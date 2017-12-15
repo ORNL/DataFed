@@ -6,12 +6,13 @@ const   joi = require('joi');
 const   db = require('@arangodb').db;
 const   graph = require('@arangodb/general-graph')._graph('sdmsg');
 
-const PERM_NONE     = 0;
-const PERM_CREATE   = 1;
-const PERM_READ     = 2;
-const PERM_WRITE    = 4;
-const PERM_DELETE   = 8;
-const PERM_ALL      = 16;
+const PERM_NONE     = 0x01;
+const PERM_LIST     = 0x01;
+const PERM_CREATE   = 0x02;
+const PERM_READ     = 0x04;
+const PERM_WRITE    = 0x08;
+const PERM_DELETE   = 0x10;
+const PERM_ALL      = 0x1F;
 
 module.context.use(router);
 
@@ -31,18 +32,150 @@ function getUserFromCert( a_cert_subject ) {
     return result[0];
 }
 
-//========== USER METHODS
 
 //----- GET USER BY CERT ID
 
 router.get('/user/by_cert', function (req, res) {
     var query = "for c in cert filter c.subject == @cert_subject for u in inbound c._id ident return u";
 
-    res.send( db._query( query, { 'cert_subject': req.queryParams.cert_subject }, options ));
+    res.send( db._query( query, { 'cert_subject': req.queryParams.cert_subject } ));
 })
 .queryParam('cert_subject', joi.string().required(), "Certificate subject string")
 .summary('Gets user by a certificate identity')
 .description('Gets user by a certificate identity');
+
+
+router.post('/data/create', function (req, res) {
+    try {
+        var data;
+
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert"],
+                write: ["data","owner"]
+            },
+            action: function ( params ) {
+                const db = require("@arangodb").db;
+
+                const client = getUserFromCert( params[0] );
+                var data = db.data.save({ _key: params[1].toString() }, { returnNew: true });
+                db.owner.save({ _from: data._id, _to: client._id });
+                params[1] = data;
+            },
+            params: [ req.queryParams.cert_subject, data ]
+        });
+
+        res.send( data );
+    } catch( e ) {
+        console.log( "exception", e );
+        throw e;
+    }
+})
+.queryParam('cert_subject', joi.string().required(), "Certificate subject string")
+.summary('Creates a new data record')
+.description('Creates a new data record');
+
+router.get('/collection/list', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.cert_subject );
+
+        if ( req.queryParams.coll_id ) {
+            result = db._query( "for c in collection filter c._id == @coll_id for v in 1..1 outbound item filter IS_SAME_COLLECTION('collection',v) return v", { coll_id: req.queryParams.coll_id } );
+        } else {
+            result = db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('collection',v) and v.is_root == true return v", { client: client._id } );
+        }
+
+        res.send( result );
+    } catch( e ) {
+        console.log( "exception", e );
+        throw e;
+    }
+})
+.queryParam('cert_subject', joi.string().required(), "Certificate subject string")
+.queryParam('coll_id', joi.string().optional(), "Base collection ID (default = root)")
+.summary('List data collections')
+.description('List data collections');
+
+
+router.post('/collection/create', function (req, res) {
+    try {
+        var new_coll;
+
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert"],
+                write: ["collection","owner"]
+            },
+            action: function ( params ) {
+                const db = require("@arangodb").db;
+                const graph = require('@arangodb/general-graph')._graph('sdmsg');
+
+                const client = getUserFromCert( params[0] );
+                var obj = { name: params[1] };
+                if ( params[2] )
+                    obj.desc = params[2];
+                if ( params[3] )
+                    obj.def_perm = params[3];
+                if ( !params[4] )
+                    obj.is_root = true;
+
+                var coll = db.collection.save( obj, { returnNew: true });
+                db.owner.save({ _from: coll._id, _to: client._id });
+
+                if ( params[4] ) {
+                    // Arango bug requires this
+                    if ( !db._exists({ _id: params[4] }) )
+                        throw -1;
+                    
+                    graph.item.save({ _from: params[4], _to: coll._id });
+                }
+
+                params[5] = coll;
+            },
+            params: [ req.queryParams.cert_subject, req.queryParams.name, req.queryParams.desc, req.queryParams.def_perm, req.queryParams.coll_id, new_coll ]
+        });
+
+        res.send( new_coll );
+    } catch( e ) {
+        console.log( "exception", e );
+        throw e;
+    }
+})
+.queryParam('cert_subject', joi.string().required(), "Certificate subject string")
+.queryParam('name', joi.string().required(), "Name")
+.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('def_perm', joi.number().integer().optional(), "Default permission mask")
+.queryParam('coll_id', joi.string().optional(), "Parent collection ID (default = root)")
+.summary('Creates a new data collection')
+.description('Creates a new data collection');
+
+
+router.post('/collection/data/add', function (req, res) {
+    try {
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert"],
+                write: ["item"]
+            },
+            action: function ( params ) {
+                const db = require("@arangodb").db;
+
+                const client = getUserFromCert( params[0] );
+                if ( db.item.firstExample({ _from: params[1], _to: params[2] }) == null )
+                    db.item.save({ _from: params[1], _to: params[2] });
+            },
+            params: [ req.queryParams.cert_subject, req.queryParams.coll_id, req.queryParams.data_id ]
+        });
+    } catch( e ) {
+        console.log( "exception", e );
+        throw e;
+    }
+})
+.queryParam('cert_subject', joi.string().required(), "Certificate subject string")
+.queryParam('coll_id', joi.string().required(), "Collection ID")
+.queryParam('data_id', joi.string().required(), "Data ID")
+.summary('Add data to collection')
+.description('Add data to collection');
 
 
 //----- GET PERMISSION BY DATA ID
@@ -67,7 +200,7 @@ router.get('/check_perm/data/by_id', function (req, res) {
     try {
         var done = false;
         const client = getUserFromCert( req.queryParams.cert_subject );
-        const data_id = "data/"+ req.queryParams.data_id;
+        const data_id = req.queryParams.data_id;
 
         console.log("client:", client, "data_id:", data_id );
 

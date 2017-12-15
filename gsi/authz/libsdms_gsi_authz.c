@@ -14,9 +14,13 @@ GLOBUS_GSI_GET_AUTHORIZATION_IDENTITY  /opt/sdms/libsdms_gsi_authz  sdms_gsi_aut
 #include <syslog.h>
 #include <stdbool.h>
 
+//#include <curl/curl.h>
+#include <mysql.h>
+
 #include <globus_types.h>
 #include <gssapi.h>
 
+MYSQL * g_mysql = 0;
 
 // Must define these here b/c globus doesn't seem to provide dev headers for GSI authz
 typedef void * globus_gsi_authz_handle_t;
@@ -89,6 +93,13 @@ sdms_gsi_authz_init()
     openlog( "sdms_gsi_authz", 0, LOG_AUTH );
     syslog( LOG_INFO, "libsdms_gsi_authz_init\n" );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
+
+    //curl_global_init(CURL_GLOBAL_ALL);
+    if ( mysql_library_init( 0, 0, 0 ))
+        syslog( LOG_INFO, "mysql_library_init FAILED" );
+
+    g_mysql = mysql_init(0);
+
     return 0;
 }
 
@@ -96,6 +107,10 @@ globus_result_t
 sdms_gsi_authz_destroy()
 {
     syslog( LOG_INFO, "sdms_gsi_authz_destroy\n" );
+
+    //curl_global_cleanup();
+    mysql_close( g_mysql );
+
     return 0;
 }
 
