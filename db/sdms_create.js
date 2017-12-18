@@ -34,4 +34,6 @@ graph._extendEdgeDefinitions(meta);
 var ident = graph_module._relation("ident", ["data","user"], ["alias","cert"]);
 graph._extendEdgeDefinitions(ident);
 
-db.cert.ensureIndex({ type: "hash", fields: [ "subject" ] })
+db.cert.ensureIndex({ type: "hash", unique: true, fields: [ "subject" ] });
+db.collection.ensureIndex({ type: "hash", unique: true, fields: [ "alias" ] });
+db.data.ensureIndex({ type: "hash", unique: true, fields: [ "alias" ] });
