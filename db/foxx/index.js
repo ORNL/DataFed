@@ -552,7 +552,7 @@ router.get('/collection/listing', function (req, res) {
 
             result = db._query( "for c in collection filter c.alias == @alias for v in 1..1 outbound c item return v", { alias: alias } );
         } else {
-            result = db._query( "for v in 1..1 outbound @coll_id item return v", { coll_id: "collection/" + req.queryParams.id } );
+cd            result = db._query( "for v in 1..1 outbound @coll_id item return v", { coll_id: "collection/" + req.queryParams.id } );
         }
 
         res.send( result );
