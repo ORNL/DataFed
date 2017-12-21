@@ -1,5 +1,6 @@
 /*jshint strict: global */
 /*jshint esversion: 6 */
+/*jshint multistr: true */
 /* globals require */
 /* globals module */
 /* globals console */
@@ -23,59 +24,37 @@ const PERM_TAG      = 0x40;
 const PERM_ANNOTATE = 0x80;
 const PERM_ALL      = 0xFF;
 
+const acl_schema = joi.object().keys({
+    subject: joi.string().required(),
+    grant: joi.number().optional(),
+    deny: joi.number().optional()
+});
 
-const ERR_INVALID_CERT          = -1;
-const ERR_PERM_DENIED           = -2;
-const ERR_CERT_IN_USE           = -3;
-const ERR_INVALID_ALIAS         = -4;
-const ERR_ITEM_ALREADY_LINKED   = -5;
-const ERR_DATA_NOT_FOUND        = -6;
-const ERR_COLL_NOT_FOUND        = -7;
-const ERR_CANNOT_DEL_ROOT       = -8;
-const ERR_ALIAS_NOT_FOUND       = -9;
+var ERR_INFO = [];
+var ERR_COUNT = 0;
+
+const ERR_PERM_DENIED           = ERR_COUNT++; ERR_INFO.push([ 400, "Permission denied" ]);
+const ERR_CERT_IN_USE           = ERR_COUNT++; ERR_INFO.push([ 400, "Certificate is in use" ]);
+const ERR_INVALID_ALIAS         = ERR_COUNT++; ERR_INFO.push([ 400, "Invalid alias" ]);
+const ERR_ITEM_ALREADY_LINKED   = ERR_COUNT++; ERR_INFO.push([ 400, "Item already in collection" ]);
+const ERR_CERT_NOT_FOUND        = ERR_COUNT++; ERR_INFO.push([ 400, "Certificate not found" ]);
+const ERR_OBJ_NOT_FOUND         = ERR_COUNT++; ERR_INFO.push([ 400, "Object not found" ]);
+const ERR_ALIAS_NOT_FOUND       = ERR_COUNT++; ERR_INFO.push([ 400, "Alias not found" ]);
+const ERR_USER_NOT_FOUND        = ERR_COUNT++; ERR_INFO.push([ 400, "User not found" ]);
+const ERR_DATA_NOT_FOUND        = ERR_COUNT++; ERR_INFO.push([ 400, "Data record not found" ]);
+const ERR_COLL_NOT_FOUND        = ERR_COUNT++; ERR_INFO.push([ 400, "Collection not found" ]);
+const ERR_CANNOT_DEL_ROOT       = ERR_COUNT++; ERR_INFO.push([ 400, "Cannot delete root collection" ]);
+const ERR_MISSING_REQ_OPTION    = ERR_COUNT++; ERR_INFO.push([ 400, "Missing one or more required options" ]);
 
 module.context.use(router);
 
-function getUserFromCert( a_cert_subject ) {
-    var result = db._query( "for c in cert filter c.subject == @cert_subject for u in inbound c._id ident return u", { 'cert_subject': a_cert_subject } ).toArray();
-
-    if ( result.length != 1 )
-        throw ERR_INVALID_CERT;
-
-    return result[0];
+function isInteger(x) {
+    return (typeof x === 'number') && (x % 1 === 0);
 }
-
-
-function getAliasID( a_alias, a_client ) {
-    if ( a_alias.startsWith( "data/" ) || a_alias.startsWith( "coll/" ) ) 
-        return null;
-
-    if ( a_alias.indexOf(":") == -1 )
-        return "aliases/" + a_client._key + ":" + a_alias;
-    else
-        return "aliases/" + a_alias;
-}
-
 
 function handleException( e, res ) {
-    if ( e ) {
-        switch ( e ) {
-            case ERR_INVALID_CERT:
-                res.throw( 400, "Invalid certificate" );
-                break;
-            case ERR_PERM_DENIED:
-                res.throw( 400, "Permission denied" );
-                break;
-            case ERR_CERT_IN_USE:
-                res.throw( 400, "Certificate is in use" );
-                break;
-            case ERR_ALIAS_NOT_FOUND:
-                res.throw( 400, "Alias not found" );
-                break;
-            default:
-                res.throw( 500, "Unexpected KNOWN exception: " + e );
-                break;
-        }
+    if ( isInteger( e ) && e >= 0 && e < ERR_COUNT ) {
+        res.throw( ERR_INFO[e][0], ERR_INFO[e][1] );
     } else if ( e.hasOwnProperty( "errorNum" )) {
         switch ( e.errorNum ) {
             case 1202:
@@ -90,7 +69,84 @@ function handleException( e, res ) {
     }
 }
 
-//===== USER API FUNCTIONS =====
+function getUserFromCert( a_cert_subject ) {
+    var result = db._query( "for c in cert filter c.subject == @cert_subject for u in inbound c._id ident return u", { 'cert_subject': a_cert_subject } ).toArray();
+
+    if ( result.length != 1 )
+        throw ERR_CERT_NOT_FOUND;
+
+    return result[0];
+}
+
+function getObject( a_obj_id, a_client ) {
+    var alias = getAliasID( a_obj_id, a_client );
+    //console.log('alias:',alias);
+    if ( alias ) {
+        var result = db._query( "for v in 1..1 inbound @alias alias return v", { alias: alias }).toArray();
+        //console.log( 'alias res:', result );
+        if ( result.length != 1 )
+            throw ERR_OBJ_NOT_FOUND;
+
+        return result[0];
+    } else {
+        try {
+            //console.log( 'trying:', a_obj_id );
+            return db.document( a_obj_id );
+        } catch( e ) {
+            throw ERR_OBJ_NOT_FOUND;
+        }
+    }
+
+}
+
+function hasAdminPerm( a_client, a_subject_key ) {
+    if ( a_client._key != a_subject_key && !a_client.is_admin && !db.admin.firstExample({ _from: "user/" + a_subject_key, _to: a_client._id }))
+        return false;
+    else
+        return true;
+}
+
+function ensureAdminPerm( a_client, a_subject_key ) {
+    if ( !hasAdminPerm( a_client, a_subject_key ))
+        throw ERR_PERM_DENIED;
+}
+
+function getAliasID( a_alias, a_client ) {
+    if ( a_alias.startsWith( "data/" ) || a_alias.startsWith( "coll/" ) ) 
+        return null;
+
+    if ( a_alias.indexOf(":") == -1 )
+        return "aliases/" + a_client._key + ":" + a_alias;
+    else
+        return "aliases/" + a_alias;
+}
+
+function hasPermission( a_client, a_obj_id, a_req_perm ) {
+    if ( a_client.is_admin )
+        return true;
+
+    var owner = db.owner.firstExample({ _from: a_obj_id });
+    if ( !owner )
+        throw ERR_OBJ_NOT_FOUND;
+
+    if ( a_client._id == owner._id || db.admin.firstExample({ _from: owner._id, _to: a_client._id }))
+        return true;
+
+    var acls = db._query( "union(( for v, e in 1..1 outbound @object acl filter and v._id == @client return e ), (for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[1]._id == @client return p.edges[0] ))", { object: a_obj_id, client: a_client._id } ).toArray();
+
+    var perm = 0;
+    for ( var i in acls ) {
+        perm |= acls[i].perm;
+    }
+
+    if ( perm & a_req_perm == a_req_perm )
+        return true;
+    else
+        return false;
+}
+
+        
+//==================== USER API FUNCTIONS
 
 
 router.post('/user/create', function (req, res) {
@@ -141,12 +197,22 @@ router.post('/user/create', function (req, res) {
 
 
 router.get('/user/view', function (req, res) {
-    if ( req.queryParams.uid ) {
-        res.send( db._query( "for u in user filter u._key == @uid return u", { 'uid': req.queryParams.uid } ));
-    } else if ( req.queryParams.cert ) {
-        res.send( db._query( "for c in cert filter c.subject == @cert for u in inbound c._id ident return u", { 'cert': req.queryParams.cert } ));
-    } else {
-        res.throw( 400, "No user specified" );
+    try {
+        if ( req.queryParams.uid ) {
+            try {
+                res.send([ db.user.document({ _id: req.queryParams.uid }) ]);
+            } catch ( e ) {
+                throw ERR_USER_NOT_FOUND;
+            }
+            //res.send( db._query( "for u in user filter u._key == @uid return u", { 'uid': req.queryParams.uid } ));
+        } else if ( req.queryParams.cert ) {
+            res.send([ getUserFromCert( req.queryParams.cert ) ]);
+            //res.send( db._query( "for c in cert filter c.subject == @cert for u in inbound c._id ident return u", { 'cert': req.queryParams.cert } ));
+        } else {
+            throw ERR_MISSING_REQ_OPTION;
+        }
+    } catch( e ) {
+        handleException( e, res );
     }
 })
 .queryParam('uid', joi.string().optional(), "UID of user to view")
@@ -166,6 +232,7 @@ router.post('/user/update', function (req, res) {
     res.throw( 400, "NOT IMPLEMENTED" );
 })
 .queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('Update user information')
 .description('Update user information');
 
@@ -182,10 +249,9 @@ router.post('/user/delete', function (req, res) {
                 //const graph = require('@arangodb/general-graph')._graph('sdmsg');
 
                 const client = getUserFromCert( params[0] );
-                if ( client._key != params[1] || !client.is_admin || !db.admin.firstExample({ _from: "user/" + params[1], _to: client._id }))
-                    throw ERR_PERM_DENIED;
+                ensureAdminPerm( client, params[1] );
 
-                var user = db.user.document({ _id: "user/" + params[1] });
+                var user = db.user.document({ _id: params[1] });
 
                 // TODO This MUST use graph engine to ensure all edges are removed
 
@@ -201,14 +267,14 @@ router.post('/user/delete', function (req, res) {
 
                 db.user.remove({ _id: user._id });
             },
-            params: [ req.queryParams.client, req.queryParams.uid ]
+            params: [ req.queryParams.client, req.queryParams.subject ]
         });
     } catch( e ) {
         handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('uid', joi.string().required(), "User ID of user to remove")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('Remove existing user entry')
 .description('Remove existing user entry. Requires admin permissions.');
 
@@ -226,10 +292,8 @@ router.post('/user/cert/create', function (req, res) {
                 var cert;
 
                 if ( params[2] ) {
-                    const user = db.user.document( "user/" + params[2] );
-
-                    if ( client._key != user._key || !client.is_admin || !db.admin.firstExample({ _from: user._id, _to: client._id }))
-                        throw ERR_PERM_DENIED;
+                    const user = db.user.document( params[2] );
+                    ensureAdminPerm( client, user._key );
 
                     cert = db.cert.save({ subject: params[1] }, { returnNew: true });
                     db.ident.save({ _from: user._id, _to: cert._id });
@@ -238,31 +302,66 @@ router.post('/user/cert/create', function (req, res) {
                     db.ident.save({ _from: client._id, _to: cert._id });
                 }
             },
-            params: [ req.queryParams.client, req.queryParams.cert, req.queryParams.uid ]
+            params: [ req.queryParams.client, req.queryParams.cert, req.queryParams.subject ]
         });
     } catch( e ) {
         handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('cert', joi.string().required(), "Certificate to add (subject)")
-.queryParam('uid', joi.string().optional(), "UID of user to associate with certificate")
+.queryParam('cert', joi.string().required(), "Certificate to add")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('Add new certificate to user account')
 .description('Add new certificate to user account');
 
 
 router.get('/user/cert/list', function (req, res) {
-    res.throw( 400, "NOT IMPLEMENTED" );
+    try {
+        var client = getUserFromCert( req.queryParams.client );
+        if ( req.queryParams.subject ) {
+            const subject = db.user.document( req.queryParams.subject );
+            ensureAdminPerm( client, subject._key );
+
+            res.send( db._query( "for v in 1..1 outbound @client ident return v.subject", { client: subject._id }));
+        } else {
+            res.send( db._query( "for v in 1..1 outbound @client ident return v.subject", { client: client._id }));
+        }
+    } catch( e ) {
+        handleException( e, res );
+    }
 })
 .queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List user certificates');
 
 
 router.post('/user/cert/update', function (req, res) {
-    res.throw( 400, "NOT IMPLEMENTED" );
+    try {
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert"],
+                write: ["cert","ident"]
+            },
+            action: function ( params ) {
+                const db = require("@arangodb").db;
+
+                const client = getUserFromCert( params[0] );
+                const owner = getUserFromCert( params[1] );
+
+                ensureAdminPerm( client, owner._key );
+
+                var cert = db.cert.firstExample({ subject: params[1] });
+                db.cert.update( cert, { subject: params[2] });
+            },
+            params: [ req.queryParams.client, req.queryParams.cert_old, req.queryParams.cert_new ]
+        });
+    } catch( e ) {
+        handleException( e, res );
+    }
 })
 .queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('cert', joi.string().required(), "Certificate to update")
+.queryParam('cert_old', joi.string().required(), "Old certificate to update")
+.queryParam('cert_new', joi.string().required(), "New certificate")
 .summary('List user certificates');
 
 
@@ -281,15 +380,14 @@ router.post('/user/cert/delete', function (req, res) {
                 const client = getUserFromCert( params[0] );
                 const owner = getUserFromCert( params[1] );
 
-                if ( client._id != owner._id || !client.is_admin || !db.admin.firstExample({ _from: owner._id, _to: client._id }))
-                    throw ERR_PERM_DENIED;
+                ensureAdminPerm( client, owner._key );
 
                 const cert = db.cert.firstExample({ subject: params[1] });
 
                 db.ident.removeByExample({ _to: cert._id });
                 db.cert.remove({ _id: cert._id });
             },
-            params: [ req.queryParams.client, req.queryParams.cert, req.queryParams.uid ]
+            params: [ req.queryParams.client, req.queryParams.cert ]
         });
     } catch( e ) {
         handleException( e, res );
@@ -301,7 +399,7 @@ router.post('/user/cert/delete', function (req, res) {
 .description('Remove certificate from user account');
 
 
-//===== DATA API FUNCTIONS =====
+//==================== DATA API FUNCTIONS
 
 
 router.post('/data/create', function (req, res) {
@@ -347,6 +445,120 @@ router.post('/data/create', function (req, res) {
 .queryParam('metadata', joi.string().optional(), "Metadata (JSON)")
 .summary('Creates a new data record')
 .description('Creates a new data record');
+
+
+router.get('/acl/update', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.client );
+        console.log( 'client', client );
+        var object = getObject( req.queryParams.subject, client );
+        console.log( 'object', object );
+        if ( !hasAdminPerm( client, object._id ))
+            throw ERR_PERM_DENIED;
+        console.log( 'hello' );
+
+        var i;
+
+        if ( req.queryParams.delete ) {
+        }
+
+        if ( req.queryParams.create ) {
+            var rule;
+
+            for ( i in req.queryParams.create ) {
+                rule = req.queryParams.create[i];
+
+                if ( !db._exists( rule.subject ))
+                    throw ERR_OBJ_NOT_FOUND;
+
+                db.acl.save({ _from: object._id, _to: rule.subject, grant: rule.grant, deny: rule.deny });
+            }
+        }
+
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('object', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('create', joi.array(acl_schema).optional(), "User and/or group ACL rules to create")
+.queryParam('delete', joi.array(joi.string()).optional(), "User and/or group ACL rules to delete")
+.summary('Update ACL rules on an object')
+.description('Update ACL rules on an object (data record or collection)');
+
+
+
+router.get('/acl/view', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.client );
+        console.log( 'client', client );
+        var object = getObject( req.queryParams.object, client );
+        console.log( 'object', object );
+
+        if ( !hasPermission( client, object._id, PERM_VIEW ))
+            throw ERR_PERM_DENIED;
+
+        res.send( db._query( "for v, e in 1..1 outbound @object acl return { subject: v._id, grant: e.grant, grant: e.deny }", { object: object._id }));
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('object', joi.string().required(), "ID or alias of data record or collection")
+.summary('View current ACL on an object')
+.description('View current ACL on an object (data record or collection)');
+
+
+
+router.get('/data/view', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.client );
+
+        // TODO Check permissions
+        var result;
+        var alias = getAliasID( req.queryParams.id, client );
+
+        if ( alias ) {
+            // FIXME
+            result = db._query("for d in data filter d.alias == @alias return d", { alias: alias });
+        } else {
+            result = [db.data.document({ _key: req.queryParams.id })];
+        }
+
+        res.send( result );
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate subject string")
+.queryParam('id', joi.string().required(), "Data ID or alias")
+.summary('Get data by ID or alias')
+.description('Get data by ID or alias');
+
+
+router.get('/data/list', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.client );
+        var result;
+
+        if ( req.queryParams.subject ) {
+            if ( hasAdminPerm( client, req.queryParams.subject )) {
+                result = db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('data', v) return v", { client: "user/" + req.queryParams.subject });
+            }
+        } else {
+            result = db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('data', v) return v", { client: client._id} );
+        }
+
+        res.send( result );
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.summary('List all data owned by client, or subject')
+.description('List all data owned by client, or subject');
+
 
 router.post('/data/delete', function (req, res) {
     try {
@@ -394,45 +606,6 @@ router.post('/data/delete', function (req, res) {
 .summary('Deletes an existing data record')
 .description('Deletes an existing data record');
 
-router.get('/data/all', function (req, res) {
-    try {
-        const client = getUserFromCert( req.queryParams.client );
-
-        const result = db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('data', v) return v", { client: client._id} );
-
-        res.send( result );
-    } catch( e ) {
-        handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client certificate subject string")
-.summary('Get all data owned by client')
-.description('Get all data owned by client');
-
-router.get('/data', function (req, res) {
-    try {
-        const client = getUserFromCert( req.queryParams.client );
-
-        // TODO Check permissions
-        var result;
-        var alias = getAliasID( req.queryParams.id, client );
-
-        if ( alias ) {
-            // FIXME
-            result = db._query("for d in data filter d.alias == @alias return d", { alias: alias });
-        } else {
-            result = [db.data.document({ _key: req.queryParams.id })];
-        }
-
-        res.send( result );
-    } catch( e ) {
-        handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client certificate subject string")
-.queryParam('id', joi.string().required(), "Data ID or alias")
-.summary('Get data by ID or alias')
-.description('Get data by ID or alias');
 
 
 

@@ -34,6 +34,9 @@ graph._extendEdgeDefinitions(meta);
 var ident = graph_module._relation("ident", ["user"], ["cert"]);
 graph._extendEdgeDefinitions(ident);
 
+var adm = graph_module._relation("admin", ["user"], ["user"]);
+graph._extendEdgeDefinitions(adm);
+
 var alias = graph_module._relation("alias", ["data","coll"], ["aliases"]);
 graph._extendEdgeDefinitions(alias);
 
