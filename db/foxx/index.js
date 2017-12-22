@@ -169,14 +169,17 @@ function hasPermission( a_client, a_object, a_req_perm ) {
     }
     console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
     result = evalPermissions( a_req_perm, perm_found, perm_deny );
+    console.log("eval res:", result );
     if ( result != null )
         return result;
 
     // Evaluate group permissions on object
 
-    acls = db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[1]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+    acls = db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
 
-    mask = perm_found;
+    console.log("eval group", acls );
+
+    mask = ~perm_found;
     for ( i in acls ) {
         acl = acls[i];
         console.log("group_perm:",acl);
@@ -186,13 +189,17 @@ function hasPermission( a_client, a_object, a_req_perm ) {
         }
     }
 
+    console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+
     result = evalPermissions( a_req_perm, perm_found, perm_deny );
+
+    console.log("eval res:", result );
     if ( result != null )
         return result;
 
     // Evaluate default permissions on object
 
-    mask = perm_found;
+    mask = ~perm_found;
     if ( mask & ( a_object.perm_grant | a_object.perm_deny ) > 0 ) {
         perm_found |= ( a_object.perm_grant | a_object.perm_deny );
         perm_deny |= ( a_object.perm_deny & mask );
@@ -524,32 +531,32 @@ router.get('/acl/update', function (req, res) {
         db._executeTransaction({
             collections: {
                 read: ["user","cert","data","coll","admin","alias","aliases"],
-                write: ["acl"]
+                write: ["acl","coll","data"]
             },
             action: function ( params ) {
-                const client = getUserFromCert( req.queryParams.client );
-                var object = getObject( req.queryParams.object, client );
+                const client = getUserFromCert( params[0] );
+                var object = getObject( params[1], client );
 
                 ensureAdminPermObject( client, object._id );
 
                 var i;
 
-                if ( req.queryParams.delete ) {
+                if ( params[3] ) {
                     var subject;
 
-                    for ( i in req.queryParams.delete ) {
-                        subject = req.queryParams.delete[i];
+                    for ( i in params[3] ) {
+                        subject = params[3][i];
                         if ( !db._exists( subject ))
                             throw ERR_OBJ_NOT_FOUND;
                         db.acl.removeByExample({ _from: object._id, _to: subject });
                     }
                 }
 
-                if ( req.queryParams.create ) {
+                if ( params[2] ) {
                     var rule;
 
-                    for ( i in req.queryParams.create ) {
-                        rule = req.queryParams.create[i];
+                    for ( i in params[2] ) {
+                        rule = params[2][i];
 
                         if ( !db._exists( rule.subject ))
                             throw ERR_OBJ_NOT_FOUND;
@@ -558,7 +565,26 @@ router.get('/acl/update', function (req, res) {
                         db.acl.save({ _from: object._id, _to: rule.subject, perm_grant: rule.grant, perm_deny: rule.deny });
                     }
                 }
-            }
+
+                if ( params[4] || params[5] ) {
+                    var obj = {};
+                    if ( params[4] ) {
+                        if ( params[4] == -1 )
+                            obj.perm_grant = null;
+                        else
+                            obj.perm_grant = params[4];
+                    }
+                    if ( params[5] ) {
+                        if ( params[5] == -1 )
+                            obj.perm_deny = null;
+                        else
+                            obj.perm_deny = params[4];
+                    }
+
+                    db._update( object._id, obj, { keepNull: false } );
+                }
+            },
+            params: [ req.queryParams.client, req.queryParams.object, req.queryParams.create, req.queryParams.delete, req.queryParams.grant, req.queryParams.deny ]
         });
     } catch( e ) {
         handleException( e, res );
@@ -568,6 +594,8 @@ router.get('/acl/update', function (req, res) {
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('create', joi.array().items(acl_schema).optional(), "User and/or group ACL rules to create")
 .queryParam('delete', joi.array(joi.string()).optional(), "User and/or group ACL rules to delete")
+.queryParam('grant', joi.number().optional(), "Set default grant permission mask (set to -1 to unset)")
+.queryParam('deny', joi.number().optional(), "Set default deny permission mask (set to -1 to unset)")
 .summary('Update ACL rules on an object')
 .description('Update ACL rules on an object (data record or collection)');
 
@@ -716,7 +744,13 @@ router.post('/collection/create', function (req, res) {
                 var obj = { title: params[1] };
                 if ( params[2] )
                     obj.desc = params[2];
-                    
+
+                if ( params[4] )
+                    obj.perm_grant = params[4];
+
+                if ( params[5] )
+                    obj.perm_deny = params[5];
+
                 var alias_id = getAliasID( params[3], client );
                 if ( alias_id && !alias_id.startsWith( client._key + ":" ))
                     throw ERR_INVALID_ALIAS;
@@ -726,7 +760,7 @@ router.post('/collection/create', function (req, res) {
 
                 var parent = null;
                 if ( params[4] )
-                    parent = "coll/" + params[4];
+                    parent = "coll/" + params[6];
                 else
                     parent = "coll/" + client._key + "_root";
 
@@ -743,7 +777,7 @@ router.post('/collection/create', function (req, res) {
 
                 params[5].push( coll.new );
             },
-            params: [ req.queryParams.client, req.queryParams.title, req.queryParams.desc, req.queryParams.alias, req.queryParams.parent_coll_id, result ]
+            params: [ req.queryParams.client, req.queryParams.title, req.queryParams.desc, req.queryParams.alias, req.queryParams.grant, req.queryParams.deny, req.queryParams.parent_coll_id, result ]
         });
 
         res.send( result );
@@ -755,6 +789,8 @@ router.post('/collection/create', function (req, res) {
 .queryParam('title', joi.string().required(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('grant', joi.number().optional(), "Default grant permission mask")
+.queryParam('deny', joi.number().optional(), "Default deny permission mask")
 .queryParam('parent_coll_id', joi.string().optional(), "Parent collection ID (default = root)")
 .summary('Creates a new data collection')
 .description('Creates a new data collection');
@@ -1130,5 +1166,138 @@ router.get('/check_perm/data/by_id', function (req, res) {
 .queryParam('req_perm', joi.number().integer().required(), "Requested permission mask")
 .summary('Checks for data permission by id')
 .description('Checks for data permission by id');
+
+
+//========== GROUP API FUNCTIONS ==========
+
+router.post('/group/create', function (req, res) {
+    try {
+        var result = [];
+
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert"],
+                write: ["group","owner","member"]
+            },
+            action: function ( params ) {
+                const db = require("@arangodb").db;
+
+                const client = getUserFromCert( params[0] );
+                var owner_key = client._key;
+
+                if ( params[1] ) {
+                    owner_key = params[1];
+                    ensureAdminPermUser( client, "user/" + owner_key );
+                }
+
+                var group = db.group.save({ _key: owner_key + "_" + params[2], desc: params[3] }, { returnNew: true });
+
+                db.owner.save({ _from: group._id, _to: "user/" + owner_key });
+
+                if ( params[4] ) {
+                    var mem;
+                    for ( var i in params[4] ) {
+                        mem = params[4][i];
+                        if ( !db._exists( "user/" + mem ))
+                            throw ERR_USER_NOT_FOUND;
+
+                        db.member.save({ _from: group._id, _to: "user/" + mem });
+                    }
+                }
+
+                result.push( group.new );
+            },
+            params: [ req.queryParams.client, req.queryParams.subject, req.queryParams.id, req.queryParams.desc, req.queryParams.members, result ]
+        });
+
+        res.send( result );
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client crtificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('members', joi.array(joi.string()).optional(), "Array of member UIDs")
+.summary('Creates a new group')
+.description('Creates a new group owned by client or subject');
+
+
+
+router.post('/group/delete', function (req, res) {
+    try {
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert","owner"],
+                write: ["group","owner","member","acl"]
+            },
+            action: function ( params ) {
+                const db = require("@arangodb").db;
+
+                const client = getUserFromCert( params[0] );
+                var group_id;
+
+                if ( params[1] ) {
+                    group_id = "group/" + params[1] + "_" + params[2];
+                } else {
+                    group_id = "group/" + client._key + "_" + params[2];
+                }
+
+                ensureAdminPermObject( params[0], group_id );
+                db.group.remove( group_id );
+                db.owner.removeByExample({ _to: group_id });
+                db.acl.removeByExample({ _to: group_id });
+                db.member.removeByExample({ _from: group_id });
+            },
+            params: [ req.queryParams.client, req.queryParams.subject, req.queryParams.id ]
+        });
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client crtificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('id', joi.string().required(), "Group ID")
+.summary('Deletes an existing group')
+.description('Deletes an existing group owned by client or subject');
+
+
+router.get('/group/list', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.client );
+        var owner_id;
+
+        if ( req.queryParams.subject ) {
+            owner_id = "user/" + req.queryParams.subject;
+            ensureAdminPermUser( client, owner_id );
+        } else {
+            owner_id = client._id;
+        }
+
+        res.send( db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('group', v) return v", { client: owner_id }));
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.summary('List groups')
+.description('List groups owned by client or subject');
+
+
+router.get('/group/view', function (req, res) {
+    try {
+        const client = getUserFromCert( req.queryParams.client );
+
+    } catch( e ) {
+        handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('id', joi.string().required(), "Group ID")
+.summary('View group details')
+.description('View group details');
+
 
 
