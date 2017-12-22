@@ -99,15 +99,35 @@ function getObject( a_obj_id, a_client ) {
 
 }
 
-function hasAdminPerm( a_client, a_subject_key ) {
-    if ( a_client._key != a_subject_key && !a_client.is_admin && !db.admin.firstExample({ _from: "user/" + a_subject_key, _to: a_client._id }))
+function hasAdminPermUser( a_client, a_user_id ) {
+    if ( a_client._id != a_user_id && !a_client.is_admin && !db.admin.firstExample({ _from: a_user_id, _to: a_client._id }))  { 
         return false;
-    else
+    } else {
         return true;
+    }
 }
 
-function ensureAdminPerm( a_client, a_subject_key ) {
-    if ( !hasAdminPerm( a_client, a_subject_key ))
+function hasAdminPermObject( a_client, a_object_id ) {
+    if ( a_client.is_admin )
+        return true;
+
+    var owner_id = db.owner.firstExample({ _from: a_object_id })._to;
+    if ( owner_id == a_client._id )
+        return true;
+
+    if ( db.admin.firstExample({ _from: owner_id, _to: a_client._id }))
+        return true;
+
+    return false;
+}
+
+function ensureAdminPermUser( a_client, a_subject_id ) {
+    if ( !hasAdminPermUser( a_client, a_subject_id ))
+        throw ERR_PERM_DENIED;
+}
+
+function ensureAdminPermObject( a_client, a_subject_id ) {
+    if ( !hasAdminPermObject( a_client, a_subject_id ))
         throw ERR_PERM_DENIED;
 }
 
@@ -121,30 +141,80 @@ function getAliasID( a_alias, a_client ) {
         return "aliases/" + a_alias;
 }
 
-function hasPermission( a_client, a_obj_id, a_req_perm ) {
+function hasPermission( a_client, a_object, a_req_perm ) {
     if ( a_client.is_admin )
         return true;
 
-    var owner = db.owner.firstExample({ _from: a_obj_id });
+    var owner = db.owner.firstExample({ _from: a_object._id });
     if ( !owner )
         throw ERR_OBJ_NOT_FOUND;
 
     if ( a_client._id == owner._id || db.admin.firstExample({ _from: owner._id, _to: a_client._id }))
         return true;
 
-    var acls = db._query( "union(( for v, e in 1..1 outbound @object acl filter and v._id == @client return e ), (for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[1]._id == @client return p.edges[0] ))", { object: a_obj_id, client: a_client._id } ).toArray();
+    var perm_found = 0;
+    var perm_deny  = 0;
+    var acl;
+    var result;
+    var mask;
 
-    var perm = 0;
+    // Evaluate user permissions on object
+
+    var acls = db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
     for ( var i in acls ) {
-        perm |= acls[i].perm;
+        acl = acls[i];
+        console.log("user_perm:",acl);
+        perm_found |= ( acl.perm_grant | acl.perm_deny );
+        perm_deny |= acl.perm_deny;
+    }
+    console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+    result = evalPermissions( a_req_perm, perm_found, perm_deny );
+    if ( result != null )
+        return result;
+
+    // Evaluate group permissions on object
+
+    acls = db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[1]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+
+    mask = perm_found;
+    for ( i in acls ) {
+        acl = acls[i];
+        console.log("group_perm:",acl);
+        if ( mask & ( acl.perm_grant | acl.perm_deny ) > 0 ) {
+            perm_found |= ( acl.perm_grant | acl.perm_deny );
+            perm_deny |= ( acl.perm_deny & mask );
+        }
     }
 
-    if ( perm & a_req_perm == a_req_perm )
-        return true;
-    else
-        return false;
+    result = evalPermissions( a_req_perm, perm_found, perm_deny );
+    if ( result != null )
+        return result;
+
+    // Evaluate default permissions on object
+
+    mask = perm_found;
+    if ( mask & ( a_object.perm_grant | a_object.perm_deny ) > 0 ) {
+        perm_found |= ( a_object.perm_grant | a_object.perm_deny );
+        perm_deny |= ( a_object.perm_deny & mask );
+
+        result = evalPermissions( a_req_perm, perm_found, perm_deny );
+        if ( result != null )
+            return result;
+    }
+
+    // TODO Eval inherited permissions
+    return false;
 }
 
+function evalPermissions( a_req_perm, a_perm_found, a_perm_deny ) {
+    if (( a_perm_found & a_req_perm ) != a_req_perm )
+        return null;
+
+    if (( a_req_perm & a_perm_deny ) != 0 )
+        return false;
+    else
+        return true;
+}
         
 //==================== USER API FUNCTIONS
 
@@ -249,9 +319,11 @@ router.post('/user/delete', function (req, res) {
                 //const graph = require('@arangodb/general-graph')._graph('sdmsg');
 
                 const client = getUserFromCert( params[0] );
-                ensureAdminPerm( client, params[1] );
 
                 var user = db.user.document({ _id: params[1] });
+
+                ensureAdminPermUser( client, user._id );
+
 
                 // TODO This MUST use graph engine to ensure all edges are removed
 
@@ -293,7 +365,7 @@ router.post('/user/cert/create', function (req, res) {
 
                 if ( params[2] ) {
                     const user = db.user.document( params[2] );
-                    ensureAdminPerm( client, user._key );
+                    ensureAdminPermUser( client, user._id );
 
                     cert = db.cert.save({ subject: params[1] }, { returnNew: true });
                     db.ident.save({ _from: user._id, _to: cert._id });
@@ -320,7 +392,7 @@ router.get('/user/cert/list', function (req, res) {
         var client = getUserFromCert( req.queryParams.client );
         if ( req.queryParams.subject ) {
             const subject = db.user.document( req.queryParams.subject );
-            ensureAdminPerm( client, subject._key );
+            ensureAdminPermUser( client, subject._id );
 
             res.send( db._query( "for v in 1..1 outbound @client ident return v.subject", { client: subject._id }));
         } else {
@@ -348,7 +420,7 @@ router.post('/user/cert/update', function (req, res) {
                 const client = getUserFromCert( params[0] );
                 const owner = getUserFromCert( params[1] );
 
-                ensureAdminPerm( client, owner._key );
+                ensureAdminPermUser( client, owner._id );
 
                 var cert = db.cert.firstExample({ subject: params[1] });
                 db.cert.update( cert, { subject: params[2] });
@@ -380,7 +452,7 @@ router.post('/user/cert/delete', function (req, res) {
                 const client = getUserFromCert( params[0] );
                 const owner = getUserFromCert( params[1] );
 
-                ensureAdminPerm( client, owner._key );
+                ensureAdminPermUser( client, owner._id );
 
                 const cert = db.cert.firstExample({ subject: params[1] });
 
@@ -449,39 +521,52 @@ router.post('/data/create', function (req, res) {
 
 router.get('/acl/update', function (req, res) {
     try {
-        const client = getUserFromCert( req.queryParams.client );
-        console.log( 'client', client );
-        var object = getObject( req.queryParams.subject, client );
-        console.log( 'object', object );
-        if ( !hasAdminPerm( client, object._id ))
-            throw ERR_PERM_DENIED;
-        console.log( 'hello' );
+        db._executeTransaction({
+            collections: {
+                read: ["user","cert","data","coll","admin","alias","aliases"],
+                write: ["acl"]
+            },
+            action: function ( params ) {
+                const client = getUserFromCert( req.queryParams.client );
+                var object = getObject( req.queryParams.object, client );
 
-        var i;
+                ensureAdminPermObject( client, object._id );
 
-        if ( req.queryParams.delete ) {
-        }
+                var i;
 
-        if ( req.queryParams.create ) {
-            var rule;
+                if ( req.queryParams.delete ) {
+                    var subject;
 
-            for ( i in req.queryParams.create ) {
-                rule = req.queryParams.create[i];
+                    for ( i in req.queryParams.delete ) {
+                        subject = req.queryParams.delete[i];
+                        if ( !db._exists( subject ))
+                            throw ERR_OBJ_NOT_FOUND;
+                        db.acl.removeByExample({ _from: object._id, _to: subject });
+                    }
+                }
 
-                if ( !db._exists( rule.subject ))
-                    throw ERR_OBJ_NOT_FOUND;
+                if ( req.queryParams.create ) {
+                    var rule;
 
-                db.acl.save({ _from: object._id, _to: rule.subject, grant: rule.grant, deny: rule.deny });
+                    for ( i in req.queryParams.create ) {
+                        rule = req.queryParams.create[i];
+
+                        if ( !db._exists( rule.subject ))
+                            throw ERR_OBJ_NOT_FOUND;
+
+                        db.acl.removeByExample({ _from: object._id, _to: rule.subject });
+                        db.acl.save({ _from: object._id, _to: rule.subject, perm_grant: rule.grant, perm_deny: rule.deny });
+                    }
+                }
             }
-        }
-
+        });
     } catch( e ) {
         handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client certificate")
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
-.queryParam('create', joi.array(acl_schema).optional(), "User and/or group ACL rules to create")
+.queryParam('create', joi.array().items(acl_schema).optional(), "User and/or group ACL rules to create")
 .queryParam('delete', joi.array(joi.string()).optional(), "User and/or group ACL rules to delete")
 .summary('Update ACL rules on an object')
 .description('Update ACL rules on an object (data record or collection)');
@@ -495,10 +580,12 @@ router.get('/acl/view', function (req, res) {
         var object = getObject( req.queryParams.object, client );
         console.log( 'object', object );
 
-        if ( !hasPermission( client, object._id, PERM_VIEW ))
-            throw ERR_PERM_DENIED;
+        if ( !hasAdminPermObject( client, object._id )) {
+            if ( !hasPermission( client, object, PERM_VIEW ))
+                throw ERR_PERM_DENIED;
+        }
 
-        res.send( db._query( "for v, e in 1..1 outbound @object acl return { subject: v._id, grant: e.grant, grant: e.deny }", { object: object._id }));
+        res.send( db._query( "for v, e in 1..1 outbound @object acl return { subject: v._id, grant: e.perm_grant, deny: e.perm_deny }", { object: object._id }));
     } catch( e ) {
         handleException( e, res );
     }
@@ -542,7 +629,7 @@ router.get('/data/list', function (req, res) {
         var result;
 
         if ( req.queryParams.subject ) {
-            if ( hasAdminPerm( client, req.queryParams.subject )) {
+            if ( hasAdminPermUser( client, req.queryParams.subject )) {
                 result = db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('data', v) return v", { client: "user/" + req.queryParams.subject });
             }
         } else {
@@ -745,18 +832,24 @@ router.get('/collection/view', function (req, res) {
     try {
         const client = getUserFromCert( req.queryParams.client );
 
-        // TODO Check permissions
-
-        var result;
+        var coll;
         var alias_id = getAliasID( req.queryParams.id, client );
 
         if ( alias_id ) {
-            result = db._query("for v in 1..1 inbound @alias_id alias filter is_same_collection('coll', v) return v", { alias_id: alias_id });
+            coll = db._query("for v in 1..1 inbound @alias_id alias filter is_same_collection('coll', v) return v", { alias_id: alias_id }).toArray();
+            if ( coll.length != 1 )
+                throw ERR_INVALID_ALIAS;
+            coll = coll[0];
         } else {
-            result = db.coll.document({ _key: req.queryParams.id });
+            coll = db.coll.document({ _key: req.queryParams.id });
         }
 
-        res.send( result );
+        if ( !hasAdminPermObject( client, coll._id )) {
+            if ( !hasPermission( client, coll, PERM_VIEW ))
+                throw ERR_PERM_DENIED;
+        }
+
+        res.send( coll );
     } catch( e ) {
         handleException( e, res );
     }
