@@ -15,6 +15,8 @@ router.use( "/grp", require('./group_router') );
 router.use( "/dat", require('./data_router') );
 router.use( "/col", require('./coll_router') );
 router.use( "/acl", require('./acl_router') );
+router.use( "/tag", require('./tag_router') );
+router.use( "/not", require('./note_router') );
 
 module.context.use(router);
 
