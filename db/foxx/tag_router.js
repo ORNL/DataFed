@@ -24,8 +24,8 @@ router.post('/update', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","data","coll","admin","alias","aliases"],
-                write: ["acl","coll","data"]
+                read: ["u","x","d","c","admin","alias","a"],
+                write: ["acl","c","d"]
             },
             action: function() {
             }

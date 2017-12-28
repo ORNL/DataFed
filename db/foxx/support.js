@@ -15,6 +15,7 @@ module.exports = ( function() {
 
     obj.db = require('@arangodb').db;
     obj.graph = require('@arangodb/general-graph')._graph('sdmsg');
+    obj.bad_chars = "/:\" ";
 
     obj.PERM_NONE     = 0x00;
     obj.PERM_VIEW     = 0x01;
@@ -38,6 +39,7 @@ module.exports = ( function() {
 
     obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission denied" ]);
     obj.ERR_CERT_IN_USE           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Certificate is in use" ]);
+    obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
     obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
     obj.ERR_CERT_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Certificate not found" ]);
@@ -70,8 +72,8 @@ module.exports = ( function() {
         }
     };
 
-    obj.getUserFromCert = function( a_cert_subject ) {
-        var result = obj.db._query( "for c in cert filter c.subject == @cert_subject for u in inbound c._id ident return u", { 'cert_subject': a_cert_subject } ).toArray();
+    obj.getUserFromCert = function( a_cert ) {
+        var result = obj.db._query( "for i in x filter i.subject == @cert for j in inbound i._id ident return j", { 'cert': a_cert } ).toArray();
 
         if ( result.length != 1 )
             throw obj.ERR_CERT_NOT_FOUND;
@@ -80,30 +82,14 @@ module.exports = ( function() {
     };
 
     obj.getObject = function( a_obj_id, a_client ) {
-        var alias = obj.getAliasID( a_obj_id, a_client );
-        //console.log('alias:',alias);
-        if ( alias ) {
-            var result = obj.db._query( "for v in 1..1 inbound @alias alias return v", { alias: alias }).toArray();
-            //console.log( 'alias res:', result );
-            if ( result.length != 1 )
-                throw obj.ERR_OBJ_NOT_FOUND;
-
-            return result[0];
-        } else {
-            try {
-                //console.log( 'trying:', a_obj_id );
-                return obj.db.document( a_obj_id );
-            } catch( e ) {
-                throw obj.ERR_OBJ_NOT_FOUND;
-            }
+        try {
+            return obj.db.document( obj.resolveID( a_obj_id, a_client ));
+        } catch( e ) {
+            throw obj.ERR_OBJ_NOT_FOUND;
         }
-
     };
 
     obj.hasAdminPermUser = function( a_client, a_user_id ) {
-        console.log("hasAdminPermUser:",a_client, "user_id:", a_user_id);
-        console.log( obj.db.admin );
-
         if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id }))  { 
             return false;
         } else {
@@ -134,7 +120,7 @@ module.exports = ( function() {
         if ( !obj.hasAdminPermObject( a_client, a_object_id ))
             throw obj.ERR_PERM_DENIED;
     };
-
+/*
     obj.getAliasID = function( a_alias, a_client ) {
         if ( a_alias.startsWith( "data/" ) || a_alias.startsWith( "coll/" ) ) 
             return null;
@@ -144,20 +130,50 @@ module.exports = ( function() {
         else
             return "aliases/" + a_alias;
     };
+*/
+    obj.validateAlias = function( a_alias, a_client ) {
+        for ( var i = 0; i < a_alias.length; ++i ) {
+            if ( obj.bad_chars.indexOf( a_alias[i] ) != -1 )
+                throw obj.ERR_INVALID_ALIAS;
+        }
+    };
 
+    obj.resolveID = function( a_id, a_client ) {
+        if ( a_id[1] == '/' ) {
+            return a_id;
+        } else {
+            var alias_id = "a/";
+            if ( a_id.indexOf(":") == -1 )
+                alias_id += a_client._key + ":" + a_id;
+            else
+                alias_id += a_id;
+
+            var alias = obj.db.alias.firstExample({ _to: alias_id });
+            if ( !alias )
+                throw obj.ERR_ALIAS_NOT_FOUND;
+
+            return alias._from;
+        }
+    };
+
+    /* Check if calling user has requested permissions:
+     * - Owners, admins, and admin delegates have all permissions (this must be checked outside of this function).
+     * - Non-owners can be granted permission (by owner) via user ACLs, group ACLs, and default permissions attached to
+     *   data, or collections containing data, or collections of collections, etc.
+     * - Permission priority is data user-ACL > data group-ACL > default data permission > collection
+     *   (user/group/default) > parent collection, etc
+     * - The first ACL found (for a given collection path) defines the permissions for the calling user and the search
+     *   stops for that path.
+     * - The final permission for a user is the union of permissions from all collection paths to the requested data.
+     * - Permissions (for a given collection path) are inherited from parent collections only if more specific and
+     *   applicable permissions are not set (a default permission will stop inheritence).
+     * - Only permissions of collections owned by the owner of the data in question apply.
+     */
     obj.hasPermission = function( a_client, a_object, a_req_perm ) {
-        if ( a_client.is_admin )
-            return true;
+        console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
 
-        var owner = obj.db.owner.firstExample({ _from: a_object._id });
-        if ( !owner )
-            throw obj.ERR_OBJ_NOT_FOUND;
-
-        if ( a_client._id == owner._id || obj.db.admin.firstExample({ _from: owner._id, _to: a_client._id }))
-            return true;
-
-        var perm_found = 0;
-        var perm_deny  = 0;
+        var perm_found  = 0;
+        var perm_deny   = 0;
         var acl;
         var result;
         var mask;
@@ -167,53 +183,169 @@ module.exports = ( function() {
         var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
         for ( var i in acls ) {
             acl = acls[i];
-            console.log("user_perm:",acl);
+            //console.log("user_perm:",acl);
             perm_found |= ( acl.perm_grant | acl.perm_deny );
             perm_deny |= acl.perm_deny;
         }
-        console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
-        console.log("eval res:", result );
-        if ( result != null )
+        //console.log("eval res:", result );
+        if ( result != null ) {
+            console.log("result (usr acl):", result );
             return result;
+        }
 
         // Evaluate group permissions on object
 
         acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
 
-        console.log("eval group", acls );
+        //console.log("eval group", acls );
 
         mask = ~perm_found;
         for ( i in acls ) {
             acl = acls[i];
-            console.log("group_perm:",acl);
+            //console.log("group_perm:",acl);
             if ( mask & ( acl.perm_grant | acl.perm_deny ) > 0 ) {
                 perm_found |= ( acl.perm_grant | acl.perm_deny );
                 perm_deny |= ( acl.perm_deny & mask );
             }
         }
 
-        console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
 
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
 
-        console.log("eval res:", result );
-        if ( result != null )
+        //console.log("eval res:", result );
+        if ( result != null ) {
+            console.log("result (grp acl):", result );
             return result;
-
-        // Evaluate default permissions on object
-
-        mask = ~perm_found;
-        if ( mask & ( a_object.perm_grant | a_object.perm_deny ) > 0 ) {
-            perm_found |= ( a_object.perm_grant | a_object.perm_deny );
-            perm_deny |= ( a_object.perm_deny & mask );
-
-            result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
-            if ( result != null )
-                return result;
         }
 
-        // TODO Eval inherited permissions
+        // Evaluate default permissions on object
+        console.log("check default, perm_found:", perm_found );
+
+        mask = ~perm_found;
+        if ( mask & ( a_object.def_grant | a_object.def_deny ) > 0 ) {
+            perm_found |= ( a_object.def_grant | a_object.def_deny );
+            perm_deny |= ( a_object.def_deny & mask );
+
+            result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+            if ( result != null ) {
+                console.log("result (def perm):", result );
+                return result;
+            }
+        }
+
+        // If not all requested permissions have been found, evaluate permissions inherited from parent (owned) containers
+
+        var owner_id = obj.db.owner.firstExample({ _from: a_object._id })._to;
+        var children = [a_object];
+        var parents;
+        var parent;
+        var usr_perm_found, usr_perm_deny;
+        var grp_perm_found, grp_perm_deny;
+        var def_perm_found, def_perm_deny;
+
+        while ( 1 ) {
+            // Find all parent collections owned by object owner
+
+            parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
+            if ( parents.length == 0 )
+                break;
+
+            // Gather user, group, and default permissions collectively over all parents
+
+            usr_perm_found = 0; usr_perm_deny = 0;
+            grp_perm_found = 0; grp_perm_deny = 0;
+            def_perm_found = 0; def_perm_deny = 0;
+
+            for ( i in parents ) {
+                parent = parents[i];
+
+                // User ACL first
+                acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
+                for ( i in acls ) {
+                    acl = acls[i];
+                    usr_perm_found |= ( acl.perm_grant | acl.perm_deny );
+                    usr_perm_deny |= acl.perm_deny;
+                }
+
+                // Group ACL next
+                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
+                for ( i in acls ) {
+                    acl = acls[i];
+                    grp_perm_found |= ( acl.perm_grant | acl.perm_deny );
+                    grp_perm_deny |= acl.perm_deny;
+                }
+
+                // Default permissions next
+                if ( parent.def_grant ) {
+                    def_perm_found |= parent.def_grant;
+                }
+
+                if ( parent.def_deny ) {
+                    def_perm_found |= parent.def_deny;
+                    def_perm_deny |= parent.def_deny;
+                }
+            }
+
+            // Eval collective user permissions found
+            mask = ~perm_found;
+            if (( mask & usr_perm_found ) > 0 ) {
+                perm_found |= usr_perm_found;
+                perm_deny |= ( usr_perm_deny & mask );
+
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                if ( result != null ) {
+                    console.log("result (prnt usr acl):", result );
+                    return result;
+                }
+            }
+
+            // Eval collective group permissions found
+            mask = ~perm_found;
+            if (( mask & grp_perm_found ) > 0 ) {
+                perm_found |= grp_perm_found;
+                perm_deny |= ( grp_perm_deny & mask );
+
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                if ( result != null ) {
+                    console.log("result (prnt grp acl):", result );
+                    return result;
+                }
+            }
+
+            mask = ~perm_found;
+            if (( mask & def_perm_found ) > 0 ) {
+                perm_found |= def_perm_found;
+                perm_deny |= ( def_perm_deny & mask );
+
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                if ( result != null ) {
+                    console.log("result (prnt def perm):", result );
+                    return result;
+                }
+            }
+
+            // If there are still missing require permissions...
+            // Determine which parents are candidates for further evaluation (have req bits not set in def permissions)
+            children = [];
+
+            // Set mask to required perm bits still not found
+            mask = (~perm_found) & a_req_perm;
+            for ( i in parents ) {
+                parent = parents[i];
+                if ( parent.def_grant == null || parent.def_deny == null || ( ~( parent.def_grant | parent.def_deny ) & mask )) {
+                    children.push( parent );
+                }
+            }
+
+            if ( children.length == 0 )
+                break;
+        }
+
+        console.log("result (last): false" );
+
         return false;
     };
 
@@ -232,142 +364,3 @@ module.exports = ( function() {
 
 
         
-//----- GET PERMISSION BY DATA ID
-
-    /* Check if calling user has requested permissions:
-     * - Owners have all permissions.
-     * - Non-owners can be granted permission (by owner) via user ACLs, group ACLs, and default permissions attached to
-     *   data, or collections containing data, or collections of collections, etc.
-     * - Permission priority is data user-ACL > data group-ACL > default data permission > collection
-     *   (user/group/default) > parent collection, etc
-     * - The first ACL found (for a given collection path) defines the permissions for the calling user and the search
-     *   stops for that path.
-     * - The final permission for a user is the union of permissions from all collection paths to the requested data.
-     * - Permissions (for a given collection path) are inherited from parent collections only if more specific and
-     *   applicable permissions are not set (a default permission will stop inheritence).
-     * - Only permissions of collections owned by the owner of the data in question apply.
-     */
-
-/*
-router.get('/check_perm/data/by_id', function (req, res) {
-    
-    var valid = false;
-
-    try {
-        var     done = false;
-        var     perm = 0;
-        const   client = getUserFromCert( req.queryParams.cert_subject );
-        const   data_id = req.queryParams.data_id;
-        var     i;
-        var     result;
-
-        console.log("client:", client, "data_id:", data_id );
-
-        if ( db.owner.firstExample({ _from: data_id, _to: client._id }) != null ) {
-            console.log("is owner" );
-            // client is owner, thus has all permissions
-            valid = true;
-        } else {
-            console.log("is NOT owner" );
-            // Client is not owner, check acls
-
-            // Check user-acl on data
-            var acl = db.acl.firstExample({ _from: data_id, _to: client._id });
-            if ( acl ) {
-                if (( acl.permission & req.queryParams.req_perm ) == req.queryParams.req_perm )
-                    valid = true;
-                done = true;
-            } else {
-                // check group-acl(s) on data
-                result = db._query( "for v, e, p in 2..2 outbound @data acl, outbound member filter v._id == @client return p.edges[0]", { data: data_id, client: client._id } ).toArray();
-                if ( result.length > 0 ) {
-                    perm = 0;
-                    for ( i in result ) {
-                        perm |= result[i].permission;
-                    }
-                    if (( perm & req.queryParams.req_perm ) == req.queryParams.req_perm )
-                        valid = true;
-                    done = true;
-                }
-            }
-
-            if ( !done ) {
-                // No ACLs found, check data default permission
-                var data = db._query( "let d = document(@data) return { def_perm : d.def_perm }", { data : data_id }).toArray();
-                if ( data.length == 1 && data[0].def_perm ) {
-                    if (( data[0].def_perm & req.queryParams.req_perm ) == req.queryParams.req_perm )
-                        valid = true;
-                    done = 1;
-                }
-            }
-
-            if ( !done ) {
-                // No data-level permissions found, evaulate all collection paths (owned by data owner)
-                // This process is a breadth-first search, pruned early if requested permissions are found
-
-                // Union of permissions from all collection paths
-                var perm_union = 0;
-
-                // Get the data owner's ID
-                var owner_id = db.owner.firstExample({ _from: data_id })._id;
-
-                // Get all owner's collections containing this data (including default permission)
-                var collections = db._query( "for v, e, p in 2..2 inbound @data item, outbound owner filter v._id == @owner return { _id: p.vertices[1]._id, def_perm: p.vertices[1].def_perm }", { data : data_id, owner: owner_id }).toArray();
-
-                while ( collections.length > 0 ) {
-                    var next = [];
-                    for ( var c in collections ) {
-                        var coll = collections[c];
-                        perm = 0;
-                        done = false;
-
-                        acl = db.acl.firstExample({ _from: coll._id, _to: client._id });
-                        if ( acl ) {
-                            perm = acl.permission;
-                            done = true;
-                        } else {
-                            // check group-acl(s) on data
-                            result = db._query( "for v, e, p in 2..2 outbound @coll acl, outbound member filter v._id == @client return p.edges[0]", { coll: coll._id, client: client._id }).toArray();
-                            if ( result.length > 0 ) {
-                                for ( i in result ) {
-                                    perm |= result[i].permission;
-                                }
-                                done = true;
-                            }
-                        }
-
-                        if ( !done && coll.def_perm )
-                            perm = coll.def_perm;
-
-                        perm_union |= perm;
-
-                        if (( perm_union & req.queryParams.req_perm ) == req.queryParams.req_perm ) {
-                            valid = true;
-                            break;
-                        }
-
-                        if ( !done )
-                            next.push( coll._id );
-                    }
-
-                    if ( valid || next.length == 0 )
-                        break;
-
-                    collections = db._query( "for vert in @start_vertices for v, e, p in 2..2 inbound vert item, outbound owner filter v._id == @owner return { _id: p.vertices[1]._id, def_perm: p.vertices[1].def_perm }", { start_vertices : next, owner: owner_id }).toArray();
-                }
-            }
-        }
-    } catch( e ) {
-        handleException( e, res );
-    }
-
-    res.send({ "valid" : valid });
-})
-.queryParam('cert_subject', joi.string().required(), "Certificate subject string")
-.queryParam('data_id', joi.string().required(), "Data id")
-.queryParam('req_perm', joi.number().integer().required(), "Requested permission mask")
-.summary('Checks for data permission by id')
-.description('Checks for data permission by id');
- */
- 
-

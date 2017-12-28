@@ -6,14 +6,14 @@ db._useDatabase('sdms');
 var graph_module = require("@arangodb/general-graph");
 var graph = graph_module._create("sdmsg");
 
-graph._addVertexCollection("user");
-graph._addVertexCollection("cert");
-graph._addVertexCollection("group");
-graph._addVertexCollection("data");
-graph._addVertexCollection("aliases");
-graph._addVertexCollection("coll");
-graph._addVertexCollection("tag");
-graph._addVertexCollection("note");
+graph._addVertexCollection("u");    // User
+graph._addVertexCollection("x");    // X.509 cert
+graph._addVertexCollection("g");    // Group
+graph._addVertexCollection("d");    // Data
+graph._addVertexCollection("c");    // Collection
+graph._addVertexCollection("t");    // Tag
+graph._addVertexCollection("n");    // Note
+graph._addVertexCollection("a");    // Alias
 
 
 var owner = graph_module._relation("owner", ["data","coll","group","note"], ["user"]);
@@ -40,4 +40,24 @@ graph._extendEdgeDefinitions(adm);
 var alias = graph_module._relation("alias", ["data","coll"], ["aliases"]);
 graph._extendEdgeDefinitions(alias);
 
-db.cert.ensureIndex({ type: "hash", unique: true, fields: [ "subject" ] });
+db.x.ensureIndex({ type: "hash", unique: true, fields: [ "subject" ] });
+
+
+
+
+db._truncate("u");
+db._truncate("x");
+db._truncate("g");
+db._truncate("d");
+db._truncate("a");
+db._truncate("c");
+db._truncate("t");
+db._truncate("n");
+db._truncate("owner");
+db._truncate("member");
+db._truncate("item");
+db._truncate("acl");
+db._truncate("meta");
+db._truncate("ident");
+db._truncate("admin");
+db._truncate("alias");

@@ -24,8 +24,8 @@ router.post('/create', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","data","coll","admin","alias","aliases"],
-                write: ["acl","coll","data"]
+                read: ["u","x"],
+                write: []
             },
             action: function() {
             }

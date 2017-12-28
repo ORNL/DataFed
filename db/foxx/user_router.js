@@ -24,15 +24,15 @@ router.post('/create', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert"],
-                write: ["user","cert","coll","owner","ident","alias","aliases"]
+                read: ["u","x"],
+                write: ["u","x","c","a","owner","ident","alias"]
             },
             action: function() {
-                var user = g_db.user.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
+                var user = g_db.u.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
 
-                var cert = g_db.cert.save({ subject: req.queryParams.cert }, { returnNew: true });
-                var root = g_db.coll.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name_first + " " + req.queryParams.name_last + " (" + req.queryParams.uid +")" }, { returnNew: true });
-                var alias = g_db.aliases.save({ _key: req.queryParams.uid + ":root" }, { returnNew: true });
+                var cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
+                var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name_first + " " + req.queryParams.name_last + " (" + req.queryParams.uid +")" }, { returnNew: true });
+                var alias = g_db.a.save({ _key: req.queryParams.uid + ":root" }, { returnNew: true });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });
                 g_db.ident.save({ _from: user._id, _to: cert._id });
@@ -42,7 +42,7 @@ router.post('/create', function (req, res) {
 
                 if ( req.queryParams.admins ) {
                     for ( var i in req.queryParams.admins ) {
-                        g_db.admin.save({ _from: user._id, _to: "user/" + req.queryParams.admins });
+                        g_db.admin.save({ _from: user._id, _to: "u/" + req.queryParams.admins });
                     }
                 }
             }
@@ -68,7 +68,7 @@ router.get('/view', function (req, res) {
     try {
         if ( req.queryParams.uid ) {
             try {
-                res.send([ g_db.user.document({ _id: req.queryParams.uid }) ]);
+                res.send([ g_db.u.document({ _id: req.queryParams.uid }) ]);
             } catch ( e ) {
                 throw g_lib.ERR_USER_NOT_FOUND;
             }
@@ -88,7 +88,7 @@ router.get('/view', function (req, res) {
 
 
 router.get('/list', function (req, res) {
-    res.send( g_db._query( "for u in user return u" ));
+    res.send( g_db._query( "for i in u return i" ));
 })
 .summary('List users')
 .description('List users');
@@ -107,13 +107,13 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","admin"],
-                write: ["user","cert","coll","data","acl","owner","ident"]
+                read: ["u","x","admin"],
+                write: ["u","x","c","d","acl","owner","ident"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
 
-                var user = g_db.user.document({ _id: req.queryParams.subject });
+                var user = g_db.u.document({ _id: req.queryParams.subject });
 
                 g_lib.ensureAdminPermUser( client, user._id );
 
@@ -130,7 +130,7 @@ router.post('/delete', function (req, res) {
                 g_db.removeByExample({ _from: user._id });
                 g_db.removeByExample({ _to: user._id });
 
-                g_db.user.remove({ _id: user._id });
+                g_db.u.remove({ _id: user._id });
             }
         });
     } catch( e ) {
@@ -147,21 +147,21 @@ router.post('/cert/create', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","admin"],
-                write: ["cert","ident"]
+                read: ["u","x","admin"],
+                write: ["x","ident"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
                 var cert;
 
                 if ( req.queryParams.subject ) {
-                    const user = g_db.user.document( req.queryParams.subject );
+                    const user = g_db.u.document( req.queryParams.subject );
                     g_lib.ensureAdminPermUser( client, user._id );
 
-                    cert = g_db.cert.save({ subject: req.queryParams.cert }, { returnNew: true });
+                    cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
                     g_db.ident.save({ _from: user._id, _to: cert._id });
                 } else {
-                    cert = g_db.cert.save({ subject: req.queryParams.cert }, { returnNew: true });
+                    cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
                     g_db.ident.save({ _from: client._id, _to: cert._id });
                 }
             }
@@ -181,7 +181,7 @@ router.get('/cert/list', function (req, res) {
     try {
         var client = g_lib.getUserFromCert( req.queryParams.client );
         if ( req.queryParams.subject ) {
-            const subject = g_db.user.document( req.queryParams.subject );
+            const subject = g_db.u.document( req.queryParams.subject );
             g_lib.ensureAdminPermUser( client, subject._id );
 
             res.send( g_db._query( "for v in 1..1 outbound @client ident return v.subject", { client: subject._id }));
@@ -201,8 +201,8 @@ router.post('/cert/update', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","admin"],
-                write: ["cert","ident"]
+                read: ["u","x","admin"],
+                write: ["x","ident"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
@@ -210,9 +210,9 @@ router.post('/cert/update', function (req, res) {
 
                 g_lib.ensureAdminPermUser( client, owner._id );
 
-                var cert = g_db.cert.firstExample({ subject: req.queryParams.cert_old });
+                var cert = g_db.x.firstExample({ subject: req.queryParams.cert_old });
 
-                g_db.cert.update( cert, { subject: req.queryParams.cert_new });
+                g_db.x.update( cert, { subject: req.queryParams.cert_new });
             }
         });
     } catch( e ) {
@@ -229,8 +229,8 @@ router.post('/cert/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert"],
-                write: ["cert","ident"]
+                read: ["u","x"],
+                write: ["x","ident"]
             },
             action: function() {
 
@@ -242,10 +242,10 @@ router.post('/cert/delete', function (req, res) {
 
                 g_lib.ensureAdminPermUser( client, owner._id );
 
-                const cert = g_db.cert.firstExample({ subject: req.queryParams.cert });
+                const cert = g_db.x.firstExample({ subject: req.queryParams.cert });
 
                 g_db.ident.removeByExample({ _to: cert._id });
-                g_db.cert.remove({ _id: cert._id });
+                g_db.x.remove({ _id: cert._id });
             }        });
     } catch( e ) {
         g_lib.handleException( e, res );

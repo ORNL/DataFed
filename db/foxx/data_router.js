@@ -26,21 +26,20 @@ router.post('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert"],
-                write: ["data","owner"]
+                read: ["u","x"],
+                write: ["d","owner"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
 
-                var alias_id = g_lib.getAliasID( req.queryParams.alias, client );
-                if ( alias_id && !alias_id.startsWith( client._key + ":" ))
-                    throw g_lib.ERR_INVALID_ALIAS;
-
-                var data = g_db.data.save({ title: req.queryParams.title, descr: req.queryParams.descr, metadata: req.queryParams.metadata }, { returnNew: true });
+                var data = g_db.d.save({ title: req.queryParams.title, descr: req.queryParams.descr, metadata: req.queryParams.metadata }, { returnNew: true });
                 g_db.owner.save({ _from: data._id, _to: client._id });
 
-                if ( alias_id ) {
-                    g_db.aliases.save({ _id: alias_id });
+                if ( req.queryParams.alias ) {
+                    g_db.validateAlias( req.queryParams.alias );
+                    var alias_id = client._key + ":" + req.queryParams.alias;
+
+                    g_db.a.save({ _id: alias_id });
                     g_db.alias.save({ _from: data._id, _to: alias_id });
                 }
 
@@ -66,18 +65,15 @@ router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromCert( req.queryParams.client );
 
-        // TODO Check permissions
-        var result;
-        var alias = g_lib.getAliasID( req.queryParams.id, client );
+        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var data = g_db.d.document( data_id );
 
-        if ( alias ) {
-            // FIXME
-            result = g_db._query("for d in data filter d.alias == @alias return d", { alias: alias });
-        } else {
-            result = [g_db.data.document({ _key: req.queryParams.id })];
+        if ( !g_lib.hasAdminPermObject( client, data_id )) {
+            if ( !g_lib.hasPermission( client, data, g_lib.PERM_VIEW ))
+                throw g_lib.ERR_PERM_DENIED;
         }
 
-        res.send( result );
+        res.send( data );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -91,15 +87,17 @@ router.get('/view', function (req, res) {
 router.get('/list', function (req, res) {
     try {
         const client = g_lib.getUserFromCert( req.queryParams.client );
-        var result;
+        var owner_id;
 
         if ( req.queryParams.subject ) {
-            if ( g_lib.hasAdminPermUser( client, req.queryParams.subject )) {
-                result = g_db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('data', v) return v", { client: "user/" + req.queryParams.subject });
-            }
+            owner_id = "u/" + req.queryParams.subject;
         } else {
-            result = g_db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('data', v) return v", { client: client._id} );
+            owner_id = client._id;
         }
+
+        var result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return v", { owner: owner_id });
+
+        // TODO Enforce VIEW perm on individual items returned
 
         res.send( result );
     } catch( e ) {
@@ -116,26 +114,16 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","data"],
-                write: ["data","owner","meta","acl","item"]
+                read: ["u","x","d"],
+                write: ["d","owner","meta","acl","item"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
 
-                // TODO Check permissions
-                var data;
-                var alias = g_lib.getAliasID( req.queryParams.id, client );
+                var data_id = g_lib.resolveID( req.queryParams.id, client );
+                g_lib.ensureAdminPermObject( client, data_id );
 
-                if ( alias ) {
-                    // FIXME
-                    data = g_db._query("for d in data filter d.alias == @alias return d", { alias: alias }).toArray();
-                    if ( data.length == 1 )
-                        data = data[0];
-                    else
-                        throw g_lib.ERR_DATA_NOT_FOUND;
-                } else {
-                    data = g_db.data.document({ _key: req.queryParams.id });
-                }
+                var data = g_db.d.document( data_id );
 
                 // TODO Need to delete attached notes
 
@@ -143,7 +131,7 @@ router.post('/delete', function (req, res) {
                 g_db.meta.removeByExample({ _from: data._id });
                 g_db.item.removeByExample({ _to: data._id });
                 g_db.acl.removeByExample({ _from: data._id });
-                g_db.data.remove({ _id: data._id });
+                g_db.d.remove({ _id: data._id });
             }
         });
     } catch( e ) {

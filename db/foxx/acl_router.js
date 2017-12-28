@@ -24,8 +24,8 @@ router.get('/update', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["user","cert","data","coll","admin","alias","aliases"],
-                write: ["acl","coll","data"]
+                read: ["u","x","d","c","a","admin","alias"],
+                write: ["c","d","acl"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
@@ -64,15 +64,15 @@ router.get('/update', function (req, res) {
                     var obj = {};
                     if ( req.queryParams.def_grant ) {
                         if ( req.queryParams.def_grant == -1 )
-                            obj.perm_grant = null;
+                            obj.def_grant = null;
                         else
-                            obj.perm_grant = req.queryParams.def_grant;
+                            obj.def_grant = req.queryParams.def_grant;
                     }
                     if ( req.queryParams.def_deny ) {
                         if ( req.queryParams.def_deny == -1 )
-                            obj.perm_deny = null;
+                            obj.def_deny = null;
                         else
-                            obj.perm_deny = req.queryParams.def_deny;
+                            obj.def_deny = req.queryParams.def_deny;
                     }
 
                     g_db._update( object._id, obj, { keepNull: false } );
@@ -99,12 +99,17 @@ router.get('/view', function (req, res) {
         const client = g_lib.getUserFromCert( req.queryParams.client );
         var object = g_lib.getObject( req.queryParams.object, client );
 
+        if ( object._id[0] != 'd' && object._id[0] != 'c' )
+            throw g_lib.ERR_INVALID_ID;
+
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
             if ( !g_lib.hasPermission( client, object, g_lib.PERM_VIEW ))
                 throw g_lib.ERR_PERM_DENIED;
         }
+        var result = g_db._query( "for v, e in 1..1 outbound @object acl return { subject: v._id, grant: e.perm_grant, deny: e.perm_deny }", { object: object._id }).toArray();
+        result.push({ subject: 'default', def_grant: object.def_grant, def_deny: object.def_deny });
 
-        res.send( g_db._query( "for v, e in 1..1 outbound @object acl return { subject: v._id, grant: e.perm_grant, deny: e.perm_deny }", { object: object._id }));
+        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
