@@ -211,8 +211,6 @@ router.get('/read', function (req, res) {
         }
 
         res.send( result );
-
-        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -221,4 +219,44 @@ router.get('/read', function (req, res) {
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
 .summary('Read contents of a collection by ID or alias')
 .description('Read contents of a collection by ID or alias');
+
+
+router.post('/write', function (req, res) {
+    try {
+        const client = g_lib.getUserFromCert( req.queryParams.client );
+
+        var coll_id = g_lib.resolveID( req.queryParams.id, client );
+        var coll = g_db.c.document( coll_id );
+
+        if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
+                throw g_lib.ERR_PERM_DENIED;
+        }
+
+        var i, id;
+
+        if ( req.queryParams.remove ) {
+            for ( i in req.queryParams.remove ) {
+                id = req.queryParams.remove[i];
+                g_db.item.removeByExample({ _from: coll_id, _to: id });
+            }
+        }
+
+        if ( req.queryParams.add ) {
+            for ( i in req.queryParams.add ) {
+                id = req.queryParams.add[i];
+                if ( g_db.item.firstExample({ _from: coll_id, _to: id }) == null )
+                    g_db.item.save({ _from: coll_id, _to: id });
+            }
+        }
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('id', joi.string().required(), "Collection ID or alias to modify")
+.queryParam('add', joi.array().items(joi.string()).optional(), "Array of item IDs to add")
+.queryParam('remove', joi.array().items(joi.string()).optional(), "Array of item IDs to remove")
+.summary('Add/remove items in a collection')
+.description('Add/remove items in a collection');
 

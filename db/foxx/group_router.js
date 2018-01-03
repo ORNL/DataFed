@@ -86,9 +86,9 @@ router.post('/delete', function (req, res) {
                 var group_id;
 
                 if ( req.queryParams.subject ) {
-                    group_id = "g/" + req.queryParams.subject + "_" + req.queryParams.gid;
+                    group_id = "g/" + req.queryParams.subject + ":" + req.queryParams.gid;
                 } else {
-                    group_id = "g/" + client._key + "_" + req.queryParams.gid;
+                    group_id = "g/" + client._key + ":" + req.queryParams.gid;
                 }
 
                 g_lib.ensureAdminPermObject( req.queryParams.client, group_id );
@@ -146,11 +146,11 @@ router.get('/view', function (req, res) {
         var offset;
 
         if ( req.queryParams.subject ) {
-            group_id += req.queryParams.subject._key + "_" + req.queryParams.id;
+            group_id += req.queryParams.subject._key + ":" + req.queryParams.id;
             offset = req.queryParams.subject.length + 1;
             g_lib.ensureAdminPermUser( client, group_id );
         } else {
-            group_id += client._key + "_" + req.queryParams.id;
+            group_id += client._key + ":" + req.queryParams.id;
             offset = client._key.length + 1;
         }
 
