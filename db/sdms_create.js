@@ -16,28 +16,28 @@ graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
 
 
-var owner = graph_module._relation("owner", ["data","coll","group","note"], ["user"]);
+var owner = graph_module._relation("owner", ["d","c","g","n","a"], ["u"]);
 graph._extendEdgeDefinitions(owner);
 
-var mem = graph_module._relation("member", ["group"], ["user"]);
+var mem = graph_module._relation("member", ["g"], ["u"]);
 graph._extendEdgeDefinitions(mem);
 
-var item = graph_module._relation("item", ["coll"], ["data","coll"]);
+var item = graph_module._relation("item", ["c"], ["d","c"]);
 graph._extendEdgeDefinitions(item);
 
-var acl = graph_module._relation("acl", ["data","coll"], ["user","group"]);
+var acl = graph_module._relation("acl", ["d","c"], ["u","g"]);
 graph._extendEdgeDefinitions(acl);
 
-var meta = graph_module._relation("meta", ["data","coll"], ["tag","note"]);
+var meta = graph_module._relation("meta", ["d","c"], ["t","n"]);
 graph._extendEdgeDefinitions(meta);
 
-var ident = graph_module._relation("ident", ["user"], ["cert"]);
+var ident = graph_module._relation("ident", ["u"], ["x"]);
 graph._extendEdgeDefinitions(ident);
 
-var adm = graph_module._relation("admin", ["user"], ["user"]);
+var adm = graph_module._relation("admin", ["u"], ["u"]);
 graph._extendEdgeDefinitions(adm);
 
-var alias = graph_module._relation("alias", ["data","coll"], ["aliases"]);
+var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
 
 db.x.ensureIndex({ type: "hash", unique: true, fields: [ "subject" ] });

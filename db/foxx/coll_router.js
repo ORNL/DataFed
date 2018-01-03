@@ -27,7 +27,7 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","x"],
-                write: ["c","owner","item"]
+                write: ["c","a","alias","owner","item"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
@@ -37,32 +37,33 @@ router.post('/create', function (req, res) {
                     obj.descr = req.queryParams.descr;
 
                 if ( req.queryParams.grant )
-                    obj.perm_grant = req.queryParams.grant;
+                    obj.grant = req.queryParams.grant;
 
                 if ( req.queryParams.deny )
-                    obj.perm_deny = req.queryParams.deny;
+                    obj.deny = req.queryParams.deny;
 
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: client._id });
 
-                var parent = null;
+                var parent_id = null;
                 if ( req.queryParams.parent )
-                    parent = g_lib.resolveID( req.queryParams.parent, client );
+                    parent_id = g_lib.resolveID( req.queryParams.parent, client );
                 else
-                    parent = "c/" + client._key + "_root";
+                    parent_id = "c/" + client._key + "_root";
 
                 // Arango bug requires this
-                if ( !g_db._exists({ _id: parent }) )
+                if ( !g_db._exists( parent_id ))
                     throw g_lib.ERR_COLL_NOT_FOUND;
 
-                g_graph.item.save({ _from: parent, _to: coll._id });
+                g_graph.item.save({ _from: parent_id, _to: coll._id });
 
                 if ( req.queryParams.alias ) {
-                    g_db.validateAlias( req.queryParams.alias );
-                    var alias_id = client._key + ":" + req.queryParams.alias;
+                    g_lib.validateAlias( req.queryParams.alias );
+                    var alias_key = client._key + ":" + req.queryParams.alias;
 
-                    g_db.a.save({ _id: alias_id });
-                    g_db.alias.save({ _from: coll._id, _to: alias_id });
+                    g_db.a.save({ _key: alias_key });
+                    g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
                 }
 
                 result.push( coll.new );
@@ -84,6 +85,11 @@ router.post('/create', function (req, res) {
 .summary('Creates a new data collection')
 .description('Creates a new data collection');
 
+router.post('/update', function (req, res) {
+    res.throw( 500, "Not yet implemented" );
+})
+.summary('Updates an existing data collection')
+.description('Updates an existing data collection');
 
 router.post('/delete', function (req, res) {
     try {
@@ -134,9 +140,17 @@ router.get('/list', function (req, res) {
             owner_id = client._id;
         }
 
-        const result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return v", { owner: owner_id });
+        const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
 
-        // TODO Enforce VIEW perm on individual items returned
+        var result = [];
+        var item;
+
+        for ( var i in items ) {
+            item = items[i];
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+                result.push({ id: item._id, title: item.title });
+            }
+        }
 
         res.send( result );
     } catch( e ) {
@@ -168,8 +182,8 @@ router.get('/view', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client certificate subject string")
 .queryParam('id', joi.string().required(), "Collection ID or alias")
-.summary('Get a data collection by ID or alias')
-.description('Get a data collection by ID or alias');
+.summary('View collection information by ID or alias')
+.description('View collection information by ID or alias');
 
 
 router.get('/read', function (req, res) {
@@ -184,7 +198,19 @@ router.get('/read', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        var result = g_db._query( "for v in 1..1 outbound @coll_id item return v", { coll_id: coll_id } );
+        const items = g_db._query( "for v in 1..1 outbound @coll item return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { coll: coll_id }).toArray();
+
+        var result = [];
+        var item;
+
+        for ( var i in items ) {
+            item = items[i];
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+                result.push({ id: item._id, title: item.title });
+            }
+        }
+
+        res.send( result );
 
         res.send( result );
     } catch( e ) {
@@ -193,6 +219,6 @@ router.get('/read', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client certificate subject string")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
-.summary('List content of a collection')
-.description('List content of a collection');
+.summary('Read contents of a collection by ID or alias')
+.description('Read contents of a collection by ID or alias');
 

@@ -32,15 +32,33 @@ router.post('/create', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
 
-                var data = g_db.d.save({ title: req.queryParams.title, descr: req.queryParams.descr, metadata: req.queryParams.metadata }, { returnNew: true });
+                var obj = {};
+
+                if ( req.queryParams.title )
+                    obj.title = req.queryParams.title;
+
+                if ( req.queryParams.descr )
+                    obj.descr = req.queryParams.descr;
+
+                if ( req.queryParams.metadata )
+                    obj.metadata = req.queryParams.metadata;
+                
+                if ( req.queryParams.grant )
+                    obj.def_grant = req.queryParams.grant;
+
+                if ( req.queryParams.deny )
+                    obj.def_deny = req.queryParams.deny;
+
+                var data = g_db.d.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: data._id, _to: client._id });
 
                 if ( req.queryParams.alias ) {
-                    g_db.validateAlias( req.queryParams.alias );
-                    var alias_id = client._key + ":" + req.queryParams.alias;
+                    g_lib.validateAlias( req.queryParams.alias );
+                    var alias_key = client._key + ":" + req.queryParams.alias;
 
-                    g_db.a.save({ _id: alias_id });
-                    g_db.alias.save({ _from: data._id, _to: alias_id });
+                    g_db.a.save({ _key: alias_key });
+                    g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
                 }
 
                 result.push( data.new );
@@ -56,6 +74,8 @@ router.post('/create', function (req, res) {
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('grant', joi.number().optional(), "Default grant permission mask")
+.queryParam('deny', joi.number().optional(), "Default deny permission mask")
 .queryParam('metadata', joi.string().optional(), "Metadata (JSON)")
 .summary('Creates a new data record')
 .description('Creates a new data record');

@@ -22,31 +22,47 @@ module.exports = router;
 
 router.post('/create', function (req, res) {
     try {
+        var result;
+
         g_db._executeTransaction({
             collections: {
                 read: ["u","x"],
-                write: ["u","x","c","a","owner","ident","alias"]
+                write: ["u","x","c","a","owner","ident","alias","admin"]
             },
             action: function() {
                 var user = g_db.u.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
 
                 var cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
                 var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name_first + " " + req.queryParams.name_last + " (" + req.queryParams.uid +")" }, { returnNew: true });
+
                 var alias = g_db.a.save({ _key: req.queryParams.uid + ":root" }, { returnNew: true });
+                g_db.owner.save({ _from: alias._id, _to: user._id });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });
                 g_db.ident.save({ _from: user._id, _to: cert._id });
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
-                // TODO must check referential integrity for admins
-
                 if ( req.queryParams.admins ) {
                     for ( var i in req.queryParams.admins ) {
-                        g_db.admin.save({ _from: user._id, _to: "u/" + req.queryParams.admins });
+                        if ( !g_db._exists( "u/" + req.queryParams.admins[i] ))
+                            throw g_lib.ERR_USER_NOT_FOUND;
+                        g_db.admin.save({ _from: user._id, _to: "u/" + req.queryParams.admins[i] });
                     }
                 }
+
+                user.new.uid = user.new._key;
+                if ( req.queryParams.admins )
+                    user.new.admins = req.queryParams.admins;
+
+                delete user.new._id;
+                delete user.new._key;
+                delete user.new._rev;
+
+                result = [user.new];
             }
         });
+
+        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -64,19 +80,144 @@ router.post('/create', function (req, res) {
 .description('Create new user entry. Requires admin permissions.');
 
 
+router.post('/update', function (req, res) {
+    try {
+        var result;
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","x"],
+                write: ["u","admin"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromCert( req.queryParams.client );
+                var user_id;
+
+                if ( req.queryParams.subject ) {
+                    user_id = "u/" + req.queryParams.subject;
+                    g_lib.ensureAdminPermUser( client, user_id );
+                }
+                else {
+                    user_id = client._id;
+                }
+
+                var obj = {};
+
+                if ( req.queryParams.name_first )
+                    obj.name_first = req.queryParams.name_first;
+
+                if ( req.queryParams.name_last )
+                    obj.name_last = req.queryParams.name_last;
+
+                if ( req.queryParams.email )
+                    obj.email = req.queryParams.email;
+
+                if ( client.is_admin ) {
+                    if ( req.queryParams.is_admin )
+                        obj.is_admin = req.queryParams.is_admin;
+
+                    if ( req.queryParams.is_project )
+                        obj.is_project = req.queryParams.is_project;
+                }
+
+                var user = g_db._update( user_id, obj, { keepNull: false, returnNew: true });
+
+                var admins = g_db._query( "for i in admin filter i._from == @user return i._to", { user: user_id }).toArray();
+                console.log("admins:",admins);
+                for ( var i in admins ) {
+                    admins[i] = admins[i].substr( 2 );
+                }
+
+                var admin;
+
+                if ( req.queryParams.admin_remove ) {
+                    var idx;
+
+                    for ( i in req.queryParams.admin_remove ) {
+                        admin = req.queryParams.admin_remove[i];
+                        idx = admins.indexOf( admin );
+                        if ( idx != -1 ) {
+                            g_db.admin.removeByExample({ _from: user_id, _to: "u/" + admin });
+                            admins.splice( idx, 1 );
+                        }
+                    }
+                }
+
+                if ( req.queryParams.admin_add ) {
+
+                    for ( i in req.queryParams.admin_add ) {
+                        admin = req.queryParams.admin_add[i];
+                        if ( admins.indexOf( admin ) == -1 ) {
+                            if ( !g_db._exists( "u/" + admin ))
+                                throw g_lib.ERR_USER_NOT_FOUND;
+
+                            g_db.admin.save({ _from: user_id, _to: "u/" + admin });
+                            admins.push( admin );
+                        }
+                    }
+                }
+
+                user.new.uid = user.new._key;
+
+                if ( admins.length )
+                    user.new.admins = admins;
+
+                delete user.new._id;
+                delete user.new._key;
+                delete user.new._rev;
+
+                result = [user.new];
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('name_first', joi.string().optional(), "New first name")
+.queryParam('name_last', joi.string().optional(), "New last name")
+.queryParam('email', joi.string().optional(), "New email")
+.queryParam('is_admin', joi.boolean().optional(), "New system administrator flag value")
+.queryParam('is_project', joi.boolean().optional(), "New account project flag value")
+.queryParam('admin_add', joi.array().items(joi.string()).optional(), "Account administrators (uids) to add")
+.queryParam('admin_remove', joi.array().items(joi.string()).optional(), "Account administrators (uids) to remove")
+.summary('Update user information')
+.description('Update user information');
+
+
+
 router.get('/view', function (req, res) {
     try {
+        var user;
+
         if ( req.queryParams.uid ) {
             try {
-                res.send([ g_db.u.document({ _id: req.queryParams.uid }) ]);
+                user = g_db.u.document({ _id: req.queryParams.uid });
             } catch ( e ) {
                 throw g_lib.ERR_USER_NOT_FOUND;
             }
         } else if ( req.queryParams.cert ) {
-            res.send([ g_lib.getUserFromCert( req.queryParams.cert ) ]);
+            user = g_lib.getUserFromCert( req.queryParams.cert );
         } else {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
+
+        var admins = g_db._query("for v in 1..1 outbound @user admin return v._key", { user: user._id } ).toArray();
+        if ( admins.length ) {
+            user.admins = admins;
+        }
+
+        user.uid = user._key;
+
+
+        delete user._id;
+        delete user._key;
+        delete user._rev;
+
+        res.send([user]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -88,19 +229,11 @@ router.get('/view', function (req, res) {
 
 
 router.get('/list', function (req, res) {
-    res.send( g_db._query( "for i in u return i" ));
+    res.send( g_db._query( "for i in u return { uid: i._key, name_last: i.name_last, name_first: i.name_first }" ));
 })
 .summary('List users')
 .description('List users');
 
-
-router.post('/update', function (req, res) {
-    res.throw( 400, "NOT IMPLEMENTED" );
-})
-.queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.summary('Update user information')
-.description('Update user information');
 
 
 router.post('/delete', function (req, res) {
@@ -108,29 +241,38 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","x","admin"],
-                write: ["u","x","c","d","acl","owner","ident"]
+                write: ["u","g","x","c","d","n","a","acl","owner","ident","alias","admin","member","item","meta"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
+                var user_id;
 
-                var user = g_db.u.document({ _id: req.queryParams.subject });
+                if ( req.queryParams.subject ) {
+                    user_id = "u/" + req.queryParams.subject;
+                    g_lib.ensureAdminPermUser( client, user_id );
+                }
+                else {
+                    user_id = client._id;
+                }
 
-                g_lib.ensureAdminPermUser( client, user._id );
+                var objects;
+                var obj;
+                var i;
 
+                // Delete certificates
+                objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
+                for ( i in objects ) {
+                    g_graph.x.remove( objects[i] );
+                }
 
-                // TODO This MUST use graph engine to ensure all edges are removed
+                // Delete collections, data, groups, notes
+                objects = g_db._query( "for v in 1..1 inbound @user owner return v._id", { user: user_id }).toArray();
+                for ( i in objects ) {
+                    obj = objects[i];
+                    g_graph[obj[0]].remove( obj );
+                }
 
-                // Delete ALL certificates
-                g_db._query( "for v in 1..1 outbound @user ident remove v", { user: user._id } );
-
-                // Delete ALL collections and data
-                g_db._query( "for v in 1..1 inbound @user owner remove v", { user: user._id } );
-
-                // Delete ALL edges
-                g_db.removeByExample({ _from: user._id });
-                g_db.removeByExample({ _to: user._id });
-
-                g_db.u.remove({ _id: user._id });
+                g_graph.u.remove( user_id );
             }
         });
     } catch( e ) {

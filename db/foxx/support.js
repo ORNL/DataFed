@@ -30,8 +30,10 @@ module.exports = ( function() {
 
     obj.acl_schema = joi.object().keys({
         subject: joi.string().required(),
-        grant: joi.number().optional(),
-        deny: joi.number().optional()
+        grant: joi.string().optional(),
+        inh_grant: joi.string().optional(),
+        deny: joi.string().optional(),
+        inh_deny: joi.string().optional()
     });
 
     obj.ERR_INFO = [];
@@ -50,6 +52,7 @@ module.exports = ( function() {
     obj.ERR_COLL_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Collection not found" ]);
     obj.ERR_CANNOT_DEL_ROOT       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot delete root collection" ]);
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
+    obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
@@ -82,8 +85,10 @@ module.exports = ( function() {
     };
 
     obj.getObject = function( a_obj_id, a_client ) {
+        var id = obj.resolveID( a_obj_id, a_client );
+
         try {
-            return obj.db.document( obj.resolveID( a_obj_id, a_client ));
+            return obj.db._document( id );
         } catch( e ) {
             throw obj.ERR_OBJ_NOT_FOUND;
         }
@@ -100,7 +105,6 @@ module.exports = ( function() {
     obj.hasAdminPermObject = function( a_client, a_object_id ) {
         if ( a_client.is_admin )
             return true;
-
         var owner_id = obj.db.owner.firstExample({ _from: a_object_id })._to;
         if ( owner_id == a_client._id )
             return true;
@@ -120,17 +124,7 @@ module.exports = ( function() {
         if ( !obj.hasAdminPermObject( a_client, a_object_id ))
             throw obj.ERR_PERM_DENIED;
     };
-/*
-    obj.getAliasID = function( a_alias, a_client ) {
-        if ( a_alias.startsWith( "data/" ) || a_alias.startsWith( "coll/" ) ) 
-            return null;
 
-        if ( a_alias.indexOf(":") == -1 )
-            return "aliases/" + a_client._key + ":" + a_alias;
-        else
-            return "aliases/" + a_alias;
-    };
-*/
     obj.validateAlias = function( a_alias, a_client ) {
         for ( var i = 0; i < a_alias.length; ++i ) {
             if ( obj.bad_chars.indexOf( a_alias[i] ) != -1 )
@@ -184,8 +178,8 @@ module.exports = ( function() {
         for ( var i in acls ) {
             acl = acls[i];
             //console.log("user_perm:",acl);
-            perm_found |= ( acl.perm_grant | acl.perm_deny );
-            perm_deny |= acl.perm_deny;
+            perm_found |= ( acl.grant | acl.deny );
+            perm_deny |= acl.deny;
         }
         //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
@@ -205,9 +199,9 @@ module.exports = ( function() {
         for ( i in acls ) {
             acl = acls[i];
             //console.log("group_perm:",acl);
-            if ( mask & ( acl.perm_grant | acl.perm_deny ) > 0 ) {
-                perm_found |= ( acl.perm_grant | acl.perm_deny );
-                perm_deny |= ( acl.perm_deny & mask );
+            if ( mask & ( acl.grant | acl.deny ) > 0 ) {
+                perm_found |= ( acl.grant | acl.deny );
+                perm_deny |= ( acl.deny & mask );
             }
         }
 
@@ -225,10 +219,12 @@ module.exports = ( function() {
         console.log("check default, perm_found:", perm_found );
 
         mask = ~perm_found;
-        if ( mask & ( a_object.def_grant | a_object.def_deny ) > 0 ) {
-            perm_found |= ( a_object.def_grant | a_object.def_deny );
-            perm_deny |= ( a_object.def_deny & mask );
+        if ( mask & ( a_object.grant | a_object.deny ) > 0 ) {
+            console.log("default perm has bits", a_object.grant, a_object.deny );
+            perm_found |= ( a_object.grant | a_object.deny );
+            perm_deny |= ( a_object.deny & mask );
 
+            console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
             result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
             if ( result != null ) {
                 console.log("result (def perm):", result );
@@ -253,7 +249,7 @@ module.exports = ( function() {
             if ( parents.length == 0 )
                 break;
 
-            // Gather user, group, and default permissions collectively over all parents
+            // Gather INHERITED user, group, and default permissions collectively over all parents
 
             usr_perm_found = 0; usr_perm_deny = 0;
             grp_perm_found = 0; grp_perm_deny = 0;
@@ -266,26 +262,25 @@ module.exports = ( function() {
                 acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
-                    usr_perm_found |= ( acl.perm_grant | acl.perm_deny );
-                    usr_perm_deny |= acl.perm_deny;
+                    usr_perm_found |= ( acl.inh_grant | acl.inh_deny );
+                    usr_perm_deny |= acl.inh_deny;
                 }
 
                 // Group ACL next
                 acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
-                    grp_perm_found |= ( acl.perm_grant | acl.perm_deny );
-                    grp_perm_deny |= acl.perm_deny;
+                    grp_perm_found |= ( acl.inh_grant | acl.inh_deny );
+                    grp_perm_deny |= acl.inh_deny;
                 }
 
-                // Default permissions next
-                if ( parent.def_grant ) {
-                    def_perm_found |= parent.def_grant;
+                if ( parent.inh_grant ) {
+                    def_perm_found |= parent.inh_grant;
                 }
 
-                if ( parent.def_deny ) {
-                    def_perm_found |= parent.def_deny;
-                    def_perm_deny |= parent.def_deny;
+                if ( parent.inh_deny ) {
+                    def_perm_found |= parent.inh_deny;
+                    def_perm_deny |= parent.inh_deny;
                 }
             }
 
@@ -328,20 +323,22 @@ module.exports = ( function() {
             }
 
             // If there are still missing require permissions...
-            // Determine which parents are candidates for further evaluation (have req bits not set in def permissions)
-            children = [];
+            // Determine which parents are candidates for further evaluation (have req bits not set in inherited permissions)
+            children = parents;
 
+/*
             // Set mask to required perm bits still not found
             mask = (~perm_found) & a_req_perm;
             for ( i in parents ) {
                 parent = parents[i];
-                if ( parent.def_grant == null || parent.def_deny == null || ( ~( parent.def_grant | parent.def_deny ) & mask )) {
+                if ( parent.inh_grant == null || parent.inh_deny == null || ( ~( parent.inh_grant | parent.inh_deny ) & mask )) {
                     children.push( parent );
                 }
             }
 
             if ( children.length == 0 )
                 break;
+*/
         }
 
         console.log("result (last): false" );
