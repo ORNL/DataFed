@@ -14,13 +14,11 @@ GLOBUS_GSI_GET_AUTHORIZATION_IDENTITY  /opt/sdms/libsdms_gsi_authz  sdms_gsi_aut
 #include <syslog.h>
 #include <stdbool.h>
 
-//#include <curl/curl.h>
-#include <mysql.h>
+#include <curl/curl.h>
 
 #include <globus_types.h>
 #include <gssapi.h>
 
-MYSQL * g_mysql = 0;
 
 // Must define these here b/c globus doesn't seem to provide dev headers for GSI authz
 typedef void * globus_gsi_authz_handle_t;
@@ -87,6 +85,15 @@ bool clearContext( globus_gsi_authz_handle_t a_handle )
     return true;
 }
 
+
+size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata )
+{
+    size_t len = size*nmemb;
+    strncat( userdata, ptr, len );
+    return len;
+}
+
+
 globus_result_t
 sdms_gsi_authz_init()
 {
@@ -94,11 +101,7 @@ sdms_gsi_authz_init()
     syslog( LOG_INFO, "libsdms_gsi_authz_init\n" );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
-    //curl_global_init(CURL_GLOBAL_ALL);
-    if ( mysql_library_init( 0, 0, 0 ))
-        syslog( LOG_INFO, "mysql_library_init FAILED" );
-
-    g_mysql = mysql_init(0);
+    curl_global_init(CURL_GLOBAL_ALL);
 
     return 0;
 }
@@ -108,8 +111,7 @@ sdms_gsi_authz_destroy()
 {
     syslog( LOG_INFO, "sdms_gsi_authz_destroy\n" );
 
-    //curl_global_cleanup();
-    mysql_close( g_mysql );
+    curl_global_cleanup();
 
     return 0;
 }
@@ -194,42 +196,104 @@ sdms_gsi_authz_authorize_async( va_list ap )
     syslog( LOG_ERR, "handle %p", handle );
 
     //syslog( LOG_ERR, "sdms_gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
-
+    
+    // TODO - Everything below must all be done on a worker thread
+    
     OM_uint32 min_stat;
-    gss_name_t src_name = GSS_C_NO_NAME;
-    gss_name_t targ_name = GSS_C_NO_NAME;
+    gss_name_t client = GSS_C_NO_NAME;
+    gss_name_t target = GSS_C_NO_NAME;
 
     gss_ctx_id_t context = findContext( handle );
     if ( context != 0 )
     {
-        OM_uint32 maj_stat = gss_inquire_context( &min_stat, context, &src_name, &targ_name, 0, 0, 0, 0, 0 );
+        OM_uint32 maj_stat = gss_inquire_context( &min_stat, context, &client, &target, 0, 0, 0, 0, 0 );
         if ( maj_stat == GSS_S_COMPLETE )
         {
-            gss_buffer_desc  src_name_buf = GSS_C_EMPTY_BUFFER;
-            gss_OID src_name_type;
+            gss_buffer_desc  client_buf = GSS_C_EMPTY_BUFFER;
+            gss_OID client_type;
 
-            maj_stat = gss_display_name( &min_stat, src_name, &src_name_buf, &src_name_type );
+            maj_stat = gss_display_name( &min_stat, client, &client_buf, &client_type );
             if ( maj_stat == GSS_S_COMPLETE )
             {
-                gss_buffer_desc targ_name_buf = GSS_C_EMPTY_BUFFER;
-                gss_OID targ_name_type;
+                gss_buffer_desc target_buf = GSS_C_EMPTY_BUFFER;
+                gss_OID target_type;
 
-                maj_stat = gss_display_name( &min_stat, targ_name, &targ_name_buf, &targ_name_type );
+                maj_stat = gss_display_name( &min_stat, target, &target_buf, &target_type );
                 if ( maj_stat == GSS_S_COMPLETE )
                 {
-                    syslog( LOG_INFO, "gss_inquire_context, src: %s, targ: %s", (char*)src_name_buf.value, (char*)targ_name_buf.value );
+                    syslog( LOG_INFO, "client: %s, target: %s, action: %s", (char*)client_buf.value, (char*)target_buf.value, action );
 
-                    if ( strcmp( (char*)src_name_buf.value, "/O=Grid/OU=GlobusTest/OU=simpleCA-daedalus/OU=Globus Simple CA/CN=Dale Stansberry" ) == 0 )
-                        result = GLOBUS_SUCCESS;
+                    CURL * curl = curl_easy_init();
+                    if ( curl )
+                    {
+                        char url[1024];
+                        char resp[1024];
+                        char error[CURL_ERROR_SIZE];
 
-                    gss_release_buffer( &min_stat, &targ_name_buf );
+                        url[0] = resp[0] = error[0] = 0;
+
+                        char * esc_client = curl_easy_escape( curl, (char*)client_buf.value, 0 );
+                        char * esc_object = curl_easy_escape( curl, object, 0 );
+                        
+                        strcpy( url, "http://localhost:8529/_db/sdms/api/glb/authz?client=" );
+                        strcat( url, esc_client );
+                        strcat( url, "&file=" );
+                        strcat( url, esc_object );
+                        strcat( url, "&act=" );
+                        strcat( url, action );
+
+                        syslog( LOG_INFO, "url: %s", url );
+                        
+                        curl_easy_setopt( curl, CURLOPT_URL, url );
+                        curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+                        curl_easy_setopt( curl, CURLOPT_USERNAME, "root" );
+                        curl_easy_setopt( curl, CURLOPT_PASSWORD, "nopass" );
+                        curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
+                        curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
+                        curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
+
+                        CURLcode res = curl_easy_perform( curl );
+
+                        long http_code = 0;
+                        curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+                        if ( res == CURLE_OK )
+                        {
+                            if ( http_code >= 200 && http_code < 300 )
+                            {
+                                result = GLOBUS_SUCCESS;
+                            }
+                            else
+                            {
+                                syslog( LOG_ERR, "authz call failed, server code %ld", http_code );
+                            }
+                        }
+                        else
+                        {
+                            syslog( LOG_ERR, "authz call error: %s", error );
+                            syslog( LOG_ERR, "curl authz call failed: %s", curl_easy_strerror( res ));
+                        }
+
+                        curl_free( esc_client );
+                        curl_free( esc_object );
+                        curl_easy_cleanup(curl);
+                    }
+                    else
+                    {
+                        syslog( LOG_ERR, "curl authz easy init failed!" );
+                    }
+
+                    //if ( strcmp( (char*)src_name_buf.value, "/O=Grid/OU=GlobusTest/OU=simpleCA-daedalus/OU=Globus Simple CA/CN=Dale Stansberry" ) == 0 )
+                    //    result = GLOBUS_SUCCESS;
+
+                    gss_release_buffer( &min_stat, &target_buf );
                 }
                 else
                 {
                     syslog( LOG_ERR, "gss_display_name target FAILED, maj: %d, min: %d", maj_stat, min_stat );
                 }
 
-                gss_release_buffer( &min_stat, &src_name_buf );
+                gss_release_buffer( &min_stat, &client_buf );
             }
             else
             {

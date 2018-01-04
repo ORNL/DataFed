@@ -96,7 +96,7 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","x"],
-                write: ["c","owner","item","acl","meta"]
+                write: ["c","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
@@ -109,14 +109,16 @@ router.post('/delete', function (req, res) {
                 if ( coll.is_root )
                     throw g_lib.ERR_CANNOT_DEL_ROOT;
 
-                // TODO Need to delete attached notes
+                var obj;
 
-                g_db.owner.removeByExample({ _from: coll._id });
-                g_db.meta.removeByExample({ _from: coll._id });
-                g_db.item.removeByExample({ _to: coll._id });
-                g_db.item.removeByExample({ _from: coll._id });
-                g_db.acl.removeByExample({ _from: coll._id });
-                g_db.c.remove({ _id: coll._id });
+                // Delete attached notes and aliases
+                var objects = g_db._query( "for v in 1..1 outbound @coll note, alias v.return v._id", { coll: coll._id }).toArray();
+                for ( var i in objects ) {
+                    obj = objects[i];
+                    g_graph.obj[0].remove( obj );
+                }
+
+                g_graph.c.remove( coll._id );
             }
         });
     } catch( e ) {

@@ -241,7 +241,7 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","x","admin"],
-                write: ["u","g","x","c","d","n","a","acl","owner","ident","alias","admin","member","item","meta"]
+                write: ["u","g","x","c","d","n","a","acl","owner","ident","alias","admin","member","item","tag","note"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );

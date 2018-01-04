@@ -28,8 +28,11 @@ graph._extendEdgeDefinitions(item);
 var acl = graph_module._relation("acl", ["d","c"], ["u","g"]);
 graph._extendEdgeDefinitions(acl);
 
-var meta = graph_module._relation("meta", ["d","c"], ["t","n"]);
-graph._extendEdgeDefinitions(meta);
+var tag = graph_module._relation("tag", ["d","c"], ["t"]);
+graph._extendEdgeDefinitions(tag);
+
+var note = graph_module._relation("note", ["d","c"], ["n"]);
+graph._extendEdgeDefinitions(note);
 
 var ident = graph_module._relation("ident", ["u"], ["x"]);
 graph._extendEdgeDefinitions(ident);

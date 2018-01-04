@@ -56,8 +56,9 @@ router.post('/update', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
                 var object = g_lib.getObject( req.queryParams.object, client );
+                var owner_id = g_db.owner.firstExample({ _from: object._id })._to.substr(2);
 
-                console.log("obj:",object);
+                //console.log("obj:",object);
 
                 var is_coll;
                 if ( object._id[0] == "c" )
@@ -83,7 +84,7 @@ router.post('/update', function (req, res) {
                         d = parsePermAction( rule.deny );
                         id = parsePermAction( rule.inh_deny );
 
-                        if ( rule.subject == "default" ) {
+                        if ( rule.id == "default" ) {
                             switch ( g.act ) {
                                 case PERM_ADD:
                                     object.grant |= g.val;
@@ -149,10 +150,15 @@ router.post('/update', function (req, res) {
 
                             update = true;
                         } else {
-                            if ( !g_db._exists( rule.subject ))
+                            if ( rule.id[0] == "g" ){
+                                console.log("group:",rule.id);
+                                rule.id = "g/" + owner_id + ":" + rule.id.substr(2);
+                                console.log("new group:",rule.id);
+                            }
+                            if ( !g_db._exists( rule.id ))
                                 throw g_lib.ERR_OBJ_NOT_FOUND;
 
-                            erule = g_db.acl.firstExample({ _from: object._id, _to: rule.subject });
+                            erule = g_db.acl.firstExample({ _from: object._id, _to: rule.id });
 
                             if ( !erule )
                                 erule = { grant: 0, inh_grant: 0, deny: 0, inh_deny: 0 };
@@ -227,7 +233,7 @@ router.post('/update', function (req, res) {
                                     g_db.acl.remove( erule );
                                 }
                             } else if ( erule.grant || erule.deny || erule.inh_grant || erule.inh_deny ) {
-                                obj = { _from: object._id, _to: rule.subject };
+                                obj = { _from: object._id, _to: rule.id };
                                 if ( erule.grant )
                                     obj.grant = erule.grant;
                                 if ( erule.deny )
@@ -255,7 +261,7 @@ router.post('/update', function (req, res) {
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('acls', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
 .summary('Update ACL(s) on a data record or collection')
-.description('Update access control list(s) (ACLs) on a data record or collection. Default access permissions are set using ACLs with subjects of "default". Inherited permissions can only be set on collections.');
+.description('Update access control list(s) (ACLs) on a data record or collection. Default access permissions are set using ACLs with id of "default". Inherited permissions can only be set on collections.');
 
 
 router.get('/view', function (req, res) {
@@ -271,11 +277,18 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
+        var idx;
         var rule;
-        var rules = g_db._query( "for v, e in 1..1 outbound @object acl return { subject: v._id, grant: e.grant, deny: e.deny, inh_grant: e.inh_grant, inh_deny: e.inh_deny }", { object: object._id }).toArray();
+        var rules = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, grant: e.grant, deny: e.deny, inh_grant: e.inh_grant, inh_deny: e.inh_deny }", { object: object._id }).toArray();
 
         for ( var i in rules ) {
             rule = rules[i];
+
+            if ( rule.id[0] == "g" ) {
+                idx = rule.id.indexOf(":");
+                if ( idx != -1 )
+                    rule.id = "g/" + rule.id.substr( idx + 1 );
+            }
 
             if ( rule.grant == null )
                 delete rule.grant;
@@ -291,7 +304,7 @@ router.get('/view', function (req, res) {
         }
 
         if ( object.deny || object.grant || object.inh_deny || object.inh_grant ) {
-            rule = { subject: 'default' };
+            rule = { id: 'default' };
             if ( object.grant != null )
                 rule.grant = object.grant;
             if ( object.deny != null )

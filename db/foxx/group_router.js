@@ -92,10 +92,7 @@ router.post('/delete', function (req, res) {
                 }
 
                 g_lib.ensureAdminPermObject( req.queryParams.client, group_id );
-                g_db.g.remove( group_id );
-                g_db.owner.removeByExample({ _to: group_id });
-                g_db.acl.removeByExample({ _to: group_id });
-                g_db.member.removeByExample({ _from: group_id });
+                g_graph.g.remove( group_id );
             }
         });
     } catch( e ) {
@@ -146,7 +143,7 @@ router.get('/view', function (req, res) {
         var offset;
 
         if ( req.queryParams.subject ) {
-            group_id += req.queryParams.subject._key + ":" + req.queryParams.id;
+            group_id += req.queryParams.subject + ":" + req.queryParams.id;
             offset = req.queryParams.subject.length + 1;
             g_lib.ensureAdminPermUser( client, group_id );
         } else {
@@ -157,6 +154,7 @@ router.get('/view', function (req, res) {
         var group = g_db.g.document( group_id );
         var result = { id: group._key.substr( offset ), descr: group.descr };
         result.members = g_db._query( "for v in 1..1 outbound @group member return { id: v._key, name_last: v.name_last, name_first: v.name_first }", { group: group_id }).toArray();
+        
         res.send( result );
 
     } catch( e ) {

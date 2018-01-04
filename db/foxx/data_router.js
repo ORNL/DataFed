@@ -27,7 +27,7 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","x"],
-                write: ["d","owner"]
+                write: ["d","a","owner","alias"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
@@ -93,6 +93,19 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
+        var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+
+        var alias = g_db._query("for v in 1..1 outbound @data alias return v", { data: data_id }).toArray();
+        if ( alias.length ) {
+            data.alias = alias[0]._key.substr( owner_id.length - 1 );
+        }
+
+        data.owner = owner_id.substr(2);
+        delete data._rev;
+        delete data._key;
+        data.id = data._id;
+        delete data._id;
+
         res.send( data );
     } catch( e ) {
         g_lib.handleException( e, res );
@@ -115,9 +128,17 @@ router.get('/list', function (req, res) {
             owner_id = client._id;
         }
 
-        var result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return v", { owner: owner_id });
+        const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
 
-        // TODO Enforce VIEW perm on individual items returned
+        var result = [];
+        var item;
+
+        for ( var i in items ) {
+            item = items[i];
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+                result.push({ id: item._id, title: item.title });
+            }
+        }
 
         res.send( result );
     } catch( e ) {
@@ -135,7 +156,7 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","x","d"],
-                write: ["d","owner","meta","acl","item"]
+                write: ["d","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
                 const client = g_lib.getUserFromCert( req.queryParams.client );
@@ -144,14 +165,16 @@ router.post('/delete', function (req, res) {
                 g_lib.ensureAdminPermObject( client, data_id );
 
                 var data = g_db.d.document( data_id );
+                var obj;
 
-                // TODO Need to delete attached notes
+                // Delete attached notes and aliases
+                var objects = g_db._query( "for v in 1..1 outbound @data note, alias v.return v._id", { data: data._id }).toArray();
+                for ( var i in objects ) {
+                    obj = objects[i];
+                    g_graph.obj[0].remove( obj );
+                }
 
-                g_db.owner.removeByExample({ _from: data._id });
-                g_db.meta.removeByExample({ _from: data._id });
-                g_db.item.removeByExample({ _to: data._id });
-                g_db.acl.removeByExample({ _from: data._id });
-                g_db.d.remove({ _id: data._id });
+                g_graph.d.remove( data._id );
             }
         });
     } catch( e ) {

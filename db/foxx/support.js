@@ -28,8 +28,10 @@ module.exports = ( function() {
     obj.PERM_ANNOTATE = 0x80;
     obj.PERM_ALL      = 0xFF;
 
+    //subject: joi.string().required(),
+
     obj.acl_schema = joi.object().keys({
-        subject: joi.string().required(),
+        id: joi.string().required(),
         grant: joi.string().optional(),
         inh_grant: joi.string().optional(),
         deny: joi.string().optional(),
@@ -53,6 +55,7 @@ module.exports = ( function() {
     obj.ERR_CANNOT_DEL_ROOT       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot delete root collection" ]);
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
     obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
+    obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
