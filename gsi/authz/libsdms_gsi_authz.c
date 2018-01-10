@@ -1,13 +1,3 @@
-/*
-GLOBUS_GSI_AUTHZ_SYSTEM_INIT           /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_init
-GLOBUS_GSI_AUTHZ_SYSTEM_DESTROY        /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_destroy
-GLOBUS_GSI_AUTHZ_HANDLE_INIT           /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_handle_init
-GLOBUS_GSI_AUTHORIZE_ASYNC             /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_authorize_async
-GLOBUS_GSI_AUTHZ_CANCEL                /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_cancel
-GLOBUS_GSI_AUTHZ_HANDLE_DESTROY        /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_handle_destroy
-GLOBUS_GSI_GET_AUTHORIZATION_IDENTITY  /opt/sdms/libsdms_gsi_authz  sdms_gsi_authz_identify
-*/
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,7 +75,17 @@ bool clearContext( globus_gsi_authz_handle_t a_handle )
     return true;
 }
 
-
+/**
+ * @brief HTTP response buffer write callback
+ * @param ptr - Incomming data
+ * @param size - Number of data elemenets
+ * @param nmemb - Size of a data element (bytes)
+ * @param userdata - User-provided data
+ * @return Number of bytes consumed
+ * 
+ * This funciton can be used by the CURL API to receive and store server response data. It is currently not
+ * used by this module, but is available if needed in the future.
+ */
 size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata )
 {
     size_t len = size*nmemb;
@@ -227,7 +227,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     if ( curl )
                     {
                         char url[1024];
-                        char resp[1024];
+                        //char resp[1024];
                         char error[CURL_ERROR_SIZE];
 
                         url[0] = resp[0] = error[0] = 0;
@@ -249,7 +249,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         curl_easy_setopt( curl, CURLOPT_USERNAME, "root" );
                         curl_easy_setopt( curl, CURLOPT_PASSWORD, "nopass" );
                         curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
-                        curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
+                        //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
                         curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
 
                         CURLcode res = curl_easy_perform( curl );
@@ -282,9 +282,6 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     {
                         syslog( LOG_ERR, "curl authz easy init failed!" );
                     }
-
-                    //if ( strcmp( (char*)src_name_buf.value, "/O=Grid/OU=GlobusTest/OU=simpleCA-daedalus/OU=Globus Simple CA/CN=Dale Stansberry" ) == 0 )
-                    //    result = GLOBUS_SUCCESS;
 
                     gss_release_buffer( &min_stat, &target_buf );
                 }
