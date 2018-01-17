@@ -1,10 +1,18 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <time.h>
+
+#define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
+#define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
+#define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
+#define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
+
 #include "Client.hpp"
 
 using namespace std;
 using namespace SDMS;
+using namespace SDMS::Facility;
 
 int main( int a_argc, char ** a_argv )
 {
@@ -40,10 +48,21 @@ int main( int a_argc, char ** a_argv )
 
         Client client( host, port, timeout );
 
-        client.hello();
-        //client.doSomething();
+        client.ping();
 
-        Client::shutdown();
+        client.login();
+
+/*
+        timerDef();
+        timerStart();
+
+        for ( int i = 0; i < 10000; ++i )
+            client.ping();
+
+        timerStop();
+        cout << "ping rate: " << 10000/timerElapsed() << " p/s\n";
+*/
+
     }
     catch( exception &e )
     {

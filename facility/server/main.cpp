@@ -10,7 +10,7 @@ int main( int a_argc, char ** a_argv )
 {
     try
     {
-        const char * host = "localhost";
+        const char * host = "127.0.0.1";
         int port = 5800;
         int timeout = 5;
         int opt;
@@ -38,12 +38,9 @@ int main( int a_argc, char ** a_argv )
             }
         }
 
-        FacilityServer server( host, port, timeout );
+        Facility::Server server( host, port, timeout );
 
-        //client.hello();
-        //client.doSomething();
-
-        FacilityServer::shutdown();
+        server.runWorkerRouter( false );
     }
     catch( exception &e )
     {
