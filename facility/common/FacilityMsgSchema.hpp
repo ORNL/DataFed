@@ -13,6 +13,8 @@ enum MessageType : uint16_t
     FMT_PING,
     FMT_LOGIN,
     FMT_LOGOUT,
+    FMT_USER_LIST,
+    FMT_USER_VIEW,
     FMT_DATA_CREATE,
     FMT_DATA_UPDATE,
     FMT_DATA_READ,

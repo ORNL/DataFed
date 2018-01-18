@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <gssapi.h>
 
 #include <Connection.hpp>
 #include "FacilityMsgSchema.hpp"
@@ -36,16 +37,17 @@ private:
     struct ClientInfo
     {
         ClientInfo() :
-            state(CS_INIT),
-            last_act(0)
+            state(CS_INIT), last_act(0), sec_ctx(GSS_C_NO_CONTEXT)
         {}
 
         ClientState     state;
         time_t          last_act;
-        // Tokens, sec context, etc
+        gss_ctx_id_t    sec_ctx;
+        std::string     name;
     };
 
     void            workerRouter();
+    void            backgroundMaintenance();
     ClientInfo &    getClientInfo( Connection::MsgBuffer &a_msg_buffer, bool a_upd_last_act = false );
 
     class Worker
@@ -57,7 +59,9 @@ private:
         void    workerThread();
         void    join();
         void    procMsgPing( Connection::MsgBuffer &a_msg_buffer );
-        void    procMsgLogin( Connection::MsgBuffer &a_msg_buffer );
+        void    procMsgLogIn( Connection::MsgBuffer &a_msg_buffer );
+        void    procMsgLogOut( Connection::MsgBuffer &a_msg_buffer );
+        void    procMsgUserCommands( Connection::MsgBuffer &a_msg_buffer );
 
         typedef void (Server::Worker::*msg_fun_t)( Connection::MsgBuffer& );
 
@@ -72,6 +76,7 @@ private:
     Connection                      m_connection;
     uint64_t                        m_timeout;
     std::thread   *                 m_router_thread;
+    std::thread   *                 m_maint_thread;
     uint32_t                        m_num_workers;
     std::vector<Worker*>            m_workers;
     std::mutex                      m_api_mutex;
@@ -80,6 +85,7 @@ private:
     bool                            m_worker_running;
     std::condition_variable         m_router_cvar;
     std::map<uint32_t,ClientInfo>   m_client_info;
+    gss_cred_id_t                   m_sec_cred;
 };
 
 

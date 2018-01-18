@@ -49,9 +49,10 @@ int main( int a_argc, char ** a_argv )
         Client client( host, port, timeout );
 
         client.ping();
-
         client.login();
-
+        client.userList();
+        client.logout();
+        client.userList();
 /*
         timerDef();
         timerStart();

@@ -37,23 +37,7 @@ public:
                 throw runtime_error("failed to activate Globus GSI GSSAPI module");
         }
 
-        OM_uint32                           maj_stat, min_stat;
-#if 0
-        struct context_arg *                arg = NULL;
-        gss_buffer_desc                     init_token = GSS_C_EMPTY_BUFFER;
-        gss_buffer_desc                     accept_token = GSS_C_EMPTY_BUFFER;
-        gss_ctx_id_t                        init_ctx = GSS_C_NO_CONTEXT;
-        gss_ctx_id_t                        accept_ctx = GSS_C_NO_CONTEXT;
-        globus_result_t                     result;
-        //globus_gsi_authz_handle_t           authz_handle;
-        char                                buf[128];
-        char *                              request_action;
-        char *                              request_object;
-        char *                              identity;
-        int                                 ok = -1;
-        int                                 fail_count = 0;
-        OM_uint32                           message_context;
-#endif
+        OM_uint32 maj_stat, min_stat;
 
         maj_stat = gss_acquire_cred( &min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
             GSS_C_INITIATE, &m_sec_cred, 0, 0 );
@@ -72,57 +56,6 @@ public:
         cout << "cred name: " << name_str << "\n";
 
         #endif
-
-
-#if 0
-        // Init security context
-
-        do
-        {
-            maj_stat = gss_init_sec_context(
-                &min_stat,
-                m_sec_cred,
-                &init_ctx,
-                GSS_C_NO_NAME,
-                GSS_C_NO_OID,
-                0,
-                0,
-                GSS_C_NO_CHANNEL_BINDINGS,
-                &accept_token,
-                NULL,
-                &init_token,
-                NULL,
-                NULL);
-
-            gssCheckError( maj_stat, min_stat );
-
-            gss_release_buffer( &min_stat, &accept_token );
-            accept_token.value = NULL;
-            accept_token.length = 0;
-
-            if ( init_token.length != 0 )
-            {
-                cout << "init tok len: " << init_token.length << "\n";
-
-                maj_stat = gss_accept_sec_context(
-                    &min_stat,
-                    &accept_ctx,
-                    m_sec_cred,
-                    &init_token,
-                    GSS_C_NO_CHANNEL_BINDINGS,
-                    NULL,
-                    NULL,
-                    &accept_token,
-                    NULL,
-                    NULL,
-                    NULL);
-            }
-        }
-        while (( maj_stat & GSS_S_CONTINUE_NEEDED ) && accept_token.length != 0 );
-
-        if (GSS_ERROR( maj_stat ))
-            throw runtime_error("Unable to establish security context");
-#endif
     }
 
     ~ClientImpl()
@@ -176,9 +109,6 @@ public:
         if ( !m_connection.recv( reply, m_timeout ))
             throw runtime_error("Server did not reply.");
 
-        if ( reply.size() != sizeof( MsgPing ))
-            throw runtime_error("Invalid reply from server (wrong size).");
-
         MsgPing *ping = (MsgPing*)reply.data();
 
         if ( ping->msg_type != FMT_PING )
@@ -199,13 +129,21 @@ public:
             throw runtime_error( "Security context already established." );
 
         OM_uint32                           maj_stat, min_stat;
+        bool loop = true;
 
         gss_buffer_desc                     init_token = GSS_C_EMPTY_BUFFER;
 
         gss_buffer_desc                     accept_token = GSS_C_EMPTY_BUFFER;
         gss_ctx_id_t                        accept_ctx = GSS_C_NO_CONTEXT;
 
-        do
+        Connection::MsgHeader msg( FMT_LOGIN );
+        Connection::MsgBuffer reply;
+        Connection::MsgHeader *reply_hdr;
+
+        // Initialize securit conext. Must exchange tokens with server until GSS
+        // init/accept functions stop generating token data.
+
+        while( loop )
         {
             maj_stat = gss_init_sec_context( &min_stat, m_sec_cred, &m_sec_ctx,
                 GSS_C_NO_NAME, GSS_C_NO_OID, 0, 0, GSS_C_NO_CHANNEL_BINDINGS,
@@ -213,41 +151,90 @@ public:
 
             gssCheckError( maj_stat, min_stat );
 
-
-
-            gss_release_buffer( &min_stat, &accept_token );
             accept_token.value = NULL;
             accept_token.length = 0;
+
 
             if ( init_token.length != 0 )
             {
                 cout << "init tok len: " << init_token.length << "\n";
 
-                maj_stat = gss_accept_sec_context( &min_stat, &accept_ctx, m_sec_cred,
-                    &init_token, GSS_C_NO_CHANNEL_BINDINGS, 0, 0,
-                    &accept_token, 0, 0, 0 );
+                // Send init token data to server
+                msg.data_size = init_token.length;
+                m_connection.send( msg, (const char*) init_token.value );
+
+                // Wait for response from server
+                if ( !m_connection.recv( reply, m_timeout ))
+                    throw runtime_error("Server did not respond.");
+
+                // Process server reply
+                reply_hdr = (Connection::MsgHeader*)reply.data();
+
+                switch ( reply_hdr->msg_type )
+                {
+                case FMT_LOGIN:
+                    cout << "data from server\n";
+                    accept_token.value = reply.data() + reply_hdr->msg_size;
+                    accept_token.length = reply_hdr->data_size;
+                    break;
+
+                case FMT_ACK: // Done
+                    cout << "done\n";
+                    loop = false;
+                    break;
+
+                case FMT_NACK: // Failed
+                    throw runtime_error("Failed to establish security context with server.");
+
+                default:
+                    throw runtime_error("Server responded with invalid reply type.");
+                }
             }
         }
-        while (( maj_stat & GSS_S_CONTINUE_NEEDED ) && accept_token.length != 0 );
+    }
 
-        if (GSS_ERROR( maj_stat ))
-            throw runtime_error("Unable to establish security context");
+    void logout()
+    {
+        cout << "logout\n";
 
+        Connection::MsgHeader msg( FMT_LOGOUT );
 
-#if 0
-        Connection::MsgHeader msg( FMT_LOGIN, sizeof(Connection::MsgHeader), cert.size() );
-
-        m_connection.send( msg, cert.c_str() );
+        m_connection.send( msg );
 
         Connection::MsgBuffer reply;
         if ( !m_connection.recv( reply, m_timeout ))
             throw runtime_error("Server did not reply.");
 
-        Connection::MsgHeader *reply_hdr = (Connection::MsgHeader*)reply.data();
-        cout << "Reply type = " << reply_hdr->msg_type << "\n";
-#endif
+        Connection::MsgHeader *hdr = (Connection::MsgHeader*)reply.data();
+        if ( hdr->msg_type != FMT_ACK )
+            throw runtime_error("Invalid reply from server (wrong type).");
     }
 
+    void userList()
+    {
+        cout << "userList\n";
+
+        Connection::MsgHeader msg( FMT_USER_LIST );
+
+        m_connection.send( msg );
+
+        Connection::MsgBuffer reply;
+        if ( !m_connection.recv( reply, m_timeout ))
+            throw runtime_error("Server did not reply.");
+
+        Connection::MsgHeader *hdr = (Connection::MsgHeader*)reply.data();
+
+        if ( hdr->msg_type == FMT_NACK )
+        {
+            if ( hdr->data_size )
+                throw runtime_error( reply.data() + sizeof( Connection::MsgHeader ));
+            else
+                throw runtime_error("Server NACK");
+        }
+
+        if ( hdr->msg_type != FMT_ACK )
+            throw runtime_error("Invalid reply from server (wrong type).");
+    }
 
 private:
     static size_t   m_initialized;  // TODO must be atomic int
@@ -276,13 +263,12 @@ Client::~Client()
     delete m_impl;
 }
 
-// Methods
+// Methods (Forward to Impl)
 
 /**
- * @brief Verify server is listening an in-synch
+ * @brief Verify server is listening and in-synch
  */
-void
-Client::ping()
+void Client::ping()
 {
     m_impl->ping();
 }
@@ -290,10 +276,19 @@ Client::ping()
 /**
  * @brief Client-server handshake and certificate exchange
  */
-void
-Client::login()
+void Client::login()
 {
     m_impl->login();
+}
+
+void Client::logout()
+{
+    m_impl->logout();
+}
+
+void Client::userList()
+{
+    m_impl->userList();
 }
 
 }}

@@ -174,6 +174,11 @@ Connection::recv( MsgBuffer & a_msg_buffer, uint64_t a_timeout )
         }
     }
 
+    // Validate header size fields
+    MsgHeader * hdr = (MsgHeader *)a_msg_buffer.data();
+    if ( hdr->msg_size < sizeof( MsgHeader ) || hdr->msg_size + hdr->data_size != a_msg_buffer.m_size )
+        throw runtime_error( "Recv msg with invalid header size fields." );
+
     return true;
 }
 

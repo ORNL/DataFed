@@ -42,6 +42,8 @@ public:
 
     void ping();
     void login();
+    void logout();
+    void userList();
 
 private:
     class ClientImpl;

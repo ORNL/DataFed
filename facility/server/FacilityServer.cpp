@@ -7,18 +7,17 @@
 
 #include <zmq.h>
 
-extern "C"
-{
-    #include <gssapi.h>
-    #include <globus_gss_assist.h>
-}
-
 #include "FacilityServer.hpp"
+#include "GSSAPI_Utils.hpp"
 
 using namespace std;
 
 namespace SDMS {
 namespace Facility {
+
+#define DEBUG_GSI
+#define MAINT_POLL_INTERVAL 5
+#define CLIENT_IDLE_TIMEOUT 30
 
 // Class ctor/dtor
 
@@ -26,23 +25,47 @@ Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint3
     m_connection( a_server_host, a_server_port, Connection::Server ),
     m_timeout(a_timeout * 1000),
     m_router_thread(0),
+    m_maint_thread(0),
     m_num_workers(a_num_workers),
     m_router_running(false),
-    m_worker_running(false)
+    m_worker_running(false),
+    m_sec_cred(0)
     
 {
-    if ( globus_module_activate( GLOBUS_GSI_GSS_ASSIST_MODULE ) != GLOBUS_SUCCESS )
+    if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
         throw runtime_error("failed to activate Globus GSI GSS assist module");
 
+    OM_uint32 maj_stat, min_stat;
+
+    maj_stat = gss_acquire_cred( &min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
+        GSS_C_INITIATE, &m_sec_cred, 0, 0 );
+
+    if ( maj_stat != GSS_S_COMPLETE )
+        throw runtime_error( "Unable to acquire valid credentials. Please (re)run grid-proxy-init." );
+
+    #ifdef DEBUG_GSI
+    
+    gss_name_t cred_name = 0;
+
+    if ( gss_inquire_cred( &min_stat, m_sec_cred, &cred_name, 0, 0, 0 )!= GSS_S_COMPLETE )
+        throw runtime_error("failed to inquire credentials");
+
+    gssString   name_str( cred_name );
+    cout << "cred name: " << name_str << "\n";
+
+    #endif
 
     Worker::m_proc_funcs[FMT_PING] = &Worker::procMsgPing;
-    Worker::m_proc_funcs[FMT_LOGIN] = &Worker::procMsgLogin;
+    Worker::m_proc_funcs[FMT_LOGIN] = &Worker::procMsgLogIn;
+    Worker::m_proc_funcs[FMT_LOGOUT] = &Worker::procMsgLogOut;
+    Worker::m_proc_funcs[FMT_USER_LIST] = &Worker::procMsgUserCommands;
+    Worker::m_proc_funcs[FMT_USER_VIEW] = &Worker::procMsgUserCommands;
 }
 
 
 Server::~Server()
 {
-    globus_module_deactivate( GLOBUS_GSI_GSS_ASSIST_MODULE );
+    globus_module_deactivate( GLOBUS_GSI_GSSAPI_MODULE );
 }
 
 
@@ -57,14 +80,22 @@ Server::runWorkerRouter( bool a_async )
     m_router_running = true;
 
     if ( a_async )
+    {
         m_router_thread = new thread( &Server::workerRouter, this );
+        m_maint_thread = new thread( &Server::backgroundMaintenance, this );
+    }
     else
     {
         lock.unlock();
+        m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         workerRouter();
         lock.lock();
         m_router_running = false;
         m_router_cvar.notify_all();
+
+        m_maint_thread->join();
+        delete m_maint_thread;
+        m_maint_thread = 0;
     }
 }
 
@@ -101,6 +132,10 @@ Server::stopWorkerRouter( bool a_async )
                 while( m_router_running )
                     m_router_cvar.wait( lock );
             }
+
+            m_maint_thread->join();
+            delete m_maint_thread;
+            m_maint_thread = 0;
         }
         else
         {
@@ -127,6 +162,10 @@ Server::waitWorkerRouter()
 
             m_router_thread = 0;
             m_router_running = false;
+
+            m_maint_thread->join();
+            delete m_maint_thread;
+            m_maint_thread = 0;
         }
         else
         {
@@ -188,6 +227,42 @@ Server::workerRouter()
     m_workers.clear();
 
     //m_router_running = false;
+}
+
+
+void
+Server::backgroundMaintenance()
+{
+    struct timespec t;
+    map<uint32_t,ClientInfo>::iterator ci;
+
+    while( m_router_running )
+    {
+        sleep( MAINT_POLL_INTERVAL );
+
+        lock_guard<mutex> lock( m_data_mutex );
+
+        clock_gettime( CLOCK_REALTIME, &t );
+
+        for ( ci = m_client_info.begin(); ci != m_client_info.end(); )
+        {
+            if ( t.tv_sec - ci->second.last_act > CLIENT_IDLE_TIMEOUT )
+            {
+                //cout << "clean-up client " << ci->first << "\n";
+
+                if ( ci->second.sec_ctx )
+                {
+                    OM_uint32  min_stat;
+                    
+                    gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
+                }
+
+                ci = m_client_info.erase( ci );
+            }
+            else
+                ++ci;
+        }
+    }
 }
 
 
@@ -303,28 +378,144 @@ Server::Worker::procMsgPing( Connection::MsgBuffer & a_msg_buffer )
 }
 
 void
-Server::Worker::procMsgLogin( Connection::MsgBuffer & a_msg_buffer )
+Server::Worker::procMsgLogIn( Connection::MsgBuffer & a_msg_buffer )
 {
-    ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
-
     cout << "proc login\n";
 
-    Connection::MsgHeader * msg = (Connection::MsgHeader *)a_msg_buffer.data();
+    ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
+    Connection::MsgHeader *msg = (Connection::MsgHeader*)a_msg_buffer.data();
+    string err_msg;
 
-    if ( msg->msg_size != sizeof( Connection::MsgHeader ))
+    //cout << "client state: " << client.state << "\n";
+
+    if ( client.state == CS_AUTHN )
     {
-        cout << "Wrong size of MsgLogin msg: " << a_msg_buffer.size() << "\n";
-
-        Connection::MsgHeader * nack = (Connection::MsgHeader *)a_msg_buffer.data();
-        nack->reinit( FMT_NACK );
+        err_msg = "Already authenticated";
     }
     else
     {
-        string cert( a_msg_buffer.data() + sizeof( Connection::MsgHeader ), msg->data_size );
-        cout << "Recv data[" << cert << "]\n";
+        OM_uint32           maj_stat, min_stat;
+        gss_buffer_desc     init_token;
+        gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
 
-        // Re-use recv buffer to send ACK
-        msg->reinit( FMT_ACK );
+        if ( msg->data_size )
+        {
+            //cout << "ini tok size: " << msg->data_size << "\n";
+            init_token.value = a_msg_buffer.data() + msg->msg_size;
+            init_token.length = msg->data_size;
+
+            maj_stat = gss_accept_sec_context( &min_stat, &client.sec_ctx, m_server.m_sec_cred,
+                &init_token, GSS_C_NO_CHANNEL_BINDINGS, 0, 0,
+                &accept_token, 0, 0, 0 );
+
+            if ( GSS_ERROR( maj_stat ))
+            {
+                err_msg = "gss_accept_sec_context failed";
+            }
+            else if ( accept_token.length )
+            {
+                // Send token to client
+                //cout << "send acc tok\n";
+                a_msg_buffer.setSize( sizeof(Connection::MsgHeader) + accept_token.length );
+                msg->reinit( FMT_LOGIN );
+                msg->data_size = accept_token.length;
+                //cout << "cpy acc tok\n";
+                memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), accept_token.value, accept_token.length );
+                //cout << "free acc tok\n";
+                free( accept_token.value );
+            }
+            else
+            {
+                // Done, check client identity
+                //cout << "done\n";
+
+                gss_name_t src_name = 0;
+                maj_stat = gss_inquire_context( &min_stat, client.sec_ctx, &src_name, 0, 0, 0, 0, 0, 0 );
+
+                if ( GSS_ERROR( maj_stat ))
+                    err_msg = "Failed to inquire context";
+                else
+                {
+                    gssString   name_str( src_name );
+                    client.name = name_str.to_string();
+                    cout << "client name: " << client.name << "\n";
+                    
+                    // Ack client
+                    a_msg_buffer.setSize( sizeof( Connection::MsgHeader ));
+                    msg->reinit( FMT_ACK );
+                    msg->data_size = 0;
+                    
+                    client.state = CS_AUTHN;
+                }
+            }
+        }
+        else
+        {
+            err_msg = "No client token data";
+        }
+    }
+
+    if ( err_msg.size() )
+    {
+        // Send NACK with error message
+        a_msg_buffer.setSize( sizeof(Connection::MsgHeader) + err_msg.size() + 1 );
+        msg->reinit( FMT_NACK );
+        msg->data_size = err_msg.size() + 1;
+        memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), err_msg.c_str(), err_msg.size() + 1 );
+    }
+
+    m_conn->send( a_msg_buffer );
+}
+
+void
+Server::Worker::procMsgLogOut( Connection::MsgBuffer & a_msg_buffer )
+{
+    cout << "proc logout\n";
+
+    lock_guard<mutex> lock(m_server.m_data_mutex);
+
+    map<uint32_t,ClientInfo>::iterator ci = m_server.m_client_info.find( a_msg_buffer.cid() );
+    if ( ci != m_server.m_client_info.end() )
+    {
+        if ( ci->second.sec_ctx )
+        {
+            OM_uint32  min_stat;
+            
+            gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
+        }
+
+        m_server.m_client_info.erase( ci );
+    }
+
+    a_msg_buffer.setSize( sizeof( Connection::MsgHeader ));
+    Connection::MsgHeader * msg = (Connection::MsgHeader*) a_msg_buffer.data();
+    msg->reinit( FMT_ACK );
+    m_conn->send( a_msg_buffer );
+}
+
+void
+Server::Worker::procMsgUserCommands( Connection::MsgBuffer & a_msg_buffer )
+{
+    cout << "proc user cmds\n";
+    ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
+    string err_msg;
+
+    if ( client.state != CS_AUTHN )
+    {
+        err_msg = "Method requires authentication";
+    }
+
+    Connection::MsgHeader *msg = (Connection::MsgHeader*)a_msg_buffer.data();
+    msg->reinit( FMT_ACK );
+    msg->data_size = 0;
+
+    if ( err_msg.size() )
+    {
+        // Send NACK with error message
+        a_msg_buffer.setSize( sizeof(Connection::MsgHeader) + err_msg.size() + 1 );
+        msg->reinit( FMT_NACK );
+        msg->data_size = err_msg.size() + 1;
+        memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), err_msg.c_str(), err_msg.size() + 1 );
     }
 
     m_conn->send( a_msg_buffer );
