@@ -31,6 +31,17 @@ struct MsgPing : public Connection::MsgHeader
     uint32_t        context;
 };
 
+struct MsgUserList : public Connection::MsgHeader
+{
+    MsgUserList() :
+        MsgHeader( FMT_USER_LIST, sizeof( MsgUserList )), details(false),
+        offset(0), count(0)
+    {}
+
+    bool            details;
+    uint32_t        offset;
+    uint32_t        count;
+};
 
 
 }}

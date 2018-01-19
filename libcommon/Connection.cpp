@@ -1,23 +1,31 @@
 #include <iostream>
+#include <boost/lexical_cast.hpp>
+#include "ErrorCodes.hpp"
+#include "TraceException.hpp"
 #include "Connection.hpp"
 
 using namespace std;
 
+namespace SDMS
+{
 
 #define MAX_ADDR_LEN 1000
 
-Connection::Connection( const std::string & a_url, Mode a_mode, void * a_context )
+Connection::Connection( const std::string & a_address, Connection::Mode a_mode, void * a_context )
     : m_context(a_context), m_socket(0), m_mode(a_mode), m_proc_addresses(false), m_context_owner(false)
 {
-    init( a_url.c_str() );
+    init( a_address );
+    REG_API(*this,SDMS)
 }
 
 Connection::Connection( const std::string & a_host, uint16_t a_port, Connection::Mode a_mode, void * a_context )
     : m_context(a_context), m_socket(0), m_mode(a_mode), m_proc_addresses(false), m_context_owner(false)
 {
-    string address = string("tcp://") + a_host + ":" + to_string( a_port );
+    string address = string("tcp://") + a_host + ":" + boost::lexical_cast<string>(a_port);
     init( address.c_str() );
+    REG_API(*this,SDMS)
 }
+
 
 
 Connection::~Connection()
@@ -27,74 +35,123 @@ Connection::~Connection()
         zmq_ctx_destroy( m_context );
 }
 
-
-void
-Connection::send( const MsgHeader & a_msg, const char * a_data )
+uint16_t
+Connection::registerAPI( const ::google::protobuf::EnumDescriptor * a_enum_desc )
 {
-    if ( a_msg.data_size )
-    {
-        if ( !a_data )
-            throw runtime_error( "Send failed due to data payload pointer." );
+    if ( a_enum_desc->name() != "Protocol" )
+        EXCEPT( EC_PROTO_INIT, "Must register with Protocol EnumDescriptor." );
 
-        uint32_t size = a_msg.msg_size + a_msg.data_size;
+    const FileDescriptorType * file = a_enum_desc->file();
+    if ( !file )
+        EXCEPT( EC_PROTO_INIT, "Failed to acquire protocol buffer file descriptor." );
 
-        cout << "sending " << size << "\n";
+    const google::protobuf::EnumValueDescriptor * val_desc = a_enum_desc->FindValueByName("ID");
+    if ( !val_desc )
+        EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
-        // Send total size
-        if ( zmq_send( m_socket, &size, sizeof( uint32_t ), ZMQ_SNDMORE ) != sizeof( uint32_t ))
-            throw runtime_error( "Send message size failed." );
+    uint16_t id = val_desc->number();
 
-        cout << "sending msg_size " << a_msg.msg_size << "\n";
+    std::map<uint16_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( id );
+    if ( iProto != m_descriptors.end() )
+        EXCEPT_PARAM( EC_PROTO_INIT, "Protocol ID " << id << " has already been registered." );
 
-        // Send message
-        if ( zmq_send( m_socket, &a_msg, a_msg.msg_size, ZMQ_SNDMORE ) != a_msg.msg_size )
-            throw runtime_error( "Send message failed." );
+    m_descriptors[id] = file;
 
-        cout << "sending data_size " << a_msg.data_size << "\n";
-
-        // Send data
-        if ( zmq_send( m_socket, a_data, a_msg.data_size, 0 ) != a_msg.data_size )
-            throw runtime_error( "Send data failed." );
-    }
-    else
-    {
-        // Send total size
-        if ( zmq_send( m_socket, &a_msg.msg_size, sizeof( uint32_t ), ZMQ_SNDMORE ) != sizeof( uint32_t ))
-            throw runtime_error( "Send message size failed." );
-
-        // Send message
-        if ( zmq_send( m_socket, &a_msg, a_msg.msg_size, 0 ) != a_msg.msg_size )
-            throw runtime_error( "Send message failed." );
-    }
+    return id;
 }
 
-
-void
-Connection::send( MsgBuffer &a_msg_buffer )
+uint16_t
+Connection::findMessageType( uint16_t a_proto_id, const string & a_message_name )
 {
-    // For servers, send client ID
-    if ( m_proc_addresses )
-    {
-        if ( zmq_send( m_socket, a_msg_buffer.m_buffer, a_msg_buffer.m_offset, ZMQ_SNDMORE ) != (int)a_msg_buffer.m_offset )
-            throw runtime_error( "Send client ID failed." );
-    }
+    map<uint16_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( a_proto_id );
+    if ( iProto == m_descriptors.end() )
+        EXCEPT_PARAM( EC_INVALID_PARAM, "Protocol ID " << a_proto_id << " has not been registered." );
 
-    // Send message size
-    if ( zmq_send( m_socket, &a_msg_buffer.m_size, sizeof( a_msg_buffer.m_size ), ZMQ_SNDMORE ) != sizeof( a_msg_buffer.m_size ))
-        throw runtime_error( "Send message size failed." );
+    const DescriptorType *desc = iProto->second->FindMessageTypeByName( a_message_name );
+    if ( !desc )
+        EXCEPT_PARAM( EC_PROTO_INIT, "Could not find specified message: " << a_message_name );
 
-    // Send message payload
-    if ( zmq_send( m_socket, a_msg_buffer.m_buffer + a_msg_buffer.m_offset, a_msg_buffer.m_size, 0 ) != (int)a_msg_buffer.m_size )
-        throw runtime_error( "Send message payload failed." );
+    return desc->index();
 }
 
 
 bool
-Connection::recv( MsgBuffer & a_msg_buffer, uint64_t a_timeout )
+Connection::send( Message &a_message )
+{
+    serializeToBuffer( a_message, m_buffer );
+
+    return send( m_buffer );
+}
+
+
+MessageID
+Connection::recv( Message *&a_msg, uint32_t a_timeout )
+{
+    a_msg = 0;
+    if ( recv( m_buffer, a_timeout ))
+    {
+        a_msg = unserializeFromBuffer( m_buffer );
+        return m_buffer.frame.msg_id;
+    }
+
+    return MessageID();
+}
+
+
+// Just like send except client ID is sent along with serialized message
+bool
+Connection::send( Message &a_message, const std::string &a_client_id )
+{
+    // Place client ID in buffer and set msg_offset
+    m_buffer.msg_offset = a_client_id.size();
+    memcpy( m_buffer.buffer, a_client_id.data(), m_buffer.msg_offset );
+
+    // Send message as usual
+    return send( a_message );
+}
+
+
+// Just like recv except client ID is extracted from recv buffer
+MessageID
+Connection::recv( Message *&a_msg, uint32_t a_timeout, std::string &a_client_id )
+{
+    // Recv message as usual
+    MessageID msg_id = recv( a_msg, a_timeout );
+
+    // Get client ID from buffer
+    if ( msg_id.msg_idx > 0 )
+        a_client_id.assign( m_buffer.buffer, m_buffer.msg_offset );
+
+    return msg_id;
+}
+
+
+bool
+Connection::send( MessageBuffer &a_msg_buffer )
+{
+    // For servers, send client ID
+    if ( m_proc_addresses )
+    {
+        if ( zmq_send( m_socket, a_msg_buffer.buffer, a_msg_buffer.msg_offset, ZMQ_SNDMORE ) != (int)a_msg_buffer.msg_offset )
+            return false;
+    }
+
+    // Send Message frame
+    if ( zmq_send( m_socket, &a_msg_buffer.frame, sizeof( MessageFrame ), ZMQ_SNDMORE ) != sizeof( MessageFrame ))
+        return false;
+
+    // Send message payload
+    if ( zmq_send( m_socket, a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size, 0 ) != (int)a_msg_buffer.frame.msg_size )
+        return false;
+
+    return true;
+}
+
+
+bool
+Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
 {
     int rc;
-
-    //cout << "RCV\n";
 
     //cout << "recv buf cap:" << a_msg_buffer.buffer_capacity << ", buf: " << hex << (void*)a_msg_buffer.buffer << endl;
 
@@ -109,7 +166,7 @@ Connection::recv( MsgBuffer & a_msg_buffer, uint64_t a_timeout )
     // Wait up to timeout for a message to arrive
     while (( rc = zmq_poll( &m_poll_item, 1, a_timeout )) < 1 )
     {
-        // Timeout - nothing else to do, return timeout (false)
+        // Timeout - nothing else to do, return failure
         if ( rc == 0 )
             return false;
     }
@@ -117,89 +174,108 @@ Connection::recv( MsgBuffer & a_msg_buffer, uint64_t a_timeout )
     // If this is a server (router), receive address of sender
     if ( m_proc_addresses )
     {
-        if (( rc = zmq_recv( m_socket, a_msg_buffer.m_buffer, a_msg_buffer.m_capacity, ZMQ_DONTWAIT )) < 0 || rc > MAX_ADDR_LEN )
-            throw runtime_error( "Recv client ID failed." );
+        if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer, a_msg_buffer.buffer_capacity, ZMQ_DONTWAIT )) < 0 || rc > MAX_ADDR_LEN )
+        {
+            return false;
+        }
+        a_msg_buffer.msg_offset = rc;
 
-        a_msg_buffer.m_offset = rc;
-        
-        // Debug ONLY
-        cout << "CID";
-        for ( int i = 0; i < rc; ++i )
-            cout << " " << (int)(unsigned char)a_msg_buffer.m_buffer[i];
-        cout << "\n";
+        //string cid;
+        //cid.assign( a_msg_buffer.buffer, a_msg_buffer.msg_offset );
+        //cout << "rcv id: " << cid << endl;
     }
     else
     {
-        a_msg_buffer.m_offset = 0;
+        a_msg_buffer.msg_offset = 0;
     }
 
-    // Receive message size
-    if (( rc = zmq_recv( m_socket, &a_msg_buffer.m_size, sizeof( a_msg_buffer.m_size ), ZMQ_DONTWAIT )) < 0 || (size_t)rc != sizeof( a_msg_buffer.m_size ))
-        throw runtime_error( "Recv buffer size failed." );
+    // Receive our message frame (type and size)
+    if (( rc = zmq_recv( m_socket, &a_msg_buffer.frame, sizeof( MessageFrame ), ZMQ_DONTWAIT )) < 0 || (size_t)rc != sizeof( MessageFrame ))
+    {
+        // Malformed message!
+        return false;
+    }
 
-    //cout << "rcv size: " << a_msg_buffer.m_size << endl;
+    //cout << "inbound msg size: " << a_msg_buffer.frame.msg_size << endl;
 
     // Resize buffer if too small
-    a_msg_buffer.ensureCapacity();
+    ensureCapacity( a_msg_buffer );
 
-    // Note: message may be in one or two parts depending on how it was sent
 
-    // Receieve message (and maybe payload)
-    if (( rc = zmq_recv( m_socket, a_msg_buffer.m_buffer + a_msg_buffer.m_offset, a_msg_buffer.m_size, ZMQ_DONTWAIT )) < 0 )
-        throw runtime_error( "Recv message failed." );
-
-    uint32_t p1sz = (uint32_t)rc;
-
-    //cout << "rcv p1sz size: " << p1sz << endl;
-
-    if ( p1sz < a_msg_buffer.m_size )
+    // Receieve message (binary serialized protobuf)
+    if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size, ZMQ_DONTWAIT )) < 0 || (uint32_t)rc != a_msg_buffer.frame.msg_size )
     {
-        cout << "need more data...\n";
-
-        // Check if there is another msg part
-        int more = 0;
-        size_t more_sz = sizeof( more );
-        if ( zmq_getsockopt( m_socket, ZMQ_RCVMORE, &more, &more_sz ) < 0 || more != 1 )
-            throw runtime_error( "Malformed message received." );
-
-        cout << "more data!\n";
-
-        if (( rc = zmq_recv( m_socket, a_msg_buffer.m_buffer + a_msg_buffer.m_offset + p1sz, a_msg_buffer.m_size - p1sz, ZMQ_DONTWAIT )) < 0 )
-            throw runtime_error( "Recv data payload failed." );
-
-        if ( ((uint32_t)rc) + p1sz != a_msg_buffer.m_size )
-        {
-            cout << "Got " << ((uint32_t)rc) + p1sz << " bytes, expected " << a_msg_buffer.m_size << "\n";
-            throw runtime_error( "Recv wrong payload size." );
-        }
+        // Malformed message!
+        return false;
     }
-
-    // Validate header size fields
-    MsgHeader * hdr = (MsgHeader *)a_msg_buffer.data();
-    if ( hdr->msg_size < sizeof( MsgHeader ) || hdr->msg_size + hdr->data_size != a_msg_buffer.m_size )
-        throw runtime_error( "Recv msg with invalid header size fields." );
+    //cout << "msg_id: " << a_msg_buffer.frame.msg_id.proto_id << ":" << a_msg_buffer.frame.msg_id.msg_idx << endl;
 
     return true;
 }
 
 
 void
-Connection::getPollInfo( zmq_pollitem_t & a_poll_data )
+Connection::getPollInfo( zmq_pollitem_t  & a_poll_data )
 {
     a_poll_data.socket = m_socket;
     a_poll_data.events = ZMQ_POLLIN;
 }
 
 
+Message*
+Connection::unserializeFromBuffer( MessageBuffer & a_msg_buffer )
+{
+    map<uint16_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( a_msg_buffer.frame.msg_id.proto_id );
+    if ( iProto != m_descriptors.end() && a_msg_buffer.frame.msg_id.msg_idx < (uint16_t)iProto->second->message_type_count())
+    {
+        //cout << "proto " << a_msg_buffer.frame.msg_id.proto_id << "found" << endl;
+
+        // Get the default class via descriptor to construct new message instance
+        const DescriptorType * msg_descriptor = iProto->second->message_type( a_msg_buffer.frame.msg_id.msg_idx );
+        const Message * default_msg = m_factory->GetPrototype( msg_descriptor );
+
+        Message * msg = default_msg->New();
+
+        if ( msg )
+        {
+            if ( msg->ParseFromArray( a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size ))
+                return msg;
+            else
+                delete msg;
+        }
+    }
+
+    return 0;
+}
+
+
+// Serialize reply into buffer
+void
+Connection::serializeToBuffer( Message &a_msg, MessageBuffer & a_msg_buffer )
+{
+    const DescriptorType * desc = a_msg.GetDescriptor();
+    const FileDescriptorType * file = desc->file();
+
+    a_msg_buffer.frame.msg_id.proto_id = file->enum_type(0)->value(0)->number();
+    a_msg_buffer.frame.msg_id.msg_idx = desc->index();
+    a_msg_buffer.frame.msg_size = a_msg.ByteSize();
+
+    // Make sure buffer is big enough
+    ensureCapacity( a_msg_buffer );
+
+    // Serialize message - may fail if required fields are missing
+    if ( !a_msg.SerializeToArray( a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size ))
+        EXCEPT( EC_PROTO_SERIALIZE, "SerializeToArray for message failed." );
+}
+
 string
-Connection::getClientID( MsgBuffer & a_msg_buffer )
+Connection::getClientID( MessageBuffer & a_msg_buffer )
 {
     string id;
-    id.assign( a_msg_buffer.m_buffer, a_msg_buffer.m_offset );
+    id.assign( a_msg_buffer.buffer, a_msg_buffer.msg_offset );
 
     return id;
 }
-
 
 void
 Connection::setupSocketKeepAlive()
@@ -219,6 +295,10 @@ Connection::init( const string & a_address )
 {
     int rc;
 
+    cout << "Connection addr: " << a_address << endl;
+
+    m_factory = google::protobuf::MessageFactory::generated_factory();
+
     // Setup ZeroMQ
     if ( !m_context )
     {
@@ -228,8 +308,6 @@ Connection::init( const string & a_address )
 
     m_proc_addresses = false;
 
-    cout << "init addr: " << a_address << "\n";
-
     switch ( m_mode )
     {
         case Server:
@@ -238,10 +316,7 @@ Connection::init( const string & a_address )
             setupSocketKeepAlive();
             rc = zmq_bind ( m_socket, a_address.c_str() );
             if ( rc == -1 )
-            {
-                cout << "Error: " << zmq_strerror(errno) << "\n";
-                throw runtime_error( "ZeroMQ bind to address failed." );
-            }
+                EXCEPT_PARAM( EC_ZMQ_ERROR, "ZeroMQ bind to address " << a_address << " failed." );
             break;
 
         case Worker:
@@ -250,7 +325,7 @@ Connection::init( const string & a_address )
             setupSocketKeepAlive();
             rc = zmq_connect( m_socket, a_address.c_str() );
             if ( rc == -1 )
-                throw runtime_error( "ZeroMQ connect to address failed." );
+                EXCEPT_PARAM( EC_ZMQ_ERROR, "ZeroMQ connect to address " << a_address << " failed." );
             break;
 
         case Client:
@@ -258,7 +333,7 @@ Connection::init( const string & a_address )
             setupSocketKeepAlive();
             rc = zmq_connect( m_socket, a_address.c_str() );
             if ( rc == -1 )
-                throw runtime_error( "ZeroMQ connect to address failed." );
+                EXCEPT_PARAM( EC_ZMQ_ERROR, "ZeroMQ connect to address " << a_address << " failed." );
             break;
 
         case Publisher:
@@ -266,7 +341,7 @@ Connection::init( const string & a_address )
             setupSocketKeepAlive();
             rc = zmq_bind ( m_socket, a_address.c_str() );
             if ( rc == -1 )
-                throw runtime_error( "ZeroMQ bind to address failed." );
+                EXCEPT_PARAM( EC_ZMQ_ERROR, "ZeroMQ bind to address " << a_address << " failed." );
             break;
 
         case Subscriber:
@@ -274,10 +349,10 @@ Connection::init( const string & a_address )
             setupSocketKeepAlive();
             rc = zmq_connect( m_socket, a_address.c_str() );
             if ( rc == -1 )
-                throw runtime_error( "ZeroMQ connect to address failed." );
+                EXCEPT_PARAM( EC_ZMQ_ERROR, "ZeroMQ connect to address " << a_address << " failed." );
             rc = zmq_setsockopt( m_socket, ZMQ_SUBSCRIBE, "", 0 );
             if ( rc == -1 )
-                throw runtime_error( "ZeroMQ subscribe to address failed." );
+                EXCEPT_PARAM( EC_ZMQ_ERROR, "ZeroMQ subscribe for address " << a_address << " failed." );
             break;
     }
 
@@ -289,3 +364,21 @@ Connection::init( const string & a_address )
 }
 
 
+void
+Connection::ensureCapacity( MessageBuffer & a_msg_buffer )
+{
+    if ( a_msg_buffer.frame.msg_size + a_msg_buffer.msg_offset > a_msg_buffer.buffer_capacity )
+    {
+        //cout << "buf resize" << endl;
+
+        char *new_buffer = new char[a_msg_buffer.frame.msg_size + a_msg_buffer.msg_offset];
+        memcpy( new_buffer, a_msg_buffer.buffer, a_msg_buffer.msg_offset );
+        delete[] a_msg_buffer.buffer;
+        a_msg_buffer.buffer = new_buffer;
+        a_msg_buffer.buffer_capacity = a_msg_buffer.frame.msg_size + a_msg_buffer.msg_offset;
+
+        //cout << "recv buf cap:" << a_msg_buffer.buffer_capacity << ", buf: " << hex << a_msg_buffer.buffer << endl;
+    }
+}
+
+}

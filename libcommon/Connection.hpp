@@ -1,16 +1,61 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
-#include <string.h>
 #include <string>
 #include <map>
 #include <stdint.h>
 #include <zmq.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/descriptor.h>
+#include "TraceException.hpp"
+#include "ErrorCodes.hpp"
+#include "SDMS.pb.h"
 
+namespace SDMS
+{
+
+typedef ::google::protobuf::Message         Message;
+
+struct MessageID
+{
+    MessageID() : proto_id(0), msg_idx(0) {}
+
+    uint16_t    proto_id;
+    uint16_t    msg_idx;
+};
+
+struct MessageFrame
+{
+    MessageFrame() : msg_size(0) {}
+
+    MessageID   msg_id;
+    uint32_t    msg_size;
+};
+
+struct MessageBuffer
+{
+    MessageBuffer() : msg_offset(0), buffer_capacity(4096)
+    {
+        buffer = new char[buffer_capacity];
+    }
+
+    ~MessageBuffer()
+    {
+        delete[] buffer;
+    }
+
+    MessageFrame    frame;
+    uint32_t        msg_offset;
+    uint32_t        buffer_capacity;
+    char        *   buffer;
+};
 
 class Connection
 {
 public:
+    typedef ::google::protobuf::Descriptor      DescriptorType;
+    typedef ::google::protobuf::FileDescriptor  FileDescriptorType;
+
     enum Mode
     {
         Server,
@@ -19,6 +64,41 @@ public:
         Subscriber,
         Worker
     };
+
+
+    //----- Constructors & Destructor -----
+
+    Connection( const std::string & a_address, Mode a_mode = Client, void * a_context = 0 );
+    Connection( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, void * a_context = 0 );
+    ~Connection();
+
+    //----- Registration Methods -----
+
+    #define REG_API(conn,ns) (conn).registerAPI( ns::Protocol_descriptor() );
+
+    uint16_t        registerAPI( const ::google::protobuf::EnumDescriptor * a_protocol );
+    uint16_t        findMessageType( uint16_t a_proto_id, const std::string & a_message_name );
+
+    //----- Basic Messaging API -----
+
+    bool            send( Message & a_message );
+    MessageID       recv( Message *& a_msg, uint32_t a_timeout );
+
+    //----- Advanced (server) Messaging API -----
+
+    bool            send( Message & a_message, const std::string &a_client_id );
+    MessageID       recv( Message *& a_msg, uint32_t a_timeout, std::string & a_client_id );
+    bool            send( MessageBuffer & a_buffer );
+    bool            recv( MessageBuffer & a_buffer, uint32_t a_timeout );
+    Message *       unserializeFromBuffer( MessageBuffer &a_buffer );
+    void            serializeToBuffer( Message & a_msg, MessageBuffer & a_msg_buffer );
+    std::string     getClientID( MessageBuffer & a_msg_buffer );
+
+    //----- Utility Methods -----
+
+    void *          getContext() { return m_context; }
+    void *          getSocket() { return m_socket; }
+    void            getPollInfo( zmq_pollitem_t  & a_poll_data );
 
     enum ErrorCode
     {
@@ -30,117 +110,61 @@ public:
         EC_TOKEN_MISMATCH
     };
 
-    struct MsgHeader
+    template<class T>
+    ErrorCode requestReply( Message& a_request, T*& a_reply, uint32_t a_context, uint32_t a_timeout )
     {
-        MsgHeader() :
-            msg_type( 0 ), msg_size( sizeof( MsgHeader )), data_size(0)
-            {}
+        a_reply = 0;
 
-        MsgHeader( uint16_t a_msg_type, uint16_t a_msg_size = 0, uint32_t a_data_size = 0 ) :
-            msg_type( a_msg_type ), msg_size( a_msg_size?a_msg_size:sizeof( MsgHeader )), data_size( a_data_size )
-            {}
-
-        void reinit( uint16_t a_msg_type, uint16_t a_msg_size = 0, uint32_t a_data_size = 0 )
+        if ( send( a_request ))
         {
-            msg_type = a_msg_type;
-            msg_size = a_msg_size?a_msg_size:sizeof( MsgHeader );
-            data_size = a_data_size;
-        }
+            Message*  raw_reply = 0;
+            MessageID msg_id = recv( raw_reply, a_timeout );
 
-        uint16_t    msg_type;
-        uint16_t    msg_size;
-        uint32_t    data_size;
-    };
-
-    class MsgBuffer
-    {
-    public:
-
-        MsgBuffer() : m_size(0), m_offset(0), m_capacity(4096)
-        {
-            m_buffer = new char[m_capacity];
-        }
-
-        ~MsgBuffer()
-        {
-            delete[] m_buffer;
-        }
-
-        inline uint32_t size()
-        {
-            return m_size;
-        }
-
-        inline void setSize( uint32_t a_size )
-        {
-            m_size = a_size;
-            ensureCapacity();
-        }
-
-        inline char * data()
-        {
-            return m_buffer + m_offset;
-        }
-
-        inline uint32_t cid()
-        {
-            return *(uint32_t*)(m_buffer+1);
-        }
-
-        void ensureCapacity()
-        {
-            if ( m_size + m_offset > m_capacity )
+            if ( !msg_id.msg_idx )
+                return EC_TIMEOUT;
+            else if ( !raw_reply )
+                return EC_UNREGISTERED_REPLY_TYPE;
+            else
             {
-                char *new_buffer = new char[m_size + m_offset];
-                memcpy( new_buffer, m_buffer, m_offset );
-                delete[] m_buffer;
-                m_buffer = new_buffer;
-                m_capacity = m_size + m_offset;
+                a_reply = dynamic_cast<T*>(raw_reply);
+                if ( a_reply )
+                {
+                    if ( a_reply->header().context() != a_context )
+                    {
+                        delete raw_reply;
+                        return EC_TOKEN_MISMATCH;
+                    }
+                    else
+                        return EC_OK;
+                }
+                else
+                {
+                    delete raw_reply;
+                    return EC_UNEXPECTED_REPLY_TYPE;
+                }
             }
         }
-
-    private:
-
-        uint32_t    m_size;
-        uint32_t    m_offset;
-        uint32_t    m_capacity;
-        char *      m_buffer;
-
-        friend class Connection;
-    };
-
-    //----- Constructors & Destructor -----
-
-    Connection( const std::string & a_url, Mode a_mode = Client, void * a_context = 0 );
-    Connection( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, void * a_context = 0 );
-    ~Connection();
-
-    //----- Messaging API -----
-
-    void            send( const MsgHeader & a_msg, const char * data = 0 );
-    void            send( MsgBuffer & a_buffer );
-    bool            recv( MsgBuffer & a_buffer, uint64_t a_timeout );
-
-    std::string     getClientID( MsgBuffer & a_msg_buffer );
-
-    //----- Utility Methods -----
-
-    void *          getContext() { return m_context; }
-    void *          getSocket() { return m_socket; }
-    void            getPollInfo( zmq_pollitem_t  & a_poll_data );
+        else
+            return EC_SEND_FAILED;
+    }
 
 private:
 
     void            setupSocketKeepAlive();
     void            init( const std::string & a_address );
-    void            ensureCapacity( MsgBuffer &a_msg_buffer );
+    void            ensureCapacity( MessageBuffer &a_msg_buffer );
 
     void           *m_context;
     void           *m_socket;
     Mode            m_mode;
     bool            m_proc_addresses;
     zmq_pollitem_t  m_poll_item;
+    MessageBuffer   m_buffer;
+    google::protobuf::MessageFactory *              m_factory;
+    std::map<uint16_t,const FileDescriptorType *>   m_descriptors;
     bool            m_context_owner;
 };
+
+}
 
 #endif // CONNECTION_HPP

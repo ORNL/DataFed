@@ -50,9 +50,7 @@ int main( int a_argc, char ** a_argv )
 
         client.ping();
         client.login();
-        client.userList();
         client.logout();
-        client.userList();
 /*
         timerDef();
         timerStart();

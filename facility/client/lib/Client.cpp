@@ -6,14 +6,9 @@
 #include "sys/types.h"
 
 #include <zmq.h>
-
-extern "C"
-{
-    #include <gssapi.h>
-}
+#include <gssapi.h>
 
 #include "Client.hpp"
-#include "FacilityMsgSchema.hpp"
 #include "GSSAPI_Utils.hpp"
 
 using namespace std;
@@ -29,7 +24,7 @@ class Client::ClientImpl
 public:
     ClientImpl( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout = 30 ) :
         m_connection( a_server_host, a_server_port, Connection::Client ),
-        m_timeout(a_timeout * 1000), m_sec_cred(0), m_sec_ctx(0)
+        m_timeout(a_timeout * 1000), m_sec_cred(0), m_sec_ctx(0), m_ctx(1)
     {
         if ( ++m_initialized == 1 )
         {
@@ -99,13 +94,58 @@ public:
      */
     void ping()
     {
+        PingRequest req;
+        PingReply * reply;
+
+        req.mutable_header()->set_context( m_ctx );
+
+        Connection::ErrorCode err = m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
+        if ( err != Connection::EC_OK )
+            throw runtime_error("Ping failed.");
+
+        delete reply;
+#if 0
+        msg.mutable_header()->set_context( m_ctx++ );
+
+        if ( m_connection.send( msg ))
+        {
+            Message*  raw_reply = 0;
+            MessageID msg_id = m_connection.recv( raw_reply, m_timeout );
+
+            if ( !msg_id.msg_idx )
+                throw runtime_error("Server did not reply.");
+
+            if ( !raw_reply )
+                throw runtime_error("Received unregistered reply type.");
+
+            if ( Check( r, raw_reply, PingReply ))
+            {
+                if ( r->header().context() != msg.header().context() )
+                {
+                    delete raw_reply;
+                    throw runtime_error("Received mismatched message context.");
+                }
+            }
+            else
+            {
+                delete raw_reply;
+                throw runtime_error("Unexpected reply type.");
+            }
+
+            delete raw_reply;
+        }
+        else
+            throw runtime_error("Send failed.");
+#endif
+
+        #if 0
         cout << "ping\n";
 
         MsgPing msg( getpid() );
 
         m_connection.send( msg );
 
-        Connection::MsgBuffer reply;
+        MessageBuffer reply;
         if ( !m_connection.recv( reply, m_timeout ))
             throw runtime_error("Server did not reply.");
 
@@ -116,6 +156,7 @@ public:
 
         if ( ping->context != msg.context )
             throw runtime_error("Invalid reply from server (wrong context).");
+        #endif
     }
 
     /**
@@ -123,6 +164,7 @@ public:
      */
     void login()
     {
+        #if 0
         cout << "login\n";
 
         if ( m_sec_ctx )
@@ -137,7 +179,7 @@ public:
         gss_ctx_id_t                        accept_ctx = GSS_C_NO_CONTEXT;
 
         Connection::MsgHeader msg( FMT_LOGIN );
-        Connection::MsgBuffer reply;
+        MessageBuffer reply;
         Connection::MsgHeader *reply_hdr;
 
         // Initialize securit conext. Must exchange tokens with server until GSS
@@ -191,10 +233,13 @@ public:
                 }
             }
         }
+        #endif
     }
 
     void logout()
     {
+
+        #if 0
         cout << "logout\n";
 
         Connection::MsgHeader msg( FMT_LOGOUT );
@@ -208,32 +253,12 @@ public:
         Connection::MsgHeader *hdr = (Connection::MsgHeader*)reply.data();
         if ( hdr->msg_type != FMT_ACK )
             throw runtime_error("Invalid reply from server (wrong type).");
+        #endif
     }
 
-    void userList()
+    bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
     {
-        cout << "userList\n";
-
-        Connection::MsgHeader msg( FMT_USER_LIST );
-
-        m_connection.send( msg );
-
-        Connection::MsgBuffer reply;
-        if ( !m_connection.recv( reply, m_timeout ))
-            throw runtime_error("Server did not reply.");
-
-        Connection::MsgHeader *hdr = (Connection::MsgHeader*)reply.data();
-
-        if ( hdr->msg_type == FMT_NACK )
-        {
-            if ( hdr->data_size )
-                throw runtime_error( reply.data() + sizeof( Connection::MsgHeader ));
-            else
-                throw runtime_error("Server NACK");
-        }
-
-        if ( hdr->msg_type != FMT_ACK )
-            throw runtime_error("Invalid reply from server (wrong type).");
+        return false;
     }
 
 private:
@@ -242,6 +267,7 @@ private:
     uint64_t        m_timeout;
     gss_cred_id_t   m_sec_cred;
     gss_ctx_id_t    m_sec_ctx;
+    uint32_t        m_ctx;
 };
 
 
@@ -286,9 +312,9 @@ void Client::logout()
     m_impl->logout();
 }
 
-void Client::userList()
+bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
 {
-    m_impl->userList();
+    return m_impl->send( a_request, a_reply, a_timeout );
 }
 
 }}

@@ -2,8 +2,10 @@
 #define SDMS_CLIENT_HPP
 
 #include <stdint.h>
-#include <Connection.hpp>
+#include "Connection.hpp"
+#include "Facility.pb.h"
 
+#define Check(Var,Src,Cls) Cls * Var = dynamic_cast<Cls*>(Src)
 
 namespace SDMS {
 namespace Facility {
@@ -40,10 +42,10 @@ public:
 
     Client& operator=( const Client & ) = delete;
 
-    void ping();
-    void login();
-    void logout();
-    void userList();
+    void        ping();
+    void        login();
+    void        logout();
+    bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
 
 private:
     class ClientImpl;
