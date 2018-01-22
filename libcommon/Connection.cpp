@@ -75,12 +75,12 @@ Connection::findMessageType( uint16_t a_proto_id, const string & a_message_name 
 }
 
 
-bool
+void
 Connection::send( Message &a_message )
 {
     serializeToBuffer( a_message, m_buffer );
 
-    return send( m_buffer );
+    send( m_buffer );
 }
 
 
@@ -91,6 +91,8 @@ Connection::recv( Message *&a_msg, uint32_t a_timeout )
     if ( recv( m_buffer, a_timeout ))
     {
         a_msg = unserializeFromBuffer( m_buffer );
+        if ( !a_msg )
+            EXCEPT( EC_UNREGISTERED_REPLY_TYPE, "Recv unregistered reply type." );
         return m_buffer.frame.msg_id;
     }
 
@@ -99,7 +101,7 @@ Connection::recv( Message *&a_msg, uint32_t a_timeout )
 
 
 // Just like send except client ID is sent along with serialized message
-bool
+void
 Connection::send( Message &a_message, const std::string &a_client_id )
 {
     // Place client ID in buffer and set msg_offset
@@ -107,7 +109,7 @@ Connection::send( Message &a_message, const std::string &a_client_id )
     memcpy( m_buffer.buffer, a_client_id.data(), m_buffer.msg_offset );
 
     // Send message as usual
-    return send( a_message );
+    send( a_message );
 }
 
 
@@ -126,25 +128,23 @@ Connection::recv( Message *&a_msg, uint32_t a_timeout, std::string &a_client_id 
 }
 
 
-bool
+void
 Connection::send( MessageBuffer &a_msg_buffer )
 {
     // For servers, send client ID
     if ( m_proc_addresses )
     {
         if ( zmq_send( m_socket, a_msg_buffer.buffer, a_msg_buffer.msg_offset, ZMQ_SNDMORE ) != (int)a_msg_buffer.msg_offset )
-            return false;
+            EXCEPT( EC_SEND_FAILED, "Send of routing address failed." );
     }
 
     // Send Message frame
     if ( zmq_send( m_socket, &a_msg_buffer.frame, sizeof( MessageFrame ), ZMQ_SNDMORE ) != sizeof( MessageFrame ))
-        return false;
+        EXCEPT( EC_SEND_FAILED, "Send of message frame failed." );
 
     // Send message payload
     if ( zmq_send( m_socket, a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size, 0 ) != (int)a_msg_buffer.frame.msg_size )
-        return false;
-
-    return true;
+        EXCEPT( EC_SEND_FAILED, "Send of message payload failed." );
 }
 
 
@@ -175,9 +175,8 @@ Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
     if ( m_proc_addresses )
     {
         if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer, a_msg_buffer.buffer_capacity, ZMQ_DONTWAIT )) < 0 || rc > MAX_ADDR_LEN )
-        {
-            return false;
-        }
+            EXCEPT( EC_RCV_FAILED, "Recv of routing address failed." );
+
         a_msg_buffer.msg_offset = rc;
 
         //string cid;
@@ -191,10 +190,7 @@ Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
 
     // Receive our message frame (type and size)
     if (( rc = zmq_recv( m_socket, &a_msg_buffer.frame, sizeof( MessageFrame ), ZMQ_DONTWAIT )) < 0 || (size_t)rc != sizeof( MessageFrame ))
-    {
-        // Malformed message!
-        return false;
-    }
+        EXCEPT( EC_RCV_FAILED, "Rcv of message frame failed." );
 
     //cout << "inbound msg size: " << a_msg_buffer.frame.msg_size << endl;
 
@@ -204,11 +200,7 @@ Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
 
     // Receieve message (binary serialized protobuf)
     if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size, ZMQ_DONTWAIT )) < 0 || (uint32_t)rc != a_msg_buffer.frame.msg_size )
-    {
-        // Malformed message!
-        return false;
-    }
-    //cout << "msg_id: " << a_msg_buffer.frame.msg_id.proto_id << ":" << a_msg_buffer.frame.msg_id.msg_idx << endl;
+        EXCEPT( EC_RCV_FAILED, "Rcv of message payload failed." );
 
     return true;
 }
@@ -268,14 +260,6 @@ Connection::serializeToBuffer( Message &a_msg, MessageBuffer & a_msg_buffer )
         EXCEPT( EC_PROTO_SERIALIZE, "SerializeToArray for message failed." );
 }
 
-string
-Connection::getClientID( MessageBuffer & a_msg_buffer )
-{
-    string id;
-    id.assign( a_msg_buffer.buffer, a_msg_buffer.msg_offset );
-
-    return id;
-}
 
 void
 Connection::setupSocketKeepAlive()

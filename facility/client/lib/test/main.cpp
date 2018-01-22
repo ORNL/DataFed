@@ -48,9 +48,11 @@ int main( int a_argc, char ** a_argv )
 
         Client client( host, port, timeout );
 
+        cout << "status: " << client.status() << "\n";
         client.ping();
         client.login();
         client.logout();
+
 /*
         timerDef();
         timerStart();
@@ -62,6 +64,10 @@ int main( int a_argc, char ** a_argv )
         cout << "ping rate: " << 10000/timerElapsed() << " p/s\n";
 */
 
+    }
+    catch( TraceException &e )
+    {
+        cout << "Exception: " << e.toString() << "\n";
     }
     catch( exception &e )
     {

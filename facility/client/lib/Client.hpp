@@ -42,6 +42,7 @@ public:
 
     Client& operator=( const Client & ) = delete;
 
+    Status      status();
     void        ping();
     void        login();
     void        logout();

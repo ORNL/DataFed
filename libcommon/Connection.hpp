@@ -11,6 +11,9 @@
 #include "ErrorCodes.hpp"
 #include "SDMS.pb.h"
 
+// TODO Put context in msg frame, not in proto file. With it in the proto file it cant be checked until
+// the msg is unserialized, which requires multiple checks when multiple msg types can be received.
+
 namespace SDMS
 {
 
@@ -19,6 +22,7 @@ typedef ::google::protobuf::Message         Message;
 struct MessageID
 {
     MessageID() : proto_id(0), msg_idx(0) {}
+    bool isNull() { return proto_id == 0; }
 
     uint16_t    proto_id;
     uint16_t    msg_idx;
@@ -44,11 +48,18 @@ struct MessageBuffer
         delete[] buffer;
     }
 
+    // Return most-local connection identity as an unsigned 32-bit int
+    uint32_t cid() const
+    {
+        return *(uint32_t*)(buffer+1);
+    }
+
     MessageFrame    frame;
     uint32_t        msg_offset;
     uint32_t        buffer_capacity;
     char        *   buffer;
 };
+
 
 class Connection
 {
@@ -81,14 +92,14 @@ public:
 
     //----- Basic Messaging API -----
 
-    bool            send( Message & a_message );
+    void            send( Message & a_message );
     MessageID       recv( Message *& a_msg, uint32_t a_timeout );
 
     //----- Advanced (server) Messaging API -----
 
-    bool            send( Message & a_message, const std::string &a_client_id );
+    void            send( Message & a_message, const std::string &a_client_id );
     MessageID       recv( Message *& a_msg, uint32_t a_timeout, std::string & a_client_id );
-    bool            send( MessageBuffer & a_buffer );
+    void            send( MessageBuffer & a_buffer );
     bool            recv( MessageBuffer & a_buffer, uint32_t a_timeout );
     Message *       unserializeFromBuffer( MessageBuffer &a_buffer );
     void            serializeToBuffer( Message & a_msg, MessageBuffer & a_msg_buffer );
@@ -104,6 +115,7 @@ public:
     {
         EC_OK = 0,
         EC_SEND_FAILED,
+        EC_RCV_FAILED,
         EC_TIMEOUT,
         EC_UNREGISTERED_REPLY_TYPE,
         EC_UNEXPECTED_REPLY_TYPE,
@@ -115,37 +127,33 @@ public:
     {
         a_reply = 0;
 
-        if ( send( a_request ))
-        {
-            Message*  raw_reply = 0;
-            MessageID msg_id = recv( raw_reply, a_timeout );
+        send( a_request );
 
-            if ( !msg_id.msg_idx )
-                return EC_TIMEOUT;
-            else if ( !raw_reply )
-                return EC_UNREGISTERED_REPLY_TYPE;
-            else
+        Message*  raw_reply = 0;
+        MessageID msg_id = recv( raw_reply, a_timeout );
+
+        if ( !msg_id.msg_idx )
+            EXCEPT( EC_TIMEOUT, "No response from server." );
+        else if ( !raw_reply )
+            EXCEPT( EC_UNREGISTERED_REPLY_TYPE, "Unregistered reply type from server." );
+        else
+        {
+            a_reply = dynamic_cast<T*>(raw_reply);
+            if ( a_reply )
             {
-                a_reply = dynamic_cast<T*>(raw_reply);
-                if ( a_reply )
-                {
-                    if ( a_reply->header().context() != a_context )
-                    {
-                        delete raw_reply;
-                        return EC_TOKEN_MISMATCH;
-                    }
-                    else
-                        return EC_OK;
-                }
-                else
+                if ( a_reply->header().context() != a_context )
                 {
                     delete raw_reply;
-                    return EC_UNEXPECTED_REPLY_TYPE;
+                    a_reply = 0;
+                    EXCEPT( EC_TOKEN_MISMATCH, "Mismatched reply context from server." );
                 }
             }
+            else
+            {
+                delete raw_reply;
+                EXCEPT( EC_UNEXPECTED_REPLY_TYPE, "Unexpected reply type from server." );
+            }
         }
-        else
-            return EC_SEND_FAILED;
     }
 
 private:

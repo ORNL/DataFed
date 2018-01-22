@@ -11,7 +11,8 @@
 #include <gssapi.h>
 
 #include <Connection.hpp>
-#include "FacilityMsgSchema.hpp"
+#include "Facility.pb.h"
+//#include "FacilityMsgSchema.hpp"
 
 namespace SDMS {
 namespace Facility {
@@ -48,7 +49,7 @@ private:
 
     void            workerRouter();
     void            backgroundMaintenance();
-    ClientInfo &    getClientInfo( Connection::MsgBuffer &a_msg_buffer, bool a_upd_last_act = false );
+    ClientInfo &    getClientInfo( MessageBuffer &a_msg_buffer, bool a_upd_last_act = false );
 
     class Worker
     {
@@ -58,22 +59,23 @@ private:
 
         void    workerThread();
         void    join();
-        void    procMsgPing( Connection::MsgBuffer &a_msg_buffer );
-        void    procMsgLogIn( Connection::MsgBuffer &a_msg_buffer );
-        void    procMsgLogOut( Connection::MsgBuffer &a_msg_buffer );
-        void    procMsgUserCommands( Connection::MsgBuffer &a_msg_buffer );
-
-        typedef void (Server::Worker::*msg_fun_t)( Connection::MsgBuffer& );
+        void    procMsgStatus( MessageBuffer &a_msg_buffer );
+        void    procMsgPing( MessageBuffer &a_msg_buffer );
+        void    procMsgInitSec( MessageBuffer &a_msg_buffer );
+        void    procMsgTermSec( MessageBuffer &a_msg_buffer );
+        void    procMsgUserCommands( MessageBuffer &a_msg_buffer );
 
         Server  &           m_server;
         void            *   m_context;
         Connection      *   m_conn;
         std::thread   *     m_worker_thread;
         int                 m_id;
-        static msg_fun_t    m_proc_funcs[_FMT_END];
+        //static msg_fun_t    m_proc_funcs[_FMT_END];
     };
 
-    Connection                      m_connection;
+    typedef void (Server::Worker::*msg_fun_t)( MessageBuffer& );
+
+    Connection                      m_conn;
     uint64_t                        m_timeout;
     std::thread   *                 m_router_thread;
     std::thread   *                 m_maint_thread;
@@ -86,6 +88,9 @@ private:
     std::condition_variable         m_router_cvar;
     std::map<uint32_t,ClientInfo>   m_client_info;
     gss_cred_id_t                   m_sec_cred;
+    std::map<uint32_t,msg_fun_t>    m_msg_handlers;
+    
+    friend class Worker;
 };
 
 

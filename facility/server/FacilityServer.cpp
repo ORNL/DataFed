@@ -7,6 +7,7 @@
 
 #include <zmq.h>
 
+#include "DynaLog.hpp"
 #include "FacilityServer.hpp"
 #include "GSSAPI_Utils.hpp"
 
@@ -18,11 +19,12 @@ namespace Facility {
 #define DEBUG_GSI
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 30
+#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 16 ) | m_conn.findMessageType( proto_id, name )] = func;
 
 // Class ctor/dtor
 
 Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout, uint32_t a_num_workers ) :
-    m_connection( a_server_host, a_server_port, Connection::Server ),
+    m_conn( a_server_host, a_server_port, Connection::Server ),
     m_timeout(a_timeout * 1000),
     m_router_thread(0),
     m_maint_thread(0),
@@ -44,7 +46,7 @@ Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint3
         throw runtime_error( "Unable to acquire valid credentials. Please (re)run grid-proxy-init." );
 
     #ifdef DEBUG_GSI
-    
+
     gss_name_t cred_name = 0;
 
     if ( gss_inquire_cred( &min_stat, m_sec_cred, &cred_name, 0, 0, 0 )!= GSS_S_COMPLETE )
@@ -55,11 +57,14 @@ Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint3
 
     #endif
 
-    Worker::m_proc_funcs[FMT_PING] = &Worker::procMsgPing;
-    Worker::m_proc_funcs[FMT_LOGIN] = &Worker::procMsgLogIn;
-    Worker::m_proc_funcs[FMT_LOGOUT] = &Worker::procMsgLogOut;
-    Worker::m_proc_funcs[FMT_USER_LIST] = &Worker::procMsgUserCommands;
-    Worker::m_proc_funcs[FMT_USER_VIEW] = &Worker::procMsgUserCommands;
+    uint32_t proto_id;
+    SET_MSG_HANDLER(1,"StatusRequest",&Worker::procMsgStatus);
+    SET_MSG_HANDLER(1,"PingRequest",&Worker::procMsgPing);
+
+    proto_id = REG_API(m_conn,Facility);
+    SET_MSG_HANDLER(proto_id,"InitSecurityRequest",&Worker::procMsgInitSec);
+    SET_MSG_HANDLER(proto_id,"TermSecurityRequest",&Worker::procMsgTermSec);
+    SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserCommands);
 }
 
 
@@ -107,7 +112,7 @@ Server::stopWorkerRouter( bool a_async )
 
     if ( m_router_running )
     {
-        void *control = zmq_socket( m_connection.getContext(), ZMQ_PUB );
+        void *control = zmq_socket( m_conn.getContext(), ZMQ_PUB );
 
         int linger = 100;
         if ( zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int )) == -1 )
@@ -182,7 +187,7 @@ Server::workerRouter()
     if ( m_num_workers == 0 )
         m_num_workers = max( 1u , std::thread::hardware_concurrency() - 1);
 
-    void * context = m_connection.getContext();
+    void * context = m_conn.getContext();
 
     //  Backend socket talks to workers over inproc
 
@@ -209,7 +214,7 @@ Server::workerRouter()
         m_workers.push_back( new Worker( *this, context, t+1 ));
 
     // Connect backend to frontend via a proxy
-    zmq_proxy_steerable( m_connection.getSocket(), backend, 0, control );
+    zmq_proxy_steerable( m_conn.getSocket(), backend, 0, control );
 
     m_worker_running = false;
 
@@ -267,7 +272,7 @@ Server::backgroundMaintenance()
 
 
 Server::ClientInfo &
-Server::getClientInfo( Connection::MsgBuffer & a_msg_buffer, bool a_upd_last_act )
+Server::getClientInfo( MessageBuffer & a_msg_buffer, bool a_upd_last_act )
 {
     lock_guard<mutex> lock(m_data_mutex);
 
@@ -291,7 +296,6 @@ Server::getClientInfo( Connection::MsgBuffer & a_msg_buffer, bool a_upd_last_act
 
 // ----- Worker Class Implementation -----------------------------------
 
-Server::Worker::msg_fun_t    Server::Worker::m_proc_funcs[_FMT_END] = {};
 
 Server::Worker::Worker( Server &a_server, void *a_context, int a_id )
     : m_server(a_server), m_context(a_context), m_worker_thread(0), m_id(a_id)
@@ -311,10 +315,11 @@ Server::Worker::workerThread()
     //cout << "W" << m_id << " starting" << endl;
 
     m_conn = new Connection( "inproc://workers", Connection::Worker, m_context );
+    REG_API(*m_conn,Facility);
 
-    Connection::MsgBuffer buffer;
-    Connection::MsgHeader * header;
-    msg_fun_t f;
+    MessageBuffer buffer;
+    map<uint32_t,msg_fun_t>::iterator handler;
+    uint32_t msg_type;
 
     while ( m_server.m_worker_running )
     {
@@ -324,18 +329,14 @@ Server::Worker::workerThread()
             {
                 if ( m_conn->recv( buffer, 1000 ))
                 {
-                    header = (Connection::MsgHeader *)buffer.data();
+                    msg_type = ( ((uint32_t)buffer.frame.msg_id.proto_id << 16 ) | buffer.frame.msg_id.msg_idx );
 
-                    if ( header->msg_type < _FMT_END )
-                    {
-                        f = m_proc_funcs[header->msg_type];
-                        if ( f )
-                            (this->*f)( buffer );
-                        else
-                            cout << "Recv msg type: " << header->msg_type << " with no defined handler\n";
-                    }
+                    handler = m_server.m_msg_handlers.find( msg_type );
+
+                    if ( handler != m_server.m_msg_handlers.end() )
+                        (this->*handler->second)(buffer);
                     else
-                        cout << "Recv bad msg type: " << header->msg_type << "\n";
+                        cout << "Recv unregistered msg type: " << msg_type << "\n";
                 }
             }
         }
@@ -356,121 +357,156 @@ Server::Worker::join()
     m_worker_thread->join();
 }
 
-void
-Server::Worker::procMsgPing( Connection::MsgBuffer & a_msg_buffer )
-{
-    ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
 
-    cout << "proc ping, cid: " << a_msg_buffer.cid() << "\n";
 
-    MsgPing * msg = (MsgPing *)a_msg_buffer.data();
+#define PROC_MSG_BEGIN( msgclass, replyclass ) \
+    msgclass *msg = 0; \
+    ::google::protobuf::Message *base_msg = m_conn->unserializeFromBuffer( a_msg_buffer ); \
+    if ( base_msg ) \
+    { \
+        msg = dynamic_cast<msgclass*>( base_msg ); \
+        if ( msg ) \
+        { \
+            DL_TRACE( "Rcvd: " << msg->DebugString()); \
+            ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true ); \
+            replyclass reply; \
+            reply.mutable_header()->set_context( msg->header().context() ); \
+            try \
+            {
 
-    if ( a_msg_buffer.size() != sizeof( MsgPing ))
-    {
-        cout << "Wrong size of MsgPing msg: " << a_msg_buffer.size() << "\n";
-
-        a_msg_buffer.setSize( sizeof( Connection::MsgHeader ));
-        Connection::MsgHeader * nack = (Connection::MsgHeader *)a_msg_buffer.data();
-        nack->reinit( FMT_NACK );
+#define PROC_MSG_END \
+            } \
+            catch( TraceException &e ) \
+            { \
+                DL_WARN( "worker "<<m_id<<": exception:" << e.toString() ); \
+                reply.mutable_header()->set_err_code( e.getErrorCode() ); \
+                reply.mutable_header()->set_err_msg( e.toString() ); \
+            } \
+            catch( exception &e ) \
+            { \
+                DL_WARN( "worker "<<m_id<<": " << e.what() ); \
+                reply.mutable_header()->set_err_code( EC_INTERNAL_ERROR ); \
+                reply.mutable_header()->set_err_msg( e.what() ); \
+            } \
+            catch(...) \
+            { \
+                DL_WARN( "worker "<<m_id<<": unkown exception while processing message!" ); \
+                reply.mutable_header()->set_err_code( EC_INTERNAL_ERROR ); \
+                reply.mutable_header()->set_err_msg( "Unknown exception type" ); \
+            } \
+            m_conn->serializeToBuffer( reply, a_msg_buffer ); \
+            m_conn->send( a_msg_buffer );\
+            DL_TRACE( "Sent: " << reply.DebugString()); \
+        } \
+        else { \
+            DL_ERROR( "worker "<<m_id<<": dynamic cast of msg buffer " << &a_msg_buffer << " failed!" );\
+        } \
+        delete base_msg; \
+    } \
+    else { \
+        DL_ERROR( "worker "<<m_id<<": buffer parse failed due to unregistered msg type." ); \
     }
 
-    m_conn->send( a_msg_buffer );
-}
 
 void
-Server::Worker::procMsgLogIn( Connection::MsgBuffer & a_msg_buffer )
+Server::Worker::procMsgStatus( MessageBuffer &a_msg_buffer )
 {
-    cout << "proc login\n";
+    PROC_MSG_BEGIN( StatusRequest, StatusReply )
 
-    ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
-    Connection::MsgHeader *msg = (Connection::MsgHeader*)a_msg_buffer.data();
-    string err_msg;
+    reply.set_status( NORMAL );
 
-    //cout << "client state: " << client.state << "\n";
+    PROC_MSG_END
+}
+
+
+void
+Server::Worker::procMsgPing( MessageBuffer & a_msg_buffer )
+{
+    PROC_MSG_BEGIN( PingRequest, PingReply )
+
+    // Nothing to do
+
+    PROC_MSG_END
+}
+
+
+void
+Server::Worker::procMsgInitSec( MessageBuffer & a_msg_buffer )
+{
+    cout << "proc init sec\n";
+
+    PROC_MSG_BEGIN( InitSecurityRequest, AckReply )
 
     if ( client.state == CS_AUTHN )
+        EXCEPT( ID_SECURITY_NOT_ALLOWED, "Security already initialized." );
+
+    OM_uint32           maj_stat, min_stat;
+    gss_buffer_desc     init_token;
+    gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
+
+    init_token.value = (void*)msg->token().c_str();
+    init_token.length = msg->token().size();
+
+    maj_stat = gss_accept_sec_context( &min_stat, &client.sec_ctx, m_server.m_sec_cred,
+        &init_token, GSS_C_NO_CHANNEL_BINDINGS, 0, 0,
+        &accept_token, 0, 0, 0 );
+
+    if ( GSS_ERROR( maj_stat ))
+        EXCEPT( ID_SECURITY_ERROR, "GSS security init failed." );
+
+    if (( maj_stat & GSS_S_CONTINUE_NEEDED ) && !accept_token.length )
+        EXCEPT( ID_SECURITY_ERROR, "Invalid client init token" );
+
+    if ( maj_stat & GSS_S_DUPLICATE_TOKEN )
+        EXCEPT( ID_SECURITY_ERROR, "Duplicate client init token" );
+
+    if ( maj_stat & GSS_S_OLD_TOKEN )
+        EXCEPT( ID_SECURITY_ERROR, "Reusing old client init token" );
+
+    if ( accept_token.length )
     {
-        err_msg = "Already authenticated";
+        // Send token to client
+
+        InitSecurityRequest reply2;
+
+        reply2.mutable_header()->set_context( msg->header().context() );
+        reply2.set_token((const char*)accept_token.value, accept_token.length );
+
+        free( accept_token.value );
+
+        m_conn->serializeToBuffer( reply2, a_msg_buffer );
+        m_conn->send( a_msg_buffer );
+        
+        return; // bypass ACK reply processing below
     }
     else
     {
-        OM_uint32           maj_stat, min_stat;
-        gss_buffer_desc     init_token;
-        gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
+        // Done, check client identity
 
-        if ( msg->data_size )
-        {
-            //cout << "ini tok size: " << msg->data_size << "\n";
-            init_token.value = a_msg_buffer.data() + msg->msg_size;
-            init_token.length = msg->data_size;
+        gss_name_t src_name = 0;
+        maj_stat = gss_inquire_context( &min_stat, client.sec_ctx, &src_name, 0, 0, 0, 0, 0, 0 );
 
-            maj_stat = gss_accept_sec_context( &min_stat, &client.sec_ctx, m_server.m_sec_cred,
-                &init_token, GSS_C_NO_CHANNEL_BINDINGS, 0, 0,
-                &accept_token, 0, 0, 0 );
+        //cout << "src name: " << src_name << "\n";
 
-            if ( GSS_ERROR( maj_stat ))
-            {
-                err_msg = "gss_accept_sec_context failed";
-            }
-            else if ( accept_token.length )
-            {
-                // Send token to client
-                //cout << "send acc tok\n";
-                a_msg_buffer.setSize( sizeof(Connection::MsgHeader) + accept_token.length );
-                msg->reinit( FMT_LOGIN );
-                msg->data_size = accept_token.length;
-                //cout << "cpy acc tok\n";
-                memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), accept_token.value, accept_token.length );
-                //cout << "free acc tok\n";
-                free( accept_token.value );
-            }
-            else
-            {
-                // Done, check client identity
-                //cout << "done\n";
+        if ( GSS_ERROR( maj_stat ))
+            EXCEPT( ID_SECURITY_ERROR, "Failed to identify security client" );
 
-                gss_name_t src_name = 0;
-                maj_stat = gss_inquire_context( &min_stat, client.sec_ctx, &src_name, 0, 0, 0, 0, 0, 0 );
+        gssString   name_str( src_name );
+        client.name = name_str.to_string();
+        cout << "client name: " << client.name << "\n";
 
-                if ( GSS_ERROR( maj_stat ))
-                    err_msg = "Failed to inquire context";
-                else
-                {
-                    gssString   name_str( src_name );
-                    client.name = name_str.to_string();
-                    cout << "client name: " << client.name << "\n";
-                    
-                    // Ack client
-                    a_msg_buffer.setSize( sizeof( Connection::MsgHeader ));
-                    msg->reinit( FMT_ACK );
-                    msg->data_size = 0;
-                    
-                    client.state = CS_AUTHN;
-                }
-            }
-        }
-        else
-        {
-            err_msg = "No client token data";
-        }
+        client.state = CS_AUTHN;
     }
 
-    if ( err_msg.size() )
-    {
-        // Send NACK with error message
-        a_msg_buffer.setSize( sizeof(Connection::MsgHeader) + err_msg.size() + 1 );
-        msg->reinit( FMT_NACK );
-        msg->data_size = err_msg.size() + 1;
-        memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), err_msg.c_str(), err_msg.size() + 1 );
-    }
-
-    m_conn->send( a_msg_buffer );
+    PROC_MSG_END
 }
 
 void
-Server::Worker::procMsgLogOut( Connection::MsgBuffer & a_msg_buffer )
+Server::Worker::procMsgTermSec( MessageBuffer & a_msg_buffer )
 {
-    cout << "proc logout\n";
+    cout << "proc term sec\n";
+
+    PROC_MSG_BEGIN( TermSecurityRequest, AckReply )
 
     lock_guard<mutex> lock(m_server.m_data_mutex);
 
@@ -483,18 +519,17 @@ Server::Worker::procMsgLogOut( Connection::MsgBuffer & a_msg_buffer )
             
             gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
         }
+        else
+            EXCEPT( ID_SECURITY_REQUIRED, "Security has not been initialized." );
 
         m_server.m_client_info.erase( ci );
     }
 
-    a_msg_buffer.setSize( sizeof( Connection::MsgHeader ));
-    Connection::MsgHeader * msg = (Connection::MsgHeader*) a_msg_buffer.data();
-    msg->reinit( FMT_ACK );
-    m_conn->send( a_msg_buffer );
+    PROC_MSG_END
 }
 
 void
-Server::Worker::procMsgUserCommands( Connection::MsgBuffer & a_msg_buffer )
+Server::Worker::procMsgUserCommands( MessageBuffer & a_msg_buffer )
 {
     cout << "proc user cmds\n";
     ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
@@ -505,6 +540,7 @@ Server::Worker::procMsgUserCommands( Connection::MsgBuffer & a_msg_buffer )
         err_msg = "Method requires authentication";
     }
 
+/*
     Connection::MsgHeader *msg = (Connection::MsgHeader*)a_msg_buffer.data();
     msg->reinit( FMT_ACK );
     msg->data_size = 0;
@@ -517,7 +553,7 @@ Server::Worker::procMsgUserCommands( Connection::MsgBuffer & a_msg_buffer )
         msg->data_size = err_msg.size() + 1;
         memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), err_msg.c_str(), err_msg.size() + 1 );
     }
-
+*/
     m_conn->send( a_msg_buffer );
 }
 

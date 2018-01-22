@@ -26,6 +26,8 @@ public:
         m_connection( a_server_host, a_server_port, Connection::Client ),
         m_timeout(a_timeout * 1000), m_sec_cred(0), m_sec_ctx(0), m_ctx(1)
     {
+        REG_API( m_connection, Facility );
+
         if ( ++m_initialized == 1 )
         {
             if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
@@ -89,6 +91,22 @@ public:
         }
     }
 
+    Status status()
+    {
+        StatusRequest req;
+        StatusReply * reply;
+
+        req.mutable_header()->set_context( m_ctx );
+
+        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
+
+        Status stat = reply->status();
+
+        delete reply;
+
+        return stat;
+    }
+
     /**
      * @brief Verify server is listening an in-synch
      */
@@ -99,64 +117,9 @@ public:
 
         req.mutable_header()->set_context( m_ctx );
 
-        Connection::ErrorCode err = m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
-        if ( err != Connection::EC_OK )
-            throw runtime_error("Ping failed.");
+        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
 
         delete reply;
-#if 0
-        msg.mutable_header()->set_context( m_ctx++ );
-
-        if ( m_connection.send( msg ))
-        {
-            Message*  raw_reply = 0;
-            MessageID msg_id = m_connection.recv( raw_reply, m_timeout );
-
-            if ( !msg_id.msg_idx )
-                throw runtime_error("Server did not reply.");
-
-            if ( !raw_reply )
-                throw runtime_error("Received unregistered reply type.");
-
-            if ( Check( r, raw_reply, PingReply ))
-            {
-                if ( r->header().context() != msg.header().context() )
-                {
-                    delete raw_reply;
-                    throw runtime_error("Received mismatched message context.");
-                }
-            }
-            else
-            {
-                delete raw_reply;
-                throw runtime_error("Unexpected reply type.");
-            }
-
-            delete raw_reply;
-        }
-        else
-            throw runtime_error("Send failed.");
-#endif
-
-        #if 0
-        cout << "ping\n";
-
-        MsgPing msg( getpid() );
-
-        m_connection.send( msg );
-
-        MessageBuffer reply;
-        if ( !m_connection.recv( reply, m_timeout ))
-            throw runtime_error("Server did not reply.");
-
-        MsgPing *ping = (MsgPing*)reply.data();
-
-        if ( ping->msg_type != FMT_PING )
-            throw runtime_error("Invalid reply from server (wrong type).");
-
-        if ( ping->context != msg.context )
-            throw runtime_error("Invalid reply from server (wrong context).");
-        #endif
     }
 
     /**
@@ -164,23 +127,20 @@ public:
      */
     void login()
     {
-        #if 0
         cout << "login\n";
 
         if ( m_sec_ctx )
             throw runtime_error( "Security context already established." );
 
-        OM_uint32                           maj_stat, min_stat;
-        bool loop = true;
+        OM_uint32           maj_stat, min_stat;
+        gss_buffer_desc     init_token = GSS_C_EMPTY_BUFFER;
+        gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
+        gss_ctx_id_t        accept_ctx = GSS_C_NO_CONTEXT;
+        bool                loop = true;
+        Message*            reply = 0;
+        MessageID           reply_id;
+        InitSecurityRequest msg;
 
-        gss_buffer_desc                     init_token = GSS_C_EMPTY_BUFFER;
-
-        gss_buffer_desc                     accept_token = GSS_C_EMPTY_BUFFER;
-        gss_ctx_id_t                        accept_ctx = GSS_C_NO_CONTEXT;
-
-        Connection::MsgHeader msg( FMT_LOGIN );
-        MessageBuffer reply;
-        Connection::MsgHeader *reply_hdr;
 
         // Initialize securit conext. Must exchange tokens with server until GSS
         // init/accept functions stop generating token data.
@@ -193,6 +153,9 @@ public:
 
             gssCheckError( maj_stat, min_stat );
 
+            if ( reply )
+                delete reply;
+
             accept_token.value = NULL;
             accept_token.length = 0;
 
@@ -202,59 +165,63 @@ public:
                 cout << "init tok len: " << init_token.length << "\n";
 
                 // Send init token data to server
-                msg.data_size = init_token.length;
-                m_connection.send( msg, (const char*) init_token.value );
+                uint32_t loc_ctx = m_ctx++;
+                msg.mutable_header()->set_context( loc_ctx );
+                msg.set_token( (const char*) init_token.value, init_token.length );
+                m_connection.send( msg );
 
                 // Wait for response from server
-                if ( !m_connection.recv( reply, m_timeout ))
+                reply_id = m_connection.recv( reply, m_timeout );
+                if ( reply_id.isNull() )
                     throw runtime_error("Server did not respond.");
-
+                cout << "reply: " << reply << "\n";
                 // Process server reply
-                reply_hdr = (Connection::MsgHeader*)reply.data();
+                //reply_hdr = (Connection::MsgHeader*)reply.data();
 
-                switch ( reply_hdr->msg_type )
+                if ( Check( r, reply, InitSecurityRequest ))
                 {
-                case FMT_LOGIN:
                     cout << "data from server\n";
-                    accept_token.value = reply.data() + reply_hdr->msg_size;
-                    accept_token.length = reply_hdr->data_size;
-                    break;
+                    accept_token.value = (void*)r->token().c_str();
+                    accept_token.length = r->token().size();
+                }
+                else if ( Check( r, reply, AckReply ))
+                {
+                    cout << "Ack\n";
+                    if ( r->header().err_code() )
+                    {
+                        cout << "error\n";
+                        string err = r->header().err_msg();
+                        delete reply;
+                        throw runtime_error( err );
+                    }
 
-                case FMT_ACK: // Done
+                    delete reply;
                     cout << "done\n";
                     loop = false;
-                    break;
-
-                case FMT_NACK: // Failed
-                    throw runtime_error("Failed to establish security context with server.");
-
-                default:
+                }
+                else
+                {
+                    delete reply;
                     throw runtime_error("Server responded with invalid reply type.");
                 }
             }
         }
-        #endif
     }
 
     void logout()
     {
-
-        #if 0
         cout << "logout\n";
 
-        Connection::MsgHeader msg( FMT_LOGOUT );
+        TermSecurityRequest req;
+        AckReply * reply;
 
-        m_connection.send( msg );
+        req.mutable_header()->set_context( m_ctx );
 
-        Connection::MsgBuffer reply;
-        if ( !m_connection.recv( reply, m_timeout ))
-            throw runtime_error("Server did not reply.");
+        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
 
-        Connection::MsgHeader *hdr = (Connection::MsgHeader*)reply.data();
-        if ( hdr->msg_type != FMT_ACK )
-            throw runtime_error("Invalid reply from server (wrong type).");
-        #endif
+        delete reply;
     }
+
 
     bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
     {
@@ -290,6 +257,11 @@ Client::~Client()
 }
 
 // Methods (Forward to Impl)
+
+Status Client::status()
+{
+    return m_impl->status();
+}
 
 /**
  * @brief Verify server is listening and in-synch

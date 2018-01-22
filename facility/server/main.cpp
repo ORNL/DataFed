@@ -1,6 +1,9 @@
 #include <iostream>
 #include <unistd.h>
 
+#define DEF_DYNALOG
+#include "DynaLog.hpp"
+
 #include "FacilityServer.hpp"
 
 using namespace std;
@@ -10,6 +13,11 @@ int main( int a_argc, char ** a_argv )
 {
     try
     {
+        DL_SET_ENABLED(true);
+        DL_SET_LEVEL(DynaLog::DL_TRACE_LEV);
+        DL_SET_CERR_ENABLED(true);
+        DL_SET_SYSDL_ENABLED(false);
+
         const char * host = "127.0.0.1";
         int port = 5800;
         int timeout = 5;
@@ -41,6 +49,10 @@ int main( int a_argc, char ** a_argv )
         Facility::Server server( host, port, timeout );
 
         server.runWorkerRouter( false );
+    }
+    catch( TraceException &e )
+    {
+        cout << e.toString() << "\n";
     }
     catch( exception &e )
     {
