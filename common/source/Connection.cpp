@@ -35,7 +35,7 @@ Connection::~Connection()
         zmq_ctx_destroy( m_context );
 }
 
-uint16_t
+uint8_t
 Connection::registerAPI( const ::google::protobuf::EnumDescriptor * a_enum_desc )
 {
     if ( a_enum_desc->name() != "Protocol" )
@@ -49,9 +49,9 @@ Connection::registerAPI( const ::google::protobuf::EnumDescriptor * a_enum_desc 
     if ( !val_desc )
         EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
-    uint16_t id = val_desc->number();
+    uint8_t id = val_desc->number();
 
-    std::map<uint16_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( id );
+    std::map<uint8_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( id );
     if ( iProto != m_descriptors.end() )
         EXCEPT_PARAM( EC_PROTO_INIT, "Protocol ID " << id << " has already been registered." );
 
@@ -60,10 +60,10 @@ Connection::registerAPI( const ::google::protobuf::EnumDescriptor * a_enum_desc 
     return id;
 }
 
-uint16_t
-Connection::findMessageType( uint16_t a_proto_id, const string & a_message_name )
+uint8_t
+Connection::findMessageType( uint8_t a_proto_id, const string & a_message_name )
 {
-    map<uint16_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( a_proto_id );
+    map<uint8_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( a_proto_id );
     if ( iProto == m_descriptors.end() )
         EXCEPT_PARAM( EC_INVALID_PARAM, "Protocol ID " << a_proto_id << " has not been registered." );
 
@@ -71,21 +71,22 @@ Connection::findMessageType( uint16_t a_proto_id, const string & a_message_name 
     if ( !desc )
         EXCEPT_PARAM( EC_PROTO_INIT, "Could not find specified message: " << a_message_name );
 
-    return desc->index();
+    return (uint8_t)desc->index();
 }
 
 
 void
-Connection::send( Message &a_message )
+Connection::send( Message &a_message, uint16_t a_context )
 {
     serializeToBuffer( a_message, m_buffer );
+    m_buffer.frame.context = a_context;
 
     send( m_buffer );
 }
 
 
-MessageID
-Connection::recv( Message *&a_msg, uint32_t a_timeout )
+bool
+Connection::recv( Message *&a_msg, MsgFrame** a_frame, uint32_t a_timeout )
 {
     a_msg = 0;
     if ( recv( m_buffer, a_timeout ))
@@ -93,20 +94,25 @@ Connection::recv( Message *&a_msg, uint32_t a_timeout )
         a_msg = unserializeFromBuffer( m_buffer );
         if ( !a_msg )
             EXCEPT( EC_UNREGISTERED_REPLY_TYPE, "Recv unregistered reply type." );
-        return m_buffer.frame.msg_id;
+
+        if ( a_frame )
+            *a_frame = &m_buffer.frame;
+
+        return true;
     }
 
-    return MessageID();
+    return false;
 }
 
 
 // Just like send except client ID is sent along with serialized message
+#if 0
 void
 Connection::send( Message &a_message, const std::string &a_client_id )
 {
-    // Place client ID in buffer and set msg_offset
-    m_buffer.msg_offset = a_client_id.size();
-    memcpy( m_buffer.buffer, a_client_id.data(), m_buffer.msg_offset );
+    // Place client ID in buffer and set offset
+    m_buffer.offset = a_client_id.size();
+    memcpy( m_buffer.buffer, a_client_id.data(), m_buffer.offset );
 
     // Send message as usual
     send( a_message );
@@ -114,42 +120,43 @@ Connection::send( Message &a_message, const std::string &a_client_id )
 
 
 // Just like recv except client ID is extracted from recv buffer
-MessageID
+MsgFrame
 Connection::recv( Message *&a_msg, uint32_t a_timeout, std::string &a_client_id )
 {
     // Recv message as usual
-    MessageID msg_id = recv( a_msg, a_timeout );
+    MsgFrame frame = recv( a_msg, a_timeout );
 
     // Get client ID from buffer
-    if ( msg_id.msg_idx > 0 )
-        a_client_id.assign( m_buffer.buffer, m_buffer.msg_offset );
+    if ( m_buffer.offset > 0 )
+        a_client_id.assign( m_buffer.buffer, m_buffer.offset );
 
-    return msg_id;
+    return frame;
 }
+#endif
 
 
 void
-Connection::send( MessageBuffer &a_msg_buffer )
+Connection::send( MsgBuffer &a_msg_buffer )
 {
     // For servers, send client ID
     if ( m_proc_addresses )
     {
-        if ( zmq_send( m_socket, a_msg_buffer.buffer, a_msg_buffer.msg_offset, ZMQ_SNDMORE ) != (int)a_msg_buffer.msg_offset )
+        if ( zmq_send( m_socket, a_msg_buffer.buffer, a_msg_buffer.offset, ZMQ_SNDMORE ) != (int)a_msg_buffer.offset )
             EXCEPT( EC_SEND_FAILED, "Send of routing address failed." );
     }
 
     // Send Message frame
-    if ( zmq_send( m_socket, &a_msg_buffer.frame, sizeof( MessageFrame ), ZMQ_SNDMORE ) != sizeof( MessageFrame ))
+    if ( zmq_send( m_socket, &a_msg_buffer.frame, sizeof( MsgFrame ), ZMQ_SNDMORE ) != sizeof( MsgFrame ))
         EXCEPT( EC_SEND_FAILED, "Send of message frame failed." );
 
     // Send message payload
-    if ( zmq_send( m_socket, a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size, 0 ) != (int)a_msg_buffer.frame.msg_size )
+    if ( zmq_send( m_socket, a_msg_buffer.buffer + a_msg_buffer.offset, a_msg_buffer.frame.msg_size, 0 ) != (int)a_msg_buffer.frame.msg_size )
         EXCEPT( EC_SEND_FAILED, "Send of message payload failed." );
 }
 
 
 bool
-Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
+Connection::recv( MsgBuffer & a_msg_buffer, uint32_t a_timeout )
 {
     int rc;
 
@@ -174,10 +181,10 @@ Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
     // If this is a server (router), receive address of sender
     if ( m_proc_addresses )
     {
-        if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer, a_msg_buffer.buffer_capacity, ZMQ_DONTWAIT )) < 0 || rc > MAX_ADDR_LEN )
+        if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer, a_msg_buffer.capacity, ZMQ_DONTWAIT )) < 0 || rc > MAX_ADDR_LEN )
             EXCEPT( EC_RCV_FAILED, "Recv of routing address failed." );
 
-        a_msg_buffer.msg_offset = rc;
+        a_msg_buffer.offset = rc;
 
         //string cid;
         //cid.assign( a_msg_buffer.buffer, a_msg_buffer.msg_offset );
@@ -185,11 +192,11 @@ Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
     }
     else
     {
-        a_msg_buffer.msg_offset = 0;
+        a_msg_buffer.offset = 0;
     }
 
     // Receive our message frame (type and size)
-    if (( rc = zmq_recv( m_socket, &a_msg_buffer.frame, sizeof( MessageFrame ), ZMQ_DONTWAIT )) < 0 || (size_t)rc != sizeof( MessageFrame ))
+    if (( rc = zmq_recv( m_socket, &a_msg_buffer.frame, sizeof( MsgFrame ), ZMQ_DONTWAIT )) < 0 || (size_t)rc != sizeof( MsgFrame ))
         EXCEPT( EC_RCV_FAILED, "Rcv of message frame failed." );
 
     //cout << "inbound msg size: " << a_msg_buffer.frame.msg_size << endl;
@@ -199,7 +206,7 @@ Connection::recv( MessageBuffer & a_msg_buffer, uint32_t a_timeout )
 
 
     // Receieve message (binary serialized protobuf)
-    if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size, ZMQ_DONTWAIT )) < 0 || (uint32_t)rc != a_msg_buffer.frame.msg_size )
+    if (( rc = zmq_recv( m_socket, a_msg_buffer.buffer + a_msg_buffer.offset, a_msg_buffer.frame.msg_size, ZMQ_DONTWAIT )) < 0 || (uint32_t)rc != a_msg_buffer.frame.msg_size )
         EXCEPT( EC_RCV_FAILED, "Rcv of message payload failed." );
 
     return true;
@@ -215,22 +222,22 @@ Connection::getPollInfo( zmq_pollitem_t  & a_poll_data )
 
 
 Message*
-Connection::unserializeFromBuffer( MessageBuffer & a_msg_buffer )
+Connection::unserializeFromBuffer( MsgBuffer & a_msg_buffer )
 {
-    map<uint16_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( a_msg_buffer.frame.msg_id.proto_id );
-    if ( iProto != m_descriptors.end() && a_msg_buffer.frame.msg_id.msg_idx < (uint16_t)iProto->second->message_type_count())
+    map<uint8_t,const FileDescriptorType *>::iterator iProto = m_descriptors.find( a_msg_buffer.frame.proto_id );
+    if ( iProto != m_descriptors.end() && a_msg_buffer.frame.msg_id < (uint8_t)iProto->second->message_type_count())
     {
         //cout << "proto " << a_msg_buffer.frame.msg_id.proto_id << "found" << endl;
 
         // Get the default class via descriptor to construct new message instance
-        const DescriptorType * msg_descriptor = iProto->second->message_type( a_msg_buffer.frame.msg_id.msg_idx );
+        const DescriptorType * msg_descriptor = iProto->second->message_type( a_msg_buffer.frame.msg_id );
         const Message * default_msg = m_factory->GetPrototype( msg_descriptor );
 
         Message * msg = default_msg->New();
 
         if ( msg )
         {
-            if ( msg->ParseFromArray( a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size ))
+            if ( msg->ParseFromArray( a_msg_buffer.buffer + a_msg_buffer.offset, a_msg_buffer.frame.msg_size ))
                 return msg;
             else
                 delete msg;
@@ -243,20 +250,20 @@ Connection::unserializeFromBuffer( MessageBuffer & a_msg_buffer )
 
 // Serialize reply into buffer
 void
-Connection::serializeToBuffer( Message &a_msg, MessageBuffer & a_msg_buffer )
+Connection::serializeToBuffer( Message &a_msg, MsgBuffer & a_msg_buffer )
 {
     const DescriptorType * desc = a_msg.GetDescriptor();
     const FileDescriptorType * file = desc->file();
 
-    a_msg_buffer.frame.msg_id.proto_id = file->enum_type(0)->value(0)->number();
-    a_msg_buffer.frame.msg_id.msg_idx = desc->index();
+    a_msg_buffer.frame.proto_id = file->enum_type(0)->value(0)->number();
+    a_msg_buffer.frame.msg_id = desc->index();
     a_msg_buffer.frame.msg_size = a_msg.ByteSize();
 
     // Make sure buffer is big enough
     ensureCapacity( a_msg_buffer );
 
     // Serialize message - may fail if required fields are missing
-    if ( !a_msg.SerializeToArray( a_msg_buffer.buffer + a_msg_buffer.msg_offset, a_msg_buffer.frame.msg_size ))
+    if ( !a_msg.SerializeToArray( a_msg_buffer.buffer + a_msg_buffer.offset, a_msg_buffer.frame.msg_size ))
         EXCEPT( EC_PROTO_SERIALIZE, "SerializeToArray for message failed." );
 }
 
@@ -349,17 +356,17 @@ Connection::init( const string & a_address )
 
 
 void
-Connection::ensureCapacity( MessageBuffer & a_msg_buffer )
+Connection::ensureCapacity( MsgBuffer & a_msg_buffer )
 {
-    if ( a_msg_buffer.frame.msg_size + a_msg_buffer.msg_offset > a_msg_buffer.buffer_capacity )
+    if ( a_msg_buffer.frame.msg_size + a_msg_buffer.offset > a_msg_buffer.capacity )
     {
         //cout << "buf resize" << endl;
 
-        char *new_buffer = new char[a_msg_buffer.frame.msg_size + a_msg_buffer.msg_offset];
-        memcpy( new_buffer, a_msg_buffer.buffer, a_msg_buffer.msg_offset );
+        char *new_buffer = new char[a_msg_buffer.frame.msg_size + a_msg_buffer.offset];
+        memcpy( new_buffer, a_msg_buffer.buffer, a_msg_buffer.offset );
         delete[] a_msg_buffer.buffer;
         a_msg_buffer.buffer = new_buffer;
-        a_msg_buffer.buffer_capacity = a_msg_buffer.frame.msg_size + a_msg_buffer.msg_offset;
+        a_msg_buffer.capacity = a_msg_buffer.frame.msg_size + a_msg_buffer.offset;
 
         //cout << "recv buf cap:" << a_msg_buffer.buffer_capacity << ", buf: " << hex << a_msg_buffer.buffer << endl;
     }

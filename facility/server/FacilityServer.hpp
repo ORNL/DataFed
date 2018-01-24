@@ -12,7 +12,7 @@
 
 #include <Connection.hpp>
 #include "Facility.pb.h"
-//#include "FacilityMsgSchema.hpp"
+//#include "DataMgrClient.hpp"
 
 namespace SDMS {
 namespace Facility {
@@ -49,7 +49,7 @@ private:
 
     void            workerRouter();
     void            backgroundMaintenance();
-    ClientInfo &    getClientInfo( MessageBuffer &a_msg_buffer, bool a_upd_last_act = false );
+    ClientInfo &    getClientInfo( MsgBuffer &a_msg_buffer, bool a_upd_last_act = false );
 
     class Worker
     {
@@ -59,11 +59,11 @@ private:
 
         void    workerThread();
         void    join();
-        void    procMsgStatus( MessageBuffer &a_msg_buffer );
-        void    procMsgPing( MessageBuffer &a_msg_buffer );
-        void    procMsgInitSec( MessageBuffer &a_msg_buffer );
-        void    procMsgTermSec( MessageBuffer &a_msg_buffer );
-        void    procMsgUserCommands( MessageBuffer &a_msg_buffer );
+        void    procMsgStatus( MsgBuffer &a_msg_buffer );
+        void    procMsgPing( MsgBuffer &a_msg_buffer );
+        void    procMsgInitSec( MsgBuffer &a_msg_buffer );
+        void    procMsgTermSec( MsgBuffer &a_msg_buffer );
+        void    procMsgUserListReq( MsgBuffer &a_msg_buffer );
 
         Server  &           m_server;
         void            *   m_context;
@@ -73,7 +73,9 @@ private:
         //static msg_fun_t    m_proc_funcs[_FMT_END];
     };
 
-    typedef void (Server::Worker::*msg_fun_t)( MessageBuffer& );
+    //DataAdminClient                 m_data_admin;
+
+    typedef void (Server::Worker::*msg_fun_t)( MsgBuffer& );
 
     Connection                      m_conn;
     uint64_t                        m_timeout;
@@ -88,7 +90,7 @@ private:
     std::condition_variable         m_router_cvar;
     std::map<uint32_t,ClientInfo>   m_client_info;
     gss_cred_id_t                   m_sec_cred;
-    std::map<uint32_t,msg_fun_t>    m_msg_handlers;
+    std::map<uint16_t,msg_fun_t>    m_msg_handlers;
     
     friend class Worker;
 };

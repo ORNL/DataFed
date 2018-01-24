@@ -48,10 +48,22 @@ int main( int a_argc, char ** a_argv )
 
         Client client( host, port, timeout );
 
-        cout << "status: " << client.status() << "\n";
-        client.ping();
-        client.login();
-        client.logout();
+        cout << "server status: " << client.status() << "\n";
+
+        //client.initSecurity();
+
+        spUserListReply users = client.userList();
+
+        cout << "user count: " << users->user_size() << "\n";
+        for ( int i = 0; i < users->user_size(); ++i )
+        {
+            const UserData & user = users->user(i);
+            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
+        }
+
+        users.reset();
+
+        //client.termSecurity();
 
 /*
         timerDef();
@@ -63,7 +75,6 @@ int main( int a_argc, char ** a_argv )
         timerStop();
         cout << "ping rate: " << 10000/timerElapsed() << " p/s\n";
 */
-
     }
     catch( TraceException &e )
     {

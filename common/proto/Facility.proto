@@ -33,27 +33,24 @@ message UserData
 // Reply with same for token exchange, end handshake with SDMS.AckReply
 message InitSecurityRequest
 {
-    required SDMS.RequestHeader header      = 1;
-    required bytes              token       = 2;
+    required bytes              token       = 1;
 }
 
 // Reply with SDMS.AckReply
 message TermSecurityRequest
 {
-    required SDMS.RequestHeader header      = 1;
 }
 
 message UserListRequest
 {
-    required SDMS.RequestHeader header      = 1;
-    optional bool               details     = 2;
-    optional uint32             offset      = 3;
-    optional uint32             count       = 4;
+    optional bool               details     = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
 }
 
 message UserListReply
 {
-    required SDMS.ReplyHeader   header      = 1;
+    optional SDMS.ReplyHeader   header      = 1;
     repeated UserData           user        = 2;
 }
 

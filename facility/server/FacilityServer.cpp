@@ -19,7 +19,7 @@ namespace Facility {
 #define DEBUG_GSI
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 30
-#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 16 ) | m_conn.findMessageType( proto_id, name )] = func;
+#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | m_conn.findMessageType( proto_id, name )] = func;
 
 // Class ctor/dtor
 
@@ -57,14 +57,14 @@ Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint3
 
     #endif
 
-    uint32_t proto_id;
+    uint8_t proto_id;
     SET_MSG_HANDLER(1,"StatusRequest",&Worker::procMsgStatus);
     SET_MSG_HANDLER(1,"PingRequest",&Worker::procMsgPing);
 
     proto_id = REG_API(m_conn,Facility);
     SET_MSG_HANDLER(proto_id,"InitSecurityRequest",&Worker::procMsgInitSec);
     SET_MSG_HANDLER(proto_id,"TermSecurityRequest",&Worker::procMsgTermSec);
-    SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserCommands);
+    SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
 }
 
 
@@ -272,7 +272,7 @@ Server::backgroundMaintenance()
 
 
 Server::ClientInfo &
-Server::getClientInfo( MessageBuffer & a_msg_buffer, bool a_upd_last_act )
+Server::getClientInfo( MsgBuffer & a_msg_buffer, bool a_upd_last_act )
 {
     lock_guard<mutex> lock(m_data_mutex);
 
@@ -317,9 +317,9 @@ Server::Worker::workerThread()
     m_conn = new Connection( "inproc://workers", Connection::Worker, m_context );
     REG_API(*m_conn,Facility);
 
-    MessageBuffer buffer;
-    map<uint32_t,msg_fun_t>::iterator handler;
-    uint32_t msg_type;
+    MsgBuffer buffer;
+    map<uint16_t,msg_fun_t>::iterator handler;
+    uint16_t msg_type;
 
     while ( m_server.m_worker_running )
     {
@@ -329,7 +329,7 @@ Server::Worker::workerThread()
             {
                 if ( m_conn->recv( buffer, 1000 ))
                 {
-                    msg_type = ( ((uint32_t)buffer.frame.msg_id.proto_id << 16 ) | buffer.frame.msg_id.msg_idx );
+                    msg_type = ( ((uint32_t)buffer.frame.proto_id << 8 ) | buffer.frame.msg_id );
 
                     handler = m_server.m_msg_handlers.find( msg_type );
 
@@ -369,8 +369,8 @@ Server::Worker::join()
         { \
             DL_TRACE( "Rcvd: " << msg->DebugString()); \
             ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true ); \
+            (void)client;\
             replyclass reply; \
-            reply.mutable_header()->set_context( msg->header().context() ); \
             try \
             {
 
@@ -409,7 +409,7 @@ Server::Worker::join()
 
 
 void
-Server::Worker::procMsgStatus( MessageBuffer &a_msg_buffer )
+Server::Worker::procMsgStatus( MsgBuffer &a_msg_buffer )
 {
     PROC_MSG_BEGIN( StatusRequest, StatusReply )
 
@@ -420,7 +420,7 @@ Server::Worker::procMsgStatus( MessageBuffer &a_msg_buffer )
 
 
 void
-Server::Worker::procMsgPing( MessageBuffer & a_msg_buffer )
+Server::Worker::procMsgPing( MsgBuffer & a_msg_buffer )
 {
     PROC_MSG_BEGIN( PingRequest, PingReply )
 
@@ -431,7 +431,7 @@ Server::Worker::procMsgPing( MessageBuffer & a_msg_buffer )
 
 
 void
-Server::Worker::procMsgInitSec( MessageBuffer & a_msg_buffer )
+Server::Worker::procMsgInitSec( MsgBuffer & a_msg_buffer )
 {
     cout << "proc init sec\n";
 
@@ -468,8 +468,6 @@ Server::Worker::procMsgInitSec( MessageBuffer & a_msg_buffer )
         // Send token to client
 
         InitSecurityRequest reply2;
-
-        reply2.mutable_header()->set_context( msg->header().context() );
         reply2.set_token((const char*)accept_token.value, accept_token.length );
 
         free( accept_token.value );
@@ -502,7 +500,7 @@ Server::Worker::procMsgInitSec( MessageBuffer & a_msg_buffer )
 }
 
 void
-Server::Worker::procMsgTermSec( MessageBuffer & a_msg_buffer )
+Server::Worker::procMsgTermSec( MsgBuffer & a_msg_buffer )
 {
     cout << "proc term sec\n";
 
@@ -529,32 +527,33 @@ Server::Worker::procMsgTermSec( MessageBuffer & a_msg_buffer )
 }
 
 void
-Server::Worker::procMsgUserCommands( MessageBuffer & a_msg_buffer )
+Server::Worker::procMsgUserListReq( MsgBuffer & a_msg_buffer )
 {
-    cout << "proc user cmds\n";
-    ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true );
-    string err_msg;
+    cout << "proc user list\n";
+
+    PROC_MSG_BEGIN( UserListRequest, UserListReply )
 
     if ( client.state != CS_AUTHN )
-    {
-        err_msg = "Method requires authentication";
-    }
+        EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
 
-/*
-    Connection::MsgHeader *msg = (Connection::MsgHeader*)a_msg_buffer.data();
-    msg->reinit( FMT_ACK );
-    msg->data_size = 0;
+    UserData* user;
 
-    if ( err_msg.size() )
-    {
-        // Send NACK with error message
-        a_msg_buffer.setSize( sizeof(Connection::MsgHeader) + err_msg.size() + 1 );
-        msg->reinit( FMT_NACK );
-        msg->data_size = err_msg.size() + 1;
-        memcpy( a_msg_buffer.data() + sizeof(Connection::MsgHeader), err_msg.c_str(), err_msg.size() + 1 );
-    }
-*/
-    m_conn->send( a_msg_buffer );
+    user = reply.add_user();
+    user->set_uid("jblow");
+    user->set_name_last("Blow");
+    user->set_name_first("Joe");
+
+    user = reply.add_user();
+    user->set_uid("jdoe");
+    user->set_name_last("Doe");
+    user->set_name_first("John");
+
+    user = reply.add_user();
+    user->set_uid("bsmith");
+    user->set_name_last("Smith");
+    user->set_name_first("Bob");
+
+    PROC_MSG_END
 }
 
 }}

@@ -15,8 +15,6 @@ typedef void * globus_gsi_authz_handle_t;
 typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_handle_t handle, globus_result_t result ); 
 
 
-static gss_ctx_id_t current_context = GSS_C_NO_CONTEXT;
-
 // TODO This value must be pulled from server config (max concurrency)
 #define MAX_ACTIVE_CTX 25
 
@@ -128,7 +126,10 @@ sdms_gsi_authz_handle_init( va_list ap )
     gss_ctx_id_t                context             = va_arg( ap, gss_ctx_id_t );
     globus_gsi_authz_cb_t       callback            = va_arg( ap, globus_gsi_authz_cb_t );
     void *                      callback_arg        = va_arg( ap, void * );
-    void *                      authz_system_state  = va_arg( ap, void * );
+    //void *                      authz_system_state  = va_arg( ap, void * );
+
+    // Unused arguments
+    (void)service_name;
 
     syslog( LOG_ERR, "handle %p", *handle );
 
@@ -161,7 +162,7 @@ sdms_gsi_authz_handle_destroy( va_list ap )
     globus_gsi_authz_handle_t   handle              = va_arg( ap, globus_gsi_authz_handle_t );
     globus_gsi_authz_cb_t       callback            = va_arg( ap, globus_gsi_authz_cb_t );
     void *                      callback_arg        = va_arg( ap, void * );
-    void *                      authz_system_state  = va_arg( ap, void * );
+    //void *                      authz_system_state  = va_arg( ap, void * );
 
     syslog( LOG_ERR, "handle %p", handle );
 
@@ -191,7 +192,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
     char *                      object              = va_arg(ap, char *);
     globus_gsi_authz_cb_t       callback            = va_arg(ap, globus_gsi_authz_cb_t);
     void *                      callback_arg        = va_arg(ap, void *);
-    void *                      authz_system_state  = va_arg(ap, void *);
+    //void *                      authz_system_state  = va_arg(ap, void *);
 
     syslog( LOG_ERR, "handle %p", handle );
 
@@ -230,7 +231,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         //char resp[1024];
                         char error[CURL_ERROR_SIZE];
 
-                        url[0] = resp[0] = error[0] = 0;
+                        url[0] = error[0] = 0;
 
                         char * esc_client = curl_easy_escape( curl, (char*)client_buf.value, 0 );
                         char * esc_object = curl_easy_escape( curl, object, 0 );
@@ -248,7 +249,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
                         curl_easy_setopt( curl, CURLOPT_USERNAME, "root" );
                         curl_easy_setopt( curl, CURLOPT_PASSWORD, "nopass" );
-                        curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
+                        //curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
                         //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
                         curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
 
@@ -324,6 +325,8 @@ sdms_gsi_authz_cancel()
 globus_result_t
 sdms_gsi_authz_identify( va_list ap )
 {
+    (void)ap;
+
     syslog( LOG_INFO, "sdms_gsi_authz_identify\n" );
     return 0;
 }

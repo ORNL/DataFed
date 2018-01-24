@@ -19,6 +19,7 @@ namespace SDMS
 
 typedef ::google::protobuf::Message         Message;
 
+/*
 struct MessageID
 {
     MessageID() : proto_id(0), msg_idx(0) {}
@@ -27,23 +28,27 @@ struct MessageID
     uint16_t    proto_id;
     uint16_t    msg_idx;
 };
+*/
 
-struct MessageFrame
+struct MsgFrame
 {
-    MessageFrame() : msg_size(0) {}
+    MsgFrame() : proto_id(0),msg_id(0),context(0),msg_size(0) {}
 
-    MessageID   msg_id;
+    //MessageID   msg_id;
+    uint8_t     proto_id;
+    uint8_t     msg_id;
+    uint16_t    context;
     uint32_t    msg_size;
 };
 
-struct MessageBuffer
+struct MsgBuffer
 {
-    MessageBuffer() : msg_offset(0), buffer_capacity(4096)
+    MsgBuffer() : offset(0), capacity(4096)
     {
-        buffer = new char[buffer_capacity];
+        buffer = new char[capacity];
     }
 
-    ~MessageBuffer()
+    ~MsgBuffer()
     {
         delete[] buffer;
     }
@@ -54,10 +59,10 @@ struct MessageBuffer
         return *(uint32_t*)(buffer+1);
     }
 
-    MessageFrame    frame;
-    uint32_t        msg_offset;
-    uint32_t        buffer_capacity;
-    char        *   buffer;
+    MsgFrame    frame;
+    uint32_t    offset;
+    uint32_t    capacity;
+    char *      buffer;
 };
 
 
@@ -79,31 +84,30 @@ public:
 
     //----- Constructors & Destructor -----
 
-    Connection( const std::string & a_address, Mode a_mode = Client, void * a_context = 0 );
-    Connection( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, void * a_context = 0 );
+    Connection( const std::string & a_address, Mode a_mode = Client, void * a_zmq_context = 0 );
+    Connection( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, void * a_zmq_context = 0 );
     ~Connection();
 
     //----- Registration Methods -----
 
     #define REG_API(conn,ns) (conn).registerAPI( ns::Protocol_descriptor() );
 
-    uint16_t        registerAPI( const ::google::protobuf::EnumDescriptor * a_protocol );
-    uint16_t        findMessageType( uint16_t a_proto_id, const std::string & a_message_name );
+    uint8_t         registerAPI( const ::google::protobuf::EnumDescriptor * a_protocol );
+    uint8_t         findMessageType( uint8_t a_proto_id, const std::string & a_message_name );
 
     //----- Basic Messaging API -----
 
-    void            send( Message & a_message );
-    MessageID       recv( Message *& a_msg, uint32_t a_timeout );
+    void            send( Message & a_message, uint16_t a_context = 0 );
+    bool            recv( Message *& a_msg, MsgFrame** a_frame = 0, uint32_t a_timeout = 0 );
 
     //----- Advanced (server) Messaging API -----
 
-    void            send( Message & a_message, const std::string &a_client_id );
-    MessageID       recv( Message *& a_msg, uint32_t a_timeout, std::string & a_client_id );
-    void            send( MessageBuffer & a_buffer );
-    bool            recv( MessageBuffer & a_buffer, uint32_t a_timeout );
-    Message *       unserializeFromBuffer( MessageBuffer &a_buffer );
-    void            serializeToBuffer( Message & a_msg, MessageBuffer & a_msg_buffer );
-    std::string     getClientID( MessageBuffer & a_msg_buffer );
+    //void            send( Message & a_message, uint16_t a_context = 0, const std::string &a_client_id );
+    //bool            recv( Message *& a_msg, MsgFrame* a_frame = 0, uint32_t a_timeout = 0, std::string** a_client_id = 0 );
+    void            send( MsgBuffer & a_buffer );
+    bool            recv( MsgBuffer & a_buffer, uint32_t a_timeout );
+    Message *       unserializeFromBuffer( MsgBuffer &a_buffer );
+    void            serializeToBuffer( Message & a_msg, MsgBuffer & a_msg_buffer );
 
     //----- Utility Methods -----
 
@@ -123,32 +127,25 @@ public:
     };
 
     template<class T>
-    ErrorCode requestReply( Message& a_request, T*& a_reply, uint32_t a_context, uint32_t a_timeout )
+    void requestReply( Message& a_request, T*& a_reply, uint16_t a_context = 0, uint32_t a_timeout = 0 )
     {
         a_reply = 0;
 
-        send( a_request );
+        send( a_request, a_context );
 
         Message*  raw_reply = 0;
-        MessageID msg_id = recv( raw_reply, a_timeout );
+        MsgFrame* frame;
 
-        if ( !msg_id.msg_idx )
+        if ( !recv( raw_reply, &frame, a_timeout ))
             EXCEPT( EC_TIMEOUT, "No response from server." );
+        else if ( frame->context != a_context )
+            EXCEPT( EC_TOKEN_MISMATCH, "Mismatched reply context from server." );
         else if ( !raw_reply )
             EXCEPT( EC_UNREGISTERED_REPLY_TYPE, "Unregistered reply type from server." );
         else
         {
             a_reply = dynamic_cast<T*>(raw_reply);
-            if ( a_reply )
-            {
-                if ( a_reply->header().context() != a_context )
-                {
-                    delete raw_reply;
-                    a_reply = 0;
-                    EXCEPT( EC_TOKEN_MISMATCH, "Mismatched reply context from server." );
-                }
-            }
-            else
+            if ( !a_reply )
             {
                 delete raw_reply;
                 EXCEPT( EC_UNEXPECTED_REPLY_TYPE, "Unexpected reply type from server." );
@@ -160,16 +157,16 @@ private:
 
     void            setupSocketKeepAlive();
     void            init( const std::string & a_address );
-    void            ensureCapacity( MessageBuffer &a_msg_buffer );
+    void            ensureCapacity( MsgBuffer &a_msg_buffer );
 
     void           *m_context;
     void           *m_socket;
     Mode            m_mode;
     bool            m_proc_addresses;
     zmq_pollitem_t  m_poll_item;
-    MessageBuffer   m_buffer;
+    MsgBuffer       m_buffer;
     google::protobuf::MessageFactory *              m_factory;
-    std::map<uint16_t,const FileDescriptorType *>   m_descriptors;
+    std::map<uint8_t,const FileDescriptorType *>    m_descriptors;
     bool            m_context_owner;
 };
 

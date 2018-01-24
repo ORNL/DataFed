@@ -18,6 +18,23 @@ namespace Facility {
 
 #define DEBUG_GSI
 
+#define HANDLE_REPLY_ERROR( reply ) \
+    if ( reply->has_header() && reply->header().has_err_code() ) \
+    { \
+        uint32_t ec = reply->header().has_err_code(); \
+        if ( reply->header().has_err_msg() ) \
+        { \
+            string em = reply->header().err_msg(); \
+            delete reply; \
+            EXCEPT( ec, em ); \
+        } \
+        else \
+        { \
+            delete reply; \
+            EXCEPT( ec, "Request failed." ); \
+        } \
+    }
+
 
 class Client::ClientImpl
 {
@@ -96,8 +113,6 @@ public:
         StatusRequest req;
         StatusReply * reply;
 
-        req.mutable_header()->set_context( m_ctx );
-
         m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
 
         Status stat = reply->status();
@@ -115,8 +130,6 @@ public:
         PingRequest req;
         PingReply * reply;
 
-        req.mutable_header()->set_context( m_ctx );
-
         m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
 
         delete reply;
@@ -125,9 +138,9 @@ public:
     /**
      * @brief Client-server handshake and certificate exchange
      */
-    void login()
+    void initSecurity()
     {
-        cout << "login\n";
+        cout << "initSecurity\n";
 
         if ( m_sec_ctx )
             throw runtime_error( "Security context already established." );
@@ -135,10 +148,8 @@ public:
         OM_uint32           maj_stat, min_stat;
         gss_buffer_desc     init_token = GSS_C_EMPTY_BUFFER;
         gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
-        gss_ctx_id_t        accept_ctx = GSS_C_NO_CONTEXT;
         bool                loop = true;
         Message*            reply = 0;
-        MessageID           reply_id;
         InitSecurityRequest msg;
 
 
@@ -166,13 +177,12 @@ public:
 
                 // Send init token data to server
                 uint32_t loc_ctx = m_ctx++;
-                msg.mutable_header()->set_context( loc_ctx );
+
                 msg.set_token( (const char*) init_token.value, init_token.length );
-                m_connection.send( msg );
+                m_connection.send( msg, loc_ctx );
 
                 // Wait for response from server
-                reply_id = m_connection.recv( reply, m_timeout );
-                if ( reply_id.isNull() )
+                if ( !m_connection.recv( reply, 0, m_timeout ))
                     throw runtime_error("Server did not respond.");
                 cout << "reply: " << reply << "\n";
                 // Process server reply
@@ -208,23 +218,45 @@ public:
         }
     }
 
-    void logout()
+    void termSecurity()
     {
-        cout << "logout\n";
+        cout << "termSecurity\n";
 
         TermSecurityRequest req;
         AckReply * reply;
-
-        req.mutable_header()->set_context( m_ctx );
 
         m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
 
         delete reply;
     }
 
+    spUserListReply
+    userList( bool a_details, uint32_t a_offset, uint32_t a_count )
+    {
+        cout << "userList\n";
+
+        UserListRequest req;
+        if ( a_details )
+            req.set_details( a_details );
+        if ( a_offset )
+            req.set_offset( a_offset );
+        if ( a_count )
+            req.set_count( a_count );
+
+        UserListReply * reply;
+
+        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
+
+        HANDLE_REPLY_ERROR( reply );
+
+        return spUserListReply( reply );
+    }
 
     bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
     {
+        (void)a_request;
+        (void)a_reply;
+        (void)a_timeout;
         return false;
     }
 
@@ -274,14 +306,20 @@ void Client::ping()
 /**
  * @brief Client-server handshake and certificate exchange
  */
-void Client::login()
+void Client::initSecurity()
 {
-    m_impl->login();
+    m_impl->initSecurity();
 }
 
-void Client::logout()
+void Client::termSecurity()
 {
-    m_impl->logout();
+    m_impl->termSecurity();
+}
+
+spUserListReply
+Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
+{
+    return m_impl->userList( a_details, a_offset, a_count );
 }
 
 bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )

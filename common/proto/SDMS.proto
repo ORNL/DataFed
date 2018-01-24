@@ -1,0 +1,49 @@
+package SDMS;
+
+enum Protocol
+{
+    ID = 1;
+}
+
+enum Status
+{
+    NORMAL      = 0;
+    DEGRADED    = 1;
+    FAILED      = 2;
+    OFFLINE     = 3;
+}
+
+message ReplyHeader
+{
+    optional uint32         err_code    = 1;
+    optional string         err_msg     = 2;
+}
+
+message AckReply
+{
+    optional ReplyHeader    header  = 1;
+}
+
+message StatusRequest
+{
+}
+
+message StatusReply
+{
+    optional ReplyHeader    header  = 1;
+    required Status         status  = 2;
+}
+
+message StatusEvent
+{
+    required Status         status  = 1;
+}
+
+message PingRequest
+{
+}
+
+message PingReply
+{
+    optional ReplyHeader    header  = 1;
+}
