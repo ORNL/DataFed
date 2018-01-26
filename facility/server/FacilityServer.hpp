@@ -12,7 +12,7 @@
 
 #include <Connection.hpp>
 #include "Facility.pb.h"
-//#include "DataMgrClient.hpp"
+#include "Repository.pb.h"
 
 namespace SDMS {
 namespace Facility {
