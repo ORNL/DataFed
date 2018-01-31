@@ -26,18 +26,6 @@ message UserData
 
 // ============================ Requests and Replies
 
-// Reply with same for token exchange, end handshake with SDMS.AckReply
-message LogInRequest
-{
-    required string             subject     = 1;
-}
-
-message LogInReply
-{
-    optional SDMS.ReplyHeader   header      = 1;
-    required uint32             session     = 2;
-}
-
 
 message UserListRequest
 {

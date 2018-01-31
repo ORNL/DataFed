@@ -6,10 +6,10 @@
 #include "sys/types.h"
 
 #include <zmq.h>
-#include <gssapi.h>
+//#include <gssapi.h>
 
 #include "Client.hpp"
-#include "GSSAPI_Utils.hpp"
+//#include "GSSAPI_Utils.hpp"
 
 using namespace std;
 
@@ -41,15 +41,17 @@ class Client::ClientImpl
 public:
     ClientImpl( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout = 30 ) :
         m_connection( a_server_host, a_server_port, Connection::Client ),
-        m_timeout(a_timeout * 1000), m_sec_cred(0), m_sec_ctx(0), m_ctx(1)
+        m_timeout(a_timeout * 1000), /*m_sec_cred(0), m_sec_ctx(0),*/ m_ctx(1)
     {
         REG_API( m_connection, Facility );
 
+#if 0
         if ( ++m_initialized == 1 )
         {
             if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
                 throw runtime_error("failed to activate Globus GSI GSSAPI module");
         }
+
 
         OM_uint32 maj_stat, min_stat;
 
@@ -70,16 +72,18 @@ public:
         cout << "cred name: " << name_str << "\n";
 
         #endif
+#endif
     }
 
     ~ClientImpl()
     {
+        /*
         if ( --m_initialized == 0 )
         {
             globus_module_deactivate( GLOBUS_GSI_GSSAPI_MODULE );
-        }
+        }*/
     }
-
+/*
     void gssCheckError( OM_uint32 a_maj_stat, OM_uint32 a_min_stat )
     {
         if ( GSS_ERROR( a_maj_stat ))
@@ -107,7 +111,7 @@ public:
             throw runtime_error( err_msg );
         }
     }
-
+*/
     Status status()
     {
         StatusRequest req;
@@ -141,7 +145,7 @@ public:
     void initSecurity()
     {
         cout << "initSecurity\n";
-
+/*
         if ( m_sec_ctx )
             throw runtime_error( "Security context already established." );
 
@@ -216,20 +220,23 @@ public:
                 }
             }
         }
+*/
     }
 
     void termSecurity()
     {
         cout << "termSecurity\n";
-
+/*
         TermSecurityRequest req;
         AckReply * reply;
 
         m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
 
         delete reply;
+*/
     }
 
+/*
     spUserListReply
     userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     {
@@ -251,6 +258,7 @@ public:
 
         return spUserListReply( reply );
     }
+*/
 
     bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
     {
@@ -264,8 +272,8 @@ private:
     static size_t   m_initialized;  // TODO must be atomic int
     Connection      m_connection;
     uint64_t        m_timeout;
-    gss_cred_id_t   m_sec_cred;
-    gss_ctx_id_t    m_sec_ctx;
+    //gss_cred_id_t   m_sec_cred;
+    //gss_ctx_id_t    m_sec_ctx;
     uint32_t        m_ctx;
 };
 
@@ -316,11 +324,12 @@ void Client::termSecurity()
     m_impl->termSecurity();
 }
 
+/*
 spUserListReply
 Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     return m_impl->userList( a_details, a_offset, a_count );
-}
+}*/
 
 bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
 {

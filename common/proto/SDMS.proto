@@ -5,6 +5,14 @@ enum Protocol
     ID = 1;
 }
 
+
+enum ResponseCode
+{
+    ID_OK                       = 0;
+    ID_AUTHN_REQUIRED           = 1;
+    ID_AUTHN_ERROR              = 3;
+}
+
 enum Status
 {
     NORMAL      = 0;

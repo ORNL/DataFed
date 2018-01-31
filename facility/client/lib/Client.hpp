@@ -11,7 +11,7 @@
 namespace SDMS {
 namespace Facility {
 
-typedef std::shared_ptr<UserListReply> spUserListReply;
+//typedef std::shared_ptr<UserListReply> spUserListReply;
 
 
 /**
@@ -50,7 +50,7 @@ public:
     void            ping();
     void            initSecurity();
     void            termSecurity();
-    spUserListReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    //spUserListReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
     bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
 

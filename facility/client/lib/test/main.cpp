@@ -52,6 +52,7 @@ int main( int a_argc, char ** a_argv )
 
         //client.initSecurity();
 
+/*
         spUserListReply users = client.userList();
 
         cout << "user count: " << users->user_size() << "\n";
@@ -62,6 +63,7 @@ int main( int a_argc, char ** a_argv )
         }
 
         users.reset();
+*/
 
         //client.termSecurity();
 

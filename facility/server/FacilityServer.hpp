@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include <time.h>
-#include <gssapi.h>
+//#include <gssapi.h>
 
 #include <Connection.hpp>
 #include "Facility.pb.h"
@@ -28,68 +28,38 @@ public:
     void    waitWorkerRouter();
 
 private:
-    enum ClientState
-    {
-        CS_INIT,
-        CS_AUTHN_PROC,
-        CS_AUTHN
-    };
 
     struct ClientInfo
     {
         ClientInfo() :
-            state(CS_INIT), last_act(0), sec_ctx(GSS_C_NO_CONTEXT)
+            state(CS_INIT), last_act(0) //, sec_ctx(GSS_C_NO_CONTEXT)
         {}
 
         ClientState     state;
         time_t          last_act;
-        gss_ctx_id_t    sec_ctx;
+        //gss_ctx_id_t    sec_ctx;
         std::string     name;
     };
 
-    void            workerRouter();
     void            backgroundMaintenance();
-    ClientInfo &    getClientInfo( MsgBuffer &a_msg_buffer, bool a_upd_last_act = false );
+    //ClientInfo &    getClientInfo( MsgBuffer &a_msg_buffer, bool a_upd_last_act = false );
 
-    class Worker
-    {
-    public:
-        Worker( Server &a_server, void *a_context, int a_id );
-        ~Worker();
 
-        void    workerThread();
-        void    join();
-        void    procMsgStatus( MsgBuffer &a_msg_buffer );
-        void    procMsgPing( MsgBuffer &a_msg_buffer );
-        void    procMsgInitSec( MsgBuffer &a_msg_buffer );
-        void    procMsgTermSec( MsgBuffer &a_msg_buffer );
-        void    procMsgUserListReq( MsgBuffer &a_msg_buffer );
+    void    procMsgStatus( MsgBuffer &a_msg_buffer );
+    void    procMsgPing( MsgBuffer &a_msg_buffer );
 
-        Server  &           m_server;
-        void            *   m_context;
-        Connection      *   m_conn;
-        std::thread   *     m_worker_thread;
-        int                 m_id;
-        //static msg_fun_t    m_proc_funcs[_FMT_END];
-    };
+    typedef void (Server::*msg_fun_t)( MsgBuf& );
 
-    //DataAdminClient                 m_data_admin;
-
-    typedef void (Server::Worker::*msg_fun_t)( MsgBuffer& );
-
-    Connection                      m_conn;
-    uint64_t                        m_timeout;
-    std::thread   *                 m_router_thread;
+    uint32_t                        m_timeout;
     std::thread   *                 m_maint_thread;
     uint32_t                        m_num_workers;
-    std::vector<Worker*>            m_workers;
     std::mutex                      m_api_mutex;
     std::mutex                      m_data_mutex;
     bool                            m_router_running;
     bool                            m_worker_running;
     std::condition_variable         m_router_cvar;
-    std::map<uint32_t,ClientInfo>   m_client_info;
-    gss_cred_id_t                   m_sec_cred;
+    //std::map<uint32_t,ClientInfo>   m_client_info;
+    //gss_cred_id_t                   m_sec_cred;
     std::map<uint16_t,msg_fun_t>    m_msg_handlers;
     
     friend class Worker;
