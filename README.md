@@ -1,7 +1,7 @@
 The Scientific Data Management System (SDMS) is cross-facility system for management, provisioning, dissemination, and metadata indexing of scientific data.
 
-Directory Structure
-
+Directory Structure:
+```
 docs/ 
 common/
     include/
@@ -25,3 +25,4 @@ facility/
 web/
     app/
     proxy/
+```
