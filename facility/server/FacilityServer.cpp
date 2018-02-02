@@ -1,15 +1,22 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "unistd.h"
 #include "sys/types.h"
 
-#include <zmq.h>
+#include <asio.hpp>
+#include <asio/ssl.hpp>
 
+#include "MsgBuf.hpp"
 #include "DynaLog.hpp"
 #include "FacilityServer.hpp"
-#include "GSSAPI_Utils.hpp"
+#include "SDMS.pb.h"
+#include "Facility.pb.h"
+//#include "GSSAPI_Utils.hpp"
 
 using namespace std;
 
@@ -19,259 +26,296 @@ namespace Facility {
 #define DEBUG_GSI
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 30
-#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | m_conn.findMessageType( proto_id, name )] = func;
+#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, name )] = func
 
-// Class ctor/dtor
 
-Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout, uint32_t a_num_workers ) :
-    m_conn( a_server_host, a_server_port, Connection::Server ),
-    m_timeout(a_timeout * 1000),
-    m_router_thread(0),
-    m_maint_thread(0),
-    m_num_workers(a_num_workers),
-    m_router_running(false),
-    m_worker_running(false)
-    //m_sec_cred(0)
-    
+class ServerImpl
 {
-#if 0
-    if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
-        throw runtime_error("failed to activate Globus GSI GSS assist module");
-
-    OM_uint32 maj_stat, min_stat;
-
-    maj_stat = gss_acquire_cred( &min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
-        GSS_C_INITIATE, &m_sec_cred, 0, 0 );
-
-    if ( maj_stat != GSS_S_COMPLETE )
-        throw runtime_error( "Unable to acquire valid credentials. Please (re)run grid-proxy-init." );
-
-    #ifdef DEBUG_GSI
-
-    gss_name_t cred_name = 0;
-
-    if ( gss_inquire_cred( &min_stat, m_sec_cred, &cred_name, 0, 0, 0 )!= GSS_S_COMPLETE )
-        throw runtime_error("failed to inquire credentials");
-
-    gssString   name_str( cred_name );
-    cout << "cred name: " << name_str << "\n";
-
-    #endif
-#endif
-
-    uint8_t proto_id;
-    SET_MSG_HANDLER(1,"StatusRequest",&Worker::procMsgStatus);
-    SET_MSG_HANDLER(1,"PingRequest",&Worker::procMsgPing);
-
-    proto_id = REG_API(m_conn,Facility);
-    (void)proto_id;
-    //SET_MSG_HANDLER(proto_id,"InitSecurityRequest",&Worker::procMsgInitSec);
-    //SET_MSG_HANDLER(proto_id,"TermSecurityRequest",&Worker::procMsgTermSec);
-    //SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
-}
-
-
-Server::~Server()
-{
-    //globus_module_deactivate( GLOBUS_GSI_GSSAPI_MODULE );
-}
-
-
-void
-Server::runWorkerRouter( bool a_async )
-{
-    unique_lock<mutex> lock(m_api_mutex);
-
-    if ( m_router_running )
-        throw runtime_error( "Only one worker router instance allowed" );
-
-    m_router_running = true;
-
-    if ( a_async )
+public:
+    ServerImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads ) :
+        m_host( a_host ),
+        m_port( a_port ),
+        m_timeout(a_timeout),
+        m_io_thread(0),
+        m_maint_thread(0),
+        m_num_threads(a_num_threads),
+        m_io_running(false),
+        m_endpoint( asio::ip::tcp::v4(), m_port ),
+        m_acceptor( m_io_service, m_endpoint ),
+        m_socket( m_io_service )
     {
-        m_router_thread = new thread( &Server::workerRouter, this );
-        m_maint_thread = new thread( &Server::backgroundMaintenance, this );
+        uint8_t proto_id = REG_PROTO( SDMS );
+        SET_MSG_HANDLER( proto_id, "StatusRequest", &ServerImpl::Session::procMsgStatus );
+        SET_MSG_HANDLER( proto_id, "PingRequest", &ServerImpl::Session::procMsgPing );
+
+        proto_id = REG_PROTO( Facility );
+        (void)proto_id;
+        //SET_MSG_HANDLER(proto_id,"InitSecurityRequest",&Worker::procMsgInitSec);
+        //SET_MSG_HANDLER(proto_id,"TermSecurityRequest",&Worker::procMsgTermSec);
+        //SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
     }
-    else
-    {
-        lock.unlock();
-        m_maint_thread = new thread( &Server::backgroundMaintenance, this );
-        workerRouter();
-        lock.lock();
-        m_router_running = false;
-        m_router_cvar.notify_all();
 
-        m_maint_thread->join();
-        delete m_maint_thread;
-        m_maint_thread = 0;
+
+    ~ServerImpl()
+    {
     }
-}
 
 
-void
-Server::stopWorkerRouter( bool a_async )
-{
-    unique_lock<mutex> lock(m_api_mutex);
-
-    if ( m_router_running )
+    void run( bool a_async )
     {
-        void *control = zmq_socket( m_conn.getContext(), ZMQ_PUB );
+        unique_lock<mutex> lock(m_api_mutex);
 
-        int linger = 100;
-        if ( zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int )) == -1 )
-            throw runtime_error("zmq_setsockopt linger failed");
-        if ( zmq_bind( control, "inproc://control" ) == -1 )
-            throw runtime_error("zmq_bind failed");
-        if ( zmq_send( control, "TERMINATE", 9, 0 ) == -1 )
-            throw runtime_error("zmq_seend failed");
+        if ( m_io_running )
+            throw runtime_error( "Only one worker router instance allowed" );
 
-        if ( !a_async )
+        m_io_running = true;
+
+        if ( a_async )
         {
-            if ( m_router_thread )
-            {
-                m_router_thread->join();
-                delete m_router_thread;
+            m_io_thread = new thread( &ServerImpl::ioRun, this );
+            m_maint_thread = new thread( &ServerImpl::backgroundMaintenance, this );
+        }
+        else
+        {
+            lock.unlock();
+            m_maint_thread = new thread( &ServerImpl::backgroundMaintenance, this );
+            ioRun();
+            lock.lock();
+            m_io_running = false;
+            m_router_cvar.notify_all();
 
-                m_router_thread = 0;
-                m_router_running = false;
+            m_maint_thread->join();
+            delete m_maint_thread;
+            m_maint_thread = 0;
+        }
+    }
+
+
+    void stop( bool a_wait )
+    {
+        unique_lock<mutex> lock(m_api_mutex);
+
+        if ( m_io_running )
+        {
+            // Signal ioPump to stop
+            m_io_service.stop();
+
+            if ( a_wait )
+            {
+                if ( m_io_thread )
+                {
+                    m_io_thread->join();
+                    delete m_io_thread;
+
+                    m_io_thread = 0;
+                    m_io_running = false;
+                }
+                else
+                {
+                    while( m_io_running )
+                        m_router_cvar.wait( lock );
+                }
+
+                m_maint_thread->join();
+                delete m_maint_thread;
+                m_maint_thread = 0;
+            }
+        }
+    }
+
+
+    void wait()
+    {
+        unique_lock<mutex> lock(m_api_mutex);
+
+        if ( m_io_running )
+        {
+            if ( m_io_thread )
+            {
+                m_io_thread->join();
+                delete m_io_thread;
+
+                m_io_thread = 0;
+                m_io_running = false;
+
+                m_maint_thread->join();
+                delete m_maint_thread;
+                m_maint_thread = 0;
             }
             else
             {
-                while( m_router_running )
+                while( m_io_running )
                     m_router_cvar.wait( lock );
             }
-
-            m_maint_thread->join();
-            delete m_maint_thread;
-            m_maint_thread = 0;
-        }
-        else
-        {
-            // zmq provides no way to flush buffer, just have to wait a while
-            usleep( 50000 );
-        }
-
-        zmq_close( control );
-    }
-}
-
-
-void
-Server::waitWorkerRouter()
-{
-    unique_lock<mutex> lock(m_api_mutex);
-
-    if ( m_router_running )
-    {
-        if ( m_router_thread )
-        {
-            m_router_thread->join();
-            delete m_router_thread;
-
-            m_router_thread = 0;
-            m_router_running = false;
-
-            m_maint_thread->join();
-            delete m_maint_thread;
-            m_maint_thread = 0;
-        }
-        else
-        {
-            while( m_router_running )
-                m_router_cvar.wait( lock );
         }
     }
-}
 
-
-
-void
-Server::backgroundMaintenance()
-{
-    struct timespec t;
-    map<uint32_t,ClientInfo>::iterator ci;
-
-    while( m_router_running )
+private:
+    void ioRun()
     {
-        sleep( MAINT_POLL_INTERVAL );
+        cout << "io thread started\n";
 
-        lock_guard<mutex> lock( m_data_mutex );
+        if ( m_io_service.stopped() )
+            m_io_service.reset();
+        
+        if ( m_num_threads == 0 )
+            m_num_threads = max( 1u, std::thread::hardware_concurrency() - 1 );
 
-        clock_gettime( CLOCK_REALTIME, &t );
+        accept();
 
-        for ( ci = m_client_info.begin(); ci != m_client_info.end(); )
+        vector<thread*> io_threads;
+
+        for ( uint32_t i = m_num_threads - 1; i > 0; i-- )
         {
-            if ( t.tv_sec - ci->second.last_act > CLIENT_IDLE_TIMEOUT )
+            io_threads.push_back( new thread( [this](){ m_io_service.run(); } ));
+            cout << "io extra thread started\n";
+        }
+
+        m_io_service.run();
+
+        for ( vector<thread*>::iterator t = io_threads.begin(); t != io_threads.end(); ++t )
+        {
+            (*t)->join();
+            delete *t;
+            cout << "io extra thread stopped\n";
+        }
+        cout << "io thread stopped\n";
+    }
+
+    void accept()
+    {
+        m_acceptor.async_accept( m_socket, [this]( error_code ec )
+        {
+            if ( !ec )
             {
-                //cout << "clean-up client " << ci->first << "\n";
-#if 0
-                if ( ci->second.sec_ctx )
-                {
-                    OM_uint32  min_stat;
-                    
-                    gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
-                }
-#endif
-                ci = m_client_info.erase( ci );
+                cout << "connect!\n";
+                Session *session = new Session( *this, move( m_socket ));
+                session->start();
+                m_sessions.push_back( session );
             }
-            else
-                ++ci;
-        }
-    }
-}
 
+            accept();
+        });
+    }
+
+    void backgroundMaintenance()
+    {
+        cout << "maint thread started\n";
+        //struct timespec t;
+        //map<uint32_t,ClientInfo>::iterator ci;
+
+        while( m_io_running )
+        {
+            sleep( MAINT_POLL_INTERVAL );
 
 #if 0
-Server::ClientInfo &
-Server::getClientInfo( MsgBuffer & a_msg_buffer, bool a_upd_last_act )
-{
-    lock_guard<mutex> lock(m_data_mutex);
+            lock_guard<mutex> lock( m_data_mutex );
 
-    if ( a_upd_last_act )
-    {
-        ClientInfo &ci = m_client_info[a_msg_buffer.cid()]; 
+            clock_gettime( CLOCK_REALTIME, &t );
 
-        struct timespec t = {0,0};
-        clock_gettime( CLOCK_REALTIME, &t );
-        ci.last_act = t.tv_sec;
-
-        return ci;
-    }
-    else
-    {
-        return m_client_info[a_msg_buffer.cid()];
-    }
-}
+            for ( ci = m_client_info.begin(); ci != m_client_info.end(); )
+            {
+                if ( t.tv_sec - ci->second.last_act > CLIENT_IDLE_TIMEOUT )
+                {
+                    //cout << "clean-up client " << ci->first << "\n";
+    #if 0
+                    if ( ci->second.sec_ctx )
+                    {
+                        OM_uint32  min_stat;
+                        
+                        gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
+                    }
+    #endif
+                    ci = m_client_info.erase( ci );
+                }
+                else
+                    ++ci;
+            }
 #endif
+        }
+        cout << "maint thread stopped\n";
+    }
 
 
+    class Session
+    {
+    public:
+        Session( ServerImpl & a_server, asio::ip::tcp::socket a_socket ) :
+            m_server( a_server ),
+            m_socket( move( a_socket )),
+            m_in_buf( 4096 )
+        {
+        }
 
-void
-Server::dataHandler()
-{
-    MsgBuf msg_buf;
+        ~Session()
+        {
+        }
 
-    map<uint16_t,msg_fun_t>::iterator handler = m_msg_handlers.find( msg_buf.getMsgType() );
+        void start()
+        {
+            readMsgHeader();
+        }
 
-    if ( handler != m_msg_handlers.end() )
-        (this->*handler->second)( msg_buf );
-    else
-        cout << "Recv unregistered msg type: " << msg_type << "\n";
+        void readMsgHeader()
+        {
+            cout << "Session::readMsgHeader\n";
+            asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
+                [this]( error_code ec, size_t len )
+                {
+                    clock_gettime( CLOCK_REALTIME, &m_last_access );
 
-}
+                    cout << "read hdr cb, len: " << len << "\n";
+                    if ( !ec )
+                        readMsgBody();
+                    else
+                    {
+                        cerr << ec.message() << "\n";
+                        readMsgHeader();
+                    }
+                });
+        }
+
+        void readMsgBody()
+        {
+            cout << "Session::readMsgBody\n";
+            asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
+                [this]( error_code ec, size_t len )
+                {
+                    cout << "read body cb, len: " << len << "\n";
+                    if ( !ec )
+                        messageHandler();
+                    else
+                    {
+                        cerr << ec.message() << "\n";
+                        readMsgHeader();
+                    }
+                });
+        }
+
+        void messageHandler()
+        {
+            uint16_t msg_type = m_in_buf.getMsgType();
+            map<uint16_t,msg_fun_t>::iterator handler = m_server.m_msg_handlers.find( msg_type );
+
+            if ( handler != m_server.m_msg_handlers.end() )
+                (this->*handler->second)();
+            else
+                cout << "Recv unregistered msg type: " << msg_type << "\n";
+
+            readMsgHeader();
+        }
 
 
 
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
     msgclass *msg = 0; \
-    ::google::protobuf::Message *base_msg = a_msg_buffer->unserialize(); \
+    ::google::protobuf::Message *base_msg = m_in_buf.unserialize(); \
     if ( base_msg ) \
     { \
         msg = dynamic_cast<msgclass*>( base_msg ); \
         if ( msg ) \
         { \
             DL_TRACE( "Rcvd: " << msg->DebugString()); \
-            (void)client;\
             replyclass reply; \
             try \
             {
@@ -287,21 +331,22 @@ Server::dataHandler()
             catch( exception &e ) \
             { \
                 DL_WARN( "worker "<<m_id<<": " << e.what() ); \
-                reply.mutable_header()->set_err_code( EC_INTERNAL_ERROR ); \
+                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
                 reply.mutable_header()->set_err_msg( e.what() ); \
             } \
             catch(...) \
             { \
                 DL_WARN( "worker "<<m_id<<": unkown exception while processing message!" ); \
-                reply.mutable_header()->set_err_code( EC_INTERNAL_ERROR ); \
+                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
                 reply.mutable_header()->set_err_msg( "Unknown exception type" ); \
             } \
-            a_msg_buffer->serialize( reply ); \
+            m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
+            m_out_buf.serialize( reply ); \
             /*m_conn->send( a_msg_buffer );*/ \
             DL_TRACE( "Sent: " << reply.DebugString()); \
         } \
         else { \
-            DL_ERROR( "worker "<<m_id<<": dynamic cast of msg buffer " << &a_msg_buffer << " failed!" );\
+            DL_ERROR( "worker "<<m_id<<": dynamic cast of msg buffer " << &m_in_buf << " failed!" );\
         } \
         delete base_msg; \
     } \
@@ -310,61 +355,132 @@ Server::dataHandler()
     }
 
 
-void
-Server::procMsgStatus( MsgBuffer &a_msg_buffer )
+        void procMsgStatus()
+        {
+            PROC_MSG_BEGIN( StatusRequest, StatusReply )
+
+            reply.set_status( NORMAL );
+
+            PROC_MSG_END
+        }
+
+
+        void procMsgPing()
+        {
+            PROC_MSG_BEGIN( PingRequest, PingReply )
+
+            // Nothing to do
+
+            PROC_MSG_END
+        }
+
+        ServerImpl &            m_server;
+        asio::ip::tcp::socket   m_socket;
+        MsgBuf                  m_in_buf;
+        MsgBuf                  m_out_buf;
+        struct timespec         m_last_access = {0,0};
+    };
+
+    /*void
+    Server::procMsgUserListReq( MsgBuffer & a_msg_buffer )
+    {
+        cout << "proc user list\n";
+
+        PROC_MSG_BEGIN( UserListRequest, UserListReply )
+
+        if ( client.state != CS_AUTHN )
+            EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
+
+        UserData* user;
+
+        user = reply.add_user();
+        user->set_uid("jblow");
+        user->set_name_last("Blow");
+        user->set_name_first("Joe");
+
+        user = reply.add_user();
+        user->set_uid("jdoe");
+        user->set_name_last("Doe");
+        user->set_name_first("John");
+
+        user = reply.add_user();
+        user->set_uid("bsmith");
+        user->set_name_last("Smith");
+        user->set_name_first("Bob");
+
+        PROC_MSG_END
+    }*/
+
+    /*
+    struct ClientInfo
+    {
+        ClientInfo() :
+            state(CS_INIT), last_act(0) //, sec_ctx(GSS_C_NO_CONTEXT)
+        {}
+
+        ClientState     state;
+        time_t          last_act;
+        //gss_ctx_id_t    sec_ctx;
+        std::string     name;
+    };
+    */
+
+
+
+    typedef void (ServerImpl::Session::*msg_fun_t)();
+
+    string                      m_host;
+    uint32_t                    m_port;
+    uint32_t                    m_timeout;
+    thread *                    m_io_thread;
+    thread *                    m_maint_thread;
+    uint32_t                    m_num_threads;
+    mutex                       m_api_mutex;
+    mutex                       m_data_mutex;
+    bool                        m_io_running;
+    condition_variable          m_router_cvar;
+    //map<uint32_t,ClientInfo>   m_client_info;
+    //gss_cred_id_t                   m_sec_cred;
+    map<uint16_t,msg_fun_t>     m_msg_handlers;
+    asio::io_service            m_io_service;
+    asio::ip::tcp::endpoint     m_endpoint;
+    asio::ip::tcp::acceptor     m_acceptor;
+    asio::ip::tcp::socket       m_socket;
+    vector<Session*>            m_sessions;
+    
+    friend class Session;
+};
+
+// ========== Server Wrapper Class ==========
+
+Server::Server( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads )
 {
-    PROC_MSG_BEGIN( StatusRequest, StatusReply )
-
-    reply.set_status( NORMAL );
-
-    PROC_MSG_END
+    m_impl = new ServerImpl( a_host, a_port, a_timeout, a_num_threads );
 }
 
-
-void
-Server::procMsgPing( MsgBuffer & a_msg_buffer )
+Server::~Server()
 {
-    PROC_MSG_BEGIN( PingRequest, PingReply )
-
-    // Nothing to do
-
-    PROC_MSG_END
+    m_impl->stop( false );
+    delete m_impl;
 }
 
-
-#if 0
-
 void
-Server::procMsgUserListReq( MsgBuffer & a_msg_buffer )
+Server::run( bool a_async )
 {
-    cout << "proc user list\n";
-
-    PROC_MSG_BEGIN( UserListRequest, UserListReply )
-
-    if ( client.state != CS_AUTHN )
-        EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
-
-    UserData* user;
-
-    user = reply.add_user();
-    user->set_uid("jblow");
-    user->set_name_last("Blow");
-    user->set_name_first("Joe");
-
-    user = reply.add_user();
-    user->set_uid("jdoe");
-    user->set_name_last("Doe");
-    user->set_name_first("John");
-
-    user = reply.add_user();
-    user->set_uid("bsmith");
-    user->set_name_last("Smith");
-    user->set_name_first("Bob");
-
-    PROC_MSG_END
+    m_impl->run( a_async );
 }
 
-#endif
+void
+Server::stop( bool a_wait )
+{
+    m_impl->stop( a_wait );
+}
+
+void
+Server::wait()
+{
+    m_impl->wait();
+}
 
 
 }}

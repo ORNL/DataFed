@@ -9,7 +9,8 @@ enum Protocol
 enum ResponseCode
 {
     ID_OK                       = 0;
-    ID_AUTHN_REQUIRED           = 1;
+    ID_INTERNAL_ERROR           = 1;
+    ID_AUTHN_REQUIRED           = 2;
     ID_AUTHN_ERROR              = 3;
 }
 

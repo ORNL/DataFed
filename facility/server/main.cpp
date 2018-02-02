@@ -3,6 +3,7 @@
 
 #define DEF_DYNALOG
 #include "DynaLog.hpp"
+#include "TraceException.hpp"
 
 #include "FacilityServer.hpp"
 
@@ -18,7 +19,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        const char * host = "127.0.0.1";
+        const char * host = "";
         int port = 5800;
         int timeout = 5;
         int opt;
@@ -30,7 +31,7 @@ int main( int a_argc, char ** a_argv )
             case '?':
                 cout << "options:" << endl;
                 cout << "? - show help" << endl;
-                cout << "h - server hostname" << endl;
+                //cout << "h - server hostname" << endl;
                 cout << "p - server port" << endl;
                 cout << "t - timeout (sec)" << endl;
                 return 0;
@@ -48,7 +49,19 @@ int main( int a_argc, char ** a_argv )
 
         Facility::Server server( host, port, timeout );
 
-        server.runWorkerRouter( false );
+        cout << "start\n";
+        server.run( false );
+
+/*
+        server.run( true );
+        cout << "wait\n";
+
+        sleep( 30 );
+        cout << "stop\n";
+        
+        server.stop( true );
+*/
+        cout << "exit\n";
     }
     catch( TraceException &e )
     {

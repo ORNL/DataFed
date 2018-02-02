@@ -1,9 +1,7 @@
 #ifndef SDMS_CLIENT_HPP
 #define SDMS_CLIENT_HPP
 
-#include <memory>
 #include <stdint.h>
-#include "Connection.hpp"
 #include "Facility.pb.h"
 
 #define Check(Var,Src,Cls) Cls * Var = dynamic_cast<Cls*>(Src)
@@ -40,19 +38,22 @@ class Client
 {
 public:
 
-    Client( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout = 30 );
+    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout = 30 );
     Client( const Client & ) = delete;
     ~Client();
 
     Client& operator=( const Client & ) = delete;
 
+    void            start();
+
     Status          status();
     void            ping();
-    void            initSecurity();
-    void            termSecurity();
+
+    //void            initSecurity();
+    //void            termSecurity();
     //spUserListReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
-    bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
+    //bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
 
 private:
     class ClientImpl;

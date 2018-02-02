@@ -4,7 +4,7 @@ file( GLOB Sources "*.cpp" )
 
 add_library( fclient STATIC ${Sources} )
 add_dependencies( fclient common )
-target_link_libraries( fclient common -lprotobuf -lpthread )
+target_link_libraries( fclient common -lprotobuf -lpthread -lcrypto -lssl )
 
 target_include_directories( fclient INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( fclient PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )

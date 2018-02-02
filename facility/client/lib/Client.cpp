@@ -1,14 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <thread>
+
+#include <asio.hpp>
+#include <asio/ssl.hpp>
 
 #include "unistd.h"
 #include "sys/types.h"
 
-#include <zmq.h>
-//#include <gssapi.h>
 
+#include "MsgBuf.hpp"
 #include "Client.hpp"
+
 //#include "GSSAPI_Utils.hpp"
 
 using namespace std;
@@ -39,85 +43,146 @@ namespace Facility {
 class Client::ClientImpl
 {
 public:
-    ClientImpl( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout = 30 ) :
-        m_connection( a_server_host, a_server_port, Connection::Client ),
-        m_timeout(a_timeout * 1000), /*m_sec_cred(0), m_sec_ctx(0),*/ m_ctx(1)
+    ClientImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout ) :
+        m_host( a_host ),
+        m_port( a_port ),
+        m_resolver(m_io_service),
+        m_socket(m_io_service),
+        m_io_thread(0),
+        m_timeout(a_timeout),
+        m_ctx(1)
     {
-        REG_API( m_connection, Facility );
+        REG_PROTO( SDMS );
+        REG_PROTO( Facility );
 
-#if 0
-        if ( ++m_initialized == 1 )
-        {
-            if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
-                throw runtime_error("failed to activate Globus GSI GSSAPI module");
-        }
-
-
-        OM_uint32 maj_stat, min_stat;
-
-        maj_stat = gss_acquire_cred( &min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
-            GSS_C_INITIATE, &m_sec_cred, 0, 0 );
-
-        if ( maj_stat != GSS_S_COMPLETE )
-            throw runtime_error( "Unable to acquire valid credentials. Please (re)run grid-proxy-init." );
-
-        #ifdef DEBUG_GSI
-        
-        gss_name_t          cred_name;
-
-        if ( gss_inquire_cred( &min_stat, m_sec_cred, &cred_name, 0, 0, 0 )!= GSS_S_COMPLETE )
-            throw runtime_error("failed to inquire credentials");
-
-        gssString   name_str( cred_name );
-        cout << "cred name: " << name_str << "\n";
-
-        #endif
-#endif
     }
 
     ~ClientImpl()
     {
-        /*
-        if ( --m_initialized == 0 )
-        {
-            globus_module_deactivate( GLOBUS_GSI_GSSAPI_MODULE );
-        }*/
     }
-/*
-    void gssCheckError( OM_uint32 a_maj_stat, OM_uint32 a_min_stat )
+
+    void start()
     {
-        if ( GSS_ERROR( a_maj_stat ))
-        {
-            string err_msg = globus_error_print_friendly( globus_error_peek( a_min_stat ));
+        auto endpoint_iterator = m_resolver.resolve({ m_host, to_string( m_port ) });
 
-            gss_buffer_desc status_string;
-            OM_uint32 d_maj, d_min, msg_ctx;
+        connect( endpoint_iterator );
 
-            do
+        m_io_thread = new thread([this](){ m_io_service.run(); });
+    }
+
+    void connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
+    {
+        asio::async_connect( m_socket, endpoint_iterator,
+            [this]( error_code ec, asio::ip::tcp::resolver::iterator )
             {
-                d_maj = gss_display_status(
-                    &d_min,
-                    a_maj_stat,
-                    GSS_C_GSS_CODE,
-                    GSS_C_NO_OID,
-                    &msg_ctx,
-                    &status_string );
+                if (!ec)
+                {
+                    cout << "connected\n";
+                    //readMsgHeader();
+                }
+                else
+                {
+                    cerr << ec.message() << "\n";
+                    //connect( endpoint_iterator );
+                }
+            });
+    }
 
-                err_msg += string("\n") + (char *) status_string.value;
-                gss_release_buffer( &d_min, &status_string );
-            }
-            while ( d_maj & GSS_S_CONTINUE_NEEDED );
+    void readMsgHeader()
+    {
+        asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
+            [this]( error_code ec, size_t len )
+            {
+                cout << "read hdr cb, len: " << len << "\n";
 
-            throw runtime_error( err_msg );
+                if ( !ec )
+                {
+                    readMsgBody();
+                }
+                else
+                {
+                    cerr << ec.message() << "\n";
+                    readMsgHeader();
+                }
+            });
+    }
+
+    void readMsgBody()
+    {
+        cout << "ClientImpl::readMsgBody\n";
+        asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
+            [this]( error_code ec, size_t len )
+            {
+                cout << "read body cb, len: " << len << "\n";
+                if ( !ec )
+                {
+                    MsgBuf::Message *msg = m_in_buf.unserialize();
+                    cout << "got msg: " << msg << "\n";
+                    delete msg;
+                }
+                else
+                {
+                    cerr << ec.message() << "\n";
+                }
+
+                readMsgHeader();
+            });
+    }
+
+    void writeMsgHeader()
+    {
+        asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
+            [this]( error_code ec, size_t len )
+            {
+                cout << "read hdr cb, len: " << len << "\n";
+
+                if ( !ec )
+                {
+                    readMsgBody();
+                }
+                else
+                {
+                    cerr << ec.message() << "\n";
+                    readMsgHeader();
+                }
+            });
+    }
+
+    template<typename RQT,typename RPT>
+    void send( RQT & a_request, RPT * a_reply, uint32_t a_context )
+    {
+        cout << "send\n";
+
+        a_reply = 0;
+        m_out_buf.getFrame().context = a_context;
+        m_out_buf.serialize( a_request );
+
+        cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
+
+        uint32_t len = asio::write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )));
+        cout << "sent header, len: " << len << "\n";
+        len = asio::write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ));
+        cout << "sent body, len: " << len << "\n";
+        len = asio::read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )));
+        cout << "rcv header, len: " << len << "\n";
+        len = asio::read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
+        cout << "rcv body, len: " << len << "\n";
+        MsgBuf::Message * raw_reply = m_in_buf.unserialize();
+        if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
+        {
+            delete raw_reply;
+            EXCEPT( 1, "Bad reply type" );
         }
     }
-*/
+
     Status status()
     {
-        StatusRequest req;
-        StatusReply * reply;
+        cout << "status\n";
 
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
+        StatusRequest req;
+        StatusReply * reply = 0;
+
+        send<>( req, reply, m_ctx++ );
 
         Status stat = reply->status();
 
@@ -132,109 +197,13 @@ public:
     void ping()
     {
         PingRequest req;
-        PingReply * reply;
+        PingReply * reply = 0;
 
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
-
-        delete reply;
-    }
-
-    /**
-     * @brief Client-server handshake and certificate exchange
-     */
-    void initSecurity()
-    {
-        cout << "initSecurity\n";
-/*
-        if ( m_sec_ctx )
-            throw runtime_error( "Security context already established." );
-
-        OM_uint32           maj_stat, min_stat;
-        gss_buffer_desc     init_token = GSS_C_EMPTY_BUFFER;
-        gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
-        bool                loop = true;
-        Message*            reply = 0;
-        InitSecurityRequest msg;
-
-
-        // Initialize securit conext. Must exchange tokens with server until GSS
-        // init/accept functions stop generating token data.
-
-        while( loop )
-        {
-            maj_stat = gss_init_sec_context( &min_stat, m_sec_cred, &m_sec_ctx,
-                GSS_C_NO_NAME, GSS_C_NO_OID, 0, 0, GSS_C_NO_CHANNEL_BINDINGS,
-                &accept_token, 0, &init_token, 0, 0 );
-
-            gssCheckError( maj_stat, min_stat );
-
-            if ( reply )
-                delete reply;
-
-            accept_token.value = NULL;
-            accept_token.length = 0;
-
-
-            if ( init_token.length != 0 )
-            {
-                cout << "init tok len: " << init_token.length << "\n";
-
-                // Send init token data to server
-                uint32_t loc_ctx = m_ctx++;
-
-                msg.set_token( (const char*) init_token.value, init_token.length );
-                m_connection.send( msg, loc_ctx );
-
-                // Wait for response from server
-                if ( !m_connection.recv( reply, 0, m_timeout ))
-                    throw runtime_error("Server did not respond.");
-                cout << "reply: " << reply << "\n";
-                // Process server reply
-                //reply_hdr = (Connection::MsgHeader*)reply.data();
-
-                if ( Check( r, reply, InitSecurityRequest ))
-                {
-                    cout << "data from server\n";
-                    accept_token.value = (void*)r->token().c_str();
-                    accept_token.length = r->token().size();
-                }
-                else if ( Check( r, reply, AckReply ))
-                {
-                    cout << "Ack\n";
-                    if ( r->header().err_code() )
-                    {
-                        cout << "error\n";
-                        string err = r->header().err_msg();
-                        delete reply;
-                        throw runtime_error( err );
-                    }
-
-                    delete reply;
-                    cout << "done\n";
-                    loop = false;
-                }
-                else
-                {
-                    delete reply;
-                    throw runtime_error("Server responded with invalid reply type.");
-                }
-            }
-        }
-*/
-    }
-
-    void termSecurity()
-    {
-        cout << "termSecurity\n";
-/*
-        TermSecurityRequest req;
-        AckReply * reply;
-
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
+        send<>( req, reply, m_ctx++ );
 
         delete reply;
-*/
     }
+
 
 /*
     spUserListReply
@@ -260,6 +229,7 @@ public:
     }
 */
 
+/*
     bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
     {
         (void)a_request;
@@ -267,27 +237,29 @@ public:
         (void)a_timeout;
         return false;
     }
+*/
+
 
 private:
-    static size_t   m_initialized;  // TODO must be atomic int
-    Connection      m_connection;
-    uint64_t        m_timeout;
-    //gss_cred_id_t   m_sec_cred;
-    //gss_ctx_id_t    m_sec_ctx;
-    uint32_t        m_ctx;
+    string                      m_host;
+    uint32_t                    m_port;
+    asio::io_service            m_io_service;
+    asio::ip::tcp::resolver     m_resolver;
+    asio::ip::tcp::socket       m_socket;
+    thread *                    m_io_thread;
+    uint32_t                    m_timeout;
+    uint32_t                    m_ctx;
+    MsgBuf                      m_in_buf;
+    MsgBuf                      m_out_buf;
 };
-
-
-size_t Client::ClientImpl::m_initialized = 0;
-
 
 
 
 // Class ctor/dtor
 
-Client::Client( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout )
+Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout )
 {
-    m_impl = new ClientImpl( a_server_host, a_server_port, a_timeout );
+    m_impl = new ClientImpl( a_host, a_port, a_timeout );
 }
 
 
@@ -296,7 +268,12 @@ Client::~Client()
     delete m_impl;
 }
 
-// Methods (Forward to Impl)
+
+void Client::start()
+{
+    return m_impl->start();
+}
+
 
 Status Client::status()
 {
@@ -311,18 +288,6 @@ void Client::ping()
     m_impl->ping();
 }
 
-/**
- * @brief Client-server handshake and certificate exchange
- */
-void Client::initSecurity()
-{
-    m_impl->initSecurity();
-}
-
-void Client::termSecurity()
-{
-    m_impl->termSecurity();
-}
 
 /*
 spUserListReply
@@ -331,10 +296,11 @@ Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     return m_impl->userList( a_details, a_offset, a_count );
 }*/
 
+/*
 bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
 {
     return m_impl->send( a_request, a_reply, a_timeout );
-}
+}*/
 
 }}
 

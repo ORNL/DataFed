@@ -8,6 +8,7 @@
 #define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
 #define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
 
+#include "TraceException.hpp"
 #include "Client.hpp"
 
 using namespace std;
@@ -18,7 +19,7 @@ int main( int a_argc, char ** a_argv )
 {
     try
     {
-        const char * host = "localhost";
+        const char * host = "127.0.0.1";
         int port = 5800;
         int timeout = 5;
         int opt;
@@ -47,6 +48,7 @@ int main( int a_argc, char ** a_argv )
         }
 
         Client client( host, port, timeout );
+        client.start();
 
         cout << "server status: " << client.status() << "\n";
 
