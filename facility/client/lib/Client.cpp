@@ -13,6 +13,13 @@
 #include "MsgBuf.hpp"
 #include "Client.hpp"
 
+#include <time.h>
+
+#define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
+#define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
+#define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
+#define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
+
 //#include "GSSAPI_Utils.hpp"
 
 using namespace std;
@@ -39,6 +46,8 @@ namespace Facility {
         } \
     }
 
+asio::ip::tcp::no_delay no_delay_on(true);
+asio::ip::tcp::no_delay no_delay_off(false);
 
 class Client::ClientImpl
 {
@@ -78,6 +87,9 @@ public:
                 if (!ec)
                 {
                     cout << "connected\n";
+                    //asio::ip::tcp::no_delay option(true);
+                    //m_socket.set_option(option);
+
                     //readMsgHeader();
                 }
                 else
@@ -88,6 +100,7 @@ public:
             });
     }
 
+#if 0
     void readMsgHeader()
     {
         asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
@@ -147,37 +160,97 @@ public:
                 }
             });
     }
+#endif
 
     template<typename RQT,typename RPT>
-    void send( RQT & a_request, RPT * a_reply, uint32_t a_context )
+    void send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
     {
-        cout << "send\n";
+        //cout << "send\n";
 
         a_reply = 0;
         m_out_buf.getFrame().context = a_context;
         m_out_buf.serialize( a_request );
 
-        cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
+        //cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
 
         uint32_t len = asio::write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )));
-        cout << "sent header, len: " << len << "\n";
+        if ( len != sizeof( MsgBuf::Frame ))
+            EXCEPT( 1, "Write header failed" );
+
+        //cout << "sent header, len: " << len << "\n";
+
+        m_socket.set_option(no_delay_on);
+
         len = asio::write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ));
-        cout << "sent body, len: " << len << "\n";
+        if ( len != m_out_buf.getFrame().size )
+            EXCEPT( 1, "Write body failed" );
+
+        //cout << "sent body, len: " << len << "\n";
+
+        m_socket.set_option(no_delay_off);
+
         len = asio::read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )));
-        cout << "rcv header, len: " << len << "\n";
-        len = asio::read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
-        cout << "rcv body, len: " << len << "\n";
+        if ( len != sizeof( MsgBuf::Frame ))
+            EXCEPT( 1, "Read header failed" );
+
+        //cout << "rcv header, len: " << len << "\n";
+        if ( m_in_buf.getFrame().size )
+        {
+            //cout << "need more: " << m_in_buf.getFrame().size << "\n";
+            m_in_buf.ensureCapacity( m_in_buf.getFrame().size );
+            len = asio::read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
+            if ( len != m_in_buf.getFrame().size )
+                EXCEPT( 1, "Read body failed" );
+            //cout << "rcv body, len: " << len << "\n";
+        }
+
+        if ( m_in_buf.getFrame().context != a_context )
+            EXCEPT_PARAM( 1, "Reply context mismatch. Expected " << a_context << " got " << m_in_buf.getFrame().context );
+
+        //cout << "send: " << t1 << ", recv: " << t2 << "\n";
+
+        //cout << "unserialize\n";
         MsgBuf::Message * raw_reply = m_in_buf.unserialize();
         if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
         {
             delete raw_reply;
             EXCEPT( 1, "Bad reply type" );
         }
+        //cout << "a_reply: " << a_reply << "\n";
     }
 
+    bool test( size_t a_iter )
+    {
+        StatusReply     in;
+        StatusReply *   out = 0;
+        MsgBuf::Message *       raw;
+        MsgBuf          buf;
+
+        for ( size_t i = 0; i < a_iter; ++i )
+        {
+            in.set_status( NORMAL );
+            buf.serialize( in );
+            raw = buf.unserialize();
+            if ( !raw )
+            {
+                cerr << "unerialize failed\n";
+                return false;
+            }
+            out = dynamic_cast<StatusReply *>(raw);
+            if ( !out )
+            {
+                cerr << "cast failed\n";
+                delete raw;
+                return false;
+            }
+            delete raw;
+        }
+        return true;
+    }
+    
     Status status()
     {
-        cout << "status\n";
+        //cout << "status\n";
 
         StatusRequest req;
         StatusReply * reply = 0;
@@ -185,6 +258,8 @@ public:
         send<>( req, reply, m_ctx++ );
 
         Status stat = reply->status();
+
+        //cout << "Got status: " << stat << "\n";
 
         delete reply;
 
@@ -248,7 +323,7 @@ private:
     asio::ip::tcp::socket       m_socket;
     thread *                    m_io_thread;
     uint32_t                    m_timeout;
-    uint32_t                    m_ctx;
+    uint16_t                    m_ctx;
     MsgBuf                      m_in_buf;
     MsgBuf                      m_out_buf;
 };
@@ -274,6 +349,11 @@ void Client::start()
     return m_impl->start();
 }
 
+bool
+Client::test( size_t a_iter )
+{
+    return m_impl->test( a_iter );
+}
 
 Status Client::status()
 {

@@ -46,6 +46,8 @@ public:
 
     void            start();
 
+    bool            test( size_t a_iter );
+
     Status          status();
     void            ping();
 

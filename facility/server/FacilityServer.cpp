@@ -18,6 +18,14 @@
 #include "Facility.pb.h"
 //#include "GSSAPI_Utils.hpp"
 
+#include <time.h>
+
+#define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
+#define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
+#define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
+#define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
+
+
 using namespace std;
 
 namespace SDMS {
@@ -27,6 +35,9 @@ namespace Facility {
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 30
 #define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, name )] = func
+
+asio::ip::tcp::no_delay no_delay_on(true);
+asio::ip::tcp::no_delay no_delay_off(false);
 
 
 class ServerImpl
@@ -258,38 +269,71 @@ private:
 
         void readMsgHeader()
         {
-            cout << "Session::readMsgHeader\n";
+            //cout << "Session::readMsgHeader\n";
+            //timerStart();
             asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
                 [this]( error_code ec, size_t len )
                 {
+                    if ( len != sizeof( MsgBuf::Frame ))
+                    {
+                        cerr << "readMsgHeader, err: read failed.\n";
+                        // TODO Should terminate session
+                        readMsgHeader();
+                    }
+
                     clock_gettime( CLOCK_REALTIME, &m_last_access );
 
-                    cout << "read hdr cb, len: " << len << "\n";
+                    //cout << "read hdr cb, len: " << len << "\n";
                     if ( !ec )
                         readMsgBody();
                     else
                     {
-                        cerr << ec.message() << "\n";
-                        readMsgHeader();
+                        if ( ec.category() == asio::error::get_misc_category() && ec.value() == asio::error::eof )
+                        {
+                            //m_sessions.push_back( session );
+                            delete this;
+                        }
+                        else
+                        {
+                            cerr << ec.category().name() << ":" << ec.value() << "\n";
+                            cerr << "readMsgHeader, err: " << ec.message() << "\n";
+                            readMsgHeader();
+                        }
                     }
                 });
         }
 
         void readMsgBody()
         {
-            cout << "Session::readMsgBody\n";
-            asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
-                [this]( error_code ec, size_t len )
-                {
-                    cout << "read body cb, len: " << len << "\n";
-                    if ( !ec )
-                        messageHandler();
-                    else
+            //cout << "Session::readMsgBody\n";
+            if ( m_in_buf.getFrame().size )
+            {
+                asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
+                    [this]( error_code ec, size_t len )
                     {
-                        cerr << ec.message() << "\n";
-                        readMsgHeader();
-                    }
-                });
+                        if ( len != m_in_buf.getFrame().size )
+                        {
+                            cerr << "readMsgBody, err: read failed.\n";
+                            // TODO Should terminate session
+                            readMsgHeader();
+                        }
+                        //cout << "read body cb, len: " << len << "\n";
+                        if ( !ec )
+                            messageHandler();
+                        else
+                        {
+                            cerr << ec.category().name() << ":" << ec.value() << "\n";
+                            cerr << "readMsgBody, err: " << ec.message() << "\n";
+                            readMsgHeader();
+                        }
+                    });
+            }
+            else
+            {
+                //timerStop();
+                //cout << "read t: " << timerElapsed() << "\n";
+                messageHandler();
+            }
         }
 
         void messageHandler()
@@ -306,6 +350,64 @@ private:
         }
 
 
+        void writeMsgHeader()
+        {
+            //cout << "Session::writeMsgHeader\n";
+            if ( m_out_buf.getFrame().size == 0 )
+                m_socket.set_option(no_delay_on);
+
+            asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
+                [this]( error_code ec, size_t len )
+                {
+                    if ( len != sizeof( MsgBuf::Frame ))
+                    {
+                        cerr << "writeMsgHeader, err: write failed.\n";
+                        // TODO Should terminate session
+                    }
+
+                    if ( m_out_buf.getFrame().size && !ec )
+                        writeMsgBody();
+
+                    m_socket.set_option( no_delay_off );
+                });
+        }
+
+        void writeMsgBody()
+        {
+            //cout << "Session::writeMsgBody\n";
+            if ( m_out_buf.getFrame().size )
+            {
+                m_socket.set_option(no_delay_on);
+
+                asio::async_write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ),
+                    [this]( error_code ec, size_t len )
+                    {
+                        if ( len != m_out_buf.getFrame().size )
+                        {
+                            cerr << "writeMsgBody, err: write failed.\n";
+                            // TODO Should terminate session
+                        }
+
+                        m_socket.set_option( no_delay_off );
+
+                        //cout << "write body cb, len: " << len << "\n";
+                        if ( !ec )
+                        {
+                            if ( ec.category() != std::system_category() || ec.value() != 0 )
+                            {
+                                cerr << ec.category().name() << ":" << ec.value() << "\n";
+                                cerr << "writeMsgBody, err: " << ec.message() << "\n";
+                            }
+                        }
+                    });
+            }
+            else
+            {
+                m_socket.set_option( no_delay_off );
+                //timerStop();
+                //cout << "write t: " << timerElapsed() << "\n";
+            }
+        }
 
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
     msgclass *msg = 0; \
@@ -342,7 +444,7 @@ private:
             } \
             m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
             m_out_buf.serialize( reply ); \
-            /*m_conn->send( a_msg_buffer );*/ \
+            writeMsgHeader() \
             DL_TRACE( "Sent: " << reply.DebugString()); \
         } \
         else { \

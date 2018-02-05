@@ -47,11 +47,31 @@ int main( int a_argc, char ** a_argv )
             }
         }
 
+        timerDef();
+
         Client client( host, port, timeout );
         client.start();
 
-        cout << "server status: " << client.status() << "\n";
+/*
+        timerStart();
 
+        client.test( 100000 );
+
+        timerStop();
+
+        cout << "time: " << timerElapsed() << " sec, iter/sec: " << 100000/timerElapsed() << "\n";
+*/
+
+        timerStart();
+
+        for ( int i = 0; i < 200000; ++i )
+            client.ping();
+
+        timerStop();
+
+        cout << "time: " << timerElapsed() << " sec, ops/sec: " << 200000/timerElapsed() << "\n";
+
+        sleep( 1 );
         //client.initSecurity();
 
 /*

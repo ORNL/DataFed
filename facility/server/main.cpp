@@ -20,11 +20,12 @@ int main( int a_argc, char ** a_argv )
         DL_SET_SYSDL_ENABLED(false);
 
         const char * host = "";
-        int port = 5800;
-        int timeout = 5;
+        int         port = 5800;
+        int         timeout = 5;
+        uint32_t    num_threads = 0;
         int opt;
 
-        while (( opt = getopt( a_argc, a_argv, "?h:p:t:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?h:p:n:t:" )) != -1 )
         {
             switch( opt )
             {
@@ -33,6 +34,7 @@ int main( int a_argc, char ** a_argv )
                 cout << "? - show help" << endl;
                 //cout << "h - server hostname" << endl;
                 cout << "p - server port" << endl;
+                cout << "n - num threads" << endl;
                 cout << "t - timeout (sec)" << endl;
                 return 0;
             case 'h':
@@ -41,13 +43,16 @@ int main( int a_argc, char ** a_argv )
             case 'p':
                 port = atoi( optarg );
                 break;
+            case 'n':
+                num_threads = (uint32_t)atoi( optarg );
+                break;
             case 't':
                 timeout = atoi( optarg );
                 break;
             }
         }
 
-        Facility::Server server( host, port, timeout );
+        Facility::Server server( host, port, timeout, num_threads );
 
         cout << "start\n";
         server.run( false );

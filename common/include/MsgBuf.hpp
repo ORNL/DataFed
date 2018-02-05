@@ -176,8 +176,8 @@ public:
 
     static Message* unserialize( const Frame & a_frame, const char * a_buffer )
     {
-        if ( !a_buffer )
-            EXCEPT_PARAM( EC_UNSERIALIZE, "Attempt to unserialize empty/null buffer." );
+        //if ( !a_buffer )
+        //    EXCEPT_PARAM( EC_UNSERIALIZE, "Attempt to unserialize empty/null buffer." );
 
         DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
 
@@ -192,6 +192,7 @@ public:
 
             if ( msg )
             {
+                // Some message types do not have any content and will not need to be parsed (and buffer may be null/empty)
                 if ( msg->ParseFromArray( a_buffer, a_frame.size ))
                     return msg;
                 else
@@ -212,13 +213,15 @@ public:
         m_frame.msg_id = desc->index();
         m_frame.size = a_msg.ByteSize();
 
-        std::cout << "msg size: " << m_frame.size << "\n";
+        // Only serialize if message type has content
+        if ( m_frame.size )
+        {
+            ensureCapacity( m_frame.size );
 
-        ensureCapacity( m_frame.size );
-
-        // Serialize message - may fail if required fields are missing
-        if ( !a_msg.SerializeToArray( m_buffer, m_frame.size ))
-            EXCEPT( EC_SERIALIZE, "SerializeToArray for message failed." );
+            // Serialize message - may fail if required fields are missing
+            if ( !a_msg.SerializeToArray( m_buffer, m_frame.size ))
+                EXCEPT( EC_SERIALIZE, "SerializeToArray for message failed." );
+        }
     }
 
 private:
