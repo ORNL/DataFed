@@ -50,7 +50,12 @@ int main( int a_argc, char ** a_argv )
         timerDef();
 
         Client client( host, port, timeout );
+        
+        cout << "Starting client" << endl;
+
         client.start();
+
+        sleep(1);
 
 /*
         timerStart();
@@ -62,17 +67,20 @@ int main( int a_argc, char ** a_argv )
         cout << "time: " << timerElapsed() << " sec, iter/sec: " << 100000/timerElapsed() << "\n";
 */
 
+        int num_send = 50000;
         timerStart();
 
-        for ( int i = 0; i < 200000; ++i )
-            client.ping();
+        for ( int i = 0; i < num_send; ++i )
+            client.text("Hello server!");
+            //client.ping();
 
         timerStop();
 
-        cout << "time: " << timerElapsed() << " sec, ops/sec: " << 200000/timerElapsed() << "\n";
+        cout << "time: " << timerElapsed() << " sec, ops/sec: " << num_send/timerElapsed() << "\n";
 
         sleep( 1 );
-        //client.initSecurity();
+
+
 
 /*
         spUserListReply users = client.userList();

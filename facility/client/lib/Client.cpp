@@ -1,10 +1,32 @@
+#define USE_TLS
+
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
 #include <thread>
 
 #include <asio.hpp>
+
+asio::ip::tcp::no_delay no_delay_on(true);
+asio::ip::tcp::no_delay no_delay_off(false);
+
+#ifdef USE_TLS
+
 #include <asio/ssl.hpp>
+
+typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
+
+//#define NO_DELAY_ON(sock) (void)0
+//#define NO_DELAY_OFF(sock) (void)0
+#define NO_DELAY_ON(sock) sock->lowest_layer().set_option(no_delay_on)
+#define NO_DELAY_OFF(sock) sock->lowest_layer().set_option(no_delay_off)
+
+#else
+
+#define NO_DELAY_ON(sock) sock->set_option(no_delay_on)
+#define NO_DELAY_OFF(sock) sock->set_option(no_delay_off)
+
+#endif
 
 #include "unistd.h"
 #include "sys/types.h"
@@ -46,8 +68,7 @@ namespace Facility {
         } \
     }
 
-asio::ip::tcp::no_delay no_delay_on(true);
-asio::ip::tcp::no_delay no_delay_off(false);
+
 
 class Client::ClientImpl
 {
@@ -55,19 +76,37 @@ public:
     ClientImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout ) :
         m_host( a_host ),
         m_port( a_port ),
-        m_resolver(m_io_service),
-        m_socket(m_io_service),
-        m_io_thread(0),
-        m_timeout(a_timeout),
-        m_ctx(1)
+        m_resolver( m_io_service ),
+        #ifdef USE_TLS
+        m_context( asio::ssl::context::tlsv12 ),
+        #endif
+        m_socket( 0 ),
+        m_io_thread( 0 ),
+        m_timeout( a_timeout ),
+        m_ctx( 1 )
     {
         REG_PROTO( SDMS );
         REG_PROTO( Facility );
 
+        #ifdef USE_TLS
+
+        //m_context.add_verify_path("/etc/ssl/certs");
+        m_context.load_verify_file("/home/d3s/olcf/SDMS/server_cert.pem");
+        m_context.use_certificate_file( "/home/d3s/olcf/SDMS/client_cert.pem", asio::ssl::context::pem );
+        m_context.use_private_key_file( "/home/d3s/olcf/SDMS/client_key.pem", asio::ssl::context::pem );
+
+        m_socket = new ssl_socket( m_io_service, m_context );
+
+        m_socket->set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
+        m_socket->set_verify_callback( bind( &ClientImpl::verifyCert, this, placeholders::_1, placeholders::_2 ));
+        #else
+        m_socket = new asio::ip::tcp::socket( m_io_service );
+        #endif
     }
 
     ~ClientImpl()
     {
+        delete m_socket;
     }
 
     void start()
@@ -81,14 +120,35 @@ public:
 
     void connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
     {
-        asio::async_connect( m_socket, endpoint_iterator,
+        cout << "connecting" << endl;
+
+        #ifdef USE_TLS
+
+        asio::async_connect( m_socket->lowest_layer(), endpoint_iterator,
+            [this]( error_code ec, asio::ip::tcp::resolver::iterator )
+            {
+                if (!ec)
+                {
+                    cout << "connected" << endl;
+                    handShake();
+            
+                    //readMsgHeader();
+                }
+                else
+                {
+                    cerr << "Connect failed: " << ec.message() << "\n";
+                    //connect( endpoint_iterator );
+                }
+            });
+
+        #else
+
+        asio::async_connect( *m_socket, endpoint_iterator,
             [this]( error_code ec, asio::ip::tcp::resolver::iterator )
             {
                 if (!ec)
                 {
                     cout << "connected\n";
-                    //asio::ip::tcp::no_delay option(true);
-                    //m_socket.set_option(option);
 
                     //readMsgHeader();
                 }
@@ -98,69 +158,47 @@ public:
                     //connect( endpoint_iterator );
                 }
             });
+
+        #endif
     }
 
-#if 0
-    void readMsgHeader()
-    {
-        asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
-            [this]( error_code ec, size_t len )
-            {
-                cout << "read hdr cb, len: " << len << "\n";
+    #ifdef USE_TLS
 
+    void handShake()
+    {
+        cout << "starting handshake" << endl;
+
+        m_socket->async_handshake( asio::ssl::stream_base::client,
+            [this]( error_code ec )
+            {
+                cout << "handshake callback" << endl;
                 if ( !ec )
                 {
-                    readMsgBody();
+                    cout << "handshake ok"  << endl ;
                 }
                 else
                 {
-                    cerr << ec.message() << "\n";
-                    readMsgHeader();
+                    cerr << "Handshake failed: " << ec.message() << endl;
                 }
             });
     }
 
-    void readMsgBody()
+    bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
     {
-        cout << "ClientImpl::readMsgBody\n";
-        asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
-            [this]( error_code ec, size_t len )
-            {
-                cout << "read body cb, len: " << len << "\n";
-                if ( !ec )
-                {
-                    MsgBuf::Message *msg = m_in_buf.unserialize();
-                    cout << "got msg: " << msg << "\n";
-                    delete msg;
-                }
-                else
-                {
-                    cerr << ec.message() << "\n";
-                }
+        (void)a_preverified;
 
-                readMsgHeader();
-            });
+        char subject_name[256];
+
+        X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
+        X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
+
+        cout << "Verifying " << subject_name << "\n";
+
+        return a_preverified;
     }
 
-    void writeMsgHeader()
-    {
-        asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
-            [this]( error_code ec, size_t len )
-            {
-                cout << "read hdr cb, len: " << len << "\n";
+    #endif
 
-                if ( !ec )
-                {
-                    readMsgBody();
-                }
-                else
-                {
-                    cerr << ec.message() << "\n";
-                    readMsgHeader();
-                }
-            });
-    }
-#endif
 
     template<typename RQT,typename RPT>
     void send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
@@ -172,24 +210,31 @@ public:
         m_out_buf.serialize( a_request );
 
         //cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
+        if ( m_out_buf.getFrame().size == 0 )
+            NO_DELAY_ON(m_socket);
 
-        uint32_t len = asio::write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )));
+        uint32_t len = asio::write( *m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )));
         if ( len != sizeof( MsgBuf::Frame ))
             EXCEPT( 1, "Write header failed" );
 
         //cout << "sent header, len: " << len << "\n";
 
-        m_socket.set_option(no_delay_on);
+        if ( m_out_buf.getFrame().size == 0 )
+            NO_DELAY_OFF(m_socket);
+        else
+        {
+            NO_DELAY_ON(m_socket);
 
-        len = asio::write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ));
-        if ( len != m_out_buf.getFrame().size )
-            EXCEPT( 1, "Write body failed" );
+            len = asio::write( *m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ));
+            if ( len != m_out_buf.getFrame().size )
+                EXCEPT( 1, "Write body failed" );
 
-        //cout << "sent body, len: " << len << "\n";
+            //cout << "sent body, len: " << len << "\n";
 
-        m_socket.set_option(no_delay_off);
+            NO_DELAY_OFF(m_socket);
+        }
 
-        len = asio::read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )));
+        len = asio::read( *m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )));
         if ( len != sizeof( MsgBuf::Frame ))
             EXCEPT( 1, "Read header failed" );
 
@@ -198,7 +243,7 @@ public:
         {
             //cout << "need more: " << m_in_buf.getFrame().size << "\n";
             m_in_buf.ensureCapacity( m_in_buf.getFrame().size );
-            len = asio::read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
+            len = asio::read( *m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
             if ( len != m_in_buf.getFrame().size )
                 EXCEPT( 1, "Read body failed" );
             //cout << "rcv body, len: " << len << "\n";
@@ -247,7 +292,25 @@ public:
         }
         return true;
     }
-    
+
+
+    string text( const string & a_message )
+    {
+        TextRequest req;
+        TextReply * reply = 0;
+
+        req.set_data( a_message );
+
+        send<>( req, reply, m_ctx++ );
+
+        string answer = reply->data();
+
+        delete reply;
+        
+        return answer;
+    }
+
+
     Status status()
     {
         //cout << "status\n";
@@ -320,7 +383,12 @@ private:
     uint32_t                    m_port;
     asio::io_service            m_io_service;
     asio::ip::tcp::resolver     m_resolver;
-    asio::ip::tcp::socket       m_socket;
+    #ifdef USE_TLS
+    asio::ssl::context          m_context;
+    ssl_socket *                m_socket;
+    #else
+    asio::ip::tcp::socket *     m_socket;
+    #endif
     thread *                    m_io_thread;
     uint32_t                    m_timeout;
     uint16_t                    m_ctx;
@@ -353,6 +421,12 @@ bool
 Client::test( size_t a_iter )
 {
     return m_impl->test( a_iter );
+}
+
+string
+Client::text( const string & a_message )
+{
+    return m_impl->text( a_message );
 }
 
 Status Client::status()

@@ -1,3 +1,5 @@
+#define USE_TLS
+
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
@@ -9,7 +11,26 @@
 #include "sys/types.h"
 
 #include <asio.hpp>
+
+asio::ip::tcp::no_delay no_delay_on(true);
+asio::ip::tcp::no_delay no_delay_off(false);
+
+#ifdef USE_TLS
+
 #include <asio/ssl.hpp>
+
+
+typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
+
+#define NO_DELAY_ON(sock) sock.lowest_layer().set_option(no_delay_on)
+#define NO_DELAY_OFF(sock) sock.lowest_layer().set_option(no_delay_off)
+
+#else
+
+#define NO_DELAY_ON(sock) sock.set_option(no_delay_on);
+#define NO_DELAY_OFF(sock) sock.set_option(no_delay_off);
+
+#endif
 
 #include "MsgBuf.hpp"
 #include "DynaLog.hpp"
@@ -36,15 +57,13 @@ namespace Facility {
 #define CLIENT_IDLE_TIMEOUT 30
 #define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, name )] = func
 
-asio::ip::tcp::no_delay no_delay_on(true);
-asio::ip::tcp::no_delay no_delay_off(false);
+
 
 
 class ServerImpl
 {
 public:
-    ServerImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads ) :
-        m_host( a_host ),
+    ServerImpl( uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads ) :
         m_port( a_port ),
         m_timeout(a_timeout),
         m_io_thread(0),
@@ -53,11 +72,34 @@ public:
         m_io_running(false),
         m_endpoint( asio::ip::tcp::v4(), m_port ),
         m_acceptor( m_io_service, m_endpoint ),
+        #ifdef USE_TLS
+        m_context( asio::ssl::context::tlsv12 )
+        #else
         m_socket( m_io_service )
+        #endif
     {
+        #ifdef USE_TLS
+        m_context.set_options(
+            asio::ssl::context::default_workarounds |
+            asio::ssl::context::no_sslv2 |
+            asio::ssl::context::no_sslv3 |
+            asio::ssl::context::no_tlsv1 |
+            asio::ssl::context::no_tlsv1_1 |
+            asio::ssl::context::single_dh_use );
+
+        m_context.set_password_callback( bind( &ServerImpl::getPassword, this));
+        m_context.use_certificate_chain_file( "/home/d3s/olcf/SDMS/server_cert.pem" );
+        m_context.use_private_key_file( "/home/d3s/olcf/SDMS/server_key.pem", asio::ssl::context::pem );
+        m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
+
+        #endif
+
+        //m_context.use_tmp_dh_file( "dh512.pem" );
+
         uint8_t proto_id = REG_PROTO( SDMS );
         SET_MSG_HANDLER( proto_id, "StatusRequest", &ServerImpl::Session::procMsgStatus );
         SET_MSG_HANDLER( proto_id, "PingRequest", &ServerImpl::Session::procMsgPing );
+        SET_MSG_HANDLER( proto_id, "TextRequest", &ServerImpl::Session::procMsgText );
 
         proto_id = REG_PROTO( Facility );
         (void)proto_id;
@@ -71,6 +113,11 @@ public:
     {
     }
 
+    string getPassword() const
+    {
+        cout << "Asking for password!\n";
+        return "nopass";
+    }
 
     void run( bool a_async )
     {
@@ -195,6 +242,29 @@ private:
 
     void accept()
     {
+        #ifdef USE_TLS
+
+        Session * session = new Session( *this, m_context );
+
+        m_acceptor.async_accept( session->m_socket.lowest_layer(),
+            [this, session]( error_code ec )
+                {
+                    if ( !ec )
+                    {
+                        cout << "connect!\n";
+                        session->start();
+                        m_sessions.push_back( session );
+                    }
+                    else
+                    {
+                        delete session;
+                    }
+
+                    accept();
+                });
+
+        #else
+
         m_acceptor.async_accept( m_socket, [this]( error_code ec )
         {
             if ( !ec )
@@ -207,6 +277,8 @@ private:
 
             accept();
         });
+
+        #endif
     }
 
     void backgroundMaintenance()
@@ -251,6 +323,19 @@ private:
     class Session
     {
     public:
+        #ifdef USE_TLS
+
+        Session( ServerImpl & a_server, asio::ssl::context& a_context ) :
+            m_server( a_server ),
+            m_socket( a_server.m_io_service, a_context ),
+            m_in_buf( 4096 )
+        {
+            m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
+            m_socket.set_verify_callback( bind( &Session::verifyCert, this, placeholders::_1, placeholders::_2 ));
+        }
+
+        #else
+
         Session( ServerImpl & a_server, asio::ip::tcp::socket a_socket ) :
             m_server( a_server ),
             m_socket( move( a_socket )),
@@ -258,14 +343,56 @@ private:
         {
         }
 
+        #endif
+
         ~Session()
         {
         }
 
         void start()
         {
+            #ifdef USE_TLS
+
+            m_socket.async_handshake( asio::ssl::stream_base::server,
+                [this]( error_code ec )
+                {
+                    if ( !ec )
+                    {
+                        readMsgHeader();
+                    }
+                    else
+                    {
+                        cerr << "start, handshake failed\n";
+                        cerr << ec.category().name() << ":" << ec.value() << " " << ec.message() << "\n";
+                        // TODO Remove session from server map
+                        delete this;
+                    }
+                });
+
+            #else
+
             readMsgHeader();
+
+            #endif
         }
+
+        #ifdef USE_TLS
+
+        bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
+        {
+            (void)a_preverified;
+
+            char subject_name[256];
+
+            X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
+            X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
+
+            cout << "Verifying " << subject_name << "\n";
+
+            return a_preverified;
+        }
+
+        #endif
 
         void readMsgHeader()
         {
@@ -274,31 +401,24 @@ private:
             asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
                 [this]( error_code ec, size_t len )
                 {
-                    if ( len != sizeof( MsgBuf::Frame ))
+                    if ( len != sizeof( MsgBuf::Frame ) || ec )
                     {
                         cerr << "readMsgHeader, err: read failed.\n";
-                        // TODO Should terminate session
-                        readMsgHeader();
-                    }
 
-                    clock_gettime( CLOCK_REALTIME, &m_last_access );
-
-                    //cout << "read hdr cb, len: " << len << "\n";
-                    if ( !ec )
-                        readMsgBody();
-                    else
-                    {
-                        if ( ec.category() == asio::error::get_misc_category() && ec.value() == asio::error::eof )
-                        {
-                            //m_sessions.push_back( session );
-                            delete this;
-                        }
-                        else
+                        if ( ec )
                         {
                             cerr << ec.category().name() << ":" << ec.value() << "\n";
                             cerr << "readMsgHeader, err: " << ec.message() << "\n";
-                            readMsgHeader();
                         }
+
+                        // TODO remove from session map
+                        delete this;
+                    }
+                    else
+                    {
+                        clock_gettime( CLOCK_REALTIME, &m_last_access );
+
+                        readMsgBody();
                     }
                 });
         }
@@ -311,20 +431,20 @@ private:
                 asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
                     [this]( error_code ec, size_t len )
                     {
-                        if ( len != m_in_buf.getFrame().size )
+                        if ( len != m_in_buf.getFrame().size || ec )
                         {
                             cerr << "readMsgBody, err: read failed.\n";
-                            // TODO Should terminate session
-                            readMsgHeader();
+                            if ( ec )
+                            {
+                                cerr << ec.category().name() << ":" << ec.value() << "\n";
+                                cerr << "readMsgBody, err: " << ec.message() << "\n";
+                            }
+                            // TODO remove from session map
+                            delete this;
                         }
-                        //cout << "read body cb, len: " << len << "\n";
-                        if ( !ec )
-                            messageHandler();
                         else
                         {
-                            cerr << ec.category().name() << ":" << ec.value() << "\n";
-                            cerr << "readMsgBody, err: " << ec.message() << "\n";
-                            readMsgHeader();
+                            messageHandler();
                         }
                     });
             }
@@ -353,8 +473,9 @@ private:
         void writeMsgHeader()
         {
             //cout << "Session::writeMsgHeader\n";
+            
             if ( m_out_buf.getFrame().size == 0 )
-                m_socket.set_option(no_delay_on);
+                NO_DELAY_ON(m_socket);
 
             asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
                 [this]( error_code ec, size_t len )
@@ -368,7 +489,7 @@ private:
                     if ( m_out_buf.getFrame().size && !ec )
                         writeMsgBody();
 
-                    m_socket.set_option( no_delay_off );
+                    NO_DELAY_OFF(m_socket);
                 });
         }
 
@@ -377,7 +498,7 @@ private:
             //cout << "Session::writeMsgBody\n";
             if ( m_out_buf.getFrame().size )
             {
-                m_socket.set_option(no_delay_on);
+                NO_DELAY_ON(m_socket);
 
                 asio::async_write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ),
                     [this]( error_code ec, size_t len )
@@ -388,7 +509,7 @@ private:
                             // TODO Should terminate session
                         }
 
-                        m_socket.set_option( no_delay_off );
+                        NO_DELAY_OFF(m_socket);
 
                         //cout << "write body cb, len: " << len << "\n";
                         if ( !ec )
@@ -403,7 +524,8 @@ private:
             }
             else
             {
-                m_socket.set_option( no_delay_off );
+                NO_DELAY_OFF(m_socket);
+
                 //timerStop();
                 //cout << "write t: " << timerElapsed() << "\n";
             }
@@ -476,8 +598,21 @@ private:
             PROC_MSG_END
         }
 
+        void procMsgText()
+        {
+            PROC_MSG_BEGIN( TextRequest, TextReply )
+
+            reply.set_data("Hello client!");
+
+            PROC_MSG_END
+        }
+
         ServerImpl &            m_server;
+        #ifdef USE_TLS
+        ssl_socket              m_socket;
+        #else
         asio::ip::tcp::socket   m_socket;
+        #endif
         MsgBuf                  m_in_buf;
         MsgBuf                  m_out_buf;
         struct timespec         m_last_access = {0,0};
@@ -547,17 +682,21 @@ private:
     asio::io_service            m_io_service;
     asio::ip::tcp::endpoint     m_endpoint;
     asio::ip::tcp::acceptor     m_acceptor;
+    #ifdef USE_TLS
+    asio::ssl::context          m_context;
+    #else
     asio::ip::tcp::socket       m_socket;
+    #endif
     vector<Session*>            m_sessions;
-    
+
     friend class Session;
 };
 
 // ========== Server Wrapper Class ==========
 
-Server::Server( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads )
+Server::Server( uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads )
 {
-    m_impl = new ServerImpl( a_host, a_port, a_timeout, a_num_threads );
+    m_impl = new ServerImpl( a_port, a_timeout, a_num_threads );
 }
 
 Server::~Server()

@@ -47,6 +47,7 @@ public:
     void            start();
 
     bool            test( size_t a_iter );
+    std::string     text( const std::string & a_message );
 
     Status          status();
     void            ping();

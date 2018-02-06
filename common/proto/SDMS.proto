@@ -28,6 +28,17 @@ message ReplyHeader
     optional string         err_msg     = 2;
 }
 
+message TextRequest
+{
+    required string         data    = 1;
+}
+
+message TextReply
+{
+    optional ReplyHeader    header  = 1;
+    required string         data    = 2;
+}
+
 message AckReply
 {
     optional ReplyHeader    header  = 1;
@@ -56,3 +67,5 @@ message PingReply
 {
     optional ReplyHeader    header  = 1;
 }
+
+
