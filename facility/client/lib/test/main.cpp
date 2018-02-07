@@ -52,13 +52,10 @@ int main( int a_argc, char ** a_argv )
         Client client( host, port, timeout );
         
         cout << "Starting client" << endl;
-
         client.start();
 
-        // TODO How to know when handshake is done?
-        sleep(1);
 
-/*
+#if 0
         timerStart();
 
         client.test( 100000 );
@@ -66,24 +63,27 @@ int main( int a_argc, char ** a_argv )
         timerStop();
 
         cout << "time: " << timerElapsed() << " sec, iter/sec: " << 100000/timerElapsed() << "\n";
-*/
+#endif
 
-        int num_send = 50000;
+#if 0
+        int num_send = 10000;
         timerStart();
 
         for ( int i = 0; i < num_send; ++i )
             client.text("Hello server!");
-            //client.ping();
 
         timerStop();
 
         cout << "time: " << timerElapsed() << " sec, ops/sec: " << num_send/timerElapsed() << "\n";
+#endif
 
-        sleep( 40 );
+        //sleep( 15 );
+
+        //for ( int i = 0; i < num_send; ++i )
+        //    client.text("Hello server!");
 
 
-
-/*
+#if 1
         spUserListReply users = client.userList();
 
         cout << "user count: " << users->user_size() << "\n";
@@ -94,7 +94,7 @@ int main( int a_argc, char ** a_argv )
         }
 
         users.reset();
-*/
+#endif
 
         //client.termSecurity();
 

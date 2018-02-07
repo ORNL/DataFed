@@ -4,6 +4,8 @@
 #include <fstream>
 #include <stdexcept>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include <asio.hpp>
 
@@ -83,7 +85,8 @@ public:
         m_socket( 0 ),
         m_io_thread( 0 ),
         m_timeout( a_timeout ),
-        m_ctx( 1 )
+        m_ctx( 1 ),
+        m_state(NOT_STARTED)
     {
         REG_PROTO( SDMS );
 
@@ -115,6 +118,14 @@ public:
         connect( endpoint_iterator );
 
         m_io_thread = new thread([this](){ m_io_service.run(); });
+        
+        // Wait for handshake to complete
+        unique_lock<mutex> lock(m_mutex);
+        while( m_state == NOT_STARTED )
+            m_start_cvar.wait( lock );
+
+        if ( m_state == FAILED )
+            EXCEPT( 1, "Failed to connect to server" );
     }
 
     void connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
@@ -130,13 +141,14 @@ public:
                 {
                     cout << "connected" << endl;
                     handShake();
-            
-                    //readMsgHeader();
                 }
                 else
                 {
                     cerr << "Connect failed: " << ec.message() << "\n";
-                    //connect( endpoint_iterator );
+
+                    unique_lock<mutex> lock(m_mutex);
+                    m_state = FAILED;
+                    m_start_cvar.notify_all();
                 }
             });
 
@@ -145,17 +157,20 @@ public:
         asio::async_connect( *m_socket, endpoint_iterator,
             [this]( error_code ec, asio::ip::tcp::resolver::iterator )
             {
+                unique_lock<mutex> lock(m_mutex);
+
                 if (!ec)
                 {
                     cout << "connected\n";
-
-                    //readMsgHeader();
+                    m_state = STARTED;
                 }
                 else
                 {
                     cerr << ec.message() << "\n";
-                    //connect( endpoint_iterator );
+                    m_state = FAILED;
                 }
+
+                m_start_cvar.notify_all();
             });
 
         #endif
@@ -171,14 +186,20 @@ public:
             [this]( error_code ec )
             {
                 cout << "handshake callback" << endl;
+
+                unique_lock<mutex> lock(m_mutex);
                 if ( !ec )
                 {
                     cout << "handshake ok"  << endl ;
+                    m_state = STARTED;
                 }
                 else
                 {
                     cerr << "Handshake failed: " << ec.message() << endl;
+                    m_state = FAILED;
                 }
+
+                m_start_cvar.notify_all();
             });
     }
 
@@ -212,7 +233,17 @@ public:
         if ( m_out_buf.getFrame().size == 0 )
             NO_DELAY_ON(m_socket);
 
-        uint32_t len = asio::write( *m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )));
+        error_code ec;
+
+        //cout << "1" << endl;
+
+        uint32_t len = asio::write( *m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )), ec );
+        
+        if ( ec )
+        {
+            cout << "write err: " << ec.category().name() << "[" << ec.value() << "] " << ec.message() << endl;
+        }
+
         if ( len != sizeof( MsgBuf::Frame ))
             EXCEPT( 1, "Write header failed" );
 
@@ -224,6 +255,8 @@ public:
         {
             NO_DELAY_ON(m_socket);
 
+            //cout << "2" << endl;
+
             len = asio::write( *m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ));
             if ( len != m_out_buf.getFrame().size )
                 EXCEPT( 1, "Write body failed" );
@@ -233,6 +266,8 @@ public:
             NO_DELAY_OFF(m_socket);
         }
 
+        //cout << "3" << endl;
+
         len = asio::read( *m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )));
         if ( len != sizeof( MsgBuf::Frame ))
             EXCEPT( 1, "Read header failed" );
@@ -240,6 +275,8 @@ public:
         //cout << "rcv header, len: " << len << "\n";
         if ( m_in_buf.getFrame().size )
         {
+            //cout << "4" << endl;
+
             //cout << "need more: " << m_in_buf.getFrame().size << "\n";
             m_in_buf.ensureCapacity( m_in_buf.getFrame().size );
             len = asio::read( *m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
@@ -302,6 +339,8 @@ public:
 
         send<>( req, reply, m_ctx++ );
 
+        HANDLE_REPLY_ERROR( reply );
+
         string answer = reply->data();
 
         delete reply;
@@ -321,7 +360,7 @@ public:
 
         Status stat = reply->status();
 
-        //cout << "Got status: " << stat << "\n";
+        HANDLE_REPLY_ERROR( reply );
 
         delete reply;
 
@@ -338,11 +377,12 @@ public:
 
         send<>( req, reply, m_ctx++ );
 
+        HANDLE_REPLY_ERROR( reply );
+
         delete reply;
     }
 
 
-/*
     spUserListReply
     userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     {
@@ -358,13 +398,13 @@ public:
 
         UserListReply * reply;
 
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
+        send<>( req, reply, m_ctx++ );
 
         HANDLE_REPLY_ERROR( reply );
 
         return spUserListReply( reply );
     }
-*/
+
 
 /*
     bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
@@ -378,6 +418,13 @@ public:
 
 
 private:
+    enum State
+    {
+        NOT_STARTED,
+        STARTED,
+        FAILED
+    };
+
     string                      m_host;
     uint32_t                    m_port;
     asio::io_service            m_io_service;
@@ -393,6 +440,9 @@ private:
     uint16_t                    m_ctx;
     MsgBuf                      m_in_buf;
     MsgBuf                      m_out_buf;
+    State                       m_state;
+    condition_variable          m_start_cvar;
+    mutex                       m_mutex;
 };
 
 
@@ -442,12 +492,11 @@ void Client::ping()
 }
 
 
-/*
 spUserListReply
 Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     return m_impl->userList( a_details, a_offset, a_count );
-}*/
+}
 
 /*
 bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )

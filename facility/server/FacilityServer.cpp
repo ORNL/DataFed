@@ -50,17 +50,29 @@ using namespace std;
 namespace SDMS {
 namespace Facility {
 
+class ServerImpl;
+class Session;
 
-#define MAINT_POLL_INTERVAL 2
-#define CLIENT_IDLE_TIMEOUT 30
+#define MAINT_POLL_INTERVAL 5
+#define CLIENT_IDLE_TIMEOUT 10
 #define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, name )] = func
+
+typedef shared_ptr<Session> spSession;
+
+
+class ISessionObserver
+{
+public:
+    virtual void sessionClosed( spSession ) = 0;
+};
 
 class Session : public enable_shared_from_this<Session>
 {
 public:
     #ifdef USE_TLS
 
-    Session( asio::io_service & a_io_service, asio::ssl::context& a_context ) :
+    Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionObserver & a_sess_obs ) :
+        m_sess_obs( a_sess_obs ),
         m_socket( a_io_service, a_context ),
         m_in_buf( 4096 )
     {
@@ -70,7 +82,8 @@ public:
 
     #else
 
-    Session( asio::ip::tcp::socket a_socket ) :
+    Session( asio::ip::tcp::socket a_socket, ISessionObserver & a_sess_obs ) :
+        m_sess_obs( a_sess_obs ),
         m_socket( move( a_socket )),
         m_in_buf( 4096 )
     {
@@ -89,7 +102,7 @@ public:
         SET_MSG_HANDLER( proto_id, "StatusRequest", &Session::procMsgStatus );
         SET_MSG_HANDLER( proto_id, "PingRequest", &Session::procMsgPing );
         SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
-        //SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
+        SET_MSG_HANDLER( proto_id, "UserListRequest", &Session::procMsgUserListReq );
     }
 
     void start()
@@ -98,20 +111,15 @@ public:
 
         #ifdef USE_TLS
 
+        auto self( shared_from_this() );
+
         m_socket.async_handshake( asio::ssl::stream_base::server,
-            [this]( error_code ec )
+            [this,self]( error_code ec )
             {
-                if ( !ec )
-                {
-                    readMsgHeader();
-                }
+                if ( ec )
+                    handleCommError( "Handshake failed: ", ec );
                 else
-                {
-                    cerr << "start, handshake failed\n";
-                    cerr << ec.category().name() << ":" << ec.value() << " " << ec.message() << "\n";
-                    // TODO Remove session from server map
-                    delete this;
-                }
+                    readMsgHeader();
             });
 
         #else
@@ -121,6 +129,14 @@ public:
         #endif
     }
 
+    void close()
+    {
+        #ifdef USE_TLS
+        m_socket.lowest_layer().close();
+        #else
+        m_socket.close();
+        #endif
+    }
 
     string remoteAddress()
     {
@@ -133,16 +149,32 @@ public:
         return ep.address().to_string() + ":" + to_string( ep.port() );
     }
 
+    asio::basic_socket<asio::ip::tcp, asio::stream_socket_service<asio::ip::tcp> > &
+    getSocket()
+    {
+        #ifdef USE_TLS
+        return m_socket.lowest_layer();
+        #else
+        return m_socket;
+        #endif
+    }
+
+    double lastAccessTime()
+    {
+        return m_last_access.tv_sec + (m_last_access.tv_nsec*1e-9);
+    }
+
 private:
     void handleCommError( const string & a_msg, error_code a_ec )
     {
-        if ( ec )
-        {
+        if ( a_ec )
             DL_ERROR( a_msg << a_ec.category().name() << "[" << a_ec.value() << "] " << a_ec.message() );
-        }
-        
-        // Server treats 0 access time (sec) as signal to drop session
-        m_last_access.tv_sec = 0;
+
+        m_sess_obs.sessionClosed( shared_from_this() );
+
+        // Setting time to 0 will cause session to be garbaged collected
+        //m_last_access.tv_sec = 0;
+        //m_last_access.tv_nsec = 0;
     }
 
     #ifdef USE_TLS
@@ -167,8 +199,10 @@ private:
     {
         //cout << "Session::readMsgHeader\n";
 
+        auto self( shared_from_this() );
+
         asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
-            [this]( error_code ec, size_t )
+            [this,self]( error_code ec, size_t )
             {
                 if ( ec )
                     handleCommError( "readMsgHeader: ", ec );
@@ -187,8 +221,10 @@ private:
 
         if ( m_in_buf.getFrame().size )
         {
+            auto self( shared_from_this() );
+
             asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
-                [this]( error_code ec, size_t )
+                [this,self]( error_code ec, size_t )
                 {
                     if ( ec )
                         handleCommError( "readMsgBody: ", ec );
@@ -223,8 +259,10 @@ private:
         if ( m_out_buf.getFrame().size == 0 )
             NO_DELAY_ON(m_socket);
 
+        auto self( shared_from_this() );
+
         asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
-            [this]( error_code ec, size_t )
+            [this,self]( error_code ec, size_t )
             {
                 if ( ec )
                     handleCommError( "readMsgBody: ", ec );
@@ -243,8 +281,10 @@ private:
         {
             NO_DELAY_ON(m_socket);
 
+            auto self( shared_from_this() );
+
             asio::async_write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ),
-                [this]( error_code ec, size_t )
+                [this,self]( error_code ec, size_t )
                 {
                     if ( ec )
                         handleCommError( "writeMsgBody: ", ec );
@@ -336,15 +376,11 @@ private:
         PROC_MSG_END
     }
 
-    /*void
-    procMsgUserListReq()
+    void procMsgUserListReq()
     {
         cout << "proc user list\n";
 
         PROC_MSG_BEGIN( UserListRequest, UserListReply )
-
-        if ( client.state != CS_AUTHN )
-            EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
 
         UserData* user;
 
@@ -364,10 +400,11 @@ private:
         user->set_name_first("Bob");
 
         PROC_MSG_END
-    }*/
+    }
 
     typedef void (Session::*msg_fun_t)();
 
+    ISessionObserver &      m_sess_obs;
     #ifdef USE_TLS
     ssl_socket              m_socket;
     #else
@@ -380,10 +417,10 @@ private:
     static map<uint16_t,msg_fun_t> m_msg_handlers;
 };
 
+map<uint16_t,Session::msg_fun_t> Session::m_msg_handlers;
 
-typedef shared_ptr<Session> spSession;
 
-class ServerImpl
+class ServerImpl : public ISessionObserver
 {
 public:
 
@@ -411,7 +448,6 @@ public:
             asio::ssl::context::no_tlsv1_1 |
             asio::ssl::context::single_dh_use );
 
-        m_context.set_password_callback( bind( &ServerImpl::getPassword, this));
         m_context.use_certificate_chain_file( "/home/d3s/olcf/SDMS/server_cert.pem" );
         m_context.use_private_key_file( "/home/d3s/olcf/SDMS/server_key.pem", asio::ssl::context::pem );
         m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
@@ -421,23 +457,11 @@ public:
         //m_context.use_tmp_dh_file( "dh512.pem" );
 
         Session::setupMsgHandlers();
-
-        uint8_t proto_id = REG_PROTO( SDMS );
-        SET_MSG_HANDLER( proto_id, "StatusRequest", &Session::procMsgStatus );
-        SET_MSG_HANDLER( proto_id, "PingRequest", &Session::procMsgPing );
-        SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
-        //SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
     }
 
 
-    ~ServerImpl()
+    virtual ~ServerImpl()
     {
-    }
-
-    string getPassword() const
-    {
-        cout << "Asking for password!\n";
-        return "nopass";
     }
 
     void run( bool a_async )
@@ -566,9 +590,9 @@ private:
     {
         #ifdef USE_TLS
 
-        pSession session = new Session( *this, m_context );
+        spSession session = make_shared<Session>( m_io_service, m_context, *this );
 
-        m_acceptor.async_accept( session->m_socket.lowest_layer(),
+        m_acceptor.async_accept( session->getSocket(),
             [this, session]( error_code ec )
                 {
                     if ( !ec )
@@ -581,10 +605,6 @@ private:
 
                         session->start();
                     }
-                    else
-                    {
-                        delete session;
-                    }
 
                     accept();
                 });
@@ -595,7 +615,7 @@ private:
         {
             if ( !ec )
             {
-                Session *session = new Session( *this, move( m_socket ));
+                spSession session = make_shared<Session>( m_io_service, move( m_socket ), *this );
                 DL_INFO( "New connection from " << session->remoteAddress() );
 
                 unique_lock<mutex>  lock( m_data_mutex );
@@ -615,11 +635,12 @@ private:
     {
         DL_DEBUG( "Maint thread started" );
 
-        struct timespec             t;
+        struct timespec             _t;
+        double                      t;
         set<spSession>::iterator    isess;
         //vector<spSession>           dead_sessions;
 
-        dead_sessions.reserve( 10 );
+        //dead_sessions.reserve( 10 );
 
         while( m_io_running )
         {
@@ -627,12 +648,14 @@ private:
 
             lock_guard<mutex> lock( m_data_mutex );
 
-            clock_gettime( CLOCK_REALTIME, &t );
+            clock_gettime( CLOCK_REALTIME, &_t );
+            t = _t.tv_sec + (_t.tv_nsec*1e-9);
 
             for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
             {
-                if (( t.tv_sec - (*isess)->m_last_access.tv_sec ) + (( t.tv_nsec - (*isess)->m_last_access.tv_nsec ) * 1.0e-9 ) > CLIENT_IDLE_TIMEOUT )
+                if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
                 {
+                    (*isess)->close();
                     isess = m_sessions.erase( isess );
                 }
                 else
@@ -652,6 +675,13 @@ private:
         DL_DEBUG( "Maint thread stopped" );
     }
 
+    void sessionClosed( spSession a_session )
+    {
+        lock_guard<mutex> lock( m_data_mutex );
+        set<spSession>::iterator isess = m_sessions.find( a_session );
+        if ( isess != m_sessions.end() )
+            m_sessions.erase( isess );
+    }
 
     string                      m_host;
     uint32_t                    m_port;

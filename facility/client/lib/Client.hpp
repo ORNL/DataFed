@@ -1,6 +1,7 @@
 #ifndef SDMS_CLIENT_HPP
 #define SDMS_CLIENT_HPP
 
+#include <memory>
 #include <stdint.h>
 #include "SDMS.pb.h"
 
@@ -9,7 +10,7 @@
 namespace SDMS {
 namespace Facility {
 
-//typedef std::shared_ptr<UserListReply> spUserListReply;
+typedef std::shared_ptr<UserListReply> spUserListReply;
 
 
 /**
@@ -51,10 +52,7 @@ public:
 
     Status          status();
     void            ping();
-
-    //void            initSecurity();
-    //void            termSecurity();
-    //spUserListReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spUserListReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
     //bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
 
