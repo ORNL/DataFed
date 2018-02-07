@@ -2,7 +2,7 @@
 #define SDMS_CLIENT_HPP
 
 #include <stdint.h>
-#include "Facility.pb.h"
+#include "SDMS.pb.h"
 
 #define Check(Var,Src,Cls) Cls * Var = dynamic_cast<Cls*>(Src)
 

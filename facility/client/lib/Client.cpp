@@ -86,7 +86,6 @@ public:
         m_ctx( 1 )
     {
         REG_PROTO( SDMS );
-        REG_PROTO( Facility );
 
         #ifdef USE_TLS
 

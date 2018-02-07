@@ -36,8 +36,6 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 #include "DynaLog.hpp"
 #include "FacilityServer.hpp"
 #include "SDMS.pb.h"
-#include "Facility.pb.h"
-//#include "GSSAPI_Utils.hpp"
 
 #include <time.h>
 
@@ -52,17 +50,343 @@ using namespace std;
 namespace SDMS {
 namespace Facility {
 
-#define DEBUG_GSI
-#define MAINT_POLL_INTERVAL 5
+
+#define MAINT_POLL_INTERVAL 2
 #define CLIENT_IDLE_TIMEOUT 30
 #define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, name )] = func
 
+class Session : public enable_shared_from_this<Session>
+{
+public:
+    #ifdef USE_TLS
+
+    Session( asio::io_service & a_io_service, asio::ssl::context& a_context ) :
+        m_socket( a_io_service, a_context ),
+        m_in_buf( 4096 )
+    {
+        m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
+        m_socket.set_verify_callback( bind( &Session::verifyCert, this, placeholders::_1, placeholders::_2 ));
+    }
+
+    #else
+
+    Session( asio::ip::tcp::socket a_socket ) :
+        m_socket( move( a_socket )),
+        m_in_buf( 4096 )
+    {
+    }
+
+    #endif
+
+    ~Session()
+    {
+        cout << "Session " << this << " deleted\n";
+    }
+
+    static void setupMsgHandlers()
+    {
+        uint8_t proto_id = REG_PROTO( SDMS );
+        SET_MSG_HANDLER( proto_id, "StatusRequest", &Session::procMsgStatus );
+        SET_MSG_HANDLER( proto_id, "PingRequest", &Session::procMsgPing );
+        SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
+        //SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
+    }
+
+    void start()
+    {
+        clock_gettime( CLOCK_REALTIME, &m_last_access );
+
+        #ifdef USE_TLS
+
+        m_socket.async_handshake( asio::ssl::stream_base::server,
+            [this]( error_code ec )
+            {
+                if ( !ec )
+                {
+                    readMsgHeader();
+                }
+                else
+                {
+                    cerr << "start, handshake failed\n";
+                    cerr << ec.category().name() << ":" << ec.value() << " " << ec.message() << "\n";
+                    // TODO Remove session from server map
+                    delete this;
+                }
+            });
+
+        #else
+
+        readMsgHeader();
+
+        #endif
+    }
 
 
+    string remoteAddress()
+    {
+        #ifdef USE_TLS
+        asio::ip::tcp::endpoint ep = m_socket.lowest_layer().remote_endpoint();
+        #else
+        asio::ip::tcp::endpoint ep = m_socket.remote_endpoint();
+        #endif
+
+        return ep.address().to_string() + ":" + to_string( ep.port() );
+    }
+
+private:
+    void handleCommError( const string & a_msg, error_code a_ec )
+    {
+        if ( ec )
+        {
+            DL_ERROR( a_msg << a_ec.category().name() << "[" << a_ec.value() << "] " << a_ec.message() );
+        }
+        
+        // Server treats 0 access time (sec) as signal to drop session
+        m_last_access.tv_sec = 0;
+    }
+
+    #ifdef USE_TLS
+
+    bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
+    {
+        (void)a_preverified;
+
+        char subject_name[256];
+
+        X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
+        X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
+
+        cout << "Verifying " << subject_name << "\n";
+
+        return a_preverified;
+    }
+
+    #endif
+
+    void readMsgHeader()
+    {
+        //cout << "Session::readMsgHeader\n";
+
+        asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
+            [this]( error_code ec, size_t )
+            {
+                if ( ec )
+                    handleCommError( "readMsgHeader: ", ec );
+                else
+                {
+                    clock_gettime( CLOCK_REALTIME, &m_last_access );
+
+                    readMsgBody();
+                }
+            });
+    }
+
+    void readMsgBody()
+    {
+        //cout << "Session::readMsgBody\n";
+
+        if ( m_in_buf.getFrame().size )
+        {
+            asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
+                [this]( error_code ec, size_t )
+                {
+                    if ( ec )
+                        handleCommError( "readMsgBody: ", ec );
+                    else
+                        messageHandler();
+                });
+        }
+        else
+        {
+            messageHandler();
+        }
+    }
+
+    void messageHandler()
+    {
+        uint16_t msg_type = m_in_buf.getMsgType();
+        map<uint16_t,msg_fun_t>::iterator handler = m_msg_handlers.find( msg_type );
+
+        if ( handler != m_msg_handlers.end() )
+            (this->*handler->second)();
+        else
+            DL_ERROR( "Recv unregistered msg type: " << msg_type );
+
+        readMsgHeader();
+    }
+
+
+    void writeMsgHeader()
+    {
+        //cout << "Session::writeMsgHeader\n";
+        
+        if ( m_out_buf.getFrame().size == 0 )
+            NO_DELAY_ON(m_socket);
+
+        asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
+            [this]( error_code ec, size_t )
+            {
+                if ( ec )
+                    handleCommError( "readMsgBody: ", ec );
+                else if ( m_out_buf.getFrame().size )
+                    writeMsgBody();
+
+                NO_DELAY_OFF(m_socket);
+            });
+    }
+
+    void writeMsgBody()
+    {
+        //cout << "Session::writeMsgBody\n";
+
+        if ( m_out_buf.getFrame().size )
+        {
+            NO_DELAY_ON(m_socket);
+
+            asio::async_write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ),
+                [this]( error_code ec, size_t )
+                {
+                    if ( ec )
+                        handleCommError( "writeMsgBody: ", ec );
+                    else
+                    {
+                        NO_DELAY_OFF(m_socket);
+                    }
+                });
+        }
+        else
+        {
+            NO_DELAY_OFF(m_socket);
+        }
+    }
+
+    #define PROC_MSG_BEGIN( msgclass, replyclass ) \
+    msgclass *msg = 0; \
+    ::google::protobuf::Message *base_msg = m_in_buf.unserialize(); \
+    if ( base_msg ) \
+    { \
+        msg = dynamic_cast<msgclass*>( base_msg ); \
+        if ( msg ) \
+        { \
+            DL_TRACE( "Rcvd: " << msg->DebugString()); \
+            replyclass reply; \
+            try \
+            {
+
+    #define PROC_MSG_END \
+            } \
+            catch( TraceException &e ) \
+            { \
+                DL_WARN( "Session "<<this<<": exception:" << e.toString() ); \
+                reply.mutable_header()->set_err_code( (ErrorCode) e.getErrorCode() ); \
+                reply.mutable_header()->set_err_msg( e.toString() ); \
+            } \
+            catch( exception &e ) \
+            { \
+                DL_WARN( "Session "<<this<<": " << e.what() ); \
+                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
+                reply.mutable_header()->set_err_msg( e.what() ); \
+            } \
+            catch(...) \
+            { \
+                DL_WARN( "Session "<<this<<": unkown exception while processing message!" ); \
+                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
+                reply.mutable_header()->set_err_msg( "Unknown exception type" ); \
+            } \
+            m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
+            m_out_buf.serialize( reply ); \
+            writeMsgHeader() \
+            DL_TRACE( "Sent: " << reply.DebugString()); \
+        } \
+        else { \
+            DL_ERROR( "Session "<<this<<": dynamic cast of msg buffer " << &m_in_buf << " failed!" );\
+        } \
+        delete base_msg; \
+    } \
+    else { \
+        DL_ERROR( "Session "<<this<<": buffer parse failed due to unregistered msg type." ); \
+    }
+
+
+    void procMsgStatus()
+    {
+        PROC_MSG_BEGIN( StatusRequest, StatusReply )
+
+        reply.set_status( NORMAL );
+
+        PROC_MSG_END
+    }
+
+
+    void procMsgPing()
+    {
+        PROC_MSG_BEGIN( PingRequest, PingReply )
+
+        // Nothing to do
+
+        PROC_MSG_END
+    }
+
+    void procMsgText()
+    {
+        PROC_MSG_BEGIN( TextRequest, TextReply )
+
+        reply.set_data("Hello client!");
+
+        PROC_MSG_END
+    }
+
+    /*void
+    procMsgUserListReq()
+    {
+        cout << "proc user list\n";
+
+        PROC_MSG_BEGIN( UserListRequest, UserListReply )
+
+        if ( client.state != CS_AUTHN )
+            EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
+
+        UserData* user;
+
+        user = reply.add_user();
+        user->set_uid("jblow");
+        user->set_name_last("Blow");
+        user->set_name_first("Joe");
+
+        user = reply.add_user();
+        user->set_uid("jdoe");
+        user->set_name_last("Doe");
+        user->set_name_first("John");
+
+        user = reply.add_user();
+        user->set_uid("bsmith");
+        user->set_name_last("Smith");
+        user->set_name_first("Bob");
+
+        PROC_MSG_END
+    }*/
+
+    typedef void (Session::*msg_fun_t)();
+
+    #ifdef USE_TLS
+    ssl_socket              m_socket;
+    #else
+    asio::ip::tcp::socket   m_socket;
+    #endif
+    MsgBuf                  m_in_buf;
+    MsgBuf                  m_out_buf;
+    struct timespec         m_last_access = {0,0};
+
+    static map<uint16_t,msg_fun_t> m_msg_handlers;
+};
+
+
+typedef shared_ptr<Session> spSession;
 
 class ServerImpl
 {
 public:
+
     ServerImpl( uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads ) :
         m_port( a_port ),
         m_timeout(a_timeout),
@@ -96,15 +420,12 @@ public:
 
         //m_context.use_tmp_dh_file( "dh512.pem" );
 
-        uint8_t proto_id = REG_PROTO( SDMS );
-        SET_MSG_HANDLER( proto_id, "StatusRequest", &ServerImpl::Session::procMsgStatus );
-        SET_MSG_HANDLER( proto_id, "PingRequest", &ServerImpl::Session::procMsgPing );
-        SET_MSG_HANDLER( proto_id, "TextRequest", &ServerImpl::Session::procMsgText );
+        Session::setupMsgHandlers();
 
-        proto_id = REG_PROTO( Facility );
-        (void)proto_id;
-        //SET_MSG_HANDLER(proto_id,"InitSecurityRequest",&Worker::procMsgInitSec);
-        //SET_MSG_HANDLER(proto_id,"TermSecurityRequest",&Worker::procMsgTermSec);
+        uint8_t proto_id = REG_PROTO( SDMS );
+        SET_MSG_HANDLER( proto_id, "StatusRequest", &Session::procMsgStatus );
+        SET_MSG_HANDLER( proto_id, "PingRequest", &Session::procMsgPing );
+        SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
         //SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
     }
 
@@ -211,7 +532,7 @@ public:
 private:
     void ioRun()
     {
-        cout << "io thread started\n";
+        DL_INFO( "io thread started" );
 
         if ( m_io_service.stopped() )
             m_io_service.reset();
@@ -226,7 +547,7 @@ private:
         for ( uint32_t i = m_num_threads - 1; i > 0; i-- )
         {
             io_threads.push_back( new thread( [this](){ m_io_service.run(); } ));
-            cout << "io extra thread started\n";
+            DL_DEBUG( "io extra thread started" );
         }
 
         m_io_service.run();
@@ -235,25 +556,30 @@ private:
         {
             (*t)->join();
             delete *t;
-            cout << "io extra thread stopped\n";
+            DL_DEBUG( "io extra thread stopped" );
         }
-        cout << "io thread stopped\n";
+
+        DL_INFO( "io thread stopped" );
     }
 
     void accept()
     {
         #ifdef USE_TLS
 
-        Session * session = new Session( *this, m_context );
+        pSession session = new Session( *this, m_context );
 
         m_acceptor.async_accept( session->m_socket.lowest_layer(),
             [this, session]( error_code ec )
                 {
                     if ( !ec )
                     {
-                        cout << "connect!\n";
+                        DL_INFO( "New connection from " << session->remoteAddress() );
+
+                        unique_lock<mutex>  lock( m_data_mutex );
+                        m_sessions.insert( session );
+                        lock.unlock();
+
                         session->start();
-                        m_sessions.push_back( session );
                     }
                     else
                     {
@@ -269,10 +595,14 @@ private:
         {
             if ( !ec )
             {
-                cout << "connect!\n";
                 Session *session = new Session( *this, move( m_socket ));
+                DL_INFO( "New connection from " << session->remoteAddress() );
+
+                unique_lock<mutex>  lock( m_data_mutex );
+                m_sessions.insert( session );
+                lock.unlock();
+
                 session->start();
-                m_sessions.push_back( session );
             }
 
             accept();
@@ -283,388 +613,45 @@ private:
 
     void backgroundMaintenance()
     {
-        cout << "maint thread started\n";
-        //struct timespec t;
-        //map<uint32_t,ClientInfo>::iterator ci;
+        DL_DEBUG( "Maint thread started" );
+
+        struct timespec             t;
+        set<spSession>::iterator    isess;
+        //vector<spSession>           dead_sessions;
+
+        dead_sessions.reserve( 10 );
 
         while( m_io_running )
         {
             sleep( MAINT_POLL_INTERVAL );
 
-#if 0
             lock_guard<mutex> lock( m_data_mutex );
 
             clock_gettime( CLOCK_REALTIME, &t );
 
-            for ( ci = m_client_info.begin(); ci != m_client_info.end(); )
+            for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
             {
-                if ( t.tv_sec - ci->second.last_act > CLIENT_IDLE_TIMEOUT )
+                if (( t.tv_sec - (*isess)->m_last_access.tv_sec ) + (( t.tv_nsec - (*isess)->m_last_access.tv_nsec ) * 1.0e-9 ) > CLIENT_IDLE_TIMEOUT )
                 {
-                    //cout << "clean-up client " << ci->first << "\n";
-    #if 0
-                    if ( ci->second.sec_ctx )
-                    {
-                        OM_uint32  min_stat;
-                        
-                        gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
-                    }
-    #endif
-                    ci = m_client_info.erase( ci );
+                    isess = m_sessions.erase( isess );
                 }
                 else
-                    ++ci;
+                    ++isess;
             }
-#endif
+
+/*
+            for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )
+            {
+                DL_INFO( "Deleting inactive client " << *isess );
+                delete *isess;
+            }
+
+            dead_sessions.clear();
+*/
         }
-        cout << "maint thread stopped\n";
+        DL_DEBUG( "Maint thread stopped" );
     }
 
-
-    class Session
-    {
-    public:
-        #ifdef USE_TLS
-
-        Session( ServerImpl & a_server, asio::ssl::context& a_context ) :
-            m_server( a_server ),
-            m_socket( a_server.m_io_service, a_context ),
-            m_in_buf( 4096 )
-        {
-            m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
-            m_socket.set_verify_callback( bind( &Session::verifyCert, this, placeholders::_1, placeholders::_2 ));
-        }
-
-        #else
-
-        Session( ServerImpl & a_server, asio::ip::tcp::socket a_socket ) :
-            m_server( a_server ),
-            m_socket( move( a_socket )),
-            m_in_buf( 4096 )
-        {
-        }
-
-        #endif
-
-        ~Session()
-        {
-        }
-
-        void start()
-        {
-            #ifdef USE_TLS
-
-            m_socket.async_handshake( asio::ssl::stream_base::server,
-                [this]( error_code ec )
-                {
-                    if ( !ec )
-                    {
-                        readMsgHeader();
-                    }
-                    else
-                    {
-                        cerr << "start, handshake failed\n";
-                        cerr << ec.category().name() << ":" << ec.value() << " " << ec.message() << "\n";
-                        // TODO Remove session from server map
-                        delete this;
-                    }
-                });
-
-            #else
-
-            readMsgHeader();
-
-            #endif
-        }
-
-        #ifdef USE_TLS
-
-        bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
-        {
-            (void)a_preverified;
-
-            char subject_name[256];
-
-            X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
-            X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
-
-            cout << "Verifying " << subject_name << "\n";
-
-            return a_preverified;
-        }
-
-        #endif
-
-        void readMsgHeader()
-        {
-            //cout << "Session::readMsgHeader\n";
-            //timerStart();
-            asio::async_read( m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )),
-                [this]( error_code ec, size_t len )
-                {
-                    if ( len != sizeof( MsgBuf::Frame ) || ec )
-                    {
-                        cerr << "readMsgHeader, err: read failed.\n";
-
-                        if ( ec )
-                        {
-                            cerr << ec.category().name() << ":" << ec.value() << "\n";
-                            cerr << "readMsgHeader, err: " << ec.message() << "\n";
-                        }
-
-                        // TODO remove from session map
-                        delete this;
-                    }
-                    else
-                    {
-                        clock_gettime( CLOCK_REALTIME, &m_last_access );
-
-                        readMsgBody();
-                    }
-                });
-        }
-
-        void readMsgBody()
-        {
-            //cout << "Session::readMsgBody\n";
-            if ( m_in_buf.getFrame().size )
-            {
-                asio::async_read( m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ),
-                    [this]( error_code ec, size_t len )
-                    {
-                        if ( len != m_in_buf.getFrame().size || ec )
-                        {
-                            cerr << "readMsgBody, err: read failed.\n";
-                            if ( ec )
-                            {
-                                cerr << ec.category().name() << ":" << ec.value() << "\n";
-                                cerr << "readMsgBody, err: " << ec.message() << "\n";
-                            }
-                            // TODO remove from session map
-                            delete this;
-                        }
-                        else
-                        {
-                            messageHandler();
-                        }
-                    });
-            }
-            else
-            {
-                //timerStop();
-                //cout << "read t: " << timerElapsed() << "\n";
-                messageHandler();
-            }
-        }
-
-        void messageHandler()
-        {
-            uint16_t msg_type = m_in_buf.getMsgType();
-            map<uint16_t,msg_fun_t>::iterator handler = m_server.m_msg_handlers.find( msg_type );
-
-            if ( handler != m_server.m_msg_handlers.end() )
-                (this->*handler->second)();
-            else
-                cout << "Recv unregistered msg type: " << msg_type << "\n";
-
-            readMsgHeader();
-        }
-
-
-        void writeMsgHeader()
-        {
-            //cout << "Session::writeMsgHeader\n";
-            
-            if ( m_out_buf.getFrame().size == 0 )
-                NO_DELAY_ON(m_socket);
-
-            asio::async_write( m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )),
-                [this]( error_code ec, size_t len )
-                {
-                    if ( len != sizeof( MsgBuf::Frame ))
-                    {
-                        cerr << "writeMsgHeader, err: write failed.\n";
-                        // TODO Should terminate session
-                    }
-
-                    if ( m_out_buf.getFrame().size && !ec )
-                        writeMsgBody();
-
-                    NO_DELAY_OFF(m_socket);
-                });
-        }
-
-        void writeMsgBody()
-        {
-            //cout << "Session::writeMsgBody\n";
-            if ( m_out_buf.getFrame().size )
-            {
-                NO_DELAY_ON(m_socket);
-
-                asio::async_write( m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ),
-                    [this]( error_code ec, size_t len )
-                    {
-                        if ( len != m_out_buf.getFrame().size )
-                        {
-                            cerr << "writeMsgBody, err: write failed.\n";
-                            // TODO Should terminate session
-                        }
-
-                        NO_DELAY_OFF(m_socket);
-
-                        //cout << "write body cb, len: " << len << "\n";
-                        if ( !ec )
-                        {
-                            if ( ec.category() != std::system_category() || ec.value() != 0 )
-                            {
-                                cerr << ec.category().name() << ":" << ec.value() << "\n";
-                                cerr << "writeMsgBody, err: " << ec.message() << "\n";
-                            }
-                        }
-                    });
-            }
-            else
-            {
-                NO_DELAY_OFF(m_socket);
-
-                //timerStop();
-                //cout << "write t: " << timerElapsed() << "\n";
-            }
-        }
-
-#define PROC_MSG_BEGIN( msgclass, replyclass ) \
-    msgclass *msg = 0; \
-    ::google::protobuf::Message *base_msg = m_in_buf.unserialize(); \
-    if ( base_msg ) \
-    { \
-        msg = dynamic_cast<msgclass*>( base_msg ); \
-        if ( msg ) \
-        { \
-            DL_TRACE( "Rcvd: " << msg->DebugString()); \
-            replyclass reply; \
-            try \
-            {
-
-#define PROC_MSG_END \
-            } \
-            catch( TraceException &e ) \
-            { \
-                DL_WARN( "worker "<<m_id<<": exception:" << e.toString() ); \
-                reply.mutable_header()->set_err_code( e.getErrorCode() ); \
-                reply.mutable_header()->set_err_msg( e.toString() ); \
-            } \
-            catch( exception &e ) \
-            { \
-                DL_WARN( "worker "<<m_id<<": " << e.what() ); \
-                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
-                reply.mutable_header()->set_err_msg( e.what() ); \
-            } \
-            catch(...) \
-            { \
-                DL_WARN( "worker "<<m_id<<": unkown exception while processing message!" ); \
-                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
-                reply.mutable_header()->set_err_msg( "Unknown exception type" ); \
-            } \
-            m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
-            m_out_buf.serialize( reply ); \
-            writeMsgHeader() \
-            DL_TRACE( "Sent: " << reply.DebugString()); \
-        } \
-        else { \
-            DL_ERROR( "worker "<<m_id<<": dynamic cast of msg buffer " << &m_in_buf << " failed!" );\
-        } \
-        delete base_msg; \
-    } \
-    else { \
-        DL_ERROR( "worker "<<m_id<<": buffer parse failed due to unregistered msg type." ); \
-    }
-
-
-        void procMsgStatus()
-        {
-            PROC_MSG_BEGIN( StatusRequest, StatusReply )
-
-            reply.set_status( NORMAL );
-
-            PROC_MSG_END
-        }
-
-
-        void procMsgPing()
-        {
-            PROC_MSG_BEGIN( PingRequest, PingReply )
-
-            // Nothing to do
-
-            PROC_MSG_END
-        }
-
-        void procMsgText()
-        {
-            PROC_MSG_BEGIN( TextRequest, TextReply )
-
-            reply.set_data("Hello client!");
-
-            PROC_MSG_END
-        }
-
-        ServerImpl &            m_server;
-        #ifdef USE_TLS
-        ssl_socket              m_socket;
-        #else
-        asio::ip::tcp::socket   m_socket;
-        #endif
-        MsgBuf                  m_in_buf;
-        MsgBuf                  m_out_buf;
-        struct timespec         m_last_access = {0,0};
-    };
-
-    /*void
-    Server::procMsgUserListReq( MsgBuffer & a_msg_buffer )
-    {
-        cout << "proc user list\n";
-
-        PROC_MSG_BEGIN( UserListRequest, UserListReply )
-
-        if ( client.state != CS_AUTHN )
-            EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
-
-        UserData* user;
-
-        user = reply.add_user();
-        user->set_uid("jblow");
-        user->set_name_last("Blow");
-        user->set_name_first("Joe");
-
-        user = reply.add_user();
-        user->set_uid("jdoe");
-        user->set_name_last("Doe");
-        user->set_name_first("John");
-
-        user = reply.add_user();
-        user->set_uid("bsmith");
-        user->set_name_last("Smith");
-        user->set_name_first("Bob");
-
-        PROC_MSG_END
-    }*/
-
-    /*
-    struct ClientInfo
-    {
-        ClientInfo() :
-            state(CS_INIT), last_act(0) //, sec_ctx(GSS_C_NO_CONTEXT)
-        {}
-
-        ClientState     state;
-        time_t          last_act;
-        //gss_ctx_id_t    sec_ctx;
-        std::string     name;
-    };
-    */
-
-
-
-    typedef void (ServerImpl::Session::*msg_fun_t)();
 
     string                      m_host;
     uint32_t                    m_port;
@@ -676,9 +663,6 @@ private:
     mutex                       m_data_mutex;
     bool                        m_io_running;
     condition_variable          m_router_cvar;
-    //map<uint32_t,ClientInfo>   m_client_info;
-    //gss_cred_id_t                   m_sec_cred;
-    map<uint16_t,msg_fun_t>     m_msg_handlers;
     asio::io_service            m_io_service;
     asio::ip::tcp::endpoint     m_endpoint;
     asio::ip::tcp::acceptor     m_acceptor;
@@ -687,7 +671,7 @@ private:
     #else
     asio::ip::tcp::socket       m_socket;
     #endif
-    vector<Session*>            m_sessions;
+    set<spSession>              m_sessions;
 
     friend class Session;
 };

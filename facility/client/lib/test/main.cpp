@@ -55,6 +55,7 @@ int main( int a_argc, char ** a_argv )
 
         client.start();
 
+        // TODO How to know when handshake is done?
         sleep(1);
 
 /*
@@ -78,7 +79,7 @@ int main( int a_argc, char ** a_argv )
 
         cout << "time: " << timerElapsed() << " sec, ops/sec: " << num_send/timerElapsed() << "\n";
 
-        sleep( 1 );
+        sleep( 40 );
 
 
 
