@@ -36,6 +36,7 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 #include "DynaLog.hpp"
 #include "FacilityServer.hpp"
 #include "SDMS.pb.h"
+#include "CentralDatabaseClient.hpp"
 
 #include <time.h>
 
@@ -102,7 +103,9 @@ public:
         SET_MSG_HANDLER( proto_id, "StatusRequest", &Session::procMsgStatus );
         SET_MSG_HANDLER( proto_id, "PingRequest", &Session::procMsgPing );
         SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
+        SET_MSG_HANDLER( proto_id, "UserViewRequest", &Session::procMsgUserViewReq );
         SET_MSG_HANDLER( proto_id, "UserListRequest", &Session::procMsgUserListReq );
+        SET_MSG_HANDLER( proto_id, "CollListRequest", &Session::procMsgCollListReq );
     }
 
     void start()
@@ -119,7 +122,10 @@ public:
                 if ( ec )
                     handleCommError( "Handshake failed: ", ec );
                 else
+                {
+                    m_db_client.setClient( m_client_dn );
                     readMsgHeader();
+                }
             });
 
         #else
@@ -181,14 +187,13 @@ private:
 
     bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
     {
-        (void)a_preverified;
-
         char subject_name[256];
 
         X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
         X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
 
         cout << "Verifying " << subject_name << "\n";
+        m_client_dn = subject_name;
 
         return a_preverified;
     }
@@ -301,14 +306,14 @@ private:
     }
 
     #define PROC_MSG_BEGIN( msgclass, replyclass ) \
-    msgclass *msg = 0; \
+    msgclass *request = 0; \
     ::google::protobuf::Message *base_msg = m_in_buf.unserialize(); \
     if ( base_msg ) \
     { \
-        msg = dynamic_cast<msgclass*>( base_msg ); \
-        if ( msg ) \
+        request = dynamic_cast<msgclass*>( base_msg ); \
+        if ( request ) \
         { \
-            DL_TRACE( "Rcvd: " << msg->DebugString()); \
+            DL_TRACE( "Rcvd: " << request->DebugString()); \
             replyclass reply; \
             try \
             {
@@ -371,33 +376,34 @@ private:
     {
         PROC_MSG_BEGIN( TextRequest, TextReply )
 
-        reply.set_data("Hello client!");
+        reply.set_data("Hello from FacilityServer!");
+
+        PROC_MSG_END
+    }
+
+    void procMsgUserViewReq()
+    {
+        PROC_MSG_BEGIN( UserViewRequest, UserDataReply )
+
+        m_db_client.userView( *request, reply );
 
         PROC_MSG_END
     }
 
     void procMsgUserListReq()
     {
-        cout << "proc user list\n";
+        PROC_MSG_BEGIN( UserListRequest, UserDataReply )
 
-        PROC_MSG_BEGIN( UserListRequest, UserListReply )
+        m_db_client.userList( *request, reply );
 
-        UserData* user;
+        PROC_MSG_END
+    }
 
-        user = reply.add_user();
-        user->set_uid("jblow");
-        user->set_name_last("Blow");
-        user->set_name_first("Joe");
+    void procMsgCollListReq()
+    {
+        PROC_MSG_BEGIN( CollListRequest, CollDataReply )
 
-        user = reply.add_user();
-        user->set_uid("jdoe");
-        user->set_name_last("Doe");
-        user->set_name_first("John");
-
-        user = reply.add_user();
-        user->set_uid("bsmith");
-        user->set_name_last("Smith");
-        user->set_name_first("Bob");
+        m_db_client.collList( *request, reply );
 
         PROC_MSG_END
     }
@@ -413,6 +419,8 @@ private:
     MsgBuf                  m_in_buf;
     MsgBuf                  m_out_buf;
     struct timespec         m_last_access = {0,0};
+    string                  m_client_dn;
+    CentralDatabaseClient   m_db_client;
 
     static map<uint16_t,msg_fun_t> m_msg_handlers;
 };
@@ -702,6 +710,7 @@ private:
     asio::ip::tcp::socket       m_socket;
     #endif
     set<spSession>              m_sessions;
+    //CentralDatabaseClient       m_db_client;
 
     friend class Session;
 };

@@ -66,11 +66,15 @@ int main( int a_argc, char ** a_argv )
 #endif
 
 #if 0
-        int num_send = 10000;
+        int num_send = 1000;
+        spUserDataReply users;
+
         timerStart();
 
         for ( int i = 0; i < num_send; ++i )
-            client.text("Hello server!");
+        {
+            users = client.userList();
+        }
 
         timerStop();
 
@@ -83,8 +87,31 @@ int main( int a_argc, char ** a_argv )
         //    client.text("Hello server!");
 
 
-#if 1
-        spUserListReply users = client.userList();
+        spUserDataReply users = client.userView( "d3s" );
+        if ( users->user_size() == 1 )
+        {
+            const UserData & user = users->user(0);
+            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
+        }
+
+        spCollDataReply colls = client.collList( "" );
+        cout << "my collection count: " << colls->coll_size() << "\n";
+        for ( int i = 0; i < colls->coll_size(); ++i )
+        {
+            const CollData & coll = colls->coll(i);
+            cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
+        }
+
+        colls = client.collList( "user1" );
+        cout << "user1 collection count: " << colls->coll_size() << "\n";
+        for ( int i = 0; i < colls->coll_size(); ++i )
+        {
+            const CollData & coll = colls->coll(i);
+            cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
+        }
+
+#if 0
+        spUserDataReply users = client.userList();
 
         cout << "user count: " << users->user_size() << "\n";
         for ( int i = 0; i < users->user_size(); ++i )

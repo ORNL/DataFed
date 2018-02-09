@@ -10,7 +10,8 @@
 namespace SDMS {
 namespace Facility {
 
-typedef std::shared_ptr<UserListReply> spUserListReply;
+typedef std::shared_ptr<UserDataReply> spUserDataReply;
+typedef std::shared_ptr<CollDataReply> spCollDataReply;
 
 
 /**
@@ -52,7 +53,9 @@ public:
 
     Status          status();
     void            ping();
-    spUserListReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spUserDataReply userView( const std::string & a_user );
+    spUserDataReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spCollDataReply collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
     //bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
 

@@ -34,6 +34,14 @@ message UserData
     optional string             globus_id   = 6;
 }
 
+message CollData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional string             desc        = 4;
+}
+
 // ============================ Reply Header
 
 // Reply header is only used to capture error information
@@ -97,20 +105,41 @@ message TextReply
     required string             data        = 2;
 }
 
-// ============================ SDMS Messages
+// ============================ User Messages
 
+message UserViewRequest
+{
+    required string             user        = 1;
+    optional bool               details     = 2;
+}
 
 message UserListRequest
 {
-    optional string             facility    = 1;
-    optional string             project     = 2;
-    optional bool               details     = 3;
-    optional uint32             offset      = 4;
-    optional uint32             count       = 5;
+    optional bool               details     = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
 }
 
-message UserListReply
+// Returned for any command the returns one or more user records
+message UserDataReply
 {
     optional SDMS.ReplyHeader   header      = 1;
     repeated UserData           user        = 2;
+}
+
+// ============================ Collection Messages
+
+message CollListRequest
+{
+    optional string             user        = 1;
+    optional bool               details     = 2;
+    optional uint32             offset      = 3;
+    optional uint32             count       = 4;
+}
+
+// Returned for any command the returns one or more user records
+message CollDataReply
+{
+    optional SDMS.ReplyHeader   header      = 1;
+    repeated CollData           coll        = 2;
 }

@@ -382,13 +382,26 @@ public:
         delete reply;
     }
 
+    spUserDataReply
+    userView( const string & a_user )
+    {
+        UserViewRequest req;
+        req.set_user( a_user );
 
-    spUserListReply
+        UserDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        HANDLE_REPLY_ERROR( reply );
+
+        return spUserDataReply( reply );
+    }
+
+    spUserDataReply
     userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     {
-        cout << "userList\n";
-
         UserListRequest req;
+
         if ( a_details )
             req.set_details( a_details );
         if ( a_offset )
@@ -396,25 +409,38 @@ public:
         if ( a_count )
             req.set_count( a_count );
 
-        UserListReply * reply;
+        UserDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
 
         HANDLE_REPLY_ERROR( reply );
 
-        return spUserListReply( reply );
+        return spUserDataReply( reply );
     }
 
 
-/*
-    bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
+    spCollDataReply
+    collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
     {
-        (void)a_request;
-        (void)a_reply;
-        (void)a_timeout;
-        return false;
+        CollListRequest req;
+
+        if ( a_user.size() )
+            req.set_user( a_user );
+        if ( a_details )
+            req.set_details( a_details );
+        if ( a_offset )
+            req.set_offset( a_offset );
+        if ( a_count )
+            req.set_count( a_count );
+
+        CollDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        HANDLE_REPLY_ERROR( reply );
+
+        return spCollDataReply( reply );
     }
-*/
 
 
 private:
@@ -492,10 +518,23 @@ void Client::ping()
 }
 
 
-spUserListReply
+spUserDataReply
+Client::userView( const string & a_user )
+{
+    return m_impl->userView( a_user );
+}
+
+spUserDataReply
 Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     return m_impl->userList( a_details, a_offset, a_count );
+}
+
+
+spCollDataReply
+Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
+{
+    return m_impl->collList( a_user, a_details, a_offset, a_count );
 }
 
 /*
