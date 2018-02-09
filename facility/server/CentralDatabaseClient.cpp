@@ -220,7 +220,7 @@ public:
             curl_free( esc_txt );
         }
 
-        DL_DEBUG( "url: " << url );
+        //DL_DEBUG( "url: " << url );
 
         curl_easy_setopt( m_curl, CURLOPT_URL, url );
         curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &resp );

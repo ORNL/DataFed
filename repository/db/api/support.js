@@ -167,7 +167,7 @@ module.exports = ( function() {
      * - Only permissions of collections owned by the owner of the data in question apply.
      */
     obj.hasPermission = function( a_client, a_object, a_req_perm ) {
-        console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
+        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
 
         var perm_found  = 0;
         var perm_deny   = 0;
@@ -188,7 +188,7 @@ module.exports = ( function() {
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
         //console.log("eval res:", result );
         if ( result != null ) {
-            console.log("result (usr acl):", result );
+            //console.log("result (usr acl):", result );
             return result;
         }
 
@@ -214,23 +214,23 @@ module.exports = ( function() {
 
         //console.log("eval res:", result );
         if ( result != null ) {
-            console.log("result (grp acl):", result );
+            //console.log("result (grp acl):", result );
             return result;
         }
 
         // Evaluate default permissions on object
-        console.log("check default, perm_found:", perm_found );
+        //console.log("check default, perm_found:", perm_found );
 
         mask = ~perm_found;
         if ( mask & ( a_object.grant | a_object.deny ) > 0 ) {
-            console.log("default perm has bits", a_object.grant, a_object.deny );
+            //console.log("default perm has bits", a_object.grant, a_object.deny );
             perm_found |= ( a_object.grant | a_object.deny );
             perm_deny |= ( a_object.deny & mask );
 
-            console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
+            //console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
             result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
             if ( result != null ) {
-                console.log("result (def perm):", result );
+                //console.log("result (def perm):", result );
                 return result;
             }
         }
@@ -295,7 +295,7 @@ module.exports = ( function() {
 
                 result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
                 if ( result != null ) {
-                    console.log("result (prnt usr acl):", result );
+                    //console.log("result (prnt usr acl):", result );
                     return result;
                 }
             }
@@ -308,7 +308,7 @@ module.exports = ( function() {
 
                 result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
                 if ( result != null ) {
-                    console.log("result (prnt grp acl):", result );
+                    //console.log("result (prnt grp acl):", result );
                     return result;
                 }
             }
@@ -320,7 +320,7 @@ module.exports = ( function() {
 
                 result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
                 if ( result != null ) {
-                    console.log("result (prnt def perm):", result );
+                    //console.log("result (prnt def perm):", result );
                     return result;
                 }
             }
@@ -344,7 +344,7 @@ module.exports = ( function() {
 */
         }
 
-        console.log("result (last): false" );
+        //console.log("result (last): false" );
 
         return false;
     };

@@ -54,6 +54,9 @@ int main( int a_argc, char ** a_argv )
         cout << "Starting client" << endl;
         client.start();
 
+        spUserDataReply users;
+        spCollDataReply colls;
+
 
 #if 0
         timerStart();
@@ -65,15 +68,15 @@ int main( int a_argc, char ** a_argv )
         cout << "time: " << timerElapsed() << " sec, iter/sec: " << 100000/timerElapsed() << "\n";
 #endif
 
-#if 0
+#if 1
         int num_send = 1000;
-        spUserDataReply users;
 
         timerStart();
 
         for ( int i = 0; i < num_send; ++i )
         {
-            users = client.userList();
+            //users = client.userList();
+            colls = client.collList( "user1" );
         }
 
         timerStop();
@@ -87,14 +90,14 @@ int main( int a_argc, char ** a_argv )
         //    client.text("Hello server!");
 
 
-        spUserDataReply users = client.userView( "d3s" );
+        users = client.userView( "d3s" );
         if ( users->user_size() == 1 )
         {
             const UserData & user = users->user(0);
             cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
         }
 
-        spCollDataReply colls = client.collList( "" );
+        colls = client.collList( "" );
         cout << "my collection count: " << colls->coll_size() << "\n";
         for ( int i = 0; i < colls->coll_size(); ++i )
         {

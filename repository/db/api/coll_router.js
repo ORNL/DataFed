@@ -147,12 +147,30 @@ router.get('/list', function (req, res) {
         var result = [];
         var item;
 
-        for ( var i in items ) {
-            item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
-                result.push({ id: item._id, title: item.title });
+        if ( items.length ) {
+            var i;
+            item = items[0];
+
+            // Don't need to call hasAdminPermObject more than once - the rest will be the same
+            if ( g_lib.hasAdminPermObject( client, item._id ))
+            {
+                for ( i in items ) {
+                    item = items[i];
+                    result.push({ id: item._id, title: item.title });
+                }
+            }
+            else
+            {
+                for ( i in items ) {
+                    item = items[i];
+                    // The following checks slow down query by a factor of ~20
+                    if (  g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+                        result.push({ id: item._id, title: item.title });
+                    }
+                }
             }
         }
+
 
         res.send( result );
     } catch( e ) {
