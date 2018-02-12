@@ -69,18 +69,17 @@ int main( int a_argc, char ** a_argv )
 #endif
 
 #if 1
-        int num_send = 1000;
+        int num_send = 500;
 
         timerStart();
 
         for ( int i = 0; i < num_send; ++i )
         {
             //users = client.userList();
-            colls = client.collList( "user1" );
+            colls = client.collList( "d3s" );
         }
 
         timerStop();
-
         cout << "time: " << timerElapsed() << " sec, ops/sec: " << num_send/timerElapsed() << "\n";
 #endif
 
@@ -89,14 +88,14 @@ int main( int a_argc, char ** a_argv )
         //for ( int i = 0; i < num_send; ++i )
         //    client.text("Hello server!");
 
-
+/*
         users = client.userView( "d3s" );
         if ( users->user_size() == 1 )
         {
             const UserData & user = users->user(0);
             cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
         }
-
+*/
         colls = client.collList( "" );
         cout << "my collection count: " << colls->coll_size() << "\n";
         for ( int i = 0; i < colls->coll_size(); ++i )
@@ -105,6 +104,7 @@ int main( int a_argc, char ** a_argv )
             cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
         }
 
+/*
         colls = client.collList( "user1" );
         cout << "user1 collection count: " << colls->coll_size() << "\n";
         for ( int i = 0; i < colls->coll_size(); ++i )
@@ -112,6 +112,7 @@ int main( int a_argc, char ** a_argv )
             const CollData & coll = colls->coll(i);
             cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
         }
+*/
 
 #if 0
         spUserDataReply users = client.userList();

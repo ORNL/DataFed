@@ -142,35 +142,27 @@ router.get('/list', function (req, res) {
             owner_id = client._id;
         }
 
-        const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
+        var result;
 
-        var result = [];
-        var item;
+        //if ( client.is_admin || owner_id == client._id ) {
+        if ( client.is_admin || owner_id == client._id || g_lib.db.admin.firstExample({ _from: owner_id, _to: client._id }) ) {
+            result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
+        }
+        else {
+            const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
+        //const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return v", { owner: owner_id }).toArray();
 
-        if ( items.length ) {
-            var i;
-            item = items[0];
+            var item;
+            result = [];
 
-            // Don't need to call hasAdminPermObject more than once - the rest will be the same
-            if ( g_lib.hasAdminPermObject( client, item._id ))
-            {
-                for ( i in items ) {
-                    item = items[i];
+            for ( var i in items ) {
+                item = items[i];
+                // The following checks slow down query by a factor of ~20
+                if ( g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
                     result.push({ id: item._id, title: item.title });
                 }
             }
-            else
-            {
-                for ( i in items ) {
-                    item = items[i];
-                    // The following checks slow down query by a factor of ~20
-                    if (  g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
-                        result.push({ id: item._id, title: item.title });
-                    }
-                }
-            }
         }
-
 
         res.send( result );
     } catch( e ) {

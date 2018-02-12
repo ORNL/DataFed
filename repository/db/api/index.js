@@ -7,6 +7,8 @@
 
 'use strict';
 
+require("@arangodb/aql/cache").properties({ mode: "demand" });
+
 const   createRouter = require('@arangodb/foxx/router');
 const   router = createRouter();
 

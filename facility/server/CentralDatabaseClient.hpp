@@ -17,6 +17,7 @@ public:
 
     void userView( const UserViewRequest & a_request, UserDataReply & a_reply );
     void userList( const UserListRequest & a_request, UserDataReply & a_reply );
+    void recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply );
     void collList( const CollListRequest & a_request, CollDataReply & a_reply );
 
 private:

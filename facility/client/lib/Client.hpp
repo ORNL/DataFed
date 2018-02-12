@@ -11,8 +11,8 @@ namespace SDMS {
 namespace Facility {
 
 typedef std::shared_ptr<UserDataReply> spUserDataReply;
+typedef std::shared_ptr<RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<CollDataReply> spCollDataReply;
-
 
 /**
  * @class Client
@@ -46,16 +46,17 @@ public:
 
     Client& operator=( const Client & ) = delete;
 
-    void            start();
+    void                start();
 
-    bool            test( size_t a_iter );
-    std::string     text( const std::string & a_message );
+    bool                test( size_t a_iter );
+    std::string         text( const std::string & a_message );
 
-    Status          status();
-    void            ping();
-    spUserDataReply userView( const std::string & a_user );
-    spUserDataReply userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
-    spCollDataReply collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    Status              status();
+    void                ping();
+    spUserDataReply     userView( const std::string & a_user );
+    spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spRecordDataReply   recordView( const std::string & a_id );
+    spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
     //bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
 

@@ -105,6 +105,7 @@ public:
         SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
         SET_MSG_HANDLER( proto_id, "UserViewRequest", &Session::procMsgUserViewReq );
         SET_MSG_HANDLER( proto_id, "UserListRequest", &Session::procMsgUserListReq );
+        SET_MSG_HANDLER( proto_id, "RecordViewRequest", &Session::procMsgRecordViewReq );
         SET_MSG_HANDLER( proto_id, "CollListRequest", &Session::procMsgCollListReq );
     }
 
@@ -395,6 +396,15 @@ private:
         PROC_MSG_BEGIN( UserListRequest, UserDataReply )
 
         m_db_client.userList( *request, reply );
+
+        PROC_MSG_END
+    }
+
+    void procMsgRecordViewReq()
+    {
+        PROC_MSG_BEGIN( RecordViewRequest, RecordDataReply )
+
+        m_db_client.recordView( *request, reply );
 
         PROC_MSG_END
     }

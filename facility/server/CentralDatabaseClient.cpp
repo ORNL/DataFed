@@ -200,6 +200,75 @@ public:
         }
     }
 
+    void recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
+    {
+        char url[1024];
+        string resp;
+        char error[CURL_ERROR_SIZE];
+
+        url[0] = error[0] = 0;
+
+        strcpy( url, "https://localhost:8529/_db/sdms/api/dat/view?client=" );
+        strcat( url, m_client );
+        strcat( url, "&id=" );
+        char * esc_txt = curl_easy_escape( m_curl, a_request.id().c_str(), 0 );
+        strcat( url, esc_txt );
+        curl_free( esc_txt );
+
+        //DL_DEBUG( "url: " << url );
+
+        curl_easy_setopt( m_curl, CURLOPT_URL, url );
+        curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &resp );
+        curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+
+        CURLcode res = curl_easy_perform( m_curl );
+
+        long http_code = 0;
+        curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+        if ( res == CURLE_OK )
+        {
+            if ( http_code >= 200 && http_code < 300 )
+            {
+                setRecordData( a_reply, resp.c_str() );
+            }
+            else
+            {
+                DL_ERROR( "arangodb call failed, server code " << http_code );
+            }
+        }
+        else
+        {
+            DL_ERROR( "db call error: " << error );
+            DL_ERROR( "curl call failed: " << curl_easy_strerror( res ));
+        }
+    }
+
+    void setRecordData( RecordDataReply & a_reply, const char * a_json )
+    {
+        rapidjson::Document doc;
+        doc.Parse( a_json );
+
+        if ( doc.HasParseError() || !doc.IsArray() )
+        {
+            DL_ERROR( "Invalid JSON returned from DB service" );
+        }
+        else
+        {
+            RecordData* rec;
+
+            for ( rapidjson::SizeType i = 0; i < doc.Size(); i++ )
+            {
+                rapidjson::Value & val = doc[i];
+
+                rec = a_reply.add_record();
+                rec->set_id( val["id"].GetString() );
+                rec->set_title( val["title"].GetString() );
+            }
+        }
+    }
+
+
     void collList( const CollListRequest & a_request, CollDataReply & a_reply )
     {
         char url[1024];
@@ -303,6 +372,7 @@ void CentralDatabaseClient::setClient( const std::string & a_client )
 
 DEF_IMPL( userView, UserViewRequest, UserDataReply )
 DEF_IMPL( userList, UserListRequest, UserDataReply )
+DEF_IMPL( recordView, RecordViewRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 
 /*

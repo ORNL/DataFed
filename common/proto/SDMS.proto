@@ -34,6 +34,16 @@ message UserData
     optional string             globus_id   = 6;
 }
 
+message RecordData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional string             desc        = 4;
+    optional string             metadata    = 5;
+    optional string             location    = 6;
+}
+
 message CollData
 {
     required string             id          = 1;
@@ -125,6 +135,21 @@ message UserDataReply
 {
     optional SDMS.ReplyHeader   header      = 1;
     repeated UserData           user        = 2;
+}
+
+// ============================ Data Messages
+
+message RecordViewRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 2;
+}
+
+// Returned for any command the returns one or more user records
+message RecordDataReply
+{
+    optional SDMS.ReplyHeader   header      = 1;
+    repeated RecordData         record      = 2;
 }
 
 // ============================ Collection Messages

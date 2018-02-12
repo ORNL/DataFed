@@ -79,7 +79,9 @@ module.exports = ( function() {
     };
 
     obj.getUserFromCert = function( a_cert ) {
-        var result = obj.db._query( "for i in x filter i.subject == @cert for j in inbound i._id ident return j", { 'cert': a_cert } ).toArray();
+        //var result = obj.db._query( "for i in x filter i.subject == @cert return document({ _id: i.user_id })", { 'cert': a_cert }, { cache: true } ).toArray();
+
+        var result = obj.db._query( "for i in x filter i.subject == @cert for j in inbound i._id ident return j", { 'cert': a_cert }, { cache: true } ).toArray();
 
         if ( result.length != 1 )
             throw obj.ERR_CERT_NOT_FOUND;
@@ -248,7 +250,7 @@ module.exports = ( function() {
         while ( 1 ) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
+            parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter is_same_collection('c',p.vertices[1]) and v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
             if ( parents.length == 0 )
                 break;
 
@@ -270,7 +272,7 @@ module.exports = ( function() {
                 }
 
                 // Group ACL next
-                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
+                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
                     grp_perm_found |= ( acl.inh_grant | acl.inh_deny );
@@ -328,20 +330,6 @@ module.exports = ( function() {
             // If there are still missing require permissions...
             // Determine which parents are candidates for further evaluation (have req bits not set in inherited permissions)
             children = parents;
-
-/*
-            // Set mask to required perm bits still not found
-            mask = (~perm_found) & a_req_perm;
-            for ( i in parents ) {
-                parent = parents[i];
-                if ( parent.inh_grant == null || parent.inh_deny == null || ( ~( parent.inh_grant | parent.inh_deny ) & mask )) {
-                    children.push( parent );
-                }
-            }
-
-            if ( children.length == 0 )
-                break;
-*/
         }
 
         //console.log("result (last): false" );

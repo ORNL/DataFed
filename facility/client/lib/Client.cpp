@@ -418,6 +418,20 @@ public:
         return spUserDataReply( reply );
     }
 
+    spRecordDataReply
+    recordView( const std::string & a_id )
+    {
+        RecordViewRequest req;
+        req.set_id( a_id );
+
+        RecordDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        HANDLE_REPLY_ERROR( reply );
+
+        return spRecordDataReply( reply );
+    }
 
     spCollDataReply
     collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
@@ -530,6 +544,11 @@ Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     return m_impl->userList( a_details, a_offset, a_count );
 }
 
+spRecordDataReply
+Client::recordView( const std::string & a_id )
+{
+    return m_impl->recordView( a_id );
+}
 
 spCollDataReply
 Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
