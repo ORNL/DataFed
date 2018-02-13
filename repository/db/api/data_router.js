@@ -106,7 +106,7 @@ router.get('/view', function (req, res) {
         data.id = data._id;
         delete data._id;
 
-        res.send( data );
+        res.send( [data] );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <boost/filesystem.hpp>
 
 #include <asio.hpp>
 
@@ -34,6 +35,7 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 #include "sys/types.h"
 
 
+#include "Exec.hpp"
 #include "MsgBuf.hpp"
 #include "Client.hpp"
 
@@ -309,7 +311,7 @@ public:
 
         for ( size_t i = 0; i < a_iter; ++i )
         {
-            in.set_status( NORMAL );
+            in.set_status( SS_NORMAL );
             buf.serialize( in );
             raw = buf.unserialize();
             if ( !raw )
@@ -349,7 +351,7 @@ public:
     }
 
 
-    Status status()
+    ServiceStatus status()
     {
         //cout << "status\n";
 
@@ -358,7 +360,7 @@ public:
 
         send<>( req, reply, m_ctx++ );
 
-        Status stat = reply->status();
+        ServiceStatus stat = reply->status();
 
         HANDLE_REPLY_ERROR( reply );
 
@@ -386,7 +388,9 @@ public:
     userView( const string & a_user )
     {
         UserViewRequest req;
-        req.set_user( a_user );
+
+        if ( a_user.size() )
+            req.set_user( a_user );
 
         UserDataReply * reply;
 
@@ -456,6 +460,115 @@ public:
         return spCollDataReply( reply );
     }
 
+    std::string
+    getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
+    {
+        // Get user's globus id
+
+        spUserDataReply users = userView( "" );
+
+        if ( !users->user_size() )
+            EXCEPT( 0, "Client user record not found" );
+
+        const UserData & user = users->user(0);
+
+        if ( !user.has_globus_id() )
+            EXCEPT( 0, "Client GlobusID is not configured" );
+
+        // Resolve data_id to a gridFTP source path
+
+        spRecordDataReply records = recordView( a_data_id );
+
+        if ( !records->record_size() )
+            EXCEPT( 0, "Specified data record not found" );
+
+        const RecordData & record = records->record(0);
+
+        if ( !record.has_data_path() )
+            EXCEPT( 0, "Data record has no associated raw data" );
+
+        // TODO keyfile must be configured externally (default plus env var override)
+        string m_keyfile = "~/.ssh/id_rsa.globus";
+
+        // Use Legacy Globus CLI to start transfer
+        string cmd = "ssh -i " + m_keyfile + " " + user.globus_id() + "@cli.globusonline.org transfer -- " + record.data_path() + "/" + record.id().substr(2) + " " + a_dest_path;
+
+        boost::filesystem::path dest(a_dest_path);
+        boost::system::error_code ec;
+
+        // Create or check dest path
+
+        if ( a_flags & CREATE_PATH )
+        {
+            if ( !create_directories( dest, ec ) && ec.value() != boost::system::errc::success )
+                EXCEPT_PARAM( 0, "Could not create dest path: " << ec.message() );
+        }
+        else
+        {
+            if ( !exists( dest, ec ) )
+                EXCEPT_PARAM( 0, "Destination path does not exist: " << a_dest_path );
+        }
+
+        // See if raw data file already exist
+
+        boost::filesystem::path dest_file = dest;
+        dest_file /= boost::filesystem::path( record.id().substr(2) );
+
+        cout << dest_file << "\n";
+        if ( exists( dest_file, ec ) )
+        {
+            if ( a_flags & BACKUP )
+            {
+                cout << "make backup\n";
+            }
+            else if ( a_flags & OVERWRITE )
+            {
+                cout << "check perms\n";
+            }
+            else
+            {
+                EXCEPT( 0, "Destination file already exists (no Overwrite/Backup)" );
+            }
+        }
+
+        // Test writing to dest path
+
+        boost::filesystem::path tmp = dest;
+        tmp /= boost::filesystem::unique_path();
+        ofstream tmpf( tmp.native().c_str() );
+
+        if ( tmpf.is_open() )
+        {
+            tmpf.close();
+            boost::filesystem::remove( tmp );
+        }
+        else
+        {
+            EXCEPT_PARAM( 0, "Can not write to destination path: " << a_dest_path );
+        }
+
+        cout << cmd << "\n";
+/*
+        string result = exec( cmd.c_str() );
+        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
+        {
+            return result.substr( 9 );
+        }
+        else
+        {
+            EXCEPT_PARAM( 0, "Globus CLI Error: " << result );
+        }
+*/
+        return "1";
+    }
+
+    TransferStatus
+    getDataTransferStatus( const std::string & a_transfer_id )
+    {
+        (void)a_transfer_id;
+        return TS_FAILED;
+    }
+
 
 private:
     enum State
@@ -518,7 +631,7 @@ Client::text( const string & a_message )
     return m_impl->text( a_message );
 }
 
-Status Client::status()
+ServiceStatus Client::status()
 {
     return m_impl->status();
 }
@@ -556,11 +669,17 @@ Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset,
     return m_impl->collList( a_user, a_details, a_offset, a_count );
 }
 
-/*
-bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
+std::string
+Client::getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
 {
-    return m_impl->send( a_request, a_reply, a_timeout );
-}*/
+    return m_impl->getData( a_data_id, a_dest_path, a_flags );
+}
+
+TransferStatus
+Client::getDataTransferStatus( const std::string & a_transfer_id )
+{
+    return m_impl->getDataTransferStatus( a_transfer_id );
+}
 
 }}
 

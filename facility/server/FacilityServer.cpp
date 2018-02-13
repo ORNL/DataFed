@@ -358,7 +358,7 @@ private:
     {
         PROC_MSG_BEGIN( StatusRequest, StatusReply )
 
-        reply.set_status( NORMAL );
+        reply.set_status( SS_NORMAL );
 
         PROC_MSG_END
     }

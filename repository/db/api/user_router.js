@@ -30,7 +30,7 @@ router.post('/create', function (req, res) {
                 write: ["u","x","c","a","owner","ident","alias","admin"]
             },
             action: function() {
-                var user = g_db.u.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
+                var user = g_db.u.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, globus_id: req.queryParams.globus_id, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
 
                 var cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
                 var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name_first + " " + req.queryParams.name_last + " (" + req.queryParams.uid +")" }, { returnNew: true });
@@ -70,6 +70,7 @@ router.post('/create', function (req, res) {
 .queryParam('uid', joi.string().required(), "User ID for new user")
 .queryParam('name_first', joi.string().required(), "First name")
 .queryParam('name_last', joi.string().required(), "Last name")
+.queryParam('globus_id', joi.string().required(), "Globus ID (user name portion only)")
 .queryParam('email', joi.string().required(), "Email")
 //.queryParam('org', joi.string().required(), "User's home organization")
 .queryParam('cert', joi.string().required(), "New user certificate subject string")
@@ -108,6 +109,9 @@ router.post('/update', function (req, res) {
 
                 if ( req.queryParams.name_last )
                     obj.name_last = req.queryParams.name_last;
+
+                if ( req.queryParams.globus_id )
+                    obj.globus_id = req.queryParams.globus_id;
 
                 if ( req.queryParams.email )
                     obj.email = req.queryParams.email;
@@ -179,6 +183,7 @@ router.post('/update', function (req, res) {
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('name_first', joi.string().optional(), "New first name")
 .queryParam('name_last', joi.string().optional(), "New last name")
+.queryParam('globus_id', joi.string().optional(), "Globus ID (user name portion only)")
 .queryParam('email', joi.string().optional(), "New email")
 .queryParam('is_admin', joi.boolean().optional(), "New system administrator flag value")
 .queryParam('is_project', joi.boolean().optional(), "New account project flag value")

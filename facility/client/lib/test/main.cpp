@@ -15,6 +15,58 @@ using namespace std;
 using namespace SDMS;
 using namespace SDMS::Facility;
 
+
+void doMsgTest( Client & client, int iter )
+{
+    timerDef();
+
+    cout << "msg marshalling test...";
+
+    timerStart();
+
+    client.test( iter );
+
+    timerStop();
+
+    cout << " time: " << timerElapsed() << " sec, iter/sec: " << iter/timerElapsed() << "\n";
+}
+
+void pingTest( Client & client, int iter )
+{
+    timerDef();
+
+    cout << "ping test...";
+
+    timerStart();
+
+    for ( int i = 0; i < iter; ++i )
+        client.ping();
+
+    timerStop();
+
+    cout << " rate: " << iter/timerElapsed() << " p/s\n";
+}
+
+void perfTest( Client & client, int iter )
+{
+    timerDef();
+    spCollDataReply colls;
+
+    cout << "perf test...";
+
+    timerStart();
+
+    for ( int i = 0; i < iter; ++i )
+    {
+        //users = client.userList();
+        colls = client.collList( "d3s" );
+    }
+
+    timerStop();
+    cout << " time: " << timerElapsed() << " sec, ops/sec: " << iter/timerElapsed() << "\n";
+}
+
+
 int main( int a_argc, char ** a_argv )
 {
     try
@@ -55,38 +107,25 @@ int main( int a_argc, char ** a_argv )
         client.start();
 
         spUserDataReply users;
+        spRecordDataReply records;
         spCollDataReply colls;
 
+        //msgTest( client );
+        //pingTest( client, 1000 );
+        //perfTest( client );
 
-#if 0
-        timerStart();
+        client.getData( "jdat1", "/home/d3s/xxxx/yyy", CREATE_PATH );
 
-        client.test( 100000 );
-
-        timerStop();
-
-        cout << "time: " << timerElapsed() << " sec, iter/sec: " << 100000/timerElapsed() << "\n";
-#endif
-
-#if 1
-        int num_send = 500;
-
-        timerStart();
-
-        for ( int i = 0; i < num_send; ++i )
+/*
+        records = client.recordView( "jdat1" );
+        if ( records->record_size() == 1 )
         {
-            //users = client.userList();
-            colls = client.collList( "d3s" );
+            const RecordData & rec = records->record(0);
+            cout << "Record id: " << rec.id() << ", title: " << rec.title() << "\n";
         }
-
-        timerStop();
-        cout << "time: " << timerElapsed() << " sec, ops/sec: " << num_send/timerElapsed() << "\n";
-#endif
-
-        //sleep( 15 );
-
-        //for ( int i = 0; i < num_send; ++i )
-        //    client.text("Hello server!");
+        else
+            cout << "Record not found\n";
+*/
 
 /*
         users = client.userView( "d3s" );
@@ -96,6 +135,8 @@ int main( int a_argc, char ** a_argv )
             cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
         }
 */
+
+/*
         colls = client.collList( "" );
         cout << "my collection count: " << colls->coll_size() << "\n";
         for ( int i = 0; i < colls->coll_size(); ++i )
@@ -103,6 +144,7 @@ int main( int a_argc, char ** a_argv )
             const CollData & coll = colls->coll(i);
             cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
         }
+*/
 
 /*
         colls = client.collList( "user1" );
@@ -114,7 +156,7 @@ int main( int a_argc, char ** a_argv )
         }
 */
 
-#if 0
+/*
         spUserDataReply users = client.userList();
 
         cout << "user count: " << users->user_size() << "\n";
@@ -125,20 +167,8 @@ int main( int a_argc, char ** a_argv )
         }
 
         users.reset();
-#endif
-
-        //client.termSecurity();
-
-/*
-        timerDef();
-        timerStart();
-
-        for ( int i = 0; i < 10000; ++i )
-            client.ping();
-
-        timerStop();
-        cout << "ping rate: " << 10000/timerElapsed() << " p/s\n";
 */
+
     }
     catch( TraceException &e )
     {

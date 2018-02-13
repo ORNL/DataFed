@@ -14,6 +14,15 @@ typedef std::shared_ptr<UserDataReply> spUserDataReply;
 typedef std::shared_ptr<RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<CollDataReply> spCollDataReply;
 
+
+enum DestFlags : uint16_t
+{
+    CREATE_PATH     = 0x01,
+    BACKUP          = 0x02,
+    OVERWRITE       = 0x04
+};
+
+
 /**
  * @class Client
  * @author Dale V. Stansberry
@@ -51,14 +60,15 @@ public:
     bool                test( size_t a_iter );
     std::string         text( const std::string & a_message );
 
-    Status              status();
+    ServiceStatus       status();
     void                ping();
-    spUserDataReply     userView( const std::string & a_user );
+    spUserDataReply     userView( const std::string & a_user = "" );
     spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spRecordDataReply   recordView( const std::string & a_id );
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
-    //bool        send( Message & a_request, Message *& a_reply, uint32_t a_timeout );
+    std::string         getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_dest_flags = 0 );
+    TransferStatus      getDataTransferStatus( const std::string & a_transfer_id );
 
 private:
     class ClientImpl;

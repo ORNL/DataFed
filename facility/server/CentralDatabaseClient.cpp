@@ -58,12 +58,20 @@ public:
 
         url[0] = error[0] = 0;
 
-        char * esc_user = curl_easy_escape( m_curl, a_request.user().c_str(), 0 );
+        strcpy( url, "https://localhost:8529/_db/sdms/api/usr/view?" );
 
-        strcpy( url, "https://localhost:8529/_db/sdms/api/usr/view?uid=" );
-        strcat( url, esc_user );
-        
-        curl_free( esc_user );
+        if ( a_request.has_user() )
+        {
+            strcat( url, "uid=" );
+            char * esc_user = curl_easy_escape( m_curl, a_request.user().c_str(), 0 );
+            strcat( url, esc_user );
+            curl_free( esc_user );
+        }
+        else
+        {
+            strcat( url, "cert=" );
+            strcat( url, m_client );
+        }
 
         //DL_DEBUG( "url: " << url );
 
@@ -187,6 +195,7 @@ public:
         else
         {
             UserData* user;
+            rapidjson::Value::MemberIterator imem;
 
             for ( rapidjson::SizeType i = 0; i < doc.Size(); i++ )
             {
@@ -196,6 +205,18 @@ public:
                 user->set_uid( val["uid"].GetString() );
                 user->set_name_last( val["name_last"].GetString() );
                 user->set_name_first( val["name_first"].GetString() );
+
+                if (( imem = val.FindMember("globus_id")) != val.MemberEnd() )
+                    user->set_globus_id( imem->value.GetString() );
+
+                if (( imem = val.FindMember("email")) != val.MemberEnd() )
+                    user->set_email( imem->value.GetString() );
+
+                if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
+                    user->set_is_admin( imem->value.GetBool() );
+
+                if (( imem = val.FindMember("is_project")) != val.MemberEnd() )
+                    user->set_is_project( imem->value.GetBool() );
             }
         }
     }
@@ -230,6 +251,8 @@ public:
         {
             if ( http_code >= 200 && http_code < 300 )
             {
+                //DL_DEBUG( "response: " << resp );
+
                 setRecordData( a_reply, resp.c_str() );
             }
             else
@@ -256,6 +279,7 @@ public:
         else
         {
             RecordData* rec;
+            rapidjson::Value::MemberIterator imem;
 
             for ( rapidjson::SizeType i = 0; i < doc.Size(); i++ )
             {
@@ -264,6 +288,15 @@ public:
                 rec = a_reply.add_record();
                 rec->set_id( val["id"].GetString() );
                 rec->set_title( val["title"].GetString() );
+
+                if (( imem = val.FindMember("desc")) != val.MemberEnd() )
+                    rec->set_desc( imem->value.GetString() );
+
+                if (( imem = val.FindMember("metadata")) != val.MemberEnd() )
+                    rec->set_metadata( imem->value.GetString() );
+
+                if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
+                    rec->set_data_path( imem->value.GetString() );
             }
         }
     }
