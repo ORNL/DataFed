@@ -9,25 +9,41 @@ enum Protocol
 
 enum ErrorCode
 {
-    ID_INTERNAL_ERROR           = 1;
-    ID_AUTHN_REQUIRED           = 2;
-    ID_AUTHN_ERROR              = 3;
+    ID_BAD_REQUEST              = 1;
+    ID_INTERNAL_ERROR           = 2;
+    ID_SERVICE_ERROR            = 3;
+    ID_AUTHN_REQUIRED           = 4;
+    ID_AUTHN_ERROR              = 5;
 }
 
 enum ServiceStatus
 {
-    SS_NORMAL      = 0;
-    SS_DEGRADED    = 1;
-    SS_FAILED      = 2;
-    SS_OFFLINE     = 3;
+    SS_NORMAL       = 0;
+    SS_DEGRADED     = 1;
+    SS_FAILED       = 2;
+    SS_OFFLINE      = 3;
 }
 
 enum TransferStatus
 {
-    TS_ACTIVE      = 0;
-    TS_INACTIVE    = 1;
-    TS_SUCCEEDED   = 2;
-    TS_FAILED      = 3;
+    TS_ACTIVE       = 0;
+    TS_INACTIVE     = 1;
+    TS_SUCCEEDED    = 2;
+    TS_FAILED       = 3;
+}
+
+enum Permissions
+{
+    PERM_NONE           = 0x000;
+    PERM_REC_LIST       = 0x001;   // Find record by browsing
+    PERM_REC_VIEW       = 0x002;   // Read public record fields (not collection items or raw data)
+    PERM_REC_UPDATE     = 0x004;   // Update public record fields
+    PERM_REC_ADMIN      = 0x008;   // Read, write admin fields, delete record
+    PERM_REC_TAG        = 0x010;   // Add/remove tags on record
+    PERM_REC_NOTE       = 0x020;   // Add, remove, edit annotations on record
+    PERM_DAT_READ       = 0x040;   // Read raw data or list collection items
+    PERM_DAT_WRITE      = 0x080;   // Write raw data or add/remove collection items
+    PERM_ALL            = 0x0FF;
 }
 
 // ============================ Data Structures
@@ -64,16 +80,6 @@ message CollData
 
 // ============================ Reply Header
 
-// Reply header is only used to capture error information
-// and must not be set unless an error occurs. Text error
-// messages are optional but useful, and should generally
-// be used.
-
-message ReplyHeader
-{
-    required ErrorCode          err_code    = 1;
-    optional string             err_msg     = 2;
-}
 
 // ============================ Basic Messages
 
@@ -81,7 +87,16 @@ message ReplyHeader
 
 message AckReply
 {
-    optional ReplyHeader        header      = 1;
+}
+
+// NackReply is only used to capture error information.
+// Text error messages are optional but useful, and
+// should generally be used.
+
+message NackReply
+{
+    required ErrorCode          err_code    = 1;
+    optional string             err_msg     = 2;
 }
 
 // Service status request-reply and event
@@ -92,8 +107,7 @@ message StatusRequest
 
 message StatusReply
 {
-    optional ReplyHeader        header      = 1;
-    required ServiceStatus      status      = 2;
+    required ServiceStatus      status      = 1;
 }
 
 message StatusEvent
@@ -101,15 +115,10 @@ message StatusEvent
     required ServiceStatus      status      = 1;
 }
 
-// Ping request-reply is used for testing communication
+// Ping request-reply is used for testing communication, reply is ACK
 
 message PingRequest
 {
-}
-
-message PingReply
-{
-    optional ReplyHeader        header      = 1;
 }
 
 // Test request-reply is for development testing
@@ -121,8 +130,22 @@ message TextRequest
 
 message TextReply
 {
-    optional ReplyHeader        header      = 1;
-    required string             data        = 2;
+    required string             data        = 1;
+}
+
+// ============================ Permissions Messages
+
+message CheckPermsRequest
+{
+    required string             id          = 1;
+    required uint32             perms       = 2;
+}
+
+message CheckPermsReply
+{
+    required string             id          = 1;
+    required uint32             granted     = 2;
+    required uint32             denied      = 3;
 }
 
 // ============================ User Messages
@@ -143,11 +166,10 @@ message UserListRequest
 // Returned for any command the returns one or more user records
 message UserDataReply
 {
-    optional SDMS.ReplyHeader   header      = 1;
-    repeated UserData           user        = 2;
+    repeated UserData           user        = 1;
 }
 
-// ============================ Data Messages
+// ============================ Data Record Messages
 
 message RecordViewRequest
 {
@@ -158,8 +180,36 @@ message RecordViewRequest
 // Returned for any command the returns one or more user records
 message RecordDataReply
 {
-    optional SDMS.ReplyHeader   header      = 1;
-    repeated RecordData         record      = 2;
+    repeated RecordData         record      = 1;
+}
+
+// ============================ Raw Data Messages
+
+message ResolveXfrRequest
+{
+    required string             id          = 1;
+    required uint32             perms       = 2;
+}
+
+message ResolveXfrReply
+{
+    required string             id          = 1;
+    required string             src_path    = 2;
+    required string             src_name    = 3;
+    required string             globus_id   = 4;
+}
+
+
+message GetDataMessage
+{
+    required string             id          = 1;
+    optional string             local_path  = 2;
+}
+
+message PutDataMessage
+{
+    required string             id          = 1;
+    optional string             local_path  = 2;
 }
 
 // ============================ Collection Messages
@@ -175,6 +225,5 @@ message CollListRequest
 // Returned for any command the returns one or more user records
 message CollDataReply
 {
-    optional SDMS.ReplyHeader   header      = 1;
-    repeated CollData           coll        = 2;
+    repeated CollData           coll        = 1;
 }

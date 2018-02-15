@@ -17,18 +17,16 @@ module.exports = ( function() {
     obj.graph = require('@arangodb/general-graph')._graph('sdmsg');
     obj.bad_chars = "/:\" ";
 
-    obj.PERM_NONE     = 0x00;
-    obj.PERM_VIEW     = 0x01;
-    obj.PERM_CREATE   = 0x02;
-    obj.PERM_READ     = 0x04;
-    obj.PERM_UPDATE   = 0x08;
-    obj.PERM_WRITE    = 0x10;
-    obj.PERM_DELETE   = 0x20;
-    obj.PERM_TAG      = 0x40;
-    obj.PERM_ANNOTATE = 0x80;
-    obj.PERM_ALL      = 0xFF;
-
-    //subject: joi.string().required(),
+    obj.PERM_NONE           = 0x000;
+    obj.PERM_REC_LIST       = 0x001;   // Find record by browsing
+    obj.PERM_REC_VIEW       = 0x002;   // Read public record fields (not collection items or raw data)
+    obj.PERM_REC_UPDATE     = 0x004;   // Update public record fields
+    obj.PERM_REC_ADMIN      = 0x008;   // Read, write admin fields, delete record
+    obj.PERM_REC_TAG        = 0x010;   // Add/remove tags on record
+    obj.PERM_REC_NOTE       = 0x020;   // Add, remove, edit annotations on record
+    obj.PERM_DAT_READ       = 0x040;   // Read raw data or list collection items
+    obj.PERM_DAT_WRITE      = 0x080;   // Write raw data or add/remove collection items
+    obj.PERM_ALL            = 0x0FF;
 
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),

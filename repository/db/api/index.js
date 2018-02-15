@@ -19,7 +19,7 @@ router.use( "/col", require('./coll_router') );
 router.use( "/acl", require('./acl_router') );
 router.use( "/tag", require('./tag_router') );
 router.use( "/not", require('./note_router') );
-router.use( "/glb", require('./glb_router') );
+router.use( "/authz", require('./authz_router') );
 
 module.context.use(router);
 

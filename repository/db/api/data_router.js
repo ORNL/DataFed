@@ -74,6 +74,8 @@ router.post('/create', function (req, res) {
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('proj', joi.string().optional(), "Optional project owner id")
+.queryParam('coll', joi.string().optional(), "Optional collection id or alias")
 .queryParam('grant', joi.number().optional(), "Default grant permission mask")
 .queryParam('deny', joi.number().optional(), "Default deny permission mask")
 .queryParam('metadata', joi.string().optional(), "Metadata (JSON)")
@@ -89,7 +91,7 @@ router.get('/view', function (req, res) {
         var data = g_db.d.document( data_id );
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
-            if ( !g_lib.hasPermission( client, data, g_lib.PERM_VIEW ))
+            if ( !g_lib.hasPermission( client, data, g_lib.PERM_REC_VIEW ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -135,7 +137,7 @@ router.get('/list', function (req, res) {
 
         for ( var i in items ) {
             item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
                 result.push({ id: item._id, title: item.title });
             }
         }

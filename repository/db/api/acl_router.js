@@ -27,15 +27,42 @@ function parsePermAction( a_perm_str ) {
 
     if ( a_perm_str == null ) {
         result.act = PERM_NC;
-    } else if ( a_perm_str[0] == "+" ) {
+        return result;
+    }
+
+    var pstr = a_perm_str.trim().toLowerCase();
+
+    if ( pstr.length == 0 ) {
+        result.act = PERM_NC;
+        return result;
+    } else if ( pstr[0] == "+" ) {
         result.act = PERM_ADD;
-        result.val = parseInt( a_perm_str.substr(1), 16 );
-    } else if ( a_perm_str[0] == "-" ) {
+        pstr = pstr.substr(1).trimLeft();
+    } else if ( pstr[0] == "-" ) {
         result.act = PERM_DEL;
-        result.val = parseInt( a_perm_str.substr(1), 16 );
+        pstr = pstr.substr(1).trimLeft();
     } else {
         result.act = PERM_SET;
-        result.val = parseInt( a_perm_str, 16 );
+    }
+
+    if ( isNaN( pstr )) {
+        result.val = 0;
+
+        for ( var i in pstr ) {
+            switch( pstr[i] ) {
+                case 'l': result.val |= g_lib.PERM_REC_LIST; break;
+                case 'v': result.val |= g_lib.PERM_REC_VIEW; break;
+                case 'u': result.val |= g_lib.PERM_REC_UPDATE; break;
+                case 'a': result.val |= g_lib.PERM_REC_ADMIN; break;
+                case 't': result.val |= g_lib.PERM_REC_TAG; break;
+                case 'n': result.val |= g_lib.PERM_REC_NOTE; break;
+                case 'r': result.val |= g_lib.PERM_DAT_READ; break;
+                case 'w': result.val |= g_lib.PERM_DAT_WRITE; break;
+                default: throw g_lib.ERR_INVALID_PERM;
+            }
+        }
+    } else {
+        result.val = parseInt( pstr, 16 );
     }
 
     if ( result.val != result.val )
@@ -273,7 +300,7 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_INVALID_ID;
 
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
-            if ( !g_lib.hasPermission( client, object, g_lib.PERM_VIEW ))
+            if ( !g_lib.hasPermission( client, object, g_lib.PERM_REC_ADMIN ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 

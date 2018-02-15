@@ -56,7 +56,8 @@ class Session;
 
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 10
-#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, name )] = func
+#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )] = &Session::dbPassThrough<rq,rp,&CentralDatabaseClient::func>
 
 typedef shared_ptr<Session> spSession;
 
@@ -100,13 +101,16 @@ public:
     static void setupMsgHandlers()
     {
         uint8_t proto_id = REG_PROTO( SDMS );
-        SET_MSG_HANDLER( proto_id, "StatusRequest", &Session::procMsgStatus );
-        SET_MSG_HANDLER( proto_id, "PingRequest", &Session::procMsgPing );
-        SET_MSG_HANDLER( proto_id, "TextRequest", &Session::procMsgText );
-        SET_MSG_HANDLER( proto_id, "UserViewRequest", &Session::procMsgUserViewReq );
-        SET_MSG_HANDLER( proto_id, "UserListRequest", &Session::procMsgUserListReq );
-        SET_MSG_HANDLER( proto_id, "RecordViewRequest", &Session::procMsgRecordViewReq );
-        SET_MSG_HANDLER( proto_id, "CollListRequest", &Session::procMsgCollListReq );
+
+        SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
+        SET_MSG_HANDLER( proto_id, PingRequest, &Session::procMsgPing );
+        SET_MSG_HANDLER( proto_id, TextRequest, &Session::procMsgText );
+
+        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
+        SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
+        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
+        SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
+        SET_MSG_HANDLER_DB( proto_id, ResolveXfrRequest, ResolveXfrReply, resolveXfr );
     }
 
     void start()
@@ -320,27 +324,33 @@ private:
             {
 
     #define PROC_MSG_END \
+                m_out_buf.serialize( reply ); \
             } \
             catch( TraceException &e ) \
             { \
-                DL_WARN( "Session "<<this<<": exception:" << e.toString() ); \
-                reply.mutable_header()->set_err_code( (ErrorCode) e.getErrorCode() ); \
-                reply.mutable_header()->set_err_msg( e.toString() ); \
+                DL_WARN( "Session "<<this<<" " << e.toString() ); \
+                NackReply nack; \
+                nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
+                nack.set_err_msg( e.toString() ); \
+                m_out_buf.serialize( nack ); \
             } \
             catch( exception &e ) \
             { \
-                DL_WARN( "Session "<<this<<": " << e.what() ); \
-                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
-                reply.mutable_header()->set_err_msg( e.what() ); \
+                DL_WARN( "Session "<<this<<" " << e.what() ); \
+                NackReply nack; \
+                nack.set_err_code( ID_INTERNAL_ERROR ); \
+                nack.set_err_msg( e.what() ); \
+                m_out_buf.serialize( nack ); \
             } \
             catch(...) \
             { \
-                DL_WARN( "Session "<<this<<": unkown exception while processing message!" ); \
-                reply.mutable_header()->set_err_code( ID_INTERNAL_ERROR ); \
-                reply.mutable_header()->set_err_msg( "Unknown exception type" ); \
+                DL_WARN( "Session "<<this<<" unkown exception while processing message!" ); \
+                NackReply nack; \
+                nack.set_err_code( ID_INTERNAL_ERROR ); \
+                nack.set_err_msg( "Unknown exception type" ); \
+                m_out_buf.serialize( nack ); \
             } \
             m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
-            m_out_buf.serialize( reply ); \
             writeMsgHeader() \
             DL_TRACE( "Sent: " << reply.DebugString()); \
         } \
@@ -366,7 +376,7 @@ private:
 
     void procMsgPing()
     {
-        PROC_MSG_BEGIN( PingRequest, PingReply )
+        PROC_MSG_BEGIN( PingRequest, AckReply )
 
         // Nothing to do
 
@@ -382,38 +392,12 @@ private:
         PROC_MSG_END
     }
 
-    void procMsgUserViewReq()
+    template<typename RQ, typename RP, void (CentralDatabaseClient::*func)( const RQ &, RP &)>
+    void dbPassThrough()
     {
-        PROC_MSG_BEGIN( UserViewRequest, UserDataReply )
+        PROC_MSG_BEGIN( RQ, RP )
 
-        m_db_client.userView( *request, reply );
-
-        PROC_MSG_END
-    }
-
-    void procMsgUserListReq()
-    {
-        PROC_MSG_BEGIN( UserListRequest, UserDataReply )
-
-        m_db_client.userList( *request, reply );
-
-        PROC_MSG_END
-    }
-
-    void procMsgRecordViewReq()
-    {
-        PROC_MSG_BEGIN( RecordViewRequest, RecordDataReply )
-
-        m_db_client.recordView( *request, reply );
-
-        PROC_MSG_END
-    }
-
-    void procMsgCollListReq()
-    {
-        PROC_MSG_BEGIN( CollListRequest, CollDataReply )
-
-        m_db_client.collList( *request, reply );
+        (m_db_client.*func)( *request, reply );
 
         PROC_MSG_END
     }

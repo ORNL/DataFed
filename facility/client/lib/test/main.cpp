@@ -114,10 +114,10 @@ int main( int a_argc, char ** a_argv )
         //pingTest( client, 1000 );
         //perfTest( client );
 
-        client.getData( "jdat1", "/home/d3s/xxxx/yyy", CREATE_PATH );
+        //client.getData( "jdat1", "/home/d3s/xxxx/yyy", CREATE_PATH );
 
 /*
-        records = client.recordView( "jdat1" );
+        records = client.recordView( "d3s:ddat1" );
         if ( records->record_size() == 1 )
         {
             const RecordData & rec = records->record(0);
@@ -125,6 +125,24 @@ int main( int a_argc, char ** a_argv )
         }
         else
             cout << "Record not found\n";
+*/
+
+        cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx", CREATE_PATH | OVERWRITE ) << "\n";
+
+/*
+        users = client.userView( "" );
+        if ( users->user_size() == 1 )
+        {
+            const UserData & user = users->user(0);
+            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
+        }
+
+        users = client.userView( "d3s" );
+        if ( users->user_size() == 1 )
+        {
+            const UserData & user = users->user(0);
+            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
+        }
 */
 
 /*

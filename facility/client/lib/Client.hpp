@@ -14,7 +14,6 @@ typedef std::shared_ptr<UserDataReply> spUserDataReply;
 typedef std::shared_ptr<RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<CollDataReply> spCollDataReply;
 
-
 enum DestFlags : uint16_t
 {
     CREATE_PATH     = 0x01,
@@ -67,7 +66,7 @@ public:
     spRecordDataReply   recordView( const std::string & a_id );
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
-    std::string         getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_dest_flags = 0 );
+    std::string         getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags = 0 );
     TransferStatus      getDataTransferStatus( const std::string & a_transfer_id );
 
 private:

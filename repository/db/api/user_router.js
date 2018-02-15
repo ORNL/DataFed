@@ -204,8 +204,8 @@ router.get('/view', function (req, res) {
             } catch ( e ) {
                 throw g_lib.ERR_USER_NOT_FOUND;
             }
-        } else if ( req.queryParams.cert ) {
-            user = g_lib.getUserFromCert( req.queryParams.cert );
+        } else if ( req.queryParams.client ) {
+            user = g_lib.getUserFromCert( req.queryParams.client );
         } else {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
@@ -228,7 +228,7 @@ router.get('/view', function (req, res) {
     }
 })
 .queryParam('uid', joi.string().optional(), "UID of user to view")
-.queryParam('cert', joi.string().optional(), "Certificate of user to view")
+.queryParam('client', joi.string().optional(), "Certificate of client")
 .summary('View user information')
 .description('View user information');
 

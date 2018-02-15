@@ -158,7 +158,7 @@ router.get('/list', function (req, res) {
             for ( var i in items ) {
                 item = items[i];
                 // The following checks slow down query by a factor of ~20
-                if ( g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+                if ( g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
                     result.push({ id: item._id, title: item.title });
                 }
             }
@@ -183,7 +183,7 @@ router.get('/view', function (req, res) {
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_VIEW ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_REC_VIEW ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -206,7 +206,7 @@ router.get('/read', function (req, res) {
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_READ ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_DAT_READ ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -217,7 +217,7 @@ router.get('/read', function (req, res) {
 
         for ( var i in items ) {
             item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_VIEW )) {
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
                 result.push({ id: item._id, title: item.title });
             }
         }
@@ -241,7 +241,7 @@ router.post('/write', function (req, res) {
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_DAT_WRITE ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 

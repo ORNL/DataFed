@@ -46,7 +46,6 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 #define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
 #define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
 
-//#include "GSSAPI_Utils.hpp"
 
 using namespace std;
 
@@ -55,23 +54,7 @@ namespace Facility {
 
 #define DEBUG_GSI
 
-#define HANDLE_REPLY_ERROR( reply ) \
-    if ( reply->has_header() && reply->header().has_err_code() ) \
-    { \
-        uint32_t ec = reply->header().has_err_code(); \
-        if ( reply->header().has_err_msg() ) \
-        { \
-            string em = reply->header().err_msg(); \
-            delete reply; \
-            EXCEPT( ec, em ); \
-        } \
-        else \
-        { \
-            delete reply; \
-            EXCEPT( ec, "Request failed." ); \
-        } \
-    }
-
+typedef std::shared_ptr<ResolveXfrReply> spResolveXfrReply;
 
 
 class Client::ClientImpl
@@ -296,8 +279,20 @@ public:
         MsgBuf::Message * raw_reply = m_in_buf.unserialize();
         if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
         {
+            NackReply * nack = dynamic_cast<NackReply *>( raw_reply );
+            if ( nack )
+            {
+                uint32_t ec = nack->err_code();
+                string msg;
+                if ( nack->has_err_msg() )
+                    msg = nack->err_msg();
+
+                delete raw_reply;
+                EXCEPT( ec, msg );
+            }
+
             delete raw_reply;
-            EXCEPT( 1, "Bad reply type" );
+            EXCEPT( 0, "Unexpected reply from server" );
         }
         //cout << "a_reply: " << a_reply << "\n";
     }
@@ -341,8 +336,6 @@ public:
 
         send<>( req, reply, m_ctx++ );
 
-        HANDLE_REPLY_ERROR( reply );
-
         string answer = reply->data();
 
         delete reply;
@@ -362,8 +355,6 @@ public:
 
         ServiceStatus stat = reply->status();
 
-        HANDLE_REPLY_ERROR( reply );
-
         delete reply;
 
         return stat;
@@ -375,11 +366,9 @@ public:
     void ping()
     {
         PingRequest req;
-        PingReply * reply = 0;
+        AckReply * reply = 0;
 
         send<>( req, reply, m_ctx++ );
-
-        HANDLE_REPLY_ERROR( reply );
 
         delete reply;
     }
@@ -395,8 +384,6 @@ public:
         UserDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
-
-        HANDLE_REPLY_ERROR( reply );
 
         return spUserDataReply( reply );
     }
@@ -417,8 +404,6 @@ public:
 
         send<>( req, reply, m_ctx++ );
 
-        HANDLE_REPLY_ERROR( reply );
-
         return spUserDataReply( reply );
     }
 
@@ -431,8 +416,6 @@ public:
         RecordDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
-
-        HANDLE_REPLY_ERROR( reply );
 
         return spRecordDataReply( reply );
     }
@@ -455,14 +438,15 @@ public:
 
         send<>( req, reply, m_ctx++ );
 
-        HANDLE_REPLY_ERROR( reply );
-
         return spCollDataReply( reply );
     }
 
     std::string
     getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
     {
+        spResolveXfrReply xfr = resolveXfr( a_data_id, PERM_DAT_READ );
+
+#if 0
         // Get user's globus id
 
         spUserDataReply users = userView( "" );
@@ -486,12 +470,11 @@ public:
 
         if ( !record.has_data_path() )
             EXCEPT( 0, "Data record has no associated raw data" );
+#endif
 
         // TODO keyfile must be configured externally (default plus env var override)
-        string m_keyfile = "~/.ssh/id_rsa.globus";
+        string keyfile = "~/.ssh/id_rsa.globus";
 
-        // Use Legacy Globus CLI to start transfer
-        string cmd = "ssh -i " + m_keyfile + " " + user.globus_id() + "@cli.globusonline.org transfer -- " + record.data_path() + "/" + record.id().substr(2) + " " + a_dest_path;
 
         boost::filesystem::path dest(a_dest_path);
         boost::system::error_code ec;
@@ -512,7 +495,7 @@ public:
         // See if raw data file already exist
 
         boost::filesystem::path dest_file = dest;
-        dest_file /= boost::filesystem::path( record.id().substr(2) );
+        dest_file /= boost::filesystem::path( xfr->src_name() );
 
         cout << dest_file << "\n";
         if ( exists( dest_file, ec ) )
@@ -547,6 +530,9 @@ public:
             EXCEPT_PARAM( 0, "Can not write to destination path: " << a_dest_path );
         }
 
+        // Use Legacy Globus CLI to start transfer
+        string cmd = "ssh -i " + keyfile + " " + xfr->globus_id() + "@cli.globusonline.org transfer -- " + xfr->src_path() + "/" + xfr->src_name() + " " + a_dest_path;
+
         cout << cmd << "\n";
 /*
         string result = exec( cmd.c_str() );
@@ -569,6 +555,19 @@ public:
         return TS_FAILED;
     }
 
+    spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
+    {
+        ResolveXfrRequest req;
+
+        req.set_id( a_id );
+        req.set_perms( a_perms );
+
+        ResolveXfrReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        return spResolveXfrReply( reply );
+    }
 
 private:
     enum State
