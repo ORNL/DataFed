@@ -446,94 +446,18 @@ public:
     {
         spResolveXfrReply xfr = resolveXfr( a_data_id, PERM_DAT_READ );
 
-#if 0
-        // Get user's globus id
-
-        spUserDataReply users = userView( "" );
-
-        if ( !users->user_size() )
-            EXCEPT( 0, "Client user record not found" );
-
-        const UserData & user = users->user(0);
-
-        if ( !user.has_globus_id() )
-            EXCEPT( 0, "Client GlobusID is not configured" );
-
-        // Resolve data_id to a gridFTP source path
-
-        spRecordDataReply records = recordView( a_data_id );
-
-        if ( !records->record_size() )
-            EXCEPT( 0, "Specified data record not found" );
-
-        const RecordData & record = records->record(0);
-
-        if ( !record.has_data_path() )
-            EXCEPT( 0, "Data record has no associated raw data" );
-#endif
-
         // TODO keyfile must be configured externally (default plus env var override)
         string keyfile = "~/.ssh/id_rsa.globus";
 
-
-        boost::filesystem::path dest(a_dest_path);
-        boost::system::error_code ec;
-
-        // Create or check dest path
-
-        if ( a_flags & CREATE_PATH )
-        {
-            if ( !create_directories( dest, ec ) && ec.value() != boost::system::errc::success )
-                EXCEPT_PARAM( 0, "Could not create dest path: " << ec.message() );
-        }
-        else
-        {
-            if ( !exists( dest, ec ) )
-                EXCEPT_PARAM( 0, "Destination path does not exist: " << a_dest_path );
-        }
-
-        // See if raw data file already exist
-
-        boost::filesystem::path dest_file = dest;
-        dest_file /= boost::filesystem::path( xfr->src_name() );
-
-        cout << dest_file << "\n";
-        if ( exists( dest_file, ec ) )
-        {
-            if ( a_flags & BACKUP )
-            {
-                cout << "make backup\n";
-            }
-            else if ( a_flags & OVERWRITE )
-            {
-                cout << "check perms\n";
-            }
-            else
-            {
-                EXCEPT( 0, "Destination file already exists (no Overwrite/Backup)" );
-            }
-        }
-
-        // Test writing to dest path
-
-        boost::filesystem::path tmp = dest;
-        tmp /= boost::filesystem::unique_path();
-        ofstream tmpf( tmp.native().c_str() );
-
-        if ( tmpf.is_open() )
-        {
-            tmpf.close();
-            boost::filesystem::remove( tmp );
-        }
-        else
-        {
-            EXCEPT_PARAM( 0, "Can not write to destination path: " << a_dest_path );
-        }
+        handleDestination( a_dest_path, xfr->src_name(), a_flags );
 
         // Use Legacy Globus CLI to start transfer
-        string cmd = "ssh -i " + keyfile + " " + xfr->globus_id() + "@cli.globusonline.org transfer -- " + xfr->src_path() + "/" + xfr->src_name() + " " + a_dest_path;
+        string cmd = "ssh -i " + keyfile + " " + xfr->globus_id() + "@cli.globusonline.org transfer -- " + xfr->src_path() + xfr->src_name() + " " + a_dest_path;
 
         cout << cmd << "\n";
+
+        string task_id = "task-1";
+
 /*
         string result = exec( cmd.c_str() );
         if ( result.compare( 0, 9, "Task ID: " ) == 0 )
@@ -545,7 +469,9 @@ public:
             EXCEPT_PARAM( 0, "Globus CLI Error: " << result );
         }
 */
-        return "1";
+        startXfr( xfr->id(), PERM_DAT_READ, task_id );
+
+        return task_id;
     }
 
     TransferStatus
@@ -570,6 +496,85 @@ public:
     }
 
 private:
+
+    void handleDestination( const string & a_dest_path, const string & a_file_name, uint16_t a_flags )
+    {
+        boost::filesystem::path dest_path( a_dest_path );
+        boost::system::error_code ec;
+
+        // Create or check dest path
+
+        if ( a_flags & CREATE_PATH )
+        {
+            if ( !create_directories( dest_path, ec ) && ec.value() != boost::system::errc::success )
+                EXCEPT_PARAM( ID_DEST_PATH_ERROR, "Could not create dest path: " << ec.message() );
+        }
+        else
+        {
+            if ( !exists( dest_path, ec ) )
+                EXCEPT_PARAM( ID_DEST_PATH_ERROR, "Destination path does not exist: " << a_dest_path );
+        }
+
+        // See if raw data file already exist
+
+        boost::filesystem::path dest_file = dest_path;
+        dest_file /= boost::filesystem::path( a_file_name );
+
+        cout << dest_file << "\n";
+        if ( exists( dest_file, ec ) )
+        {
+            if ( a_flags & BACKUP )
+            {
+                boost::filesystem::path bak_file_base = dest_file;
+
+                uint32_t num = 1;
+                for ( ; num < 100; ++num )
+                {
+                    boost::filesystem::path bak_file = bak_file_base;
+                    bak_file += boost::filesystem::path( "." + to_string( num ));
+
+                    if ( !exists( bak_file, ec ))
+                    {
+                        boost::filesystem::rename( dest_file, bak_file, ec );
+                        if ( ec.value() != boost::system::errc::success )
+                            EXCEPT_PARAM( ID_DEST_FILE_ERROR, "Could not backup destination file: " << ec.message() );
+
+                        break;
+                    }
+                }
+
+                if ( num == 100 )
+                    EXCEPT( ID_DEST_FILE_ERROR, "Unable to backup destination file (too many existing backup files)" );
+            }
+            else if ( a_flags & OVERWRITE )
+            {
+                boost::filesystem::file_status s = boost::filesystem::status( dest_file );
+                if (( s.permissions() & 0200 ) != 0200 )
+                    EXCEPT( ID_DEST_FILE_ERROR, "Can not overwrite destination file (no permission)" );
+            }
+            else  
+            {
+                EXCEPT( ID_DEST_FILE_ERROR, "Destination file already exists (no Overwrite/Backup)" );
+            }
+        }
+
+        // Test writing to dest path
+
+        boost::filesystem::path tmp = dest_path;
+        tmp /= boost::filesystem::unique_path();
+        ofstream tmpf( tmp.native().c_str() );
+
+        if ( tmpf.is_open() )
+        {
+            tmpf.close();
+            boost::filesystem::remove( tmp );
+        }
+        else
+        {
+            EXCEPT_PARAM( ID_DEST_PATH_ERROR, "Can not write to destination path: " << a_dest_path );
+        }
+    }
+
     enum State
     {
         NOT_STARTED,

@@ -127,7 +127,7 @@ int main( int a_argc, char ** a_argv )
             cout << "Record not found\n";
 */
 
-        cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx", CREATE_PATH | OVERWRITE ) << "\n";
+        cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx", CREATE_PATH | BACKUP ) << "\n";
 
 /*
         users = client.userView( "" );
