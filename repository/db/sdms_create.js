@@ -14,6 +14,7 @@ graph._addVertexCollection("c");    // Collection
 graph._addVertexCollection("t");    // Tag
 graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
+graph._addVertexCollection("tr");   // Transfers
 
 
 var owner = graph_module._relation("owner", ["d","c","g","n","a"], ["u"]);
@@ -46,21 +47,27 @@ graph._extendEdgeDefinitions(alias);
 db.x.ensureIndex({ type: "hash", unique: true, fields: [ "subject" ] });
 
 
+db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "task" ] });
+db.tr.ensureIndex({ type: "hash", unique: true, fields: [ "data", "path" ] });
+
+// Also has user, mode (read/write), status (globus)
 
 
 db._truncate("u");
 db._truncate("x");
 db._truncate("g");
 db._truncate("d");
-db._truncate("a");
 db._truncate("c");
 db._truncate("t");
 db._truncate("n");
+db._truncate("a");
+db._truncate("tr");
 db._truncate("owner");
 db._truncate("member");
 db._truncate("item");
 db._truncate("acl");
-db._truncate("meta");
+db._truncate("tag");
+db._truncate("note");
 db._truncate("ident");
 db._truncate("admin");
 db._truncate("alias");

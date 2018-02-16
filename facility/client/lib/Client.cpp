@@ -79,8 +79,8 @@ public:
 
         //m_context.add_verify_path("/etc/ssl/certs");
         m_context.load_verify_file("/home/d3s/olcf/SDMS/server_cert.pem");
-        m_context.use_certificate_file( "/home/d3s/olcf/SDMS/client_cert.pem", asio::ssl::context::pem );
-        m_context.use_private_key_file( "/home/d3s/olcf/SDMS/client_key.pem", asio::ssl::context::pem );
+        m_context.use_certificate_file( "/home/d3s/olcf/SDMS/client_cert2.pem", asio::ssl::context::pem );
+        m_context.use_private_key_file( "/home/d3s/olcf/SDMS/client_key2.pem", asio::ssl::context::pem );
 
         m_socket = new ssl_socket( m_io_service, m_context );
 
@@ -456,7 +456,7 @@ public:
 
         cout << cmd << "\n";
 
-        string task_id = "task-1";
+        string task_id = "foo"; //globusStub( 1 );
 
 /*
         string result = exec( cmd.c_str() );
@@ -469,7 +469,7 @@ public:
             EXCEPT_PARAM( 0, "Globus CLI Error: " << result );
         }
 */
-        startXfr( xfr->id(), PERM_DAT_READ, task_id );
+        //startXfr( xfr->id(), PERM_DAT_READ, task_id );
 
         return task_id;
     }

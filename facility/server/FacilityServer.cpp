@@ -76,10 +76,15 @@ public:
     Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionObserver & a_sess_obs ) :
         m_sess_obs( a_sess_obs ),
         m_socket( a_io_service, a_context ),
+        m_anon(false),
         m_in_buf( 4096 )
     {
         m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
         m_socket.set_verify_callback( bind( &Session::verifyCert, this, placeholders::_1, placeholders::_2 ));
+
+        m_setup_msg = 0x100 | MsgBuf::findMessageType( 1, "SetupRequest" );
+        
+        cout << "ctor(" << this << "), m_anon: " << m_anon << "\n";
     }
 
     #else
@@ -105,6 +110,7 @@ public:
         SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
         SET_MSG_HANDLER( proto_id, PingRequest, &Session::procMsgPing );
         SET_MSG_HANDLER( proto_id, TextRequest, &Session::procMsgText );
+        SET_MSG_HANDLER( proto_id, SetupRequest, &Session::procMsgSetup );
 
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
@@ -197,10 +203,18 @@ private:
         X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
         X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
 
-        cout << "Verifying " << subject_name << "\n";
-        m_client_dn = subject_name;
+        cout << "Client: " << subject_name << "\n";
 
-        return a_preverified;
+        m_client_dn = subject_name;
+        if ( !a_preverified )
+            m_anon = true;
+
+        if ( m_anon )
+            cout << "Anonymous user\n";
+
+        cout << "verify(" << this << "), m_anon: " << m_anon << "\n";
+
+        return true;
     }
 
     #endif
@@ -253,8 +267,28 @@ private:
         uint16_t msg_type = m_in_buf.getMsgType();
         map<uint16_t,msg_fun_t>::iterator handler = m_msg_handlers.find( msg_type );
 
+        cout << "Get msg type: " << msg_type << "\n";
+
         if ( handler != m_msg_handlers.end() )
-            (this->*handler->second)();
+        {
+            // Anonymous user can only send SetupRequest message
+            if ( m_anon && msg_type != m_setup_msg )
+            {
+                DL_ERROR( "Anonymous user sent msg type: " << msg_type );
+
+                NackReply nack;
+                nack.set_err_code( ID_AUTHN_REQUIRED );
+                nack.set_err_msg( "Anonymous users have restricted API access" );
+                m_out_buf.serialize( nack );
+                m_out_buf.getFrame().context = m_in_buf.getFrame().context;
+                writeMsgHeader();
+            }
+            else
+            {
+                cout << "anon: " << m_anon << ", " << msg_type << " != " << m_setup_msg << "\n";
+                (this->*handler->second)();
+            }
+        }
         else
             DL_ERROR( "Recv unregistered msg type: " << msg_type );
 
@@ -282,6 +316,7 @@ private:
                 NO_DELAY_OFF(m_socket);
             });
     }
+
 
     void writeMsgBody()
     {
@@ -351,7 +386,7 @@ private:
                 m_out_buf.serialize( nack ); \
             } \
             m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
-            writeMsgHeader() \
+            writeMsgHeader(); \
             DL_TRACE( "Sent: " << reply.DebugString()); \
         } \
         else { \
@@ -363,6 +398,14 @@ private:
         DL_ERROR( "Session "<<this<<": buffer parse failed due to unregistered msg type." ); \
     }
 
+    void procMsgSetup()
+    {
+        PROC_MSG_BEGIN( SetupRequest, AckReply )
+
+        cout << "doing setup!\n";
+
+        PROC_MSG_END
+    }
 
     void procMsgStatus()
     {
@@ -410,6 +453,8 @@ private:
     #else
     asio::ip::tcp::socket   m_socket;
     #endif
+    bool                    m_anon;
+    uint16_t                m_setup_msg;
     MsgBuf                  m_in_buf;
     MsgBuf                  m_out_buf;
     struct timespec         m_last_access = {0,0};
