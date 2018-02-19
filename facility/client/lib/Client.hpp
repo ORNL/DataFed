@@ -4,15 +4,17 @@
 #include <memory>
 #include <stdint.h>
 #include "SDMS.pb.h"
+#include "SDMS_Anon.pb.h"
+#include "SDMS_Auth.pb.h"
 
 #define Check(Var,Src,Cls) Cls * Var = dynamic_cast<Cls*>(Src)
 
 namespace SDMS {
 namespace Facility {
 
-typedef std::shared_ptr<UserDataReply> spUserDataReply;
-typedef std::shared_ptr<RecordDataReply> spRecordDataReply;
-typedef std::shared_ptr<CollDataReply> spCollDataReply;
+typedef std::shared_ptr<Auth::UserDataReply> spUserDataReply;
+typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
+typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
 
 enum DestFlags : uint16_t
 {
@@ -57,17 +59,18 @@ public:
     void                start();
 
     bool                test( size_t a_iter );
-    std::string         text( const std::string & a_message );
+
+    void                generateClientCredentials( const std::string & a_out_path, const std::string & a_env_name );
+    void                setup();
 
     ServiceStatus       status();
-    void                ping();
     spUserDataReply     userView( const std::string & a_user = "" );
     spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spRecordDataReply   recordView( const std::string & a_id );
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
     std::string         getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags = 0 );
-    TransferStatus      getDataTransferStatus( const std::string & a_transfer_id );
+    XfrStatus           getDataTransferStatus( const std::string & a_transfer_id );
 
 private:
     class ClientImpl;

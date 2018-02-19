@@ -2,6 +2,7 @@
 #define CENTRALDBCLIENT_HPP
 
 #include "SDMS.pb.h"
+#include "SDMS_Auth.pb.h"
 
 namespace SDMS {
 
@@ -15,12 +16,12 @@ public:
 
     void setClient( const std::string & a_client );
 
-    void checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply );
-    void userView( const UserViewRequest & a_request, UserDataReply & a_reply );
-    void userList( const UserListRequest & a_request, UserDataReply & a_reply );
-    void recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply );
-    void collList( const CollListRequest & a_request, CollDataReply & a_reply );
-    void resolveXfr( const ResolveXfrRequest & a_request, ResolveXfrReply & a_reply );
+    void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
+    void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
+    void userList( const Auth::UserListRequest & a_request, Auth::UserDataReply & a_reply );
+    void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
+    void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
+    void resolveXfr( const Auth::ResolveXfrRequest & a_request, Auth::ResolveXfrReply & a_reply );
 
 private:
     CentralDatabaseClientImpl* m_impl;

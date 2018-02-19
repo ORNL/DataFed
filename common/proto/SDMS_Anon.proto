@@ -1,0 +1,58 @@
+import "SDMS.proto";
+
+package SDMS.Anon;
+
+enum Protocol
+{
+    ID = 1;
+}
+
+
+// ============================ Messages
+
+
+message AckReply
+{
+}
+
+// NackReply is only used to capture error information.
+// Text error messages are optional but useful, and
+// should generally be used.
+
+message NackReply
+{
+    required SDMS.ErrorCode     err_code    = 1;
+    optional string             err_msg     = 2;
+}
+
+
+message StatusRequest
+{
+}
+
+message StatusReply
+{
+    required SDMS.ServiceStatus status      = 1;
+}
+
+message ServerInfoRequest
+{
+}
+
+message ServerInfoReply
+{
+    required string             country     = 1;
+    required string             org         = 2;
+    required string             div         = 3;
+}
+
+
+message AuthenticateRequest
+{
+    required string             uname       = 1;    // Local username
+    required string             password    = 2;    // Password or passcode
+}
+
+
+
+

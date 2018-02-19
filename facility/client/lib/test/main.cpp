@@ -31,21 +31,6 @@ void doMsgTest( Client & client, int iter )
     cout << " time: " << timerElapsed() << " sec, iter/sec: " << iter/timerElapsed() << "\n";
 }
 
-void pingTest( Client & client, int iter )
-{
-    timerDef();
-
-    cout << "ping test...";
-
-    timerStart();
-
-    for ( int i = 0; i < iter; ++i )
-        client.ping();
-
-    timerStop();
-
-    cout << " rate: " << iter/timerElapsed() << " p/s\n";
-}
 
 void perfTest( Client & client, int iter )
 {
@@ -99,7 +84,7 @@ int main( int a_argc, char ** a_argv )
             }
         }
 
-        timerDef();
+        //timerDef();
 
         Client client( host, port, timeout );
         
@@ -113,6 +98,8 @@ int main( int a_argc, char ** a_argv )
         //msgTest( client );
         //pingTest( client, 1000 );
         //perfTest( client );
+
+        client.generateClientCredentials( "/home/d3s/xxxx/", "daedalus" );
 
         //client.getData( "jdat1", "/home/d3s/xxxx/yyy", CREATE_PATH );
 
@@ -130,13 +117,14 @@ int main( int a_argc, char ** a_argv )
         //cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx", CREATE_PATH | BACKUP ) << "\n";
 
 
+/*
         users = client.userView( "" );
         if ( users->user_size() == 1 )
         {
             const UserData & user = users->user(0);
             cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
         }
-/*
+
         users = client.userView( "d3s" );
         if ( users->user_size() == 1 )
         {

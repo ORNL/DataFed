@@ -36,6 +36,8 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 #include "DynaLog.hpp"
 #include "FacilityServer.hpp"
 #include "SDMS.pb.h"
+#include "SDMS_Anon.pb.h"
+#include "SDMS_Auth.pb.h"
 #include "CentralDatabaseClient.hpp"
 
 #include <time.h>
@@ -49,6 +51,10 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 using namespace std;
 
 namespace SDMS {
+
+using namespace SDMS::Anon;
+using namespace SDMS::Auth;
+
 namespace Facility {
 
 class ServerImpl;
@@ -82,8 +88,6 @@ public:
         m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
         m_socket.set_verify_callback( bind( &Session::verifyCert, this, placeholders::_1, placeholders::_2 ));
 
-        m_setup_msg = 0x100 | MsgBuf::findMessageType( 1, "SetupRequest" );
-        
         cout << "ctor(" << this << "), m_anon: " << m_anon << "\n";
     }
 
@@ -105,12 +109,14 @@ public:
 
     static void setupMsgHandlers()
     {
-        uint8_t proto_id = REG_PROTO( SDMS );
+        uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
-        SET_MSG_HANDLER( proto_id, PingRequest, &Session::procMsgPing );
-        SET_MSG_HANDLER( proto_id, TextRequest, &Session::procMsgText );
-        SET_MSG_HANDLER( proto_id, SetupRequest, &Session::procMsgSetup );
+        SET_MSG_HANDLER( proto_id, ServerInfoRequest, &Session::procMsgServerInfo );
+
+        proto_id = REG_PROTO( SDMS::Auth );
+
+        //SET_MSG_HANDLER( proto_id, SetupRequest, &Session::procMsgSetup );
 
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
@@ -267,16 +273,16 @@ private:
         uint16_t msg_type = m_in_buf.getMsgType();
         map<uint16_t,msg_fun_t>::iterator handler = m_msg_handlers.find( msg_type );
 
-        cout << "Get msg type: " << msg_type << "\n";
+        //cout << "Get msg type: " << msg_type << "\n";
 
         if ( handler != m_msg_handlers.end() )
         {
             // Anonymous user can only send SetupRequest message
-            if ( m_anon && msg_type != m_setup_msg )
+            if ( m_anon && msg_type > 0x1FF )
             {
                 DL_ERROR( "Anonymous user sent msg type: " << msg_type );
 
-                NackReply nack;
+                Anon::NackReply nack;
                 nack.set_err_code( ID_AUTHN_REQUIRED );
                 nack.set_err_msg( "Anonymous users have restricted API access" );
                 m_out_buf.serialize( nack );
@@ -285,7 +291,6 @@ private:
             }
             else
             {
-                cout << "anon: " << m_anon << ", " << msg_type << " != " << m_setup_msg << "\n";
                 (this->*handler->second)();
             }
         }
@@ -387,7 +392,7 @@ private:
             } \
             m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
             writeMsgHeader(); \
-            DL_TRACE( "Sent: " << reply.DebugString()); \
+            DL_DEBUG( "Sent: " << reply.DebugString()); \
         } \
         else { \
             DL_ERROR( "Session "<<this<<": dynamic cast of msg buffer " << &m_in_buf << " failed!" );\
@@ -398,39 +403,32 @@ private:
         DL_ERROR( "Session "<<this<<": buffer parse failed due to unregistered msg type." ); \
     }
 
+    void procMsgServerInfo()
+    {
+        PROC_MSG_BEGIN( ServerInfoRequest, ServerInfoReply )
+
+        // TODO Get from prog options
+        reply.set_country("US");
+        reply.set_org("ORNL");
+        reply.set_div("NCCS");
+
+        PROC_MSG_END
+    }
+
     void procMsgSetup()
     {
-        PROC_MSG_BEGIN( SetupRequest, AckReply )
+        //PROC_MSG_BEGIN( Anon::SetupRequest, Anon::AckReply )
 
         cout << "doing setup!\n";
 
-        PROC_MSG_END
+        //PROC_MSG_END
     }
 
     void procMsgStatus()
     {
-        PROC_MSG_BEGIN( StatusRequest, StatusReply )
+        PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
 
         reply.set_status( SS_NORMAL );
-
-        PROC_MSG_END
-    }
-
-
-    void procMsgPing()
-    {
-        PROC_MSG_BEGIN( PingRequest, AckReply )
-
-        // Nothing to do
-
-        PROC_MSG_END
-    }
-
-    void procMsgText()
-    {
-        PROC_MSG_BEGIN( TextRequest, TextReply )
-
-        reply.set_data("Hello from FacilityServer!");
 
         PROC_MSG_END
     }
@@ -454,7 +452,6 @@ private:
     asio::ip::tcp::socket   m_socket;
     #endif
     bool                    m_anon;
-    uint16_t                m_setup_msg;
     MsgBuf                  m_in_buf;
     MsgBuf                  m_out_buf;
     struct timespec         m_last_access = {0,0};

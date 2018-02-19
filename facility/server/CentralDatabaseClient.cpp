@@ -10,6 +10,7 @@ using namespace std;
 
 namespace SDMS {
 
+using namespace SDMS::Auth;
 
 size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata )
 {

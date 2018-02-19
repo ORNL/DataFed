@@ -162,7 +162,7 @@ public:
 
         const DescriptorType *desc = iProto->second->FindMessageTypeByName( a_message_name );
         if ( !desc )
-            EXCEPT_PARAM( EC_PROTO_INIT, "Could not find specified message: " << a_message_name );
+            EXCEPT_PARAM( EC_PROTO_INIT, "Could not find specified message: " << a_message_name << " for protocol: " << (unsigned int)a_proto_id );
 
         return (uint8_t)desc->index();
     }
@@ -181,23 +181,34 @@ public:
 
         DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
 
-        if ( iProto != getDescriptorMap().end() && a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
+        if ( iProto != getDescriptorMap().end() )
         {
-            //cout << "proto " << a_msg_buffer.a_frame.proto_id << "found" << endl;
-
-            const DescriptorType * msg_descriptor = iProto->second->message_type( a_frame.msg_id );
-            const Message * default_msg = getFactory().GetPrototype( msg_descriptor );
-
-            Message * msg = default_msg->New();
-
-            if ( msg )
+            if ( a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
             {
-                // Some message types do not have any content and will not need to be parsed (and buffer may be null/empty)
-                if ( msg->ParseFromArray( a_buffer, a_frame.size ))
-                    return msg;
-                else
-                    delete msg;
+                //cout << "proto " << a_msg_buffer.a_frame.proto_id << "found" << endl;
+
+                const DescriptorType * msg_descriptor = iProto->second->message_type( a_frame.msg_id );
+                const Message * default_msg = getFactory().GetPrototype( msg_descriptor );
+
+                Message * msg = default_msg->New();
+
+                if ( msg )
+                {
+                    // Some message types do not have any content and will not need to be parsed (and buffer may be null/empty)
+                    if ( msg->ParseFromArray( a_buffer, a_frame.size ))
+                        return msg;
+                    else
+                        delete msg;
+                }
             }
+            else
+            {
+                EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: invalid message type " << (unsigned int)a_frame.msg_id );
+            }
+        }
+        else
+        {
+            EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: message contains unknown protocol ID " << (unsigned int)a_frame.proto_id );
         }
 
         return 0;

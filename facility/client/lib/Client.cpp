@@ -31,8 +31,9 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 
 #endif
 
-#include "unistd.h"
-#include "sys/types.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 
 #include "Exec.hpp"
@@ -50,11 +51,15 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 using namespace std;
 
 namespace SDMS {
+
+using namespace SDMS::Anon;
+using namespace SDMS::Auth;
+
 namespace Facility {
 
 #define DEBUG_GSI
 
-typedef std::shared_ptr<ResolveXfrReply> spResolveXfrReply;
+typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 
 
 class Client::ClientImpl
@@ -73,7 +78,8 @@ public:
         m_ctx( 1 ),
         m_state(NOT_STARTED)
     {
-        REG_PROTO( SDMS );
+        REG_PROTO( SDMS::Anon );
+        REG_PROTO( SDMS::Auth );
 
         #ifdef USE_TLS
 
@@ -111,6 +117,18 @@ public:
 
         if ( m_state == FAILED )
             EXCEPT( 1, "Failed to connect to server" );
+            
+        ServerInfoRequest req;
+        ServerInfoReply * reply = 0;
+
+        send<>( req, reply, m_ctx++ );
+
+        m_country = reply->country();
+        m_org = reply->org();
+        m_div = reply->div();
+
+        delete reply;
+
     }
 
     void connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
@@ -275,11 +293,12 @@ public:
 
         //cout << "send: " << t1 << ", recv: " << t2 << "\n";
 
-        //cout << "unserialize\n";
+        cout << "unserialize\n";
         MsgBuf::Message * raw_reply = m_in_buf.unserialize();
+        cout << "msg: " << raw_reply << "\n";
         if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
         {
-            NackReply * nack = dynamic_cast<NackReply *>( raw_reply );
+            Anon::NackReply * nack = dynamic_cast<Anon::NackReply *>( raw_reply );
             if ( nack )
             {
                 uint32_t ec = nack->err_code();
@@ -292,15 +311,41 @@ public:
             }
 
             delete raw_reply;
-            EXCEPT( 0, "Unexpected reply from server" );
+            EXCEPT_PARAM( 0, "Unexpected reply from server, msg_type: " << m_in_buf.getMsgType() );
         }
         //cout << "a_reply: " << a_reply << "\n";
     }
 
+    void generateClientCredentials( const string & a_out_path, const string & a_env_name )
+    {
+        char * uid = getlogin();
+        if ( uid == 0 )
+            EXCEPT( 0, "Could not determine login name" );
+
+        string key_file = a_out_path + "/" + uid + "-" + a_env_name + "-key.pem";
+        string cert_file = a_out_path + "/" + uid + "-" + a_env_name + "-cert.pem";
+
+        string cmd = "openssl req -newkey rsa:2048 -nodes -subj /DC=" + m_country + "/DC=" + m_org + "/DC=" + m_div + "/DC=" + a_env_name + "/CN=" + uid + " -keyout " + key_file + " -x509 -days 365 -out " + cert_file;
+
+        if ( system( cmd.c_str() ))
+            EXCEPT( 0, "Credential generation failed. Check specifed path and env name." );
+        
+        ifstream inf( cert_file );
+
+        if ( !inf.is_open() || !inf.good() )
+            EXCEPT( 0, "Could not open new cert file" );
+
+        string cert(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+
+        inf.close();
+        
+        cout << "New cert [" << cert << "]\n";
+    }
+
     bool test( size_t a_iter )
     {
-        StatusReply     in;
-        StatusReply *   out = 0;
+        Anon::StatusReply     in;
+        Anon::StatusReply *   out = 0;
         MsgBuf::Message *       raw;
         MsgBuf          buf;
 
@@ -314,7 +359,7 @@ public:
                 cerr << "unerialize failed\n";
                 return false;
             }
-            out = dynamic_cast<StatusReply *>(raw);
+            out = dynamic_cast<Anon::StatusReply *>(raw);
             if ( !out )
             {
                 cerr << "cast failed\n";
@@ -327,29 +372,12 @@ public:
     }
 
 
-    string text( const string & a_message )
-    {
-        TextRequest req;
-        TextReply * reply = 0;
-
-        req.set_data( a_message );
-
-        send<>( req, reply, m_ctx++ );
-
-        string answer = reply->data();
-
-        delete reply;
-        
-        return answer;
-    }
-
-
     ServiceStatus status()
     {
         //cout << "status\n";
 
-        StatusRequest req;
-        StatusReply * reply = 0;
+        Anon::StatusRequest req;
+        Anon::StatusReply * reply = 0;
 
         send<>( req, reply, m_ctx++ );
 
@@ -360,28 +388,15 @@ public:
         return stat;
     }
 
-    /**
-     * @brief Verify server is listening an in-synch
-     */
-    void ping()
-    {
-        PingRequest req;
-        AckReply * reply = 0;
-
-        send<>( req, reply, m_ctx++ );
-
-        delete reply;
-    }
-
     spUserDataReply
     userView( const string & a_user )
     {
-        UserViewRequest req;
+        Auth::UserViewRequest req;
 
         if ( a_user.size() )
             req.set_user( a_user );
 
-        UserDataReply * reply;
+        Auth::UserDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
 
@@ -391,7 +406,7 @@ public:
     spUserDataReply
     userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     {
-        UserListRequest req;
+        Auth::UserListRequest req;
 
         if ( a_details )
             req.set_details( a_details );
@@ -400,7 +415,7 @@ public:
         if ( a_count )
             req.set_count( a_count );
 
-        UserDataReply * reply;
+        Auth::UserDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
 
@@ -410,10 +425,10 @@ public:
     spRecordDataReply
     recordView( const std::string & a_id )
     {
-        RecordViewRequest req;
+        Auth::RecordViewRequest req;
         req.set_id( a_id );
 
-        RecordDataReply * reply;
+        Auth::RecordDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
 
@@ -423,7 +438,7 @@ public:
     spCollDataReply
     collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
     {
-        CollListRequest req;
+        Auth::CollListRequest req;
 
         if ( a_user.size() )
             req.set_user( a_user );
@@ -434,7 +449,7 @@ public:
         if ( a_count )
             req.set_count( a_count );
 
-        CollDataReply * reply;
+        Auth::CollDataReply * reply;
 
         send<>( req, reply, m_ctx++ );
 
@@ -474,21 +489,21 @@ public:
         return task_id;
     }
 
-    TransferStatus
+    XfrStatus
     getDataTransferStatus( const std::string & a_transfer_id )
     {
         (void)a_transfer_id;
-        return TS_FAILED;
+        return XFR_FAILED;
     }
 
     spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
     {
-        ResolveXfrRequest req;
+        Auth::ResolveXfrRequest req;
 
         req.set_id( a_id );
         req.set_perms( a_perms );
 
-        ResolveXfrReply * reply;
+        Auth::ResolveXfrReply * reply;
 
         send<>( req, reply, m_ctx++ );
 
@@ -600,6 +615,9 @@ private:
     State                       m_state;
     condition_variable          m_start_cvar;
     mutex                       m_mutex;
+    string                      m_country;
+    string                      m_org;
+    string                      m_div;
 };
 
 
@@ -623,29 +641,20 @@ void Client::start()
     return m_impl->start();
 }
 
+void Client::generateClientCredentials( const std::string & a_out_path, const std::string & a_env_name )
+{
+    m_impl->generateClientCredentials( a_out_path, a_env_name );
+}
+
 bool
 Client::test( size_t a_iter )
 {
     return m_impl->test( a_iter );
 }
 
-string
-Client::text( const string & a_message )
-{
-    return m_impl->text( a_message );
-}
-
 ServiceStatus Client::status()
 {
     return m_impl->status();
-}
-
-/**
- * @brief Verify server is listening and in-synch
- */
-void Client::ping()
-{
-    m_impl->ping();
 }
 
 
@@ -679,7 +688,7 @@ Client::getData( const std::string & a_data_id, const std::string & a_dest_path,
     return m_impl->getData( a_data_id, a_dest_path, a_flags );
 }
 
-TransferStatus
+XfrStatus
 Client::getDataTransferStatus( const std::string & a_transfer_id )
 {
     return m_impl->getDataTransferStatus( a_transfer_id );
