@@ -34,7 +34,7 @@ router.post('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
 .summary('Update tags on an object')
 .description('Update tags on an object (data record or collection)');

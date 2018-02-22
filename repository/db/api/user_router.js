@@ -261,7 +261,7 @@ router.post('/delete', function (req, res) {
                 var obj;
                 var i;
 
-                // Delete certificates
+                // Delete linked accounts
                 objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     g_graph.uid.remove( objects[i] );

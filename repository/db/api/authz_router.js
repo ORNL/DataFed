@@ -25,7 +25,7 @@ router.get('/gridftp', function (req, res) {
         console.log( "file", req.queryParams.file );
         console.log( "act", req.queryParams.act );
 
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
 
         // Actions: read, write, create, delete, chdir, lookup
         var req_perm = 0;
@@ -53,7 +53,7 @@ router.get('/gridftp', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('file', joi.string().required(), "Data file name")
 .queryParam('act', joi.string().required(), "Action")
 .summary('Checks authorization')
@@ -62,7 +62,7 @@ router.get('/gridftp', function (req, res) {
 
 router.get('/xfr/pre', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
 
         var data_id = g_lib.resolveID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
@@ -83,7 +83,7 @@ router.get('/xfr/pre', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "Data record ID or alias")
 .queryParam('perms', joi.number().required(), "Requested permissions (read/write)")
 .summary('Performs pre-transfer authorization')

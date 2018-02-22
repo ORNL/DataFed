@@ -77,11 +77,11 @@ router.post('/update', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x","d","c","a","admin","alias"],
+                read: ["u","uid","d","c","a","admin","alias"],
                 write: ["c","d","acl"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
                 var object = g_lib.getObject( req.queryParams.object, client );
                 var owner_id = g_db.owner.firstExample({ _from: object._id })._to.substr(2);
 
@@ -284,7 +284,7 @@ router.post('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('acls', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
 .summary('Update ACL(s) on a data record or collection')
@@ -293,7 +293,7 @@ router.post('/update', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
         var object = g_lib.getObject( req.queryParams.object, client );
 
         if ( object._id[0] != "c" && object._id[0] != "d" )
@@ -350,7 +350,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
 .summary('View current ACL on an object')
 .description('View current ACL on an object (data record or collection)');

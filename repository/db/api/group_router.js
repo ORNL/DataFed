@@ -26,11 +26,11 @@ router.post('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","x","admin"],
+                read: ["u","uid","admin"],
                 write: ["g","owner","member"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
                 var uid;
 
                 if ( req.queryParams.subject ) {
@@ -78,11 +78,11 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x","owner","admin"],
+                read: ["u","uid","owner","admin"],
                 write: ["g","owner","member","acl"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
                 var group_id;
 
                 if ( req.queryParams.subject ) {
@@ -108,7 +108,7 @@ router.post('/delete', function (req, res) {
 
 router.get('/list', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
         var owner_id;
         var offset;
 
@@ -130,7 +130,7 @@ router.get('/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List groups')
 .description('List groups owned by client or subject');
@@ -138,7 +138,7 @@ router.get('/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
         var group_id = "g/";
         var offset;
 
@@ -161,7 +161,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('id', joi.string().required(), "Group ID")
 .summary('View group details')

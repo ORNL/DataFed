@@ -26,11 +26,11 @@ router.post('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","x"],
+                read: ["u","uid"],
                 write: ["c","a","alias","owner","item"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
 
                 var obj = { title: req.queryParams.title };
                 if ( req.queryParams.descr )
@@ -75,7 +75,7 @@ router.post('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client crtificate subject string")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('title', joi.string().required(), "Title")
 .queryParam('descr', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
@@ -95,11 +95,11 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x"],
+                read: ["u","uid"],
                 write: ["c","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
 
                 g_lib.ensureAdminPermObject( client, coll_id );
@@ -125,7 +125,7 @@ router.post('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client crtificate subject string")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "Collection ID or alias")
 .summary('Deletes an existing data collection')
 .description('Deletes an existing data collection');
@@ -133,7 +133,7 @@ router.post('/delete', function (req, res) {
 
 router.get('/list', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
         var owner_id;
 
         if ( req.queryParams.subject ) {
@@ -169,7 +169,7 @@ router.get('/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List all data collections owned by client (or subject)')
 .description('List all data collections owned by client (or subject)');
@@ -177,7 +177,7 @@ router.get('/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
@@ -192,7 +192,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate subject string")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "Collection ID or alias")
 .summary('View collection information by ID or alias')
 .description('View collection information by ID or alias');
@@ -200,7 +200,7 @@ router.get('/view', function (req, res) {
 
 router.get('/read', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
@@ -227,7 +227,7 @@ router.get('/read', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate subject string")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
 .summary('Read contents of a collection by ID or alias')
 .description('Read contents of a collection by ID or alias');
@@ -235,7 +235,7 @@ router.get('/read', function (req, res) {
 
 router.post('/write', function (req, res) {
     try {
-        const client = g_lib.getUserFromCert( req.queryParams.client );
+        const client = g_lib.getUserFromUID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
@@ -265,7 +265,7 @@ router.post('/write', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to modify")
 .queryParam('add', joi.array().items(joi.string()).optional(), "Array of item IDs to add")
 .queryParam('remove', joi.array().items(joi.string()).optional(), "Array of item IDs to remove")
