@@ -26,20 +26,20 @@ router.post('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","x"],
-                write: ["u","x","c","a","owner","ident","alias","admin"]
+                read: ["u"],
+                write: ["u","uid","c","a","owner","ident","alias","admin"]
             },
             action: function() {
                 var user = g_db.u.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, globus_id: req.queryParams.globus_id, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
 
-                var cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
+                var fac_uid = g_db.uid.save({ _key: req.queryParams.facility_uid }, { returnNew: true });
                 var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name_first + " " + req.queryParams.name_last + " (" + req.queryParams.uid +")" }, { returnNew: true });
 
                 var alias = g_db.a.save({ _key: req.queryParams.uid + ":root" }, { returnNew: true });
                 g_db.owner.save({ _from: alias._id, _to: user._id });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });
-                g_db.ident.save({ _from: user._id, _to: cert._id });
+                g_db.ident.save({ _from: user._id, _to: fac_uid._id });
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
                 if ( req.queryParams.admins ) {
@@ -67,13 +67,12 @@ router.post('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('uid', joi.string().required(), "User ID for new user")
+.queryParam('uid', joi.string().required(), "SDMS user ID for new user")
 .queryParam('name_first', joi.string().required(), "First name")
 .queryParam('name_last', joi.string().required(), "Last name")
-.queryParam('globus_id', joi.string().required(), "Globus ID (user name portion only)")
 .queryParam('email', joi.string().required(), "Email")
-//.queryParam('org', joi.string().required(), "User's home organization")
-.queryParam('cert', joi.string().required(), "New user certificate subject string")
+.queryParam('globus_id', joi.string().required(), "Globus ID (user name portion only)")
+.queryParam('facility_uid', joi.string().required(), "As facility/uid")
 .queryParam('is_admin', joi.boolean().optional(), "New account is a system administrator")
 .queryParam('is_project', joi.boolean().optional(), "New account is a project")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
@@ -87,11 +86,11 @@ router.post('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","x"],
+                read: ["u","uid"],
                 write: ["u","admin"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
                 var user_id;
 
                 if ( req.queryParams.subject ) {
@@ -179,7 +178,7 @@ router.post('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client uid")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('name_first', joi.string().optional(), "New first name")
 .queryParam('name_last', joi.string().optional(), "New last name")
@@ -198,14 +197,14 @@ router.get('/view', function (req, res) {
     try {
         var user;
 
-        if ( req.queryParams.uid ) {
+        if ( req.queryParams.subject ) {
             try {
-                user = g_db.u.document({ _id: req.queryParams.uid });
+                user = g_db.u.document({ _id: req.queryParams.subject });
             } catch ( e ) {
                 throw g_lib.ERR_USER_NOT_FOUND;
             }
         } else if ( req.queryParams.client ) {
-            user = g_lib.getUserFromCert( req.queryParams.client );
+            user = g_lib.getUserFromUID( req.queryParams.client );
         } else {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
@@ -217,7 +216,6 @@ router.get('/view', function (req, res) {
 
         user.uid = user._key;
 
-
         delete user._id;
         delete user._key;
         delete user._rev;
@@ -227,8 +225,8 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('uid', joi.string().optional(), "UID of user to view")
-.queryParam('client', joi.string().optional(), "Certificate of client")
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('subject', joi.string().optional(), "UID of subject user to view")
 .summary('View user information')
 .description('View user information');
 
@@ -240,16 +238,15 @@ router.get('/list', function (req, res) {
 .description('List users');
 
 
-
 router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x","admin"],
-                write: ["u","g","x","c","d","n","a","acl","owner","ident","alias","admin","member","item","tag","note"]
+                read: ["u","uid","admin"],
+                write: ["u","g","uid","c","d","n","a","acl","owner","ident","alias","admin","member","item","tag","note"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
+                const client = g_lib.getUserFromUID( req.queryParams.client );
                 var user_id;
 
                 if ( req.queryParams.subject ) {
@@ -267,7 +264,7 @@ router.post('/delete', function (req, res) {
                 // Delete certificates
                 objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
-                    g_graph.x.remove( objects[i] );
+                    g_graph.uid.remove( objects[i] );
                 }
 
                 // Delete collections, data, groups, notes
@@ -284,32 +281,52 @@ router.post('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
+.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('Remove existing user entry')
 .description('Remove existing user entry. Requires admin permissions.');
 
 
-router.post('/cert/create', function (req, res) {
+router.get('/uid/list', function (req, res) {
+    try {
+        var client = g_lib.getUserFromUID( req.queryParams.client );
+        if ( req.queryParams.subject ) {
+            const subject = g_db.u.document( req.queryParams.subject );
+            g_lib.ensureAdminPermUser( client, subject._id );
+
+            res.send( g_db._query( "for v in 1..1 outbound @client ident return v._key", { client: subject._id }));
+        } else {
+            res.send( g_db._query( "for v in 1..1 outbound @client ident return v._key", { client: client._id }));
+        }
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client uid")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.summary('List user linked UIDs');
+
+
+router.post('/uid/add', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x","admin"],
-                write: ["x","ident"]
+                read: ["u","uid","admin"],
+                write: ["uid","ident"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
-                var cert;
+                const client = g_lib.getUserFromUID( req.queryParams.client );
+                var uid;
 
                 if ( req.queryParams.subject ) {
                     const user = g_db.u.document( req.queryParams.subject );
                     g_lib.ensureAdminPermUser( client, user._id );
 
-                    cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
-                    g_db.ident.save({ _from: user._id, _to: cert._id });
+                    uid = g_db.uid.save({ _key: req.queryParams.uid }, { returnNew: true });
+                    g_db.ident.save({ _from: user._id, _to: uid._id });
                 } else {
-                    cert = g_db.x.save({ subject: req.queryParams.cert }, { returnNew: true });
-                    g_db.ident.save({ _from: client._id, _to: cert._id });
+                    uid = g_db.uid.save({ _key: req.queryParams.uid }, { returnNew: true });
+                    g_db.ident.save({ _from: client._id, _to: uid._id });
                 }
             }
         });
@@ -317,89 +334,42 @@ router.post('/cert/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('cert', joi.string().required(), "Certificate to add")
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('uid', joi.string().required(), "UID to add")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.summary('Add new certificate to user account')
-.description('Add new certificate to user account');
+.summary('Add new linked UID to user account')
+.description('Add new linked UID to user account');
 
 
-router.get('/cert/list', function (req, res) {
-    try {
-        var client = g_lib.getUserFromCert( req.queryParams.client );
-        if ( req.queryParams.subject ) {
-            const subject = g_db.u.document( req.queryParams.subject );
-            g_lib.ensureAdminPermUser( client, subject._id );
-
-            res.send( g_db._query( "for v in 1..1 outbound @client ident return v.subject", { client: subject._id }));
-        } else {
-            res.send( g_db._query( "for v in 1..1 outbound @client ident return v.subject", { client: client._id }));
-        }
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.summary('List user certificates');
-
-
-router.post('/cert/update', function (req, res) {
+router.post('/uid/remove', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x","admin"],
-                write: ["x","ident"]
+                read: ["u","uid"],
+                write: ["uid","ident"]
             },
             action: function() {
-                const client = g_lib.getUserFromCert( req.queryParams.client );
-                const owner = g_lib.getUserFromCert( req.queryParams.cert_old );
+
+                if ( req.queryParams.client == req.queryParams.uid )
+                    throw g_lib.ERR_UID_IN_USE;
+
+                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const owner = g_lib.getUserFromUID( req.queryParams.uid );
 
                 g_lib.ensureAdminPermUser( client, owner._id );
 
-                var cert = g_db.x.firstExample({ subject: req.queryParams.cert_old });
+                const uid = g_db.uid.document({ _key: req.queryParams.uid });
 
-                g_db.x.update( cert, { subject: req.queryParams.cert_new });
+                g_db.ident.removeByExample({ _to: uid._id });
+                g_db.uid.remove({ _id: uid._id });
             }
         });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('cert_old', joi.string().required(), "Old certificate to update")
-.queryParam('cert_new', joi.string().required(), "New certificate")
-.summary('List user certificates');
-
-
-router.post('/cert/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","x"],
-                write: ["x","ident"]
-            },
-            action: function() {
-
-                if ( req.queryParams.client == req.queryParams.cert )
-                    throw g_lib.ERR_CERT_IN_USE;
-
-                const client = g_lib.getUserFromCert( req.queryParams.client );
-                const owner = g_lib.getUserFromCert( req.queryParams.cert );
-
-                g_lib.ensureAdminPermUser( client, owner._id );
-
-                const cert = g_db.x.firstExample({ subject: req.queryParams.cert });
-
-                g_db.ident.removeByExample({ _to: cert._id });
-                g_db.x.remove({ _id: cert._id });
-            }        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client certificate")
-.queryParam('cert', joi.string().required(), "Certificate to delete")
-.summary('Remove certificate from user account')
-.description('Remove certificate from user account');
+.queryParam('client', joi.string().required(), "Client uid")
+.queryParam('uid', joi.string().required(), "Certificate to delete")
+.summary('Remove linked UID from user account')
+.description('Remove linked UID from user account');
 

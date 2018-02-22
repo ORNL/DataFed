@@ -60,17 +60,21 @@ int main( int a_argc, char ** a_argv )
         int port = 5800;
         int timeout = 5;
         int opt;
+        char * gen_env = 0;
+        const char * cred_path = "/home/d3s/.sdms/d3s-daedalus";
 
-        while (( opt = getopt( a_argc, a_argv, "?h:p:t:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?h:p:t:c:g:" )) != -1 )
         {
             switch( opt )
             {
             case '?':
                 cout << "options:" << endl;
-                cout << "? - show help" << endl;
-                cout << "h - server hostname" << endl;
-                cout << "p - server port" << endl;
-                cout << "t - timeout (sec)" << endl;
+                cout << "?      - show help" << endl;
+                cout << "h name - server hostname" << endl;
+                cout << "p port - server port number" << endl;
+                cout << "t sec  - timeout (sec)" << endl;
+                cout << "c cred - specify path to credentials" << endl;
+                cout << "g env  - generate new client credentials for 'env' environment" << endl;
                 return 0;
             case 'h':
                 host = optarg;
@@ -81,25 +85,41 @@ int main( int a_argc, char ** a_argv )
             case 't':
                 timeout = atoi( optarg );
                 break;
+            case 'c':
+                cred_path = optarg;
+                break;
+            case 'g':
+                gen_env = optarg;
+                break;
             }
         }
 
         //timerDef();
 
-        Client client( host, port, timeout );
+        Client client( host, port, timeout, cred_path );
         
         cout << "Starting client" << endl;
+
+
         client.start();
+        if ( gen_env )
+        {
+            client.authenticate( "d3s", "password" );
+            client.updateClientCredentials( "/home/d3s/.sdms/", "daedalus" );
+
+            exit(0);
+        }
+
 
         spUserDataReply users;
-        spRecordDataReply records;
-        spCollDataReply colls;
+        //spRecordDataReply records;
+        //spCollDataReply colls;
+
 
         //msgTest( client );
         //pingTest( client, 1000 );
         //perfTest( client );
 
-        client.generateClientCredentials( "/home/d3s/xxxx/", "daedalus" );
 
         //client.getData( "jdat1", "/home/d3s/xxxx/yyy", CREATE_PATH );
 

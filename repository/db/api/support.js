@@ -40,11 +40,10 @@ module.exports = ( function() {
     obj.ERR_COUNT = 0;
 
     obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission denied" ]);
-    obj.ERR_CERT_IN_USE           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Certificate is in use" ]);
     obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
     obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
-    obj.ERR_CERT_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Certificate not found" ]);
+    obj.ERR_UID_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "UID not found" ]);
     obj.ERR_OBJ_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Object not found" ]);
     obj.ERR_ALIAS_NOT_FOUND       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Alias not found" ]);
     obj.ERR_USER_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "User not found" ]);
@@ -76,13 +75,11 @@ module.exports = ( function() {
         }
     };
 
-    obj.getUserFromCert = function( a_cert ) {
-        //var result = obj.db._query( "for i in x filter i.subject == @cert return document({ _id: i.user_id })", { 'cert': a_cert }, { cache: true } ).toArray();
-
-        var result = obj.db._query( "for i in x filter i.subject == @cert for j in inbound i._id ident return j", { 'cert': a_cert }, { cache: true } ).toArray();
+    obj.getUserFromUID = function( a_uid ) {
+        var result = obj.db._query( "for j in inbound @uid ident return j", { 'uid': 'uid/' + a_uid }, { cache: true } ).toArray();
 
         if ( result.length != 1 )
-            throw obj.ERR_CERT_NOT_FOUND;
+            throw obj.ERR_UID_NOT_FOUND;
 
         return result[0];
     };

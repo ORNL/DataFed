@@ -29,7 +29,7 @@ public:
     {
         m_curl = curl_easy_init();
         if ( !m_curl )
-            EXCEPT( 1, "libcurl init failed" );
+            EXCEPT( ID_INTERNAL_ERROR, "libcurl init failed" );
 
         curl_easy_setopt( m_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
         curl_easy_setopt( m_curl, CURLOPT_USERNAME, "root" );
@@ -122,6 +122,18 @@ public:
         }
     }
 
+    void userByUname( const std::string & a_uname, UserDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        long http_code = dbGet( "usr/find/by_uname", {{"uname",a_uname}}, result );
+
+        if ( http_code >= 200 && http_code < 300 )
+        {
+            setUserData( a_reply, result );
+        }
+    }
+
     void checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
     {
         rapidjson::Document result;
@@ -170,7 +182,7 @@ public:
     {
         if ( !a_result.IsArray() )
         {
-            EXCEPT( 0, "Invalid JSON returned from DB service" );
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
         }
 
         UserData* user;
@@ -215,7 +227,7 @@ public:
     {
         if ( !a_result.IsArray() )
         {
-            EXCEPT( 0, "Invalid JSON returned from DB service" );
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
         }
 
         RecordData* rec;
@@ -261,7 +273,7 @@ public:
     {
         if ( !a_result.IsArray() )
         {
-            EXCEPT( 0, "Invalid JSON returned from DB service" );
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
         }
 
         CollData* coll;
@@ -323,6 +335,7 @@ DEF_IMPL( userList, UserListRequest, UserDataReply )
 DEF_IMPL( recordView, RecordViewRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( resolveXfr, ResolveXfrRequest, ResolveXfrReply )
+DEF_IMPL( userByUname, std::string, UserDataReply )
 
 
 }

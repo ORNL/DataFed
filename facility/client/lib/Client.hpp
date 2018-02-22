@@ -50,7 +50,7 @@ class Client
 {
 public:
 
-    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout = 30 );
+    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path );
     Client( const Client & ) = delete;
     ~Client();
 
@@ -60,7 +60,9 @@ public:
 
     bool                test( size_t a_iter );
 
-    void                generateClientCredentials( const std::string & a_out_path, const std::string & a_env_name );
+    void                authenticate( const std::string & a_uname, const std::string & a_password );
+    void                updateClientCredentials( const std::string & a_out_path, const std::string & a_env_name );
+
     void                setup();
 
     ServiceStatus       status();

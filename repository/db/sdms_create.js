@@ -7,7 +7,7 @@ var graph_module = require("@arangodb/general-graph");
 var graph = graph_module._create("sdmsg");
 
 graph._addVertexCollection("u");    // User
-graph._addVertexCollection("x");    // X.509 cert
+graph._addVertexCollection("uid");   // User IDs
 graph._addVertexCollection("g");    // Group
 graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
@@ -35,7 +35,7 @@ graph._extendEdgeDefinitions(tag);
 var note = graph_module._relation("note", ["d","c"], ["n"]);
 graph._extendEdgeDefinitions(note);
 
-var ident = graph_module._relation("ident", ["u"], ["x"]);
+var ident = graph_module._relation("ident", ["u"], ["uid"]);
 graph._extendEdgeDefinitions(ident);
 
 var adm = graph_module._relation("admin", ["u"], ["u"]);
@@ -43,8 +43,6 @@ graph._extendEdgeDefinitions(adm);
 
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
-
-db.x.ensureIndex({ type: "hash", unique: true, fields: [ "subject" ] });
 
 
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "task" ] });
@@ -54,7 +52,7 @@ db.tr.ensureIndex({ type: "hash", unique: true, fields: [ "data", "path" ] });
 
 
 db._truncate("u");
-db._truncate("x");
+db._truncate("uid");
 db._truncate("g");
 db._truncate("d");
 db._truncate("c");

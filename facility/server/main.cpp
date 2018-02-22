@@ -22,18 +22,20 @@ int main( int a_argc, char ** a_argv )
         int         port = 5800;
         int         timeout = 5;
         uint32_t    num_threads = 0;
+        const char * verify_path = "/home/d3s/.sdms-server/";
         int opt;
 
-        while (( opt = getopt( a_argc, a_argv, "?p:n:t:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?p:n:t:v:" )) != -1 )
         {
             switch( opt )
             {
             case '?':
                 cout << "options:" << endl;
-                cout << "? - show help" << endl;
-                cout << "p - server port" << endl;
-                cout << "n - num threads" << endl;
-                cout << "t - timeout (sec)" << endl;
+                cout << "?      - show help" << endl;
+                cout << "p port - set server port" << endl;
+                cout << "n num  - set num threads" << endl;
+                cout << "t sec  - timeout (sec)" << endl;
+                cout << "v path - set client verify path" << endl;
                 return 0;
             case 'p':
                 port = atoi( optarg );
@@ -44,10 +46,13 @@ int main( int a_argc, char ** a_argv )
             case 't':
                 timeout = atoi( optarg );
                 break;
+            case 'v':
+                verify_path = optarg;
+                break;
             }
         }
 
-        Facility::Server server( port, timeout, num_threads );
+        Facility::Server server( port, verify_path, timeout, num_threads );
 
         cout << "start\n";
         server.run( false );

@@ -1,6 +1,7 @@
 #define USE_TLS
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <stdexcept>
 #include <thread>
@@ -68,10 +69,14 @@ class Session;
 typedef shared_ptr<Session> spSession;
 
 
-class ISessionObserver
+class ISessionMgr
 {
 public:
     virtual void sessionClosed( spSession ) = 0;
+    virtual const string & getVerifyPath() = 0;
+    virtual const string & getCountry() = 0;
+    virtual const string & getOrg() = 0;
+    virtual const string & getUnit() = 0;
 };
 
 class Session : public enable_shared_from_this<Session>
@@ -79,13 +84,14 @@ class Session : public enable_shared_from_this<Session>
 public:
     #ifdef USE_TLS
 
-    Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionObserver & a_sess_obs ) :
-        m_sess_obs( a_sess_obs ),
+    Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionMgr & a_sess_mgr ) :
+        m_sess_mgr( a_sess_mgr ),
         m_socket( a_io_service, a_context ),
-        m_anon(false),
+        m_anon(true),
         m_in_buf( 4096 )
     {
-        m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
+        //m_socket.set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
+        m_socket.set_verify_mode( asio::ssl::verify_peer );
         m_socket.set_verify_callback( bind( &Session::verifyCert, this, placeholders::_1, placeholders::_2 ));
 
         cout << "ctor(" << this << "), m_anon: " << m_anon << "\n";
@@ -93,8 +99,8 @@ public:
 
     #else
 
-    Session( asio::ip::tcp::socket a_socket, ISessionObserver & a_sess_obs ) :
-        m_sess_obs( a_sess_obs ),
+    Session( asio::ip::tcp::socket a_socket, ISessionMgr & a_sess_mgr ) :
+        m_sess_mgr( a_sess_mgr ),
         m_socket( move( a_socket )),
         m_in_buf( 4096 )
     {
@@ -113,10 +119,13 @@ public:
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
         SET_MSG_HANDLER( proto_id, ServerInfoRequest, &Session::procMsgServerInfo );
+        SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Session::procMsgAuthenticate );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
         //SET_MSG_HANDLER( proto_id, SetupRequest, &Session::procMsgSetup );
+
+        SET_MSG_HANDLER( proto_id, SetCertificateRequest, &Session::procMsgSetCertificate );
 
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
@@ -140,6 +149,8 @@ public:
                     handleCommError( "Handshake failed: ", ec );
                 else
                 {
+                    cout << "anon: " << m_anon << "\n";
+
                     m_db_client.setClient( m_client_dn );
                     readMsgHeader();
                 }
@@ -193,7 +204,7 @@ private:
         if ( a_ec )
             DL_ERROR( a_msg << a_ec.category().name() << "[" << a_ec.value() << "] " << a_ec.message() );
 
-        m_sess_obs.sessionClosed( shared_from_this() );
+        m_sess_mgr.sessionClosed( shared_from_this() );
 
         // Setting time to 0 will cause session to be garbaged collected
         //m_last_access.tv_sec = 0;
@@ -210,17 +221,11 @@ private:
         X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
 
         cout << "Client: " << subject_name << "\n";
-
         m_client_dn = subject_name;
-        if ( !a_preverified )
-            m_anon = true;
+        
+        m_anon = false;
 
-        if ( m_anon )
-            cout << "Anonymous user\n";
-
-        cout << "verify(" << this << "), m_anon: " << m_anon << "\n";
-
-        return true;
+        return a_preverified;
     }
 
     #endif
@@ -415,6 +420,24 @@ private:
         PROC_MSG_END
     }
 
+    void procMsgAuthenticate()
+    {
+        PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
+
+        // TODO Verify domain prefix, then pass to auth backend...
+        
+        // Now find user record
+
+        UserDataReply udat_reply;
+        m_db_client.userByUname( request->uname(), udat_reply );
+
+        // Now update client status to authenticated
+        m_anon = false;
+        m_uname = request->uname();
+
+        PROC_MSG_END
+    }
+
     void procMsgSetup()
     {
         //PROC_MSG_BEGIN( Anon::SetupRequest, Anon::AckReply )
@@ -433,6 +456,60 @@ private:
         PROC_MSG_END
     }
 
+    void procMsgSetCertificate()
+    {
+        PROC_MSG_BEGIN( SetCertificateRequest, AckReply )
+
+        cout << "Cert: " << request->x509_cert() << "\n";
+
+        BIO* certBio = BIO_new(BIO_s_mem());
+        BIO_write( certBio, request->x509_cert().c_str(), request->x509_cert().size() );
+        X509* cert = PEM_read_bio_X509( certBio, 0, 0, 0 );
+
+        if ( !cert )
+            EXCEPT( ID_BAD_REQUEST, "Invalid X509 certificate" );
+
+        char subject[256];
+
+        X509_NAME_oneline( X509_get_subject_name( cert ), subject, 256 );
+
+        long hash = X509_subject_name_hash( cert );
+
+        X509_free( cert );
+
+        cout << "Subject: " << subject << "\n";
+
+        string req_sub = "/C=" + m_sess_mgr.getCountry() + "/O=" + m_sess_mgr.getOrg() + "/OU=" + m_sess_mgr.getUnit() + "/L=";
+
+        // Subject must conform to: /DC=country/DC=org/DC=div/DC=env/CN=uname, where:
+        // country, org, and div are configured for this server
+        // uname is the authentcate uname for the current session
+        // and env is any string that does not contain additional RDNs
+
+        if ( strncmp( subject, req_sub.c_str(), req_sub.size() ) != 0 )
+            EXCEPT( ID_BAD_REQUEST, "Invalid X509 subject (prefix)" );
+
+        req_sub = "/UID=" + m_uname;
+        cout << req_sub << " == " << (subject + strlen(subject) - req_sub.size()) << "\n";
+        if ( strncmp( subject + strlen(subject) - req_sub.size(), req_sub.c_str(), req_sub.size() ) != 0 )
+            EXCEPT( ID_BAD_REQUEST, "Invalid X509 subject (uname)" );
+
+        char buf[50];
+        sprintf( buf, "%08lx.0", hash );
+
+        string fname = m_sess_mgr.getVerifyPath() + string(buf);
+        cout << "cer filename: " << fname << "\n";
+        
+        ofstream outf( fname.c_str() );
+        if ( outf.is_open() )
+        {
+            outf << request->x509_cert();
+            outf.close();
+        }
+
+        PROC_MSG_END
+    }
+
     template<typename RQ, typename RP, void (CentralDatabaseClient::*func)( const RQ &, RP &)>
     void dbPassThrough()
     {
@@ -445,13 +522,15 @@ private:
 
     typedef void (Session::*msg_fun_t)();
 
-    ISessionObserver &      m_sess_obs;
+    ISessionMgr &           m_sess_mgr;
     #ifdef USE_TLS
     ssl_socket              m_socket;
     #else
     asio::ip::tcp::socket   m_socket;
     #endif
     bool                    m_anon;
+    string                  m_uname;
+    vector<bool>            m_verify_chain;
     MsgBuf                  m_in_buf;
     MsgBuf                  m_out_buf;
     struct timespec         m_last_access = {0,0};
@@ -464,12 +543,13 @@ private:
 map<uint16_t,Session::msg_fun_t> Session::m_msg_handlers;
 
 
-class ServerImpl : public ISessionObserver
+class ServerImpl : public ISessionMgr
 {
 public:
 
-    ServerImpl( uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads ) :
+    ServerImpl( uint32_t a_port, const string & a_verify_path, uint32_t a_timeout, uint32_t a_num_threads ) :
         m_port( a_port ),
+        m_verify_path( a_verify_path ),
         m_timeout(a_timeout),
         m_io_thread(0),
         m_maint_thread(0),
@@ -478,10 +558,13 @@ public:
         m_endpoint( asio::ip::tcp::v4(), m_port ),
         m_acceptor( m_io_service, m_endpoint ),
         #ifdef USE_TLS
-        m_context( asio::ssl::context::tlsv12 )
+        m_context( asio::ssl::context::tlsv12 ),
         #else
-        m_socket( m_io_service )
+        m_socket( m_io_service ),
         #endif
+        m_country("US"),    // TODO Get from params
+        m_org("ORNL"),    // TODO Get from params
+        m_unit("NCCS")    // TODO Get from params
     {
         #ifdef USE_TLS
         m_context.set_options(
@@ -494,7 +577,8 @@ public:
 
         m_context.use_certificate_chain_file( "/home/d3s/olcf/SDMS/server_cert.pem" );
         m_context.use_private_key_file( "/home/d3s/olcf/SDMS/server_key.pem", asio::ssl::context::pem );
-        m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
+        //m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
+        m_context.add_verify_path( m_verify_path.c_str() );
 
         #endif
 
@@ -598,6 +682,11 @@ public:
     }
 
 private:
+    const string & getVerifyPath() { return m_verify_path; }
+    const string & getCountry() { return m_country; }
+    const string & getOrg() { return m_org ; }
+    const string & getUnit() { return m_unit ; }
+
     void ioRun()
     {
         DL_INFO( "io thread started" );
@@ -729,6 +818,7 @@ private:
 
     string                      m_host;
     uint32_t                    m_port;
+    string                      m_verify_path;
     uint32_t                    m_timeout;
     thread *                    m_io_thread;
     thread *                    m_maint_thread;
@@ -746,16 +836,18 @@ private:
     asio::ip::tcp::socket       m_socket;
     #endif
     set<spSession>              m_sessions;
-    //CentralDatabaseClient       m_db_client;
+    string                      m_country;
+    string                      m_org;
+    string                      m_unit;
 
     friend class Session;
 };
 
 // ========== Server Wrapper Class ==========
 
-Server::Server( uint32_t a_port, uint32_t a_timeout, uint32_t a_num_threads )
+Server::Server( uint32_t a_port, const string & a_verify_path, uint32_t a_timeout, uint32_t a_num_threads )
 {
-    m_impl = new ServerImpl( a_port, a_timeout, a_num_threads );
+    m_impl = new ServerImpl( a_port, a_verify_path, a_timeout, a_num_threads );
 }
 
 Server::~Server()

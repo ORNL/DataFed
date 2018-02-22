@@ -23,6 +23,8 @@ public:
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void resolveXfr( const Auth::ResolveXfrRequest & a_request, Auth::ResolveXfrReply & a_reply );
 
+    void userByUname( const std::string & a_uname, Auth::UserDataReply & a_reply );
+
 private:
     CentralDatabaseClientImpl* m_impl;
 };

@@ -65,7 +65,7 @@ typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 class Client::ClientImpl
 {
 public:
-    ClientImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout ) :
+    ClientImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path ) :
         m_host( a_host ),
         m_port( a_port ),
         m_resolver( m_io_service ),
@@ -85,8 +85,15 @@ public:
 
         //m_context.add_verify_path("/etc/ssl/certs");
         m_context.load_verify_file("/home/d3s/olcf/SDMS/server_cert.pem");
-        m_context.use_certificate_file( "/home/d3s/olcf/SDMS/client_cert2.pem", asio::ssl::context::pem );
-        m_context.use_private_key_file( "/home/d3s/olcf/SDMS/client_key2.pem", asio::ssl::context::pem );
+        
+        if ( a_cred_path.size() )
+        {
+            m_context.use_certificate_file( a_cred_path + "-pub", asio::ssl::context::pem );
+            m_context.use_private_key_file( a_cred_path, asio::ssl::context::pem );
+        }
+
+        //m_context.use_certificate_file( "/home/d3s/olcf/SDMS/client_cert2.pem", asio::ssl::context::pem );
+        //m_context.use_private_key_file( "/home/d3s/olcf/SDMS/client_key2.pem", asio::ssl::context::pem );
 
         m_socket = new ssl_socket( m_io_service, m_context );
 
@@ -316,16 +323,16 @@ public:
         //cout << "a_reply: " << a_reply << "\n";
     }
 
-    void generateClientCredentials( const string & a_out_path, const string & a_env_name )
+    void updateClientCredentials( const string & a_out_path, const string & a_env_name )
     {
         char * uid = getlogin();
         if ( uid == 0 )
             EXCEPT( 0, "Could not determine login name" );
 
-        string key_file = a_out_path + "/" + uid + "-" + a_env_name + "-key.pem";
-        string cert_file = a_out_path + "/" + uid + "-" + a_env_name + "-cert.pem";
+        string key_file = a_out_path + "/" + uid + "-" + a_env_name;
+        string cert_file = a_out_path + "/" + uid + "-" + a_env_name + "-pub";
 
-        string cmd = "openssl req -newkey rsa:2048 -nodes -subj /DC=" + m_country + "/DC=" + m_org + "/DC=" + m_div + "/DC=" + a_env_name + "/CN=" + uid + " -keyout " + key_file + " -x509 -days 365 -out " + cert_file;
+        string cmd = "openssl req -newkey rsa:2048 -nodes -subj /C=" + m_country + "/O=" + m_org + "/OU=" + m_div + "/L=" + a_env_name + "/UID=" + uid + " -keyout " + key_file + " -x509 -days 365 -out " + cert_file;
 
         if ( system( cmd.c_str() ))
             EXCEPT( 0, "Credential generation failed. Check specifed path and env name." );
@@ -338,8 +345,17 @@ public:
         string cert(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
 
         inf.close();
-        
+
         cout << "New cert [" << cert << "]\n";
+
+        SetCertificateRequest req;
+        AckReply * reply = 0;
+
+        req.set_x509_cert( cert );
+
+        send<>( req, reply, m_ctx++ );
+
+        delete reply;
     }
 
     bool test( size_t a_iter )
@@ -386,6 +402,19 @@ public:
         delete reply;
 
         return stat;
+    }
+
+    void
+    authenticate( const string & a_uname, const string & a_password )
+    {
+        AuthenticateRequest req;
+
+        req.set_uname( a_uname );
+        req.set_password( a_password );
+
+        AckReply * reply;
+
+        send<>( req, reply, m_ctx++ );
     }
 
     spUserDataReply
@@ -624,9 +653,9 @@ private:
 
 // Class ctor/dtor
 
-Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout )
+Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path )
 {
-    m_impl = new ClientImpl( a_host, a_port, a_timeout );
+    m_impl = new ClientImpl( a_host, a_port, a_timeout, a_cred_path );
 }
 
 
@@ -641,9 +670,14 @@ void Client::start()
     return m_impl->start();
 }
 
-void Client::generateClientCredentials( const std::string & a_out_path, const std::string & a_env_name )
+void Client::authenticate( const std::string & a_uname, const std::string & a_password )
 {
-    m_impl->generateClientCredentials( a_out_path, a_env_name );
+    m_impl->authenticate( a_uname, a_password );
+}
+
+void Client::updateClientCredentials( const std::string & a_out_path, const std::string & a_env_name )
+{
+    m_impl->updateClientCredentials( a_out_path, a_env_name );
 }
 
 bool
