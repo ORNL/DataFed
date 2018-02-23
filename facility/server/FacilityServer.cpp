@@ -1,5 +1,3 @@
-#define USE_TLS
-
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -17,22 +15,12 @@
 asio::ip::tcp::no_delay no_delay_on(true);
 asio::ip::tcp::no_delay no_delay_off(false);
 
-#ifdef USE_TLS
-
 #include <asio/ssl.hpp>
-
 
 typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 
 #define NO_DELAY_ON(sock) sock.lowest_layer().set_option(no_delay_on)
 #define NO_DELAY_OFF(sock) sock.lowest_layer().set_option(no_delay_off)
-
-#else
-
-#define NO_DELAY_ON(sock) sock.set_option(no_delay_on);
-#define NO_DELAY_OFF(sock) sock.set_option(no_delay_off);
-
-#endif
 
 #include "MsgBuf.hpp"
 #include "DynaLog.hpp"
@@ -84,8 +72,6 @@ public:
 class Session : public enable_shared_from_this<Session>
 {
 public:
-    #ifdef USE_TLS
-
     Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionMgr & a_sess_mgr ) :
         m_sess_mgr( a_sess_mgr ),
         m_socket( a_io_service, a_context ),
@@ -98,17 +84,6 @@ public:
 
         cout << "ctor(" << this << "), m_anon: " << m_anon << "\n";
     }
-
-    #else
-
-    Session( asio::ip::tcp::socket a_socket, ISessionMgr & a_sess_mgr ) :
-        m_sess_mgr( a_sess_mgr ),
-        m_socket( move( a_socket )),
-        m_in_buf( 4096 )
-    {
-    }
-
-    #endif
 
     ~Session()
     {
@@ -125,10 +100,7 @@ public:
 
         proto_id = REG_PROTO( SDMS::Auth );
 
-        //SET_MSG_HANDLER( proto_id, SetupRequest, &Session::procMsgSetup );
-
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
-
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
@@ -139,8 +111,6 @@ public:
     void start()
     {
         clock_gettime( CLOCK_REALTIME, &m_last_access );
-
-        #ifdef USE_TLS
 
         auto self( shared_from_this() );
 
@@ -157,30 +127,16 @@ public:
                     readMsgHeader();
                 }
             });
-
-        #else
-
-        readMsgHeader();
-
-        #endif
     }
 
     void close()
     {
-        #ifdef USE_TLS
         m_socket.lowest_layer().close();
-        #else
-        m_socket.close();
-        #endif
     }
 
     string remoteAddress()
     {
-        #ifdef USE_TLS
         asio::ip::tcp::endpoint ep = m_socket.lowest_layer().remote_endpoint();
-        #else
-        asio::ip::tcp::endpoint ep = m_socket.remote_endpoint();
-        #endif
 
         return ep.address().to_string() + ":" + to_string( ep.port() );
     }
@@ -188,11 +144,7 @@ public:
     asio::basic_socket<asio::ip::tcp, asio::stream_socket_service<asio::ip::tcp> > &
     getSocket()
     {
-        #ifdef USE_TLS
         return m_socket.lowest_layer();
-        #else
-        return m_socket;
-        #endif
     }
 
     double lastAccessTime()
@@ -212,8 +164,6 @@ private:
         //m_last_access.tv_sec = 0;
         //m_last_access.tv_nsec = 0;
     }
-
-    #ifdef USE_TLS
 
     bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
     {
@@ -238,8 +188,6 @@ private:
 
         return a_preverified;
     }
-
-    #endif
 
     void readMsgHeader()
     {
@@ -534,55 +482,6 @@ private:
         PROC_MSG_END
     }
 
-#if 0
-    void procMsgSetCertificate()
-    {
-        PROC_MSG_BEGIN( SetCertificateRequest, AckReply )
-
-        cout << "Cert: " << request->x509_cert() << "\n";
-
-        BIO* certBio = BIO_new(BIO_s_mem());
-        BIO_write( certBio, request->x509_cert().c_str(), request->x509_cert().size() );
-        X509* cert = PEM_read_bio_X509( certBio, 0, 0, 0 );
-
-        if ( !cert )
-            EXCEPT( ID_BAD_REQUEST, "Invalid X509 certificate" );
-
-        char subject[256];
-
-        X509_NAME_oneline( X509_get_subject_name( cert ), subject, 256 );
-
-        long hash = X509_subject_name_hash( cert );
-
-        X509_free( cert );
-
-        cout << "Subject: " << subject << "\n";
-
-        // Subject must conform to: /C=country/O=org/OU=unit/CN=uid, where:
-        // country, org, and unit are configured for this server
-        // uid is the authentcate uid for the current session
-
-        string req_sub = "/C=" + m_sess_mgr.getCountry() + "/O=" + m_sess_mgr.getOrg() + "/OU=" + m_sess_mgr.getUnit() + "/CN=" + m_uid;
-
-        if ( strcmp( subject, req_sub.c_str() ) != 0 )
-            EXCEPT( ID_BAD_REQUEST, "Invalid X509 subject" );
-
-        char buf[50];
-        sprintf( buf, "%08lx.0", hash );
-
-        string fname = m_sess_mgr.getVerifyPath() + string(buf);
-        cout << "cert filename: " << fname << "\n";
-        
-        ofstream outf( fname.c_str() );
-        if ( outf.is_open() )
-        {
-            outf << request->x509_cert();
-            outf.close();
-        }
-
-        PROC_MSG_END
-    }
-#endif
 
     template<typename RQ, typename RP, void (CentralDatabaseClient::*func)( const RQ &, RP &)>
     void dbPassThrough()
@@ -597,11 +496,7 @@ private:
     typedef void (Session::*msg_fun_t)();
 
     ISessionMgr &           m_sess_mgr;
-    #ifdef USE_TLS
     ssl_socket              m_socket;
-    #else
-    asio::ip::tcp::socket   m_socket;
-    #endif
     bool                    m_anon;
     string                  m_uid;
     MsgBuf                  m_in_buf;
@@ -628,16 +523,11 @@ public:
         m_io_running(false),
         m_endpoint( asio::ip::tcp::v4(), m_port ),
         m_acceptor( m_io_service, m_endpoint ),
-        #ifdef USE_TLS
         m_context( asio::ssl::context::tlsv12 ),
-        #else
-        m_socket( m_io_service ),
-        #endif
         m_country("US"),    // TODO Get from params
         m_org("ORNL"),    // TODO Get from params
         m_unit("CCS")    // TODO Get from params
     {
-        #ifdef USE_TLS
         m_context.set_options(
             asio::ssl::context::default_workarounds |
             asio::ssl::context::no_sslv2 |
@@ -655,9 +545,6 @@ public:
 
         //m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
         //m_context.add_verify_path( m_verify_path.c_str() );
-
-        #endif
-
         //m_context.use_tmp_dh_file( "dh512.pem" );
 
         Session::setupMsgHandlers();
@@ -798,8 +685,6 @@ private:
 
     void accept()
     {
-        #ifdef USE_TLS
-
         spSession session = make_shared<Session>( m_io_service, m_context, *this );
 
         m_acceptor.async_accept( session->getSocket(),
@@ -818,27 +703,6 @@ private:
 
                     accept();
                 });
-
-        #else
-
-        m_acceptor.async_accept( m_socket, [this]( error_code ec )
-        {
-            if ( !ec )
-            {
-                spSession session = make_shared<Session>( m_io_service, move( m_socket ), *this );
-                DL_INFO( "New connection from " << session->remoteAddress() );
-
-                unique_lock<mutex>  lock( m_data_mutex );
-                m_sessions.insert( session );
-                lock.unlock();
-
-                session->start();
-            }
-
-            accept();
-        });
-
-        #endif
     }
 
     void backgroundMaintenance()
@@ -906,11 +770,7 @@ private:
     asio::io_service            m_io_service;
     asio::ip::tcp::endpoint     m_endpoint;
     asio::ip::tcp::acceptor     m_acceptor;
-    #ifdef USE_TLS
     asio::ssl::context          m_context;
-    #else
-    asio::ip::tcp::socket       m_socket;
-    #endif
     set<spSession>              m_sessions;
     string                      m_country;
     string                      m_org;

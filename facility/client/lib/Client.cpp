@@ -1,5 +1,3 @@
-#define USE_TLS
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -13,8 +11,6 @@
 asio::ip::tcp::no_delay no_delay_on(true);
 asio::ip::tcp::no_delay no_delay_off(false);
 
-#ifdef USE_TLS
-
 #include <asio/ssl.hpp>
 
 typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
@@ -23,13 +19,6 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 //#define NO_DELAY_OFF(sock) (void)0
 #define NO_DELAY_ON(sock) sock->lowest_layer().set_option(no_delay_on)
 #define NO_DELAY_OFF(sock) sock->lowest_layer().set_option(no_delay_off)
-
-#else
-
-#define NO_DELAY_ON(sock) sock->set_option(no_delay_on)
-#define NO_DELAY_OFF(sock) sock->set_option(no_delay_off)
-
-#endif
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -57,8 +46,6 @@ using namespace SDMS::Auth;
 
 namespace Facility {
 
-#define DEBUG_GSI
-
 typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 
 
@@ -71,9 +58,7 @@ public:
         m_cred_path( a_cred_path ),
         m_unit(a_unit),
         m_resolver( m_io_service ),
-        #ifdef USE_TLS
         m_context( asio::ssl::context::tlsv12 ),
-        #endif
         m_socket( 0 ),
         m_io_thread( 0 ),
         m_timeout( a_timeout ),
@@ -86,8 +71,6 @@ public:
         char * uid = getlogin();
         if ( uid == 0 )
             EXCEPT( 0, "Could not determine login name" );
-
-        #ifdef USE_TLS
 
         //m_context.add_verify_path("/etc/ssl/certs");
         m_context.load_verify_file("/home/d3s/.sdms/sdmsd-CCS-cert.pem");
@@ -108,9 +91,6 @@ public:
 
         m_socket->set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
         m_socket->set_verify_callback( bind( &ClientImpl::verifyCert, this, placeholders::_1, placeholders::_2 ));
-        #else
-        m_socket = new asio::ip::tcp::socket( m_io_service );
-        #endif
     }
 
     ~ClientImpl()
@@ -163,8 +143,6 @@ public:
     {
         cout << "connecting" << endl;
 
-        #ifdef USE_TLS
-
         asio::async_connect( m_socket->lowest_layer(), endpoint_iterator,
             [this]( error_code ec, asio::ip::tcp::resolver::iterator )
             {
@@ -182,32 +160,7 @@ public:
                     m_start_cvar.notify_all();
                 }
             });
-
-        #else
-
-        asio::async_connect( *m_socket, endpoint_iterator,
-            [this]( error_code ec, asio::ip::tcp::resolver::iterator )
-            {
-                unique_lock<mutex> lock(m_mutex);
-
-                if (!ec)
-                {
-                    cout << "connected\n";
-                    m_state = STARTED;
-                }
-                else
-                {
-                    cerr << ec.message() << "\n";
-                    m_state = FAILED;
-                }
-
-                m_start_cvar.notify_all();
-            });
-
-        #endif
     }
-
-    #ifdef USE_TLS
 
     void handShake()
     {
@@ -247,8 +200,6 @@ public:
 
         return a_preverified;
     }
-
-    #endif
 
 
     template<typename RQT,typename RPT>
@@ -653,12 +604,8 @@ private:
     string                      m_key_file;
     asio::io_service            m_io_service;
     asio::ip::tcp::resolver     m_resolver;
-    #ifdef USE_TLS
     asio::ssl::context          m_context;
     ssl_socket *                m_socket;
-    #else
-    asio::ip::tcp::socket *     m_socket;
-    #endif
     thread *                    m_io_thread;
     uint32_t                    m_timeout;
     uint16_t                    m_ctx;
