@@ -80,7 +80,7 @@ public:
             curl_free( esc_txt );
         }
 
-        //DL_DEBUG( "url: " << url );
+        DL_DEBUG( "url: " << url );
 
         curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
         curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -122,18 +122,6 @@ public:
         }
     }
 
-    void userByUname( const std::string & a_uname, UserDataReply & a_reply )
-    {
-        rapidjson::Document result;
-
-        long http_code = dbGet( "usr/find/by_uname", {{"uname",a_uname}}, result );
-
-        if ( http_code >= 200 && http_code < 300 )
-        {
-            setUserData( a_reply, result );
-        }
-    }
-
     void checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
     {
         rapidjson::Document result;
@@ -154,7 +142,7 @@ public:
         long http_code;
 
         if ( a_request.has_user() )
-            http_code = dbGet( "usr/view", {{"uid",a_request.user()}}, result );
+            http_code = dbGet( "usr/view", {{"subject",a_request.user()}}, result );
         else
             http_code = dbGet( "usr/view", {}, result );
 
@@ -335,7 +323,6 @@ DEF_IMPL( userList, UserListRequest, UserDataReply )
 DEF_IMPL( recordView, RecordViewRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( resolveXfr, ResolveXfrRequest, ResolveXfrReply )
-DEF_IMPL( userByUname, std::string, UserDataReply )
 
 
 }

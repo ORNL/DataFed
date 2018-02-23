@@ -21,7 +21,7 @@ int main( int a_argc, char ** a_argv )
 
         int         port = 5800;
         int         timeout = 5;
-        uint32_t    num_threads = 0;
+        uint32_t    num_threads = 1;
         const char * verify_path = "/home/d3s/.sdms-server/";
         int opt;
 
@@ -33,7 +33,7 @@ int main( int a_argc, char ** a_argv )
                 cout << "options:" << endl;
                 cout << "?      - show help" << endl;
                 cout << "p port - set server port" << endl;
-                cout << "n num  - set num threads" << endl;
+                cout << "n num  - set num threads (0 = optimal)" << endl;
                 cout << "t sec  - timeout (sec)" << endl;
                 cout << "v path - set client verify path" << endl;
                 return 0;

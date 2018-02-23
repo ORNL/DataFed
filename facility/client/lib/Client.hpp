@@ -50,18 +50,19 @@ class Client
 {
 public:
 
-    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path );
+    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, const std::string & a_unit, bool a_load_certs );
     Client( const Client & ) = delete;
     ~Client();
 
     Client& operator=( const Client & ) = delete;
 
     void                start();
+    void                stop();
 
     bool                test( size_t a_iter );
 
     void                authenticate( const std::string & a_uname, const std::string & a_password );
-    void                updateClientCredentials( const std::string & a_out_path, const std::string & a_env_name );
+    void                generateCredentials();
 
     void                setup();
 

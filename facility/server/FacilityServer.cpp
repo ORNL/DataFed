@@ -7,9 +7,10 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <cstdio>
 
-#include "unistd.h"
-#include "sys/types.h"
+#include <unistd.h>
+#include <sys/types.h>
 
 #include <asio.hpp>
 
@@ -73,7 +74,8 @@ class ISessionMgr
 {
 public:
     virtual void sessionClosed( spSession ) = 0;
-    virtual const string & getVerifyPath() = 0;
+    virtual const string & getCertFile() = 0;
+    virtual const string & getKeyFile() = 0;
     virtual const string & getCountry() = 0;
     virtual const string & getOrg() = 0;
     virtual const string & getUnit() = 0;
@@ -125,7 +127,7 @@ public:
 
         //SET_MSG_HANDLER( proto_id, SetupRequest, &Session::procMsgSetup );
 
-        SET_MSG_HANDLER( proto_id, SetCertificateRequest, &Session::procMsgSetCertificate );
+        SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
 
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
@@ -151,7 +153,7 @@ public:
                 {
                     cout << "anon: " << m_anon << "\n";
 
-                    m_db_client.setClient( m_client_dn );
+                    m_db_client.setClient( m_sess_mgr.getUnit() + "." + m_uid );
                     readMsgHeader();
                 }
             });
@@ -215,14 +217,23 @@ private:
 
     bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
     {
-        char subject_name[256];
+        char subject_buf[256];
 
         X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
-        X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
+        X509_NAME_oneline( X509_get_subject_name( cert ), subject_buf, 256 );
 
-        cout << "Client: " << subject_name << "\n";
-        m_client_dn = subject_name;
-        
+        string subject = subject_buf;
+
+        cout << "verify cert: " << subject << "\n";
+
+        size_t pos = subject.rfind("/CN=");
+
+        if ( pos == string::npos )
+            return false;
+
+        m_uid = subject.substr( pos + 4 );
+        cout << "uid: " << m_uid << "\n";
+
         m_anon = false;
 
         return a_preverified;
@@ -397,7 +408,7 @@ private:
             } \
             m_out_buf.getFrame().context = m_in_buf.getFrame().context; \
             writeMsgHeader(); \
-            DL_DEBUG( "Sent: " << reply.DebugString()); \
+            DL_TRACE( "Sent: " << reply.DebugString()); \
         } \
         else { \
             DL_ERROR( "Session "<<this<<": dynamic cast of msg buffer " << &m_in_buf << " failed!" );\
@@ -413,9 +424,9 @@ private:
         PROC_MSG_BEGIN( ServerInfoRequest, ServerInfoReply )
 
         // TODO Get from prog options
-        reply.set_country("US");
-        reply.set_org("ORNL");
-        reply.set_div("NCCS");
+        reply.set_country( m_sess_mgr.getCountry() );
+        reply.set_org( m_sess_mgr.getOrg() );
+        reply.set_unit( m_sess_mgr.getUnit() );
 
         PROC_MSG_END
     }
@@ -424,16 +435,22 @@ private:
     {
         PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
 
-        // TODO Verify domain prefix, then pass to auth backend...
+        // TODO call local auth backend...
         
         // Now find user record
 
-        UserDataReply udat_reply;
-        m_db_client.userByUname( request->uname(), udat_reply );
+        m_uid = request->uid();
+        m_db_client.setClient( m_sess_mgr.getUnit() + "." + m_uid );
+
+        cout << "UID: " << m_uid << "\n";
+
+        UserViewRequest req2;
+        UserDataReply rep2;
+
+        m_db_client.userView( req2, rep2 );
 
         // Now update client status to authenticated
         m_anon = false;
-        m_uname = request->uname();
 
         PROC_MSG_END
     }
@@ -456,6 +473,68 @@ private:
         PROC_MSG_END
     }
 
+    void procMsgGenerateCredentials()
+    {
+        PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+
+        // TODO need a private place to put these temp files
+
+        string key_file = "/tmp/" + m_uid + "-" + m_sess_mgr.getUnit() + "-key.pem";
+        string cert_file = "/tmp/" + m_uid + "-" + m_sess_mgr.getUnit() + "-cert.pem";
+        string csr_file = "/tmp/" + m_uid + "-" + m_sess_mgr.getUnit() + ".csr";
+
+        try
+        {
+            string cmd = "openssl genrsa -out " + key_file + " 2048";
+            if ( system( cmd.c_str() ))
+                EXCEPT( ID_SERVICE_ERROR, "Client key generation failed." );
+
+            cmd = "openssl req -new -key " + key_file + " -subj /C=" + m_sess_mgr.getCountry() + "/O=" + m_sess_mgr.getOrg() + "/OU=" + m_sess_mgr.getUnit() + "/CN=" + m_uid + " -out " + csr_file;
+            if ( system( cmd.c_str() ))
+                EXCEPT( ID_SERVICE_ERROR, "CSR generation failed." );
+
+            cmd = "openssl x509 -req -in " + csr_file + " -CA " + m_sess_mgr.getCertFile() + " -CAkey " + m_sess_mgr.getKeyFile() + " -CAcreateserial -out " + cert_file + " -days 1024 -sha256";
+            if ( system( cmd.c_str() ))
+                EXCEPT( ID_SERVICE_ERROR, "Certificate generation failed." );
+
+            ifstream inf( cert_file );
+            if ( !inf.is_open() || !inf.good() )
+                EXCEPT( ID_SERVICE_ERROR, "Could not open new cert file" );
+
+            string data(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+            inf.close();
+
+            cout << "New cert [" << data << "]\n";
+
+            reply.set_x509_cert( data );
+
+            inf.open( key_file );
+            if ( !inf.is_open() || !inf.good() )
+                EXCEPT( ID_SERVICE_ERROR, "Could not open new key file" );
+
+            data.assign(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+            inf.close();
+
+            cout << "New key [" << data << "]\n";
+
+            reply.set_x509_key( data );
+
+            remove( key_file.c_str() );
+            remove( cert_file.c_str() );
+            remove( csr_file.c_str() );
+        }
+        catch(...)
+        {
+            remove( key_file.c_str() );
+            remove( cert_file.c_str() );
+            remove( csr_file.c_str() );
+            throw;
+        }
+
+        PROC_MSG_END
+    }
+
+#if 0
     void procMsgSetCertificate()
     {
         PROC_MSG_BEGIN( SetCertificateRequest, AckReply )
@@ -479,26 +558,20 @@ private:
 
         cout << "Subject: " << subject << "\n";
 
-        string req_sub = "/C=" + m_sess_mgr.getCountry() + "/O=" + m_sess_mgr.getOrg() + "/OU=" + m_sess_mgr.getUnit() + "/L=";
+        // Subject must conform to: /C=country/O=org/OU=unit/CN=uid, where:
+        // country, org, and unit are configured for this server
+        // uid is the authentcate uid for the current session
 
-        // Subject must conform to: /DC=country/DC=org/DC=div/DC=env/CN=uname, where:
-        // country, org, and div are configured for this server
-        // uname is the authentcate uname for the current session
-        // and env is any string that does not contain additional RDNs
+        string req_sub = "/C=" + m_sess_mgr.getCountry() + "/O=" + m_sess_mgr.getOrg() + "/OU=" + m_sess_mgr.getUnit() + "/CN=" + m_uid;
 
-        if ( strncmp( subject, req_sub.c_str(), req_sub.size() ) != 0 )
-            EXCEPT( ID_BAD_REQUEST, "Invalid X509 subject (prefix)" );
-
-        req_sub = "/UID=" + m_uname;
-        cout << req_sub << " == " << (subject + strlen(subject) - req_sub.size()) << "\n";
-        if ( strncmp( subject + strlen(subject) - req_sub.size(), req_sub.c_str(), req_sub.size() ) != 0 )
-            EXCEPT( ID_BAD_REQUEST, "Invalid X509 subject (uname)" );
+        if ( strcmp( subject, req_sub.c_str() ) != 0 )
+            EXCEPT( ID_BAD_REQUEST, "Invalid X509 subject" );
 
         char buf[50];
         sprintf( buf, "%08lx.0", hash );
 
         string fname = m_sess_mgr.getVerifyPath() + string(buf);
-        cout << "cer filename: " << fname << "\n";
+        cout << "cert filename: " << fname << "\n";
         
         ofstream outf( fname.c_str() );
         if ( outf.is_open() )
@@ -509,6 +582,7 @@ private:
 
         PROC_MSG_END
     }
+#endif
 
     template<typename RQ, typename RP, void (CentralDatabaseClient::*func)( const RQ &, RP &)>
     void dbPassThrough()
@@ -529,12 +603,10 @@ private:
     asio::ip::tcp::socket   m_socket;
     #endif
     bool                    m_anon;
-    string                  m_uname;
-    vector<bool>            m_verify_chain;
+    string                  m_uid;
     MsgBuf                  m_in_buf;
     MsgBuf                  m_out_buf;
     struct timespec         m_last_access = {0,0};
-    string                  m_client_dn;
     CentralDatabaseClient   m_db_client;
 
     static map<uint16_t,msg_fun_t> m_msg_handlers;
@@ -547,9 +619,8 @@ class ServerImpl : public ISessionMgr
 {
 public:
 
-    ServerImpl( uint32_t a_port, const string & a_verify_path, uint32_t a_timeout, uint32_t a_num_threads ) :
+    ServerImpl( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads ) :
         m_port( a_port ),
-        m_verify_path( a_verify_path ),
         m_timeout(a_timeout),
         m_io_thread(0),
         m_maint_thread(0),
@@ -564,7 +635,7 @@ public:
         #endif
         m_country("US"),    // TODO Get from params
         m_org("ORNL"),    // TODO Get from params
-        m_unit("NCCS")    // TODO Get from params
+        m_unit("CCS")    // TODO Get from params
     {
         #ifdef USE_TLS
         m_context.set_options(
@@ -575,10 +646,15 @@ public:
             asio::ssl::context::no_tlsv1_1 |
             asio::ssl::context::single_dh_use );
 
-        m_context.use_certificate_chain_file( "/home/d3s/olcf/SDMS/server_cert.pem" );
-        m_context.use_private_key_file( "/home/d3s/olcf/SDMS/server_key.pem", asio::ssl::context::pem );
+        m_cert_file = a_cert_dir + "sdmsd-" + m_unit + "-cert.pem";
+        m_key_file = a_cert_dir + "sdmsd-" + m_unit + "-key.pem";
+
+        m_context.use_certificate_chain_file( m_cert_file.c_str() );
+        m_context.use_private_key_file( m_key_file.c_str(), asio::ssl::context::pem );
+        m_context.load_verify_file( m_cert_file.c_str() );
+
         //m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
-        m_context.add_verify_path( m_verify_path.c_str() );
+        //m_context.add_verify_path( m_verify_path.c_str() );
 
         #endif
 
@@ -682,10 +758,11 @@ public:
     }
 
 private:
-    const string & getVerifyPath() { return m_verify_path; }
+    const string & getCertFile() { return m_cert_file; }
+    const string & getKeyFile() { return m_key_file; }
     const string & getCountry() { return m_country; }
-    const string & getOrg() { return m_org ; }
-    const string & getUnit() { return m_unit ; }
+    const string & getOrg() { return m_org; }
+    const string & getUnit() { return m_unit; }
 
     void ioRun()
     {
@@ -818,7 +895,6 @@ private:
 
     string                      m_host;
     uint32_t                    m_port;
-    string                      m_verify_path;
     uint32_t                    m_timeout;
     thread *                    m_io_thread;
     thread *                    m_maint_thread;
@@ -839,6 +915,8 @@ private:
     string                      m_country;
     string                      m_org;
     string                      m_unit;
+    string                      m_cert_file;
+    string                      m_key_file;
 
     friend class Session;
 };

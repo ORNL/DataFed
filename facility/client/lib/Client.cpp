@@ -65,9 +65,11 @@ typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 class Client::ClientImpl
 {
 public:
-    ClientImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path ) :
+    ClientImpl( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, const std::string & a_unit, bool a_load_certs ) :
         m_host( a_host ),
         m_port( a_port ),
+        m_cred_path( a_cred_path ),
+        m_unit(a_unit),
         m_resolver( m_io_service ),
         #ifdef USE_TLS
         m_context( asio::ssl::context::tlsv12 ),
@@ -81,19 +83,26 @@ public:
         REG_PROTO( SDMS::Anon );
         REG_PROTO( SDMS::Auth );
 
+        char * uid = getlogin();
+        if ( uid == 0 )
+            EXCEPT( 0, "Could not determine login name" );
+
         #ifdef USE_TLS
 
         //m_context.add_verify_path("/etc/ssl/certs");
-        m_context.load_verify_file("/home/d3s/olcf/SDMS/server_cert.pem");
+        m_context.load_verify_file("/home/d3s/.sdms/sdmsd-CCS-cert.pem");
         
-        if ( a_cred_path.size() )
-        {
-            m_context.use_certificate_file( a_cred_path + "-pub", asio::ssl::context::pem );
-            m_context.use_private_key_file( a_cred_path, asio::ssl::context::pem );
-        }
+        if ( m_cred_path.size() && *m_cred_path.rbegin() != '/' )
+            m_cred_path += "/";
 
-        //m_context.use_certificate_file( "/home/d3s/olcf/SDMS/client_cert2.pem", asio::ssl::context::pem );
-        //m_context.use_private_key_file( "/home/d3s/olcf/SDMS/client_key2.pem", asio::ssl::context::pem );
+        m_cert_file = m_cred_path + uid + "-" + a_unit + "-cert.pem";
+        m_key_file = m_cred_path + uid + "-" + a_unit + "-key.pem";
+
+        if ( a_load_certs )
+        {
+            m_context.use_certificate_file( m_cert_file, asio::ssl::context::pem );
+            m_context.use_private_key_file( m_key_file , asio::ssl::context::pem );
+        }
 
         m_socket = new ssl_socket( m_io_service, m_context );
 
@@ -106,6 +115,8 @@ public:
 
     ~ClientImpl()
     {
+        stop();
+
         delete m_socket;
     }
 
@@ -132,10 +143,20 @@ public:
 
         m_country = reply->country();
         m_org = reply->org();
-        m_div = reply->div();
+        m_unit = reply->unit();
 
         delete reply;
+    }
 
+    void stop()
+    {
+        if ( m_state == STARTED )
+        {
+            error_code ec;
+            m_socket->lowest_layer().cancel( ec );
+            m_socket->shutdown( ec );
+            m_state = NOT_STARTED;
+        }
     }
 
     void connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
@@ -323,38 +344,36 @@ public:
         //cout << "a_reply: " << a_reply << "\n";
     }
 
-    void updateClientCredentials( const string & a_out_path, const string & a_env_name )
+    void generateCredentials()
     {
         char * uid = getlogin();
         if ( uid == 0 )
             EXCEPT( 0, "Could not determine login name" );
 
-        string key_file = a_out_path + "/" + uid + "-" + a_env_name;
-        string cert_file = a_out_path + "/" + uid + "-" + a_env_name + "-pub";
+        GenerateCredentialsRequest req;
+        GenerateCredentialsReply * reply = 0;
 
-        string cmd = "openssl req -newkey rsa:2048 -nodes -subj /C=" + m_country + "/O=" + m_org + "/OU=" + m_div + "/L=" + a_env_name + "/UID=" + uid + " -keyout " + key_file + " -x509 -days 365 -out " + cert_file;
-
-        if ( system( cmd.c_str() ))
-            EXCEPT( 0, "Credential generation failed. Check specifed path and env name." );
-        
-        ifstream inf( cert_file );
-
-        if ( !inf.is_open() || !inf.good() )
-            EXCEPT( 0, "Could not open new cert file" );
-
-        string cert(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
-
-        inf.close();
-
-        cout << "New cert [" << cert << "]\n";
-
-        SetCertificateRequest req;
-        AckReply * reply = 0;
-
-        req.set_x509_cert( cert );
+        req.set_x509( true );
 
         send<>( req, reply, m_ctx++ );
 
+
+        cout << "Save " << m_key_file << "\n";
+        ofstream outf( m_key_file );
+        if ( !outf.is_open() || !outf.good() )
+            EXCEPT_PARAM( 0, "Could not open " << m_key_file << " for write" );
+
+        outf << reply->x509_key();
+        outf.close();
+
+        cout << "Save " << m_cert_file << "\n";
+        outf.open( m_cert_file );
+        if ( !outf.is_open() || !outf.good() )
+            EXCEPT_PARAM( 0, "Could not open " << m_cert_file << " for write" );
+
+        outf << reply->x509_cert();
+        outf.close();
+        
         delete reply;
     }
 
@@ -405,11 +424,11 @@ public:
     }
 
     void
-    authenticate( const string & a_uname, const string & a_password )
+    authenticate( const string & a_uid, const string & a_password )
     {
         AuthenticateRequest req;
 
-        req.set_uname( a_uname );
+        req.set_uid( a_uid );
         req.set_password( a_password );
 
         AckReply * reply;
@@ -628,6 +647,10 @@ private:
 
     string                      m_host;
     uint32_t                    m_port;
+    string                      m_cred_path;
+    string                      m_unit;
+    string                      m_cert_file;
+    string                      m_key_file;
     asio::io_service            m_io_service;
     asio::ip::tcp::resolver     m_resolver;
     #ifdef USE_TLS
@@ -646,16 +669,15 @@ private:
     mutex                       m_mutex;
     string                      m_country;
     string                      m_org;
-    string                      m_div;
 };
 
 
 
 // Class ctor/dtor
 
-Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path )
+Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, const std::string & a_unit, bool a_load_certs )
 {
-    m_impl = new ClientImpl( a_host, a_port, a_timeout, a_cred_path );
+    m_impl = new ClientImpl( a_host, a_port, a_timeout, a_cred_path, a_unit, a_load_certs );
 }
 
 
@@ -667,7 +689,12 @@ Client::~Client()
 
 void Client::start()
 {
-    return m_impl->start();
+    m_impl->start();
+}
+
+void Client::stop()
+{
+    m_impl->stop();
 }
 
 void Client::authenticate( const std::string & a_uname, const std::string & a_password )
@@ -675,9 +702,9 @@ void Client::authenticate( const std::string & a_uname, const std::string & a_pa
     m_impl->authenticate( a_uname, a_password );
 }
 
-void Client::updateClientCredentials( const std::string & a_out_path, const std::string & a_env_name )
+void Client::generateCredentials()
 {
-    m_impl->updateClientCredentials( a_out_path, a_env_name );
+    m_impl->generateCredentials();
 }
 
 bool

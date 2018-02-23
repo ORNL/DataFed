@@ -43,13 +43,12 @@ message ServerInfoReply
 {
     required string             country     = 1;
     required string             org         = 2;
-    required string             div         = 3;
+    required string             unit        = 3;
 }
-
 
 message AuthenticateRequest
 {
-    required string             uname       = 1;    // Local username
+    required string             uid         = 1;    // Local user ID
     required string             password    = 2;    // Password or passcode
 }
 

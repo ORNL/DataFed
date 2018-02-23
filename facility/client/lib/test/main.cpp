@@ -60,10 +60,11 @@ int main( int a_argc, char ** a_argv )
         int port = 5800;
         int timeout = 5;
         int opt;
-        char * gen_env = 0;
-        const char * cred_path = "/home/d3s/.sdms/d3s-daedalus";
+        bool gen_cert = false;
+        const char * cred_path = "/home/d3s/.sdms/";
+        const char * unit = "CCS";
 
-        while (( opt = getopt( a_argc, a_argv, "?h:p:t:c:g:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?h:p:t:c:gu:" )) != -1 )
         {
             switch( opt )
             {
@@ -74,7 +75,8 @@ int main( int a_argc, char ** a_argv )
                 cout << "p port - server port number" << endl;
                 cout << "t sec  - timeout (sec)" << endl;
                 cout << "c cred - specify path to credentials" << endl;
-                cout << "g env  - generate new client credentials for 'env' environment" << endl;
+                cout << "u unit - specify unit" << endl;
+                cout << "g      - generate new client credentials" << endl;
                 return 0;
             case 'h':
                 host = optarg;
@@ -88,24 +90,26 @@ int main( int a_argc, char ** a_argv )
             case 'c':
                 cred_path = optarg;
                 break;
+            case 'u':
+                unit = optarg;
+                break;
             case 'g':
-                gen_env = optarg;
+                gen_cert = true;
                 break;
             }
         }
 
         //timerDef();
 
-        Client client( host, port, timeout, cred_path );
-        
-        cout << "Starting client" << endl;
+        cout << "Starting client (" << unit << ")" << endl;
 
+        Client client( host, port, timeout, cred_path, unit, !gen_cert );
 
         client.start();
-        if ( gen_env )
+        if ( gen_cert )
         {
             client.authenticate( "d3s", "password" );
-            client.updateClientCredentials( "/home/d3s/.sdms/", "daedalus" );
+            client.generateCredentials();
 
             exit(0);
         }
@@ -113,7 +117,7 @@ int main( int a_argc, char ** a_argv )
 
         spUserDataReply users;
         //spRecordDataReply records;
-        //spCollDataReply colls;
+        spCollDataReply colls;
 
 
         //msgTest( client );
@@ -162,7 +166,7 @@ int main( int a_argc, char ** a_argv )
         }
 */
 
-/*
+
         colls = client.collList( "" );
         cout << "my collection count: " << colls->coll_size() << "\n";
         for ( int i = 0; i < colls->coll_size(); ++i )
@@ -170,7 +174,7 @@ int main( int a_argc, char ** a_argv )
             const CollData & coll = colls->coll(i);
             cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
         }
-*/
+
 
 /*
         colls = client.collList( "user1" );
@@ -194,7 +198,8 @@ int main( int a_argc, char ** a_argv )
 
         users.reset();
 */
-
+        //client.stop();
+        //sleep( 5 );
     }
     catch( TraceException &e )
     {
