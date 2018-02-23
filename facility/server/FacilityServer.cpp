@@ -421,9 +421,9 @@ private:
         PROC_MSG_END
     }
 
-    void procMsgGenerateCredentials()
+    void generateX509( GenerateCredentialsRequest * request, GenerateCredentialsReply & reply )
     {
-        PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+        (void)request;
 
         // TODO need a private place to put these temp files
 
@@ -478,6 +478,42 @@ private:
             remove( csr_file.c_str() );
             throw;
         }
+    }
+
+    void generateSSH( GenerateCredentialsRequest * request, GenerateCredentialsReply & reply )
+    {
+        (void)request;
+
+        // TODO need make ssh key store configurable
+
+        string key_file = "/home/d3s/.sdms-server/ssh/" + m_uid + "-" + m_sess_mgr.getUnit() + "-key";
+
+        string cmd = "ssh-keygen -t rsa -b 2048 -P '' -C \"SDMS SSH Key for " + m_uid + "\" -f " + key_file;
+        cout << "cmd: " << cmd << "\n";
+        if ( system( cmd.c_str() ))
+            EXCEPT( ID_SERVICE_ERROR, "SSH key generation failed." );
+
+        ifstream inf( key_file + ".pub" );
+        if ( !inf.is_open() || !inf.good() )
+            EXCEPT( ID_SERVICE_ERROR, "Could not open new ssh public key file" );
+
+        string data(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+        inf.close();
+
+        cout << "New ssh pub key [" << data << "]\n";
+
+        reply.set_ssh_pub( data );
+    }
+
+    void procMsgGenerateCredentials()
+    {
+        PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+
+        if ( request->has_x509() && request->x509() )
+            generateX509( request, reply );
+
+        if ( request->has_ssh() && request->ssh() )
+            generateSSH( request, reply );
 
         PROC_MSG_END
     }

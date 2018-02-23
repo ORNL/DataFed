@@ -44,6 +44,7 @@ enum Permissions
     PERM_ALL            = 0x0FF;
 }
 
+
 // ============================ Data Structures
 
 message UserData

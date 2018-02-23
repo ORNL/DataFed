@@ -295,7 +295,7 @@ public:
         //cout << "a_reply: " << a_reply << "\n";
     }
 
-    void generateCredentials()
+    void generateCredentials( uint8_t a_flags )
     {
         char * uid = getlogin();
         if ( uid == 0 )
@@ -304,27 +304,46 @@ public:
         GenerateCredentialsRequest req;
         GenerateCredentialsReply * reply = 0;
 
-        req.set_x509( true );
+        if ( a_flags & GEN_X509 )
+            req.set_x509( true );
+
+        if ( a_flags & GEN_SSH )
+            req.set_ssh( true );
 
         send<>( req, reply, m_ctx++ );
 
+        if ( a_flags & GEN_X509 )
+        {
+            cout << "Saving " << m_key_file << "\n";
+            ofstream outf( m_key_file );
+            if ( !outf.is_open() || !outf.good() )
+                EXCEPT_PARAM( 0, "Could not open " << m_key_file << " for write" );
 
-        cout << "Save " << m_key_file << "\n";
-        ofstream outf( m_key_file );
-        if ( !outf.is_open() || !outf.good() )
-            EXCEPT_PARAM( 0, "Could not open " << m_key_file << " for write" );
+            outf << reply->x509_key();
+            outf.close();
 
-        outf << reply->x509_key();
-        outf.close();
+            cout << "Saving " << m_cert_file << "\n";
+            outf.open( m_cert_file );
+            if ( !outf.is_open() || !outf.good() )
+                EXCEPT_PARAM( 0, "Could not open " << m_cert_file << " for write" );
 
-        cout << "Save " << m_cert_file << "\n";
-        outf.open( m_cert_file );
-        if ( !outf.is_open() || !outf.good() )
-            EXCEPT_PARAM( 0, "Could not open " << m_cert_file << " for write" );
+            outf << reply->x509_cert();
+            outf.close();
+        }
 
-        outf << reply->x509_cert();
-        outf.close();
-        
+        if ( a_flags & GEN_SSH )
+        {
+            string ssh_file = string("/tmp/") + uid + "-" + m_unit + "-ssh-pub.rsa";
+
+            cout << "Saving " << ssh_file << "\n";
+            ofstream  outf( ssh_file );
+            if ( !outf.is_open() || !outf.good() )
+                EXCEPT_PARAM( 0, "Could not open " << ssh_file << " for write" );
+
+            outf << reply->ssh_pub();
+            outf.close();
+        }
+
         delete reply;
     }
 
@@ -649,9 +668,9 @@ void Client::authenticate( const std::string & a_uname, const std::string & a_pa
     m_impl->authenticate( a_uname, a_password );
 }
 
-void Client::generateCredentials()
+void Client::generateCredentials( uint8_t a_flags )
 {
-    m_impl->generateCredentials();
+    m_impl->generateCredentials( a_flags );
 }
 
 bool

@@ -60,11 +60,11 @@ int main( int a_argc, char ** a_argv )
         int port = 5800;
         int timeout = 5;
         int opt;
-        bool gen_cert = false;
+        uint8_t gen_cert = 0;
         const char * cred_path = "/home/d3s/.sdms/";
         const char * unit = "CCS";
 
-        while (( opt = getopt( a_argc, a_argv, "?h:p:t:c:gu:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?h:p:t:c:xsu:" )) != -1 )
         {
             switch( opt )
             {
@@ -76,7 +76,8 @@ int main( int a_argc, char ** a_argv )
                 cout << "t sec  - timeout (sec)" << endl;
                 cout << "c cred - specify path to credentials" << endl;
                 cout << "u unit - specify unit" << endl;
-                cout << "g      - generate new client credentials" << endl;
+                cout << "x      - generate new client X509 credentials" << endl;
+                cout << "s      - generate new client SSH keys" << endl;
                 return 0;
             case 'h':
                 host = optarg;
@@ -93,8 +94,11 @@ int main( int a_argc, char ** a_argv )
             case 'u':
                 unit = optarg;
                 break;
-            case 'g':
-                gen_cert = true;
+            case 'x':
+                gen_cert |= GEN_X509;
+                break;
+            case 's':
+                gen_cert |= GEN_SSH;
                 break;
             }
         }
@@ -103,13 +107,15 @@ int main( int a_argc, char ** a_argv )
 
         cout << "Starting client (" << unit << ")" << endl;
 
-        Client client( host, port, timeout, cred_path, unit, !gen_cert );
+        Client client( host, port, timeout, cred_path, unit, (( gen_cert & GEN_X509 ) == 0 ));
 
         client.start();
         if ( gen_cert )
         {
-            client.authenticate( "d3s", "password" );
-            client.generateCredentials();
+            if (( gen_cert & GEN_X509 ) != 0 )
+                client.authenticate( "d3s", "password" );
+
+            client.generateCredentials( gen_cert );
 
             exit(0);
         }

@@ -23,6 +23,12 @@ enum DestFlags : uint16_t
     OVERWRITE       = 0x04
 };
 
+enum GenFlags
+{
+    GEN_X509    = 0x01,
+    GEN_SSH     = 0x02
+};
+
 
 /**
  * @class Client
@@ -62,7 +68,7 @@ public:
     bool                test( size_t a_iter );
 
     void                authenticate( const std::string & a_uname, const std::string & a_password );
-    void                generateCredentials();
+    void                generateCredentials( uint8_t a_flags );
 
     void                setup();
 
