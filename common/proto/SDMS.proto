@@ -21,13 +21,20 @@ enum ServiceStatus
     SS_OFFLINE      = 3;
 }
 
+enum XfrMode
+{
+    XM_GET_READ     = 0;
+    XM_GET_WRITE    = 1;
+    XM_PUT          = 2;
+}
+
 enum XfrStatus
 {
-    XFR_INIT        = 0;
-    XFR_ACTIVE      = 1;
-    XFR_INACTIVE    = 2;
-    XFR_SUCCEEDED   = 3;
-    XFR_FAILED      = 4;
+    XS_INIT         = 0;
+    XS_ACTIVE       = 1;
+    XS_INACTIVE     = 2;
+    XS_SUCCEEDED    = 3;
+    XS_FAILED       = 4;
 }
 
 enum Permissions
@@ -75,5 +82,17 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
+}
+
+message XfrData
+{
+    required string             id          = 1;
+    required XfrMode            mode        = 2;
+    required XfrStatus          status      = 3;
+    required string             data_id     = 4; // With revision?
+    required string             data_path   = 5;
+    required string             dest_path   = 6;
+    required string             globus_id   = 7;
+    optional string             task_id     = 8; // Only set if status > XFR_INIT
 }
 

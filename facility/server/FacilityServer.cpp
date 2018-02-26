@@ -101,11 +101,12 @@ public:
         proto_id = REG_PROTO( SDMS::Auth );
 
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
+        SET_MSG_HANDLER( proto_id, GetDataRequest, &Session::procMsgGetData  );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
-        SET_MSG_HANDLER_DB( proto_id, ResolveXfrRequest, ResolveXfrReply, resolveXfr );
+        SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
     }
 
     void start()
@@ -518,6 +519,44 @@ private:
         PROC_MSG_END
     }
 
+    void procMsgGetData()
+    {
+        PROC_MSG_BEGIN( GetDataRequest, XfrDataReply )
+
+        // 1. Resolve ID/Alias to data ID
+        // 2. Verify client has R/W permission
+        // 3. Get source path
+        // 4. Get client globus ID
+        // 5. Calculate client SSH keyfile
+        // 6. Create transfer record in DB
+        // 7. Start Globus transfer - capture task ID
+        // 8. Update transfer record with task ID
+
+        m_db_client.xfrInit( request->id(), request->dest(), XM_GET_READ, reply );
+
+        if ( reply.xfr_size() != 1 )
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+
+        const XfrData & xfr = reply.xfr(0);
+
+        // Use Legacy Globus CLI to start transfer
+        string keyfile = "/home/d3s/.sdms-server/ssh/" + m_uid + "-" + m_sess_mgr.getUnit() + "-key";
+        string cmd = "ssh -i " + keyfile + " " + xfr.globus_id() + "@cli.globusonline.org transfer -- " + xfr.data_path() + " " + xfr.dest_path();
+
+        cout << cmd << "\n";
+/*
+        string result = exec( cmd.c_str() );
+        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
+        {
+            return result.substr( 9 );
+        }
+        else
+        {
+            EXCEPT_PARAM( 0, "Globus CLI Error: " << result );
+        }
+*/
+        PROC_MSG_END
+    }
 
     template<typename RQ, typename RP, void (CentralDatabaseClient::*func)( const RQ &, RP &)>
     void dbPassThrough()

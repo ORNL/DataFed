@@ -121,9 +121,9 @@ int main( int a_argc, char ** a_argv )
         }
 
 
-        spUserDataReply users;
+        //spUserDataReply users;
         //spRecordDataReply records;
-        spCollDataReply colls;
+        //spCollDataReply colls;
 
 
         //msgTest( client );
@@ -131,7 +131,38 @@ int main( int a_argc, char ** a_argv )
         //perfTest( client );
 
 
-        //client.getData( "jdat1", "/home/d3s/xxxx/yyy", CREATE_PATH );
+        spXfrDataReply xfrs = client.getData( "dat1", "/home/d3s/SDMS/data", CREATE_PATH );
+
+        if ( xfrs->xfr_size() == 1 )
+        {
+            const XfrData & xfr = xfrs->xfr(0);
+            cout << "xfr id     : " << xfr.data_id() << "\n";
+            cout << "xfr mode   : " << (int)xfr.mode() << "\n";
+            cout << "xfr status : " << (int)xfr.status() << "\n";
+            cout << "data id    : " << xfr.data_id() << "\n";
+            cout << "data_path  : " << xfr.data_path() << "\n";
+            cout << "dest_path  : " << xfr.dest_path() << "\n";
+            cout << "globus id  : " << xfr.globus_id() << "\n";
+        }
+        else
+            cout << "Data xfr not started?\n";
+
+
+
+/*
+        XfrStatus xfr_stat = get_data->xfr_status();
+        if ( xfr_stat == XFR_ACTIVE )
+        {
+            cout << "Waiting for xfr\n";
+            while ( xfr_stat == XFR_ACTIVE )
+            {
+                sleep( 5 );
+                xfr_stat = client.getXfrStatus( get_data->xfr_id() );
+                cout << "status: " << (int)xfr_stat << "\n";
+            }
+        }
+*/
+
 
 /*
         records = client.recordView( "d3s:ddat1" );
@@ -172,7 +203,7 @@ int main( int a_argc, char ** a_argv )
         }
 */
 
-
+/*
         colls = client.collList( "" );
         cout << "my collection count: " << colls->coll_size() << "\n";
         for ( int i = 0; i < colls->coll_size(); ++i )
@@ -180,7 +211,7 @@ int main( int a_argc, char ** a_argv )
             const CollData & coll = colls->coll(i);
             cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
         }
-
+*/
 
 /*
         colls = client.collList( "user1" );

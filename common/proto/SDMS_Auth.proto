@@ -33,9 +33,7 @@ message CheckPermsRequest
 
 message CheckPermsReply
 {
-    required string             id          = 1;
-    required uint32             granted     = 2;
-    required uint32             denied      = 3;
+    required uint32             granted     = 1;
 }
 
 // ============================ User Messages
@@ -75,33 +73,22 @@ message RecordDataReply
 
 // ============================ Raw Data Messages
 
-message ResolveXfrRequest
+message XfrViewRequest
 {
-    required string             id          = 1;
-    required uint32             perms       = 2;
+    required string             xfr_id      = 1;
 }
 
-message ResolveXfrReply
+message XfrDataReply
 {
-    required string             id          = 1;
-    required SDMS.XfrStatus     xfr_status  = 2;
-    optional string             src_path    = 3;
-    required string             src_name    = 4;
-    optional string             globus_id   = 5;
-    optional string             task_id     = 6;
+    repeated SDMS.XfrData       xfr         = 1;
 }
 
-message GetDataMessage
+message GetDataRequest
 {
     required string             id          = 1;
-    optional string             local_path  = 2;
+    required string             dest        = 2;
 }
 
-message PutDataMessage
-{
-    required string             id          = 1;
-    optional string             local_path  = 2;
-}
 
 // ============================ Collection Messages
 

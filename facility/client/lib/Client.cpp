@@ -46,7 +46,7 @@ using namespace SDMS::Auth;
 
 namespace Facility {
 
-typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
+//typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 
 
 class Client::ClientImpl
@@ -474,45 +474,36 @@ public:
         return spCollDataReply( reply );
     }
 
-    std::string
+    spXfrDataReply
     getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
     {
-        spResolveXfrReply xfr = resolveXfr( a_data_id, PERM_DAT_READ );
+        checkPath( a_dest_path, a_flags );
 
-        // TODO keyfile must be configured externally (default plus env var override)
-        string keyfile = "~/.ssh/id_rsa.globus";
+        Auth::GetDataRequest    req;
+        Auth::XfrDataReply *    rep;
 
-        handleDestination( a_dest_path, xfr->src_name(), a_flags );
+        req.set_id( a_data_id );
+        req.set_dest( a_dest_path );
 
-        // Use Legacy Globus CLI to start transfer
-        string cmd = "ssh -i " + keyfile + " " + xfr->globus_id() + "@cli.globusonline.org transfer -- " + xfr->src_path() + xfr->src_name() + " " + a_dest_path;
+        send<>( req, rep, m_ctx++ );
 
-        cout << cmd << "\n";
+        return spXfrDataReply( rep );
+    }
 
-        string task_id = "foo"; //globusStub( 1 );
+    spXfrDataReply
+    xfrView( const std::string & a_xfr_id )
+    {
+        Auth::XfrViewRequest    req;
+        Auth::XfrDataReply *    rep;
+
+        req.set_xfr_id( a_xfr_id );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spXfrDataReply( rep );
+    }
 
 /*
-        string result = exec( cmd.c_str() );
-        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
-        {
-            return result.substr( 9 );
-        }
-        else
-        {
-            EXCEPT_PARAM( 0, "Globus CLI Error: " << result );
-        }
-*/
-        //startXfr( xfr->id(), PERM_DAT_READ, task_id );
-
-        return task_id;
-    }
-
-    XfrStatus
-    getDataTransferStatus( const std::string & a_transfer_id )
-    {
-        (void)a_transfer_id;
-        return XFR_FAILED;
-    }
 
     spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
     {
@@ -527,10 +518,11 @@ public:
 
         return spResolveXfrReply( reply );
     }
+*/
 
 private:
 
-    void handleDestination( const string & a_dest_path, const string & a_file_name, uint16_t a_flags )
+    void checkPath( const string & a_dest_path, /*const string & a_file_name,*/ uint16_t a_flags )
     {
         boost::filesystem::path dest_path( a_dest_path );
         boost::system::error_code ec;
@@ -549,7 +541,7 @@ private:
         }
 
         // See if raw data file already exist
-
+        /*
         boost::filesystem::path dest_file = dest_path;
         dest_file /= boost::filesystem::path( a_file_name );
 
@@ -589,7 +581,7 @@ private:
             {
                 EXCEPT( ID_DEST_FILE_ERROR, "Destination file already exists (no Overwrite/Backup)" );
             }
-        }
+        }*/
 
         // Test writing to dest path
 
@@ -709,16 +701,16 @@ Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset,
     return m_impl->collList( a_user, a_details, a_offset, a_count );
 }
 
-std::string
+spXfrDataReply
 Client::getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
 {
     return m_impl->getData( a_data_id, a_dest_path, a_flags );
 }
 
-XfrStatus
-Client::getDataTransferStatus( const std::string & a_transfer_id )
+spXfrDataReply
+Client::xfrView( const std::string & a_transfer_id )
 {
-    return m_impl->getDataTransferStatus( a_transfer_id );
+    return m_impl->xfrView( a_transfer_id );
 }
 
 }}

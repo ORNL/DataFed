@@ -126,14 +126,18 @@ public:
     {
         rapidjson::Document result;
 
-        long http_code = dbGet( "authz/check", {{"id",a_request.id()},{"perms",to_string( a_request.perms()) }}, result );
+        dbGet( "authz/check", {{"id",a_request.id()},{"perms",to_string( a_request.perms()) }}, result );
 
-        if ( http_code >= 200 && http_code < 300 )
-        {
-            a_reply.set_id( result["id"].GetString() );
-            a_reply.set_granted( result["granted"].GetInt() );
-            a_reply.set_denied( result["denied"].GetInt() );
-        }
+        a_reply.set_granted( result["granted"].GetInt() );
+    }
+
+    uint16_t checkPerms( const string & a_id, uint16_t a_perms )
+    {
+        rapidjson::Document result;
+
+        dbGet( "authz/check", {{"id",a_id},{"perms",to_string( a_perms )}}, result );
+
+        return result["granted"].GetInt();
     }
 
     void userView( const UserViewRequest & a_request, UserDataReply & a_reply )
@@ -203,12 +207,9 @@ public:
     {
         rapidjson::Document result;
 
-        long http_code = dbGet( "dat/view", {{"id",a_request.id()}}, result );
+        dbGet( "dat/view", {{"id",a_request.id()}}, result );
 
-        if ( http_code >= 200 && http_code < 300 )
-        {
-            setRecordData( a_reply, result );
-        }
+        setRecordData( a_reply, result );
     }
 
     void setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
@@ -244,17 +245,13 @@ public:
     void collList( const CollListRequest & a_request, CollDataReply & a_reply )
     {
         rapidjson::Document result;
-        long http_code;
 
         if ( a_request.has_user() )
-            http_code = dbGet( "col/list", {{"subject",a_request.user()}}, result );
+            dbGet( "col/list", {{"subject",a_request.user()}}, result );
         else
-            http_code = dbGet( "col/list", {}, result );
+             dbGet( "col/list", {}, result );
 
-        if ( http_code >= 200 && http_code < 300 )
-        {
-            setCollData( a_reply, result );
-        }
+        setCollData( a_reply, result );
     }
 
     void setCollData( CollDataReply & a_reply, rapidjson::Document & a_result )
@@ -276,20 +273,60 @@ public:
         }
     }
 
-    void resolveXfr( const ResolveXfrRequest & a_request, ResolveXfrReply & a_reply )
+    void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply )
     {
         rapidjson::Document result;
 
-        long http_code = dbGet( "authz/xfr/pre", {{"id",a_request.id()},{"perms",to_string(a_request.perms())}}, result );
+        dbGet( "xfr/view", {{"xfr_id",a_request.xfr_id()}}, result );
 
-        if ( http_code >= 200 && http_code < 300 )
+        setXfrData( a_reply, result );
+    }
+
+    void setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_result )
+    {
+        if ( !a_result.IsArray() )
         {
-            a_reply.set_id( result["id"].GetString() );
-            a_reply.set_src_path( result["src_path"].GetString() );
-            a_reply.set_src_name( result["src_name"].GetString() );
-            a_reply.set_globus_id( result["globus_id"].GetString() );
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        }
+
+        XfrData* xfr;
+        rapidjson::Value::MemberIterator imem;
+
+        for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+        {
+            rapidjson::Value & val = a_result[i];
+
+            xfr = a_reply.add_xfr();
+            xfr->set_id( val["id"].GetString() );
+            xfr->set_mode( (XfrMode)val["mode"].GetInt() );
+            xfr->set_status( (XfrStatus)val["status"].GetInt() );
+            xfr->set_data_id( val["data_id"].GetString() );
+            xfr->set_data_path( val["data_path"].GetString() );
+            xfr->set_dest_path( val["dest_path"].GetString() );
+            xfr->set_globus_id( val["globus_id"].GetString() );
+
+            imem = val.FindMember("task_id");
+            if ( imem != val.MemberEnd() )
+                xfr->set_task_id( imem->value.GetString() );
         }
     }
+
+    void xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "xfr/init", {{"data_id",a_data_id},{"data_path",a_data_path},{"mode",to_string(a_mode)}}, result );
+
+        setXfrData( a_reply, result );
+    }
+
+    void xfrUpdate( const std::string & a_xfr_id, XfrStatus & a_status, const std::string & a_task_id = "" )
+    {
+        rapidjson::Document result;
+
+        dbGet( "xfr/update", {{"id",a_xfr_id},{"status",to_string(a_status)},{"task_id",a_task_id}}, result );
+    }
+
 
     CURL * m_curl;
     char * m_client;
@@ -317,12 +354,16 @@ void CentralDatabaseClient::setClient( const std::string & a_client )
 { m_impl->meth( a_request, a_reply ); }
 
 
-DEF_IMPL( checkPerms, CheckPermsRequest, CheckPermsReply )
+//DEF_IMPL( checkPerms, CheckPermsRequest, CheckPermsReply )
 DEF_IMPL( userView, UserViewRequest, UserDataReply )
 DEF_IMPL( userList, UserListRequest, UserDataReply )
 DEF_IMPL( recordView, RecordViewRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
-DEF_IMPL( resolveXfr, ResolveXfrRequest, ResolveXfrReply )
+DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 
+void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
+{
+    m_impl->xfrInit( a_data_id, a_data_path, a_mode, a_reply );
+}
 
 }
