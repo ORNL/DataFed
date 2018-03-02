@@ -28,6 +28,16 @@ module.exports = ( function() {
     obj.PERM_DAT_WRITE      = 0x080;   // Write raw data or add/remove collection items
     obj.PERM_ALL            = 0x0FF;
 
+    obj.XS_INIT             = 0;
+    obj.XS_ACTIVE           = 1;
+    obj.XS_INACTIVE         = 2;
+    obj.XS_SUCCEEDED        = 3;
+    obj.XS_FAILED           = 4;
+
+    obj.XM_GET_READ         = 0;
+    obj.XM_GET_WRITE        = 1;
+    obj.XM_PUT              = 2;
+
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
         grant: joi.string().optional(),
@@ -53,6 +63,7 @@ module.exports = ( function() {
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
     obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
     obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
+    obj.ERR_XFR_CONFLICT          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data transfer conflict" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);

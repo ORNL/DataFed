@@ -24,8 +24,8 @@ public:
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
-    void xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply );
-    void xfrUpdate( const std::string & a_xfr_id, XfrStatus & a_status, const std::string & a_task_id = "" );
+    void xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply );
+    void xfrUpdate( const std::string & a_xfr_id, XfrStatus a_status, const std::string & a_task_id = "" );
 
 private:
     CentralDatabaseClientImpl* m_impl;

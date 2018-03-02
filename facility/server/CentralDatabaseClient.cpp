@@ -297,7 +297,7 @@ public:
             rapidjson::Value & val = a_result[i];
 
             xfr = a_reply.add_xfr();
-            xfr->set_id( val["id"].GetString() );
+            xfr->set_id( val["_id"].GetString() );
             xfr->set_mode( (XfrMode)val["mode"].GetInt() );
             xfr->set_status( (XfrStatus)val["status"].GetInt() );
             xfr->set_data_id( val["data_id"].GetString() );
@@ -311,20 +311,23 @@ public:
         }
     }
 
-    void xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
+    void xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
     {
         rapidjson::Document result;
 
-        dbGet( "xfr/init", {{"data_id",a_data_id},{"data_path",a_data_path},{"mode",to_string(a_mode)}}, result );
+        dbGet( "xfr/init", {{"id",a_id},{"path",a_data_path},{"mode",to_string(a_mode)}}, result );
 
         setXfrData( a_reply, result );
     }
 
-    void xfrUpdate( const std::string & a_xfr_id, XfrStatus & a_status, const std::string & a_task_id = "" )
+    void xfrUpdate( const std::string & a_xfr_id, XfrStatus a_status, const std::string & a_task_id )
     {
         rapidjson::Document result;
 
-        dbGet( "xfr/update", {{"id",a_xfr_id},{"status",to_string(a_status)},{"task_id",a_task_id}}, result );
+        if ( a_task_id.size() )
+            dbGet( "xfr/update", {{"xfr_id",a_xfr_id},{"status",to_string(a_status)},{"task_id",a_task_id}}, result );
+        else
+            dbGet( "xfr/update", {{"xfr_id",a_xfr_id},{"status",to_string(a_status)}}, result );
     }
 
 
@@ -364,6 +367,11 @@ DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {
     m_impl->xfrInit( a_data_id, a_data_path, a_mode, a_reply );
+}
+
+void CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus a_status, const std::string & a_task_id )
+{
+    m_impl->xfrUpdate( a_xfr_id, a_status, a_task_id );
 }
 
 }

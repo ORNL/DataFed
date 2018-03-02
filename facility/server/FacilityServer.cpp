@@ -2,6 +2,9 @@
 #include <fstream>
 #include <algorithm>
 #include <stdexcept>
+#include <map>
+#include <deque>
+#include <list>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -28,6 +31,7 @@ typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 #include "SDMS.pb.h"
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
+#include "Exec.hpp"
 #include "CentralDatabaseClient.hpp"
 
 #include <time.h>
@@ -67,6 +71,7 @@ public:
     virtual const string & getCountry() = 0;
     virtual const string & getOrg() = 0;
     virtual const string & getUnit() = 0;
+    virtual void handleNewXfr( const XfrData & a_xfr, const string & a_uid ) = 0;
 };
 
 class Session : public enable_shared_from_this<Session>
@@ -537,14 +542,15 @@ private:
         if ( reply.xfr_size() != 1 )
             EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-        const XfrData & xfr = reply.xfr(0);
+        m_sess_mgr.handleNewXfr( reply.xfr(0), m_uid );
 
+/*
         // Use Legacy Globus CLI to start transfer
         string keyfile = "/home/d3s/.sdms-server/ssh/" + m_uid + "-" + m_sess_mgr.getUnit() + "-key";
         string cmd = "ssh -i " + keyfile + " " + xfr.globus_id() + "@cli.globusonline.org transfer -- " + xfr.data_path() + " " + xfr.dest_path();
 
         cout << cmd << "\n";
-/*
+
         string result = exec( cmd.c_str() );
         if ( result.compare( 0, 9, "Task ID: " ) == 0 )
         {
@@ -601,7 +607,8 @@ public:
         m_context( asio::ssl::context::tlsv12 ),
         m_country("US"),    // TODO Get from params
         m_org("ORNL"),    // TODO Get from params
-        m_unit("CCS")    // TODO Get from params
+        m_unit("CCS"),    // TODO Get from params
+        m_xfr_thread(0)
     {
         m_context.set_options(
             asio::ssl::context::default_workarounds |
@@ -623,6 +630,8 @@ public:
         //m_context.use_tmp_dh_file( "dh512.pem" );
 
         Session::setupMsgHandlers();
+        
+        m_db_client.setClient( "sdms" );
     }
 
 
@@ -643,15 +652,21 @@ public:
         {
             m_io_thread = new thread( &ServerImpl::ioRun, this );
             m_maint_thread = new thread( &ServerImpl::backgroundMaintenance, this );
+            m_xfr_thread = new thread( &ServerImpl::xfrManagement, this );
         }
         else
         {
             lock.unlock();
             m_maint_thread = new thread( &ServerImpl::backgroundMaintenance, this );
+            m_xfr_thread = new thread( &ServerImpl::xfrManagement, this );
             ioRun();
             lock.lock();
             m_io_running = false;
             m_router_cvar.notify_all();
+
+            m_xfr_thread->join();
+            delete m_xfr_thread;
+            m_xfr_thread = 0;
 
             m_maint_thread->join();
             delete m_maint_thread;
@@ -685,6 +700,10 @@ public:
                         m_router_cvar.wait( lock );
                 }
 
+                m_xfr_thread->join();
+                delete m_xfr_thread;
+                m_xfr_thread = 0;
+
                 m_maint_thread->join();
                 delete m_maint_thread;
                 m_maint_thread = 0;
@@ -706,6 +725,10 @@ public:
 
                 m_io_thread = 0;
                 m_io_running = false;
+
+                m_xfr_thread->join();
+                delete m_xfr_thread;
+                m_xfr_thread = 0;
 
                 m_maint_thread->join();
                 delete m_maint_thread;
@@ -824,6 +847,133 @@ private:
         DL_DEBUG( "Maint thread stopped" );
     }
 
+    void xfrManagement()
+    {
+        DL_DEBUG( "Xfr thread started" );
+
+        list<XfrDataInfo*>::iterator ixfr;
+        XfrDataInfo * xfr_entry;
+        string keyfile;
+        string cmd;
+        string result;
+        XfrStatus status;
+
+        while( m_io_running )
+        {
+            sleep( 1 );
+
+            {
+                lock_guard<mutex> lock( m_xfr_mutex );
+                while ( m_xfr_pending.size() )
+                {
+                    xfr_entry = m_xfr_all[m_xfr_pending.front()];
+                    m_xfr_active.push_front(xfr_entry);
+                    m_xfr_pending.pop_front();
+                }
+            }
+
+            for ( ixfr = m_xfr_active.begin(); ixfr != m_xfr_active.end(); )
+            {
+                try
+                {
+                    if ( (*ixfr)->count < 0 )
+                    {
+                        // Start xfr, get task ID, update DB
+                        // Use Legacy Globus CLI to start transfer
+
+                        //keyfile = "/home/d3s/.sdms-server/ssh/" + (*ixfr)->uid + "-" + m_unit + "-key";
+                        //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
+                        //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
+                        cmd = "ssh globus transfer -- olcf#dtn_atlas/~/file.dat " + (*ixfr)->dest_path;
+
+                        cout << cmd << "\n";
+
+                        result = exec( cmd.c_str() );
+                        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
+                        {
+                            (*ixfr)->task_id = result.substr( 9 );
+                            (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
+                            cout << "New task[" << (*ixfr)->task_id << "]\n";
+                            
+                            // Update DB entry
+                            m_db_client.xfrUpdate( (*ixfr)->id, (*ixfr)->status, (*ixfr)->task_id );
+                            (*ixfr)->count = 5;
+                            ixfr++;
+                        }
+                        else
+                        {
+                            cout << "Globus CLI Error\n";
+                            ixfr = m_xfr_active.erase( ixfr );
+                        }
+                    }
+                    else if ( --(*ixfr)->count == 0 )
+                    {
+                        // Get current status
+                        cmd = "ssh globus status -f status " + (*ixfr)->task_id;
+                        result = exec( cmd.c_str() );
+
+                        if ( result.compare( "Status: SUCCEEDED\n" ) == 0 )
+                            status = XS_SUCCEEDED;
+                        else if ( result.compare( "Status: FAILED\n" ) == 0 )
+                            status = XS_FAILED;
+                        else if ( result.compare( "Status: ACTIVE\n" ) == 0 )
+                            status = XS_ACTIVE;
+                        else if ( result.compare( "Status: INACTIVE\n" ) == 0 )
+                            status = XS_INACTIVE;
+                        else
+                        {
+                            EXCEPT_PARAM( 1, "Invalid globus reply: " << result );
+                        }
+
+                        if ( (*ixfr)->status != status )
+                        {
+                            (*ixfr)->status = status;
+
+                            // Update DB entry
+                            m_db_client.xfrUpdate( (*ixfr)->id, (*ixfr)->status );
+
+                            // Remove from active list
+                            if ( (*ixfr)->status > XS_INACTIVE )
+                            {
+                                ixfr = m_xfr_active.erase( ixfr );
+                            }
+                            else
+                            {
+                                (*ixfr)->count = 5;
+                                ++ixfr;
+                            }
+                        }
+                    }
+                    else
+                        ++ixfr;
+                }
+                catch( TraceException & e )
+                {
+                    cout << "XFR thread exception: " << e.toString() << "\n";
+                    ixfr = m_xfr_active.erase( ixfr );
+                }
+                catch(...)
+                {
+                    cout << "XFR thread exception!\n";
+                    ixfr = m_xfr_active.erase( ixfr );
+                }
+            }
+        }
+        DL_DEBUG( "Xfr thread stopped" );
+    }
+
+    void handleNewXfr( const XfrData & a_xfr, const string & a_uid )
+    {
+        lock_guard<mutex> lock(m_xfr_mutex);
+
+        if ( m_xfr_all.find( a_xfr.id() ) == m_xfr_all.end() )
+        {
+            XfrDataInfo * xfr_entry = new XfrDataInfo( a_xfr, a_uid, -1 );
+            m_xfr_all[a_xfr.id()] = xfr_entry;
+            m_xfr_pending.push_back( a_xfr.id() );
+        }
+    }
+
     void sessionClosed( spSession a_session )
     {
         lock_guard<mutex> lock( m_data_mutex );
@@ -831,6 +981,28 @@ private:
         if ( isess != m_sessions.end() )
             m_sessions.erase( isess );
     }
+
+    struct XfrDataInfo
+    {
+        XfrDataInfo( const XfrData & a_xfr, const string & a_uid, int a_count ) :
+            id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),data_path(a_xfr.data_path()),
+            dest_path(a_xfr.dest_path()),globus_id(a_xfr.globus_id()),uid(a_uid),count(a_count)
+        {
+            if ( a_xfr.has_task_id() )
+                task_id = a_xfr.task_id();
+        }
+
+        string      id;
+        XfrMode     mode;
+        XfrStatus   status;
+        //string      data_id;
+        string      data_path;
+        string      dest_path;
+        string      globus_id;
+        string      task_id;
+        string      uid;
+        int         count;
+    };
 
     string                      m_host;
     uint32_t                    m_port;
@@ -852,6 +1024,12 @@ private:
     string                      m_unit;
     string                      m_cert_file;
     string                      m_key_file;
+    mutex                       m_xfr_mutex;
+    deque<string>               m_xfr_pending;
+    list<XfrDataInfo*>          m_xfr_active;
+    map<string,XfrDataInfo*>    m_xfr_all;
+    thread *                    m_xfr_thread;
+    CentralDatabaseClient       m_db_client;
 
     friend class Session;
 };

@@ -131,12 +131,12 @@ int main( int a_argc, char ** a_argv )
         //perfTest( client );
 
 
-        spXfrDataReply xfrs = client.getData( "dat1", "/home/d3s/SDMS/data", CREATE_PATH );
+        spXfrDataReply xfrs = client.getData( "dat1", "olcf#dtn_atlas/~/testxfr", CREATE_PATH );
 
         if ( xfrs->xfr_size() == 1 )
         {
             const XfrData & xfr = xfrs->xfr(0);
-            cout << "xfr id     : " << xfr.data_id() << "\n";
+            cout << "xfr id     : " << xfr.id() << "\n";
             cout << "xfr mode   : " << (int)xfr.mode() << "\n";
             cout << "xfr status : " << (int)xfr.status() << "\n";
             cout << "data id    : " << xfr.data_id() << "\n";
