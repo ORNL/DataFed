@@ -130,11 +130,14 @@ int main( int a_argc, char ** a_argv )
         //pingTest( client, 1000 );
         //perfTest( client );
 
-
-        //spXfrDataReply xfrs = client.getData( "dat1", "olcf#dtn_atlas/~/testxfr", CREATE_PATH );
+        #if 1
+        spXfrDataReply xfrs = client.getData( "dat2", "olcf#dtn_atlas/~/working/", 0 );
+        #else
         string new_id;
         spXfrDataReply xfrs = client.putData( "olcf#dtn_atlas/~/datafile", "Hello World", new_id, "Test data", "dat2", "{\"x\":1}" );
         cout << "Created data record " << new_id << "\n";
+        #endif
+
         if ( xfrs->xfr_size() == 1 )
         {
             const XfrData & xfr = xfrs->xfr(0);

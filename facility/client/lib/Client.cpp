@@ -501,7 +501,8 @@ public:
     spXfrDataReply
     getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
     {
-        checkPath( a_dest_path, a_flags );
+        // TODO - Can't check dest if command exec is not local to file system
+        //checkPath( a_dest_path, a_flags );
 
         Auth::GetDataRequest    req;
         Auth::XfrDataReply *    rep;
@@ -532,12 +533,8 @@ public:
     putData( const std::string & a_src_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
     {
         // Create data record
-        cout << "1" << endl;
         spRecordDataReply rec_reply = recordCreate( a_title, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
-        cout << "2" << endl;
-
         a_data_id = rec_reply->record(0).id();
-        cout << "3" << endl;
 
         return putData( a_src_path, a_data_id );
     }

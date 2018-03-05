@@ -34,9 +34,8 @@ module.exports = ( function() {
     obj.XS_SUCCEEDED        = 3;
     obj.XS_FAILED           = 4;
 
-    obj.XM_GET_READ         = 0;
-    obj.XM_GET_WRITE        = 1;
-    obj.XM_PUT              = 2;
+    obj.XM_GET              = 0;
+    obj.XM_PUT              = 1;
 
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),

@@ -23,9 +23,8 @@ enum ServiceStatus
 
 enum XfrMode
 {
-    XM_GET_READ     = 0;
-    XM_GET_WRITE    = 1;
-    XM_PUT          = 2;
+    XM_GET          = 0;
+    XM_PUT          = 1;
 }
 
 enum XfrStatus
@@ -94,5 +93,6 @@ message XfrData
     required string             dest_path   = 6;
     required string             globus_id   = 7;
     optional string             task_id     = 8; // Only set if status > XFR_INIT
+    required uint32             updated     = 9;
 }
 

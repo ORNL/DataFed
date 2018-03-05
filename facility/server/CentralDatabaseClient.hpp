@@ -26,7 +26,7 @@ public:
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply );
-    void xfrUpdate( const std::string & a_xfr_id, size_t a_time, XfrStatus * a_status = 0, const char * a_task_id = 0 );
+    void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const char * a_task_id = 0 );
 
 private:
     CentralDatabaseClientImpl* m_impl;

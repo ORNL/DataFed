@@ -539,7 +539,7 @@ private:
         // 7. Start Globus transfer - capture task ID
         // 8. Update transfer record with task ID
 
-        m_db_client.xfrInit( request->id(), request->dest(), XM_GET_READ, reply );
+        m_db_client.xfrInit( request->id(), request->dest(), XM_GET, reply );
 
         if ( reply.xfr_size() != 1 )
             EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
@@ -856,7 +856,6 @@ private:
         string cmd;
         string result;
         XfrStatus status;
-        struct timespec time = {0,0};
 
         while( m_io_running )
         {
@@ -902,9 +901,7 @@ private:
                             cout << "New task[" << (*ixfr)->task_id << "]\n";
                             
                             // Update DB entry
-
-                            clock_gettime(CLOCK_REALTIME,&time);
-                            m_db_client.xfrUpdate( (*ixfr)->id, time.tv_sec, 0, (*ixfr)->task_id.c_str() );
+                            m_db_client.xfrUpdate( (*ixfr)->id, 0, (*ixfr)->task_id.c_str() );
                             (*ixfr)->count = 5;
                             ixfr++;
                         }
@@ -938,8 +935,7 @@ private:
                             (*ixfr)->status = status;
 
                             // Update DB entry
-                            clock_gettime(CLOCK_REALTIME,&time);
-                            m_db_client.xfrUpdate( (*ixfr)->id, time.tv_sec, &(*ixfr)->status );
+                            m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status );
 
                             // Remove from active list
                             if ( (*ixfr)->status > XS_INACTIVE )

@@ -34,15 +34,22 @@ router.get('/init', function (req, res) {
                 var data = g_db.d.document( data_id );
 
                 if ( !g_lib.hasAdminPermObject( client, data._id )) {
-                    var perms = g_lib.PERM_DAT_READ;
-                    if ( req.queryParams.mode > g_lib.XM_GET_READ )
-                        perms |= g_lib.PERM_DAT_WRITE;
+                    var perms;
+                    if ( req.queryParams.mode == g_lib.XM_PUT )
+                        perms = g_lib.PERM_DAT_WRITE;
+                    else
+                        perms = g_lib.PERM_DAT_READ;
                     if ( !g_lib.hasPermission( client, data, perms ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
+                var dest_path = req.queryParams.path;
+                if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
+                    dest_path += "/";
+                dest_path += data_id.substr( 2 );
+
                 // See if there is an existing transfer record either in INIT or ACTIVE state
-                var xfr = g_db._query( "for i in tr filter i.data_id == @data_id and i.dest_path == @dest return i", { data_id: data_id, dest: req.queryParams.path }).toArray();
+                var xfr = g_db._query( "for i in tr filter i.data_id == @data_id and i.dest_path == @dest and i.status < 3 return i", { data_id: data_id, dest: dest_path }).toArray();
                 if ( xfr.length == 0 )
                 {
 
@@ -54,15 +61,21 @@ router.get('/init', function (req, res) {
                         status: g_lib.XS_INIT,
                         data_id: data_id,
                         data_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
-                        dest_path: req.queryParams.path,
-                        globus_id: client.globus_id
+                        dest_path: dest_path,
+                        globus_id: client.globus_id,
+                        updated: ((Date.now()/1000)|0)
                         }, { returnNew: true } );
 
                     result = [xfr.new];
                 } else {
-                    // TODO Must also check mode is same
+                    // Two different processes cannot PUT the same data
+                    if ( xfr[0].mode == g_lib.XM_PUT || req.queryParams.mode == g_lib.XM_PUT )
+                        throw g_lib.ERR_XFR_CONFLICT;
+
+                    // TODO - Not sure if it's OK for two different users to GET to the same destination...
                     if ( xfr[0].globus_id != client.globus_id )
                         throw g_lib.ERR_XFR_CONFLICT;
+
 
                     result = xfr;
                 }
@@ -84,7 +97,7 @@ router.get('/init', function (req, res) {
 
 router.get('/update', function (req, res) {
     try {
-        var obj = {};
+        var obj = { updated: ((Date.now()/1000)|0) };
 
         if ( req.queryParams.status != null )
             obj.status = req.queryParams.status;
@@ -101,7 +114,7 @@ router.get('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('xfr_id', joi.string().required(), "Xfr record ID")
-.queryParam('status', joi.string().optional(), "New status")
+.queryParam('status', joi.number().optional(), "New status")
 .queryParam('task_id', joi.string().optional(), "New task ID")
 .summary('Update transfer record')
 .description('Update transfer record');

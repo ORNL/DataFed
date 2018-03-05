@@ -331,6 +331,7 @@ public:
             xfr->set_data_path( val["data_path"].GetString() );
             xfr->set_dest_path( val["dest_path"].GetString() );
             xfr->set_globus_id( val["globus_id"].GetString() );
+            xfr->set_updated( val["updated"].GetInt() );
 
             imem = val.FindMember("task_id");
             if ( imem != val.MemberEnd() )
@@ -347,17 +348,16 @@ public:
         setXfrData( a_reply, result );
     }
 
-    void xfrUpdate( const std::string & a_xfr_id, size_t a_time, XfrStatus * a_status, const char * a_task_id )
+    void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const char * a_task_id )
     {
         rapidjson::Document result;
 
         vector<pair<string,string>> params;
         params.push_back({"xfr_id",a_xfr_id});
-        params.push_back({"updated",to_string(a_time)});
         if ( a_status )
             params.push_back({"status",to_string(*a_status)});
         if ( a_task_id )
-            params.push_back({"task_id",to_string(*a_task_id)});
+            params.push_back({"task_id", string(a_task_id)});
 
         dbGet( "xfr/update", params, result );
     }
@@ -402,9 +402,9 @@ void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::s
     m_impl->xfrInit( a_data_id, a_data_path, a_mode, a_reply );
 }
 
-void CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, size_t a_time, XfrStatus * a_status, const char * a_task_id )
+void CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const char * a_task_id )
 {
-    m_impl->xfrUpdate( a_xfr_id, a_time, a_status, a_task_id );
+    m_impl->xfrUpdate( a_xfr_id, a_status, a_task_id );
 }
 
 }
