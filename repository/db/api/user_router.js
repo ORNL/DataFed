@@ -20,7 +20,7 @@ module.exports = router;
 //==================== USER API FUNCTIONS
 
 
-router.post('/create', function (req, res) {
+router.get('/create', function (req, res) {
     try {
         var result;
 
@@ -80,7 +80,7 @@ router.post('/create', function (req, res) {
 .description('Create new user entry. Requires admin permissions.');
 
 
-router.post('/update', function (req, res) {
+router.get('/update', function (req, res) {
     try {
         var result;
 
@@ -238,7 +238,7 @@ router.get('/list', function (req, res) {
 .description('List users');
 
 
-router.post('/delete', function (req, res) {
+router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -307,7 +307,7 @@ router.get('/uid/list', function (req, res) {
 .summary('List user linked UIDs');
 
 
-router.post('/uid/add', function (req, res) {
+router.get('/uid/add', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -341,7 +341,7 @@ router.post('/uid/add', function (req, res) {
 .description('Add new linked UID to user account');
 
 
-router.post('/uid/remove', function (req, res) {
+router.get('/uid/remove', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {

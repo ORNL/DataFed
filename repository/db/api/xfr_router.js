@@ -53,7 +53,7 @@ router.get('/init', function (req, res) {
                         mode: req.queryParams.mode,
                         status: g_lib.XS_INIT,
                         data_id: data_id,
-                        data_path: "olcf#sdms/xx/" + data_id.substr( 2 ),
+                        data_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
                         dest_path: req.queryParams.path,
                         globus_id: client.globus_id
                         }, { returnNew: true } );

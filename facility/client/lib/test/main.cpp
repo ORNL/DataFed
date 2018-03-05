@@ -131,8 +131,10 @@ int main( int a_argc, char ** a_argv )
         //perfTest( client );
 
 
-        spXfrDataReply xfrs = client.getData( "dat1", "olcf#dtn_atlas/~/testxfr", CREATE_PATH );
-
+        //spXfrDataReply xfrs = client.getData( "dat1", "olcf#dtn_atlas/~/testxfr", CREATE_PATH );
+        string new_id;
+        spXfrDataReply xfrs = client.putData( "olcf#dtn_atlas/~/datafile", "Hello World", new_id, "Test data", "dat2", "{\"x\":1}" );
+        cout << "Created data record " << new_id << "\n";
         if ( xfrs->xfr_size() == 1 )
         {
             const XfrData & xfr = xfrs->xfr(0);

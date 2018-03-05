@@ -71,6 +71,16 @@ message RecordDataReply
     repeated SDMS.RecordData    record      = 1;
 }
 
+message RecordCreateRequest
+{
+    required string             title       = 1;
+    optional string             desc        = 2;
+    optional string             alias       = 3;
+    optional string             metadata    = 4;
+    optional string             proj_id     = 5;
+    optional string             coll_id     = 6;
+}
+
 // ============================ Raw Data Messages
 
 message XfrViewRequest
@@ -87,6 +97,12 @@ message GetDataRequest
 {
     required string             id          = 1;
     required string             dest        = 2;
+}
+
+message PutDataRequest
+{
+    required string             id          = 1;
+    required string             src        = 2;
 }
 
 

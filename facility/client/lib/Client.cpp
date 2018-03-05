@@ -453,6 +453,30 @@ public:
         return spRecordDataReply( reply );
     }
 
+    spRecordDataReply
+    recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+    {
+        Auth::RecordCreateRequest req;
+
+        req.set_title( a_title );
+        if ( a_desc )
+            req.set_desc( a_desc );
+        if ( a_alias )
+            req.set_alias( a_alias );
+        if ( a_metadata )
+            req.set_metadata( a_metadata );
+        if ( a_proj_id )
+            req.set_proj_id( a_proj_id );
+        if ( a_coll_id )
+            req.set_coll_id( a_coll_id );
+
+        Auth::RecordDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        return spRecordDataReply( reply );
+    }
+
     spCollDataReply
     collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
     {
@@ -491,6 +515,34 @@ public:
     }
 
     spXfrDataReply
+    putData( const std::string & a_src_path, const string & a_data_id )
+    {
+        Auth::PutDataRequest    req;
+        Auth::XfrDataReply *    rep;
+
+        req.set_id( a_data_id );
+        req.set_src( a_src_path );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spXfrDataReply( rep );
+    }
+
+    spXfrDataReply
+    putData( const std::string & a_src_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+    {
+        // Create data record
+        cout << "1" << endl;
+        spRecordDataReply rec_reply = recordCreate( a_title, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
+        cout << "2" << endl;
+
+        a_data_id = rec_reply->record(0).id();
+        cout << "3" << endl;
+
+        return putData( a_src_path, a_data_id );
+    }
+
+    spXfrDataReply
     xfrView( const std::string & a_xfr_id )
     {
         Auth::XfrViewRequest    req;
@@ -504,7 +556,6 @@ public:
     }
 
 /*
-
     spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
     {
         Auth::ResolveXfrRequest req;
@@ -695,6 +746,12 @@ Client::recordView( const std::string & a_id )
     return m_impl->recordView( a_id );
 }
 
+spRecordDataReply
+Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+{
+    return m_impl->recordCreate( a_title, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
+}
+
 spCollDataReply
 Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
@@ -705,6 +762,18 @@ spXfrDataReply
 Client::getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
 {
     return m_impl->getData( a_data_id, a_dest_path, a_flags );
+}
+
+spXfrDataReply
+Client::putData( const std::string & a_src_path, const string & a_data_id )
+{
+    return m_impl->putData( a_src_path, a_data_id );
+}
+
+spXfrDataReply
+Client::putData( const std::string & a_src_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+{
+    return m_impl->putData( a_src_path, a_title, a_data_id, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
 }
 
 spXfrDataReply

@@ -70,6 +70,8 @@ module.exports = ( function() {
     };
 
     obj.handleException = function( e, res ) {
+        console.log( "Service exception:", e );
+
         if ( obj.isInteger( e ) && e >= 0 && e < obj.ERR_COUNT ) {
             res.throw( obj.ERR_INFO[e][0], obj.ERR_INFO[e][1] );
         } else if ( e.hasOwnProperty( "errorNum" )) {

@@ -20,7 +20,7 @@ module.exports = router;
 //==================== DATA API FUNCTIONS
 
 
-router.post('/create', function (req, res) {
+router.get('/create', function (req, res) {
     try {
         var result = [];
 
@@ -60,6 +60,11 @@ router.post('/create', function (req, res) {
                     g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
                 }
+
+                delete data.new._rev;
+                delete data.new._key;
+                data.new.id = data.new._id;
+                delete data.new._id;
 
                 result.push( data.new );
             }
@@ -153,7 +158,7 @@ router.get('/list', function (req, res) {
 .description('List all data owned by client, or subject');
 
 
-router.post('/delete', function (req, res) {
+router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -169,14 +174,16 @@ router.post('/delete', function (req, res) {
                 var data = g_db.d.document( data_id );
                 var obj;
 
+                const graph = require('@arangodb/general-graph')._graph('sdmsg');
+
                 // Delete attached notes and aliases
-                var objects = g_db._query( "for v in 1..1 outbound @data note, alias v.return v._id", { data: data._id }).toArray();
+                var objects = g_db._query( "for v in 1..1 outbound @data note, alias return v._id", { data: data._id }).toArray();
                 for ( var i in objects ) {
                     obj = objects[i];
-                    g_graph.obj[0].remove( obj );
+                    graph[obj[0]].remove( obj );
                 }
 
-                g_graph.d.remove( data._id );
+                graph.d.remove( data._id );
             }
         });
     } catch( e ) {

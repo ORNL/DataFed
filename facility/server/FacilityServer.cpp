@@ -107,9 +107,11 @@ public:
 
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
         SET_MSG_HANDLER( proto_id, GetDataRequest, &Session::procMsgGetData  );
+        SET_MSG_HANDLER( proto_id, PutDataRequest, &Session::procMsgPutData  );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
+        SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
     }
@@ -544,23 +546,20 @@ private:
 
         m_sess_mgr.handleNewXfr( reply.xfr(0), m_uid );
 
-/*
-        // Use Legacy Globus CLI to start transfer
-        string keyfile = "/home/d3s/.sdms-server/ssh/" + m_uid + "-" + m_sess_mgr.getUnit() + "-key";
-        string cmd = "ssh -i " + keyfile + " " + xfr.globus_id() + "@cli.globusonline.org transfer -- " + xfr.data_path() + " " + xfr.dest_path();
+        PROC_MSG_END
+    }
 
-        cout << cmd << "\n";
+    void procMsgPutData()
+    {
+        PROC_MSG_BEGIN( PutDataRequest, XfrDataReply )
 
-        string result = exec( cmd.c_str() );
-        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
-        {
-            return result.substr( 9 );
-        }
-        else
-        {
-            EXCEPT_PARAM( 0, "Globus CLI Error: " << result );
-        }
-*/
+        m_db_client.xfrInit( request->id(), request->src(), XM_PUT, reply );
+
+        if ( reply.xfr_size() != 1 )
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+
+        m_sess_mgr.handleNewXfr( reply.xfr(0), m_uid );
+
         PROC_MSG_END
     }
 
@@ -857,6 +856,7 @@ private:
         string cmd;
         string result;
         XfrStatus status;
+        struct timespec time = {0,0};
 
         while( m_io_running )
         {
@@ -884,7 +884,13 @@ private:
                         //keyfile = "/home/d3s/.sdms-server/ssh/" + (*ixfr)->uid + "-" + m_unit + "-key";
                         //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
                         //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
-                        cmd = "ssh globus transfer -- olcf#dtn_atlas/~/file.dat " + (*ixfr)->dest_path;
+
+                        cmd = "ssh globus transfer -- ";
+
+                        if ( (*ixfr)->mode == XM_PUT )
+                            cmd += (*ixfr)->dest_path + " " + (*ixfr)->data_path;
+                        else
+                            cmd += (*ixfr)->data_path + " " + (*ixfr)->dest_path;
 
                         cout << cmd << "\n";
 
@@ -896,7 +902,9 @@ private:
                             cout << "New task[" << (*ixfr)->task_id << "]\n";
                             
                             // Update DB entry
-                            m_db_client.xfrUpdate( (*ixfr)->id, (*ixfr)->status, (*ixfr)->task_id );
+
+                            clock_gettime(CLOCK_REALTIME,&time);
+                            m_db_client.xfrUpdate( (*ixfr)->id, time.tv_sec, 0, (*ixfr)->task_id.c_str() );
                             (*ixfr)->count = 5;
                             ixfr++;
                         }
@@ -930,7 +938,8 @@ private:
                             (*ixfr)->status = status;
 
                             // Update DB entry
-                            m_db_client.xfrUpdate( (*ixfr)->id, (*ixfr)->status );
+                            clock_gettime(CLOCK_REALTIME,&time);
+                            m_db_client.xfrUpdate( (*ixfr)->id, time.tv_sec, &(*ixfr)->status );
 
                             // Remove from active list
                             if ( (*ixfr)->status > XS_INACTIVE )

@@ -93,7 +93,9 @@ public:
 
         if ( res == CURLE_OK )
         {
+            //cout << "About to parse[" << res_json << "]" << endl;
             a_result.Parse( res_json.c_str() );
+            //cout << "parse done" << endl;
 
             if ( http_code >= 200 && http_code < 300 )
             {
@@ -106,13 +108,13 @@ public:
             }
             else
             {
-                if ( http_code == 400 && !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
+                if ( !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
                 {
                     EXCEPT_PARAM( ID_BAD_REQUEST, "Bad request: " << a_result["errorMessage"].GetString() );
                 }
                 else
                 {
-                    EXCEPT_PARAM( ID_BAD_REQUEST, "SDMS DB service call failed. Code: " << http_code );
+                    EXCEPT_PARAM( ID_BAD_REQUEST, "SDMS DB service call failed. Code: " << http_code << ", err: " << error );
                 }
             }
         }
@@ -212,8 +214,32 @@ public:
         setRecordData( a_reply, result );
     }
 
+    void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        vector<pair<string,string>> params;
+        params.push_back({"title",a_request.title()});
+        if ( a_request.has_desc() )
+            params.push_back({"desc",a_request.desc()});
+        if ( a_request.has_alias() )
+            params.push_back({"alias",a_request.alias()});
+        if ( a_request.has_metadata() )
+            params.push_back({"metadata",a_request.metadata()});
+        if ( a_request.has_proj_id() )
+            params.push_back({"proj",a_request.proj_id()});
+        if ( a_request.has_coll_id() )
+            params.push_back({"coll",a_request.coll_id()});
+
+        dbGet( "dat/create", params, result );
+
+        setRecordData( a_reply, result );
+    }
+
     void setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
     {
+        //cout << "SetRecordData" << endl;
+
         if ( !a_result.IsArray() )
         {
             EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
@@ -239,6 +265,7 @@ public:
             if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
                 rec->set_data_path( imem->value.GetString() );
         }
+        //cout << "SetRecordData done" << endl;
     }
 
 
@@ -320,14 +347,19 @@ public:
         setXfrData( a_reply, result );
     }
 
-    void xfrUpdate( const std::string & a_xfr_id, XfrStatus a_status, const std::string & a_task_id )
+    void xfrUpdate( const std::string & a_xfr_id, size_t a_time, XfrStatus * a_status, const char * a_task_id )
     {
         rapidjson::Document result;
 
-        if ( a_task_id.size() )
-            dbGet( "xfr/update", {{"xfr_id",a_xfr_id},{"status",to_string(a_status)},{"task_id",a_task_id}}, result );
-        else
-            dbGet( "xfr/update", {{"xfr_id",a_xfr_id},{"status",to_string(a_status)}}, result );
+        vector<pair<string,string>> params;
+        params.push_back({"xfr_id",a_xfr_id});
+        params.push_back({"updated",to_string(a_time)});
+        if ( a_status )
+            params.push_back({"status",to_string(*a_status)});
+        if ( a_task_id )
+            params.push_back({"task_id",to_string(*a_task_id)});
+
+        dbGet( "xfr/update", params, result );
     }
 
 
@@ -361,6 +393,7 @@ void CentralDatabaseClient::setClient( const std::string & a_client )
 DEF_IMPL( userView, UserViewRequest, UserDataReply )
 DEF_IMPL( userList, UserListRequest, UserDataReply )
 DEF_IMPL( recordView, RecordViewRequest, RecordDataReply )
+DEF_IMPL( recordCreate, RecordCreateRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 
@@ -369,9 +402,9 @@ void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::s
     m_impl->xfrInit( a_data_id, a_data_path, a_mode, a_reply );
 }
 
-void CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus a_status, const std::string & a_task_id )
+void CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, size_t a_time, XfrStatus * a_status, const char * a_task_id )
 {
-    m_impl->xfrUpdate( a_xfr_id, a_status, a_task_id );
+    m_impl->xfrUpdate( a_xfr_id, a_time, a_status, a_task_id );
 }
 
 }
