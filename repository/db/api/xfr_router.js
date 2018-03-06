@@ -43,41 +43,57 @@ router.get('/init', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var dest_path = req.queryParams.path;
-                if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
-                    dest_path += "/";
-                dest_path += data_id.substr( 2 );
+                var xfr;
 
-                // See if there is an existing transfer record either in INIT or ACTIVE state
-                var xfr = g_db._query( "for i in tr filter i.data_id == @data_id and i.dest_path == @dest and i.status < 3 return i", { data_id: data_id, dest: dest_path }).toArray();
-                if ( xfr.length == 0 )
-                {
-
-                    // TODO Check/set read/write lock on data record (revision)
-                    // TODO Add configuration info for facility end-points and storage locations
+                if ( req.queryParams.mode == g_lib.XM_PUT ) {
+                    xfr = g_db._query( "for i in tr filter i.data_id == @data_id and i.status < 3 return i", { data_id: data_id }).toArray();
+                    // If there are any active puts/gets for same data, this is a conflict
+                    if ( xfr.length != 0 )
+                        throw g_lib.ERR_XFR_CONFLICT;
 
                     xfr = g_db.tr.save({
-                        mode: req.queryParams.mode,
+                        mode: g_lib.XM_PUT,
                         status: g_lib.XS_INIT,
                         data_id: data_id,
-                        data_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
-                        dest_path: dest_path,
+                        repo_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
+                        local_path: req.queryParams.path,
                         globus_id: client.globus_id,
                         updated: ((Date.now()/1000)|0)
                         }, { returnNew: true } );
 
                     result = [xfr.new];
                 } else {
-                    // Two different processes cannot PUT the same data
-                    if ( xfr[0].mode == g_lib.XM_PUT || req.queryParams.mode == g_lib.XM_PUT )
-                        throw g_lib.ERR_XFR_CONFLICT;
+                    var dest_path = req.queryParams.path;
+                    if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
+                        dest_path += "/";
+                    dest_path += data_id.substr( 2 );
 
-                    // TODO - Not sure if it's OK for two different users to GET to the same destination...
-                    if ( xfr[0].globus_id != client.globus_id )
-                        throw g_lib.ERR_XFR_CONFLICT;
+                    // See if there is an existing transfer record either in INIT or ACTIVE state
+                    xfr = g_db._query( "for i in tr filter i.data_id == @data_id and ( i.mode == 1 or i.local_path == @loc_path ) and i.status < 3 return i", { data_id: data_id, loc_path: dest_path }).toArray();
 
+                    for ( var i in xfr ) {
+                        if ( xfr[i].mode == g_lib.XM_PUT )
+                            throw g_lib.ERR_XFR_CONFLICT;
+                    }
 
-                    result = xfr;
+                    if ( xfr.length == 0 )
+                    {
+                        // TODO Add configuration info for facility end-points and storage locations
+
+                        xfr = g_db.tr.save({
+                            mode: g_lib.XM_GET,
+                            status: g_lib.XS_INIT,
+                            data_id: data_id,
+                            repo_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
+                            local_path: dest_path,
+                            globus_id: client.globus_id,
+                            updated: ((Date.now()/1000)|0)
+                            }, { returnNew: true } );
+
+                        result = [xfr.new];
+                    } else {
+                        result = xfr;
+                    }
                 }
             }
         });
@@ -97,22 +113,33 @@ router.get('/init', function (req, res) {
 
 router.get('/update', function (req, res) {
     try {
-        var obj = { updated: ((Date.now()/1000)|0) };
+        var result;
 
-        if ( req.queryParams.status != null )
-            obj.status = req.queryParams.status;
+        g_db._executeTransaction({
+            collections: {
+                read: [],
+                write: ["tr"]
+            },
+            action: function() {
+                var obj = { updated: ((Date.now()/1000)|0) };
 
-        if ( req.queryParams.task_id )
-            obj.task_id = req.queryParams.task_id;
+                if ( req.queryParams.status != null )
+                    obj.status = req.queryParams.status;
 
-        var xfr = g_db._update( req.queryParams.xfr_id, obj, { keepNull: false, returnNew: true });
+                if ( req.queryParams.task_id )
+                    obj.task_id = req.queryParams.task_id;
 
-        res.send( [xfr.new] );
+                var xfr = g_db._update( req.queryParams.xfr_id, obj, { keepNull: false, returnNew: true });
+
+                result = [xfr.new];
+            }
+        });
+
+        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client UID")
+    }})
+//.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('xfr_id', joi.string().required(), "Xfr record ID")
 .queryParam('status', joi.number().optional(), "New status")
 .queryParam('task_id', joi.string().optional(), "New task ID")
@@ -124,6 +151,7 @@ router.get('/view', function (req, res) {
     try {
         //const client = g_lib.getUserFromUID( req.queryParams.client );
 
+
         var result = g_db.tr.document( req.queryParams.xfr_id );
 
         res.send( [result] );
@@ -131,7 +159,22 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+//.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('xfr_id', joi.string().required(), "Xfr record ID")
 .summary('View transfer record')
+.description('View transfer record');
+
+router.get('/list', function (req, res) {
+    try {
+        //const client = g_lib.getUserFromUID( req.queryParams.client );
+
+        var result = g_db._query( "for i in tr return i" ).toArray();
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+//.queryParam('client', joi.string().required(), "Client UID")
+.summary('List transfer record')
 .description('View transfer record');

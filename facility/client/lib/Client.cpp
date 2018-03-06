@@ -141,14 +141,11 @@ public:
 
     void connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
     {
-        cout << "connecting" << endl;
-
         asio::async_connect( m_socket->lowest_layer(), endpoint_iterator,
             [this]( error_code ec, asio::ip::tcp::resolver::iterator )
             {
                 if (!ec)
                 {
-                    cout << "connected" << endl;
                     handShake();
                 }
                 else
@@ -164,17 +161,12 @@ public:
 
     void handShake()
     {
-        cout << "starting handshake" << endl;
-
         m_socket->async_handshake( asio::ssl::stream_base::client,
             [this]( error_code ec )
             {
-                cout << "handshake callback" << endl;
-
                 unique_lock<mutex> lock(m_mutex);
                 if ( !ec )
                 {
-                    cout << "handshake ok"  << endl ;
                     m_state = STARTED;
                 }
                 else
@@ -195,8 +187,6 @@ public:
 
         X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
         X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
-
-        cout << "Verifying " << subject_name << "\n";
 
         return a_preverified;
     }
@@ -223,7 +213,7 @@ public:
         
         if ( ec )
         {
-            cout << "write err: " << ec.category().name() << "[" << ec.value() << "] " << ec.message() << endl;
+            cerr << "write err: " << ec.category().name() << "[" << ec.value() << "] " << ec.message() << endl;
         }
 
         if ( len != sizeof( MsgBuf::Frame ))
@@ -272,9 +262,8 @@ public:
 
         //cout << "send: " << t1 << ", recv: " << t2 << "\n";
 
-        cout << "unserialize\n";
         MsgBuf::Message * raw_reply = m_in_buf.unserialize();
-        cout << "msg: " << raw_reply << "\n";
+        //cout << "msg: " << raw_reply << "\n";
         if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
         {
             Anon::NackReply * nack = dynamic_cast<Anon::NackReply *>( raw_reply );
@@ -314,7 +303,7 @@ public:
 
         if ( a_flags & GEN_X509 )
         {
-            cout << "Saving " << m_key_file << "\n";
+            //cout << "Saving " << m_key_file << "\n";
             ofstream outf( m_key_file );
             if ( !outf.is_open() || !outf.good() )
                 EXCEPT_PARAM( 0, "Could not open " << m_key_file << " for write" );
@@ -322,7 +311,7 @@ public:
             outf << reply->x509_key();
             outf.close();
 
-            cout << "Saving " << m_cert_file << "\n";
+            //cout << "Saving " << m_cert_file << "\n";
             outf.open( m_cert_file );
             if ( !outf.is_open() || !outf.good() )
                 EXCEPT_PARAM( 0, "Could not open " << m_cert_file << " for write" );
@@ -335,7 +324,7 @@ public:
         {
             string ssh_file = string("/tmp/") + uid + "-" + m_unit + "-ssh-pub.rsa";
 
-            cout << "Saving " << ssh_file << "\n";
+            //cout << "Saving " << ssh_file << "\n";
             ofstream  outf( ssh_file );
             if ( !outf.is_open() || !outf.good() )
                 EXCEPT_PARAM( 0, "Could not open " << ssh_file << " for write" );
@@ -361,7 +350,7 @@ public:
             raw = buf.unserialize();
             if ( !raw )
             {
-                cerr << "unerialize failed\n";
+                cerr << "unserialize failed\n";
                 return false;
             }
             out = dynamic_cast<Anon::StatusReply *>(raw);
@@ -499,16 +488,13 @@ public:
     }
 
     spXfrDataReply
-    getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
+    getData( const std::string & a_data_id, const std::string & a_local_path )
     {
-        // TODO - Can't check dest if command exec is not local to file system
-        //checkPath( a_dest_path, a_flags );
-
         Auth::GetDataRequest    req;
         Auth::XfrDataReply *    rep;
 
         req.set_id( a_data_id );
-        req.set_dest( a_dest_path );
+        req.set_local( a_local_path );
 
         send<>( req, rep, m_ctx++ );
 
@@ -516,13 +502,13 @@ public:
     }
 
     spXfrDataReply
-    putData( const std::string & a_src_path, const string & a_data_id )
+    putData( const std::string & a_local_path, const string & a_data_id )
     {
         Auth::PutDataRequest    req;
         Auth::XfrDataReply *    rep;
 
         req.set_id( a_data_id );
-        req.set_src( a_src_path );
+        req.set_local( a_local_path );
 
         send<>( req, rep, m_ctx++ );
 
@@ -530,13 +516,13 @@ public:
     }
 
     spXfrDataReply
-    putData( const std::string & a_src_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+    putData( const std::string & a_local_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
     {
         // Create data record
         spRecordDataReply rec_reply = recordCreate( a_title, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
         a_data_id = rec_reply->record(0).id();
 
-        return putData( a_src_path, a_data_id );
+        return putData( a_local_path, a_data_id );
     }
 
     spXfrDataReply
@@ -756,9 +742,9 @@ Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset,
 }
 
 spXfrDataReply
-Client::getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags )
+Client::getData( const std::string & a_data_id, const std::string & a_dest_path )
 {
-    return m_impl->getData( a_data_id, a_dest_path, a_flags );
+    return m_impl->getData( a_data_id, a_dest_path );
 }
 
 spXfrDataReply

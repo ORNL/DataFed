@@ -131,7 +131,7 @@ int main( int a_argc, char ** a_argv )
         //perfTest( client );
 
         #if 1
-        spXfrDataReply xfrs = client.getData( "dat2", "olcf#dtn_atlas/~/working/", 0 );
+        spXfrDataReply xfrs = client.getData( "dat2", "olcf#dtn_atlas/~/working/" );
         #else
         string new_id;
         spXfrDataReply xfrs = client.putData( "olcf#dtn_atlas/~/datafile", "Hello World", new_id, "Test data", "dat2", "{\"x\":1}" );
@@ -145,8 +145,8 @@ int main( int a_argc, char ** a_argv )
             cout << "xfr mode   : " << (int)xfr.mode() << "\n";
             cout << "xfr status : " << (int)xfr.status() << "\n";
             cout << "data id    : " << xfr.data_id() << "\n";
-            cout << "data_path  : " << xfr.data_path() << "\n";
-            cout << "dest_path  : " << xfr.dest_path() << "\n";
+            cout << "repo_path  : " << xfr.repo_path() << "\n";
+            cout << "loc_path  : " << xfr.local_path() << "\n";
             cout << "globus id  : " << xfr.globus_id() << "\n";
         }
         else

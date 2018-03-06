@@ -328,8 +328,8 @@ public:
             xfr->set_mode( (XfrMode)val["mode"].GetInt() );
             xfr->set_status( (XfrStatus)val["status"].GetInt() );
             xfr->set_data_id( val["data_id"].GetString() );
-            xfr->set_data_path( val["data_path"].GetString() );
-            xfr->set_dest_path( val["dest_path"].GetString() );
+            xfr->set_repo_path( val["repo_path"].GetString() );
+            xfr->set_local_path( val["local_path"].GetString() );
             xfr->set_globus_id( val["globus_id"].GetString() );
             xfr->set_updated( val["updated"].GetInt() );
 

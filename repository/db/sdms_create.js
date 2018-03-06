@@ -45,8 +45,10 @@ var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
 
 
-db.tr.ensureIndex({ type: "hash", unique: true, fields: [ "task_id" ] });
-db.tr.ensureIndex({ type: "hash", unique: true, fields: [ "data_id", "dest_path" ] });
+db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "data_id" ] });
+db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "local_path" ] });
+db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "mode" ] });
+db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "status" ] });
 
 // Also has user, mode (read/write), status (globus)
 

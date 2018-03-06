@@ -6,11 +6,12 @@ enum ErrorCode
 {
     ID_BAD_REQUEST              = 1;
     ID_INTERNAL_ERROR           = 2;
-    ID_SERVICE_ERROR            = 3;
-    ID_AUTHN_REQUIRED           = 4;
-    ID_AUTHN_ERROR              = 5;
-    ID_DEST_PATH_ERROR          = 6;
-    ID_DEST_FILE_ERROR          = 7;
+    ID_CLIENT_ERROR             = 3;
+    ID_SERVICE_ERROR            = 4;
+    ID_AUTHN_REQUIRED           = 5;
+    ID_AUTHN_ERROR              = 6;
+    ID_DEST_PATH_ERROR          = 7;
+    ID_DEST_FILE_ERROR          = 8;
 }
 
 enum ServiceStatus
@@ -89,8 +90,8 @@ message XfrData
     required XfrMode            mode        = 2;
     required XfrStatus          status      = 3;
     required string             data_id     = 4; // With revision?
-    required string             data_path   = 5;
-    required string             dest_path   = 6;
+    required string             repo_path   = 5;
+    required string             local_path  = 6;
     required string             globus_id   = 7;
     optional string             task_id     = 8; // Only set if status > XFR_INIT
     required uint32             updated     = 9;

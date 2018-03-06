@@ -96,13 +96,13 @@ message XfrDataReply
 message GetDataRequest
 {
     required string             id          = 1;
-    required string             dest        = 2;
+    required string             local       = 2;
 }
 
 message PutDataRequest
 {
     required string             id          = 1;
-    required string             src        = 2;
+    required string             local       = 2;
 }
 
 

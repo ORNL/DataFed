@@ -539,7 +539,7 @@ private:
         // 7. Start Globus transfer - capture task ID
         // 8. Update transfer record with task ID
 
-        m_db_client.xfrInit( request->id(), request->dest(), XM_GET, reply );
+        m_db_client.xfrInit( request->id(), request->local(), XM_GET, reply );
 
         if ( reply.xfr_size() != 1 )
             EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
@@ -553,7 +553,7 @@ private:
     {
         PROC_MSG_BEGIN( PutDataRequest, XfrDataReply )
 
-        m_db_client.xfrInit( request->id(), request->src(), XM_PUT, reply );
+        m_db_client.xfrInit( request->id(), request->local(), XM_PUT, reply );
 
         if ( reply.xfr_size() != 1 )
             EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
@@ -887,9 +887,9 @@ private:
                         cmd = "ssh globus transfer -- ";
 
                         if ( (*ixfr)->mode == XM_PUT )
-                            cmd += (*ixfr)->dest_path + " " + (*ixfr)->data_path;
+                            cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
                         else
-                            cmd += (*ixfr)->data_path + " " + (*ixfr)->dest_path;
+                            cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
 
                         cout << cmd << "\n";
 
@@ -908,6 +908,8 @@ private:
                         else
                         {
                             cout << "Globus CLI Error\n";
+                            status = XS_FAILED;
+                            m_db_client.xfrUpdate( (*ixfr)->id, &status );
                             ixfr = m_xfr_active.erase( ixfr );
                         }
                     }
@@ -990,8 +992,8 @@ private:
     struct XfrDataInfo
     {
         XfrDataInfo( const XfrData & a_xfr, const string & a_uid, int a_count ) :
-            id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),data_path(a_xfr.data_path()),
-            dest_path(a_xfr.dest_path()),globus_id(a_xfr.globus_id()),uid(a_uid),count(a_count)
+            id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),repo_path(a_xfr.repo_path()),
+            local_path(a_xfr.local_path()),globus_id(a_xfr.globus_id()),uid(a_uid),count(a_count)
         {
             if ( a_xfr.has_task_id() )
                 task_id = a_xfr.task_id();
@@ -1001,8 +1003,8 @@ private:
         XfrMode     mode;
         XfrStatus   status;
         //string      data_id;
-        string      data_path;
-        string      dest_path;
+        string      repo_path;
+        string      local_path;
         string      globus_id;
         string      task_id;
         string      uid;

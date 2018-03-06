@@ -80,9 +80,9 @@ public:
     spRecordDataReply   recordView( const std::string & a_id );
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
-    spXfrDataReply      getData( const std::string & a_data_id, const std::string & a_dest_path, uint16_t a_flags = 0 );
-    spXfrDataReply      putData( const std::string & a_src_path, const std::string & a_data_id );
-    spXfrDataReply      putData( const std::string & a_src_path, const std::string & a_title, std::string & a_data_id, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );
+    spXfrDataReply      getData( const std::string & a_data_id, const std::string & a_local_path );
+    spXfrDataReply      putData( const std::string & a_local_path, const std::string & a_data_id );
+    spXfrDataReply      putData( const std::string & a_local_path, const std::string & a_title, std::string & a_data_id, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );
     spXfrDataReply      xfrView( const std::string & a_transfer_id );
 
 private:
