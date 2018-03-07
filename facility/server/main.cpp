@@ -22,10 +22,10 @@ int main( int a_argc, char ** a_argv )
         int         port = 5800;
         int         timeout = 5;
         uint32_t    num_threads = 1;
-        const char * verify_path = "/home/d3s/.sdms-server/";
+        const char * cert_dir = "/home/d3s/.sdms-server/";
         int opt;
 
-        while (( opt = getopt( a_argc, a_argv, "?p:n:t:v:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?p:n:t:c:" )) != -1 )
         {
             switch( opt )
             {
@@ -35,7 +35,7 @@ int main( int a_argc, char ** a_argv )
                 cout << "p port - set server port" << endl;
                 cout << "n num  - set num threads (0 = optimal)" << endl;
                 cout << "t sec  - timeout (sec)" << endl;
-                cout << "v path - set client verify path" << endl;
+                cout << "c dir  - set certificate directory" << endl;
                 return 0;
             case 'p':
                 port = atoi( optarg );
@@ -46,13 +46,13 @@ int main( int a_argc, char ** a_argv )
             case 't':
                 timeout = atoi( optarg );
                 break;
-            case 'v':
-                verify_path = optarg;
+            case 'c':
+                cert_dir = optarg;
                 break;
             }
         }
 
-        Facility::Server server( port, verify_path, timeout, num_threads );
+        Facility::Server server( port, cert_dir, timeout, num_threads );
 
         cout << "start\n";
         server.run( false );

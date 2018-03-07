@@ -156,6 +156,28 @@ int xfr_status( vector<string>& a_args )
     return 0;
 }
 
+int gen_ssh( vector<string>& a_args )
+{
+    if ( a_args.size() != 1 )
+        return -1;
+
+    g_client->generateKeys( a_args[0] );
+    cout << "SUCCESS\n";
+
+    return 0;
+}
+
+int get_ssh( vector<string>& a_args )
+{
+    if ( a_args.size() != 1 )
+        return -1;
+
+    g_client->getPublicKey( a_args[0] );
+    cout << "SUCCESS\n";
+
+    return 0;
+}
+
 int main( int a_argc, char ** a_argv )
 {
     typedef map<string,pair<string,int (*)(vector<string>&)>> cmd_t;
@@ -167,8 +189,8 @@ int main( int a_argc, char ** a_argv )
         uint32_t    timeout = 5;
         string      cred_path = "/home/d3s/.sdms/";
         string      unit = "CCS";
-        bool        gen_cred = false;
-        bool        gen_ssh = false;
+        //bool        gen_cred = false;
+        //bool        gen_ssh = false;
         string      cfg_file;
         string      cmd;
         vector<string>  args;
@@ -178,7 +200,10 @@ int main( int a_argc, char ** a_argv )
             { "create", { "create -t title [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nCreate a new data record using supplied options. Returns new data ID on success.", create_data }},
             { "get", { "get id dest\n\nTransfer raw data associated with identifier (or alias) 'id' from repository to destination directory 'dest'. Destination path may include a globus end-point prefix. If no end-point is specified, the default end-point associated with the local environment is used.", get_data }},
             { "put", { "put id src\n\nTransfer raw data associated with identifier (or alias) 'id' from source file 'dest' to repository. Source path may include a globus end-point prefix. If no end-point is specified, the default end-point associated with the local environment is used.", put_data }},
-            { "status", { "status xfr_id\n\nGet status of specified data transfer.", xfr_status }}
+            { "status", { "status xfr_id\n\nGet status of specified data transfer.", xfr_status }},
+            { "gen-cred", { "gen-cred\n\nGenerate new user credentials (X509) for the local environment.", 0 }},
+            { "gen-ssh", { "gen-ssh out-file\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh }},
+            { "get-ssh", { "get-ssh out-file\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh }}
         };
 
         namespace po = boost::program_options;
@@ -187,8 +212,8 @@ int main( int a_argc, char ** a_argv )
             ("help,?", "Show help")
             ("version,v", "Show version number")
             ("cred-dir,c",po::value<string>( &cred_path ),"User credentials directory")
-            ("gen-cred,x",po::bool_switch( &gen_cred ),"Generate new user credentials for this environment")
-            ("gen-ssh,s",po::bool_switch( &gen_ssh ),"Generate new globus SSH keys for this environment")
+            //("gen-cred,x",po::bool_switch( &gen_cred ),"Generate new user credentials for this environment")
+            //("gen-ssh,s",po::bool_switch( &gen_ssh ),"Generate new globus SSH keys for this environment")
             ("wait,w",po::bool_switch( &g_wait ),"Block until command completes")
             ("title,t",po::value<string>( &g_title ),"Specify title for create/update commands")
             ("desc,d",po::value<string>( &g_desc ),"Specify description for create/update commands")
@@ -220,7 +245,7 @@ int main( int a_argc, char ** a_argv )
             po::store( po::command_line_parser( a_argc, a_argv ).options( options ).positional( pops ).run(), opt_map );
             po::notify( opt_map );
 
-            if ( opt_map.count( "help" ))
+            if ( opt_map.count( "help" ) || cmd.size() == 0 )
             {
                 cout << "SDMS CLI Client, ver. " << VERSION << "\n";
                 if ( cmd.size() )
@@ -277,24 +302,41 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-
         //cout << "Starting client (" << unit << ")" << endl;
         //cout << cred_path << ", " << gen_cred << endl;
 
-        Client client( host, port, timeout, cred_path, unit, !gen_cred );
-        client.start();
+        bool load_cred = true;
 
-        if ( gen_cred || gen_ssh )
+        // Must process "gen-cred" command before client init
+
+        if ( cmd == "gen-cred" )
         {
-            if ( gen_cred )
+            if ( args.size() != 0 )
             {
-                // TODO input uname and passcode
-                client.authenticate( "d3s", "password" );
+                cout << "ERROR\n";
+                cerr << "Invalid arguments for command '" << cmd << "'.\n    Usage: " << commands["gen-cred"].first << "\n\n";
+                return 1;
             }
 
-            client.generateCredentials( (gen_cred?GEN_X509:0) | (gen_ssh?GEN_SSH:0) );
+            load_cred = false;
+        }
 
-            // TODO print message for new credentials
+        Client client( host, port, timeout, cred_path, unit, load_cred );
+        client.start();
+
+        if ( !load_cred )
+        {
+            string password;
+
+            cout << "Password: ";
+            cin >> password;
+
+            client.authenticate( password );
+
+            client.generateCredentials();
+
+            cout << "SUCCESS\n";
+            exit(0);
         }
 
         g_client = &client;

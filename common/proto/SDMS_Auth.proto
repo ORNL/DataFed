@@ -12,15 +12,25 @@ enum Protocol
 
 message GenerateCredentialsRequest
 {
-    optional bool               x509        = 1;
-    optional bool               ssh         = 2;
 }
 
 message GenerateCredentialsReply
 {
-    optional string             x509_key    = 1;
-    optional string             x509_cert   = 2;
-    optional string             ssh_pub     = 3;
+    required string             x509_key    = 1;
+    required string             x509_cert   = 2;
+}
+
+message GenerateKeysRequest
+{
+}
+
+message GetPublicKeyRequest
+{
+}
+
+message PublicKeyReply
+{
+    required string             pub_key     = 1;
 }
 
 // ============================ Permissions Messages

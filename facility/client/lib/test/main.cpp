@@ -113,9 +113,9 @@ int main( int a_argc, char ** a_argv )
         if ( gen_cert )
         {
             if (( gen_cert & GEN_X509 ) != 0 )
-                client.authenticate( "d3s", "password" );
+                client.authenticate( "password" );
 
-            client.generateCredentials( gen_cert );
+            client.generateCredentials();
 
             exit(0);
         }

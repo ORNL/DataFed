@@ -68,8 +68,10 @@ public:
 
     bool                test( size_t a_iter );
 
-    void                authenticate( const std::string & a_uname, const std::string & a_password );
-    void                generateCredentials( uint8_t a_flags );
+    void                authenticate( const std::string & a_password );
+    void                generateCredentials();
+    void                generateKeys( const std::string & a_outfile );
+    void                getPublicKey( const std::string & a_outfile );
 
     void                setup();
 
