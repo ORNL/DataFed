@@ -41,11 +41,8 @@ int do_test( vector<string>& a_args )
     return 0;
 }
 
-int create_data( vector<string>& a_args )
+spRecordDataReply createRecord()
 {
-    (void)a_args;
-    spRecordDataReply rep;
-
     if ( !g_title.size() )
         EXCEPT_PARAM( 1, "Title option is required for create command" );
 
@@ -61,24 +58,105 @@ int create_data( vector<string>& a_args )
         string metadata(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
 
         inf.close();
-        rep = g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str() );
+
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str() );
     }
     else
     {
-        rep = g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0 );
     }
+}
+
+spRecordDataReply updateRecord( const string & a_id )
+{
+    if ( g_meta_file.size() )
+    {
+        if ( g_meta.size() )
+            EXCEPT_PARAM( 1, "Options meta and meta-file are mutually exclusive" );
+
+        ifstream inf( g_meta_file.c_str() );
+        if ( !inf.is_open() )
+            EXCEPT_PARAM( 1, "Could not open metadata file: " << g_meta_file );
+
+        string metadata(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+
+        inf.close();
+
+        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str() );
+    }
+    else
+    {
+        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0 );
+    }
+}
+
+
+int create_record( vector<string>& a_args )
+{
+    if ( a_args.size() != 0 )
+        return -1;
+
+    spRecordDataReply rep = createRecord();
 
     cout << rep->record(0).id() << "\n";
 
     return 0;
 }
 
-int get_data( vector<string>& a_args )
+
+int update_record( vector<string>& a_args )
+{
+    if ( a_args.size() != 1 )
+        return -1;
+
+    updateRecord( a_args[0] );
+
+    cout << "SUCCESS\n";
+
+    return 0;
+}
+
+
+int delete_record( vector<string>& a_args )
+{
+    (void)a_args;
+    cout << "Not implemented yet\n";
+    return 1;
+}
+
+
+int find_records( vector<string>& a_args )
+{
+    if ( a_args.size() == 0 )
+        return -1;
+
+    string query;
+    query.reserve( 512 );
+
+    for ( vector<string>::iterator a = a_args.begin(); a != a_args.end(); a++ )
+    {
+        query.append( *a );
+        query.append( " " );
+    }
+
+    spRecordDataReply rep = g_client->recordFind( query );
+
+    for ( int i = 0; i < rep->record_size(); i++ )
+    {
+        const RecordData & rec = rep->record(i);
+        cout << "  " << rec.id() << "  " << rec.title() << "\n";
+    }
+
+    return 0;
+}
+
+
+int pull_data( vector<string>& a_args )
 {
     if ( a_args.size() != 2 )
         return -1;
 
-    spXfrDataReply xfrs = g_client->getData( a_args[0], a_args[1] );
+    spXfrDataReply xfrs = g_client->pullData( a_args[0], a_args[1] );
 
     if ( g_wait )
     {
@@ -109,12 +187,28 @@ int get_data( vector<string>& a_args )
 }
 
 
-int put_data( vector<string>& a_args )
+int push_data( vector<string>& a_args )
 {
-    if ( a_args.size() != 2 )
+    string data_id;
+
+    if ( a_args.size() == 1 )
+    {
+        // Create new record based on options
+        spRecordDataReply rep = createRecord();
+        data_id = rep->record(0).id();
+    }
+    else if ( a_args.size() == 2 )
+    {
+        // Update existing record if options are provided
+        data_id = a_args[0];
+        spRecordDataReply rep = updateRecord( data_id );
+    }
+    else
         return -1;
 
-    spXfrDataReply xfrs = g_client->putData( a_args[0], a_args[1] );
+    // Push data to record
+
+    spXfrDataReply xfrs = g_client->pushData( data_id, *a_args.rbegin() );
 
     if ( g_wait )
     {
@@ -197,9 +291,12 @@ int main( int a_argc, char ** a_argv )
 
         cmd_t commands = {
             { "test", { "test [arg [arg...]]\n\nPerforms cmd line interface testing", do_test }},
-            { "create", { "create -t title [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nCreate a new data record using supplied options. Returns new data ID on success.", create_data }},
-            { "get", { "get id dest\n\nTransfer raw data associated with identifier (or alias) 'id' from repository to destination directory 'dest'. Destination path may include a globus end-point prefix. If no end-point is specified, the default end-point associated with the local environment is used.", get_data }},
-            { "put", { "put id src\n\nTransfer raw data associated with identifier (or alias) 'id' from source file 'dest' to repository. Source path may include a globus end-point prefix. If no end-point is specified, the default end-point associated with the local environment is used.", put_data }},
+            { "create", { "create -t title [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nCreate a new data record using supplied options. Returns new data ID on success.", create_record }},
+            { "update", { "update id [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nUpdate an existing data record using supplied options.", update_record }},
+            { "delete", { "delete id\n\nDelete an existing data record.", delete_record }},
+            { "find", { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records }},
+            { "pull", { "pull id dest\n\n'Pull' raw data from repository and place in a specified destination directory. The 'id' parameter may be either a data identifier or an alias. The destination path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", pull_data }},
+            { "push", { "push [id] src [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\n'Push' raw data from the specified source path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options, and for new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data }},
             { "status", { "status xfr_id\n\nGet status of specified data transfer.", xfr_status }},
             { "gen-cred", { "gen-cred\n\nGenerate new user credentials (X509) for the local environment.", 0 }},
             { "gen-ssh", { "gen-ssh out-file\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh }},
@@ -308,7 +405,6 @@ int main( int a_argc, char ** a_argv )
         bool load_cred = true;
 
         // Must process "gen-cred" command before client init
-
         if ( cmd == "gen-cred" )
         {
             if ( args.size() != 0 )
@@ -362,129 +458,10 @@ int main( int a_argc, char ** a_argv )
                 return 1;
             }
         }
-
-        //spUserDataReply users;
-        //spRecordDataReply records;
-        //spCollDataReply colls;
-
-
-        //msgTest( client );
-        //pingTest( client, 1000 );
-        //perfTest( client );
-
-/*
-        #if 1
-        spXfrDataReply xfrs = client.getData( "dat2", "olcf#dtn_atlas/~/working/", 0 );
-        #else
-        string new_id;
-        spXfrDataReply xfrs = client.putData( "olcf#dtn_atlas/~/datafile", "Hello World", new_id, "Test data", "dat2", "{\"x\":1}" );
-        cout << "Created data record " << new_id << "\n";
-        #endif
-
-        if ( xfrs->xfr_size() == 1 )
-        {
-            const XfrData & xfr = xfrs->xfr(0);
-            cout << "xfr id     : " << xfr.id() << "\n";
-            cout << "xfr mode   : " << (int)xfr.mode() << "\n";
-            cout << "xfr status : " << (int)xfr.status() << "\n";
-            cout << "data id    : " << xfr.data_id() << "\n";
-            cout << "repo_path  : " << xfr.repo_path() << "\n";
-            cout << "loc_path  : " << xfr.local_path() << "\n";
-            cout << "globus id  : " << xfr.globus_id() << "\n";
-        }
         else
-            cout << "Data xfr not started?\n";
-*/
-
-
-/*
-        XfrStatus xfr_stat = get_data->xfr_status();
-        if ( xfr_stat == XFR_ACTIVE )
         {
-            cout << "Waiting for xfr\n";
-            while ( xfr_stat == XFR_ACTIVE )
-            {
-                sleep( 5 );
-                xfr_stat = client.getXfrStatus( get_data->xfr_id() );
-                cout << "status: " << (int)xfr_stat << "\n";
-            }
+            // TODO Start console mode
         }
-*/
-
-
-/*
-        records = client.recordView( "d3s:ddat1" );
-        if ( records->record_size() == 1 )
-        {
-            const RecordData & rec = records->record(0);
-            cout << "Record id: " << rec.id() << ", title: " << rec.title() << "\n";
-        }
-        else
-            cout << "Record not found\n";
-*/
-
-        //cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx", CREATE_PATH | BACKUP ) << "\n";
-
-
-/*
-        users = client.userView( "" );
-        if ( users->user_size() == 1 )
-        {
-            const UserData & user = users->user(0);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
-
-        users = client.userView( "d3s" );
-        if ( users->user_size() == 1 )
-        {
-            const UserData & user = users->user(0);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
-*/
-
-/*
-        users = client.userView( "d3s" );
-        if ( users->user_size() == 1 )
-        {
-            const UserData & user = users->user(0);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
-*/
-
-/*
-        colls = client.collList( "" );
-        cout << "my collection count: " << colls->coll_size() << "\n";
-        for ( int i = 0; i < colls->coll_size(); ++i )
-        {
-            const CollData & coll = colls->coll(i);
-            cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
-        }
-*/
-
-/*
-        colls = client.collList( "user1" );
-        cout << "user1 collection count: " << colls->coll_size() << "\n";
-        for ( int i = 0; i < colls->coll_size(); ++i )
-        {
-            const CollData & coll = colls->coll(i);
-            cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
-        }
-*/
-
-/*
-        spUserDataReply users = client.userList();
-
-        cout << "user count: " << users->user_size() << "\n";
-        for ( int i = 0; i < users->user_size(); ++i )
-        {
-            const UserData & user = users->user(i);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
-
-        users.reset();
-*/
-        //client.stop();
-        //sleep( 5 );
     }
     catch( TraceException &e )
     {

@@ -37,12 +37,12 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.title )
                     obj.title = req.queryParams.title;
 
-                if ( req.queryParams.descr )
-                    obj.descr = req.queryParams.descr;
+                if ( req.queryParams.desc )
+                    obj.desc = req.queryParams.desc;
 
-                if ( req.queryParams.metadata )
-                    obj.metadata = req.queryParams.metadata;
-                
+                if ( req.queryParams.md )
+                    obj.md = JSON.parse( req.queryParams.md );
+
                 if ( req.queryParams.grant )
                     obj.def_grant = req.queryParams.grant;
 
@@ -59,6 +59,7 @@ router.get('/create', function (req, res) {
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
+                    data.new.alias = req.queryParams.alias;
                 }
 
                 delete data.new._rev;
@@ -83,9 +84,114 @@ router.get('/create', function (req, res) {
 .queryParam('coll', joi.string().optional(), "Optional collection id or alias")
 .queryParam('grant', joi.number().optional(), "Default grant permission mask")
 .queryParam('deny', joi.number().optional(), "Default deny permission mask")
-.queryParam('metadata', joi.string().optional(), "Metadata (JSON)")
+.queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .summary('Creates a new data record')
 .description('Creates a new data record');
+
+
+router.get('/update', function (req, res) {
+    try {
+        var result = [];
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uid"],
+                write: ["d","a","owner","alias"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromUID( req.queryParams.client );
+                var data_id = g_lib.resolveID( req.queryParams.id, client );
+                if ( !g_lib.hasAdminPermObject( client, data_id )) {
+                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_REC_WRITE ))
+                        throw g_lib.ERR_PERM_DENIED;
+                }
+
+                if ( req.queryParams.alias )
+                    g_lib.validateAlias( req.queryParams.alias );
+
+                var obj = {};
+                var do_update = false;
+
+                if ( req.queryParams.title ) {
+                    obj.title = req.queryParams.title;
+                    do_update = true;
+                }
+
+                if ( req.queryParams.desc ) {
+                    obj.desc = req.queryParams.desc;
+                    do_update = true;
+                }
+
+                if ( req.queryParams.md ) {
+                    obj.md = JSON.parse( req.queryParams.md );
+                    do_update = true;
+                }
+                
+                if ( req.queryParams.grant != null ) {
+                    if ( req.queryParams.grant == 0 )
+                        obj.def_grant = null;
+                    else
+                        obj.def_grant = req.queryParams.grant;
+                    do_update = true;
+                }
+
+                if ( req.queryParams.deny != null ) {
+                    if ( req.queryParams.deny == 0 )
+                        obj.def_deny = null;
+                    else
+                        obj.def_deny = req.queryParams.deny;
+                    do_update = true;
+                }
+
+                var data;
+
+                if ( do_update ) {
+                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true });
+                    data = data.new;
+                } else {
+                    data = g_db.d.document( data_id );
+                }
+
+                if ( req.queryParams.alias ) {
+                    var old_alias = g_db.alias.firstExample({ _from: data_id });
+                    if ( old_alias ) {
+                        g_db.a.remove( old_alias._to );
+                        g_db.alias.remove( old_alias );
+                    }
+
+                    var alias_key = client._key + ":" + req.queryParams.alias;
+
+                    g_db.a.save({ _key: alias_key });
+                    g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
+                    data.alias = req.queryParams.alias;
+                }
+
+                delete data._rev;
+                delete data._key;
+                data.id = data._id;
+                delete data._id;
+
+                result.push( data );
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('id', joi.string().required(), "Data record ID or alias")
+.queryParam('title', joi.string().optional(), "Title")
+.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('proj', joi.string().optional(), "Project owner id")
+.queryParam('grant', joi.number().optional(), "Default grant permission mask")
+.queryParam('deny', joi.number().optional(), "Default deny permission mask")
+.queryParam('md', joi.string().optional(), "Metadata (JSON)")
+.summary('Updates an existing data record')
+.description('Updates an existing data record');
 
 
 router.get('/view', function (req, res) {
@@ -135,6 +241,7 @@ router.get('/list', function (req, res) {
             owner_id = client._id;
         }
 
+        // TODO - This is broken. permission system has changed since this was written
         const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
 
         var result = [];
@@ -156,6 +263,36 @@ router.get('/list', function (req, res) {
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List all data owned by client, or subject')
 .description('List all data owned by client, or subject');
+
+// TODO Add limit, offset, and details options
+// TODO Add options for ALL, user/project, or collection (recursize or not) options
+router.get('/find', function (req, res) {
+    try {
+        const client = g_lib.getUserFromUID( req.queryParams.client );
+
+        //console.log( 'query: ', "for i in d filter " + req.queryParams.query + " return i" );
+        const cursor = g_db._query( "for i in d filter " + req.queryParams.query + " return i" );
+        //console.log( 'items: ', items );
+
+        var result = [];
+        var item;
+
+        while ( cursor.hasNext() ) {
+            item = cursor.next();
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
+                result.push({ id: item._id, title: item.title, desc: item.desc, md: item.md });
+            }
+        }
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('query', joi.string().required(), "Query expression")
+.summary('Find all data records that match query')
+.description('Find all data records that match query');
 
 
 router.get('/delete', function (req, res) {

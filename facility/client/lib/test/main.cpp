@@ -130,6 +130,7 @@ int main( int a_argc, char ** a_argv )
         //pingTest( client, 1000 );
         //perfTest( client );
 
+/*
         #if 1
         spXfrDataReply xfrs = client.getData( "dat2", "olcf#dtn_atlas/~/working/" );
         #else
@@ -151,7 +152,7 @@ int main( int a_argc, char ** a_argv )
         }
         else
             cout << "Data xfr not started?\n";
-
+*/
 
 
 /*

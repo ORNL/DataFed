@@ -457,6 +457,93 @@ public:
         return spUserDataReply( reply );
     }
 
+    string parseQuery( const string & a_query )
+    {
+        static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?'};
+        static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
+
+        struct Var
+        {
+            Var() : start(0), len(0) {}
+            void reset() { start = 0; len = 0; }
+
+            size_t  start;
+            size_t  len;
+        };
+
+        vector<Var> vars;
+        int state = 0;
+        Var v;
+        string result;
+
+        for ( string::const_iterator c = a_query.begin(); c != a_query.end(); ++c )
+        {
+            switch( state )
+            {
+            case 0: // Not quoted
+                if ( spec.find( *c ) == spec.end() )
+                {
+                    if ( nums.find( *c ) == nums.end() )
+                    {
+                        if ( *c == '\'' )
+                            state = 1;
+                        else if ( *c == '\"' )
+                            state = 2;
+                        else
+                        {
+                            result.append( "i.md." );
+
+                            v.start = a_query.begin() - c;
+                            v.len = 0;
+                            state = 3;
+                        }
+                    }
+                }
+                break;
+            case 1: // Single quote
+                if ( *c == '\'' )
+                    state = 0;
+                break;
+            case 2: // Double quote
+                if ( *c == '\"' )
+                    state = 0;
+                break;
+            case 3: // Identifier
+                if ( spec.find( *c ) != spec.end() )
+                {
+                    vars.push_back( v );
+                    v.reset();
+                    state = 0;
+                }
+                else
+                    v.len++;
+                break;
+            }
+
+            if ( state == 0 && *c == '?' )
+                result += "LIKE";
+            else
+                result += *c;
+        }
+
+        cout << "[" << a_query << "]=>[" << result << "]\n";
+        return result;
+    }
+
+    spRecordDataReply
+    recordFind( const std::string & a_query )
+    {
+        Auth::RecordFindRequest req;
+
+        req.set_query( parseQuery( a_query ));
+
+        Auth::RecordDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        return spRecordDataReply( reply );
+    }
+
     spRecordDataReply
     recordView( const std::string & a_id )
     {
@@ -494,6 +581,30 @@ public:
         return spRecordDataReply( reply );
     }
 
+    spRecordDataReply
+    recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id )
+    {
+        Auth::RecordUpdateRequest req;
+
+        req.set_id( a_id );
+        if ( a_title )
+            req.set_title( a_title );
+        if ( a_desc )
+            req.set_desc( a_desc );
+        if ( a_alias )
+            req.set_alias( a_alias );
+        if ( a_metadata )
+            req.set_metadata( a_metadata );
+        if ( a_proj_id )
+            req.set_proj_id( a_proj_id );
+
+        Auth::RecordDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        return spRecordDataReply( reply );
+    }
+
     spCollDataReply
     collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
     {
@@ -516,7 +627,7 @@ public:
     }
 
     spXfrDataReply
-    getData( const std::string & a_data_id, const std::string & a_local_path )
+    pullData( const std::string & a_data_id, const std::string & a_local_path )
     {
         Auth::GetDataRequest    req;
         Auth::XfrDataReply *    rep;
@@ -529,8 +640,9 @@ public:
         return spXfrDataReply( rep );
     }
 
+
     spXfrDataReply
-    putData( const std::string & a_local_path, const string & a_data_id )
+    pushData( const std::string & a_data_id, const std::string & a_local_path )
     {
         Auth::PutDataRequest    req;
         Auth::XfrDataReply *    rep;
@@ -543,15 +655,6 @@ public:
         return spXfrDataReply( rep );
     }
 
-    spXfrDataReply
-    putData( const std::string & a_local_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
-    {
-        // Create data record
-        spRecordDataReply rec_reply = recordCreate( a_title, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
-        a_data_id = rec_reply->record(0).id();
-
-        return putData( a_local_path, a_data_id );
-    }
 
     spXfrDataReply
     xfrView( const std::string & a_xfr_id )
@@ -762,6 +865,12 @@ Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 }
 
 spRecordDataReply
+Client::recordFind( const std::string & a_query )
+{
+    return m_impl->recordFind( a_query );
+}
+
+spRecordDataReply
 Client::recordView( const std::string & a_id )
 {
     return m_impl->recordView( a_id );
@@ -773,6 +882,12 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
     return m_impl->recordCreate( a_title, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
 }
 
+spRecordDataReply
+Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id )
+{
+    return m_impl->recordUpdate( a_id, a_title, a_desc, a_alias, a_metadata, a_proj_id );
+}
+
 spCollDataReply
 Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
@@ -780,22 +895,24 @@ Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset,
 }
 
 spXfrDataReply
-Client::getData( const std::string & a_data_id, const std::string & a_dest_path )
+Client::pullData( const std::string & a_data_id, const std::string & a_dest_path )
 {
-    return m_impl->getData( a_data_id, a_dest_path );
+    return m_impl->pullData( a_data_id, a_dest_path );
 }
 
 spXfrDataReply
-Client::putData( const std::string & a_src_path, const string & a_data_id )
+Client::pushData( const std::string & a_data_id, const std::string & a_src_path )
 {
-    return m_impl->putData( a_src_path, a_data_id );
+    return m_impl->pushData( a_data_id, a_src_path );
 }
 
+/*
 spXfrDataReply
-Client::putData( const std::string & a_src_path, const std::string & a_title, std::string & a_data_id, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+Client::pushData( const std::string & a_src_path, std::string & a_data_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
 {
-    return m_impl->putData( a_src_path, a_title, a_data_id, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
+    return m_impl->pushData( a_src_path, a_title, a_data_id, a_desc, a_alias, a_metadata, a_proj_id, a_coll_id );
 }
+*/
 
 spXfrDataReply
 Client::xfrView( const std::string & a_transfer_id )

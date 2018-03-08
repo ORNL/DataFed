@@ -2,6 +2,8 @@
 #include <vector>
 #include <curl/curl.h>
 #include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/prettywriter.h>
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "CentralDatabaseClient.hpp"
@@ -93,7 +95,7 @@ public:
 
         if ( res == CURLE_OK )
         {
-            //cout << "About to parse[" << res_json << "]" << endl;
+            cout << "About to parse[" << res_json << "]" << endl;
             a_result.Parse( res_json.c_str() );
             //cout << "parse done" << endl;
 
@@ -214,6 +216,15 @@ public:
         setRecordData( a_reply, result );
     }
 
+    void recordFind( const RecordFindRequest & a_request, RecordDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "dat/find", {{"query",a_request.query()}}, result );
+
+        setRecordData( a_reply, result );
+    }
+
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
     {
         rapidjson::Document result;
@@ -225,13 +236,35 @@ public:
         if ( a_request.has_alias() )
             params.push_back({"alias",a_request.alias()});
         if ( a_request.has_metadata() )
-            params.push_back({"metadata",a_request.metadata()});
+            params.push_back({"md",a_request.metadata()});
         if ( a_request.has_proj_id() )
             params.push_back({"proj",a_request.proj_id()});
         if ( a_request.has_coll_id() )
             params.push_back({"coll",a_request.coll_id()});
 
         dbGet( "dat/create", params, result );
+
+        setRecordData( a_reply, result );
+    }
+
+    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        vector<pair<string,string>> params;
+        params.push_back({"id",a_request.id()});
+        if ( a_request.has_title() )
+            params.push_back({"title",a_request.title()});
+        if ( a_request.has_desc() )
+            params.push_back({"desc",a_request.desc()});
+        if ( a_request.has_alias() )
+            params.push_back({"alias",a_request.alias()});
+        if ( a_request.has_metadata() )
+            params.push_back({"md",a_request.metadata()});
+        if ( a_request.has_proj_id() )
+            params.push_back({"proj",a_request.proj_id()});
+
+        dbGet( "dat/update", params, result );
 
         setRecordData( a_reply, result );
     }
@@ -259,8 +292,14 @@ public:
             if (( imem = val.FindMember("desc")) != val.MemberEnd() )
                 rec->set_desc( imem->value.GetString() );
 
-            if (( imem = val.FindMember("metadata")) != val.MemberEnd() )
-                rec->set_metadata( imem->value.GetString() );
+            if (( imem = val.FindMember("md")) != val.MemberEnd() )
+            {
+                rapidjson::StringBuffer buffer;
+                rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+                imem->value.Accept(writer);
+                rec->set_metadata( buffer.GetString() );
+                //rec->set_metadata( imem->value.GetString() );
+            }
 
             if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
                 rec->set_data_path( imem->value.GetString() );
@@ -393,7 +432,9 @@ void CentralDatabaseClient::setClient( const std::string & a_client )
 DEF_IMPL( userView, UserViewRequest, UserDataReply )
 DEF_IMPL( userList, UserListRequest, UserDataReply )
 DEF_IMPL( recordView, RecordViewRequest, RecordDataReply )
+DEF_IMPL( recordFind, RecordFindRequest, RecordDataReply )
 DEF_IMPL( recordCreate, RecordCreateRequest, RecordDataReply )
+DEF_IMPL( recordUpdate, RecordUpdateRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 
