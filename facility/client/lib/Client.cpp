@@ -88,6 +88,7 @@ public:
         }
 
         m_socket = new ssl_socket( m_io_service, m_context );
+        
 
         m_socket->set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
         m_socket->set_verify_callback( bind( &ClientImpl::verifyCert, this, placeholders::_1, placeholders::_2 ));
@@ -146,6 +147,9 @@ public:
             {
                 if (!ec)
                 {
+                    asio::socket_base::keep_alive option(true);
+                    m_socket->lowest_layer().set_option(option);
+
                     handShake();
                 }
                 else
@@ -471,10 +475,10 @@ public:
             size_t  len;
         };
 
-        vector<Var> vars;
         int state = 0;
         Var v;
         string result;
+        string tmp;
 
         for ( string::const_iterator c = a_query.begin(); c != a_query.end(); ++c )
         {
@@ -491,10 +495,9 @@ public:
                             state = 2;
                         else
                         {
-                            result.append( "i.md." );
-
-                            v.start = a_query.begin() - c;
-                            v.len = 0;
+                            v.start = c - a_query.begin();
+                            //cout << "start: " << v.start << "\n";
+                            v.len = 1;
                             state = 3;
                         }
                     }
@@ -511,7 +514,13 @@ public:
             case 3: // Identifier
                 if ( spec.find( *c ) != spec.end() )
                 {
-                    vars.push_back( v );
+                    //cout << "start: " << v.start << ", len: " << v.len << "\n";
+                    tmp = a_query.substr( v.start, v.len );
+                    if ( tmp != "true" && tmp != "false" )
+                    {
+                        result.append( "i.md." );
+                    }
+                    result.append( tmp );
                     v.reset();
                     state = 0;
                 }
@@ -522,11 +531,11 @@ public:
 
             if ( state == 0 && *c == '?' )
                 result += "LIKE";
-            else
+            else if ( state != 3 )
                 result += *c;
         }
 
-        cout << "[" << a_query << "]=>[" << result << "]\n";
+        //cout << "[" << a_query << "]=>[" << result << "]\n";
         return result;
     }
 
@@ -582,7 +591,7 @@ public:
     }
 
     spRecordDataReply
-    recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id )
+    recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, bool a_md_merge, const char * a_proj_id )
     {
         Auth::RecordUpdateRequest req;
 
@@ -594,7 +603,10 @@ public:
         if ( a_alias )
             req.set_alias( a_alias );
         if ( a_metadata )
+        {
             req.set_metadata( a_metadata );
+            req.set_md_merge( a_md_merge );
+        }
         if ( a_proj_id )
             req.set_proj_id( a_proj_id );
 
@@ -883,9 +895,9 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
 }
 
 spRecordDataReply
-Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id )
+Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, bool a_md_merge, const char * a_proj_id )
 {
-    return m_impl->recordUpdate( a_id, a_title, a_desc, a_alias, a_metadata, a_proj_id );
+    return m_impl->recordUpdate( a_id, a_title, a_desc, a_alias, a_metadata, a_md_merge, a_proj_id );
 }
 
 spCollDataReply

@@ -261,6 +261,8 @@ public:
             params.push_back({"alias",a_request.alias()});
         if ( a_request.has_metadata() )
             params.push_back({"md",a_request.metadata()});
+        if ( a_request.has_md_merge() )
+            params.push_back({"md_merge",a_request.md_merge()?"true":"false"});
         if ( a_request.has_proj_id() )
             params.push_back({"proj",a_request.proj_id()});
 
@@ -288,6 +290,9 @@ public:
             rec = a_reply.add_record();
             rec->set_id( val["id"].GetString() );
             rec->set_title( val["title"].GetString() );
+
+            if (( imem = val.FindMember("alias")) != val.MemberEnd() )
+                rec->set_alias( imem->value.GetString() );
 
             if (( imem = val.FindMember("desc")) != val.MemberEnd() )
                 rec->set_desc( imem->value.GetString() );

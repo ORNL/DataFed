@@ -103,7 +103,8 @@ message RecordUpdateRequest
     optional string             desc        = 3;
     optional string             alias       = 4;
     optional string             metadata    = 5;
-    optional string             proj_id     = 6;
+    optional bool               md_merge    = 6;
+    optional string             proj_id     = 7;
 }
 
 // ============================ Raw Data Messages

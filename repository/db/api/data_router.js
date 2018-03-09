@@ -146,7 +146,7 @@ router.get('/update', function (req, res) {
                 var data;
 
                 if ( do_update ) {
-                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true });
+                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.queryParams.md_merge });
                     data = data.new;
                 } else {
                     data = g_db.d.document( data_id );
@@ -190,6 +190,7 @@ router.get('/update', function (req, res) {
 .queryParam('grant', joi.number().optional(), "Default grant permission mask")
 .queryParam('deny', joi.number().optional(), "Default deny permission mask")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
+.queryParam('md_merge', joi.boolean().optional().default(true), "Merge metadata instead of replace (merge is default)")
 .summary('Updates an existing data record')
 .description('Updates an existing data record');
 

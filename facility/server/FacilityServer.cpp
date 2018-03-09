@@ -12,7 +12,7 @@
 #define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
 
 #define MAINT_POLL_INTERVAL 5
-#define CLIENT_IDLE_TIMEOUT 10
+#define CLIENT_IDLE_TIMEOUT 300
 #define INIT_POLL_PERIOD 5
 #define MAX_BACKOFF 6
 
@@ -260,6 +260,7 @@ Server::backgroundMaintenance()
         {
             if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
             {
+                cout << "CLOSING IDLE SESSION\n";
                 (*isess)->close();
                 isess = m_sessions.erase( isess );
             }
