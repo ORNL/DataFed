@@ -10,6 +10,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "TraceException.hpp"
+#include "SmartTokenizer.hpp"
 #include "Client.hpp"
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
@@ -47,82 +48,6 @@ cmd_t   g_commands;
 po::options_description g_opts_command( "Command options" );
 
 
-void cmdlineTokenize( char * a_input, vector<char*> & a_raw_args )
-{
-    int state = 0;
-    char * s;
-    char * cr, * cw;
-    bool esc = false;
-
-    // Spaces outside of quotes are delimiters
-    // Single and double quotes may be used to avoid tokenizing on spaces
-    // Escape char is '\'
-    // Esapce sequences are converted and retained
-
-    for ( cr = cw = a_input[0]; *cr != 0; ++cr )
-    {
-        if ( esc )
-        {
-            *cw = *cr;
-            esc = false
-        }
-        else if ( *cr == '\\' )
-        {
-            esc = true;
-        }
-        else
-        {
-            switch( state )
-            {
-            case 0: // Not quoted, no word/phrase found
-                if ( *c == '\'' )
-                {
-                    // Start of single quoted word/phrase
-                    state = 1;
-                }
-                else if ( *c == '\"' )
-                {
-                    // Start of double quoted word/phrase
-                    state = 2;
-                }
-                else if ( *c != ' ' )
-                {
-                    // Start of unquoted word
-                    *cw = *cr;
-                    a_raw_args.push_back( cw++ );
-                    state = 3;
-                }
-                break;
-            case 1: // Single quote
-                if ( *c == '\'' )
-                {
-                    *c = 0;
-                    a_raw_args.push_back( s );
-                    state = 0;
-                }
-                break;
-            case 2: // Double quote
-                if ( *c == '\"' )
-                {
-                    *c = 0;
-                    a_raw_args.push_back( s );
-                    state = 0;
-                }
-                break;
-            case 3: // Not quoted
-                if ( *c == ' ' )
-                {
-                    *c = 0;
-                    a_raw_args.push_back( s );
-                    state = 0;
-                }
-                break;
-            }
-
-        result += *c;
-        }
-    }
-}
 
 
 int no_console()
@@ -438,7 +363,7 @@ enum OptionResult
     OPTS_ERROR
 };
 
-OptionResult processArgs( int a_argc, char ** a_argv, po::options_description & a_opts_desc, po::positional_options_description & a_opts_pos )
+OptionResult processArgs( int a_argc, const char ** a_argv, po::options_description & a_opts_desc, po::positional_options_description & a_opts_pos )
 {
     g_wait = false;
     g_title.clear();
@@ -545,7 +470,7 @@ int main( int a_argc, char ** a_argv )
 
     try
     {
-        OptionResult res = processArgs( a_argc, a_argv, opts_all, opts_pos );
+        OptionResult res = processArgs( a_argc, (const char**)a_argv, opts_all, opts_pos );
         
         if ( res == OPTS_HELP )
         {
@@ -625,13 +550,8 @@ int main( int a_argc, char ** a_argv )
         else
         {
             char * cmd_str;
-            char   prog_name[] = "sdms";
-
-            char * tok_str;
-            //char * tok;
-            vector<char*> raw_args;
-
-            //vector<string> raw_args;
+            size_t len;
+            SmartTokenizer tok;
 
             cout << "SDMS CLI Client, ver. " << VERSION << "\n";
             cout << "Console mode. Use Ctrl-C or type \"exit\" to terminate program.\n\n";
@@ -640,39 +560,37 @@ int main( int a_argc, char ** a_argv )
             {
                 cmd_str = readline(">");
 
+                len = strlen( cmd_str );
+                if ( !len )
+                    continue;
+
                 if ( strcmp( cmd_str, "exit" ) == 0 )
                     break;
 
-                raw_args.clear();
-                //raw_args.push_back( (char*)"sdms" );
-                tok_str = strdup( cmd_str );
-
-
-                cmdlineTokenize( tok_str, raw_args );
-/*
-                raw_args.clear();
-                raw_args.push_back( "sdms" );
-                tok_str = strdup( cmd_str );
-                tok = strtok( tok_str, " " );
-                while( tok != 0 )
-                {
-                    raw_args.push_back( tok );
-                    tok = strtok( 0, " " );
-                }
-*/
+                tok.parse( cmd_str, len );
+                add_history( cmd_str );
+                free( cmd_str );
 
                 try
                 {
-                    if ( processArgs( raw_args.size(), &raw_args[0], opts_console, opts_pos ) == OPTS_OK )
+                    tok.tokens().insert( tok.begin(), "sdms" );
+
+                    for ( SmartTokenizer::const_iter_t i = tok.begin(); i != tok.end(); ++i )
                     {
+                        cout << "[" << *i << "]";
+                    }
+                    cout << "\n";
+
+                    if ( processArgs( tok.tokens().size(), &tok.tokens()[0], opts_console, opts_pos ) == OPTS_OK )
+                    {
+                        /*
                         cout << "cmd:["<<g_cmd<<"],args:";
                         for ( vector<string>::iterator a = g_args.begin(); a != g_args.end(); ++a )
                             cout << "["<<*a<<"]";
-                        cout << "\n";
+                        cout << "\n";*/
 
                         if ( g_cmd.size() )
                         {
-                            add_history( cmd_str );
 
                             icmd = g_commands.find( g_cmd );
                             if ( icmd != g_commands.end() )
@@ -698,9 +616,6 @@ int main( int a_argc, char ** a_argv )
                 {
                     cout << e.what() << "\n";
                 }
-
-                free( cmd_str );
-                free( tok_str );
             }
         }
     }
