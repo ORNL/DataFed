@@ -4,6 +4,7 @@
 #include<string>
 #include<vector>
 
+template<char delim = ' ', bool keep_empty = false>
 class SmartTokenizer
 {
 public:
@@ -92,11 +93,16 @@ private:
                     state = 1;
                 else if ( *r == '\"' && !esc )
                     state = 2;
-                else if ( *r != ' ' )
+                else if ( *r != delim )
                 {
                     *w = *r;
                     m_tokens.push_back( w++ );
                     state = 3;
+                }
+                else if ( keep_empty )
+                {
+                    *w = 0;
+                    m_tokens.push_back( w++ );
                 }
                 break;
             case 1: // Start of single quoted string
@@ -104,7 +110,7 @@ private:
                     state = 0;
                 else
                 {
-                    *w = *++r;
+                    *w = *r;
                     m_tokens.push_back( w++ );
                     state = 11;
                 }
@@ -132,7 +138,7 @@ private:
                     *w++ = *r;
                 break;
             case 3: // Unquoted token
-                if ( *r == ' ' )
+                if ( *r == delim )
                 {
                     *w++ = 0;
                     state = 0;
@@ -149,6 +155,10 @@ private:
             esc = false;
         }
         *w = 0;
+        if ( state == 0 && keep_empty )
+        {
+            m_tokens.push_back( w++ );
+        }
     }
 
     std::string                 m_buffer;

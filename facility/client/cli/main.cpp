@@ -551,7 +551,7 @@ int main( int a_argc, char ** a_argv )
         {
             char * cmd_str;
             size_t len;
-            SmartTokenizer tok;
+            SmartTokenizer<> tok;
 
             cout << "SDMS CLI Client, ver. " << VERSION << "\n";
             cout << "Console mode. Use Ctrl-C or type \"exit\" to terminate program.\n\n";
@@ -571,26 +571,23 @@ int main( int a_argc, char ** a_argv )
                 add_history( cmd_str );
                 free( cmd_str );
 
+                for ( SmartTokenizer<>::const_iter_t i = tok.begin(); i != tok.end(); ++i )
+                    cout << "[" << *i << "]";
+                cout << "\n";
+                continue;
+
                 try
                 {
                     tok.tokens().insert( tok.begin(), "sdms" );
 
-                    for ( SmartTokenizer::const_iter_t i = tok.begin(); i != tok.end(); ++i )
-                    {
-                        cout << "[" << *i << "]";
-                    }
-                    cout << "\n";
-
                     if ( processArgs( tok.tokens().size(), &tok.tokens()[0], opts_console, opts_pos ) == OPTS_OK )
                     {
-                        /*
-                        cout << "cmd:["<<g_cmd<<"],args:";
-                        for ( vector<string>::iterator a = g_args.begin(); a != g_args.end(); ++a )
-                            cout << "["<<*a<<"]";
-                        cout << "\n";*/
-
                         if ( g_cmd.size() )
                         {
+                            cout << "cmd:["<<g_cmd<<"],args:";
+                            for ( vector<string>::iterator a = g_args.begin(); a != g_args.end(); ++a )
+                                cout << "["<<*a<<"]";
+                            cout << "\n";
 
                             icmd = g_commands.find( g_cmd );
                             if ( icmd != g_commands.end() )
