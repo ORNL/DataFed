@@ -83,6 +83,7 @@ public:
     spRecordDataReply   recordView( const std::string & a_id );
     spRecordDataReply   recordFind( const std::string & a_query );
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spCollDataReply     collRead( const std::string & a_coll_id, CollMode a_mode = CM_ALL, bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
 
     spXfrDataReply      pullData( const std::string & a_data_id, const std::string & a_local_path );
     spXfrDataReply      pushData( const std::string & a_data_id, const std::string & a_local_path );

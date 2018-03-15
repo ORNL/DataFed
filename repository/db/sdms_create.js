@@ -14,6 +14,7 @@ graph._addVertexCollection("c");    // Collection
 graph._addVertexCollection("t");    // Tag
 graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
+graph._addVertexCollection("l");    // Label
 graph._addVertexCollection("tr");   // Transfers
 
 

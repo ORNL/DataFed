@@ -142,6 +142,15 @@ message CollListRequest
     optional uint32             count       = 4;
 }
 
+message CollReadRequest
+{
+    required string             id          = 1;
+    optional CollMode           mode        = 2;
+    optional bool               details     = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
+
 // Returned for any command the returns one or more user records
 message CollDataReply
 {

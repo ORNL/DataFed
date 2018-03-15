@@ -130,8 +130,8 @@ router.post('/delete', function (req, res) {
 .summary('Deletes an existing data collection')
 .description('Deletes an existing data collection');
 
-
-router.get('/list', function (req, res) {
+// This is an OWNER or ADMIN only function, other users must navigate the collection hierarchy
+router.get('/priv/list', function (req, res) {
     try {
         const client = g_lib.getUserFromUID( req.queryParams.client );
         var owner_id;
@@ -142,29 +142,11 @@ router.get('/list', function (req, res) {
             owner_id = client._id;
         }
 
-        var result;
-
-        //if ( client.is_admin || owner_id == client._id ) {
         if ( client.is_admin || owner_id == client._id || g_lib.db.admin.firstExample({ _from: owner_id, _to: client._id }) ) {
-            result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
-        }
-        else {
-            const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
-        //const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return v", { owner: owner_id }).toArray();
-
-            var item;
-            result = [];
-
-            for ( var i in items ) {
-                item = items[i];
-                // The following checks slow down query by a factor of ~20
-                if ( g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
-                    result.push({ id: item._id, title: item.title });
-                }
-            }
-        }
-
-        res.send( result );
+            var result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
+            res.send( result );
+        } else
+            throw g_lib.ERR_PERM_DENIED;
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -210,15 +192,24 @@ router.get('/read', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        const items = g_db._query( "for v in 1..1 outbound @coll item return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { coll: coll_id }).toArray();
+//"for i in d filter i.metadata.x == 3 let a = (for v in outbound i._id alias return v._id) let o = (for v in outbound i._id owner return v._id) return {id: i._id, title: i.title,alias:a[0],owner:o[0]}"
+
+        const items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
 
         var result = [];
         var item;
+        var mode = 0;
+
+        if ( req.queryParams.mode == "c" )
+            mode = 1;
+        else if ( req.queryParams.mode == "d" )
+            mode = 2;
 
         for ( var i in items ) {
             item = items[i];
             if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
-                result.push({ id: item._id, title: item.title });
+                if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
+                    result.push({ id: item._id, title: item.title, alias: item.alias });
             }
         }
 
@@ -229,6 +220,7 @@ router.get('/read', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
+.queryParam('mode', joi.string().valid('a','d','c').optional(), "Read mode: (a)ll, (d)ata only, (c)ollections only")
 .summary('Read contents of a collection by ID or alias')
 .description('Read contents of a collection by ID or alias');
 

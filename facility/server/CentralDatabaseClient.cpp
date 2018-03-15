@@ -318,9 +318,26 @@ public:
         rapidjson::Document result;
 
         if ( a_request.has_user() )
-            dbGet( "col/list", {{"subject",a_request.user()}}, result );
+            dbGet( "col/priv/list", {{"subject",a_request.user()}}, result );
         else
-             dbGet( "col/list", {}, result );
+             dbGet( "col/priv/list", {}, result );
+
+        setCollData( a_reply, result );
+    }
+
+    void collRead( const CollReadRequest & a_request, CollDataReply & a_reply )
+    {
+        rapidjson::Document result;
+        const char * mode = "a";
+        if ( a_request.has_mode() )
+        {
+            if ( a_request.mode() == CM_DATA )
+                mode = "d";
+            else if ( a_request.mode() == CM_COLL )
+                mode = "c";
+        }
+
+        dbGet( "col/read", {{"id",a_request.id()},{"mode",mode}}, result );
 
         setCollData( a_reply, result );
     }
@@ -441,6 +458,7 @@ DEF_IMPL( recordFind, RecordFindRequest, RecordDataReply )
 DEF_IMPL( recordCreate, RecordCreateRequest, RecordDataReply )
 DEF_IMPL( recordUpdate, RecordUpdateRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
+DEF_IMPL( collRead, CollReadRequest, CollDataReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 
 void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )

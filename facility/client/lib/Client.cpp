@@ -638,6 +638,28 @@ public:
         return spCollDataReply( reply );
     }
 
+    spCollDataReply
+    collRead( const std::string & a_coll_id, CollMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
+    {
+        Auth::CollReadRequest req;
+
+        req.set_id( a_coll_id );
+        if ( a_mode )
+            req.set_mode( a_mode );
+        if ( a_details )
+            req.set_details( a_details );
+        if ( a_offset )
+            req.set_offset( a_offset );
+        if ( a_count )
+            req.set_count( a_count );
+
+        Auth::CollDataReply * reply;
+
+        send<>( req, reply, m_ctx++ );
+
+        return spCollDataReply( reply );
+    }
+
     spXfrDataReply
     pullData( const std::string & a_data_id, const std::string & a_local_path )
     {
@@ -904,6 +926,12 @@ spCollDataReply
 Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     return m_impl->collList( a_user, a_details, a_offset, a_count );
+}
+
+spCollDataReply
+Client::collRead( const std::string & a_coll_id, CollMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
+{
+    return m_impl->collRead( a_coll_id, a_mode, a_details, a_offset, a_count );
 }
 
 spXfrDataReply

@@ -37,6 +37,13 @@ enum XfrStatus
     XS_FAILED       = 4;
 }
 
+enum CollMode
+{
+    CM_ALL          = 0;
+    CM_COLL         = 1;
+    CM_DATA         = 2;
+}
+
 enum Permissions
 {
     PERM_NONE           = 0x000;

@@ -32,6 +32,13 @@ const char * StatusText[] = { "INITIAL", "ACTIVE", "INACTIVE", "SUCCEEDED", "FAI
 
 typedef map<string,pair<string,int (*)()>> cmd_t;
 
+enum OutputFormat
+{
+    TEXT,
+    JSON,
+    CSV
+};
+
 bool            g_wait = false;
 string          g_title;
 string          g_desc;
@@ -42,12 +49,81 @@ bool            g_meta_replace;
 string          g_cfg_file;
 string          g_cmd;
 vector<string>  g_args;
+string          g_out_form_str;
+OutputFormat    g_out_form = TEXT;
 
 cmd_t   g_commands;
 
 po::options_description g_opts_command( "Command options" );
 
 
+
+void printUsers( spUserDataReply a_reply )
+{
+    if ( g_out_form == JSON )
+        cout << "{\"users\":[";
+    if ( a_reply->user_size() )
+    {
+        for ( int i = 0; i < a_reply->user_size(); i++ )
+        {
+            if ( g_out_form == JSON && i > 0 )
+                cout << ",";
+
+            const UserData & user = a_reply->user(i);
+            switch ( g_out_form )
+            {
+            case TEXT:
+                cout << "  UID    : " << user.uid() << "\n";
+                cout << "  Name   : " << user.name_first() << " " << user.name_last() << "\n";
+                if ( user.has_email() )
+                    cout << "  email  : " << user.email() << "\n";
+                if ( user.has_globus_id() )
+                    cout << "  globus : " << user.globus_id() << "\n";
+                if ( user.has_phone() )
+                    cout << "  phone  : " << user.phone() << "\n";
+                if ( user.has_is_admin() )
+                    cout << "  admin  : " << user.is_admin() << "\n";
+                break;
+            case JSON:
+                cout << "{\"uid\":\"" << user.uid() << "\",\"name_first\":\"" << user.name_first() << "\",\"name_last\":\"" << user.name_last() << "\"";
+                if ( user.has_email() )
+                    cout << ",\"email\":\"" << user.email() << "\"";
+                if ( user.has_globus_id() )
+                    cout << ",\"globus_id\":\"" << user.globus_id() << "\"";
+                if ( user.has_phone() )
+                    cout << ",\"phone\":\"" << user.phone() << "\"";
+                if ( user.has_is_admin() )
+                    cout << ",\"admin\":" << (user.is_admin()?"true":"false");
+                cout << "}";
+                break;
+            case CSV:
+                cout << "\"" << user.uid() << "\",\"" << user.name_first() << "\",\"" << user.name_last() << "\"\n";
+                break;
+            }
+
+            if ( g_out_form == TEXT )
+                cout << "\n";
+        }
+    }
+    if ( g_out_form == JSON )
+        cout << "]}\n";
+}
+
+
+void printCollData( spCollDataReply a_reply )
+{
+    if ( a_reply->coll_size() )
+    {
+        for ( int i = 0; i < a_reply->coll_size(); i++ )
+        {
+            const CollData & data = a_reply->coll(i);
+
+            cout << "  ID    : " << data.id() << "\n";
+            cout << "  Title : " << data.title() << "\n";
+            cout << "\n";
+        }
+    }
+}
 
 
 int no_console()
@@ -332,6 +408,42 @@ int xfr_status()
     return 0;
 }
 
+int read_coll()
+{
+    if ( g_args.size() == 0 )
+    {
+        spCollDataReply rep = g_client->collRead( "root" );
+        printCollData( rep );
+    }
+    else if ( g_args.size() == 1 )
+    {
+        spCollDataReply rep = g_client->collRead( g_args[0] );
+        printCollData( rep );
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
+int user()
+{
+    if ( g_args.size() == 0 )
+    {
+        spUserDataReply rep = g_client->userList();
+        printUsers( rep );
+    }
+    else if ( g_args.size() == 1 )
+    {
+        spUserDataReply rep = g_client->userView( g_args[0] );
+        printUsers( rep );
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
 int gen_ssh()
 {
     if ( g_args.size() != 1 )
@@ -398,6 +510,21 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
 
             optfile.close();
         }
+
+        if ( opt_map.count( "output-format" ))
+        {
+            if ( g_out_form_str == "text" )
+                g_out_form = TEXT;
+            else if ( g_out_form_str == "json" )
+                g_out_form = JSON;
+            else if ( g_out_form_str == "csv" )
+                g_out_form = CSV;
+            else
+            {
+                cout << "Invalid value for output format\n";
+                return OPTS_ERROR;
+            }
+        }
     }
     catch( po::unknown_option & e )
     {
@@ -417,10 +544,12 @@ int main( int a_argc, char ** a_argv )
     g_commands["update"] = { "update id [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nUpdate an existing data record using supplied options.", update_record };
     g_commands["delete"] = { "delete id\n\nDelete an existing data record.", delete_record };
     g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
+    g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
     g_commands["find"] = { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records };
     g_commands["pull"] = { "pull id dest\n\n'Pull' raw data from repository and place in a specified destination directory. The 'id' parameter may be either a data identifier or an alias. The destination path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", pull_data };
     g_commands["push"] = { "push [id] src [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\n'Push' raw data from the specified source path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options, and for new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data };
     g_commands["status"] = { "status xfr_id\n\nGet status of specified data transfer.", xfr_status };
+    g_commands["user"] = { "user [id]\n\nList all users, or view user associated with 'id'.", user };
     g_commands["gen-cred"] = { "gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console };
     g_commands["gen-ssh"] = { "gen-ssh out-file\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh };
     g_commands["get-ssh"] = { "get-ssh out-file\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh };
@@ -454,6 +583,7 @@ int main( int a_argc, char ** a_argv )
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
+        ("output-format,O",po::value<string>( &g_out_form_str ),"Output format (text,json,csv)")
         ;
 
     opts_hidden.add_options()
@@ -486,6 +616,11 @@ int main( int a_argc, char ** a_argv )
         if ( res == OPTS_VERSION )
         {
             cout << VERSION << endl;
+            return 1;
+        }
+
+        if ( res == OPTS_ERROR )
+        {
             return 1;
         }
 
@@ -571,10 +706,12 @@ int main( int a_argc, char ** a_argv )
                 add_history( cmd_str );
                 free( cmd_str );
 
+/*
                 for ( SmartTokenizer<>::const_iter_t i = tok.begin(); i != tok.end(); ++i )
                     cout << "[" << *i << "]";
                 cout << "\n";
                 continue;
+*/
 
                 try
                 {
