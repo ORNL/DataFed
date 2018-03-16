@@ -703,6 +703,19 @@ public:
         return spXfrDataReply( rep );
     }
 
+    spACLDataReply
+    aclView( const std::string & a_id )
+    {
+        Auth::ACLViewRequest    req;
+        Auth::ACLDataReply *    rep;
+
+        req.set_id( a_id );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spACLDataReply( rep );
+    }
+
 /*
     spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
     {
@@ -958,6 +971,12 @@ spXfrDataReply
 Client::xfrView( const std::string & a_transfer_id )
 {
     return m_impl->xfrView( a_transfer_id );
+}
+
+spACLDataReply
+Client::aclView( const std::string & a_id )
+{
+    return m_impl->aclView( a_id );
 }
 
 }}

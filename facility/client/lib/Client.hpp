@@ -16,6 +16,7 @@ typedef std::shared_ptr<Auth::UserDataReply> spUserDataReply;
 typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
 typedef std::shared_ptr<Auth::XfrDataReply> spXfrDataReply;
+typedef std::shared_ptr<Auth::ACLDataReply> spACLDataReply;
 
 enum DestFlags : uint16_t
 {
@@ -89,6 +90,7 @@ public:
     spXfrDataReply      pushData( const std::string & a_data_id, const std::string & a_local_path );
     //spXfrDataReply      pushData( const std::string & a_local_path, std::string & a_data_id, const char * a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );
     spXfrDataReply      xfrView( const std::string & a_transfer_id );
+    spACLDataReply      aclView( const std::string & a_id );
 
 private:
     class ClientImpl;

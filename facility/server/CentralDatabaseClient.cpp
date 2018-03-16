@@ -423,6 +423,46 @@ public:
         dbGet( "xfr/update", params, result );
     }
 
+    void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "acl/view", {{"id",a_request.id()}}, result );
+
+        setACLData( a_reply, result );
+    }
+
+    void setACLData( ACLDataReply & a_reply, rapidjson::Document & a_result )
+    {
+        if ( !a_result.IsArray() )
+        {
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        }
+
+        ACLData* acl;
+        rapidjson::Value::MemberIterator imem;
+
+        for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+        {
+            rapidjson::Value & val = a_result[i];
+
+            acl = a_reply.add_acl();
+            acl->set_id( val["id"].GetString() );
+
+            imem = val.FindMember("grant");
+            if ( imem != val.MemberEnd() )
+                acl->set_grant( imem->value.GetInt() );
+            imem = val.FindMember("deny");
+            if ( imem != val.MemberEnd() )
+                acl->set_deny( imem->value.GetInt() );
+            imem = val.FindMember("inh_grant");
+            if ( imem != val.MemberEnd() )
+                acl->set_inh_grant( imem->value.GetInt() );
+            imem = val.FindMember("inh_deny");
+            if ( imem != val.MemberEnd() )
+                acl->set_inh_deny( imem->value.GetInt() );
+        }
+    }
 
     CURL * m_curl;
     char * m_client;
@@ -460,6 +500,8 @@ DEF_IMPL( recordUpdate, RecordUpdateRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( collRead, CollReadRequest, CollDataReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
+DEF_IMPL( aclView, ACLViewRequest, ACLDataReply )
+
 
 void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {

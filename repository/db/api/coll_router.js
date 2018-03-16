@@ -180,7 +180,70 @@ router.get('/view', function (req, res) {
 .description('View collection information by ID or alias');
 
 
+/* This version of read assumes that if a client has read permissions for a collection, then
+ * the items in the collection only need to be checked for local overrides to the LIST permission.
+ * Have READ access to a collection translates to having LIST access for the contained items,
+ * unless LIST is explicitly revoked on an item (i.e. not inherited)
+*/
 router.get('/read', function (req, res) {
+    try {
+        const client = g_lib.getUserFromUID( req.queryParams.client );
+
+        var coll_id = g_lib.resolveID( req.queryParams.id, client );
+        var coll = g_db.c.document( coll_id );
+        var result = [];
+        var items;
+        var item;
+        var mode = 0;
+        var i;
+
+        if ( req.queryParams.mode == "c" )
+            mode = 1;
+        else if ( req.queryParams.mode == "d" )
+            mode = 2;
+
+        if ( g_lib.hasAdminPermObject( client, coll_id )) {
+            // No need to perform pernission checks on items if client has admin perm on collection
+            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+
+            if ( mode > 0 ) {
+                for ( i in items ) {
+                    item = items[i];
+                    if ((mode == 1 && item.id[0] == 'c') || (mode == 2 && item.id[0] == 'd' ))
+                        result.push( item );
+                }
+            } else {
+                result = items;
+            }
+
+        } else {
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_DAT_READ ))
+                throw g_lib.ERR_PERM_DENIED;
+
+            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, grant: v.grant, deny: v.deny, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+
+            for ( i in items ) {
+                item = items[i];
+                if ( g_lib.hasLocalPermission( client, item, g_lib.PERM_DAT_LIST )) {
+                    if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
+                        result.push({ id: item._id, title: item.title, alias: item.alias });
+                }
+            }
+        }
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('id', joi.string().required(), "Collection ID or alias to list")
+.queryParam('mode', joi.string().valid('a','d','c').optional(), "Read mode: (a)ll, (d)ata only, (c)ollections only")
+.summary('Read contents of a collection by ID or alias')
+.description('Read contents of a collection by ID or alias');
+
+
+router.get('/read2', function (req, res) {
     try {
         const client = g_lib.getUserFromUID( req.queryParams.client );
 

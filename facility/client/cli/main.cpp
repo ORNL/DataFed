@@ -125,6 +125,30 @@ void printCollData( spCollDataReply a_reply )
     }
 }
 
+void printACLs( spACLDataReply a_reply )
+{
+    if ( a_reply->acl_size() )
+    {
+        for ( int i = 0; i < a_reply->acl_size(); i++ )
+        {
+            const ACLData & acl = a_reply->acl(i);
+
+            cout << "  ID       : " << acl.id() << "\n";
+            if ( acl.has_grant() )
+                cout << "  Grant    : " << acl.grant() << "\n";
+            if ( acl.has_deny() )
+                cout << "  Deny     : " << acl.deny() << "\n";
+            if ( acl.has_inh_grant() )
+                cout << "  Grant(i) : " << acl.inh_grant() << "\n";
+            if ( acl.has_inh_deny() )
+                cout << "  Deny(i)  : " << acl.inh_deny() << "\n";
+            cout << "\n";
+        }
+    }
+    else
+        cout << "  No ACLs set\n";
+}
+
 
 int no_console()
 {
@@ -444,6 +468,26 @@ int user()
     return 0;
 }
 
+
+int acl()
+{
+    if ( g_args.size() < 2 )
+        return -1;
+    else if ( g_args[0] == "get" )
+    {
+        spACLDataReply rep = g_client->aclView( g_args[1] );
+        printACLs( rep );
+    }
+    else if ( g_args[0] == "set" )
+    {
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
+
 int gen_ssh()
 {
     if ( g_args.size() != 1 )
@@ -550,6 +594,7 @@ int main( int a_argc, char ** a_argv )
     g_commands["push"] = { "push [id] src [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\n'Push' raw data from the specified source path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options, and for new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data };
     g_commands["status"] = { "status xfr_id\n\nGet status of specified data transfer.", xfr_status };
     g_commands["user"] = { "user [id]\n\nList all users, or view user associated with 'id'.", user };
+    g_commands["acl"] = { "acl set|get id [uid perm] [gid perm]\n\nSet or get ACLs for record 'id' (ID/alias)", acl };
     g_commands["gen-cred"] = { "gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console };
     g_commands["gen-ssh"] = { "gen-ssh out-file\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh };
     g_commands["get-ssh"] = { "get-ssh out-file\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh };

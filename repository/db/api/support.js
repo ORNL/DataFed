@@ -162,6 +162,256 @@ module.exports = ( function() {
         }
     };
 
+
+    obj.hasLocalPermission = function( a_client, a_object, a_req_perm ) {
+        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
+
+        var perm_found  = 0;
+        var perm_deny   = 0;
+        var acl;
+        var result;
+        var mask;
+
+        // Evaluate permissions set directly on object
+
+        var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+        for ( var i in acls ) {
+            acl = acls[i];
+            //console.log("user_perm:",acl);
+            perm_found |= ( acl.grant | acl.deny );
+            perm_deny |= acl.deny;
+        }
+        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+        //console.log("eval res:", result );
+        if ( result != null ) {
+            //console.log("result (usr acl):", result );
+            return result;
+        }
+
+        // Evaluate group permissions on object
+
+        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+
+        //console.log("eval group", acls );
+
+        mask = ~perm_found;
+        for ( i in acls ) {
+            acl = acls[i];
+            //console.log("group_perm:",acl);
+            if ( mask & ( acl.grant | acl.deny ) > 0 ) {
+                perm_found |= ( acl.grant | acl.deny );
+                perm_deny |= ( acl.deny & mask );
+            }
+        }
+
+        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+
+        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+
+        //console.log("eval res:", result );
+        if ( result != null ) {
+            //console.log("result (grp acl):", result );
+            return result;
+        }
+
+        // Evaluate default permissions on object
+        //console.log("check default, perm_found:", perm_found );
+
+        mask = ~perm_found;
+        if ( mask & ( a_object.grant | a_object.deny ) > 0 ) {
+            //console.log("default perm has bits", a_object.grant, a_object.deny );
+            perm_found |= ( a_object.grant | a_object.deny );
+            perm_deny |= ( a_object.deny & mask );
+
+            //console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
+            result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+            if ( result != null ) {
+                //console.log("result (def perm):", result );
+                return result;
+            }
+        }
+
+        return false;
+    };
+
+
+    /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
+     * ownership or admin privelege - the hasAdminPermObject function performs these checks and should be
+     * called first if needed. This function is typically used when filtering a list of objects that are
+     * known not to be owned by the client (and that the client is not an admin). In this case, those checks
+     * would add performance cost for no benefit.
+     */
+    obj.hasPermission = function( a_client, a_object, a_req_perm ) {
+        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
+
+        var perm_found  = 0;
+        var perm_deny   = 0;
+        var acl;
+        var result;
+        var mask;
+
+        // Evaluate permissions set directly on object
+
+        var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+        for ( var i in acls ) {
+            acl = acls[i];
+            //console.log("user_perm:",acl);
+            perm_found |= ( acl.grant | acl.deny );
+            perm_deny |= acl.deny;
+        }
+        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+        //console.log("eval res:", result );
+        if ( result != null ) {
+            //console.log("result (usr acl):", result );
+            return result;
+        }
+
+        // Evaluate group permissions on object
+
+        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+
+        //console.log("eval group", acls );
+
+        mask = ~perm_found;
+        for ( i in acls ) {
+            acl = acls[i];
+            //console.log("group_perm:",acl);
+            if ( mask & ( acl.grant | acl.deny ) > 0 ) {
+                perm_found |= ( acl.grant | acl.deny );
+                perm_deny |= ( acl.deny & mask );
+            }
+        }
+
+        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+
+        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+
+        //console.log("eval res:", result );
+        if ( result != null ) {
+            //console.log("result (grp acl):", result );
+            return result;
+        }
+
+        // Evaluate default permissions on object
+        //console.log("check default, perm_found:", perm_found );
+
+        mask = ~perm_found;
+        if ( mask & ( a_object.grant | a_object.deny ) > 0 ) {
+            //console.log("default perm has bits", a_object.grant, a_object.deny );
+            perm_found |= ( a_object.grant | a_object.deny );
+            perm_deny |= ( a_object.deny & mask );
+
+            //console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
+            result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+            if ( result != null ) {
+                //console.log("result (def perm):", result );
+                return result;
+            }
+        }
+
+        // If not all requested permissions have been found, evaluate permissions inherited from parent (owned) containers
+
+        var owner_id = obj.db.owner.firstExample({ _from: a_object._id })._to;
+        var children = [a_object];
+        var parents;
+        var parent;
+        var usr_perm_found, usr_perm_deny;
+        var grp_perm_found, grp_perm_deny;
+        var def_perm_found, def_perm_deny;
+
+        while ( 1 ) {
+            // Find all parent collections owned by object owner
+
+            parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter is_same_collection('c',p.vertices[1]) and v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
+            if ( parents.length == 0 )
+                break;
+
+            // Gather INHERITED user, group, and default permissions collectively over all parents
+
+            usr_perm_found = 0; usr_perm_deny = 0;
+            grp_perm_found = 0; grp_perm_deny = 0;
+            def_perm_found = 0; def_perm_deny = 0;
+
+            for ( i in parents ) {
+                parent = parents[i];
+
+                // User ACL first
+                acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
+                for ( i in acls ) {
+                    acl = acls[i];
+                    usr_perm_found |= ( acl.inh_grant | acl.inh_deny );
+                    usr_perm_deny |= acl.inh_deny;
+                }
+
+                // Group ACL next
+                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
+                for ( i in acls ) {
+                    acl = acls[i];
+                    grp_perm_found |= ( acl.inh_grant | acl.inh_deny );
+                    grp_perm_deny |= acl.inh_deny;
+                }
+
+                if ( parent.inh_grant ) {
+                    def_perm_found |= parent.inh_grant;
+                }
+
+                if ( parent.inh_deny ) {
+                    def_perm_found |= parent.inh_deny;
+                    def_perm_deny |= parent.inh_deny;
+                }
+            }
+
+            // Eval collective user permissions found
+            mask = ~perm_found;
+            if (( mask & usr_perm_found ) > 0 ) {
+                perm_found |= usr_perm_found;
+                perm_deny |= ( usr_perm_deny & mask );
+
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                if ( result != null ) {
+                    //console.log("result (prnt usr acl):", result );
+                    return result;
+                }
+            }
+
+            // Eval collective group permissions found
+            mask = ~perm_found;
+            if (( mask & grp_perm_found ) > 0 ) {
+                perm_found |= grp_perm_found;
+                perm_deny |= ( grp_perm_deny & mask );
+
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                if ( result != null ) {
+                    //console.log("result (prnt grp acl):", result );
+                    return result;
+                }
+            }
+
+            mask = ~perm_found;
+            if (( mask & def_perm_found ) > 0 ) {
+                perm_found |= def_perm_found;
+                perm_deny |= ( def_perm_deny & mask );
+
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                if ( result != null ) {
+                    //console.log("result (prnt def perm):", result );
+                    return result;
+                }
+            }
+
+            // If there are still missing require permissions...
+            // Determine which parents are candidates for further evaluation (have req bits not set in inherited permissions)
+            children = parents;
+        }
+
+        //console.log("result (last): false" );
+
+        return false;
+    };
+
+
     /* Check if calling user has requested permissions:
      * - Owners, admins, and admin delegates have all permissions (this must be checked outside of this function).
      * - Non-owners can be granted permission (by owner) via user ACLs, group ACLs, and default permissions attached to
@@ -175,7 +425,7 @@ module.exports = ( function() {
      *   applicable permissions are not set (a default permission will stop inheritence).
      * - Only permissions of collections owned by the owner of the data in question apply.
      */
-    obj.hasPermission = function( a_client, a_object, a_req_perm ) {
+    obj.hasPermission_old = function( a_client, a_object, a_req_perm ) {
         //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
 
         var perm_found  = 0;

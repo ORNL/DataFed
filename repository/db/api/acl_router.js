@@ -294,7 +294,7 @@ router.post('/update', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromUID( req.queryParams.client );
-        var object = g_lib.getObject( req.queryParams.object, client );
+        var object = g_lib.getObject( req.queryParams.id, client );
 
         if ( object._id[0] != "c" && object._id[0] != "d" )
             throw g_lib.ERR_INVALID_ID;
@@ -351,7 +351,7 @@ router.get('/view', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('object', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('id', joi.string().required(), "ID or alias of data record or collection")
 .summary('View current ACL on an object')
 .description('View current ACL on an object (data record or collection)');
 

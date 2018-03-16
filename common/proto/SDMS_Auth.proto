@@ -156,3 +156,20 @@ message CollDataReply
 {
     repeated SDMS.CollData      coll        = 1;
 }
+
+// ============================ ACL Messages
+
+message ACLViewRequest
+{
+    required string             id          = 1;
+}
+
+message ACLSetRequest
+{
+    required string             id          = 1;
+}
+
+message ACLDataReply
+{
+    repeated ACLData            acl         = 1;
+}
