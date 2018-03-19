@@ -127,21 +127,21 @@ void printCollData( spCollDataReply a_reply )
 
 void printACLs( spACLDataReply a_reply )
 {
-    if ( a_reply->acl_size() )
+    if ( a_reply->rule_size() )
     {
-        for ( int i = 0; i < a_reply->acl_size(); i++ )
+        for ( int i = 0; i < a_reply->rule_size(); i++ )
         {
-            const ACLData & acl = a_reply->acl(i);
+            const ACLRule & rule = a_reply->rule(i);
 
-            cout << "  ID       : " << acl.id() << "\n";
-            if ( acl.has_grant() )
-                cout << "  Grant    : " << acl.grant() << "\n";
-            if ( acl.has_deny() )
-                cout << "  Deny     : " << acl.deny() << "\n";
-            if ( acl.has_inh_grant() )
-                cout << "  Grant(i) : " << acl.inh_grant() << "\n";
-            if ( acl.has_inh_deny() )
-                cout << "  Deny(i)  : " << acl.inh_deny() << "\n";
+            cout << "  ID       : " << rule.id() << "\n";
+            if ( rule.has_grant() )
+                cout << "  Grant    : " << rule.grant() << "\n";
+            if ( rule.has_deny() )
+                cout << "  Deny     : " << rule.deny() << "\n";
+            if ( rule.has_inh_grant() )
+                cout << "  Grant(i) : " << rule.inh_grant() << "\n";
+            if ( rule.has_inh_deny() )
+                cout << "  Deny(i)  : " << rule.inh_deny() << "\n";
             cout << "\n";
         }
     }
@@ -471,15 +471,15 @@ int user()
 
 int acl()
 {
-    if ( g_args.size() < 2 )
-        return -1;
-    else if ( g_args[0] == "get" )
+    if ( g_args.size() == 2 && g_args[0] == "get" )
     {
         spACLDataReply rep = g_client->aclView( g_args[1] );
         printACLs( rep );
     }
-    else if ( g_args[0] == "set" )
+    else if (  g_args.size() == 3 && g_args[0] == "set" )
     {
+        g_client->aclUpdate( g_args[1], g_args[2] );
+        cout << "SUCCESS\n";
     }
     else
         return -1;

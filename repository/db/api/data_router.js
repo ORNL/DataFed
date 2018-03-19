@@ -102,7 +102,7 @@ router.get('/update', function (req, res) {
                 const client = g_lib.getUserFromUID( req.queryParams.client );
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 if ( !g_lib.hasAdminPermObject( client, data_id )) {
-                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_REC_WRITE ))
+                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_WRITE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -203,7 +203,7 @@ router.get('/view', function (req, res) {
         var data = g_db.d.document( data_id );
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
-            if ( !g_lib.hasPermission( client, data, g_lib.PERM_REC_VIEW ))
+            if ( !g_lib.hasPermission( client, data, g_lib.PERM_VIEW ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -250,7 +250,7 @@ router.get('/list', function (req, res) {
 
         for ( var i in items ) {
             item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
                 result.push({ id: item._id, title: item.title });
             }
         }
@@ -280,7 +280,7 @@ router.get('/find', function (req, res) {
 
         while ( cursor.hasNext() ) {
             item = cursor.next();
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
                 result.push({ id: item._id, title: item.title, desc: item.desc, md: item.md });
             }
         }

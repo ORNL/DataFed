@@ -50,14 +50,14 @@ function parsePermAction( a_perm_str ) {
 
         for ( var i in pstr ) {
             switch( pstr[i] ) {
-                case 'l': result.val |= g_lib.PERM_REC_LIST; break;
-                case 'v': result.val |= g_lib.PERM_REC_VIEW; break;
-                case 'u': result.val |= g_lib.PERM_REC_UPDATE; break;
-                case 'a': result.val |= g_lib.PERM_REC_ADMIN; break;
-                case 't': result.val |= g_lib.PERM_REC_TAG; break;
-                case 'n': result.val |= g_lib.PERM_REC_NOTE; break;
-                case 'r': result.val |= g_lib.PERM_DAT_READ; break;
-                case 'w': result.val |= g_lib.PERM_DAT_WRITE; break;
+                case 'l': result.val |= g_lib.PERM_LIST; break;
+                case 'v': result.val |= g_lib.PERM_VIEW; break;
+                case 'u': result.val |= g_lib.PERM_UPDATE; break;
+                case 'a': result.val |= g_lib.PERM_ADMIN; break;
+                case 't': result.val |= g_lib.PERM_TAG; break;
+                case 'n': result.val |= g_lib.PERM_NOTE; break;
+                case 'r': result.val |= g_lib.PERM_READ; break;
+                case 'w': result.val |= g_lib.PERM_WRITE; break;
                 default: throw g_lib.ERR_INVALID_PERM;
             }
         }
@@ -73,7 +73,7 @@ function parsePermAction( a_perm_str ) {
 
 //==================== ACL API FUNCTIONS
 
-router.post('/update', function (req, res) {
+router.get('/update', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -82,7 +82,7 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromUID( req.queryParams.client );
-                var object = g_lib.getObject( req.queryParams.object, client );
+                var object = g_lib.getObject( req.queryParams.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: object._id })._to.substr(2);
 
                 //console.log("obj:",object);
@@ -98,14 +98,14 @@ router.post('/update', function (req, res) {
 
                 g_lib.ensureAdminPermObject( client, object._id );
 
-                if ( req.queryParams.acls ) {
+                if ( req.queryParams.rules ) {
                     var rule,erule;
                     var g,ig,d,id;
                     var obj;
                     var update = false;
 
-                    for ( var i in req.queryParams.acls ) {
-                        rule = req.queryParams.acls[i];
+                    for ( var i in req.queryParams.rules ) {
+                        rule = req.queryParams.rules[i];
                         g = parsePermAction( rule.grant );
                         ig = parsePermAction( rule.inh_grant );
                         d = parsePermAction( rule.deny );
@@ -285,8 +285,8 @@ router.post('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('object', joi.string().required(), "ID or alias of data record or collection")
-.queryParam('acls', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
+.queryParam('id', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('rules', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
 .summary('Update ACL(s) on a data record or collection')
 .description('Update access control list(s) (ACLs) on a data record or collection. Default access permissions are set using ACLs with id of "default". Inherited permissions can only be set on collections.');
 
@@ -300,7 +300,7 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_INVALID_ID;
 
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
-            if ( !g_lib.hasPermission( client, object, g_lib.PERM_REC_ADMIN ))
+            if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 

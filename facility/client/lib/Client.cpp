@@ -716,6 +716,20 @@ public:
         return spACLDataReply( rep );
     }
 
+    void
+    aclUpdate( const std::string & a_id, const std::string & a_rules )
+    {
+        Auth::ACLUpdateRequest  req;
+        Anon::AckReply *        rep;
+
+        req.set_id( a_id );
+        req.set_rules( a_rules );
+
+        send<>( req, rep, m_ctx++ );
+
+        delete rep;
+    }
+
 /*
     spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
     {
@@ -977,6 +991,12 @@ spACLDataReply
 Client::aclView( const std::string & a_id )
 {
     return m_impl->aclView( a_id );
+}
+
+void
+Client::aclUpdate( const std::string & a_id, const std::string & a_rules )
+{
+    return m_impl->aclUpdate( a_id, a_rules );
 }
 
 }}

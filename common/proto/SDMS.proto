@@ -104,7 +104,7 @@ message XfrData
     required uint32             updated     = 9;
 }
 
-message ACLData
+message ACLRule
 {
     required string             id          = 1;
     optional uint32             grant       = 2;
@@ -112,4 +112,3 @@ message ACLData
     optional uint32             inh_grant   = 4;
     optional uint32             inh_deny    = 5;
 }
-

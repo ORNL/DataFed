@@ -31,11 +31,11 @@ router.get('/gridftp', function (req, res) {
         var req_perm = 0;
         switch ( req.queryParams.act ) {
             case "read":
-                req_perm = g_lib.PERM_DAT_READ;
+                req_perm = g_lib.PERM_READ;
                 break;
             case "write":
             case "create":
-                req_perm = g_lib.PERM_DAT_WRITE;
+                req_perm = g_lib.PERM_WRITE;
                 break;
             default:
                 throw g_lib.ERR_INVALID_ACTION;

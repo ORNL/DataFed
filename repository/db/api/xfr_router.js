@@ -36,9 +36,9 @@ router.get('/init', function (req, res) {
                 if ( !g_lib.hasAdminPermObject( client, data._id )) {
                     var perms;
                     if ( req.queryParams.mode == g_lib.XM_PUT )
-                        perms = g_lib.PERM_DAT_WRITE;
+                        perms = g_lib.PERM_WRITE;
                     else
-                        perms = g_lib.PERM_DAT_READ;
+                        perms = g_lib.PERM_READ;
                     if ( !g_lib.hasPermission( client, data, perms ))
                         throw g_lib.ERR_PERM_DENIED;
                 }

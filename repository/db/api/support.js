@@ -18,14 +18,14 @@ module.exports = ( function() {
     obj.bad_chars = "/:\" ";
 
     obj.PERM_NONE           = 0x000;
-    obj.PERM_REC_LIST       = 0x001;   // Find record by browsing
-    obj.PERM_REC_VIEW       = 0x002;   // Read public record fields (not collection items or raw data)
-    obj.PERM_REC_UPDATE     = 0x004;   // Update public record fields
-    obj.PERM_REC_ADMIN      = 0x008;   // Read, write admin fields, delete record
-    obj.PERM_REC_TAG        = 0x010;   // Add/remove tags on record
-    obj.PERM_REC_NOTE       = 0x020;   // Add, remove, edit annotations on record
-    obj.PERM_DAT_READ       = 0x040;   // Read raw data or list collection items
-    obj.PERM_DAT_WRITE      = 0x080;   // Write raw data or add/remove collection items
+    obj.PERM_LIST           = 0x001;   // Find record by browsing
+    obj.PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
+    obj.PERM_UPDATE         = 0x004;   // Update public record fields
+    obj.PERM_ADMIN          = 0x008;   // Read, write admin fields, delete record
+    obj.PERM_TAG            = 0x010;   // Add/remove tags on record
+    obj.PERM_NOTE           = 0x020;   // Add, remove, edit annotations on record
+    obj.PERM_READ           = 0x040;   // Read raw data or list collection items
+    obj.PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
     obj.PERM_ALL            = 0x0FF;
 
     obj.XS_INIT             = 0;
@@ -235,6 +235,41 @@ module.exports = ( function() {
         return false;
     };
 
+    // Only works for a single permission - not a mask
+    obj.hasLocalDeny = function( a_client, a_object, a_req_perm ) {
+        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
+
+        var acl;
+
+        // Evaluate permissions set directly on object
+        var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+        for ( var i in acls ) {
+            acl = acls[i];
+            if (( acl.deny & a_req_perm ) == a_req_perm )
+                return true;
+            else if (( acl.grant & a_req_perm ) == a_req_perm )
+                return false;
+        }
+
+        var grant = 0;
+
+        // Evaluate group permissions on object
+        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+        for ( i in acls ) {
+            acl = acls[i];
+            grant |= acl.grant;
+            if (( acl.deny & a_req_perm ) == a_req_perm )
+                return true;
+        }
+
+        if (( grant & a_req_perm ) == a_req_perm )
+            return false;
+
+        if (( a_object.deny & a_req_perm ) == a_req_perm )
+            return true;
+
+        return false;
+    };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
      * ownership or admin privelege - the hasAdminPermObject function performs these checks and should be

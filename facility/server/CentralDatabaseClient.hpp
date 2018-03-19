@@ -2,6 +2,7 @@
 #define CENTRALDBCLIENT_HPP
 
 #include "SDMS.pb.h"
+#include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
 
 namespace SDMS {
@@ -32,6 +33,7 @@ public:
     void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const char * a_task_id = 0 );
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
+    void aclUpdate( const Auth::ACLUpdateRequest & a_request, Anon::AckReply & a_reply );
 
 
 private:

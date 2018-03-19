@@ -82,6 +82,7 @@ Session::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
+        SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, AckReply, aclUpdate );
     }
 }
 

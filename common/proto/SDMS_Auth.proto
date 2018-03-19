@@ -164,12 +164,13 @@ message ACLViewRequest
     required string             id          = 1;
 }
 
-message ACLSetRequest
+message ACLUpdateRequest
 {
     required string             id          = 1;
+    required string             rules       = 2;
 }
 
 message ACLDataReply
 {
-    repeated ACLData            acl         = 1;
+    repeated ACLRule            rule        = 1;
 }

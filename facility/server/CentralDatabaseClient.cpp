@@ -95,9 +95,12 @@ public:
 
         if ( res == CURLE_OK )
         {
-            cout << "About to parse[" << res_json << "]" << endl;
-            a_result.Parse( res_json.c_str() );
-            //cout << "parse done" << endl;
+            if ( res_json.size() )
+            {
+                cout << "About to parse[" << res_json << "]" << endl;
+                a_result.Parse( res_json.c_str() );
+                //cout << "parse done" << endl;
+            }
 
             if ( http_code >= 200 && http_code < 300 )
             {
@@ -432,6 +435,66 @@ public:
         setACLData( a_reply, result );
     }
 
+    void aclUpdate( const Auth::ACLUpdateRequest & a_request, Anon::AckReply & a_reply )
+    {
+        (void) a_reply;
+
+        rapidjson::Document result;
+/*
+        string rules = "{";
+        bool comma = false;
+
+        for ( int i = 0; i < a_request.rule_size(); ++i )
+        {
+            const ACLRuleStr & rule = a_request.rule(i);
+
+            if ( i > 0 )
+                rules += ",";
+
+            rules += "{\"" + rule.id() + "\":{";
+            comma = false;
+
+            if ( rule.has_grant() )
+            {
+                rules += "\"grant\":\"" + rule.grant() + "\"";
+                comma = true;
+            }
+
+            if ( rule.has_deny() )
+            {
+                if ( comma )
+                    rules += ",";
+
+                rules += "\"deny\":\"" + rule.deny() + "\"";
+                comma = true;
+            }
+
+            if ( rule.has_inh_grant() )
+            {
+                if ( comma )
+                    rules += ",";
+
+                rules += "\"inh_grant\":\"" + rule.inh_grant() + "\"";
+                comma = true;
+            }
+
+            if ( rule.has_inh_deny() )
+            {
+                if ( comma )
+                    rules += ",";
+
+                rules += "\"inh_deny\":\"" + rule.inh_deny() + "\"";
+                comma = true;
+            }
+            rules += "}";
+        }
+        rules += "}";
+
+        cout << rules << "\n";
+*/
+        dbGet( "acl/update", {{"id",a_request.id()},{"rules",a_request.rules()}}, result );
+    }
+
     void setACLData( ACLDataReply & a_reply, rapidjson::Document & a_result )
     {
         if ( !a_result.IsArray() )
@@ -439,28 +502,28 @@ public:
             EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
         }
 
-        ACLData* acl;
+        ACLRule* rule;
         rapidjson::Value::MemberIterator imem;
 
         for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
         {
             rapidjson::Value & val = a_result[i];
 
-            acl = a_reply.add_acl();
-            acl->set_id( val["id"].GetString() );
+            rule = a_reply.add_rule();
+            rule->set_id( val["id"].GetString() );
 
             imem = val.FindMember("grant");
             if ( imem != val.MemberEnd() )
-                acl->set_grant( imem->value.GetInt() );
+                rule->set_grant( imem->value.GetInt() );
             imem = val.FindMember("deny");
             if ( imem != val.MemberEnd() )
-                acl->set_deny( imem->value.GetInt() );
+                rule->set_deny( imem->value.GetInt() );
             imem = val.FindMember("inh_grant");
             if ( imem != val.MemberEnd() )
-                acl->set_inh_grant( imem->value.GetInt() );
+                rule->set_inh_grant( imem->value.GetInt() );
             imem = val.FindMember("inh_deny");
             if ( imem != val.MemberEnd() )
-                acl->set_inh_deny( imem->value.GetInt() );
+                rule->set_inh_deny( imem->value.GetInt() );
         }
     }
 
@@ -501,6 +564,7 @@ DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( collRead, CollReadRequest, CollDataReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 DEF_IMPL( aclView, ACLViewRequest, ACLDataReply )
+DEF_IMPL( aclUpdate, ACLUpdateRequest, Anon::AckReply )
 
 
 void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )

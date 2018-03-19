@@ -165,7 +165,7 @@ router.get('/view', function (req, res) {
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_REC_VIEW ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_VIEW ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -217,17 +217,18 @@ router.get('/read', function (req, res) {
             }
 
         } else {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_DAT_READ ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_READ ))
                 throw g_lib.ERR_PERM_DENIED;
 
             items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, grant: v.grant, deny: v.deny, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
 
             for ( i in items ) {
                 item = items[i];
-                if ( g_lib.hasLocalPermission( client, item, g_lib.PERM_DAT_LIST )) {
-                    if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
-                        result.push({ id: item._id, title: item.title, alias: item.alias });
-                }
+                if ( g_lib.hasLocalDeny( client, item, g_lib.PERM_LIST ))
+                    continue;
+                if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
+                    result.push({ id: item._id, title: item.title, alias: item.alias });
+                //}
             }
         }
 
@@ -251,7 +252,7 @@ router.get('/read2', function (req, res) {
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_DAT_READ ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_READ ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -270,7 +271,7 @@ router.get('/read2', function (req, res) {
 
         for ( var i in items ) {
             item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_REC_LIST )) {
+            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
                 if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
                     result.push({ id: item._id, title: item.title, alias: item.alias });
             }
@@ -296,7 +297,7 @@ router.post('/write', function (req, res) {
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_DAT_WRITE ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
