@@ -80,6 +80,7 @@ Session::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
+        SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, AckReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, AckReply, aclUpdate );

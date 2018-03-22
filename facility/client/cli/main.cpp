@@ -487,6 +487,43 @@ int acl()
     return 0;
 }
 
+int add_item()
+{
+    if ( g_args.size() != 2 )
+        return -1;
+
+    if ( g_args[1][0] == 'g' )
+    {
+        // Group ID
+        g_client->groupAdd( g_args[1], g_args[0] );
+    }
+    else
+    {
+        // Collection ID
+        g_client->collectionAdd( g_args[1], g_args[0] );
+    }
+
+    return 0;
+}
+
+int rem_item()
+{
+    if ( g_args.size() != 2 )
+        return -1;
+
+    if ( g_args[1][0] == 'g' )
+    {
+        // Group ID
+        g_client->groupRemove( g_args[1], g_args[0] );
+    }
+    else
+    {
+        // Collection ID
+        g_client->collectionRemove( g_args[1], g_args[0] );
+    }
+
+    return 0;
+}
 
 int gen_ssh()
 {
@@ -589,6 +626,8 @@ int main( int a_argc, char ** a_argv )
     g_commands["delete"] = { "delete id\n\nDelete an existing data record.", delete_record };
     g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
     g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
+    g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection or group 'id2'.", add_item };
+    g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection or group 'id'.", rem_item };
     g_commands["find"] = { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records };
     g_commands["pull"] = { "pull id dest\n\n'Pull' raw data from repository and place in a specified destination directory. The 'id' parameter may be either a data identifier or an alias. The destination path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", pull_data };
     g_commands["push"] = { "push [id] src [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\n'Push' raw data from the specified source path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options, and for new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data };

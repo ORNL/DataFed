@@ -345,6 +345,47 @@ public:
         setCollData( a_reply, result );
     }
 
+    void collWrite( const CollWriteRequest & a_request, Anon::AckReply & a_reply )
+    {
+        (void) a_reply;
+
+        string add_list, rem_list;
+
+        if ( a_request.add_size() > 0 )
+        {
+            add_list = "[";
+            for ( int i = 0; i < a_request.add_size(); i++ )
+            {
+                if ( i > 0 )
+                    add_list += ",";
+
+                add_list += "\"" + a_request.add(i) + "\"";
+            }
+            add_list += "]";
+        }
+        else
+            add_list = "[]";
+
+        if ( a_request.rem_size() > 0 )
+        {
+            rem_list = "[";
+            for ( int i = 0; i < a_request.rem_size(); i++ )
+            {
+                if ( i > 0 )
+                    rem_list += ",";
+
+                rem_list += "\"" + a_request.rem(i) + "\"";
+            }
+            rem_list += "]";
+        }
+        else
+            rem_list = "[]";
+
+        rapidjson::Document result;
+
+        dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
+    }
+
     void setCollData( CollDataReply & a_reply, rapidjson::Document & a_result )
     {
         if ( !a_result.IsArray() )
@@ -562,6 +603,7 @@ DEF_IMPL( recordCreate, RecordCreateRequest, RecordDataReply )
 DEF_IMPL( recordUpdate, RecordUpdateRequest, RecordDataReply )
 DEF_IMPL( collList, CollListRequest, CollDataReply )
 DEF_IMPL( collRead, CollReadRequest, CollDataReply )
+DEF_IMPL( collWrite, CollWriteRequest, Anon::AckReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 DEF_IMPL( aclView, ACLViewRequest, ACLDataReply )
 DEF_IMPL( aclUpdate, ACLUpdateRequest, Anon::AckReply )

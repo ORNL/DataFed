@@ -730,6 +730,44 @@ public:
         delete rep;
     }
 
+    void
+    groupAdd( const std::string & a_group_id, const std::string & a_item_id )
+    {
+    }
+
+    void
+    groupRemove( const std::string & a_group_id, const std::string & a_item_id )
+    {
+    }
+
+    void
+    collectionAdd( const std::string & a_coll_id, const std::string & a_item_id )
+    {
+        Auth::CollWriteRequest  req;
+        Anon::AckReply *        rep;
+
+        req.set_id( a_coll_id );
+        req.add_add( a_item_id );
+
+        send<>( req, rep, m_ctx++ );
+
+        delete rep;
+    }
+
+    void
+    collectionRemove( const std::string & a_coll_id, const std::string & a_item_id )
+    {
+        Auth::CollWriteRequest  req;
+        Anon::AckReply *        rep;
+
+        req.set_id( a_coll_id );
+        req.add_rem( a_item_id );
+
+        send<>( req, rep, m_ctx++ );
+
+        delete rep;
+    }
+
 /*
     spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
     {
@@ -997,6 +1035,30 @@ void
 Client::aclUpdate( const std::string & a_id, const std::string & a_rules )
 {
     return m_impl->aclUpdate( a_id, a_rules );
+}
+
+void
+Client::groupAdd( const std::string & a_group_id, const std::string & a_item_id )
+{
+    m_impl->groupAdd( a_group_id, a_item_id );
+}
+
+void
+Client::groupRemove( const std::string & a_group_id, const std::string & a_item_id )
+{
+    m_impl->groupRemove( a_group_id, a_item_id );
+}
+
+void
+Client::collectionAdd( const std::string & a_coll_id, const std::string & a_item_id )
+{
+    m_impl->collectionAdd( a_coll_id, a_item_id );
+}
+
+void
+Client::collectionRemove( const std::string & a_coll_id, const std::string & a_item_id )
+{
+    m_impl->collectionRemove( a_coll_id, a_item_id );
 }
 
 }}

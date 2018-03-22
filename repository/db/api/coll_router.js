@@ -20,7 +20,7 @@ module.exports = router;
 
 //===== COLLECTION API FUNCTIONS =====
 
-router.post('/create', function (req, res) {
+router.get('/create', function (req, res) {
     try {
         var result = [];
 
@@ -85,13 +85,13 @@ router.post('/create', function (req, res) {
 .summary('Creates a new data collection')
 .description('Creates a new data collection');
 
-router.post('/update', function (req, res) {
+router.get('/update', function (req, res) {
     res.throw( 500, "Not yet implemented" );
 })
 .summary('Updates an existing data collection')
 .description('Updates an existing data collection');
 
-router.post('/delete', function (req, res) {
+router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -289,7 +289,7 @@ router.get('/read2', function (req, res) {
 .description('Read contents of a collection by ID or alias');
 
 
-router.post('/write', function (req, res) {
+router.get('/write', function (req, res) {
     try {
         const client = g_lib.getUserFromUID( req.queryParams.client );
 
@@ -305,14 +305,14 @@ router.post('/write', function (req, res) {
 
         if ( req.queryParams.remove ) {
             for ( i in req.queryParams.remove ) {
-                id = req.queryParams.remove[i];
+                id = g_lib.resolveID( req.queryParams.remove[i] );
                 g_db.item.removeByExample({ _from: coll_id, _to: id });
             }
         }
 
         if ( req.queryParams.add ) {
             for ( i in req.queryParams.add ) {
-                id = req.queryParams.add[i];
+                id = g_lib.resolveID( req.queryParams.add[i], client );
                 if ( g_db.item.firstExample({ _from: coll_id, _to: id }) == null )
                     g_db.item.save({ _from: coll_id, _to: id });
             }

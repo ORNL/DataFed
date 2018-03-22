@@ -151,6 +151,14 @@ message CollReadRequest
     optional uint32             count       = 5;
 }
 
+message CollWriteRequest
+{
+    required string             id          = 1;
+    repeated string             add         = 2;
+    repeated string             rem         = 3;
+    optional bool               rem_all     = 4;
+}
+
 // Returned for any command the returns one or more user records
 message CollDataReply
 {

@@ -93,6 +93,12 @@ public:
     spACLDataReply      aclView( const std::string & a_id );
     void                aclUpdate( const std::string & a_id, const std::string & a_rules );
 
+    void                groupAdd( const std::string & a_group_id, const std::string & a_item_id );
+    void                groupRemove( const std::string & a_group_id, const std::string & a_item_id );
+
+    void                collectionAdd( const std::string & a_coll_id, const std::string & a_item_id );
+    void                collectionRemove( const std::string & a_coll_id, const std::string & a_item_id );
+
 private:
     class ClientImpl;
 
