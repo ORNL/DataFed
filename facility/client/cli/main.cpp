@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <cstdlib>
 #include <unistd.h>
 #include <time.h>
 #include <boost/program_options.hpp>
@@ -109,6 +110,24 @@ void printUsers( spUserDataReply a_reply )
         cout << "]}\n";
 }
 
+void printGroups( spGroupDataReply a_reply )
+{
+    if ( a_reply->group_size() )
+    {
+        for ( int i = 0; i < a_reply->group_size(); i++ )
+        {
+            const GroupData & data = a_reply->group(i);
+
+            cout << "  ID    : " << data.id() << "\n";
+            if ( data.has_title() )
+                cout << "  Title : " << data.title() << "\n";
+            if ( data.has_desc() )
+                cout << "  Desc  : " << data.desc() << "\n";
+            cout << "\n";
+        }
+    }
+    else cout << "No results\n";
+}
 
 void printCollData( spCollDataReply a_reply )
 {
@@ -468,6 +487,50 @@ int user()
     return 0;
 }
 
+int group()
+{
+    if ( g_args.size() >= 2 )
+    {
+        if ( g_args[1] == "create" || g_args[1] == "new" )
+        {
+            if ( g_args.size() > 4 )
+                return -1;
+
+            spGroupDataReply rep = g_client->groupCreate( g_args[1], g_args.size() > 2?g_args[2].c_str():0, g_args.size() > 3?g_args[3].c_str():0 );
+            printGroups( rep );
+        }
+        else if ( g_args[1] == "update" || g_args[1] == "upd" )
+        {
+            if ( g_args.size() > 4 )
+                return -1;
+
+            spGroupDataReply rep = g_client->groupUpdate( g_args[1], g_args.size() > 2?g_args[2].c_str():0, g_args.size() > 3?g_args[3].c_str():0 );
+            printGroups( rep );
+        }
+        else if ( g_args[1] == "delete" || g_args[1] == "del" )
+        {
+            if ( g_args.size() > 2 )
+                return -1;
+
+            g_client->groupDelete( g_args[1] );
+
+        }
+        else
+            return -1;
+    }
+    else if ( g_args.size() == 1 )
+    {
+        if ( g_args[0] == "list" )
+        {
+            spGroupDataReply rep = g_client->groupList();
+            printGroups( rep );
+        }
+    }
+    else
+        return -1;
+
+    return 0;
+}
 
 int acl()
 {
@@ -626,6 +689,7 @@ int main( int a_argc, char ** a_argv )
     g_commands["delete"] = { "delete id\n\nDelete an existing data record.", delete_record };
     g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
     g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
+    g_commands["group"] = { "group id cmd [args]\n\nGroup command (create, update, delete) for group 'id'", group };
     g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection or group 'id2'.", add_item };
     g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection or group 'id'.", rem_item };
     g_commands["find"] = { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records };
@@ -641,7 +705,8 @@ int main( int a_argc, char ** a_argv )
     string      host = "127.0.0.1";
     uint16_t    port = 5800;
     uint32_t    timeout = 5;
-    string      cred_path = "/home/d3s/.sdms/";
+    string      home = getenv("HOME");
+    string      cred_path = home + "/.sdms/";
     string      unit = "CCS";
 
     po::options_description opts_startup( "Program options" );
@@ -799,7 +864,8 @@ int main( int a_argc, char ** a_argv )
 
                 try
                 {
-                    tok.tokens().insert( tok.begin(), "sdms" );
+                    //const char * foo = "sdms";
+                    tok.tokens().insert( tok.tokens().begin(),  "sdms" );
 
                     if ( processArgs( tok.tokens().size(), &tok.tokens()[0], opts_console, opts_pos ) == OPTS_OK )
                     {

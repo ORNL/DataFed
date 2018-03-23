@@ -568,6 +568,72 @@ public:
         }
     }
 
+    void groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "grp/create", {{"id",a_request.group().id()}}, result );
+
+        setGroupData( a_reply, result );
+    }
+
+    void groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "grp/update", {{"id",a_request.group().id()}}, result );
+
+        setGroupData( a_reply, result );
+    }
+
+    void groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
+    {
+    }
+
+    void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "grp/list", {}, result );
+
+        setGroupData( a_reply, result );
+    }
+
+    void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply )
+    {
+        rapidjson::Document result;
+
+        dbGet( "grp/view", {{"id",a_request.id()}}, result );
+
+        setGroupData( a_reply, result );
+    }
+
+    void setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_result )
+    {
+        if ( !a_result.IsArray() )
+        {
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        }
+
+        GroupData * group;
+        rapidjson::Value::MemberIterator imem;
+
+        for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+        {
+            rapidjson::Value & val = a_result[i];
+
+            group = a_reply.add_group();
+            group->set_id( val["id"].GetString() );
+
+            imem = val.FindMember("title");
+            if ( imem != val.MemberEnd() )
+                group->set_title( imem->value.GetString() );
+            imem = val.FindMember("desc");
+            if ( imem != val.MemberEnd() )
+                group->set_desc( imem->value.GetString() );
+        }
+    }
+
     CURL * m_curl;
     char * m_client;
 };
@@ -594,6 +660,7 @@ void CentralDatabaseClient::setClient( const std::string & a_client )
 { m_impl->meth( a_request, a_reply ); }
 
 
+
 //DEF_IMPL( checkPerms, CheckPermsRequest, CheckPermsReply )
 DEF_IMPL( userView, UserViewRequest, UserDataReply )
 DEF_IMPL( userList, UserListRequest, UserDataReply )
@@ -607,6 +674,11 @@ DEF_IMPL( collWrite, CollWriteRequest, Anon::AckReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 DEF_IMPL( aclView, ACLViewRequest, ACLDataReply )
 DEF_IMPL( aclUpdate, ACLUpdateRequest, Anon::AckReply )
+DEF_IMPL( groupCreate, GroupCreateRequest, Auth::GroupDataReply )
+DEF_IMPL( groupUpdate, GroupUpdateRequest, Auth::GroupDataReply )
+DEF_IMPL( groupDelete, GroupDeleteRequest, Anon::AckReply )
+DEF_IMPL( groupList, GroupListRequest, Auth::GroupDataReply )
+DEF_IMPL( groupView, GroupViewRequest, Auth::GroupDataReply )
 
 
 void CentralDatabaseClient::xfrInit( const std::string & a_data_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )

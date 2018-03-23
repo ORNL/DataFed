@@ -36,6 +36,11 @@ public:
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request, Anon::AckReply & a_reply );
 
+    void groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply );
+    void groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply );
+    void groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply );
+    void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply );
+    void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply );
 
 private:
     CentralDatabaseClientImpl* m_impl;

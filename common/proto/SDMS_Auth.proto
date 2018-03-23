@@ -165,6 +165,37 @@ message CollDataReply
     repeated SDMS.CollData      coll        = 1;
 }
 
+// ============================ Group Messages
+
+message GroupCreateRequest
+{
+    required SDMS.GroupData     group       = 1;
+}
+
+message GroupUpdateRequest
+{
+    required SDMS.GroupData     group       = 1;
+}
+
+message GroupDataReply
+{
+    repeated SDMS.GroupData     group       = 1;
+}
+
+message GroupDeleteRequest
+{
+    required string             id          = 1;
+}
+
+message GroupListRequest
+{
+}
+
+message GroupViewRequest
+{
+    required string             id          = 1;
+}
+
 // ============================ ACL Messages
 
 message ACLViewRequest

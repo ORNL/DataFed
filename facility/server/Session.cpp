@@ -84,6 +84,11 @@ Session::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, AckReply, aclUpdate );
+        SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
+        SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
+        SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
+        SET_MSG_HANDLER_DB( proto_id, GroupListRequest, GroupDataReply, groupList );
+        SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
     }
 }
 

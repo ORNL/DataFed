@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <thread>
 #include <mutex>
+#include <set>
 #include <condition_variable>
 #include <boost/filesystem.hpp>
 
@@ -72,11 +73,14 @@ public:
         if ( uid == 0 )
             EXCEPT( 0, "Could not determine login name" );
 
-        //m_context.add_verify_path("/etc/ssl/certs");
-        m_context.load_verify_file("/home/d3s/.sdms/sdmsd-CCS-cert.pem");
-        
         if ( m_cred_path.size() && *m_cred_path.rbegin() != '/' )
             m_cred_path += "/";
+
+        //m_context.add_verify_path("/etc/ssl/certs");
+
+        // TODO - This must be configurable
+        m_context.load_verify_file( m_cred_path + "sdmsd-" + a_unit + "-cert.pem");
+        
 
         m_cert_file = m_cred_path + uid + "-" + a_unit + "-cert.pem";
         m_key_file = m_cred_path + uid + "-" + a_unit + "-key.pem";
@@ -730,6 +734,78 @@ public:
         delete rep;
     }
 
+    // ===== GROUP METHODS =====
+
+    spGroupDataReply
+    groupCreate( const std::string & a_group_id, const char * a_title, const char * a_desc )
+    {
+        Auth::GroupCreateRequest  req;
+        Auth::GroupDataReply *  rep;
+
+        req.mutable_group()->set_id( a_group_id );
+        if ( a_title )
+            req.mutable_group()->set_title( a_title );
+        if ( a_desc )
+            req.mutable_group()->set_desc( a_desc );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spGroupDataReply( rep );
+    }
+
+    spGroupDataReply
+    groupUpdate( const std::string & a_group_id, const char * a_title, const char * a_desc )
+    {
+        Auth::GroupUpdateRequest  req;
+        Auth::GroupDataReply *  rep;
+
+        req.mutable_group()->set_id( a_group_id );
+        if ( a_title )
+            req.mutable_group()->set_title( a_title );
+        if ( a_desc )
+            req.mutable_group()->set_desc( a_desc );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spGroupDataReply( rep );
+    }
+
+    void groupDelete( const std::string & a_group_id )
+    {
+        Auth::GroupDeleteRequest  req;
+        Anon::AckReply *        rep;
+
+        req.set_id( a_group_id );
+
+        send<>( req, rep, m_ctx++ );
+
+        delete rep;
+    }
+
+    spGroupDataReply
+    groupList()
+    {
+        Auth::GroupListRequest  req;
+        Auth::GroupDataReply *  rep;
+
+        send<>( req, rep, m_ctx++ );
+
+        return spGroupDataReply( rep );
+    }
+
+    spGroupDataReply
+    groupView( const std::string & a_group_id )
+    {
+        Auth::GroupViewRequest  req;
+        Auth::GroupDataReply *  rep;
+
+        req.set_id( a_group_id );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spGroupDataReply( rep );
+    }
+
     void
     groupAdd( const std::string & a_group_id, const std::string & a_item_id )
     {
@@ -1037,16 +1113,46 @@ Client::aclUpdate( const std::string & a_id, const std::string & a_rules )
     return m_impl->aclUpdate( a_id, a_rules );
 }
 
-void
-Client::groupAdd( const std::string & a_group_id, const std::string & a_item_id )
+spGroupDataReply
+Client::groupCreate( const std::string & a_group_id, const char * a_title, const char * a_desc )
 {
-    m_impl->groupAdd( a_group_id, a_item_id );
+    return m_impl->groupCreate( a_group_id, a_title, a_desc );
+}
+
+spGroupDataReply
+Client::groupUpdate( const std::string & a_group_id, const char * a_title, const char * a_desc )
+{
+    return m_impl->groupUpdate( a_group_id, a_title, a_desc );
 }
 
 void
-Client::groupRemove( const std::string & a_group_id, const std::string & a_item_id )
+Client::groupDelete( const std::string & a_group_id )
 {
-    m_impl->groupRemove( a_group_id, a_item_id );
+    m_impl->groupDelete( a_group_id );
+}
+
+spGroupDataReply
+Client::groupList()
+{
+    return m_impl->groupList();
+}
+
+spGroupDataReply
+Client::groupView( const std::string & a_group_id )
+{
+    m_impl->groupView( a_group_id );
+}
+
+void
+Client::groupAdd( const std::string & a_group_id, const std::string & a_user_id )
+{
+    m_impl->groupAdd( a_group_id, a_user_id );
+}
+
+void
+Client::groupRemove( const std::string & a_group_id, const std::string & a_user_id )
+{
+    m_impl->groupRemove( a_group_id, a_user_id );
 }
 
 void

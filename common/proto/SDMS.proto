@@ -104,6 +104,14 @@ message XfrData
     required uint32             updated     = 9;
 }
 
+message GroupData
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    repeated string             user_id     = 4;
+}
+
 message ACLRule
 {
     required string             id          = 1;

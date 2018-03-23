@@ -17,6 +17,7 @@ typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
 typedef std::shared_ptr<Auth::XfrDataReply> spXfrDataReply;
 typedef std::shared_ptr<Auth::ACLDataReply> spACLDataReply;
+typedef std::shared_ptr<Auth::GroupDataReply> spGroupDataReply;
 
 enum DestFlags : uint16_t
 {
@@ -93,8 +94,13 @@ public:
     spACLDataReply      aclView( const std::string & a_id );
     void                aclUpdate( const std::string & a_id, const std::string & a_rules );
 
-    void                groupAdd( const std::string & a_group_id, const std::string & a_item_id );
-    void                groupRemove( const std::string & a_group_id, const std::string & a_item_id );
+    spGroupDataReply    groupCreate( const std::string & a_group_id, const char * a_title = 0, const char * a_desc = 0 );
+    spGroupDataReply    groupUpdate( const std::string & a_group_id, const char * a_title = 0, const char * a_desc = 0 );
+    void                groupDelete( const std::string & a_group_id );
+    spGroupDataReply    groupList();
+    spGroupDataReply    groupView( const std::string & a_group_id );
+    void                groupAdd( const std::string & a_group_id, const std::string & a_user_id );
+    void                groupRemove( const std::string & a_group_id, const std::string & a_user_id );
 
     void                collectionAdd( const std::string & a_coll_id, const std::string & a_item_id );
     void                collectionRemove( const std::string & a_coll_id, const std::string & a_item_id );

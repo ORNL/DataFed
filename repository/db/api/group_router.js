@@ -20,7 +20,7 @@ module.exports = router;
 
 //========== GROUP API FUNCTIONS ==========
 
-router.post('/create', function (req, res) {
+router.get('/create', function (req, res) {
     try {
         var result = [];
 
@@ -40,7 +40,7 @@ router.post('/create', function (req, res) {
                     uid = client._key;
                 }
 
-                var group = g_db.g.save({ _key: uid + ":" + req.queryParams.gid, gid: req.queryParams.gid, descr: req.queryParams.descr }, { returnNew: true });
+                var group = g_db.g.save({ _key: uid + ":" + req.queryParams.id, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
 
                 g_db.owner.save({ _from: group._id, _to: "u/" + uid });
 
@@ -66,15 +66,16 @@ router.post('/create', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client crtificate")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('gid', joi.string().required(), "Group ID")
-.queryParam('descr', joi.string().optional(), "Description")
+.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('title', joi.string().optional(), "Title")
+.queryParam('desc', joi.string().optional(), "Description")
 .queryParam('members', joi.array(joi.string()).optional(), "Array of member UIDs")
 .summary('Creates a new group')
 .description('Creates a new group owned by client (or subject), with optional members');
 
 
 
-router.post('/delete', function (req, res) {
+router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -86,9 +87,9 @@ router.post('/delete', function (req, res) {
                 var group_id;
 
                 if ( req.queryParams.subject ) {
-                    group_id = "g/" + req.queryParams.subject + ":" + req.queryParams.gid;
+                    group_id = "g/" + req.queryParams.subject + ":" + req.queryParams.id;
                 } else {
-                    group_id = "g/" + client._key + ":" + req.queryParams.gid;
+                    group_id = "g/" + client._key + ":" + req.queryParams.id;
                 }
 
                 g_lib.ensureAdminPermObject( req.queryParams.client, group_id );
@@ -101,7 +102,7 @@ router.post('/delete', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client crtificate")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('gid', joi.string().required(), "Group ID")
+.queryParam('id', joi.string().required(), "Group ID")
 .summary('Deletes an existing group')
 .description('Deletes an existing group owned by client or subject');
 

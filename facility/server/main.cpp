@@ -22,8 +22,9 @@ int main( int a_argc, char ** a_argv )
         int         port = 5800;
         int         timeout = 5;
         uint32_t    num_threads = 1;
-        const char * cert_dir = "/home/d3s/.sdms-server/";
-        int opt;
+        string      home = getenv("HOME");
+        string      cred_path = home + "/.sdms-server/";
+        int         opt;
 
         while (( opt = getopt( a_argc, a_argv, "?p:n:t:c:" )) != -1 )
         {
@@ -47,14 +48,13 @@ int main( int a_argc, char ** a_argv )
                 timeout = atoi( optarg );
                 break;
             case 'c':
-                cert_dir = optarg;
+                cred_path = optarg;
                 break;
             }
         }
 
-        Facility::Server server( port, cert_dir, timeout, num_threads );
+        Facility::Server server( port, cred_path, timeout, num_threads );
 
-        cout << "start\n";
         server.run( false );
 
 /*
