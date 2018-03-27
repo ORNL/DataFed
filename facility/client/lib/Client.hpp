@@ -99,8 +99,8 @@ public:
     void                groupDelete( const std::string & a_group_id );
     spGroupDataReply    groupList();
     spGroupDataReply    groupView( const std::string & a_group_id );
-    void                groupAdd( const std::string & a_group_id, const std::string & a_user_id );
-    void                groupRemove( const std::string & a_group_id, const std::string & a_user_id );
+    spGroupDataReply    groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids );
+    spGroupDataReply    groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids );
 
     void                collectionAdd( const std::string & a_coll_id, const std::string & a_item_id );
     void                collectionRemove( const std::string & a_coll_id, const std::string & a_item_id );

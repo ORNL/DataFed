@@ -40,7 +40,7 @@ router.get('/create', function (req, res) {
                     uid = client._key;
                 }
 
-                var group = g_db.g.save({ _key: uid + ":" + req.queryParams.id, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
+                var group = g_db.g.save({ uid: uid, gid: req.queryParams.id, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
 
                 g_db.owner.save({ _from: group._id, _to: "u/" + uid });
 
@@ -54,6 +54,12 @@ router.get('/create', function (req, res) {
                         g_db.member.save({ _from: group._id, _to: "u/" + mem });
                     }
                 }
+
+                group.members = g_db._query( "for v in 1..1 outbound @group member return v._key", { group: group._id }).toArray();
+
+                delete group._id;
+                delete group._key;
+                delete group._rev;
 
                 result.push( group.new );
             }
@@ -74,6 +80,100 @@ router.get('/create', function (req, res) {
 .description('Creates a new group owned by client (or subject), with optional members');
 
 
+router.get('/update', function (req, res) {
+    try {
+        var result = [];
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uid","admin"],
+                write: ["g","owner","member"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromUID( req.queryParams.client );
+                var group;
+
+                if ( req.queryParams.subject ) {
+                    group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
+                    if ( !group )
+                        throw g_lib.ERR_GROUP_NOT_FOUND;
+                    g_lib.ensureAdminPermObject( req.queryParams.client, group._id );
+                } else {
+                    group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
+                    if ( !group )
+                        throw g_lib.ERR_GROUP_NOT_FOUND;
+                }
+
+                var obj = {};
+                var upd = false;
+
+                if ( req.queryParams.title ) {
+                    obj.title = req.queryParams.title;
+                    upd = true;
+                }
+
+                if ( req.queryParams.desc ) {
+                    obj.desc = req.queryParams.desc;
+                    upd = true;
+                }
+
+                if ( upd ) {
+                    group = g_db._update( group._id, obj, { returnNew: true });
+                    group = group.new;
+                }
+
+                var mem;
+                var i;
+
+                if ( req.queryParams.add ) {
+                    for ( i in req.queryParams.add ) {
+                        mem = req.queryParams.add[i];
+
+                        if ( !g_db._exists( "u/" + mem ))
+                            throw g_lib.ERR_USER_NOT_FOUND;
+
+                        if ( !g_db.member.firstExample({ _from: group._id, _to: "u/" + mem  }) )
+                            g_db.member.save({ _from: group._id, _to: "u/" + mem });
+                    }
+                }
+
+                if ( req.queryParams.rem ) {
+                    var edge;
+
+                    for ( i in req.queryParams.rem ) {
+                        mem = req.queryParams.rem[i];
+
+                        edge = g_db.member.firstExample({ _from: group._id, _to: "u/" + mem  });
+                        if ( edge )
+                            g_db._remove( edge );
+                    }
+                }
+
+                group.members = g_db._query( "for v in 1..1 outbound @group member return v._key", { group: group._id }).toArray();
+
+                delete group._id;
+                delete group._key;
+                delete group._rev;
+
+                result.push( group );
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client crtificate")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('title', joi.string().optional(), "New title")
+.queryParam('desc', joi.string().optional(), "New description")
+.queryParam('add', joi.array(joi.string()).optional(), "Array of member UIDs to add to group")
+.queryParam('rem', joi.array(joi.string()).optional(), "Array of member UIDs to remove from group")
+.summary('Updates an existing group')
+.description('Updates an existing group owned by client (or subject)');
+
 
 router.get('/delete', function (req, res) {
     try {
@@ -84,16 +184,20 @@ router.get('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromUID( req.queryParams.client );
-                var group_id;
+                var group;
 
                 if ( req.queryParams.subject ) {
-                    group_id = "g/" + req.queryParams.subject + ":" + req.queryParams.id;
+                    group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
+                    if ( !group )
+                        throw g_lib.ERR_GROUP_NOT_FOUND;
+                    g_lib.ensureAdminPermObject( req.queryParams.client, group._id );
                 } else {
-                    group_id = "g/" + client._key + ":" + req.queryParams.id;
+                    group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
+                    if ( !group )
+                        throw g_lib.ERR_GROUP_NOT_FOUND;
                 }
 
-                g_lib.ensureAdminPermObject( req.queryParams.client, group_id );
-                g_graph.g.remove( group_id );
+                g_graph.g.remove( group._id );
             }
         });
     } catch( e ) {
@@ -111,21 +215,16 @@ router.get('/list', function (req, res) {
     try {
         const client = g_lib.getUserFromUID( req.queryParams.client );
         var owner_id;
-        var offset;
 
         if ( req.queryParams.subject ) {
             owner_id = "u/" + req.queryParams.subject;
-            offset = req.queryParams.subject.length + 1;
             g_lib.ensureAdminPermUser( client, owner_id );
         } else {
             owner_id = client._id;
-            offset = client._key.length + 1;
         }
 
-        var groups = g_db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('g', v) return { id: v._key, descr: v.descr }", { client: owner_id }).toArray();
-        for ( var i in groups ) {
-            groups[i].id = groups[i].id.substr( offset );
-        }
+        var groups = g_db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('g', v) return { gid: v.gid, title: v.title }", { client: owner_id }).toArray();
+
         res.send( groups );
     } catch( e ) {
         g_lib.handleException( e, res );
@@ -140,23 +239,23 @@ router.get('/list', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromUID( req.queryParams.client );
-        var group_id = "g/";
-        var offset;
+        var group;
 
         if ( req.queryParams.subject ) {
-            group_id += req.queryParams.subject + ":" + req.queryParams.id;
-            offset = req.queryParams.subject.length + 1;
-            g_lib.ensureAdminPermUser( client, group_id );
+            group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
+            if ( !group )
+                throw g_lib.ERR_GROUP_NOT_FOUND;
+
+            g_lib.ensureAdminPermUser( client, group._id );
         } else {
-            group_id += client._key + ":" + req.queryParams.id;
-            offset = client._key.length + 1;
+            group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
+            if ( !group )
+                throw g_lib.ERR_GROUP_NOT_FOUND;
         }
 
-        var group = g_db.g.document( group_id );
-        var result = { id: group._key.substr( offset ), descr: group.descr };
-        result.members = g_db._query( "for v in 1..1 outbound @group member return { id: v._key, name_last: v.name_last, name_first: v.name_first }", { group: group_id }).toArray();
-        
-        res.send( result );
+        var result = { gid: group.gid, title: group.title, desc: group.desc };
+        result.members = g_db._query( "for v in 1..1 outbound @group member return v._key", { group: group._id }).toArray();
+        res.send( [result] );
 
     } catch( e ) {
         g_lib.handleException( e, res );

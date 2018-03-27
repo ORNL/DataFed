@@ -174,7 +174,12 @@ message GroupCreateRequest
 
 message GroupUpdateRequest
 {
-    required SDMS.GroupData     group       = 1;
+    required string             gid         = 1;
+    optional string             uid         = 2;
+    optional string             title       = 3;
+    optional string             desc        = 4;
+    repeated string             add_uid     = 5;
+    repeated string             rem_uid     = 6;
 }
 
 message GroupDataReply
@@ -184,7 +189,7 @@ message GroupDataReply
 
 message GroupDeleteRequest
 {
-    required string             id          = 1;
+    required string             gid         = 1;
 }
 
 message GroupListRequest
@@ -193,7 +198,7 @@ message GroupListRequest
 
 message GroupViewRequest
 {
-    required string             id          = 1;
+    required string             gid         = 1;
 }
 
 // ============================ ACL Messages

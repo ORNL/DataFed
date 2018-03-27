@@ -106,10 +106,11 @@ message XfrData
 
 message GroupData
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    repeated string             user_id     = 4;
+    required string             gid         = 1;
+    optional string             uid         = 2;
+    optional string             title       = 3;
+    optional string             desc        = 4;
+    repeated string             member      = 5;
 }
 
 message ACLRule

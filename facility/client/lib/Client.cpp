@@ -742,7 +742,7 @@ public:
         Auth::GroupCreateRequest  req;
         Auth::GroupDataReply *  rep;
 
-        req.mutable_group()->set_id( a_group_id );
+        req.mutable_group()->set_gid( a_group_id );
         if ( a_title )
             req.mutable_group()->set_title( a_title );
         if ( a_desc )
@@ -759,11 +759,11 @@ public:
         Auth::GroupUpdateRequest  req;
         Auth::GroupDataReply *  rep;
 
-        req.mutable_group()->set_id( a_group_id );
+        req.set_gid( a_group_id );
         if ( a_title )
-            req.mutable_group()->set_title( a_title );
+            req.set_title( a_title );
         if ( a_desc )
-            req.mutable_group()->set_desc( a_desc );
+            req.set_desc( a_desc );
 
         send<>( req, rep, m_ctx++ );
 
@@ -775,7 +775,7 @@ public:
         Auth::GroupDeleteRequest  req;
         Anon::AckReply *        rep;
 
-        req.set_id( a_group_id );
+        req.set_gid( a_group_id );
 
         send<>( req, rep, m_ctx++ );
 
@@ -799,21 +799,41 @@ public:
         Auth::GroupViewRequest  req;
         Auth::GroupDataReply *  rep;
 
-        req.set_id( a_group_id );
+        req.set_gid( a_group_id );
 
         send<>( req, rep, m_ctx++ );
 
         return spGroupDataReply( rep );
     }
 
-    void
-    groupAdd( const std::string & a_group_id, const std::string & a_item_id )
+    spGroupDataReply
+    groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids )
     {
+        Auth::GroupUpdateRequest  req;
+        Auth::GroupDataReply *  rep;
+
+        req.set_gid( a_group_id );
+        for ( vector<string>::const_iterator u = a_uids.begin(); u != a_uids.end(); ++u )
+            req.add_add_uid( *u );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spGroupDataReply( rep );
     }
 
-    void
-    groupRemove( const std::string & a_group_id, const std::string & a_item_id )
+    spGroupDataReply
+    groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids )
     {
+        Auth::GroupUpdateRequest  req;
+        Auth::GroupDataReply *  rep;
+
+        req.set_gid( a_group_id );
+        for ( vector<string>::const_iterator u = a_uids.begin(); u != a_uids.end(); ++u )
+            req.add_rem_uid( *u );
+
+        send<>( req, rep, m_ctx++ );
+
+        return spGroupDataReply( rep );
     }
 
     void
@@ -1140,19 +1160,19 @@ Client::groupList()
 spGroupDataReply
 Client::groupView( const std::string & a_group_id )
 {
-    m_impl->groupView( a_group_id );
+    return m_impl->groupView( a_group_id );
 }
 
-void
-Client::groupAdd( const std::string & a_group_id, const std::string & a_user_id )
+spGroupDataReply
+Client::groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids )
 {
-    m_impl->groupAdd( a_group_id, a_user_id );
+    return m_impl->groupAdd( a_group_id, a_uids );
 }
 
-void
-Client::groupRemove( const std::string & a_group_id, const std::string & a_user_id )
+spGroupDataReply
+Client::groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids )
 {
-    m_impl->groupRemove( a_group_id, a_user_id );
+    return m_impl->groupRemove( a_group_id, a_uids );
 }
 
 void

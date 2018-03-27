@@ -118,11 +118,18 @@ void printGroups( spGroupDataReply a_reply )
         {
             const GroupData & data = a_reply->group(i);
 
-            cout << "  ID    : " << data.id() << "\n";
+            cout << "  GID   : " << data.gid() << "\n";
             if ( data.has_title() )
                 cout << "  Title : " << data.title() << "\n";
             if ( data.has_desc() )
                 cout << "  Desc  : " << data.desc() << "\n";
+            if ( data.member_size() > 0 )
+            {
+                cout << "  Member:";
+                for ( int i = 0; i < data.member_size(); ++i )
+                    cout << " " << data.member(i);
+                cout << "\n";
+            }
             cout << "\n";
         }
     }
@@ -491,7 +498,7 @@ int group()
 {
     if ( g_args.size() >= 2 )
     {
-        if ( g_args[1] == "create" || g_args[1] == "new" )
+        if ( g_args[0] == "create" || g_args[0] == "new" )
         {
             if ( g_args.size() > 4 )
                 return -1;
@@ -499,7 +506,7 @@ int group()
             spGroupDataReply rep = g_client->groupCreate( g_args[1], g_args.size() > 2?g_args[2].c_str():0, g_args.size() > 3?g_args[3].c_str():0 );
             printGroups( rep );
         }
-        else if ( g_args[1] == "update" || g_args[1] == "upd" )
+        else if ( g_args[0] == "update" || g_args[0] == "upd" )
         {
             if ( g_args.size() > 4 )
                 return -1;
@@ -507,13 +514,45 @@ int group()
             spGroupDataReply rep = g_client->groupUpdate( g_args[1], g_args.size() > 2?g_args[2].c_str():0, g_args.size() > 3?g_args[3].c_str():0 );
             printGroups( rep );
         }
-        else if ( g_args[1] == "delete" || g_args[1] == "del" )
+        else if ( g_args[0] == "delete" || g_args[0] == "del" )
         {
             if ( g_args.size() > 2 )
                 return -1;
 
             g_client->groupDelete( g_args[1] );
 
+        }
+        else if ( g_args[0] == "view" )
+        {
+            if ( g_args.size() > 2 )
+                return -1;
+
+            spGroupDataReply rep = g_client->groupView( g_args[1] );
+            printGroups( rep );
+        }
+        else if ( g_args[0] == "add" )
+        {
+            if ( g_args.size() < 3 )
+                return -1;
+
+            vector<string> ids;
+            for ( size_t i = 2; i < g_args.size(); ++i )
+                ids.push_back( g_args[i] );
+
+            spGroupDataReply rep = g_client->groupAdd( g_args[1], ids );
+            printGroups( rep );
+        }
+        else if ( g_args[0] == "rem" )
+        {
+            if ( g_args.size() < 3 )
+                return -1;
+
+            vector<string> ids;
+            for ( size_t i = 2; i < g_args.size(); ++i )
+                ids.push_back( g_args[i] );
+
+            spGroupDataReply rep = g_client->groupRemove( g_args[1], ids );
+            printGroups( rep );
         }
         else
             return -1;
@@ -555,16 +594,8 @@ int add_item()
     if ( g_args.size() != 2 )
         return -1;
 
-    if ( g_args[1][0] == 'g' )
-    {
-        // Group ID
-        g_client->groupAdd( g_args[1], g_args[0] );
-    }
-    else
-    {
-        // Collection ID
-        g_client->collectionAdd( g_args[1], g_args[0] );
-    }
+    // Collection ID
+    g_client->collectionAdd( g_args[1], g_args[0] );
 
     return 0;
 }
@@ -574,16 +605,8 @@ int rem_item()
     if ( g_args.size() != 2 )
         return -1;
 
-    if ( g_args[1][0] == 'g' )
-    {
-        // Group ID
-        g_client->groupRemove( g_args[1], g_args[0] );
-    }
-    else
-    {
-        // Collection ID
-        g_client->collectionRemove( g_args[1], g_args[0] );
-    }
+    // Collection ID
+    g_client->collectionRemove( g_args[1], g_args[0] );
 
     return 0;
 }
@@ -689,7 +712,7 @@ int main( int a_argc, char ** a_argv )
     g_commands["delete"] = { "delete id\n\nDelete an existing data record.", delete_record };
     g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
     g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
-    g_commands["group"] = { "group id cmd [args]\n\nGroup command (create, update, delete) for group 'id'", group };
+    g_commands["group"] = { "group cmd [id [args]]\n\nGroup command (list, view, create, update, delete) for group 'id'", group };
     g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection or group 'id2'.", add_item };
     g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection or group 'id'.", rem_item };
     g_commands["find"] = { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records };

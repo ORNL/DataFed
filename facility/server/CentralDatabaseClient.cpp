@@ -4,6 +4,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
+#include <rapidjson/error/en.h>
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "CentralDatabaseClient.hpp"
@@ -106,6 +107,8 @@ public:
             {
                 if ( a_result.HasParseError() )
                 {
+                    rapidjson::ParseErrorCode ec = a_result.GetParseError();
+                    cerr << "Parse error: " << rapidjson::GetParseError_En( ec ) << endl;
                     EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
                 }
 
@@ -572,7 +575,26 @@ public:
     {
         rapidjson::Document result;
 
-        dbGet( "grp/create", {{"id",a_request.group().id()}}, result );
+        vector<pair<string,string>> params;
+        params.push_back({"id", a_request.group().gid()});
+        if ( a_request.group().has_title() )
+            params.push_back({"title", a_request.group().title()});
+        if ( a_request.group().has_desc() )
+            params.push_back({"desc", a_request.group().desc()});
+        if ( a_request.group().member_size() > 0 )
+        {
+            string members = "[";
+            for ( int i = 0; i < a_request.group().member_size(); ++i )
+            {
+                if ( i > 0 )
+                    members += ",";
+                members += "\"" + a_request.group().member(i) + "\"";
+            }
+            members += "]";
+            params.push_back({"members",  members });
+        }
+
+        dbGet( "grp/create", params, result );
 
         setGroupData( a_reply, result );
     }
@@ -581,17 +603,52 @@ public:
     {
         rapidjson::Document result;
 
-        dbGet( "grp/update", {{"id",a_request.group().id()}}, result );
+        vector<pair<string,string>> params;
+        params.push_back({"id", a_request.gid()});
+        if ( a_request.has_title() )
+            params.push_back({"title", a_request.title()});
+        if ( a_request.has_desc() )
+            params.push_back({"desc", a_request.desc()});
+        if ( a_request.add_uid_size() > 0 )
+        {
+            string members = "[";
+            for ( int i = 0; i < a_request.add_uid_size(); ++i )
+            {
+                if ( i > 0 )
+                    members += ",";
+                members += "\"" + a_request.add_uid(i) + "\"";
+            }
+            members += "]";
+            params.push_back({"add",  members });
+        }
+        if ( a_request.rem_uid_size() > 0 )
+        {
+            string members = "[";
+            for ( int i = 0; i < a_request.rem_uid_size(); ++i )
+            {
+                if ( i > 0 )
+                    members += ",";
+                members += "\"" + a_request.rem_uid(i) + "\"";
+            }
+            members += "]";
+            params.push_back({"rem",  members });
+        }
+
+        dbGet( "grp/update", params, result );
 
         setGroupData( a_reply, result );
     }
 
     void groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
     {
+        (void) a_request;
+        (void) a_reply;
     }
 
     void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply )
     {
+        (void) a_request;
+
         rapidjson::Document result;
 
         dbGet( "grp/list", {}, result );
@@ -603,7 +660,7 @@ public:
     {
         rapidjson::Document result;
 
-        dbGet( "grp/view", {{"id",a_request.id()}}, result );
+        dbGet( "grp/view", {{"id",a_request.gid()}}, result );
 
         setGroupData( a_reply, result );
     }
@@ -623,14 +680,23 @@ public:
             rapidjson::Value & val = a_result[i];
 
             group = a_reply.add_group();
-            group->set_id( val["id"].GetString() );
+            group->set_gid( val["gid"].GetString() );
 
+            imem = val.FindMember("uid");
+            if ( imem != val.MemberEnd() )
+                group->set_uid( val["uid"].GetString() );
             imem = val.FindMember("title");
             if ( imem != val.MemberEnd() )
                 group->set_title( imem->value.GetString() );
             imem = val.FindMember("desc");
             if ( imem != val.MemberEnd() )
                 group->set_desc( imem->value.GetString() );
+            imem = val.FindMember("members");
+            if ( imem != val.MemberEnd() )
+            {
+                for ( rapidjson::SizeType m = 0; m < imem->value.Size(); m++ )
+                    group->add_member( imem->value[m].GetString() );
+            }
         }
     }
 
