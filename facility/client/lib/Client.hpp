@@ -3,7 +3,16 @@
 
 #include <memory>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <set>
+#include <condition_variable>
 #include <stdint.h>
+#include <asio.hpp>
+#include <asio/ssl.hpp>
+#include "MsgBuf.hpp"
+
+
 #include "SDMS.pb.h"
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
@@ -107,9 +116,42 @@ public:
     void                collectionRemove( const std::string & a_coll_id, const std::string & a_item_id );
 
 private:
-    class ClientImpl;
+    typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 
-    ClientImpl * m_impl;
+    void connect( asio::ip::tcp::resolver::iterator endpoint_iterator );
+    bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context );
+    void handShake();
+    template<typename RQT,typename RPT>
+    void send( RQT & a_request, RPT *& a_reply, uint16_t a_context );
+    std::string parseQuery( const std::string & a_query );
+
+    enum State
+    {
+        NOT_STARTED,
+        STARTED,
+        FAILED
+    };
+
+    std::string                 m_host;
+    uint32_t                    m_port;
+    std::string                 m_cred_path;
+    std::string                 m_unit;
+    std::string                 m_cert_file;
+    std::string                 m_key_file;
+    asio::io_service            m_io_service;
+    asio::ip::tcp::resolver     m_resolver;
+    asio::ssl::context          m_context;
+    ssl_socket *                m_socket;
+    std::thread *               m_io_thread;
+    uint32_t                    m_timeout;
+    uint16_t                    m_ctx;
+    MsgBuf                      m_in_buf;
+    MsgBuf                      m_out_buf;
+    State                       m_state;
+    std::condition_variable     m_start_cvar;
+    std::mutex                  m_mutex;
+    std::string                 m_country;
+    std::string                 m_org;
 };
 
 }}

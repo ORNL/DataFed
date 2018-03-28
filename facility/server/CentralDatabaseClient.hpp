@@ -1,13 +1,18 @@
 #ifndef CENTRALDBCLIENT_HPP
 #define CENTRALDBCLIENT_HPP
 
+#include <string>
+#include <vector>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/error/en.h>
+#include <curl/curl.h>
 #include "SDMS.pb.h"
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
 
 namespace SDMS {
-
-class CentralDatabaseClientImpl;
 
 class CentralDatabaseClient
 {
@@ -43,7 +48,16 @@ public:
     void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply );
 
 private:
-    CentralDatabaseClientImpl* m_impl;
+    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
+    void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
+    void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
+    void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
+    void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
+    void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
+    void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
+
+    CURL * m_curl;
+    char * m_client;
 };
 
 }
