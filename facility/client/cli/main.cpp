@@ -498,7 +498,7 @@ int group()
 {
     if ( g_args.size() >= 2 )
     {
-        if ( g_args[0] == "create" || g_args[0] == "new" )
+        if ( g_args[0] == "create" || g_args[0] == "c" )
         {
             if ( g_args.size() > 4 )
                 return -1;
@@ -506,7 +506,7 @@ int group()
             spGroupDataReply rep = g_client->groupCreate( g_args[1], g_args.size() > 2?g_args[2].c_str():0, g_args.size() > 3?g_args[3].c_str():0 );
             printGroups( rep );
         }
-        else if ( g_args[0] == "update" || g_args[0] == "upd" )
+        else if ( g_args[0] == "update" || g_args[0] == "u" )
         {
             if ( g_args.size() > 4 )
                 return -1;
@@ -514,7 +514,7 @@ int group()
             spGroupDataReply rep = g_client->groupUpdate( g_args[1], g_args.size() > 2?g_args[2].c_str():0, g_args.size() > 3?g_args[3].c_str():0 );
             printGroups( rep );
         }
-        else if ( g_args[0] == "delete" || g_args[0] == "del" )
+        else if ( g_args[0] == "delete" || g_args[0] == "d" )
         {
             if ( g_args.size() > 2 )
                 return -1;
@@ -522,7 +522,7 @@ int group()
             g_client->groupDelete( g_args[1] );
 
         }
-        else if ( g_args[0] == "view" )
+        else if ( g_args[0] == "view"  || g_args[0] == "v" )
         {
             if ( g_args.size() > 2 )
                 return -1;
@@ -530,7 +530,7 @@ int group()
             spGroupDataReply rep = g_client->groupView( g_args[1] );
             printGroups( rep );
         }
-        else if ( g_args[0] == "add" )
+        else if ( g_args[0] == "add"  || g_args[0] == "+" )
         {
             if ( g_args.size() < 3 )
                 return -1;
@@ -542,7 +542,7 @@ int group()
             spGroupDataReply rep = g_client->groupAdd( g_args[1], ids );
             printGroups( rep );
         }
-        else if ( g_args[0] == "rem" )
+        else if ( g_args[0] == "rem"  || g_args[0] == "-" )
         {
             if ( g_args.size() < 3 )
                 return -1;
@@ -559,7 +559,7 @@ int group()
     }
     else if ( g_args.size() == 1 )
     {
-        if ( g_args[0] == "list" )
+        if ( g_args[0] == "list"  || g_args[0] == "ls" )
         {
             spGroupDataReply rep = g_client->groupList();
             printGroups( rep );
@@ -578,10 +578,28 @@ int acl()
         spACLDataReply rep = g_client->aclView( g_args[1] );
         printACLs( rep );
     }
-    else if (  g_args.size() == 3 && g_args[0] == "set" )
+    else if (( g_args.size() == 5 || g_args.size() == 6 ) && g_args[0] == "set" )
     {
-        g_client->aclUpdate( g_args[1], g_args[2] );
-        cout << "SUCCESS\n";
+        if ( g_args[3] != "grant" || g_args[3] == "deny" )
+            return -1;
+
+        // acl [get|set] id [[uid|gid|def] [grant|deny [inh]] value] ]
+        string rule = "[{\"id\":\"" + g_args[2] + "\",\"";
+
+        if ( g_args[4] == "inh" )
+        {
+            if ( g_args.size() != 6 )
+                return -1;
+
+            rule += "inh_" + g_args[3] + "\":\"" + g_args[5] + "\"}]";
+        }
+        else
+        {
+            rule += g_args[3] + "\":\"" + g_args[4] + "\"}]";
+        }
+
+        spACLDataReply rep = g_client->aclUpdate( g_args[1], rule );
+        printACLs( rep );
     }
     else
         return -1;
@@ -713,14 +731,14 @@ int main( int a_argc, char ** a_argv )
     g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
     g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
     g_commands["group"] = { "group cmd [id [args]]\n\nGroup command (list, view, create, update, delete) for group 'id'", group };
-    g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection or group 'id2'.", add_item };
-    g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection or group 'id'.", rem_item };
+    g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection 'id2'.", add_item };
+    g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection 'id2'.", rem_item };
     g_commands["find"] = { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records };
     g_commands["pull"] = { "pull id dest\n\n'Pull' raw data from repository and place in a specified destination directory. The 'id' parameter may be either a data identifier or an alias. The destination path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", pull_data };
     g_commands["push"] = { "push [id] src [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\n'Push' raw data from the specified source path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options, and for new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data };
     g_commands["status"] = { "status xfr_id\n\nGet status of specified data transfer.", xfr_status };
     g_commands["user"] = { "user [id]\n\nList all users, or view user associated with 'id'.", user };
-    g_commands["acl"] = { "acl set|get id [uid perm] [gid perm]\n\nSet or get ACLs for record 'id' (ID/alias)", acl };
+    g_commands["acl"] = { "acl [get|set] id [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record 'id' (ID/alias)", acl };
     g_commands["gen-cred"] = { "gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console };
     g_commands["gen-ssh"] = { "gen-ssh out-file\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh };
     g_commands["get-ssh"] = { "get-ssh out-file\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh };
@@ -877,13 +895,6 @@ int main( int a_argc, char ** a_argv )
                 tok.parse( cmd_str, len );
                 add_history( cmd_str );
                 free( cmd_str );
-
-/*
-                for ( SmartTokenizer<>::const_iter_t i = tok.begin(); i != tok.end(); ++i )
-                    cout << "[" << *i << "]";
-                cout << "\n";
-                continue;
-*/
 
                 try
                 {

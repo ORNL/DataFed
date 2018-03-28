@@ -479,64 +479,15 @@ public:
         setACLData( a_reply, result );
     }
 
-    void aclUpdate( const Auth::ACLUpdateRequest & a_request, Anon::AckReply & a_reply )
+    void aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
     {
         (void) a_reply;
 
         rapidjson::Document result;
-/*
-        string rules = "{";
-        bool comma = false;
 
-        for ( int i = 0; i < a_request.rule_size(); ++i )
-        {
-            const ACLRuleStr & rule = a_request.rule(i);
-
-            if ( i > 0 )
-                rules += ",";
-
-            rules += "{\"" + rule.id() + "\":{";
-            comma = false;
-
-            if ( rule.has_grant() )
-            {
-                rules += "\"grant\":\"" + rule.grant() + "\"";
-                comma = true;
-            }
-
-            if ( rule.has_deny() )
-            {
-                if ( comma )
-                    rules += ",";
-
-                rules += "\"deny\":\"" + rule.deny() + "\"";
-                comma = true;
-            }
-
-            if ( rule.has_inh_grant() )
-            {
-                if ( comma )
-                    rules += ",";
-
-                rules += "\"inh_grant\":\"" + rule.inh_grant() + "\"";
-                comma = true;
-            }
-
-            if ( rule.has_inh_deny() )
-            {
-                if ( comma )
-                    rules += ",";
-
-                rules += "\"inh_deny\":\"" + rule.inh_deny() + "\"";
-                comma = true;
-            }
-            rules += "}";
-        }
-        rules += "}";
-
-        cout << rules << "\n";
-*/
         dbGet( "acl/update", {{"id",a_request.id()},{"rules",a_request.rules()}}, result );
+
+        setACLData( a_reply, result );
     }
 
     void setACLData( ACLDataReply & a_reply, rapidjson::Document & a_result )
@@ -554,6 +505,7 @@ public:
             rapidjson::Value & val = a_result[i];
 
             rule = a_reply.add_rule();
+
             rule->set_id( val["id"].GetString() );
 
             imem = val.FindMember("grant");
@@ -641,8 +593,10 @@ public:
 
     void groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
     {
-        (void) a_request;
         (void) a_reply;
+        rapidjson::Document result;
+
+        dbGet( "grp/delete", {{"id",a_request.gid()}}, result );
     }
 
     void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply )
@@ -739,7 +693,7 @@ DEF_IMPL( collRead, CollReadRequest, CollDataReply )
 DEF_IMPL( collWrite, CollWriteRequest, Anon::AckReply )
 DEF_IMPL( xfrView, XfrViewRequest, XfrDataReply )
 DEF_IMPL( aclView, ACLViewRequest, ACLDataReply )
-DEF_IMPL( aclUpdate, ACLUpdateRequest, Anon::AckReply )
+DEF_IMPL( aclUpdate, ACLUpdateRequest, Auth::ACLDataReply )
 DEF_IMPL( groupCreate, GroupCreateRequest, Auth::GroupDataReply )
 DEF_IMPL( groupUpdate, GroupUpdateRequest, Auth::GroupDataReply )
 DEF_IMPL( groupDelete, GroupDeleteRequest, Anon::AckReply )

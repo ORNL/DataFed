@@ -2,6 +2,7 @@
 #define SDMS_CLIENT_HPP
 
 #include <memory>
+#include <vector>
 #include <stdint.h>
 #include "SDMS.pb.h"
 #include "SDMS_Anon.pb.h"
@@ -92,7 +93,7 @@ public:
     //spXfrDataReply      pushData( const std::string & a_local_path, std::string & a_data_id, const char * a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );
     spXfrDataReply      xfrView( const std::string & a_transfer_id );
     spACLDataReply      aclView( const std::string & a_id );
-    void                aclUpdate( const std::string & a_id, const std::string & a_rules );
+    spACLDataReply      aclUpdate( const std::string & a_id, const std::string & a_rules );
 
     spGroupDataReply    groupCreate( const std::string & a_group_id, const char * a_title = 0, const char * a_desc = 0 );
     spGroupDataReply    groupUpdate( const std::string & a_group_id, const char * a_title = 0, const char * a_desc = 0 );

@@ -720,18 +720,18 @@ public:
         return spACLDataReply( rep );
     }
 
-    void
+    spACLDataReply
     aclUpdate( const std::string & a_id, const std::string & a_rules )
     {
         Auth::ACLUpdateRequest  req;
-        Anon::AckReply *        rep;
+        Auth::ACLDataReply *    rep;
 
         req.set_id( a_id );
         req.set_rules( a_rules );
 
         send<>( req, rep, m_ctx++ );
 
-        delete rep;
+        return spACLDataReply( rep );
     }
 
     // ===== GROUP METHODS =====
@@ -1127,7 +1127,7 @@ Client::aclView( const std::string & a_id )
     return m_impl->aclView( a_id );
 }
 
-void
+spACLDataReply
 Client::aclUpdate( const std::string & a_id, const std::string & a_rules )
 {
     return m_impl->aclUpdate( a_id, a_rules );
