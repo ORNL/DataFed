@@ -64,9 +64,17 @@ router.get('/create', function (req, res) {
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
+
+                    coll.new.alias = req.queryParams.alias;
                 }
 
-                result.push( coll.new );
+                coll = coll.new;
+                coll.id = coll._id;
+                delete coll._id;
+                delete coll._key;
+                delete coll._rev;
+
+                result.push( coll );
             }
         });
 
@@ -169,7 +177,20 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        res.send( coll );
+        var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
+        coll.owner = owner_id.substr(2);
+
+        var alias = g_db._query("for v in 1..1 outbound @coll alias return v", { coll: coll_id }).toArray();
+        if ( alias.length ) {
+            coll.alias = alias[0]._key.substr( owner_id.length - 1 );
+        }
+
+        coll.id = coll._id;
+        delete coll._id;
+        delete coll._key;
+        delete coll._rev;
+
+        res.send( [coll] );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

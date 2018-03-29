@@ -31,7 +31,55 @@ Client * g_client = 0;
 
 const char * StatusText[] = { "INITIAL", "ACTIVE", "INACTIVE", "SUCCEEDED", "FAILED" };
 
-typedef map<string,pair<string,int (*)()>> cmd_t;
+//typedef map<string,pair<string,int (*)()>> cmd_t;
+
+typedef int (*cmd_func_t)();
+
+struct CmdInfo
+{
+    CmdInfo( const char *  a_cmd_short, const char * a_cmd_long, const char * a_desc_short, const char * a_desc_long, cmd_func_t a_func ) :
+        cmd_short(a_cmd_short), cmd_long(a_cmd_long), desc_short(a_desc_short), desc_long(a_desc_long), func(a_func)
+    {}
+
+    void help( bool a_full = false )
+    {
+        cout << cmd_long;
+        if ( cmd_short.size() )
+            cout << " (" << cmd_short << ")";
+        cout << " - " << desc_short << "\n";
+
+        if ( a_full )
+            cout << desc_long << "\n";
+    }
+
+    string      cmd_short;
+    string      cmd_long;
+    string      desc_short;
+    string      desc_long;
+    cmd_func_t  func;
+};
+
+typedef vector<CmdInfo> cmd_list_t;
+typedef map<string,CmdInfo*> cmd_map_t;
+
+cmd_list_t  g_cmd_list;
+cmd_map_t   g_cmd_map;
+
+void addCommand( const char * a_cmd_short, const char * a_cmd_long, const char * a_desc_short, const char * a_desc_long, cmd_func_t a_func )
+{
+    g_cmd_list.push_back( CmdInfo( a_cmd_short, a_cmd_long, a_desc_short, a_desc_long, a_func ));
+}
+
+void buildCmdMap()
+{
+    for ( cmd_list_t::iterator c = g_cmd_list.begin(); c != g_cmd_list.end(); c++ )
+    {
+        if ( c->cmd_short.size() )
+            g_cmd_map[c->cmd_short] = &(*c);
+        if ( c->cmd_long.size() )
+            g_cmd_map[c->cmd_long] = &(*c);
+    }
+}
 
 enum OutputFormat
 {
@@ -53,7 +101,6 @@ vector<string>  g_args;
 string          g_out_form_str;
 OutputFormat    g_out_form = TEXT;
 
-cmd_t   g_commands;
 
 po::options_description g_opts_command( "Command options" );
 
@@ -136,6 +183,29 @@ void printGroups( spGroupDataReply a_reply )
     else cout << "No results\n";
 }
 
+void printData( spRecordDataReply a_rep )
+{
+    if ( a_rep->record_size() )
+    {
+        for ( int i = 0; i < a_rep->record_size(); i++ )
+        {
+            const RecordData & rec = a_rep->record(i);
+            cout << "   id : " << rec.id() << "\n";
+            if ( rec.has_alias() )
+                cout << "alias : " << rec.alias() << "\n";
+            cout << "title : " << rec.title() << "\n";
+            if ( rec.has_desc() )
+                cout << " desc : " << rec.desc() << "\n";
+            if ( rec.has_owner() )
+                cout << "owner : " << rec.owner() << "\n";
+            if ( rec.has_metadata() )
+                cout << " meta : " << rec.metadata() << "\n";
+        }
+    }
+    else
+        cout << "No results\n";
+}
+
 void printCollData( spCollDataReply a_reply )
 {
     if ( a_reply->coll_size() )
@@ -144,11 +214,17 @@ void printCollData( spCollDataReply a_reply )
         {
             const CollData & data = a_reply->coll(i);
 
-            cout << "  ID    : " << data.id() << "\n";
-            cout << "  Title : " << data.title() << "\n";
+            cout << "  id    : " << data.id() << "\n";
+            if ( data.has_alias() )
+                cout << "  alias : " << data.alias() << "\n";
+            cout << "  title : " << data.title() << "\n";
+            if ( data.has_owner() )
+                cout << "  owner : " << data.owner() << "\n";
             cout << "\n";
         }
     }
+    else
+        cout << "No results\n";
 }
 
 void printACLs( spACLDataReply a_reply )
@@ -197,19 +273,18 @@ int help()
         if ( g_args[0] == "all" )
         {
             cout << "Available commands:\n\n";
-            for ( cmd_t::iterator icmd = g_commands.begin(); icmd != g_commands.end(); ++icmd )
-            {
-                cout << "  " << icmd->first << "\n";
-            }
+            for ( cmd_list_t::iterator icmd = g_cmd_list.begin(); icmd != g_cmd_list.end(); ++icmd )
+                icmd->help();
+
             cout << "\n";
         }
         else
         {
-            cmd_t::iterator icmd = g_commands.find( g_args[0] );
-            if ( icmd == g_commands.end() )
+            cmd_map_t::iterator icmd = g_cmd_map.find( g_args[0] );
+            if ( icmd == g_cmd_map.end() )
                 cout << "Unknown command '" << g_args[0] << "'\n";
             else
-                cout << "Help for command '" << g_args[0] << "':\n\n    Usage: " << icmd->second.first << "\n\n";
+                icmd->second->help( true );
         }
     }
 
@@ -265,65 +340,6 @@ spRecordDataReply updateRecord( const string & a_id )
     }
 }
 
-void printDataRecord( const RecordData & a_rec )
-{
-    cout << "   id : " << a_rec.id() << "\n";
-    if ( a_rec.has_alias() )
-        cout << "alias : " << a_rec.alias() << "\n";
-    cout << "title : " << a_rec.title() << "\n";
-    if ( a_rec.has_desc() )
-        cout << " desc : " << a_rec.desc() << "\n";
-    if ( a_rec.has_metadata() )
-        cout << " meta : " << a_rec.metadata() << "\n";
-}
-
-int create_record()
-{
-    if ( g_args.size() != 0 )
-        return -1;
-
-    spRecordDataReply rep = createRecord();
-
-    cout << rep->record(0).id() << "\n";
-
-    return 0;
-}
-
-
-int update_record()
-{
-    if ( g_args.size() != 1 )
-        return -1;
-
-    updateRecord( g_args[0] );
-
-    cout << "SUCCESS\n";
-
-    return 0;
-}
-
-
-int delete_record()
-{
-    cout << "Not implemented yet\n";
-    return 1;
-}
-
-int view_record()
-{
-    if ( g_args.size() != 1 )
-        return -1;
-
-    spRecordDataReply rep = g_client->recordView( g_args[0] );
-
-    for ( int i = 0; i < rep->record_size(); i++ )
-    {
-        printDataRecord( rep->record(i) );
-    }
-
-    return 0;
-}
-
 
 int find_records()
 {
@@ -340,20 +356,8 @@ int find_records()
     }
 
     spRecordDataReply rep = g_client->recordFind( query );
-    if ( rep->record_size() )
-    {
-        cout << rep->record_size() << " match(es) found:\n\n";
-
-        for ( int i = 0; i < rep->record_size(); i++ )
-        {
-            printDataRecord( rep->record(i) );
-            cout << "\n";
-        }
-    }
-    else
-    {
-        cout << "No matches found.\n";
-    }
+    cout << rep->record_size() << " match(es) found:\n\n";
+    printData( rep );
 
     return 0;
 }
@@ -446,6 +450,116 @@ int push_data()
     return 0;
 }
 
+int data()
+{
+    if ( g_args[0] == "view" || g_args[0] == "v" )
+    {
+        if ( g_args.size() != 2 )
+            return -1;
+
+        spRecordDataReply rep = g_client->recordView( g_args[1] );
+        printData( rep );
+    }
+    else if( g_args[0] == "list" || g_args[0] == "l" )
+    {
+        cout << "NOT IMPLEMENTED YET\n";
+    }
+    else if( g_args[0] == "create" || g_args[0] == "c" )
+    {
+        if ( g_args.size() != 1 )
+            return -1;
+
+        spRecordDataReply rep = createRecord();
+        printData( rep );
+    }
+    else if( g_args[0] == "update" || g_args[0] == "u" )
+    {
+        if ( g_args.size() != 2 )
+            return -1;
+
+        spRecordDataReply rep = updateRecord( g_args[0] );
+        printData( rep );
+    }
+    else if( g_args[0] == "delete" || g_args[0] == "d" )
+    {
+        cout << "NOT IMPLEMENTED YET\n";
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
+int coll()
+{
+    if ( g_args[0] == "view" || g_args[0] == "v" )
+    {
+        if ( g_args.size() == 2 )
+        {
+            spCollDataReply rep = g_client->collView( g_args[1] );
+            printCollData( rep );
+        }
+        else
+            return -1;
+    }
+    else if( g_args[0] == "ls" )
+    {
+        if ( g_args.size() == 1 )
+        {
+            spCollDataReply rep = g_client->collRead( "root" );
+            printCollData( rep );
+        }
+        else if ( g_args.size() == 2 )
+        {
+            spCollDataReply rep = g_client->collRead( g_args[1] );
+            printCollData( rep );
+        }
+        else
+            return -1;
+    }
+    else if( g_args[0] == "create" || g_args[0] == "c" )
+    {
+        if ( g_args.size() != 1 )
+            return -1;
+
+        if ( !g_title.size() )
+            EXCEPT_PARAM( 1, "Title option is required for create command" );
+
+        spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
+        printCollData( rep );
+    }
+    else if( g_args[0] == "update" || g_args[0] == "u" )
+    {
+        if ( g_args.size() != 2 )
+            return -1;
+
+        spCollDataReply rep = g_client->collUpdate( g_args[1], g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
+        printCollData( rep );
+    }
+    else if( g_args[0] == "delete" || g_args[0] == "d" )
+    {
+        cout << "NOT IMPLEMENTED YET\n";
+    }
+    else if( g_args[0] == "add" || g_args[0] == "a" )
+    {
+        if ( g_args.size() != 3 )
+            return -1;
+
+        g_client->collAddItem( g_args[1], g_args[2] );
+    }
+    else if( g_args[0] == "remove" || g_args[0] == "r" )
+    {
+        if ( g_args.size() != 3 )
+            return -1;
+
+        g_client->collRemoveItem( g_args[1], g_args[2] );
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
 
 int xfr_status()
 {
@@ -454,24 +568,6 @@ int xfr_status()
 
     spXfrDataReply xfr = g_client->xfrView( g_args[0] );
     cout << StatusText[xfr->xfr(0).status()] << "\n";
-
-    return 0;
-}
-
-int read_coll()
-{
-    if ( g_args.size() == 0 )
-    {
-        spCollDataReply rep = g_client->collRead( "root" );
-        printCollData( rep );
-    }
-    else if ( g_args.size() == 1 )
-    {
-        spCollDataReply rep = g_client->collRead( g_args[0] );
-        printCollData( rep );
-    }
-    else
-        return -1;
 
     return 0;
 }
@@ -607,27 +703,6 @@ int acl()
     return 0;
 }
 
-int add_item()
-{
-    if ( g_args.size() != 2 )
-        return -1;
-
-    // Collection ID
-    g_client->collectionAdd( g_args[1], g_args[0] );
-
-    return 0;
-}
-
-int rem_item()
-{
-    if ( g_args.size() != 2 )
-        return -1;
-
-    // Collection ID
-    g_client->collectionRemove( g_args[1], g_args[0] );
-
-    return 0;
-}
 
 int gen_ssh()
 {
@@ -724,24 +799,32 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
 
 int main( int a_argc, char ** a_argv )
 {
-    g_commands["help"] = { "help [cmd]\n\nList all commands, or show help for 'cmd'", help };
+    /*
     g_commands["create"] = { "create -t title [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nCreate a new data record using supplied options. Returns new data ID on success.", create_record };
     g_commands["update"] = { "update id [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nUpdate an existing data record using supplied options.", update_record };
     g_commands["delete"] = { "delete id\n\nDelete an existing data record.", delete_record };
     g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
+
     g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
-    g_commands["group"] = { "group cmd [id [args]]\n\nGroup command (list, view, create, update, delete) for group 'id'", group };
     g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection 'id2'.", add_item };
     g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection 'id2'.", rem_item };
-    g_commands["find"] = { "find query\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records };
-    g_commands["pull"] = { "pull id dest\n\n'Pull' raw data from repository and place in a specified destination directory. The 'id' parameter may be either a data identifier or an alias. The destination path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", pull_data };
-    g_commands["push"] = { "push [id] src [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\n'Push' raw data from the specified source path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options, and for new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data };
-    g_commands["status"] = { "status xfr_id\n\nGet status of specified data transfer.", xfr_status };
-    g_commands["user"] = { "user [id]\n\nList all users, or view user associated with 'id'.", user };
-    g_commands["acl"] = { "acl [get|set] id [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record 'id' (ID/alias)", acl };
-    g_commands["gen-cred"] = { "gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console };
-    g_commands["gen-ssh"] = { "gen-ssh out-file\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh };
-    g_commands["get-ssh"] = { "get-ssh out-file\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh };
+*/
+
+    addCommand( "?", "help", "Show help", "Use 'help <cmd>' to show help for a specific command.", help );
+    addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", pull_data );
+    addCommand( "", "put", "Put data into repository", "put <src> [id] [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data );
+    addCommand( "s", "status", "View data transfer status", "status <xfr_id>\n\nGet status of specified data transfer.", xfr_status );
+    addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", data );
+    addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
+    addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
+    addCommand( "u", "user", "List or view user information", "user [id]\n\nLists all users if 'id' parameter is omitted; otherwise, view details of associated user.", user );
+    addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
+    addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
+    addCommand( "", "gen-cred", "Generate local credentials","gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console );
+    addCommand( "", "gen-ssh", "Generate globus SSH keys", "gen-ssh <out-file>\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh );
+    addCommand( "", "get-ssh", "Retrieve globus public SSH key", "get-ssh <out-file>\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh );
+
+    buildCmdMap();
 
     string      host = "127.0.0.1";
     uint16_t    port = 5800;
@@ -822,7 +905,8 @@ int main( int a_argc, char ** a_argv )
             if ( g_args.size() != 0 )
             {
                 cout << "ERROR\n";
-                cerr << "Invalid arguments for command '" << g_cmd << "'.\n    Usage: " << g_commands["gen-cred"].first << "\n\n";
+                cerr << "Invalid arguments for command '" << g_cmd << "'.\n";
+                g_cmd_map["gen-cred"]->help( true );
                 return 1;
             }
 
@@ -849,18 +933,19 @@ int main( int a_argc, char ** a_argv )
 
         g_client = &client;
 
-        cmd_t::iterator icmd;
+        cmd_map_t::iterator icmd;
 
         if ( g_cmd.size() )
         {
-            icmd = g_commands.find( g_cmd );
-            if ( icmd != g_commands.end() )
+            icmd = g_cmd_map.find( g_cmd );
+            if ( icmd != g_cmd_map.end() )
             {
-                int ec = icmd->second.second();
+                int ec = icmd->second->func();
                 if ( ec < 0 )
                 {
-                    cout << "ERROR\n";
-                    cerr << "Invalid arguments for command '" << g_cmd << "'.\n    Usage: " << icmd->second.first << "\n\n";
+                    cerr << "Invalid arguments.\n";
+                    icmd->second->help( true );
+                    cout << "\n";
                     return 1;
                 }
                 return ec;
@@ -910,13 +995,15 @@ int main( int a_argc, char ** a_argv )
                                 cout << "["<<*a<<"]";
                             cout << "\n";
 
-                            icmd = g_commands.find( g_cmd );
-                            if ( icmd != g_commands.end() )
+                            icmd = g_cmd_map.find( g_cmd );
+                            if ( icmd != g_cmd_map.end() )
                             {
-                                int ec = icmd->second.second();
+                                int ec = icmd->second->func();
                                 if ( ec < 0 )
                                 {
-                                    cout << "Invalid arguments. Usage: " << icmd->second.first << "\n\n";
+                                    cout << "Invalid arguments.\n";
+                                    icmd->second->help( true );
+                                    cout << "\n";
                                 }
                             }
                             else

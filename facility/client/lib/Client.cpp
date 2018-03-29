@@ -629,6 +629,19 @@ Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset,
 }
 
 spCollDataReply
+Client::collView( const std::string & a_id )
+{
+    Auth::CollViewRequest req;
+    req.set_id( a_id );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+spCollDataReply
 Client::collRead( const std::string & a_coll_id, CollMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     Auth::CollReadRequest req;
@@ -648,6 +661,78 @@ Client::collRead( const std::string & a_coll_id, CollMode a_mode, bool a_details
     send<>( req, reply, m_ctx++ );
 
     return spCollDataReply( reply );
+}
+
+spCollDataReply
+Client::collCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_proj_id, const char * a_coll_id )
+{
+    Auth::CollCreateRequest req;
+
+    req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+    if ( a_alias )
+        req.set_alias( a_alias );
+    if ( a_proj_id )
+        req.set_proj_id( a_proj_id );
+    if ( a_coll_id )
+        req.set_coll_id( a_coll_id );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+spCollDataReply
+Client::collUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_proj_id )
+{
+    Auth::CollUpdateRequest req;
+
+    req.set_id( a_id );
+    if ( a_title )
+        req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+    if ( a_alias )
+        req.set_alias( a_alias );
+    if ( a_proj_id )
+        req.set_proj_id( a_proj_id );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+void
+Client::collAddItem( const std::string & a_coll_id, const std::string & a_item_id )
+{
+    Auth::CollWriteRequest  req;
+    Anon::AckReply *        rep;
+
+    req.set_id( a_coll_id );
+    req.add_add( a_item_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+void
+Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id )
+{
+    Auth::CollWriteRequest  req;
+    Anon::AckReply *        rep;
+
+    req.set_id( a_coll_id );
+    req.add_rem( a_item_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
 }
 
 spXfrDataReply
@@ -822,33 +907,6 @@ Client::groupRemove( const std::string & a_group_id, const std::vector<std::stri
     return spGroupDataReply( rep );
 }
 
-void
-Client::collectionAdd( const std::string & a_coll_id, const std::string & a_item_id )
-{
-    Auth::CollWriteRequest  req;
-    Anon::AckReply *        rep;
-
-    req.set_id( a_coll_id );
-    req.add_add( a_item_id );
-
-    send<>( req, rep, m_ctx++ );
-
-    delete rep;
-}
-
-void
-Client::collectionRemove( const std::string & a_coll_id, const std::string & a_item_id )
-{
-    Auth::CollWriteRequest  req;
-    Anon::AckReply *        rep;
-
-    req.set_id( a_coll_id );
-    req.add_rem( a_item_id );
-
-    send<>( req, rep, m_ctx++ );
-
-    delete rep;
-}
 
 /*
 spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )

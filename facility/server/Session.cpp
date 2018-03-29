@@ -79,6 +79,9 @@ Session::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
+        SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
+        SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
+        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, AckReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );

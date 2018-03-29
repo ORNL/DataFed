@@ -45,7 +45,7 @@ graph._extendEdgeDefinitions(adm);
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
 
-db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "name" ] });
+db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "data_id" ] });
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "local_path" ] });

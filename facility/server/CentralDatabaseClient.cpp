@@ -281,7 +281,13 @@ CentralDatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Docu
         rec->set_title( val["title"].GetString() );
 
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
-            rec->set_alias( imem->value.GetString() );
+        {
+            if ( !imem->value.IsNull() )
+                rec->set_alias( imem->value.GetString() );
+        }
+
+        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
+            rec->set_owner( imem->value.GetString() );
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             rec->set_desc( imem->value.GetString() );
@@ -311,6 +317,58 @@ CentralDatabaseClient::collList( const CollListRequest & a_request, CollDataRepl
         dbGet( "col/priv/list", {{"subject",a_request.user()}}, result );
     else
             dbGet( "col/priv/list", {}, result );
+
+    setCollData( a_reply, result );
+}
+
+void
+CentralDatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    vector<pair<string,string>> params;
+    params.push_back({"title",a_request.title()});
+    if ( a_request.has_desc() )
+        params.push_back({"desc",a_request.desc()});
+    if ( a_request.has_alias() )
+        params.push_back({"alias",a_request.alias()});
+    if ( a_request.has_proj_id() )
+        params.push_back({"proj",a_request.proj_id()});
+    if ( a_request.has_coll_id() )
+        params.push_back({"coll",a_request.coll_id()});
+
+    dbGet( "col/create", params, result );
+
+    setCollData( a_reply, result );
+}
+
+void
+CentralDatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_title() )
+        params.push_back({"title",a_request.title()});
+    if ( a_request.has_desc() )
+        params.push_back({"desc",a_request.desc()});
+    if ( a_request.has_alias() )
+        params.push_back({"alias",a_request.alias()});
+    if ( a_request.has_proj_id() )
+        params.push_back({"proj",a_request.proj_id()});
+
+    dbGet( "col/update", params, result );
+
+    setCollData( a_reply, result );
+}
+
+void
+CentralDatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "col/view", {{"id",a_request.id()}}, result );
 
     setCollData( a_reply, result );
 }
@@ -384,6 +442,7 @@ CentralDatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document
     }
 
     CollData* coll;
+    rapidjson::Value::MemberIterator imem;
 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
     {
@@ -392,6 +451,15 @@ CentralDatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document
         coll = a_reply.add_coll();
         coll->set_id( val["id"].GetString() );
         coll->set_title( val["title"].GetString() );
+
+        if (( imem = val.FindMember("alias")) != val.MemberEnd() )
+        {
+            if ( !imem->value.IsNull() )
+                coll->set_alias( imem->value.GetString() );
+        }
+
+        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
+            coll->set_owner( imem->value.GetString() );
     }
 }
 

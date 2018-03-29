@@ -134,12 +134,35 @@ message PutDataRequest
 
 // ============================ Collection Messages
 
+message CollCreateRequest
+{
+    required string             title       = 1;
+    optional string             desc        = 2;
+    optional string             alias       = 3;
+    optional string             proj_id     = 4;
+    optional string             coll_id     = 5;
+}
+
+message CollUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional string             alias       = 4;
+    optional string             proj_id     = 5;
+}
+
 message CollListRequest
 {
     optional string             user        = 1;
     optional bool               details     = 2;
     optional uint32             offset      = 3;
     optional uint32             count       = 4;
+}
+
+message CollViewRequest
+{
+    required string             id          = 1;
 }
 
 message CollReadRequest

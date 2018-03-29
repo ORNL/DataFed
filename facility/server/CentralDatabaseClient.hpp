@@ -30,7 +30,11 @@ public:
     void recordFind( const Auth::RecordFindRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
+
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
+    void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
+    void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
+    void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::CollDataReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Anon::AckReply & a_reply );
 

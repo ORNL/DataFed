@@ -94,13 +94,19 @@ public:
     spRecordDataReply   recordUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, bool a_md_merge = true, const char * a_proj_id = 0 );
     spRecordDataReply   recordView( const std::string & a_id );
     spRecordDataReply   recordFind( const std::string & a_query );
+
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spCollDataReply     collCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );
+    spCollDataReply     collUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0, const char * a_proj_id = 0 );        spCollDataReply     collView( const std::string & a_id );
     spCollDataReply     collRead( const std::string & a_coll_id, CollMode a_mode = CM_ALL, bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    void                collAddItem( const std::string & a_coll_id, const std::string & a_item_id );
+    void                collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id );
 
     spXfrDataReply      pullData( const std::string & a_data_id, const std::string & a_local_path );
     spXfrDataReply      pushData( const std::string & a_data_id, const std::string & a_local_path );
-    //spXfrDataReply      pushData( const std::string & a_local_path, std::string & a_data_id, const char * a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );
+
     spXfrDataReply      xfrView( const std::string & a_transfer_id );
+
     spACLDataReply      aclView( const std::string & a_id );
     spACLDataReply      aclUpdate( const std::string & a_id, const std::string & a_rules );
 
@@ -112,8 +118,6 @@ public:
     spGroupDataReply    groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids );
     spGroupDataReply    groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids );
 
-    void                collectionAdd( const std::string & a_coll_id, const std::string & a_item_id );
-    void                collectionRemove( const std::string & a_coll_id, const std::string & a_item_id );
 
 private:
     typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;

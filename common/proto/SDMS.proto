@@ -81,6 +81,7 @@ message RecordData
     optional string             desc        = 4;
     optional string             metadata    = 5;
     optional string             data_path   = 6;
+    optional string             owner       = 7;
 }
 
 message CollData
@@ -89,6 +90,7 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
+    optional string             owner       = 5;
 }
 
 message XfrData
