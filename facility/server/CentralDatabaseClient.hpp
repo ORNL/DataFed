@@ -26,6 +26,8 @@ public:
     //uint16_t checkPerms( const string & a_id, uint16_t a_perms );
     void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
     void userList( const Auth::UserListRequest & a_request, Auth::UserDataReply & a_reply );
+
+    void recordList( const Auth::RecordListRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordFind( const Auth::RecordFindRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );

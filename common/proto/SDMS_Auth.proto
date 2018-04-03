@@ -69,6 +69,10 @@ message UserDataReply
 
 // ============================ Data Record Messages
 
+message RecordListRequest
+{
+}
+
 message RecordViewRequest
 {
     required string             id          = 1;

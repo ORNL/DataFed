@@ -43,12 +43,6 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.md )
                     obj.md = JSON.parse( req.queryParams.md );
 
-                if ( req.queryParams.grant )
-                    obj.def_grant = req.queryParams.grant;
-
-                if ( req.queryParams.deny )
-                    obj.def_deny = req.queryParams.deny;
-
                 var data = g_db.d.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: data._id, _to: client._id });
 
@@ -82,8 +76,6 @@ router.get('/create', function (req, res) {
 .queryParam('alias', joi.string().optional(), "Alias")
 .queryParam('proj', joi.string().optional(), "Optional project owner id")
 .queryParam('coll', joi.string().optional(), "Optional collection id or alias")
-.queryParam('grant', joi.number().optional(), "Default grant permission mask")
-.queryParam('deny', joi.number().optional(), "Default deny permission mask")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .summary('Creates a new data record')
 .description('Creates a new data record');
@@ -99,10 +91,12 @@ router.get('/update', function (req, res) {
                 write: ["d","a","owner","alias"]
             },
             action: function() {
+                var data;
                 const client = g_lib.getUserFromUID( req.queryParams.client );
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 if ( !g_lib.hasAdminPermObject( client, data_id )) {
-                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_WRITE ))
+                    data = g_db.d.document( data_id );
+                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_UPDATE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -126,24 +120,6 @@ router.get('/update', function (req, res) {
                     obj.md = JSON.parse( req.queryParams.md );
                     do_update = true;
                 }
-                
-                if ( req.queryParams.grant != null ) {
-                    if ( req.queryParams.grant == 0 )
-                        obj.def_grant = null;
-                    else
-                        obj.def_grant = req.queryParams.grant;
-                    do_update = true;
-                }
-
-                if ( req.queryParams.deny != null ) {
-                    if ( req.queryParams.deny == 0 )
-                        obj.def_deny = null;
-                    else
-                        obj.def_deny = req.queryParams.deny;
-                    do_update = true;
-                }
-
-                var data;
 
                 if ( do_update ) {
                     data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.queryParams.md_merge });
@@ -159,11 +135,12 @@ router.get('/update', function (req, res) {
                         g_db.alias.remove( old_alias );
                     }
 
-                    var alias_key = client._key + ":" + req.queryParams.alias;
+                    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+                    var alias_key = owner_id.substr(2) + ":" + req.queryParams.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
                     data.alias = req.queryParams.alias;
                 }
 
@@ -187,8 +164,6 @@ router.get('/update', function (req, res) {
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
 .queryParam('proj', joi.string().optional(), "Project owner id")
-.queryParam('grant', joi.number().optional(), "Default grant permission mask")
-.queryParam('deny', joi.number().optional(), "Default deny permission mask")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .queryParam('md_merge', joi.boolean().optional().default(true), "Merge metadata instead of replace (merge is default)")
 .summary('Updates an existing data record')
@@ -238,22 +213,14 @@ router.get('/list', function (req, res) {
 
         if ( req.queryParams.subject ) {
             owner_id = "u/" + req.queryParams.subject;
+            g_lib.ensureAdminPermUser( client, owner_id );
         } else {
             owner_id = client._id;
         }
 
-        // TODO - This is broken. permission system has changed since this was written
-        const items = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title }", { owner: owner_id }).toArray();
+        const result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
 
-        var result = [];
-        var item;
-
-        for ( var i in items ) {
-            item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
-                result.push({ id: item._id, title: item.title });
-            }
-        }
+        //const result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
 
         res.send( result );
     } catch( e ) {

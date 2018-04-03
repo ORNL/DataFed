@@ -192,6 +192,18 @@ CentralDatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document
 }
 
 void
+CentralDatabaseClient::recordList( const RecordListRequest & a_request, RecordDataReply & a_reply )
+{
+    (void) a_request;
+
+    rapidjson::Document result;
+
+    dbGet( "dat/list", {}, result );
+
+    setRecordData( a_reply, result );
+}
+
+void
 CentralDatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
 {
     rapidjson::Document result;

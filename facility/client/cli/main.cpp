@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <vector>
 #include <map>
 #include <cstdlib>
@@ -183,44 +184,89 @@ void printGroups( spGroupDataReply a_reply )
     else cout << "No results\n";
 }
 
-void printData( spRecordDataReply a_rep )
+void printData( spRecordDataReply a_rep, bool a_list = false )
 {
     if ( a_rep->record_size() )
     {
+        size_t pos;
         for ( int i = 0; i < a_rep->record_size(); i++ )
         {
             const RecordData & rec = a_rep->record(i);
-            cout << "   id : " << rec.id() << "\n";
-            if ( rec.has_alias() )
-                cout << "alias : " << rec.alias() << "\n";
-            cout << "title : " << rec.title() << "\n";
-            if ( rec.has_desc() )
-                cout << " desc : " << rec.desc() << "\n";
-            if ( rec.has_owner() )
-                cout << "owner : " << rec.owner() << "\n";
-            if ( rec.has_metadata() )
-                cout << " meta : " << rec.metadata() << "\n";
+
+            if ( a_list )
+            {
+                cout << left << setw(12) << rec.id();
+                if ( rec.has_owner() )
+                    cout << " " << left << setw(12) << rec.owner();
+
+                if ( rec.has_alias() )
+                {
+                    pos = rec.alias().find_first_of(":");
+                    if ( pos != string::npos )
+                        cout << " " << left << setw(16) << rec.alias().substr( pos + 1 );
+                }
+                else
+                    cout << " " << setw(16) << " ";
+
+                cout << " \"" << rec.title() << "\"";
+                cout << "\n";
+            }
+            else
+            {
+                cout << "   id : " << rec.id() << "\n";
+                if ( rec.has_alias() )
+                    cout << "alias : " << rec.alias() << "\n";
+                cout << "title : " << rec.title() << "\n";
+                if ( rec.has_desc() )
+                    cout << " desc : " << rec.desc() << "\n";
+                if ( rec.has_owner() )
+                    cout << "owner : " << rec.owner() << "\n";
+                if ( rec.has_metadata() )
+                    cout << " meta : " << rec.metadata() << "\n";
+            }
         }
     }
     else
         cout << "No results\n";
 }
 
-void printCollData( spCollDataReply a_reply )
+void printCollData( spCollDataReply a_reply, bool a_list = false )
 {
     if ( a_reply->coll_size() )
     {
+        size_t pos;
         for ( int i = 0; i < a_reply->coll_size(); i++ )
         {
             const CollData & data = a_reply->coll(i);
 
-            cout << "  id    : " << data.id() << "\n";
-            if ( data.has_alias() )
-                cout << "  alias : " << data.alias() << "\n";
-            cout << "  title : " << data.title() << "\n";
-            if ( data.has_owner() )
-                cout << "  owner : " << data.owner() << "\n";
-            cout << "\n";
+            if ( a_list )
+            {
+                cout << left << setw(12) << data.id();
+                if ( data.has_owner() )
+                    cout << " " << left << setw(12) << data.owner();
+
+                if ( data.has_alias() )
+                {
+                    pos = data.alias().find_first_of(":");
+                    if ( pos != string::npos )
+                        cout << " " << left << setw(16) << data.alias().substr( pos + 1 );
+                }
+                else
+                    cout << " " << setw(16) << " ";
+
+                cout << " \"" << data.title() << "\"";
+                cout << "\n";
+            }
+            else
+            {
+                cout << "  id    : " << data.id() << "\n";
+                if ( data.has_alias() )
+                    cout << "  alias : " << data.alias() << "\n";
+                cout << "  title : " << data.title() << "\n";
+                if ( data.has_owner() )
+                    cout << "  owner : " << data.owner() << "\n";
+                cout << "\n";
+            }
         }
     }
     else
@@ -357,7 +403,7 @@ int find_records()
 
     spRecordDataReply rep = g_client->recordFind( query );
     cout << rep->record_size() << " match(es) found:\n\n";
-    printData( rep );
+    printData( rep, true );
 
     return 0;
 }
@@ -462,7 +508,8 @@ int data()
     }
     else if( g_args[0] == "list" || g_args[0] == "l" )
     {
-        cout << "NOT IMPLEMENTED YET\n";
+        spRecordDataReply rep = g_client->recordList();
+        printData( rep, true );
     }
     else if( g_args[0] == "create" || g_args[0] == "c" )
     {
@@ -502,17 +549,17 @@ int coll()
         else
             return -1;
     }
-    else if( g_args[0] == "ls" )
+    else if( g_args[0] == "l" )
     {
         if ( g_args.size() == 1 )
         {
             spCollDataReply rep = g_client->collRead( "root" );
-            printCollData( rep );
+            printCollData( rep, true );
         }
         else if ( g_args.size() == 2 )
         {
             spCollDataReply rep = g_client->collRead( g_args[1] );
-            printCollData( rep );
+            printCollData( rep, true );
         }
         else
             return -1;
@@ -799,17 +846,6 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
 
 int main( int a_argc, char ** a_argv )
 {
-    /*
-    g_commands["create"] = { "create -t title [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nCreate a new data record using supplied options. Returns new data ID on success.", create_record };
-    g_commands["update"] = { "update id [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nUpdate an existing data record using supplied options.", update_record };
-    g_commands["delete"] = { "delete id\n\nDelete an existing data record.", delete_record };
-    g_commands["view"] = { "view id\n\nView an existing data record.", view_record };
-
-    g_commands["ls"] = { "ls [id]\n\nList contents of a collection specified by 'id'. If 'id' is omitted, all top-level collections are listed.", read_coll };
-    g_commands["add"] = { "add id id2\n\nAdd item 'id' into collection 'id2'.", add_item };
-    g_commands["rem"] = { "rem id id2\n\nRemove item 'id' from collection 'id2'.", rem_item };
-*/
-
     addCommand( "?", "help", "Show help", "Use 'help <cmd>' to show help for a specific command.", help );
     addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", pull_data );
     addCommand( "", "put", "Put data into repository", "put <src> [id] [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data );
@@ -983,17 +1019,18 @@ int main( int a_argc, char ** a_argv )
 
                 try
                 {
-                    //const char * foo = "sdms";
                     tok.tokens().insert( tok.tokens().begin(),  "sdms" );
 
                     if ( processArgs( tok.tokens().size(), &tok.tokens()[0], opts_console, opts_pos ) == OPTS_OK )
                     {
                         if ( g_cmd.size() )
                         {
+                            /*
                             cout << "cmd:["<<g_cmd<<"],args:";
                             for ( vector<string>::iterator a = g_args.begin(); a != g_args.end(); ++a )
                                 cout << "["<<*a<<"]";
                             cout << "\n";
+                            */
 
                             icmd = g_cmd_map.find( g_cmd );
                             if ( icmd != g_cmd_map.end() )

@@ -331,3 +331,30 @@ sdms_gsi_authz_identify( va_list ap )
     return 0;
 }
 
+globus_result_t
+sdms_map_user( va_list Ap )
+{
+    syslog( LOG_INFO, "sdms_map_user" );
+
+    //char *          users_dn         = NULL;
+    //char            translated_dn[MAX_DN_LENGTH];
+    char *          service          = NULL;
+    char *          desired_identity = NULL;
+    char *          identity_buffer  = NULL;
+    //char *          shared_user_cert = NULL;
+    unsigned int    buffer_length    = 0;
+    gss_ctx_id_t    context;
+
+    context          = va_arg(Ap, gss_ctx_id_t);
+    service          = va_arg(Ap, char *);
+    desired_identity = va_arg(Ap, char *);
+    identity_buffer  = va_arg(Ap, char *);
+    buffer_length    = va_arg(Ap, unsigned int);
+
+    syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s)", service, desired_identity );
+
+    strcpy( identity_buffer, "root" );
+    buffer_length = 4;
+
+    return GLOBUS_SUCCESS;
+}
