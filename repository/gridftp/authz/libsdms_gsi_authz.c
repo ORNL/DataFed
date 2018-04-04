@@ -349,7 +349,7 @@ sdms_map_user( va_list Ap )
     char *          service          = NULL;
     char *          desired_identity = NULL;
     char *          identity_buffer  = NULL;
-    //char *          shared_user_cert = NULL;
+    char *          shared_user_cert = NULL;
     unsigned int    buffer_length    = 0;
     gss_ctx_id_t    context;
 
@@ -358,8 +358,9 @@ sdms_map_user( va_list Ap )
     desired_identity = va_arg(Ap, char *);
     identity_buffer  = va_arg(Ap, char *);
     buffer_length    = va_arg(Ap, unsigned int);
+    shared_user_cert = va_arg(Ap, char *);
 
-    syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s)", service, desired_identity );
+    syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity, shared_user_cert );
 
     strcpy( identity_buffer, "root" );
     buffer_length = 4;
