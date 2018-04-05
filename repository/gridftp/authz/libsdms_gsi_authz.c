@@ -106,9 +106,14 @@ sdms_gsi_authz_init()
 
     curl_global_init(CURL_GLOBAL_ALL);
 
-    strncpy( db_user, getenv("SDMS_DB_USER"), MAX_DB_USER_LEN );
+    char * temp = getenv("SDMS_DB_USER");
+    syslog( LOG_INFO, "SDMS_DB_USER = %s", temp );
+    strncpy( db_user, temp, MAX_DB_USER_LEN );
     db_user[MAX_DB_USER_LEN] = 0;
-    strncpy( db_pass, getenv("SDMS_DB_PASS"), MAX_DB_PASS_LEN );
+
+    temp = getenv("SDMS_DB_PASS");
+    syslog( LOG_INFO, "SDMS_DB_PASS = %s", temp );
+    strncpy( db_pass, temp, MAX_DB_PASS_LEN );
     db_user[MAX_DB_PASS_LEN] = 0;
 
     return 0;
