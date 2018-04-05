@@ -17,6 +17,11 @@ typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_ha
 
 // TODO This value must be pulled from server config (max concurrency)
 #define MAX_ACTIVE_CTX 25
+#define MAX_DB_USER_LEN 32
+#define MAX_DB_PASS_LEN 32
+
+char    db_user[MAX_DB_USER_LEN+1];
+char    db_pass[MAX_DB_PASS_LEN+1];
 
 // TODO This is a brute-force context lookup solution. Needs to be replaced with an indexed look-up
 struct ContextHandleEntry
@@ -100,6 +105,11 @@ sdms_gsi_authz_init()
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
     curl_global_init(CURL_GLOBAL_ALL);
+
+    strncpy( db_user, getenv("SDMS_DB_USER"), MAX_DB_USER_LEN );
+    db_user[MAX_DB_USER_LEN] = 0;
+    strncpy( db_pass, getenv("SDMS_DB_PASS"), MAX_DB_PASS_LEN );
+    db_user[MAX_DB_PASS_LEN] = 0;
 
     return 0;
 }
@@ -217,12 +227,14 @@ sdms_gsi_authz_authorize_async( va_list ap )
             if ( maj_stat == GSS_S_COMPLETE )
             {
                 // Testing hack
+                #if 0
                 if ( strcmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=u_eiiq2lgi7fd7jfaggqdmnijiya" ) == 0 )
                 {
                     result = GLOBUS_SUCCESS;
                     callback(callback_arg, handle, result);
                     return result;
                 }
+                #endif
 
                 gss_buffer_desc target_buf = GSS_C_EMPTY_BUFFER;
                 gss_OID target_type;
@@ -255,8 +267,8 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         
                         curl_easy_setopt( curl, CURLOPT_URL, url );
                         curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-                        curl_easy_setopt( curl, CURLOPT_USERNAME, "root" );
-                        curl_easy_setopt( curl, CURLOPT_PASSWORD, "nopass" );
+                        curl_easy_setopt( curl, CURLOPT_USERNAME, db_user );
+                        curl_easy_setopt( curl, CURLOPT_PASSWORD, db_pass );
                         //curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
                         //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
                         curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
@@ -358,9 +370,10 @@ sdms_map_user( va_list Ap )
     desired_identity = va_arg(Ap, char *);
     identity_buffer  = va_arg(Ap, char *);
     buffer_length    = va_arg(Ap, unsigned int);
-    shared_user_cert = va_arg(Ap, char *);
+    //shared_user_cert = va_arg(Ap, char *);
 
-    syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity, shared_user_cert );
+    syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity );
+    //syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity, shared_user_cert );
 
     strcpy( identity_buffer, "root" );
     buffer_length = 4;
