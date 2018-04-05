@@ -12,6 +12,7 @@ var server_cert = process.env.SDMS_WEB_CERT || 'sdms_web_cert.pem';
 var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
 var credentials = {key: privateKey, cert: certificate};
+var jwt_decode = require('jwt-decode');
 
 const oauth_credentials = {
     clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
@@ -41,7 +42,19 @@ app.get('/user_auth', (request, response) => {
     console.log(`user_auth: `, request.query, request.body );
 
     globus_auth.code.getToken( request.originalUrl ).then( function( user ) {
-        console.log( user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
+        //console.log( 'token:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
+	//console.log( 'id:', user.data.id_token, btoa( user.data.id_token ));
+	try {
+            console.log( 'id enc:', user.data.id_token );
+	    console.log( 'start' );
+//var token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIiLCJleHAiOjEzOTMyODY4OTMsImlhdCI6MTM5MzI2ODg5M30.4-iaDojEVl0pJQMjrbM1EzUIfAZgsbK_kgnVyVxFSVo';
+
+            //var dec = jwt_decode( token );
+            var dec = jwt_decode( user.data.id_token );
+	    console.log( 'id dec:', dec );
+        } catch( e ) {
+            console.log('exception:', e );
+        }
 
         // Refresh the current users access token.
         user.refresh().then( function (updatedUser) {
@@ -56,7 +69,7 @@ app.get('/user_auth', (request, response) => {
         });
 
         // We should store the token into a database.
-        return res.send( user.accessToken );
+        return response.send( user.accessToken );
     })
 })
 
