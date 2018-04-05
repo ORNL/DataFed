@@ -105,7 +105,7 @@ sdms_gsi_authz_init()
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
     curl_global_init(CURL_GLOBAL_ALL);
-
+/*
     char * temp = getenv("SDMS_DB_USER");
     syslog( LOG_INFO, "SDMS_DB_USER = %s", temp );
     strncpy( db_user, temp, MAX_DB_USER_LEN );
@@ -115,7 +115,7 @@ sdms_gsi_authz_init()
     syslog( LOG_INFO, "SDMS_DB_PASS = %s", temp );
     strncpy( db_pass, temp, MAX_DB_PASS_LEN );
     db_user[MAX_DB_PASS_LEN] = 0;
-
+*/
     return 0;
 }
 
@@ -231,16 +231,6 @@ sdms_gsi_authz_authorize_async( va_list ap )
             maj_stat = gss_display_name( &min_stat, client, &client_buf, &client_type );
             if ( maj_stat == GSS_S_COMPLETE )
             {
-                // Testing hack
-                #if 0
-                if ( strcmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=u_eiiq2lgi7fd7jfaggqdmnijiya" ) == 0 )
-                {
-                    result = GLOBUS_SUCCESS;
-                    callback(callback_arg, handle, result);
-                    return result;
-                }
-                #endif
-
                 gss_buffer_desc target_buf = GSS_C_EMPTY_BUFFER;
                 gss_OID target_type;
 
@@ -248,6 +238,16 @@ sdms_gsi_authz_authorize_async( va_list ap )
                 if ( maj_stat == GSS_S_COMPLETE )
                 {
                     syslog( LOG_INFO, "client: %s, target: %s, action: %s", (char*)client_buf.value, (char*)target_buf.value, action );
+
+                    // Testing hack
+                    #if 1
+                    //if ( strcmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=u_eiiq2lgi7fd7jfaggqdmnijiya" ) == 0 )
+                    {
+                        result = GLOBUS_SUCCESS;
+                        callback(callback_arg, handle, result);
+                        return result;
+                    }
+                    #endif
 
                     CURL * curl = curl_easy_init();
                     if ( curl )
