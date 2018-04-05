@@ -14,6 +14,7 @@ var certificate = fs.readFileSync( server_cert, 'utf8');
 var credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
 
+
 const oauth_credentials = {
     clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
     clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
@@ -43,15 +44,12 @@ app.get('/user_auth', (request, response) => {
 
     globus_auth.code.getToken( request.originalUrl ).then( function( user ) {
         //console.log( 'token:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
-	//console.log( 'id:', user.data.id_token, btoa( user.data.id_token ));
-	try {
-            console.log( 'id enc:', user.data.id_token );
-	    console.log( 'start' );
-//var token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIiLCJleHAiOjEzOTMyODY4OTMsImlhdCI6MTM5MzI2ODg5M30.4-iaDojEVl0pJQMjrbM1EzUIfAZgsbK_kgnVyVxFSVo';
+        //console.log( 'id:', user.data.id_token, btoa( user.data.id_token ));
 
-            //var dec = jwt_decode( token );
+        try {
+            //console.log( 'id enc:', user.data.id_token );
             var dec = jwt_decode( user.data.id_token );
-	    console.log( 'id dec:', dec );
+            console.log( 'id dec:', dec );
         } catch( e ) {
             console.log('exception:', e );
         }
@@ -69,6 +67,20 @@ app.get('/user_auth', (request, response) => {
         });
 
         // We should store the token into a database.
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
+        xhr.onreadystatechange = function() {
+            if ( xhr.readyState>3 && xhr.status == 200 ) {
+                console.log( 'introspect:', xhr.responseText );
+            }
+        };
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('Basic', btoa(toString(oauth_credentials.clientId) + ':' + toString(oauth_credentials.clientSecret)) );
+        xhr.send('');
+
+
         return response.send( user.accessToken );
     })
 })
