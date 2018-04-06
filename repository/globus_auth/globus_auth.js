@@ -86,8 +86,9 @@ app.get('/user_auth', ( a_request, a_response ) => {
         }, function( error, response, body ) {
             if( response.statusCode >= 200 && response.statusCode < 300 )
                 console.log( 'body:', body );
-                if ( body.active ) {
-                    console.log( 'name:', body.name, '\nuname:', body.username, '\nclient_id:', body.client_id, '\nidentities:', body.identities_set );
+                var userinfo = JSON.parse( body );
+                if ( userinfo.active ) {
+                    console.log( 'name:', userinfo.name, '\nuname:', userinfo.username, '\nclient_id:', userinfo.client_id, '\nidentities:', userinfo.identities_set );
                 }
         } );
     })
