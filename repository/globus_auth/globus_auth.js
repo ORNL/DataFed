@@ -84,6 +84,26 @@ app.get('/user_auth', (request, response) => {
             console.log( "req timeout:", e );
         };
 
+        xhr.onabort = function( e ) {
+            console.log( "req aborted:", e );
+        };
+
+        xhr.onprogress = function( e ) {
+            console.log( "req progress:", e );
+        };
+
+        xhr.onloadstart = function( e ) {
+            console.log( "req load start:", e );
+        };
+
+        xhr.onloadend = function( e ) {
+            console.log( "req load end:", e );
+        };
+
+        xhr.onload = function( e ) {
+            console.log( "req load:", e );
+        };
+
         xhr.onreadystatechange = function() {
             console.log( 'state change:', xhr.readyState, xhr.status, xhr.statusText );
             if ( xhr.readyState > 3 && xhr.status >= 200 && xhr.status < 300 ) {
