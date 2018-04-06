@@ -70,17 +70,20 @@ app.get('/user_auth', (request, response) => {
         // We should store the token into a database.
         //console.log( 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
 
+        response.send( user.accessToken );
+
         var xhr = new XMLHttpRequest();
 
-        xhr.addEventListener( "error", function( e ) {
+        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect' ); //, oauth_credentials.clientId, oauth_credentials.clientSecret );
+
+        xhr.onerror = function( e ) {
             console.log( "req err:", e );
-        });
+        };
 
-        xhr.addEventListener( "timeout", function( e ) {
+        xhr.ontimeout = function( e ) {
             console.log( "req timeout:", e );
-        });
+        };
 
-        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect', True ); //, oauth_credentials.clientId, oauth_credentials.clientSecret );
         xhr.onreadystatechange = function() {
             console.log( 'state change:', xhr.readyState, xhr.status, xhr.statusText );
             if ( xhr.readyState > 3 && xhr.status >= 200 && xhr.status < 300 ) {
@@ -90,10 +93,9 @@ app.get('/user_auth', (request, response) => {
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.setRequestHeader('Basic', btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
+        xhr.setRequestHeader('Authorization', 'Basic ' + btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
         xhr.send( 'token=' + user.accessToken + '&include=identities_set' );
 
-        response.send( user.accessToken );
     })
 })
 
