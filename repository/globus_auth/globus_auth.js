@@ -2,6 +2,7 @@
 
 const express = require('express');
 var https = require('https');
+var request = require('request');
 const fs = require('fs');
 const app = express();
 const port = 7512;
@@ -39,10 +40,10 @@ app.get('/go', (request, response) => {
     response.redirect(uri)
 })
 
-app.get('/user_auth', (request, response) => {
+app.get('/user_auth', ( a_request, a_response ) => {
     //console.log(`user_auth: `, request.query, request.body );
 
-    globus_auth.code.getToken( request.originalUrl ).then( function( user ) {
+    globus_auth.code.getToken( a_request.originalUrl ).then( function( user ) {
         //console.log( 'token:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
         //console.log( 'id:', user.data.id_token, btoa( user.data.id_token ));
 
@@ -70,9 +71,28 @@ app.get('/user_auth', (request, response) => {
         // We should store the token into a database.
         //console.log( 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
 
-        response.send( user.accessToken );
+        a_response.send( user.accessToken );
 
+        request.post({
+            uri: 'https://auth.globus.org/v2/oauth2/token/introspect',
+            headers: {
+                'Content-Type' : 'application/x-www-form-urlencoded',
+                'Accept' : 'application/json',
+                //'Authorization' :'Basic ' + btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret )
+            },
+            auth: {
+                user: oauth_credentials.clientId,
+                pass: oauth_credentials.clientSecret
+            },
+            body: 'token=' + user.accessToken + '&include=identities_set'
+        }, function( error, response, body ) {
+                console.log( 'something: ', error, response, body  );
+        } );
+
+/*
         var xhr = new XMLHttpRequest();
+
+        console.log( xhr );
 
         xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect' ); //, oauth_credentials.clientId, oauth_credentials.clientSecret );
 
@@ -115,7 +135,7 @@ app.get('/user_auth', (request, response) => {
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.setRequestHeader('Authorization', 'Basic ' + btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
         xhr.send( 'token=' + user.accessToken + '&include=identities_set' );
-
+*/
     })
 })
 
