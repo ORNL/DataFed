@@ -85,7 +85,10 @@ app.get('/user_auth', ( a_request, a_response ) => {
             body: 'token=' + user.accessToken + '&include=identities_set'
         }, function( error, response, body ) {
             if( response.statusCode >= 200 && response.statusCode < 300 )
-                console.log( 'resp:', response, 'body:', body );
+                console.log( 'body:', body );
+                if ( body.active ) {
+                    console.log( 'name:', body.name, '\nuname:', body.username, '\nclient_id:', body.client_id, '\nidentities:', body.identities_set );
+                }
         } );
     })
 })
