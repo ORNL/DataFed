@@ -71,6 +71,15 @@ app.get('/user_auth', (request, response) => {
         //console.log( 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
 
         var xhr = new XMLHttpRequest();
+
+        xhr.addEventListener( "error", function( e ) {
+            console.log( "req err:", e );
+        });
+
+        xhr.addEventListener( "timeout", function( e ) {
+            console.log( "req timeout:", e );
+        });
+
         xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect', true, oauth_credentials.clientId, oauth_credentials.clientSecret );
         xhr.onreadystatechange = function() {
             console.log( 'state change:', xhr.readyState, xhr.status, xhr.statusText );
@@ -84,7 +93,7 @@ app.get('/user_auth', (request, response) => {
         //xhr.setRequestHeader('Basic', btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
         xhr.send( 'token=' + user.accessToken + '&include=identities_set' );
 
-        return response.send( user.accessToken );
+        response.send( user.accessToken );
     })
 })
 
