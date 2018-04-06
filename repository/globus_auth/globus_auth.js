@@ -40,7 +40,7 @@ app.get('/go', (request, response) => {
 })
 
 app.get('/user_auth', (request, response) => {
-    console.log(`user_auth: `, request.query, request.body );
+    //console.log(`user_auth: `, request.query, request.body );
 
     globus_auth.code.getToken( request.originalUrl ).then( function( user ) {
         //console.log( 'token:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
@@ -80,7 +80,7 @@ app.get('/user_auth', (request, response) => {
             console.log( "req timeout:", e );
         });
 
-        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect', true, oauth_credentials.clientId, oauth_credentials.clientSecret );
+        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect', True ); //, oauth_credentials.clientId, oauth_credentials.clientSecret );
         xhr.onreadystatechange = function() {
             console.log( 'state change:', xhr.readyState, xhr.status, xhr.statusText );
             if ( xhr.readyState > 3 && xhr.status >= 200 && xhr.status < 300 ) {
@@ -90,7 +90,7 @@ app.get('/user_auth', (request, response) => {
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        //xhr.setRequestHeader('Basic', btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
+        xhr.setRequestHeader('Basic', btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
         xhr.send( 'token=' + user.accessToken + '&include=identities_set' );
 
         response.send( user.accessToken );
