@@ -61,25 +61,28 @@ app.get('/user_auth', (request, response) => {
         });
 
         // Sign API requests on behalf of the current user.
+        /*
         user.sign({
             method: 'get',
             url: 'https://sdms.ornl.gov'
-        });
+        });*/
 
         // We should store the token into a database.
+        //console.log( 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
+        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect', true, oauth_credentials.clientId, oauth_credentials.clientSecret );
         xhr.onreadystatechange = function() {
-            if ( xhr.readyState>3 && xhr.status == 200 ) {
+            console.log( 'state change:', xhr.readyState, xhr.status, xhr.statusText );
+            if ( xhr.readyState > 3 && xhr.status >= 200 && xhr.status < 300 ) {
                 console.log( 'introspect:', xhr.responseText );
             }
         };
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.setRequestHeader('Basic', btoa(toString(oauth_credentials.clientId) + ':' + toString(oauth_credentials.clientSecret)) );
-        xhr.send('');
-
+        //xhr.setRequestHeader('Basic', btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
+        xhr.send( 'token=' + user.accessToken + '&include=identities_set' );
 
         return response.send( user.accessToken );
     })
