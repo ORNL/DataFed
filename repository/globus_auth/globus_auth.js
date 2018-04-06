@@ -69,7 +69,6 @@ app.get('/user_auth', ( a_request, a_response ) => {
         });*/
 
         // We should store the token into a database.
-        //console.log( 'https://auth.globus.org/v2/oauth2/token/introspect?token=' + user.accessToken + '&include=identities_set' );
 
         a_response.send( user.accessToken );
 
@@ -78,7 +77,6 @@ app.get('/user_auth', ( a_request, a_response ) => {
             headers: {
                 'Content-Type' : 'application/x-www-form-urlencoded',
                 'Accept' : 'application/json',
-                //'Authorization' :'Basic ' + btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret )
             },
             auth: {
                 user: oauth_credentials.clientId,
@@ -86,56 +84,9 @@ app.get('/user_auth', ( a_request, a_response ) => {
             },
             body: 'token=' + user.accessToken + '&include=identities_set'
         }, function( error, response, body ) {
-                console.log( 'something: ', error, response, body  );
+            if( response.statusCode >= 200 && response.statusCode < 300 )
+                console.log( 'resp:', response, 'body:', body );
         } );
-
-/*
-        var xhr = new XMLHttpRequest();
-
-        console.log( xhr );
-
-        xhr.open('POST', 'https://auth.globus.org/v2/oauth2/token/introspect' ); //, oauth_credentials.clientId, oauth_credentials.clientSecret );
-
-        xhr.onerror = function( e ) {
-            console.log( "req err:", e );
-        };
-
-        xhr.ontimeout = function( e ) {
-            console.log( "req timeout:", e );
-        };
-
-        xhr.onabort = function( e ) {
-            console.log( "req aborted:", e );
-        };
-
-        xhr.onprogress = function( e ) {
-            console.log( "req progress:", e );
-        };
-
-        xhr.onloadstart = function( e ) {
-            console.log( "req load start:", e );
-        };
-
-        xhr.onloadend = function( e ) {
-            console.log( "req load end:", e );
-        };
-
-        xhr.onload = function( e ) {
-            console.log( "req load:", e );
-        };
-
-        xhr.onreadystatechange = function() {
-            console.log( 'state change:', xhr.readyState, xhr.status, xhr.statusText );
-            if ( xhr.readyState > 3 && xhr.status >= 200 && xhr.status < 300 ) {
-                console.log( 'introspect:', xhr.responseText );
-            }
-        };
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.setRequestHeader('Accept', 'application/json');
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.setRequestHeader('Authorization', 'Basic ' + btoa(oauth_credentials.clientId + ':' + oauth_credentials.clientSecret ));
-        xhr.send( 'token=' + user.accessToken + '&include=identities_set' );
-*/
     })
 })
 
