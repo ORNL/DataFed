@@ -23,6 +23,82 @@ typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_ha
 char    db_user[MAX_DB_USER_LEN+1];
 char    db_pass[MAX_DB_PASS_LEN+1];
 
+void uuidToStr( unsigned char * a_uuid, char * a_out )
+{
+    static const char * hex = "0123456789abcdef";
+    static const char * form = "xxxx-xx-xx-xx-xxxxxx";
+    unsigned char * pend = a_uuid + 16;
+    char * pout = a_out;
+    const char * f = form + 1;
+
+    for( unsigned char * pin = a_uuid; pin != pend; pout += 2, pin++, f++ )
+    {
+        pout[0] = hex[(*pin>>4) & 0xF];
+        pout[1] = hex[*pin & 0xF];
+        if ( *f == '-' )
+        {
+            pout[2] = '-';
+            pout++;
+            f++;
+        }
+    }
+
+    pout[0] = 0;
+}
+
+bool decodeUUID( const char * a_input, char * a_uuid )
+{
+    static char vocab[33] = "abcdefghijklmnopqrstuvwxyz234567";
+    uint64_t word;
+    const char * iter;
+    const char * end = vocab + 32;
+    size_t len = strlen( a_input );
+    char c;
+    unsigned long v;
+    unsigned char out[16];
+    unsigned char * outp = out;
+    size_t out_len = 0;
+    size_t i, j;
+
+    for ( i = 0; i < len; i += 8)
+    {
+        word = 0;
+        for ( j = 0; j < 8; ++j )
+        {
+            if ( i + j < len )
+            {
+                c = a_input[i+j];
+                for ( iter = vocab; iter != end; ++iter )
+                {
+                    if ( *iter == c )
+                    {
+                        v = ( iter - vocab );
+                        break;
+                    }
+                }
+
+                if ( iter == end )
+                    return false;
+
+                word <<= 5;
+                word |= v;
+            }
+            else
+            {
+                word <<= 5*(8-j);
+                break;
+            }
+        }
+
+        for ( j = 0; j < 5 && out_len < 16; ++j, ++out_len )
+            *outp++ = ((word >> ((4-j)*8)) & 0xFF);
+    }
+
+    uuidToStr( out, a_uuid );
+
+    return true;
+}
+
 // TODO This is a brute-force context lookup solution. Needs to be replaced with an indexed look-up
 struct ContextHandleEntry
 {
@@ -249,64 +325,81 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     }
                     #endif
 
-                    CURL * curl = curl_easy_init();
-                    if ( curl )
+                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=u_", 54 ) != 0 )
                     {
-                        char url[1024];
-                        //char resp[1024];
-                        char error[CURL_ERROR_SIZE];
-
-                        url[0] = error[0] = 0;
-
-                        char * esc_client = curl_easy_escape( curl, (char*)client_buf.value, 0 );
-                        char * esc_object = curl_easy_escape( curl, object, 0 );
-                        
-                        strcpy( url, "http://localhost:8529/_db/sdms/api/glb/authz?client=" );
-                        strcat( url, esc_client );
-                        strcat( url, "&file=" );
-                        strcat( url, esc_object );
-                        strcat( url, "&act=" );
-                        strcat( url, action );
-
-                        syslog( LOG_INFO, "url: %s", url );
-                        
-                        curl_easy_setopt( curl, CURLOPT_URL, url );
-                        curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-                        curl_easy_setopt( curl, CURLOPT_USERNAME, db_user );
-                        curl_easy_setopt( curl, CURLOPT_PASSWORD, db_pass );
-                        //curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
-                        //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
-                        curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
-
-                        CURLcode res = curl_easy_perform( curl );
-
-                        long http_code = 0;
-                        curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &http_code );
-
-                        if ( res == CURLE_OK )
-                        {
-                            if ( http_code >= 200 && http_code < 300 )
-                            {
-                                result = GLOBUS_SUCCESS;
-                            }
-                            else
-                            {
-                                syslog( LOG_ERR, "authz call failed, server code %ld", http_code );
-                            }
-                        }
-                        else
-                        {
-                            syslog( LOG_ERR, "authz call error: %s", error );
-                            syslog( LOG_ERR, "curl authz call failed: %s", curl_easy_strerror( res ));
-                        }
-
-                        curl_free( esc_client );
-                        curl_free( esc_object );
-                        curl_easy_cleanup(curl);
+                        syslog( LOG_ERR, "Invalid certificate subject prefix: %s", (char*)client_buf.value );
                     }
                     else
                     {
-                        syslog( LOG_ERR, "curl authz easy init failed!" );
+                        char uuid[40];
+
+                        if ( !decodeUUID( (char*)client_buf.value + 54, uuid ))
+                        {
+                            syslog( LOG_ERR, "Failed to decode subject UUID: %s", (char*)client_buf.value + 54 );
+                        }
+                        else
+                        {
+                            CURL * curl = curl_easy_init();
+
+                            if ( !curl )
+                            {
+                                syslog( LOG_ERR, "curl authz easy init failed!" );
+                            }
+                            else
+                            {
+                                char url[1024];
+                                //char resp[1024];
+                                char error[CURL_ERROR_SIZE];
+
+                                url[0] = error[0] = 0;
+
+                                char * esc_client = curl_easy_escape( curl, uuid, 0 );
+                                char * esc_object = curl_easy_escape( curl, object, 0 );
+                                
+                                strcpy( url, "http://localhost:8529/_db/sdms/api/glb/authz?client=" );
+                                strcat( url, esc_client );
+                                strcat( url, "&file=" );
+                                strcat( url, esc_object );
+                                strcat( url, "&act=" );
+                                strcat( url, action );
+
+                                syslog( LOG_INFO, "url: %s", url );
+                                
+                                curl_easy_setopt( curl, CURLOPT_URL, url );
+                                curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+                                curl_easy_setopt( curl, CURLOPT_USERNAME, db_user );
+                                curl_easy_setopt( curl, CURLOPT_PASSWORD, db_pass );
+                                //curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
+                                //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
+                                curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
+
+                                CURLcode res = curl_easy_perform( curl );
+
+                                long http_code = 0;
+                                curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+                                if ( res == CURLE_OK )
+                                {
+                                    if ( http_code >= 200 && http_code < 300 )
+                                    {
+                                        result = GLOBUS_SUCCESS;
+                                    }
+                                    else
+                                    {
+                                        syslog( LOG_ERR, "authz call failed, server code %ld", http_code );
+                                    }
+                                }
+                                else
+                                {
+                                    syslog( LOG_ERR, "authz call error: %s", error );
+                                    syslog( LOG_ERR, "curl authz call failed: %s", curl_easy_strerror( res ));
+                                }
+
+                                curl_free( esc_client );
+                                curl_free( esc_object );
+                                curl_easy_cleanup(curl);
+                            }
+                        }
                     }
 
                     gss_release_buffer( &min_stat, &target_buf );
