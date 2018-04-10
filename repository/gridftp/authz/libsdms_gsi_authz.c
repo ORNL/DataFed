@@ -192,6 +192,9 @@ sdms_gsi_authz_init()
     strncpy( db_pass, temp, MAX_DB_PASS_LEN );
     db_user[MAX_DB_PASS_LEN] = 0;
 */
+    strcpy( db_user, "root" );
+    strcpy( db_pass, "sdms!" );
+
     return 0;
 }
 
@@ -356,7 +359,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                                 char * esc_client = curl_easy_escape( curl, uuid, 0 );
                                 char * esc_object = curl_easy_escape( curl, object, 0 );
                                 
-                                strcpy( url, "http://localhost:8529/_db/sdms/api/glb/authz?client=" );
+                                strcpy( url, "http://localhost:8529/_db/sdms/api/authz/gridftp?client=" );
                                 strcat( url, esc_client );
                                 strcat( url, "&file=" );
                                 strcat( url, esc_object );

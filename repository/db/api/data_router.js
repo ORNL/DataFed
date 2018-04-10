@@ -30,7 +30,7 @@ router.get('/create', function (req, res) {
                 write: ["d","a","owner","alias"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
                 var obj = {};
 
@@ -92,7 +92,7 @@ router.get('/update', function (req, res) {
             },
             action: function() {
                 var data;
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 if ( !g_lib.hasAdminPermObject( client, data_id )) {
                     data = g_db.d.document( data_id );
@@ -172,7 +172,7 @@ router.get('/update', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var data_id = g_lib.resolveID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
@@ -208,7 +208,7 @@ router.get('/view', function (req, res) {
 
 router.get('/list', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
         var owner_id;
 
         if ( req.queryParams.subject ) {
@@ -236,7 +236,7 @@ router.get('/list', function (req, res) {
 // TODO Add options for ALL, user/project, or collection (recursize or not) options
 router.get('/find', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         //console.log( 'query: ', "for i in d filter " + req.queryParams.query + " return i" );
         const cursor = g_db._query( "for i in d filter " + req.queryParams.query + " return i" );
@@ -271,7 +271,7 @@ router.get('/delete', function (req, res) {
                 write: ["d","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 g_lib.ensureAdminPermObject( client, data_id );

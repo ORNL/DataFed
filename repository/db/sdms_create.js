@@ -7,7 +7,8 @@ var graph_module = require("@arangodb/general-graph");
 var graph = graph_module._create("sdmsg");
 
 graph._addVertexCollection("u");    // User
-graph._addVertexCollection("uid");   // User IDs
+graph._addVertexCollection("accn");   // User facility accounts
+graph._addVertexCollection("uuid");   // User globus UUIDs
 graph._addVertexCollection("g");    // Group
 graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
@@ -36,7 +37,7 @@ graph._extendEdgeDefinitions(tag);
 var note = graph_module._relation("note", ["d","c"], ["n"]);
 graph._extendEdgeDefinitions(note);
 
-var ident = graph_module._relation("ident", ["u"], ["uid"]);
+var ident = graph_module._relation("ident", ["u"], ["accn","uuid"]);
 graph._extendEdgeDefinitions(ident);
 
 var adm = graph_module._relation("admin", ["u"], ["u"]);
@@ -56,7 +57,8 @@ db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "status" ] });
 
 
 db._truncate("u");
-db._truncate("uid");
+db._truncate("accn");
+db._truncate("uuid");
 db._truncate("g");
 db._truncate("d");
 db._truncate("c");

@@ -27,19 +27,17 @@ router.get('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u"],
-                write: ["u","uid","c","a","owner","ident","alias","admin"]
+                write: ["u","c","a","owner","ident","alias","admin"]
             },
             action: function() {
-                var user = g_db.u.save({ _key: req.queryParams.uid, name_last: req.queryParams.name_last, name_first: req.queryParams.name_first, globus_id: req.queryParams.globus_id, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
+                var user = g_db.u.save({ _key: req.queryParams.uid, password: req.queryParams.password, name: req.queryParams.name, globus_id: req.queryParams.globus_id, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
 
-                var fac_uid = g_db.uid.save({ _key: req.queryParams.facility_uid }, { returnNew: true });
-                var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name_first + " " + req.queryParams.name_last + " (" + req.queryParams.uid +")" }, { returnNew: true });
+                var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name + " (" + req.queryParams.uid +")" }, { returnNew: true });
 
                 var alias = g_db.a.save({ _key: req.queryParams.uid + ":root" }, { returnNew: true });
                 g_db.owner.save({ _from: alias._id, _to: user._id });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });
-                g_db.ident.save({ _from: user._id, _to: fac_uid._id });
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
                 if ( req.queryParams.admins ) {
@@ -68,16 +66,15 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('uid', joi.string().required(), "SDMS user ID for new user")
-.queryParam('name_first', joi.string().required(), "First name")
-.queryParam('name_last', joi.string().required(), "Last name")
+.queryParam('password', joi.string().required(), "SDMS account password")
+.queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().required(), "Email")
-.queryParam('globus_id', joi.string().required(), "Globus ID (user name portion only)")
-.queryParam('facility_uid', joi.string().required(), "As facility/uid")
+.queryParam('globus_id', joi.string().required(), "Primary Globus ID (user name portion only)")
 .queryParam('is_admin', joi.boolean().optional(), "New account is a system administrator")
 .queryParam('is_project', joi.boolean().optional(), "New account is a project")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
 .summary('Create new user entry')
-.description('Create new user entry. Requires admin permissions.');
+.description('Create new user entry.');
 
 
 router.get('/update', function (req, res) {
@@ -86,11 +83,11 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
+                read: ["u","uuid","accn"],
                 write: ["u","admin"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var user_id;
 
                 if ( req.queryParams.subject ) {
@@ -103,11 +100,11 @@ router.get('/update', function (req, res) {
 
                 var obj = {};
 
-                if ( req.queryParams.name_first )
-                    obj.name_first = req.queryParams.name_first;
+                if ( req.queryParams.password )
+                    obj.password = req.queryParams.password;
 
-                if ( req.queryParams.name_last )
-                    obj.name_last = req.queryParams.name_last;
+                if ( req.queryParams.name )
+                    obj.name = req.queryParams.name;
 
                 if ( req.queryParams.globus_id )
                     obj.globus_id = req.queryParams.globus_id;
@@ -180,8 +177,8 @@ router.get('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client uid")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('name_first', joi.string().optional(), "New first name")
-.queryParam('name_last', joi.string().optional(), "New last name")
+.queryParam('password', joi.string().optional(), "SDMS account password")
+.queryParam('name', joi.string().optional(), "New name")
 .queryParam('globus_id', joi.string().optional(), "Globus ID (user name portion only)")
 .queryParam('email', joi.string().optional(), "New email")
 .queryParam('is_admin', joi.boolean().optional(), "New system administrator flag value")
@@ -204,7 +201,7 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_USER_NOT_FOUND;
             }
         } else if ( req.queryParams.client ) {
-            user = g_lib.getUserFromUID( req.queryParams.client );
+            user = g_lib.getUserFromClientID( req.queryParams.client );
         } else {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
@@ -225,14 +222,14 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user to view")
 .summary('View user information')
 .description('View user information');
 
 
 router.get('/list', function (req, res) {
-    res.send( g_db._query( "for i in u return { uid: i._key, name_last: i.name_last, name_first: i.name_first }" ));
+    res.send( g_db._query( "for i in u return { uid: i._key, name: i.name }" ));
 })
 .summary('List users')
 .description('List users');
@@ -242,11 +239,11 @@ router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","admin"],
-                write: ["u","g","uid","c","d","n","a","acl","owner","ident","alias","admin","member","item","tag","note"]
+                read: ["u","admin"],
+                write: ["u","g","uuid","accn","c","d","n","a","acl","owner","ident","alias","admin","member","item","tag","note"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var user_id;
 
                 if ( req.queryParams.subject ) {
@@ -264,14 +261,15 @@ router.get('/delete', function (req, res) {
                 // Delete linked accounts
                 objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
-                    g_graph.uid.remove( objects[i] );
+                    obj = objects[i];
+                    g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
                 // Delete collections, data, groups, notes
                 objects = g_db._query( "for v in 1..1 inbound @user owner return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
-                    g_graph[obj[0]].remove( obj );
+                    g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
                 g_graph.u.remove( user_id );
@@ -281,15 +279,15 @@ router.get('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('Remove existing user entry')
 .description('Remove existing user entry. Requires admin permissions.');
 
 
-router.get('/uid/list', function (req, res) {
+router.get('/ident/list', function (req, res) {
     try {
-        var client = g_lib.getUserFromUID( req.queryParams.client );
+        var client = g_lib.getUserFromClientID( req.queryParams.client );
         if ( req.queryParams.subject ) {
             const subject = g_db.u.document( req.queryParams.subject );
             g_lib.ensureAdminPermUser( client, subject._id );
@@ -302,31 +300,36 @@ router.get('/uid/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client uid")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List user linked UIDs');
 
 
-router.get('/uid/add', function (req, res) {
+router.get('/ident/add', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","admin"],
-                write: ["uid","ident"]
+                read: ["u","admin"],
+                write: ["uuid","accn","ident"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
-                var uid;
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var id;
+
+                if ( g_lib.isUUID( req.queryParams.ident )) {
+                    id = g_db.uuid.save({ _key: req.queryParams.ident }, { returnNew: true });
+                } else if ( g_lib.isDomainAccount( req.queryParams.ident )) {
+                    id = g_db.accn.save({ _key: req.queryParams.ident }, { returnNew: true });
+                } else
+                    throw g_lib.ERR_INVALID_IDENT;
 
                 if ( req.queryParams.subject ) {
                     const user = g_db.u.document( req.queryParams.subject );
                     g_lib.ensureAdminPermUser( client, user._id );
 
-                    uid = g_db.uid.save({ _key: req.queryParams.uid }, { returnNew: true });
-                    g_db.ident.save({ _from: user._id, _to: uid._id });
+                    g_db.ident.save({ _from: user._id, _to: id._id });
                 } else {
-                    uid = g_db.uid.save({ _key: req.queryParams.uid }, { returnNew: true });
-                    g_db.ident.save({ _from: client._id, _to: uid._id });
+                    g_db.ident.save({ _from: client._id, _to: id._id });
                 }
             }
         });
@@ -334,42 +337,45 @@ router.get('/uid/add', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
-.queryParam('uid', joi.string().required(), "UID to add")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.summary('Add new linked UID to user account')
-.description('Add new linked UID to user account');
+.queryParam('ident', joi.string().required(), "Identity to add")
+.summary('Add new linked identity')
+.description('Add new linked identity to user account. Identities can be UUIDs or domain accounts.');
 
 
-router.get('/uid/remove', function (req, res) {
+router.get('/ident/remove', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
-                write: ["uid","ident"]
+                read: ["u","admin"],
+                write: ["uuid","accn","ident"]
             },
             action: function() {
-
-                if ( req.queryParams.client == req.queryParams.uid )
-                    throw g_lib.ERR_UID_IN_USE;
-
-                const client = g_lib.getUserFromUID( req.queryParams.client );
-                const owner = g_lib.getUserFromUID( req.queryParams.uid );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                const owner = g_lib.getUserFromClientID( req.queryParams.ident );
 
                 g_lib.ensureAdminPermUser( client, owner._id );
 
-                const uid = g_db.uid.document({ _key: req.queryParams.uid });
+                if ( g_lib.isUUID( req.queryParams.ident )) {
+                    g_graph.uuid.remove( "uuid/" + req.queryParams.ident );
+                    //g_db.uuid.remove({ _id: "uuid/" + req.queryParams.ident });
+                } else if ( g_lib.isDomainAccount( req.queryParams.ident )) {
+                    //const acc = g_db.accn.document({ _key: req.queryParams.ident });
+                    //g_db.ident.removeByExample({ _to: acc._id });
 
-                g_db.ident.removeByExample({ _to: uid._id });
-                g_db.uid.remove({ _id: uid._id });
+                    g_graph.accn.remove( "accn/" + req.queryParams.ident );
+                    //g_db.accn.remove({ _id: "accn/" + req.queryParams.ident });
+                } else
+                    throw g_lib.ERR_INVALID_IDENT;
             }
         });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client uid")
-.queryParam('uid', joi.string().required(), "Certificate to delete")
-.summary('Remove linked UID from user account')
-.description('Remove linked UID from user account');
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('ident', joi.string().required(), "Certificate to delete")
+.summary('Remove linked identity from user account')
+.description('Remove linked identity from user account');
 

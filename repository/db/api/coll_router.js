@@ -30,7 +30,7 @@ router.get('/create', function (req, res) {
                 write: ["c","a","alias","owner","item"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
                 var obj = { title: req.queryParams.title };
                 if ( req.queryParams.desc )
@@ -96,7 +96,7 @@ router.get('/update', function (req, res) {
             },
             action: function() {
                 var coll;
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     coll = g_db.c.document( coll_id );
@@ -173,7 +173,7 @@ router.get('/delete', function (req, res) {
                 write: ["c","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
 
                 g_lib.ensureAdminPermObject( client, coll_id );
@@ -207,7 +207,7 @@ router.get('/delete', function (req, res) {
 // This is an OWNER or ADMIN only function, other users must navigate the collection hierarchy
 router.get('/priv/list', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
         var owner_id;
 
         if ( req.queryParams.subject ) {
@@ -233,7 +233,7 @@ router.get('/priv/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
@@ -274,7 +274,7 @@ router.get('/view', function (req, res) {
 */
 router.get('/read', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
@@ -333,7 +333,7 @@ router.get('/read', function (req, res) {
 
 router.get('/read2', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
@@ -378,7 +378,7 @@ router.get('/read2', function (req, res) {
 
 router.get('/write', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );

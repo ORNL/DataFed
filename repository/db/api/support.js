@@ -50,6 +50,7 @@ module.exports = ( function() {
 
     obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission denied" ]);
     obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
+    obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
     obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
     obj.ERR_UID_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "UID not found" ]);
@@ -88,11 +89,40 @@ module.exports = ( function() {
         }
     };
 
-    obj.getUserFromUID = function( a_uid ) {
-        var result = obj.db._query( "for j in inbound @uid ident return j", { 'uid': 'uid/' + a_uid }, { cache: true } ).toArray();
+    obj.isDomainAccount = function( a_client_id ) {
+        if ( a_client_id.indexOf( "." ) != -1 )
+            return true;
+        else
+            return false;
+    };
+
+    obj.isUUID = function( a_client_id ) {
+        if ( a_client_id.length == 36 && a_client_id.charAt(8) == "-" )
+            return true;
+        else
+            return false;
+    };
+
+    obj.getUserFromClientID = function( a_client_id ) {
+        // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
+        // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
+
+        var params;
+
+        if ( obj.isDomainAccount( a_client_id )) {
+            // Account
+            params = { 'id': 'accn/' + a_client_id };
+        } else if ( obj.isUUID( a_client_id  )) {
+            // UUID
+            params = { 'id': 'uuid/' + a_client_id };
+        } else {
+            return obj.db._document({ _id: "u/" + a_client_id });
+        }
+
+        var result = obj.db._query( "for j in inbound @id ident return j", params, { cache: true } ).toArray();
 
         if ( result.length != 1 )
-            throw obj.ERR_UID_NOT_FOUND;
+            throw obj.ERR_CLIENT_NOT_FOUND;
 
         return result[0];
     };

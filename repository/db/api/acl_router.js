@@ -83,7 +83,7 @@ router.get('/update', function (req, res) {
                 write: ["c","d","acl"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var object = g_lib.getObject( req.queryParams.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: object._id })._to.substr(2);
 
@@ -309,7 +309,7 @@ router.get('/update', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
         var object = g_lib.getObject( req.queryParams.id, client );
 
         if ( object._id[0] != "c" && object._id[0] != "d" )

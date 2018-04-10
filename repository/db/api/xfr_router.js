@@ -28,7 +28,7 @@ router.get('/init', function (req, res) {
                 write: ["tr"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getClientID( req.queryParams.client );
 
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
@@ -149,7 +149,7 @@ router.get('/update', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        //const client = g_lib.getUserFromUID( req.queryParams.client );
+        //const client = g_lib.getUserFromClientID( req.queryParams.client );
 
 
         var result = g_db.tr.document( req.queryParams.xfr_id );
@@ -166,7 +166,7 @@ router.get('/view', function (req, res) {
 
 router.get('/list', function (req, res) {
     try {
-        //const client = g_lib.getUserFromUID( req.queryParams.client );
+        //const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var result = g_db._query( "for i in tr return i" ).toArray();
 

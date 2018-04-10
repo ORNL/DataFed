@@ -25,7 +25,7 @@ router.get('/gridftp', function (req, res) {
         console.log( "file", req.queryParams.file );
         console.log( "act", req.queryParams.act );
 
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         // Actions: read, write, create, delete, chdir, lookup
         var req_perm = 0;
@@ -37,6 +37,12 @@ router.get('/gridftp', function (req, res) {
             case "create":
                 req_perm = g_lib.PERM_WRITE;
                 break;
+            case "delete":
+                throw g_lib.ERR_INVALID_ACTION;
+            case "chdir":
+            case "lookup":
+                // For TESTING, allow these actions
+                return;
             default:
                 throw g_lib.ERR_INVALID_ACTION;
         }
@@ -62,7 +68,7 @@ router.get('/gridftp', function (req, res) {
 
 router.get('/xfr/pre', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var data_id = g_lib.resolveID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );

@@ -30,7 +30,7 @@ router.get('/create', function (req, res) {
                 write: ["g","owner","member"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var uid;
 
                 if ( req.queryParams.subject ) {
@@ -90,7 +90,7 @@ router.get('/update', function (req, res) {
                 write: ["g","owner","member"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
 
                 if ( req.queryParams.subject ) {
@@ -183,7 +183,7 @@ router.get('/delete', function (req, res) {
                 write: ["g","owner","member","acl"]
             },
             action: function() {
-                const client = g_lib.getUserFromUID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
 
                 if ( req.queryParams.subject ) {
@@ -213,7 +213,7 @@ router.get('/delete', function (req, res) {
 
 router.get('/list', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
         var owner_id;
 
         if ( req.queryParams.subject ) {
@@ -238,7 +238,7 @@ router.get('/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromUID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
         var group;
 
         if ( req.queryParams.subject ) {
