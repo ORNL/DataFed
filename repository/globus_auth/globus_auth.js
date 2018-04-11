@@ -83,14 +83,15 @@ app.get('/user_auth', ( a_request, a_response ) => {
             },
             body: 'token=' + user.accessToken + '&include=identities_set'
         }, function( error, response, body ) {
-            var resp_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br>";
+            var resp_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br>';
 
             if( response.statusCode >= 200 && response.statusCode < 300 ) {
                 console.log( 'body:', body );
                 var userinfo = JSON.parse( body );
 
-                if ( userinfo.active ) {
+                if ( userinfo.active )
                     resp_content += "ERROR: Globus user is INACTIVE!<br><br>";
+
                 resp_content += "Name: " + userinfo.name + "<br>";
                 resp_content += "User name: " + userinfo.username + "<br>";
                 resp_content += "Client ID: " + userinfo.client_id + "<br>";
