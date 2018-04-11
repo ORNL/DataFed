@@ -7,6 +7,7 @@
 #include <curl/curl.h>
 
 #include <globus_types.h>
+#include <globus_error_hierarchy.h>
 #include <gssapi.h>
 
 
@@ -431,10 +432,18 @@ sdms_gsi_authz_authorize_async( va_list ap )
         syslog( LOG_ERR, "context handle lookup FAILED" );
     }
 
-    callback(callback_arg, handle, result);
+    if ( result != GLOBUS_SUCCESS )
+    {
+        globus_object_t * error = globus_error_construct_no_authentication( 0, 0 );
+        //globus_module_descriptor_t * base_source,
+        //globus_object_t * base_cause);
+
+        result = globus_error_put( error );
+    }
+
+    callback( callback_arg, handle, result );
 
     return result;
-
 }
 
 globus_result_t
