@@ -359,7 +359,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                                 char * esc_client = curl_easy_escape( curl, uuid, 0 );
                                 char * esc_object = curl_easy_escape( curl, object, 0 );
                                 
-                                strcpy( url, "https://localhost:8529/_db/sdms/api/authz/gridftp?client=" );
+                                strcpy( url, "https://sdms.ornl.gov:8529/_db/sdms/api/authz/gridftp?client=" );
                                 strcat( url, esc_client );
                                 strcat( url, "&file=" );
                                 strcat( url, esc_object );
@@ -367,11 +367,13 @@ sdms_gsi_authz_authorize_async( va_list ap )
                                 strcat( url, action );
 
                                 syslog( LOG_INFO, "url: %s", url );
-                                
+
                                 curl_easy_setopt( curl, CURLOPT_URL, url );
                                 curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
                                 curl_easy_setopt( curl, CURLOPT_USERNAME, db_user );
                                 curl_easy_setopt( curl, CURLOPT_PASSWORD, db_pass );
+                                curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0 );
+                                curl_easy_setopt( curl, CURLOPT_TCP_NODELAY, 1 );
                                 //curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
                                 //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
                                 curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
