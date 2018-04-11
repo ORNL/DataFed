@@ -31,10 +31,10 @@ const ClientOAuth2 = require('client-oauth2');
 var globus_auth = new ClientOAuth2( oauth_credentials );
 
 app.get('/', (request, response) => {
-    response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/go">Go!</a></body></html>');
+    response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
 })
 
-app.get('/go', (request, response) => {
+app.get('/get_ident', (request, response) => {
     console.log(`starting auth flow` );
     var uri = globus_auth.code.getUri();
     response.redirect(uri)
@@ -70,7 +70,6 @@ app.get('/user_auth', ( a_request, a_response ) => {
 
         // We should store the token into a database.
 
-        a_response.send( user.accessToken );
 
         request.post({
             uri: 'https://auth.globus.org/v2/oauth2/token/introspect',
@@ -84,12 +83,31 @@ app.get('/user_auth', ( a_request, a_response ) => {
             },
             body: 'token=' + user.accessToken + '&include=identities_set'
         }, function( error, response, body ) {
-            if( response.statusCode >= 200 && response.statusCode < 300 )
+            var resp_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br>";
+
+            if( response.statusCode >= 200 && response.statusCode < 300 ) {
                 console.log( 'body:', body );
                 var userinfo = JSON.parse( body );
+
                 if ( userinfo.active ) {
-                    console.log( 'name:', userinfo.name, '\nuname:', userinfo.username, '\nclient_id:', userinfo.client_id, '\nidentities:', userinfo.identities_set );
+                    resp_content += "ERROR: Globus user is INACTIVE!<br><br>";
+                resp_content += "Name: " + userinfo.name + "<br>";
+                resp_content += "User name: " + userinfo.username + "<br>";
+                resp_content += "Client ID: " + userinfo.client_id + "<br>";
+                resp_content += "Identities:<br>";
+                for ( var i in userinfo.identities_set ) {
+                    resp_content += "&nbsp&nbsp&nbsp&nbsp" + userinfo.identities_set[i] + "<br>";
                 }
+
+                resp_content += "<br>Please manually install the reported Globus identities into the SDMS database for the associated user.<br>";
+
+            } else {
+                resp_content += "Failed to retrieve Globus identities.<br>";
+            }
+
+            resp_content += '<br><br><a href="/get_ident">Get Globus Identities</a><br>';
+            resp_content += '<a href="/">Back to Main</a></body></html>';
+            a_response.send( resp_content );
         } );
     })
 })
