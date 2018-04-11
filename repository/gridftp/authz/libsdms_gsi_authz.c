@@ -359,7 +359,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                                 char * esc_client = curl_easy_escape( curl, uuid, 0 );
                                 char * esc_object = curl_easy_escape( curl, object, 0 );
                                 
-                                strcpy( url, "http://localhost:8529/_db/sdms/api/authz/gridftp?client=" );
+                                strcpy( url, "https://localhost:8529/_db/sdms/api/authz/gridftp?client=" );
                                 strcat( url, esc_client );
                                 strcat( url, "&file=" );
                                 strcat( url, esc_object );
