@@ -440,8 +440,10 @@ sdms_gsi_authz_authorize_async( va_list ap )
 
         result = globus_error_put( error );
     }
-
-    callback( callback_arg, handle, result );
+    else
+    {
+        callback( callback_arg, handle, result );
+    }
 
     return result;
 }
