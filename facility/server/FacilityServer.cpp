@@ -38,7 +38,7 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_context( asio::ssl::context::tlsv12 ),
     m_country("US"),    // TODO Get from params
     m_org("ORNL"),    // TODO Get from params
-    m_unit("CCS"),    // TODO Get from params
+    m_unit("ccs"),    // TODO Get from params
     m_xfr_thread(0)
 {
     m_context.set_options(

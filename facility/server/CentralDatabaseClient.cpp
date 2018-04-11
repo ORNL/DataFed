@@ -124,6 +124,21 @@ CentralDatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,
     }
 }
 
+void
+CentralDatabaseClient::clientAuthenticate( const std::string & a_password )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/authn", {{"pw",a_password}}, result );
+}
+
+void
+CentralDatabaseClient::clientLinkIdentity( const std::string & a_identity )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/ident/add", {{"ident",a_identity}}, result );
+}
 
 void
 CentralDatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
@@ -174,8 +189,7 @@ CentralDatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document
 
         user = a_reply.add_user();
         user->set_uid( val["uid"].GetString() );
-        user->set_name_last( val["name_last"].GetString() );
-        user->set_name_first( val["name_first"].GetString() );
+        user->set_name( val["name"].GetString() );
 
         if (( imem = val.FindMember("globus_id")) != val.MemberEnd() )
             user->set_globus_id( imem->value.GetString() );

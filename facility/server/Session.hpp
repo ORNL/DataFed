@@ -58,8 +58,8 @@ private:
     void writeMsgBody();
     void procMsgServerInfo();
     void procMsgAuthenticate();
-    void procMsgSetup();
     void procMsgStatus();
+    void procMsgSetLocalIdentity();
     void procMsgGenerateCredentials();
     void procMsgGenerateKeys();
     void procMsgGetPublicKey();

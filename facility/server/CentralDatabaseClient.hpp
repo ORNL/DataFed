@@ -21,6 +21,8 @@ public:
     ~CentralDatabaseClient();
 
     void setClient( const std::string & a_client );
+    void clientAuthenticate( const std::string & a_password );
+    void clientLinkIdentity( const std::string & a_identity );
 
     //void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
     //uint16_t checkPerms( const string & a_id, uint16_t a_perms );

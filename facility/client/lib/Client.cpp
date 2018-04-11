@@ -38,6 +38,28 @@ namespace Facility {
 
 //typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 
+bool
+Client::verifyCredentials( const std::string & a_cred_path, const std::string & a_unit )
+{
+    char * uid = getlogin();
+    if ( uid == 0 )
+        EXCEPT( 0, "Could not determine login name" );
+
+    boost::system::error_code ec;
+    boost::filesystem::path dest_path( a_cred_path + uid + "-" + a_unit + "-cert.pem" );
+
+    // TODO Need a way to actually check to see if the content of these credentials is valid
+
+    if ( !exists( dest_path, ec ) )
+        return false;
+
+    dest_path = a_cred_path + uid + "-" + a_unit + "-key.pem";
+    if ( !exists( dest_path, ec ) )
+        return false;
+
+    return true;
+}
+
 
 Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, const std::string & a_unit, bool a_load_certs ) :
     m_host( a_host ),
@@ -59,6 +81,8 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     if ( uid == 0 )
         EXCEPT( 0, "Could not determine login name" );
 
+    m_uid = uid;
+
     if ( m_cred_path.size() && *m_cred_path.rbegin() != '/' )
         m_cred_path += "/";
 
@@ -68,8 +92,8 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     m_context.load_verify_file( m_cred_path + "sdmsd-" + a_unit + "-cert.pem");
     
 
-    m_cert_file = m_cred_path + uid + "-" + a_unit + "-cert.pem";
-    m_key_file = m_cred_path + uid + "-" + a_unit + "-key.pem";
+    m_cert_file = m_cred_path + m_uid + "-" + a_unit + "-cert.pem";
+    m_key_file = m_cred_path + m_uid + "-" + a_unit + "-key.pem";
 
     if ( a_load_certs )
     {
@@ -78,7 +102,6 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     }
 
     m_socket = new ssl_socket( m_io_service, m_context );
-    
 
     m_socket->set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
     m_socket->set_verify_callback( bind( &Client::verifyCert, this, placeholders::_1, placeholders::_2 ));
@@ -195,7 +218,7 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
     m_out_buf.getFrame().context = a_context;
     m_out_buf.serialize( a_request );
 
-    //cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
+    cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
     if ( m_out_buf.getFrame().size == 0 )
         NO_DELAY_ON(m_socket);
 
@@ -254,8 +277,6 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
     if ( m_in_buf.getFrame().context != a_context )
         EXCEPT_PARAM( 1, "Reply context mismatch. Expected " << a_context << " got " << m_in_buf.getFrame().context );
 
-    //cout << "send: " << t1 << ", recv: " << t2 << "\n";
-
     MsgBuf::Message * raw_reply = m_in_buf.unserialize();
     //cout << "msg: " << raw_reply << "\n";
     if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
@@ -277,6 +298,27 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
     }
     //cout << "a_reply: " << a_reply << "\n";
 }
+
+string Client::setup()
+{
+    setLocalIdentity();
+    generateCredentials();
+
+    return generateKeys();
+}
+
+void Client::setLocalIdentity()
+{
+    SetLocalIdentityRequest req;
+    Anon::AckReply *        rep;
+
+    req.set_ident( m_uid );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
 
 void Client::generateCredentials()
 {
@@ -312,12 +354,9 @@ void Client::generateCredentials()
     }
 }
 
+/*
 void Client::generateKeys( const std::string & a_outfile )
 {
-    char * uid = getlogin();
-    if ( uid == 0 )
-        EXCEPT( 0, "Could not determine login name" );
-
     ofstream  outf( a_outfile );
     if ( !outf.is_open() || !outf.good() )
         EXCEPT_PARAM( 0, "Could not open " << a_outfile << " for output" );
@@ -332,13 +371,24 @@ void Client::generateKeys( const std::string & a_outfile )
 
     delete reply;
 }
+*/
 
+std::string Client::generateKeys()
+{
+    GenerateKeysRequest req;
+    PublicKeyReply * reply = 0;
+
+    send<>( req, reply, m_ctx++ );
+
+    string result = reply->pub_key();
+
+    delete reply;
+    return result;
+}
+
+/*
 void Client::getPublicKey( const std::string & a_outfile )
 {
-    char * uid = getlogin();
-    if ( uid == 0 )
-        EXCEPT( 0, "Could not determine login name" );
-
     ofstream  outf( a_outfile );
     if ( !outf.is_open() || !outf.good() )
         EXCEPT_PARAM( 0, "Could not open " << a_outfile << " for output" );
@@ -352,6 +402,20 @@ void Client::getPublicKey( const std::string & a_outfile )
     outf.close();
 
     delete reply;
+}
+*/
+
+std::string Client::sshPublicKey()
+{
+    GetPublicKeyRequest req;
+    PublicKeyReply * reply = 0;
+
+    send<>( req, reply, m_ctx++ );
+
+    string result = reply->pub_key();
+
+    delete reply;
+    return result;
 }
 
 bool Client::test( size_t a_iter )
@@ -401,20 +465,26 @@ ServiceStatus Client::status()
 }
 
 void
-Client::authenticate( const string & a_password )
+Client::authenticate( const std::string & a_uid, const string & a_password )
 {
+    /*
     char * uid = getlogin();
     if ( uid == 0 )
         EXCEPT( 0, "Could not determine login name" );
+    */
 
     AuthenticateRequest req;
 
-    req.set_uid( uid );
+    req.set_uid( a_uid );
     req.set_password( a_password );
 
     AckReply * reply;
 
+cout << "sending\n";
     send<>( req, reply, m_ctx++ );
+cout << "back\n";
+
+    delete reply;
 }
 
 spUserDataReply

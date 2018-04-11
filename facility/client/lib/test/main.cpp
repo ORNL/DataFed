@@ -104,7 +104,7 @@ int main( int a_argc, char ** a_argv )
         }
 
         //timerDef();
-
+#if 0
         cout << "Starting client (" << unit << ")" << endl;
 
         Client client( host, port, timeout, cred_path, unit, (( gen_cert & GEN_X509 ) == 0 ));
@@ -119,7 +119,7 @@ int main( int a_argc, char ** a_argv )
 
             exit(0);
         }
-
+#endif
 
         //spUserDataReply users;
         //spRecordDataReply records;

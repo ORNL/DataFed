@@ -123,7 +123,7 @@ void printUsers( spUserDataReply a_reply )
             {
             case TEXT:
                 cout << "  UID    : " << user.uid() << "\n";
-                cout << "  Name   : " << user.name_first() << " " << user.name_last() << "\n";
+                cout << "  Name   : " << user.name() << "\n";
                 if ( user.has_email() )
                     cout << "  email  : " << user.email() << "\n";
                 if ( user.has_globus_id() )
@@ -134,7 +134,7 @@ void printUsers( spUserDataReply a_reply )
                     cout << "  admin  : " << user.is_admin() << "\n";
                 break;
             case JSON:
-                cout << "{\"uid\":\"" << user.uid() << "\",\"name_first\":\"" << user.name_first() << "\",\"name_last\":\"" << user.name_last() << "\"";
+                cout << "{\"uid\":\"" << user.uid() << "\",\"name\":\"" << user.name() << "\"";
                 if ( user.has_email() )
                     cout << ",\"email\":\"" << user.email() << "\"";
                 if ( user.has_globus_id() )
@@ -146,7 +146,7 @@ void printUsers( spUserDataReply a_reply )
                 cout << "}";
                 break;
             case CSV:
-                cout << "\"" << user.uid() << "\",\"" << user.name_first() << "\",\"" << user.name_last() << "\"\n";
+                cout << "\"" << user.uid() << "\",\"" << user.name() << "\"\n";
                 break;
             }
 
@@ -750,7 +750,7 @@ int acl()
     return 0;
 }
 
-
+/*
 int gen_ssh()
 {
     if ( g_args.size() != 1 )
@@ -761,18 +761,29 @@ int gen_ssh()
 
     return 0;
 }
+*/
 
 int get_ssh()
 {
-    if ( g_args.size() != 1 )
+    if ( g_args.size() )
         return -1;
 
-    g_client->getPublicKey( g_args[0] );
-    cout << "SUCCESS\n";
+    cout << g_client->sshPublicKey() << "\n";
 
     return 0;
 }
 
+int setup()
+{
+    string key = g_client->setup();
+
+//    g_client->generateCredentials();
+
+//    cout << "SSH Public Key:\n" << g_client->generateKeys() << "\n\nThis key must be manually installed in your GlobusID account.\n";
+    cout << "SSH Public Key:\n" << key << "\n\nThis key must be manually installed in your GlobusID account.\n";
+
+    return 0;
+}
 
 enum OptionResult
 {
@@ -856,8 +867,9 @@ int main( int a_argc, char ** a_argv )
     addCommand( "u", "user", "List or view user information", "user [id]\n\nLists all users if 'id' parameter is omitted; otherwise, view details of associated user.", user );
     addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
-    addCommand( "", "gen-cred", "Generate local credentials","gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console );
-    addCommand( "", "gen-ssh", "Generate globus SSH keys", "gen-ssh <out-file>\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh );
+    addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
+    //addCommand( "", "gen-cred", "Generate local credentials","gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console );
+    //addCommand( "", "gen-ssh", "Generate globus SSH keys", "gen-ssh <out-file>\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh );
     addCommand( "", "get-ssh", "Retrieve globus public SSH key", "get-ssh <out-file>\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh );
 
     buildCmdMap();
@@ -867,7 +879,8 @@ int main( int a_argc, char ** a_argv )
     uint32_t    timeout = 5;
     string      home = getenv("HOME");
     string      cred_path = home + "/.sdms/";
-    string      unit = "CCS";
+    string      unit = "ccs";
+    bool        manual_auth = false;
 
     po::options_description opts_startup( "Program options" );
     po::options_description opts_hidden( "Hidden options" );
@@ -882,6 +895,7 @@ int main( int a_argc, char ** a_argv )
         ("host,h",po::value<string>( &host ),"Service hostname/IP")
         ("port,p",po::value<uint16_t>( &port ),"Service port")
         ("cfg",po::value<string>( &g_cfg_file ),"Use config file for options")
+        ("login,l",po::bool_switch( &manual_auth )->default_value(false),"Manually login to SDMS")
         ;
 
     g_opts_command.add_options()
@@ -933,6 +947,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
+/*
         bool load_cred = true;
 
         // Must process "gen-cred" command before client init
@@ -948,23 +963,28 @@ int main( int a_argc, char ** a_argv )
 
             load_cred = false;
         }
+*/
+        if ( !manual_auth && !Client::verifyCredentials( cred_path, unit ))
+        {
+            cout << "No client credentials found, manual authentication required\n";
+            manual_auth = true;
+        }
 
-        Client client( host, port, timeout, cred_path, unit, load_cred );
+        Client client( host, port, timeout, cred_path, unit, !manual_auth );
         client.start();
 
-        if ( !load_cred )
+        if ( manual_auth )
         {
+            string uname;
             string password;
 
-            cout << "Password: ";
+            cout << "SDMS user ID: ";
+            cin >> uname;
+
+            cout << "SDMS password: ";
             cin >> password;
 
-            client.authenticate( password );
-
-            client.generateCredentials();
-
-            cout << "SUCCESS\n";
-            exit(0);
+            client.authenticate( uname, password );
         }
 
         g_client = &client;

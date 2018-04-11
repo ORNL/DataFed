@@ -67,6 +67,7 @@ Session::setupMsgHandlers()
 
         proto_id = REG_PROTO( SDMS::Auth );
 
+        SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
         SET_MSG_HANDLER( proto_id, GenerateKeysRequest, &Session::procMsgGenerateKeys );
         SET_MSG_HANDLER( proto_id, GetPublicKeyRequest, &Session::procMsgGetPublicKey );
@@ -396,35 +397,14 @@ Session::procMsgAuthenticate()
 {
     PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
 
-    // TODO call local auth backend...
-    
-    // Now find user record
+    // Note: uid is the user's SDMS account name, not posix uid
+    m_db_client.setClient( request->uid() );
+    m_db_client.clientAuthenticate( request->password() );
 
     m_uid = request->uid();
-    m_db_client.setClient( m_sess_mgr.getUnit() + "." + m_uid );
-
-    cout << "UID: " << m_uid << "\n";
-
-    UserViewRequest req2;
-    UserDataReply rep2;
-
-    m_db_client.userView( req2, rep2 );
-
-    // Now update client status to authenticated
     m_anon = false;
 
     PROC_MSG_END
-}
-
-
-void
-Session::procMsgSetup()
-{
-    //PROC_MSG_BEGIN( Anon::SetupRequest, Anon::AckReply )
-
-    cout << "doing setup!\n";
-
-    //PROC_MSG_END
 }
 
 
@@ -438,7 +418,29 @@ Session::procMsgStatus()
     PROC_MSG_END
 }
 
+void
+Session::procMsgSetLocalIdentity()
+{
+    PROC_MSG_BEGIN( SetLocalIdentityRequest, Anon::AckReply )
 
+    // Ensure client has an identity for local environment
+    m_db_client.clientLinkIdentity( m_sess_mgr.getUnit() + "." + request->ident() );
+
+    // Switch to POSIX identity
+    m_uid = request->ident();
+    m_db_client.setClient( m_sess_mgr.getUnit() + "." + m_uid );
+
+    PROC_MSG_END
+}
+
+/** @brief Creates identity for local environment and generate matching credentials
+ *
+ * This method configures a local environment for non- interactive SDMS use.
+ * An identity matching the facility and POSIX uid of the client is generated
+ * and linked, and x509 certificates are generated and stored on the server
+ * side. The public certificate is returned to the client for installation and
+ * subsequent use.
+ */
 void
 Session::procMsgGenerateCredentials()
 {
@@ -452,6 +454,9 @@ Session::procMsgGenerateCredentials()
 
     try
     {
+        // TODO This process is BROKEN. There is nothing that prevents anyone from replicating this process anywhere/
+        // TODO We MUST SIGN the certificate with the HOST key to ensure they can not be spoofed
+
         string cmd = "openssl genrsa -out " + key_file + " 2048";
         if ( system( cmd.c_str() ))
             EXCEPT( ID_SERVICE_ERROR, "Client key generation failed." );

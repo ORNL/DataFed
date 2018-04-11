@@ -19,6 +19,21 @@ module.exports = router;
 
 //==================== USER API FUNCTIONS
 
+router.get('/authn', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        if ( client.password != req.queryParams.pw )
+            throw g_lib.ERR_AUTHN_FAILED;
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client uid")
+.queryParam('pw', joi.string().required(), "SDMS account password")
+.summary('Authenticate user')
+.description('Authenticate user using SDMS password');
+
 
 router.get('/create', function (req, res) {
     try {
@@ -317,8 +332,12 @@ router.get('/ident/add', function (req, res) {
                 var id;
 
                 if ( g_lib.isUUID( req.queryParams.ident )) {
+                    if ( g_db._exists({ _id: "uuid/" + req.queryParams.ident }))
+                        return;
                     id = g_db.uuid.save({ _key: req.queryParams.ident }, { returnNew: true });
                 } else if ( g_lib.isDomainAccount( req.queryParams.ident )) {
+                    if ( g_db._exists({ _id: "accn/" + req.queryParams.ident }))
+                        return;
                     id = g_db.accn.save({ _key: req.queryParams.ident }, { returnNew: true });
                 } else
                     throw g_lib.ERR_INVALID_IDENT;

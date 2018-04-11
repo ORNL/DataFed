@@ -80,12 +80,16 @@ public:
 
     bool                test( size_t a_iter );
 
-    void                authenticate( const std::string & a_password );
+    void                authenticate( const std::string & a_uid, const std::string & a_password );
+    std::string         setup();
+    std::string         sshPublicKey();
+    /*
     void                generateCredentials();
     void                generateKeys( const std::string & a_outfile );
+    std::string         generateKeys();
     void                getPublicKey( const std::string & a_outfile );
-
-    void                setup();
+    std::string         getPublicKey();
+    */
 
     ServiceStatus       status();
     spUserDataReply     userView( const std::string & a_user = "" );
@@ -120,16 +124,20 @@ public:
     spGroupDataReply    groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids );
     spGroupDataReply    groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids );
 
+    static bool         verifyCredentials( const std::string & a_cred_path, const std::string & a_unit );
 
 private:
     typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
 
-    void connect( asio::ip::tcp::resolver::iterator endpoint_iterator );
-    bool verifyCert( bool a_preverified, asio::ssl::verify_context & a_context );
-    void handShake();
+    void            connect( asio::ip::tcp::resolver::iterator endpoint_iterator );
+    bool            verifyCert( bool a_preverified, asio::ssl::verify_context & a_context );
+    void            handShake();
     template<typename RQT,typename RPT>
-    void send( RQT & a_request, RPT *& a_reply, uint16_t a_context );
-    std::string parseQuery( const std::string & a_query );
+    void            send( RQT & a_request, RPT *& a_reply, uint16_t a_context );
+    std::string     parseQuery( const std::string & a_query );
+    void            setLocalIdentity();
+    void            generateCredentials();
+    std::string     generateKeys();
 
     enum State
     {
@@ -142,6 +150,7 @@ private:
     uint32_t                    m_port;
     std::string                 m_cred_path;
     std::string                 m_unit;
+    std::string                 m_uid;
     std::string                 m_cert_file;
     std::string                 m_key_file;
     asio::io_service            m_io_service;
