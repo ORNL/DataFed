@@ -89,7 +89,7 @@ app.get('/user_auth', ( a_request, a_response ) => {
                 console.log( 'body:', body );
                 var userinfo = JSON.parse( body );
 
-                if ( userinfo.active )
+                if ( !userinfo.active )
                     resp_content += "ERROR: Globus user is INACTIVE!<br><br>";
 
                 resp_content += "Name: " + userinfo.name + "<br>";

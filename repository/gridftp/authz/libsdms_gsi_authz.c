@@ -319,7 +319,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     syslog( LOG_INFO, "client: %s, target: %s, action: %s", (char*)client_buf.value, (char*)target_buf.value, action );
 
                     // Testing hack
-                    #if 1
+                    #if 0
                     //if ( strcmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=u_eiiq2lgi7fd7jfaggqdmnijiya" ) == 0 )
                     {
                         result = GLOBUS_SUCCESS;
