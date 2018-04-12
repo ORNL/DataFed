@@ -59,7 +59,7 @@ router.get('/gridftp', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('file', joi.string().required(), "Data file name")
 .queryParam('act', joi.string().required(), "Action")
 .summary('Checks authorization')
@@ -89,7 +89,7 @@ router.get('/xfr/pre', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data record ID or alias")
 .queryParam('perms', joi.number().required(), "Requested permissions (read/write)")
 .summary('Performs pre-transfer authorization')

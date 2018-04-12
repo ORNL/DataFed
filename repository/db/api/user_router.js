@@ -25,11 +25,13 @@ router.get('/authn', function (req, res) {
 
         if ( client.password != req.queryParams.pw )
             throw g_lib.ERR_AUTHN_FAILED;
+
+        res.send({ "authorized": 1 });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client uid")
+.queryParam('client', joi.string().required(), "Client SDMS UID")
 .queryParam('pw', joi.string().required(), "SDMS account password")
 .summary('Authenticate user')
 .description('Authenticate user using SDMS password');

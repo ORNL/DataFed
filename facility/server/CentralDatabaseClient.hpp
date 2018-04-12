@@ -17,7 +17,7 @@ namespace SDMS {
 class CentralDatabaseClient
 {
 public:
-    CentralDatabaseClient();
+    CentralDatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
     ~CentralDatabaseClient();
 
     void setClient( const std::string & a_client );
@@ -64,8 +64,11 @@ private:
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
 
-    CURL * m_curl;
-    char * m_client;
+    CURL *      m_curl;
+    char *      m_client;
+    std::string m_db_url;
+    std::string m_db_user;
+    std::string m_db_pass;
 };
 
 }

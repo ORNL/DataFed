@@ -28,11 +28,12 @@ asio::ip::tcp::no_delay no_delay_off(false);
 map<uint16_t,Session::msg_fun_t> Session::m_msg_handlers;
 
 
-Session::Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionMgr & a_sess_mgr ) :
+Session::Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionMgr & a_sess_mgr, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_sess_mgr( a_sess_mgr ),
     m_socket( a_io_service, a_context ),
     m_anon(true),
-    m_in_buf( 4096 )
+    m_in_buf( 4096 ),
+    m_db_client(a_db_url,a_db_user,a_db_pass)
 {
     Session::setupMsgHandlers();
 
@@ -383,7 +384,6 @@ Session::procMsgServerInfo()
 {
     PROC_MSG_BEGIN( ServerInfoRequest, ServerInfoReply )
 
-    // TODO Get from prog options
     reply.set_country( m_sess_mgr.getCountry() );
     reply.set_org( m_sess_mgr.getOrg() );
     reply.set_unit( m_sess_mgr.getUnit() );

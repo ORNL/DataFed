@@ -26,7 +26,7 @@ router.get('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","admin"],
+                read: ["u","uuid","accn","admin"],
                 write: ["g","owner","member"]
             },
             action: function() {
@@ -70,7 +70,7 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client crtificate")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('id', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().optional(), "Title")
@@ -86,7 +86,7 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","admin"],
+                read: ["u","uuid","accn","admin"],
                 write: ["g","owner","member"]
             },
             action: function() {
@@ -164,7 +164,7 @@ router.get('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client crtificate")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('id', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().optional(), "New title")
@@ -179,7 +179,7 @@ router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","owner","admin"],
+                read: ["u","uuid","accn","owner","admin"],
                 write: ["g","owner","member","acl"]
             },
             action: function() {
@@ -204,7 +204,7 @@ router.get('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client crtificate")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('id', joi.string().required(), "Group ID")
 .summary('Deletes an existing group')
@@ -230,7 +230,7 @@ router.get('/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List groups')
 .description('List groups owned by client or subject');
@@ -261,7 +261,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('id', joi.string().required(), "Group ID")
 .summary('View group details')

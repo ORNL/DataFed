@@ -26,7 +26,7 @@ router.get('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
+                read: ["u","uuid","accn"],
                 write: ["c","a","alias","owner","item"]
             },
             action: function() {
@@ -77,7 +77,7 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('title', joi.string().required(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
@@ -91,7 +91,7 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
+                read: ["u","uuid","accn"],
                 write: ["c","a","owner","alias"]
             },
             action: function() {
@@ -157,7 +157,7 @@ router.get('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
@@ -169,7 +169,7 @@ router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
+                read: ["u","uuid","accn"],
                 write: ["c","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
@@ -199,7 +199,7 @@ router.get('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias")
 .summary('Deletes an existing data collection')
 .description('Deletes an existing data collection');
@@ -225,7 +225,7 @@ router.get('/priv/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List all data collections owned by client (or subject)')
 .description('List all data collections owned by client (or subject)');
@@ -261,7 +261,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias")
 .summary('View collection information by ID or alias')
 .description('View collection information by ID or alias');
@@ -324,7 +324,7 @@ router.get('/read', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
 .queryParam('mode', joi.string().valid('a','d','c').optional(), "Read mode: (a)ll, (d)ata only, (c)ollections only")
 .summary('Read contents of a collection by ID or alias')
@@ -369,7 +369,7 @@ router.get('/read2', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
 .queryParam('mode', joi.string().valid('a','d','c').optional(), "Read mode: (a)ll, (d)ata only, (c)ollections only")
 .summary('Read contents of a collection by ID or alias')
@@ -408,7 +408,7 @@ router.get('/write', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to modify")
 .queryParam('add', joi.array().items(joi.string()).optional(), "Array of item IDs to add")
 .queryParam('remove', joi.array().items(joi.string()).optional(), "Array of item IDs to remove")

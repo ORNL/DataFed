@@ -26,7 +26,7 @@ namespace SDMS {
 namespace Facility {
 
 
-Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads ) :
+Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_port( a_port ),
     m_timeout(a_timeout),
     m_io_thread(0),
@@ -39,7 +39,11 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_country("US"),    // TODO Get from params
     m_org("ORNL"),    // TODO Get from params
     m_unit("ccs"),    // TODO Get from params
-    m_xfr_thread(0)
+    m_xfr_thread(0),
+    m_db_url(a_db_url),
+    m_db_user(a_db_user),
+    m_db_pass(a_db_pass),
+    m_db_client( m_db_url, m_db_user, m_db_pass )
 {
     m_context.set_options(
         asio::ssl::context::default_workarounds |
@@ -214,7 +218,7 @@ Server::ioRun()
 void
 Server::accept()
 {
-    spSession session = make_shared<Session>( m_io_service, m_context, *this );
+    spSession session = make_shared<Session>( m_io_service, m_context, *this, m_db_url, m_db_user, m_db_pass );
 
     m_acceptor.async_accept( session->getSocket(),
         [this, session]( error_code ec )

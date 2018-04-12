@@ -25,7 +25,7 @@ namespace Facility {
 class Server : public ISessionMgr
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout = 30, uint32_t a_num_threads = 0 );
+    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -101,6 +101,10 @@ private:
     std::list<XfrDataInfo*>         m_xfr_active;
     std::map<std::string,XfrDataInfo*>   m_xfr_all;
     std::thread *                   m_xfr_thread;
+    // Should be in Central Server
+    std::string                     m_db_url;
+    std::string                     m_db_user;
+    std::string                     m_db_pass;
     CentralDatabaseClient           m_db_client;
 
     friend class Session;

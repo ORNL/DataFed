@@ -79,7 +79,7 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","d","c","a","admin","alias"],
+                read: ["u","uuid","accn","d","c","a","admin","alias"],
                 write: ["c","d","acl"]
             },
             action: function() {
@@ -300,7 +300,7 @@ router.get('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('rules', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
 .summary('Update ACL(s) on a data record or collection')
@@ -328,7 +328,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
 .summary('View current ACL on an object')
 .description('View current ACL on an object (data record or collection)');

@@ -25,8 +25,11 @@ int main( int a_argc, char ** a_argv )
         string      home = getenv("HOME");
         string      cred_path = home + "/.sdms-server/";
         int         opt;
+        string      db_url = "https://localhost:8529/_db/sdms/api/";
+        string      db_user = "root";
+        string      db_pass = "nopass";
 
-        while (( opt = getopt( a_argc, a_argv, "?p:n:t:c:" )) != -1 )
+        while (( opt = getopt( a_argc, a_argv, "?p:n:t:c:d:U:P:" )) != -1 )
         {
             switch( opt )
             {
@@ -37,6 +40,9 @@ int main( int a_argc, char ** a_argv )
                 cout << "n num  - set num threads (0 = optimal)" << endl;
                 cout << "t sec  - timeout (sec)" << endl;
                 cout << "c dir  - set certificate directory" << endl;
+                cout << "d url  - set db url" << endl;
+                cout << "U user - set db user" << endl;
+                cout << "P pass - set db password" << endl;
                 return 0;
             case 'p':
                 port = atoi( optarg );
@@ -50,10 +56,19 @@ int main( int a_argc, char ** a_argv )
             case 'c':
                 cred_path = optarg;
                 break;
+            case 'd':
+                db_url = optarg;
+                break;
+            case 'U':
+                db_user = optarg;
+                break;
+            case 'P':
+                db_pass = optarg;
+                break;
             }
         }
 
-        Facility::Server server( port, cred_path, timeout, num_threads );
+        Facility::Server server( port, cred_path, timeout, num_threads, db_url, db_user, db_pass );
 
         server.run( false );
 

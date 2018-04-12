@@ -33,7 +33,7 @@ class Session : public std::enable_shared_from_this<Session>
 {
 public:
 
-    Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionMgr & a_sess_mgr );
+    Session( asio::io_service & a_io_service, asio::ssl::context& a_context, ISessionMgr & a_sess_mgr, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
     virtual ~Session();
 
     void        start();

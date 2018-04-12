@@ -491,7 +491,7 @@ sdms_map_user( va_list Ap )
     syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s)", service, desired_identity );
     //syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity, shared_user_cert );
 
-    strncpy( identity_buffer, "root", buffer_length );
+    strncpy( identity_buffer, "cades", buffer_length );
     buffer_length = 4;
 
     return GLOBUS_SUCCESS;

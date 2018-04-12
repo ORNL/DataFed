@@ -24,11 +24,11 @@ router.get('/init', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","g","d","c","a","alias","acl","admin"],
+                read: ["u","g","d","c","a","uuid","accn","alias","acl","admin"],
                 write: ["tr"]
             },
             action: function() {
-                const client = g_lib.getClientID( req.queryParams.client );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
@@ -55,7 +55,7 @@ router.get('/init', function (req, res) {
                         mode: g_lib.XM_PUT,
                         status: g_lib.XS_INIT,
                         data_id: data_id,
-                        repo_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
+                        repo_path: "fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 ),
                         local_path: req.queryParams.path,
                         globus_id: client.globus_id,
                         updated: ((Date.now()/1000)|0)
@@ -84,7 +84,7 @@ router.get('/init', function (req, res) {
                             mode: g_lib.XM_GET,
                             status: g_lib.XS_INIT,
                             data_id: data_id,
-                            repo_path: "olcf#dtn_atlas/ccs/home/d3s/sdms-repo/" + data_id.substr( 2 ),
+                            repo_path: "fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 ),
                             local_path: dest_path,
                             globus_id: client.globus_id,
                             updated: ((Date.now()/1000)|0)
@@ -103,7 +103,7 @@ router.get('/init', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data record ID or alias")
 .queryParam('path', joi.string().required(), "Data local path")
 .queryParam('mode', joi.number().required(), "Transfer mode (get read/write, put)")

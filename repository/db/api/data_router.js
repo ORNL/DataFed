@@ -26,7 +26,7 @@ router.get('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
+                read: ["u","uuid","accn"],
                 write: ["d","a","owner","alias"]
             },
             action: function() {
@@ -70,7 +70,7 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
@@ -87,7 +87,7 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid"],
+                read: ["u","uiid","accn"],
                 write: ["d","a","owner","alias"]
             },
             action: function() {
@@ -158,7 +158,7 @@ router.get('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data record ID or alias")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
@@ -200,7 +200,7 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data ID or alias")
 .summary('Get data by ID or alias')
 .description('Get data by ID or alias');
@@ -227,7 +227,7 @@ router.get('/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .summary('List all data owned by client, or subject')
 .description('List all data owned by client, or subject');
@@ -257,7 +257,7 @@ router.get('/find', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('query', joi.string().required(), "Query expression")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
@@ -267,7 +267,7 @@ router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uid","d"],
+                read: ["u","uuid","accn","d"],
                 write: ["d","a","n","owner","item","acl","tag","note","alias"]
             },
             action: function() {
@@ -295,7 +295,7 @@ router.get('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data ID or alias")
 .summary('Deletes an existing data record')
 .description('Deletes an existing data record');

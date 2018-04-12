@@ -17,16 +17,16 @@ size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata
 }
 
 
-CentralDatabaseClient::CentralDatabaseClient() :
-    m_client(0)
+CentralDatabaseClient::CentralDatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
+    m_client(0), m_db_url(a_db_url), m_db_user(a_db_user), m_db_pass(a_db_pass)
 {
     m_curl = curl_easy_init();
     if ( !m_curl )
         EXCEPT( ID_INTERNAL_ERROR, "libcurl init failed" );
 
     curl_easy_setopt( m_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-    curl_easy_setopt( m_curl, CURLOPT_USERNAME, "root" );
-    curl_easy_setopt( m_curl, CURLOPT_PASSWORD, "nopass" );
+    curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_db_user.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_db_pass.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
     curl_easy_setopt( m_curl, CURLOPT_SSL_VERIFYPEER, 0 );
     curl_easy_setopt( m_curl, CURLOPT_TCP_NODELAY, 1 );
@@ -58,7 +58,7 @@ CentralDatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,
     url.reserve( 512 );
 
     // TODO Get URL base from ctor
-    url.append( "https://localhost:8529/_db/sdms/api/" );
+    url.append( m_db_url );
     url.append( a_url_path );
     url.append( "?client=" );
     url.append( m_client );
