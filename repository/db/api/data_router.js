@@ -87,7 +87,7 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uiid","accn"],
+                read: ["u","uuid","accn"],
                 write: ["d","a","owner","alias"]
             },
             action: function() {

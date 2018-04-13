@@ -13,8 +13,8 @@
 
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 300
-#define INIT_POLL_PERIOD 5
-#define MAX_BACKOFF 6
+#define INIT_POLL_PERIOD 1
+#define MAX_BACKOFF 10
 
 using namespace std;
 
@@ -316,10 +316,13 @@ Server::xfrManagement()
         {
             try
             {
-                if ( (*ixfr)->poll < 0 )
+                //cout << "poll: " << (*ixfr)->poll << "\n";
+
+                if ( (*ixfr)->stage == 0 )
                 {
                     // Start xfr, get task ID, update DB
                     // Use Legacy Globus CLI to start transfer
+                    cout << "start xfr\n";
 
                     keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
 
@@ -331,8 +334,6 @@ Server::xfrManagement()
                         cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
                     else
                         cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
-
-                    cout << cmd << "\n";
 
                     {
                         lock_guard<mutex> lock( m_key_mutex );
@@ -349,6 +350,7 @@ Server::xfrManagement()
 
                         // Update DB entry
                         m_db_client.xfrUpdate( (*ixfr)->id, 0, (*ixfr)->task_id.c_str() );
+                        (*ixfr)->stage = 1;
                         (*ixfr)->poll = INIT_POLL_PERIOD;
                         ixfr++;
                     }
@@ -360,53 +362,56 @@ Server::xfrManagement()
                         ixfr = m_xfr_active.erase( ixfr );
                     }
                 }
-                else if ( --(*ixfr)->poll == 0 )
-                {
-                    // Get current status
-                    keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
-
-                    cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
-                    result = exec( cmd.c_str() );
-
-                    if ( result.compare( "Status: SUCCEEDED\n" ) == 0 )
-                        status = XS_SUCCEEDED;
-                    else if ( result.compare( "Status: FAILED\n" ) == 0 )
-                        status = XS_FAILED;
-                    else if ( result.compare( "Status: ACTIVE\n" ) == 0 )
-                        status = XS_ACTIVE;
-                    else if ( result.compare( "Status: INACTIVE\n" ) == 0 )
-                        status = XS_INACTIVE;
-                    else
-                    {
-                        EXCEPT_PARAM( 1, "Invalid globus reply: " << result );
-                    }
-
-                    cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
-
-                    if ( (*ixfr)->status != status )
-                    {
-                        (*ixfr)->status = status;
-
-                        // Update DB entry
-                        m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status );
-                    }
-
-                    // Remove from active list
-                    if ( (*ixfr)->status > XS_INACTIVE )
-                    {
-                        ixfr = m_xfr_active.erase( ixfr );
-                    }
-                    else
-                    {
-                        if ( (*ixfr)->backoff < MAX_BACKOFF )
-                            (*ixfr)->backoff++;
-
-                        (*ixfr)->poll = INIT_POLL_PERIOD*(1<<(*ixfr)->backoff);
-                        ++ixfr;
-                    }
-                }
                 else
-                    ++ixfr;
+                {
+                    if ( --(*ixfr)->poll == 0 )
+                    {
+                        //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
+
+                        // Get current status
+                        keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
+
+                        //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
+                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
+                        result = exec( cmd.c_str() );
+                        if ( parseGlobusEvents( result, status ))
+                        {
+                            // Cancel the xfr task
+                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
+                            result = exec( cmd.c_str() );
+                            cout << "Cancel result: " << result << "\n";
+                        }
+
+                        cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
+
+                        if ( (*ixfr)->status != status )
+                        {
+                            (*ixfr)->status = status;
+
+                            // Update DB entry
+                            m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status );
+                        }
+
+                        // Remove from active list
+                        if ( (*ixfr)->status > XS_INACTIVE )
+                        {
+                            ixfr = m_xfr_active.erase( ixfr );
+                        }
+                        else
+                        {
+                            // Backoff increments each poll interval, but time waited only increments
+                            // every two poll intervals. This allows polling to better match size of
+                            // file being transferred.
+                            if ( (*ixfr)->backoff < MAX_BACKOFF )
+                                (*ixfr)->backoff++;
+
+                            (*ixfr)->poll = INIT_POLL_PERIOD*(1<<((*ixfr)->backoff >> 1));
+                            ++ixfr;
+                        }
+                    }
+                    else
+                        ++ixfr;
+                }
             }
             catch( TraceException & e )
             {
@@ -423,6 +428,63 @@ Server::xfrManagement()
     DL_DEBUG( "Xfr thread stopped" );
 }
 
+bool
+Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status )
+{
+    status = XS_INACTIVE;
+
+    size_t p1 = 0;
+    size_t p2 = a_events.find_first_of( "=", 0 );
+    string tmp;
+    size_t fault_count = 0;
+
+    while ( p2 != string::npos )
+    {
+        tmp = a_events.substr( p1, p2 - p1 );
+        if ( tmp != "code" )
+            return XS_FAILED;
+
+        p1 = p2 + 1;
+        p2 = a_events.find_first_of( "\n", p1 );
+        if ( p2 != string::npos )
+            tmp = a_events.substr( p1, p2 - p1 );
+        else
+            tmp = a_events.substr( p1 );
+
+        cout << "event: " << tmp << "\n";
+
+        if ( tmp == "STARTED" || tmp == "PROGRESS" )
+            status = XS_ACTIVE;
+        else if ( tmp == "SUCCEEDED" )
+            status = XS_SUCCEEDED;
+        else if ( tmp == "CANCELED" || tmp == "FAILED" )
+            status = XS_FAILED;
+        else if ( tmp == "CONNECTION_RESET" )
+        {
+            status = XS_INIT;
+            if ( ++fault_count > 10 )
+            {
+                status = XS_FAILED;
+                return true;
+            }
+        }
+        else
+        {
+            status = XS_FAILED;
+            return true;
+        }
+
+        // TODO There may be non-fatal error codes that should be checked for
+
+        if ( p2 == string::npos )
+            break;
+
+        p1 = p2 + 1;
+        p2 = a_events.find_first_of( "=", p1 );
+    }
+
+    return false;
+}
 
 void
 Server::sessionClosed( spSession a_session )
@@ -481,7 +543,7 @@ Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
 
     if ( m_xfr_all.find( a_xfr.id() ) == m_xfr_all.end() )
     {
-        XfrDataInfo * xfr_entry = new XfrDataInfo( a_xfr, a_uid, -1 );
+        XfrDataInfo * xfr_entry = new XfrDataInfo( a_xfr, a_uid );
         m_xfr_all[a_xfr.id()] = xfr_entry;
         m_xfr_pending.push_back( a_xfr.id() );
     }

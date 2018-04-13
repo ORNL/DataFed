@@ -96,6 +96,10 @@ string          g_alias;
 string          g_meta;
 string          g_meta_file;
 bool            g_meta_replace;
+string          g_name;
+string          g_email;
+string          g_globus_id;
+bool            g_details;
 string          g_cfg_file;
 string          g_cmd;
 vector<string>  g_args;
@@ -132,6 +136,22 @@ void printUsers( spUserDataReply a_reply )
                     cout << "  phone  : " << user.phone() << "\n";
                 if ( user.has_is_admin() )
                     cout << "  admin  : " << user.is_admin() << "\n";
+
+                if ( user.ident_size() )
+                {
+                    cout << "  idents :\n";
+                    for ( int j = 0; j < user.ident_size(); j++ )
+                        cout << "    " << user.ident(j) << "\n";
+                }
+
+                if ( user.admin_size() )
+                {
+                    cout << "  admins :";
+                    for ( int j = 0; j < user.admin_size(); j++ )
+                        cout << " " << user.admin(j);
+                    cout << "\n";
+                }
+
                 break;
             case JSON:
                 cout << "{\"uid\":\"" << user.uid() << "\",\"name\":\"" << user.name() << "\"";
@@ -524,7 +544,7 @@ int data()
         if ( g_args.size() != 2 )
             return -1;
 
-        spRecordDataReply rep = updateRecord( g_args[0] );
+        spRecordDataReply rep = updateRecord( g_args[1] );
         printData( rep );
     }
     else if( g_args[0] == "delete" || g_args[0] == "d" )
@@ -621,14 +641,28 @@ int xfr_status()
 
 int user()
 {
-    if ( g_args.size() == 0 )
+    if ( g_args[0] == "list" || g_args[0] == "l" )
     {
-        spUserDataReply rep = g_client->userList();
+        if ( g_args.size() != 1 )
+            return -1;
+
+        spUserDataReply rep = g_client->userList( g_details );
         printUsers( rep );
     }
-    else if ( g_args.size() == 1 )
+    else if ( g_args[0] == "view" || g_args[0] == "v" )
     {
-        spUserDataReply rep = g_client->userView( g_args[0] );
+        if ( g_args.size() != 2 )
+            return -1;
+
+        spUserDataReply rep = g_client->userView( g_args[1], g_details );
+        printUsers( rep );
+    }
+    else if ( g_args[0] == "update" || g_args[0] == "u" )
+    {
+        if ( g_args.size() != 2 )
+            return -1;
+
+        spUserDataReply rep = g_client->userUpdate( g_args[1], g_name.size()?g_name.c_str():0, g_email.size()?g_email.c_str():0, g_globus_id.size()?g_globus_id.c_str():0 );
         printUsers( rep );
     }
     else
@@ -864,7 +898,7 @@ int main( int a_argc, char ** a_argv )
     addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", data );
     addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
-    addCommand( "u", "user", "List or view user information", "user [id]\n\nLists all users if 'id' parameter is omitted; otherwise, view details of associated user.", user );
+    addCommand( "u", "user", "User management", "user <cmd> [id [args]]\n\nUser commands: (l)ist, (v)iew, (u)pdate.", user );
     addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
@@ -907,6 +941,10 @@ int main( int a_argc, char ** a_argv )
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
         ("output-format,O",po::value<string>( &g_out_form_str ),"Output format (text,json,csv)")
+        ("name,n",po::value<string>( &g_name ),"Specify user name for update command")
+        ("email,e",po::value<string>( &g_email ),"Specify user email for update command")
+        ("globus_id,g",po::value<string>( &g_globus_id ),"Specify user globus_id for update command")
+        ("details,D",po::bool_switch( &g_details ),"Retrieve extra details for supported commands")
         ;
 
     opts_hidden.add_options()

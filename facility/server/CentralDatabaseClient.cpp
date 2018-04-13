@@ -143,13 +143,13 @@ CentralDatabaseClient::clientLinkIdentity( const std::string & a_identity )
 void
 CentralDatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
-    rapidjson::Document result;
-    long http_code;
+    vector<pair<string,string>> params;
+    params.push_back({"subject",a_request.uid()});
+    if ( a_request.has_details() && a_request.details() )
+        params.push_back({"details","true"});
 
-    if ( a_request.has_user() )
-        http_code = dbGet( "usr/view", {{"subject",a_request.user()}}, result );
-    else
-        http_code = dbGet( "usr/view", {}, result );
+    rapidjson::Document result;
+    long http_code = dbGet( "usr/view", params, result );
 
     if ( http_code >= 200 && http_code < 300 )
     {
@@ -157,14 +157,40 @@ CentralDatabaseClient::userView( const UserViewRequest & a_request, UserDataRepl
     }
 }
 
+
+void
+CentralDatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply & a_reply )
+{
+    rapidjson::Document result;
+    long http_code;
+
+    vector<pair<string,string>> params;
+    params.push_back({"subject",a_request.uid()});
+    if ( a_request.has_name() )
+        params.push_back({"name",a_request.name()});
+    if ( a_request.has_email() )
+        params.push_back({"email",a_request.email()});
+    if ( a_request.has_globus_id() )
+        params.push_back({"globus_id",a_request.globus_id()});
+
+    http_code = dbGet( "usr/update", params, result );
+
+    if ( http_code >= 200 && http_code < 300 )
+    {
+        setUserData( a_reply, result );
+    }
+}
+
+
 void
 CentralDatabaseClient::userList( const UserListRequest & a_request, UserDataReply & a_reply )
 {
-    (void)a_request;
+    vector<pair<string,string>> params;
+    if ( a_request.has_details() && a_request.details() )
+        params.push_back({"details","true"});
 
     rapidjson::Document result;
-
-    long http_code = dbGet( "usr/list", {}, result );
+    long http_code = dbGet( "usr/list", params, result );
 
     if ( http_code >= 200 && http_code < 300 )
     {
@@ -202,6 +228,18 @@ CentralDatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document
 
         if (( imem = val.FindMember("is_project")) != val.MemberEnd() )
             user->set_is_project( imem->value.GetBool() );
+
+        if (( imem = val.FindMember("admins")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                user->add_admin( imem->value[j].GetString() );
+        }
+
+        if (( imem = val.FindMember("idents")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                user->add_ident( imem->value[j].GetString() );
+        }
     }
 }
 

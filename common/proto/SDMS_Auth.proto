@@ -55,8 +55,16 @@ message CheckPermsReply
 
 message UserViewRequest
 {
-    optional string             user        = 1;
+    required string             uid         = 1;
     optional bool               details     = 2;
+}
+
+message UserUpdateRequest
+{
+    required string             uid         = 1;
+    optional string             name        = 2;
+    optional string             email       = 3;
+    optional string             globus_id   = 4;
 }
 
 message UserListRequest

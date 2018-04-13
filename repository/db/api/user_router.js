@@ -223,9 +223,16 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
 
-        var admins = g_db._query("for v in 1..1 outbound @user admin return v._key", { user: user._id } ).toArray();
-        if ( admins.length ) {
-            user.admins = admins;
+        if ( req.queryParams.details ) {
+            var admins = g_db._query("for v in 1..1 outbound @user admin return v._key", { user: user._id } ).toArray();
+            if ( admins.length ) {
+                user.admins = admins;
+            }
+
+            var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
+            if ( idents.length ) {
+                user.idents = idents;
+            }
         }
 
         user.uid = user._key;
@@ -241,13 +248,19 @@ router.get('/view', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user to view")
+.queryParam('details', joi.boolean().optional(), "Show additional user details")
 .summary('View user information')
 .description('View user information');
 
 
 router.get('/list', function (req, res) {
-    res.send( g_db._query( "for i in u return { uid: i._key, name: i.name }" ));
+    if ( req.queryParams.details ) {
+        res.send( g_db._query( "for i in u return { uid: i._key, name: i.name, email: i.email, globus_id: i.globus_id }" ));
+    } else {
+        res.send( g_db._query( "for i in u return { uid: i._key, name: i.name }" ));
+    }
 })
+.queryParam('details', joi.boolean().optional(), "Show additional user details")
 .summary('List users')
 .description('List users');
 

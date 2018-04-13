@@ -75,6 +75,7 @@ Session::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, GetDataRequest, &Session::procMsgGetData  );
         SET_MSG_HANDLER( proto_id, PutDataRequest, &Session::procMsgPutData  );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
+        SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
         SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );

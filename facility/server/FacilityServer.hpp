@@ -37,9 +37,9 @@ public:
 private:
     struct XfrDataInfo
     {
-        XfrDataInfo( const XfrData & a_xfr, const std::string & a_uid, int a_poll ) :
+        XfrDataInfo( const XfrData & a_xfr, const std::string & a_uid ) :
             id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),repo_path(a_xfr.repo_path()),
-            local_path(a_xfr.local_path()),globus_id(a_xfr.globus_id()),uid(a_uid),poll(a_poll),backoff(0)
+            local_path(a_xfr.local_path()),globus_id(a_xfr.globus_id()),uid(a_uid),stage(0),poll(0),backoff(0)
         {
             if ( a_xfr.has_task_id() )
                 task_id = a_xfr.task_id();
@@ -54,6 +54,7 @@ private:
         std::string     globus_id;
         std::string     task_id;
         std::string     uid;
+        int             stage; // (0=not started,1=started,2=active)
         int             poll;
         int             backoff;
     };
@@ -73,6 +74,7 @@ private:
     void accept();
     void backgroundMaintenance();
     void xfrManagement();
+    bool parseGlobusEvents( const std::string & a_events, XfrStatus & status );
 
     std::string                     m_host;
     uint32_t                        m_port;

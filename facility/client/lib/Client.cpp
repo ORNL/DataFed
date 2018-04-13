@@ -218,7 +218,7 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
     m_out_buf.getFrame().context = a_context;
     m_out_buf.serialize( a_request );
 
-    cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
+    //cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
     if ( m_out_buf.getFrame().size == 0 )
         NO_DELAY_ON(m_socket);
 
@@ -488,14 +488,14 @@ cout << "back\n";
 }
 
 spUserDataReply
-Client::userView( const string & a_user )
+Client::userView( const string & a_uid, bool a_details )
 {
     Auth::UserViewRequest req;
-
-    if ( a_user.size() )
-        req.set_user( a_user );
-
     Auth::UserDataReply * reply;
+
+    req.set_uid( a_uid );
+    if ( a_details )
+        req.set_details( true );
 
     send<>( req, reply, m_ctx++ );
 
@@ -506,6 +506,7 @@ spUserDataReply
 Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     Auth::UserListRequest req;
+    Auth::UserDataReply * reply;
 
     if ( a_details )
         req.set_details( a_details );
@@ -514,14 +515,33 @@ Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     if ( a_count )
         req.set_count( a_count );
 
-    Auth::UserDataReply * reply;
+    send<>( req, reply, m_ctx++ );
+
+    return spUserDataReply( reply );
+}
+
+spUserDataReply
+Client::userUpdate( const std::string & a_uid, const char * a_name, const char * a_email, const char * a_globus_id )
+{
+    Auth::UserUpdateRequest req;
+    Auth::UserDataReply *   reply;
+
+    req.set_uid( a_uid );
+
+    if ( a_name )
+        req.set_name( a_name );
+    if ( a_email )
+        req.set_email( a_email );
+    if ( a_globus_id )
+        req.set_globus_id( a_globus_id );
 
     send<>( req, reply, m_ctx++ );
 
     return spUserDataReply( reply );
 }
 
-string Client::parseQuery( const string & a_query )
+string
+Client::parseQuery( const string & a_query )
 {
     static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?'};
     static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
