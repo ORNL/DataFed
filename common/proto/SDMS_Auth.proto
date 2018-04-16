@@ -124,6 +124,11 @@ message RecordUpdateRequest
     optional string             proj_id     = 7;
 }
 
+message RecordDeleteRequest
+{
+    required string             id          = 1;
+}
+
 // ============================ Raw Data Messages
 
 message XfrViewRequest
@@ -136,16 +141,21 @@ message XfrDataReply
     repeated SDMS.XfrData       xfr         = 1;
 }
 
-message GetDataRequest
+message DataGetRequest
 {
     required string             id          = 1;
     required string             local       = 2;
 }
 
-message PutDataRequest
+message DataPutRequest
 {
     required string             id          = 1;
     required string             local       = 2;
+}
+
+message DataDeleteRequest
+{
+    required string             id          = 1;
 }
 
 

@@ -549,4 +549,10 @@ Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
     }
 }
 
+void
+Server::dataDelete( const std::string & a_data_id )
+{
+    m_store.dataDelete( a_data_id );
+}
+
 }}

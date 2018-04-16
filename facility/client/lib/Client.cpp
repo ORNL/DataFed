@@ -50,11 +50,11 @@ Client::verifyCredentials( const std::string & a_cred_path, const std::string & 
 
     // TODO Need a way to actually check to see if the content of these credentials is valid
 
-    if ( !exists( dest_path, ec ) )
+    if ( !boost::filesystem::exists( dest_path, ec ) )
         return false;
 
     dest_path = a_cred_path + uid + "-" + a_unit + "-key.pem";
-    if ( !exists( dest_path, ec ) )
+    if ( !boost::filesystem::exists( dest_path, ec ) )
         return false;
 
     return true;
@@ -708,6 +708,21 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
     return spRecordDataReply( reply );
 }
 
+
+void
+Client::recordDelete( const std::string & a_id )
+{
+    Auth::RecordViewRequest req;
+    Anon::AckReply *        rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+
 spCollDataReply
 Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
@@ -837,9 +852,9 @@ Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_ite
 }
 
 spXfrDataReply
-Client::pullData( const std::string & a_data_id, const std::string & a_local_path )
+Client::dataGet( const std::string & a_data_id, const std::string & a_local_path )
 {
-    Auth::GetDataRequest    req;
+    Auth::DataGetRequest    req;
     Auth::XfrDataReply *    rep;
 
     req.set_id( a_data_id );
@@ -852,9 +867,9 @@ Client::pullData( const std::string & a_data_id, const std::string & a_local_pat
 
 
 spXfrDataReply
-Client::pushData( const std::string & a_data_id, const std::string & a_local_path )
+Client::dataPut( const std::string & a_data_id, const std::string & a_local_path )
 {
-    Auth::PutDataRequest    req;
+    Auth::DataPutRequest    req;
     Auth::XfrDataReply *    rep;
 
     req.set_id( a_data_id );
@@ -863,6 +878,20 @@ Client::pushData( const std::string & a_data_id, const std::string & a_local_pat
     send<>( req, rep, m_ctx++ );
 
     return spXfrDataReply( rep );
+}
+
+
+void
+Client::dataDelete( const std::string & a_id )
+{
+    Auth::DataDeleteRequest req;
+    Anon::AckReply *        rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
 }
 
 

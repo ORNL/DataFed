@@ -23,6 +23,7 @@ public:
     void setClient( const std::string & a_client );
     void clientAuthenticate( const std::string & a_password );
     void clientLinkIdentity( const std::string & a_identity );
+    std::string getDataStorageLocation( const std::string & a_data_id );
 
     //void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
     //uint16_t checkPerms( const string & a_id, uint16_t a_perms );
@@ -35,6 +36,7 @@ public:
     void recordFind( const Auth::RecordFindRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
+    void recordDelete( const Auth::RecordDeleteRequest & a_request, Anon::AckReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );

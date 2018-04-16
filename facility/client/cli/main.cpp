@@ -429,12 +429,12 @@ int find_records()
 }
 
 
-int pull_data()
+int get_data()
 {
     if ( g_args.size() != 2 )
         return -1;
 
-    spXfrDataReply xfrs = g_client->pullData( g_args[0], g_args[1] );
+    spXfrDataReply xfrs = g_client->dataGet( g_args[0], g_args[1] );
 
     if ( g_wait )
     {
@@ -465,7 +465,7 @@ int pull_data()
 }
 
 
-int push_data()
+int put_data()
 {
     string data_id;
 
@@ -486,7 +486,7 @@ int push_data()
 
     // Push data to record
 
-    spXfrDataReply xfrs = g_client->pushData( data_id, *g_args.rbegin() );
+    spXfrDataReply xfrs = g_client->dataPut( data_id, *g_args.rbegin() );
 
     if ( g_wait )
     {
@@ -547,9 +547,21 @@ int data()
         spRecordDataReply rep = updateRecord( g_args[1] );
         printData( rep );
     }
+    else if( g_args[0] == "clear" || g_args[0] == "r" )
+    {
+        if ( g_args.size() != 2 )
+            return -1;
+
+        g_client->dataDelete( g_args[1] );
+        cout << "SUCCESS\n";
+    }
     else if( g_args[0] == "delete" || g_args[0] == "d" )
     {
-        cout << "NOT IMPLEMENTED YET\n";
+        if ( g_args.size() != 2 )
+            return -1;
+
+        g_client->recordDelete( g_args[1] );
+        cout << "SUCCESS\n";
     }
     else
         return -1;
@@ -892,10 +904,10 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
 int main( int a_argc, char ** a_argv )
 {
     addCommand( "?", "help", "Show help", "Use 'help <cmd>' to show help for a specific command.", help );
-    addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", pull_data );
-    addCommand( "", "put", "Put data into repository", "put <src> [id] [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", push_data );
+    addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", get_data );
+    addCommand( "", "put", "Put data into repository", "put <src> [id] [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", put_data );
     addCommand( "s", "status", "View data transfer status", "status <xfr_id>\n\nGet status of specified data transfer.", xfr_status );
-    addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", data );
+    addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (l)ist, (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
     addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
     addCommand( "u", "user", "User management", "user <cmd> [id [args]]\n\nUser commands: (l)ist, (v)iew, (u)pdate.", user );

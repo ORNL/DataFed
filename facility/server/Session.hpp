@@ -26,6 +26,9 @@ public:
     virtual const std::string &     getOrg() = 0;
     virtual const std::string &     getUnit() = 0;
     virtual void                    handleNewXfr( const XfrData & a_xfr, const std::string & a_uid ) = 0;
+
+    // TODO Methods that belong in CentralServer
+    virtual void                    dataDelete( const std::string & a_data_id ) = 0;
 };
 
 
@@ -63,8 +66,10 @@ private:
     void procMsgGenerateCredentials();
     void procMsgGenerateKeys();
     void procMsgGetPublicKey();
-    void procMsgGetData();
-    void procMsgPutData();
+    void procMsgDataGet();
+    void procMsgDataPut();
+    void procMsgDataDelete();
+    void procMsgRecordDelete();
     template<typename RQ, typename RP, void (CentralDatabaseClient::*func)( const RQ &, RP &)>
     void dbPassThrough();
 

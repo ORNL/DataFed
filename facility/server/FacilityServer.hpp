@@ -17,6 +17,7 @@
 
 #include "Session.hpp"
 #include "CentralDatabaseClient.hpp"
+#include "CentralStorage.hpp"
 #include "SDMS.pb.h"
 
 namespace SDMS {
@@ -70,6 +71,9 @@ private:
     const std::string & getUnit() { return m_unit; }
     void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
 
+    // Should be in CentralServer
+    void                dataDelete( const std::string & a_data_id );
+
     void ioRun();
     void accept();
     void backgroundMaintenance();
@@ -108,6 +112,7 @@ private:
     std::string                     m_db_user;
     std::string                     m_db_pass;
     CentralDatabaseClient           m_db_client;
+    CentralStorage                  m_store;
 
     friend class Session;
 };

@@ -68,12 +68,17 @@ Session::setupMsgHandlers()
 
         proto_id = REG_PROTO( SDMS::Auth );
 
+        // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
         SET_MSG_HANDLER( proto_id, GenerateKeysRequest, &Session::procMsgGenerateKeys );
         SET_MSG_HANDLER( proto_id, GetPublicKeyRequest, &Session::procMsgGetPublicKey );
-        SET_MSG_HANDLER( proto_id, GetDataRequest, &Session::procMsgGetData  );
-        SET_MSG_HANDLER( proto_id, PutDataRequest, &Session::procMsgPutData  );
+        SET_MSG_HANDLER( proto_id, DataGetRequest, &Session::procMsgDataGet  );
+        SET_MSG_HANDLER( proto_id, DataPutRequest, &Session::procMsgDataPut  );
+        SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Session::procMsgDataDelete );
+        SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Session::procMsgRecordDelete );
+
+        // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
@@ -539,9 +544,9 @@ Session::procMsgGetPublicKey()
 
 
 void
-Session::procMsgGetData()
+Session::procMsgDataGet()
 {
-    PROC_MSG_BEGIN( GetDataRequest, XfrDataReply )
+    PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
 
     // 1. Resolve ID/Alias to data ID
     // 2. Verify client has R/W permission
@@ -564,9 +569,9 @@ Session::procMsgGetData()
 
 
 void
-Session::procMsgPutData()
+Session::procMsgDataPut()
 {
-    PROC_MSG_BEGIN( PutDataRequest, XfrDataReply )
+    PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
 
     m_db_client.xfrInit( request->id(), request->local(), XM_PUT, reply );
 
@@ -574,6 +579,47 @@ Session::procMsgPutData()
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
     m_sess_mgr.handleNewXfr( reply.xfr(0), m_uid );
+
+    PROC_MSG_END
+}
+
+
+void
+Session::procMsgDataDelete()
+{
+    PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
+
+    // TODO Acquire write lock here
+
+    // TODO - The storage manager should determine where data lives
+    string file = m_db_client.getDataStorageLocation( request->id() );
+
+    // Ask FileManager to delete file
+    m_sess_mgr.dataDelete( file );
+
+    // TODO Update record to indicate no raw data exists
+
+    PROC_MSG_END
+}
+
+
+void
+Session::procMsgRecordDelete()
+{
+    PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
+
+    // TODO Acquire write lock here
+
+    // TODO - The storage manager should determine where data lives
+    string file = m_db_client.getDataStorageLocation( request->id() );
+
+    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    m_db_client.recordDelete( *request, reply );
+
+    // Ask FileManager to delete file
+    m_sess_mgr.dataDelete( file );
+
+    // TODO Update record to indicate no raw data exists
 
     PROC_MSG_END
 }

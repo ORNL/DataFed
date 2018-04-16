@@ -140,6 +140,27 @@ CentralDatabaseClient::clientLinkIdentity( const std::string & a_identity )
     dbGet( "usr/ident/add", {{"ident",a_identity}}, result );
 }
 
+std::string
+CentralDatabaseClient::getDataStorageLocation( const std::string & a_data_id )
+{
+    rapidjson::Document result;
+
+    // TODO This need to be done correctly without assuming storage location
+    dbGet( "dat/view", {{"id",a_data_id}}, result );
+
+    rapidjson::Value::MemberIterator imem;
+
+    // TODO Not sure if this check is needed
+    if ( result.Size() != 1 )
+        EXCEPT_PARAM( ID_BAD_REQUEST, "No such data record: " << a_data_id );
+
+    rapidjson::Value & val = result[0];
+
+    string id = val["id"].GetString();
+
+    return string("/data/") + id.substr(2);
+}
+
 void
 CentralDatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
@@ -321,6 +342,15 @@ CentralDatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request
     dbGet( "dat/update", params, result );
 
     setRecordData( a_reply, result );
+}
+
+void
+CentralDatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void)a_reply;
+    rapidjson::Document result;
+
+    dbGet( "dat/delete", {{"id",a_request.id()}}, result );
 }
 
 void
