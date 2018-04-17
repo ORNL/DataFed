@@ -300,6 +300,7 @@ Server::xfrManagement()
     size_t file_size;
     time_t mod_time;
     Auth::RecordUpdateRequest upd_req;
+    Auth::RecordDataReply  reply;
 
     while( m_io_running )
     {
@@ -415,15 +416,13 @@ Server::xfrManagement()
                                 }
 
                                 // Update DB record with new file stats
-                                {
-                                    Auth::RecordDataReply   reply;
-                                    upd_req.set_id( (*ixfr)->data_id );
-                                    upd_req.set_data_size( file_size );
-                                    upd_req.set_data_time( mod_time );
-                                    upd_req.set_subject( m_unit + "." + (*ixfr)->uid );
+                                upd_req.set_id( (*ixfr)->data_id );
+                                upd_req.set_data_size( file_size );
+                                upd_req.set_data_time( mod_time );
+                                upd_req.set_subject( m_unit + "." + (*ixfr)->uid );
+                                reply.Clear();
 
-                                    m_db_client.recordUpdate( upd_req, reply );
-                                }
+                                m_db_client.recordUpdate( upd_req, reply );
                             }
                         }
 
