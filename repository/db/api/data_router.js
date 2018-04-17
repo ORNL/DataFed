@@ -106,27 +106,27 @@ router.get('/update', function (req, res) {
                 var obj = { rec_time: Math.floor( Date.now()/1000 ) };
                 var do_update = false;
 
-                if ( req.queryParams.title ) {
+                if ( req.queryParams.title != undefined ) {
                     obj.title = req.queryParams.title;
                     do_update = true;
                 }
 
-                if ( req.queryParams.desc ) {
+                if ( req.queryParams.desc != undefined ) {
                     obj.desc = req.queryParams.desc;
                     do_update = true;
                 }
 
-                if ( req.queryParams.md ) {
+                if ( req.queryParams.md != undefined ) {
                     obj.md = JSON.parse( req.queryParams.md );
                     do_update = true;
                 }
 
-                if ( req.queryParams.data_size ) {
+                if ( req.queryParams.data_size != undefined ) {
                     obj.data_size = req.queryParams.data_size;
                     do_update = true;
                 }
 
-                if ( req.queryParams.data_time ) {
+                if ( req.queryParams.data_time != undefined ) {
                     obj.data_time = req.queryParams.data_time;
                     do_update = true;
                 }

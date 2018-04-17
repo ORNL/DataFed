@@ -400,7 +400,8 @@ Server::xfrManagement()
 
                                 if ( (*ixfr)->status == XS_SUCCEEDED )
                                 {
-                                    if ( !m_store.dataGetSize( (*ixfr)->repo_path, file_size ))
+                                    // TODO Path must not be assumed
+                                    if ( !m_store.dataGetSize( string("/data/") + (*ixfr)->data_id.substr(2), file_size ))
                                     {
                                         // TODO This should not happen. If it does something is very very wrong
                                         DL_ERROR( "Transfer succeeded but destination file does not exist! Transfer ID: " << (*ixfr)->id );
