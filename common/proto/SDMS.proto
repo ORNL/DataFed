@@ -82,7 +82,10 @@ message RecordData
     optional string             desc        = 4;
     optional string             metadata    = 5;
     optional string             data_path   = 6;
-    optional string             owner       = 7;
+    optional uint64             data_size   = 7;
+    optional uint32             rec_time    = 8;
+    optional uint32             data_time   = 9;
+    optional string             owner       = 10;
 }
 
 message CollData

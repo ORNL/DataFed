@@ -32,7 +32,7 @@ router.get('/create', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                var obj = {};
+                var obj = { data_size: 0, rec_time: Math.floor( Date.now()/1000 ) };
 
                 if ( req.queryParams.title )
                     obj.title = req.queryParams.title;
@@ -103,7 +103,7 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.alias )
                     g_lib.validateAlias( req.queryParams.alias );
 
-                var obj = {};
+                var obj = { rec_time: Math.floor( Date.now()/1000 ) };
                 var do_update = false;
 
                 if ( req.queryParams.title ) {
@@ -118,6 +118,16 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.md ) {
                     obj.md = JSON.parse( req.queryParams.md );
+                    do_update = true;
+                }
+
+                if ( req.queryParams.data_size ) {
+                    obj.data_size = req.queryParams.data_size;
+                    do_update = true;
+                }
+
+                if ( req.queryParams.data_time ) {
+                    obj.data_time = req.queryParams.data_time;
                     do_update = true;
                 }
 
@@ -166,6 +176,8 @@ router.get('/update', function (req, res) {
 .queryParam('proj', joi.string().optional(), "Project owner id")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .queryParam('md_merge', joi.boolean().optional().default(true), "Merge metadata instead of replace (merge is default)")
+.queryParam('data_size', joi.number().optional(), "Data size (bytes)")
+.queryParam('data_time', joi.number().optional(), "Data modification time")
 .summary('Updates an existing data record')
 .description('Updates an existing data record');
 

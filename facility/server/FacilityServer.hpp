@@ -39,7 +39,7 @@ private:
     struct XfrDataInfo
     {
         XfrDataInfo( const XfrData & a_xfr, const std::string & a_uid ) :
-            id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),repo_path(a_xfr.repo_path()),
+            id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),data_id(a_xfr.data_id()),repo_path(a_xfr.repo_path()),
             local_path(a_xfr.local_path()),globus_id(a_xfr.globus_id()),uid(a_uid),stage(0),poll(0),backoff(0)
         {
             if ( a_xfr.has_task_id() )
@@ -49,7 +49,7 @@ private:
         std::string     id;
         XfrMode         mode;
         XfrStatus       status;
-        //string        data_id;
+        std::string     data_id;
         std::string     repo_path;
         std::string     local_path;
         std::string     globus_id;

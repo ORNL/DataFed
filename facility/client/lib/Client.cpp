@@ -712,8 +712,8 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
 void
 Client::recordDelete( const std::string & a_id )
 {
-    Auth::RecordViewRequest req;
-    Anon::AckReply *        rep;
+    Auth::RecordDeleteRequest   req;
+    Anon::AckReply *            rep;
 
     req.set_id( a_id );
 

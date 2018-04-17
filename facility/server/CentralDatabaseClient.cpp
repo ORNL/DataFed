@@ -338,6 +338,10 @@ CentralDatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request
         params.push_back({"md_merge",a_request.md_merge()?"true":"false"});
     if ( a_request.has_proj_id() )
         params.push_back({"proj",a_request.proj_id()});
+    if ( a_request.has_data_size() )
+        params.push_back({"data_size",to_string(a_request.data_size())});
+    if ( a_request.has_data_time() )
+        params.push_back({"data_time",to_string(a_request.data_time())});
 
     dbGet( "dat/update", params, result );
 
@@ -397,6 +401,15 @@ CentralDatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Docu
 
         if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
             rec->set_data_path( imem->value.GetString() );
+
+        if (( imem = val.FindMember("data_size")) != val.MemberEnd() )
+            rec->set_data_size( imem->value.GetInt() );
+
+        if (( imem = val.FindMember("data_time")) != val.MemberEnd() )
+            rec->set_data_time( imem->value.GetInt() );
+
+        if (( imem = val.FindMember("rec_time")) != val.MemberEnd() )
+            rec->set_rec_time( imem->value.GetInt() );
     }
     //cout << "SetRecordData done" << endl;
 }

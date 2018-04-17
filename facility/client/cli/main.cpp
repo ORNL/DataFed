@@ -243,6 +243,12 @@ void printData( spRecordDataReply a_rep, bool a_list = false )
                     cout << "owner : " << rec.owner() << "\n";
                 if ( rec.has_metadata() )
                     cout << " meta : " << rec.metadata() << "\n";
+                if ( rec.has_data_size() )
+                    cout << " size : " << rec.data_size() << "\n";
+                if ( rec.has_data_time() )
+                    cout << " dt   : " << rec.data_time() << "\n";
+                if ( rec.has_rec_time() )
+                    cout << " rt   : " << rec.rec_time() << "\n";
             }
         }
     }
@@ -905,7 +911,7 @@ int main( int a_argc, char ** a_argv )
 {
     addCommand( "?", "help", "Show help", "Use 'help <cmd>' to show help for a specific command.", help );
     addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", get_data );
-    addCommand( "", "put", "Put data into repository", "put <src> [id] [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", put_data );
+    addCommand( "", "put", "Put data into repository", "put [id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", put_data );
     addCommand( "s", "status", "View data transfer status", "status <xfr_id>\n\nGet status of specified data transfer.", xfr_status );
     addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (l)ist, (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
     addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );

@@ -297,6 +297,9 @@ Server::xfrManagement()
     string cmd;
     string result;
     XfrStatus status;
+    size_t file_size;
+    time_t mod_time;
+    Auth::RecordUpdateRequest upd_req;
 
     while( m_io_running )
     {
@@ -390,6 +393,36 @@ Server::xfrManagement()
 
                             // Update DB entry
                             m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status );
+
+                            if ( (*ixfr)->mode == XM_PUT )
+                            {
+                                mod_time = time(0);
+
+                                if ( (*ixfr)->status == XS_SUCCEEDED )
+                                {
+                                    if ( !m_store.dataGetSize( (*ixfr)->repo_path, file_size ))
+                                    {
+                                        // TODO This should not happen. If it does something is very very wrong
+                                        DL_ERROR( "Transfer succeeded but destination file does not exist! Transfer ID: " << (*ixfr)->id );
+                                        file_size = 0;
+                                    }
+                                }
+                                else
+                                {
+                                    // TODO How to handle PUT errors?
+                                    file_size = 0;
+                                }
+
+                                // Update DB record with new file stats
+                                {
+                                    Auth::RecordDataReply   reply;
+                                    upd_req.set_id( (*ixfr)->data_id );
+                                    upd_req.set_data_size( file_size );
+                                    upd_req.set_data_time( mod_time );
+
+                                    m_db_client.recordUpdate( upd_req, reply );
+                                }
+                            }
                         }
 
                         // Remove from active list
