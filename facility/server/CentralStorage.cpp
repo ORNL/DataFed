@@ -42,6 +42,7 @@ CentralStorage::dataGetSize( const std::string & a_filename, size_t & a_size )
         return true;
     }
 
+    cout << "dataGetSize: file " << a_filename << " does not exist\n";
     return false;
  }
 

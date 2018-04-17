@@ -342,6 +342,8 @@ CentralDatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request
         params.push_back({"data_size",to_string(a_request.data_size())});
     if ( a_request.has_data_time() )
         params.push_back({"data_time",to_string(a_request.data_time())});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
 
     dbGet( "dat/update", params, result );
 
