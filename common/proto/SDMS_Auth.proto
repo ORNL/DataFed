@@ -139,6 +139,14 @@ message XfrViewRequest
     required string             xfr_id      = 1;
 }
 
+message XfrListRequest
+{
+    optional uint32             from        = 1;
+    optional uint32             to          = 2;
+    optional uint32             since       = 3;
+    optional SDMS.XfrStatus     status      = 4;
+}
+
 message XfrDataReply
 {
     repeated SDMS.XfrData       xfr         = 1;

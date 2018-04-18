@@ -117,6 +117,7 @@ public:
     void                dataDelete( const std::string & a_id );
 
     spXfrDataReply      xfrView( const std::string & a_transfer_id );
+    spXfrDataReply      xfrList( uint32_t * a_since, uint32_t * a_from, uint32_t * a_to, XfrStatus * a_status );
 
     spACLDataReply      aclView( const std::string & a_id );
     spACLDataReply      aclUpdate( const std::string & a_id, const std::string & a_rules );

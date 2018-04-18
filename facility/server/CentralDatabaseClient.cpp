@@ -583,6 +583,27 @@ CentralDatabaseClient::xfrView( const Auth::XfrViewRequest & a_request, Auth::Xf
 }
 
 void
+CentralDatabaseClient::xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    vector<pair<string,string>> params;
+
+    if ( a_request.has_since() )
+        params.push_back({"since",to_string(a_request.since())});
+    if ( a_request.has_from() )
+        params.push_back({"from",to_string(a_request.from())});
+    if ( a_request.has_to() )
+        params.push_back({"to",to_string(a_request.to())});
+    if ( a_request.has_status() )
+        params.push_back({"status",to_string((unsigned int)a_request.status())});
+
+    dbGet( "xfr/list", params, result );
+
+    setXfrData( a_reply, result );
+}
+
+void
 CentralDatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )

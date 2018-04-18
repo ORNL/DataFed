@@ -46,6 +46,7 @@ public:
     void collWrite( const Auth::CollWriteRequest & a_request, Anon::AckReply & a_reply );
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
+    void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply );
     void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const char * a_task_id = 0 );
 

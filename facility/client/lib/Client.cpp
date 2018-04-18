@@ -908,6 +908,28 @@ Client::xfrView( const std::string & a_xfr_id )
     return spXfrDataReply( rep );
 }
 
+
+spXfrDataReply
+Client::xfrList( uint32_t * a_since, uint32_t * a_from, uint32_t * a_to, XfrStatus * a_status )
+{
+    Auth::XfrListRequest    req;
+    Auth::XfrDataReply *    rep;
+
+    if ( a_since )
+        req.set_since( *a_since );
+    if ( a_from )
+        req.set_from( *a_from );
+    if ( a_to )
+        req.set_to( *a_to );
+    if ( a_status )
+        req.set_status( *a_status );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spXfrDataReply( rep );
+}
+
+
 spACLDataReply
 Client::aclView( const std::string & a_id )
 {

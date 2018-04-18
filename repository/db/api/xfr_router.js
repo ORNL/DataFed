@@ -57,6 +57,7 @@ router.get('/init', function (req, res) {
                         data_id: data_id,
                         repo_path: "fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 ),
                         local_path: req.queryParams.path,
+                        user_id: client._id,
                         globus_id: client.globus_id,
                         updated: ((Date.now()/1000)|0)
                         }, { returnNew: true } );
@@ -72,7 +73,7 @@ router.get('/init', function (req, res) {
                     xfr = g_db._query( "for i in tr filter i.data_id == @data_id and ( i.mode == 1 or i.local_path == @loc_path ) and i.status < 3 return i", { data_id: data_id, loc_path: dest_path }).toArray();
 
                     for ( var i in xfr ) {
-                        if ( xfr[i].mode == g_lib.XM_PUT )
+                        if ( xfr[i].mode == g_lib.XM_PUT || xfr[i].user_id != client._id )
                             throw g_lib.ERR_XFR_CONFLICT;
                     }
 
@@ -86,6 +87,7 @@ router.get('/init', function (req, res) {
                             data_id: data_id,
                             repo_path: "fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 ),
                             local_path: dest_path,
+                            user_id: client._id,
                             globus_id: client.globus_id,
                             updated: ((Date.now()/1000)|0)
                             }, { returnNew: true } );
@@ -166,15 +168,56 @@ router.get('/view', function (req, res) {
 
 router.get('/list', function (req, res) {
     try {
-        //const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var result;
+        var filter = "";
 
-        var result = g_db._query( "for i in tr return i" ).toArray();
+        if (( req.queryParams.from != undefined || req.queryParams.to != undefined ) && req.queryParams.since != undefined )
+            throw g_lib.ERR_INVALID_PARAM;
+
+        if ( req.queryParams.from != undefined ) {
+            filter += "i.updated >= " + req.queryParams.from;
+        }
+
+        if ( req.queryParams.to != undefined ) {
+            if ( filter.length )
+                filter += " and ";
+            filter += "i.updated <= " + req.queryParams.to;
+        }
+
+        if ( req.queryParams.since != undefined ) {
+            filter += "i.updated >= " + ((Date.now()/1000) - req.queryParams.since);
+        }
+
+        if ( req.queryParams.status != undefined ) {
+            if ( filter.length )
+                filter += " and ";
+
+            filter += "i.status == " + req.queryParams.status;
+        }
+
+        if ( req.queryParams.client != undefined ) {
+            const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+            if ( filter.length )
+                result = g_db._query( "for i in tr filter i.user_id == @uid and " + filter + " return i", { uid: client._id } ).toArray();
+            else
+                result = g_db._query( "for i in tr filter i.user_id == @uid return i", { uid: client._id } ).toArray();
+        } else {
+            if ( filter.length )
+                result = g_db._query( "for i in tr filter " + filter + " return i" ).toArray();
+            else
+                result = g_db._query( "for i in tr return i" ).toArray();
+        }
 
         res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-//.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('from', joi.number().optional(), "Return results on or after absolute 'from' time.")
+.queryParam('to', joi.number().optional(), "Return result on or before absolute 'to' time.")
+.queryParam('since', joi.number().optional(), "Return results between now and 'since' seconds ago.")
+.queryParam('status', joi.number().optional(), "Return results matching 'status'.")
 .summary('List transfer record')
 .description('View transfer record');
