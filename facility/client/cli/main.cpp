@@ -101,6 +101,10 @@ string          g_email;
 string          g_globus_id;
 bool            g_details;
 string          g_cfg_file;
+uint32_t        g_since;
+uint32_t        g_from;
+uint32_t        g_to;
+int32_t         g_status;
 string          g_cmd;
 vector<string>  g_args;
 string          g_out_form_str;
@@ -323,6 +327,27 @@ void printACLs( spACLDataReply a_reply )
         cout << "  No ACLs set\n";
 }
 
+void printXfrData( spXfrDataReply a_reply )
+{
+    if ( a_reply->xfr_size() )
+    {
+        for ( int i = 0; i < a_reply->xfr_size(); i++ )
+        {
+            const XfrData & xfr = a_reply->xfr(i);
+
+            cout << "  Xfr ID  : " << xfr.id() << "\n";
+            cout << "  Data ID : " << xfr.data_id() << "\n";
+            cout << "  Mode    : " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
+            cout << "  Status  : " << StatusText[xfr.status()] << "\n";
+            cout << "  Path    : " << xfr.local_path() << "\n";
+            cout << "  Updated : " << xfr.updated() << "\n";
+
+            cout << "\n";
+        }
+    }
+    else
+        cout << "  No transfers\n";
+}
 
 int no_console()
 {
@@ -648,11 +673,32 @@ int coll()
 
 int xfr_status()
 {
-    if ( g_args.size() != 1 )
-        return -1;
+    if ( g_args.size() == 0 )
+    {
+        uint32_t since = 24*3600;
 
-    spXfrDataReply xfr = g_client->xfrView( g_args[0] );
-    cout << StatusText[xfr->xfr(0).status()] << "\n";
+        if ( g_from || g_to )
+            since = 0;
+        else if ( g_since )
+            since = g_since;
+
+        XfrStatus status = XS_INIT;
+
+        if ( g_status >= 0 && g_status <= XS_FAILED )
+            status = (XfrStatus)g_status;
+        else
+            g_status = -1;
+
+        spXfrDataReply xfr = g_client->xfrList( since?&since:0, g_from?&g_from:0, g_to?&g_to:0, g_status >= 0?&status:0 );
+        printXfrData( xfr );
+    }
+    else if ( g_args.size() == 1 )
+    {
+        spXfrDataReply xfr = g_client->xfrView( g_args[0] );
+        printXfrData( xfr );
+    }
+    else
+        return -1;
 
     return 0;
 }
@@ -854,6 +900,14 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
     g_meta.clear();
     g_meta_file.clear();
     g_meta_replace = false;
+    g_name.clear();
+    g_email.clear();
+    g_globus_id.clear();
+    g_details = false;
+    g_since = 0;
+    g_from = 0;
+    g_to = 0;
+    g_status = -1;
     g_cmd.clear();
     g_args.clear();
 
@@ -963,6 +1017,10 @@ int main( int a_argc, char ** a_argv )
         ("email,e",po::value<string>( &g_email ),"Specify user email for update command")
         ("globus_id,g",po::value<string>( &g_globus_id ),"Specify user globus_id for update command")
         ("details,D",po::bool_switch( &g_details ),"Retrieve extra details for supported commands")
+        ("since",po::value<uint32_t>( &g_since ),"Specify time since 'now' in seconds")
+        ("from",po::value<uint32_t>( &g_from ),"Specify absolute 'from' time")
+        ("to",po::value<uint32_t>( &g_to ),"Specify absolute 'to' time")
+        ("status",po::value<int32_t>( &g_status ),"Specify transfer status")
         ;
 
     opts_hidden.add_options()
