@@ -340,6 +340,9 @@ Server::xfrManagement()
                     else
                         cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
 
+                    // HACK Need err msg if things go wrong
+                    cmd += " 2>&1";
+
                     {
                         lock_guard<mutex> lock( m_key_mutex );
                         result = exec( cmd.c_str() );
