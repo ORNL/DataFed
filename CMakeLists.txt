@@ -42,6 +42,7 @@ set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory( common )
-add_subdirectory( repository )
+add_subdirectory( core )
 add_subdirectory( facility )
+add_subdirectory( repository )
 
