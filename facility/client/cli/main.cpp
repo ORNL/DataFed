@@ -331,6 +331,8 @@ void printXfrData( spXfrDataReply a_reply )
 {
     if ( a_reply->xfr_size() )
     {
+        time_t t;
+
         for ( int i = 0; i < a_reply->xfr_size(); i++ )
         {
             const XfrData & xfr = a_reply->xfr(i);
@@ -342,7 +344,8 @@ void printXfrData( spXfrDataReply a_reply )
             if ( xfr.has_err_msg() )
                 cout << "  Error   : " << xfr.err_msg() << "\n";
             cout << "  Path    : " << xfr.local_path() << "\n";
-            cout << "  Updated : " << xfr.updated() << "\n";
+            t = (time_t)xfr.updated();
+            cout << "  Updated : " << ctime( &t );
 
             cout << "\n";
         }
@@ -677,7 +680,7 @@ int xfr_status()
 {
     if ( g_args.size() == 0 )
     {
-        uint32_t since = 24*3600;
+        uint32_t since = 6*3600;
 
         if ( g_from || g_to )
             since = 0;

@@ -33,6 +33,9 @@ router.get('/init', function (req, res) {
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
 
+                if ( !data.file_size )
+                    throw g_lib.ERR_XFR_NO_RAW_DATA;
+
                 if ( !g_lib.hasAdminPermObject( client, data._id )) {
                     var perms;
                     if ( req.queryParams.mode == g_lib.XM_PUT )
@@ -202,14 +205,14 @@ router.get('/list', function (req, res) {
             const client = g_lib.getUserFromClientID( req.queryParams.client );
 
             if ( filter.length )
-                result = g_db._query( "for i in tr filter i.user_id == @uid and " + filter + " return i", { uid: client._id } ).toArray();
+                result = g_db._query( "for i in tr filter i.user_id == @uid and " + filter + " sort i.updated desc return i", { uid: client._id } ).toArray();
             else
-                result = g_db._query( "for i in tr filter i.user_id == @uid return i", { uid: client._id } ).toArray();
+                result = g_db._query( "for i in tr filter i.user_id == @uid sort i.updated desc return i", { uid: client._id } ).toArray();
         } else {
             if ( filter.length )
-                result = g_db._query( "for i in tr filter " + filter + " return i" ).toArray();
+                result = g_db._query( "for i in tr filter " + filter + " sort i.updated desc return i" ).toArray();
             else
-                result = g_db._query( "for i in tr return i" ).toArray();
+                result = g_db._query( "for i in tr sort i.updated desc return i" ).toArray();
         }
 
         res.send( result );
