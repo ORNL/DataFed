@@ -364,7 +364,13 @@ Server::xfrManagement()
                     }
                     else
                     {
-                        cout << "Globus CLI Error\nResult:[" << result << "]";
+                        //cout << "Globus CLI Error\nResult:[" << result << "]";
+                        for ( string::iterator c = result.begin(); c != result.end(); c++ )
+                        {
+                            if ( *c == '\n' )
+                                *c = '.';
+                        }
+
                         status = XS_FAILED;
                         m_db_client.xfrUpdate( (*ixfr)->id, &status, result );
                         ixfr = m_xfr_active.erase( ixfr );
