@@ -339,6 +339,8 @@ void printXfrData( spXfrDataReply a_reply )
             cout << "  Data ID : " << xfr.data_id() << "\n";
             cout << "  Mode    : " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
             cout << "  Status  : " << StatusText[xfr.status()] << "\n";
+            if ( xfr.has_err_msg() )
+                cout << "  Error   : " << xfr.err_msg() << "\n";
             cout << "  Path    : " << xfr.local_path() << "\n";
             cout << "  Updated : " << xfr.updated() << "\n";
 

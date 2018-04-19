@@ -301,6 +301,7 @@ Server::xfrManagement()
     time_t mod_time;
     Auth::RecordUpdateRequest upd_req;
     Auth::RecordDataReply  reply;
+    string error_msg;
 
     while( m_io_running )
     {
@@ -353,7 +354,7 @@ Server::xfrManagement()
                         cout << "Task " << (*ixfr)->task_id << " started\n";
 
                         // Update DB entry
-                        m_db_client.xfrUpdate( (*ixfr)->id, 0, (*ixfr)->task_id.c_str() );
+                        m_db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
                         (*ixfr)->stage = 1;
                         (*ixfr)->poll = INIT_POLL_PERIOD;
                         ixfr++;
@@ -362,7 +363,7 @@ Server::xfrManagement()
                     {
                         cout << "Globus CLI Error\n";
                         status = XS_FAILED;
-                        m_db_client.xfrUpdate( (*ixfr)->id, &status );
+                        m_db_client.xfrUpdate( (*ixfr)->id, &status, result );
                         ixfr = m_xfr_active.erase( ixfr );
                     }
                 }
@@ -378,7 +379,7 @@ Server::xfrManagement()
                         //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
                         cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
                         result = exec( cmd.c_str() );
-                        if ( parseGlobusEvents( result, status ))
+                        if ( parseGlobusEvents( result, status, error_msg ))
                         {
                             // Cancel the xfr task
                             cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
@@ -393,7 +394,7 @@ Server::xfrManagement()
                             (*ixfr)->status = status;
 
                             // Update DB entry
-                            m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status );
+                            m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
 
                             if ( (*ixfr)->mode == XM_PUT )
                             {
@@ -463,7 +464,7 @@ Server::xfrManagement()
 }
 
 bool
-Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status )
+Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg )
 {
     status = XS_INACTIVE;
 
@@ -471,6 +472,8 @@ Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status )
     size_t p2 = a_events.find_first_of( "=", 0 );
     string tmp;
     size_t fault_count = 0;
+
+    a_err_msg.clear();
 
     while ( p2 != string::npos )
     {
@@ -491,20 +494,25 @@ Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status )
             status = XS_ACTIVE;
         else if ( tmp == "SUCCEEDED" )
             status = XS_SUCCEEDED;
-        else if ( tmp == "CANCELED" || tmp == "FAILED" )
+        else if ( tmp == "CANCELED" )
+        {
             status = XS_FAILED;
+            a_err_msg = tmp;
+        }
         else if ( tmp == "CONNECTION_RESET" )
         {
             status = XS_INIT;
             if ( ++fault_count > 10 )
             {
                 status = XS_FAILED;
+                a_err_msg = "Could not connect";
                 return true;
             }
         }
         else
         {
             status = XS_FAILED;
+            a_err_msg = tmp;
             return true;
         }
 

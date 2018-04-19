@@ -54,8 +54,12 @@ void perfTest( Client & client, int iter )
 
 int main( int a_argc, char ** a_argv )
 {
+    (void) a_argc;
+    (void) a_argv;
+
     try
     {
+#if 0
         const char * host = "127.0.0.1";
         int port = 5800;
         int timeout = 5;
@@ -102,6 +106,7 @@ int main( int a_argc, char ** a_argv )
                 break;
             }
         }
+#endif
 
         //timerDef();
 #if 0

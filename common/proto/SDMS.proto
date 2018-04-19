@@ -106,8 +106,9 @@ message XfrData
     required string             repo_path   = 5;
     required string             local_path  = 6;
     required string             globus_id   = 7;
-    optional string             task_id     = 8; // Only set if status > XFR_INIT
-    required uint32             updated     = 9;
+    required uint32             updated     = 8;
+    optional string             task_id     = 9; // Only set if status > XFR_INIT
+    optional string             err_msg     = 10; // Only set if status == XFR_FAILED
 }
 
 message GroupData

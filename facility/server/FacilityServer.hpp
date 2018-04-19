@@ -78,7 +78,7 @@ private:
     void accept();
     void backgroundMaintenance();
     void xfrManagement();
-    bool parseGlobusEvents( const std::string & a_events, XfrStatus & status );
+    bool parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg );
 
     std::string                     m_host;
     uint32_t                        m_port;

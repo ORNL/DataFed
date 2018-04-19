@@ -631,6 +631,10 @@ CentralDatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document &
         imem = val.FindMember("task_id");
         if ( imem != val.MemberEnd() )
             xfr->set_task_id( imem->value.GetString() );
+
+        imem = val.FindMember("err_msg");
+        if ( imem != val.MemberEnd() )
+            xfr->set_err_msg( imem->value.GetString() );
     }
 }
 
@@ -645,7 +649,7 @@ CentralDatabaseClient::xfrInit( const std::string & a_id, const std::string & a_
 }
 
 void
-CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const char * a_task_id )
+CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const std::string & a_err_msg, const char * a_task_id )
 {
     rapidjson::Document result;
 
@@ -655,6 +659,8 @@ CentralDatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_st
         params.push_back({"status",to_string(*a_status)});
     if ( a_task_id )
         params.push_back({"task_id", string(a_task_id)});
+    if ( a_err_msg.size() )
+        params.push_back({"err_msg", a_err_msg});
 
     dbGet( "xfr/update", params, result );
 }

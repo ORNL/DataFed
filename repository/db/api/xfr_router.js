@@ -131,6 +131,9 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.task_id )
                     obj.task_id = req.queryParams.task_id;
 
+                if ( req.queryParams.err_msg )
+                    obj.err_msg = req.queryParams.err_msg;
+
                 var xfr = g_db._update( req.queryParams.xfr_id, obj, { keepNull: false, returnNew: true });
 
                 result = [xfr.new];
@@ -145,6 +148,7 @@ router.get('/update', function (req, res) {
 .queryParam('xfr_id', joi.string().required(), "Xfr record ID")
 .queryParam('status', joi.number().optional(), "New status")
 .queryParam('task_id', joi.string().optional(), "New task ID")
+.queryParam('err_msg', joi.string().optional(), "Error message")
 .summary('Update transfer record')
 .description('Update transfer record');
 
@@ -152,7 +156,6 @@ router.get('/update', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         //const client = g_lib.getUserFromClientID( req.queryParams.client );
-
 
         var result = g_db.tr.document( req.queryParams.xfr_id );
 
