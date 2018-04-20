@@ -63,13 +63,12 @@ Session::setupMsgHandlers()
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
-        SET_MSG_HANDLER( proto_id, ServerInfoRequest, &Session::procMsgServerInfo );
         SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Session::procMsgAuthenticate );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
         // Requests that require the server to take action
-        SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
+        //SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
         SET_MSG_HANDLER( proto_id, GenerateKeysRequest, &Session::procMsgGenerateKeys );
         SET_MSG_HANDLER( proto_id, GetPublicKeyRequest, &Session::procMsgGetPublicKey );
@@ -122,7 +121,7 @@ Session::start()
             {
                 cout << "anon: " << m_anon << "\n";
 
-                m_db_client.setClient( m_sess_mgr.getUnit() + "." + m_uid );
+                m_db_client.setClient( m_client_id );
                 readMsgHeader();
             }
         });
@@ -183,17 +182,18 @@ Session::verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
 
     string subject = subject_buf;
 
-    cout << "verify cert: " << subject << "\n";
+    cout << "verify cert: " << subject << ", pre ver: " << a_preverified << "\n";
 
-    size_t pos = subject.rfind("/CN=");
+    size_t pos = subject.rfind("/CN=SDMS-");
 
-    if ( pos == string::npos )
-        return false;
+    if ( pos != string::npos )
+    {
+        // This is a user cert
+        m_client_id = subject.substr( pos + 9 );
+        cout << "uid: " << m_client_id << "\n";
 
-    m_uid = subject.substr( pos + 4 );
-    cout << "uid: " << m_uid << "\n";
-
-    m_anon = false;
+        m_anon = false;
+    }
 
     return a_preverified;
 }
@@ -387,19 +387,6 @@ else { \
 
 
 void
-Session::procMsgServerInfo()
-{
-    PROC_MSG_BEGIN( ServerInfoRequest, ServerInfoReply )
-
-    reply.set_country( m_sess_mgr.getCountry() );
-    reply.set_org( m_sess_mgr.getOrg() );
-    reply.set_unit( m_sess_mgr.getUnit() );
-
-    PROC_MSG_END
-}
-
-
-void
 Session::procMsgAuthenticate()
 {
     PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
@@ -408,7 +395,7 @@ Session::procMsgAuthenticate()
     m_db_client.setClient( request->uid() );
     m_db_client.clientAuthenticate( request->password() );
 
-    m_uid = request->uid();
+    m_client_id = request->uid();
     m_anon = false;
 
     PROC_MSG_END
@@ -425,6 +412,7 @@ Session::procMsgStatus()
     PROC_MSG_END
 }
 
+/*
 void
 Session::procMsgSetLocalIdentity()
 {
@@ -439,6 +427,7 @@ Session::procMsgSetLocalIdentity()
 
     PROC_MSG_END
 }
+*/
 
 /** @brief Creates identity for local environment and generate matching credentials
  *
@@ -455,20 +444,17 @@ Session::procMsgGenerateCredentials()
 
     // TODO need a private place to put these temp files
 
-    string key_file = "/tmp/" + m_uid + "-" + m_sess_mgr.getUnit() + "-key.pem";
-    string cert_file = "/tmp/" + m_uid + "-" + m_sess_mgr.getUnit() + "-cert.pem";
-    string csr_file = "/tmp/" + m_uid + "-" + m_sess_mgr.getUnit() + ".csr";
+    string key_file = "/tmp/" + m_client_id + "-key.pem";
+    string cert_file = "/tmp/" + m_client_id + "-cert.pem";
+    string csr_file = "/tmp/" + m_client_id + ".csr";
 
     try
     {
-        // TODO This process is BROKEN. There is nothing that prevents anyone from replicating this process anywhere/
-        // TODO We MUST SIGN the certificate with the HOST key to ensure they can not be spoofed
-
         string cmd = "openssl genrsa -out " + key_file + " 2048";
         if ( system( cmd.c_str() ))
             EXCEPT( ID_SERVICE_ERROR, "Client key generation failed." );
 
-        cmd = "openssl req -new -key " + key_file + " -subj /C=" + m_sess_mgr.getCountry() + "/O=" + m_sess_mgr.getOrg() + "/OU=" + m_sess_mgr.getUnit() + "/CN=" + m_uid + " -out " + csr_file;
+        cmd = "openssl req -new -key " + key_file + " -subj /C=US/O=DOE/OU=ASCR/CN=SDMS-" + m_client_id + " -out " + csr_file;
         if ( system( cmd.c_str() ))
             EXCEPT( ID_SERVICE_ERROR, "CSR generation failed." );
 
@@ -521,7 +507,7 @@ Session::procMsgGenerateKeys()
 
     string key_data;
 
-    m_sess_mgr.generateKeys( m_uid, key_data );
+    m_sess_mgr.generateKeys( m_client_id, key_data );
 
     reply.set_pub_key( key_data );
 
@@ -536,7 +522,7 @@ Session::procMsgGetPublicKey()
 
     string key_data;
 
-    m_sess_mgr.getPublicKey( m_uid, key_data );
+    m_sess_mgr.getPublicKey( m_client_id, key_data );
 
     reply.set_pub_key( key_data );
 
@@ -563,7 +549,7 @@ Session::procMsgDataGet()
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-    m_sess_mgr.handleNewXfr( reply.xfr(0), m_uid );
+    m_sess_mgr.handleNewXfr( reply.xfr(0), m_client_id );
 
     PROC_MSG_END
 }
@@ -579,7 +565,7 @@ Session::procMsgDataPut()
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-    m_sess_mgr.handleNewXfr( reply.xfr(0), m_uid );
+    m_sess_mgr.handleNewXfr( reply.xfr(0), m_client_id );
 
     PROC_MSG_END
 }

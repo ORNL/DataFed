@@ -69,7 +69,7 @@ class Client
 {
 public:
 
-    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, const std::string & a_unit, bool a_load_certs );
+    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, bool a_load_certs );
     Client( const Client & ) = delete;
     ~Client();
 
@@ -130,7 +130,7 @@ public:
     spGroupDataReply    groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids );
     spGroupDataReply    groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids );
 
-    static bool         verifyCredentials( const std::string & a_cred_path, const std::string & a_unit );
+    static bool         verifyCredentials( const std::string & a_cred_path );
 
 private:
     typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
@@ -155,7 +155,6 @@ private:
     std::string                 m_host;
     uint32_t                    m_port;
     std::string                 m_cred_path;
-    std::string                 m_unit;
     std::string                 m_uid;
     std::string                 m_cert_file;
     std::string                 m_key_file;
@@ -171,8 +170,6 @@ private:
     State                       m_state;
     std::condition_variable     m_start_cvar;
     std::mutex                  m_mutex;
-    std::string                 m_country;
-    std::string                 m_org;
 };
 
 }}

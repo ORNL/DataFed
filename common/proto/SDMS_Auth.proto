@@ -10,10 +10,12 @@ enum Protocol
 
 // ============================ Setup/Config Messages
 
+/*
 message SetLocalIdentityRequest
 {
     required string             ident       = 1;
 }
+*/
 
 message GenerateCredentialsRequest
 {

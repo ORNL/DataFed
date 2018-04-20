@@ -65,9 +65,6 @@ private:
     const std::string & getKeyFile() { return m_key_file; }
     void                generateKeys( const std::string & a_uid, std::string & a_key_data );
     void                getPublicKey( const std::string & a_uid, std::string & a_key_data );
-    const std::string & getCountry() { return m_country; }
-    const std::string & getOrg() { return m_org; }
-    const std::string & getUnit() { return m_unit; }
     void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
 
     // Should be in CentralServer
@@ -94,9 +91,6 @@ private:
     asio::ip::tcp::acceptor         m_acceptor;
     asio::ssl::context              m_context;
     std::set<spSession>             m_sessions;
-    std::string                     m_country;
-    std::string                     m_org;
-    std::string                     m_unit;
     std::string                     m_cert_file;
     std::string                     m_key_file;
     std::string                     m_key_path;

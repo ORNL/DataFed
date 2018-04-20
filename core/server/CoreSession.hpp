@@ -25,9 +25,6 @@ public:
     virtual const std::string &     getKeyFile() = 0;
     virtual void                    generateKeys( const std::string & a_uid, std::string & a_key_data ) = 0;
     virtual void                    getPublicKey( const std::string & a_uid, std::string & a_key_data ) = 0;
-    virtual const std::string &     getCountry() = 0;
-    virtual const std::string &     getOrg() = 0;
-    virtual const std::string &     getUnit() = 0;
     virtual void                    handleNewXfr( const XfrData & a_xfr, const std::string & a_uid ) = 0;
 
     // TODO Methods that belong in CentralServer
@@ -81,7 +78,7 @@ private:
     ISessionMgr &           m_sess_mgr;
     ssl_socket              m_socket;
     bool                    m_anon;
-    std::string             m_uid;
+    std::string             m_client_id;
     MsgBuf                  m_in_buf;
     MsgBuf                  m_out_buf;
     struct timespec         m_last_access = {0,0};

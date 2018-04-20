@@ -36,9 +36,6 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_endpoint( asio::ip::tcp::v4(), m_port ),
     m_acceptor( m_io_service, m_endpoint ),
     m_context( asio::ssl::context::tlsv12 ),
-    m_country("US"),    // TODO Get from params
-    m_org("ORNL"),    // TODO Get from params
-    m_unit("ccs"),    // TODO Get from params
     m_xfr_thread(0),
     m_db_url(a_db_url),
     m_db_user(a_db_user),
@@ -53,9 +50,12 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
         asio::ssl::context::no_tlsv1_1 |
         asio::ssl::context::single_dh_use );
 
-    m_cert_file = a_cert_dir + "sdmsd-" + m_unit + "-cert.pem";
-    m_key_file = a_cert_dir + "sdmsd-" + m_unit + "-key.pem";
+    m_cert_file = a_cert_dir + "sdms-core-cert.pem";
+    m_key_file = a_cert_dir + "sdms-core-key.pem";
     m_key_path = a_cert_dir + "ssh/";
+
+    cout << "cert file: " << m_cert_file << "\n";
+    cout << "key file: " << m_key_file << "\n";
 
     m_context.use_certificate_chain_file( m_cert_file.c_str() );
     m_context.use_private_key_file( m_key_file.c_str(), asio::ssl::context::pem );
@@ -329,7 +329,7 @@ Server::xfrManagement()
                     // Use Legacy Globus CLI to start transfer
                     cout << "start xfr\n";
 
-                    keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
+                    keyfile = m_key_path + (*ixfr)->uid + "-key";
 
                     cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- ";
                     //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
@@ -383,7 +383,7 @@ Server::xfrManagement()
                         //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
 
                         // Get current status
-                        keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
+                        keyfile = m_key_path + (*ixfr)->uid + "-key";
 
                         //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
                         cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
@@ -430,7 +430,7 @@ Server::xfrManagement()
                                 upd_req.set_id( (*ixfr)->data_id );
                                 upd_req.set_data_size( file_size );
                                 upd_req.set_data_time( mod_time );
-                                upd_req.set_subject( m_unit + "." + (*ixfr)->uid );
+                                upd_req.set_subject( (*ixfr)->uid );
                                 reply.Clear();
 
                                 m_db_client.recordUpdate( upd_req, reply );
@@ -551,9 +551,9 @@ Server::sessionClosed( spSession a_session )
 void
 Server::generateKeys( const std::string & a_uid, std::string & a_key_data )
 {
-    string key_file = m_key_path + a_uid + "-" + m_unit + "-key";
+    string key_file = m_key_path + a_uid + "-key";
 
-    string cmd = "yes|ssh-keygen -q -t rsa -b 2048 -P '' -C \"SDMS SSH Key for " + a_uid + " (" + m_unit + ")\" -f " + key_file;
+    string cmd = "yes|ssh-keygen -q -t rsa -b 2048 -P '' -C \"SDMS SSH Key for " + a_uid + "\" -f " + key_file;
     //cout << "cmd: " << cmd << "\n";
 
     lock_guard<mutex> lock( m_key_mutex );
@@ -574,11 +574,11 @@ Server::generateKeys( const std::string & a_uid, std::string & a_key_data )
 void
 Server::getPublicKey( const std::string & a_uid, std::string & a_key_data )
 {
-    string key_file = m_key_path + a_uid + "-" + m_unit + "-key";
+    string key_file = m_key_path + a_uid + "-key.pub";
 
     lock_guard<mutex> lock( m_key_mutex );
 
-    ifstream inf( key_file + ".pub" );
+    ifstream inf( key_file );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT( ID_SERVICE_ERROR, "Could not open new ssh public key file" );
 

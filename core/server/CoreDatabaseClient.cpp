@@ -93,7 +93,6 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         {
             cout << "About to parse[" << res_json << "]" << endl;
             a_result.Parse( res_json.c_str() );
-            //cout << "parse done" << endl;
         }
 
         if ( http_code >= 200 && http_code < 300 )
@@ -109,7 +108,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         }
         else
         {
-            if ( !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
+            if ( res_json.size() && !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
             {
                 EXCEPT_PARAM( ID_BAD_REQUEST, "Bad request: " << a_result["errorMessage"].GetString() );
             }

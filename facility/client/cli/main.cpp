@@ -990,7 +990,6 @@ int main( int a_argc, char ** a_argv )
     uint32_t    timeout = 5;
     string      home = getenv("HOME");
     string      cred_path = home + "/.sdms/";
-    string      unit = "ccs";
     bool        manual_auth = false;
 
     po::options_description opts_startup( "Program options" );
@@ -1083,13 +1082,13 @@ int main( int a_argc, char ** a_argv )
             load_cred = false;
         }
 */
-        if ( !manual_auth && !Client::verifyCredentials( cred_path, unit ))
+        if ( !manual_auth && !Client::verifyCredentials( cred_path ))
         {
             cout << "No client credentials found, manual authentication required\n";
             manual_auth = true;
         }
 
-        Client client( host, port, timeout, cred_path, unit, !manual_auth );
+        Client client( host, port, timeout, cred_path, !manual_auth );
         client.start();
 
         if ( manual_auth )

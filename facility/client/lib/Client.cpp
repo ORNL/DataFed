@@ -39,33 +39,32 @@ namespace Facility {
 //typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
 
 bool
-Client::verifyCredentials( const std::string & a_cred_path, const std::string & a_unit )
+Client::verifyCredentials( const std::string & a_cred_path )
 {
     char * uid = getlogin();
     if ( uid == 0 )
         EXCEPT( 0, "Could not determine login name" );
 
     boost::system::error_code ec;
-    boost::filesystem::path dest_path( a_cred_path + uid + "-" + a_unit + "-cert.pem" );
+    boost::filesystem::path dest_path( a_cred_path + "sdms-user-cert.pem" );
 
     // TODO Need a way to actually check to see if the content of these credentials is valid
 
     if ( !boost::filesystem::exists( dest_path, ec ) )
         return false;
 
-    dest_path = a_cred_path + uid + "-" + a_unit + "-key.pem";
-    if ( !boost::filesystem::exists( dest_path, ec ) )
+    //dest_path = a_cred_path + uid + "-" + a_unit + "-key.pem";
+    if ( !boost::filesystem::exists( a_cred_path + "sdms-user-key.pem", ec ) )
         return false;
 
     return true;
 }
 
 
-Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, const std::string & a_unit, bool a_load_certs ) :
+Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, bool a_load_certs ) :
     m_host( a_host ),
     m_port( a_port ),
     m_cred_path( a_cred_path ),
-    m_unit(a_unit),
     m_resolver( m_io_service ),
     m_context( asio::ssl::context::tlsv12 ),
     m_socket( 0 ),
@@ -89,11 +88,14 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     //m_context.add_verify_path("/etc/ssl/certs");
 
     // TODO - This must be configurable
-    m_context.load_verify_file( m_cred_path + "sdmsd-" + a_unit + "-cert.pem");
-    
+    m_context.load_verify_file( m_cred_path + "sdms-core-cert.pem");
 
-    m_cert_file = m_cred_path + m_uid + "-" + a_unit + "-cert.pem";
-    m_key_file = m_cred_path + m_uid + "-" + a_unit + "-key.pem";
+    m_cert_file = m_cred_path + "sdms-user-cert.pem";
+    m_key_file = m_cred_path + "sdms-user-key.pem";
+
+    cout << "host cert file: " << m_cred_path << "sdms-core-cert.pem" << "\n";
+    cout << "user cert file: " << m_cert_file << "\n";
+    cout << "user key file: " << m_key_file << "\n";
 
     if ( a_load_certs )
     {
@@ -129,17 +131,6 @@ void Client::start()
 
     if ( m_state == FAILED )
         EXCEPT( 1, "Failed to connect to server" );
-        
-    ServerInfoRequest req;
-    ServerInfoReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    m_country = reply->country();
-    m_org = reply->org();
-    m_unit = reply->unit();
-
-    delete reply;
 }
 
 void Client::stop()
@@ -198,12 +189,16 @@ void Client::handShake()
 
 bool Client::verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
 {
+    // TODO What is the point of this funtions?
+
+    /*
     (void)a_preverified;
 
     char subject_name[256];
 
     X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
     X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
+    */
 
     return a_preverified;
 }
@@ -301,12 +296,13 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
 
 string Client::setup()
 {
-    setLocalIdentity();
+    //setLocalIdentity();
     generateCredentials();
 
     return generateKeys();
 }
 
+/*
 void Client::setLocalIdentity()
 {
     SetLocalIdentityRequest req;
@@ -318,7 +314,7 @@ void Client::setLocalIdentity()
 
     delete rep;
 }
-
+*/
 
 void Client::generateCredentials()
 {
