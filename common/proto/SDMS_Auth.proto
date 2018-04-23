@@ -281,3 +281,21 @@ message ACLDataReply
 {
     repeated ACLRule            rule        = 1;
 }
+
+// ============================ Repo Messages
+
+message RepoDataDeleteRequest
+{
+    required string             id          = 1;
+}
+
+message RepoDataGetSizeRequest
+{
+    required string             id          = 1;
+}
+
+message RepoDataSizeReply
+{
+    required string             id          = 1;
+    required uint64             size        = 2;
+}

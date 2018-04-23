@@ -66,11 +66,15 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     //m_context.use_tmp_dh_file( "dh512.pem" );
 
     m_db_client.setClient( "sdms" );
+
+    m_repo_client = new CommClient( "127.0.0.1", 5900, a_cert_dir + "sdms-repo-cert.pem", m_cert_file, m_key_file );
+    m_data_delete.push_back("d/fubar");
 }
 
 
 Server::~Server()
 {
+    delete m_repo_client;
 }
 
 
@@ -247,6 +251,12 @@ Server::backgroundMaintenance()
     struct timespec             _t;
     double                      t;
     set<spSession>::iterator    isess;
+    vector<string>::iterator    idel;
+    Auth::RepoDataDeleteRequest req;
+    Anon::AckReply *            rep;
+
+    m_repo_client->start();
+
     //vector<spSession>           dead_sessions;
 
     //dead_sessions.reserve( 10 );
@@ -272,6 +282,16 @@ Server::backgroundMaintenance()
                 ++isess;
         }
 
+        // Process data deletion requests
+        if ( m_data_delete.size() )
+        {
+            for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
+            {
+                req.set_id( *idel );
+                m_repo_client->send( req, rep );
+                delete rep;
+            }
+        }
 /*
         for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )
         {
@@ -604,9 +624,8 @@ Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
 void
 Server::dataDelete( const std::string & a_data_id )
 {
-    // TODO Send delete cmd to appropriate repo server
-
-    //m_store.dataDelete( a_data_id );
+    lock_guard<mutex> lock( m_data_mutex );
+    m_data_delete.push_back( a_data_id );
 }
 
 }}
