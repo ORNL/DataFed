@@ -67,14 +67,16 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
 
     m_db_client.setClient( "sdms" );
 
-    m_repo_client = new CommClient( "127.0.0.1", 5900, a_cert_dir + "sdms-repo-cert.pem", m_cert_file, m_key_file );
+    //m_repo_client = new MsgComm( "127.0.0.1", 5900, a_cert_dir + "sdms-repo-cert.pem", m_cert_file, m_key_file );
+    m_repo_comm = new MsgComm( "127.0.0.1", 5900, MsgComm::Client );
+
     m_data_delete.push_back("d/fubar");
 }
 
 
 Server::~Server()
 {
-    delete m_repo_client;
+    delete m_repo_comm;
 }
 
 
@@ -253,9 +255,8 @@ Server::backgroundMaintenance()
     set<spSession>::iterator    isess;
     vector<string>::iterator    idel;
     Auth::RepoDataDeleteRequest req;
-    Anon::AckReply *            rep;
-
-    m_repo_client->start();
+    MsgBuf::Message *           reply;
+    MsgBuf::Frame               frame;
 
     //vector<spSession>           dead_sessions;
 
@@ -283,14 +284,23 @@ Server::backgroundMaintenance()
         }
 
         // Process data deletion requests
-        if ( m_data_delete.size() )
+        try
         {
-            for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
+            if ( m_data_delete.size() )
             {
-                req.set_id( *idel );
-                m_repo_client->send( req, rep );
-                delete rep;
+                for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
+                {
+                    req.set_id( *idel );
+                    m_repo_comm->send( req );
+                    m_repo_comm->recv( reply, frame );
+                    delete reply;
+                }
             }
+            m_data_delete.clear();
+        }
+        catch( ... )
+        {
+            cout << "Exception on delete data\n";
         }
 /*
         for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )

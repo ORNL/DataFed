@@ -15,7 +15,7 @@
 #include <asio.hpp>
 #include <asio/ssl.hpp>
 
-#include "CommClient.hpp"
+#include "MsgComm.hpp"
 #include "CoreSession.hpp"
 #include "CoreDatabaseClient.hpp"
 #include "SDMS.pb.h"
@@ -106,7 +106,7 @@ private:
     std::string                     m_db_user;
     std::string                     m_db_pass;
     DatabaseClient                  m_db_client;
-    CommClient *                    m_repo_client;
+    MsgComm *                       m_repo_comm;
     std::vector<std::string>        m_data_delete;
 
     friend class Session;
