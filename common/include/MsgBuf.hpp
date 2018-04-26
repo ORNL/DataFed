@@ -10,7 +10,8 @@
 
 // TODO Need to add host-network conversions for buffer frame fields
 
-
+#define MAX_ROUTE_LEN   16
+#define MAX_UID_LEN     16
 #define REG_PROTO(ns) MsgBuf::registerProtocol( ns::Protocol_descriptor() )
 
 class MsgBuf
@@ -53,6 +54,9 @@ public:
 
     MsgBuf( uint32_t a_capacity = 0 ) : m_buffer(0), m_capacity(0)
     {
+        m_route[0] = 0;
+        m_uid[0] = 0;
+
         if ( a_capacity )
             ensureCapacity( a_capacity );
     }
@@ -66,6 +70,8 @@ public:
 
     void clear()
     {
+        m_route[0] = 0;
+        m_uid[0] = 0;
         m_frame.clear();
 
         if ( m_buffer )
@@ -100,6 +106,60 @@ public:
     inline const char * getBuffer() const
     {
         return m_buffer;
+    }
+
+    inline std::string getRoute() const
+    {
+        return std::string( m_route + 1, m_route[0] );
+    }
+
+    inline const char * getRouteBuffer() const
+    {
+        return m_route + 1;
+    }
+
+    inline uint8_t getRouteLen() const
+    {
+        return m_route[0];
+    }
+
+    void setRoute( const std::string & a_route )
+    {
+        if ( a_route.size() >= MAX_ROUTE_LEN )
+            EXCEPT( 1, "Route max length exceeded" );
+
+        m_route[0] = (uint8_t) a_route.size();
+        strncpy( m_route + 1, a_route.c_str(), a_route.size() );
+    }
+
+    void setRoute( const char * a_route, uint8_t a_len )
+    {
+        if ( a_len >= MAX_ROUTE_LEN )
+            EXCEPT( 1, "Route max length exceeded" );
+
+        m_route[0] = a_len;
+        strncpy( m_route + 1, a_route, a_len );
+    }
+
+    inline const char * getUID() const
+    {
+        return m_uid;
+    }
+
+    void setUID( const char * a_uid )
+    {
+        if ( strlen( a_uid ) >= MAX_UID_LEN )
+            EXCEPT( 1, "UID max length exceeded" );
+
+        strcpy( m_uid, a_uid );
+    }
+
+    void setUID( const std::string & a_uid )
+    {
+        if ( a_uid.size() >= MAX_UID_LEN )
+            EXCEPT( 1, "UID max length exceeded" );
+
+        strcpy( m_uid, a_uid.c_str() );
     }
 
     char * acquireBuffer()
@@ -254,6 +314,8 @@ private:
     Frame       m_frame;
     char *      m_buffer;
     uint32_t    m_capacity;
+    char        m_route[MAX_ROUTE_LEN]; // Byte 0 = length
+    char        m_uid[MAX_UID_LEN]; // Null teminated
 };
 
 

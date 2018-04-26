@@ -45,20 +45,29 @@ MsgComm::send( MsgBuf::Message & a_msg, uint16_t a_context )
 }
 
 void
-MsgComm::send( MsgBuf & a_message )
+MsgComm::send( MsgBuf & a_msg_buf )
 {
     zmq_msg_t msg;
     int rc;
 
-    zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
-    memcpy( zmq_msg_data( &msg ), &a_message.getFrame(), sizeof( MsgBuf::Frame ));
+    if ( m_proc_addresses )
+    {
+        zmq_msg_init_size( &msg, a_msg_buf.getRouteLen() );
+        memcpy( zmq_msg_data( &msg ), a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteLen() );
 
-    if (( rc = zmq_msg_send( &msg, m_socket, a_message.getFrame().size?ZMQ_SNDMORE:0 )) < 0 )
+        if (( rc = zmq_msg_send( &msg, m_socket, ZMQ_SNDMORE )) < 0 )
+            EXCEPT( 1, "zmq_msg_send (route) failed." );
+    }
+
+    zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
+    memcpy( zmq_msg_data( &msg ), &a_msg_buf.getFrame(), sizeof( MsgBuf::Frame ));
+
+    if (( rc = zmq_msg_send( &msg, m_socket, a_msg_buf.getFrame().size?ZMQ_SNDMORE:0 )) < 0 )
         EXCEPT( 1, "zmq_msg_send (frame) failed." );
 
-    if ( a_message.getFrame().size )
+    if ( a_msg_buf.getFrame().size )
     {
-        zmq_msg_init_data( &msg, a_message.acquireBuffer(), a_message.getFrame().size, freeBuffer, 0 );
+        zmq_msg_init_data( &msg, a_msg_buf.acquireBuffer(), a_msg_buf.getFrame().size, freeBuffer, 0 );
 
         if (( rc = zmq_msg_send( &msg, m_socket, 0 )) < 0 )
             EXCEPT( 1, "zmq_msg_send (body) failed." );
@@ -81,7 +90,7 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_tim
 }
 
 bool
-MsgComm::recv( MsgBuf & a_message, uint32_t a_timeout )
+MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 {
     zmq_msg_t msg;
     int rc;
@@ -92,6 +101,19 @@ MsgComm::recv( MsgBuf & a_message, uint32_t a_timeout )
             return false;
     }
 
+    if ( m_proc_addresses )
+    {
+        zmq_msg_init( &msg );
+
+        if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
+            EXCEPT( 1, "zmq_msg_recv (route) failed." );
+
+        if ( zmq_msg_size( &msg ) >= MAX_ROUTE_LEN )
+            EXCEPT( 1, "Invalid message route received." );
+
+        a_msg_buf.setRoute( (char *)zmq_msg_data( &msg ), zmq_msg_size( &msg ));
+    }
+
     zmq_msg_init( &msg );
 
     if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
@@ -100,20 +122,20 @@ MsgComm::recv( MsgBuf & a_message, uint32_t a_timeout )
     if ( zmq_msg_size( &msg ) != sizeof( MsgBuf::Frame ))
         EXCEPT( 1, "Invalid message frame received." );
 
-    a_message.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
+    a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
     zmq_msg_close( &msg );
 
-    if ( a_message.getFrame().size )
+    if ( a_msg_buf.getFrame().size )
     {
         if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
             EXCEPT( 1, "zmq_msg_recv (body) failed." );
 
-        if ( zmq_msg_size( &msg ) != sizeof( a_message.getFrame().size ))
+        if ( zmq_msg_size( &msg ) != sizeof( a_msg_buf.getFrame().size ))
             EXCEPT( 1, "Invalid message body received." );
 
-        a_message.ensureCapacity( a_message.getFrame().size );
-        memcpy( a_message.getBuffer(), zmq_msg_data( &msg ), a_message.getFrame().size );
+        a_msg_buf.ensureCapacity( a_msg_buf.getFrame().size );
+        memcpy( a_msg_buf.getBuffer(), zmq_msg_data( &msg ), a_msg_buf.getFrame().size );
 
         zmq_msg_close( &msg );
     }

@@ -291,8 +291,11 @@ Server::backgroundMaintenance()
                 for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
                 {
                     req.set_id( *idel );
+                    cout << "Send delete\n";
                     m_repo_comm->send( req );
+                    cout << "Get reply\n";
                     m_repo_comm->recv( reply, frame );
+                    cout << "Got reply!\n";
                     delete reply;
                 }
             }
