@@ -67,8 +67,6 @@ private:
     void                generateKeys( const std::string & a_uid, std::string & a_key_data );
     void                getPublicKey( const std::string & a_uid, std::string & a_key_data );
     void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
-
-    // Should be in CentralServer
     void                dataDelete( const std::string & a_data_id );
 
     void ioRun();
@@ -76,6 +74,7 @@ private:
     void backgroundMaintenance();
     void xfrManagement();
     bool parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg );
+    void zapHandler();
 
     std::string                     m_host;
     uint32_t                        m_port;
@@ -106,7 +105,11 @@ private:
     std::string                     m_db_user;
     std::string                     m_db_pass;
     DatabaseClient                  m_db_client;
-    MsgComm *                       m_repo_comm;
+    void *                          m_zmq_ctx;
+    MsgComm::SecurityContext        m_sec_ctx;
+    //MsgComm *                       m_repo_comm;
+    std::thread *                   m_zap_thread;
+    std::map<std::string,std::string>   m_auth_clients;
     std::vector<std::string>        m_data_delete;
 
     friend class Session;

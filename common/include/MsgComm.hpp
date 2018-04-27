@@ -2,7 +2,7 @@
 #define MSGCOMM_HPP
 
 #include <string>
-#include <map>
+#include <vector>
 #include <stdint.h>
 #include <zmq.h>
 #include "MsgBuf.hpp"
@@ -21,10 +21,19 @@ public:
         Worker
     };
 
+    struct SecurityContext
+    {
+        bool                        is_server;
+        std::string                 domain;
+        std::string                 public_key;
+        std::string                 private_key;
+        std::string                 server_key;     // Clients only
+    };
+
     //----- Constructors & Destructor -----
 
-    MsgComm( const std::string & a_address, Mode a_mode = Client, void * a_context = 0 );
-    MsgComm( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, void * a_context = 0 );
+    MsgComm( const std::string & a_address, Mode a_mode = Client, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
+    MsgComm( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
     ~MsgComm();
 
     //----- Basic Messaging API -----
@@ -49,7 +58,8 @@ public:
 private:
 
     void            setupSocketKeepAlive();
-    void            init( const std::string & a_address );
+    void            setupSecurityContext( SecurityContext * a_sec_ctx );
+    void            init( const std::string & a_address, SecurityContext * a_sec_ctx );
 
     void           *m_context;
     void           *m_socket;

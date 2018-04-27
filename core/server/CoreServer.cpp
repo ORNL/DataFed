@@ -40,7 +40,8 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_db_url(a_db_url),
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
-    m_db_client( m_db_url, m_db_user, m_db_pass )
+    m_db_client( m_db_url, m_db_user, m_db_pass ),
+    m_zmq_ctx(0)
 {
     m_context.set_options(
         asio::ssl::context::default_workarounds |
@@ -68,7 +69,16 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_db_client.setClient( "sdms" );
 
     //m_repo_client = new MsgComm( "127.0.0.1", 5900, a_cert_dir + "sdms-repo-cert.pem", m_cert_file, m_key_file );
-    m_repo_comm = new MsgComm( "127.0.0.1", 5900, MsgComm::Client );
+
+    m_sec_ctx.is_server = true;
+    m_sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    m_sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
+
+    m_auth_clients["B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9["] = "repo1";
+
+    m_zmq_ctx = zmq_ctx_new();
+
+    m_zap_thread = new thread( &Server::zapHandler, this );
 
     m_data_delete.push_back("d/fubar");
 }
@@ -76,7 +86,7 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
 
 Server::~Server()
 {
-    delete m_repo_comm;
+    //delete m_repo_comm;
 }
 
 
@@ -257,6 +267,8 @@ Server::backgroundMaintenance()
     Auth::RepoDataDeleteRequest req;
     MsgBuf::Message *           reply;
     MsgBuf::Frame               frame;
+    MsgComm                     repo_comm( "127.0.0.1", 5900, MsgComm::Client, &m_sec_ctx, m_zmq_ctx );
+    //MsgComm                     repo_comm( "tcp://*:5900", MsgComm::Server, &m_sec_ctx, m_zmq_ctx );
 
     //vector<spSession>           dead_sessions;
 
@@ -292,10 +304,12 @@ Server::backgroundMaintenance()
                 {
                     req.set_id( *idel );
                     cout << "Send delete\n";
-                    m_repo_comm->send( req );
+                    repo_comm.send( req );
                     cout << "Get reply\n";
-                    m_repo_comm->recv( reply, frame );
-                    cout << "Got reply!\n";
+                    if ( !repo_comm.recv( reply, frame, 5000 ))
+                        cout << "No response!\n";
+                    else
+                        cout << "Got reply!\n";
                     delete reply;
                 }
             }
@@ -640,5 +654,128 @@ Server::dataDelete( const std::string & a_data_id )
     lock_guard<mutex> lock( m_data_mutex );
     m_data_delete.push_back( a_data_id );
 }
+
+
+void
+Server::zapHandler()
+{
+    bool    accepted = true;
+    char    client_key_text[41];
+    //void *  socket = zmq_socket( m_zmq_ctx, ZMQ_ROUTER );
+    void *  socket = zmq_socket( m_zmq_ctx, ZMQ_REP );
+    int     rc;
+    char    version[100];
+    char    request_id[100];
+    char    domain[100];
+    char    address[100];
+    char    identity_property[100];
+    char    mechanism[100];
+    char    client_key[100];
+    map<string,string>::iterator iclient;
+    zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
+
+    if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
+        EXCEPT( 1, "Bind on ZAP failed." );
+
+    char    route[100];
+    size_t rlen;
+
+    while ( 1 )
+    {
+        try
+        {
+            if (( rc = zmq_poll( poll_items, 1, 2000 )) == -1 )
+                EXCEPT( 1, "Poll on ZAP socket failed." );
+
+            if ( !(poll_items[0].revents & ZMQ_POLLIN ))
+                continue;
+    /*
+            if (( rc = zmq_recv( socket, route, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv ROUTE frame failed." );
+            rlen = rc;
+
+            if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv NULL frame failed." );
+    */
+
+            if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv version failed." );
+            version[rc] = 0;
+            if (( rc = zmq_recv( socket, request_id, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv request_id failed." );
+            request_id[rc] = 0;
+            if (( rc = zmq_recv( socket, domain, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv domain failed." );
+            domain[rc] = 0;
+            if (( rc = zmq_recv( socket, address, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv address failed." );
+            address[rc] = 0;
+            if (( rc = zmq_recv( socket, identity_property, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv identity_property failed." );
+            identity_property[rc] = 0;
+            if (( rc = zmq_recv( socket, mechanism, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv mechanism failed." );
+            mechanism[rc] = 0;
+            if (( rc = zmq_recv( socket, client_key, 100, 0 )) == -1 )
+                EXCEPT( 1, "Rcv client_key failed." );
+            client_key[rc] = 0;
+
+            if ( rc != 32 )
+                EXCEPT( 1, "Invalid client_key length." );
+
+            if ( !zmq_z85_encode( client_key_text, (uint8_t*)client_key, 32 ))
+                EXCEPT( 1, "Encode of client_key failed." );
+
+            cout << "ZAP request:" <<
+                "\n\tversion: " << version <<
+                "\n\trequest_id: " << request_id <<
+                "\n\tdomain: " << domain <<
+                "\n\taddress: " << address <<
+                "\n\tidentity_property: " << identity_property <<
+                "\n\tmechanism: " << mechanism <<
+                "\n\tclient_key: " << client_key_text << "\n";
+
+            if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
+                accepted = true;
+            else
+                accepted = false;
+
+            accepted = false;
+
+            // Send reply back to ZAP. A reply of 200 means accept, 400 means deny
+            /*
+            zmq_send( socket, route, rlen, ZMQ_SNDMORE );
+            zmq_send( socket, "", 0, ZMQ_SNDMORE );
+            */
+
+            zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
+            zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
+            zmq_send( socket, accepted ? "200" : "400", 3, ZMQ_SNDMORE );
+            zmq_send( socket, "", 0, ZMQ_SNDMORE );
+            //if ( accepted )
+            //    zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
+            //else
+                zmq_send( socket, "", 0, ZMQ_SNDMORE );
+            zmq_send( socket, "", 0, 0 );
+            cout << "ZAP reply sent" << endl;
+        }
+        catch( TraceException & e )
+        {
+            cout << "ZAP handler:" << e.toString() << "\n";
+        }
+        catch( exception & e )
+        {
+            cout << "ZAP handler:" << e.what() << "\n";
+        }
+        catch( ... )
+        {
+            cout << "ZAP handler: unknown exception type\n";
+        }
+    }
+
+
+    zmq_close( socket );
+}
+
 
 }}

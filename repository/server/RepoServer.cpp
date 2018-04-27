@@ -1,9 +1,13 @@
 #include <fstream>
 #include <time.h>
-#include "MsgBuf.hpp"
+#include <boost/filesystem.hpp>
 #include "DynaLog.hpp"
 #include "RepoServer.hpp"
 #include "Exec.hpp"
+
+#include "SDMS.pb.h"
+#include "SDMS_Anon.pb.h"
+#include "SDMS_Auth.pb.h"
 
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
@@ -17,38 +21,28 @@
 #define MAX_BACKOFF 10
 
 using namespace std;
+using namespace SDMS::Anon;
+using namespace SDMS::Auth;
 
 namespace SDMS {
-
-//using namespace SDMS::Anon;
-//using namespace SDMS::Auth;
-
 namespace Repo {
 
+#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
-Server::Server( uint32_t a_port, const std::string & a_cert_dir, uint32_t a_num_threads ) :
+
+Server::Server( uint32_t a_port, const std::string & a_cert_dir ) :
     m_port( a_port ),
-    m_io_thread(0),
-    m_num_threads(a_num_threads),
-    m_io_running(false),
-    m_endpoint( asio::ip::tcp::v4(), m_port ),
-    m_acceptor( m_io_service, m_endpoint ),
-    m_context( asio::ssl::context::tlsv12 )
+    m_io_running( false ),
+    m_zmq_ctx( 0 )
 {
-    m_context.set_options(
-        asio::ssl::context::default_workarounds |
-        asio::ssl::context::no_sslv2 |
-        asio::ssl::context::no_sslv3 |
-        asio::ssl::context::no_tlsv1 |
-        asio::ssl::context::no_tlsv1_1 |
-        asio::ssl::context::single_dh_use );
+    uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
-    m_cert_file = a_cert_dir + "sdms-repo-cert.pem";
-    m_key_file = a_cert_dir + "sdms-repo-key.pem";
+    SET_MSG_HANDLER( proto_id, StatusRequest, &Server::procStatusRequest );
 
-    m_context.use_certificate_chain_file( m_cert_file.c_str() );
-    m_context.use_private_key_file( m_key_file.c_str(), asio::ssl::context::pem );
-    m_context.load_verify_file( m_cert_file.c_str() );
+    proto_id = REG_PROTO( SDMS::Auth );
+
+    SET_MSG_HANDLER( proto_id, RepoDataDeleteRequest, &Server::procDataDeleteRequest );
+    SET_MSG_HANDLER( proto_id, RepoDataGetSizeRequest, &Server::procDataGetSizeRequest );
 }
 
 
@@ -89,8 +83,7 @@ Server::stop( bool a_wait )
 
     if ( m_io_running )
     {
-        // Signal ioPump to stop
-        m_io_service.stop();
+        zmq_ctx_term( m_zmq_ctx );
 
         if ( a_wait )
         {
@@ -141,67 +134,49 @@ Server::ioRun()
 {
     DL_INFO( "io thread started" );
 
-    if ( m_io_service.stopped() )
-        m_io_service.reset();
-    
-    if ( m_num_threads == 0 )
-        m_num_threads = max( 1u, std::thread::hardware_concurrency() - 1 );
+    m_zmq_ctx = zmq_ctx_new();
 
-    accept();
+    MsgComm::SecurityContext sec_ctx;
+    sec_ctx.is_server = false;
+    sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
+    sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
 
-    vector<thread*> io_threads;
+    // Mismatched keys for test
+    //sec_ctx.public_key = "M-y6STp{#z}+COob3.h@aB#GQd8WAAM=kxb=kUml";
+    //sec_ctx.private_key = "hI%HWmX:0qZL-okAvg?Rw{}brbsy(m+9@!CKMkX:";
+    //sec_ctx.server_key = "M-y6STp{#z}+COob3.h@aB#GQd8WAAM=kxb=kUml";
 
-    for ( uint32_t i = m_num_threads - 1; i > 0; i-- )
+    MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::Server, &sec_ctx, m_zmq_ctx );
+    //MsgComm sysComm( string("tcp://127.0.0.1:") + to_string(m_port), MsgComm::Client, &sec_ctx, m_zmq_ctx );
+
+    uint16_t msg_type;
+    map<uint16_t,msg_fun_t>::iterator handler;
+
+    while ( 1 )
     {
-        io_threads.push_back( new thread( [this](){ m_io_service.run(); } ));
-        DL_DEBUG( "io extra thread started" );
+        sysComm.recv( m_msg_buf );
+
+        msg_type = m_msg_buf.getMsgType();
+
+        //cout << "Get msg type: " << msg_type << "\n";
+
+        handler = m_msg_handlers.find( msg_type );
+        if ( handler != m_msg_handlers.end() )
+        {
+            (this->*handler->second)();
+            sysComm.send( m_msg_buf );
+        }
+        else
+        {
+            DL_ERROR( "Recv unregistered msg type: " << msg_type );
+        }
     }
 
-    m_io_service.run();
-
-    for ( vector<thread*>::iterator t = io_threads.begin(); t != io_threads.end(); ++t )
-    {
-        (*t)->join();
-        delete *t;
-        DL_DEBUG( "io extra thread stopped" );
-    }
-
+    m_zmq_ctx = 0;
     DL_INFO( "io thread stopped" );
 }
 
-
-void
-Server::accept()
-{
-    spSession session = make_shared<Session>( m_io_service, m_context, *this );
-
-    m_acceptor.async_accept( session->getSocket(),
-        [this, session]( error_code ec )
-            {
-                if ( !ec )
-                {
-                    DL_INFO( "New connection from " << session->remoteAddress() );
-
-                    unique_lock<mutex>  lock( m_data_mutex );
-                    m_sessions.insert( session );
-                    lock.unlock();
-
-                    session->start();
-                }
-
-                accept();
-            });
-}
-
-
-void
-Server::sessionClosed( spSession a_session )
-{
-    lock_guard<mutex> lock( m_data_mutex );
-    set<spSession>::iterator isess = m_sessions.find( a_session );
-    if ( isess != m_sessions.end() )
-        m_sessions.erase( isess );
-}
 
 
 string
@@ -209,6 +184,102 @@ Server::getDataPath( const string & a_data_id )
 {
     return string( "/data/" ) + a_data_id.substr(2);
 }
+
+
+#define PROC_MSG_BEGIN( msgclass, replyclass ) \
+msgclass *request = 0; \
+::google::protobuf::Message *base_msg = m_msg_buf.unserialize(); \
+if ( base_msg ) \
+{ \
+    request = dynamic_cast<msgclass*>( base_msg ); \
+    if ( request ) \
+    { \
+        DL_TRACE( "Rcvd: " << request->DebugString()); \
+        replyclass reply; \
+        try \
+        {
+
+#define PROC_MSG_END \
+            m_msg_buf.serialize( reply ); \
+        } \
+        catch( TraceException &e ) \
+        { \
+            DL_WARN( e.toString() ); \
+            NackReply nack; \
+            nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
+            nack.set_err_msg( e.toString() ); \
+            m_msg_buf.serialize( nack ); \
+        } \
+        catch( exception &e ) \
+        { \
+            DL_WARN( e.what() ); \
+            NackReply nack; \
+            nack.set_err_code( ID_INTERNAL_ERROR ); \
+            nack.set_err_msg( e.what() ); \
+            m_msg_buf.serialize( nack ); \
+        } \
+        catch(...) \
+        { \
+            DL_WARN( "unkown exception while processing message!" ); \
+            NackReply nack; \
+            nack.set_err_code( ID_INTERNAL_ERROR ); \
+            nack.set_err_msg( "Unknown exception type" ); \
+            m_msg_buf.serialize( nack ); \
+        } \
+    } \
+    else { \
+        DL_ERROR( "dynamic cast of msg buffer failed!" );\
+    } \
+    delete base_msg; \
+} \
+else { \
+    DL_ERROR( "buffer parse failed due to unregistered msg type." ); \
+}
+
+
+void
+Server::procStatusRequest()
+{
+    PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
+
+    reply.set_status( SS_NORMAL );
+
+    PROC_MSG_END
+}
+
+
+void
+Server::procDataDeleteRequest()
+{
+    PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
+
+    boost::filesystem::path data_path(  getDataPath( request->id() ) );
+
+    if ( boost::filesystem::remove( data_path ))
+    {
+        // Errors are OK (file may not exist under some conditions)
+    }
+
+    PROC_MSG_END
+}
+
+
+void
+Server::procDataGetSizeRequest()
+{
+    PROC_MSG_BEGIN( Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply )
+
+    boost::filesystem::path data_path( getDataPath( request->id() ));
+
+    if ( boost::filesystem::exists( data_path ))
+    {
+        reply.set_size( boost::filesystem::file_size( data_path ));
+    }
+
+    PROC_MSG_END
+}
+
+
 
 
 }}

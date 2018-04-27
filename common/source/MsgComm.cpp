@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include "TraceException.hpp"
 #include "MsgComm.hpp"
 
@@ -7,23 +8,77 @@ using namespace std;
 
 #define MAX_ADDR_LEN 1000
 
+void hexDump( const char * a_buffer, const char *a_buffer_end, ostream & a_out )
+{
+    const unsigned char * p = (unsigned char *) a_buffer;
+    const unsigned char * e = (unsigned char *) a_buffer_end;
+    bool done = false;
+
+    int l = 0, i = 0;
+    while ( !done )
+    {
+        a_out << setw(4) << setfill('0') << dec << l << ": ";
+
+        for ( i = 0; i < 16; ++i )
+        {
+            if ( i == 8 )
+                a_out << "  ";
+
+            if ( p + i != e )
+            {
+                a_out << hex << setw(2) << setfill('0') << ((unsigned short)(*(p+i))) << " ";
+            }
+            else
+            {
+                done = true;
+
+                for ( ; i < 16; ++i )
+                    a_out << "   ";
+
+                break;
+            }
+        }
+
+        a_out << "  ";
+
+        for ( i = 0; i < 16; ++i )
+        {
+            if ( p + i != e )
+            {
+                if ( isprint( *(p + i )))
+                    a_out << *(p+i);
+                else
+                    a_out << ".";
+            }
+            else
+                break;
+        }
+
+        a_out << "\n";
+
+        p += 16;
+        l += 16;
+    }
+}
+
+
 void freeBuffer( void * a_data, void * a_hint )
 {
     (void) a_hint;
     delete (char*) a_data;
 }
 
-MsgComm::MsgComm( const std::string & a_address, MsgComm::Mode a_mode, void * a_context )
+MsgComm::MsgComm( const std::string & a_address, MsgComm::Mode a_mode, SecurityContext * a_sec_ctx, void * a_context )
     : m_context(a_context), m_socket(0), m_mode(a_mode), m_proc_addresses(false), m_context_owner(false)
 {
-    init( a_address );
+    init( a_address, a_sec_ctx );
 }
 
-MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, MsgComm::Mode a_mode, void * a_context )
+MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, MsgComm::Mode a_mode, SecurityContext * a_sec_ctx, void * a_context )
     : m_context(a_context), m_socket(0), m_mode(a_mode), m_proc_addresses(false), m_context_owner(false)
 {
     string address = string("tcp://") + a_host + ":" + to_string( a_port );
-    init( address.c_str() );
+    init( address.c_str(), a_sec_ctx );
 }
 
 MsgComm::~MsgComm()
@@ -52,6 +107,10 @@ MsgComm::send( MsgBuf & a_msg_buf )
 
     if ( m_proc_addresses )
     {
+        cout << "send addr\n";
+        cout << "Route addr:\n";
+        hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
+
         zmq_msg_init_size( &msg, a_msg_buf.getRouteLen() );
         memcpy( zmq_msg_data( &msg ), a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteLen() );
 
@@ -62,11 +121,15 @@ MsgComm::send( MsgBuf & a_msg_buf )
     zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
     memcpy( zmq_msg_data( &msg ), &a_msg_buf.getFrame(), sizeof( MsgBuf::Frame ));
 
+    cout << "send frame\n";
+
     if (( rc = zmq_msg_send( &msg, m_socket, a_msg_buf.getFrame().size?ZMQ_SNDMORE:0 )) < 0 )
         EXCEPT( 1, "zmq_msg_send (frame) failed." );
 
     if ( a_msg_buf.getFrame().size )
     {
+        cout << "send body\n";
+
         zmq_msg_init_data( &msg, a_msg_buf.acquireBuffer(), a_msg_buf.getFrame().size, freeBuffer, 0 );
 
         if (( rc = zmq_msg_send( &msg, m_socket, 0 )) < 0 )
@@ -79,7 +142,7 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_tim
 {
     MsgBuf buf;
 
-    if( recv( buf, a_timeout ))
+    if ( recv( buf, a_timeout ))
     {
         a_frame = buf.getFrame();
         a_msg = buf.unserialize();
@@ -95,7 +158,9 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
     zmq_msg_t msg;
     int rc;
 
-    while (( rc = zmq_poll( &m_poll_item, 1, a_timeout )) < 1 )
+    cout << "rcv poll\n";
+
+    while (( rc = zmq_poll( &m_poll_item, 1, a_timeout?a_timeout:-1 )) < 1 )
     {
         if ( rc == 0 ) // Timeout
             return false;
@@ -103,6 +168,8 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     if ( m_proc_addresses )
     {
+        cout << "rcv route\n";
+
         zmq_msg_init( &msg );
 
         if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
@@ -112,9 +179,17 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
             EXCEPT( 1, "Invalid message route received." );
 
         a_msg_buf.setRoute( (char *)zmq_msg_data( &msg ), zmq_msg_size( &msg ));
+
+        cout << "Route addr:\n";
+        hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
+        hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
+
+        zmq_msg_close( &msg );
     }
 
     zmq_msg_init( &msg );
+
+    cout << "rcv frame\n";
 
     if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
         EXCEPT( 1, "zmq_msg_recv (frame) failed." );
@@ -124,18 +199,27 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
+    cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";;
+
     zmq_msg_close( &msg );
 
     if ( a_msg_buf.getFrame().size )
     {
+        cout << "rcv body\n";
+
+        zmq_msg_init( &msg );
+
         if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
             EXCEPT( 1, "zmq_msg_recv (body) failed." );
 
-        if ( zmq_msg_size( &msg ) != sizeof( a_msg_buf.getFrame().size ))
-            EXCEPT( 1, "Invalid message body received." );
+        if ( zmq_msg_size( &msg ) != a_msg_buf.getFrame().size )
+            EXCEPT_PARAM( 1, "Invalid message body received. Expected: " << a_msg_buf.getFrame().size << ", got: " << zmq_msg_size( &msg ) );
 
         a_msg_buf.ensureCapacity( a_msg_buf.getFrame().size );
         memcpy( a_msg_buf.getBuffer(), zmq_msg_data( &msg ), a_msg_buf.getFrame().size );
+
+        cout << "Body:\n";
+        hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
 
         zmq_msg_close( &msg );
     }
@@ -317,7 +401,55 @@ MsgComm::setupSocketKeepAlive()
 }
 
 void
-MsgComm::init( const string & a_address )
+MsgComm::setupSecurityContext( SecurityContext * a_sec_ctx )
+{
+    if ( !a_sec_ctx )
+        return;
+
+    uint8_t private_key[32];
+    uint8_t public_key[32];
+    int rc;
+
+    if ( !zmq_z85_decode( private_key, a_sec_ctx->private_key.c_str() ))
+        EXCEPT( 1, "Decode private key failed." );
+
+    if ( !zmq_z85_decode( public_key, a_sec_ctx->public_key.c_str() ))
+        EXCEPT( 1, "Decode public key failed." );
+
+    if (( rc = zmq_setsockopt( m_socket, ZMQ_CURVE_SECRETKEY, private_key, 32 )) == -1 )
+        EXCEPT( 1, "Set ZMQ_CURVE_SECRETKEY failed." );
+
+    if (( rc = zmq_setsockopt( m_socket, ZMQ_CURVE_PUBLICKEY, public_key, 32 )) == -1 )
+        EXCEPT( 1, "Set ZMQ_CURVE_PUBLICKEY failed." );
+
+    if ( a_sec_ctx->is_server )
+    {
+        int curve_server = 1;
+
+        if (( rc = zmq_setsockopt( m_socket, ZMQ_CURVE_SERVER, &curve_server, sizeof(curve_server))) == -1 )
+            EXCEPT( 1, "Set ZMQ_CURVE_SERVER failed." );
+    }
+    else
+    {
+        if ( a_sec_ctx->server_key.size() != 40 )
+            EXCEPT( 1, "Invalid server public key." );
+
+        if (( rc = zmq_setsockopt( m_socket, ZMQ_CURVE_SERVERKEY, a_sec_ctx->server_key.c_str(), 40 )) == -1 )
+            EXCEPT( 1, "Set ZMQ_CURVE_SERVERKEY failed." );
+    }
+
+/*
+    rc = zmq_setsockopt( m_socket, ZMQ_ZAP_DOMAIN, "global", 0 );
+    if ( rc == -1 )
+    {
+        cout << "Set ZMQ_CURVE_SERVER failed.\n";
+        return 1;
+    }
+*/
+}
+
+void
+MsgComm::init( const string & a_address, SecurityContext * a_sec_ctx )
 {
     int rc;
 
@@ -337,61 +469,60 @@ MsgComm::init( const string & a_address )
         case Server:
             m_proc_addresses = true;
             m_socket = zmq_socket( m_context, ZMQ_ROUTER );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_bind ( m_socket, a_address.c_str() );
-            if ( rc == -1 )
+            if (( rc = zmq_bind( m_socket, a_address.c_str() )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ bind to address " << a_address << " failed." );
             break;
 
         case Worker:
             m_proc_addresses = true;
             m_socket = zmq_socket( m_context, ZMQ_DEALER );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_connect( m_socket, a_address.c_str() );
-            if ( rc == -1 )
+            if (( rc = zmq_connect( m_socket, a_address.c_str() )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ connect to address " << a_address << " failed." );
             break;
 
         case Client:
             m_socket = zmq_socket( m_context, ZMQ_DEALER );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_connect( m_socket, a_address.c_str() );
-            if ( rc == -1 )
+            if (( rc = zmq_connect( m_socket, a_address.c_str() )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ connect to address " << a_address << " failed." );
             break;
 
         case Push:
             m_socket = zmq_socket( m_context, ZMQ_PUSH );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_connect( m_socket, a_address.c_str() );
-            if ( rc == -1 )
+            if (( rc = zmq_connect( m_socket, a_address.c_str() )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ connect to address " << a_address << " failed." );
             break;
 
         case Pull:
             m_socket = zmq_socket( m_context, ZMQ_PULL );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_bind( m_socket, a_address.c_str() );
-            if ( rc == -1 )
-                EXCEPT_PARAM( 1, "ZeroMQ connect to address " << a_address << " failed." );
+            if (( rc = zmq_bind( m_socket, a_address.c_str() )) == -1 )
+                EXCEPT_PARAM( 1, "ZeroMQ bind to address " << a_address << " failed." );
             break;
 
         case Publisher:
             m_socket = zmq_socket( m_context, ZMQ_PUB );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_bind( m_socket, a_address.c_str() );
-            if ( rc == -1 )
+            if (( rc = zmq_bind( m_socket, a_address.c_str() )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ bind to address " << a_address << " failed." );
             break;
 
         case Subscriber:
             m_socket = zmq_socket( m_context, ZMQ_SUB );
+            setupSecurityContext( a_sec_ctx );
             setupSocketKeepAlive();
-            rc = zmq_connect( m_socket, a_address.c_str() );
-            if ( rc == -1 )
+            if (( rc = zmq_connect( m_socket, a_address.c_str() )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ connect to address " << a_address << " failed." );
-            rc = zmq_setsockopt( m_socket, ZMQ_SUBSCRIBE, "", 0 );
-            if ( rc == -1 )
+            if (( rc = zmq_setsockopt( m_socket, ZMQ_SUBSCRIBE, "", 0 )) == -1 )
                 EXCEPT_PARAM( 1, "ZeroMQ subscribe for address " << a_address << " failed." );
             break;
     }

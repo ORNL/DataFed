@@ -129,7 +129,7 @@ public:
             EXCEPT( 1, "Route max length exceeded" );
 
         m_route[0] = (uint8_t) a_route.size();
-        strncpy( m_route + 1, a_route.c_str(), a_route.size() );
+        memcpy( m_route + 1, a_route.c_str(), a_route.size() );
     }
 
     void setRoute( const char * a_route, uint8_t a_len )
@@ -138,7 +138,7 @@ public:
             EXCEPT( 1, "Route max length exceeded" );
 
         m_route[0] = a_len;
-        strncpy( m_route + 1, a_route, a_len );
+        memcpy( m_route + 1, a_route, a_len );
     }
 
     inline const char * getUID() const

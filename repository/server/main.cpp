@@ -24,8 +24,7 @@ int main( int a_argc, char ** a_argv )
 
         DL_INFO( "SDMS repo server starting" );
 
-        uint16_t    port = 5800;
-        uint32_t    num_threads = 1;
+        uint16_t    port = 5900;
         string      cfg_file;
         string      home = getenv("HOME");
         string      cred_path = home + "/.sdms-server/";
@@ -36,7 +35,6 @@ int main( int a_argc, char ** a_argv )
             ("help,?", "Show help")
             ("version,v", "Show version number")
             ("port,p",po::value<uint16_t>( &port ),"Service port")
-            ("threads,t",po::value<uint32_t>( &num_threads ),"Number of I/O threads")
             ("cred-dir,c",po::value<string>( &cred_path ),"Server credentials directory")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ;
@@ -65,7 +63,7 @@ int main( int a_argc, char ** a_argv )
             {
                 ifstream optfile( cfg_file.c_str() );
                 if ( !optfile.is_open() )
-                    EXCEPT_PARAM( ID_CLIENT_ERROR, "Could not open config file: " << cfg_file );
+                    EXCEPT_PARAM( 1, "Could not open config file: " << cfg_file );
 
                 po::store( po::parse_config_file( optfile, opts, false ), opt_map );
                 po::notify( opt_map );
@@ -79,7 +77,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Repo::Server server( port, cred_path, num_threads );
+        Repo::Server server( port, cred_path );
 
         server.run( false );
 
