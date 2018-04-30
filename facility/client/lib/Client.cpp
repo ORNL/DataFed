@@ -120,6 +120,8 @@ void Client::start()
 {
     auto endpoint_iterator = m_resolver.resolve({ m_host, to_string( m_port ) });
 
+    cerr << "connecting to " << m_host << ":" << m_port << "\n";
+
     connect( endpoint_iterator );
 
     m_io_thread = new thread([this](){ m_io_service.run(); });
@@ -154,6 +156,8 @@ void Client::connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
                 asio::socket_base::keep_alive option(true);
                 m_socket->lowest_layer().set_option(option);
 
+                cerr << "start handshake\n";
+
                 handShake();
             }
             else
@@ -175,6 +179,7 @@ void Client::handShake()
             unique_lock<mutex> lock(m_mutex);
             if ( !ec )
             {
+                cerr << "started\n";
                 m_state = STARTED;
             }
             else
@@ -191,14 +196,12 @@ bool Client::verifyCert( bool a_preverified, asio::ssl::verify_context & a_conte
 {
     // TODO What is the point of this funtions?
 
-    /*
-    (void)a_preverified;
-
     char subject_name[256];
 
     X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
     X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
-    */
+
+    cout << "verify " << subject_name << ", pre-ver: " << a_preverified << "\n";
 
     return a_preverified;
 }

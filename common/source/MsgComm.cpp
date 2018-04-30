@@ -158,7 +158,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
     zmq_msg_t msg;
     int rc;
 
-    cout << "rcv poll\n";
+    //cout << "rcv poll\n";
 
     while (( rc = zmq_poll( &m_poll_item, 1, a_timeout?a_timeout:-1 )) < 1 )
     {
@@ -168,7 +168,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     if ( m_proc_addresses )
     {
-        cout << "rcv route\n";
+        //cout << "rcv route\n";
 
         zmq_msg_init( &msg );
 
@@ -180,16 +180,16 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
         a_msg_buf.setRoute( (char *)zmq_msg_data( &msg ), zmq_msg_size( &msg ));
 
-        cout << "Route addr:\n";
-        hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
-        hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
+        //cout << "Route addr:\n";
+        //hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
+        //hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
 
         zmq_msg_close( &msg );
     }
 
     zmq_msg_init( &msg );
 
-    cout << "rcv frame\n";
+    //cout << "rcv frame\n";
 
     if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
         EXCEPT( 1, "zmq_msg_recv (frame) failed." );
@@ -199,13 +199,13 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
-    cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";;
+    //cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";;
 
     zmq_msg_close( &msg );
 
     if ( a_msg_buf.getFrame().size )
     {
-        cout << "rcv body\n";
+        //cout << "rcv body\n";
 
         zmq_msg_init( &msg );
 
@@ -218,8 +218,8 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         a_msg_buf.ensureCapacity( a_msg_buf.getFrame().size );
         memcpy( a_msg_buf.getBuffer(), zmq_msg_data( &msg ), a_msg_buf.getFrame().size );
 
-        cout << "Body:\n";
-        hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
+        //cout << "Body:\n";
+        //hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
 
         zmq_msg_close( &msg );
     }

@@ -985,8 +985,8 @@ int main( int a_argc, char ** a_argv )
 
     buildCmdMap();
 
-    string      host = "127.0.0.1";
-    uint16_t    port = 5800;
+    string      host = "sdms.ornl.gov";
+    uint16_t    port = 7512;
     uint32_t    timeout = 5;
     string      home = getenv("HOME");
     string      cred_path = home + "/.sdms/";

@@ -243,6 +243,8 @@ Server::procStatusRequest()
 {
     PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
 
+    cout << "Repo: status request\n";
+
     reply.set_status( SS_NORMAL );
 
     PROC_MSG_END
@@ -254,10 +256,15 @@ Server::procDataDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
 
+    cout << "Repo: data delete request " << request->id() << "\n";
+
     boost::filesystem::path data_path(  getDataPath( request->id() ) );
+
+    cout << "Repo: path " << data_path << "\n";
 
     if ( boost::filesystem::remove( data_path ))
     {
+        cout << "Repo: delete failed\n";
         // Errors are OK (file may not exist under some conditions)
     }
 
@@ -270,11 +277,20 @@ Server::procDataGetSizeRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply )
 
+    cout << "Repo: data get size request " << request->id() << "\n";
+
     boost::filesystem::path data_path( getDataPath( request->id() ));
+
+    cout << "Repo: path " << data_path << "\n";
 
     if ( boost::filesystem::exists( data_path ))
     {
         reply.set_size( boost::filesystem::file_size( data_path ));
+        cout << "Repo: size: " << reply.size() << "\n";
+    }
+    else
+    {
+        cout << "Repo: path does not exist\n";
     }
 
     PROC_MSG_END

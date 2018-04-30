@@ -24,16 +24,16 @@ int main( int a_argc, char ** a_argv )
 
         DL_INFO( "SDMS core server starting" );
 
-        uint16_t    port = 5800;
+        uint16_t    port = 7512;
         int         timeout = 5;
         uint32_t    num_threads = 1;
         string      home = getenv("HOME");
-        string      cred_path = home + "/.sdms-server/";
+        string      cred_path = home + "/.sdms/";
         //string      db_url = "https://sdms.ornl.gov:8529/_db/sdms/api/";
-        string      db_url = "http://localhost:8529/_db/sdms/api/";
+        string      db_url = "http://sdms.ornl.gov:8529/_db/sdms/api/";
         string      db_user = "root";
-        //string      db_pass = "sdms!";
-        string      db_pass = "nopass";
+        string      db_pass = "sdms!";
+        //string      db_pass = "nopass";
         string      repo_addr = "tcp://localhost:9000";
         string      cfg_file;
 
