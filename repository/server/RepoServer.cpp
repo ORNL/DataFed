@@ -285,6 +285,7 @@ Server::procDataGetSizeRequest()
 
     if ( boost::filesystem::exists( data_path ))
     {
+        reply.set_id( request->id() );
         reply.set_size( boost::filesystem::file_size( data_path ));
         cout << "Repo: size: " << reply.size() << "\n";
     }
