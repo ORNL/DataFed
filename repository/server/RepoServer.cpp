@@ -262,11 +262,7 @@ Server::procDataDeleteRequest()
 
     cout << "Repo: path " << data_path << "\n";
 
-    if ( boost::filesystem::remove( data_path ))
-    {
-        cout << "Repo: delete failed\n";
-        // Errors are OK (file may not exist under some conditions)
-    }
+    boost::filesystem::remove( data_path );
 
     PROC_MSG_END
 }
@@ -283,14 +279,16 @@ Server::procDataGetSizeRequest()
 
     cout << "Repo: path " << data_path << "\n";
 
+    reply.set_id( request->id() );
+
     if ( boost::filesystem::exists( data_path ))
     {
-        reply.set_id( request->id() );
         reply.set_size( boost::filesystem::file_size( data_path ));
         cout << "Repo: size: " << reply.size() << "\n";
     }
     else
     {
+        reply.set_size( 0 );
         cout << "Repo: path does not exist\n";
     }
 

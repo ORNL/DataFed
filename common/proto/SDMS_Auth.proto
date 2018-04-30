@@ -27,15 +27,15 @@ message GenerateCredentialsReply
     required string             x509_cert   = 2;
 }
 
-message GenerateKeysRequest
+message SSH_GenerateKeysRequest
 {
 }
 
-message GetPublicKeyRequest
+message SSH_GetPublicKeyRequest
 {
 }
 
-message PublicKeyReply
+message SSH_PublicKeyReply
 {
     required string             pub_key     = 1;
 }

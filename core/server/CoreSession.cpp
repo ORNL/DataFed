@@ -503,7 +503,7 @@ Session::procMsgGenerateCredentials()
 void
 Session::procMsgGenerateKeys()
 {
-    PROC_MSG_BEGIN( GenerateKeysRequest, PublicKeyReply )
+    PROC_MSG_BEGIN( SSH_GenerateKeysRequest, SSH_PublicKeyReply )
 
     string key_data;
 
@@ -518,7 +518,7 @@ Session::procMsgGenerateKeys()
 void
 Session::procMsgGetPublicKey()
 {
-    PROC_MSG_BEGIN( GetPublicKeyRequest, PublicKeyReply )
+    PROC_MSG_BEGIN( SSH_GetPublicKeyRequest, SSH_PublicKeyReply )
 
     string key_data;
 

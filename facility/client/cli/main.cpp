@@ -853,37 +853,33 @@ int acl()
     return 0;
 }
 
-/*
+
 int gen_ssh()
 {
     if ( g_args.size() != 1 )
         return -1;
 
-    g_client->generateKeys( g_args[0] );
-    cout << "SUCCESS\n";
+    string key = g_client->sshGenerateKeys();
+    cout << "SSH Public Key:\n" << key << "\n\nThis key must be manually installed in your GlobusID account.\n";
 
     return 0;
 }
-*/
 
 int get_ssh()
 {
     if ( g_args.size() )
         return -1;
 
-    cout << g_client->sshPublicKey() << "\n";
+    string key = g_client->sshGetPublicKey();
+    cout << "SSH Public Key:\n" << key << "\n\nThis key must be manually installed in your GlobusID account.\n";
 
     return 0;
 }
 
 int setup()
 {
-    string key = g_client->setup();
-
-//    g_client->generateCredentials();
-
-//    cout << "SSH Public Key:\n" << g_client->generateKeys() << "\n\nThis key must be manually installed in your GlobusID account.\n";
-    cout << "SSH Public Key:\n" << key << "\n\nThis key must be manually installed in your GlobusID account.\n";
+    g_client->setup();
+    cout << "SUCCESS\n";
 
     return 0;
 }
@@ -980,7 +976,7 @@ int main( int a_argc, char ** a_argv )
     addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
     //addCommand( "", "gen-cred", "Generate local credentials","gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console );
-    //addCommand( "", "gen-ssh", "Generate globus SSH keys", "gen-ssh <out-file>\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh );
+    addCommand( "", "gen-ssh", "Generate globus SSH keys", "gen-ssh <out-file>\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh );
     addCommand( "", "get-ssh", "Retrieve globus public SSH key", "get-ssh <out-file>\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh );
 
     buildCmdMap();

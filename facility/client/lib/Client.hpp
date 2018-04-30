@@ -81,15 +81,9 @@ public:
     bool                test( size_t a_iter );
 
     void                authenticate( const std::string & a_uid, const std::string & a_password );
-    std::string         setup();
-    std::string         sshPublicKey();
-    /*
-    void                generateCredentials();
-    void                generateKeys( const std::string & a_outfile );
-    std::string         generateKeys();
-    void                getPublicKey( const std::string & a_outfile );
-    std::string         getPublicKey();
-    */
+    void                setup();
+    std::string         sshGenerateKeys();
+    std::string         sshGetPublicKey();
 
     ServiceStatus       status();
 
@@ -141,9 +135,6 @@ private:
     template<typename RQT,typename RPT>
     void            send( RQT & a_request, RPT *& a_reply, uint16_t a_context );
     std::string     parseQuery( const std::string & a_query );
-    void            setLocalIdentity();
-    void            generateCredentials();
-    std::string     generateKeys();
 
     enum State
     {

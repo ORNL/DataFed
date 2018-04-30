@@ -297,29 +297,7 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
     //cout << "a_reply: " << a_reply << "\n";
 }
 
-string Client::setup()
-{
-    //setLocalIdentity();
-    generateCredentials();
-
-    return generateKeys();
-}
-
-/*
-void Client::setLocalIdentity()
-{
-    SetLocalIdentityRequest req;
-    Anon::AckReply *        rep;
-
-    req.set_ident( m_uid );
-
-    send<>( req, rep, m_ctx++ );
-
-    delete rep;
-}
-*/
-
-void Client::generateCredentials()
+void Client::setup()
 {
     GenerateCredentialsRequest req;
     GenerateCredentialsReply * reply = 0;
@@ -351,31 +329,16 @@ void Client::generateCredentials()
         delete reply;
         throw;
     }
+
+    cout << "SUCCESS\n";
 }
 
-/*
-void Client::generateKeys( const std::string & a_outfile )
+
+std::string
+Client::sshGenerateKeys()
 {
-    ofstream  outf( a_outfile );
-    if ( !outf.is_open() || !outf.good() )
-        EXCEPT_PARAM( 0, "Could not open " << a_outfile << " for output" );
-
-    GenerateKeysRequest req;
-    PublicKeyReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    outf << reply->pub_key();
-    outf.close();
-
-    delete reply;
-}
-*/
-
-std::string Client::generateKeys()
-{
-    GenerateKeysRequest req;
-    PublicKeyReply * reply = 0;
+    SSH_GenerateKeysRequest req;
+    SSH_PublicKeyReply * reply = 0;
 
     send<>( req, reply, m_ctx++ );
 
@@ -385,29 +348,10 @@ std::string Client::generateKeys()
     return result;
 }
 
-/*
-void Client::getPublicKey( const std::string & a_outfile )
+std::string Client::sshGetPublicKey()
 {
-    ofstream  outf( a_outfile );
-    if ( !outf.is_open() || !outf.good() )
-        EXCEPT_PARAM( 0, "Could not open " << a_outfile << " for output" );
-
-    GetPublicKeyRequest req;
-    PublicKeyReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    outf << reply->pub_key();
-    outf.close();
-
-    delete reply;
-}
-*/
-
-std::string Client::sshPublicKey()
-{
-    GetPublicKeyRequest req;
-    PublicKeyReply * reply = 0;
+    SSH_GetPublicKeyRequest req;
+    SSH_PublicKeyReply * reply = 0;
 
     send<>( req, reply, m_ctx++ );
 
@@ -712,7 +656,7 @@ void
 Client::recordDelete( const std::string & a_id )
 {
     Auth::RecordDeleteRequest   req;
-    Anon::AckReply *            rep;
+    Auth::RecordDeleteReply *   rep;
 
     req.set_id( a_id );
 
