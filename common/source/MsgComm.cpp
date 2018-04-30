@@ -121,7 +121,7 @@ MsgComm::send( MsgBuf & a_msg_buf )
     zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
     memcpy( zmq_msg_data( &msg ), &a_msg_buf.getFrame(), sizeof( MsgBuf::Frame ));
 
-    cout << "send frame\n";
+    //cout << "send frame\n";
 
     if (( rc = zmq_msg_send( &msg, m_socket, a_msg_buf.getFrame().size?ZMQ_SNDMORE:0 )) < 0 )
         EXCEPT( 1, "zmq_msg_send (frame) failed." );
