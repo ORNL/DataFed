@@ -58,49 +58,57 @@ Session::setupMsgHandlers()
 
     if ( init )
     {
-        init = false;
+        try
+        {
+            uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
-        uint8_t proto_id = REG_PROTO( SDMS::Anon );
+            SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
+            SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Session::procMsgAuthenticate );
 
-        SET_MSG_HANDLER( proto_id, StatusRequest, &Session::procMsgStatus );
-        SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Session::procMsgAuthenticate );
+            proto_id = REG_PROTO( SDMS::Auth );
 
-        proto_id = REG_PROTO( SDMS::Auth );
+            // Requests that require the server to take action
+            //SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
+            SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
+            SET_MSG_HANDLER( proto_id, GenerateKeysRequest, &Session::procMsgGenerateKeys );
+            SET_MSG_HANDLER( proto_id, GetPublicKeyRequest, &Session::procMsgGetPublicKey );
+            SET_MSG_HANDLER( proto_id, DataGetRequest, &Session::procMsgDataGet  );
+            SET_MSG_HANDLER( proto_id, DataPutRequest, &Session::procMsgDataPut  );
+            SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Session::procMsgDataDelete );
+            SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Session::procMsgRecordDelete );
 
-        // Requests that require the server to take action
-        //SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
-        SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
-        SET_MSG_HANDLER( proto_id, GenerateKeysRequest, &Session::procMsgGenerateKeys );
-        SET_MSG_HANDLER( proto_id, GetPublicKeyRequest, &Session::procMsgGetPublicKey );
-        SET_MSG_HANDLER( proto_id, DataGetRequest, &Session::procMsgDataGet  );
-        SET_MSG_HANDLER( proto_id, DataPutRequest, &Session::procMsgDataPut  );
-        SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Session::procMsgDataDelete );
-        SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Session::procMsgRecordDelete );
+            // Requests that can be handled by DB client directly
+            SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
+            SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
+            SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
+            SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
+            SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
+            SET_MSG_HANDLER_DB( proto_id, RecordFindRequest, RecordDataReply, recordFind );
+            SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
+            SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
+            SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
+            SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
+            SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
+            SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
+            SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
+            SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, AckReply, collWrite );
+            SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
+            SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
+            SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
+            SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
+            SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
+            SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
+            SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
+            SET_MSG_HANDLER_DB( proto_id, GroupListRequest, GroupDataReply, groupList );
+            SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
 
-        // Requests that can be handled by DB client directly
-        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
-        SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
-        SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
-        SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
-        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
-        SET_MSG_HANDLER_DB( proto_id, RecordFindRequest, RecordDataReply, recordFind );
-        SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
-        SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
-        SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
-        SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
-        SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
-        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
-        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, AckReply, collWrite );
-        SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
-        SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
-        SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
-        SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
-        SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
-        SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
-        SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
-        SET_MSG_HANDLER_DB( proto_id, GroupListRequest, GroupDataReply, groupList );
-        SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
+            init = false;
+        }
+        catch( TraceException & e)
+        {
+            DL_ERROR( e.toString() );
+            throw;
+        }
     }
 }
 
