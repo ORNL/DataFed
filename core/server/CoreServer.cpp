@@ -349,6 +349,12 @@ Server::xfrManagement()
     Auth::RecordDataReply  reply;
     string error_msg;
 
+    Auth::RepoDataGetSizeRequest sz_req;
+    MsgBuf::Message *            raw_msg;
+    Auth::RepoDataSizeReply *    sz_rep;
+    MsgBuf::Frame                frame;
+    MsgComm  repo_comm( m_repo_address, MsgComm::Client, &m_sec_ctx, m_zmq_ctx );
+
     while( m_io_running )
     {
         sleep( 1 );
@@ -454,22 +460,24 @@ Server::xfrManagement()
                             if ( (*ixfr)->mode == XM_PUT )
                             {
                                 mod_time = time(0);
+                                file_size = 0;
 
+                                // TODO How to handle PUT errors?
                                 if ( (*ixfr)->status == XS_SUCCEEDED )
                                 {
-                                    // TODO Path must not be assumed
-                                    /*
-                                    if ( !m_store.dataGetSize( string("/data/") + (*ixfr)->data_id.substr(2), file_size ))
+                                    // TODO This should be done in another thread so xfr mon isn't blocked
+                                    sz_req.set_id( (*ixfr)->data_id );
+                                    repo_comm.send( sz_req );
+                                    if ( !repo_comm.recv( raw_msg, frame, 10000 ))
+                                        cout << "No response from repo server!\n";
+                                    else
                                     {
-                                        // TODO This should not happen. If it does something is very very wrong
-                                        DL_ERROR( "Transfer succeeded but destination file does not exist! Transfer ID: " << (*ixfr)->id );
-                                        file_size = 0;
-                                    }*/
-                                }
-                                else
-                                {
-                                    // TODO How to handle PUT errors?
-                                    file_size = 0;
+                                        if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
+                                        {
+                                            file_size = sz_rep->size();
+                                        }
+                                        delete sz_rep;
+                                    }
                                 }
 
                                 // Update DB record with new file stats

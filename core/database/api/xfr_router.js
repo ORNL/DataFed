@@ -33,9 +33,6 @@ router.get('/init', function (req, res) {
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
 
-                if ( !data.file_size )
-                    throw g_lib.ERR_XFR_NO_RAW_DATA;
-
                 if ( !g_lib.hasAdminPermObject( client, data._id )) {
                     var perms;
                     if ( req.queryParams.mode == g_lib.XM_PUT )
@@ -67,6 +64,9 @@ router.get('/init', function (req, res) {
 
                     result = [xfr.new];
                 } else {
+                    if ( !data.file_size )
+                        throw g_lib.ERR_XFR_NO_RAW_DATA;
+
                     var dest_path = req.queryParams.path;
                     if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
                         dest_path += "/";
