@@ -176,6 +176,7 @@ void Client::handShake()
     m_socket->async_handshake( asio::ssl::stream_base::client,
         [this]( error_code ec )
         {
+            cerr << "b4 lock\n";
             unique_lock<mutex> lock(m_mutex);
             if ( !ec )
             {

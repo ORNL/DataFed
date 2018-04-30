@@ -112,6 +112,8 @@ Session::start()
 
     auto self( shared_from_this() );
 
+    cout << "session start\n";
+
     m_socket.async_handshake( asio::ssl::stream_base::server,
         [this,self]( error_code ec )
         {
