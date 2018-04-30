@@ -578,11 +578,8 @@ Session::procMsgDataDelete()
 
     // TODO Acquire write lock here
 
-    // TODO - The storage manager should determine where data lives
-    string file = m_db_client.getDataStorageLocation( request->id() );
-
     // Ask FileManager to delete file
-    m_sess_mgr.dataDelete( file );
+    m_sess_mgr.dataDelete( request->id() );
 
     // TODO Update record to indicate no raw data exists
 
@@ -597,18 +594,13 @@ Session::procMsgRecordDelete()
 
     // TODO Acquire write lock here
 
-    // TODO - The storage manager should determine where data lives
-    cout << "Get store loc\n";
-    string file = m_db_client.getDataStorageLocation( request->id() );
-    cout << "Store loc: " << file << "\n";
-
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.recordDelete( *request, reply );
 
     cout << "Rec deleted\n";
 
     // Ask FileManager to delete file
-    m_sess_mgr.dataDelete( file );
+    m_sess_mgr.dataDelete( request->id() );
 
     cout << "File deleted\n";
 

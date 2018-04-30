@@ -107,9 +107,9 @@ MsgComm::send( MsgBuf & a_msg_buf )
 
     if ( m_proc_addresses )
     {
-        cout << "send addr\n";
-        cout << "Route addr:\n";
-        hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
+        //cout << "send addr\n";
+        //cout << "Route addr:\n";
+        //hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
 
         zmq_msg_init_size( &msg, a_msg_buf.getRouteLen() );
         memcpy( zmq_msg_data( &msg ), a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteLen() );
@@ -128,7 +128,7 @@ MsgComm::send( MsgBuf & a_msg_buf )
 
     if ( a_msg_buf.getFrame().size )
     {
-        cout << "send body\n";
+        //cout << "send body\n";
 
         zmq_msg_init_data( &msg, a_msg_buf.acquireBuffer(), a_msg_buf.getFrame().size, freeBuffer, 0 );
 
