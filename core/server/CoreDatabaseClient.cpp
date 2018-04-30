@@ -351,12 +351,21 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
-DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDeleteReply & a_reply )
 {
     (void)a_reply;
     rapidjson::Document result;
 
     dbGet( "dat/delete", {{"id",a_request.id()}}, result );
+
+    if ( !result.IsArray() || result.Size() != 1 )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    rapidjson::Value & val = result[0];
+
+    a_reply.set_id( val["id"].GetString() );
 }
 
 void

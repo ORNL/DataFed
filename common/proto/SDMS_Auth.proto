@@ -134,6 +134,11 @@ message RecordDeleteRequest
     required string             id          = 1;
 }
 
+message RecordDeleteReply
+{
+    required string             id          = 1;
+}
+
 // ============================ Raw Data Messages
 
 message XfrViewRequest

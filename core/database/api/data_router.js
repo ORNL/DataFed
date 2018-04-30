@@ -277,6 +277,8 @@ router.get('/find', function (req, res) {
 
 router.get('/delete', function (req, res) {
     try {
+        var result = [];
+
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
@@ -301,8 +303,12 @@ router.get('/delete', function (req, res) {
                 }
 
                 graph.d.remove( data._id );
+
+                result.push({ id: data_id });
             }
         });
+
+        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

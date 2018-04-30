@@ -577,11 +577,19 @@ Session::procMsgDataDelete()
     PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
 
     // TODO Acquire write lock here
+    // TODO Need better error handling (plus retry)
+
+    // Get data ID (req ID might be an alias)
+    Auth::RecordUpdateRequest upd_req;
+    Auth::RecordDataReply upd_reply;
+
+    upd_req.set_id( request->id() );
+    upd_req.set_data_size( 0 );
+
+    m_db_client.recordUpdate( upd_req, upd_reply );
 
     // Ask FileManager to delete file
     m_sess_mgr.dataDelete( request->id() );
-
-    // TODO Update record to indicate no raw data exists
 
     PROC_MSG_END
 }
@@ -590,21 +598,16 @@ Session::procMsgDataDelete()
 void
 Session::procMsgRecordDelete()
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( RecordDeleteRequest, RecordDeleteReply )
 
     // TODO Acquire write lock here
+    // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.recordDelete( *request, reply );
 
-    cout << "Rec deleted\n";
-
     // Ask FileManager to delete file
-    m_sess_mgr.dataDelete( request->id() );
-
-    cout << "File deleted\n";
-
-    // TODO Update record to indicate no raw data exists
+    m_sess_mgr.dataDelete( reply.id() );
 
     PROC_MSG_END
 }
