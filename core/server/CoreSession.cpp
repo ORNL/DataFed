@@ -70,8 +70,8 @@ Session::setupMsgHandlers()
             // Requests that require the server to take action
             //SET_MSG_HANDLER( proto_id, SetLocalIdentityRequest, &Session::procMsgSetLocalIdentity );
             SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Session::procMsgGenerateCredentials );
-            SET_MSG_HANDLER( proto_id, GenerateKeysRequest, &Session::procMsgGenerateKeys );
-            SET_MSG_HANDLER( proto_id, GetPublicKeyRequest, &Session::procMsgGetPublicKey );
+            SET_MSG_HANDLER( proto_id, SSH_GenerateKeysRequest, &Session::procMsgGenerateKeys );
+            SET_MSG_HANDLER( proto_id, SSH_GetPublicKeyRequest, &Session::procMsgGetPublicKey );
             SET_MSG_HANDLER( proto_id, DataGetRequest, &Session::procMsgDataGet  );
             SET_MSG_HANDLER( proto_id, DataPutRequest, &Session::procMsgDataPut  );
             SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Session::procMsgDataDelete );
