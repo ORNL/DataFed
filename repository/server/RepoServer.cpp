@@ -30,7 +30,7 @@ namespace Repo {
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
 
-Server::Server( uint32_t a_port, const std::string & a_cert_dir ) :
+Server::Server( uint32_t a_port ) :
     m_port( a_port ),
     m_io_running( false ),
     m_zmq_ctx( 0 )
@@ -142,34 +142,35 @@ Server::ioRun()
     sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
     sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
 
-    // Mismatched keys for test
-    //sec_ctx.public_key = "M-y6STp{#z}+COob3.h@aB#GQd8WAAM=kxb=kUml";
-    //sec_ctx.private_key = "hI%HWmX:0qZL-okAvg?Rw{}brbsy(m+9@!CKMkX:";
-    //sec_ctx.server_key = "M-y6STp{#z}+COob3.h@aB#GQd8WAAM=kxb=kUml";
-
     MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::Server, &sec_ctx, m_zmq_ctx );
-    //MsgComm sysComm( string("tcp://127.0.0.1:") + to_string(m_port), MsgComm::Client, &sec_ctx, m_zmq_ctx );
 
     uint16_t msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;
 
     while ( 1 )
     {
-        sysComm.recv( m_msg_buf );
-
-        msg_type = m_msg_buf.getMsgType();
-
-        //cout << "Get msg type: " << msg_type << "\n";
-
-        handler = m_msg_handlers.find( msg_type );
-        if ( handler != m_msg_handlers.end() )
+        try
         {
-            (this->*handler->second)();
-            sysComm.send( m_msg_buf );
+            sysComm.recv( m_msg_buf );
+
+            msg_type = m_msg_buf.getMsgType();
+
+            //cout << "Get msg type: " << msg_type << "\n";
+
+            handler = m_msg_handlers.find( msg_type );
+            if ( handler != m_msg_handlers.end() )
+            {
+                (this->*handler->second)();
+                sysComm.send( m_msg_buf );
+            }
+            else
+            {
+                DL_ERROR( "Recv unregistered msg type: " << msg_type );
+            }
         }
-        else
+        catch( ... )
         {
-            DL_ERROR( "Recv unregistered msg type: " << msg_type );
+            DL_ERROR( "Exception in msg handler" );
         }
     }
 

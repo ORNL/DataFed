@@ -34,6 +34,7 @@ int main( int a_argc, char ** a_argv )
         string      db_user = "root";
         //string      db_pass = "sdms!";
         string      db_pass = "nopass";
+        string      repo_addr = "tcp://localhost:9000";
         string      cfg_file;
 
         po::options_description opts( "Options" );
@@ -46,6 +47,7 @@ int main( int a_argc, char ** a_argv )
             ("db-url,u",po::value<string>( &db_url ),"DB url")
             ("db-user,U",po::value<string>( &db_user ),"DB user name")
             ("db-pass,P",po::value<string>( &db_pass ),"DB password")
+            ("repo-addr,r",po::value<string>( &repo_addr ),"Data repository zmq address")
             ("threads,t",po::value<uint32_t>( &num_threads ),"Number of I/O threads")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ;
@@ -88,7 +90,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Core::Server server( port, cred_path, timeout, num_threads, db_url, db_user, db_pass );
+        Core::Server server( port, cred_path, timeout, num_threads, db_url, db_user, db_pass, repo_addr );
 
         server.run( false );
 

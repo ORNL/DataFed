@@ -26,7 +26,7 @@ namespace Core {
 class Server : public ISessionMgr
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
+    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, const std::string & a_repo_address );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -107,7 +107,7 @@ private:
     DatabaseClient                  m_db_client;
     void *                          m_zmq_ctx;
     MsgComm::SecurityContext        m_sec_ctx;
-    //MsgComm *                       m_repo_comm;
+    std::string                     m_repo_address;
     std::thread *                   m_zap_thread;
     std::map<std::string,std::string>   m_auth_clients;
     std::vector<std::string>        m_data_delete;

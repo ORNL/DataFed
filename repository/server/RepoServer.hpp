@@ -18,7 +18,7 @@ namespace Repo {
 class Server
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir );
+    Server( uint32_t a_server_port );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -43,8 +43,6 @@ private:
     std::mutex                      m_data_mutex;
     bool                            m_io_running;
     std::condition_variable         m_router_cvar;
-    std::string                     m_cert_file;
-    std::string                     m_key_file;
     void *                          m_zmq_ctx;
     MsgBuf                          m_msg_buf;
 

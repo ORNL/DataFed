@@ -24,10 +24,8 @@ int main( int a_argc, char ** a_argv )
 
         DL_INFO( "SDMS repo server starting" );
 
-        uint16_t    port = 5900;
+        uint16_t    port = 9000;
         string      cfg_file;
-        string      home = getenv("HOME");
-        string      cred_path = home + "/.sdms-server/";
 
         po::options_description opts( "Options" );
 
@@ -35,7 +33,6 @@ int main( int a_argc, char ** a_argv )
             ("help,?", "Show help")
             ("version,v", "Show version number")
             ("port,p",po::value<uint16_t>( &port ),"Service port")
-            ("cred-dir,c",po::value<string>( &cred_path ),"Server credentials directory")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ;
 
@@ -77,7 +74,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Repo::Server server( port, cred_path );
+        Repo::Server server( port );
 
         server.run( false );
 

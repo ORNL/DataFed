@@ -26,7 +26,7 @@ namespace SDMS {
 namespace Core {
 
 
-Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
+Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, const std::string & a_repo_address ) :
     m_port( a_port ),
     m_timeout(a_timeout),
     m_io_thread(0),
@@ -41,7 +41,9 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
     m_db_client( m_db_url, m_db_user, m_db_pass ),
-    m_zmq_ctx(0)
+    m_zmq_ctx(0),
+    m_repo_address( a_repo_address ),
+    m_zap_thread(0)
 {
     m_context.set_options(
         asio::ssl::context::default_workarounds |
@@ -68,8 +70,6 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
 
     m_db_client.setClient( "sdms" );
 
-    //m_repo_client = new MsgComm( "127.0.0.1", 5900, a_cert_dir + "sdms-repo-cert.pem", m_cert_file, m_key_file );
-
     m_sec_ctx.is_server = true;
     m_sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
     m_sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
@@ -79,14 +79,15 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_zmq_ctx = zmq_ctx_new();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
-
-    m_data_delete.push_back("d/fubar");
 }
 
 
 Server::~Server()
 {
-    //delete m_repo_comm;
+    stop( true );
+
+    m_zap_thread->join();
+    delete m_zap_thread;
 }
 
 
@@ -267,11 +268,9 @@ Server::backgroundMaintenance()
     Auth::RepoDataDeleteRequest req;
     MsgBuf::Message *           reply;
     MsgBuf::Frame               frame;
-    MsgComm                     repo_comm( "127.0.0.1", 5900, MsgComm::Client, &m_sec_ctx, m_zmq_ctx );
-    //MsgComm                     repo_comm( "tcp://*:5900", MsgComm::Server, &m_sec_ctx, m_zmq_ctx );
+    MsgComm                     repo_comm( m_repo_address, MsgComm::Client, &m_sec_ctx, m_zmq_ctx );
 
     //vector<spSession>           dead_sessions;
-
     //dead_sessions.reserve( 10 );
 
     while( m_io_running )
@@ -303,14 +302,14 @@ Server::backgroundMaintenance()
                 for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
                 {
                     req.set_id( *idel );
-                    cout << "Send delete\n";
                     repo_comm.send( req );
-                    cout << "Get reply\n";
                     if ( !repo_comm.recv( reply, frame, 5000 ))
-                        cout << "No response!\n";
+                    {
+                        cout << "No response from repo server!\n";
+                        break;
+                    }
                     else
-                        cout << "Got reply!\n";
-                    delete reply;
+                        delete reply;
                 }
             }
             m_data_delete.clear();
@@ -661,7 +660,6 @@ Server::zapHandler()
 {
     bool    accepted = true;
     char    client_key_text[41];
-    //void *  socket = zmq_socket( m_zmq_ctx, ZMQ_ROUTER );
     void *  socket = zmq_socket( m_zmq_ctx, ZMQ_REP );
     int     rc;
     char    version[100];
@@ -677,9 +675,6 @@ Server::zapHandler()
     if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
         EXCEPT( 1, "Bind on ZAP failed." );
 
-    char    route[100];
-    size_t rlen;
-
     while ( 1 )
     {
         try
@@ -689,14 +684,6 @@ Server::zapHandler()
 
             if ( !(poll_items[0].revents & ZMQ_POLLIN ))
                 continue;
-    /*
-            if (( rc = zmq_recv( socket, route, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv ROUTE frame failed." );
-            rlen = rc;
-
-            if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv NULL frame failed." );
-    */
 
             if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
                 EXCEPT( 1, "Rcv version failed." );
@@ -736,28 +723,25 @@ Server::zapHandler()
                 "\n\tclient_key: " << client_key_text << "\n";
 
             if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
+            {
                 accepted = true;
+                cout << "ZAP: Accepted\n";
+            }
             else
+            {
                 accepted = false;
-
-            accepted = false;
-
-            // Send reply back to ZAP. A reply of 200 means accept, 400 means deny
-            /*
-            zmq_send( socket, route, rlen, ZMQ_SNDMORE );
-            zmq_send( socket, "", 0, ZMQ_SNDMORE );
-            */
+                cout << "ZAP: Denied\n";
+            }
 
             zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
             zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
             zmq_send( socket, accepted ? "200" : "400", 3, ZMQ_SNDMORE );
             zmq_send( socket, "", 0, ZMQ_SNDMORE );
-            //if ( accepted )
-            //    zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
-            //else
+            if ( accepted )
+                zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
+            else
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
             zmq_send( socket, "", 0, 0 );
-            cout << "ZAP reply sent" << endl;
         }
         catch( TraceException & e )
         {
