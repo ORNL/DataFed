@@ -11,8 +11,9 @@
     </body>
     <script>
         var userinfo = <%- @userinfo %>;
-
         console.log( "userinfo:", userinfo );
+        saveUser( userinfo );
+        window.location.replace("main.ect");
 
 /*
                 if ( !userinfo.active )

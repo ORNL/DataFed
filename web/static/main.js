@@ -14,4 +14,11 @@ function loadUser() {
     console.log( "user: ", g_user );
 }
 
+function saveUser( a_user ) {
+    console.log( "saveUser" );
+
+    g_user = a_user;
+    sessionStorage.setItem( "user", a_user );
+}
+
 console.log( "main.js loaded");
