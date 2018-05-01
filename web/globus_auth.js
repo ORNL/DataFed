@@ -42,11 +42,7 @@ app.get('/', (request, response) => {
     console.log("get /");
 
     // Store user access token in session
-    var user = sessionStorage.getItem( "user" );
-    if ( user )
-        response.render('welcome');
-    else
-        response.render('index', { user: user });
+    response.render('index', { user: user });
 
     //response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
 })
