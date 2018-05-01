@@ -65,35 +65,31 @@ app.get('/login', (request, response) => {
 app.get('/user_auth', ( a_request, a_response ) => {
     //console.log(`user_auth: `, request.query, request.body );
 
-    globus_auth.code.getToken( a_request.originalUrl ).then( function( user ) {
-        console.log( 'user:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
-        //console.log( 'id:', user.data.id_token, btoa( user.data.id_token ));
+    globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
+        console.log( 'client token:', client_token );
 
         // Store user access token in session
         //sessionStorage.setItem( "user", user );
 
         try {
-            //console.log( 'id enc:', user.data.id_token );
-            var dec = jwt_decode( user.data.id_token );
+            var dec = jwt_decode( client_token.data.id_token );
             console.log( 'id dec:', dec );
         } catch( e ) {
             console.log('exception:', e );
         }
 
         // Refresh the current users access token.
-        user.refresh().then( function (updatedUser) {
-            console.log( updatedUser !== user); //=> true
+        client_token.refresh().then( function (updatedUser) {
+            console.log( updatedUser !== client_token ); //=> true
             console.log( updatedUser.accessToken );
         });
 
         // Sign API requests on behalf of the current user.
         /*
-        user.sign({
+        client_token.sign({
             method: 'get',
             url: 'https://sdms.ornl.gov'
         });*/
-
-        // We should store the token into a database.
 
         request.post({
             uri: 'https://auth.globus.org/v2/oauth2/token/introspect',
@@ -105,16 +101,16 @@ app.get('/user_auth', ( a_request, a_response ) => {
                 user: oauth_credentials.clientId,
                 pass: oauth_credentials.clientSecret
             },
-            body: 'token=' + user.accessToken + '&include=identities_set'
+            body: 'token=' + client_token.accessToken + '&include=identities_set'
         }, function( error, response, body ) {
             var userinfo = null;
 
             if( response.statusCode >= 200 && response.statusCode < 300 ) {
                 console.log( 'body:', body );
-                userinfo = JSON.parse( body );
+                userinfo = body; //JSON.parse( body );
             }
 
-            a_response.render("login", { user: user, userinfo: userinfo });
+            a_response.render("login", { userinfo: userinfo });
         } );
     })
 })
