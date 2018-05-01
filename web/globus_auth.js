@@ -41,7 +41,12 @@ app.engine( 'ect', ectRenderer.render );
 app.get('/', (request, response) => {
     console.log("get /");
 
-    response.render('index');
+    // Store user access token in session
+    var user = sessionStorage.getItem( "user" );
+    if ( user )
+        response.render('welcome');
+    else
+        response.render('index', { user: user });
 
     //response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
 })
@@ -68,8 +73,11 @@ app.get('/user_auth', ( a_request, a_response ) => {
     //console.log(`user_auth: `, request.query, request.body );
 
     globus_auth.code.getToken( a_request.originalUrl ).then( function( user ) {
-        //console.log( 'token:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
+        console.log( 'user:', user ); //=> { accessToken: '...', tokenType: 'bearer', ... }
         //console.log( 'id:', user.data.id_token, btoa( user.data.id_token ));
+
+        // Store user access token in session
+        sessionStorage.setItem( "user", user );
 
         try {
             //console.log( 'id enc:', user.data.id_token );
