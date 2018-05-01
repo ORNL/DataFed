@@ -12,7 +12,7 @@
 #define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
 
 #define MAINT_POLL_INTERVAL 5
-#define CLIENT_IDLE_TIMEOUT 300
+#define CLIENT_IDLE_TIMEOUT 3600
 #define INIT_POLL_PERIOD 1
 #define MAX_BACKOFF 10
 

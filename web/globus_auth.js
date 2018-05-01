@@ -5,14 +5,16 @@ var https = require('https');
 var request = require('request');
 const fs = require('fs');
 const app = express();
-const port = 7512;
+var ECT = require('ect');
+var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
+const port = 443;
 
 var server_key = process.env.SDMS_WEB_KEY || 'sdms_web_key.pem';
 var server_cert = process.env.SDMS_WEB_CERT || 'sdms_web_cert.pem';
 
 var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
-var credentials = {key: privateKey, cert: certificate};
+var web_credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
 
 
@@ -21,7 +23,7 @@ const oauth_credentials = {
     clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
     authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
     accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-    redirectUri: 'https://sdms.ornl.gov:7512/user_auth',
+    redirectUri: 'https://sdms.ornl.gov:443/user_auth',
     scopes: ['openid']
 };
 
@@ -30,12 +32,34 @@ const ClientOAuth2 = require('client-oauth2');
 
 var globus_auth = new ClientOAuth2( oauth_credentials );
 
+
+
+app.set( 'view engine', 'ect' );
+app.engine( 'ect', ectRenderer.render );
+
+
 app.get('/', (request, response) => {
-    response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
+    console.log("get /");
+
+    response.render('index');
+
+    //response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
+})
+
+app.get('/register', (request, response) => {
+    console.log('register');
+    response.render('register');
+})
+
+app.get('/login', (request, response) => {
+    console.log('login');
+    //response.render('login');
+    var uri = globus_auth.code.getUri();
+    response.redirect(uri)
 })
 
 app.get('/get_ident', (request, response) => {
-    console.log(`starting auth flow` );
+    console.log('starting auth flow');
     var uri = globus_auth.code.getUri();
     response.redirect(uri)
 })
@@ -113,5 +137,8 @@ app.get('/user_auth', ( a_request, a_response ) => {
     })
 })
 
-var httpsServer = https.createServer( credentials, app );
+var httpsServer = https.createServer( web_credentials, app );
+
+console.log( "listeing on port", port );
+
 httpsServer.listen( port );
