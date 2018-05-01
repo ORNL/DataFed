@@ -1,10 +1,33 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <% include 'head.ect' %>
         <title>SDMS Login</title>
     </head>
     <body>
         <h1>Scientific Data Management System - Log-In</h1>
-        For stuff
+        <div id='userinfo'></div><br>
+        <a href="/">Back to main</a>
     </body>
+    <script>
+        var user = <%= @user %>
+        var userinfo = <%= @userinfo %>
+
+        console.log( "user:", user );
+        console.log( "userinfo:", userinfo );
+
+/*
+                if ( !userinfo.active )
+                    resp_content += "ERROR: Globus user is INACTIVE!<br><br>";
+
+                resp_content += "Name: " + userinfo.name + "<br>";
+                resp_content += "User name: " + userinfo.username + "<br>";
+                resp_content += "Client ID: " + userinfo.client_id + "<br>";
+                resp_content += "Identities:<br>";
+                for ( var i in userinfo.identities_set ) {
+                    resp_content += "&nbsp&nbsp&nbsp&nbsp" + userinfo.identities_set[i] + "<br>";
+                }
+*/
+
+    </script>
 </html>
