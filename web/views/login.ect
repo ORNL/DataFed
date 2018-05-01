@@ -10,8 +10,8 @@
         <a href="/">Back to main</a>
     </body>
     <script>
-        console.log( "test:", "<%= @userinfo %>" );
-        var userinfo = JSON.parse("<%= @userinfo %>");
+        console.log( "test:", "<%- @userinfo %>" );
+        var userinfo = JSON.parse("<%- @userinfo %>");
 
         console.log( "userinfo:", userinfo );
 
