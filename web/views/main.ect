@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="style.css"/>
+        <script type="text/javascript" charset="utf-8" src="main.js"></script>
+        <script type="text/javascript">
+            loadUser();
+            if ( !g_user )
+                window.location.replace("index.ect");
+        </script>
+        <title>SDMS Main</title>
+    </head>
+    <body>
+        <h1>Scientific Data Management System</h1>
+        <p>This is the main SDMS page for authenticated users.</p>
+        <a href="logout">Log Out</a><br>
+    </body>
+</html>
