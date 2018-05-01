@@ -49,14 +49,15 @@ app.get('/', (request, response) => {
     //response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
 })
 
+app.get('/main', (request, response) => {
+    response.render('main');
+})
+
 app.get('/register', (request, response) => {
-    console.log('register');
     response.render('register');
 })
 
 app.get('/login', (request, response) => {
-    console.log('login');
-    //response.render('login');
     var uri = globus_auth.code.getUri();
     response.redirect(uri)
 })

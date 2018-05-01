@@ -5,13 +5,17 @@
         <script type="text/javascript">
             loadUser();
             if ( !g_user )
-                window.location.replace("index");
+                window.location.replace("/");
         </script>
         <title>SDMS Main</title>
     </head>
     <body>
         <h1>Scientific Data Management System</h1>
         <p>This is the main SDMS page for authenticated users.</p>
+        <p>Hello <span id=uname></span></p>
         <a href="logout">Log Out</a><br>
     </body>
+    <script>
+    document.getElementById("uname").innerHTML = g_user.name;
+    </script>
 </html>
