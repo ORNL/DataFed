@@ -13,7 +13,7 @@
         <h1>Scientific Data Management System</h1>
         <p>This is the main SDMS page for authenticated users.</p>
         <p>Hello <span id=uname></span></p>
-        <a href="logout">Log Out</a><br>
+        <a onclick="logout()" href="/">Log Out</a><br>
     </body>
     <script>
     document.getElementById("uname").innerHTML = g_user.name;

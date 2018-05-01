@@ -7,7 +7,7 @@ function loadUser() {
 
     if ( user ) {
         // TODO Verify that user is still active
-        g_user = user;
+        g_user = JSON.parse( user );
     } else {
         g_user = null;
     }
@@ -18,7 +18,13 @@ function saveUser( a_user ) {
     console.log( "saveUser" );
 
     g_user = a_user;
-    sessionStorage.setItem( "user", a_user );
+    sessionStorage.setItem( "user", JSON.stringify( a_user ));
+}
+
+function logout() {
+    console.log( "logout");
+    g_user = null;
+    sessionStorage.clear();
 }
 
 console.log( "main.js loaded");
