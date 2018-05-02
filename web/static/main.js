@@ -2,7 +2,7 @@ var g_user = null;
 
 function loadUser() {
     console.log( "loadUser" );
-    console.log( "cookies:", document.console );
+    console.log( "cookies:", document.coookie );
 
     /*
     var user = sessionStorage.getItem( "user" );
