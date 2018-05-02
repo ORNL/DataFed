@@ -31,11 +31,8 @@ const oauth_credentials = {
 
 // Initialize the OAuth2 Library
 const ClientOAuth2 = require('client-oauth2');
-
 var globus_auth = new ClientOAuth2( oauth_credentials );
 
-
-//app.use('/static', express.static('static'))
 app.use( express.static( __dirname + '/static' ));
 app.use( cookieParser );
 app.set( 'view engine', 'ect' );
@@ -45,25 +42,33 @@ app.engine( 'ect', ectRenderer.render );
 app.get('/', (request, response) => {
     console.log("get /");
 
-    // Store user access token in session
     response.render('index');
-
-    //response.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SDMS Dev WebApp</title></head><body>SDMS Development WebApp<br><br><a href="/get_ident">Get Globus Identities</a></body></html>');
 })
 
 app.get('/main', (request, response) => {
+    console.log("get /main");
+
     response.render( 'main', { user: request.cookies['sdms-user'] });
 })
 
 app.get('/register', (request, response) => {
+    console.log("get /register");
+
     response.render('register');
 })
 
 app.get('/login', (request, response) => {
+    console.log("get /login");
+
     var uri = globus_auth.code.getUri();
     response.redirect(uri)
 })
 
+app.get('/error', (request, response) => {
+    console.log("get /error");
+
+    response.render('error');
+})
 
 app.get('/user_auth', ( a_request, a_response ) => {
     console.log( '/user_auth:', a_request );
@@ -138,7 +143,9 @@ app.get('/user_auth', ( a_request, a_response ) => {
     })
 });
 
-app.get('usr/find', ( a_request, a_response ) => {
+app.get('/usr/find', ( a_request, a_response ) => {
+    console.log("get /usr/find");
+
     // TODO Send req to Core Server via protobuf
     a_response.send({ user: "foo-user", fake: 1 });
 });
