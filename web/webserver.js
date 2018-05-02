@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+var cookieParser = require('cookie-parser');
 var https = require('https');
 var request = require('request');
 const fs = require('fs');
@@ -36,7 +37,7 @@ var globus_auth = new ClientOAuth2( oauth_credentials );
 
 //app.use('/static', express.static('static'))
 app.use( express.static( __dirname + '/static' ));
-
+app.use( cookieParser );
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 
@@ -51,7 +52,7 @@ app.get('/', (request, response) => {
 })
 
 app.get('/main', (request, response) => {
-    response.render('main');
+    response.render( 'main', { user: request.cookies['sdms-user'] });
 })
 
 app.get('/register', (request, response) => {
@@ -65,23 +66,24 @@ app.get('/login', (request, response) => {
 
 
 app.get('/user_auth', ( a_request, a_response ) => {
-    //console.log(`user_auth: `, request.query, request.body );
+    console.log( '/user_auth:', a_request );
+
+    // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
     globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
         console.log( 'client token:', client_token );
 
-        // Store user access token in session
-        //sessionStorage.setItem( "user", user );
-
+        /*
         try {
             var dec = jwt_decode( client_token.data.id_token );
-            console.log( 'id dec:', dec );
+            //console.log( 'id dec:', dec );
         } catch( e ) {
             console.log('exception:', e );
-        }
+        }*/
 
         // Refresh the current users access token.
-        client_token.refresh().then( function (updatedUser) {
+        client_token.refresh().then( function( updatedUser ) {
+            // TODO What to do here???
             console.log( updatedUser !== client_token ); //=> true
             console.log( updatedUser.accessToken );
         });
@@ -107,18 +109,38 @@ app.get('/user_auth', ( a_request, a_response ) => {
         }, function( error, response, body ) {
             var userinfo = null;
 
-            if( response.statusCode >= 200 && response.statusCode < 300 ) {
-                console.log( 'body:', body );
-                userinfo = body; //JSON.parse( body );
-            }
+            if ( response.statusCode >= 200 && response.statusCode < 300 ) {
+                console.log( 'got user info:', body );
+                userinfo = JSON.parse( body );
 
-            a_response.render("login", { userinfo: userinfo });
+                request.get({
+                    uri: '/usr/find',
+                    qs: { ids: userinfo.identities_set }
+                }, function( error, response, body ) {
+                    a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
+                    if ( response.statusCode == 200 ) {
+                        console.log( 'user found:', body );
+                        a_response.cookie( 'sdms-user', body );
+                        a_response.redirect( "main" );
+                    } else {
+                        console.log( 'user not found' );
+                        a_response.clearCookie( 'sdms-user' );
+                        a_response.redirect( "register" );
+                    }
+                });
+
+            } else {
+                a_response.clearCookie( 'sdms-token' );
+                a_response.clearCookie( 'sdms-user' );
+                a_response.redirect( "/error" );
+            }
         } );
     })
 });
 
 app.get('usr/find', ( a_request, a_response ) => {
-    a_response.send('');
+    // TODO Send req to Core Server via protobuf
+    a_response.send({ user: "foo-user", fake: 1 });
 });
 
 var httpsServer = https.createServer( web_credentials, app );
