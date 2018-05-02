@@ -16,7 +16,7 @@ var server_cert = process.env.SDMS_WEB_CERT || 'sdms_web_cert.pem';
 
 var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
-var web_credentials = {key: privateKey, cert: certificate};
+var web_credentials = {ca: , key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
 
 const oauth_credentials = {
@@ -25,13 +25,26 @@ const oauth_credentials = {
     authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
     accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
     redirectUri: 'https://sdms.ornl.gov:443/user_auth',
-    scopes: ['openid'],
-    access_type: 'offline'
+    scopes: ['openid']
 };
 
 // Initialize the OAuth2 Library
 const ClientOAuth2 = require('client-oauth2');
 var globus_auth = new ClientOAuth2( oauth_credentials );
+
+//--- This is a HACK to gt around lack of host cert
+var agentOptions;
+var agent;
+
+agentOptions = {
+  host: 'sdms.ornl.gov'
+, port: '443'
+, path: '/'
+, rejectUnauthorized: false
+};
+
+agent = new https.Agent(agentOptions);
+
 
 app.use( express.static( __dirname + '/static' ));
 app.use( cookieParser() );
@@ -76,7 +89,7 @@ app.get('/user_auth', ( a_request, a_response ) => {
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
-    globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
+    globus_auth.code.getToken( a_request.originalUrl + "&access_type=offline" ).then( function( client_token ) {
         console.log( 'client token:', client_token );
 
         /*
@@ -123,7 +136,8 @@ app.get('/user_auth', ( a_request, a_response ) => {
 
                 request.get({
                     uri: 'https://sdms.ornl.gov/usr/find',
-                    qs: { ids: userinfo.identities_set }
+                    qs: { ids: userinfo.identities_set },
+                    agent: agent // HACK
                 }, function( error, response, body ) {
                     console.log( '/usr/find cb' );
                     if ( error ) {
