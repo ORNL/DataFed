@@ -71,7 +71,7 @@ app.get('/error', (request, response) => {
 })
 
 app.get('/user_auth', ( a_request, a_response ) => {
-    console.log( '/user_auth:', a_request );
+    console.log( 'get /user_auth' );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
@@ -122,6 +122,8 @@ app.get('/user_auth', ( a_request, a_response ) => {
                     uri: '/usr/find',
                     qs: { ids: userinfo.identities_set }
                 }, function( error, response, body ) {
+                    console.log( '/usr/fins cb:', error, response, body );
+
                     a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
                     if ( response.statusCode == 200 ) {
                         console.log( 'user found:', body );
@@ -148,6 +150,10 @@ app.get('/usr/find', ( a_request, a_response ) => {
 
     // TODO Send req to Core Server via protobuf
     a_response.send({ user: "foo-user", fake: 1 });
+});
+
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 
 var httpsServer = https.createServer( web_credentials, app );
