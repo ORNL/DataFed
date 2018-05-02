@@ -16,7 +16,7 @@ var server_cert = process.env.SDMS_WEB_CERT || 'sdms_web_cert.pem';
 
 var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
-var web_credentials = {ca: , key: privateKey, cert: certificate};
+var web_credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
 
 const oauth_credentials = {
