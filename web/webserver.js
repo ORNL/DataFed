@@ -19,14 +19,14 @@ var certificate = fs.readFileSync( server_cert, 'utf8');
 var web_credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
 
-
 const oauth_credentials = {
     clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
     clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
     authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
     accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
     redirectUri: 'https://sdms.ornl.gov:443/user_auth',
-    scopes: ['openid']
+    scopes: ['openid'],
+    access_type: 'offline'
 };
 
 // Initialize the OAuth2 Library
@@ -92,6 +92,8 @@ app.get('/user_auth', ( a_request, a_response ) => {
             // TODO What to do here???
             console.log( updatedUser !== client_token ); //=> true
             console.log( updatedUser.accessToken );
+        }, function( reason ) {
+            console.log( "refresh failed:", reason );
         });
 
         // Sign API requests on behalf of the current user.
