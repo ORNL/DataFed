@@ -61,6 +61,7 @@ app.get('/login', (request, response) => {
     console.log("get /login");
 
     var uri = globus_auth.code.getUri();
+    console.log( 'about to go to', uri );
     response.redirect(uri)
 })
 
@@ -71,7 +72,7 @@ app.get('/error', (request, response) => {
 })
 
 app.get('/user_auth', ( a_request, a_response ) => {
-    console.log( 'get /user_auth' );
+    console.log( 'get /user_auth', a_request.originalUrl );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
@@ -119,20 +120,26 @@ app.get('/user_auth', ( a_request, a_response ) => {
                 userinfo = JSON.parse( body );
 
                 request.get({
-                    uri: '/usr/find',
+                    uri: 'https://sdms.ornl.gov/usr/find',
                     qs: { ids: userinfo.identities_set }
                 }, function( error, response, body ) {
-                    console.log( '/usr/fins cb:', error, response, body );
-
-                    a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
-                    if ( response.statusCode == 200 ) {
-                        console.log( 'user found:', body );
-                        a_response.cookie( 'sdms-user', body );
-                        a_response.redirect( "main" );
-                    } else {
-                        console.log( 'user not found' );
+                    console.log( '/usr/find cb' );
+                    if ( error ) {
+                        console.log( '/usr/find error:', error );
+                        a_response.clearCookie( 'sdms-token' );
                         a_response.clearCookie( 'sdms-user' );
-                        a_response.redirect( "register" );
+                        a_response.redirect( "/error" );
+                    } else {
+                        a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
+                        if ( response.statusCode == 200 ) {
+                            console.log( 'user found:', body );
+                            a_response.cookie( 'sdms-user', body );
+                            a_response.redirect( "main" );
+                        } else {
+                            console.log( 'user not found' );
+                            a_response.clearCookie( 'sdms-user' );
+                            a_response.redirect( "register" );
+                        }
                     }
                 });
 
