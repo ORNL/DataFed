@@ -2,11 +2,10 @@ var g_user = null;
 
 function loadUser() {
     console.log( "loadUser" );
-    console.log( "cookies:", document.cookie );
-    console.log( "user:", Cookies.get( 'sdms-user' ));
+    //console.log( "user:", );
 
-    /*
-    var user = sessionStorage.getItem( "user" );
+
+    var user = Cookies.get( 'sdms-user' );
 
     if ( user ) {
         // TODO Verify that user is still active
@@ -15,7 +14,6 @@ function loadUser() {
         g_user = null;
     }
     console.log( "user: ", g_user );
-    */
 }
 
 
