@@ -206,6 +206,31 @@ router.get('/update', function (req, res) {
 .description('Update user information');
 
 
+router.get('/find', function (req, res) {
+    try {
+        var user = g_lib.getUserFromIDs( req.queryParams.ids );
+
+        var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
+        if ( idents.length ) {
+            user.idents = idents;
+        }
+
+        user.uid = user._key;
+
+        delete user._id;
+        delete user._key;
+        delete user._rev;
+
+        res.send([user]);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('ids', joi.array().items(joi.string()).required(), "User ID List")
+.summary('Find a user from list of IDs')
+.description('Find a user from list of IDs');
+
 
 router.get('/view', function (req, res) {
     try {

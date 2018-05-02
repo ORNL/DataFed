@@ -27,4 +27,19 @@ function logout() {
     sessionStorage.clear();
 }
 
+function userByAccount( a_identities, a_callback ) {
+    request.get({
+        uri: 'https://sdms.ornl.gov/usr/find',
+        qs: { ids: a_identities }
+    }, function( error, response, body ) {
+        console.log( 'userByAcc resp:', error, response, body );
+        if ( response.statusCode == 200 ) {
+            user = JSON.parse( body );
+            a_callback( user );
+        } else {
+            a_callback();
+        }
+    } );
+}
+
 console.log( "main.js loaded");

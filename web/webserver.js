@@ -4,6 +4,7 @@ const express = require('express');
 var https = require('https');
 var request = require('request');
 const fs = require('fs');
+var protobuf = require("protobufjs");
 const app = express();
 var ECT = require('ect');
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
@@ -114,7 +115,11 @@ app.get('/user_auth', ( a_request, a_response ) => {
             a_response.render("login", { userinfo: userinfo });
         } );
     })
-})
+});
+
+app.get('usr/find', ( a_request, a_response ) => {
+    a_response.send('');
+});
 
 var httpsServer = https.createServer( web_credentials, app );
 

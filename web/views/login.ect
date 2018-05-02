@@ -6,11 +6,21 @@
     </head>
     <body>
         <h1>Scientific Data Management System - Log-In</h1>
+        <p>You have successfully authenticated as <span id="user_name"></span>.<p>
+        <div id="info">Checking SDMS registration status...</div>
     </body>
     <script>
         var userinfo = <%- @userinfo %>;
         console.log( "userinfo:", userinfo );
-        saveUser( userinfo );
-        window.location.replace("/main");
+        document.getElementById("user_name").innerHTML = userinfo.name;
+
+        userByAccount( userinfo.identities_set, ( a_user ) => {
+            if ( a_user ) {
+                saveUser( userinfo );
+                window.location.replace("/main");
+            } else {
+                document.getElementById("info").innerHTML = "You are not currently registered.";
+            }
+        });
     </script>
 </html>
