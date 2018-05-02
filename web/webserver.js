@@ -143,7 +143,7 @@ app.get('/user_auth', ( a_request, a_response ) => {
             }
         } );
     }, function( reason ){
-        console.log( "getToken failed:", reasone );
+        console.log( "getToken failed:", reason );
     })
 });
 
