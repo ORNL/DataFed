@@ -34,7 +34,7 @@ const ClientOAuth2 = require('client-oauth2');
 var globus_auth = new ClientOAuth2( oauth_credentials );
 
 app.use( express.static( __dirname + '/static' ));
-//app.use( cookieParser );
+app.use( cookieParser() );
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 
