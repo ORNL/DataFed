@@ -142,6 +142,8 @@ app.get('/user_auth', ( a_request, a_response ) => {
                 a_response.redirect( "/error" );
             }
         } );
+    }, function( reason ){
+        console.log( "getToken failed:", reasone );
     })
 });
 
