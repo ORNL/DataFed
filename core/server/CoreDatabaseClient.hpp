@@ -31,6 +31,7 @@ public:
     void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
     void userUpdate( const Auth::UserUpdateRequest & a_request, Auth::UserDataReply & a_reply );
     void userList( const Auth::UserListRequest & a_request, Auth::UserDataReply & a_reply );
+    void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
 
     void recordList( const Auth::RecordListRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );

@@ -220,6 +220,29 @@ DatabaseClient::userList( const UserListRequest & a_request, UserDataReply & a_r
 }
 
 void
+DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
+{
+    string uuids = "[";
+
+    for ( int i = 0; i < a_request.uuid_size(); i++ )
+    {
+        if ( i )
+            uuids += ",";
+        uuids += "\"" + a_request.uuid(i) + "\"";
+    }
+
+    uuids += "]";
+
+    rapidjson::Document result;
+    long http_code = dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result );
+
+    if ( http_code >= 200 && http_code < 300 )
+    {
+        setUserData( a_reply, result );
+    }
+}
+
+void
 DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )

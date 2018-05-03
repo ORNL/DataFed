@@ -61,6 +61,11 @@ message UserViewRequest
     optional bool               details     = 2;
 }
 
+message UserFindByUUIDsRequest
+{
+    repeated string             uuid        = 1;
+}
+
 message UserUpdateRequest
 {
     required string             uid         = 1;

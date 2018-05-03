@@ -136,7 +136,7 @@ app.get('/user_auth', ( a_request, a_response ) => {
 
                 request.get({
                     uri: 'https://sdms.ornl.gov/usr/find',
-                    qs: { ids: userinfo.identities_set },
+                    qs: { uuids: userinfo.identities_set },
                     agent: agent // HACK
                 }, function( error, response, body ) {
                     console.log( '/usr/find cb' );
@@ -173,13 +173,32 @@ app.get('/user_auth', ( a_request, a_response ) => {
 app.get('/usr/find', ( a_request, a_response ) => {
     console.log("get /usr/find");
 
-    // TODO Send req to Core Server via protobuf
+    var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
+    console.log( msg );
+    var msg_buf = msg.encode({ uuid: a_request.query.uuids });
+    console.log( msg_buf );
+
     a_response.send({ user: "foo-user", fake: 1 });
 });
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
+
+protobuf.load("SDMS_Anon.proto", function(err, root) {
+    if ( err )
+        throw err;
+    g_anon = root;
+    console.log('anon protobuf loaded');
+});
+
+protobuf.load("SDMS_Auth.proto", function(err, root) {
+    if ( err )
+        throw err;
+    g_auth = root;
+    console.log('auth protobuf loaded');
+});
+
 
 var httpsServer = https.createServer( web_credentials, app );
 
