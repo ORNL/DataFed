@@ -4,7 +4,6 @@ function loadUser() {
     console.log( "loadUser" );
     //console.log( "user:", );
 
-
     var user = Cookies.get( 'sdms-user' );
 
     if ( user ) {
@@ -26,6 +25,7 @@ function saveUser( a_user ) {
 function logout() {
     console.log( "logout");
     g_user = null;
+    Cookies.remove( 'sdms-user' );
     //sessionStorage.clear();
 }
 
