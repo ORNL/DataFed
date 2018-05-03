@@ -18,6 +18,8 @@ var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
 var web_credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
+var g_anon;
+var g_auth;
 
 const oauth_credentials = {
     clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
