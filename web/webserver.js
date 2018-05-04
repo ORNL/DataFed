@@ -31,8 +31,7 @@ var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
 var web_credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
-var g_anon;
-var g_auth;
+var g_proto = {};
 
 const oauth_credentials = {
     clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
@@ -223,20 +222,42 @@ process.on('unhandledRejection', (reason, p) => {
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;
-    g_anon = root;
+
     console.log('anon protobuf loaded');
+
+    var pro = root.lookupEnum( "SDMS.Anon.Protocol" );
+    if ( !pro )
+        throw "Missing Protocol enum in SDMS.Anon proto file";
+    
+    g_proto[ pro.values.ID ] = pro.parent.by_id;
+
+    // Test
+    var msg = g_proto[pro.values.ID][1];
+    if ( msg )
+        console.log( "msg[1]:", msg.name );
+    else
+        console.log( "msg[1] not found!" );
+        
 });
 
 protobuf.load("SDMS_Auth.proto", function(err, root) {
     if ( err )
         throw err;
-    g_auth = root;
+
     console.log('auth protobuf loaded');
-    var msg = g_auth.lookupType( 1 );
+
+    var pro = root.lookupEnum( "SDMS.Auth.Protocol" );
+    if ( !pro )
+        throw "Missing Protocol enum in SDMS.Auth proto file";
+    
+    g_proto[ pro.values.ID ] = pro.parent.by_id;
+
+    // Test
+    var msg = g_proto[pro.values.ID][1];
     if ( msg )
-        console.log( "msg 1", msg.name );
+        console.log( "msg[1]:", msg.name );
     else
-        console.log( "lookup failed" );
+        console.log( "msg[1] not found!" );
 });
 
 
