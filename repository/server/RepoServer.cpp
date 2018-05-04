@@ -142,6 +142,7 @@ Server::ioRun()
 
     MsgComm sysComm( string("tcp://*:") + to_string(m_port), ZMQ_ROUTER, true, &sec_ctx );
 
+#if 0
     MsgComm test( string("tcp://localhost:9001"), ZMQ_DEALER, false, 0 );
     StatusRequest stat_req;
     MsgBuf::Message * msg;
@@ -155,6 +156,7 @@ Server::ioRun()
     {
         cout << "Core server responded with " << frame.getMsgType() << "\n";
     }
+#endif
 
     uint16_t msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;

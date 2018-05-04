@@ -108,11 +108,12 @@ MsgComm::send( MsgBuf & a_msg_buf )
     uint8_t * route = a_msg_buf.getRouteBuffer();
     if ( *route )
     {
+        cout << "route parts: " << (int)*route << "\n";
         uint8_t * rptr = route + 1;
 
         for ( uint8_t i = 0; i < *route; i++, rptr += ( *rptr + 1 ))
         {
-            //cout << "send addr\n";
+            cout << "part " << (int)i << " sz: " << (int) *rptr << "\n";
             //cout << "Route addr:\n";
             //hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
 
@@ -214,6 +215,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         //hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
 
         zmq_msg_close( &msg );
+        (*route)++;
         rptr += *rptr + 1;
     }
 

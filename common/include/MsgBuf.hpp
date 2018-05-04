@@ -1,6 +1,7 @@
 #ifndef MSGBUF_HPP
 #define MSGBUF_HPP
 
+#include <iostream>
 #include <string>
 #include <map>
 #include <stdint.h>
@@ -265,6 +266,9 @@ public:
 
     void serialize( Message & a_msg )
     {
+        if ( !a_msg.IsInitialized() )
+            EXCEPT( EC_SERIALIZE, "Message is missing required fields" );
+
         const DescriptorType * desc = a_msg.GetDescriptor();
         const FileDescriptorType * file = desc->file();
 
