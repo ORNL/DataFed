@@ -1,3 +1,15 @@
+/*jshint strict: global */
+/*jshint esversion: 6 */
+/*jshint multistr: true */
+/* globals require */
+/* globals module */
+/* globals console */
+/* globals process */
+/* globals Buffer */
+/* globals __dirname */
+
+/*import { isContext } from 'vm';*/
+
 'use strict';
 
 const express = require('express');
@@ -6,6 +18,7 @@ var https = require('https');
 var request = require('request');
 const fs = require('fs');
 var protobuf = require("protobufjs");
+var zmq = require("zeromq");
 const app = express();
 var ECT = require('ect');
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
@@ -39,14 +52,17 @@ var agentOptions;
 var agent;
 
 agentOptions = {
-  host: 'sdms.ornl.gov'
-, port: '443'
-, path: '/'
-, rejectUnauthorized: false
+    host : 'sdms.ornl.gov',
+    port : '443',
+    path : '/',
+    rejectUnauthorized : false
 };
 
 agent = new https.Agent(agentOptions);
 
+var core_sock = zmq.socket('dealer');
+core_sock.connect('tcp://sdms.ornl.gov:9001');
+console.log('Worker connected to port 3000');
 
 app.use( express.static( __dirname + '/static' ));
 app.use( cookieParser() );
@@ -58,33 +74,33 @@ app.get('/', (request, response) => {
     console.log("get /");
 
     response.render('index');
-})
+});
 
 app.get('/main', (request, response) => {
     console.log("get /main");
 
     response.render( 'main', { user: request.cookies['sdms-user'] });
-})
+});
 
 app.get('/register', (request, response) => {
     console.log("get /register");
 
     response.render('register');
-})
+});
 
 app.get('/login', (request, response) => {
     console.log("get /login");
 
     var uri = globus_auth.code.getUri();
     console.log( 'about to go to', uri );
-    response.redirect(uri)
-})
+    response.redirect(uri);
+});
 
 app.get('/error', (request, response) => {
     console.log("get /error");
 
     response.render('error');
-})
+});
 
 app.get('/user_auth', ( a_request, a_response ) => {
     console.log( 'get /user_auth', a_request.originalUrl );
@@ -169,7 +185,7 @@ app.get('/user_auth', ( a_request, a_response ) => {
         } );
     }, function( reason ){
         console.log( "getToken failed:", reason );
-    })
+    });
 });
 
 app.get('/usr/find', ( a_request, a_response ) => {
@@ -179,7 +195,25 @@ app.get('/usr/find', ( a_request, a_response ) => {
     var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
     console.log( msg_buf );
 
-    a_response.send({ user: "foo-user", fake: 1 });
+    /* Frame contents (C++)
+    uint32_t    size;       // Size of buffer
+    uint8_t     proto_id;
+    uint8_t     msg_id;
+    uint16_t    isContext
+    */
+    var frame = new Buffer.alloc(8);
+    frame.writeUInt32LE( msg_buf.length, 0 );
+    frame.writeUInt8( 2, 4 );
+    frame.writeUInt8( 1 /*msg_id*/, 5 );
+    frame.writeUInt16LE( 0, 6 );
+
+    core_sock.send([ frame, msg_buf ]);
+    var reply = core_sock.read();
+
+    core_sock.on('message', function( reply ) {
+
+        a_response.send({ user: "foo-user", fake: 1 });
+    });
 });
 
 process.on('unhandledRejection', (reason, p) => {
