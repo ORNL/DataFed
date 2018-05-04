@@ -232,6 +232,11 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
         throw err;
     g_auth = root;
     console.log('auth protobuf loaded');
+    var msg = g_auth.lookupType( 1 );
+    if ( msg )
+        console.log( "msg 1", msg.name );
+    else
+        console.log( "lookup failed" );
 });
 
 
