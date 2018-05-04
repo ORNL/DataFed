@@ -43,7 +43,6 @@ private:
     std::mutex                      m_data_mutex;
     bool                            m_io_running;
     std::condition_variable         m_router_cvar;
-    void *                          m_zmq_ctx;
     MsgBuf                          m_msg_buf;
 
     std::map<uint16_t,msg_fun_t>    m_msg_handlers;

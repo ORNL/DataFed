@@ -17,13 +17,14 @@
 
 #include "MsgComm.hpp"
 #include "CoreSession.hpp"
+#include "CoreWorker.hpp"
 #include "CoreDatabaseClient.hpp"
 #include "SDMS.pb.h"
 
 namespace SDMS {
 namespace Core {
 
-class Server : public ISessionMgr
+class Server : public ISessionMgr, public IWorkerMgr
 {
 public:
     Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, const std::string & a_repo_address );
@@ -69,6 +70,15 @@ private:
     void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
     void                dataDelete( const std::string & a_data_id );
 
+    // IWorkerMgr methods
+    const std::string & getDbURL() { return m_db_url; };
+    const std::string & getDbUser() { return m_db_user; };
+    const std::string & getDbPass() { return m_db_pass; };
+
+    void msgRouter();
+    void ioLocal();
+    void ioServices();
+    void ioClients();
     void ioRun();
     void accept();
     void backgroundMaintenance();
@@ -105,12 +115,16 @@ private:
     std::string                     m_db_user;
     std::string                     m_db_pass;
     DatabaseClient                  m_db_client;
-    void *                          m_zmq_ctx;
     MsgComm::SecurityContext        m_sec_ctx;
     std::string                     m_repo_address;
     std::thread *                   m_zap_thread;
     std::map<std::string,std::string>   m_auth_clients;
     std::vector<std::string>        m_data_delete;
+
+    std::thread *                   m_msg_router_thread;
+    std::vector<Worker*>            m_workers;
+    size_t                          m_num_workers;
+    std::thread *                   m_io_local_thread;
 
     friend class Session;
 };

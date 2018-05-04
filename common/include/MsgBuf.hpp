@@ -10,8 +10,11 @@
 
 // TODO Need to add host-network conversions for buffer frame fields
 
-#define MAX_ROUTE_LEN   16
-#define MAX_UID_LEN     16
+
+// typically 5 bytes per router (internal), or larger for external
+#define MAX_ROUTE_LEN   50
+// Able to store a UUID string
+#define MAX_UID_LEN     100
 #define REG_PROTO(ns) MsgBuf::registerProtocol( ns::Protocol_descriptor() )
 
 class MsgBuf
@@ -43,6 +46,11 @@ public:
             proto_id = 0;
             msg_id = 0;
             context = 0;
+        }
+
+        inline uint16_t getMsgType() const
+        {
+            return ( ((uint16_t)proto_id) << 8 ) | msg_id;
         }
 
         uint32_t    size;       // Size of buffer
@@ -108,37 +116,19 @@ public:
         return m_buffer;
     }
 
-    inline std::string getRoute() const
+    inline const uint8_t * getRouteBuffer() const
     {
-        return std::string( m_route + 1, m_route[0] );
+        return m_route;
     }
 
-    inline const char * getRouteBuffer() const
+    inline uint8_t * getRouteBuffer()
     {
-        return m_route + 1;
+        return m_route;
     }
 
-    inline uint8_t getRouteLen() const
+    inline uint8_t getRouteMaxLen() const
     {
-        return m_route[0];
-    }
-
-    void setRoute( const std::string & a_route )
-    {
-        if ( a_route.size() >= MAX_ROUTE_LEN )
-            EXCEPT( 1, "Route max length exceeded" );
-
-        m_route[0] = (uint8_t) a_route.size();
-        memcpy( m_route + 1, a_route.c_str(), a_route.size() );
-    }
-
-    void setRoute( const char * a_route, uint8_t a_len )
-    {
-        if ( a_len >= MAX_ROUTE_LEN )
-            EXCEPT( 1, "Route max length exceeded" );
-
-        m_route[0] = a_len;
-        memcpy( m_route + 1, a_route, a_len );
+        return MAX_ROUTE_LEN;
     }
 
     inline const char * getUID() const
@@ -204,10 +194,8 @@ public:
         uint8_t id = val_desc->number();
 
         DescriptorMap::iterator iProto = getDescriptorMap().find( id );
-        if ( iProto != getDescriptorMap().end() )
-            EXCEPT_PARAM( EC_PROTO_INIT, "Protocol ID " << id << " has already been registered." );
-
-        getDescriptorMap()[id] = file;
+        if ( iProto == getDescriptorMap().end() )
+            getDescriptorMap()[id] = file;
 
         return id;
     }
@@ -314,7 +302,7 @@ private:
     Frame       m_frame;
     char *      m_buffer;
     uint32_t    m_capacity;
-    char        m_route[MAX_ROUTE_LEN]; // Byte 0 = length
+    uint8_t     m_route[MAX_ROUTE_LEN]; // Byte 0 = length
     char        m_uid[MAX_UID_LEN]; // Null teminated
 };
 

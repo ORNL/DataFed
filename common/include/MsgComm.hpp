@@ -10,17 +10,6 @@
 class MsgComm
 {
 public:
-    enum Mode
-    {
-        Server,
-        Client,
-        Publisher,
-        Subscriber,
-        Push,
-        Pull,
-        Worker
-    };
-
     struct SecurityContext
     {
         bool                        is_server;
@@ -30,43 +19,24 @@ public:
         std::string                 server_key;     // Clients only
     };
 
-    //----- Constructors & Destructor -----
-
-    MsgComm( const std::string & a_address, Mode a_mode = Client, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
-    MsgComm( const std::string & a_host, uint16_t a_port, Mode a_mode = Client, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
+    MsgComm( const std::string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
+    MsgComm( const std::string & a_host, uint16_t a_port, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
     ~MsgComm();
 
-    //----- Basic Messaging API -----
     void            send( MsgBuf::Message & a_msg, uint16_t a_context = 0 );
     void            send( MsgBuf & a_message );
     bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_timeout = 0 );
     bool            recv( MsgBuf & a_message, uint32_t a_timeout = 0 );
-
-    //----- Advanced (server) Messaging API -----
-/*
-    bool            send( MessageType & a_message, const std::string &a_client_id );
-    MessageID       recv( MessageType *& a_msg, uint32_t a_timeout, std::string & a_client_id );
-
-    std::string     getClientID( MessageBuffer & a_msg_buffer );
-*/
-    //----- Utility Methods -----
-
-    void *          getContext() { return m_context; }
     void *          getSocket() { return m_socket; }
     void            getPollInfo( zmq_pollitem_t  & a_poll_data );
+    static void *   getContext();
 
 private:
-
-    void            setupSocketKeepAlive();
     void            setupSecurityContext( SecurityContext * a_sec_ctx );
-    void            init( const std::string & a_address, SecurityContext * a_sec_ctx );
+    void            init( const std::string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_cxt );
 
-    void           *m_context;
     void           *m_socket;
-    Mode            m_mode;
-    bool            m_proc_addresses;
     zmq_pollitem_t  m_poll_item;
-    bool            m_context_owner;
 };
 
 #endif // CONNECTION_HPP

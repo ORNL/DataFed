@@ -32,8 +32,7 @@ namespace Repo {
 
 Server::Server( uint32_t a_port ) :
     m_port( a_port ),
-    m_io_running( false ),
-    m_zmq_ctx( 0 )
+    m_io_running( false )
 {
     uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
@@ -83,7 +82,8 @@ Server::stop( bool a_wait )
 
     if ( m_io_running )
     {
-        zmq_ctx_term( m_zmq_ctx );
+        // TODO Need another way to terminate ZMQ threads
+        //zmq_ctx_term( m_zmq_ctx );
 
         if ( a_wait )
         {
@@ -134,15 +134,27 @@ Server::ioRun()
 {
     DL_INFO( "io thread started" );
 
-    m_zmq_ctx = zmq_ctx_new();
-
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = false;
     sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
     sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
     sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
 
-    MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::Server, &sec_ctx, m_zmq_ctx );
+    MsgComm sysComm( string("tcp://*:") + to_string(m_port), ZMQ_ROUTER, true, &sec_ctx );
+
+    MsgComm test( string("tcp://localhost:9001"), ZMQ_DEALER, false, 0 );
+    StatusRequest stat_req;
+    MsgBuf::Message * msg;
+    MsgBuf::Frame frame;
+    test.send( stat_req );
+    if ( !test.recv( msg, frame, 5000 ))
+    {
+        cout << "Core server did not respond\n";
+    }
+    else
+    {
+        cout << "Core server responded with " << frame.getMsgType() << "\n";
+    }
 
     uint16_t msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;
@@ -151,21 +163,22 @@ Server::ioRun()
     {
         try
         {
-            sysComm.recv( m_msg_buf );
-
-            msg_type = m_msg_buf.getMsgType();
-
-            //cout << "Get msg type: " << msg_type << "\n";
-
-            handler = m_msg_handlers.find( msg_type );
-            if ( handler != m_msg_handlers.end() )
+            if ( sysComm.recv( m_msg_buf, 2000 ))
             {
-                (this->*handler->second)();
-                sysComm.send( m_msg_buf );
-            }
-            else
-            {
-                DL_ERROR( "Recv unregistered msg type: " << msg_type );
+                msg_type = m_msg_buf.getMsgType();
+
+                //cout << "Get msg type: " << msg_type << "\n";
+
+                handler = m_msg_handlers.find( msg_type );
+                if ( handler != m_msg_handlers.end() )
+                {
+                    (this->*handler->second)();
+                    sysComm.send( m_msg_buf );
+                }
+                else
+                {
+                    DL_ERROR( "Recv unregistered msg type: " << msg_type );
+                }
             }
         }
         catch( ... )
@@ -174,7 +187,6 @@ Server::ioRun()
         }
     }
 
-    m_zmq_ctx = 0;
     DL_INFO( "io thread stopped" );
 }
 

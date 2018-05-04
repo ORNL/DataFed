@@ -41,9 +41,10 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
     m_db_client( m_db_url, m_db_user, m_db_pass ),
-    m_zmq_ctx(0),
     m_repo_address( a_repo_address ),
-    m_zap_thread(0)
+    m_zap_thread(0),
+    m_msg_router_thread(0),
+    m_num_workers(8)
 {
     m_context.set_options(
         asio::ssl::context::default_workarounds |
@@ -76,8 +77,6 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
 
     m_auth_clients["B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9["] = "repo1";
 
-    m_zmq_ctx = zmq_ctx_new();
-
     m_zap_thread = new thread( &Server::zapHandler, this );
 }
 
@@ -106,16 +105,24 @@ Server::run( bool a_async )
         m_io_thread = new thread( &Server::ioRun, this );
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         m_xfr_thread = new thread( &Server::xfrManagement, this );
+        m_msg_router_thread = new thread( &Server::msgRouter, this );
+        m_io_local_thread = new thread( &Server::ioLocal, this );
     }
     else
     {
         lock.unlock();
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         m_xfr_thread = new thread( &Server::xfrManagement, this );
+        m_msg_router_thread = new thread( &Server::msgRouter, this );
+        m_io_local_thread = new thread( &Server::ioLocal, this );
         ioRun();
         lock.lock();
         m_io_running = false;
         m_router_cvar.notify_all();
+
+        m_msg_router_thread->join();
+        delete m_msg_router_thread;
+        m_msg_router_thread = 0;
 
         m_xfr_thread->join();
         delete m_xfr_thread;
@@ -154,6 +161,10 @@ Server::stop( bool a_wait )
                     m_router_cvar.wait( lock );
             }
 
+            m_msg_router_thread->join();
+            delete m_msg_router_thread;
+            m_msg_router_thread = 0;
+
             m_xfr_thread->join();
             delete m_xfr_thread;
             m_xfr_thread = 0;
@@ -180,6 +191,10 @@ Server::wait()
 
             m_io_thread = 0;
             m_io_running = false;
+
+            m_msg_router_thread->join();
+            delete m_msg_router_thread;
+            m_msg_router_thread = 0;
 
             m_xfr_thread->join();
             delete m_xfr_thread;
@@ -231,6 +246,62 @@ Server::ioRun()
     DL_INFO( "io thread stopped" );
 }
 
+void
+Server::msgRouter()
+{
+    void * ctx = MsgComm::getContext();
+
+    void *frontend = zmq_socket( ctx, ZMQ_ROUTER );
+    int linger = 100;
+    zmq_setsockopt( frontend, ZMQ_LINGER, &linger, sizeof( int ));
+    zmq_bind( frontend, "inproc://msg_proc" );
+
+    void *backend = zmq_socket( ctx, ZMQ_DEALER );
+    zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int ));
+
+    zmq_bind( backend, "inproc://workers" );
+
+    void *control = zmq_socket( ctx, ZMQ_SUB );
+    zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int ));
+    zmq_connect( control, "inproc://control" );
+    zmq_setsockopt( control, ZMQ_SUBSCRIBE, "", 0 );
+
+    // Ceate worker threads
+    for ( uint16_t t = 0; t < m_num_workers; ++t )
+        m_workers.push_back( new Worker( *this, t+1 ));
+
+    // Connect backend to frontend via a proxy
+    zmq_proxy_steerable( frontend, backend, 0, control );
+
+    zmq_close( backend );
+    zmq_close( control );
+
+    // Clean-up workers
+    vector<Worker*>::iterator iwrk;
+
+    for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
+        (*iwrk)->stop();
+
+    for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
+        delete *iwrk;
+}
+
+void
+Server::ioLocal()
+{
+    int linger = 100;
+    void * ctx = MsgComm::getContext();
+
+    void *frontend = zmq_socket( ctx, ZMQ_ROUTER );
+    zmq_setsockopt( frontend, ZMQ_LINGER, &linger, sizeof( int ));
+    zmq_bind( frontend, "tcp://*:9001" );
+
+    void *backend = zmq_socket( ctx, ZMQ_DEALER );
+    zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int ));
+    zmq_connect( backend, "inproc://msg_proc" );
+
+    zmq_proxy( frontend, backend, 0 );
+}
 
 void
 Server::accept()
@@ -261,73 +332,89 @@ Server::backgroundMaintenance()
 {
     DL_DEBUG( "Maint thread started" );
 
-    struct timespec             _t;
-    double                      t;
-    set<spSession>::iterator    isess;
-    vector<string>::iterator    idel;
-    Auth::RepoDataDeleteRequest req;
-    MsgBuf::Message *           reply;
-    MsgBuf::Frame               frame;
-    MsgComm                     repo_comm( m_repo_address, MsgComm::Client, &m_sec_ctx, m_zmq_ctx );
-
-    //vector<spSession>           dead_sessions;
-    //dead_sessions.reserve( 10 );
-
-    while( m_io_running )
+    try
     {
-        sleep( MAINT_POLL_INTERVAL );
+        struct timespec             _t;
+        double                      t;
+        set<spSession>::iterator    isess;
+        vector<string>::iterator    idel;
+        Auth::RepoDataDeleteRequest req;
+        MsgBuf::Message *           reply;
+        MsgBuf::Frame               frame;
+        MsgComm                     repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
 
-        lock_guard<mutex> lock( m_data_mutex );
+        //vector<spSession>           dead_sessions;
+        //dead_sessions.reserve( 10 );
 
-        clock_gettime( CLOCK_REALTIME, &_t );
-        t = _t.tv_sec + (_t.tv_nsec*1e-9);
-
-        for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
+        while( m_io_running )
         {
-            if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
-            {
-                cout << "CLOSING IDLE SESSION\n";
-                (*isess)->close();
-                isess = m_sessions.erase( isess );
-            }
-            else
-                ++isess;
-        }
+            sleep( MAINT_POLL_INTERVAL );
 
-        // Process data deletion requests
-        try
-        {
-            if ( m_data_delete.size() )
+            lock_guard<mutex> lock( m_data_mutex );
+
+            clock_gettime( CLOCK_REALTIME, &_t );
+            t = _t.tv_sec + (_t.tv_nsec*1e-9);
+
+            for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
             {
-                for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
+                if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
                 {
-                    req.set_id( *idel );
-                    repo_comm.send( req );
-                    if ( !repo_comm.recv( reply, frame, 5000 ))
-                    {
-                        cout << "No response from repo server!\n";
-                        break;
-                    }
-                    else
-                        delete reply;
+                    cout << "CLOSING IDLE SESSION\n";
+                    (*isess)->close();
+                    isess = m_sessions.erase( isess );
                 }
+                else
+                    ++isess;
             }
-            m_data_delete.clear();
-        }
-        catch( ... )
-        {
-            cout << "Exception on delete data\n";
-        }
-/*
-        for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )
-        {
-            DL_INFO( "Deleting inactive client " << *isess );
-            delete *isess;
-        }
 
-        dead_sessions.clear();
-*/
+            // Process data deletion requests
+            try
+            {
+                if ( m_data_delete.size() )
+                {
+                    for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
+                    {
+                        req.set_id( *idel );
+                        repo_comm.send( req );
+                        if ( !repo_comm.recv( reply, frame, 5000 ))
+                        {
+                            cout << "No response from repo server!\n";
+                            break;
+                        }
+                        else
+                            delete reply;
+                    }
+                }
+                m_data_delete.clear();
+            }
+            catch( ... )
+            {
+                cout << "Exception on delete data\n";
+            }
+    /*
+            for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )
+            {
+                DL_INFO( "Deleting inactive client " << *isess );
+                delete *isess;
+            }
+
+            dead_sessions.clear();
+    */
+        }
     }
+    catch( TraceException & e )
+    {
+        DL_ERROR( "Maint thread: " << e.toString() );
+    }
+    catch( exception & e )
+    {
+        DL_ERROR( "Maint thread: " << e.what() );
+    }
+    catch( ... )
+    {
+        DL_ERROR( "Maint thread: unkown exception " );
+    }
+
     DL_DEBUG( "Maint thread stopped" );
 }
 
@@ -337,193 +424,209 @@ Server::xfrManagement()
 {
     DL_DEBUG( "Xfr thread started" );
 
-    list<XfrDataInfo*>::iterator ixfr;
-    XfrDataInfo * xfr_entry;
-    string keyfile;
-    string cmd;
-    string result;
-    XfrStatus status;
-    size_t file_size;
-    time_t mod_time;
-    Auth::RecordUpdateRequest upd_req;
-    Auth::RecordDataReply  reply;
-    string error_msg;
-
-    Auth::RepoDataGetSizeRequest sz_req;
-    MsgBuf::Message *            raw_msg;
-    Auth::RepoDataSizeReply *    sz_rep;
-    MsgBuf::Frame                frame;
-    MsgComm  repo_comm( m_repo_address, MsgComm::Client, &m_sec_ctx, m_zmq_ctx );
-
-    while( m_io_running )
+    try
     {
-        sleep( 1 );
+        list<XfrDataInfo*>::iterator ixfr;
+        XfrDataInfo * xfr_entry;
+        string keyfile;
+        string cmd;
+        string result;
+        XfrStatus status;
+        size_t file_size;
+        time_t mod_time;
+        Auth::RecordUpdateRequest upd_req;
+        Auth::RecordDataReply  reply;
+        string error_msg;
 
+        Auth::RepoDataGetSizeRequest sz_req;
+        MsgBuf::Message *            raw_msg;
+        Auth::RepoDataSizeReply *    sz_rep;
+        MsgBuf::Frame                frame;
+        MsgComm  repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
+
+        while( m_io_running )
         {
-            lock_guard<mutex> lock( m_xfr_mutex );
-            while ( m_xfr_pending.size() )
-            {
-                xfr_entry = m_xfr_all[m_xfr_pending.front()];
-                m_xfr_active.push_front(xfr_entry);
-                m_xfr_pending.pop_front();
-            }
-        }
+            sleep( 1 );
 
-        for ( ixfr = m_xfr_active.begin(); ixfr != m_xfr_active.end(); )
-        {
-            try
             {
-                //cout << "poll: " << (*ixfr)->poll << "\n";
-
-                if ( (*ixfr)->stage == 0 )
+                lock_guard<mutex> lock( m_xfr_mutex );
+                while ( m_xfr_pending.size() )
                 {
-                    // Start xfr, get task ID, update DB
-                    // Use Legacy Globus CLI to start transfer
-                    cout << "start xfr\n";
-
-                    keyfile = m_key_path + (*ixfr)->uid + "-key";
-
-                    cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- ";
-                    //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
-                    //cmd = "ssh globus transfer -- ";
-
-                    if ( (*ixfr)->mode == XM_PUT )
-                        cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
-                    else
-                        cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
-
-                    // HACK Need err msg if things go wrong
-                    cmd += " 2>&1";
-
-                    {
-                        lock_guard<mutex> lock( m_key_mutex );
-                        result = exec( cmd.c_str() );
-                    }
-
-                    if ( result.compare( 0, 9, "Task ID: " ) == 0 )
-                    {
-                        (*ixfr)->task_id = result.substr( 9 );
-                        (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
-                        //cout << "New task[" << (*ixfr)->task_id << "]\n";
-
-                        cout << "Task " << (*ixfr)->task_id << " started\n";
-
-                        // Update DB entry
-                        m_db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
-                        (*ixfr)->stage = 1;
-                        (*ixfr)->poll = INIT_POLL_PERIOD;
-                        ixfr++;
-                    }
-                    else
-                    {
-                        //cout << "Globus CLI Error\nResult:[" << result << "]";
-                        for ( string::iterator c = result.begin(); c != result.end(); c++ )
-                        {
-                            if ( *c == '\n' )
-                                *c = '.';
-                        }
-
-                        status = XS_FAILED;
-                        m_db_client.xfrUpdate( (*ixfr)->id, &status, result );
-                        ixfr = m_xfr_active.erase( ixfr );
-                    }
+                    xfr_entry = m_xfr_all[m_xfr_pending.front()];
+                    m_xfr_active.push_front(xfr_entry);
+                    m_xfr_pending.pop_front();
                 }
-                else
-                {
-                    if ( --(*ixfr)->poll == 0 )
-                    {
-                        //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
+            }
 
-                        // Get current status
+            for ( ixfr = m_xfr_active.begin(); ixfr != m_xfr_active.end(); )
+            {
+                try
+                {
+                    //cout << "poll: " << (*ixfr)->poll << "\n";
+
+                    if ( (*ixfr)->stage == 0 )
+                    {
+                        // Start xfr, get task ID, update DB
+                        // Use Legacy Globus CLI to start transfer
+                        cout << "start xfr\n";
+
                         keyfile = m_key_path + (*ixfr)->uid + "-key";
 
-                        //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
-                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
-                        result = exec( cmd.c_str() );
-                        if ( parseGlobusEvents( result, status, error_msg ))
+                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- ";
+                        //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
+                        //cmd = "ssh globus transfer -- ";
+
+                        if ( (*ixfr)->mode == XM_PUT )
+                            cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
+                        else
+                            cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
+
+                        // HACK Need err msg if things go wrong
+                        cmd += " 2>&1";
+
                         {
-                            // Cancel the xfr task
-                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
+                            lock_guard<mutex> lock( m_key_mutex );
                             result = exec( cmd.c_str() );
-                            cout << "Cancel result: " << result << "\n";
                         }
 
-                        cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
-
-                        if ( (*ixfr)->status != status )
+                        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
                         {
-                            (*ixfr)->status = status;
+                            (*ixfr)->task_id = result.substr( 9 );
+                            (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
+                            //cout << "New task[" << (*ixfr)->task_id << "]\n";
+
+                            cout << "Task " << (*ixfr)->task_id << " started\n";
 
                             // Update DB entry
-                            m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
-
-                            if ( (*ixfr)->mode == XM_PUT )
-                            {
-                                mod_time = time(0);
-                                file_size = 0;
-
-                                // TODO How to handle PUT errors?
-                                if ( (*ixfr)->status == XS_SUCCEEDED )
-                                {
-                                    // TODO This should be done in another thread so xfr mon isn't blocked
-                                    sz_req.set_id( (*ixfr)->data_id );
-                                    repo_comm.send( sz_req );
-                                    if ( !repo_comm.recv( raw_msg, frame, 10000 ))
-                                        cout << "No response from repo server!\n";
-                                    else
-                                    {
-                                        if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
-                                        {
-                                            file_size = sz_rep->size();
-                                        }
-                                        delete sz_rep;
-                                    }
-                                }
-
-                                // Update DB record with new file stats
-                                upd_req.set_id( (*ixfr)->data_id );
-                                upd_req.set_data_size( file_size );
-                                upd_req.set_data_time( mod_time );
-                                upd_req.set_subject( (*ixfr)->uid );
-                                reply.Clear();
-
-                                m_db_client.recordUpdate( upd_req, reply );
-                            }
-                        }
-
-                        // Remove from active list
-                        if ( (*ixfr)->status > XS_INACTIVE )
-                        {
-                            ixfr = m_xfr_active.erase( ixfr );
+                            m_db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                            (*ixfr)->stage = 1;
+                            (*ixfr)->poll = INIT_POLL_PERIOD;
+                            ixfr++;
                         }
                         else
                         {
-                            // Backoff increments each poll interval, but time waited only increments
-                            // every two poll intervals. This allows polling to better match size of
-                            // file being transferred.
-                            if ( (*ixfr)->backoff < MAX_BACKOFF )
-                                (*ixfr)->backoff++;
+                            //cout << "Globus CLI Error\nResult:[" << result << "]";
+                            for ( string::iterator c = result.begin(); c != result.end(); c++ )
+                            {
+                                if ( *c == '\n' )
+                                    *c = '.';
+                            }
 
-                            (*ixfr)->poll = INIT_POLL_PERIOD*(1<<((*ixfr)->backoff >> 1));
-                            ++ixfr;
+                            status = XS_FAILED;
+                            m_db_client.xfrUpdate( (*ixfr)->id, &status, result );
+                            ixfr = m_xfr_active.erase( ixfr );
                         }
                     }
                     else
-                        ++ixfr;
+                    {
+                        if ( --(*ixfr)->poll == 0 )
+                        {
+                            //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
+
+                            // Get current status
+                            keyfile = m_key_path + (*ixfr)->uid + "-key";
+
+                            //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
+                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
+                            result = exec( cmd.c_str() );
+                            if ( parseGlobusEvents( result, status, error_msg ))
+                            {
+                                // Cancel the xfr task
+                                cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
+                                result = exec( cmd.c_str() );
+                                cout << "Cancel result: " << result << "\n";
+                            }
+
+                            cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
+
+                            if ( (*ixfr)->status != status )
+                            {
+                                (*ixfr)->status = status;
+
+                                // Update DB entry
+                                m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
+
+                                if ( (*ixfr)->mode == XM_PUT )
+                                {
+                                    mod_time = time(0);
+                                    file_size = 0;
+
+                                    // TODO How to handle PUT errors?
+                                    if ( (*ixfr)->status == XS_SUCCEEDED )
+                                    {
+                                        // TODO This should be done in another thread so xfr mon isn't blocked
+                                        sz_req.set_id( (*ixfr)->data_id );
+                                        repo_comm.send( sz_req );
+                                        if ( !repo_comm.recv( raw_msg, frame, 10000 ))
+                                            cout << "No response from repo server!\n";
+                                        else
+                                        {
+                                            if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
+                                            {
+                                                file_size = sz_rep->size();
+                                            }
+                                            delete sz_rep;
+                                        }
+                                    }
+
+                                    // Update DB record with new file stats
+                                    upd_req.set_id( (*ixfr)->data_id );
+                                    upd_req.set_data_size( file_size );
+                                    upd_req.set_data_time( mod_time );
+                                    upd_req.set_subject( (*ixfr)->uid );
+                                    reply.Clear();
+
+                                    m_db_client.recordUpdate( upd_req, reply );
+                                }
+                            }
+
+                            // Remove from active list
+                            if ( (*ixfr)->status > XS_INACTIVE )
+                            {
+                                ixfr = m_xfr_active.erase( ixfr );
+                            }
+                            else
+                            {
+                                // Backoff increments each poll interval, but time waited only increments
+                                // every two poll intervals. This allows polling to better match size of
+                                // file being transferred.
+                                if ( (*ixfr)->backoff < MAX_BACKOFF )
+                                    (*ixfr)->backoff++;
+
+                                (*ixfr)->poll = INIT_POLL_PERIOD*(1<<((*ixfr)->backoff >> 1));
+                                ++ixfr;
+                            }
+                        }
+                        else
+                            ++ixfr;
+                    }
                 }
-            }
-            catch( TraceException & e )
-            {
-                cout << "XFR thread exception: " << e.toString() << "\n";
-                ixfr = m_xfr_active.erase( ixfr );
-            }
-            catch(...)
-            {
-                cout << "XFR thread exception!\n";
-                ixfr = m_xfr_active.erase( ixfr );
+                catch( TraceException & e )
+                {
+                    cout << "XFR thread exception: " << e.toString() << "\n";
+                    ixfr = m_xfr_active.erase( ixfr );
+                }
+                catch(...)
+                {
+                    cout << "XFR thread exception!\n";
+                    ixfr = m_xfr_active.erase( ixfr );
+                }
             }
         }
     }
+    catch( TraceException & e )
+    {
+        DL_ERROR( "Maint thread: " << e.toString( true ) );
+    }
+    catch( exception & e )
+    {
+        DL_ERROR( "Maint thread: " << e.what() );
+    }
+    catch( ... )
+    {
+        DL_ERROR( "Maint thread: unkown exception " );
+    }
+
     DL_DEBUG( "Xfr thread stopped" );
 }
 
@@ -666,107 +769,126 @@ Server::dataDelete( const std::string & a_data_id )
 void
 Server::zapHandler()
 {
-    bool    accepted = true;
-    char    client_key_text[41];
-    void *  socket = zmq_socket( m_zmq_ctx, ZMQ_REP );
-    int     rc;
-    char    version[100];
-    char    request_id[100];
-    char    domain[100];
-    char    address[100];
-    char    identity_property[100];
-    char    mechanism[100];
-    char    client_key[100];
-    map<string,string>::iterator iclient;
-    zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
-
-    if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
-        EXCEPT( 1, "Bind on ZAP failed." );
-
-    while ( 1 )
+    DL_INFO( "ZAP handler thread starting" );
+    
+    try
     {
-        try
+        void * ctx = MsgComm::getContext();
+
+        bool    accepted = true;
+        char    client_key_text[41];
+        void *  socket = zmq_socket( ctx, ZMQ_REP );
+        int     rc;
+        char    version[100];
+        char    request_id[100];
+        char    domain[100];
+        char    address[100];
+        char    identity_property[100];
+        char    mechanism[100];
+        char    client_key[100];
+        map<string,string>::iterator iclient;
+        zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
+
+        if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
+            EXCEPT( 1, "Bind on ZAP failed." );
+
+        while ( 1 )
         {
-            if (( rc = zmq_poll( poll_items, 1, 2000 )) == -1 )
-                EXCEPT( 1, "Poll on ZAP socket failed." );
-
-            if ( !(poll_items[0].revents & ZMQ_POLLIN ))
-                continue;
-
-            if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv version failed." );
-            version[rc] = 0;
-            if (( rc = zmq_recv( socket, request_id, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv request_id failed." );
-            request_id[rc] = 0;
-            if (( rc = zmq_recv( socket, domain, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv domain failed." );
-            domain[rc] = 0;
-            if (( rc = zmq_recv( socket, address, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv address failed." );
-            address[rc] = 0;
-            if (( rc = zmq_recv( socket, identity_property, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv identity_property failed." );
-            identity_property[rc] = 0;
-            if (( rc = zmq_recv( socket, mechanism, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv mechanism failed." );
-            mechanism[rc] = 0;
-            if (( rc = zmq_recv( socket, client_key, 100, 0 )) == -1 )
-                EXCEPT( 1, "Rcv client_key failed." );
-            client_key[rc] = 0;
-
-            if ( rc != 32 )
-                EXCEPT( 1, "Invalid client_key length." );
-
-            if ( !zmq_z85_encode( client_key_text, (uint8_t*)client_key, 32 ))
-                EXCEPT( 1, "Encode of client_key failed." );
-
-            cout << "ZAP request:" <<
-                "\n\tversion: " << version <<
-                "\n\trequest_id: " << request_id <<
-                "\n\tdomain: " << domain <<
-                "\n\taddress: " << address <<
-                "\n\tidentity_property: " << identity_property <<
-                "\n\tmechanism: " << mechanism <<
-                "\n\tclient_key: " << client_key_text << "\n";
-
-            if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
+            try
             {
-                accepted = true;
-                cout << "ZAP: Accepted\n";
-            }
-            else
-            {
-                accepted = false;
-                cout << "ZAP: Denied\n";
-            }
+                if (( rc = zmq_poll( poll_items, 1, 2000 )) == -1 )
+                    EXCEPT( 1, "Poll on ZAP socket failed." );
 
-            zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
-            zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
-            zmq_send( socket, accepted ? "200" : "400", 3, ZMQ_SNDMORE );
-            zmq_send( socket, "", 0, ZMQ_SNDMORE );
-            if ( accepted )
-                zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
-            else
+                if ( !(poll_items[0].revents & ZMQ_POLLIN ))
+                    continue;
+
+                if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv version failed." );
+                version[rc] = 0;
+                if (( rc = zmq_recv( socket, request_id, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv request_id failed." );
+                request_id[rc] = 0;
+                if (( rc = zmq_recv( socket, domain, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv domain failed." );
+                domain[rc] = 0;
+                if (( rc = zmq_recv( socket, address, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv address failed." );
+                address[rc] = 0;
+                if (( rc = zmq_recv( socket, identity_property, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv identity_property failed." );
+                identity_property[rc] = 0;
+                if (( rc = zmq_recv( socket, mechanism, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv mechanism failed." );
+                mechanism[rc] = 0;
+                if (( rc = zmq_recv( socket, client_key, 100, 0 )) == -1 )
+                    EXCEPT( 1, "Rcv client_key failed." );
+                client_key[rc] = 0;
+
+                if ( rc != 32 )
+                    EXCEPT( 1, "Invalid client_key length." );
+
+                if ( !zmq_z85_encode( client_key_text, (uint8_t*)client_key, 32 ))
+                    EXCEPT( 1, "Encode of client_key failed." );
+
+                cout << "ZAP request:" <<
+                    "\n\tversion: " << version <<
+                    "\n\trequest_id: " << request_id <<
+                    "\n\tdomain: " << domain <<
+                    "\n\taddress: " << address <<
+                    "\n\tidentity_property: " << identity_property <<
+                    "\n\tmechanism: " << mechanism <<
+                    "\n\tclient_key: " << client_key_text << "\n";
+
+                if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
+                {
+                    accepted = true;
+                    cout << "ZAP: Accepted\n";
+                }
+                else
+                {
+                    accepted = false;
+                    cout << "ZAP: Denied\n";
+                }
+
+                zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
+                zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
+                zmq_send( socket, accepted ? "200" : "400", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-            zmq_send( socket, "", 0, 0 );
+                if ( accepted )
+                    zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
+                else
+                    zmq_send( socket, "", 0, ZMQ_SNDMORE );
+                zmq_send( socket, "", 0, 0 );
+            }
+            catch( TraceException & e )
+            {
+                cout << "ZAP handler:" << e.toString() << "\n";
+            }
+            catch( exception & e )
+            {
+                cout << "ZAP handler:" << e.what() << "\n";
+            }
+            catch( ... )
+            {
+                cout << "ZAP handler: unknown exception type\n";
+            }
         }
-        catch( TraceException & e )
-        {
-            cout << "ZAP handler:" << e.toString() << "\n";
-        }
-        catch( exception & e )
-        {
-            cout << "ZAP handler:" << e.what() << "\n";
-        }
-        catch( ... )
-        {
-            cout << "ZAP handler: unknown exception type\n";
-        }
+
+        zmq_close( socket );
     }
-
-
-    zmq_close( socket );
+    catch( TraceException & e )
+    {
+        DL_ERROR( "ZAP handler:" << e.toString() );
+    }
+    catch( exception & e )
+    {
+        DL_ERROR( "ZAP handler:" << e.what() );
+    }
+    catch( ... )
+    {
+        DL_ERROR( "ZAP handler: unknown exception type" );
+    }
+    DL_INFO( "ZAP handler thread exiting" );
 }
 
 
