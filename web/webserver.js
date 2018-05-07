@@ -62,6 +62,11 @@ agentOptions = {
 
 agent = new https.Agent(agentOptions);
 
+const MAX_CTX = 50;
+var g_ctx = new Array( MAX_CTX );
+g_ctx.fill(null);
+var g_ctx_next = 0;
+
 const nullfr = Buffer.from([]);
 var core_sock = zmq.socket('dealer');
 core_sock.connect('tcp://sdms.ornl.gov:9001');
@@ -194,6 +199,19 @@ app.get('/user_auth', ( a_request, a_response ) => {
 app.get('/usr/find', ( a_request, a_response ) => {
     console.log("get /usr/find");
 
+    var ctx = g_ctx_next;
+    if ( ctx == MAX_CTX ) {
+        ctx = g_ctx.indexOf( null );
+        if ( ctx == -1 ) {
+            a_response.status( 503 );
+            a_response.send( "Server too busy" );
+            return;
+        }
+    } else if ( ++g_ctx_next < MAX_CTX ) {
+        if ( g_ctx[g_ctx_next] )
+            g_ctx_next = MAX_CTX;
+    }
+
     //var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
     var msg = g_msg_by_name["UserFindByUUIDsRequest"];
     var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
@@ -209,21 +227,18 @@ app.get('/usr/find', ( a_request, a_response ) => {
     frame.writeUInt32LE( msg_buf.length, 0 );
     frame.writeUInt8( msg._pid, 4 );
     frame.writeUInt8( msg._mid, 5 );
-    frame.writeUInt16LE( 0, 6 );
+    frame.writeUInt16LE( ctx, 6 );
 
-    console.log("frame buffer", frame.toString('hex'));
-    console.log("msg buffer", msg_buf.toString('hex'));
+    g_ctx[ctx] = function( reply ){
+        console.log( "reply to /usr/find", reply );
+
+        a_response.send({ user: "foo-user", fake: 1 });
+    };
+
+    //console.log("frame buffer", frame.toString('hex'));
+    //console.log("msg buffer", msg_buf.toString('hex'));
 
     core_sock.send([ nullfr, frame, msg_buf ]);
-    //var reply = core_sock.read();
-
-    core_sock.on('message', function( delim, frame, msg ) {
-        console.log( "got msg", delim, frame, msg );
-        //    throw "Did not recv null frame delimiter!";
-        console.log( "frame", frame.toString('hex') );
-        console.log( "msg", msg.toString('hex') );
-        a_response.send({ user: "foo-user", fake: 1 });
-    });
 });
 
 process.on('unhandledRejection', (reason, p) => {
@@ -295,6 +310,37 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
     else
         console.log( "msg[1] not found!" );
     */
+});
+
+
+core_sock.on('message', function( delim, frame, msg_buf ) {
+    console.log( "got msg", delim, frame, msg_buf );
+    console.log( "frame", frame.toString('hex') );
+    var mlen = frame.readUInt32LE( 0 );
+    var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
+    var ctx = frame.readUInt16LE( 6 );
+
+    console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
+
+    var msg_class = g_msg_by_id[mtype];
+    var msg;
+
+    if ( msg_class ) {
+        msg = msg_class.decode( msg_buf );
+        if ( !msg )
+            console.log( "decode failed" );
+    } else {
+        console.log( "unkown mtype" );
+    }
+
+    var f = g_ctx[ctx];
+    if ( f ) {
+        g_ctx[ctx] = null;
+        g_ctx_next = ctx;
+        f( msg );
+    } else {
+        console.log( "no callback found!" );
+    }
 });
 
 
