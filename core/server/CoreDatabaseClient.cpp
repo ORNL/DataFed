@@ -25,6 +25,8 @@ DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string 
     if ( !m_curl )
         EXCEPT( ID_INTERNAL_ERROR, "libcurl init failed" );
 
+    setClient("");
+
     curl_easy_setopt( m_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
     curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_db_user.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_db_pass.c_str() );
@@ -66,7 +68,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     url.append( m_db_url );
     url.append( a_url_path );
     url.append( "?client=" );
-    cout << "dbGet 1.3" << endl;
+    cout << "dbGet 1.3 " << endl;
     url.append( m_client );
 
     char * esc_txt;
