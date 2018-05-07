@@ -178,7 +178,7 @@ if ( base_msg ) \
         /*DL_INFO( "Rcvd: " << request->DebugString());*/ \
         replyclass reply; \
         try \
-        {
+        { cout << "about to call handler" << endl;
 
 #define PROC_MSG_END \
             if ( send_reply ) \
@@ -229,7 +229,7 @@ bool
 Worker::dbPassThrough()
 {
     PROC_MSG_BEGIN( RQ, RP )
-    cout << "Calling DB handler" << endl;
+    cout << "Calling DB handler " << func << endl;
     (m_db_client.*func)( *request, reply );
 
     PROC_MSG_END
