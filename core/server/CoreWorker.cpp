@@ -51,8 +51,8 @@ Worker::wait()
     }
 }
 
-#define SET_MSG_HANDLER(proto_id,msg,func)  cout << "set handler " << ((proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg ))<< "\n"; m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) cout << "set db handler " << ((proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )) << "\n"; m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
+#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
 
 void
 Worker::setupMsgHandlers()

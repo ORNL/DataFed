@@ -50,6 +50,8 @@ DatabaseClient::setClient( const std::string & a_client )
 long
 DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, rapidjson::Document & a_result )
 {
+    cout << "dbGet" << endl;
+
     string  url;
     string  res_json;
     char    error[CURL_ERROR_SIZE];
@@ -65,9 +67,12 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     url.append( m_client );
 
     char * esc_txt;
+    cout << "dbGet 2" << endl;
 
     for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
     {
+        cout << "dbGet 2.1" << endl;
+
         url.append( "&" );
         url.append( iparam->first.c_str() );
         url.append( "=" );
@@ -75,6 +80,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         url.append( esc_txt );
         curl_free( esc_txt );
     }
+    cout << "dbGet 3" << endl;
 
     DL_DEBUG( "url: " << url );
 
