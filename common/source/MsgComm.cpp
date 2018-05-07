@@ -60,6 +60,8 @@ void hexDump( const char * a_buffer, const char *a_buffer_end, ostream & a_out )
         p += 16;
         l += 16;
     }
+
+    a_out << dec;
 }
 
 
@@ -259,8 +261,8 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         a_msg_buf.ensureCapacity( a_msg_buf.getFrame().size );
         memcpy( a_msg_buf.getBuffer(), zmq_msg_data( &msg ), a_msg_buf.getFrame().size );
 
-        //cout << "Body:\n";
-        //hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
+        cout << "Body:\n";
+        hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
 
         zmq_msg_close( &msg );
     }

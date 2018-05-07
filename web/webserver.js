@@ -205,13 +205,14 @@ app.get('/usr/find', ( a_request, a_response ) => {
     uint8_t     msg_id;
     uint16_t    isContext
     */
-    var frame = new Buffer.alloc(8);
+    var frame = Buffer.alloc(8);
     frame.writeUInt32LE( msg_buf.length, 0 );
     frame.writeUInt8( msg._pid, 4 );
     frame.writeUInt8( msg._mid, 5 );
     frame.writeUInt16LE( 0, 6 );
 
     console.log("frame buffer", frame.toString('hex'));
+    console.log("msg buffer", msg_buf.toString('hex'));
 
     core_sock.send([ nullfr, frame, msg_buf ]);
     //var reply = core_sock.read();
