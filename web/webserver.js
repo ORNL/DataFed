@@ -226,7 +226,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
         //console.log( "got frame", parts[0].toString('hex') );
         //console.log( "got msg", parts[1].toString('hex') );
             a_response.send({ user: "foo-user", fake: 1 });
-        }
+        });
     });
 });
 
