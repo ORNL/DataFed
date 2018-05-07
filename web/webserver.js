@@ -188,8 +188,9 @@ app.get('/user_auth', ( a_request, a_response ) => {
 });
 
 app.get('/usr/register', ( a_request, a_response ) => {
-    console.log( 'get /usr/register', a_request.cookies );
-    //a_request.cookie( 'sdms-user', JSON.stringify( userinfo ));
+    var user = a_request.cookies[ 'sdms-user' ];
+    console.log( 'get /usr/register', user, typeof user );
+
     a_response.redirect( "/error" );
 });
 
