@@ -112,7 +112,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         {
             if ( res_json.size() && !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
             {
-                EXCEPT_PARAM( ID_BAD_REQUEST, "Bad request: " << a_result["errorMessage"].GetString() );
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].GetString() );
             }
             else
             {
@@ -224,21 +224,16 @@ DatabaseClient::userList( const UserListRequest & a_request, UserDataReply & a_r
 void
 DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
 {
-    cout << "userFindByUUIDs" << endl;
     string uuids = "[";
-
-    cout << "uuids: " << a_request.uuid_size() << endl;
 
     for ( int i = 0; i < a_request.uuid_size(); i++ )
     {
-        cout << i << " " << a_request.uuid(i) << endl;
         if ( i )
             uuids += ",";
         uuids += "\"" + a_request.uuid(i) + "\"";
     }
 
     uuids += "]";
-    cout << "uuids " << uuids << endl;
 
     rapidjson::Document result;
     long http_code = dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result );
