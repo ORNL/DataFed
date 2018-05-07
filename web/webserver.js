@@ -196,7 +196,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
     //var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
     var msg = g_msg_by_name["UserFindByUUIDsRequest"];
     var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
-    console.log( msg_buf );
+    console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
     /* Frame contents (C++)
     uint32_t    size;       // Size of buffer
