@@ -211,6 +211,8 @@ app.get('/usr/find', ( a_request, a_response ) => {
     frame.writeUInt8( msg._mid, 5 );
     frame.writeUInt16LE( 0, 6 );
 
+    console.log("frame buffer", frame.toString('hex'));
+
     core_sock.send([ nullfr, frame, msg_buf ]);
     //var reply = core_sock.read();
 
