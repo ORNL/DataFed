@@ -31,7 +31,10 @@ var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
 var web_credentials = {key: privateKey, cert: certificate};
 var jwt_decode = require('jwt-decode');
-var g_proto = {};
+var g_anon;
+var g_auth;
+var g_msg_by_id = {};
+var g_msg_by_name = {};
 
 const oauth_credentials = {
     clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
@@ -190,7 +193,8 @@ app.get('/user_auth', ( a_request, a_response ) => {
 app.get('/usr/find', ( a_request, a_response ) => {
     console.log("get /usr/find");
 
-    var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
+    //var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
+    var msg = g_msg_by_name["SDMS.UserFindByUUIDsRequest"];
     var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
     console.log( msg_buf );
 
@@ -202,15 +206,15 @@ app.get('/usr/find', ( a_request, a_response ) => {
     */
     var frame = new Buffer.alloc(8);
     frame.writeUInt32LE( msg_buf.length, 0 );
-    frame.writeUInt8( 2, 4 );
-    frame.writeUInt8( 1 /*msg_id*/, 5 );
+    frame.writeUInt8( msg._pid, 4 );
+    frame.writeUInt8( msg._mid, 5 );
     frame.writeUInt16LE( 0, 6 );
 
     core_sock.send([ frame, msg_buf ]);
-    var reply = core_sock.read();
+    //var reply = core_sock.read();
 
     core_sock.on('message', function( reply ) {
-
+        console.log( "got reply", reply );
         a_response.send({ user: "foo-user", fake: 1 });
     });
 });
@@ -223,41 +227,67 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;
 
+    g_anon = root;
+
     console.log('anon protobuf loaded');
 
-    var pro = root.lookupEnum( "SDMS.Anon.Protocol" );
-    if ( !pro )
+    var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
+    if ( !msg )
         throw "Missing Protocol enum in SDMS.Anon proto file";
     
-    g_proto[ pro.values.ID ] = pro.parent.by_id;
+    var mlist = msg.parent.order;
+    var pid = msg.values.ID;
 
-    // Test
-    var msg = g_proto[pro.values.ID][1];
-    if ( msg )
-        console.log( "msg[1]:", msg.name );
-    else
-        console.log( "msg[1] not found!" );
-        
+    for ( var i = 0; i < mlist.length; i++ ) {
+        msg = mlist[i];
+
+        msg._pid = pid;
+        msg._mid = i;
+        msg._msg_type = (pid << 8) | i;
+
+        console.log( "msg", msg._msg_type, msg.name );
+
+        g_msg_by_id[ msg._msg_type ] = msg;
+        g_msg_by_name[ msg.name ] = msg;
+    }
 });
 
 protobuf.load("SDMS_Auth.proto", function(err, root) {
     if ( err )
         throw err;
 
+    g_auth = root;
+
     console.log('auth protobuf loaded');
 
-    var pro = root.lookupEnum( "SDMS.Auth.Protocol" );
-    if ( !pro )
+    var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
+    if ( !msg )
         throw "Missing Protocol enum in SDMS.Auth proto file";
     
-    g_proto[ pro.values.ID ] = pro.parent.by_id;
+    var mlist = msg.parent.order;
+    var pid = msg.values.ID;
+
+    for ( var i = 0; i < mlist.length; i++ ) {
+        msg = mlist[i];
+
+        msg._pid = pid;
+        msg._mid = i;
+        msg._msg_type = (pid << 8) | i;
+
+        console.log( "msg", msg._msg_type, msg.name );
+
+        g_msg_by_id[ msg._msg_type ] = msg;
+        g_msg_by_name[ msg.name ] = msg;
+    }
 
     // Test
+    /*
     var msg = g_proto[pro.values.ID][1];
     if ( msg )
         console.log( "msg[1]:", msg.name );
     else
         console.log( "msg[1] not found!" );
+    */
 });
 
 
