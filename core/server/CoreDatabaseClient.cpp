@@ -55,15 +55,18 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     string  url;
     string  res_json;
     char    error[CURL_ERROR_SIZE];
+    cout << "dbGet 1.1" << endl;
 
     error[0] = 0;
 
     url.reserve( 512 );
+    cout << "dbGet 1.2" << endl;
 
     // TODO Get URL base from ctor
     url.append( m_db_url );
     url.append( a_url_path );
     url.append( "?client=" );
+    cout << "dbGet 1.3" << endl;
     url.append( m_client );
 
     char * esc_txt;
