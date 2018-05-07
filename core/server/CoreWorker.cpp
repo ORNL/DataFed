@@ -175,7 +175,7 @@ if ( base_msg ) \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
-        DL_TRACE( "Rcvd: " << request->DebugString()); \
+        DL_INFO( "Rcvd: " << request->DebugString()); \
         replyclass reply; \
         try \
         {
