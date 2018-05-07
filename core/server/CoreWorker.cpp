@@ -175,7 +175,7 @@ if ( base_msg ) \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
-        DL_INFO( "Rcvd: " << request->DebugString()); \
+        /*DL_INFO( "Rcvd: " << request->DebugString());*/ \
         replyclass reply; \
         try \
         {
@@ -229,7 +229,7 @@ bool
 Worker::dbPassThrough()
 {
     PROC_MSG_BEGIN( RQ, RP )
-
+    cout << "Calling DB handler" << endl;
     (m_db_client.*func)( *request, reply );
 
     PROC_MSG_END
