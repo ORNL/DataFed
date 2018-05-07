@@ -71,6 +71,8 @@ Worker::setupMsgHandlers()
 
         proto_id = REG_PROTO( SDMS::Auth );
 
+        SET_MSG_HANDLER( proto_id, UserFindByUUIDsRequest, &Worker::procStatusRequest );
+
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
         SET_MSG_HANDLER( proto_id, SSH_GenerateKeysRequest, &Worker::procSSH_GenerateKeysRequest );
@@ -84,7 +86,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
-        SET_MSG_HANDLER_DB( proto_id, UserFindByUUIDsRequest, UserDataReply, userFindByUUIDs );
+        //SET_MSG_HANDLER_DB( proto_id, UserFindByUUIDsRequest, UserDataReply, userFindByUUIDs );
         SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordFindRequest, RecordDataReply, recordFind );
