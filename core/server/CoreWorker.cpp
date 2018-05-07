@@ -64,6 +64,8 @@ Worker::setupMsgHandlers()
 
     try
     {
+        cout << "setup worker msg handlers\n";
+
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Worker::procStatusRequest );
@@ -72,6 +74,9 @@ Worker::setupMsgHandlers()
         proto_id = REG_PROTO( SDMS::Auth );
 
         SET_MSG_HANDLER( proto_id, UserFindByUUIDsRequest, &Worker::procStatusRequest );
+
+        cout << "status handler: " << m_msg_handlers[0x103] << "\n";;
+        cout << "521 handler: " << m_msg_handlers[521] << "\n";;
 
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
