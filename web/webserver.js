@@ -218,7 +218,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
     //var reply = core_sock.read();
 
     core_sock.on('message', function( reply ) {
-        console.log( "got reply", reply );
+        console.log( "got reply", reply.toString('hex') );
         a_response.send({ user: "foo-user", fake: 1 });
     });
 });
