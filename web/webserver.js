@@ -222,6 +222,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
         //if ( delim.length != 0 )
         //    throw "Did not recv null frame delimiter!";
         var parts = core_sock.read();
+        console.log( "got parts", parts, parts?parts.toString('hex'):"" );
         if ( parts.length != 2 )
             throw "Recv invalid message parts!";
         console.log( "got frame", parts[0].toString('hex') );
