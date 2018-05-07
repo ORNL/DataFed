@@ -51,8 +51,8 @@ Worker::wait()
     }
 }
 
-#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
+#define SET_MSG_HANDLER(proto_id,msg,func)  cout << "set handler " << ((proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg ))<< "\n"; m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) cout << "set db handler " << ((proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )) << "\n"; m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
 
 void
 Worker::setupMsgHandlers()
@@ -73,11 +73,6 @@ Worker::setupMsgHandlers()
 
         proto_id = REG_PROTO( SDMS::Auth );
 
-        SET_MSG_HANDLER( proto_id, UserFindByUUIDsRequest, &Worker::procStatusRequest );
-
-        cout << "status handler: " << m_msg_handlers[0x103] << "\n";;
-        cout << "521 handler: " << m_msg_handlers[521] << "\n";;
-
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
         SET_MSG_HANDLER( proto_id, SSH_GenerateKeysRequest, &Worker::procSSH_GenerateKeysRequest );
@@ -91,7 +86,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
-        //SET_MSG_HANDLER_DB( proto_id, UserFindByUUIDsRequest, UserDataReply, userFindByUUIDs );
+        SET_MSG_HANDLER_DB( proto_id, UserFindByUUIDsRequest, UserDataReply, userFindByUUIDs );
         SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordFindRequest, RecordDataReply, recordFind );

@@ -242,8 +242,8 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
     var mlist = msg.parent.order;
     var pid = msg.values.ID;
 
-    for ( var i = 0; i < mlist.length; i++ ) {
-        msg = mlist[i];
+    for ( var i = 0; i < mlist.length - 1; i++ ) {
+        msg = mlist[i+1];
 
         msg._pid = pid;
         msg._mid = i;
@@ -270,9 +270,9 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
     
     var mlist = msg.parent.order;
     var pid = msg.values.ID;
-
-    for ( var i = 0; i < mlist.length; i++ ) {
-        msg = mlist[i];
+    // Skip first entry which is Protocol enum
+    for ( var i = 0; i < mlist.length-1; i++ ) {
+        msg = mlist[i+1];
 
         msg._pid = pid;
         msg._mid = i;
