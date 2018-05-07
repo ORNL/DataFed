@@ -194,7 +194,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
     console.log("get /usr/find");
 
     //var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
-    var msg = g_msg_by_name["SDMS.UserFindByUUIDsRequest"];
+    var msg = g_msg_by_name["UserFindByUUIDsRequest"];
     var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
     console.log( msg_buf );
 
