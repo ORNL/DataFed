@@ -240,7 +240,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
-    //cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";;
+    cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
 
     zmq_msg_close( &msg );
 

@@ -131,11 +131,14 @@ Worker::workerThread()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                cout << "W" << m_tid << " got msg " << msg_type << endl;
+                //cout << "W" << m_tid << " got msg " << msg_type << endl;
+                DL_INFO( "W"<<m_tid<<" recvd msg type: " << msg_type );
 
                 handler = m_msg_handlers.find( msg_type );
                 if ( handler != m_msg_handlers.end() )
                 {
+                    DL_INFO( "W"<<m_tid<<" calling handler" );
+
                     if ( (this->*handler->second)())
                     {
                         comm.send( m_msg_buf );
