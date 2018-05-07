@@ -62,6 +62,7 @@ agentOptions = {
 
 agent = new https.Agent(agentOptions);
 
+const nullfr = Buffer.from([]);
 var core_sock = zmq.socket('dealer');
 core_sock.connect('tcp://sdms.ornl.gov:9001');
 console.log('Worker connected to port 3000');
@@ -210,7 +211,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
     frame.writeUInt8( msg._mid, 5 );
     frame.writeUInt16LE( 0, 6 );
 
-    core_sock.send([ frame, msg_buf ]);
+    core_sock.send([ nullfr, frame, msg_buf ]);
     //var reply = core_sock.read();
 
     core_sock.on('message', function( reply ) {
