@@ -231,8 +231,12 @@ app.get('/usr/find', ( a_request, a_response ) => {
 
     g_ctx[ctx] = function( reply ){
         console.log( "reply to /usr/find", reply );
-
-        a_response.send({ user: "foo-user", fake: 1 });
+        if ( reply.length != 1 ) {
+            a_response.status( 404 );
+            a_response.send( "User not found" );
+        } else {
+            a_response.send({ name: reply[0].name, uid: reply[0].uid });
+        }
     };
 
     //console.log("frame buffer", frame.toString('hex'));
