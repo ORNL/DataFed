@@ -219,11 +219,14 @@ app.get('/usr/find', ( a_request, a_response ) => {
 
     core_sock.on('message', function( msg ) {
         console.log( "got msg", msg, msg?msg.length:"" );
-        //if ( delim.length != 0 )
+        core_sock.on('message', function( msg ) {
+            console.log( "got msg 2", msg, msg?msg.length:"" );
+            //if ( delim.length != 0 )
         //    throw "Did not recv null frame delimiter!";
         //console.log( "got frame", parts[0].toString('hex') );
         //console.log( "got msg", parts[1].toString('hex') );
-        a_response.send({ user: "foo-user", fake: 1 });
+            a_response.send({ user: "foo-user", fake: 1 });
+        }
     });
 });
 
