@@ -16,7 +16,6 @@
 
         userByAccount( userinfo.identities_set, ( a_user ) => {
             if ( a_user ) {
-                saveUser( userinfo );
                 window.location.replace("/main");
             } else {
                 document.getElementById("info").innerHTML = "You are not currently registered.";

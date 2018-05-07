@@ -12,14 +12,8 @@ function loadUser() {
     } else {
         g_user = null;
     }
+
     console.log( "user: ", g_user );
-}
-
-
-function saveUser( a_user ) {
-    console.log( "saveUser" );
-
-    g_user = "foo";
 }
 
 function logout() {
