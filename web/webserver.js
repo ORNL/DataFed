@@ -118,29 +118,15 @@ app.get('/user_auth', ( a_request, a_response ) => {
     globus_auth.code.getToken( a_request.originalUrl + "&access_type=offline" ).then( function( client_token ) {
         console.log( 'client token:', client_token );
 
+        // TODO - Refresh the current users access token?
         /*
-        try {
-            var dec = jwt_decode( client_token.data.id_token );
-            //console.log( 'id dec:', dec );
-        } catch( e ) {
-            console.log('exception:', e );
-        }*/
-
-        // Refresh the current users access token.
         client_token.refresh().then( function( updatedUser ) {
             // TODO What to do here???
             console.log( updatedUser !== client_token ); //=> true
             console.log( updatedUser.accessToken );
         }, function( reason ) {
             console.log( "refresh failed:", reason );
-        });
-
-        // Sign API requests on behalf of the current user.
-        /*
-        client_token.sign({
-            method: 'get',
-            url: 'https://sdms.ornl.gov'
-        });*/
+        }); */
 
         request.post({
             uri: 'https://auth.globus.org/v2/oauth2/token/introspect',
@@ -157,8 +143,11 @@ app.get('/user_auth', ( a_request, a_response ) => {
             var userinfo = null;
 
             if ( response.statusCode >= 200 && response.statusCode < 300 ) {
-                console.log( 'got user info:', body );
+                //console.log( 'got user info:', body );
                 userinfo = JSON.parse( body );
+
+                // Set access token cookie even if user isn't registered
+                a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
 
                 request.get({
                     uri: 'https://sdms.ornl.gov/usr/find',
@@ -168,18 +157,20 @@ app.get('/user_auth', ( a_request, a_response ) => {
                     console.log( '/usr/find cb' );
                     if ( error ) {
                         console.log( '/usr/find error:', error );
-                        a_response.clearCookie( 'sdms-token' );
-                        a_response.clearCookie( 'sdms-user' );
                         a_response.redirect( "/error" );
                     } else {
-                        a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
                         if ( response.statusCode == 200 ) {
                             console.log( 'user found:', body );
-                            a_response.cookie( 'sdms-user', body );
+                            // TODO Account may be disable from SDMS (active = false)
+                            userinfo.registered = true;
+                            userinfo.active = true;
+                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ));
                             a_response.redirect( "main" );
                         } else {
-                            console.log( 'user not found' );
-                            a_response.clearCookie( 'sdms-user' );
+                            console.log( 'user not registered' );
+                            userinfo.registered = false;
+                            userinfo.active = false;
+                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ));
                             a_response.redirect( "register" );
                         }
                     }
@@ -194,6 +185,12 @@ app.get('/user_auth', ( a_request, a_response ) => {
     }, function( reason ){
         console.log( "getToken failed:", reason );
     });
+});
+
+app.get('/usr/register', ( a_request, a_response ) => {
+    console.log( 'get /usr/register', a_request.cookies );
+    //a_request.cookie( 'sdms-user', JSON.stringify( userinfo ));
+    a_response.redirect( "/error" );
 });
 
 app.get('/usr/find', ( a_request, a_response ) => {

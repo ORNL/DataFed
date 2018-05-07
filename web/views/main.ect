@@ -4,7 +4,7 @@
         <% include 'head.ect' %>
         <script type="text/javascript">
             loadUser();
-            if ( !g_user )
+            if ( !g_user || !g_user.active )
                 window.location.replace("/");
         </script>
         <title>SDMS Main</title>
