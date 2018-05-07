@@ -167,9 +167,11 @@ Worker::workerThread()
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
 bool send_reply = true; \
+cout << "unserialize msg" << endl;\
 ::google::protobuf::Message *base_msg = m_msg_buf.unserialize(); \
 if ( base_msg ) \
 { \
+    cout << "got msg ptr" << endl;\
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
