@@ -218,6 +218,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
     //var reply = core_sock.read();
 
     core_sock.on('message', function( delim ) {
+        console.log( "got delim", delim, delim?delim.toString('hex'):"" );
         if ( delim.length != 0 )
             throw "Did not recv null frame delimiter!";
         var parts = core_sock.read();
