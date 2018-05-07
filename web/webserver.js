@@ -217,16 +217,12 @@ app.get('/usr/find', ( a_request, a_response ) => {
     core_sock.send([ nullfr, frame, msg_buf ]);
     //var reply = core_sock.read();
 
-    core_sock.on('message', function( delim ) {
-        console.log( "got delim", delim, delim?delim.toString('hex'):"" );
+    core_sock.on('message', function( msg ) {
+        console.log( "got msg", msg, msg?msg.length:"" );
         //if ( delim.length != 0 )
         //    throw "Did not recv null frame delimiter!";
-        var parts = core_sock.read();
-        console.log( "got parts", parts, parts?parts.toString('hex'):"" );
-        if ( parts.length != 2 )
-            throw "Recv invalid message parts!";
-        console.log( "got frame", parts[0].toString('hex') );
-        console.log( "got msg", parts[1].toString('hex') );
+        //console.log( "got frame", parts[0].toString('hex') );
+        //console.log( "got msg", parts[1].toString('hex') );
         a_response.send({ user: "foo-user", fake: 1 });
     });
 });
