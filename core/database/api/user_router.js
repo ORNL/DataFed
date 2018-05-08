@@ -44,7 +44,7 @@ router.get('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u"],
-                write: ["u","c","a","owner","ident","alias","admin"]
+                write: ["u","c","a","owner","ident","uuid","alias","admin"]
             },
             action: function() {
                 var user = g_db.u.save({ _key: req.queryParams.uid, password: req.queryParams.password, name: req.queryParams.name, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
