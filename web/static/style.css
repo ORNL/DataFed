@@ -1,13 +1,18 @@
-html, body
+html
+{
+    height: 100%
+}
+
+body
 {
     font-family: "arial", "sans-serif";
-    margin: 0;
 }
 
 .col-flex
 {
     display:flex;
     flex-direction:column;
+    height: 100%;
     /*justify-content:flex-start;
     align-items:stretch;
     align-content:flex-start;*/
@@ -17,6 +22,7 @@ html, body
 {
     display:flex;
     flex-direction:row;
+    width: 100%;
     /*justify-content:flex-start;
     align-items:stretch;
     align-content:flex-start;*/
@@ -30,6 +36,7 @@ html, body
     border-style: solid;
     border-width: 0px 0px 2px 0px;
     border-color: #000000;
+    margin: 0;
 }
 
 .footer
@@ -39,10 +46,12 @@ html, body
     border-style: solid;
     border-width: 2px 0px 0px 0px;
     border-color: #000000;
+    margin: 0;
 }
 
 .content
 {
     background: #e0e0e0;
     color: #033003;
+    margin: 0;
 }
