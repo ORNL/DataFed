@@ -20,7 +20,7 @@ function logout() {
     console.log( "logout");
     g_user = null;
     Cookies.remove( 'sdms-user' );
-    //sessionStorage.clear();
+    window.location = "/";
 }
 
 
