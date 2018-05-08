@@ -6,6 +6,21 @@
     <body>
         <h1>Scientific Data Management System - Registration</h1>
         <p>TO DO: Restrict to specific organizations, projects, and/or staff groups.</p>
-        Click <a href="/usr/register">here</a> to register as an SDMS user.
+        <p>Please enter a password for your new SDMS account. This password is needed for the SDMS command-line interface (CLI). The SDMS CLI can be used to generate local credentials to support automatic authentication.</p>
+        New Password: <input type="password" id="pw1"><br>
+        Re-enter Password: <input type="password" id="pw2"><br>
+        <button onclick="register()" type="button">Register</button>
     </body>
+    <script>
+        function register() {
+            var pw1 = document.getElementById('pw1').value;
+            var pw2 = document.getElementById('pw2').value;
+            if ( pw1.length == 0 )
+                alert( "Password cannot be empty" );
+            else if ( pw1 != pw2 )
+                alert( "Passwords do not match" );
+            else
+                window.location = "/usr/register?pw="+pw1;
+        }
+    </script>
 </html>

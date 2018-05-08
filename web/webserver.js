@@ -215,6 +215,9 @@ app.get('/usr/register', ( a_request, a_response ) => {
             }
         };
 
+        console.log("frame buffer", frame.toString('hex'));
+        console.log("msg buffer", msg_buf.toString('hex'));
+
         core_sock.send([ nullfr, frame, msg_buf ]);
     });
 });
