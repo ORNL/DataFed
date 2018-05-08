@@ -1,6 +1,7 @@
 html
 {
     height: 100%;
+    padding: .5em;
 }
 
 body
@@ -53,4 +54,15 @@ body
 {
     background: #e0e0e0;
     color: #033003;
+}
+
+.button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: .5em .25em;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: .8em;
 }

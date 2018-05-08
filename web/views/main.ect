@@ -9,16 +9,18 @@
         </script>
         <title>SDMS Main</title>
     </head>
-    <body style="background:#FF0000">
-    <div class="col-flex" style="background:#00FF00">
+    <body>
+    <div class="col-flex">
         <div class="header" style="flex:none">
-            Scientific Data Management System
+            <div class="row-flex">
+                <div style="flex:1">Scientific Data Management System</div><div style="flex:none"><button onclick="logout()">Log Out</button></div>
+            </div>
         </div>
-        <div class="content" style="flex:1 0 auto">
+        <div class="content" style="flex:1">
             <p>This is the main SDMS page for authenticated users.</p>
         </div>
         <div class="footer" style="flex:none">
-            User: <span id=uname></span> <a onclick="logout()" href="/">Log Out</a><br>
+            User: <span id=uname></span>
         </div>
     </div>
     </body>
