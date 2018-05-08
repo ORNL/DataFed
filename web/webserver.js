@@ -189,13 +189,15 @@ app.get('/user_auth', ( a_request, a_response ) => {
 
 app.get('/usr/register', ( a_request, a_response ) => {
     var user = JSON.parse( a_request.cookies[ 'sdms-user' ] );
-    console.log( 'get /usr/register', user, typeof user );
+    console.log( 'get /usr/register', user );
 
     allocRequestContext( a_response, function( ctx ){
         var uid = user.username.substr( 0, user.username.indexOf( "@" ));
-        console.log( "create", { uid: uid, password: a_request.query.password, name: user.name, email: user.email, uuid: user.identities_set } );
+        console.log( "create", { uid: uid, password: a_request.query.pw, name: user.name, email: user.email, uuid: user.identities_set } );
         var msg = g_msg_by_name["UserCreateRequest"];
-        var msg_buf = msg.encode({ uid: uid, password: a_request.query.password, name: user.name, email: user.email, uuid: user.identities_set }).finish();
+        console.log( typeof uid, typeof a_request.query.pw, typeof user.name, typeof user.email );
+        var msg_buf = msg.encode({ uid: uid, password: a_request.query.pw, name: user.name, email: user.email, uuid: user.identities_set }).finish();
+        console.log("frame");
         var frame = Buffer.alloc(8);
         frame.writeUInt32LE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
