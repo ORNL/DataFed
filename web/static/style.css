@@ -21,7 +21,7 @@ html, body
     align-content:flex-start;
 }
 
-header
+.header
 {
     background: #004000;
     color: #ffffff;
@@ -30,7 +30,7 @@ header
     border-color: #000000
 }
 
-footer
+.footer
 {
     background: #004000;
     color: #ffffff;
@@ -38,7 +38,7 @@ footer
     border-color: #000000
 }
 
-content
+.content
 {
     background: #e0e0e0;
     color: #033003;
