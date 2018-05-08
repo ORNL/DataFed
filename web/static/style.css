@@ -35,8 +35,8 @@ body
     background: #004000;
     color: #ffffff;
     /*font-size: 1.6em;*/
-    border-style: solid;
-    border-width: 0px 0px 2px 0px;
+    border-style: double;
+    border-width: 0px 0px 3px 0px;
     border-color: #000000;
     padding: .5em;
 }
@@ -46,7 +46,7 @@ body
     background: #004000;
     color: #ffffff;
     border-style: solid;
-    border-width: 2px 0px 0px 0px;
+    border-width: 3px 0px 0px 0px;
     border-color: #000000;
     padding: .5em;
 }

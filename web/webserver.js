@@ -12,15 +12,15 @@
 
 'use strict';
 
-const express = require('express');
-var cookieParser = require('cookie-parser');
+const express = require('express'); // For REST api
+var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
 var request = require('request');
 const fs = require('fs');
 var protobuf = require("protobufjs");
 var zmq = require("zeromq");
 const app = express();
-var ECT = require('ect');
+var ECT = require('ect'); // for html templates
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
 const port = 443;
 
@@ -30,7 +30,6 @@ var server_cert = process.env.SDMS_WEB_CERT || 'sdms_web_cert.pem';
 var privateKey  = fs.readFileSync( server_key, 'utf8');
 var certificate = fs.readFileSync( server_cert, 'utf8');
 var web_credentials = {key: privateKey, cert: certificate};
-var jwt_decode = require('jwt-decode');
 var g_anon;
 var g_auth;
 var g_msg_by_id = {};
@@ -383,7 +382,4 @@ function allocRequestContext( a_response, a_callback ) {
 };
 
 var httpsServer = https.createServer( web_credentials, app );
-
-console.log( "listeing on port", port );
-
 httpsServer.listen( port );
