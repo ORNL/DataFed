@@ -23,5 +23,8 @@ function logout() {
     window.location = "/";
 }
 
+function getData( a_callback ) {
+    a_callback(["data1","data2","data3","data4"]);
+}
 
 console.log( "main.js loaded");

@@ -13,11 +13,27 @@
     <div class="col-flex">
         <div class="header" style="flex:none">
             <div class="row-flex">
-                <div style="flex:1;font-size: 1.6em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="button" onclick="logout()">Log Out</button></div>
+                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="logout()">Log Out</button></div>
             </div>
         </div>
-        <div class="content" style="flex:1">
-            <p>This is the main SDMS page for authenticated users.</p>
+        <div id="content" class="content" style="flex:auto">
+            <div id="tabs">
+                <ul>
+                    <li><a href="#tab-data">Data</a></li>
+                    <li><a href="#fragment-2">Projects</a></li>
+                    <li><a href="#fragment-3">Settings</a></li>
+                </ul>
+                <div id="tab-data">
+                    <ul id="data-list">
+                    </ul>
+                </div>
+                <div id="fragment-2">
+                    Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+                </div>
+                <div id="fragment-3">
+                    Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+                </div>
+            </div>
         </div>
         <div class="footer" style="flex:none">
             User: <span id=uname></span>
@@ -25,6 +41,32 @@
     </div>
     </body>
     <script>
+        function resizeHandler() {
+            console.log("resized!");
+            $('#tabs').tabs().height(50);
+            $('#tabs').tabs().height($("#content").height()-9);
+            $("#tabs").tabs("refresh");
+        }
+
         document.getElementById("uname").innerHTML = g_user.name;
+        $("#tabs").tabs({heightStyle:"fill"}).css({
+            'min-height': '50px',
+            'overflow': 'auto'
+        });
+        $(".btn").button();
+
+        window.addEventListener( "resize", resizeHandler );
+
+        getData( function( data ) {
+            var html = "";
+            for ( var i in data ) {
+                html += "<li>" + data[i] + "</li>";
+            }
+            $("#data-list").html( html ).selectable({
+                classes: {
+                    "ui-selectable": "ui-state-default",
+                    "ui-selected": "ui-state-highlight"
+                }});
+        });
     </script>
 </html>

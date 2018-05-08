@@ -55,7 +55,7 @@ body
 {
     background: #e0e0e0;
     color: #033003;
-    padding: .5em;
+    /*padding: .5em;*/
 }
 
 .button {
@@ -67,4 +67,14 @@ body
     text-decoration: none;
     display: inline-block;
     /*font-size: .8em;*/
+}
+
+.ui-selectablexx
+{
+    background-color: #808080;
+}
+
+.ui-selectedxx
+{
+    background-color: #80FF80;
 }
