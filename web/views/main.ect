@@ -9,16 +9,18 @@
         </script>
         <title>SDMS Main</title>
     </head>
-    <body class="col-flex">
+    <body style="height:100%">
+    <div class="col-flex" style="height:100%">
         <div class="header" style="flex:none">
             Scientific Data Management System
         </div>
         <div class="content" style="flex:auto">
             <p>This is the main SDMS page for authenticated users.</p>
         </div>
-        <div class="header" style="flex:none">
+        <div class="footer" style="flex:none">
             User: <span id=uname></span> <a onclick="logout()" href="/">Log Out</a><br>
         </div>
+    </div>
     </body>
     <script>
         document.getElementById("uname").innerHTML = g_user.name;
