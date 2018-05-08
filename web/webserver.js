@@ -188,63 +188,76 @@ app.get('/user_auth', ( a_request, a_response ) => {
 });
 
 app.get('/usr/register', ( a_request, a_response ) => {
-    var user = a_request.cookies[ 'sdms-user' ];
+    var user = JSON.parse( a_request.cookies[ 'sdms-user' ] );
     console.log( 'get /usr/register', user, typeof user );
 
-    a_response.redirect( "/error" );
+    allocRequestContext( a_response, function( ctx ){
+        var uid = user.username.substr( 0, user.username.indexOf( "@" ));
+        console.log( "create", { uid: uid, password: a_request.query.password, name: user.name, email: user.email, uuid: user.identities_set } );
+        var msg = g_msg_by_name["UserCreateRequest"];
+        var msg_buf = msg.encode({ uid: uid, password: a_request.query.password, name: user.name, email: user.email, uuid: user.identities_set }).finish();
+        var frame = Buffer.alloc(8);
+        frame.writeUInt32LE( msg_buf.length, 0 );
+        frame.writeUInt8( msg._pid, 4 );
+        frame.writeUInt8( msg._mid, 5 );
+        frame.writeUInt16LE( ctx, 6 );
+
+        g_ctx[ctx] = function( reply ){
+            console.log( "reply to /usr/register", reply );
+            if ( reply.errCode ) {
+                // TODO Need to provide error information as query string
+                a_response.redirect( "error" );
+            } else {
+                user.registered = true;
+                user.active = true;
+                a_response.cookie( 'sdms-user', JSON.stringify( user ));
+                a_response.redirect( "main" );
+            }
+        };
+
+        core_sock.send([ nullfr, frame, msg_buf ]);
+    });
 });
 
 app.get('/usr/find', ( a_request, a_response ) => {
     console.log("get /usr/find");
 
-    var ctx = g_ctx_next;
-    if ( ctx == MAX_CTX ) {
-        ctx = g_ctx.indexOf( null );
-        if ( ctx == -1 ) {
-            a_response.status( 503 );
-            a_response.send( "Server too busy" );
-            return;
-        }
-    } else if ( ++g_ctx_next < MAX_CTX ) {
-        if ( g_ctx[g_ctx_next] )
-            g_ctx_next = MAX_CTX;
-    }
+    allocRequestContext( a_response, function( ctx ){
+        var msg = g_msg_by_name["UserFindByUUIDsRequest"];
+        var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
+        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
-    //var msg = g_auth.lookupType("SDMS.UserFindByUUIDsRequest");
-    var msg = g_msg_by_name["UserFindByUUIDsRequest"];
-    var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
-    console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        /* Frame contents (C++)
+        uint32_t    size;       // Size of buffer
+        uint8_t     proto_id;
+        uint8_t     msg_id;
+        uint16_t    isContext
+        */
+        var frame = Buffer.alloc(8);
+        frame.writeUInt32LE( msg_buf.length, 0 );
+        frame.writeUInt8( msg._pid, 4 );
+        frame.writeUInt8( msg._mid, 5 );
+        frame.writeUInt16LE( ctx, 6 );
 
-    /* Frame contents (C++)
-    uint32_t    size;       // Size of buffer
-    uint8_t     proto_id;
-    uint8_t     msg_id;
-    uint16_t    isContext
-    */
-    var frame = Buffer.alloc(8);
-    frame.writeUInt32LE( msg_buf.length, 0 );
-    frame.writeUInt8( msg._pid, 4 );
-    frame.writeUInt8( msg._mid, 5 );
-    frame.writeUInt16LE( ctx, 6 );
+        g_ctx[ctx] = function( reply ){
+            console.log( "reply to /usr/find", reply );
+            if ( reply.errCode ) {
+                a_response.status( 404 );
+                if ( reply.errMsg )
+                    a_response.send( reply.errMsg );
+                else
+                    a_response.send( "User not found" );
+            } else {
+                var user = reply.user[0];
+                a_response.send({ name: user.name, uid: user.uid });
+            }
+        };
 
-    g_ctx[ctx] = function( reply ){
-        console.log( "reply to /usr/find", reply );
-        if ( reply.errCode ) {
-            a_response.status( 404 );
-            if ( reply.errMsg )
-                a_response.send( reply.errMsg );
-            else
-                a_response.send( "User not found" );
-        } else {
-            var user = reply.user[0];
-            a_response.send({ name: user.name, uid: user.uid });
-        }
-    };
+        //console.log("frame buffer", frame.toString('hex'));
+        //console.log("msg buffer", msg_buf.toString('hex'));
 
-    //console.log("frame buffer", frame.toString('hex'));
-    //console.log("msg buffer", msg_buf.toString('hex'));
-
-    core_sock.send([ nullfr, frame, msg_buf ]);
+        core_sock.send([ nullfr, frame, msg_buf ]);
+    });
 });
 
 process.on('unhandledRejection', (reason, p) => {
@@ -349,6 +362,22 @@ core_sock.on('message', function( delim, frame, msg_buf ) {
     }
 });
 
+function allocRequestContext( a_response, a_callback ) {
+    var ctx = g_ctx_next;
+    if ( ctx == MAX_CTX ) {
+        ctx = g_ctx.indexOf( null );
+        if ( ctx == -1 ) {
+            a_response.status( 503 );
+            a_response.send( "Server too busy" );
+        } else {
+            a_callback( ctx );
+        }
+    } else if ( ++g_ctx_next < MAX_CTX ) {
+        if ( g_ctx[g_ctx_next] )
+            g_ctx_next = MAX_CTX;
+        a_callback( ctx );
+    }
+};
 
 var httpsServer = https.createServer( web_credentials, app );
 

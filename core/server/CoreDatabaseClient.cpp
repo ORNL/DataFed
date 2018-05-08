@@ -164,20 +164,42 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
 }
 
 void
+DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
+{
+    vector<pair<string,string>> params;
+    params.push_back({"uid",a_request.uid()});
+    params.push_back({"password",a_request.password()});
+    params.push_back({"name",a_request.name()});
+    params.push_back({"email",a_request.email()});
+    string uuids = "[";
+    for ( int i = 0; i < a_request.uuid_size(); i++ )
+    {
+        if ( i )
+            uuids += ",";
+        uuids += "\"" + a_request.uuid(i) + "\"";
+    }
+    uuids += "]";
+    params.push_back({"uuids",uuids});
+
+    rapidjson::Document result;
+    dbGet( "usr/create", params, result );
+
+    setUserData( a_reply, result );
+}
+
+
+void
 DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
-    params.push_back({"subject",a_request.uid()});
+    params.push_back({"uid",a_request.uid()});
     if ( a_request.has_details() && a_request.details() )
         params.push_back({"details","true"});
 
     rapidjson::Document result;
-    long http_code = dbGet( "usr/view", params, result );
+    dbGet( "usr/view", params, result );
 
-    if ( http_code >= 200 && http_code < 300 )
-    {
-        setUserData( a_reply, result );
-    }
+    setUserData( a_reply, result );
 }
 
 
@@ -185,23 +207,15 @@ void
 DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply & a_reply )
 {
     rapidjson::Document result;
-    long http_code;
 
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
-    if ( a_request.has_name() )
-        params.push_back({"name",a_request.name()});
     if ( a_request.has_email() )
         params.push_back({"email",a_request.email()});
-    if ( a_request.has_globus_id() )
-        params.push_back({"globus_id",a_request.globus_id()});
 
-    http_code = dbGet( "usr/update", params, result );
+    dbGet( "usr/update", params, result );
 
-    if ( http_code >= 200 && http_code < 300 )
-    {
-        setUserData( a_reply, result );
-    }
+    setUserData( a_reply, result );
 }
 
 
@@ -213,12 +227,9 @@ DatabaseClient::userList( const UserListRequest & a_request, UserDataReply & a_r
         params.push_back({"details","true"});
 
     rapidjson::Document result;
-    long http_code = dbGet( "usr/list", params, result );
+    dbGet( "usr/list", params, result );
 
-    if ( http_code >= 200 && http_code < 300 )
-    {
-        setUserData( a_reply, result );
-    }
+    setUserData( a_reply, result );
 }
 
 void
@@ -236,12 +247,9 @@ DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request,
     uuids += "]";
 
     rapidjson::Document result;
-    long http_code = dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result );
+    dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result );
 
-    if ( http_code >= 200 && http_code < 300 )
-    {
-        setUserData( a_reply, result );
-    }
+    setUserData( a_reply, result );
 }
 
 void
@@ -262,9 +270,6 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
         user = a_reply.add_user();
         user->set_uid( val["uid"].GetString() );
         user->set_name( val["name"].GetString() );
-
-        if (( imem = val.FindMember("globus_id")) != val.MemberEnd() )
-            user->set_globus_id( imem->value.GetString() );
 
         if (( imem = val.FindMember("email")) != val.MemberEnd() )
             user->set_email( imem->value.GetString() );

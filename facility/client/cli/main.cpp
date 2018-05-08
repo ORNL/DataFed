@@ -134,8 +134,6 @@ void printUsers( spUserDataReply a_reply )
                 cout << "  Name   : " << user.name() << "\n";
                 if ( user.has_email() )
                     cout << "  email  : " << user.email() << "\n";
-                if ( user.has_globus_id() )
-                    cout << "  globus : " << user.globus_id() << "\n";
                 if ( user.has_phone() )
                     cout << "  phone  : " << user.phone() << "\n";
                 if ( user.has_is_admin() )
@@ -161,8 +159,6 @@ void printUsers( spUserDataReply a_reply )
                 cout << "{\"uid\":\"" << user.uid() << "\",\"name\":\"" << user.name() << "\"";
                 if ( user.has_email() )
                     cout << ",\"email\":\"" << user.email() << "\"";
-                if ( user.has_globus_id() )
-                    cout << ",\"globus_id\":\"" << user.globus_id() << "\"";
                 if ( user.has_phone() )
                     cout << ",\"phone\":\"" << user.phone() << "\"";
                 if ( user.has_is_admin() )
@@ -731,7 +727,7 @@ int user()
         if ( g_args.size() != 2 )
             return -1;
 
-        spUserDataReply rep = g_client->userUpdate( g_args[1], g_name.size()?g_name.c_str():0, g_email.size()?g_email.c_str():0, g_globus_id.size()?g_globus_id.c_str():0 );
+        spUserDataReply rep = g_client->userUpdate( g_args[1], g_email.size()?g_email.c_str():0 );
         printUsers( rep );
     }
     else

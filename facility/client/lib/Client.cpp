@@ -465,19 +465,15 @@ Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 }
 
 spUserDataReply
-Client::userUpdate( const std::string & a_uid, const char * a_name, const char * a_email, const char * a_globus_id )
+Client::userUpdate( const std::string & a_uid, const char * a_email )
 {
     Auth::UserUpdateRequest req;
     Auth::UserDataReply *   reply;
 
     req.set_uid( a_uid );
 
-    if ( a_name )
-        req.set_name( a_name );
     if ( a_email )
         req.set_email( a_email );
-    if ( a_globus_id )
-        req.set_globus_id( a_globus_id );
 
     send<>( req, reply, m_ctx++ );
 

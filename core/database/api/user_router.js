@@ -47,7 +47,7 @@ router.get('/create', function (req, res) {
                 write: ["u","c","a","owner","ident","alias","admin"]
             },
             action: function() {
-                var user = g_db.u.save({ _key: req.queryParams.uid, password: req.queryParams.password, name: req.queryParams.name, globus_id: req.queryParams.globus_id, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
+                var user = g_db.u.save({ _key: req.queryParams.uid, password: req.queryParams.password, name: req.queryParams.name, email: req.queryParams.email, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project }, { returnNew: true });
 
                 var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name + " (" + req.queryParams.uid +")" }, { returnNew: true });
 
@@ -57,8 +57,19 @@ router.get('/create', function (req, res) {
                 g_db.alias.save({ _from: root._id, _to: alias._id });
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
+                var i;
+                var uuid;
+                for ( i in req.queryParams.uuids ) {
+                    uuid = "uuid/" + req.queryParams.uuids[i];
+                    if ( g_db._exists({ _id: uuid }))
+                        throw g_lib.ERR_INVALID_IDENT;
+
+                    g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
+                    g_db.ident.save({ _from: user._id, _to: uuid });
+                }
+
                 if ( req.queryParams.admins ) {
-                    for ( var i in req.queryParams.admins ) {
+                    for ( i in req.queryParams.admins ) {
                         if ( !g_db._exists( "u/" + req.queryParams.admins[i] ))
                             throw g_lib.ERR_USER_NOT_FOUND;
                         g_db.admin.save({ _from: user._id, _to: "u/" + req.queryParams.admins[i] });
@@ -82,11 +93,11 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('uid', joi.string().required(), "SDMS user ID for new user")
+.queryParam('uid', joi.string().required(), "SDMS user ID (globus) for new user")
 .queryParam('password', joi.string().required(), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().required(), "Email")
-.queryParam('globus_id', joi.string().required(), "Primary Globus ID (user name portion only)")
+.queryParam('uuids', joi.array().items(joi.string()).required(), "Globus identities (UUIDs)")
 .queryParam('is_admin', joi.boolean().optional(), "New account is a system administrator")
 .queryParam('is_project', joi.boolean().optional(), "New account is a project")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
@@ -196,7 +207,6 @@ router.get('/update', function (req, res) {
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('password', joi.string().optional(), "SDMS account password")
 .queryParam('name', joi.string().optional(), "New name")
-.queryParam('globus_id', joi.string().optional(), "Globus ID (user name portion only)")
 .queryParam('email', joi.string().optional(), "New email")
 .queryParam('is_admin', joi.boolean().optional(), "New system administrator flag value")
 .queryParam('is_project', joi.boolean().optional(), "New account project flag value")

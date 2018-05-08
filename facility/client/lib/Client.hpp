@@ -89,7 +89,7 @@ public:
 
     spUserDataReply     userView( const std::string & a_uid, bool a_details );
     spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
-    spUserDataReply     userUpdate( const std::string & a_uid, const char * a_name, const char * a_email, const char * a_globus_id );
+    spUserDataReply     userUpdate( const std::string & a_uid, const char * a_email );
 
     spRecordDataReply   recordList();
     spRecordDataReply   recordCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_proj_id = 0, const char * a_coll_id = 0 );

@@ -67,11 +67,10 @@ message UserData
     required string             name        = 2;
     optional string             email       = 3;
     optional string             phone       = 4;
-    optional string             globus_id   = 5;
-    optional bool               is_admin    = 6;
-    optional bool               is_project  = 7;
-    repeated string             admin       = 8;
-    repeated string             ident       = 9;
+    optional bool               is_admin    = 5;
+    optional bool               is_project  = 6;
+    repeated string             admin       = 7;
+    repeated string             ident       = 8;
 }
 
 message RecordData

@@ -55,6 +55,15 @@ message CheckPermsReply
 
 // ============================ User Messages
 
+message UserCreateRequest
+{
+    required string             uid         = 1;
+    required string             password    = 2;
+    required string             name        = 3;
+    required string             email       = 4;
+    repeated string             uuid        = 5;
+}
+
 message UserViewRequest
 {
     required string             uid         = 1;
@@ -69,9 +78,7 @@ message UserFindByUUIDsRequest
 message UserUpdateRequest
 {
     required string             uid         = 1;
-    optional string             name        = 2;
-    optional string             email       = 3;
-    optional string             globus_id   = 4;
+    optional string             email       = 2;
 }
 
 message UserListRequest
