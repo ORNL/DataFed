@@ -4,8 +4,8 @@ html, body
     margin: 0;
 }
 
-.col-flex{
-    height:100%;
+.col-flex
+{
     display:flex;
     flex-direction:column;
     justify-content:flex-start;
@@ -13,8 +13,8 @@ html, body
     align-content:flex-start;
 }
 
-.row-flex{
-    width: 100%;
+.row-flex
+{
     display:flex;
     flex-direction:row;
     justify-content:flex-start;
