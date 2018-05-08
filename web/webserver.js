@@ -193,11 +193,8 @@ app.get('/usr/register', ( a_request, a_response ) => {
 
     allocRequestContext( a_response, function( ctx ){
         var uid = user.username.substr( 0, user.username.indexOf( "@" ));
-        console.log( "create", { uid: uid, password: a_request.query.pw, name: user.name, email: user.email, uuid: user.identities_set } );
         var msg = g_msg_by_name["UserCreateRequest"];
-        console.log( typeof uid, typeof a_request.query.pw, typeof user.name, typeof user.email );
         var msg_buf = msg.encode({ uid: uid, password: a_request.query.pw, name: user.name, email: user.email, uuid: user.identities_set }).finish();
-        console.log("frame");
         var frame = Buffer.alloc(8);
         frame.writeUInt32LE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
@@ -208,17 +205,17 @@ app.get('/usr/register', ( a_request, a_response ) => {
             console.log( "reply to /usr/register", reply );
             if ( reply.errCode ) {
                 // TODO Need to provide error information as query string
-                a_response.redirect( "error" );
+                a_response.redirect( "/error" );
             } else {
                 user.registered = true;
                 user.active = true;
                 a_response.cookie( 'sdms-user', JSON.stringify( user ));
-                a_response.redirect( "main" );
+                a_response.redirect( "/main" );
             }
         };
 
-        console.log("frame buffer", frame.toString('hex'));
-        console.log("msg buffer", msg_buf.toString('hex'));
+        //console.log("frame buffer", frame.toString('hex'));
+        //console.log("msg buffer", msg_buf.toString('hex'));
 
         core_sock.send([ nullfr, frame, msg_buf ]);
     });
