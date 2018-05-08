@@ -100,7 +100,6 @@ app.get('/login', (request, response) => {
     console.log("get /login");
 
     var uri = globus_auth.code.getUri();
-    console.log( 'about to go to', uri );
     response.redirect(uri);
 });
 
@@ -116,7 +115,7 @@ app.get('/user_auth', ( a_request, a_response ) => {
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
     globus_auth.code.getToken( a_request.originalUrl + "&access_type=offline" ).then( function( client_token ) {
-        console.log( 'client token:', client_token );
+        //console.log( 'client token:', client_token );
 
         // TODO - Refresh the current users access token?
         /*
@@ -335,13 +334,15 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
 
 
 core_sock.on('message', function( delim, frame, msg_buf ) {
-    console.log( "got msg", delim, frame, msg_buf );
-    console.log( "frame", frame.toString('hex') );
+    //console.log( "got msg", delim, frame, msg_buf );
+    //console.log( "frame", frame.toString('hex') );
     var mlen = frame.readUInt32LE( 0 );
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
     var ctx = frame.readUInt16LE( 6 );
 
-    console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
+    console.log( "got msg type:", mtype );
+
+    //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
 
     var msg_class = g_msg_by_id[mtype];
     var msg;

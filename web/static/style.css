@@ -1,6 +1,45 @@
 html, body
 {
     font-family: "arial", "sans-serif";
+}
+
+.col-flex{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:stretch;
+    align-content:flex-start;
+}
+
+.row-flex{
+    width: 100%;
+    display:flex;
+    flex-direction:row;
+    justify-content:flex-start;
+    align-items:stretch;
+    align-content:flex-start;
+}
+
+header
+{
+    background: #004000;
+    color: #ffffff;
+    font-size: 1.6em;
+    border-width: 0px 0px 1px 0px;
+    border-color: #000000
+}
+
+footer
+{
+    background: #004000;
+    color: #ffffff;
+    border-width: 1px 0px 0px 0px;
+    border-color: #000000
+}
+
+content
+{
     background: #e0e0e0;
     color: #033003;
 }
