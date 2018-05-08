@@ -8,7 +8,6 @@ body
     font-family: "arial", "sans-serif";
     height: 100%;
     margin: 0;
-    padding: .5em;
 }
 
 .col-flex
@@ -35,10 +34,11 @@ body
 {
     background: #004000;
     color: #ffffff;
-    font-size: 1.6em;
+    /*font-size: 1.6em;*/
     border-style: solid;
     border-width: 0px 0px 2px 0px;
     border-color: #000000;
+    padding: .5em;
 }
 
 .footer
@@ -48,21 +48,23 @@ body
     border-style: solid;
     border-width: 2px 0px 0px 0px;
     border-color: #000000;
+    padding: .5em;
 }
 
 .content
 {
     background: #e0e0e0;
     color: #033003;
+    padding: .5em;
 }
 
 .button {
     background-color: #4CAF50;
     border: none;
     color: white;
-    padding: .5em .25em;
+    padding: .25em;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: .8em;
+    /*font-size: .8em;*/
 }
