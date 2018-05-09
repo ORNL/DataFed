@@ -2,6 +2,8 @@
 <html>
     <head>
         <% include 'head.ect' %>
+        <link href="fancytree/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
+        <script src="fancytree/jquery.fancytree-all.min.js"></script>
         <script type="text/javascript">
             loadUser();
             if ( !g_user || !g_user.active )
@@ -10,28 +12,48 @@
         <title>SDMS Main</title>
     </head>
     <body>
-    <div class="col-flex">
+    <div class="col-flex" style="height:100%">
         <div class="header" style="flex:none">
             <div class="row-flex">
                 <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="logout()">Log Out</button></div>
             </div>
         </div>
-        <div id="content" class="content" style="flex:auto">
+        <div id="content" class="content" style="flex:1 1 100%">
             <div id="tabs">
                 <ul>
-                    <li><a href="#tab-data">Data</a></li>
-                    <li><a href="#fragment-2">Projects</a></li>
-                    <li><a href="#fragment-3">Settings</a></li>
+                    <li><a href="#tab-1">Data</a></li>
+                    <li><a href="#tab-2">Projects</a></li>
+                    <li><a href="#tab-3">Settings</a></li>
                 </ul>
-                <div id="tab-data">
-                    <ul id="data-list">
-                    </ul>
+                <div id="tab-1">
+                    <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
+                        <div class="row-flex" style="flex:1 1 100%">
+                            <div class="col-flex" style="flex:1 1 auto;padding:.25em">
+                                <div style="flex:none">Collections &amp Data:</div>
+                                <div class="ui-widget-content text" style="flex:1 1 100%;overflow:auto">
+                                    <div id="data_tree" class="no-border"></div>
+                                </div>
+                            </div>
+                            <div class="col-flex" style="flex:1 1 auto;padding:.25em">
+                                <div style="flex:none">Selection Details:</div>
+                                <div id="data_info" class="ui-widget-content text" style="flex:1 1 100%">stuff</div>
+                            </div>
+                        </div>
+                        <div style="flex:none;padding:.25em">
+                            <button class="btn">New</button>
+                            <button class="btn act-folder act-data" disabled>Edit</button>
+                            <button class="btn act-folder act-data" disabled>Delete</button>
+                            <button class="btn act-folder act-data" disabled>Share</button>
+                            <button class="btn act-data" disabled>Link</button>
+                            <button class="btn act-data" disabled>Unlink</button>
+                            <button class="btn act-data" disabled>Upload</button>
+                            <button class="btn act-data" disabled>Download</button>
+                        </div>
+                    </div>
                 </div>
-                <div id="fragment-2">
-                    Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+                <div id="tab-2">
                 </div>
-                <div id="fragment-3">
-                    Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+                <div id="tab-3">
                 </div>
             </div>
         </div>
@@ -58,15 +80,58 @@
         window.addEventListener( "resize", resizeHandler );
 
         getData( function( data ) {
-            var html = "";
+            var content = [];
             for ( var i in data ) {
-                html += "<li>" + data[i] + "</li>";
+                content.push({ title: data[i], folder: false });
             }
-            $("#data-list").html( html ).selectable({
-                classes: {
-                    "ui-selectable": "ui-state-default",
-                    "ui-selected": "ui-state-highlight"
-                }});
+            var source = [{title:"root",folder:true,children:content}];
+            $("#data_tree").fancytree({
+                extensions: ["themeroller"],
+                themeroller: {
+                    activeClass: "ui-state-hover",
+                    addClass: "",
+                    focusClass: "",
+                    hoverClass: "ui-state-active",
+                    selectedClass: ""
+                },
+                source: source,
+                selectMode: 1,
+                click: function( event, data ) {
+                    console.log("click",data.node );
+                    //data.node.setSelected(true);
+                    showSelectedInfo( data.node );
+                },
+                select: function(event, data){
+                    console.log("select",data.node.isSelected(),data.node.data);
+                }
+            });
         });
+
+        function updateBtnState( state ){
+            if ( state == undefined ) {
+                console.log("undef");
+                $(".btn.act-folder .btn.act-data").button("option", "disabled", true);
+            } else if ( state == false ) {
+                console.log("false");
+                $(".btn.act-data").not(".act-folder").button("option", "disabled", true);
+                $(".btn.act-folder").button("option", "disabled", false);
+            } else {
+                console.log("true");
+                $(".btn.act-folder").button("option", "disabled", false);
+                $(".btn.act-data").button("option", "disabled", false);
+            }
+        }
+
+        function showSelectedInfo( node ){
+            var html = "";
+            if ( node.folder ) {
+                html += "Folder " + node.title;
+                updateBtnState( false );
+            } else {
+                html += "Data " + node.title;
+                updateBtnState( true );
+            }
+            $("#data_info").html(html);
+        }
     </script>
 </html>
