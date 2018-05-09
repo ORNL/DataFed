@@ -40,7 +40,7 @@ const oauth_credentials = {
     clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
     authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
     accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-    redirectUri: 'https://sdms.ornl.gov:443/user_auth',
+    redirectUri: 'https://sdms.ornl.gov:443/ui/authn',
     scopes: ['openid']
 };
 
@@ -71,6 +71,7 @@ var core_sock = zmq.socket('dealer');
 core_sock.connect('tcp://sdms.ornl.gov:9001');
 console.log('Worker connected to port 3000');
 
+//console.log(  __dirname + '/static' );
 app.use( express.static( __dirname + '/static' ));
 app.use( cookieParser() );
 app.set( 'view engine', 'ect' );
@@ -80,35 +81,62 @@ app.engine( 'ect', ectRenderer.render );
 app.get('/', (request, response) => {
     console.log("get /");
 
-    response.render('index');
+    if ( request.cookies['sdms'] )
+        response.redirect( '/ui/main' );
+    else
+        response.redirect('/ui');
 });
 
-app.get('/main', (request, response) => {
-    console.log("get /main");
+app.get('/ui', (request, response) => {
+    console.log("get /ui");
 
-    response.render( 'main', { user: request.cookies['sdms-user'] });
+    console.log( "sdms cookie:", request.cookies['sdms'] );
+
+    if ( request.cookies['sdms'] )
+        response.redirect( '/ui/main' );
+    else
+        response.render('index');
 });
 
-app.get('/register', (request, response) => {
-    console.log("get /register");
+app.get('/ui/main', (request, response) => {
+    console.log("get /ui/main");
+
+    console.log( "sdms cookie:", request.cookies['sdms'] );
+
+    if ( request.cookies['sdms'] )
+        response.render( 'main' );
+    else
+        response.redirect( '/ui' );
+});
+
+app.get('/ui/register', (request, response) => {
+    console.log("get /ui/register");
 
     response.render('register');
 });
 
-app.get('/login', (request, response) => {
-    console.log("get /login");
+app.get('/ui/login', (request, response) => {
+    console.log("get /ui/login");
 
     var uri = globus_auth.code.getUri();
     response.redirect(uri);
 });
 
-app.get('/error', (request, response) => {
-    console.log("get /error");
+app.get('/ui/logout', (request, response) => {
+    console.log("get /ui/logout");
+
+    response.clearCookie( 'sdms' );
+    response.clearCookie( 'sdms-user', { path: "/ui" } );
+    response.redirect("/ui");
+});
+
+app.get('/ui/error', (request, response) => {
+    console.log("get /ui/error");
 
     response.render('error');
 });
 
-app.get('/user_auth', ( a_request, a_response ) => {
+app.get('/ui/authn', ( a_request, a_response ) => {
     console.log( 'get /user_auth', a_request.originalUrl );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
@@ -145,39 +173,42 @@ app.get('/user_auth', ( a_request, a_response ) => {
                 userinfo = JSON.parse( body );
 
                 // Set access token cookie even if user isn't registered
-                a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
+                //a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
+
+                // TODO This can just be a function call - AJAX is NOT required!!!
 
                 request.get({
-                    uri: 'https://sdms.ornl.gov/usr/find',
+                    uri: 'https://sdms.ornl.gov/api/usr/find',
                     qs: { uuids: userinfo.identities_set },
                     agent: agent // HACK
                 }, function( error, response, body ) {
-                    console.log( '/usr/find cb' );
+                    console.log( '/api/usr/find cb' );
                     if ( error ) {
-                        console.log( '/usr/find error:', error );
-                        a_response.redirect( "/error" );
+                        console.log( '/api/usr/find error:', error );
+                        a_response.redirect( "/ui/error" );
                     } else {
                         if ( response.statusCode == 200 ) {
                             console.log( 'user found:', body );
                             // TODO Account may be disable from SDMS (active = false)
-                            userinfo.registered = true;
-                            userinfo.active = true;
-                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ));
-                            a_response.redirect( "main" );
+                            //userinfo.registered = true;
+                            //userinfo.active = true;
+                            a_response.cookie( 'sdms', userinfo.username, { httpOnly: true });
+                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
+                            a_response.redirect( "/ui/main" );
                         } else {
                             console.log( 'user not registered' );
-                            userinfo.registered = false;
-                            userinfo.active = false;
-                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ));
-                            a_response.redirect( "register" );
+                            /*userinfo.registered = false;
+                            userinfo.active = false;*/
+                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
+                            a_response.redirect( "/ui/register" );
                         }
                     }
                 });
 
             } else {
-                a_response.clearCookie( 'sdms-token' );
-                a_response.clearCookie( 'sdms-user' );
-                a_response.redirect( "/error" );
+                a_response.clearCookie( 'sdms' );
+                a_response.clearCookie( 'sdms-user', { path: "/ui" } );
+                a_response.redirect( "/ui/error" );
             }
         } );
     }, function( reason ){
@@ -185,14 +216,14 @@ app.get('/user_auth', ( a_request, a_response ) => {
     });
 });
 
-app.get('/usr/register', ( a_request, a_response ) => {
-    var user = JSON.parse( a_request.cookies[ 'sdms-user' ] );
-    console.log( 'get /usr/register', user );
+app.get('/ui/do_register', ( a_request, a_response ) => {
+    var userinfo = JSON.parse( a_request.cookies[ 'sdms-user' ] );
+    console.log( 'get /ui/do_register', userinfo );
 
     allocRequestContext( a_response, function( ctx ){
-        var uid = user.username.substr( 0, user.username.indexOf( "@" ));
+        var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
         var msg = g_msg_by_name["UserCreateRequest"];
-        var msg_buf = msg.encode({ uid: uid, password: a_request.query.pw, name: user.name, email: user.email, uuid: user.identities_set }).finish();
+        var msg_buf = msg.encode({ uid: uid, password: a_request.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }).finish();
         var frame = Buffer.alloc(8);
         frame.writeUInt32LE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
@@ -200,27 +231,26 @@ app.get('/usr/register', ( a_request, a_response ) => {
         frame.writeUInt16LE( ctx, 6 );
 
         g_ctx[ctx] = function( reply ){
-            console.log( "reply to /usr/register", reply );
+            console.log( "reply to /ui/do_register", reply );
             if ( reply.errCode ) {
                 // TODO Need to provide error information as query string
-                a_response.redirect( "/error" );
+                a_response.redirect( "/ui/error" );
             } else {
-                user.registered = true;
-                user.active = true;
-                a_response.cookie( 'sdms-user', JSON.stringify( user ));
-                a_response.redirect( "/main" );
+                a_response.cookie( 'sdms', userinfo.username, { httpOnly: true });
+                //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
+                a_response.redirect( "/ui/main" );
             }
         };
 
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
 
-        core_sock.send([ nullfr, frame, msg_buf ]);
+        core_sock.send([ nullfr, frame, nullfr, msg_buf ]);
     });
 });
 
-app.get('/usr/find', ( a_request, a_response ) => {
-    console.log("get /usr/find");
+app.get('/api/usr/find', ( a_request, a_response ) => {
+    console.log("get /api/usr/find");
 
     allocRequestContext( a_response, function( ctx ){
         var msg = g_msg_by_name["UserFindByUUIDsRequest"];
@@ -240,7 +270,7 @@ app.get('/usr/find', ( a_request, a_response ) => {
         frame.writeUInt16LE( ctx, 6 );
 
         g_ctx[ctx] = function( reply ){
-            console.log( "reply to /usr/find", reply );
+            console.log( "reply to /api/usr/find", reply );
             if ( reply.errCode ) {
                 a_response.status( 404 );
                 if ( reply.errMsg )
@@ -256,9 +286,26 @@ app.get('/usr/find', ( a_request, a_response ) => {
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
 
-        core_sock.send([ nullfr, frame, msg_buf ]);
+        core_sock.send([ nullfr, frame, nullfr, msg_buf ]);
     });
 });
+
+
+app.get('/api/col/read', ( a_req, a_resp ) => {
+    sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/col/read", reply );
+        var result =[];
+        var item;
+
+        for ( var i in reply.coll ) {
+            item = reply.coll[i];
+            result.push({ id:item.id, title:item.title });
+        }
+
+        a_response.send(result);
+    });
+});
+
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -380,6 +427,52 @@ function allocRequestContext( a_response, a_callback ) {
         a_callback( ctx );
     }
 };
+
+function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
+    var client = JSON.parse( a_req.cookies[ 'sdms' ] );
+    if ( !client ) {
+        a_resp.status(403).send( "Not authorized" );
+        return;
+    }
+
+    allocRequestContext( a_response, function( ctx ){
+        var msg = g_msg_by_name[a_msg_name];
+        if ( !msg )
+            throw "Invalid message type: " + a_msg_nam;
+
+        var msg_buf = msg.encode(a_msg_data).finish();
+        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+
+        /* Frame contents (C++)
+        uint32_t    size;       // Size of buffer
+        uint8_t     proto_id;
+        uint8_t     msg_id;
+        uint16_t    isContext
+        */
+        var frame = Buffer.alloc(8);
+        frame.writeUInt32LE( msg_buf.length, 0 );
+        frame.writeUInt8( msg._pid, 4 );
+        frame.writeUInt8( msg._mid, 5 );
+        frame.writeUInt16LE( ctx, 6 );
+
+        g_ctx[ctx] = function( reply ) {
+            if ( a_reply.errCode ) {
+                if ( a_reply.errMsg )
+                    a_resp.status(500).send( a_reply.errMsg );
+                else
+                    a_resp.status(500).send( "error code: " + a_reply.errCode );
+            } else {
+                a_cb( reply );
+            }
+        };
+
+        //console.log("frame buffer", frame.toString('hex'));
+        //console.log("msg buffer", msg_buf.toString('hex'));
+
+        core_sock.send([ nullfr, frame, client, msg_buf ]);
+    });
+};
+
 
 var httpsServer = https.createServer( web_credentials, app );
 httpsServer.listen( port );
