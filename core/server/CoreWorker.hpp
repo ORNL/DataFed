@@ -30,18 +30,18 @@ private:
     void setupMsgHandlers();
     void workerThread();
     template<typename RQ, typename RP, void (DatabaseClient::*func)( const RQ &, RP &)>
-    bool dbPassThrough();
-    bool procStatusRequest();
-    bool procAuthenticateRequest();
-    bool procGenerateCredentialsRequest();
-    bool procSSH_GenerateKeysRequest();
-    bool procSSH_GetPublicKeyRequest();
-    bool procDataGetRequest();
-    bool procDataPutRequest();
-    bool procDataDeleteRequest();
-    bool procRecordDeleteRequest();
+    bool dbPassThrough( const std::string & a_uid );
+    bool procStatusRequest( const std::string & a_uid );
+    bool procAuthenticateRequest( const std::string & a_uid );
+    bool procGenerateCredentialsRequest( const std::string & a_uid );
+    bool procSSH_GenerateKeysRequest( const std::string & a_uid );
+    bool procSSH_GetPublicKeyRequest( const std::string & a_uid );
+    bool procDataGetRequest( const std::string & a_uid );
+    bool procDataPutRequest( const std::string & a_uid );
+    bool procDataDeleteRequest( const std::string & a_uid );
+    bool procRecordDeleteRequest( const std::string & a_uid );
 
-    typedef bool (Worker::*msg_fun_t)();
+    typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
 
     IWorkerMgr &        m_mgr;
     size_t              m_tid;

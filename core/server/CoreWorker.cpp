@@ -142,7 +142,7 @@ Worker::workerThread()
                 {
                     DL_INFO( "W"<<m_tid<<" calling handler" );
 
-                    if ( (this->*handler->second)())
+                    if ( (this->*handler->second)( m_msg_buf.getUID() ))
                     {
                         comm.send( m_msg_buf );
                     }
@@ -229,9 +229,12 @@ return send_reply;
 
 template<typename RQ, typename RP, void (DatabaseClient::*func)( const RQ &, RP &)>
 bool
-Worker::dbPassThrough()
+Worker::dbPassThrough( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RQ, RP )
+
+    m_db_client.setClient( a_uid );
+
     cout << "Calling DB handler " << func << endl;
     (m_db_client.*func)( *request, reply );
 
@@ -239,10 +242,10 @@ Worker::dbPassThrough()
 }
 
 bool
-Worker::procStatusRequest()
+Worker::procStatusRequest( const std::string & a_uid )
 {
-    cout << "procStatusRequest\n";
     PROC_MSG_BEGIN( StatusRequest, StatusReply )
+    (void)a_uid;
 
     reply.set_status( SS_NORMAL );
 
@@ -250,64 +253,72 @@ Worker::procStatusRequest()
 }
 
 bool
-Worker::procAuthenticateRequest()
+Worker::procAuthenticateRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procGenerateCredentialsRequest()
+Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procSSH_GenerateKeysRequest()
+Worker::procSSH_GenerateKeysRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( SSH_GenerateKeysRequest, SSH_PublicKeyReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procSSH_GetPublicKeyRequest()
+Worker::procSSH_GetPublicKeyRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( SSH_GetPublicKeyRequest, SSH_PublicKeyReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procDataGetRequest()
+Worker::procDataGetRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procDataPutRequest()
+Worker::procDataPutRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procDataDeleteRequest()
+Worker::procDataDeleteRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
 
     PROC_MSG_END
 }
 
 bool
-Worker::procRecordDeleteRequest()
+Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
+    (void)a_uid;
     PROC_MSG_BEGIN( RecordDeleteRequest, RecordDeleteReply )
 
     PROC_MSG_END

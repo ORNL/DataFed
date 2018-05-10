@@ -52,17 +52,74 @@ function _asyncGet( a_path, a_raw_json_data, a_callback ) {
     });
 }
 
-function getData( a_coll_id, a_callback ) {
-    _asyncGet( "/col/read?id=" + a_coll_id, null, function( ok, data ){
-        if ( ok )
+function viewData( a_id, a_callback ) {
+    console.log("viewData()");
+    _asyncGet( "/api/dat/view?id=" + a_id, null, function( ok, data ){
+        if ( ok ) {
+            console.log("viewData ok, data:", data, typeof data );
             a_callback( data );
+        }
+        else {
+            console.log("viewData failed:", data );
+            a_callback();
+        }
+    });
+}
+
+function viewColl( a_id, a_callback ) {
+    console.log("viewColl()");
+    _asyncGet( "/api/col/view?id=" + a_id, null, function( ok, data ){
+        if ( ok ) {
+            console.log("viewColl ok, data:", data, typeof data );
+            a_callback( data );
+        }
+        else {
+            console.log("viewColl failed:", data );
+            a_callback();
+        }
+    });
+}
+
+/*
+function getData( a_coll_id, a_callback ) {
+    console.log("getData()");
+    _asyncGet( "/api/col/read?id=" + a_coll_id, null, function( ok, data ){
+        if ( ok ) {
+            console.log("getData ok, data:", data, typeof data );
+
+            a_callback( data );
+        }
         else {
             console.log("getData failed:", data );
             a_callback();
         }
     });
+}*/
 
-    /*a_callback(["data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4","data1","data2","data3","data4"]);*/
+function dlgNew() {
+    var frame = $('#dlg_new');
+
+    var options = {
+        title: "New Data or Collection",
+        modal: true,
+        width: 400,
+        height: 'auto',
+        resizable: true,
+        closeOnEscape: false,
+        buttons: [{
+            text: "Create",
+            click: function() {
+                $( this ).dialog( "close" );
+            }
+        },{
+            text: "Cancel",
+            click: function() {
+                $( this ).dialog( "close" );
+            }
+        }]
+    };
+
+    frame.dialog( options );
 }
 
 console.log( "main.js loaded");

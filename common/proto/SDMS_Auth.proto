@@ -114,7 +114,7 @@ message RecordFindRequest
 // Returned for any command the returns one or more user records
 message RecordDataReply
 {
-    repeated SDMS.RecordData    record      = 1;
+    repeated SDMS.RecordData    data        = 1;
 }
 
 message RecordCreateRequest
@@ -242,7 +242,7 @@ message CollWriteRequest
 // Returned for any command the returns one or more user records
 message CollDataReply
 {
-    repeated SDMS.CollData      coll        = 1;
+    repeated SDMS.CollData      data        = 1;
 }
 
 // ============================ Group Messages

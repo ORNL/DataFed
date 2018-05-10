@@ -206,12 +206,12 @@ void printGroups( spGroupDataReply a_reply )
 
 void printData( spRecordDataReply a_rep, bool a_list = false )
 {
-    if ( a_rep->record_size() )
+    if ( a_rep->data_size() )
     {
         size_t pos;
-        for ( int i = 0; i < a_rep->record_size(); i++ )
+        for ( int i = 0; i < a_rep->data_size(); i++ )
         {
-            const RecordData & rec = a_rep->record(i);
+            const RecordData & rec = a_rep->data(i);
 
             if ( a_list )
             {
@@ -258,12 +258,12 @@ void printData( spRecordDataReply a_rep, bool a_list = false )
 
 void printCollData( spCollDataReply a_reply, bool a_list = false )
 {
-    if ( a_reply->coll_size() )
+    if ( a_reply->data_size() )
     {
         size_t pos;
-        for ( int i = 0; i < a_reply->coll_size(); i++ )
+        for ( int i = 0; i < a_reply->data_size(); i++ )
         {
-            const CollData & data = a_reply->coll(i);
+            const CollData & data = a_reply->data(i);
 
             if ( a_list )
             {
@@ -454,7 +454,7 @@ int find_records()
     }
 
     spRecordDataReply rep = g_client->recordFind( query );
-    cout << rep->record_size() << " match(es) found:\n\n";
+    cout << rep->data_size() << " match(es) found:\n\n";
     printData( rep, true );
 
     return 0;
@@ -505,7 +505,7 @@ int put_data()
     {
         // Create new record based on options
         spRecordDataReply rep = createRecord();
-        data_id = rep->record(0).id();
+        data_id = rep->data(0).id();
     }
     else if ( g_args.size() == 2 )
     {

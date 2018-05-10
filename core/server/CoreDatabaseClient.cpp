@@ -415,7 +415,7 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
     {
         rapidjson::Value & val = a_result[i];
 
-        rec = a_reply.add_record();
+        rec = a_reply.add_data();
         rec->set_id( val["id"].GetString() );
         rec->set_title( val["title"].GetString() );
 
@@ -596,14 +596,17 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
     {
         rapidjson::Value & val = a_result[i];
 
-        coll = a_reply.add_coll();
+        coll = a_reply.add_data();
         coll->set_id( val["id"].GetString() );
         coll->set_title( val["title"].GetString() );
 
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
         {
             if ( !imem->value.IsNull() )
+            {
+                cout << "set coll alias: " << imem->value.GetString() << "\n";
                 coll->set_alias( imem->value.GetString() );
+            }
         }
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )

@@ -91,11 +91,10 @@ MsgComm::~MsgComm()
 }
 
 void
-MsgComm::send( MsgBuf::Message & a_msg, uint16_t a_context )
+MsgComm::send( MsgBuf::Message & a_msg, const std::string & a_uid, uint16_t a_context )
 {
-    MsgBuf buf;
+    MsgBuf buf( a_uid, a_context, 0 );
 
-    buf.getFrame().context = a_context;
     buf.serialize( a_msg );
 
     send( buf );
@@ -137,8 +136,22 @@ MsgComm::send( MsgBuf & a_msg_buf )
 
     zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
     memcpy( zmq_msg_data( &msg ), &a_msg_buf.getFrame(), sizeof( MsgBuf::Frame ));
-    if (( rc = zmq_msg_send( &msg, m_socket, a_msg_buf.getFrame().size?ZMQ_SNDMORE:0 )) < 0 )
+    if (( rc = zmq_msg_send( &msg, m_socket, ZMQ_SNDMORE )) < 0 )
         EXCEPT( 1, "zmq_msg_send (frame) failed." );
+
+    // Send message UID (if set, null otherwise)
+    if ( a_msg_buf.getUID().size() )
+    {
+        zmq_msg_init_size( &msg, a_msg_buf.getUID().size() );
+        memcpy( zmq_msg_data( &msg ), a_msg_buf.getUID().c_str(), a_msg_buf.getUID().size() );
+    }
+    else
+    {
+        zmq_msg_init( &msg );
+    }
+
+    if (( rc = zmq_msg_send( &msg, m_socket, a_msg_buf.getFrame().size?ZMQ_SNDMORE:0 )) < 0 )
+        EXCEPT( 1, "zmq_msg_send (delimiter) failed." );
 
     if ( a_msg_buf.getFrame().size )
     {
@@ -152,7 +165,7 @@ MsgComm::send( MsgBuf & a_msg_buf )
 }
 
 bool
-MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_timeout )
+MsgComm::recv( MsgBuf::Message *& a_msg, std::string & a_uid, MsgBuf::Frame & a_frame, uint32_t a_timeout )
 {
     MsgBuf buf;
 
@@ -160,6 +173,7 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_tim
     {
         a_frame = buf.getFrame();
         a_msg = buf.unserialize();
+        a_uid = buf.getUID();
         return true;
     }
 
@@ -243,6 +257,19 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
     cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
+
+    zmq_msg_close( &msg );
+
+    // Recv client UID
+    zmq_msg_init( &msg );
+
+    if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
+        EXCEPT( 1, "zmq_msg_recv (uid) failed." );
+
+    if ( zmq_msg_size( &msg ))
+        a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
+    else
+        a_msg_buf.clearUID();
 
     zmq_msg_close( &msg );
 

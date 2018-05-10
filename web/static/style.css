@@ -70,6 +70,28 @@ body
     /*font-size: .8em;*/
 }
 
+.info_table
+{
+    border:none;
+    border-collapse:collapse;
+    width:100%;
+}
+
+.info_table tr:nth-child(even)
+{
+    background-color: #eee;
+}
+
+.info_table tr:nth-child(odd)
+{
+    background-color: #fff;
+}
+
+.info_table td
+{
+    vertical-align:top;
+}
+
 .no-border
 {
     border:none!important;
@@ -89,4 +111,9 @@ ul.ui-effects-placeholder { width:10px !important; }
 
 .ui-fancytree.fancytree-container { 
     border: none;
+}
+
+/* Hide all jQ dialog close buttons */
+.ui-dialog-titlebar-close {
+    visibility: hidden;
 }

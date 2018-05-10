@@ -341,6 +341,7 @@ Server::backgroundMaintenance()
         Auth::RepoDataDeleteRequest req;
         MsgBuf::Message *           reply;
         MsgBuf::Frame               frame;
+        string                      uid;
         MsgComm                     repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
 
         //vector<spSession>           dead_sessions;
@@ -370,13 +371,14 @@ Server::backgroundMaintenance()
             // Process data deletion requests
             try
             {
+                // TODO This needs to be re-written in an async manner
                 if ( m_data_delete.size() )
                 {
                     for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
                     {
                         req.set_id( *idel );
                         repo_comm.send( req );
-                        if ( !repo_comm.recv( reply, frame, 5000 ))
+                        if ( !repo_comm.recv( reply, uid, frame, 5000 ))
                         {
                             cout << "No response from repo server!\n";
                             break;
@@ -442,6 +444,7 @@ Server::xfrManagement()
         MsgBuf::Message *            raw_msg;
         Auth::RepoDataSizeReply *    sz_rep;
         MsgBuf::Frame                frame;
+        string                       uid;
         MsgComm  repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
 
         while( m_io_running )
@@ -557,7 +560,7 @@ Server::xfrManagement()
                                         // TODO This should be done in another thread so xfr mon isn't blocked
                                         sz_req.set_id( (*ixfr)->data_id );
                                         repo_comm.send( sz_req );
-                                        if ( !repo_comm.recv( raw_msg, frame, 10000 ))
+                                        if ( !repo_comm.recv( raw_msg, uid, frame, 10000 ))
                                             cout << "No response from repo server!\n";
                                         else
                                         {

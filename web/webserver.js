@@ -169,7 +169,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
             var userinfo = null;
 
             if ( response.statusCode >= 200 && response.statusCode < 300 ) {
-                //console.log( 'got user info:', body );
+                console.log( 'got user info:', body );
                 userinfo = JSON.parse( body );
 
                 // Set access token cookie even if user isn't registered
@@ -189,10 +189,12 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                     } else {
                         if ( response.statusCode == 200 ) {
                             console.log( 'user found:', body );
+                            var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+
                             // TODO Account may be disable from SDMS (active = false)
                             //userinfo.registered = true;
                             //userinfo.active = true;
-                            a_response.cookie( 'sdms', userinfo.username, { httpOnly: true });
+                            a_response.cookie( 'sdms', uid, { httpOnly: true });
                             a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
                             a_response.redirect( "/ui/main" );
                         } else {
@@ -236,7 +238,7 @@ app.get('/ui/do_register', ( a_request, a_response ) => {
                 // TODO Need to provide error information as query string
                 a_response.redirect( "/ui/error" );
             } else {
-                a_response.cookie( 'sdms', userinfo.username, { httpOnly: true });
+                a_response.cookie( 'sdms', uid, { httpOnly: true });
                 //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
                 a_response.redirect( "/ui/main" );
             }
@@ -290,22 +292,35 @@ app.get('/api/usr/find', ( a_request, a_response ) => {
     });
 });
 
-
 app.get('/api/col/read', ( a_req, a_resp ) => {
     sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         console.log( "reply to /api/col/read", reply );
-        var result =[];
-        var item;
 
-        for ( var i in reply.coll ) {
-            item = reply.coll[i];
-            result.push({ id:item.id, title:item.title });
-        }
-
-        a_response.send(result);
+        a_resp.send(reply);
     });
 });
 
+app.get('/api/col/view', ( a_req, a_resp ) => {
+    sendMessage( "CollViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/col/view", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/list', ( a_req, a_resp ) => {
+    sendMessage( "RecordListRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/dat/list", reply );
+
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/view', ( a_req, a_resp ) => {
+    sendMessage( "RecordViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/dat/view", reply );
+        a_resp.send(reply);
+    });
+});
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -367,19 +382,10 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
     }
-
-    // Test
-    /*
-    var msg = g_proto[pro.values.ID][1];
-    if ( msg )
-        console.log( "msg[1]:", msg.name );
-    else
-        console.log( "msg[1] not found!" );
-    */
 });
 
 
-core_sock.on('message', function( delim, frame, msg_buf ) {
+core_sock.on('message', function( delim, frame, client, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
     var mlen = frame.readUInt32LE( 0 );
@@ -387,6 +393,8 @@ core_sock.on('message', function( delim, frame, msg_buf ) {
     var ctx = frame.readUInt16LE( 6 );
 
     console.log( "got msg type:", mtype );
+    console.log( "client len:", client?client.length:0 );
+    console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
 
     //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
 
@@ -394,9 +402,18 @@ core_sock.on('message', function( delim, frame, msg_buf ) {
     var msg;
 
     if ( msg_class ) {
-        msg = msg_class.decode( msg_buf );
-        if ( !msg )
-            console.log( "decode failed" );
+        // Only try to decode if there is a payload
+        if ( msg_buf && msg_buf.length ) {
+            try {
+                msg = msg_class.decode( msg_buf );
+                if ( !msg )
+                    console.log( "decode failed" );
+            } catch ( err ) {
+                console.log( "decode failed:", err );
+            }
+        } else {
+            msg = msg_class;
+        }
     } else {
         console.log( "unkown mtype" );
     }
@@ -429,13 +446,13 @@ function allocRequestContext( a_response, a_callback ) {
 };
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
-    var client = JSON.parse( a_req.cookies[ 'sdms' ] );
+    var client = a_req.cookies[ 'sdms' ];
     if ( !client ) {
         a_resp.status(403).send( "Not authorized" );
         return;
     }
 
-    allocRequestContext( a_response, function( ctx ){
+    allocRequestContext( a_resp, function( ctx ){
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_nam;
@@ -455,14 +472,16 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
         frame.writeUInt8( msg._mid, 5 );
         frame.writeUInt16LE( ctx, 6 );
 
-        g_ctx[ctx] = function( reply ) {
-            if ( a_reply.errCode ) {
+        g_ctx[ctx] = function( a_reply ) {
+            if ( !a_reply ) {
+                a_resp.status(500).send( "Empty reply" );
+            } else if ( a_reply.errCode ) {
                 if ( a_reply.errMsg )
                     a_resp.status(500).send( a_reply.errMsg );
                 else
                     a_resp.status(500).send( "error code: " + a_reply.errCode );
             } else {
-                a_cb( reply );
+                a_cb( a_reply );
             }
         };
 

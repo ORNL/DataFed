@@ -64,7 +64,15 @@ public:
     MsgBuf( uint32_t a_capacity = 0 ) : m_buffer(0), m_capacity(0)
     {
         m_route[0] = 0;
-        m_uid[0] = 0;
+
+        if ( a_capacity )
+            ensureCapacity( a_capacity );
+    }
+
+    MsgBuf( const std::string & a_uid, uint16_t a_context = 0, uint32_t a_capacity = 0 ) : m_buffer(0), m_capacity(0), m_uid(a_uid)
+    {
+        m_frame.context = a_context;
+        m_route[0] = 0;
 
         if ( a_capacity )
             ensureCapacity( a_capacity );
@@ -80,7 +88,7 @@ public:
     void clear()
     {
         m_route[0] = 0;
-        m_uid[0] = 0;
+        m_uid.clear();
         m_frame.clear();
 
         if ( m_buffer )
@@ -132,25 +140,27 @@ public:
         return MAX_ROUTE_LEN;
     }
 
-    inline const char * getUID() const
+    inline const std::string & getUID() const
     {
         return m_uid;
     }
 
-    void setUID( const char * a_uid )
+    inline void setUID( const char * a_uid, size_t a_len = 0 )
     {
-        if ( strlen( a_uid ) >= MAX_UID_LEN )
-            EXCEPT( 1, "UID max length exceeded" );
-
-        strcpy( m_uid, a_uid );
+        if ( a_len )
+            m_uid.assign( a_uid, a_len );
+        else
+            m_uid = a_uid; // Null-term str
     }
 
-    void setUID( const std::string & a_uid )
+    inline void setUID( const std::string & a_uid )
     {
-        if ( a_uid.size() >= MAX_UID_LEN )
-            EXCEPT( 1, "UID max length exceeded" );
+        m_uid = a_uid;
+    }
 
-        strcpy( m_uid, a_uid.c_str() );
+    inline void clearUID()
+    {
+        m_uid.clear();
     }
 
     char * acquireBuffer()
@@ -307,7 +317,7 @@ private:
     char *      m_buffer;
     uint32_t    m_capacity;
     uint8_t     m_route[MAX_ROUTE_LEN]; // Byte 0 = length
-    char        m_uid[MAX_UID_LEN]; // Null teminated
+    std::string m_uid;
 };
 
 
