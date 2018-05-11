@@ -364,8 +364,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_metadata() )
         params.push_back({"md",a_request.metadata()});
-    if ( a_request.has_md_merge() )
-        params.push_back({"md_merge",a_request.md_merge()?"true":"false"});
+    if ( a_request.has_mdSet() )
+        params.push_back({"mdSet",a_request.mdSet()});
     if ( a_request.has_proj_id() )
         params.push_back({"proj",a_request.proj_id()});
     if ( a_request.has_data_size() )
@@ -483,7 +483,7 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
     if ( a_request.has_proj_id() )
         params.push_back({"proj",a_request.proj_id()});
     if ( a_request.has_coll_id() )
-        params.push_back({"coll",a_request.coll_id()});
+        params.push_back({"parent",a_request.coll_id()});
 
     dbGet( "col/create", params, result );
 
@@ -510,6 +510,16 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 
     setCollData( a_reply, result );
 }
+
+void
+DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void)a_reply;
+    rapidjson::Document result;
+
+    dbGet( "col/delete", {{"id",a_request.id()}}, result );
+}
+
 
 void
 DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )

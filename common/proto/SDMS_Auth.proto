@@ -134,7 +134,7 @@ message RecordUpdateRequest
     optional string             desc        = 3;
     optional string             alias       = 4;
     optional string             metadata    = 5;
-    optional bool               md_merge    = 6;
+    optional bool               mdSet       = 6;
     optional string             proj_id     = 7;
     optional uint64             data_size   = 8;
     optional uint32             data_time   = 9;
@@ -207,6 +207,11 @@ message CollUpdateRequest
     optional string             desc        = 3;
     optional string             alias       = 4;
     optional string             proj_id     = 5;
+}
+
+message CollDeleteRequest
+{
+    required string             id          = 1;
 }
 
 message CollListRequest

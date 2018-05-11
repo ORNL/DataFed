@@ -15,6 +15,7 @@ public:
     virtual const std::string & getDbURL() = 0;
     virtual const std::string & getDbUser() = 0;
     virtual const std::string & getDbPass() = 0;
+    virtual void dataDelete( const std::string & a_id ) = 0;
 };
 
 class Worker

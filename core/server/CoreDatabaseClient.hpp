@@ -44,6 +44,7 @@ public:
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
+    void collDelete( const Auth::CollDeleteRequest & a_request, Anon::AckReply & a_reply );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::CollDataReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Anon::AckReply & a_reply );

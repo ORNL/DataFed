@@ -257,7 +257,7 @@ app.get('/api/usr/find', ( a_request, a_response ) => {
     allocRequestContext( a_response, function( ctx ){
         var msg = g_msg_by_name["UserFindByUUIDsRequest"];
         var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
-        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         /* Frame contents (C++)
         uint32_t    size;       // Size of buffer
@@ -272,7 +272,7 @@ app.get('/api/usr/find', ( a_request, a_response ) => {
         frame.writeUInt16LE( ctx, 6 );
 
         g_ctx[ctx] = function( reply ){
-            console.log( "reply to /api/usr/find", reply );
+            //console.log( "reply to /api/usr/find", reply );
             if ( reply.errCode ) {
                 a_response.status( 404 );
                 if ( reply.errMsg )
@@ -292,10 +292,100 @@ app.get('/api/usr/find', ( a_request, a_response ) => {
     });
 });
 
-app.get('/api/col/read', ( a_req, a_resp ) => {
-    sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/col/read", reply );
+app.get('/api/dat/create', ( a_req, a_resp ) => {
+    var params  = {
+        title: a_req.query.title,
+        alias: a_req.query.alias,
+        desc: a_req.query.desc,
+        metadata: a_req.query.md,
+        collId:  a_req.query.coll
+    };
 
+    sendMessage( "RecordCreateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/dat/create", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/update', ( a_req, a_resp ) => {
+    var params = { id:  a_req.query.id };
+    if ( a_req.query.title )
+        params.title = a_req.query.title;
+
+    if ( a_req.query.alias )
+        params.alias = a_req.query.alias;
+
+    if ( a_req.query.desc )
+        params.desc = a_req.query.desc;
+
+    if ( a_req.query.md ) {
+        params.metadata = a_req.query.md;
+        if ( a_req.query.mdSet )
+            params.mdSet = true;
+    }
+
+    sendMessage( "RecordUpdateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/dat/update", reply );
+        a_resp.send(reply);
+    });
+});
+
+
+app.get('/api/dat/delete', ( a_req, a_resp ) => {
+    sendMessage( "RecordDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/dat/view", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/view', ( a_req, a_resp ) => {
+    sendMessage( "RecordViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/dat/view", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/list', ( a_req, a_resp ) => {
+    sendMessage( "RecordListRequest", {}, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/dat/list", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/col/create', ( a_req, a_resp ) => {
+    var params  = {
+        title: a_req.query.title,
+        alias: a_req.query.alias,
+        desc: a_req.query.desc,
+        collId:  a_req.query.coll
+    };
+
+    sendMessage( "CollCreateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/col/create", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/col/update', ( a_req, a_resp ) => {
+    var params = { id:  a_req.query.id };
+    if ( a_req.query.title )
+        params.title = a_req.query.title;
+
+    if ( a_req.query.alias )
+        params.alias = a_req.query.alias;
+
+    if ( a_req.query.desc )
+        params.desc = a_req.query.desc;
+
+    sendMessage( "CollUpdateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/col/update", reply );
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/col/delete', ( a_req, a_resp ) => {
+    sendMessage( "CollDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/dat/view", reply );
         a_resp.send(reply);
     });
 });
@@ -307,20 +397,13 @@ app.get('/api/col/view', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/dat/list', ( a_req, a_resp ) => {
-    sendMessage( "RecordListRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/dat/list", reply );
-
+app.get('/api/col/read', ( a_req, a_resp ) => {
+    sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
 });
 
-app.get('/api/dat/view', ( a_req, a_resp ) => {
-    sendMessage( "RecordViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/dat/view", reply );
-        a_resp.send(reply);
-    });
-});
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -348,7 +431,7 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
         msg._mid = i;
         msg._msg_type = (pid << 8) | i;
 
-        console.log( "msg", msg._msg_type, msg.name );
+        //console.log( "msg", msg._msg_type, msg.name );
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
@@ -377,7 +460,7 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
         msg._mid = i;
         msg._msg_type = (pid << 8) | i;
 
-        console.log( "msg", msg._msg_type, msg.name );
+        //console.log( "msg", msg._msg_type, msg.name );
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;

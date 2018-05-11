@@ -87,7 +87,7 @@ body
     background-color: #fff;
 }
 
-.info_table td
+td
 {
     vertical-align:top;
 }
@@ -117,3 +117,5 @@ ul.ui-effects-placeholder { width:10px !important; }
 .ui-dialog-titlebar-close {
     visibility: hidden;
 }
+
+:focus { outline: none; }

@@ -96,6 +96,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
+        SET_MSG_HANDLER_DB( proto_id, CollDeleteRequest, AckReply, collDelete );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, AckReply, collWrite );
@@ -320,6 +321,15 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( RecordDeleteRequest, RecordDeleteReply )
+
+    // TODO Acquire write lock here
+    // TODO Need better error handling (plus retry)
+
+    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    m_db_client.recordDelete( *request, reply );
+
+    // Ask FileManager to delete file
+    m_mgr.dataDelete( reply.id() );
 
     PROC_MSG_END
 }
