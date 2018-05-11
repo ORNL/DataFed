@@ -186,10 +186,10 @@ router.get('/delete', function (req, res) {
                 var obj;
 
                 // Delete attached notes and aliases
-                var objects = g_db._query( "for v in 1..1 outbound @coll note, alias v.return v._id", { coll: coll._id }).toArray();
+                var objects = g_db._query( "for v in 1..1 outbound @coll note, alias return v._id", { coll: coll._id }).toArray();
                 for ( var i in objects ) {
                     obj = objects[i];
-                    g_graph.obj[0].remove( obj );
+                    g_graph[obj[0]].remove( obj );
                 }
 
                 g_graph.c.remove( coll._id );
