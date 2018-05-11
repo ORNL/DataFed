@@ -636,7 +636,7 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
     if ( a_metadata )
     {
         req.set_metadata( a_metadata );
-        req.set_md_merge( a_md_merge );
+        req.set_mdset( !a_md_merge );
     }
     if ( a_proj_id )
         req.set_proj_id( a_proj_id );

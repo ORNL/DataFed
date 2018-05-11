@@ -364,8 +364,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_metadata() )
         params.push_back({"md",a_request.metadata()});
-    if ( a_request.has_mdSet() )
-        params.push_back({"mdSet",a_request.mdSet()});
+    if ( a_request.has_mdset() )
+        params.push_back({"mdset",a_request.mdset()?"true":"false"});
     if ( a_request.has_proj_id() )
         params.push_back({"proj",a_request.proj_id()});
     if ( a_request.has_data_size() )

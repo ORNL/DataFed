@@ -149,7 +149,7 @@ function dlgNewEdit(a_mode,a_data) {
 
                         if ( a_data ) {
                             if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
-                                url += "&mdSet=true";
+                                url += "&mdset=true";
                         }
                     }
                 }
@@ -162,10 +162,6 @@ function dlgNewEdit(a_mode,a_data) {
                 var inst = $(this);
                 _asyncGet( url, null, function( ok, data ){
                     if ( ok ) {
-                        if ( a_data )
-                            alert( "Updated record " + data.data[0].id );
-                        else
-                            alert( "Created record " + data.data[0].id );
                         inst.dialog( "close" );
                         $('#data_tree').fancytree('getTree').reload( tree_source );
                     } else {

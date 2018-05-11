@@ -192,7 +192,7 @@
                         item = data.response.data[i];
                         alias = item.alias?item.alias.substr(item.alias.indexOf(":") + 1):"";
                         is_folder = item.id[0]=="c"?true:false;
-                        entry = { title: "<span style='display:inline-block;width:20ch'>" + item.id.substr(2) + " (" + alias + ")</span> \"" + item.title + "\"", folder: is_folder, key: item.id };
+                        entry = { title: "<span style='display:inline-block;width:20ch'>" + item.id.substr(2) + (alias?" (" + alias + ")":" ") + "</span> \"" + item.title + "\"", folder: is_folder, key: item.id };
                         if ( is_folder )
                             entry.lazy = true;
                         data.result.push( entry );

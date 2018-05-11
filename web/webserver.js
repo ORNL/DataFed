@@ -320,8 +320,8 @@ app.get('/api/dat/update', ( a_req, a_resp ) => {
 
     if ( a_req.query.md ) {
         params.metadata = a_req.query.md;
-        if ( a_req.query.mdSet )
-            params.mdSet = true;
+        if ( a_req.query.mdset )
+            params.mdset = true;
     }
 
     sendMessage( "RecordUpdateRequest", params, a_req, a_resp, function( reply ) {
