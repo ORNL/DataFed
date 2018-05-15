@@ -267,6 +267,16 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+/*
+    char public_key[41];
+    char secret_key[41];
+
+    if ( zmq_curve_keypair( public_key, secret_key ) != 0 )
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Key generation failed: " << zmq_strerror( errno ));
+
+    params.push_back({"key_pub",public_key});
+    params.push_back({"key_prv",secret_key});
+*/
 
     PROC_MSG_END
 }
@@ -333,5 +343,6 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 
     PROC_MSG_END
 }
+
 
 }}

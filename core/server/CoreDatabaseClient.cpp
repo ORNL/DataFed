@@ -1,3 +1,4 @@
+#include <zmq.h>
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "CoreDatabaseClient.hpp"
