@@ -29,7 +29,8 @@ namespace Core {
 Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, const std::string & a_repo_address ) :
     m_port( a_port ),
     m_timeout(a_timeout),
-    m_io_thread(0),
+    m_io_secure_thread(0),
+    m_io_insecure_thread(0),
     m_maint_thread(0),
     m_num_threads(a_num_threads),
     m_io_running(false),
@@ -102,11 +103,12 @@ Server::run( bool a_async )
 
     if ( a_async )
     {
-        m_io_thread = new thread( &Server::ioRun, this );
+        //m_io_thread = new thread( &Server::ioRun, this );
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         m_xfr_thread = new thread( &Server::xfrManagement, this );
         m_msg_router_thread = new thread( &Server::msgRouter, this );
-        m_io_local_thread = new thread( &Server::ioLocal, this );
+        m_io_secure_thread = new thread( &Server::ioSecure, this );
+        m_io_insecure_thread = new thread( &Server::ioInsecure, this );
     }
     else
     {
@@ -114,8 +116,10 @@ Server::run( bool a_async )
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         m_xfr_thread = new thread( &Server::xfrManagement, this );
         m_msg_router_thread = new thread( &Server::msgRouter, this );
-        m_io_local_thread = new thread( &Server::ioLocal, this );
-        ioRun();
+        m_io_secure_thread = new thread( &Server::ioSecure, this );
+        //m_io_insecure_thread = new thread( &Server::ioInsecure, this );
+        ioInsecure();
+        //ioRun();
         lock.lock();
         m_io_running = false;
         m_router_cvar.notify_all();
@@ -142,6 +146,7 @@ Server::stop( bool a_wait )
 
     if ( m_io_running )
     {
+#if 0
         // Signal ioPump to stop
         m_io_service.stop();
 
@@ -173,6 +178,7 @@ Server::stop( bool a_wait )
             delete m_maint_thread;
             m_maint_thread = 0;
         }
+#endif
     }
 }
 
@@ -181,6 +187,8 @@ void
 Server::wait()
 {
     unique_lock<mutex> lock(m_api_mutex);
+
+#if 0
 
     if ( m_io_running )
     {
@@ -210,6 +218,7 @@ Server::wait()
                 m_router_cvar.wait( lock );
         }
     }
+#endif
 }
 
 
@@ -287,20 +296,34 @@ Server::msgRouter()
 }
 
 void
-Server::ioLocal()
+Server::ioSecure()
 {
+    MsgComm::SecurityContext sec_ctx;
+    sec_ctx.is_server = true;
+    sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
+    sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+
+    MsgComm frontend( "tcp://*:9002", ZMQ_ROUTER, true, &sec_ctx );
+    MsgComm backend( "inproc://msg_proc", ZMQ_DEALER, false );
+
+    frontend.proxy( backend, true );
+
+    //zmq_proxy( comm.getSocket(), backend, 0 );
+}
+
+void
+Server::ioInsecure()
+{
+    MsgComm comm( "tcp://*:9001", ZMQ_ROUTER, true );
+
     int linger = 100;
     void * ctx = MsgComm::getContext();
-
-    void *frontend = zmq_socket( ctx, ZMQ_ROUTER );
-    zmq_setsockopt( frontend, ZMQ_LINGER, &linger, sizeof( int ));
-    zmq_bind( frontend, "tcp://*:9001" );
-
     void *backend = zmq_socket( ctx, ZMQ_DEALER );
     zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int ));
     zmq_connect( backend, "inproc://msg_proc" );
 
-    zmq_proxy( frontend, backend, 0 );
+    zmq_proxy( comm.getSocket(), backend, 0 );
 }
 
 void
@@ -778,7 +801,6 @@ Server::zapHandler()
     {
         void * ctx = MsgComm::getContext();
 
-        bool    accepted = true;
         char    client_key_text[41];
         void *  socket = zmq_socket( ctx, ZMQ_REP );
         int     rc;
@@ -804,6 +826,8 @@ Server::zapHandler()
 
                 if ( !(poll_items[0].revents & ZMQ_POLLIN ))
                     continue;
+
+                cout << "Got zap data\n";
 
                 if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
                     EXCEPT( 1, "Rcv version failed." );
@@ -842,22 +866,21 @@ Server::zapHandler()
                     "\n\tmechanism: " << mechanism <<
                     "\n\tclient_key: " << client_key_text << "\n";
 
+                // Always accept - but only set UID if it's a known client (by key)
                 if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
                 {
-                    accepted = true;
-                    cout << "ZAP: Accepted\n";
+                    cout << "ZAP: Known client\n";
                 }
                 else
                 {
-                    accepted = false;
-                    cout << "ZAP: Denied\n";
+                    cout << "ZAP: UNKNOWN client\n";
                 }
 
                 zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
-                zmq_send( socket, accepted ? "200" : "400", 3, ZMQ_SNDMORE );
+                zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                if ( accepted )
+                if ( iclient != m_auth_clients.end() )
                     zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
                 else
                     zmq_send( socket, "", 0, ZMQ_SNDMORE );

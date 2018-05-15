@@ -979,7 +979,7 @@ int main( int a_argc, char ** a_argv )
 
     string      host = "sdms.ornl.gov";
     uint16_t    port = 7512;
-    uint32_t    timeout = 5;
+    uint32_t    timeout = 10000;
     string      home = getenv("HOME");
     string      cred_path = home + "/.sdms/";
     bool        manual_auth = false;

@@ -127,6 +127,10 @@ Worker::workerThread()
     uint16_t        msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;
 
+    Anon::NackReply nack;
+    nack.set_err_code( ID_AUTHN_REQUIRED );
+    nack.set_err_msg( "Authentication required" );
+
     while ( m_run )
     {
         try
@@ -136,20 +140,29 @@ Worker::workerThread()
                 msg_type = m_msg_buf.getMsgType();
 
                 //cout << "W" << m_tid << " got msg " << msg_type << endl;
-                DL_INFO( "W"<<m_tid<<" recvd msg type: " << msg_type );
+                DL_INFO( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
 
-                handler = m_msg_handlers.find( msg_type );
-                if ( handler != m_msg_handlers.end() )
+                if ( m_msg_buf.getUID().size() == 0 && msg_type > 0x1FF )
                 {
-                    DL_INFO( "W"<<m_tid<<" calling handler" );
-
-                    if ( (this->*handler->second)( m_msg_buf.getUID() ))
-                    {
-                        comm.send( m_msg_buf );
-                    }
+                    DL_INFO( "W"<<m_tid<<" unauthorized access" );
+                    m_msg_buf.serialize( nack );
+                    comm.send( m_msg_buf );
                 }
                 else
-                    DL_ERROR( "W"<<m_tid<<" recvd unregistered msg type: " << msg_type );
+                {
+                    handler = m_msg_handlers.find( msg_type );
+                    if ( handler != m_msg_handlers.end() )
+                    {
+                        DL_INFO( "W"<<m_tid<<" calling handler" );
+
+                        if ( (this->*handler->second)( m_msg_buf.getUID() ))
+                        {
+                            comm.send( m_msg_buf );
+                        }
+                    }
+                    else
+                        DL_ERROR( "W"<<m_tid<<" recvd unregistered msg type: " << msg_type );
+                }
             }
         }
         catch( TraceException & e )
@@ -258,6 +271,11 @@ Worker::procAuthenticateRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
+
+    m_db_client.setClient( request->uid() );
+    m_db_client.clientAuthenticate( request->password() );
+
+    cout << "Authenticated " << request->uid() << "\n";
 
     PROC_MSG_END
 }

@@ -299,6 +299,137 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
 
 void
+MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
+{
+    zmq_msg_t       msg;
+    int             rc;
+    size_t          len;
+    const char *    uid;
+    uint32_t        msg_size;
+    void *          out_sock = a_backend.m_socket;
+    zmq_pollitem_t  items[] = {{ m_socket, 0, ZMQ_POLLIN, 0}, { out_sock, 0, ZMQ_POLLIN, 0 }};
+
+    while ( 1 )
+    {
+        //cout << "rcv poll\n";
+
+        while (( rc = zmq_poll( items, 2, 1000 )) < 1 )
+        {
+            if ( rc == 0 ) // Timeout - TODO check exit condition
+                continue;
+        }
+
+        if ( items[1].revents )
+        {
+            cout << "OUT msg ready\n";
+
+            while ( 1 )
+            {
+                cout << "  out rcv->send\n";
+                zmq_msg_init( &msg );
+
+                if (( rc = zmq_msg_recv( &msg, out_sock, ZMQ_DONTWAIT )) < 0 )
+                    EXCEPT( 1, "zmq_msg_recv (out_sock) failed." );
+
+                // Stop when no more parts
+                if ( zmq_msg_more( &msg ) == 0 )
+                {
+                    zmq_msg_send( &msg, m_socket, 0 );
+                    break;
+                }
+                else
+                {
+                    zmq_msg_send( &msg, m_socket, ZMQ_SNDMORE );
+                }
+            }
+        }
+
+        if ( items[0].revents )
+        {
+            cout << "IN msg ready\n";
+
+            // Handle Route and Delimiter Parts
+            uid = 0;
+
+            while ( 1 )
+            {
+                zmq_msg_init( &msg );
+
+                if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
+                    EXCEPT( 1, "zmq_msg_recv (route) failed." );
+
+                len = zmq_msg_size( &msg );
+
+                if ( !uid )
+                {
+                    uid = zmq_msg_gets( &msg, "User-Id");
+                    if ( uid )
+                        cout << "UID[" << uid << "]\n";
+                }
+
+                zmq_msg_send( &msg, out_sock, ZMQ_SNDMORE );
+
+                // Stop when delimiter is read
+                if ( !len )
+                    break;
+            }
+
+            // Handle Frame Part
+
+            if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
+                EXCEPT( 1, "zmq_msg_recv (frame) failed." );
+
+            if ( zmq_msg_size( &msg ) != sizeof( MsgBuf::Frame ))
+            {
+                hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
+                EXCEPT_PARAM( 1, "Invalid message frame received. Expected " << sizeof( MsgBuf::Frame ) << " got " << zmq_msg_size( &msg ) );
+            }
+
+            msg_size = ((MsgBuf::Frame*)zmq_msg_data( &msg ))->size;
+
+            zmq_msg_send( &msg, out_sock, ZMQ_SNDMORE );
+
+            // Handle UID Part
+
+            if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
+                EXCEPT( 1, "zmq_msg_recv (uid) failed." );
+
+            if ( a_uid_from_wire )
+            {
+                cout << "Handle UID Part\n";
+
+                // Ignore received UID  and send UID from transport layer instead
+                zmq_msg_close( &msg );
+
+                if ( uid && ((len = strlen(uid)) > 0 ))
+                {
+                    zmq_msg_init_size( &msg, len );
+                    memcpy( zmq_msg_data( &msg ), uid, len );
+                }
+                else
+                    zmq_msg_init( &msg );
+            }
+
+            zmq_msg_send( &msg, out_sock, msg_size?ZMQ_SNDMORE:0 );
+
+            // Handle Body Part (if included)
+
+            if ( msg_size )
+            {
+                if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
+                    EXCEPT( 1, "zmq_msg_recv (body) failed." );
+
+                if ( zmq_msg_size( &msg ) != msg_size )
+                    EXCEPT_PARAM( 1, "Invalid message body received. Expected: " << msg_size << ", got: " << zmq_msg_size( &msg ) );
+
+                zmq_msg_send( &msg, out_sock, 0 );
+            }
+        }
+    }
+}
+
+
+void
 MsgComm::getPollInfo( zmq_pollitem_t  & a_poll_data )
 {
     a_poll_data.socket = m_socket;
@@ -357,6 +488,8 @@ MsgComm::setupSecurityContext( SecurityContext * a_sec_ctx )
 void
 MsgComm::init( const string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
 {
+    cout << "Init conn to " << a_address << "\n";
+
     int rc;
     void * ctx = a_zmq_ctx?a_zmq_ctx:getContext();
 

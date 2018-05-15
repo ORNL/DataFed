@@ -23,8 +23,8 @@ message GenerateCredentialsRequest
 
 message GenerateCredentialsReply
 {
-    required string             x509_key    = 1;
-    required string             x509_cert   = 2;
+    required string             pub_key     = 1;
+    required string             priv_key    = 2;
 }
 
 message SSH_GenerateKeysRequest

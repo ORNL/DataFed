@@ -76,7 +76,8 @@ private:
     const std::string & getDbPass() { return m_db_pass; };
 
     void msgRouter();
-    void ioLocal();
+    void ioSecure();
+    void ioInsecure();
     void ioServices();
     void ioClients();
     void ioRun();
@@ -89,7 +90,8 @@ private:
     std::string                     m_host;
     uint32_t                        m_port;
     uint32_t                        m_timeout;
-    std::thread *                   m_io_thread;
+    std::thread *                   m_io_secure_thread;
+    std::thread *                   m_io_insecure_thread;
     std::thread *                   m_maint_thread;
     uint32_t                        m_num_threads;
     std::mutex                      m_api_mutex;

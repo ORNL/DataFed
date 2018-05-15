@@ -482,7 +482,7 @@ Session::procMsgGenerateCredentials()
 
         cout << "New cert [" << data << "]\n";
 
-        reply.set_x509_cert( data );
+        reply.set_pub_key( data );
 
         inf.open( key_file );
         if ( !inf.is_open() || !inf.good() )
@@ -493,7 +493,7 @@ Session::procMsgGenerateCredentials()
 
         cout << "New key [" << data << "]\n";
 
-        reply.set_x509_key( data );
+        reply.set_priv_key( data );
 
         remove( key_file.c_str() );
         remove( cert_file.c_str() );
