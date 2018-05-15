@@ -27,7 +27,7 @@ router.get('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["d","a","owner","alias"]
+                write: ["d","a","owner","alias","item"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -54,6 +54,11 @@ router.get('/create', function (req, res) {
                     g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
                     data.new.alias = req.queryParams.alias;
+                }
+
+                if ( req.queryParams.coll ) {
+                    var coll_id = g_lib.resolveID( req.queryParams.coll, client );
+                    g_db.item.save({ _from: coll_id, _to: data.new._id });
                 }
 
                 delete data.new._rev;
@@ -132,7 +137,7 @@ router.get('/update', function (req, res) {
                 }
 
                 if ( do_update ) {
-                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.queryParams.md_merge });
+                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.queryParams.mdset?false:true });
                     data = data.new;
                 } else {
                     data = g_db.d.document( data_id );
@@ -175,7 +180,7 @@ router.get('/update', function (req, res) {
 .queryParam('alias', joi.string().optional(), "Alias")
 .queryParam('proj', joi.string().optional(), "Project owner id")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
-.queryParam('md_merge', joi.boolean().optional().default(true), "Merge metadata instead of replace (merge is default)")
+.queryParam('mdset', joi.boolean().optional().default(false), "Set metadata instead of merging")
 .queryParam('data_size', joi.number().optional(), "Data size (bytes)")
 .queryParam('data_time', joi.number().optional(), "Data modification time")
 .summary('Updates an existing data record')
@@ -230,7 +235,13 @@ router.get('/list', function (req, res) {
             owner_id = client._id;
         }
 
-        const result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+        var result;
+
+        if ( req.queryParams.all ) {
+            result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+        } else {
+            result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let l = (for i in inbound v._id item return i._id) filter length(l) == 0 let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+        }
 
         //const result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
 
@@ -241,6 +252,7 @@ router.get('/list', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('all', joi.boolean().optional().default(false), "List all data (true), or only loose data (false)")
 .summary('List all data owned by client, or subject')
 .description('List all data owned by client, or subject');
 
