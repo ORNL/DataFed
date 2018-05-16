@@ -73,16 +73,16 @@ void freeBuffer( void * a_data, void * a_hint )
 
 
 MsgComm::MsgComm( const std::string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
-    : m_socket(0)
+    : m_socket(0), m_bound(a_bind), m_address(a_address)
 {
-    init( a_address, a_sock_type, a_bind, a_sec_ctx, a_zmq_ctx );
+    init( a_sock_type, a_sec_ctx, a_zmq_ctx );
 }
 
 MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
-    : m_socket(0)
+    : m_socket(0), m_bound(a_bind)
 {
-    string address = string("tcp://") + a_host + ":" + to_string( a_port );
-    init( address.c_str(), a_sock_type, a_bind, a_sec_ctx, a_zmq_ctx );
+    m_address = string("tcp://") + a_host + ":" + to_string( a_port );
+    init( a_sock_type, a_sec_ctx, a_zmq_ctx );
 }
 
 MsgComm::~MsgComm()
@@ -109,12 +109,12 @@ MsgComm::send( MsgBuf & a_msg_buf )
     uint8_t * route = a_msg_buf.getRouteBuffer();
     if ( *route )
     {
-        cout << "route parts: " << (int)*route << "\n";
+        //cout << "route parts: " << (int)*route << "\n";
         uint8_t * rptr = route + 1;
 
         for ( uint8_t i = 0; i < *route; i++, rptr += ( *rptr + 1 ))
         {
-            cout << "part " << (int)i << " sz: " << (int) *rptr << "\n";
+            //cout << "part " << (int)i << " sz: " << (int) *rptr << "\n";
             //cout << "Route addr:\n";
             //hexDump( a_msg_buf.getRouteBuffer(), a_msg_buf.getRouteBuffer() + a_msg_buf.getRouteLen(), cout );
 
@@ -199,7 +199,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     uint8_t * route = a_msg_buf.getRouteBuffer();
     uint8_t * rptr = route + 1;
-    size_t tot_len = 1;
+    //size_t tot_len = 1;
 
     *route = 0;
 
@@ -222,7 +222,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         if ((( rptr + len ) - route ) > MAX_ROUTE_LEN )
             EXCEPT( 1, "Message route total max len exceeded." );
 
-        tot_len += len + 1;
+        //tot_len += len + 1;
 
         *rptr = (uint8_t) len;
         memcpy( rptr + 1, (char *)zmq_msg_data( &msg ), len );
@@ -235,11 +235,12 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         rptr += *rptr + 1;
     }
 
+/*
     if ( tot_len > 1 )
     {
         cout << "Route addr ("<< tot_len << "):\n";
         hexDump( (char*)route, (char*)(route + tot_len), cout );
-    }
+    }*/
 
     zmq_msg_init( &msg );
 
@@ -256,7 +257,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
-    cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
+    //cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
 
     zmq_msg_close( &msg );
 
@@ -288,8 +289,8 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         a_msg_buf.ensureCapacity( a_msg_buf.getFrame().size );
         memcpy( a_msg_buf.getBuffer(), zmq_msg_data( &msg ), a_msg_buf.getFrame().size );
 
-        cout << "Body:\n";
-        hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
+        //cout << "Body:\n";
+        //hexDump( a_msg_buf.getBuffer(), a_msg_buf.getBuffer() + a_msg_buf.getFrame().size, cout );
 
         zmq_msg_close( &msg );
     }
@@ -321,11 +322,11 @@ MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
 
         if ( items[1].revents )
         {
-            cout << "OUT msg ready\n";
+            //cout << "OUT msg ready\n";
 
             while ( 1 )
             {
-                cout << "  out rcv->send\n";
+                //cout << "  out rcv->send\n";
                 zmq_msg_init( &msg );
 
                 if (( rc = zmq_msg_recv( &msg, out_sock, ZMQ_DONTWAIT )) < 0 )
@@ -346,7 +347,7 @@ MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
 
         if ( items[0].revents )
         {
-            cout << "IN msg ready\n";
+            //cout << "IN msg ready\n";
 
             // Handle Route and Delimiter Parts
             uid = 0;
@@ -363,8 +364,8 @@ MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
                 if ( !uid )
                 {
                     uid = zmq_msg_gets( &msg, "User-Id");
-                    if ( uid )
-                        cout << "UID[" << uid << "]\n";
+                    //if ( uid )
+                    //    cout << "UID[" << uid << "]\n";
                 }
 
                 zmq_msg_send( &msg, out_sock, ZMQ_SNDMORE );
@@ -396,7 +397,7 @@ MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
 
             if ( a_uid_from_wire )
             {
-                cout << "Handle UID Part\n";
+                //cout << "Handle UID Part\n";
 
                 // Ignore received UID  and send UID from transport layer instead
                 zmq_msg_close( &msg );
@@ -486,9 +487,32 @@ MsgComm::setupSecurityContext( SecurityContext * a_sec_ctx )
 }
 
 void
-MsgComm::init( const string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
+MsgComm::reset()
 {
-    cout << "Init conn to " << a_address << "\n";
+    int rc;
+
+    if ( m_bound )
+    {
+        if (( rc = zmq_unbind( m_socket, m_address.c_str() )) == -1 )
+            EXCEPT_PARAM( 1, "ZeroMQ unbind from address " << m_address << " failed." );
+
+        if (( rc = zmq_bind( m_socket, m_address.c_str() )) == -1 )
+            EXCEPT_PARAM( 1, "ZeroMQ bind to address " << m_address << " failed." );
+    }
+    else
+    {
+        if (( rc = zmq_disconnect( m_socket, m_address.c_str() )) == -1 )
+            EXCEPT_PARAM( 1, "ZeroMQ disconnect from address " << m_address << " failed." );
+
+        if (( rc = zmq_connect( m_socket, m_address.c_str() )) == -1 )
+            EXCEPT_PARAM( 1, "ZeroMQ connect to address " << m_address << " failed." );
+    }
+}
+
+void
+MsgComm::init( size_t a_sock_type, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
+{
+    cout << "Init conn to " << m_address << "\n";
 
     int rc;
     void * ctx = a_zmq_ctx?a_zmq_ctx:getContext();
@@ -511,21 +535,21 @@ MsgComm::init( const string & a_address, size_t a_sock_type, bool a_bind, Securi
     value = 5;
     zmq_setsockopt( m_socket, ZMQ_TCP_KEEPALIVE_INTVL, &value, sizeof( int ));
 
-    if ( a_bind )
+    if ( m_bound )
     {
-        if (( rc = zmq_bind( m_socket, a_address.c_str() )) == -1 )
-            EXCEPT_PARAM( 1, "ZeroMQ bind to address " << a_address << " failed." );
+        if (( rc = zmq_bind( m_socket, m_address.c_str() )) == -1 )
+            EXCEPT_PARAM( 1, "ZeroMQ bind to address " << m_address << " failed." );
     }
     else
     {
-        if (( rc = zmq_connect( m_socket, a_address.c_str() )) == -1 )
-            EXCEPT_PARAM( 1, "ZeroMQ connect to address " << a_address << " failed." );
+        if (( rc = zmq_connect( m_socket, m_address.c_str() )) == -1 )
+            EXCEPT_PARAM( 1, "ZeroMQ connect to address " << m_address << " failed." );
     }
 
     if ( a_sock_type == ZMQ_SUB )
     {
         if (( rc = zmq_setsockopt( m_socket, ZMQ_SUBSCRIBE, "", 0 )) == -1 )
-            EXCEPT_PARAM( 1, "ZeroMQ subscribe for address " << a_address << " failed." );
+            EXCEPT_PARAM( 1, "ZeroMQ subscribe for address " << m_address << " failed." );
     }
 
     value = 100;

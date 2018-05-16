@@ -23,6 +23,7 @@ public:
     MsgComm( const std::string & a_host, uint16_t a_port, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx = 0, void * a_zmq_cxt = 0 );
     ~MsgComm();
 
+    void            reset();
     void            send( MsgBuf::Message & a_msg, const std::string & a_uid = "", uint16_t a_context = 0 );
     void            send( MsgBuf & a_message );
     bool            recv( MsgBuf::Message *& a_msg, std::string & a_uid, MsgBuf::Frame & a_frame, uint32_t a_timeout = 0 );
@@ -34,9 +35,11 @@ public:
 
 private:
     void            setupSecurityContext( SecurityContext * a_sec_ctx );
-    void            init( const std::string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_cxt );
+    void            init( size_t a_sock_type, SecurityContext * a_sec_ctx, void * a_zmq_cxt );
 
     void           *m_socket;
+    bool            m_bound;
+    std::string     m_address;
     zmq_pollitem_t  m_poll_item;
 };
 

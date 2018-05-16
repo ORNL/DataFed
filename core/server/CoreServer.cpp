@@ -1,4 +1,5 @@
 #include <fstream>
+#include <algorithm>
 #include <time.h>
 #include "MsgBuf.hpp"
 #include "DynaLog.hpp"
@@ -34,19 +35,19 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_maint_thread(0),
     m_num_threads(a_num_threads),
     m_io_running(false),
-    m_endpoint( asio::ip::tcp::v4(), m_port ),
-    m_acceptor( m_io_service, m_endpoint ),
-    m_context( asio::ssl::context::tlsv12 ),
+    //m_endpoint( asio::ip::tcp::v4(), m_port ),
+    //m_acceptor( m_io_service, m_endpoint ),
+    //m_context( asio::ssl::context::tlsv12 ),
     m_xfr_thread(0),
     m_db_url(a_db_url),
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
-    m_db_client( m_db_url, m_db_user, m_db_pass ),
     m_repo_address( a_repo_address ),
     m_zap_thread(0),
     m_msg_router_thread(0),
     m_num_workers(8)
 {
+    /*
     m_context.set_options(
         asio::ssl::context::default_workarounds |
         asio::ssl::context::no_sslv2 |
@@ -69,8 +70,7 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     //m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
     //m_context.add_verify_path( m_verify_path.c_str() );
     //m_context.use_tmp_dh_file( "dh512.pem" );
-
-    m_db_client.setClient( "sdms" );
+    */
 
     m_sec_ctx.is_server = true;
     m_sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
@@ -221,7 +221,7 @@ Server::wait()
 #endif
 }
 
-
+/*
 void
 Server::ioRun()
 {
@@ -254,6 +254,7 @@ Server::ioRun()
 
     DL_INFO( "io thread stopped" );
 }
+*/
 
 void
 Server::msgRouter()
@@ -326,6 +327,7 @@ Server::ioInsecure()
     zmq_proxy( comm.getSocket(), backend, 0 );
 }
 
+/*
 void
 Server::accept()
 {
@@ -348,7 +350,7 @@ Server::accept()
                 accept();
             });
 }
-
+*/
 
 void
 Server::backgroundMaintenance()
@@ -359,13 +361,14 @@ Server::backgroundMaintenance()
     {
         struct timespec             _t;
         double                      t;
-        set<spSession>::iterator    isess;
+        //set<spSession>::iterator    isess;
         vector<string>::iterator    idel;
         Auth::RepoDataDeleteRequest req;
         MsgBuf::Message *           reply;
         MsgBuf::Frame               frame;
         string                      uid;
         MsgComm                     repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
+        map<string,pair<string,size_t>>::iterator itrans_client;
 
         //vector<spSession>           dead_sessions;
         //dead_sessions.reserve( 10 );
@@ -379,6 +382,7 @@ Server::backgroundMaintenance()
             clock_gettime( CLOCK_REALTIME, &_t );
             t = _t.tv_sec + (_t.tv_nsec*1e-9);
 
+/*
             for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
             {
                 if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
@@ -389,6 +393,19 @@ Server::backgroundMaintenance()
                 }
                 else
                     ++isess;
+            }
+*/
+
+            // Delete expired transient client credentials
+            for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
+            {
+                if ( itrans_client->second.second < t )
+                {
+                    cout << "Delete expired trans client " << itrans_client->second.first << "\n";
+                    itrans_client = m_trans_auth_clients.erase( itrans_client );
+                }
+                else
+                    itrans_client++;
             }
 
             // Process data deletion requests
@@ -462,13 +479,16 @@ Server::xfrManagement()
         Auth::RecordUpdateRequest upd_req;
         Auth::RecordDataReply  reply;
         string error_msg;
-
+        size_t  pos;
         Auth::RepoDataGetSizeRequest sz_req;
         MsgBuf::Message *            raw_msg;
         Auth::RepoDataSizeReply *    sz_rep;
         MsgBuf::Frame                frame;
         string                       uid;
         MsgComm  repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
+        DatabaseClient db_client( m_db_url, m_db_user, m_db_pass );
+
+        db_client.setClient( "sdms" );
 
         while( m_io_running )
         {
@@ -498,7 +518,7 @@ Server::xfrManagement()
 
                         keyfile = m_key_path + (*ixfr)->uid + "-key";
 
-                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- ";
+                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org transfer -- ";
                         //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
                         //cmd = "ssh globus transfer -- ";
 
@@ -515,16 +535,18 @@ Server::xfrManagement()
                             result = exec( cmd.c_str() );
                         }
 
-                        if ( result.compare( 0, 9, "Task ID: " ) == 0 )
+                        pos = result.find( "Task ID: " );
+
+                        if ( pos != string::npos )
                         {
-                            (*ixfr)->task_id = result.substr( 9 );
+                            (*ixfr)->task_id = result.substr( pos + 9 );
                             (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
                             //cout << "New task[" << (*ixfr)->task_id << "]\n";
 
                             cout << "Task " << (*ixfr)->task_id << " started\n";
 
                             // Update DB entry
-                            m_db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                            db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
                             (*ixfr)->stage = 1;
                             (*ixfr)->poll = INIT_POLL_PERIOD;
                             ixfr++;
@@ -539,7 +561,7 @@ Server::xfrManagement()
                             }
 
                             status = XS_FAILED;
-                            m_db_client.xfrUpdate( (*ixfr)->id, &status, result );
+                            db_client.xfrUpdate( (*ixfr)->id, &status, result );
                             ixfr = m_xfr_active.erase( ixfr );
                         }
                     }
@@ -553,12 +575,12 @@ Server::xfrManagement()
                             keyfile = m_key_path + (*ixfr)->uid + "-key";
 
                             //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
-                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
+                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
                             result = exec( cmd.c_str() );
                             if ( parseGlobusEvents( result, status, error_msg ))
                             {
                                 // Cancel the xfr task
-                                cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
+                                cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
                                 result = exec( cmd.c_str() );
                                 cout << "Cancel result: " << result << "\n";
                             }
@@ -570,7 +592,7 @@ Server::xfrManagement()
                                 (*ixfr)->status = status;
 
                                 // Update DB entry
-                                m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
+                                db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
 
                                 if ( (*ixfr)->mode == XM_PUT )
                                 {
@@ -602,7 +624,7 @@ Server::xfrManagement()
                                     upd_req.set_subject( (*ixfr)->uid );
                                     reply.Clear();
 
-                                    m_db_client.recordUpdate( upd_req, reply );
+                                    db_client.recordUpdate( upd_req, reply );
                                 }
                             }
 
@@ -721,6 +743,7 @@ Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status, std
     return false;
 }
 
+/*
 void
 Server::sessionClosed( spSession a_session )
 {
@@ -729,7 +752,7 @@ Server::sessionClosed( spSession a_session )
     if ( isess != m_sessions.end() )
         m_sessions.erase( isess );
 }
-
+*/
 
 void
 Server::generateKeys( const std::string & a_uid, std::string & a_key_data )
@@ -763,7 +786,7 @@ Server::getPublicKey( const std::string & a_uid, std::string & a_key_data )
 
     ifstream inf( key_file );
     if ( !inf.is_open() || !inf.good() )
-        EXCEPT( ID_SERVICE_ERROR, "Could not open new ssh public key file" );
+        EXCEPT( ID_SERVICE_ERROR, "No SSH key available" );
 
     a_key_data.assign(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
 
@@ -812,7 +835,12 @@ Server::zapHandler()
         char    mechanism[100];
         char    client_key[100];
         map<string,string>::iterator iclient;
+        map<string,pair<string,size_t>>::iterator itrans_client;
         zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
+        string uid;
+        DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
+
+        db_client.setClient( "sdms" );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );
@@ -869,21 +897,32 @@ Server::zapHandler()
                 // Always accept - but only set UID if it's a known client (by key)
                 if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
                 {
-                    cout << "ZAP: Known client\n";
+                    cout << "ZAP: Known pre-authorized client\n";
+                    uid = iclient->second;
+                }
+                else if (( itrans_client = m_trans_auth_clients.find( client_key_text )) != m_trans_auth_clients.end())
+                {
+                    cout << "ZAP: Known transient client\n";
+                    uid = itrans_client->second.first;
                 }
                 else
                 {
-                    cout << "ZAP: UNKNOWN client\n";
+                    if ( db_client.uidByPubKey( client_key_text, uid ) )
+                    {
+                        cout << "ZAP: Known client " << uid << "\n";
+                    }
+                    else
+                    {
+                        uid = string("anon_") + client_key_text;
+                        cout << "ZAP: UNKNOWN client " << uid << "\n";
+                    }
                 }
 
                 zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
                 zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                if ( iclient != m_auth_clients.end() )
-                    zmq_send( socket, iclient->second.c_str(), iclient->second.size(), ZMQ_SNDMORE );
-                else
-                    zmq_send( socket, "", 0, ZMQ_SNDMORE );
+                zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
             }
             catch( TraceException & e )
@@ -917,6 +956,20 @@ Server::zapHandler()
     DL_INFO( "ZAP handler thread exiting" );
 }
 
+
+void
+Server::authorizeClient( const std::string & a_cert_uid, const std::string & a_uid )
+{
+    if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
+    {
+        struct timespec             _t;
+
+        lock_guard<mutex> lock( m_data_mutex );
+        clock_gettime( CLOCK_REALTIME, &_t );
+
+        m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, _t.tv_sec + 10 );
+    }
+}
 
 
 }}

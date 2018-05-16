@@ -189,23 +189,29 @@ void Client::setup()
 
     try
     {
+        // TODO Ensure readable by user only
+
         //cout << "Saving " << m_key_file << "\n";
         string fname = m_cred_path + "user-key-pub";
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
         ofstream outf( fname );
         if ( !outf.is_open() || !outf.good() )
             EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
 
         outf << reply->pub_key();
         outf.close();
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read );
 
         //cout << "Saving " << m_cert_file << "\n";
         fname = m_cred_path + "user-key-priv";
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
         outf.open( fname );
         if ( !outf.is_open() || !outf.good() )
             EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
 
         outf << reply->priv_key();
         outf.close();
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read );
 
         delete reply;
     }
@@ -214,8 +220,6 @@ void Client::setup()
         delete reply;
         throw;
     }
-
-    cout << "SUCCESS\n";
 }
 
 
@@ -295,12 +299,6 @@ ServiceStatus Client::status()
 void
 Client::authenticate( const std::string & a_uid, const string & a_password )
 {
-    /*
-    char * uid = getlogin();
-    if ( uid == 0 )
-        EXCEPT( 0, "Could not determine login name" );
-    */
-
     AuthenticateRequest req;
 
     req.set_uid( a_uid );
@@ -308,11 +306,12 @@ Client::authenticate( const std::string & a_uid, const string & a_password )
 
     AckReply * reply;
 
-cout << "sending\n";
     send<>( req, reply, m_ctx++ );
-cout << "back\n";
 
     delete reply;
+
+    // On success, reconnect to server with same credentials
+    m_comm->reset();
 }
 
 spUserDataReply

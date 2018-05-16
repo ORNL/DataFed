@@ -127,6 +127,52 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     }
 }
 
+bool
+DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
+{
+    string  url;
+    char    error[CURL_ERROR_SIZE];
+
+    a_result.clear();
+    error[0] = 0;
+
+    url.reserve( 512 );
+
+    // TODO Get URL base from ctor
+    url.append( m_db_url );
+    url.append( a_url_path );
+    url.append( "?client=" );
+    url.append( m_client );
+
+    char * esc_txt;
+
+    for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
+    {
+        url.append( "&" );
+        url.append( iparam->first.c_str() );
+        url.append( "=" );
+        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        url.append( esc_txt );
+        curl_free( esc_txt );
+    }
+
+    DL_DEBUG( "url: " << url );
+
+    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
+    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+
+    CURLcode res = curl_easy_perform( m_curl );
+
+    long http_code = 0;
+    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+    if ( res == CURLE_OK && ( http_code >= 200 && http_code < 300 ))
+        return true;
+    else
+        return false;
+}
+
 void
 DatabaseClient::clientAuthenticate( const std::string & a_password )
 {
@@ -151,8 +197,6 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
     // TODO This need to be done correctly without assuming storage location
     dbGet( "dat/view", {{"id",a_data_id}}, result );
 
-    rapidjson::Value::MemberIterator imem;
-
     // TODO Not sure if this check is needed
     if ( result.Size() != 1 )
         EXCEPT_PARAM( ID_BAD_REQUEST, "No such data record: " << a_data_id );
@@ -163,6 +207,45 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
 
     return string("/data/") + id.substr(2);
 }
+
+
+bool
+DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
+{
+    return dbGetRaw( "usr/find/by_pub_key", {{"pub_key",a_pub_key}}, a_uid );
+}
+
+bool
+DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/keys/get", {}, result );
+
+    rapidjson::Value & val = result[0];
+
+    rapidjson::Value::MemberIterator imem = val.FindMember("pub_key");
+    
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_pub_key = imem->value.GetString();
+
+    imem = val.FindMember("priv_key");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_priv_key = imem->value.GetString();
+
+    return true;
+}
+
+void
+DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result );
+}
+
 
 void
 DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
@@ -678,7 +761,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_data_id( val["data_id"].GetString() );
         xfr->set_repo_path( val["repo_path"].GetString() );
         xfr->set_local_path( val["local_path"].GetString() );
-        xfr->set_globus_id( val["globus_id"].GetString() );
+        xfr->set_uid( val["user_id"].GetString() );
         xfr->set_updated( val["updated"].GetInt() );
 
         imem = val.FindMember("task_id");

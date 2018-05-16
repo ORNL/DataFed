@@ -142,7 +142,7 @@ Worker::workerThread()
                 //cout << "W" << m_tid << " got msg " << msg_type << endl;
                 DL_INFO( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
 
-                if ( m_msg_buf.getUID().size() == 0 && msg_type > 0x1FF )
+                if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
                     DL_INFO( "W"<<m_tid<<" unauthorized access" );
                     m_msg_buf.serialize( nack );
@@ -276,6 +276,7 @@ Worker::procAuthenticateRequest( const std::string & a_uid )
     m_db_client.clientAuthenticate( request->password() );
 
     cout << "Authenticated " << request->uid() << "\n";
+    m_mgr.authorizeClient( a_uid, request->uid() );
 
     PROC_MSG_END
 }
@@ -285,16 +286,27 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
-/*
-    char public_key[41];
-    char secret_key[41];
 
-    if ( zmq_curve_keypair( public_key, secret_key ) != 0 )
-        EXCEPT_PARAM( ID_SERVICE_ERROR, "Key generation failed: " << zmq_strerror( errno ));
+    m_db_client.setClient( a_uid );
 
-    params.push_back({"key_pub",public_key});
-    params.push_back({"key_prv",secret_key});
-*/
+    string pub_key, priv_key;
+
+    if ( !m_db_client.userGetKeys( pub_key, priv_key ))
+    {
+        char public_key[41];
+        char secret_key[41];
+
+        if ( zmq_curve_keypair( public_key, secret_key ) != 0 )
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Key generation failed: " << zmq_strerror( errno ));
+
+        pub_key = public_key;
+        priv_key = secret_key;
+
+        m_db_client.userSetKeys( pub_key, priv_key );
+    }
+
+    reply.set_pub_key( pub_key );
+    reply.set_priv_key( priv_key );
 
     PROC_MSG_END
 }
@@ -302,8 +314,13 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 bool
 Worker::procSSH_GenerateKeysRequest( const std::string & a_uid )
 {
-    (void)a_uid;
-    PROC_MSG_BEGIN( SSH_GenerateKeysRequest, SSH_PublicKeyReply )
+     PROC_MSG_BEGIN( SSH_GenerateKeysRequest, SSH_PublicKeyReply )
+
+    string key_data;
+
+    m_mgr.generateKeys( a_uid, key_data );
+
+    reply.set_pub_key( key_data );
 
     PROC_MSG_END
 }
@@ -311,8 +328,13 @@ Worker::procSSH_GenerateKeysRequest( const std::string & a_uid )
 bool
 Worker::procSSH_GetPublicKeyRequest( const std::string & a_uid )
 {
-    (void)a_uid;
     PROC_MSG_BEGIN( SSH_GetPublicKeyRequest, SSH_PublicKeyReply )
+
+    string key_data;
+
+    m_mgr.getPublicKey( a_uid, key_data );
+
+    reply.set_pub_key( key_data );
 
     PROC_MSG_END
 }
@@ -320,8 +342,15 @@ Worker::procSSH_GetPublicKeyRequest( const std::string & a_uid )
 bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
-    (void)a_uid;
     PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
+
+    m_db_client.setClient( a_uid );
+    m_db_client.xfrInit( request->id(), request->local(), XM_GET, reply );
+
+    if ( reply.xfr_size() != 1 )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+
+    m_mgr.handleNewXfr( reply.xfr(0), a_uid );
 
     PROC_MSG_END
 }
@@ -329,8 +358,15 @@ Worker::procDataGetRequest( const std::string & a_uid )
 bool
 Worker::procDataPutRequest( const std::string & a_uid )
 {
-    (void)a_uid;
     PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
+
+    m_db_client.setClient( a_uid );
+    m_db_client.xfrInit( request->id(), request->local(), XM_PUT, reply );
+
+    if ( reply.xfr_size() != 1 )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+
+    m_mgr.handleNewXfr( reply.xfr(0), a_uid );
 
     PROC_MSG_END
 }
@@ -338,8 +374,19 @@ Worker::procDataPutRequest( const std::string & a_uid )
 bool
 Worker::procDataDeleteRequest( const std::string & a_uid )
 {
-    (void)a_uid;
     PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
+
+    Auth::RecordUpdateRequest upd_req;
+    Auth::RecordDataReply upd_reply;
+
+    upd_req.set_id( request->id() );
+    upd_req.set_data_size( 0 );
+
+    m_db_client.setClient( a_uid );
+    m_db_client.recordUpdate( upd_req, upd_reply );
+
+    // Ask FileManager to delete file
+    m_mgr.dataDelete( request->id() );
 
     PROC_MSG_END
 }
@@ -347,13 +394,13 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
 bool
 Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
-    (void)a_uid;
     PROC_MSG_BEGIN( RecordDeleteRequest, RecordDeleteReply )
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    m_db_client.setClient( a_uid );
     m_db_client.recordDelete( *request, reply );
 
     // Ask FileManager to delete file
