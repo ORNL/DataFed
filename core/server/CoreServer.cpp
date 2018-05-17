@@ -1,5 +1,4 @@
 #include <fstream>
-#include <algorithm>
 #include <time.h>
 #include "MsgBuf.hpp"
 #include "DynaLog.hpp"
@@ -14,8 +13,6 @@
 
 #define MAINT_POLL_INTERVAL 5
 #define CLIENT_IDLE_TIMEOUT 3600
-#define INIT_POLL_PERIOD 1
-#define MAX_BACKOFF 10
 
 using namespace std;
 
@@ -38,12 +35,12 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     //m_endpoint( asio::ip::tcp::v4(), m_port ),
     //m_acceptor( m_io_service, m_endpoint ),
     //m_context( asio::ssl::context::tlsv12 ),
-    m_xfr_thread(0),
     m_db_url(a_db_url),
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
     m_repo_address( a_repo_address ),
     m_zap_thread(0),
+    m_xfr_mgr( *this ),
     m_msg_router_thread(0),
     m_num_workers(8)
 {
@@ -104,8 +101,8 @@ Server::run( bool a_async )
     if ( a_async )
     {
         //m_io_thread = new thread( &Server::ioRun, this );
+        m_xfr_mgr.start();
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
-        m_xfr_thread = new thread( &Server::xfrManagement, this );
         m_msg_router_thread = new thread( &Server::msgRouter, this );
         m_io_secure_thread = new thread( &Server::ioSecure, this );
         m_io_insecure_thread = new thread( &Server::ioInsecure, this );
@@ -113,8 +110,8 @@ Server::run( bool a_async )
     else
     {
         lock.unlock();
+        m_xfr_mgr.start();
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
-        m_xfr_thread = new thread( &Server::xfrManagement, this );
         m_msg_router_thread = new thread( &Server::msgRouter, this );
         m_io_secure_thread = new thread( &Server::ioSecure, this );
         //m_io_insecure_thread = new thread( &Server::ioInsecure, this );
@@ -127,10 +124,6 @@ Server::run( bool a_async )
         m_msg_router_thread->join();
         delete m_msg_router_thread;
         m_msg_router_thread = 0;
-
-        m_xfr_thread->join();
-        delete m_xfr_thread;
-        m_xfr_thread = 0;
 
         m_maint_thread->join();
         delete m_maint_thread;
@@ -461,287 +454,7 @@ Server::backgroundMaintenance()
 }
 
 
-void
-Server::xfrManagement()
-{
-    DL_DEBUG( "Xfr thread started" );
 
-    try
-    {
-        list<XfrDataInfo*>::iterator ixfr;
-        XfrDataInfo * xfr_entry;
-        string keyfile;
-        string cmd;
-        string result;
-        XfrStatus status;
-        size_t file_size;
-        time_t mod_time;
-        Auth::RecordUpdateRequest upd_req;
-        Auth::RecordDataReply  reply;
-        string error_msg;
-        size_t  pos;
-        Auth::RepoDataGetSizeRequest sz_req;
-        MsgBuf::Message *            raw_msg;
-        Auth::RepoDataSizeReply *    sz_rep;
-        MsgBuf::Frame                frame;
-        string                       uid;
-        MsgComm  repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
-        DatabaseClient db_client( m_db_url, m_db_user, m_db_pass );
-
-        db_client.setClient( "sdms" );
-
-        while( m_io_running )
-        {
-            sleep( 1 );
-
-            {
-                lock_guard<mutex> lock( m_xfr_mutex );
-                while ( m_xfr_pending.size() )
-                {
-                    xfr_entry = m_xfr_all[m_xfr_pending.front()];
-                    m_xfr_active.push_front(xfr_entry);
-                    m_xfr_pending.pop_front();
-                }
-            }
-
-            for ( ixfr = m_xfr_active.begin(); ixfr != m_xfr_active.end(); )
-            {
-                try
-                {
-                    //cout << "poll: " << (*ixfr)->poll << "\n";
-
-                    if ( (*ixfr)->stage == 0 )
-                    {
-                        // Start xfr, get task ID, update DB
-                        // Use Legacy Globus CLI to start transfer
-                        cout << "start xfr\n";
-
-                        keyfile = m_key_path + (*ixfr)->uid + "-key";
-
-                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org transfer -- ";
-                        //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
-                        //cmd = "ssh globus transfer -- ";
-
-                        if ( (*ixfr)->mode == XM_PUT )
-                            cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
-                        else
-                            cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
-
-                        // HACK Need err msg if things go wrong
-                        cmd += " 2>&1";
-
-                        {
-                            lock_guard<mutex> lock( m_key_mutex );
-                            result = exec( cmd.c_str() );
-                        }
-
-                        pos = result.find( "Task ID: " );
-
-                        if ( pos != string::npos )
-                        {
-                            (*ixfr)->task_id = result.substr( pos + 9 );
-                            (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
-                            //cout << "New task[" << (*ixfr)->task_id << "]\n";
-
-                            cout << "Task " << (*ixfr)->task_id << " started\n";
-
-                            // Update DB entry
-                            db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
-                            (*ixfr)->stage = 1;
-                            (*ixfr)->poll = INIT_POLL_PERIOD;
-                            ixfr++;
-                        }
-                        else
-                        {
-                            //cout << "Globus CLI Error\nResult:[" << result << "]";
-                            for ( string::iterator c = result.begin(); c != result.end(); c++ )
-                            {
-                                if ( *c == '\n' )
-                                    *c = '.';
-                            }
-
-                            status = XS_FAILED;
-                            db_client.xfrUpdate( (*ixfr)->id, &status, result );
-                            ixfr = m_xfr_active.erase( ixfr );
-                        }
-                    }
-                    else
-                    {
-                        if ( --(*ixfr)->poll == 0 )
-                        {
-                            //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
-
-                            // Get current status
-                            keyfile = m_key_path + (*ixfr)->uid + "-key";
-
-                            //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
-                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
-                            result = exec( cmd.c_str() );
-                            if ( parseGlobusEvents( result, status, error_msg ))
-                            {
-                                // Cancel the xfr task
-                                cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
-                                result = exec( cmd.c_str() );
-                                cout << "Cancel result: " << result << "\n";
-                            }
-
-                            cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
-
-                            if ( (*ixfr)->status != status )
-                            {
-                                (*ixfr)->status = status;
-
-                                // Update DB entry
-                                db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
-
-                                if ( (*ixfr)->mode == XM_PUT )
-                                {
-                                    mod_time = time(0);
-                                    file_size = 0;
-
-                                    // TODO How to handle PUT errors?
-                                    if ( (*ixfr)->status == XS_SUCCEEDED )
-                                    {
-                                        // TODO This should be done in another thread so xfr mon isn't blocked
-                                        sz_req.set_id( (*ixfr)->data_id );
-                                        repo_comm.send( sz_req );
-                                        if ( !repo_comm.recv( raw_msg, uid, frame, 10000 ))
-                                            cout << "No response from repo server!\n";
-                                        else
-                                        {
-                                            if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
-                                            {
-                                                file_size = sz_rep->size();
-                                            }
-                                            delete sz_rep;
-                                        }
-                                    }
-
-                                    // Update DB record with new file stats
-                                    upd_req.set_id( (*ixfr)->data_id );
-                                    upd_req.set_data_size( file_size );
-                                    upd_req.set_data_time( mod_time );
-                                    upd_req.set_subject( (*ixfr)->uid );
-                                    reply.Clear();
-
-                                    db_client.recordUpdate( upd_req, reply );
-                                }
-                            }
-
-                            // Remove from active list
-                            if ( (*ixfr)->status > XS_INACTIVE )
-                            {
-                                ixfr = m_xfr_active.erase( ixfr );
-                            }
-                            else
-                            {
-                                // Backoff increments each poll interval, but time waited only increments
-                                // every two poll intervals. This allows polling to better match size of
-                                // file being transferred.
-                                if ( (*ixfr)->backoff < MAX_BACKOFF )
-                                    (*ixfr)->backoff++;
-
-                                (*ixfr)->poll = INIT_POLL_PERIOD*(1<<((*ixfr)->backoff >> 1));
-                                ++ixfr;
-                            }
-                        }
-                        else
-                            ++ixfr;
-                    }
-                }
-                catch( TraceException & e )
-                {
-                    cout << "XFR thread exception: " << e.toString() << "\n";
-                    ixfr = m_xfr_active.erase( ixfr );
-                }
-                catch(...)
-                {
-                    cout << "XFR thread exception!\n";
-                    ixfr = m_xfr_active.erase( ixfr );
-                }
-            }
-        }
-    }
-    catch( TraceException & e )
-    {
-        DL_ERROR( "Maint thread: " << e.toString( true ) );
-    }
-    catch( exception & e )
-    {
-        DL_ERROR( "Maint thread: " << e.what() );
-    }
-    catch( ... )
-    {
-        DL_ERROR( "Maint thread: unkown exception " );
-    }
-
-    DL_DEBUG( "Xfr thread stopped" );
-}
-
-bool
-Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg )
-{
-    status = XS_INACTIVE;
-
-    size_t p1 = 0;
-    size_t p2 = a_events.find_first_of( "=", 0 );
-    string tmp;
-    size_t fault_count = 0;
-
-    a_err_msg.clear();
-
-    while ( p2 != string::npos )
-    {
-        tmp = a_events.substr( p1, p2 - p1 );
-        if ( tmp != "code" )
-            return XS_FAILED;
-
-        p1 = p2 + 1;
-        p2 = a_events.find_first_of( "\n", p1 );
-        if ( p2 != string::npos )
-            tmp = a_events.substr( p1, p2 - p1 );
-        else
-            tmp = a_events.substr( p1 );
-
-        cout << "event: " << tmp << "\n";
-
-        if ( tmp == "STARTED" || tmp == "PROGRESS" )
-            status = XS_ACTIVE;
-        else if ( tmp == "SUCCEEDED" )
-            status = XS_SUCCEEDED;
-        else if ( tmp == "CANCELED" )
-        {
-            status = XS_FAILED;
-            a_err_msg = tmp;
-        }
-        else if ( tmp == "CONNECTION_RESET" )
-        {
-            status = XS_INIT;
-            if ( ++fault_count > 10 )
-            {
-                status = XS_FAILED;
-                a_err_msg = "Could not connect";
-                return true;
-            }
-        }
-        else
-        {
-            status = XS_FAILED;
-            a_err_msg = tmp;
-            return true;
-        }
-
-        // TODO There may be non-fatal error codes that should be checked for
-
-        if ( p2 == string::npos )
-            break;
-
-        p1 = p2 + 1;
-        p2 = a_events.find_first_of( "=", p1 );
-    }
-
-    return false;
-}
 
 /*
 void
@@ -797,14 +510,7 @@ Server::getPublicKey( const std::string & a_uid, std::string & a_key_data )
 void
 Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
 {
-    lock_guard<mutex> lock(m_xfr_mutex);
-
-    if ( m_xfr_all.find( a_xfr.id() ) == m_xfr_all.end() )
-    {
-        XfrDataInfo * xfr_entry = new XfrDataInfo( a_xfr, a_uid );
-        m_xfr_all[a_xfr.id()] = xfr_entry;
-        m_xfr_pending.push_back( a_xfr.id() );
-    }
+    m_xfr_mgr.newXfr( a_xfr, a_uid );
 }
 
 void
