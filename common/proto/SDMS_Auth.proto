@@ -55,6 +55,12 @@ message CheckPermsReply
 
 // ============================ User Messages
 
+message UserSaveTokensRequest
+{
+    required string             access      = 1;
+    required string             refresh     = 2;
+}
+
 message UserCreateRequest
 {
     required string             uid         = 1;

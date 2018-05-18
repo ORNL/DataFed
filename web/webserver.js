@@ -41,8 +41,10 @@ const oauth_credentials = {
     authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
     accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
     redirectUri: 'https://sdms.ornl.gov:443/ui/authn',
-    scopes: ['openid']
+    scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
 };
+
+//scopes: ['openid','urn:globus:auth:scope:transfer.api.globus.org:all']
 
 // Initialize the OAuth2 Library
 const ClientOAuth2 = require('client-oauth2');
@@ -112,7 +114,7 @@ app.get('/ui/main', (request, response) => {
 app.get('/ui/register', (request, response) => {
     console.log("get /ui/register");
 
-    response.render('register');
+    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok });
 });
 
 app.get('/ui/login', (request, response) => {
@@ -141,8 +143,10 @@ app.get('/ui/authn', ( a_request, a_response ) => {
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
-    globus_auth.code.getToken( a_request.originalUrl + "&access_type=offline" ).then( function( client_token ) {
-        //console.log( 'client token:', client_token );
+    globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
+        console.log( 'client token:', client_token );
+        var xfr_token = client_token.data.other_tokens[0];
+        console.log( 'xfr token:', xfr_token );
 
         // TODO - Refresh the current users access token?
         /*
@@ -172,9 +176,6 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                 console.log( 'got user info:', body );
                 userinfo = JSON.parse( body );
 
-                // Set access token cookie even if user isn't registered
-                //a_response.cookie( 'sdms-token', client_token.accessToken, { httpOnly: true });
-
                 // TODO This can just be a function call - AJAX is NOT required!!!
 
                 request.get({
@@ -191,6 +192,9 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                             console.log( 'user found:', body );
                             var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
+                            // Save access token
+                            saveToken( uid, xfr_token.access_token, xfr_token.refresh_token );
+
                             // TODO Account may be disable from SDMS (active = false)
                             //userinfo.registered = true;
                             //userinfo.active = true;
@@ -202,7 +206,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                             /*userinfo.registered = false;
                             userinfo.active = false;*/
                             a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
-                            a_response.redirect( "/ui/register" );
+                            a_response.redirect( "/ui/register&acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
                         }
                     }
                 });
@@ -238,6 +242,9 @@ app.get('/ui/do_register', ( a_request, a_response ) => {
                 // TODO Need to provide error information as query string
                 a_response.redirect( "/ui/error" );
             } else {
+                // Save access token
+                saveToken( uid, a_request.query.acc_tok, a_request.query.ref_tok );
+
                 a_response.cookie( 'sdms', uid, { httpOnly: true });
                 //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
                 a_response.redirect( "/ui/main" );
@@ -405,9 +412,6 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
 });
 
 
-process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-});
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
@@ -467,6 +471,13 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
     }
 });
 
+function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
+    console.log( "save token", a_uid, a_acc_tok, a_ref_tok );
+
+    sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok }, function( reply ) {
+        console.log( "reply to saveToken" );
+    });
+}
 
 core_sock.on('message', function( delim, frame, client, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
@@ -516,8 +527,10 @@ function allocRequestContext( a_response, a_callback ) {
     if ( ctx == MAX_CTX ) {
         ctx = g_ctx.indexOf( null );
         if ( ctx == -1 ) {
-            a_response.status( 503 );
-            a_response.send( "Server too busy" );
+            if ( a_response ) {
+                a_response.status( 503 );
+                a_response.send( "Server too busy" );
+            }
         } else {
             a_callback( ctx );
         }
@@ -526,7 +539,8 @@ function allocRequestContext( a_response, a_callback ) {
             g_ctx_next = MAX_CTX;
         a_callback( ctx );
     }
-};
+}
+
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
     var client = a_req.cookies[ 'sdms' ];
@@ -538,7 +552,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
     allocRequestContext( a_resp, function( ctx ){
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
-            throw "Invalid message type: " + a_msg_nam;
+            throw "Invalid message type: " + a_msg_name;
 
         var msg_buf = msg.encode(a_msg_data).finish();
         console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
@@ -573,8 +587,34 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
 
         core_sock.send([ nullfr, frame, client, msg_buf ]);
     });
-};
+}
 
+
+function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
+    var msg = g_msg_by_name[a_msg_name];
+    if ( !msg )
+        throw "Invalid message type: " + a_msg_name;
+
+    allocRequestContext( null, function( ctx ){
+        var msg_buf = msg.encode(a_msg_data).finish();
+        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+
+        var frame = Buffer.alloc(8);
+        frame.writeUInt32LE( msg_buf.length, 0 );
+        frame.writeUInt8( msg._pid, 4 );
+        frame.writeUInt8( msg._mid, 5 );
+        frame.writeUInt16LE( ctx, 6 );
+
+        g_ctx[ctx] = a_cb;
+
+        core_sock.send([ nullfr, frame, a_client, msg_buf ]);
+    });
+}
+
+
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
 
 var httpsServer = https.createServer( web_credentials, app );
 httpsServer.listen( port );

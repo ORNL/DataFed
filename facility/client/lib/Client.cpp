@@ -8,8 +8,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "Exec.hpp"
-
 #include <time.h>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}

@@ -1,4 +1,5 @@
 #include <zmq.h>
+#include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "CoreDatabaseClient.hpp"
@@ -9,15 +10,6 @@ namespace SDMS {
 namespace Core {
 
 using namespace SDMS::Auth;
-
-size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata )
-{
-    size_t len = size*nmemb;
-    //strncat( userdata, ptr, len );
-    ((string*)userdata)->append( ptr, len );
-    return len;
-}
-
 
 DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_client(0), m_db_url(a_db_url), m_db_user(a_db_user), m_db_pass(a_db_pass)
@@ -246,6 +238,47 @@ DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & 
     dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result );
 }
 
+void
+DatabaseClient::userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok )
+{
+    string result;
+    dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok}}, result );
+}
+
+bool
+DatabaseClient::userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/token/get", {}, result );
+
+    rapidjson::Value & val = result[0];
+
+    rapidjson::Value::MemberIterator imem = val.FindMember("access");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_acc_tok = imem->value.GetString();
+
+    imem = val.FindMember("refresh");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_ref_tok = imem->value.GetString();
+
+    return true;
+}
+
+bool
+DatabaseClient::userGetAccessToken( std::string & a_acc_tok )
+{
+    return dbGetRaw( "usr/token/get/access", {}, a_acc_tok );
+}
+
+void
+DatabaseClient::userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void)a_reply;
+    userSetTokens( a_request.access(), a_request.refresh() );
+}
 
 void
 DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )

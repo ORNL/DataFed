@@ -46,6 +46,7 @@ private:
         std::string     local_path;
         std::string     task_id;
         std::string     uid;
+        std::string     token;
         int             stage; // (0=not started,1=started,2=active)
         int             poll;
         int             backoff;

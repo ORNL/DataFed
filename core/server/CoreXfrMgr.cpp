@@ -4,9 +4,10 @@
 #include "MsgComm.hpp"
 #include "CoreXfrMgr.hpp"
 #include "CoreDatabaseClient.hpp"
+#include "GlobusTransferClient.hpp"
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
-#include "Exec.hpp"
+#include "Util.hpp"
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
 
@@ -67,6 +68,213 @@ XfrMgr::newXfr( const XfrData & a_xfr, const std::string & a_uid )
 
 void
 XfrMgr::xfrThreadFunc()
+{
+    DL_DEBUG( "Xfr thread started" );
+
+    try
+    {
+        list<XfrDataInfo*>::iterator ixfr;
+        XfrDataInfo * xfr_entry;
+        string keyfile;
+        string cmd;
+        string result;
+        XfrStatus status;
+        size_t file_size;
+        time_t mod_time;
+        Auth::RecordUpdateRequest upd_req;
+        Auth::RecordDataReply  reply;
+        string error_msg;
+        size_t  pos;
+        DatabaseClient db_client( m_mgr.getDbURL(), m_mgr.getDbUser(), m_mgr.getDbPass() );
+        GlobusTransferClient glob;
+
+        db_client.setClient( "sdms" );
+
+        while( m_run )
+        {
+            sleep( 1 );
+
+            {
+                lock_guard<mutex> lock( m_xfr_mutex );
+                while ( m_xfr_pending.size() )
+                {
+                    xfr_entry = m_xfr_all[m_xfr_pending.front()];
+                    m_xfr_active.push_front(xfr_entry);
+                    m_xfr_pending.pop_front();
+                }
+            }
+
+            for ( ixfr = m_xfr_active.begin(); ixfr != m_xfr_active.end(); )
+            {
+                try
+                {
+                    //cout << "poll: " << (*ixfr)->poll << "\n";
+
+                    if ( (*ixfr)->stage == 0 )
+                    {
+                        // Start xfr, get task ID, update DB
+                        // Use Legacy Globus CLI to start transfer
+                        cout << "start new xfr:" << (*ixfr)->id << "\n";
+
+                        // Get user's access token
+                        db_client.setClient( (*ixfr)->uid );
+
+                        if ( !db_client.userGetAccessToken( (*ixfr)->token )) {
+                            cout << "User " << (*ixfr)->uid << " has no access token\n";
+                            ixfr = m_xfr_active.erase( ixfr );
+                        }
+                        else
+                        {
+                            // Get new submission ID
+                            cout << "Sub ID: " << glob.getSubmissionID( (*ixfr)->token ) << "\n";
+
+                            (*ixfr)->stage = 1;
+                            (*ixfr)->poll = 10000;
+
+                            ixfr++;
+                        }
+
+#if 0
+                        if ( (*ixfr)->mode == XM_PUT )
+                            cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
+                        else
+                            cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
+
+                        // HACK Need err msg if things go wrong
+                        cmd += " 2>&1";
+
+                        result = exec( cmd.c_str() );
+
+                        pos = result.find( "Task ID: " );
+
+                        if ( pos != string::npos )
+                        {
+                            (*ixfr)->task_id = result.substr( pos + 9 );
+                            (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
+                            //cout << "New task[" << (*ixfr)->task_id << "]\n";
+
+                            cout << "Task " << (*ixfr)->task_id << " started\n";
+
+                            // Update DB entry
+                            db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                            (*ixfr)->stage = 1;
+                            (*ixfr)->poll = INIT_POLL_PERIOD;
+                            ixfr++;
+                        }
+                        else
+                        {
+                            //cout << "Globus CLI Error\nResult:[" << result << "]";
+                            for ( string::iterator c = result.begin(); c != result.end(); c++ )
+                            {
+                                if ( *c == '\n' )
+                                    *c = '.';
+                            }
+
+                            status = XS_FAILED;
+                            db_client.xfrUpdate( (*ixfr)->id, &status, result );
+                            ixfr = m_xfr_active.erase( ixfr );
+                        }
+#endif
+                    }
+                    else
+                    {
+                        if ( --(*ixfr)->poll == 0 )
+                        {
+                            //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
+
+                            // Get current status
+                            keyfile = m_mgr.getKeyPath() + (*ixfr)->uid + "-key";
+
+                            //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
+                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
+                            result = exec( cmd.c_str() );
+                            if ( parseGlobusEvents( result, status, error_msg ))
+                            {
+                                // Cancel the xfr task
+                                cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
+                                result = exec( cmd.c_str() );
+                                cout << "Cancel result: " << result << "\n";
+                            }
+
+                            cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
+
+                            if ( (*ixfr)->status != status )
+                            {
+                                (*ixfr)->status = status;
+
+                                // Update DB entry
+                                db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
+
+                                if ( (*ixfr)->mode == XM_PUT )
+                                {
+                                    mod_time = time(0);
+                                    //file_size = 0;
+
+                                    // Update DB record with new file stats
+                                    upd_req.set_id( (*ixfr)->data_id );
+                                    //upd_req.set_data_size( file_size );
+                                    upd_req.set_data_time( mod_time );
+                                    upd_req.set_subject( (*ixfr)->uid );
+                                    reply.Clear();
+
+                                    db_client.recordUpdate( upd_req, reply );
+                                }
+                            }
+
+                            // Remove from active list
+                            if ( (*ixfr)->status > XS_INACTIVE )
+                            {
+                                ixfr = m_xfr_active.erase( ixfr );
+                            }
+                            else
+                            {
+                                // Backoff increments each poll interval, but time waited only increments
+                                // every two poll intervals. This allows polling to better match size of
+                                // file being transferred.
+                                if ( (*ixfr)->backoff < MAX_BACKOFF )
+                                    (*ixfr)->backoff++;
+
+                                (*ixfr)->poll = INIT_POLL_PERIOD*(1<<((*ixfr)->backoff >> 1));
+                                ++ixfr;
+                            }
+                        }
+                        else
+                            ++ixfr;
+                    }
+                }
+                catch( TraceException & e )
+                {
+                    cout << "XFR thread exception: " << e.toString() << "\n";
+                    ixfr = m_xfr_active.erase( ixfr );
+                }
+                catch(...)
+                {
+                    cout << "XFR thread exception!\n";
+                    ixfr = m_xfr_active.erase( ixfr );
+                }
+            }
+        }
+    }
+    catch( TraceException & e )
+    {
+        DL_ERROR( "Maint thread: " << e.toString( true ) );
+    }
+    catch( exception & e )
+    {
+        DL_ERROR( "Maint thread: " << e.what() );
+    }
+    catch( ... )
+    {
+        DL_ERROR( "Maint thread: unkown exception " );
+    }
+
+    DL_DEBUG( "Xfr thread stopped" );
+}
+
+#if 0
+
+void
+XfrMgr::xfrThreadFunc_old()
 {
     DL_DEBUG( "Xfr thread started" );
 
@@ -281,7 +489,7 @@ XfrMgr::xfrThreadFunc()
     DL_DEBUG( "Xfr thread stopped" );
 }
 
-
+#endif
 
 bool
 XfrMgr::parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg )
