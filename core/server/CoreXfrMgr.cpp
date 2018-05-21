@@ -87,6 +87,8 @@ XfrMgr::xfrThreadFunc()
         size_t  pos;
         DatabaseClient db_client( m_mgr.getDbURL(), m_mgr.getDbUser(), m_mgr.getDbPass() );
         GlobusTransferClient glob;
+        bool res;
+        vector<string> events;
 
         db_client.setClient( "sdms" );
 
@@ -126,76 +128,42 @@ XfrMgr::xfrThreadFunc()
                         else
                         {
                             // Get new submission ID
-                            cout << "Sub ID: " << glob.getSubmissionID( (*ixfr)->token ) << "\n";
+                            string sub_id = glob.getSubmissionID( (*ixfr)->token );
 
-                            (*ixfr)->stage = 1;
-                            (*ixfr)->poll = 10000;
+                            // True = ok, false = temp failure, exception = perm failure
+                            if ( (*ixfr)->mode == XM_PUT )
+                                res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
+                            else
+                                res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->repo_path, (*ixfr)->local_path, (*ixfr)->task_id );
 
-                            ixfr++;
-                        }
-
-#if 0
-                        if ( (*ixfr)->mode == XM_PUT )
-                            cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
-                        else
-                            cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
-
-                        // HACK Need err msg if things go wrong
-                        cmd += " 2>&1";
-
-                        result = exec( cmd.c_str() );
-
-                        pos = result.find( "Task ID: " );
-
-                        if ( pos != string::npos )
-                        {
-                            (*ixfr)->task_id = result.substr( pos + 9 );
-                            (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
-                            //cout << "New task[" << (*ixfr)->task_id << "]\n";
-
-                            cout << "Task " << (*ixfr)->task_id << " started\n";
-
-                            // Update DB entry
-                            db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
-                            (*ixfr)->stage = 1;
-                            (*ixfr)->poll = INIT_POLL_PERIOD;
-                            ixfr++;
-                        }
-                        else
-                        {
-                            //cout << "Globus CLI Error\nResult:[" << result << "]";
-                            for ( string::iterator c = result.begin(); c != result.end(); c++ )
+                            if ( res )
                             {
-                                if ( *c == '\n' )
-                                    *c = '.';
+                                cout << "xfr running with task id: " << (*ixfr)->task_id << "\n";
+                                // Update DB entry
+                                db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                                (*ixfr)->stage = 1;
+                                (*ixfr)->poll = INIT_POLL_PERIOD;
                             }
 
+                            ixfr++;
+                        }
+
+                        /*
                             status = XS_FAILED;
                             db_client.xfrUpdate( (*ixfr)->id, &status, result );
                             ixfr = m_xfr_active.erase( ixfr );
-                        }
-#endif
+                        */
                     }
                     else
                     {
                         if ( --(*ixfr)->poll == 0 )
                         {
                             //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
-
-                            // Get current status
-                            keyfile = m_mgr.getKeyPath() + (*ixfr)->uid + "-key";
-
-                            //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
-                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
-                            result = exec( cmd.c_str() );
-                            if ( parseGlobusEvents( result, status, error_msg ))
+                            if ( glob.checkTransferStatus( (*ixfr)->token, (*ixfr)->task_id, status, error_msg ))
                             {
-                                // Cancel the xfr task
-                                cmd = "ssh -i " + keyfile + " " + (*ixfr)->uid + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
-                                result = exec( cmd.c_str() );
-                                cout << "Cancel result: " << result << "\n";
+                                cout << "TODO - cancel failed task!\n";
+                                //glob.cancelTask( (*ixfr)->token, (*ixfr)->task_id );
                             }
-
                             cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
 
                             if ( (*ixfr)->status != status )
@@ -490,71 +458,5 @@ XfrMgr::xfrThreadFunc_old()
 }
 
 #endif
-
-bool
-XfrMgr::parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg )
-{
-    status = XS_INACTIVE;
-
-    size_t p1 = 0;
-    size_t p2 = a_events.find_first_of( "=", 0 );
-    string tmp;
-    size_t fault_count = 0;
-
-    a_err_msg.clear();
-
-    while ( p2 != string::npos )
-    {
-        tmp = a_events.substr( p1, p2 - p1 );
-        if ( tmp != "code" )
-            return XS_FAILED;
-
-        p1 = p2 + 1;
-        p2 = a_events.find_first_of( "\n", p1 );
-        if ( p2 != string::npos )
-            tmp = a_events.substr( p1, p2 - p1 );
-        else
-            tmp = a_events.substr( p1 );
-
-        cout << "event: " << tmp << "\n";
-
-        if ( tmp == "STARTED" || tmp == "PROGRESS" )
-            status = XS_ACTIVE;
-        else if ( tmp == "SUCCEEDED" )
-            status = XS_SUCCEEDED;
-        else if ( tmp == "CANCELED" )
-        {
-            status = XS_FAILED;
-            a_err_msg = tmp;
-        }
-        else if ( tmp == "CONNECTION_RESET" )
-        {
-            status = XS_INIT;
-            if ( ++fault_count > 10 )
-            {
-                status = XS_FAILED;
-                a_err_msg = "Could not connect";
-                return true;
-            }
-        }
-        else
-        {
-            status = XS_FAILED;
-            a_err_msg = tmp;
-            return true;
-        }
-
-        // TODO There may be non-fatal error codes that should be checked for
-
-        if ( p2 == string::npos )
-            break;
-
-        p1 = p2 + 1;
-        p2 = a_events.find_first_of( "=", p1 );
-    }
-
-    return false;
-}
-
 
 }}

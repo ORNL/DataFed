@@ -26,7 +26,6 @@ public:
 
 private:
     void    xfrThreadFunc();
-    bool    parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg );
 
     struct XfrDataInfo
     {
