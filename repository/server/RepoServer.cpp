@@ -140,7 +140,7 @@ Server::ioRun()
     sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
     sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
 
-    MsgComm sysComm( string("tcp://*:") + to_string(m_port), ZMQ_ROUTER, true, &sec_ctx );
+    MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::ROUTER, true, &sec_ctx );
 
 #if 0
     MsgComm test( string("tcp://localhost:9001"), ZMQ_DEALER, false, 0 );

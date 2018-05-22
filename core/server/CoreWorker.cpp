@@ -124,7 +124,7 @@ Worker::workerThread()
 {
     cout << "W" << m_tid << " started" << endl;
 
-    MsgComm         comm( "inproc://workers", ZMQ_DEALER, false );
+    MsgComm         comm( "inproc://workers", MsgComm::DEALER, false );
     uint16_t        msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;
 

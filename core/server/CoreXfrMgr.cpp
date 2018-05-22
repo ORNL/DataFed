@@ -84,13 +84,20 @@ XfrMgr::xfrThreadFunc()
         Auth::RecordUpdateRequest upd_req;
         Auth::RecordDataReply  reply;
         string error_msg;
-        size_t  pos;
         DatabaseClient db_client( m_mgr.getDbURL(), m_mgr.getDbUser(), m_mgr.getDbPass() );
         GlobusTransferClient glob;
         bool res;
         vector<string> events;
 
         db_client.setClient( "sdms" );
+
+        // TODO - This is just for demo, must use core server to communicate with repos
+        MsgComm  repo_comm( "tcp://localhost:9000", MsgComm::DEALER, false, & m_mgr.getSecurityContext() );
+        MsgBuf::Message *            raw_msg;
+        Auth::RepoDataGetSizeRequest sz_req;
+        Auth::RepoDataSizeReply *    sz_rep;
+        MsgBuf::Frame                frame;
+        string                       uid;
 
         while( m_run )
         {
@@ -176,11 +183,28 @@ XfrMgr::xfrThreadFunc()
                                 if ( (*ixfr)->mode == XM_PUT )
                                 {
                                     mod_time = time(0);
-                                    //file_size = 0;
+                                    file_size = 0;
+
+                                    if ( (*ixfr)->status == XS_SUCCEEDED )
+                                    {
+                                        // TODO This should be done in another thread so xfr mon isn't blocked
+                                        sz_req.set_id( (*ixfr)->data_id );
+                                        repo_comm.send( sz_req );
+                                        if ( !repo_comm.recv( raw_msg, uid, frame, 10000 ))
+                                            cout << "No response from repo server!\n";
+                                        else
+                                        {
+                                            if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
+                                            {
+                                                file_size = sz_rep->size();
+                                            }
+                                            delete sz_rep;
+                                        }
+                                    }
 
                                     // Update DB record with new file stats
                                     upd_req.set_id( (*ixfr)->data_id );
-                                    //upd_req.set_data_size( file_size );
+                                    upd_req.set_data_size( file_size );
                                     upd_req.set_data_time( mod_time );
                                     upd_req.set_subject( (*ixfr)->uid );
                                     reply.Clear();

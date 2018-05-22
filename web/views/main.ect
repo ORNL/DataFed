@@ -47,9 +47,11 @@
                             <button class="btn act-folder act-data" disabled>Share</button>
                             <button class="btn act-data" disabled>Link</button>
                             <button class="btn act-data" disabled>Unlink</button>
-                            <button class="btn act-data" disabled>Upload</button>
-                            <button class="btn act-data" disabled>Download</button>
+                            <button class="btn act-data" onclick="xfrSelected(0)" disabled>Upload</button>
+                            <button class="btn act-data" onclick="xfrSelected(1)" disabled>Download</button>
                         </div>
+                        <div style="flex:none">Transfer History:</div>
+                        <div id="xfr_hist" class="ui-widget-content text" style="flex:1 4 100%"></div>
                     </div>
                 </div>
                 <div id="tab-2">
@@ -75,6 +77,15 @@
             <label for="md_mode">Set</label>
             </td></tr>
         <tr id='dlg_coll_row'><td>Collection ID:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>
+        </table>
+    </div>
+    <div id='dlg_xfr' style='display:none'>
+        <table style='width:100%'>
+        <tr><td>Title:</td><td><input disabled type='text' id='title' style='width:100%'></input></td></tr>
+        <tr><td>Alias:</td><td><input disabled type='text' id='alias' style='width:100%'></input></td></tr>
+        <tr><td >Description:</td><td><textarea disabled id='desc' rows=3 style='width:100%'></textarea></td></tr>
+        <tr><td>Metadata:</td><td><textarea disabled id='md' rows=3 style='width:100%'></textarea></td></tr>
+        <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>
         </table>
     </div>
     <div id='dlg_alert' style='display:none'></div>

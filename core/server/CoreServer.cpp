@@ -298,8 +298,8 @@ Server::ioSecure()
     sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
     sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
 
-    MsgComm frontend( "tcp://*:9002", ZMQ_ROUTER, true, &sec_ctx );
-    MsgComm backend( "inproc://msg_proc", ZMQ_DEALER, false );
+    MsgComm frontend( "tcp://*:9002", MsgComm::ROUTER, true, &sec_ctx );
+    MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
     frontend.proxy( backend, true );
 
@@ -309,7 +309,7 @@ Server::ioSecure()
 void
 Server::ioInsecure()
 {
-    MsgComm comm( "tcp://*:9001", ZMQ_ROUTER, true );
+    MsgComm comm( "tcp://*:9001", MsgComm::ROUTER, true );
 
     int linger = 100;
     void * ctx = MsgComm::getContext();
@@ -360,7 +360,7 @@ Server::backgroundMaintenance()
         MsgBuf::Message *           reply;
         MsgBuf::Frame               frame;
         string                      uid;
-        MsgComm                     repo_comm( m_repo_address, ZMQ_DEALER, false, &m_sec_ctx );
+        MsgComm                     repo_comm( m_repo_address, MsgComm::DEALER, false, &m_sec_ctx );
         map<string,pair<string,size_t>>::iterator itrans_client;
 
         //vector<spSession>           dead_sessions;

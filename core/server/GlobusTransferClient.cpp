@@ -285,7 +285,7 @@ GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_i
 bool
 GlobusTransferClient::checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, XfrStatus & a_status, std::string & a_err_msg )
 {
-    a_status = XS_INACTIVE;
+    a_status = XS_INIT;
     a_err_msg.clear();
 
     rapidjson::Document result;
@@ -330,21 +330,26 @@ GlobusTransferClient::checkTransferStatus( const std::string & a_acc_tok, const 
 bool
 GlobusTransferClient::eventsHaveErrors( const vector<string> & a_events, XfrStatus & a_status, std::string & a_err_msg )
 {
-    a_status = XS_INACTIVE;
+    a_status = XS_INIT;
     size_t fault_count = 0;
 
-    for ( vector<string>::const_iterator istat = a_events.begin(); istat != a_events.end(); ++istat )
+    // Processing events in order of oldest first
+    for ( vector<string>::const_reverse_iterator istat = a_events.rbegin(); istat != a_events.rend(); ++istat )
     {
         cout << "event: " << *istat << "\n";
 
         if ( *istat == "STARTED" || *istat == "PROGRESS" )
             a_status = XS_ACTIVE;
         else if ( *istat == "SUCCEEDED" )
+        {
             a_status = XS_SUCCEEDED;
+            break;
+        }
         else if ( *istat == "CANCELED" )
         {
             a_status = XS_FAILED;
             a_err_msg = *istat;
+            break;
         }
         else if ( *istat == "CONNECTION_RESET" )
         {

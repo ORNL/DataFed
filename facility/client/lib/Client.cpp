@@ -108,7 +108,7 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
     */
 
-    m_comm = new MsgComm( a_host, a_port, ZMQ_DEALER, false, &sec_ctx );
+    m_comm = new MsgComm( a_host, a_port, MsgComm::DEALER, false, &sec_ctx );
 }
 
 Client::~Client()

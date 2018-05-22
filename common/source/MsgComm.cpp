@@ -72,13 +72,14 @@ void freeBuffer( void * a_data, void * a_hint )
 }
 
 
-MsgComm::MsgComm( const std::string & a_address, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
+MsgComm::MsgComm( const std::string & a_address, SockType a_sock_type, bool a_bind, const SecurityContext * a_sec_ctx, void * a_zmq_ctx )
     : m_socket(0), m_bound(a_bind), m_address(a_address)
 {
     init( a_sock_type, a_sec_ctx, a_zmq_ctx );
 }
 
-MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, size_t a_sock_type, bool a_bind, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
+
+MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, SockType a_sock_type, bool a_bind, const SecurityContext * a_sec_ctx, void * a_zmq_ctx )
     : m_socket(0), m_bound(a_bind)
 {
     m_address = string("tcp://") + a_host + ":" + to_string( a_port );
@@ -439,7 +440,7 @@ MsgComm::getPollInfo( zmq_pollitem_t  & a_poll_data )
 
 
 void
-MsgComm::setupSecurityContext( SecurityContext * a_sec_ctx )
+MsgComm::setupSecurityContext( const SecurityContext * a_sec_ctx )
 {
     if ( !a_sec_ctx )
         return;
@@ -510,7 +511,7 @@ MsgComm::reset()
 }
 
 void
-MsgComm::init( size_t a_sock_type, SecurityContext * a_sec_ctx, void * a_zmq_ctx )
+MsgComm::init( SockType a_sock_type, const SecurityContext * a_sec_ctx, void * a_zmq_ctx )
 {
     cout << "Init conn to " << m_address << "\n";
 
