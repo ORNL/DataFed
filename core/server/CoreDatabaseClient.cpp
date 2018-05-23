@@ -86,7 +86,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            cout << "About to parse[" << res_json << "]" << endl;
+            //cout << "About to parse[" << res_json << "]" << endl;
             a_result.Parse( res_json.c_str() );
         }
 
@@ -561,13 +561,13 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
             rec->set_data_path( imem->value.GetString() );
 
         if (( imem = val.FindMember("data_size")) != val.MemberEnd() )
-            rec->set_data_size( imem->value.GetInt() );
+            rec->set_data_size( imem->value.GetUint64() );
 
         if (( imem = val.FindMember("data_time")) != val.MemberEnd() )
-            rec->set_data_time( imem->value.GetInt() );
+            rec->set_data_time( imem->value.GetUint64() );
 
         if (( imem = val.FindMember("rec_time")) != val.MemberEnd() )
-            rec->set_rec_time( imem->value.GetInt() );
+            rec->set_rec_time( imem->value.GetUint64() );
     }
     //cout << "SetRecordData done" << endl;
 }
@@ -727,14 +727,17 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
         coll->set_id( val["id"].GetString() );
         coll->set_title( val["title"].GetString() );
 
+        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
+            coll->set_desc( imem->value.GetString() );
+
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
         {
             if ( !imem->value.IsNull() )
             {
-                cout << "set coll alias: " << imem->value.GetString() << "\n";
                 coll->set_alias( imem->value.GetString() );
             }
         }
+
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             coll->set_owner( imem->value.GetString() );
@@ -795,7 +798,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_repo_path( val["repo_path"].GetString() );
         xfr->set_local_path( val["local_path"].GetString() );
         xfr->set_uid( val["user_id"].GetString() );
-        xfr->set_updated( val["updated"].GetInt() );
+        xfr->set_updated( val["updated"].GetUint64() );
 
         imem = val.FindMember("task_id");
         if ( imem != val.MemberEnd() )

@@ -256,6 +256,7 @@ function dlgStartTransfer( a_mode, a_data ) {
             $("#alias",frame).val(a_data.alias);
             $("#desc",frame).val(a_data.desc);
             $("#md",frame).val(a_data.metadata);
+            $("#path",frame).val("olcf#dtn_atlas/~/");
         }
     };
 
@@ -336,17 +337,18 @@ function xfrHistoryPoll() {
 
     _asyncGet( "/api/xfr/status", null, function( ok, data ){
         if ( ok ) {
-            console.log( "xfr status", data );
+            //console.log( "xfr status", data );
             if ( data.xfr.length ) {
+                var len = data.xfr.length>5?5:data.xfr.length;
                 var html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Status</th></tr>";
                 var stat;
-                for ( var i = 0; i < data.xfr.length; i++ ) {
+                for ( var i = 0; i < len; i++ ) {
                     stat = data.xfr[i];
-                    html += "<tr><td>" + stat.dataId + "</td><td>" + stat.mode + "</td><td>" + stat.localPath + "</td><td>";
+                    html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td><td>";
                     if ( stat.status == "XS_FAILED" )
                     html += "FAILED: " + stat.errMsg + "</td></tr>";
                     else
-                        html += stat.status + "</td></tr>";
+                        html += stat.status.substr(3) + "</td></tr>";
                 }
                 html += "</table>";
                 $("#xfr_hist").html( html );
@@ -359,6 +361,6 @@ function xfrHistoryPoll() {
     });
 }
 
-var pollTimer = setTimeout( xfrHistoryPoll, 5000 );
+var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 
 console.log( "main.js loaded");

@@ -154,7 +154,7 @@ Worker::workerThread()
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        DL_INFO( "W"<<m_tid<<" calling handler" );
+                        DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
@@ -185,18 +185,16 @@ Worker::workerThread()
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
 bool send_reply = true; \
-cout << "unserialize msg" << endl;\
 ::google::protobuf::Message *base_msg = m_msg_buf.unserialize(); \
 if ( base_msg ) \
 { \
-    cout << "got msg ptr" << endl;\
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
         /*DL_INFO( "Rcvd: " << request->DebugString());*/ \
         replyclass reply; \
         try \
-        { cout << "about to call handler" << endl;
+        {
 
 #define PROC_MSG_END \
             if ( send_reply ) \
@@ -250,7 +248,6 @@ Worker::dbPassThrough( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
 
-    cout << "Calling DB handler " << func << endl;
     (m_db_client.*func)( *request, reply );
 
     PROC_MSG_END

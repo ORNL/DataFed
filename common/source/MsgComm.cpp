@@ -239,26 +239,29 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 /*
     if ( tot_len > 1 )
     {
-        cout << "Route addr ("<< tot_len << "):\n";
+        cout << "RCV route("<< tot_len << "):\n";
         hexDump( (char*)route, (char*)(route + tot_len), cout );
-    }*/
+    }
+    else
+        cout << "RCV delim with no route\n";
+*/
 
     zmq_msg_init( &msg );
 
     //cout << "rcv frame\n";
 
     if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
-        EXCEPT( 1, "zmq_msg_recv (frame) failed." );
+        EXCEPT_PARAM( 1, "RCV zmq_msg_recv (frame) failed: " << zmq_strerror(errno) );
 
     if ( zmq_msg_size( &msg ) != sizeof( MsgBuf::Frame ))
     {
         hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
-        EXCEPT_PARAM( 1, "Invalid message frame received. Expected " << sizeof( MsgBuf::Frame ) << " got " << zmq_msg_size( &msg ) );
+        EXCEPT_PARAM( 1, "RCV Invalid message frame received. Expected " << sizeof( MsgBuf::Frame ) << " got " << zmq_msg_size( &msg ) );
     }
 
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
-    //cout << "Frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
+    //cout << "RCV frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
 
     zmq_msg_close( &msg );
 
@@ -266,7 +269,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
     zmq_msg_init( &msg );
 
     if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
-        EXCEPT( 1, "zmq_msg_recv (uid) failed." );
+        EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
 
     if ( zmq_msg_size( &msg ))
         a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
@@ -282,10 +285,10 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
         zmq_msg_init( &msg );
 
         if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
-            EXCEPT( 1, "zmq_msg_recv (body) failed." );
+            EXCEPT( 1, "RCV zmq_msg_recv (body) failed." );
 
         if ( zmq_msg_size( &msg ) != a_msg_buf.getFrame().size )
-            EXCEPT_PARAM( 1, "Invalid message body received. Expected: " << a_msg_buf.getFrame().size << ", got: " << zmq_msg_size( &msg ) );
+            EXCEPT_PARAM( 1, "RCV Invalid message body received. Expected: " << a_msg_buf.getFrame().size << ", got: " << zmq_msg_size( &msg ) );
 
         a_msg_buf.ensureCapacity( a_msg_buf.getFrame().size );
         memcpy( a_msg_buf.getBuffer(), zmq_msg_data( &msg ), a_msg_buf.getFrame().size );

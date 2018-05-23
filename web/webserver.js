@@ -222,10 +222,22 @@ app.get('/ui/authn', ( a_request, a_response ) => {
     });
 });
 
-app.get('/ui/do_register', ( a_request, a_response ) => {
-    var userinfo = JSON.parse( a_request.cookies[ 'sdms-user' ] );
-    console.log( 'get /ui/do_register', userinfo );
+app.get('/ui/do_register', ( a_req, a_resp ) => {
+    console.log( 'get /ui/do_register' );
+    var userinfo = JSON.parse( a_req.cookies[ 'sdms-user' ] );
+    console.log( 'userinfo', userinfo );
+    var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
+    sendMessage( "UserCreateRequest", { uid: uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, a_req, a_resp, function( reply ) {
+        // Save access token
+        saveToken( uid, a_request.query.acc_tok, a_request.query.ref_tok );
+
+        a_response.cookie( 'sdms', uid, { httpOnly: true });
+        //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
+        a_response.redirect( "/ui/main" );
+    });
+
+    /*
     allocRequestContext( a_response, function( ctx ){
         var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
         var msg = g_msg_by_name["UserCreateRequest"];
@@ -254,24 +266,25 @@ app.get('/ui/do_register', ( a_request, a_response ) => {
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
 
+        console.log( "send (do_reg): UserCreateRequest" );
         core_sock.send([ nullfr, frame, nullfr, msg_buf ]);
     });
+    */
 });
 
-app.get('/api/usr/find', ( a_request, a_response ) => {
+app.get('/api/usr/find', ( a_req, a_resp ) => {
     console.log("get /api/usr/find");
 
+    sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
+        var user = reply.user[0];
+        a_resp.send({ name: user.name, uid: user.uid });
+    });
+
+    /*
     allocRequestContext( a_response, function( ctx ){
         var msg = g_msg_by_name["UserFindByUUIDsRequest"];
         var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
-        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
-
-        /* Frame contents (C++)
-        uint32_t    size;       // Size of buffer
-        uint8_t     proto_id;
-        uint8_t     msg_id;
-        uint16_t    isContext
-        */
+    
         var frame = Buffer.alloc(8);
         frame.writeUInt32LE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
@@ -279,7 +292,6 @@ app.get('/api/usr/find', ( a_request, a_response ) => {
         frame.writeUInt16LE( ctx, 6 );
 
         g_ctx[ctx] = function( reply ){
-            //console.log( "reply to /api/usr/find", reply );
             if ( reply.errCode ) {
                 a_response.status( 404 );
                 if ( reply.errMsg )
@@ -292,11 +304,10 @@ app.get('/api/usr/find', ( a_request, a_response ) => {
             }
         };
 
-        //console.log("frame buffer", frame.toString('hex'));
-        //console.log("msg buffer", msg_buf.toString('hex'));
-
+        console.log( "send (usr find): UserFindByUUIDsRequest" );
         core_sock.send([ nullfr, frame, nullfr, msg_buf ]);
     });
+    */
 });
 
 app.get('/api/dat/create', ( a_req, a_resp ) => {
@@ -606,7 +617,11 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
 
-        core_sock.send([ nullfr, frame, client, msg_buf ]);
+        console.log( "sendMsg:", a_msg_name );
+        if ( msg_buf.length )
+            core_sock.send([ nullfr, frame, client, msg_buf ]);
+        else
+            core_sock.send([ nullfr, frame, client ]);
     });
 }
 
@@ -628,7 +643,11 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         g_ctx[ctx] = a_cb;
 
-        core_sock.send([ nullfr, frame, a_client, msg_buf ]);
+        console.log( "sendMsgDirect:", a_msg_name );
+        if ( msg_buf.length )
+            core_sock.send([ nullfr, frame, a_client, msg_buf ]);
+        else
+            core_sock.send([ nullfr, frame, a_client ]);
     });
 }
 
