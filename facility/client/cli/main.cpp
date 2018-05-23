@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <time.h>
+#include <termios.h>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/token_functions.hpp>
@@ -1066,7 +1067,14 @@ int main( int a_argc, char ** a_argv )
             cin >> uname;
 
             cout << "SDMS password: ";
+
+            termios oldt;
+            tcgetattr(STDIN_FILENO, &oldt);
+            termios newt = oldt;
+            newt.c_lflag &= ~ECHO;
+            tcsetattr(STDIN_FILENO, TCSANOW, &newt);
             cin >> password;
+            tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
             client.authenticate( uname, password );
         }
