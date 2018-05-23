@@ -388,20 +388,20 @@ router.get('/write', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        var i, id;
+        var i, obj;
 
         if ( req.queryParams.remove ) {
             for ( i in req.queryParams.remove ) {
-                id = g_lib.resolveID( req.queryParams.remove[i], client );
-                g_db.item.removeByExample({ _from: coll_id, _to: id });
+                obj = g_lib.getObject( req.queryParams.remove[i], client );
+                g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
             }
         }
 
         if ( req.queryParams.add ) {
             for ( i in req.queryParams.add ) {
-                id = g_lib.resolveID( req.queryParams.add[i], client );
-                if ( g_db.item.firstExample({ _from: coll_id, _to: id }) == null )
-                    g_db.item.save({ _from: coll_id, _to: id });
+                obj = g_lib.getObject( req.queryParams.add[i], client );
+                if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }) == null )
+                    g_db.item.save({ _from: coll_id, _to: obj._id });
             }
         }
     } catch( e ) {

@@ -63,6 +63,8 @@ module.exports = ( function() {
     obj.ERR_USER_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "User not found" ]);
     obj.ERR_DATA_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data record not found" ]);
     obj.ERR_COLL_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Collection not found" ]);
+    obj.ERR_KEYS_NOT_DEFINED      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Keys not defined" ]);
+    obj.ERR_TOKEN_NOT_DEFINED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Token not defined" ]);
     obj.ERR_CANNOT_DEL_ROOT       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot delete root collection" ]);
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
     obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
@@ -134,6 +136,26 @@ module.exports = ( function() {
     obj.findUserFromUUIDs = function( a_uuids ) {
         var result = obj.db._query( "for i in ident filter i._to in @ids return distinct document(i._from)", { ids: a_uuids }).toArray();
 
+        if ( result.length != 1 )
+            throw obj.ERR_USER_NOT_FOUND;
+
+        return result[0];
+    };
+
+    obj.uidFromPubKey = function( a_pub_key ) {
+        //var result = obj.db._query( "for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v._key) return u[0]", { key: a_pub_key }).toArray();
+        var result = obj.db._query( "for i in u filter i.pub_key == @key return i._key", { key: a_pub_key }).toArray();
+
+        if ( result.length != 1 )
+            throw obj.ERR_USER_NOT_FOUND;
+
+        return result[0];
+    };
+
+    obj.findUserFromPubKey = function( a_pub_key ) {
+        var result = obj.db._query( "for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v) return u[0]", { key: a_pub_key }).toArray();
+
+        console.log( "key res:", result );
         if ( result.length != 1 )
             throw obj.ERR_USER_NOT_FOUND;
 
