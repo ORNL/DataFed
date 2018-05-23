@@ -15,7 +15,7 @@
     <div class="col-flex" style="height:100%">
         <div class="header" style="flex:none">
             <div class="row-flex">
-                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="logout()">Log Out</button></div>
+                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="test()">Test</button><button class="btn" onclick="logout()">Log Out</button></div>
             </div>
         </div>
         <div id="content" class="content" style="flex:1 1 100%">
@@ -40,15 +40,18 @@
                             </div>
                         </div>
                         <div style="flex:none;padding:.25em">
+                            <input type="checkbox" id="lock_btn"><label title="Allow drag and drop within Collections & Data window" for="lock_btn">Unlock</label></input>
                             <button class="btn" onclick="dlgNewEdit(0)">New Data</button>
                             <button class="btn" onclick="dlgNewEdit(1)">New Coll.</button>
                             <button class="btn act-folder act-data" onclick="editSelected()" disabled>Edit</button>
                             <button class="btn act-folder act-data" onclick="deleteSelected()" disabled>Delete</button>
                             <button class="btn act-folder act-data" disabled>Share</button>
-                            <button class="btn act-data" disabled>Link</button>
-                            <button class="btn act-data" disabled>Unlink</button>
-                            <button class="btn act-data" disabled>Upload</button>
-                            <button class="btn act-data" disabled>Download</button>
+                            <!-- button class="btn act-data" disabled>Unlink</button -->
+                            <button class="btn act-data" onclick="xfrSelected(0)" disabled>Upload</button>
+                            <button class="btn act-data" onclick="xfrSelected(1)" disabled>Download</button>
+                        </div>
+                        <div style="flex:none;padding:.5em 0 0 0">Transfer History:</div>
+                        <div id="xfr_hist" style="flex:none">
                         </div>
                     </div>
                 </div>
@@ -75,6 +78,15 @@
             <label for="md_mode">Set</label>
             </td></tr>
         <tr id='dlg_coll_row'><td>Collection ID:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>
+        </table>
+    </div>
+    <div id='dlg_xfr' style='display:none'>
+        <table style='width:100%'>
+        <tr><td>Title:</td><td><input disabled type='text' id='title' style='width:100%'></input></td></tr>
+        <tr><td>Alias:</td><td><input disabled type='text' id='alias' style='width:100%'></input></td></tr>
+        <tr><td >Description:</td><td><textarea disabled id='desc' rows=3 style='width:100%'></textarea></td></tr>
+        <tr><td>Metadata:</td><td><textarea disabled id='md' rows=3 style='width:100%'></textarea></td></tr>
+        <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>
         </table>
     </div>
     <div id='dlg_alert' style='display:none'></div>
@@ -152,12 +164,69 @@
         });
 
         $(".btn").button();
+        $( "#lock_btn" ).button().click(function() {
+            if ( this.checked )
+                drag_enabled = 1;
+            else
+                drag_enabled = 0;
+        });
+        $( document ).tooltip({ show: { effect: "slideDown", delay: 500 }});
+
+        var drag_mode = 0;
+        var drag_enabled = 0;
 
         var tree_source = [{title:"root",folder:true,lazy:true,key:"root"},
             {title:"Loose data",folder:true,lazy:true,key:"loose"}];
 
         $("#data_tree").fancytree({
-            extensions: ["themeroller"],
+            extensions: ["dnd","themeroller"],
+            dnd:{
+                dragStart: function(node, data) {
+                    if ( !drag_enabled || node.key == "loose" || node.key == "root" )
+                        return false;
+
+                    if ( data.originalEvent.shiftKey ) {
+                        drag_mode = 1;
+                        return true;
+                    } else if ( data.originalEvent.ctrlKey ) {
+                        return false;
+                    } else {
+                        drag_mode = 0;
+                        return true;
+                    }
+                },
+                dragDrop: function(node, data) {
+                    node.setExpanded(true).always(function(){
+                        console.log("drop in",node,data);
+
+                        for ( var i in node.children ){
+                            if ( node.children[i].key == data.otherNode.key )
+                                return false;
+                        }
+
+                        if ( node.parent.key == "loose" ){
+                            linkItem( data.otherNode.key, node.key, function() {
+                                data.otherNode.moveTo( node, data.hitMode );
+                            });
+                        } else if ( drag_mode || data.otherNode.isFolder() ){
+                            console.log("wtf");
+                            linkItemUnlinkSource( data.otherNode.key, node.key, node.parent.key, function() {
+                                data.otherNode.moveTo( node, data.hitMode );
+                            });
+                        }else{
+                            linkItem( data.otherNode.key, node.key, function() {
+                                data.otherNode.copyTo( node, data.hitMode );
+                            });
+                        }
+                    });
+                },
+                dragEnter: function(node, data) {
+                    if ( node.isFolder() && node.key != "loose" )
+                        return "over";
+                    else
+                        return false;
+                }
+            },
             themeroller: {
                 activeClass: "ui-state-hover",
                 addClass: "",

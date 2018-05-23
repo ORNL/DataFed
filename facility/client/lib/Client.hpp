@@ -8,8 +8,7 @@
 #include <set>
 #include <condition_variable>
 #include <stdint.h>
-#include <asio.hpp>
-#include <asio/ssl.hpp>
+#include "MsgComm.hpp"
 #include "MsgBuf.hpp"
 
 
@@ -82,8 +81,6 @@ public:
 
     void                authenticate( const std::string & a_uid, const std::string & a_password );
     void                setup();
-    std::string         sshGenerateKeys();
-    std::string         sshGetPublicKey();
 
     ServiceStatus       status();
 
@@ -127,38 +124,20 @@ public:
     static bool         verifyCredentials( const std::string & a_cred_path );
 
 private:
-    typedef asio::ssl::stream<asio::ip::tcp::socket> ssl_socket;
-
-    void            connect( asio::ip::tcp::resolver::iterator endpoint_iterator );
-    bool            verifyCert( bool a_preverified, asio::ssl::verify_context & a_context );
-    void            handShake();
+    //bool            verifyCert( bool a_preverified, asio::ssl::verify_context & a_context );
+    //std::string     loadKeyFile( const std::string & a_fname );
     template<typename RQT,typename RPT>
     void            send( RQT & a_request, RPT *& a_reply, uint16_t a_context );
     std::string     parseQuery( const std::string & a_query );
 
-    enum State
-    {
-        NOT_STARTED,
-        STARTED,
-        FAILED
-    };
 
     std::string                 m_host;
     uint32_t                    m_port;
     std::string                 m_cred_path;
     std::string                 m_uid;
-    std::string                 m_cert_file;
-    std::string                 m_key_file;
-    asio::io_service            m_io_service;
-    asio::ip::tcp::resolver     m_resolver;
-    asio::ssl::context          m_context;
-    ssl_socket *                m_socket;
-    std::thread *               m_io_thread;
+    MsgComm *                   m_comm;
     uint32_t                    m_timeout;
     uint16_t                    m_ctx;
-    MsgBuf                      m_in_buf;
-    MsgBuf                      m_out_buf;
-    State                       m_state;
     std::condition_variable     m_start_cvar;
     std::mutex                  m_mutex;
 };

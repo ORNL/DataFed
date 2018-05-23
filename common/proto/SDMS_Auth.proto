@@ -10,34 +10,14 @@ enum Protocol
 
 // ============================ Setup/Config Messages
 
-/*
-message SetLocalIdentityRequest
-{
-    required string             ident       = 1;
-}
-*/
-
 message GenerateCredentialsRequest
 {
 }
 
 message GenerateCredentialsReply
 {
-    required string             x509_key    = 1;
-    required string             x509_cert   = 2;
-}
-
-message SSH_GenerateKeysRequest
-{
-}
-
-message SSH_GetPublicKeyRequest
-{
-}
-
-message SSH_PublicKeyReply
-{
     required string             pub_key     = 1;
+    required string             priv_key    = 2;
 }
 
 // ============================ Permissions Messages
@@ -54,6 +34,12 @@ message CheckPermsReply
 }
 
 // ============================ User Messages
+
+message UserSaveTokensRequest
+{
+    required string             access      = 1;
+    required string             refresh     = 2;
+}
 
 message UserCreateRequest
 {

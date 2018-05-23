@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <time.h>
+#include <termios.h>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/token_functions.hpp>
@@ -849,29 +850,6 @@ int acl()
     return 0;
 }
 
-
-int gen_ssh()
-{
-    if ( g_args.size() != 1 )
-        return -1;
-
-    string key = g_client->sshGenerateKeys();
-    cout << "SSH Public Key:\n" << key << "\n\nThis key must be manually installed in your GlobusID account.\n";
-
-    return 0;
-}
-
-int get_ssh()
-{
-    if ( g_args.size() )
-        return -1;
-
-    string key = g_client->sshGetPublicKey();
-    cout << "SSH Public Key:\n" << key << "\n\nThis key must be manually installed in your GlobusID account.\n";
-
-    return 0;
-}
-
 int setup()
 {
     g_client->setup();
@@ -971,15 +949,12 @@ int main( int a_argc, char ** a_argv )
     addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
-    //addCommand( "", "gen-cred", "Generate local credentials","gen-cred\n\nGenerate new user credentials (X509) for the local environment.", no_console );
-    addCommand( "", "gen-ssh", "Generate globus SSH keys", "gen-ssh <out-file>\n\nGenerate new SSH keys for the local environment. The resulting public key is written to the specified output file and must be subsequently installed in the user's Globus ID account (see https://docs.globus.org/cli/legacy).", gen_ssh );
-    addCommand( "", "get-ssh", "Retrieve globus public SSH key", "get-ssh <out-file>\n\nGet current SSH public key for the local environment. The public key is written to the specified output file.", get_ssh );
 
     buildCmdMap();
 
     string      host = "sdms.ornl.gov";
     uint16_t    port = 7512;
-    uint32_t    timeout = 5;
+    uint32_t    timeout = 10000;
     string      home = getenv("HOME");
     string      cred_path = home + "/.sdms/";
     bool        manual_auth = false;
@@ -1092,7 +1067,14 @@ int main( int a_argc, char ** a_argv )
             cin >> uname;
 
             cout << "SDMS password: ";
+
+            termios oldt;
+            tcgetattr(STDIN_FILENO, &oldt);
+            termios newt = oldt;
+            newt.c_lflag &= ~ECHO;
+            tcsetattr(STDIN_FILENO, TCSANOW, &newt);
             cin >> password;
+            tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
             client.authenticate( uname, password );
         }

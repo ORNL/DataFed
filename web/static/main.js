@@ -85,6 +85,14 @@ function viewColl( a_id, a_callback ) {
     });
 }
 
+function linkItem( a_item, a_coll, a_cb ) {
+    _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll, null, a_cb );
+}
+
+function linkItemUnlinkSource( a_item, a_coll, a_source, a_cb ) {
+    _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll+"&unlink="+a_source, null, a_cb );
+}
+
 function dlgNewEdit(a_mode,a_data) {
     var frame = $('#dlg_new');
     var dlg_title;
@@ -208,6 +216,61 @@ function dlgNewEdit(a_mode,a_data) {
     frame.dialog( options );
 }
 
+function dlgStartTransfer( a_mode, a_data ) {
+    var frame = $('#dlg_xfr');
+    var dlg_title = (a_mode?"Download Data ":"Upload Data ") + a_data.id;
+
+    var options = {
+        title: dlg_title,
+        modal: true,
+        width: 400,
+        height: 'auto',
+        resizable: true,
+        closeOnEscape: false,
+        buttons: [{
+            text: a_mode?"Download":"Upload",
+            click: function() {
+                var path = encodeURIComponent($("#path",frame).val());
+                if ( !path ) {
+                    alert("Path cannot be empty");
+                    return;
+                }
+
+                var url = "/api/dat/";
+                if ( a_mode )
+                    url += "get";
+                else
+                    url += "put";
+
+                url += "?id=" + a_data.id + "&path=" + path;
+
+                var inst = $(this);
+                _asyncGet( url, null, function( ok, data ){
+                    if ( ok ) {
+                        inst.dialog( "close" );
+                    } else {
+                        alert( "Error: " + data );
+                    }
+                });
+            }
+        },{
+            text: "Cancel",
+            click: function() {
+                $( this ).dialog( "close" );
+            }
+        }],
+        open: function(event,ui){
+            $("#title",frame).val(a_data.title);
+            $("#alias",frame).val(a_data.alias);
+            $("#desc",frame).val(a_data.desc);
+            $("#md",frame).val(a_data.metadata);
+            $("#path",frame).val("olcf#dtn_atlas/~/");
+        }
+    };
+
+    frame.dialog( options );
+}
+
 function deleteSelected() {
     var item = $('#data_tree').fancytree('getTree').activeNode;
     var url = "/api/";
@@ -263,6 +326,61 @@ function editSelected() {
             dlgNewEdit(0,data.data[0]);
         }); 
     }
+}
+
+function xfrSelected( a_mode ) {
+    var key = $('#data_tree').fancytree('getTree').activeNode.key;
+
+    if ( key[0] == "d" ) {
+        viewData( key, function( data ){
+            dlgStartTransfer( a_mode, data.data[0] );
+        }); 
+    }
+}
+
+function xfrHistoryPoll() {
+    console.log( "poll xfr history" );
+    if ( !g_user )
+        return;
+
+    _asyncGet( "/api/xfr/status", null, function( ok, data ){
+        if ( ok ) {
+            //console.log( "xfr status", data );
+            if ( data.xfr.length ) {
+                var len = data.xfr.length>5?5:data.xfr.length;
+                var html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Status</th></tr>";
+                var stat;
+                for ( var i = 0; i < len; i++ ) {
+                    stat = data.xfr[i];
+                    html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td><td>";
+                    if ( stat.status == "XS_FAILED" )
+                    html += "FAILED: " + stat.errMsg + "</td></tr>";
+                    else
+                        html += stat.status.substr(3) + "</td></tr>";
+                }
+                html += "</table>";
+                $("#xfr_hist").html( html );
+            } else {
+                $("#xfr_hist").html("No transfer history");
+            }
+        }
+
+        //pollTimer = setTimeout( xfrHistoryPoll, 5000 );
+    });
+}
+
+var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
+
+function test() {
+    console.log("testing...");
+    _asyncGet( "/ui/test", null, function( ok, data ){
+        if ( ok ) {
+            console.log("test ok, data:", data, typeof data );
+        }
+        else {
+            console.log("test failed:", data );
+        }
+    });
 }
 
 console.log( "main.js loaded");

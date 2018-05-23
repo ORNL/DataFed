@@ -5,18 +5,11 @@
 #include <zmq.h>
 #include "MsgComm.hpp"
 #include "CoreDatabaseClient.hpp"
+#include "CoreIWorkerMgr.hpp"
 
 namespace SDMS {
 namespace Core {
 
-class IWorkerMgr
-{
-public:
-    virtual const std::string & getDbURL() = 0;
-    virtual const std::string & getDbUser() = 0;
-    virtual const std::string & getDbPass() = 0;
-    virtual void dataDelete( const std::string & a_id ) = 0;
-};
 
 class Worker
 {
@@ -35,8 +28,6 @@ private:
     bool procStatusRequest( const std::string & a_uid );
     bool procAuthenticateRequest( const std::string & a_uid );
     bool procGenerateCredentialsRequest( const std::string & a_uid );
-    bool procSSH_GenerateKeysRequest( const std::string & a_uid );
-    bool procSSH_GetPublicKeyRequest( const std::string & a_uid );
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataDeleteRequest( const std::string & a_uid );

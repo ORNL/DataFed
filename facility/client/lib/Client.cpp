@@ -4,20 +4,9 @@
 #include <stdexcept>
 #include <boost/filesystem.hpp>
 
-
-asio::ip::tcp::no_delay no_delay_on(true);
-asio::ip::tcp::no_delay no_delay_off(false);
-
-//#define NO_DELAY_ON(sock) (void)0
-//#define NO_DELAY_OFF(sock) (void)0
-#define NO_DELAY_ON(sock) sock->lowest_layer().set_option(no_delay_on)
-#define NO_DELAY_OFF(sock) sock->lowest_layer().set_option(no_delay_off)
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-
-#include "Exec.hpp"
 
 #include <time.h>
 
@@ -37,27 +26,35 @@ using namespace SDMS::Auth;
 namespace Facility {
 
 //typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
+string loadKeyFile( const string & a_fname )
+{
+    string key;
+
+    ifstream inf( a_fname );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 0, "Could not open " << a_fname << " for write" );
+
+    inf >> key;
+    inf.close();
+
+    cout << "loaded " << a_fname << ": [" << key << "]\n";
+
+    return key;
+}
 
 bool
 Client::verifyCredentials( const std::string & a_cred_path )
 {
-    char * uid = getlogin();
-    if ( uid == 0 )
-        EXCEPT( 0, "Could not determine login name" );
-
-    boost::system::error_code ec;
-    boost::filesystem::path dest_path( a_cred_path + "sdms-user-cert.pem" );
-
-    // TODO Need a way to actually check to see if the content of these credentials is valid
-
-    if ( !boost::filesystem::exists( dest_path, ec ) )
+    try
+    {
+        string key = loadKeyFile( a_cred_path + "user-key-pub" );
+        key = loadKeyFile( a_cred_path + "user-key-priv" );
+        return true;
+    }
+    catch(...)
+    {
         return false;
-
-    //dest_path = a_cred_path + uid + "-" + a_unit + "-key.pem";
-    if ( !boost::filesystem::exists( a_cred_path + "sdms-user-key.pem", ec ) )
-        return false;
-
-    return true;
+    }
 }
 
 
@@ -65,13 +62,7 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     m_host( a_host ),
     m_port( a_port ),
     m_cred_path( a_cred_path ),
-    m_resolver( m_io_service ),
-    m_context( asio::ssl::context::tlsv12 ),
-    m_socket( 0 ),
-    m_io_thread( 0 ),
-    m_timeout( a_timeout ),
-    m_ctx( 1 ),
-    m_state(NOT_STARTED)
+    m_timeout( a_timeout )
 {
     REG_PROTO( SDMS::Anon );
     REG_PROTO( SDMS::Auth );
@@ -85,114 +76,57 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     if ( m_cred_path.size() && *m_cred_path.rbegin() != '/' )
         m_cred_path += "/";
 
-    //m_context.add_verify_path("/etc/ssl/certs");
+    // TODO - Key files should be configurable
 
-    // TODO - This must be configurable
-    m_context.load_verify_file( m_cred_path + "sdms-core-cert.pem");
-
-    m_cert_file = m_cred_path + "sdms-user-cert.pem";
-    m_key_file = m_cred_path + "sdms-user-key.pem";
-
-    cout << "host cert file: " << m_cred_path << "sdms-core-cert.pem" << "\n";
-    cout << "user cert file: " << m_cert_file << "\n";
-    cout << "user key file: " << m_key_file << "\n";
+    MsgComm::SecurityContext sec_ctx;
+    sec_ctx.is_server = false;
+    //sec_ctx.domain;
+    sec_ctx.server_key = loadKeyFile( m_cred_path + "core-key-pub" );
 
     if ( a_load_certs )
     {
-        m_context.use_certificate_file( m_cert_file, asio::ssl::context::pem );
-        m_context.use_private_key_file( m_key_file , asio::ssl::context::pem );
+        cout << "Load keys\n";
+        sec_ctx.public_key = loadKeyFile( m_cred_path + "user-key-pub" );
+        sec_ctx.private_key = loadKeyFile( m_cred_path + "user-key-priv" );
+    }
+    else
+    {
+        cout << "Gen temp keys\n";
+        char pub_key[41];
+        char priv_key[41];
+
+        if ( zmq_curve_keypair( pub_key, priv_key ) != 0 )
+            EXCEPT_PARAM( 1, "Key generation failed: " << zmq_strerror( errno ));
+
+        sec_ctx.public_key = pub_key;
+        sec_ctx.private_key = priv_key;
     }
 
-    m_socket = new ssl_socket( m_io_service, m_context );
+    /*
+    sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
+    sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    */
 
-    m_socket->set_verify_mode( asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert );
-    m_socket->set_verify_callback( bind( &Client::verifyCert, this, placeholders::_1, placeholders::_2 ));
+    m_comm = new MsgComm( a_host, a_port, MsgComm::DEALER, false, &sec_ctx );
 }
 
 Client::~Client()
 {
     stop();
 
-    delete m_socket;
+    delete m_comm;
 }
 
 void Client::start()
 {
-    auto endpoint_iterator = m_resolver.resolve({ m_host, to_string( m_port ) });
-
-    cerr << "connecting to " << m_host << ":" << m_port << "\n";
-
-    connect( endpoint_iterator );
-
-    m_io_thread = new thread([this](){ m_io_service.run(); });
-    
-    // Wait for handshake to complete
-    unique_lock<mutex> lock(m_mutex);
-    while( m_state == NOT_STARTED )
-        m_start_cvar.wait( lock );
-
-    if ( m_state == FAILED )
-        EXCEPT( 1, "Failed to connect to server" );
 }
 
 void Client::stop()
 {
-    if ( m_state == STARTED )
-    {
-        error_code ec;
-        m_socket->lowest_layer().cancel( ec );
-        m_socket->shutdown( ec );
-        m_state = NOT_STARTED;
-    }
 }
 
-void Client::connect( asio::ip::tcp::resolver::iterator endpoint_iterator )
-{
-    asio::async_connect( m_socket->lowest_layer(), endpoint_iterator,
-        [this]( error_code ec, asio::ip::tcp::resolver::iterator )
-        {
-            if (!ec)
-            {
-                asio::socket_base::keep_alive option(true);
-                m_socket->lowest_layer().set_option(option);
-
-                cerr << "start handshake\n";
-
-                handShake();
-            }
-            else
-            {
-                cerr << "Connect failed: " << ec.message() << "\n";
-
-                unique_lock<mutex> lock(m_mutex);
-                m_state = FAILED;
-                m_start_cvar.notify_all();
-            }
-        });
-}
-
-void Client::handShake()
-{
-    m_socket->async_handshake( asio::ssl::stream_base::client,
-        [this]( error_code ec )
-        {
-            cerr << "b4 lock\n";
-            unique_lock<mutex> lock(m_mutex);
-            if ( !ec )
-            {
-                cerr << "started\n";
-                m_state = STARTED;
-            }
-            else
-            {
-                cerr << "Handshake failed: " << ec.message() << endl;
-                m_state = FAILED;
-            }
-
-            m_start_cvar.notify_all();
-        });
-}
-
+/*
 bool Client::verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
 {
     // TODO What is the point of this funtions?
@@ -205,98 +139,44 @@ bool Client::verifyCert( bool a_preverified, asio::ssl::verify_context & a_conte
     cout << "verify " << subject_name << ", pre-ver: " << a_preverified << "\n";
 
     return a_preverified;
-}
+}*/
 
 
 template<typename RQT,typename RPT>
 void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
 {
     //cout << "send\n";
+    MsgBuf::Message * reply = 0;
+    string uid;
+    MsgBuf::Frame frame;
 
-    a_reply = 0;
-    m_out_buf.getFrame().context = a_context;
-    m_out_buf.serialize( a_request );
+    m_comm->send( a_request, uid, a_context );
 
-    //cout << "out msg body sz: " << m_out_buf.getFrame().size << "\n";
-    if ( m_out_buf.getFrame().size == 0 )
-        NO_DELAY_ON(m_socket);
-
-    error_code ec;
-
-    //cout << "1" << endl;
-
-    uint32_t len = asio::write( *m_socket, asio::buffer( (char*)&m_out_buf.getFrame(), sizeof( MsgBuf::Frame )), ec );
-    
-    if ( ec )
+    if ( m_comm->recv( reply, uid, frame, m_timeout ))
     {
-        cerr << "write err: " << ec.category().name() << "[" << ec.value() << "] " << ec.message() << endl;
-    }
+        a_reply = dynamic_cast<RPT*>( reply );
 
-    if ( len != sizeof( MsgBuf::Frame ))
-        EXCEPT( 1, "Write header failed" );
-
-    //cout << "sent header, len: " << len << "\n";
-
-    if ( m_out_buf.getFrame().size == 0 )
-        NO_DELAY_OFF(m_socket);
-    else
-    {
-        NO_DELAY_ON(m_socket);
-
-        //cout << "2" << endl;
-
-        len = asio::write( *m_socket, asio::buffer( m_out_buf.getBuffer(), m_out_buf.getFrame().size ));
-        if ( len != m_out_buf.getFrame().size )
-            EXCEPT( 1, "Write body failed" );
-
-        //cout << "sent body, len: " << len << "\n";
-
-        NO_DELAY_OFF(m_socket);
-    }
-
-    //cout << "3" << endl;
-
-    len = asio::read( *m_socket, asio::buffer( (char*)&m_in_buf.getFrame(), sizeof( MsgBuf::Frame )));
-    if ( len != sizeof( MsgBuf::Frame ))
-        EXCEPT( 1, "Read header failed" );
-
-    //cout << "rcv header, len: " << len << "\n";
-    if ( m_in_buf.getFrame().size )
-    {
-        //cout << "4" << endl;
-
-        //cout << "need more: " << m_in_buf.getFrame().size << "\n";
-        m_in_buf.ensureCapacity( m_in_buf.getFrame().size );
-        len = asio::read( *m_socket, asio::buffer( m_in_buf.getBuffer(), m_in_buf.getFrame().size ));
-        if ( len != m_in_buf.getFrame().size )
-            EXCEPT( 1, "Read body failed" );
-        //cout << "rcv body, len: " << len << "\n";
-    }
-
-    if ( m_in_buf.getFrame().context != a_context )
-        EXCEPT_PARAM( 1, "Reply context mismatch. Expected " << a_context << " got " << m_in_buf.getFrame().context );
-
-    MsgBuf::Message * raw_reply = m_in_buf.unserialize();
-    //cout << "msg: " << raw_reply << "\n";
-    if (( a_reply = dynamic_cast<RPT *>( raw_reply )) == 0 )
-    {
-        Anon::NackReply * nack = dynamic_cast<Anon::NackReply *>( raw_reply );
-        if ( nack )
+        if ( !a_reply )
         {
-            uint32_t ec = nack->err_code();
-            string msg;
-            if ( nack->has_err_msg() )
-                msg = nack->err_msg();
+            Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( reply );
+            string err_msg;
+            if ( nack )
+                err_msg = nack->err_msg();
 
-            delete raw_reply;
-            EXCEPT( ec, msg );
+            delete reply;
+
+            if ( err_msg.size() )
+                EXCEPT( 0, err_msg );
+            else
+                EXCEPT_PARAM( 0, "Unexpected reply from server, msg_type: " << frame.getMsgType() );
         }
 
-        delete raw_reply;
-        EXCEPT_PARAM( 0, "Unexpected reply from server, msg_type: " << m_in_buf.getMsgType() );
+        return;
     }
-    //cout << "a_reply: " << a_reply << "\n";
+
+    EXCEPT( 0, "Timeout waiting for reply from server" );
 }
+
 
 void Client::setup()
 {
@@ -307,21 +187,29 @@ void Client::setup()
 
     try
     {
-        //cout << "Saving " << m_key_file << "\n";
-        ofstream outf( m_key_file );
-        if ( !outf.is_open() || !outf.good() )
-            EXCEPT_PARAM( 0, "Could not open " << m_key_file << " for write" );
+        // TODO Ensure readable by user only
 
-        outf << reply->x509_key();
+        //cout << "Saving " << m_key_file << "\n";
+        string fname = m_cred_path + "user-key-pub";
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+        ofstream outf( fname );
+        if ( !outf.is_open() || !outf.good() )
+            EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
+
+        outf << reply->pub_key();
         outf.close();
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read );
 
         //cout << "Saving " << m_cert_file << "\n";
-        outf.open( m_cert_file );
+        fname = m_cred_path + "user-key-priv";
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+        outf.open( fname );
         if ( !outf.is_open() || !outf.good() )
-            EXCEPT_PARAM( 0, "Could not open " << m_cert_file << " for write" );
+            EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
 
-        outf << reply->x509_cert();
+        outf << reply->priv_key();
         outf.close();
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read );
 
         delete reply;
     }
@@ -330,37 +218,8 @@ void Client::setup()
         delete reply;
         throw;
     }
-
-    cout << "SUCCESS\n";
 }
 
-
-std::string
-Client::sshGenerateKeys()
-{
-    SSH_GenerateKeysRequest req;
-    SSH_PublicKeyReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    string result = reply->pub_key();
-
-    delete reply;
-    return result;
-}
-
-std::string Client::sshGetPublicKey()
-{
-    SSH_GetPublicKeyRequest req;
-    SSH_PublicKeyReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    string result = reply->pub_key();
-
-    delete reply;
-    return result;
-}
 
 bool Client::test( size_t a_iter )
 {
@@ -411,12 +270,6 @@ ServiceStatus Client::status()
 void
 Client::authenticate( const std::string & a_uid, const string & a_password )
 {
-    /*
-    char * uid = getlogin();
-    if ( uid == 0 )
-        EXCEPT( 0, "Could not determine login name" );
-    */
-
     AuthenticateRequest req;
 
     req.set_uid( a_uid );
@@ -424,11 +277,12 @@ Client::authenticate( const std::string & a_uid, const string & a_password )
 
     AckReply * reply;
 
-cout << "sending\n";
     send<>( req, reply, m_ctx++ );
-cout << "back\n";
 
     delete reply;
+
+    // On success, reconnect to server with same credentials
+    m_comm->reset();
 }
 
 spUserDataReply

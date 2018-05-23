@@ -25,9 +25,16 @@ public:
     void clientAuthenticate( const std::string & a_password );
     void clientLinkIdentity( const std::string & a_identity );
     std::string getDataStorageLocation( const std::string & a_data_id );
+    bool uidByPubKey( const std::string & a_pub_key, std::string & a_uid );
+    bool userGetKeys( std::string & a_pub_key, std::string & a_priv_key);
+    void userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key );
+    void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
+    bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok );
+    bool userGetAccessToken( std::string & a_token );
 
     //void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
     //uint16_t checkPerms( const string & a_id, uint16_t a_perms );
+    void userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply );
     void userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply );
     void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
     void userUpdate( const Auth::UserUpdateRequest & a_request, Auth::UserDataReply & a_reply );
@@ -63,8 +70,10 @@ public:
     void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply );
 
+
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
+    bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );

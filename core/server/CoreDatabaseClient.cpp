@@ -1,3 +1,5 @@
+#include <zmq.h>
+#include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "CoreDatabaseClient.hpp"
@@ -8,15 +10,6 @@ namespace SDMS {
 namespace Core {
 
 using namespace SDMS::Auth;
-
-size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata )
-{
-    size_t len = size*nmemb;
-    //strncat( userdata, ptr, len );
-    ((string*)userdata)->append( ptr, len );
-    return len;
-}
-
 
 DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_client(0), m_db_url(a_db_url), m_db_user(a_db_user), m_db_pass(a_db_pass)
@@ -93,7 +86,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            cout << "About to parse[" << res_json << "]" << endl;
+            //cout << "About to parse[" << res_json << "]" << endl;
             a_result.Parse( res_json.c_str() );
         }
 
@@ -126,6 +119,52 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     }
 }
 
+bool
+DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
+{
+    string  url;
+    char    error[CURL_ERROR_SIZE];
+
+    a_result.clear();
+    error[0] = 0;
+
+    url.reserve( 512 );
+
+    // TODO Get URL base from ctor
+    url.append( m_db_url );
+    url.append( a_url_path );
+    url.append( "?client=" );
+    url.append( m_client );
+
+    char * esc_txt;
+
+    for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
+    {
+        url.append( "&" );
+        url.append( iparam->first.c_str() );
+        url.append( "=" );
+        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        url.append( esc_txt );
+        curl_free( esc_txt );
+    }
+
+    DL_DEBUG( "url: " << url );
+
+    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
+    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+
+    CURLcode res = curl_easy_perform( m_curl );
+
+    long http_code = 0;
+    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+    if ( res == CURLE_OK && ( http_code >= 200 && http_code < 300 ))
+        return true;
+    else
+        return false;
+}
+
 void
 DatabaseClient::clientAuthenticate( const std::string & a_password )
 {
@@ -150,8 +189,6 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
     // TODO This need to be done correctly without assuming storage location
     dbGet( "dat/view", {{"id",a_data_id}}, result );
 
-    rapidjson::Value::MemberIterator imem;
-
     // TODO Not sure if this check is needed
     if ( result.Size() != 1 )
         EXCEPT_PARAM( ID_BAD_REQUEST, "No such data record: " << a_data_id );
@@ -161,6 +198,86 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
     string id = val["id"].GetString();
 
     return string("/data/") + id.substr(2);
+}
+
+
+bool
+DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
+{
+    return dbGetRaw( "usr/find/by_pub_key", {{"pub_key",a_pub_key}}, a_uid );
+}
+
+bool
+DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/keys/get", {}, result );
+
+    rapidjson::Value & val = result[0];
+
+    rapidjson::Value::MemberIterator imem = val.FindMember("pub_key");
+    
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_pub_key = imem->value.GetString();
+
+    imem = val.FindMember("priv_key");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_priv_key = imem->value.GetString();
+
+    return true;
+}
+
+void
+DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result );
+}
+
+void
+DatabaseClient::userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok )
+{
+    string result;
+    dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok}}, result );
+}
+
+bool
+DatabaseClient::userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/token/get", {}, result );
+
+    rapidjson::Value & val = result[0];
+
+    rapidjson::Value::MemberIterator imem = val.FindMember("access");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_acc_tok = imem->value.GetString();
+
+    imem = val.FindMember("refresh");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_ref_tok = imem->value.GetString();
+
+    return true;
+}
+
+bool
+DatabaseClient::userGetAccessToken( std::string & a_acc_tok )
+{
+    return dbGetRaw( "usr/token/get/access", {}, a_acc_tok );
+}
+
+void
+DatabaseClient::userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void)a_reply;
+    userSetTokens( a_request.access(), a_request.refresh() );
 }
 
 void
@@ -444,13 +561,13 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
             rec->set_data_path( imem->value.GetString() );
 
         if (( imem = val.FindMember("data_size")) != val.MemberEnd() )
-            rec->set_data_size( imem->value.GetInt() );
+            rec->set_data_size( imem->value.GetUint64() );
 
         if (( imem = val.FindMember("data_time")) != val.MemberEnd() )
-            rec->set_data_time( imem->value.GetInt() );
+            rec->set_data_time( imem->value.GetUint64() );
 
         if (( imem = val.FindMember("rec_time")) != val.MemberEnd() )
-            rec->set_rec_time( imem->value.GetInt() );
+            rec->set_rec_time( imem->value.GetUint64() );
     }
     //cout << "SetRecordData done" << endl;
 }
@@ -610,14 +727,17 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
         coll->set_id( val["id"].GetString() );
         coll->set_title( val["title"].GetString() );
 
+        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
+            coll->set_desc( imem->value.GetString() );
+
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
         {
             if ( !imem->value.IsNull() )
             {
-                cout << "set coll alias: " << imem->value.GetString() << "\n";
                 coll->set_alias( imem->value.GetString() );
             }
         }
+
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             coll->set_owner( imem->value.GetString() );
@@ -677,8 +797,8 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_data_id( val["data_id"].GetString() );
         xfr->set_repo_path( val["repo_path"].GetString() );
         xfr->set_local_path( val["local_path"].GetString() );
-        xfr->set_globus_id( val["globus_id"].GetString() );
-        xfr->set_updated( val["updated"].GetInt() );
+        xfr->set_uid( val["user_id"].GetString() );
+        xfr->set_updated( val["updated"].GetUint64() );
 
         imem = val.FindMember("task_id");
         if ( imem != val.MemberEnd() )
