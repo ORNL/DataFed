@@ -453,60 +453,6 @@ Server::backgroundMaintenance()
     DL_DEBUG( "Maint thread stopped" );
 }
 
-
-
-
-/*
-void
-Server::sessionClosed( spSession a_session )
-{
-    lock_guard<mutex> lock( m_data_mutex );
-    set<spSession>::iterator isess = m_sessions.find( a_session );
-    if ( isess != m_sessions.end() )
-        m_sessions.erase( isess );
-}
-*/
-
-void
-Server::generateKeys( const std::string & a_uid, std::string & a_key_data )
-{
-    string key_file = m_key_path + a_uid + "-key";
-
-    string cmd = "yes|ssh-keygen -q -t rsa -b 2048 -P '' -C \"SDMS SSH Key for " + a_uid + "\" -f " + key_file;
-    //cout << "cmd: " << cmd << "\n";
-
-    lock_guard<mutex> lock( m_key_mutex );
-
-    if ( system( cmd.c_str() ))
-        EXCEPT( ID_SERVICE_ERROR, "SSH key generation failed." );
-
-    ifstream inf( key_file + ".pub" );
-    if ( !inf.is_open() || !inf.good() )
-        EXCEPT( ID_SERVICE_ERROR, "Could not open new ssh public key file" );
-
-    a_key_data.assign(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
-
-    inf.close();
-}
-
-
-void
-Server::getPublicKey( const std::string & a_uid, std::string & a_key_data )
-{
-    string key_file = m_key_path + a_uid + "-key.pub";
-
-    lock_guard<mutex> lock( m_key_mutex );
-
-    ifstream inf( key_file );
-    if ( !inf.is_open() || !inf.good() )
-        EXCEPT( ID_SERVICE_ERROR, "No SSH key available" );
-
-    a_key_data.assign(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
-
-    inf.close();
-}
-
-
 void
 Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
 {

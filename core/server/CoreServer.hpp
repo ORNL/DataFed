@@ -40,8 +40,6 @@ private:
     const std::string & getKeyPath() { return m_key_path; }
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
-    void                generateKeys( const std::string & a_uid, std::string & a_key_data );
-    void                getPublicKey( const std::string & a_uid, std::string & a_key_data );
     void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
     void                dataDelete( const std::string & a_data_id );
 

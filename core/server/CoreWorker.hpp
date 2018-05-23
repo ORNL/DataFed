@@ -28,8 +28,6 @@ private:
     bool procStatusRequest( const std::string & a_uid );
     bool procAuthenticateRequest( const std::string & a_uid );
     bool procGenerateCredentialsRequest( const std::string & a_uid );
-    bool procSSH_GenerateKeysRequest( const std::string & a_uid );
-    bool procSSH_GetPublicKeyRequest( const std::string & a_uid );
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataDeleteRequest( const std::string & a_uid );

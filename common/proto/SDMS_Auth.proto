@@ -10,13 +10,6 @@ enum Protocol
 
 // ============================ Setup/Config Messages
 
-/*
-message SetLocalIdentityRequest
-{
-    required string             ident       = 1;
-}
-*/
-
 message GenerateCredentialsRequest
 {
 }
@@ -25,19 +18,6 @@ message GenerateCredentialsReply
 {
     required string             pub_key     = 1;
     required string             priv_key    = 2;
-}
-
-message SSH_GenerateKeysRequest
-{
-}
-
-message SSH_GetPublicKeyRequest
-{
-}
-
-message SSH_PublicKeyReply
-{
-    required string             pub_key     = 1;
 }
 
 // ============================ Permissions Messages

@@ -75,8 +75,6 @@ Worker::setupMsgHandlers()
 
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
-        SET_MSG_HANDLER( proto_id, SSH_GenerateKeysRequest, &Worker::procSSH_GenerateKeysRequest );
-        SET_MSG_HANDLER( proto_id, SSH_GetPublicKeyRequest, &Worker::procSSH_GetPublicKeyRequest );
         SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest  );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest  );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
@@ -309,33 +307,6 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-Worker::procSSH_GenerateKeysRequest( const std::string & a_uid )
-{
-     PROC_MSG_BEGIN( SSH_GenerateKeysRequest, SSH_PublicKeyReply )
-
-    string key_data;
-
-    m_mgr.generateKeys( a_uid, key_data );
-
-    reply.set_pub_key( key_data );
-
-    PROC_MSG_END
-}
-
-bool
-Worker::procSSH_GetPublicKeyRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( SSH_GetPublicKeyRequest, SSH_PublicKeyReply )
-
-    string key_data;
-
-    m_mgr.getPublicKey( a_uid, key_data );
-
-    reply.set_pub_key( key_data );
-
-    PROC_MSG_END
-}
 
 bool
 Worker::procDataGetRequest( const std::string & a_uid )

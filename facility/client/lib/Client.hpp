@@ -81,8 +81,6 @@ public:
 
     void                authenticate( const std::string & a_uid, const std::string & a_password );
     void                setup();
-    std::string         sshGenerateKeys();
-    std::string         sshGetPublicKey();
 
     ServiceStatus       status();
 

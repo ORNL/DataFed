@@ -221,33 +221,6 @@ void Client::setup()
 }
 
 
-std::string
-Client::sshGenerateKeys()
-{
-    SSH_GenerateKeysRequest req;
-    SSH_PublicKeyReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    string result = reply->pub_key();
-
-    delete reply;
-    return result;
-}
-
-std::string Client::sshGetPublicKey()
-{
-    SSH_GetPublicKeyRequest req;
-    SSH_PublicKeyReply * reply = 0;
-
-    send<>( req, reply, m_ctx++ );
-
-    string result = reply->pub_key();
-
-    delete reply;
-    return result;
-}
-
 bool Client::test( size_t a_iter )
 {
     Anon::StatusReply     in;
