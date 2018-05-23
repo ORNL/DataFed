@@ -85,6 +85,14 @@ function viewColl( a_id, a_callback ) {
     });
 }
 
+function linkItem( a_item, a_coll, a_cb ) {
+    _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll, null, a_cb );
+}
+
+function linkItemUnlinkSource( a_item, a_coll, a_source, a_cb ) {
+    _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll+"&unlink="+a_source, null, a_cb );
+}
+
 function dlgNewEdit(a_mode,a_data) {
     var frame = $('#dlg_new');
     var dlg_title;
@@ -357,10 +365,22 @@ function xfrHistoryPoll() {
             }
         }
 
-        pollTimer = setTimeout( xfrHistoryPoll, 5000 );
+        //pollTimer = setTimeout( xfrHistoryPoll, 5000 );
     });
 }
 
 var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
+
+function test() {
+    console.log("testing...");
+    _asyncGet( "/ui/test", null, function( ok, data ){
+        if ( ok ) {
+            console.log("test ok, data:", data, typeof data );
+        }
+        else {
+            console.log("test failed:", data );
+        }
+    });
+}
 
 console.log( "main.js loaded");

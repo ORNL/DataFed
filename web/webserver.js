@@ -176,41 +176,29 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                 console.log( 'got user info:', body );
                 userinfo = JSON.parse( body );
 
-                // TODO This can just be a function call - AJAX is NOT required!!!
+                sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
+                    console.log( "UserFindByUUIDsRequest reply:", reply );
 
-                request.get({
-                    uri: 'https://sdms.ornl.gov/api/usr/find',
-                    qs: { uuids: userinfo.identities_set },
-                    agent: agent // HACK
-                }, function( error, response, body ) {
-                    console.log( '/api/usr/find cb' );
-                    if ( error ) {
-                        console.log( '/api/usr/find error:', error );
+                    if ( !reply || reply.errCode  ) {
+                        console.log("User find error. Reply:", reply );
                         a_response.redirect( "/ui/error" );
+                    } else if ( !reply.user || !reply.user.length ) {
+                        // Not registered
+                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
+                        a_response.redirect( "/ui/register&acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
                     } else {
-                        if ( response.statusCode == 200 ) {
-                            console.log( 'user found:', body );
-                            var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+                        // Registered
+                        var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-                            // Save access token
-                            saveToken( uid, xfr_token.access_token, xfr_token.refresh_token );
+                        // Save access token
+                        saveToken( uid, xfr_token.access_token, xfr_token.refresh_token );
 
-                            // TODO Account may be disable from SDMS (active = false)
-                            //userinfo.registered = true;
-                            //userinfo.active = true;
-                            a_response.cookie( 'sdms', uid, { httpOnly: true });
-                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
-                            a_response.redirect( "/ui/main" );
-                        } else {
-                            console.log( 'user not registered' );
-                            /*userinfo.registered = false;
-                            userinfo.active = false;*/
-                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
-                            a_response.redirect( "/ui/register&acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
-                        }
+                        // TODO Account may be disable from SDMS (active = false)
+                        a_response.cookie( 'sdms', uid, { httpOnly: true });
+                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
+                        a_response.redirect( "/ui/main" );
                     }
                 });
-
             } else {
                 a_response.clearCookie( 'sdms' );
                 a_response.clearCookie( 'sdms-user', { path: "/ui" } );
@@ -276,38 +264,10 @@ app.get('/api/usr/find', ( a_req, a_resp ) => {
     console.log("get /api/usr/find");
 
     sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
+        console.log( "UserFindByUUIDsRequest reply:", reply );
         var user = reply.user[0];
         a_resp.send({ name: user.name, uid: user.uid });
     });
-
-    /*
-    allocRequestContext( a_response, function( ctx ){
-        var msg = g_msg_by_name["UserFindByUUIDsRequest"];
-        var msg_buf = msg.encode({ uuid: a_request.query.uuids }).finish();
-    
-        var frame = Buffer.alloc(8);
-        frame.writeUInt32LE( msg_buf.length, 0 );
-        frame.writeUInt8( msg._pid, 4 );
-        frame.writeUInt8( msg._mid, 5 );
-        frame.writeUInt16LE( ctx, 6 );
-
-        g_ctx[ctx] = function( reply ){
-            if ( reply.errCode ) {
-                a_response.status( 404 );
-                if ( reply.errMsg )
-                    a_response.send( reply.errMsg );
-                else
-                    a_response.send( "User not found" );
-            } else {
-                var user = reply.user[0];
-                a_response.send({ name: user.name, uid: user.uid });
-            }
-        };
-
-        console.log( "send (usr find): UserFindByUUIDsRequest" );
-        core_sock.send([ nullfr, frame, nullfr, msg_buf ]);
-    });
-    */
 });
 
 app.get('/api/dat/create', ( a_req, a_resp ) => {
@@ -443,6 +403,20 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/link', ( a_req, a_resp ) => {
+    console.log("link ", a_req.query.item,"to",a_req.query.coll );
+    sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: [a_req.query.item] }, a_req, a_resp, function( reply ) {
+        console.log( "reply to /api/link" );
+        if ( a_req.query.unlink ) {
+            sendMessage( "CollWriteRequest", { id: a_req.query.unlink, rem: [a_req.query.item] }, a_req, a_resp, function( reply2 ) {
+                console.log( "reply2 to /api/link" );
+
+                a_resp.send(reply2);
+            });
+        } else
+            a_resp.send(reply);
+    });
+});
 
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
@@ -603,12 +577,16 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
 
         g_ctx[ctx] = function( a_reply ) {
             if ( !a_reply ) {
+                console.log("empty reply");
                 a_resp.status(500).send( "Empty reply" );
             } else if ( a_reply.errCode ) {
-                if ( a_reply.errMsg )
+                if ( a_reply.errMsg ) {
+                    console.log("error", a_reply.errMsg);
                     a_resp.status(500).send( a_reply.errMsg );
-                else
+                } else {
                     a_resp.status(500).send( "error code: " + a_reply.errCode );
+                    console.log("error", a_reply.errCode);
+                }
             } else {
                 a_cb( a_reply );
             }
@@ -654,6 +632,30 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
+
+app.get('/ui/test', ( a_req, a_resp ) => {
+    console.log("TEST");
+    var client = a_req.cookies[ 'sdms' ];
+
+    var userinfo = JSON.parse( a_req.cookies[ 'sdms-user' ] );
+    for ( var i in userinfo.identities_set ) {
+        request.get({
+            uri: 'https://auth.globus.org/v2/api/identities/' + userinfo.identities_set[i],
+            headers: {
+                'Content-Type' : 'application/x-www-form-urlencoded',
+                'Accept' : 'application/json',
+            },
+            auth: {
+                user: oauth_credentials.clientId,
+                pass: oauth_credentials.clientSecret
+            }
+        }, function( error, response, body ) {
+            console.log( "ids resp:",error, body );
+        });
+    }
+
+    a_resp.send({'result':'OK'});
 });
 
 var httpsServer = https.createServer( web_credentials, app );
