@@ -230,6 +230,11 @@ message CollWriteRequest
     optional bool               rem_all     = 4;
 }
 
+message CollGetParentsRequest
+{
+    required string             id          = 1;
+}
+
 // Returned for any command the returns one or more user records
 message CollDataReply
 {

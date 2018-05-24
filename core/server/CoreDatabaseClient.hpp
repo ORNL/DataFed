@@ -55,6 +55,7 @@ public:
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::CollDataReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Anon::AckReply & a_reply );
+    void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply );
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );

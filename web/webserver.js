@@ -68,10 +68,11 @@ var g_ctx = new Array( MAX_CTX );
 g_ctx.fill(null);
 var g_ctx_next = 0;
 
+var serv_addr = 'tcp://sdms.ornl.gov:9001';
 const nullfr = Buffer.from([]);
 var core_sock = zmq.socket('dealer');
-core_sock.connect('tcp://sdms.ornl.gov:9001');
-console.log('Worker connected to port 3000');
+core_sock.connect( serv_addr );
+console.log('Connected to SDMS at', serv_addr );
 
 //console.log(  __dirname + '/static' );
 app.use( express.static( __dirname + '/static' ));
@@ -112,7 +113,7 @@ app.get('/ui/main', (request, response) => {
 });
 
 app.get('/ui/register', (request, response) => {
-    console.log("get /ui/register");
+    console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
 
     response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok });
 });
@@ -179,16 +180,19 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                 sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
                     console.log( "UserFindByUUIDsRequest reply:", reply );
 
-                    if ( !reply || reply.errCode  ) {
+                    if ( !reply  ) {
                         console.log("User find error. Reply:", reply );
                         a_response.redirect( "/ui/error" );
                     } else if ( !reply.user || !reply.user.length ) {
                         // Not registered
+                        console.log("User not registered", userinfo );
                         a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
-                        a_response.redirect( "/ui/register&acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
+                        //a_response.redirect( "/ui/register" );
+                        a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
                     } else {
                         // Registered
                         var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+                        userinfo.uid = uid;
 
                         // Save access token
                         saveToken( uid, xfr_token.access_token, xfr_token.refresh_token );
@@ -216,13 +220,26 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
     console.log( 'userinfo', userinfo );
     var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-    sendMessage( "UserCreateRequest", { uid: uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, a_req, a_resp, function( reply ) {
-        // Save access token
-        saveToken( uid, a_request.query.acc_tok, a_request.query.ref_tok );
+    sendMessageDirect( "UserCreateRequest", "sdms", { uid: uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, function( reply ) {
+        if ( !reply ) {
+            console.log("empty reply");
+            a_resp.status(500).send( "Empty reply" );
+        } else if ( reply.errCode ) {
+            if ( reply.errMsg ) {
+                console.log("error", reply.errMsg);
+                a_resp.status(500).send( reply.errMsg );
+            } else {
+                a_resp.status(500).send( "error code: " + reply.errCode );
+                console.log("error", reply.errCode);
+            }
+        } else {
+            // Save access token
+            saveToken( uid, a_req.query.acc_tok, a_req.query.ref_tok );
 
-        a_response.cookie( 'sdms', uid, { httpOnly: true });
-        //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
-        a_response.redirect( "/ui/main" );
+            a_resp.cookie( 'sdms', uid, { httpOnly: true });
+            //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
+            a_resp.redirect( "/ui/main" );
+        }
     });
 
     /*
@@ -403,6 +420,12 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/col/get_parents', ( a_req, a_resp ) => {
+    sendMessage( "CollGetParentsRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/link', ( a_req, a_resp ) => {
     console.log("link ", a_req.query.item,"to",a_req.query.coll );
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: [a_req.query.item] }, a_req, a_resp, function( reply ) {
@@ -418,6 +441,12 @@ app.get('/api/link', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/unlink', ( a_req, a_resp ) => {
+    console.log("unlink ", a_req.query.item,"from",a_req.query.coll );
+    sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: [a_req.query.item] }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
@@ -493,8 +522,8 @@ core_sock.on('message', function( delim, frame, client, msg_buf ) {
     var ctx = frame.readUInt16LE( 6 );
 
     console.log( "got msg type:", mtype );
-    console.log( "client len:", client?client.length:0 );
-    console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
+    //console.log( "client len:", client?client.length:0 );
+    //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
 
     //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
 

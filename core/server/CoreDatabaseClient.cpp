@@ -86,7 +86,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            //cout << "About to parse[" << res_json << "]" << endl;
+            cout << "About to parse[" << res_json << "]" << endl;
             a_result.Parse( res_json.c_str() );
         }
 
@@ -706,6 +706,16 @@ DatabaseClient::collWrite( const CollWriteRequest & a_request, Anon::AckReply & 
     rapidjson::Document result;
 
     dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
+}
+
+void
+DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "col/get_parents", {{"id",a_request.id()}}, result );
+
+    setCollData( a_reply, result );
 }
 
 void
