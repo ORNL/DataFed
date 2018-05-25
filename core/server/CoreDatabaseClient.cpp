@@ -217,7 +217,6 @@ DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
     rapidjson::Value & val = result[0];
 
     rapidjson::Value::MemberIterator imem = val.FindMember("pub_key");
-    
     if ( imem == val.MemberEnd() )
         return false;
     a_pub_key = imem->value.GetString();
