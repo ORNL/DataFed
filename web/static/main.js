@@ -101,6 +101,10 @@ function getParents( a_id, a_cb ) {
     _asyncGet( "/api/col/get_parents?id="+a_id, null, a_cb );
 }
 
+function aclView( a_id, a_cb ) {
+    _asyncGet( "/api/acl/view?id="+a_id, null, a_cb );
+}
+
 function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
     var frame = $('#dlg_new');
     var dlg_title;
@@ -392,82 +396,16 @@ function shareSelected() {
     if ( node ) {
         if ( node.key[0] == "c" ){
             viewColl( node.key, function( data ){
-                dlgSetACLs( data.data[0] );
+                dlgSetACLs.show( data.data[0] );
             });
         } else {
             viewData( node.key, function( data ){
-                dlgSetACLs( data.data[0] );
+                dlgSetACLs.show( data.data[0] );
             });
         }
     }
 }
 
-function dlgSetACLs( item ){
-    var frame = $('#dlg_acl');
-    var options = {
-        title: "Sharing for " + (item.id[0]=="c"?"Collection ":"Data ") + item.id,
-        modal: true,
-        width: 400,
-        height: 'auto',
-        resizable: true,
-        closeOnEscape: false,
-        buttons: [{
-            text: "Ok",
-            click: function() {
-                var inst = $(this);
-                inst.dialog( "close" );
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $( this ).dialog( "close" );
-            }
-        }],
-        open: function(event,ui){
-            $("#dlg_acl_title",frame).html(item.title);
-
-
-            var src = [
-                {title:"Users",folder:true,children:[{title:"user1"}],key:"users"},
-                {title:"Groups",folder:true,children:[{title:"group1"}],key:"groups"},
-                {title:"Default",folder:false,key:"default"}
-            ];
-    
-            $("#dlg_acl_tree",frame).fancytree({
-                extensions: ["themeroller"],
-                themeroller: {
-                    activeClass: "ui-state-hover",
-                    addClass: "",
-                    focusClass: "",
-                    hoverClass: "ui-state-active",
-                    selectedClass: ""
-                },
-                source: src,
-                selectMode: 1,
-                activate: function( event, data ) {
-                    //console.log("click",data.node );
-                    //showSelectedInfo( data.node.key );
-                },
-            });
-
-            $( "input", frame ).checkboxradio();
-            //$( "select", frame ).selectmenu();
-            /*
-            $("#title",frame).val(a_data.title);
-            $("#alias",frame).val(a_data.alias);
-            $("#desc",frame).val(a_data.desc);
-            $("#md",frame).val(a_data.metadata);
-            document.getElementById("dlg_coll_row").style.display = 'none';
-            if ( a_mode )
-                document.getElementById("dlg_md_row2").style.display = 'none';
-            else
-                document.getElementById("dlg_md_row2").style.display = '';
-            */
-        }
-    };
-
-    frame.dialog( options );
-}
 
 function generateTitle( item ) {
     if ( item.alias )
@@ -755,8 +693,6 @@ function setupDataTree(){
     });
 }
 
-var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
-
 function test() {
     console.log("testing...");
     _asyncGet( "/ui/test", null, function( ok, data ){
@@ -768,5 +704,17 @@ function test() {
         }
     });
 }
+
+var PERM_LIST           = 0x001;   // Find record by browsing
+var PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
+var PERM_UPDATE         = 0x004;   // Update public record fields
+var PERM_ADMIN          = 0x008;   // Read, write admin fields, delete record
+var PERM_TAG            = 0x010;   // Add/remove tags on record
+var PERM_NOTE           = 0x020;   // Add, remove, edit annotations on record
+var PERM_READ           = 0x040;   // Read raw data or list collection items
+var PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
+
+var dlgSetACLs = new makeDlgSetACLs();
+var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 
 console.log( "main.js loaded");

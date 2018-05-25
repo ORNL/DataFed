@@ -4,6 +4,8 @@
         <% include 'head.ect' %>
         <link href="/fancytree/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
         <script src="/fancytree/jquery.fancytree-all.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_set_acls.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript">
             loadUser();
             if ( !g_user || !g_user.active )
@@ -88,38 +90,7 @@
         <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>
         </table>
     </div>
-    <div id='dlg_acl' style='display:none'>
-        <table style='width:100%'>
-        <tr><td colspan="2">Title: <span id="dlg_acl_title"></span></td></tr>
-        <tr><td>Subjects:</td><td>Settings:</td></tr>
-        <tr><td class="ui-widget-content text" style="overflow:auto"><div id="dlg_acl_tree" class="no-border"></div></td><td><div id="dlg_acl_settings" class="ui-widget-content text">
-                <fieldset>
-                    <legend>Read: </legend>
-                    <label for="radio-read-1">Allow</label>
-                    <input type="radio" name="radio-read" id="radio-read-1">
-                    <label for="radio-read-2">Deny</label>
-                    <input type="radio" name="radio-read" id="radio-read-2">
-                    <label for="radio-read-3">Inherit</label>
-                    <input type="radio" name="radio-read" id="radio-read-3">
-                </fieldset>
-                <fieldset>
-                    <legend>Write: </legend>
-                    <label for="radio-write-1">Allow</label>
-                    <input type="radio" name="radio-write" id="radio-write-1">
-                    <label for="radio-write-2">Deny</label>
-                    <input type="radio" name="radio-write" id="radio-write-2">
-                    <label for="radio-write-3">Inherit</label>
-                    <input type="radio" name="radio-write" id="radio-write-3">
-                </fieldset>
-                <label for="view">View:</label>
-                <select name="view" id="perm_view">
-                    <option>Allow</option>
-                    <option>Deny</option>
-                    <option selected="selected">Inherit</option>
-                </select>
-            </div></td></tr>
-        </table>
-    </div>
+    <div id="app_dlg" style='display:none'></div>
     <div id='dlg_alert' style='display:none'></div>
     </body>
     <script>
@@ -144,6 +115,8 @@
         });
 
         $(".btn").button();
+
+
         /*
         $( "#lock_btn" ).button().click(function() {
             if ( this.checked )

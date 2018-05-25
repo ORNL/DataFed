@@ -1,6 +1,7 @@
 html
 {
     height: 100%;
+    font-size: 100%;
 }
 
 body
@@ -56,18 +57,14 @@ body
 {
     background: #FFFFFF!important;
     color: #000000!important;
-    font-size: 1em!important;
+    font-size: 1rem!important;
+    font-style: normal!important;
 }
 
-.button {
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    padding: .25em .5em;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    /*font-size: .8em;*/
+.small {
+    margin: 0!important;
+    padding: .1rem .25rem!important;
+    font-size: 1rem!important;
 }
 
 .info_table
@@ -112,6 +109,7 @@ ul.ui-effects-placeholder { width:10px !important; }
 
 .ui-fancytree.fancytree-container { 
     border: none;
+    font-size: 1rem;
 }
 
 /* Hide all jQ dialog close buttons */

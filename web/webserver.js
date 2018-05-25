@@ -361,6 +361,12 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/acl/view', ( a_req, a_resp ) => {
+    sendMessage( "ACLViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/xfr/status', ( a_req, a_resp ) => {
     sendMessage( "XfrListRequest", {}, a_req, a_resp, function( reply ) {
         //console.log( "reply to /api/col/read", reply );
