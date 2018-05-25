@@ -58,6 +58,9 @@ router.get('/create', function (req, res) {
 
                 if ( req.queryParams.coll ) {
                     var coll_id = g_lib.resolveID( req.queryParams.coll, client );
+                    if ( coll_id[0] != "c" )
+                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
+
                     g_db.item.save({ _from: coll_id, _to: data.new._id });
                 }
 

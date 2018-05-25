@@ -299,10 +299,10 @@ router.get('/keys/get', function( req, res ) {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
 
-        if ( !user.user.pub_key || !user.priv_key )
-            throw g_lib.ERR_KEYS_NOT_DEFINED;
-
-        res.send([{ uid: user._key, pub_key: user.pub_key, priv_key: user.priv_key }]);
+        if ( !user.pub_key || !user.priv_key )
+            res.send([{ uid: user._key }]);
+        else
+            res.send([{ uid: user._key, pub_key: user.pub_key, priv_key: user.priv_key }]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
