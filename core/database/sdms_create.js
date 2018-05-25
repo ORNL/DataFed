@@ -46,6 +46,9 @@ graph._extendEdgeDefinitions(adm);
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
 
+//db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
+db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
+
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "data_id" ] });
@@ -65,6 +68,7 @@ db._truncate("c");
 db._truncate("t");
 db._truncate("n");
 db._truncate("a");
+db._truncate("l");
 db._truncate("tr");
 db._truncate("owner");
 db._truncate("member");

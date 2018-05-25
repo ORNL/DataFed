@@ -134,9 +134,6 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.name )
                     obj.name = req.queryParams.name;
 
-                if ( req.queryParams.globus_id )
-                    obj.globus_id = req.queryParams.globus_id;
-
                 if ( req.queryParams.email )
                     obj.email = req.queryParams.email;
 
@@ -193,6 +190,10 @@ router.get('/update', function (req, res) {
                 delete user.new._id;
                 delete user.new._key;
                 delete user.new._rev;
+                delete user.new.pub_key;
+                delete user.new.priv_key;
+                delete user.new.access;
+                delete user.new.refresh;
 
                 result = [user.new];
             }
@@ -247,6 +248,176 @@ router.get('/find/by_uuids', function (req, res) {
 .description('Find a user from list of UUIDs');
 
 
+router.get('/keys/set', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["u"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var user_id;
+
+                if ( req.queryParams.subject ) {
+                    user_id = "u/" + req.queryParams.subject;
+                    g_lib.ensureAdminPermUser( client, user_id );
+                }
+                else {
+                    user_id = client._id;
+                }
+
+                var obj = { pub_key: req.queryParams.pub_key, priv_key: req.queryParams.priv_key };
+                g_db._update( user_id, obj, { keepNull: false });
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user")
+.queryParam('pub_key', joi.string().required(), "User public key")
+.queryParam('priv_key', joi.string().required(), "User private key")
+.summary('Set user public and private keys')
+.description('Set user public and private keys');
+
+
+router.get('/keys/get', function( req, res ) {
+    try {
+        var user;
+
+        if ( req.queryParams.subject ) {
+            try {
+                user = g_db.u.document({ _id: req.queryParams.subject });
+            } catch ( e ) {
+                throw g_lib.ERR_USER_NOT_FOUND;
+            }
+        } else if ( req.queryParams.client ) {
+            user = g_lib.getUserFromClientID( req.queryParams.client );
+        } else {
+            throw g_lib.ERR_MISSING_REQ_OPTION;
+        }
+
+        if ( !user.pub_key || !user.priv_key )
+            res.send([{ uid: user._key }]);
+        else
+            res.send([{ uid: user._key, pub_key: user.pub_key, priv_key: user.priv_key }]);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user")
+.summary('Get user public and private keys')
+.description('Get user public and private keys');
+
+router.get('/find/by_pub_key', function (req, res) {
+    try {
+        var uid = g_lib.uidFromPubKey( req.queryParams.pub_key );
+
+        res.send(uid);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('pub_key', joi.string().required(), "User public key")
+.summary('Find a user by public key')
+.description('Find a user by public key');
+
+router.get('/token/set', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["u"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var user_id;
+
+                if ( req.queryParams.subject ) {
+                    user_id = "u/" + req.queryParams.subject;
+                    g_lib.ensureAdminPermUser( client, user_id );
+                }
+                else {
+                    user_id = client._id;
+                }
+
+                var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh };
+                g_db._update( user_id, obj, { keepNull: false });
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user")
+.queryParam('access', joi.string().required(), "User access token")
+.queryParam('refresh', joi.string().required(), "User refresh token")
+.summary('Set user tokens')
+.description('Set user tokens');
+
+router.get('/token/get', function( req, res ) {
+    try {
+        var user;
+
+        if ( req.queryParams.subject ) {
+            try {
+                user = g_db.u.document({ _id: req.queryParams.subject });
+            } catch ( e ) {
+                throw g_lib.ERR_USER_NOT_FOUND;
+            }
+        } else if ( req.queryParams.client ) {
+            user = g_lib.getUserFromClientID( req.queryParams.client );
+        } else {
+            throw g_lib.ERR_MISSING_REQ_OPTION;
+        }
+
+        if ( !user.access )
+            throw g_lib.ERR_TOKEN_NOT_DEFINED;
+
+        res.send({ access: user.access, refresh: user.refresh });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user")
+.summary('Get user tokens')
+.description('Get user tokens');
+
+router.get('/token/get/access', function( req, res ) {
+    try {
+        var user;
+
+        if ( req.queryParams.subject ) {
+            try {
+                user = g_db.u.document({ _id: req.queryParams.subject });
+            } catch ( e ) {
+                throw g_lib.ERR_USER_NOT_FOUND;
+            }
+        } else if ( req.queryParams.client ) {
+            user = g_lib.getUserFromClientID( req.queryParams.client );
+        } else {
+            throw g_lib.ERR_MISSING_REQ_OPTION;
+        }
+
+        if ( !user.access )
+            throw g_lib.ERR_TOKEN_NOT_DEFINED;
+
+        res.send( user.access );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user")
+.summary('Get user access token')
+.description('Get user access token');
+
+
 router.get('/view', function (req, res) {
     try {
         var user;
@@ -280,6 +451,10 @@ router.get('/view', function (req, res) {
         delete user._id;
         delete user._key;
         delete user._rev;
+        delete user.pub_key;
+        delete user.priv_key;
+        delete user.new.access;
+        delete user.new.refresh;
 
         res.send([user]);
     } catch( e ) {
@@ -295,7 +470,7 @@ router.get('/view', function (req, res) {
 
 router.get('/list', function (req, res) {
     if ( req.queryParams.details ) {
-        res.send( g_db._query( "for i in u return { uid: i._key, name: i.name, email: i.email, globus_id: i.globus_id }" ));
+        res.send( g_db._query( "for i in u return { uid: i._key, name: i.name, email: i.email }" ));
     } else {
         res.send( g_db._query( "for i in u return { uid: i._key, name: i.name }" ));
     }
@@ -391,9 +566,20 @@ router.get('/ident/add', function (req, res) {
                         return;
                     id = g_db.uuid.save({ _key: req.queryParams.ident }, { returnNew: true });
                 } else if ( g_lib.isDomainAccount( req.queryParams.ident )) {
-                    if ( g_db._exists({ _id: "accn/" + req.queryParams.ident }))
+                    if ( g_db._exists({ _id: "accn/" + req.queryParams.ident })) {
+                        if ( req.queryParams.pub_key && req.queryParams.priv_key ) {
+                            // Update existing accn with new keys
+                            g_db.accn.update( { _id: "accn/" + req.queryParams.ident }, { pub_key: req.queryParams.pub_key, priv_key: req.queryParams.priv_key });
+                        }
                         return;
-                    id = g_db.accn.save({ _key: req.queryParams.ident }, { returnNew: true });
+                    } else {
+                        var accn = { _key: req.queryParams.ident };
+                        if ( req.queryParams.pub_key && req.queryParams.priv_key ) {
+                            accn.pub_key = req.queryParams.pub_key;
+                            accn.priv_key = req.queryParams.priv_key;
+                        }
+                        id = g_db.accn.save( accn, { returnNew: true });
+                    }
                 } else
                     throw g_lib.ERR_INVALID_IDENT;
 
@@ -414,6 +600,8 @@ router.get('/ident/add', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
 .queryParam('ident', joi.string().required(), "Identity to add")
+.queryParam('pub_key', joi.string().optional(), "Optional public key (domain accounts only)")
+.queryParam('priv_key', joi.string().optional(), "Optional private key (domain accounts only)")
 .summary('Add new linked identity')
 .description('Add new linked identity to user account. Identities can be UUIDs or domain accounts.');
 

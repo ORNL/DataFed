@@ -40,8 +40,11 @@ router.get('/create', function (req, res) {
                 g_db.owner.save({ _from: coll._id, _to: client._id });
 
                 var parent_id = null;
-                if ( req.queryParams.parent )
+                if ( req.queryParams.parent ) {
                     parent_id = g_lib.resolveID( req.queryParams.parent, client );
+                    if ( parent_id[0] != "c" )
+                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
+                }
                 else
                     parent_id = "c/" + client._key + "_root";
 
@@ -378,32 +381,40 @@ router.get('/read2', function (req, res) {
 
 router.get('/write', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","d","c","uuid","accn"],
+                write: ["item"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var coll_id = g_lib.resolveID( req.queryParams.id, client );
-        var coll = g_db.c.document( coll_id );
+                var coll_id = g_lib.resolveID( req.queryParams.id, client );
+                var coll = g_db.c.document( coll_id );
 
-        if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
-                throw g_lib.ERR_PERM_DENIED;
-        }
+                if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
+                        throw g_lib.ERR_PERM_DENIED;
+                }
 
-        var i, id;
+                var i, obj;
 
-        if ( req.queryParams.remove ) {
-            for ( i in req.queryParams.remove ) {
-                id = g_lib.resolveID( req.queryParams.remove[i], client );
-                g_db.item.removeByExample({ _from: coll_id, _to: id });
+                if ( req.queryParams.remove ) {
+                    for ( i in req.queryParams.remove ) {
+                        obj = g_lib.getObject( req.queryParams.remove[i], client );
+                        g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
+                    }
+                }
+
+                if ( req.queryParams.add ) {
+                    for ( i in req.queryParams.add ) {
+                        obj = g_lib.getObject( req.queryParams.add[i], client );
+                        if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }) == null )
+                            g_db.item.save({ _from: coll_id, _to: obj._id });
+                    }
+                }
             }
-        }
-
-        if ( req.queryParams.add ) {
-            for ( i in req.queryParams.add ) {
-                id = g_lib.resolveID( req.queryParams.add[i], client );
-                if ( g_db.item.firstExample({ _from: coll_id, _to: id }) == null )
-                    g_db.item.save({ _from: coll_id, _to: id });
-            }
-        }
+        });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -414,4 +425,23 @@ router.get('/write', function (req, res) {
 .queryParam('remove', joi.array().items(joi.string()).optional(), "Array of item IDs to remove")
 .summary('Add/remove items in a collection')
 .description('Add/remove items in a collection');
+
+router.get('/get_parents', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var item_id = g_lib.resolveID( req.queryParams.id, client );
+
+        // TODO How to check non-owner permission for this?
+
+        const items = g_db._query( "for v in 1..1 inbound @item item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { item: item_id }).toArray();
+
+        res.send( items );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "ID or alias of child item")
+.summary('Get parent collection(s) of item')
+.description('Get parent collection(s) of item');
 

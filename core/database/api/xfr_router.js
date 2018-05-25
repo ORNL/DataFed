@@ -64,7 +64,7 @@ router.get('/init', function (req, res) {
 
                     result = [xfr.new];
                 } else {
-                    if ( !data.file_size )
+                    if ( !data.data_size )
                         throw g_lib.ERR_XFR_NO_RAW_DATA;
 
                     var dest_path = req.queryParams.path;
