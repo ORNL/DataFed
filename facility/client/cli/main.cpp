@@ -313,10 +313,10 @@ void printACLs( spACLDataReply a_reply )
                 cout << "  Grant    : " << rule.grant() << "\n";
             if ( rule.has_deny() )
                 cout << "  Deny     : " << rule.deny() << "\n";
-            if ( rule.has_inh_grant() )
-                cout << "  Grant(i) : " << rule.inh_grant() << "\n";
-            if ( rule.has_inh_deny() )
-                cout << "  Deny(i)  : " << rule.inh_deny() << "\n";
+            if ( rule.has_inhgrant() )
+                cout << "  Grant(i) : " << rule.inhgrant() << "\n";
+            if ( rule.has_inhdeny() )
+                cout << "  Deny(i)  : " << rule.inhdeny() << "\n";
             cout << "\n";
         }
     }
@@ -834,7 +834,7 @@ int acl()
             if ( g_args.size() != 6 )
                 return -1;
 
-            rule += "inh_" + g_args[3] + "\":\"" + g_args[5] + "\"}]";
+            rule += "inh" + g_args[3] + "\":\"" + g_args[5] + "\"}]";
         }
         else
         {

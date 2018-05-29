@@ -282,8 +282,43 @@ app.get('/api/usr/find', ( a_req, a_resp ) => {
 
     sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
         console.log( "UserFindByUUIDsRequest reply:", reply );
-        var user = reply.user[0];
-        a_resp.send({ name: user.name, uid: user.uid });
+        a_resp.send(reply.user[0]);
+    });
+});
+
+app.get('/api/usr/view', ( a_req, a_resp ) => {
+    console.log("get /api/usr/view");
+
+    sendMessage( "UserViewRequest", { uid: a_req.query.id }, a_req, a_resp, function( reply ) {
+        console.log( "UserViewRequest reply:", reply );
+        a_resp.send(reply.user[0]);
+    });
+});
+
+app.get('/api/usr/list', ( a_req, a_resp ) => {
+    console.log("get /api/usr/list");
+
+    sendMessage( "UserListRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "UserListRequest reply:", reply );
+        a_resp.send(reply.user);
+    });
+});
+
+app.get('/api/grp/view', ( a_req, a_resp ) => {
+    console.log("get /api/grp/view");
+
+    sendMessage( "GroupViewRequest", { gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
+        console.log( "GroupViewRequest reply:", reply );
+        a_resp.send(reply.group[0]);
+    });
+});
+
+app.get('/api/grp/list', ( a_req, a_resp ) => {
+    console.log("get /api/grp/list");
+
+    sendMessage( "GroupListRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "GroupListRequest reply:", reply );
+        a_resp.send(reply.group);
     });
 });
 
@@ -363,6 +398,12 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
 
 app.get('/api/acl/view', ( a_req, a_resp ) => {
     sendMessage( "ACLViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/acl/update', ( a_req, a_resp ) => {
+    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

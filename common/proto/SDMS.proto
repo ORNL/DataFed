@@ -124,6 +124,6 @@ message ACLRule
     required string             id          = 1;
     optional uint32             grant       = 2;
     optional uint32             deny        = 3;
-    optional uint32             inh_grant   = 4;
-    optional uint32             inh_deny    = 5;
+    optional uint32             inhgrant    = 4;
+    optional uint32             inhdeny     = 5;
 }

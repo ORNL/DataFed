@@ -105,6 +105,26 @@ function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+a_id, null, a_cb );
 }
 
+function aclUpdate( a_id, a_rules, a_cb ) {
+    //console.log("update rules:",JSON.stringify(a_rules));
+    _asyncGet( "/api/acl/update?id="+a_id+"&rules="+JSON.stringify(a_rules), null, a_cb );
+}
+
+function userView( a_id, a_cb ) {
+    _asyncGet( "/api/usr/view?id="+a_id, null, a_cb );
+}
+
+function groupView( a_gid, a_cb ) {
+    if ( a_gid.startsWith("g/" ))
+        _asyncGet( "/api/grp/view?gid="+a_gid.substr(2), null, a_cb );
+    else
+        _asyncGet( "/api/grp/view?gid="+a_gid, null, a_cb );
+}
+
+function groupList( a_cb ) {
+    _asyncGet( "/api/grp/list", null, a_cb );
+}
+
 function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
     var frame = $('#dlg_new');
     var dlg_title;
@@ -705,16 +725,19 @@ function test() {
     });
 }
 
-var PERM_LIST           = 0x001;   // Find record by browsing
-var PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
-var PERM_UPDATE         = 0x004;   // Update public record fields
-var PERM_ADMIN          = 0x008;   // Read, write admin fields, delete record
-var PERM_TAG            = 0x010;   // Add/remove tags on record
-var PERM_NOTE           = 0x020;   // Add, remove, edit annotations on record
-var PERM_READ           = 0x040;   // Read raw data or list collection items
-var PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
+var PERM_LIST           = 0x01;   // Find record by browsing
+var PERM_VIEW           = 0x02;   // Read public record fields (not collection items or raw data)
+var PERM_UPDATE         = 0x04;   // Update public record fields
+var PERM_ADMIN          = 0x08;   // Read, write admin fields, delete record
+var PERM_TAG            = 0x10;   // Add/remove tags on record
+var PERM_NOTE           = 0x20;   // Add, remove, edit annotations on record
+var PERM_READ           = 0x40;   // Read raw data or list collection items
+var PERM_WRITE          = 0x80;   // Write raw data or add/remove collection items
+var PERM_ALL            = 0xFF;
 
 var dlgSetACLs = new makeDlgSetACLs();
+var dlgPickUser = new makeDlgPickUser();
+var dlgGroups = new makeDlgGroups();
 var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 
 console.log( "main.js loaded");

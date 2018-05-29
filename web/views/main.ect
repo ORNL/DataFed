@@ -4,7 +4,9 @@
         <% include 'head.ect' %>
         <link href="/fancytree/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
         <script src="/fancytree/jquery.fancytree-all.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_pick_user.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_set_acls.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript">
             loadUser();
@@ -90,7 +92,8 @@
         <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>
         </table>
     </div>
-    <div id="app_dlg" style='display:none'></div>
+    <div id="dlg_app" style='display:none'></div>
+    <div id="dlg_pop" style='display:none'></div>
     <div id='dlg_alert' style='display:none'></div>
     </body>
     <script>

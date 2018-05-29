@@ -308,7 +308,7 @@ void
 DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
-    params.push_back({"uid",a_request.uid()});
+    params.push_back({"subject",a_request.uid()});
     if ( a_request.has_details() && a_request.details() )
         params.push_back({"details","true"});
 
@@ -893,12 +893,12 @@ DatabaseClient::setACLData( ACLDataReply & a_reply, rapidjson::Document & a_resu
         imem = val.FindMember("deny");
         if ( imem != val.MemberEnd() )
             rule->set_deny( imem->value.GetInt() );
-        imem = val.FindMember("inh_grant");
+        imem = val.FindMember("inhgrant");
         if ( imem != val.MemberEnd() )
-            rule->set_inh_grant( imem->value.GetInt() );
-        imem = val.FindMember("inh_deny");
+            rule->set_inhgrant( imem->value.GetInt() );
+        imem = val.FindMember("inhdeny");
         if ( imem != val.MemberEnd() )
-            rule->set_inh_deny( imem->value.GetInt() );
+            rule->set_inhdeny( imem->value.GetInt() );
     }
 }
 
