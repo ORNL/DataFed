@@ -37,12 +37,22 @@ module.exports = ( function() {
     obj.XM_GET              = 0;
     obj.XM_PUT              = 1;
 
+    /*
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
         grant: joi.string().optional(),
         inh_grant: joi.string().optional(),
         deny: joi.string().optional(),
         inh_deny: joi.string().optional()
+    });
+    */
+
+    obj.acl_schema = joi.object().keys({
+        id: joi.string().required(),
+        grant: joi.number().optional(),
+        inhgrant: joi.number().optional(),
+        deny: joi.number().optional(),
+        inhdeny: joi.number().optional()
     });
 
     obj.ERR_INFO = [];
@@ -443,25 +453,25 @@ module.exports = ( function() {
                 acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
-                    usr_perm_found |= ( acl.inh_grant | acl.inh_deny );
-                    usr_perm_deny |= acl.inh_deny;
+                    usr_perm_found |= ( acl.inhgrant | acl.inhdeny );
+                    usr_perm_deny |= acl.inhdeny;
                 }
 
                 // Group ACL next
                 acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
-                    grp_perm_found |= ( acl.inh_grant | acl.inh_deny );
-                    grp_perm_deny |= acl.inh_deny;
+                    grp_perm_found |= ( acl.inhgrant | acl.inhdeny );
+                    grp_perm_deny |= acl.inhdeny;
                 }
 
-                if ( parent.inh_grant ) {
-                    def_perm_found |= parent.inh_grant;
+                if ( parent.inhgrant ) {
+                    def_perm_found |= parent.inhgrant;
                 }
 
-                if ( parent.inh_deny ) {
-                    def_perm_found |= parent.inh_deny;
-                    def_perm_deny |= parent.inh_deny;
+                if ( parent.inhdeny ) {
+                    def_perm_found |= parent.inhdeny;
+                    def_perm_deny |= parent.inhdeny;
                 }
             }
 
@@ -626,25 +636,25 @@ module.exports = ( function() {
                 acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
-                    usr_perm_found |= ( acl.inh_grant | acl.inh_deny );
-                    usr_perm_deny |= acl.inh_deny;
+                    usr_perm_found |= ( acl.inhgrant | acl.inhdeny );
+                    usr_perm_deny |= acl.inhdeny;
                 }
 
                 // Group ACL next
                 acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
                     acl = acls[i];
-                    grp_perm_found |= ( acl.inh_grant | acl.inh_deny );
-                    grp_perm_deny |= acl.inh_deny;
+                    grp_perm_found |= ( acl.inhgrant | acl.inhdeny );
+                    grp_perm_deny |= acl.inhdeny;
                 }
 
-                if ( parent.inh_grant ) {
-                    def_perm_found |= parent.inh_grant;
+                if ( parent.inhgrant ) {
+                    def_perm_found |= parent.inhgrant;
                 }
 
-                if ( parent.inh_deny ) {
-                    def_perm_found |= parent.inh_deny;
-                    def_perm_deny |= parent.inh_deny;
+                if ( parent.inhdeny ) {
+                    def_perm_found |= parent.inhdeny;
+                    def_perm_deny |= parent.inhdeny;
                 }
             }
 

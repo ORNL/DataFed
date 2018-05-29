@@ -453,8 +453,8 @@ router.get('/view', function (req, res) {
         delete user._rev;
         delete user.pub_key;
         delete user.priv_key;
-        delete user.new.access;
-        delete user.new.refresh;
+        delete user.access;
+        delete user.refresh;
 
         res.send([user]);
     } catch( e ) {
