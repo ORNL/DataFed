@@ -322,6 +322,15 @@ app.get('/api/grp/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/grp/delete', ( a_req, a_resp ) => {
+    console.log("get /api/grp/delete");
+
+    sendMessage( "GroupDeleteRequest", { gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
+        console.log( "GroupDeleteRequest reply:", reply );
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/dat/create', ( a_req, a_resp ) => {
     var params  = {
         title: a_req.query.title,

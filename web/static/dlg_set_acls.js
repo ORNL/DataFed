@@ -13,9 +13,9 @@ function makeDlgSetACLs(){
                             <div id='dlg_rule_tree' class='no-border'></div>\
                         </div>\
                         <div style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                            <button id='dlg_add_user' class='btn small''>+ User</button>\
-                            <button id='dlg_add_group' class='btn small''>+ Group</button>\
-                            <button id='dlg_rem' class='btn small' >Remove</button>\
+                            <button id='dlg_add_user' class='btn small'>+ User</button>\
+                            <button id='dlg_add_group' class='btn small'>+ Group</button>\
+                            <button id='dlg_rem' class='btn small'>Remove</button>\
                         </div>\
                     </div>\
                     <div style='flex:none'>&nbsp</div>\
@@ -65,7 +65,7 @@ function makeDlgSetACLs(){
 
     this.show = function( item ){
         console.log( "show", item );
-        inst.frame = $('#dlg_app');
+        inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
 
         inst.is_coll = (item.id[0]=="c");
@@ -150,19 +150,19 @@ function makeDlgSetACLs(){
                             if ( !ok )
                                 alert( "ACL Update Failed", data.errMsg );
                             else
-                                dlg_inst.dialog( "close" );
+                                dlg_inst.dialog('destroy').remove();
                         });
                     }
                 },{
                     text: "Cancel",
                     click: function() {
-                        $( this ).dialog( "close" );
+                        $(this).dialog('destroy').remove();
                     }
                 }],
                 open: function(event,ui){
                     $("#dlg_id",inst.frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
                     var src = inst.buildTreeSource( inst.orig_rules );
-            
+
                     $("#dlg_rule_tree",inst.frame).fancytree({
                         extensions: ["themeroller"],
                         themeroller: {

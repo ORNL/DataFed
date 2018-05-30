@@ -12,7 +12,7 @@ function makeDlgPickUser(){
         </div>";
 
     this.show = function( cb ){
-        inst.frame = $('#dlg_pop');
+        inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
 
         var options = {
@@ -35,12 +35,12 @@ function makeDlgPickUser(){
                             users.push( key );
                     }
                     cb( users );
-                    $(this).dialog( "close" );
+                    $(this).dialog('destroy').remove();
                 }
             },{
                 text: "Cancel",
                 click: function() {
-                    $( this ).dialog( "close" );
+                    $(this).dialog('destroy').remove();
                 }
             }],
             open: function(event,ui){

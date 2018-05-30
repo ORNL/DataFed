@@ -7,6 +7,7 @@
         <script type="text/javascript" charset="utf-8" src="/dlg_pick_user.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_set_acls.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_group_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript">
             loadUser();
@@ -68,33 +69,6 @@
             User: <span id=uname></span>
         </div>
     </div>
-    <div id='dlg_new' style='display:none'>
-        <table style='width:100%'>
-        <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>
-        <tr><td>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>
-        <tr><td >Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>
-        <tr id='dlg_md_row'><td>Metadata:</td><td><textarea id='md' rows=3 style='width:100%'></textarea></td></tr>
-        <tr id='dlg_md_row2'><td>Metadata mode:</td><td>
-            <input type="radio" id="md_merge" name="md_mode" value="merge" checked>
-            <label for="md_merge">Merge</label>
-            <input type="radio" id="md_set"  name="md_mode" value="set">
-            <label for="md_mode">Set</label>
-            </td></tr>
-        <tr id='dlg_coll_row'><td>Parent:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>
-        </table>
-    </div>
-    <div id='dlg_xfr' style='display:none'>
-        <table style='width:100%'>
-        <tr><td>Title:</td><td><input disabled type='text' id='title' style='width:100%'></input></td></tr>
-        <tr><td>Alias:</td><td><input disabled type='text' id='alias' style='width:100%'></input></td></tr>
-        <tr><td >Description:</td><td><textarea disabled id='desc' rows=3 style='width:100%'></textarea></td></tr>
-        <tr><td>Metadata:</td><td><textarea disabled id='md' rows=3 style='width:100%'></textarea></td></tr>
-        <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>
-        </table>
-    </div>
-    <div id="dlg_app" style='display:none'></div>
-    <div id="dlg_pop" style='display:none'></div>
-    <div id='dlg_alert' style='display:none'></div>
     </body>
     <script>
         function resizeHandler() {

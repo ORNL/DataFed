@@ -125,8 +125,30 @@ function groupList( a_cb ) {
     _asyncGet( "/api/grp/list", null, a_cb );
 }
 
+function groupDelete( a_gid, a_cb ) {
+    _asyncGet( "/api/grp/delete?gid="+(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
+        if ( ok && a_cb )
+            a_cb();
+    });
+}
+
 function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
-    var frame = $('#dlg_new');
+    var frame = $(document.createElement('div'));
+    frame.html(
+        "<table style='width:100%'>\
+            <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
+            <tr><td>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>\
+            <tr><td >Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+            <tr id='dlg_md_row'><td>Metadata:</td><td><textarea id='md' rows=3 style='width:100%'></textarea></td></tr>\
+            <tr id='dlg_md_row2'><td>Metadata mode:</td><td>\
+                <input type='radio' id='md_merge' name='md_mode' value='merge' checked>\
+                <label for='md_merge'>Merge</label>\
+                <input type='radio' id='md_set'  name='md_mode' value='set'>\
+                <label for='md_mode'>Set</label>\
+                </td></tr>\
+            <tr id='dlg_coll_row'><td>Parent:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>\
+            </table>" );
+
     var dlg_title;
     if ( a_data ) {
         dlg_title = (a_mode?"Edit Collection ":"Edit Data ") + a_data.id;
@@ -202,7 +224,7 @@ function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
                 var inst = $(this);
                 _asyncGet( url, null, function( ok, data ){
                     if ( ok ) {
-                        inst.dialog( "close" );
+                        inst.dialog('destroy').remove();
                         //console.log( "data:",data);
                         if ( a_cb )
                             a_cb(data.data[0]);
@@ -214,9 +236,7 @@ function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
         },{
             text: "Cancel",
             click: function() {
-                $( this ).dialog( "close" );
-                if ( a_cb )
-                    a_cb();
+                $(this).dialog('destroy').remove();
             }
         }],
         open: function(event,ui){
@@ -225,26 +245,26 @@ function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
                 $("#alias",frame).val(a_data.alias);
                 $("#desc",frame).val(a_data.desc);
                 $("#md",frame).val(a_data.metadata);
-                document.getElementById("dlg_coll_row").style.display = 'none';
+                $("#dlg_coll_row",frame).css("display","none");
                 if ( a_mode )
-                    document.getElementById("dlg_md_row2").style.display = 'none';
+                    $("#dlg_md_row2",frame).css("display","none");
                 else
-                    document.getElementById("dlg_md_row2").style.display = '';
+                    $("#dlg_md_row2",frame).css("display","show");
             } else {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
                 $("#coll",frame).val(a_parent?a_parent:"");
                 $("#md",frame).val("");
-                document.getElementById("dlg_coll_row").style.display = '';
-                document.getElementById("dlg_md_row2").style.display = 'none';
+                $("#dlg_coll_row",frame).css("display","show");
+                $("#dlg_md_row2",frame).css("display","none");
             }
 
             if ( a_mode ){
                 $("#md",frame).val("");
-                document.getElementById("dlg_md_row").style.display = 'none';
+                $("#dlg_md_row",frame).css("display","none");
             } else
-                document.getElementById("dlg_md_row").style.display = '';
+                $("#dlg_md_row",frame).css("display","show");
         }
     };
 
@@ -253,7 +273,16 @@ function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
 }
 
 function dlgStartTransfer( a_mode, a_data ) {
-    var frame = $('#dlg_xfr');
+    var frame = $(document.createElement('div'));
+    frame.html(
+        "<table style='width:100%'>\
+        <tr><td>Title:</td><td><input disabled type='text' id='title' style='width:100%'></input></td></tr>\
+        <tr><td>Alias:</td><td><input disabled type='text' id='alias' style='width:100%'></input></td></tr>\
+        <tr><td >Description:</td><td><textarea disabled id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+        <tr><td>Metadata:</td><td><textarea disabled id='md' rows=3 style='width:100%'></textarea></td></tr>\
+        <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>\
+        </table>" );
+
     var dlg_title = (a_mode?"Download Data ":"Upload Data ") + a_data.id;
 
     var options = {
@@ -283,7 +312,7 @@ function dlgStartTransfer( a_mode, a_data ) {
                 var inst = $(this);
                 _asyncGet( url, null, function( ok, data ){
                     if ( ok ) {
-                        inst.dialog( "close" );
+                        inst.dialog('destroy').remove();
                     } else {
                         alert( "Error: " + data );
                     }
@@ -292,7 +321,7 @@ function dlgStartTransfer( a_mode, a_data ) {
         },{
             text: "Cancel",
             click: function() {
-                $( this ).dialog( "close" );
+                $(this).dialog('destroy').remove();
             }
         }],
         open: function(event,ui){
@@ -322,31 +351,18 @@ function deleteSelected() {
 
     msg += " ID " + item.key + "?<div>";
 
-    $( msg ).dialog({
-        title: "Confirm Deletion",
-        modal: true,
-        buttons: [
-            {
-                text: "Yes",
-                click: function() {
-                    var inst = $(this);
-                    url += "/delete?id=" + item.key;
-                    _asyncGet( url, null, function( ok, data ){
-                        if ( ok ) {
-                            inst.dialog( "close" );
-                            deleteNode( item.key );
-                        } else {
-                            alert( "Delete failed: " + data );
-                        }
-                    });
+    confirmChoice( "Confirm Deletion", msg, ["Yes","Cancel"], function( choice ){
+        if ( choice == 0 ){
+            var inst = $(this);
+            url += "/delete?id=" + item.key;
+            _asyncGet( url, null, function( ok, data ){
+                if ( ok ) {
+                    deleteNode( item.key );
+                } else {
+                    alert( "Delete failed: " + data );
                 }
-            },{
-                text: "Cancel",
-                click: function() {
-                    $( this ).dialog( "close" );
-                }
-            }
-        ]
+            });
+        }
     });
 }
 
@@ -713,6 +729,30 @@ function setupDataTree(){
     });
 }
 
+function confirmChoice( title, msg, btns, cb ) {
+    var div = $(document.createElement('div'));
+    div.html( msg );
+    var options = {
+        title: title,
+        modal: true,
+        buttons: []
+    };
+
+    for ( var i in btns ){
+        ( function( idx ) {
+            options.buttons.push({
+                text: btns[idx],
+                click: function() {
+                    cb( idx );
+                    $(this).dialog('destroy').remove();
+                }
+            });
+        })(i);
+    }
+
+    div.dialog( options );
+}
+
 function test() {
     console.log("testing...");
     _asyncGet( "/ui/test", null, function( ok, data ){
@@ -738,6 +778,8 @@ var PERM_ALL            = 0xFF;
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();
 var dlgGroups = new makeDlgGroups();
+var dlgGroupEdit = new makeDlgGroupEdit();
+
 var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 
 console.log( "main.js loaded");
