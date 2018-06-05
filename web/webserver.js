@@ -304,6 +304,43 @@ app.get('/api/usr/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/grp/create', ( a_req, a_resp ) => {
+    console.log("get /api/grp/create");
+
+    var params  = {
+        group: {
+            gid: a_req.query.gid,
+            title: a_req.query.title,
+            desc: a_req.query.desc,
+            member: a_req.query.member?JSON.parse( a_req.query.member ):null
+        }
+    };
+
+    sendMessage( "GroupCreateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "GroupCreateRequest reply:", reply );
+        a_resp.send(reply.group[0]);
+    });
+});
+
+app.get('/api/grp/update', ( a_req, a_resp ) => {
+    console.log("get /api/grp/update");
+
+    var params  = {
+        gid: a_req.query.gid,
+        title: a_req.query.title,
+        desc: a_req.query.desc,
+        addUid: a_req.query.add?JSON.parse( a_req.query.add ):null,
+        remUid: a_req.query.rem?JSON.parse( a_req.query.rem ):null,
+    };
+
+    console.log("params",params);
+
+    sendMessage( "GroupUpdateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "GroupUpdateRequest reply:", reply );
+        a_resp.send(reply.group[0]);
+    });
+});
+
 app.get('/api/grp/view', ( a_req, a_resp ) => {
     console.log("get /api/grp/view");
 

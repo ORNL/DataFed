@@ -125,6 +125,39 @@ function groupList( a_cb ) {
     _asyncGet( "/api/grp/list", null, a_cb );
 }
 
+function groupCreate( a_group, a_cb ) {
+    var url = "/api/grp/create?gid="+a_group.gid;
+    if ( a_group.title )
+        url += "&title="+a_group.title;
+    if ( a_group.desc )
+        url += "&desc="+a_group.desc;
+    if ( a_group.member && a_group.member.length )
+        url += "&member=" + JSON.stringify( a_group.member );
+    console.log( "create:", url );
+
+    _asyncGet( url, null, function( ok, data ){
+        if (  a_cb )
+            a_cb( ok, data );
+    });
+}
+
+function groupUpdate( a_group, a_cb ) {
+    var url = "/api/grp/update?gid="+a_group.gid;
+    if ( a_group.title )
+        url += "&title="+a_group.title;
+    if ( a_group.desc )
+        url += "&desc="+a_group.desc;
+    if ( a_group.add && a_group.add.length )
+        url += "&add=" + JSON.stringify(a_group.add);
+    if ( a_group.rem && a_group.rem.length )
+        url += "&rem=" + JSON.stringify(a_group.rem);
+console.log( "update:", url );
+    _asyncGet( url, null, function( ok, data ){
+        if (  a_cb )
+            a_cb( ok, data );
+    });
+}
+
 function groupDelete( a_gid, a_cb ) {
     _asyncGet( "/api/grp/delete?gid="+(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
         if ( ok && a_cb )

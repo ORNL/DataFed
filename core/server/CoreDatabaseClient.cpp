@@ -944,27 +944,33 @@ DatabaseClient::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::G
         params.push_back({"desc", a_request.desc()});
     if ( a_request.add_uid_size() > 0 )
     {
+        cout << "Adding group members: ";
         string members = "[";
         for ( int i = 0; i < a_request.add_uid_size(); ++i )
         {
             if ( i > 0 )
                 members += ",";
             members += "\"" + a_request.add_uid(i) + "\"";
+            cout << " " << a_request.add_uid(i);
         }
         members += "]";
         params.push_back({"add",  members });
+        cout << endl;
     }
     if ( a_request.rem_uid_size() > 0 )
     {
+        cout << "Removing group members: ";
         string members = "[";
         for ( int i = 0; i < a_request.rem_uid_size(); ++i )
         {
             if ( i > 0 )
                 members += ",";
             members += "\"" + a_request.rem_uid(i) + "\"";
+            cout << " " << a_request.rem_uid(i);
         }
         members += "]";
         params.push_back({"rem",  members });
+        cout << endl;
     }
 
     dbGet( "grp/update", params, result );

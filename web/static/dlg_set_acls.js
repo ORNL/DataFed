@@ -176,8 +176,6 @@ function makeDlgSetACLs(){
                         selectMode: 1,
                         activate: function( event, data ) {
                             inst.updateSelection( data.node.key, data.node.data.rule );
-                            //console.log("click",data.node );
-                            //showSelectedInfo( data.node.key );
                         },
                     });
                     inst.disablePermControls( true );

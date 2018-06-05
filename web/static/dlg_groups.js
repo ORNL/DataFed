@@ -186,7 +186,7 @@ function makeDlgGroups(){
 
     this.remGroup = function(){
         console.log("Remove group");
-        var tree = $("#dlg_group_tree").fancytree("getTree");
+        var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
             confirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Delete","Cancel"], function( choice ) {
@@ -203,9 +203,10 @@ function makeDlgGroups(){
 
     this.editGroup = function(){
         console.log("Edit group");
-        var tree = $("#dlg_group_tree").fancytree("getTree");
+        var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
+            console.log( "node", node );
             groupView( node.key, function( ok, group ){
                 if ( ok ){
                     dlgGroupEdit.show( group, function( group_new ){
