@@ -1028,13 +1028,13 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
         group->set_gid( val["gid"].GetString() );
 
         imem = val.FindMember("uid");
-        if ( imem != val.MemberEnd() )
+        if ( imem != val.MemberEnd() && !imem->value.IsNull() )
             group->set_uid( val["uid"].GetString() );
         imem = val.FindMember("title");
-        if ( imem != val.MemberEnd() )
+        if ( imem != val.MemberEnd() && !imem->value.IsNull() )
             group->set_title( imem->value.GetString() );
         imem = val.FindMember("desc");
-        if ( imem != val.MemberEnd() )
+        if ( imem != val.MemberEnd() && !imem->value.IsNull() )
             group->set_desc( imem->value.GetString() );
         imem = val.FindMember("members");
         if ( imem != val.MemberEnd() )

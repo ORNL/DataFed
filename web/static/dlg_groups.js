@@ -150,7 +150,7 @@ function makeDlgGroups(){
 
                     html += "</td></tr></table>";
                 */
-                var html = "" + group.title + "<p>" + (group.desc?group.desc:"(no description)") + "</p>";
+                var html = (group.title?group.title:"(no title)") + "<p>" + (group.desc?group.desc:"(no description)") + "</p>";
                 $("#grp_info",inst.frame).html(html);
 
                 html = "";

@@ -310,9 +310,9 @@ app.get('/api/grp/create', ( a_req, a_resp ) => {
     var params  = {
         group: {
             gid: a_req.query.gid,
-            title: a_req.query.title,
-            desc: a_req.query.desc,
-            member: a_req.query.member?JSON.parse( a_req.query.member ):null
+            title: a_req.query.title?a_req.query.title:undefined,
+            desc: a_req.query.desc?a_req.query.desc:undefined,
+            member: a_req.query.member?JSON.parse( a_req.query.member ):undefined
         }
     };
 
