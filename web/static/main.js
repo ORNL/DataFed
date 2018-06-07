@@ -588,24 +588,29 @@ function xfrHistoryPoll() {
 }
 
 function updateBtnState( state ){
-    if ( state == undefined ) {
-        console.log("undef");
-        $(".btn.act-folder").button("option", "disabled", true);
-        $(".btn.act-data").button("option", "disabled", true);
-    } else if ( state == false ) {
-        console.log("false");
+    if ( state == "c" ) {
         $(".btn.act-data").not(".act-folder").button("option", "disabled", true);
         $(".btn.act-folder").button("option", "disabled", false);
-    } else {
-        console.log("true");
+    } else if ( state == "d" ) {
         $(".btn.act-folder").button("option", "disabled", false);
         $(".btn.act-data").button("option", "disabled", false);
+    } else if ( state == "r" ) {
+        $(".btn.act-folder").button("option", "disabled", true);
+        $(".btn.act-data").button("option", "disabled", true);
+        $(".btn.act-root").button("option", "disabled", false);
+    } else {
+        $(".btn.act-folder").button("option", "disabled", true);
+        $(".btn.act-data").button("option", "disabled", true);
     }
+
 }
 
 function showSelectedInfo( key ){
-    if ( key[0] == "c" && key != root_key ) {
-        updateBtnState( false );
+    if ( key[0] == "c" /*&& key != root_key*/ ) {
+        if ( key == root_key )
+            updateBtnState( "r" );
+        else
+            updateBtnState( "c" );
         viewColl( key, function( data ){
             var item = data.data[0];
             var html = "<table class='info_table'><col width='30%'><col width='70%'>";
@@ -619,7 +624,7 @@ function showSelectedInfo( key ){
             $("#data_info").html(html);
         }); 
     } else if ( key[0] == "d" ) {
-        updateBtnState( true );
+        updateBtnState( "d" );
         viewData( key, function( data ){
             var item = data.data[0];
             var html = "<table class='info_table'><col width='30%'><col width='70%'>";
@@ -798,15 +803,16 @@ function test() {
     });
 }
 
-var PERM_LIST           = 0x01;   // Find record by browsing
-var PERM_VIEW           = 0x02;   // Read public record fields (not collection items or raw data)
-var PERM_UPDATE         = 0x04;   // Update public record fields
-var PERM_ADMIN          = 0x08;   // Read, write admin fields, delete record
-var PERM_TAG            = 0x10;   // Add/remove tags on record
-var PERM_NOTE           = 0x20;   // Add, remove, edit annotations on record
-var PERM_READ           = 0x40;   // Read raw data or list collection items
-var PERM_WRITE          = 0x80;   // Write raw data or add/remove collection items
-var PERM_ALL            = 0xFF;
+var PERM_LIST           = 0x001;   // Find record by browsing
+var PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
+var PERM_UPDATE         = 0x004;   // Update public record fields
+var PERM_ADMIN          = 0x008;   // Read, write admin fields, delete record
+var PERM_TAG            = 0x010;   // Add/remove tags on record
+var PERM_NOTE           = 0x020;   // Add, remove, edit annotations on record
+var PERM_READ           = 0x040;   // Read raw data or list collection items
+var PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
+var PERM_CREATE         = 0x100;   // Create data and collections
+var PERM_ALL            = 0x1FF;
 
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();

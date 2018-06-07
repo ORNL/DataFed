@@ -22,16 +22,16 @@ public:
 
     void start();
     void stop( bool a_wait );
-    void newXfr( const XfrData & a_xfr, const std::string & a_uid );
+    void newXfr( const XfrData & a_xfr );
 
 private:
     void    xfrThreadFunc();
 
     struct XfrDataInfo
     {
-        XfrDataInfo( const XfrData & a_xfr, const std::string & a_uid ) :
+        XfrDataInfo( const XfrData & a_xfr ) :
             id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),data_id(a_xfr.data_id()),repo_path(a_xfr.repo_path()),
-            local_path(a_xfr.local_path()),uid(a_uid),stage(0),poll(0),backoff(0)
+            local_path(a_xfr.local_path()),user_id(a_xfr.user_id()),repo_id(a_xfr.repo_id()),stage(0),poll(0),backoff(0)
         {
             if ( a_xfr.has_task_id() )
                 task_id = a_xfr.task_id();
@@ -44,7 +44,8 @@ private:
         std::string     repo_path;
         std::string     local_path;
         std::string     task_id;
-        std::string     uid;
+        std::string     user_id;
+        std::string     repo_id;
         std::string     token;
         int             stage; // (0=not started,1=started,2=active)
         int             poll;

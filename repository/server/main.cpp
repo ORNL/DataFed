@@ -5,6 +5,7 @@
 #define DEF_DYNALOG
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
+#include "Util.hpp"
 #include "RepoServer.hpp"
 
 using namespace std;
@@ -26,14 +27,19 @@ int main( int a_argc, char ** a_argv )
 
         uint16_t    port = 9000;
         string      cfg_file;
+        bool        gen_keys = false;
+        string      home = getenv("HOME");
+        string      cred_dir = home + "/.sdms/";
 
         po::options_description opts( "Options" );
 
         opts.add_options()
             ("help,?", "Show help")
             ("version,v", "Show version number")
+            ("cred-dir,c",po::value<string>( &cred_dir ),"Server credentials directory")
             ("port,p",po::value<uint16_t>( &port ),"Service port")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
+            ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
 
         try
@@ -47,13 +53,35 @@ int main( int a_argc, char ** a_argv )
                 cout << "SDMS Repo Server, ver. " << VERSION << "\n";
                 cout << "Usage: sdms-repo [options]\n";
                 cout << opts << endl;
-                return 1;
+                return 0;
             }
 
             if ( opt_map.count( "version" ))
             {
                 cout << VERSION << endl;
-                return 1;
+                return 0;
+            }
+
+            if ( gen_keys )
+            {
+                string pub_key, priv_key;
+                generateKeys( pub_key, priv_key );
+
+                string fname = cred_dir + "sdms-repo-key.pub";
+                ofstream outf( fname.c_str() );
+                if ( !outf.is_open() || !outf.good() )
+                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
+                outf << pub_key;
+                outf.close();
+
+                fname = cred_dir + "sdms-repo-key.priv";
+                outf.open( fname.c_str() );
+                if ( !outf.is_open() || !outf.good() )
+                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
+                outf << priv_key;
+                outf.close();
+
+                return 0;
             }
 
             if ( cfg_file.size() )
@@ -74,7 +102,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Repo::Server server( port );
+        Repo::Server server( cred_dir, port );
 
         server.run( false );
 

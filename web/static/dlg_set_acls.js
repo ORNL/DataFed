@@ -31,6 +31,7 @@ function makeDlgSetACLs(){
                             <tr><td>Annotate:</td><td><select id='dlg_note_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             <tr><td>Read:</td><td><select id='dlg_read_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             <tr><td>Write:</td><td><select id='dlg_write_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select id='dlg_create_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             </table>\
                         </div>\
                         <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
@@ -52,6 +53,7 @@ function makeDlgSetACLs(){
                             <tr><td>Annotate:</td><td><select id='dlg_inh_note_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             <tr><td>Read:</td><td><select id='dlg_inh_read_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             <tr><td>Write:</td><td><select id='dlg_inh_write_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Create:</td><td><select id='dlg_inh_create_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             </table>\
                         </div>\
                         <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
@@ -73,6 +75,7 @@ function makeDlgSetACLs(){
         if ( inst.is_coll ){
             $("#col_div_1",inst.frame).show();
             $("#col_div_2",inst.frame).show();
+            $("#dlg_create_row",inst.frame).show();
             $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh("grant"); });
             $("#dlg_inh_deny_all",inst.frame).click( function(){ inst.setAllPermInh("deny"); });
             $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh("inherit"); });
@@ -85,6 +88,9 @@ function makeDlgSetACLs(){
             $("#dlg_inh_note_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_NOTE )});
             $("#dlg_inh_read_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_READ )});
             $("#dlg_inh_write_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
+
+            $("#dlg_create_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_CREATE )});
+            $("#dlg_inh_create_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_CREATE )});
         }
 
         $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm("grant"); });
@@ -137,7 +143,7 @@ function makeDlgSetACLs(){
             var options = {
                 title: "Sharing for " + (inst.is_coll?"Collection \"":"Data \"") + item.title + "\"",
                 modal: true,
-                width: inst.is_coll?600:400,
+                width: inst.is_coll?600:425,
                 height: 'auto',
                 resizable: true,
                 closeOnEscape: false,
@@ -271,6 +277,7 @@ function makeDlgSetACLs(){
         $("#dlg_note_sel",this.frame).val(value);
         $("#dlg_read_sel",this.frame).val(value);
         $("#dlg_write_sel",this.frame).val(value);
+        $("#dlg_create_sel",this.frame).val(value);
     }
 
     this.setAllPermInh = function( value ){
@@ -295,6 +302,7 @@ function makeDlgSetACLs(){
         $("#dlg_inh_note_sel",this.frame).val(value);
         $("#dlg_inh_read_sel",this.frame).val(value);
         $("#dlg_inh_write_sel",this.frame).val(value);
+        $("#dlg_inh_create_sel",this.frame).val(value);
     }
 
     this.setPermsFromRule = function( rule ){
@@ -312,6 +320,7 @@ function makeDlgSetACLs(){
             inst.setPerm( "#dlg_note_sel", rule, PERM_NOTE );
             inst.setPerm( "#dlg_read_sel", rule, PERM_READ );
             inst.setPerm( "#dlg_write_sel", rule, PERM_WRITE );
+            inst.setPerm( "#dlg_create_sel", rule, PERM_CREATE );
             if ( inst.is_coll ) {
                 inst.setPermInh( "#dlg_inh_view_sel", rule, PERM_VIEW );
                 inst.setPermInh( "#dlg_inh_list_sel", rule, PERM_LIST );
@@ -321,6 +330,7 @@ function makeDlgSetACLs(){
                 inst.setPermInh( "#dlg_inh_note_sel", rule, PERM_NOTE );
                 inst.setPermInh( "#dlg_inh_read_sel", rule, PERM_READ );
                 inst.setPermInh( "#dlg_inh_write_sel", rule, PERM_WRITE );
+                inst.setPermInh( "#dlg_inh_create_sel", rule, PERM_CREATE );
             }
         }
     }
@@ -354,6 +364,7 @@ function makeDlgSetACLs(){
         $("#dlg_note_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_read_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_write_sel",inst.frame).prop("disabled", disabled );
+        $("#dlg_create_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_grant_all",inst.frame).prop("disabled", disabled );
         $("#dlg_deny_all",inst.frame).prop("disabled", disabled );
         $("#dlg_inherit_all",inst.frame).prop("disabled", disabled );
@@ -373,6 +384,7 @@ function makeDlgSetACLs(){
             $("#dlg_inh_note_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_read_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_write_sel",inst.frame).prop("disabled", disabled );
+            $("#dlg_inh_create_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_grant_all",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_deny_all",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_inherit_all",inst.frame).prop("disabled", disabled );

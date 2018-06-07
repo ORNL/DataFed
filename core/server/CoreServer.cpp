@@ -24,7 +24,7 @@ namespace SDMS {
 namespace Core {
 
 
-Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, const std::string & a_repo_address ) :
+Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_port( a_port ),
     m_timeout(a_timeout),
     m_io_secure_thread(0),
@@ -38,42 +38,19 @@ Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, 
     m_db_url(a_db_url),
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
-    m_repo_address( a_repo_address ),
     m_zap_thread(0),
     m_xfr_mgr( *this ),
     m_msg_router_thread(0),
     m_num_workers(8)
 {
-    /*
-    m_context.set_options(
-        asio::ssl::context::default_workarounds |
-        asio::ssl::context::no_sslv2 |
-        asio::ssl::context::no_sslv3 |
-        asio::ssl::context::no_tlsv1 |
-        asio::ssl::context::no_tlsv1_1 |
-        asio::ssl::context::single_dh_use );
-
-    m_cert_file = a_cert_dir + "sdms-core-cert.pem";
-    m_key_file = a_cert_dir + "sdms-core-key.pem";
-    m_key_path = a_cert_dir + "ssh/";
-
-    cout << "cert file: " << m_cert_file << "\n";
-    cout << "key file: " << m_key_file << "\n";
-
-    m_context.use_certificate_chain_file( m_cert_file.c_str() );
-    m_context.use_private_key_file( m_key_file.c_str(), asio::ssl::context::pem );
-    m_context.load_verify_file( m_cert_file.c_str() );
-
-    //m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
-    //m_context.add_verify_path( m_verify_path.c_str() );
-    //m_context.use_tmp_dh_file( "dh512.pem" );
-    */
+    loadKeys( a_cred_dir );
 
     m_sec_ctx.is_server = true;
-    m_sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    m_sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
+    m_sec_ctx.public_key = m_pub_key; //"B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    m_sec_ctx.private_key = m_priv_key; //"k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
 
-    m_auth_clients["B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9["] = "repo1";
+    //m_auth_clients["B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9["] = "repo1";
+    loadRepositoryConfig();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
 }
@@ -87,6 +64,42 @@ Server::~Server()
     delete m_zap_thread;
 }
 
+void
+Server::loadKeys( const std::string & a_cred_dir )
+{
+    string fname = a_cred_dir + "sdms-core-key.pub";
+    ifstream inf( fname.c_str() );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+    inf >> m_pub_key;
+    inf.close();
+
+    fname = a_cred_dir + "sdms-core-key.priv";
+    inf.open( fname.c_str() );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+    inf >> m_priv_key;
+    inf.close();
+
+    cout << "pub key["<<m_pub_key<<"]\n";
+    cout << "priv key["<<m_priv_key<<"]\n";
+}
+
+void
+Server::loadRepositoryConfig()
+{
+    DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
+    db_client.setClient( "sdms" );
+
+    vector<RepoData*> repos;
+
+    db_client.repoList( repos );
+    for ( vector<RepoData*>::iterator r = repos.begin(); r != repos.end(); ++r )
+    {
+        m_repos[(*r)->id()] = *r;
+        m_auth_clients[(*r)->pub_key()] = (*r)->id();
+    }
+}
 
 void
 Server::run( bool a_async )
@@ -360,7 +373,7 @@ Server::backgroundMaintenance()
         MsgBuf::Message *           reply;
         MsgBuf::Frame               frame;
         string                      uid;
-        MsgComm                     repo_comm( m_repo_address, MsgComm::DEALER, false, &m_sec_ctx );
+        MsgComm                     repo_comm( m_repos.begin()->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
         map<string,pair<string,size_t>>::iterator itrans_client;
 
         //vector<spSession>           dead_sessions;
@@ -454,9 +467,9 @@ Server::backgroundMaintenance()
 }
 
 void
-Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
+Server::handleNewXfr( const XfrData & a_xfr )
 {
-    m_xfr_mgr.newXfr( a_xfr, a_uid );
+    m_xfr_mgr.newXfr( a_xfr );
 }
 
 void
@@ -608,6 +621,15 @@ Server::zapHandler()
     DL_INFO( "ZAP handler thread exiting" );
 }
 
+const std::string *
+Server::getRepoAddress( const std::string & a_repo_id )
+{
+    map<string,RepoData*>::iterator r = m_repos.find( a_repo_id );
+    if ( r != m_repos.end() )
+        return &r->second->address(); // This is safe with current protobuf implementation
+    else
+        return 0;
+}
 
 void
 Server::authorizeClient( const std::string & a_cert_uid, const std::string & a_uid )

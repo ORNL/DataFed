@@ -5,6 +5,7 @@
 #define DEF_DYNALOG
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
+#include "Util.hpp"
 #include "CoreServer.hpp"
 
 using namespace std;
@@ -28,28 +29,28 @@ int main( int a_argc, char ** a_argv )
         int         timeout = 5;
         uint32_t    num_threads = 1;
         string      home = getenv("HOME");
-        string      cred_path = home + "/.sdms/";
+        string      cred_dir = home + "/.sdms/";
         //string      db_url = "https://sdms.ornl.gov:8529/_db/sdms/api/";
         string      db_url = "http://sdms.ornl.gov:8529/_db/sdms/api/";
         string      db_user = "root";
         string      db_pass = "sdms!";
         //string      db_pass = "nopass";
-        string      repo_addr = "tcp://localhost:9000";
         string      cfg_file;
+        bool        gen_keys = false;
 
         po::options_description opts( "Options" );
 
         opts.add_options()
             ("help,?", "Show help")
             ("version,v", "Show version number")
-            ("cred-dir,c",po::value<string>( &cred_path ),"User credentials directory")
+            ("cred-dir,c",po::value<string>( &cred_dir ),"Server credentials directory")
             ("port,p",po::value<uint16_t>( &port ),"Service port")
             ("db-url,u",po::value<string>( &db_url ),"DB url")
             ("db-user,U",po::value<string>( &db_user ),"DB user name")
             ("db-pass,P",po::value<string>( &db_pass ),"DB password")
-            ("repo-addr,r",po::value<string>( &repo_addr ),"Data repository zmq address")
             ("threads,t",po::value<uint32_t>( &num_threads ),"Number of I/O threads")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
+            ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
 
         try
@@ -63,13 +64,35 @@ int main( int a_argc, char ** a_argv )
                 cout << "SDMS Core Server, ver. " << VERSION << "\n";
                 cout << "Usage: sdms-core [options]\n";
                 cout << opts << endl;
-                return 1;
+                return 0;
             }
 
             if ( opt_map.count( "version" ))
             {
                 cout << VERSION << endl;
-                return 1;
+                return 0;
+            }
+
+            if ( gen_keys )
+            {
+                string pub_key, priv_key;
+                generateKeys( pub_key, priv_key );
+
+                string fname = cred_dir + "sdms-core-key.pub";
+                ofstream outf( fname.c_str() );
+                if ( !outf.is_open() || !outf.good() )
+                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
+                outf << pub_key;
+                outf.close();
+
+                fname = cred_dir + "sdms-core-key.priv";
+                outf.open( fname.c_str() );
+                if ( !outf.is_open() || !outf.good() )
+                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
+                outf << priv_key;
+                outf.close();
+
+                return 0;
             }
 
             if ( cfg_file.size() )
@@ -90,7 +113,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Core::Server server( port, cred_path, timeout, num_threads, db_url, db_user, db_pass, repo_addr );
+        Core::Server server( port, cred_dir, timeout, num_threads, db_url, db_user, db_pass );
 
         server.run( false );
 

@@ -18,7 +18,7 @@ namespace Repo {
 class Server
 {
 public:
-    Server( uint32_t a_server_port );
+    Server( const std::string & a_cred_dir, uint32_t a_server_port );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -29,6 +29,7 @@ public:
 
 private:
     void            ioRun();
+    void            loadKeys( const std::string & a_cred_dir );
 
     std::string getDataPath( const std::string & a_data_id );
     void        procStatusRequest();
@@ -44,6 +45,9 @@ private:
     bool                            m_io_running;
     std::condition_variable         m_router_cvar;
     MsgBuf                          m_msg_buf;
+    std::string                     m_pub_key;
+    std::string                     m_priv_key;
+    std::string                     m_core_key;
 
     std::map<uint16_t,msg_fun_t>    m_msg_handlers;
 };

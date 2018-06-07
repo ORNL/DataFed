@@ -200,6 +200,39 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
     return string("/data/") + id.substr(2);
 }
 
+void
+DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/list", {}, result );
+
+    if ( !result.IsArray() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+
+    RepoData* repo;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        rapidjson::Value & val = result[i];
+
+        repo = new RepoData();
+        repo->set_id( val["_id"].GetString() );
+        repo->set_total_sz( val["total_sz"].GetUint64() );
+        repo->set_pub_key( val["pub_key"].GetString() );
+        repo->set_address( val["address"].GetString() );
+        repo->set_endpoint( val["endpoint"].GetString() );
+
+        if (( imem = val.FindMember("title")) != val.MemberEnd() )
+            repo->set_title( imem->value.GetString() );
+        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
+            repo->set_desc( imem->value.GetString() );
+
+        a_repos.push_back( repo );
+    }
+}
+
 
 bool
 DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
@@ -806,7 +839,8 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_data_id( val["data_id"].GetString() );
         xfr->set_repo_path( val["repo_path"].GetString() );
         xfr->set_local_path( val["local_path"].GetString() );
-        xfr->set_uid( val["user_id"].GetString() );
+        xfr->set_user_id( val["user_id"].GetString() );
+        xfr->set_repo_id( val["repo_id"].GetString() );
         xfr->set_updated( val["updated"].GetUint64() );
 
         imem = val.FindMember("task_id");

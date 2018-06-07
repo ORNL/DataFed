@@ -22,7 +22,7 @@ namespace Core {
 class Server : public IWorkerMgr
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, const std::string & a_repo_address );
+    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -37,12 +37,14 @@ private:
     const std::string & getDbURL() { return m_db_url; }
     const std::string & getDbUser() { return m_db_user; }
     const std::string & getDbPass() { return m_db_pass; }
-    const std::string & getKeyPath() { return m_key_path; }
+    const std::string * getRepoAddress( const std::string & a_repo_id );
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
-    void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
+    void                handleNewXfr( const XfrData & a_xfr );
     void                dataDelete( const std::string & a_data_id );
 
+    void loadKeys( const std::string & a_cred_dir );
+    void loadRepositoryConfig();
     void msgRouter();
     void ioSecure();
     void ioInsecure();
@@ -62,15 +64,14 @@ private:
     std::mutex                      m_data_mutex;
     bool                            m_io_running;
     std::condition_variable         m_router_cvar;
-    std::string                     m_cert_file;
-    std::string                     m_key_file;
-    std::string                     m_key_path;
-    std::mutex                      m_key_mutex;
+    std::string                     m_pub_key;
+    std::string                     m_priv_key;
     std::string                     m_db_url;
     std::string                     m_db_user;
     std::string                     m_db_pass;
     MsgComm::SecurityContext        m_sec_ctx;
-    std::string                     m_repo_address;
+    std::map<std::string,RepoData*> m_repos;
+    //std::string                     m_repo_address;
     std::thread *                   m_zap_thread;
     std::map<std::string,std::string>   m_auth_clients;
     std::map<std::string,std::pair<std::string,size_t>>   m_trans_auth_clients;

@@ -320,7 +320,7 @@ Worker::procDataGetRequest( const std::string & a_uid )
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-    m_mgr.handleNewXfr( reply.xfr(0), a_uid );
+    m_mgr.handleNewXfr( reply.xfr(0) );
 
     PROC_MSG_END
 }
@@ -336,7 +336,7 @@ Worker::procDataPutRequest( const std::string & a_uid )
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-    m_mgr.handleNewXfr( reply.xfr(0), a_uid );
+    m_mgr.handleNewXfr( reply.xfr(0) );
 
     PROC_MSG_END
 }

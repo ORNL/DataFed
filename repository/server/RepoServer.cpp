@@ -30,10 +30,12 @@ namespace Repo {
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
 
-Server::Server( uint32_t a_port ) :
+Server::Server( const std::string & a_cred_dir, uint32_t a_port ) :
     m_port( a_port ),
     m_io_running( false )
 {
+    loadKeys( a_cred_dir );
+
     uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
     SET_MSG_HANDLER( proto_id, StatusRequest, &Server::procStatusRequest );
@@ -128,6 +130,34 @@ Server::wait()
     }
 }
 
+void
+Server::loadKeys( const std::string & a_cred_dir )
+{
+    string fname = a_cred_dir + "sdms-repo-key.pub";
+    ifstream inf( fname.c_str() );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+    inf >> m_pub_key;
+    inf.close();
+
+    fname = a_cred_dir + "sdms-repo-key.priv";
+    inf.open( fname.c_str() );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+    inf >> m_priv_key;
+    inf.close();
+
+    fname = a_cred_dir + "sdms-core-key.pub";
+    inf.open( fname.c_str() );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+    inf >> m_core_key;
+    inf.close();
+
+    cout << "pub key["<<m_pub_key<<"]\n";
+    cout << "priv key["<<m_priv_key<<"]\n";
+    cout << "core key["<<m_core_key<<"]\n";
+}
 
 void
 Server::ioRun()
@@ -136,9 +166,9 @@ Server::ioRun()
 
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = false;
-    sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
-    sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    sec_ctx.public_key = m_pub_key; //"B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    sec_ctx.private_key = m_priv_key; //"k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
+    sec_ctx.server_key = m_core_key; //"B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
 
     MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::ROUTER, true, &sec_ctx );
 
