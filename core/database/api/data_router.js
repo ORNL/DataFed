@@ -26,8 +26,8 @@ router.get('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
-                write: ["d","a","owner","alias","item"]
+                read: ["u","uuid","accn","repo","alloc"],
+                write: ["d","a","loc","owner","alias","item"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -46,6 +46,10 @@ router.get('/create', function (req, res) {
                 var data = g_db.d.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: data._id, _to: client._id });
 
+                // Storage location is from user/project allocations
+                var repo_alloc = g_lib.assignRepo( client._id );
+                g_db.loc.save({ _from: data._id, _to: repo_alloc.repo._id, path: repo_alloc.alloc.path });
+
                 if ( req.queryParams.alias ) {
                     g_lib.validateAlias( req.queryParams.alias );
                     var alias_key = client._key + ":" + req.queryParams.alias;
@@ -56,13 +60,16 @@ router.get('/create', function (req, res) {
                     data.new.alias = req.queryParams.alias;
                 }
 
+                var coll_id;
                 if ( req.queryParams.coll ) {
-                    var coll_id = g_lib.resolveID( req.queryParams.coll, client );
+                    coll_id = g_lib.resolveID( req.queryParams.coll, client );
                     if ( coll_id[0] != "c" )
                         throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
-
-                    g_db.item.save({ _from: coll_id, _to: data.new._id });
+                } else {
+                    coll_id = "c/"  + client._key + "_root";
                 }
+
+                g_db.item.save({ _from: coll_id, _to: data.new._id });
 
                 delete data.new._rev;
                 delete data.new._key;
@@ -79,10 +86,10 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
+.queryParam('owner', joi.string().optional(), "Optional owner id (user or project)")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
-.queryParam('proj', joi.string().optional(), "Optional project owner id")
 .queryParam('coll', joi.string().optional(), "Optional collection id or alias")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .summary('Creates a new data record')
@@ -181,7 +188,6 @@ router.get('/update', function (req, res) {
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
-.queryParam('proj', joi.string().optional(), "Project owner id")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .queryParam('mdset', joi.boolean().optional().default(false), "Set metadata instead of merging")
 .queryParam('data_size', joi.number().optional(), "Data size (bytes)")

@@ -17,6 +17,7 @@ graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
 graph._addVertexCollection("l");    // Label
 graph._addVertexCollection("tr");   // Transfers
+graph._addVertexCollection("repo"); // Repository servers
 
 
 var owner = graph_module._relation("owner", ["d","c","g","n","a"], ["u"]);
@@ -45,6 +46,12 @@ graph._extendEdgeDefinitions(adm);
 
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
+
+var alloc = graph_module._relation("alloc", ["u"], ["repo"]);
+graph._extendEdgeDefinitions(alloc);
+
+var loc = graph_module._relation("loc", ["d"], ["repo"]);
+graph._extendEdgeDefinitions(loc);
 
 //db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });

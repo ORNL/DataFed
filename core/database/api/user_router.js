@@ -39,6 +39,9 @@ router.get('/authn', function (req, res) {
 
 router.get('/create', function (req, res) {
     try {
+        if ( !req.queryParams.uuids && !req.queryParams.is_project )
+            throw g_lib.ERR_MISSING_REQ_OPTION;
+
         var result;
 
         g_db._executeTransaction({
@@ -58,14 +61,16 @@ router.get('/create', function (req, res) {
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
                 var i;
-                var uuid;
-                for ( i in req.queryParams.uuids ) {
-                    uuid = "uuid/" + req.queryParams.uuids[i];
-                    if ( g_db._exists({ _id: uuid }))
-                        throw g_lib.ERR_INVALID_IDENT;
+                if ( !req.queryParams.is_project ){
+                    var uuid;
+                    for ( i in req.queryParams.uuids ) {
+                        uuid = "uuid/" + req.queryParams.uuids[i];
+                        if ( g_db._exists({ _id: uuid }))
+                            throw g_lib.ERR_INVALID_IDENT;
 
-                    g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
-                    g_db.ident.save({ _from: user._id, _to: uuid });
+                        g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
+                        g_db.ident.save({ _from: user._id, _to: uuid });
+                    }
                 }
 
                 if ( req.queryParams.admins ) {
@@ -97,7 +102,7 @@ router.get('/create', function (req, res) {
 .queryParam('password', joi.string().required(), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().required(), "Email")
-.queryParam('uuids', joi.array().items(joi.string()).required(), "Globus identities (UUIDs)")
+.queryParam('uuids', joi.array().items(joi.string()).optional(), "Globus identities (UUIDs) required for non-project users")
 .queryParam('is_admin', joi.boolean().optional(), "New account is a system administrator")
 .queryParam('is_project', joi.boolean().optional(), "New account is a project")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")

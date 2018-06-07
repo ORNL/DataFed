@@ -24,7 +24,7 @@ router.get('/init', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","g","d","c","a","uuid","accn","alias","acl","admin"],
+                read: ["u","g","d","c","a","repo","loc","uuid","accn","alias","acl","admin"],
                 write: ["tr"]
             },
             action: function() {
@@ -32,6 +32,8 @@ router.get('/init', function (req, res) {
 
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
+                //var data_loc = g_db.loc.firstExample({_from: data_id });
+
 
                 if ( !g_lib.hasAdminPermObject( client, data._id )) {
                     var perms;
@@ -43,6 +45,12 @@ router.get('/init', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
+                // Get data storage location
+                var repo_loc = g_db._query("for v,e in 1..1 outbound @data loc return { repo: v, loc: e }", { data: data_id } ).toArray();
+                if ( repo_loc.length != 1 )
+                    throw g_lib.ERR_INTERNAL_FAULT;
+
+                repo_loc = repo_loc[0];
                 var xfr;
 
                 if ( req.queryParams.mode == g_lib.XM_PUT ) {
@@ -55,10 +63,10 @@ router.get('/init', function (req, res) {
                         mode: g_lib.XM_PUT,
                         status: g_lib.XS_INIT,
                         data_id: data_id,
-                        repo_path: "fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 ),
+                        repo_path: repo_loc.repo.endpoint + repo_loc.loc.path + data_id.substr( 2 ),
                         local_path: req.queryParams.path,
                         user_id: client._id,
-                        globus_id: client.globus_id,
+                        repo_id: repo_loc.repo._id,
                         updated: ((Date.now()/1000)|0)
                         }, { returnNew: true } );
 
@@ -83,15 +91,16 @@ router.get('/init', function (req, res) {
                     if ( xfr.length == 0 )
                     {
                         // TODO Add configuration info for facility end-points and storage locations
+                        //"fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 )
 
                         xfr = g_db.tr.save({
                             mode: g_lib.XM_GET,
                             status: g_lib.XS_INIT,
                             data_id: data_id,
-                            repo_path: "fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 ),
+                            repo_path: repo_loc.repo.endpoint + repo_loc.loc.path + data_id.substr( 2 ),
                             local_path: dest_path,
                             user_id: client._id,
-                            globus_id: client.globus_id,
+                            repo_id: repo_loc.repo._id,
                             updated: ((Date.now()/1000)|0)
                             }, { returnNew: true } );
 

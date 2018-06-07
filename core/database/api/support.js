@@ -26,7 +26,8 @@ module.exports = ( function() {
     obj.PERM_NOTE           = 0x020;   // Add, remove, edit annotations on record
     obj.PERM_READ           = 0x040;   // Read raw data or list collection items
     obj.PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
-    obj.PERM_ALL            = 0x0FF;
+    obj.PERM_CREATE         = 0x100;   // Create new records and collections
+    obj.PERM_ALL            = 0x1FF;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
@@ -82,6 +83,8 @@ module.exports = ( function() {
     obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
     obj.ERR_XFR_NO_RAW_DATA       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Record has no raw data to transfer" ]);
     obj.ERR_XFR_CONFLICT          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data transfer conflict" ]);
+    obj.ERR_INTERNAL_FAULT        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Internal server fault" ]);
+    obj.ERR_NO_ALLOCATION         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "No storage allocation available" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
@@ -171,6 +174,15 @@ module.exports = ( function() {
             throw obj.ERR_USER_NOT_FOUND;
 
         return result[0];
+    };
+
+    obj.assignRepo = function( a_user_id ){
+        var repos = obj.db._query( "for v, e in 1..1 outbound @user alloc return { repo: v, alloc: e }", { user: a_user_id }).toArray();
+        if ( !repos.length )
+            throw obj.ERR_NO_ALLOCATION;
+
+        // TODO Need an alg for selecting best allocation when multiple present
+        return repos[0];
     };
 
     obj.getObject = function( a_obj_id, a_client ) {
