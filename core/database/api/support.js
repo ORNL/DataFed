@@ -28,6 +28,7 @@ module.exports = ( function() {
     obj.PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
     obj.PERM_CREATE         = 0x100;   // Create new records and collections
     obj.PERM_ALL            = 0x1FF;
+    obj.PERM_MEMBER         = 0x1F7;   // Baseline project member permissions (all but admin)
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
@@ -85,6 +86,10 @@ module.exports = ( function() {
     obj.ERR_XFR_CONFLICT          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data transfer conflict" ]);
     obj.ERR_INTERNAL_FAULT        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Internal server fault" ]);
     obj.ERR_NO_ALLOCATION         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "No storage allocation available" ]);
+    obj.ERR_PROJ_REQUIRES_ADMIN   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project requires at least one admin" ]);
+    obj.ERR_PASSWORD_REQUIRED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Password required" ]);
+    obj.ERR_EMAIL_REQUIRED        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "E-mail required" ]);
+    obj.ERR_MEM_GRP_PROTECTED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Operation not allow on project 'members' group" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
@@ -204,14 +209,18 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermObject = function( a_client, a_object_id ) {
+        console.log("a1");
         if ( a_client.is_admin )
             return true;
+        console.log("a2");
         var owner_id = obj.db.owner.firstExample({ _from: a_object_id })._to;
         if ( owner_id == a_client._id )
             return true;
+        console.log("a3", owner_id, a_client );
 
         if ( obj.db.admin.firstExample({ _from: owner_id, _to: a_client._id }))
             return true;
+        console.log("a4");
 
         return false;
     };

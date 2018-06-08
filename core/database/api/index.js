@@ -13,6 +13,7 @@ const   createRouter = require('@arangodb/foxx/router');
 const   router = createRouter();
 
 router.use( "/usr", require('./user_router') );
+router.use( "/prj", require('./proj_router') );
 router.use( "/grp", require('./group_router') );
 router.use( "/dat", require('./data_router') );
 router.use( "/col", require('./coll_router') );

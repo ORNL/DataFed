@@ -85,11 +85,14 @@ router.get('/update', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var object = g_lib.getObject( req.queryParams.id, client );
-                var owner_id = g_db.owner.firstExample({ _from: object._id })._to.substr(2);
+                var owner_id = g_db.owner.firstExample({ _from: object._id })._to;
+                var owner = g_db.u.document( owner_id );
+                owner_id = owner_id.substr(2);
 
                 //console.log("obj:",object);
 
                 var is_coll;
+
                 if ( object._id[0] == "c" )
                     is_coll = true;
                 else
@@ -103,75 +106,69 @@ router.get('/update', function (req, res) {
                 // Delete existing ACL rules for this object
                 g_db.acl.removeByExample({ _from: object._id });
 
-                if ( req.queryParams.rules ) {
-                    var rule,erule;
-                    var obj;
-                    var update = false;
+                var rule,erule;
+                var obj;
 
-                    for ( var i in req.queryParams.rules ) {
-                        rule = req.queryParams.rules[i];
+                for ( var i in req.queryParams.rules ) {
+                    rule = req.queryParams.rules[i];
 
-                        if ( !is_coll && ( rule.inhgrant || rule.inhdeny ))
-                            throw g_lib.ERR_INVALID_PERM;
+                    if ( !is_coll && ( rule.inhgrant || rule.inhdeny ))
+                        throw g_lib.ERR_INVALID_PERM;
 
-                        if ( rule.id == "default" || rule.id == "def" ) {
-                            object.grant = rule.grant;
-                            object.deny = rule.deny;
+                    if ( rule.id == "default" || rule.id == "def" ) {
+                        object.grant = rule.grant;
+                        object.deny = rule.deny;
 
-                            if ( object.grant == 0 )
-                                object.grant = null;
+                        if ( object.grant == 0 )
+                            object.grant = null;
 
-                            if ( object.deny == 0 )
-                                object.deny = null;
+                        if ( object.deny == 0 )
+                            object.deny = null;
 
-                            object.inhgrant = rule.inhgrant;
-                            object.inhdeny = rule.inhdeny;
+                        object.inhgrant = rule.inhgrant;
+                        object.inhdeny = rule.inhdeny;
 
-                            if ( object.inhgrant == 0 )
-                                object.inhgrant = null;
+                        if ( object.inhgrant == 0 )
+                            object.inhgrant = null;
 
-                            if ( object.inhdeny == 0 )
-                                object.inhdeny = null;
+                        if ( object.inhdeny == 0 )
+                            object.inhdeny = null;
 
-                            update = true;
-                        } else {
-                            if ( rule.id.startsWith("g/")){
-                                var group = g_db.g.firstExample({ uid: owner_id, gid: rule.id.substr(2) });
-
-                                if ( !group )
-                                    throw g_lib.ERR_GROUP_NOT_FOUND;
-
-                                rule.id = group._id;
-                              
-                            } else {
-                                if ( !rule.id.startsWith("u/"))
-                                    rule.id = "u/" + rule.id;
-
-                                if ( !g_db._exists( rule.id ))
-                                    throw g_lib.ERR_USER_NOT_FOUND;
-                            }
-
-                            obj = { _from : object._id, _to:rule.id };
-                            if ( rule.grant )
-                                obj.grant = rule.grant;
-                            if ( rule.deny )
-                                obj.deny = rule.deny;
-                            if ( rule.inhgrant )
-                                obj.inhgrant = rule.inhgrant;
-                            if ( rule.inhdeny )
-                                obj.inhdeny = rule.inhdeny;
-
-                            g_db.acl.save( obj );
-                        }
-                    }
-
-                    if ( update )
                         g_db._update( object._id, object, { keepNull: false } );
-                    }
+                    } else {
+                        if ( rule.id.startsWith("g/")){
+                            var group = g_db.g.firstExample({ uid: owner_id, gid: rule.id.substr(2) });
 
-                    result = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, deny: e.deny, inhgrant: e.inhgrant, inhdeny: e.inhdeny }", { object: object._id }).toArray();
-                    postProcACLRules( result, object );
+                            if ( !group )
+                                throw g_lib.ERR_GROUP_NOT_FOUND;
+
+                            rule.id = group._id;
+
+                        } else {
+                            if ( !rule.id.startsWith("u/"))
+                                rule.id = "u/" + rule.id;
+
+                            if ( !g_db._exists( rule.id ))
+                                throw g_lib.ERR_USER_NOT_FOUND;
+                        }
+
+                        obj = { _from : object._id, _to:rule.id };
+                        if ( rule.grant )
+                            obj.grant = rule.grant;
+                        if ( rule.deny )
+                            obj.deny = rule.deny;
+                        if ( rule.inhgrant )
+                            obj.inhgrant = rule.inhgrant;
+                        if ( rule.inhdeny )
+                            obj.inhdeny = rule.inhdeny;
+
+                        g_db.acl.save( obj );
+                    }
                 }
+
+                result = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, deny: e.deny, inhgrant: e.inhgrant, inhdeny: e.inhdeny }", { object: object._id }).toArray();
+                postProcACLRules( result, object );
+            }
         });
 
         res.send( result );
@@ -181,7 +178,7 @@ router.get('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
-.queryParam('rules', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
+.queryParam('rules', joi.array().items(g_lib.acl_schema).required(), "User and/or group ACL rules to create")
 .summary('Update ACL(s) on a data record or collection')
 .description('Update access control list(s) (ACLs) on a data record or collection. Default access permissions are set using ACLs with id of "default". Inherited permissions can only be set on collections.');
 

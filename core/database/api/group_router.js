@@ -97,7 +97,7 @@ router.get('/update', function (req, res) {
                     group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
-                    g_lib.ensureAdminPermObject( req.queryParams.client, group._id );
+                    g_lib.ensureAdminPermObject( client, group._id );
                 } else {
                     group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
                     if ( !group )
@@ -107,12 +107,12 @@ router.get('/update', function (req, res) {
                 var obj = {};
                 var upd = false;
 
-                if ( req.queryParams.title ) {
+                if ( req.queryParams.title && group.gid != "members" ) {
                     obj.title = req.queryParams.title;
                     upd = true;
                 }
 
-                if ( req.queryParams.desc ) {
+                if ( req.queryParams.desc && group.gid != "members" ) {
                     obj.desc = req.queryParams.desc;
                     upd = true;
                 }
@@ -183,21 +183,31 @@ router.get('/delete', function (req, res) {
                 write: ["g","owner","member","acl"]
             },
             action: function() {
+                console.log("1");
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
+                console.log("2");
 
                 if ( req.queryParams.subject ) {
-                    group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
+                    console.log("3");
+                    group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
-                    g_lib.ensureAdminPermObject( req.queryParams.client, group._id );
+                        console.log("4",group);
+                    g_lib.ensureAdminPermObject( client, group._id );
+                    // Make sure special members project is protected
+                    console.log("5");
+                    if ( group.gid == "members" )
+                        throw g_lib.ERR_MEM_GRP_PROTECTED;
                 } else {
-                    group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
+                    console.log("6");
+                    group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
                 }
 
-                g_graph.g.remove( group._id );
+                console.log("7");
+                //g_graph.g.remove( group._id );
             }
         });
     } catch( e ) {
@@ -206,7 +216,7 @@ router.get('/delete', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('gid', joi.string().required(), "Group ID")
 .summary('Deletes an existing group')
 .description('Deletes an existing group owned by client or subject');
 
@@ -246,7 +256,7 @@ router.get('/view', function (req, res) {
             if ( !group )
                 throw g_lib.ERR_GROUP_NOT_FOUND;
 
-            g_lib.ensureAdminPermUser( client, group._id );
+            g_lib.ensureAdminPermObject( client, group._id );
         } else {
             group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
             if ( !group )
