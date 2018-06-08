@@ -176,6 +176,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
             if ( response.statusCode >= 200 && response.statusCode < 300 ) {
                 console.log( 'got user info:', body );
                 userinfo = JSON.parse( body );
+                userinfo.uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
                 sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
                     console.log( "UserFindByUUIDsRequest reply:", reply );
@@ -190,15 +191,11 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                         //a_response.redirect( "/ui/register" );
                         a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
                     } else {
-                        // Registered
-                        var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
-                        userinfo.uid = uid;
-
-                        // Save access token
-                        saveToken( uid, xfr_token.access_token, xfr_token.refresh_token );
+                        // Registered, save access token
+                        saveToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token );
 
                         // TODO Account may be disable from SDMS (active = false)
-                        a_response.cookie( 'sdms', uid, { httpOnly: true });
+                        a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true });
                         a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
                         a_response.redirect( "/ui/main" );
                     }
@@ -218,9 +215,9 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
     console.log( 'get /ui/do_register' );
     var userinfo = JSON.parse( a_req.cookies[ 'sdms-user' ] );
     console.log( 'userinfo', userinfo );
-    var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+    //var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-    sendMessageDirect( "UserCreateRequest", "sdms", { uid: uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, function( reply ) {
+    sendMessageDirect( "UserCreateRequest", "sdms", { uid: userinfo.uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, function( reply ) {
         if ( !reply ) {
             console.log("empty reply");
             a_resp.status(500).send( "Empty reply" );
@@ -234,9 +231,9 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             }
         } else {
             // Save access token
-            saveToken( uid, a_req.query.acc_tok, a_req.query.ref_tok );
+            saveToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok );
 
-            a_resp.cookie( 'sdms', uid, { httpOnly: true });
+            a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true });
             //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
             a_resp.redirect( "/ui/main" );
         }
