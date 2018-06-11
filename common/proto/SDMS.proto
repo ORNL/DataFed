@@ -74,6 +74,14 @@ message UserData
     repeated string             ident       = 8;
 }
 
+message ProjectData
+{
+    required string             id          = 1;
+    required string             name        = 2;
+    repeated string             admin       = 3;
+    repeated string             member      = 4;
+}
+
 message RecordData
 {
     required string             id          = 1;

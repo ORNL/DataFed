@@ -444,6 +444,68 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
 }
 
 void
+DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
+{
+    rapidjson::Document result;
+    dbGet( "prj/view", {{"id",a_request.id()}}, result );
+
+    setProjectData( a_reply, result );
+}
+
+void
+DatabaseClient::projListByAdmin( const Auth::ProjectListByAdminRequest & a_request, Auth::ProjectDataReply & a_reply )
+{
+    (void)a_request;
+    rapidjson::Document result;
+    dbGet( "prj/list/by_admin", {}, result );
+
+    setProjectData( a_reply, result );
+}
+
+void
+DatabaseClient::projListByMember( const Auth::ProjectListByMemberRequest & a_request, Auth::ProjectDataReply & a_reply )
+{
+    (void)a_request;
+    rapidjson::Document result;
+    dbGet( "prj/list/by_member", {}, result );
+
+    setProjectData( a_reply, result );
+}
+
+void
+DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    ProjectData* proj;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        proj = a_reply.add_proj();
+        proj->set_id( val["uid"].GetString() );
+        proj->set_name( val["name"].GetString() );
+
+        if (( imem = val.FindMember("admins")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                proj->add_admin( imem->value[j].GetString() );
+        }
+
+        if (( imem = val.FindMember("members")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                proj->add_member( imem->value[j].GetString() );
+        }
+    }
+}
+
+void
 DatabaseClient::recordList( const RecordListRequest & a_request, RecordDataReply & a_reply )
 {
     (void) a_request;

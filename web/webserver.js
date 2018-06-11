@@ -301,6 +301,42 @@ app.get('/api/usr/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/prj/view', ( a_req, a_resp ) => {
+    console.log("get /api/prj/view");
+
+    sendMessage( "ProjectViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.proj );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
+app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
+    console.log("get /api/prj/list/by_admin");
+
+    sendMessage( "ProjectListByAdminRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.proj );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
+app.get('/api/prj/list/by_member', ( a_req, a_resp ) => {
+    console.log("get /api/prj/list/by_member");
+
+    sendMessage( "ProjectListByMemberRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.proj );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
 app.get('/api/grp/create', ( a_req, a_resp ) => {
     console.log("get /api/grp/create");
 

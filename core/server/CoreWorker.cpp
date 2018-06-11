@@ -87,6 +87,9 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListRequest, UserDataReply, userList );
         SET_MSG_HANDLER_DB( proto_id, UserFindByUUIDsRequest, UserDataReply, userFindByUUIDs );
+        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
+        SET_MSG_HANDLER_DB( proto_id, ProjectListByAdminRequest, ProjectDataReply, projListByAdmin );
+        SET_MSG_HANDLER_DB( proto_id, ProjectListByMemberRequest, ProjectDataReply, projListByMember );
         SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordFindRequest, RecordDataReply, recordFind );

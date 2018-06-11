@@ -42,6 +42,10 @@ public:
     void userList( const Auth::UserListRequest & a_request, Auth::UserDataReply & a_reply );
     void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
 
+    void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projListByAdmin( const Auth::ProjectListByAdminRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projListByMember( const Auth::ProjectListByMemberRequest & a_request, Auth::ProjectDataReply & a_reply );
+
     void recordList( const Auth::RecordListRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordFind( const Auth::RecordFindRequest & a_request, Auth::RecordDataReply & a_reply );
@@ -77,6 +81,7 @@ private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
+    void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );

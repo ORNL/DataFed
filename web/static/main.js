@@ -648,8 +648,13 @@ function showSelectedInfo( key ){
 }
 
 function setupDataTree(){
-    var tree_source = [{title:"root",folder:true,lazy:true,key:root_key},
-        {title:"Loose data",folder:true,lazy:true,key:"loose"}];
+    var tree_source = [
+        {title:"My Data",folder:true,lazy:true,key:root_key},
+        {title:"Projects (admin)",folder:true,lazy:true,key:"prjbyadm"},
+        {title:"Projects (member)",folder:true,lazy:true,key:"prjbymem"},
+        {title:"Shares",folder:true,lazy:true },
+        {title:"Views",folder:true,lazy:true }
+    ];
 
     $("#data_tree").fancytree({
         extensions: ["dnd","themeroller"],
@@ -709,7 +714,17 @@ function setupDataTree(){
         source: tree_source,
         selectMode: 1,
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "loose" ) {
+            if ( data.node.key == "prjbyadm" ){
+                data.result = {
+                    url: "/api/prj/list/by_admin",
+                    cache: false
+                };
+            } else if ( data.node.key == "prjbymem" ){
+                data.result = {
+                    url: "/api/prj/list/by_member",
+                    cache: false
+                };
+            } else if ( data.node.key == "loose" ) {
                 data.result = {
                     url: "/api/dat/list",
                     cache: false
@@ -723,7 +738,19 @@ function setupDataTree(){
         },
         postProcess: function( event, data ) {
             console.log( "pos proc:", data );
-            if ( data.node.parent ) {
+            if ( data.node.key == "prjbyadm" || data.node.key == "prjbymem" ){
+                //console.log("proj list resp",data.response);
+                data.result = [];
+                if ( data.response.length ){
+                    var item;
+                    for ( var i in data.response ) {
+                        item = data.response[i];
+                        data.result.push({ title: item.name + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", lazy: true });
+                    }
+                }else{
+                    data.result.push({ title: "(none)", icon: false  });
+                }
+            } else if ( data.node.parent ) {
                 data.result = [];
                 var item;
                 var folder;

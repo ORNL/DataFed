@@ -295,6 +295,28 @@ message ACLDataReply
     repeated ACLRule            rule        = 1;
 }
 
+// ============================ Project Messages
+
+message ProjectListByAdminRequest
+{
+    //required string             uid         = 1;
+}
+
+message ProjectListByMemberRequest
+{
+    //required string             uid         = 1;
+}
+
+message ProjectViewRequest
+{
+    required string             id          = 1;
+}
+
+message ProjectDataReply
+{
+    repeated ProjectData        proj        = 1;
+}
+
 // ============================ Repo Messages
 
 message RepoDataDeleteRequest
