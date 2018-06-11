@@ -39,6 +39,10 @@ module.exports = ( function() {
     obj.XM_GET              = 0;
     obj.XM_PUT              = 1;
 
+    obj.PROJ_NO_ROLE        = 0;
+    obj.PROJ_MEMBER         = 1;
+    obj.PROJ_ADMIN          = 2;
+
     /*
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
@@ -66,6 +70,7 @@ module.exports = ( function() {
     obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
     obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid parameter(s)" ]);
+    obj.ERR_INVALID_COLLECTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid collection" ]);
     obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
     obj.ERR_CLIENT_NOT_FOUND      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Client not found" ]);
     obj.ERR_UID_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "UID not found" ]);
@@ -86,6 +91,7 @@ module.exports = ( function() {
     obj.ERR_XFR_CONFLICT          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data transfer conflict" ]);
     obj.ERR_INTERNAL_FAULT        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Internal server fault" ]);
     obj.ERR_NO_ALLOCATION         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "No storage allocation available" ]);
+    obj.ERR_ALLOCATION_EXCEEDED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Storage allocation exceeded" ]);
     obj.ERR_PROJ_REQUIRES_ADMIN   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project requires at least one admin" ]);
     obj.ERR_PASSWORD_REQUIRED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Password required" ]);
     obj.ERR_EMAIL_REQUIRED        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "E-mail required" ]);
@@ -181,6 +187,18 @@ module.exports = ( function() {
         return result[0];
     };
 
+    obj.getProjectRole = function( a_client, a_proj ){
+        if ( obj.db.admin.firstExample({ _from: a_proj._id, _to: a_client._id }))
+            return obj.PROJ_ADMIN;
+
+        var res = obj.db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' and v._id == @proj return { id: v._id }", { user: a_client._id, proj: a_proj._id }).toArray();
+
+        if ( res.length == 1 )
+            return obj.PROJ_MEMBER;
+        else
+            return obj.PROJ_NO_ROLE;
+    };
+
     obj.assignRepo = function( a_user_id ){
         var repos = obj.db._query( "for v, e in 1..1 outbound @user alloc return { repo: v, alloc: e }", { user: a_user_id }).toArray();
         if ( !repos.length )
@@ -188,6 +206,15 @@ module.exports = ( function() {
 
         // TODO Need an alg for selecting best allocation when multiple present
         return repos[0];
+    };
+
+    obj.verifyRepo = function( a_user_id, a_repo_id ){
+        var alloc = obj.db.alloc.firstExample({ _from: a_user_id, _to: "repo/" + a_repo_id });
+        if ( !alloc )
+            throw obj.ERR_NO_ALLOCATION;
+        if ( alloc.alloc >= alloc.usage )
+            throw obj.ERR_ALLOCATION_EXCEEDED;
+        return alloc;
     };
 
     obj.getObject = function( a_obj_id, a_client ) {
@@ -225,6 +252,14 @@ module.exports = ( function() {
         return false;
     };
 
+    obj.hasAdminPermRepo = function( a_client, a_repo_id ) {
+        if ( !a_client.is_admin && !obj.db.admin.firstExample({ _from: a_repo_id, _to: a_client._id }))  { 
+            return false;
+        } else {
+            return true;
+        }
+    };
+
     obj.ensureAdminPermUser = function( a_client, a_user_id ) {
         if ( !obj.hasAdminPermUser( a_client, a_user_id ))
             throw obj.ERR_PERM_DENIED;
@@ -232,6 +267,11 @@ module.exports = ( function() {
 
     obj.ensureAdminPermObject = function( a_client, a_object_id ) {
         if ( !obj.hasAdminPermObject( a_client, a_object_id ))
+            throw obj.ERR_PERM_DENIED;
+    };
+
+    obj.ensureAdminPermRepo = function( a_client, a_repo_id ) {
+        if ( !obj.hasAdminPermRepo( a_client, a_repo_id ))
             throw obj.ERR_PERM_DENIED;
     };
 

@@ -47,28 +47,45 @@ router.get('/view', function (req, res) {
 
 
 router.get('/create', function (req, res) {
-    var obj = {
-        _key: req.queryParams.id,
-        total_sz: req.queryParams.total_sz,
-        pub_key: req.queryParams.pub_key,
-        address: req.queryParams.address,
-        endpoint: req.queryParams.endpoint
-    };
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u"],
+                write: ["repo","admin"]
+            },
+            action: function() {
+                var obj = {
+                    _key: req.queryParams.id,
+                    total_sz: req.queryParams.total_sz,
+                    pub_key: req.queryParams.pub_key,
+                    address: req.queryParams.address,
+                    endpoint: req.queryParams.endpoint
+                };
 
-    if ( req.queryParams.title )
-        obj.title = req.queryParams.title;
+                if ( req.queryParams.title )
+                    obj.title = req.queryParams.title;
 
-    if ( req.queryParams.desc )
-        obj.desc = req.queryParams.desc;
+                if ( req.queryParams.desc )
+                    obj.desc = req.queryParams.desc;
 
-    var repo = g_db.repo.save( obj, { returnNew: true });
+                var repo = g_db.repo.save( obj, { returnNew: true });
 
-    repo.new.id = repo.new._id;
-    delete repo.new._id;
-    delete repo.new._key;
-    delete repo.new._rev;
+                for ( var i in req.queryParams.admins ) {
+                    if ( !g_db._exists( "u/" + req.queryParams.admins[i] ))
+                        throw g_lib.ERR_USER_NOT_FOUND;
+                    g_db.admin.save({ _from: repo._id, _to: "u/" + req.queryParams.admins[i] });
+                }
 
-    res.send( repo.new );
+                repo.new.id = repo.new._id;
+                delete repo.new._id;
+                delete repo.new._key;
+                delete repo.new._rev;
+                res.send( repo.new );
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
 })
 .queryParam('id', joi.string().required(), "Repo server ID")
 .queryParam('title', joi.string().optional(), "Title")
@@ -77,13 +94,21 @@ router.get('/create', function (req, res) {
 .queryParam('pub_key', joi.string().required(), "Repo server public key")
 .queryParam('address', joi.string().required(), "Repo server address")
 .queryParam('endpoint', joi.string().required(), "Repo server endpoint")
+.queryParam('admins', joi.array().items(joi.string()).required(), "Repo admin user IDs")
 .summary('Create a repo server record')
-.description('Create a repo server record');
+.description('Create a repo server record.');
 
 
 router.get('/update', function (req, res) {
 })
 .queryParam('id', joi.string().required(), "Repo server ID")
+.queryParam('title', joi.string().optional(), "Title")
+.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('total_sz', joi.number().optional(), "Total storage size (capacity) (GB)")
+.queryParam('pub_key', joi.string().optional(), "Repo server public key")
+.queryParam('address', joi.string().optional(), "Repo server address")
+.queryParam('endpoint', joi.string().optional(), "Repo server endpoint")
+.queryParam('admins', joi.array().items(joi.string()).optional(), "Repo admin user IDs")
 .summary('Update a repo server record')
 .description('Update a repo server record');
 
@@ -110,7 +135,26 @@ router.get('/delete', function (req, res) {
 .summary('Delete repo server record')
 .description('Delete repo server record');
 
-router.get('/alloc/list', function (req, res) {
+router.get('/alloc/list/by_repo', function (req, res) {
+    var client = g_lib.getUserFromClientID( req.queryParams.client );
+    var repo = g_db.repo.document( "repo/" + req.queryParams.repo );
+
+    g_lib.ensureAdminPermRepo( client, repo._id );
+
+    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return { uid: v._id, name: v.name, alloc: e.alloc, path: e.path }", { repo: repo._id } ).toArray();
+    var obj;
+    for ( var i in result ){
+        obj = result[i];
+        obj.uid = obj.uid.substr(2);
+    }
+    res.send( result );
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('repo', joi.string().required(), "Repo ID")
+.summary('List all allocations for a repo')
+.description('List all allocations a repo');
+
+router.get('/alloc/list/by_user', function (req, res) {
     var user = g_lib.getUserFromClientID( req.queryParams.client );
 
     var result = g_db._query("for v, e in 1..1 outbound @user alloc return { id: e._to, alloc: e.alloc, path: e.path }", { user: user._id } ).toArray();
@@ -122,28 +166,31 @@ router.get('/alloc/list', function (req, res) {
     res.send( result );
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.summary('Collect user repo information')
-.description('Collect user (or project) repo information');
+.summary('List user\'s repo allocations')
+.description('List user\'s repo allocations');
 
 router.get('/alloc/set', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","repo"],
+                read: ["u","uuid","accn","repo","admin"],
                 write: ["alloc"]
             },
             action: function() {
-                var user = g_lib.getUserFromClientID( req.queryParams.client );
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                var subject = g_lib.getUserFromClientID( req.queryParams.subject );
                 var repo = g_db.repo.document( "repo/" + req.queryParams.repo );
 
+                g_lib.ensureAdminPermRepo( client, repo._id );
+
                 if ( req.queryParams.alloc == 0 ){
-                    g_db.alloc.removeByExample({ _from: user._id, _to: repo._id });
+                    g_db.alloc.removeByExample({ _from: subject._id, _to: repo._id });
                 } else {
-                    var alloc = g_db.alloc.firstExample({ _from: user._id, _to: repo._id });
+                    var alloc = g_db.alloc.firstExample({ _from: subject._id, _to: repo._id });
                     if ( alloc ){
                         g_db.alloc.update( alloc._id, { alloc: req.queryParams.alloc });
                     } else {
-                        g_db.alloc.save({ _from: user._id, _to: repo._id, alloc: req.queryParams.alloc, path: "/" + user._key + "/" });
+                        g_db.alloc.save({ _from: subject._id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: "/" + subject._key + "/" });
                     }
                 }
             }
@@ -153,7 +200,8 @@ router.get('/alloc/set', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
 .queryParam('repo', joi.string().required(), "Repo ID")
 .queryParam('alloc', joi.number().required(), "Allocation (GB)")
-.summary('Set user repo allocation')
-.description('Set user repo allocation');
+.summary('Set user/project repo allocation')
+.description('Set user repo/project allocation. Only repo admin can set allocations.');

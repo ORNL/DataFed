@@ -41,7 +41,7 @@ graph._extendEdgeDefinitions(note);
 var ident = graph_module._relation("ident", ["u"], ["accn","uuid"]);
 graph._extendEdgeDefinitions(ident);
 
-var adm = graph_module._relation("admin", ["u"], ["u"]);
+var adm = graph_module._relation("admin", ["u","repo"], ["u"]);
 graph._extendEdgeDefinitions(adm);
 
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);

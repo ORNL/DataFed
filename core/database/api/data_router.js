@@ -31,7 +31,48 @@ router.get('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var proj;
 
+                var coll_id;
+
+                if ( req.queryParams.proj ) {
+                    proj = g_db.u.document( "u/" + req.queryParams.proj );
+
+                    // Enusre client is a project member and has create permission
+                    var role = g_lib.getProjectRole( client, proj );
+                    if ( role == g_lib.PROJ_NO_ROLE )
+                        throw g_lib.ERR_PERM_DENIED;
+
+                    if ( req.queryParams.coll ) {
+                        coll_id = g_lib.resolveID( req.queryParams.coll, proj );
+                        if ( coll_id[0] != "c" )
+                            throw g_lib.ERR_INVALID_COLLECTION;
+                    } else {
+                        coll_id = "c/"  + proj._key + "_root";
+                    }
+                    var coll = g_db.c.document( coll_id );
+                    if ( role == g_lib.PROJ_MEMBER ){
+                        if ( !g_lib.hasPermission( client, coll, g_lib.PERM_CREATE ))
+                            throw g_lib.ERR_PERM_DENIED;
+                    }
+                } else {
+                    if ( req.queryParams.coll ) {
+                        coll_id = g_lib.resolveID( req.queryParams.coll, client );
+                        if ( coll_id[0] != "c" )
+                            throw g_lib.ERR_INVALID_COLLECTION;
+                    } else {
+                        coll_id = "c/"  + client._key + "_root";
+                    }
+                }
+
+                // Storage location is from user/project allocations
+                var repo_alloc;
+                if ( req.queryParams.repo ) {
+                    repo_alloc = g_lib.verifyRepo( proj?proj._id:client._id, req.queryParams.repo );
+                } else {
+                    repo_alloc = g_lib.assignRepo( proj?proj._id:client._id );
+                }
+                
                 var obj = { data_size: 0, rec_time: Math.floor( Date.now()/1000 ) };
 
                 if ( req.queryParams.title )
@@ -44,30 +85,21 @@ router.get('/create', function (req, res) {
                     obj.md = JSON.parse( req.queryParams.md );
 
                 var data = g_db.d.save( obj, { returnNew: true });
-                g_db.owner.save({ _from: data._id, _to: client._id });
 
-                // Storage location is from user/project allocations
-                var repo_alloc = g_lib.assignRepo( client._id );
+                g_db.owner.save({ _from: data._id, _to: proj?proj._id:client._id });
+
                 g_db.loc.save({ _from: data._id, _to: repo_alloc.repo._id, path: repo_alloc.alloc.path });
 
                 if ( req.queryParams.alias ) {
                     g_lib.validateAlias( req.queryParams.alias );
-                    var alias_key = client._key + ":" + req.queryParams.alias;
+                    var alias_key = (proj?proj._key:client._key) + ":" + req.queryParams.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: (proj?proj._id:client._id) });
                     data.new.alias = req.queryParams.alias;
                 }
 
-                var coll_id;
-                if ( req.queryParams.coll ) {
-                    coll_id = g_lib.resolveID( req.queryParams.coll, client );
-                    if ( coll_id[0] != "c" )
-                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
-                } else {
-                    coll_id = "c/"  + client._key + "_root";
-                }
 
                 g_db.item.save({ _from: coll_id, _to: data.new._id });
 
@@ -86,11 +118,12 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('owner', joi.string().optional(), "Optional owner id (user or project)")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('proj', joi.string().optional(), "Optional project")
 .queryParam('coll', joi.string().optional(), "Optional collection id or alias")
+.queryParam('repo', joi.string().optional(), "Optional repo ID for allocation")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .summary('Creates a new data record')
 .description('Creates a new data record');
@@ -215,6 +248,9 @@ router.get('/view', function (req, res) {
             data.alias = alias[0]._key.substr( owner_id.length - 1 );
         }
 
+        data.repo = g_db.loc.firstExample({ _from: data_id });
+        if ( data.repo )
+            data.repo = data.repo._to;
         data.owner = owner_id.substr(2);
         delete data._rev;
         delete data._key;
@@ -303,7 +339,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","n","owner","item","acl","tag","note","alias"]
+                write: ["d","a","n","owner","item","acl","tag","note","alias","loc"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );

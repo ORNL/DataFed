@@ -170,8 +170,7 @@ router.get('/update', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        //var client = g_lib.getUserFromClientID( req.queryParams.client );
-
+        var client = g_lib.getUserFromClientID( req.queryParams.client );
         var proj = g_db.u.document({ _id: req.queryParams.id });
 
         var admins = g_db._query("for v in 1..1 outbound @user admin return v._key", { user: proj._id } ).toArray();
@@ -179,7 +178,15 @@ router.get('/view', function (req, res) {
             proj.admins = admins;
         }
 
-        proj.uid = proj._key;
+        if ( g_lib.getProjectRole( client, proj ) != g_lib.PROJ_NO_ROLE ){
+            var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._key", { proj: proj._id }).toArray();
+
+            if ( members.length ) {
+                proj.members = members;
+            }
+        }
+
+        proj.id = proj._key;
 
         delete proj._id;
         delete proj._key;
@@ -190,11 +197,10 @@ router.get('/view', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-//.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Project ID")
 .summary('View project information')
 .description('View project information');
-
 
 router.get('/list/all', function (req, res) {
     res.send( g_db._query( "for i in u filter i.is_project == true return { uid: i._key, name: i.name }" ));
@@ -212,7 +218,8 @@ router.get('/list/by_admin', function (req, res) {
 
 router.get('/list/by_member', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
-    res.send( g_db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' return { uid: v._key, name: v.name }", { user: client._id }));
+    res.send( g_db._query( "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { uid: v._key, name: v.name }", { user: client._id }));
+    //res.send( g_db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' return { uid: v._key, name: v.name }", { user: client._id }));
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .summary('List projects')
