@@ -9,6 +9,7 @@ var graph = graph_module._create("sdmsg");
 graph._addVertexCollection("u");    // User
 graph._addVertexCollection("accn");   // User facility accounts
 graph._addVertexCollection("uuid");   // User globus UUIDs
+graph._addVertexCollection("p");    // Project
 graph._addVertexCollection("g");    // Group
 graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
@@ -20,7 +21,7 @@ graph._addVertexCollection("tr");   // Transfers
 graph._addVertexCollection("repo"); // Repository servers
 
 
-var owner = graph_module._relation("owner", ["d","c","g","n","a"], ["u"]);
+var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u"]);
 graph._extendEdgeDefinitions(owner);
 
 var mem = graph_module._relation("member", ["g"], ["u"]);
@@ -41,13 +42,13 @@ graph._extendEdgeDefinitions(note);
 var ident = graph_module._relation("ident", ["u"], ["accn","uuid"]);
 graph._extendEdgeDefinitions(ident);
 
-var adm = graph_module._relation("admin", ["u","repo"], ["u"]);
+var adm = graph_module._relation("admin", ["p","repo"], ["u"]);
 graph._extendEdgeDefinitions(adm);
 
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);
 
-var alloc = graph_module._relation("alloc", ["u"], ["repo"]);
+var alloc = graph_module._relation("alloc", ["u","p"], ["repo"]);
 graph._extendEdgeDefinitions(alloc);
 
 var loc = graph_module._relation("loc", ["d"], ["repo"]);
@@ -55,6 +56,8 @@ graph._extendEdgeDefinitions(loc);
 
 //db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
+
+db.p.ensureIndex({ type: "hash", unique: true, fields: [ "domain", "title" ], sparse: true });
 
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 

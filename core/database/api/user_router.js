@@ -39,13 +39,6 @@ router.get('/authn', function (req, res) {
 
 router.get('/create', function (req, res) {
     try {
-        if ( !req.queryParams.uuids && !req.queryParams.is_project )
-            throw g_lib.ERR_MISSING_REQ_OPTION;
-        if ( req.queryParams.is_project && !req.queryParams.admins )
-            throw g_lib.ERR_PROJ_REQUIRES_ADMIN;
-        if ( !req.queryParams.password && !req.queryParams.is_project )
-            throw g_lib.ERR_PASSWORD_REQUIRED;
-
         var result;
 
         g_db._executeTransaction({
@@ -54,12 +47,12 @@ router.get('/create', function (req, res) {
                 write: ["u","c","a","g","acl","owner","ident","uuid","alias","admin"]
             },
             action: function() {
-                var user_data = { _key: req.queryParams.uid, name: req.queryParams.name, is_admin: req.queryParams.is_admin, is_project: req.queryParams.is_project };
+                var user_data = { _key: req.queryParams.uid, name: req.queryParams.name, is_admin: req.queryParams.is_admin };
 
                 if ( req.queryParams.password )
                     user_data.password = req.queryParams.password;
 
-                if ( !req.queryParams.is_project && req.queryParams.email )
+                if ( req.queryParams.email )
                     user_data.email = req.queryParams.email;
 
                 var user = g_db.u.save( user_data, { returnNew: true });
@@ -75,29 +68,14 @@ router.get('/create', function (req, res) {
                 var i;
                 var mem_grp;
 
-                if ( !req.queryParams.is_project ){
-                    var uuid;
-                    for ( i in req.queryParams.uuids ) {
-                        uuid = "uuid/" + req.queryParams.uuids[i];
-                        if ( g_db._exists({ _id: uuid }))
-                            throw g_lib.ERR_INVALID_IDENT;
+                var uuid;
+                for ( i in req.queryParams.uuids ) {
+                    uuid = "uuid/" + req.queryParams.uuids[i];
+                    if ( g_db._exists({ _id: uuid }))
+                        throw g_lib.ERR_INVALID_IDENT;
 
-                        g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
-                        g_db.ident.save({ _from: user._id, _to: uuid });
-                    }
-                } else {
-                    // Projects have a special "members" group associated with root
-                    mem_grp = g_db.g.save({ uid:req.queryParams.uid, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
-                    g_db.owner.save({ _from: mem_grp._id, _to: user._id });
-                    g_db.acl.save({ _from: root._id, _to: mem_grp._id, grant: g_lib.PERM_MEMBER, inhgrant: g_lib.PERM_MEMBER });
-                }
-
-                if ( req.queryParams.admins ) {
-                    for ( i in req.queryParams.admins ) {
-                        if ( !g_db._exists( "u/" + req.queryParams.admins[i] ))
-                            throw g_lib.ERR_USER_NOT_FOUND;
-                        g_db.admin.save({ _from: user._id, _to: "u/" + req.queryParams.admins[i] });
-                    }
+                    g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
+                    g_db.ident.save({ _from: user._id, _to: uuid });
                 }
 
                 user.new.uid = user.new._key;
@@ -118,13 +96,11 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('uid', joi.string().required(), "SDMS user ID (globus) for new user")
-.queryParam('password', joi.string().optional(), "SDMS account password (not required for projects)")
+.queryParam('password', joi.string().required(), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().optional(), "Email")
-.queryParam('uuids', joi.array().items(joi.string()).optional(), "Globus identities (UUIDs) required for non-project users")
+.queryParam('uuids', joi.array().items(joi.string()).required(), "Globus identities (UUIDs)")
 .queryParam('is_admin', joi.boolean().optional(), "New account is a system administrator")
-.queryParam('is_project', joi.boolean().optional(), "New account is a project")
-.queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
 .summary('Create new user entry')
 .description('Create new user entry.');
 
@@ -164,52 +140,11 @@ router.get('/update', function (req, res) {
                 if ( client.is_admin ) {
                     if ( req.queryParams.is_admin )
                         obj.is_admin = req.queryParams.is_admin;
-
-                    if ( req.queryParams.is_project )
-                        obj.is_project = req.queryParams.is_project;
                 }
 
                 var user = g_db._update( user_id, obj, { keepNull: false, returnNew: true });
 
-                var admins = g_db._query( "for i in admin filter i._from == @user return i._to", { user: user_id }).toArray();
-                console.log("admins:",admins);
-                for ( var i in admins ) {
-                    admins[i] = admins[i].substr( 2 );
-                }
-
-                var admin;
-
-                if ( req.queryParams.admin_remove ) {
-                    var idx;
-
-                    for ( i in req.queryParams.admin_remove ) {
-                        admin = req.queryParams.admin_remove[i];
-                        idx = admins.indexOf( admin );
-                        if ( idx != -1 ) {
-                            g_db.admin.removeByExample({ _from: user_id, _to: "u/" + admin });
-                            admins.splice( idx, 1 );
-                        }
-                    }
-                }
-
-                if ( req.queryParams.admin_add ) {
-
-                    for ( i in req.queryParams.admin_add ) {
-                        admin = req.queryParams.admin_add[i];
-                        if ( admins.indexOf( admin ) == -1 ) {
-                            if ( !g_db._exists( "u/" + admin ))
-                                throw g_lib.ERR_USER_NOT_FOUND;
-
-                            g_db.admin.save({ _from: user_id, _to: "u/" + admin });
-                            admins.push( admin );
-                        }
-                    }
-                }
-
                 user.new.uid = user.new._key;
-
-                if ( admins.length )
-                    user.new.admins = admins;
 
                 delete user.new._id;
                 delete user.new._key;
@@ -234,9 +169,6 @@ router.get('/update', function (req, res) {
 .queryParam('name', joi.string().optional(), "New name")
 .queryParam('email', joi.string().optional(), "New email")
 .queryParam('is_admin', joi.boolean().optional(), "New system administrator flag value")
-.queryParam('is_project', joi.boolean().optional(), "New account project flag value")
-.queryParam('admin_add', joi.array().items(joi.string()).optional(), "Account administrators (uids) to add")
-.queryParam('admin_remove', joi.array().items(joi.string()).optional(), "Account administrators (uids) to remove")
 .summary('Update user information')
 .description('Update user information');
 
@@ -459,11 +391,6 @@ router.get('/view', function (req, res) {
         }
 
         if ( req.queryParams.details ) {
-            var admins = g_db._query("for v in 1..1 outbound @user admin return v._key", { user: user._id } ).toArray();
-            if ( admins.length ) {
-                user.admins = admins;
-            }
-
             var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
             if ( idents.length ) {
                 user.idents = idents;

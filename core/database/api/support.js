@@ -188,6 +188,9 @@ module.exports = ( function() {
     };
 
     obj.getProjectRole = function( a_client, a_proj ){
+        if ( obj.db.owner.firstExample({ _from: a_proj._id, _to: a_client._id }))
+            return obj.PROJ_ADMIN;
+
         if ( obj.db.admin.firstExample({ _from: a_proj._id, _to: a_client._id }))
             return obj.PROJ_ADMIN;
 

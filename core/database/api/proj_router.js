@@ -26,45 +26,52 @@ router.get('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u"],
-                write: ["u","c","a","g","acl","owner","ident","alias","admin"]
+                read: ["u","p"],
+                write: ["p","c","a","g","acl","owner","ident","alias","admin"]
             },
             action: function() {
-                var user_data = { _key: req.queryParams.id, name: req.queryParams.name, is_project: true };
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                var user = g_db.u.save( user_data, { returnNew: true });
+                var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, domain: req.queryParams.domain };
+
+                if ( req.queryParams.repo ){
+                    if ( !g_lib.verifyRepo( client._id, req.queryParams.repo ))
+                        throw g_lib.ERR_NO_ALLOCATION;
+                    proj_data.repo =  req.queryParams.repo;
+                }
+
+                var proj = g_db.p.save( proj_data, { returnNew: true });
+                g_db.owner.save({ _from: proj._id, _to: client._id });
 
                 var root = g_db.c.save({ _key: req.queryParams.id + "_root", is_root: true, title: "root", desc: "Root collection for project " + req.queryParams.name + " (" + req.queryParams.id +")" }, { returnNew: true });
 
                 var alias = g_db.a.save({ _key: req.queryParams.id + ":root" }, { returnNew: true });
-                g_db.owner.save({ _from: alias._id, _to: user._id });
+                g_db.owner.save({ _from: alias._id, _to: proj._id });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });
-                g_db.owner.save({ _from: root._id, _to: user._id });
+                g_db.owner.save({ _from: root._id, _to: proj._id });
 
                 var i;
                 var mem_grp;
 
                 // Projects have a special "members" group associated with root
-                mem_grp = g_db.g.save({ uid:req.queryParams.id, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
-                g_db.owner.save({ _from: mem_grp._id, _to: user._id });
+                mem_grp = g_db.g.save({ uid: "p/" + req.queryParams.id, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
+                g_db.owner.save({ _from: mem_grp._id, _to: proj._id });
                 g_db.acl.save({ _from: root._id, _to: mem_grp._id, grant: g_lib.PERM_MEMBER, inhgrant: g_lib.PERM_MEMBER });
 
                 for ( i in req.queryParams.admins ) {
                     if ( !g_db._exists( "u/" + req.queryParams.admins[i] ))
                         throw g_lib.ERR_USER_NOT_FOUND;
-                    g_db.admin.save({ _from: user._id, _to: "u/" + req.queryParams.admins[i] });
+                    g_db.admin.save({ _from: proj._id, _to: "u/" + req.queryParams.admins[i] });
                 }
 
-                user.new.uid = user.new._key;
-                if ( req.queryParams.admins )
-                    user.new.admins = req.queryParams.admins;
+                proj.new.id = proj.new._key;
+                proj.new.admins = req.queryParams.admins;
+                delete proj.new._id;
+                delete proj.new._key;
+                delete proj.new._rev;
 
-                delete user.new._id;
-                delete user.new._key;
-                delete user.new._rev;
-
-                result = [user.new];
+                result = [proj.new];
             }
         });
 
@@ -73,8 +80,11 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID for new project")
-.queryParam('name', joi.string().required(), "Name")
+.queryParam('title', joi.string().required(), "Title (must be unque within domain)")
+.queryParam('domain', joi.string().required(), "Domain or topic (in reverse dotted notation)")
+.queryParam('repo', joi.string().optional(), "Repository ID (must be associated with client)")
 .queryParam('admins', joi.array().items(joi.string()).required(), "Account administrators (uids)")
 .summary('Create new project')
 .description('Create new project.');
@@ -86,24 +96,31 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
-                write: ["u","admin"]
+                read: ["u","p","uuid","accn"],
+                write: ["p","admin"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var user_id;
+                var proj_id;
 
-                user_id = "u/" + req.queryParams.id;
-                g_lib.ensureAdminPermUser( client, user_id );
+                proj_id = "p/" + req.queryParams.id;
+                g_lib.ensureAdminPermUser( client, proj_id );
 
                 var obj = {};
 
                 if ( req.queryParams.name )
                     obj.name = req.queryParams.name;
 
-                var user = g_db._update( user_id, obj, { keepNull: false, returnNew: true });
+                if ( req.queryParams.repo ){
+                    if ( !g_lib.verifyRepo( client._id, req.queryParams.repo ))
+                        throw g_lib.ERR_NO_ALLOCATION;
+    
+                    obj.repo =  req.queryParams.repo;
+                }
+    
+                var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
-                var admins = g_db._query( "for i in admin filter i._from == @user return i._to", { user: user_id }).toArray();
+                var admins = g_db._query( "for i in admin filter i._from == @proj return i._to", { proj: proj_id }).toArray();
                 console.log("admins:",admins);
                 for ( var i in admins ) {
                     admins[i] = admins[i].substr( 2 );
@@ -118,7 +135,7 @@ router.get('/update', function (req, res) {
                         admin = req.queryParams.admin_remove[i];
                         idx = admins.indexOf( admin );
                         if ( idx != -1 ) {
-                            g_db.admin.removeByExample({ _from: user_id, _to: "u/" + admin });
+                            g_db.admin.removeByExample({ _from: proj_id, _to: "u/" + admin });
                             admins.splice( idx, 1 );
                         }
                     }
@@ -132,25 +149,25 @@ router.get('/update', function (req, res) {
                             if ( !g_db._exists( "u/" + admin ))
                                 throw g_lib.ERR_USER_NOT_FOUND;
 
-                            g_db.admin.save({ _from: user_id, _to: "u/" + admin });
+                            g_db.admin.save({ _from: proj_id, _to: "u/" + admin });
                             admins.push( admin );
                         }
                     }
                 }
 
-                if ( !g_db.admin.firstExample({ _from: user_id }))
+                if ( !g_db.admin.firstExample({ _from: proj_id }))
                     throw g_lib.ERR_PROJ_REQUIRES_ADMIN;
 
-                user.new.uid = user.new._key;
+                proj.new.id = proj.new._key;
 
                 if ( admins.length )
-                    user.new.admins = admins;
+                proj.new.admins = admins;
 
-                delete user.new._id;
-                delete user.new._key;
-                delete user.new._rev;
+                delete proj.new._id;
+                delete proj.new._key;
+                delete proj.new._rev;
 
-                result = [user.new];
+                result = [proj.new];
             }
         });
 
@@ -159,9 +176,10 @@ router.get('/update', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client uid")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Project ID")
-.queryParam('name', joi.string().optional(), "New name")
+.queryParam('title', joi.string().optional(), "New title")
+.queryParam('repo', joi.string().optional(), "New repository ID (only affects new data)")
 .queryParam('admin_add', joi.array().items(joi.string()).optional(), "Account administrators (uids) to add")
 .queryParam('admin_remove', joi.array().items(joi.string()).optional(), "Account administrators (uids) to remove")
 .summary('Update project information')
@@ -171,9 +189,9 @@ router.get('/update', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         var client = g_lib.getUserFromClientID( req.queryParams.client );
-        var proj = g_db.u.document({ _id: req.queryParams.id });
+        var proj = g_db.p.document({ _id: "p/" + req.queryParams.id });
 
-        var admins = g_db._query("for v in 1..1 outbound @user admin return v._key", { user: proj._id } ).toArray();
+        var admins = g_db._query("for v in 1..1 outbound @proj admin return v._key", { proj: proj._id } ).toArray();
         if ( admins.length ) {
             proj.admins = admins;
         }
@@ -203,11 +221,12 @@ router.get('/view', function (req, res) {
 .description('View project information');
 
 router.get('/list/all', function (req, res) {
-    res.send( g_db._query( "for i in u filter i.is_project == true return { uid: i._key, name: i.name }" ));
+    res.send( g_db._query( "for i in p return { uid: i._key, name: i.name }" ));
 })
 .summary('List projects')
 .description('List projects');
 
+// TODO Fixme!!!
 router.get('/list/by_admin', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
     res.send( g_db._query( "for v in 1..1 inbound @user admin filter v.is_project == true return { uid: v._key, name: v.name }", { user: client._id }));
@@ -219,7 +238,6 @@ router.get('/list/by_admin', function (req, res) {
 router.get('/list/by_member', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
     res.send( g_db._query( "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { uid: v._key, name: v.name }", { user: client._id }));
-    //res.send( g_db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' return { uid: v._key, name: v.name }", { user: client._id }));
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .summary('List projects')
@@ -234,21 +252,21 @@ router.get('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var user_id = "u/" + req.queryParams.id;
-                g_lib.ensureAdminPermUser( client, user_id );
+                var proj_id = "p/" + req.queryParams.id;
+                g_lib.ensureAdminPermUser( client, proj_id );
 
                 var objects;
                 var obj;
                 var i;
 
                 // Delete collections, data, groups, notes
-                objects = g_db._query( "for v in 1..1 inbound @user owner return v._id", { user: user_id }).toArray();
+                objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
-                g_graph.u.remove( user_id );
+                g_graph.p.remove( proj_id );
             }
         });
     } catch( e ) {
@@ -257,6 +275,6 @@ router.get('/delete', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Project ID")
-.summary('Remove existing user entry')
-.description('Remove existing user entry. Requires admin permissions.');
+.summary('Remove existing project')
+.description('Remove existing project.');
 
