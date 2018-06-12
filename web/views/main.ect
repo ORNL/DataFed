@@ -9,6 +9,8 @@
         <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_group_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/main_repo_tab.js"></script>
         <script type="text/javascript">
             loadUser();
             if ( !g_user || !g_user.active )
@@ -26,10 +28,13 @@
         <div id="content" class="content" style="flex:1 1 100%">
             <div id="tabs">
                 <ul>
-                    <li><a href="#tab-1">Data</a></li>
-                    <li><a href="#tab-3">Settings</a></li>
+                    <li><a href="#tab-browse">Browse</a></li>
+                    <li><a href="#tab-search">Search</a></li>
+                    <li><a href="#tab-repo">Repos</a></li>
+                    <li style='display:none'><a href="#tab-admin">Admin</a></li>
+                    <li><a href="#tab-settings">Settings</a></li>
                 </ul>
-                <div id="tab-1">
+                <div id="tab-browse">
                     <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
                         <div class="row-flex" style="flex:1 1 100%">
                             <div class="col-flex" style="flex:1 1 40%;padding:.25em">
@@ -52,15 +57,42 @@
                             <button class="btn act-folder act-data act-root" onclick="shareSelected()" disabled>Sharing</button>
                             <button class="btn act-data" onclick="xfrSelected(0)" disabled>Upload</button>
                             <button class="btn act-data" onclick="xfrSelected(1)" disabled>Download</button>
+                            <button class="btn act-data" onclick="moveSelected()" disabled>Move</button>
                         </div>
                         <div style="flex:none;padding:.5em 0 0 0">Transfer History:</div>
                         <div id="xfr_hist" style="flex:none">
                         </div>
                     </div>
                 </div>
-                <div id="tab-2">
+                <div id="tab-search">
+                Search Stuff
                 </div>
-                <div id="tab-3">
+                <div id="tab-repo">
+                    <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
+                        <div class="row-flex" style="flex:1 1 100%">
+                            <div class="col-flex" style="flex:1 1 40%;padding:.25em">
+                                <div style="flex:none">Repositories:</div>
+                                <div class="ui-widget-content text" style="flex:1 1 100%;overflow:auto">
+                                    <div id="repo_tree" class="no-border"></div>
+                                </div>
+                            </div>
+                            <div class="col-flex" style="flex:1 1 60%;padding:.25em">
+                                <div style="flex:none">Selection Details:</div>
+                                <div id="repo_info" class="ui-widget-content text" style="flex:1 1 100%"></div>
+                            </div>
+                        </div>
+                        <div style="flex:none;padding:.25em">
+                            <button class="btn act-repo" onclick="allocAdd()" disabled>Add Allocation</button>
+                            <button class="btn act-repo" onclick="allocEdit()" disabled>Edit Allocation</button>
+                            <button class="btn act-repo" onclick="allocDelete()" disabled>Delete Allocation</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-admin">
+                Admin Stuff
+                </div>
+                <div id="tab-settings">
+                Settings Stuff
                 </div>
             </div>
         </div>
@@ -80,12 +112,19 @@
         var drag_mode = 0;
         var drag_enabled = 1;
         var root_key = "c/" + g_user.uid + "_root";
-        console.log( "root key:", root_key );
-        console.log( "g)user:", g_user );
 
         window.addEventListener( "resize", resizeHandler );
 
         document.getElementById("uname").innerHTML = g_user.name;
+
+        userView( g_user.uid, function( ok, user ){
+            console.log( "Use info (db):", ok, user );
+            if ( ok && user ){
+                g_user.isAdmin = user.isAdmin;
+                if ( g_user.isAdmin )
+                    $('[href="#tab-admin"]').closest('li').show();
+            }
+        });
 
         $("#tabs").tabs({heightStyle:"fill"}).css({
             'min-height': '50px',
@@ -104,6 +143,7 @@
         });*/
         $( document ).tooltip({ show: { effect: "slideDown", delay: 500 }});
 
-        setupDataTree();
+        setupBrowseTab();
+        setupRepoTab();
     </script>
 </html>

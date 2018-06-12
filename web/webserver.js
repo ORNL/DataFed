@@ -574,6 +574,17 @@ app.get('/api/unlink', ( a_req, a_resp ) => {
     });
 });
 
+// TODO Finish this!!!
+app.get('/api/repo/list/by_alloc', ( a_req, a_resp ) => {
+    sendMessage( "RepoListByAllocRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.alloc );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;
