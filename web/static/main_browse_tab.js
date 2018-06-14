@@ -211,24 +211,23 @@ function addNode( item ){
         if ( ok ) {
             var tree = $("#data_tree").fancytree("getTree");
             var par = data.data;
-            console.log( "parents", par );
+            var scope;
 
             if ( par && par.length ) {
                 var updnodes = [];
                 tree.visit(function(node){
-                    console.log( "visit", node );
                     if ( node.isFolder() ) {
-                        console.log( "is folder" );
                         for ( var i in par ) {
                             if ( par[i].id == node.key ) {
                                 updnodes.push( node );
+                                scope = node.data.scope;
                                 break;
                             }
                         }
                     }
                 });
                 if ( updnodes.length ) {
-                    var nodedat = {title: generateTitle( item ), key: item.id, folder:item.id[0]=="c"?true:false };
+                    var nodedat = {title: generateTitle( item ), key: item.id, folder:item.id[0]=="c"?true:false, scope: scope };
                     for ( var i in updnodes ) {
                         updnodes[i].addNode( nodedat );
                     }
@@ -252,10 +251,8 @@ function generateTitle( item ) {
 
 function setupBrowseTab(){
     var tree_source = [
-        {title:"My Data",folder:true,lazy:true,key: "c/" + g_user.uid + "_root" },
+        {title:"My Data",folder:true,lazy:true,key: "c/" + g_user.uid + "_root", scope: g_user.uid },
         {title:"My Projects",folder:true,lazy:true,key:"myproj"},
-        //{title:"Projects (admin)",folder:true,lazy:true,key:"prjbyadm"},
-        //{title:"Projects (member)",folder:true,lazy:true,key:"prjbymem"},
         {title:"Shares",folder:true,lazy:true },
         {title:"Views",folder:true,lazy:true }
     ];
@@ -303,7 +300,9 @@ function setupBrowseTab(){
                 });
             },
             dragEnter: function(node, data) {
-                if ( node.isFolder() && node.key != "loose" )
+                console.log( "enter:", node, data );
+                //if ( node.isFolder() && node.key != "loose" )
+                if ( node.isFolder() && node.data.scope == data.otherNode.data.scope )
                     return "over";
                 else
                     return false;
@@ -324,7 +323,7 @@ function setupBrowseTab(){
                     url: "/api/prj/list/",
                     cache: false
                 };
-            } else if ( data.node.key == "prjbyadm" ){
+            } /*else if ( data.node.key == "prjbyadm" ){
                 data.result = {
                     url: "/api/prj/list/by_admin",
                     cache: false
@@ -339,7 +338,7 @@ function setupBrowseTab(){
                     url: "/api/dat/list",
                     cache: false
                 };
-            } else {
+            }*/else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
                     cache: false
@@ -349,13 +348,12 @@ function setupBrowseTab(){
         postProcess: function( event, data ) {
             console.log( "pos proc:", data );
             if ( data.node.key == "myproj" ){
-                //console.log("proj list resp",data.response);
                 data.result = [];
                 if ( data.response.length ){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.title + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", lazy: true });
+                        data.result.push({ title: item.title + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", scope: item.id, lazy: true });
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false  });
@@ -365,13 +363,16 @@ function setupBrowseTab(){
                 var item;
                 var folder;
                 var entry;
+                var scope = data.node.data.scope;
+
                 for ( var i in data.response.data ) {
                     item = data.response.data[i];
                     is_folder = item.id[0]=="c"?true:false;
 
-                    entry = { title: generateTitle( item ), folder: is_folder, key: item.id };
+                    entry = { title: generateTitle( item ), folder: is_folder, scope: scope, key: item.id };
                     if ( is_folder )
                         entry.lazy = true;
+
                     data.result.push( entry );
                 }
             }

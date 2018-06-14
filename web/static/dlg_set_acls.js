@@ -181,6 +181,27 @@ function makeDlgSetACLs(){
                         },
                         source: src,
                         selectMode: 1,
+                        lazyLoad: function( event, data ) {
+                            if ( data.node.key.startsWith("g/")){
+                                data.result = {
+                                    url: "/api/grp/view?uid="+inst.uid+"&gid="+data.node.key.substr(2),
+                                    cache: false
+                                };
+                            }
+                        },
+                        postProcess: function( event, data ) {
+                            if ( data.node.key.startsWith("g/")){
+                                //console.log("resp:",data.response);
+                                data.result = [];
+                                if ( data.response.member && data.response.member.length ){
+                                    for ( var i in data.response.member ) {
+                                        data.result.push({ title: data.response.member[i], icon: false });
+                                    }
+                                }else{
+                                    data.result.push({ title: "(empty)", icon: false  });
+                                }
+                            }
+                        },
                         activate: function( event, data ) {
                             inst.updateSelection( data.node.key, data.node.data.rule );
                         },
@@ -204,7 +225,7 @@ function makeDlgSetACLs(){
             if ( sub.id.startsWith( "u/" ))
                 user_rules.push({title: sub.id.substring(2), key: sub.id, rule: sub });
             else if ( sub.id.startsWith( "g/" ))
-                group_rules.push({title: sub.id.substring(2), key: sub.id, rule: sub });
+                group_rules.push({title: sub.id.substring(2), key: sub.id, rule: sub, folder:true, lazy:true });
             else
                 def_rule = sub;
         }
@@ -354,7 +375,7 @@ function makeDlgSetACLs(){
             $(id,this.frame).val("inherit");
     }
 
-    this.disablePermControls = function( disabled, is_default ){
+    this.disablePermControls = function( disabled, no_remove ){
         if ( disabled )
             inst.setAllPerm("inherit");
         $("#dlg_view_sel",inst.frame).prop("disabled", disabled );
@@ -369,7 +390,7 @@ function makeDlgSetACLs(){
         $("#dlg_grant_all",inst.frame).prop("disabled", disabled );
         $("#dlg_deny_all",inst.frame).prop("disabled", disabled );
         $("#dlg_inherit_all",inst.frame).prop("disabled", disabled );
-        if ( is_default )
+        if ( no_remove )
             $("#dlg_rem",inst.frame).prop("disabled", true );
         else
             $("#dlg_rem",inst.frame).prop("disabled", disabled );
@@ -393,6 +414,7 @@ function makeDlgSetACLs(){
     }
 
     this.updateSelection = function( key, rule ){
+        console.log('update:',key);
         inst.cur_rule = null;
         for ( var i in inst.new_rules ) {
             if ( inst.new_rules[i].id == key ) {
@@ -404,9 +426,9 @@ function makeDlgSetACLs(){
         if ( key.startsWith( "u/" )) {
             inst.disablePermControls( false );
             inst.setPermsFromRule( rule );
-        } else if ( key.startsWith ("g/" )) {
-            inst.disablePermControls( false );
-            inst.setPermsFromRule( rule );
+        } else if ( key.startsWith("g/")) {
+            inst.disablePermControls(false,(key=='g/members'?true:false));
+            inst.setPermsFromRule(rule);
         } else if ( key == "default" ) {
             inst.disablePermControls( false, true );
             inst.setPermsFromRule( rule );
@@ -445,7 +467,7 @@ function makeDlgSetACLs(){
                 if ( !tree.getNodeByKey( id )){
                     rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
                     inst.new_rules.push( rule );
-                    tree.rootNode.children[1].addNode({title: id.substr(2), key: id, rule: rule });
+                    tree.rootNode.children[1].addNode({title: id.substr(2), key: id, rule: rule, folder:true, lazy:true });
                 }
             }
         }, true );
@@ -456,6 +478,8 @@ function makeDlgSetACLs(){
         if ( inst.cur_rule ){
             var key = inst.cur_rule.id;
             if ( key == "default" )
+                return;
+            if ( key == "g/members" )
                 return;
 
             var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");

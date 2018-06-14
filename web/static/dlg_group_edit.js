@@ -34,15 +34,13 @@ function makeDlgGroupEdit(){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
         inst.uid = a_uid;
+        console.log("uid =",inst.uid);
 
         $(".btn",inst.frame).button();
 
         var src = [];
 
         if ( group ){
-            //inst.group = Object.assign( {}, group );
-            inst.group = jQuery.extend(true, {}, group );
-
             $("#gid",inst.frame).val( group.gid ).prop("disabled", true);
             $("#title",inst.frame).val( group.title );
             $("#desc",inst.frame).val( group.desc );
@@ -53,7 +51,9 @@ function makeDlgGroupEdit(){
                 for ( var i in group.member ){
                     src.push({ title: group.member[i], icon: false, key: group.member[i]});
                 }
-            }
+            }else
+                group.member = [];
+            inst.group = jQuery.extend(true, {}, group );
         } else {
             inst.group = { member: [] };
             $("#btn_clear",inst.frame).button("disable");
