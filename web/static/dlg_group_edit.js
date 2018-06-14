@@ -29,10 +29,11 @@ function makeDlgGroupEdit(){
             </div>\
         </div>";
 
-    this.show = function( group, cb ){
+    this.show = function( a_uid, group, cb ){
 
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
+        inst.uid = a_uid;
 
         $(".btn",inst.frame).button();
 
@@ -180,7 +181,7 @@ function makeDlgGroupEdit(){
                             }
                         });
                     } else {
-                        groupCreate( inst.group, function( ok, data ){
+                        groupCreate( inst.uid, inst.group, function( ok, data ){
                             if ( !ok ){
                                 alert( data );
                             } else {
@@ -211,12 +212,9 @@ function makeDlgGroupEdit(){
         var tree = $("#member_list",inst.frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            console.log( "key:", node.key );
             var i = inst.group.member.indexOf( node.key );
-            console.log( "idx:", i );
             if ( i > -1 ) {
                 inst.group.member.splice( i, 1 );
-                console.log( "members:", inst.group.member );
                 node.remove();
             }
             $("#btn_remove",inst.frame).button("disable");
@@ -228,7 +226,7 @@ function makeDlgGroupEdit(){
         var sel = tree.getSelectedNodes();
         var tree2 = $("#member_list",inst.frame).fancytree("getTree");
         var key;
-        console.log( sel, inst.group.member );
+
         for ( var i in sel ){
             key = sel[i].key;
             if ( inst.group.member.indexOf( key ) == -1 ){
@@ -244,7 +242,6 @@ function makeDlgGroupEdit(){
 
     this.clearUsers = function(){
         inst.group.member = [];
-        console.log( "members:", inst.group.member );
         var tree = $("#member_list",inst.frame).fancytree("getTree");
         tree.clear();
         $("#btn_clear",inst.frame).button("disable");
@@ -253,7 +250,6 @@ function makeDlgGroupEdit(){
 
     this.userSelected = function(){
         var b = $("#btn_remove",inst.frame);
-        console.log( "btn:",b);
         $("#btn_remove",inst.frame).button("enable");
     }
 }

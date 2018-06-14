@@ -30,9 +30,10 @@ function makeDlgGroups(){
             </div>\
         </div>";
 
-    this.show = function( cb, select ){
+    this.show = function( a_uid, cb, select ){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
+        inst.uid = a_uid;
 
         $("#dlg_add_grp",inst.frame).click( inst.addGroup );
         $("#dlg_edit_grp",inst.frame).click( inst.editGroup );
@@ -66,7 +67,7 @@ function makeDlgGroups(){
                 }
             }],
             open: function(event,ui){
-                groupList(function( ok, data){
+                groupList(inst.uid,function( ok, data){
                     console.log( "group list:", ok, data );
                     var src = [];
                     var group;
@@ -127,8 +128,8 @@ function makeDlgGroups(){
         inst.frame.dialog( options );
     }
 
-    this.showSelectedInfo = function( key ){
-        groupView( key, function( ok, group ){
+    this.showSelectedInfo = function( a_key ){
+        groupView( inst.uid, a_key, function( ok, group ){
             console.log( "group:", group );
             if ( ok ) {
                 $("#dlg_edit_grp",inst.frame).prop("disabled", false );
@@ -177,9 +178,9 @@ function makeDlgGroups(){
         $("#dlg_rem_grp",inst.frame).prop("disabled", true );
     }
 
-    this.addGroup = function(){
+    this.addGroup = function( ){
         console.log("Add group");
-        dlgGroupEdit.show( null, function( group ){
+        dlgGroupEdit.show( inst.uid, null, function( group ){
             console.log("Added");
         });
     }
@@ -192,7 +193,7 @@ function makeDlgGroups(){
             confirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Delete","Cancel"], function( choice ) {
                 console.log( choice );
                 if ( choice == 0 ) {
-                    groupDelete( node.key, function() {
+                    groupDelete( inst.uid, node.key, function() {
                         node.remove();
                         inst.selectNone();
                     });
@@ -207,9 +208,9 @@ function makeDlgGroups(){
         var node = tree.getActiveNode();
         if ( node ){
             console.log( "node", node );
-            groupView( node.key, function( ok, group ){
+            groupView( inst.uid, node.key, function( ok, group ){
                 if ( ok ){
-                    dlgGroupEdit.show( group, function( group_new ){
+                    dlgGroupEdit.show( inst.uid, group, function( group_new ){
                         console.log("edited");
                     });
                 }

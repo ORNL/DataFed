@@ -43,8 +43,7 @@ public:
     void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
 
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projListByAdmin( const Auth::ProjectListByAdminRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projListByMember( const Auth::ProjectListByMemberRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
 
     void recordList( const Auth::RecordListRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
@@ -90,6 +89,7 @@ private:
 
     CURL *      m_curl;
     char *      m_client;
+    std::string m_client_uid;
     std::string m_db_url;
     std::string m_db_user;
     std::string m_db_pass;

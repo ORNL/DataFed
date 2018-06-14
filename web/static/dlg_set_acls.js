@@ -69,7 +69,7 @@ function makeDlgSetACLs(){
         console.log( "show", item );
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
-
+        inst.uid = item.owner;
         inst.is_coll = (item.id[0]=="c");
 
         if ( inst.is_coll ){
@@ -111,7 +111,8 @@ function makeDlgSetACLs(){
 
         aclView( item.id, function( ok, data ){
             if ( !ok || !data ) {
-                alert("Could not get ACLs for", item.id );
+                //alert( "Could not get ACLs for " + item.id );
+                alert( data );
                 return;
             }
             console.log("data",data);
@@ -435,7 +436,7 @@ function makeDlgSetACLs(){
     this.addGroup = function(){
         console.log("add group" );
 
-        dlgGroups.show( function( gids ){
+        dlgGroups.show( inst.uid, function( gids ){
             var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
             var id;
             var rule;

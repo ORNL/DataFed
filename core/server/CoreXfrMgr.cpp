@@ -222,7 +222,6 @@ XfrMgr::xfrThreadFunc()
                                     upd_req.set_id( (*ixfr)->data_id );
                                     upd_req.set_data_size( file_size );
                                     upd_req.set_data_time( mod_time );
-                                    upd_req.set_subject( (*ixfr)->user_id );
                                     reply.Clear();
 
                                     db_client.recordUpdate( upd_req, reply );

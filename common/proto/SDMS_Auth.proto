@@ -109,8 +109,7 @@ message RecordCreateRequest
     optional string             desc        = 2;
     optional string             alias       = 3;
     optional string             metadata    = 4;
-    optional string             proj_id     = 5;
-    optional string             coll_id     = 6;
+    optional string             parent_id   = 5;
 }
 
 message RecordUpdateRequest
@@ -121,10 +120,8 @@ message RecordUpdateRequest
     optional string             alias       = 4;
     optional string             metadata    = 5;
     optional bool               mdset       = 6;
-    optional string             proj_id     = 7;
-    optional uint64             data_size   = 8;
-    optional uint32             data_time   = 9;
-    optional string             subject     = 10;
+    optional uint64             data_size   = 7;
+    optional uint32             data_time   = 8;
 }
 
 message RecordDeleteRequest
@@ -182,8 +179,7 @@ message CollCreateRequest
     required string             title       = 1;
     optional string             desc        = 2;
     optional string             alias       = 3;
-    optional string             proj_id     = 4;
-    optional string             coll_id     = 5;
+    optional string             parent_id   = 4;
 }
 
 message CollUpdateRequest
@@ -192,7 +188,6 @@ message CollUpdateRequest
     optional string             title       = 2;
     optional string             desc        = 3;
     optional string             alias       = 4;
-    optional string             proj_id     = 5;
 }
 
 message CollDeleteRequest
@@ -250,8 +245,8 @@ message GroupCreateRequest
 
 message GroupUpdateRequest
 {
-    required string             gid         = 1;
-    optional string             uid         = 2;
+    required string             uid         = 1;
+    required string             gid         = 2;
     optional string             title       = 3;
     optional string             desc        = 4;
     repeated string             add_uid     = 5;
@@ -265,16 +260,19 @@ message GroupDataReply
 
 message GroupDeleteRequest
 {
-    required string             gid         = 1;
+    required string             uid         = 1;
+    required string             gid         = 2;
 }
 
 message GroupListRequest
 {
+    required string             uid         = 1;
 }
 
 message GroupViewRequest
 {
-    required string             gid         = 1;
+    required string             uid         = 1;
+    required string             gid         = 2;
 }
 
 // ============================ ACL Messages
@@ -297,14 +295,11 @@ message ACLDataReply
 
 // ============================ Project Messages
 
-message ProjectListByAdminRequest
+message ProjectListRequest
 {
-    //required string             uid         = 1;
-}
-
-message ProjectListByMemberRequest
-{
-    //required string             uid         = 1;
+    optional bool               by_owner    = 1;
+    optional bool               by_admin    = 2;
+    optional bool               by_member   = 3;
 }
 
 message ProjectViewRequest

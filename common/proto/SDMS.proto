@@ -77,9 +77,12 @@ message UserData
 message ProjectData
 {
     required string             id          = 1;
-    required string             name        = 2;
-    repeated string             admin       = 3;
-    repeated string             member      = 4;
+    required string             title       = 2;
+    optional string             domain      = 3;
+    optional string             repo        = 4;
+    optional string             owner       = 5;
+    repeated string             admin       = 6;
+    repeated string             member      = 7;
 }
 
 message RecordData
@@ -122,8 +125,8 @@ message XfrData
 
 message GroupData
 {
-    required string             gid         = 1;
-    optional string             uid         = 2;
+    required string             uid         = 1;
+    required string             gid         = 2;
     optional string             title       = 3;
     optional string             desc        = 4;
     repeated string             member      = 5;

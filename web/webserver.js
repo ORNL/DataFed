@@ -313,6 +313,18 @@ app.get('/api/prj/view', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/prj/list', ( a_req, a_resp ) => {
+    console.log("get /api/prj/list");
+
+    sendMessage( "ProjectListRequest", { by_owner: true, by_admin: true, by_member: true }, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.proj );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
 app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
     console.log("get /api/prj/list/by_admin");
 
@@ -342,6 +354,7 @@ app.get('/api/grp/create', ( a_req, a_resp ) => {
 
     var params  = {
         group: {
+            uid: a_req.query.uid,
             gid: a_req.query.gid,
             title: a_req.query.title?a_req.query.title:undefined,
             desc: a_req.query.desc?a_req.query.desc:undefined,
@@ -359,6 +372,7 @@ app.get('/api/grp/update', ( a_req, a_resp ) => {
     console.log("get /api/grp/update");
 
     var params  = {
+        uid: a_req.query.uid,
         gid: a_req.query.gid,
         title: a_req.query.title,
         desc: a_req.query.desc,
@@ -377,7 +391,7 @@ app.get('/api/grp/update', ( a_req, a_resp ) => {
 app.get('/api/grp/view', ( a_req, a_resp ) => {
     console.log("get /api/grp/view");
 
-    sendMessage( "GroupViewRequest", { gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
+    sendMessage( "GroupViewRequest", { uid: a_req.query.uid, gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
         console.log( "GroupViewRequest reply:", reply );
         a_resp.send(reply.group[0]);
     });
@@ -386,7 +400,7 @@ app.get('/api/grp/view', ( a_req, a_resp ) => {
 app.get('/api/grp/list', ( a_req, a_resp ) => {
     console.log("get /api/grp/list");
 
-    sendMessage( "GroupListRequest", {}, a_req, a_resp, function( reply ) {
+    sendMessage( "GroupListRequest", { uid: a_req.query.uid }, a_req, a_resp, function( reply ) {
         console.log( "GroupListRequest reply:", reply );
         a_resp.send(reply.group);
     });
@@ -395,7 +409,7 @@ app.get('/api/grp/list', ( a_req, a_resp ) => {
 app.get('/api/grp/delete', ( a_req, a_resp ) => {
     console.log("get /api/grp/delete");
 
-    sendMessage( "GroupDeleteRequest", { gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
+    sendMessage( "GroupDeleteRequest", { uid: a_req.query.uid, gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
         console.log( "GroupDeleteRequest reply:", reply );
         a_resp.send(reply);
     });
@@ -407,7 +421,7 @@ app.get('/api/dat/create', ( a_req, a_resp ) => {
         alias: a_req.query.alias,
         desc: a_req.query.desc,
         metadata: a_req.query.md,
-        collId:  a_req.query.coll
+        parentId:  a_req.query.coll
     };
 
     sendMessage( "RecordCreateRequest", params, a_req, a_resp, function( reply ) {
@@ -499,7 +513,7 @@ app.get('/api/col/create', ( a_req, a_resp ) => {
         title: a_req.query.title,
         alias: a_req.query.alias,
         desc: a_req.query.desc,
-        collId:  a_req.query.coll
+        parentId: a_req.query.coll
     };
 
     sendMessage( "CollCreateRequest", params, a_req, a_resp, function( reply ) {

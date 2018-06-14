@@ -50,8 +50,8 @@
                         </div>
                         <div style="flex:none;padding:.25em">
                             <!-- input type="checkbox" id="lock_btn"><label title="Allow drag and drop within Collections & Data window" for="lock_btn">Unlock</label></input -->
-                            <button class="btn" onclick="newData()">New Data</button>
-                            <button class="btn" onclick="newColl()">New Coll.</button>
+                            <button class="btn act-folder act-root" onclick="newData()" disabled>New Data</button>
+                            <button class="btn act-folder act-root" onclick="newColl()" disabled>New Coll.</button>
                             <button class="btn act-folder act-data" onclick="editSelected()" disabled>Edit</button>
                             <button class="btn act-folder act-data" onclick="deleteSelected()" disabled>Delete</button>
                             <button class="btn act-folder act-data act-root" onclick="shareSelected()" disabled>Sharing</button>
@@ -111,7 +111,7 @@
 
         var drag_mode = 0;
         var drag_enabled = 1;
-        var root_key = "c/" + g_user.uid + "_root";
+        //var root_key = "c/" + g_user.uid + "_root";
 
         window.addEventListener( "resize", resizeHandler );
 

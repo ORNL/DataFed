@@ -114,26 +114,25 @@ function userView( a_id, a_cb ) {
     _asyncGet( "/api/usr/view?id="+a_id, null, a_cb );
 }
 
-function groupView( a_gid, a_cb ) {
+function groupView( a_uid, a_gid, a_cb ) {
     if ( a_gid.startsWith("g/" ))
-        _asyncGet( "/api/grp/view?gid="+a_gid.substr(2), null, a_cb );
+        _asyncGet( "/api/grp/view?uid="+a_uid+"&gid="+a_gid.substr(2), null, a_cb );
     else
-        _asyncGet( "/api/grp/view?gid="+a_gid, null, a_cb );
+        _asyncGet( "/api/grp/view?uid="+a_uid+"&gid="+a_gid, null, a_cb );
 }
 
-function groupList( a_cb ) {
-    _asyncGet( "/api/grp/list", null, a_cb );
+function groupList( a_uid, a_cb ) {
+    _asyncGet( "/api/grp/list?uid="+a_uid, null, a_cb );
 }
 
-function groupCreate( a_group, a_cb ) {
-    var url = "/api/grp/create?gid="+a_group.gid;
+function groupCreate( a_uid, a_group, a_cb ) {
+    var url = "/api/grp/create?uid="+a_uid+"&gid="+a_group.gid;
     if ( a_group.title )
         url += "&title="+a_group.title;
     if ( a_group.desc )
         url += "&desc="+a_group.desc;
     if ( a_group.member && a_group.member.length )
         url += "&member=" + JSON.stringify( a_group.member );
-    console.log( "create:", url );
 
     _asyncGet( url, null, function( ok, data ){
         if (  a_cb )
@@ -142,7 +141,7 @@ function groupCreate( a_group, a_cb ) {
 }
 
 function groupUpdate( a_group, a_cb ) {
-    var url = "/api/grp/update?gid="+a_group.gid;
+    var url = "/api/grp/update?uid="+a_group.uid+"&gid="+a_group.gid;
     if ( a_group.title )
         url += "&title="+a_group.title;
     if ( a_group.desc )
@@ -158,14 +157,14 @@ function groupUpdate( a_group, a_cb ) {
     });
 }
 
-function groupDelete( a_gid, a_cb ) {
-    _asyncGet( "/api/grp/delete?gid="+(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
+function groupDelete( a_uid, a_gid, a_cb ) {
+    _asyncGet( "/api/grp/delete?uid="+a_uid+"&gid="+(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
         if ( ok && a_cb )
             a_cb();
     });
 }
 
-function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
+function dlgNewEdit(a_mode,a_data,a_parent,a_owner,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
         "<table style='width:100%'>\

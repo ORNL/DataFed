@@ -39,6 +39,7 @@ DatabaseClient::~DatabaseClient()
 void
 DatabaseClient::setClient( const std::string & a_client )
 {
+    m_client_uid = a_client;
     m_client = curl_easy_escape( m_curl, a_client.c_str(), 0 );
 }
 
@@ -453,21 +454,18 @@ DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::Proj
 }
 
 void
-DatabaseClient::projListByAdmin( const Auth::ProjectListByAdminRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
-    (void)a_request;
     rapidjson::Document result;
-    dbGet( "prj/list/by_admin", {}, result );
+    vector<pair<string,string>> params;
+    if ( a_request.has_by_owner() && a_request.by_owner() )
+        params.push_back({"by_owner","true"});
+    if ( a_request.has_by_admin() && a_request.by_admin() )
+        params.push_back({"by_admin","true"});
+    if ( a_request.has_by_member() && a_request.by_member() )
+        params.push_back({"by_member","true"});
 
-    setProjectData( a_reply, result );
-}
-
-void
-DatabaseClient::projListByMember( const Auth::ProjectListByMemberRequest & a_request, Auth::ProjectDataReply & a_reply )
-{
-    (void)a_request;
-    rapidjson::Document result;
-    dbGet( "prj/list/by_member", {}, result );
+    dbGet( "prj/list", {}, result );
 
     setProjectData( a_reply, result );
 }
@@ -489,7 +487,16 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 
         proj = a_reply.add_proj();
         proj->set_id( val["uid"].GetString() );
-        proj->set_name( val["name"].GetString() );
+        proj->set_title( val["title"].GetString() );
+
+        if (( imem = val.FindMember("domain")) != val.MemberEnd() )
+            proj->set_domain( imem->value.GetString() );
+
+        if (( imem = val.FindMember("repo")) != val.MemberEnd() )
+            proj->set_repo( imem->value.GetString() );
+
+        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
+            proj->set_owner( imem->value.GetString() );
 
         if (( imem = val.FindMember("admins")) != val.MemberEnd() )
         {
@@ -550,10 +557,8 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_metadata() )
         params.push_back({"md",a_request.metadata()});
-    if ( a_request.has_proj_id() )
-        params.push_back({"proj",a_request.proj_id()});
-    if ( a_request.has_coll_id() )
-        params.push_back({"coll",a_request.coll_id()});
+    if ( a_request.has_parent_id() )
+        params.push_back({"parent",a_request.parent_id()});
 
     dbGet( "dat/create", params, result );
 
@@ -577,14 +582,10 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         params.push_back({"md",a_request.metadata()});
     if ( a_request.has_mdset() )
         params.push_back({"mdset",a_request.mdset()?"true":"false"});
-    if ( a_request.has_proj_id() )
-        params.push_back({"proj",a_request.proj_id()});
     if ( a_request.has_data_size() )
         params.push_back({"data_size",to_string(a_request.data_size())});
     if ( a_request.has_data_time() )
         params.push_back({"data_time",to_string(a_request.data_time())});
-    if ( a_request.has_subject() )
-        params.push_back({"subject",a_request.subject()});
 
     dbGet( "dat/update", params, result );
 
@@ -691,10 +692,8 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
         params.push_back({"desc",a_request.desc()});
     if ( a_request.has_alias() )
         params.push_back({"alias",a_request.alias()});
-    if ( a_request.has_proj_id() )
-        params.push_back({"proj",a_request.proj_id()});
-    if ( a_request.has_coll_id() )
-        params.push_back({"parent",a_request.coll_id()});
+    if ( a_request.has_parent_id() )
+        params.push_back({"parent",a_request.parent_id()});
 
     dbGet( "col/create", params, result );
 
@@ -714,8 +713,6 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
         params.push_back({"desc",a_request.desc()});
     if ( a_request.has_alias() )
         params.push_back({"alias",a_request.alias()});
-    if ( a_request.has_proj_id() )
-        params.push_back({"proj",a_request.proj_id()});
 
     dbGet( "col/update", params, result );
 
@@ -1004,7 +1001,9 @@ DatabaseClient::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::G
     rapidjson::Document result;
 
     vector<pair<string,string>> params;
-    params.push_back({"id", a_request.group().gid()});
+    params.push_back({"gid", a_request.group().gid()});
+    if ( a_request.group().uid().compare( m_client_uid ) != 0 )
+        params.push_back({"proj", a_request.group().uid()});
     if ( a_request.group().has_title() )
         params.push_back({"title", a_request.group().title()});
     if ( a_request.group().has_desc() )
@@ -1033,7 +1032,9 @@ DatabaseClient::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::G
     rapidjson::Document result;
 
     vector<pair<string,string>> params;
-    params.push_back({"id", a_request.gid()});
+    params.push_back({"gid", a_request.gid()});
+    if ( a_request.uid().compare( m_client_uid ) != 0 )
+        params.push_back({"proj", a_request.uid()});
     if ( a_request.has_title() )
         params.push_back({"title", a_request.title()});
     if ( a_request.has_desc() )
@@ -1080,7 +1081,12 @@ DatabaseClient::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::A
     (void) a_reply;
     rapidjson::Document result;
 
-    dbGet( "grp/delete", {{"id",a_request.gid()}}, result );
+    vector<pair<string,string>> params;
+    params.push_back({"gid", a_request.gid()});
+    if ( a_request.uid().compare( m_client_uid ) != 0 )
+        params.push_back({"proj", a_request.uid()});
+
+    dbGet( "grp/delete", params, result );
 }
 
 void
@@ -1089,8 +1095,11 @@ DatabaseClient::groupList( const Auth::GroupListRequest & a_request, Auth::Group
     (void) a_request;
 
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    if ( a_request.uid().compare( m_client_uid ) != 0 )
+        params.push_back({"proj", a_request.uid()});
 
-    dbGet( "grp/list", {}, result );
+    dbGet( "grp/list", params, result );
 
     setGroupData( a_reply, result );
 }
@@ -1099,8 +1108,12 @@ void
 DatabaseClient::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"gid", a_request.gid()});
+    if ( a_request.uid().compare( m_client_uid ) != 0 )
+        params.push_back({"proj", a_request.uid()});
 
-    dbGet( "grp/view", {{"id",a_request.gid()}}, result );
+    dbGet( "grp/view", params, result );
 
     setGroupData( a_reply, result );
 }

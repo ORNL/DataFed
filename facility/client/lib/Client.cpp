@@ -452,7 +452,7 @@ Client::recordView( const std::string & a_id )
 }
 
 spRecordDataReply
-Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_proj_id, const char * a_coll_id )
+Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_coll_id )
 {
     Auth::RecordCreateRequest req;
 
@@ -463,10 +463,8 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
         req.set_alias( a_alias );
     if ( a_metadata )
         req.set_metadata( a_metadata );
-    if ( a_proj_id )
-        req.set_proj_id( a_proj_id );
     if ( a_coll_id )
-        req.set_coll_id( a_coll_id );
+        req.set_parent_id( a_coll_id );
 
     Auth::RecordDataReply * reply;
 
@@ -476,7 +474,7 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
 }
 
 spRecordDataReply
-Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, bool a_md_merge, const char * a_proj_id )
+Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, bool a_md_merge )
 {
     Auth::RecordUpdateRequest req;
 
@@ -492,8 +490,6 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
         req.set_metadata( a_metadata );
         req.set_mdset( !a_md_merge );
     }
-    if ( a_proj_id )
-        req.set_proj_id( a_proj_id );
 
     Auth::RecordDataReply * reply;
 
@@ -574,7 +570,7 @@ Client::collRead( const std::string & a_coll_id, CollMode a_mode, bool a_details
 }
 
 spCollDataReply
-Client::collCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_proj_id, const char * a_coll_id )
+Client::collCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_coll_id )
 {
     Auth::CollCreateRequest req;
 
@@ -583,10 +579,8 @@ Client::collCreate( const std::string & a_title, const char * a_desc, const char
         req.set_desc( a_desc );
     if ( a_alias )
         req.set_alias( a_alias );
-    if ( a_proj_id )
-        req.set_proj_id( a_proj_id );
     if ( a_coll_id )
-        req.set_coll_id( a_coll_id );
+        req.set_parent_id( a_coll_id );
 
     Auth::CollDataReply * reply;
 
@@ -596,7 +590,7 @@ Client::collCreate( const std::string & a_title, const char * a_desc, const char
 }
 
 spCollDataReply
-Client::collUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_proj_id )
+Client::collUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias )
 {
     Auth::CollUpdateRequest req;
 
@@ -607,8 +601,6 @@ Client::collUpdate( const std::string & a_id, const char * a_title, const char *
         req.set_desc( a_desc );
     if ( a_alias )
         req.set_alias( a_alias );
-    if ( a_proj_id )
-        req.set_proj_id( a_proj_id );
 
     Auth::CollDataReply * reply;
 

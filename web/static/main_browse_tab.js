@@ -30,44 +30,49 @@ function deleteSelected() {
 
 function newData() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
-    if ( node ) {
-        if ( node.key[0] == "c" ) {
-            viewColl( node.key, function( data ){
-                var obj = data.data[0];
-                dlgNewEdit(0,null,obj.alias?obj.alias:obj.id,function(data){
-                    addNode( data );
-                });
-            }); 
-        } else
-            dlgNewEdit(0,null,null,function(data){
+    if ( node && node.key[0] == "c" ) {
+        viewColl( node.key, function( data ){
+            var coll = data.data[0];
+            var coll_id = coll.id;
+            if ( coll.alias ){
+                if ( coll.owner != g_user.uid )
+                    coll_id = coll.owner + ":" + coll.alias;
+                else
+                    coll_id = coll.alias;
+            }
+
+            dlgNewEdit(0,null,coll_id,coll.owner,function(data){
                 addNode( data );
             });
-    } else {
+        }); 
+    } /*else {
         dlgNewEdit(0,null,null,function(data){
             addNode( data );
         });
-    }
+    }*/
 }
 
 function newColl() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
-    if ( node ) {
-        if ( node.key[0] == "c" ) {
-            viewColl( node.key, function( data ){
-                var obj = data.data[0];
-                dlgNewEdit(1,null,obj.alias?obj.alias:obj.id,function(data){
-                    addNode( data );
-                });
-            }); 
-        } else
-            dlgNewEdit(1,null,null,function(data){
+    if ( node && node.key[0] == "c" ) {
+        viewColl( node.key, function( data ){
+            var coll = data.data[0];
+            var coll_id = coll.id;
+            if ( coll.alias ){
+                if ( coll.owner != g_user.uid )
+                    coll_id = coll.owner + ":" + coll.alias;
+                else
+                    coll_id = coll.alias;
+            }
+            dlgNewEdit(1,null,coll_id,coll.owner,function(data){
                 addNode( data );
             });
-    } else {
+        }); 
+    }/* else {
         dlgNewEdit(1,null,null,function(data){
             addNode( data );
         });
-    }
+    }*/
 }
 
 function editSelected() {
@@ -75,13 +80,13 @@ function editSelected() {
     if ( node ) {
         if ( node.key[0] == "c" ) {
             viewColl( node.key, function( data ){
-                dlgNewEdit(1,data.data[0],null,function(data){
+                dlgNewEdit(1,data.data[0],null,null,function(data){
                     updateNodeTitle( data );
                 });
             }); 
         } else if ( node.key[0] == "d" ) {
             viewData( node.key, function( data ){
-                dlgNewEdit(0,data.data[0],null,function(data){
+                dlgNewEdit(0,data.data[0],null,null,function(data){
                     updateNodeTitle( data );
                 });
             }); 
@@ -143,7 +148,7 @@ function updateBtnState( state ){
         $(".btn.act-data").not(".act-folder").button("option", "disabled", true);
         $(".btn.act-folder").button("option", "disabled", false);
     } else if ( state == "d" ) {
-        $(".btn.act-folder").button("option", "disabled", false);
+        $(".btn.act-folder").button("option", "disabled", true);
         $(".btn.act-data").button("option", "disabled", false);
     } else if ( state == "r" ) {
         $(".btn.act-folder").button("option", "disabled", true);
@@ -158,7 +163,8 @@ function updateBtnState( state ){
 
 function showSelectedInfo( key ){
     if ( key[0] == "c" /*&& key != root_key*/ ) {
-        if ( key == root_key )
+        //if ( key == root_key )
+        if ( key.endsWith( "_root" ))
             updateBtnState( "r" );
         else
             updateBtnState( "c" );
@@ -246,9 +252,10 @@ function generateTitle( item ) {
 
 function setupBrowseTab(){
     var tree_source = [
-        {title:"My Data",folder:true,lazy:true,key:root_key},
-        {title:"Projects (admin)",folder:true,lazy:true,key:"prjbyadm"},
-        {title:"Projects (member)",folder:true,lazy:true,key:"prjbymem"},
+        {title:"My Data",folder:true,lazy:true,key: "c/" + g_user.uid + "_root" },
+        {title:"My Projects",folder:true,lazy:true,key:"myproj"},
+        //{title:"Projects (admin)",folder:true,lazy:true,key:"prjbyadm"},
+        //{title:"Projects (member)",folder:true,lazy:true,key:"prjbymem"},
         {title:"Shares",folder:true,lazy:true },
         {title:"Views",folder:true,lazy:true }
     ];
@@ -257,7 +264,8 @@ function setupBrowseTab(){
         extensions: ["dnd","themeroller"],
         dnd:{
             dragStart: function(node, data) {
-                if ( !drag_enabled || node.key == "loose" || node.key == root_key )
+                //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
+                if ( !drag_enabled || node.key.endsWith("_root"))
                     return false;
 
                 if ( data.originalEvent.shiftKey ) {
@@ -311,7 +319,12 @@ function setupBrowseTab(){
         source: tree_source,
         selectMode: 1,
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "prjbyadm" ){
+            if ( data.node.key == "myproj" ){
+                data.result = {
+                    url: "/api/prj/list/",
+                    cache: false
+                };
+            } else if ( data.node.key == "prjbyadm" ){
                 data.result = {
                     url: "/api/prj/list/by_admin",
                     cache: false
@@ -335,14 +348,14 @@ function setupBrowseTab(){
         },
         postProcess: function( event, data ) {
             console.log( "pos proc:", data );
-            if ( data.node.key == "prjbyadm" || data.node.key == "prjbymem" ){
+            if ( data.node.key == "myproj" ){
                 //console.log("proj list resp",data.response);
                 data.result = [];
                 if ( data.response.length ){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", lazy: true });
+                        data.result.push({ title: item.title + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", lazy: true });
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false  });
@@ -372,14 +385,15 @@ function setupBrowseTab(){
             console.log("select",data.node.isSelected(),data.node.data);
         },*/
         click: function(event, data) {
-            if ( drag_enabled && data.originalEvent.ctrlKey && data.node.parent.key != "loose" ) {
+            // TODO Revisit unlink feature
+            if ( drag_enabled && data.originalEvent.ctrlKey ) {
                 if ( data.node.isFolder() ){
-                    if ( data.node.key != "loose" && data.node.key != root_key && data.node.parent.key != root_key ){
+                    //if ( data.node.key != "loose" && data.node.key != root_key && data.node.parent.key != root_key ){
                         //console.log("move to root",data.node );
                         linkItemUnlinkSource( data.node.key, "root", data.node.parent.key, function() {
                             data.node.moveTo( data.node.getParentList()[0], "over" );
                         });
-                    }
+                    //}
                 } else {
                     //console.log("unlink",data.node );
                     unlinkItem( data.node.key, data.node.parent.key, function() {
