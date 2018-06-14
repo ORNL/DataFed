@@ -26,36 +26,40 @@ router.get('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","admin"],
+                read: ["u","p","uuid","accn","admin"],
                 write: ["g","owner","member"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var uid;
 
-                if ( req.queryParams.subject ) {
-                    uid = req.queryParams.subject;
-                    g_lib.ensureAdminPermUser( client, "u/" + uid );
+                if ( req.queryParams.proj ) {
+                    if ( req.queryParams.proj.startsWith("p/"))
+                        uid = req.queryParams.proj;
+                    else
+                        uid = "p/" + req.queryParams.proj;
+                    g_lib.ensureAdminPermProj( client, uid );
                 } else {
-                    uid = client._key;
+                    uid = client._id;
                 }
 
-                var group = g_db.g.save({ uid: uid, gid: req.queryParams.id, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
+                var group = g_db.g.save({ uid: uid, gid: req.queryParams.gid, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
 
-                g_db.owner.save({ _from: group._id, _to: "u/" + uid });
+                g_db.owner.save({ _from: group._id, _to: uid });
 
                 if ( req.queryParams.members ) {
+                    group.new.members = req.queryParams.members;
                     var mem;
                     for ( var i in req.queryParams.members ) {
                         mem = req.queryParams.members[i];
-                        if ( !g_db._exists( "u/" + mem ))
+                        if ( !g_db._exists( "u/"+mem ))
                             throw g_lib.ERR_USER_NOT_FOUND;
 
-                        g_db.member.save({ _from: group._id, _to: "u/" + mem });
+                        g_db.member.save({ _from: group._id, _to: "u/"+mem });
                     }
+                }else{
+                    group.new.members = [];
                 }
-
-                group.members = g_db._query( "for v in 1..1 outbound @group member return v._key", { group: group._id }).toArray();
 
                 delete group._id;
                 delete group._key;
@@ -71,13 +75,13 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('proj', joi.string().optional(), "Project ID (optional)")
+.queryParam('gid', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('members', joi.array(joi.string()).optional(), "Array of member UIDs")
 .summary('Creates a new group')
-.description('Creates a new group owned by client (or subject), with optional members');
+.description('Creates a new group owned by client (or project), with optional members');
 
 
 router.get('/update', function (req, res) {
@@ -86,20 +90,23 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","admin"],
+                read: ["u","p","uuid","accn","admin"],
                 write: ["g","owner","member"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
 
-                if ( req.queryParams.subject ) {
-                    group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
+                if ( req.queryParams.proj ) {
+                    var uid = req.queryParams.proj;
+                    if ( !uid.startsWith("p/"))
+                        uid = "p/" + uid;
+                    group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
                     g_lib.ensureAdminPermObject( client, group._id );
                 } else {
-                    group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
+                    group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
                 }
@@ -165,14 +172,14 @@ router.get('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('proj', joi.string().optional(), "Project ID")
+.queryParam('gid', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().optional(), "New title")
 .queryParam('desc', joi.string().optional(), "New description")
 .queryParam('add', joi.array(joi.string()).optional(), "Array of member UIDs to add to group")
 .queryParam('rem', joi.array(joi.string()).optional(), "Array of member UIDs to remove from group")
 .summary('Updates an existing group')
-.description('Updates an existing group owned by client (or subject)');
+.description('Updates an existing group owned by client (or project).');
 
 
 router.get('/delete', function (req, res) {
@@ -183,31 +190,28 @@ router.get('/delete', function (req, res) {
                 write: ["g","owner","member","acl"]
             },
             action: function() {
-                console.log("1");
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
-                console.log("2");
 
-                if ( req.queryParams.subject ) {
-                    console.log("3");
-                    group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.gid });
+                if ( req.queryParams.proj ) {
+                    var uid = req.queryParams.proj;
+                    if ( !uid.startsWith("p/"))
+                        uid = "p/" + uid;
+                    group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
-                        console.log("4",group);
+
                     g_lib.ensureAdminPermObject( client, group._id );
                     // Make sure special members project is protected
-                    console.log("5");
                     if ( group.gid == "members" )
                         throw g_lib.ERR_MEM_GRP_PROTECTED;
                 } else {
-                    console.log("6");
-                    group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.gid });
+                    group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
                 }
 
-                console.log("7");
-                //g_graph.g.remove( group._id );
+                g_graph.g.remove( group._id );
             }
         });
     } catch( e ) {
@@ -215,10 +219,10 @@ router.get('/delete', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('proj', joi.string().optional(), "Project ID")
 .queryParam('gid', joi.string().required(), "Group ID")
 .summary('Deletes an existing group')
-.description('Deletes an existing group owned by client or subject');
+.description('Deletes an existing group owned by client or project');
 
 
 router.get('/list', function (req, res) {
@@ -226,14 +230,17 @@ router.get('/list', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var owner_id;
 
-        if ( req.queryParams.subject ) {
-            owner_id = "u/" + req.queryParams.subject;
-            g_lib.ensureAdminPermUser( client, owner_id );
+        if ( req.queryParams.proj ) {
+            if ( req.queryParams.proj.startsWith("p/"))
+                owner_id = req.queryParams.proj;
+            else
+                owner_id = "p/" + req.queryParams.proj;
+            g_lib.ensureAdminPermProj( client, owner_id );
         } else {
             owner_id = client._id;
         }
 
-        var groups = g_db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('g', v) return { gid: v.gid, title: v.title }", { client: owner_id }).toArray();
+        var groups = g_db._query( "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('g', v) return { uid: v.uid, gid: v.gid, title: v.title }", { client: owner_id }).toArray();
 
         res.send( groups );
     } catch( e ) {
@@ -241,9 +248,9 @@ router.get('/list', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('proj', joi.string().optional(), "Project ID")
 .summary('List groups')
-.description('List groups owned by client or subject');
+.description('List groups owned by client or project');
 
 
 router.get('/view', function (req, res) {
@@ -251,19 +258,22 @@ router.get('/view', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var group;
 
-        if ( req.queryParams.subject ) {
-            group = g_db.g.firstExample({ uid: req.queryParams.subject, gid: req.queryParams.id });
+        if ( req.queryParams.proj ) {
+            var uid = req.queryParams.proj;
+            if ( !uid.startsWith("p/"))
+                uid = "p/" + uid;
+            group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
             if ( !group )
                 throw g_lib.ERR_GROUP_NOT_FOUND;
 
             g_lib.ensureAdminPermObject( client, group._id );
         } else {
-            group = g_db.g.firstExample({ uid: client._key, gid: req.queryParams.id });
+            group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
             if ( !group )
                 throw g_lib.ERR_GROUP_NOT_FOUND;
         }
 
-        var result = { gid: group.gid, title: group.title, desc: group.desc };
+        var result = { uid: group.uid, gid: group.gid, title: group.title, desc: group.desc };
         result.members = g_db._query( "for v in 1..1 outbound @group member return v._key", { group: group._id }).toArray();
         res.send( [result] );
 
@@ -272,8 +282,8 @@ router.get('/view', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('id', joi.string().required(), "Group ID")
+.queryParam('proj', joi.string().optional(), "Project ID")
+.queryParam('gid', joi.string().required(), "Group ID")
 .summary('View group details')
 .description('View group details');
 

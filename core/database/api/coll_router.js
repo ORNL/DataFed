@@ -31,36 +31,48 @@ router.get('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var owner_id;
+                var parent_id;
+
+                if ( req.queryParams.parent ) {
+                    parent_id = g_lib.resolveID( req.queryParams.parent, client );
+
+                    if ( parent_id[0] != "c" )
+                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
+
+                    if ( !g_db._exists( parent_id ))
+                        throw g_lib.ERR_COLL_NOT_FOUND;
+
+                    owner_id = g_db.owner.firstExample({_from:parent_id})._to;
+                    if ( owner_id != client._id ){
+                        if ( !g_lib.hasAdminPermProj( client, owner_id )){
+                            var parent_coll = g_db.c.document( parent_id );
+
+                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_CREATE ))
+                                throw g_lib.ERR_PERM_DENIED;
+                        }
+                    }
+                }else{
+                    parent_id = "c/" + client._key + "_root";
+                    owner_id = client._id;
+                }
 
                 var obj = { title: req.queryParams.title };
                 if ( req.queryParams.desc )
                     obj.desc = req.queryParams.desc;
 
                 var coll = g_db.c.save( obj, { returnNew: true });
-                g_db.owner.save({ _from: coll._id, _to: client._id });
-
-                var parent_id = null;
-                if ( req.queryParams.parent ) {
-                    parent_id = g_lib.resolveID( req.queryParams.parent, client );
-                    if ( parent_id[0] != "c" )
-                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
-                }
-                else
-                    parent_id = "c/" + client._key + "_root";
-
-                // Arango bug requires this
-                if ( !g_db._exists( parent_id ))
-                    throw g_lib.ERR_COLL_NOT_FOUND;
-
+                g_db.owner.save({ _from: coll._id, _to: owner_id });
+    
                 g_graph.item.save({ _from: parent_id, _to: coll._id });
 
                 if ( req.queryParams.alias ) {
                     g_lib.validateAlias( req.queryParams.alias );
-                    var alias_key = client._key + ":" + req.queryParams.alias;
+                    var alias_key = owner_id.substr(2) + ":" + req.queryParams.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: client._id });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
 
                     coll.new.alias = req.queryParams.alias;
                 }

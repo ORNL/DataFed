@@ -69,6 +69,7 @@ module.exports = ( function() {
     obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
     obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
+    obj.ERR_INVALID_DOMAIN        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid domain" ]);
     obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid parameter(s)" ]);
     obj.ERR_INVALID_COLLECTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid collection" ]);
     obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
@@ -203,19 +204,22 @@ module.exports = ( function() {
     };
 
     obj.assignRepo = function( a_user_id ){
-        var repos = obj.db._query( "for v, e in 1..1 outbound @user alloc return { repo: v, alloc: e }", { user: a_user_id }).toArray();
-        if ( !repos.length )
-            throw obj.ERR_NO_ALLOCATION;
+        //var repos = obj.db._query( "for v, e in 1..1 outbound @user alloc return { repo: v, alloc: e }", { user: a_user_id }).toArray();
+        var repos = obj.db.alloc.byExample({ _from: a_user_id }).toArray();
 
-        // TODO Need an alg for selecting best allocation when multiple present
-        return repos[0];
+        for ( var i in repos ){
+            if ( repos[i].usage < repos[i].alloc )
+                return repos[i];
+        }
+
+        return null;
     };
 
     obj.verifyRepo = function( a_user_id, a_repo_id ){
         var alloc = obj.db.alloc.firstExample({ _from: a_user_id, _to: "repo/" + a_repo_id });
         if ( !alloc )
             throw obj.ERR_NO_ALLOCATION;
-        if ( alloc.alloc >= alloc.usage )
+        if ( alloc.usage >= alloc.alloc )
             throw obj.ERR_ALLOCATION_EXCEEDED;
         return alloc;
     };
@@ -238,19 +242,28 @@ module.exports = ( function() {
         }
     };
 
+    obj.hasAdminPermProj = function( a_client, a_proj_id ) {
+        if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client._id }))  { 
+            return false;
+        } else {
+            return true;
+        }
+    };
+
     obj.hasAdminPermObject = function( a_client, a_object_id ) {
-        console.log("a1");
         if ( a_client.is_admin )
             return true;
-        console.log("a2");
+
         var owner_id = obj.db.owner.firstExample({ _from: a_object_id })._to;
         if ( owner_id == a_client._id )
             return true;
-        console.log("a3", owner_id, a_client );
 
         if ( obj.db.admin.firstExample({ _from: owner_id, _to: a_client._id }))
             return true;
-        console.log("a4");
+
+        if ( obj.db.owner.firstExample({ _from: owner_id, _to: a_client._id }))
+            return true;
+
 
         return false;
     };
@@ -265,6 +278,11 @@ module.exports = ( function() {
 
     obj.ensureAdminPermUser = function( a_client, a_user_id ) {
         if ( !obj.hasAdminPermUser( a_client, a_user_id ))
+            throw obj.ERR_PERM_DENIED;
+    };
+
+    obj.ensureAdminPermProj = function( a_client, a_user_id ) {
+        if ( !obj.hasAdminPermProj( a_client, a_user_id ))
             throw obj.ERR_PERM_DENIED;
     };
 

@@ -21,7 +21,7 @@ graph._addVertexCollection("tr");   // Transfers
 graph._addVertexCollection("repo"); // Repository servers
 
 
-var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u"]);
+var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u","p"]);
 graph._extendEdgeDefinitions(owner);
 
 var mem = graph_module._relation("member", ["g"], ["u"]);

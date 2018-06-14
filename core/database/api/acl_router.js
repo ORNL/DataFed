@@ -79,15 +79,15 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","d","c","a","admin","alias"],
+                read: ["u","p","uuid","accn","d","c","a","admin","alias"],
                 write: ["c","d","acl"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var object = g_lib.getObject( req.queryParams.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: object._id })._to;
-                var owner = g_db.u.document( owner_id );
-                owner_id = owner_id.substr(2);
+                //var owner = g_db._document( owner_id );
+                //owner_id = owner_id.substr(2);
 
                 //console.log("obj:",object);
 
@@ -425,9 +425,12 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_INVALID_ID;
 
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
+            //console.log( "hasAdminPermObject = false");
             if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ))
                 throw g_lib.ERR_PERM_DENIED;
-        }
+            //console.log( "hasPerm(admin) = true");
+        }//else
+            //console.log( "hasAdminPermObject = true");
 
         var rules = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, deny: e.deny, inhgrant: e.inhgrant, inhdeny: e.inhdeny }", { object: object._id }).toArray();
         postProcACLRules( rules, object );
