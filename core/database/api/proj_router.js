@@ -48,7 +48,7 @@ router.get('/create', function (req, res) {
                 var proj = g_db.p.save( proj_data, { returnNew: true });
                 g_db.owner.save({ _from: proj._id, _to: client._id });
 
-                var root = g_db.c.save({ _key: req.queryParams.id + "_root", is_root: true, title: "root", desc: "Root collection for project " + req.queryParams.name + " (" + req.queryParams.id +")" }, { returnNew: true });
+                var root = g_db.c.save({ _key: req.queryParams.id + "_root", is_root: true, title: "root", desc: "Root collection for project " + req.queryParams.id }, { returnNew: true });
 
                 var alias = g_db.a.save({ _key: req.queryParams.id + ":root" }, { returnNew: true });
                 g_db.owner.save({ _from: alias._id, _to: proj._id });
