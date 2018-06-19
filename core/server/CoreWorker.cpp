@@ -3,6 +3,7 @@
 #include <CoreWorker.hpp>
 #include <TraceException.hpp>
 #include <DynaLog.hpp>
+#include <Util.hpp>
 #include <SDMS.pb.h>
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>
@@ -79,6 +80,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest  );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RecordFindRequest, &Worker::procRecordFindRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, UserSaveTokensRequest, AckReply, userSaveTokens );
@@ -91,7 +93,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
         SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
-        SET_MSG_HANDLER_DB( proto_id, RecordFindRequest, RecordDataReply, recordFind );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
@@ -381,5 +382,17 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+bool
+Worker::procRecordFindRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordFindRequest, RecordDataReply )
+
+    m_db_client.setClient( a_uid );
+    RecordFindRequest req2;
+    req2.set_query( parseQuery( request->query() ));
+    m_db_client.recordFind( req2, reply );
+
+    PROC_MSG_END
+}
 
 }}

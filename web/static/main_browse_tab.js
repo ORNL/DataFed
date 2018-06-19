@@ -240,6 +240,14 @@ function addNode( item ){
     });
 }
 
+function execQuery(){
+    var query = $("#query_input").val();
+    console.log( "query:", query );
+    findData( query, function( ok, data ){
+        console.log( "qry res:", ok, data );
+    });
+}
+
 function generateTitle( item ) {
     if ( item.alias )
         return "\"" + item.title + "\" (" + item.alias.substr(item.alias.indexOf(":") + 1) + ")";

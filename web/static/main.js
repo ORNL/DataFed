@@ -71,6 +71,10 @@ function createData( a_title, a_alias, a_desc, a_md, a_coll, a_callback ) {
     _asyncGet( "/api/dat/create?title="+a_title+"&alias="+a_alias+"&desc="+a_desc+"&md="+a_md+"&coll="+a_coll, null, a_callback );
 }
 
+function findData( a_query, a_callback ) {
+    _asyncGet("/api/dat/find?query="+encodeURIComponent(a_query),null,a_callback);
+}
+
 function viewColl( a_id, a_callback ) {
     console.log("viewColl()");
     _asyncGet( "/api/col/view?id=" + a_id, null, function( ok, data ){

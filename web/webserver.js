@@ -489,6 +489,14 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/find', ( a_req, a_resp ) => {
+    console.log( "/api/dat/find", a_req.query.query );
+    sendMessage( "RecordFindRequest", { query: a_req.query.query }, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/col/read", reply );
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/acl/view', ( a_req, a_resp ) => {
     sendMessage( "ACLViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);

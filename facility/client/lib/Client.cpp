@@ -334,6 +334,7 @@ Client::userUpdate( const std::string & a_uid, const char * a_email )
     return spUserDataReply( reply );
 }
 
+#if 0
 string
 Client::parseQuery( const string & a_query )
 {
@@ -412,6 +413,7 @@ Client::parseQuery( const string & a_query )
     //cout << "[" << a_query << "]=>[" << result << "]\n";
     return result;
 }
+#endif
 
 spRecordDataReply
 Client::recordList()
@@ -429,7 +431,8 @@ Client::recordFind( const std::string & a_query )
 {
     Auth::RecordFindRequest req;
 
-    req.set_query( parseQuery( a_query ));
+    //req.set_query( parseQuery( a_query ));
+    req.set_query( a_query );
 
     Auth::RecordDataReply * reply;
 

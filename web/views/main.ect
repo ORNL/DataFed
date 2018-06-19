@@ -36,6 +36,20 @@
                 </ul>
                 <div id="tab-browse">
                     <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
+                        <div style="flex:none">
+                            <div class="row-flex" style="flex:1 1 100%">
+                                <div style="flex:none;padding:.25em">
+                                    Search:
+                                </div>
+                                <div style="flex:1 1 100%;padding:.25em">
+                                    <input id="query_input" type='text' style="width:100%"></input>
+                                </div>
+                                <div style="flex:none;padding:.25em">
+                                    <button class="btn small" onclick="execQuery()">Search</button>
+                                    <button class="btn small" onclick="resetQuery()">Reset</button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row-flex" style="flex:1 1 100%">
                             <div class="col-flex" style="flex:1 1 40%;padding:.25em">
                                 <div style="flex:none">Collections &amp Data:</div>
@@ -65,7 +79,6 @@
                     </div>
                 </div>
                 <div id="tab-search">
-                Search Stuff
                 </div>
                 <div id="tab-repo">
                     <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
