@@ -53,6 +53,12 @@ body
     padding: .5em;
 }
 
+.status-bar
+{
+    color:#00FF00;
+    background:#202020;
+}
+
 .text
 {
     background: #FFFFFF!important;

@@ -1,3 +1,9 @@
+var data_md_tree;
+var data_md_empty = true;
+var data_md_empty_src = [{title:"(none)", icon:false}];
+var data_md_cur = {};
+var data_md_exp = {};
+
 function deleteSelected() {
     var item = $('#data_tree').fancytree('getTree').activeNode;
     var url = "/api/";
@@ -170,37 +176,103 @@ function showSelectedInfo( key ){
             updateBtnState( "c" );
         viewColl( key, function( data ){
             var item = data.data[0];
-            var html = "<table class='info_table'><col width='30%'><col width='70%'>";
-            html += "<tr><td>Type:</td><td>Data Collection</td></tr>";
-            html += "<tr><td>ID:</td><td>" + item.id + "</td></tr>";
-            html += "<tr><td>Title:</td><td>" + item.title + "</td></tr>";
-            html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
-            html += "<tr><td>Desc:</td><td>" + (item.desc?item.desc:"(none)") + "</td></tr>";
+            var html = "Collection, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
+            $("#data_ident").html( html );
+
+            html = "\"" + item.title + "\"<br>";
+            if ( item.desc )
+                html += "<p>\"" + item.desc + "\"</p>";
+            else
+                html += "<br>";
+
+            html += "<table class='info_table'><col width='30%'><col width='70%'>";
+            html += "<tr><th>Field</th><th>Value</th></tr>";
             html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
             html += "</table>";
             $("#data_info").html(html);
+            showSelectedMetadata();
         }); 
     } else if ( key[0] == "d" ) {
         updateBtnState( "d" );
         viewData( key, function( data ){
             var item = data.data[0];
-            var html = "<table class='info_table'><col width='30%'><col width='70%'>";
-            html += "<tr><td>Type:</td><td>Data Record</td></tr>";
-            html += "<tr><td>ID:</td><td>" + item.id + "</td></tr>";
-            html += "<tr><td>Title:</td><td>" + item.title + "</td></tr>";
-            html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
-            html += "<tr><td>Desc:</td><td>" + (item.desc?item.desc:"(none)") + "</td></tr>";
+            var html = "Data Record, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
+            $("#data_ident").html( html );
+
+            var html = "\"" + item.title + "\"<br>";
+            if ( item.desc )
+                html += "<p>\"" + item.desc + "\"</p>";
+            else
+                html += "<br>";
+
+            html += "<table class='info_table'><col width='30%'><col width='70%'>";
+            html += "<tr><th>Field</th><th>Value</th></tr>";
             html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
             html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
-            html += "<tr><td>Metadata:</td><td>" + (item.metadata?item.metadata:"(none)") + "</td></tr>";
             html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
             html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
             html += "</table>";
             $("#data_info").html(html);
+            showSelectedMetadata( item.metadata );
         }); 
     } else {
         updateBtnState();
-        $("#data_info").html("");
+        $("#data_info").html("(no information available)<br><br><br>");
+        showSelectedMetadata();
+    }
+}
+
+function buildObjSrcTree( obj, base ){
+    console.log("build", base);
+
+    var src = [];
+    var fkey;
+    Object.keys(obj).forEach(function(k) {
+        //console.log(key,typeof md[key]);
+
+        if ( typeof obj[k] === 'object' ){
+            fkey=base+"."+k;
+            //console.log( fkey, "=", data_md_exp[fkey] );
+            if ( data_md_exp[fkey] ){
+                data_md_exp[fkey] = 10;
+            }
+            src.push({title:k, icon: true, folder: true, expanded: data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey)})
+        }else if ( typeof obj[k] === 'string' )
+            src.push({title:k + " : \"" + obj[k] + "\"", icon: false })
+        else
+            src.push({title:k + " : " + obj[k], icon: false })
+    });
+
+    return src;
+}
+
+function showSelectedMetadata( md_str )
+{
+    if ( md_str ){
+        for ( var i in data_md_exp ){
+            if ( data_md_exp[i] == 1 )
+                delete data_md_exp[i];
+            else
+                data_md_exp[i]--;
+        }
+
+        console.log( "exp st", data_md_exp );
+        // TODO Use data_md_tree.isExapnded() to do lazy loading in case user's don't want to see metadata
+        var md = JSON.parse( md_str );
+        if ( data_md_exp["md"] )
+            data_md_exp["md"] = 10;
+        var src = [{title:"md", icon: true, folder: true, expanded: data_md_exp["md"]?true:false, children: buildObjSrcTree(md,"md")}];
+
+        //console.log("md:",md);
+        //console.log("keys:",Object.keys(md));
+        //for ( var p in md ) {
+            //if ( md.hasOwnProperty( p )) {
+
+        data_md_tree.reload( src );
+        data_md_empty = false;
+    } else if ( !data_md_empty ) {
+        data_md_tree.reload(data_md_empty_src);
+        data_md_empty = true;
     }
 }
 
@@ -242,9 +314,30 @@ function addNode( item ){
 
 function execQuery(){
     var query = $("#query_input").val();
-    console.log( "query:", query );
+    //console.log( "query:", query );
+    setStatusText("Executing search query...");
     findData( query, function( ok, data ){
-        console.log( "qry res:", ok, data );
+        //console.log( "qry res:", ok, data );
+
+        var tree = $("#data_tree").fancytree("getTree");
+        var srch_node = tree.getNodeByKey("search");
+        var results = [];
+        if ( data.data && data.data.length > 0 ){
+            setStatusText( "Found " + data.data.length + " result" + (data.data.length==1?"":"s"));
+            for ( var i in data.data ){
+                var item = data.data[i];
+                results.push({title: generateTitle( item ), icon:false, key: item.id, nodrag: true });
+            }
+        } else {
+            setStatusText("No results found");
+            results.push({title:"(no results)",icon:false, nodrag: true});
+        }
+        srch_node.removeChildren();
+        srch_node.addChildren( results );
+        srch_node.setExpanded( true );
+
+        if ( !tree.activeNode )
+            showSelectedInfo( "" );
     });
 }
 
@@ -259,10 +352,11 @@ function generateTitle( item ) {
 
 function setupBrowseTab(){
     var tree_source = [
-        {title:"My Data",folder:true,lazy:true,key: "c/" + g_user.uid + "_root", scope: g_user.uid },
-        {title:"My Projects",folder:true,lazy:true,key:"myproj"},
-        {title:"Shares",folder:true,lazy:true },
-        {title:"Views",folder:true,lazy:true }
+        {title:"My Data",folder:true,lazy:true,key: "c/" + g_user.uid + "_root", scope: g_user.uid, nodrag: true },
+        {title:"My Projects",folder:true,lazy:true,key:"myproj", nodrag: true},
+        {title:"Shares",folder:true,lazy:true, nodrag: true },
+        {title:"Views",folder:true,lazy:true, nodrag: true },
+        {title:"Search Results",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
     $("#data_tree").fancytree({
@@ -270,7 +364,7 @@ function setupBrowseTab(){
         dnd:{
             dragStart: function(node, data) {
                 //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
-                if ( !drag_enabled || node.key.endsWith("_root"))
+                if ( !drag_enabled || node.data.nodrag )
                     return false;
 
                 if ( data.originalEvent.shiftKey ) {
@@ -331,22 +425,7 @@ function setupBrowseTab(){
                     url: "/api/prj/list/",
                     cache: false
                 };
-            } /*else if ( data.node.key == "prjbyadm" ){
-                data.result = {
-                    url: "/api/prj/list/by_admin",
-                    cache: false
-                };
-            } else if ( data.node.key == "prjbymem" ){
-                data.result = {
-                    url: "/api/prj/list/by_member",
-                    cache: false
-                };
-            } else if ( data.node.key == "loose" ) {
-                data.result = {
-                    url: "/api/dat/list",
-                    cache: false
-                };
-            }*/else {
+            } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
                     cache: false
@@ -412,4 +491,45 @@ function setupBrowseTab(){
             }
         }
     });
+
+    $("#data_md_tree").fancytree({
+        extensions: ["themeroller"],
+        themeroller: {
+            activeClass: "ui-state-hover",
+            addClass: "",
+            focusClass: "",
+            hoverClass: "ui-state-active",
+            selectedClass: ""
+        },
+        source: data_md_empty_src,
+        selectMode: 1,
+        beforeExpand: function(event,data){
+            var path = data.node.title;
+            var par = data.node.parent;
+            while ( par ){
+                if ( par.title == "root" && !par.parent )
+                    break;
+                path = par.title + "." + path;
+                par = par.parent;
+            }
+
+            if ( data.node.isExpanded() ){
+                //console.log("collapsed", data.node, path );
+                delete data_md_exp[path];
+            }else{
+                //console.log("expanded", data.node, path );
+                data_md_exp[path] = 10;
+            }
+            //console.log( "exp st", data_md_exp );
+        }
+    });
+
+    data_md_tree = $("#data_md_tree").fancytree("getTree");
+
+    $("#query_input").on('keyup', function (e) {
+        if (e.keyCode == 13)
+            execQuery();
+    });
+
+    showSelectedInfo("");
 }

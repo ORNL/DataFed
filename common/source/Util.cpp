@@ -127,12 +127,24 @@ string parseQuery( const string & a_query )
             {
                 //cout << "start: " << v.start << ", len: " << v.len << "\n";
                 tmp = a_query.substr( v.start, v.len );
-                if ( tmp != "true" && tmp != "false" )
+                if ( tmp == "id" )
                 {
-                    //result.append( "i.md." );
-                    result.append( "i." );
+                    result.append( "i._id'" );
                 }
-                result.append( tmp );
+                else if ( tmp == "desc" )
+                {
+                    result.append( "i['" );
+                    result.append( tmp );
+                    result.append( "']" );
+                }
+                else if ( tmp != "true" && tmp != "false" && tmp != "null" )
+                {
+                    result.append( "i." );
+                    result.append( tmp );
+                }
+                else
+                    result.append( tmp );
+
                 v.reset();
                 state = 0;
             }
@@ -145,6 +157,16 @@ string parseQuery( const string & a_query )
             result += "LIKE";
         else if ( state != 3 )
             result += *c;
+    }
+
+    // Handle identifiers at end of line
+    if ( state == 3 )
+    {
+        tmp = a_query.substr( v.start, v.len );
+        if ( tmp != "true" && tmp != "false" && tmp != "null" )
+            result.append( "i." );
+
+        result.append( tmp );
     }
 
     cout << "[" << a_query << "]=>[" << result << "]\n";

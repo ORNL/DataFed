@@ -19,10 +19,10 @@
         <title>SDMS Main</title>
     </head>
     <body>
-    <div class="col-flex" style="height:100%">
+    <div class="col-flex" style="height:100%;width:100%">
         <div class="header" style="flex:none">
             <div class="row-flex">
-                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="test()">Test</button><button class="btn" onclick="logout()">Log Out</button></div>
+                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="logout()">Log Out</button></div>
             </div>
         </div>
         <div id="content" class="content" style="flex:1 1 100%">
@@ -36,30 +36,39 @@
                 </ul>
                 <div id="tab-browse">
                     <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
-                        <div style="flex:none">
-                            <div class="row-flex" style="flex:1 1 100%">
-                                <div style="flex:none;padding:.25em">
-                                    Search:
-                                </div>
-                                <div style="flex:1 1 100%;padding:.25em">
-                                    <input id="query_input" type='text' style="width:100%"></input>
-                                </div>
-                                <div style="flex:none;padding:.25em">
-                                    <button class="btn small" onclick="execQuery()">Search</button>
-                                    <button class="btn small" onclick="resetQuery()">Reset</button>
-                                </div>
+                        <div class="row-flex" style="flex:none;align-items:center;padding: 0 0 .5em .25em">
+                            <div style="flex:none;padding-right:.25em">
+                                Search Query:
+                            </div>
+                            <div style="flex:1 1 100%;padding-right:.5em">
+                                <input id="query_input" type='text' style="width:100%"></input>
+                            </div>
+                            <div style="flex:none;padding-right:.25em">
+                                <select id="query_scope">
+                                    <ul>
+                                        <option value="myall">My Data &amp Projects</option>
+                                        <option value="mydata">My Data</option>
+                                        <option value="myproj">My Projects</option>
+                                        <option value="shared">Shared Data</option>
+                                        <option value="public">Public Data</option>
+                                        <option value="all">All Data</option>
+                                    </ul>
+                                </select>
+                                <button class="btn small" onclick="execQuery()">Search</button>
                             </div>
                         </div>
                         <div class="row-flex" style="flex:1 1 100%">
-                            <div class="col-flex" style="flex:1 1 40%;padding:.25em">
+                            <div class="col-flex" style="flex:0 0 40%;padding:.25em">
                                 <div style="flex:none">Collections &amp Data:</div>
-                                <div class="ui-widget-content text" style="flex:1 1 100%;overflow:auto">
-                                    <div id="data_tree" class="no-border"></div>
+                                <div class="ui-widget-content text" style="flex:1 1 100%">
+                                    <div id="data_tree" class="no-border" style="overflow:auto"></div>
                                 </div>
                             </div>
-                            <div class="col-flex" style="flex:1 1 60%;padding:.25em">
-                                <div style="flex:none">Selection Details:</div>
-                                <div id="data_info" class="ui-widget-content text" style="flex:1 1 100%"></div>
+                            <div class="col-flex" style="flex:0 0 60%;padding:.25em">
+                                <div style="flex:none">Selection Details: <span id="data_ident"></span></div>
+                                <div id="data_info" class="ui-widget-content text" style="flex:none"></div>
+                                <div style="flex:none">Selection Metadata:</div>
+                                <div class="ui-widget-content text" style="flex:1 1 100%"><div id="data_md_tree" class="no-border"></div></div>
                             </div>
                         </div>
                         <div style="flex:none;padding:.25em">
@@ -110,7 +119,11 @@
             </div>
         </div>
         <div class="footer" style="flex:none">
-            User: <span id=uname></span>
+            <div class="row-flex">
+                <div style="flex:none" >User: <span id="uname"></span></div>
+                <div style="flex:none" >&nbsp&nbsp&nbsp</div>
+                <div id="status_text" class="status-bar" style="flex:1 1 100%;text-align:center"></div>
+            </div>
         </div>
     </div>
     </body>
@@ -124,7 +137,6 @@
 
         var drag_mode = 0;
         var drag_enabled = 1;
-        //var root_key = "c/" + g_user.uid + "_root";
 
         window.addEventListener( "resize", resizeHandler );
 
@@ -158,5 +170,6 @@
 
         setupBrowseTab();
         setupRepoTab();
+        setStatusText("SDMS Ready");
     </script>
 </html>

@@ -404,6 +404,16 @@ function xfrHistoryPoll() {
     });
 }
 
+function setStatusText( text ){
+    if ( status_timer )
+        clearTimeout( status_timer );
+
+    $("#status_text").html( text );
+    status_timer = setTimeout( function(){
+        status_timer = null;
+        $("#status_text").html("");
+    }, 8000 );
+}
 
 function confirmChoice( title, msg, btns, cb ) {
     var div = $(document.createElement('div'));
@@ -429,6 +439,7 @@ function confirmChoice( title, msg, btns, cb ) {
     div.dialog( options );
 }
 
+var status_timer;
 
 var PERM_LIST           = 0x001;   // Find record by browsing
 var PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
