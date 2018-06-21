@@ -22,7 +22,7 @@
     <div class="col-flex" style="height:100%;width:100%">
         <div class="header" style="flex:none">
             <div class="row-flex">
-                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="logout()">Log Out</button></div>
+                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;"><button class="btn" onclick="logout()">Log Out</button></div>
             </div>
         </div>
         <div id="content" class="content" style="flex:1 1 100%">
@@ -46,7 +46,7 @@
                             <div style="flex:none;padding-right:.25em">
                                 <select id="query_scope">
                                     <ul>
-                                        <option value="myall">My Data &amp Projects</option>
+                                        <option value="myall" selected>My Data &amp Projects</option>
                                         <option value="mydata">My Data</option>
                                         <option value="myproj">My Projects</option>
                                         <option value="shared">Shared Data</option>
@@ -54,7 +54,7 @@
                                         <option value="all">All Data</option>
                                     </ul>
                                 </select>
-                                <button class="btn small" onclick="execQuery()">Search</button>
+                                <button class="btn" onclick="execQuery()">Search</button>
                             </div>
                         </div>
                         <div class="row-flex" style="flex:1 1 100%">

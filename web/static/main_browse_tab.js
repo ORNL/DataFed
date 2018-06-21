@@ -314,9 +314,12 @@ function addNode( item ){
 
 function execQuery(){
     var query = $("#query_input").val();
-    //console.log( "query:", query );
+    var scope = $("#query_scope").val();
+
+    //console.log( "query:", query, scope );
+
     setStatusText("Executing search query...");
-    findData( query, function( ok, data ){
+    findData( query, scope, function( ok, data ){
         //console.log( "qry res:", ok, data );
 
         var tree = $("#data_tree").fancytree("getTree");
@@ -529,6 +532,13 @@ function setupBrowseTab(){
     $("#query_input").on('keyup', function (e) {
         if (e.keyCode == 13)
             execQuery();
+    });
+    $("#query_scope").selectmenu({
+        width:"auto"
+        /*,
+        change: function(event,ui){
+            console.log("sel change",ui.item.value);
+        }*/
     });
 
     showSelectedInfo("");

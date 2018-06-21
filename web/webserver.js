@@ -491,7 +491,7 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
 
 app.get('/api/dat/find', ( a_req, a_resp ) => {
     console.log( "/api/dat/find", a_req.query.query );
-    sendMessage( "RecordFindRequest", { query: a_req.query.query }, a_req, a_resp, function( reply ) {
+    sendMessage( "RecordFindRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
         //console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });

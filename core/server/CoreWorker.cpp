@@ -390,6 +390,8 @@ Worker::procRecordFindRequest( const std::string & a_uid )
     m_db_client.setClient( a_uid );
     RecordFindRequest req2;
     req2.set_query( parseQuery( request->query() ));
+    if ( request->has_scope())
+        req2.set_scope( request->scope() );
     m_db_client.recordFind( req2, reply );
 
     PROC_MSG_END

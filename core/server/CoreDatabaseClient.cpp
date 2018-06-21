@@ -538,8 +538,12 @@ void
 DatabaseClient::recordFind( const RecordFindRequest & a_request, RecordDataReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"query",a_request.query()});
+    if ( a_request.has_scope() )
+        params.push_back({"scope",a_request.scope()});
 
-    dbGet( "dat/find", {{"query",a_request.query()}}, result );
+    dbGet( "dat/find", params, result );
 
     setRecordData( a_reply, result );
 }

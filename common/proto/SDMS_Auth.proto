@@ -95,6 +95,7 @@ message RecordViewRequest
 message RecordFindRequest
 {
     required string             query       = 1;
+    optional string             scope       = 2;
 }
 
 // Returned for any command the returns one or more user records
