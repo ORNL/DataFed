@@ -23,15 +23,15 @@ function makeDlgSetACLs(){
                         <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
                         <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
                             <table class='info_table' style='width:100%'>\
-                            <tr><td>List:</td><td><select id='dlg_list_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>View:</td><td><select id='dlg_view_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Update:</td><td><select id='dlg_upd_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Admin:</td><td><select id='dlg_admin_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Tag:</td><td><select id='dlg_tag_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Annotate:</td><td><select id='dlg_note_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Read:</td><td><select id='dlg_read_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Write:</td><td><select id='dlg_write_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select id='dlg_create_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>List:</td><td><select id='dlg_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select><br><br><br></td></tr>\
+                            <tr><td>View:</td><td><select id='dlg_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Update:</td><td><select id='dlg_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Admin:</td><td><select id='dlg_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Tag:</td><td><select id='dlg_tag_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Annotate:</td><td><select id='dlg_note_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Read:</td><td><select id='dlg_read_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Write:</td><td><select id='dlg_write_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select id='dlg_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             </table>\
                         </div>\
                         <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
@@ -45,15 +45,15 @@ function makeDlgSetACLs(){
                         <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
                         <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
                             <table class='info_table' style='width:100%'>\
-                            <tr><td>List:</td><td><select id='dlg_inh_list_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>View:</td><td><select id='dlg_inh_view_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Update:</td><td><select id='dlg_inh_upd_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Admin:</td><td><select id='dlg_inh_admin_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Tag:</td><td><select id='dlg_inh_tag_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Annotate:</td><td><select id='dlg_inh_note_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Read:</td><td><select id='dlg_inh_read_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Write:</td><td><select id='dlg_inh_write_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Create:</td><td><select id='dlg_inh_create_sel' class='small'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>List:</td><td style='overflow:visible'><select id='dlg_inh_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>View:</td><td><select id='dlg_inh_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Update:</td><td><select id='dlg_inh_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Admin:</td><td><select id='dlg_inh_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Tag:</td><td><select id='dlg_inh_tag_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Annotate:</td><td><select id='dlg_inh_note_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Read:</td><td><select id='dlg_inh_read_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Write:</td><td><select id='dlg_inh_write_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                            <tr><td>Create:</td><td><select id='dlg_inh_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                             </table>\
                         </div>\
                         <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
@@ -76,6 +76,7 @@ function makeDlgSetACLs(){
             $("#col_div_1",inst.frame).show();
             $("#col_div_2",inst.frame).show();
             $("#dlg_create_row",inst.frame).show();
+/*
             $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh("grant"); });
             $("#dlg_inh_deny_all",inst.frame).click( function(){ inst.setAllPermInh("deny"); });
             $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh("inherit"); });
@@ -91,8 +92,10 @@ function makeDlgSetACLs(){
 
             $("#dlg_create_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_CREATE )});
             $("#dlg_inh_create_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_CREATE )});
+*/
         }
 
+/*
         $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm("grant"); });
         $("#dlg_deny_all",inst.frame).click( function(){ inst.setAllPerm("deny"); });
         $("#dlg_inherit_all",inst.frame).click( function(){ inst.setAllPerm("inherit"); });
@@ -108,7 +111,9 @@ function makeDlgSetACLs(){
         $("#dlg_note_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_NOTE )});
         $("#dlg_read_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_READ )});
         $("#dlg_write_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_WRITE )});
-
+*/
+    
+    
         aclView( item.id, function( ok, data ){
             if ( !ok || !data ) {
                 //alert( "Could not get ACLs for " + item.id );
@@ -211,6 +216,10 @@ function makeDlgSetACLs(){
             };
 
             inst.frame.dialog( options );
+            $(".btn",inst.frame).button();
+            $("select",inst.frame).selectmenu({
+                    width:"auto",
+            });
         });
     }
 

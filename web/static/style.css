@@ -124,3 +124,7 @@ ul.ui-effects-placeholder { width:10px !important; }
 }
 
 :focus { outline: none; }
+
+.ui-popup-container {
+    z-index: 110;
+}

@@ -29,7 +29,6 @@
             <div id="tabs">
                 <ul>
                     <li><a href="#tab-browse">Browse</a></li>
-                    <li><a href="#tab-search">Search</a></li>
                     <li><a href="#tab-repo">Repos</a></li>
                     <li style='display:none'><a href="#tab-admin">Admin</a></li>
                     <li><a href="#tab-settings">Settings</a></li>
@@ -45,14 +44,12 @@
                             </div>
                             <div style="flex:none;padding-right:.25em">
                                 <select id="query_scope">
-                                    <ul>
                                         <option value="myall" selected>My Data &amp Projects</option>
                                         <option value="mydata">My Data</option>
                                         <option value="myproj">My Projects</option>
                                         <option value="shared">Shared Data</option>
                                         <option value="public">Public Data</option>
                                         <option value="all">All Data</option>
-                                    </ul>
                                 </select>
                                 <button class="btn" onclick="execQuery()">Search</button>
                             </div>
@@ -67,7 +64,7 @@
                             <div class="col-flex" style="flex:0 0 60%;padding:.25em">
                                 <div style="flex:none">Selection Details: <span id="data_ident"></span></div>
                                 <div id="data_info" class="ui-widget-content text" style="flex:none"></div>
-                                <div style="flex:none">Selection Metadata:</div>
+                                <div style="flex:none;padding-top:.5em">Selection Metadata:</div>
                                 <div class="ui-widget-content text" style="flex:1 1 100%"><div id="data_md_tree" class="no-border"></div></div>
                             </div>
                         </div>
@@ -86,8 +83,6 @@
                         <div id="xfr_hist" style="flex:none">
                         </div>
                     </div>
-                </div>
-                <div id="tab-search">
                 </div>
                 <div id="tab-repo">
                     <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
