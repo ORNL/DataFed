@@ -327,19 +327,26 @@ router.get('/find', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        //console.log( 'query: ', "for i in d filter " + req.queryParams.query + " return i" );
-        const cursor = g_db._query( "for i in d filter " + req.queryParams.query + " return i" );
-        //console.log( 'items: ', items );
-
         var result = [];
-        var item;
 
-        while ( cursor.hasNext() ) {
-            item = cursor.next();
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
-                result.push({ id: item._id, title: item.title, desc: item.desc, md: item.md });
-            }
-        }
+        if ( !req.queryParams.scope || req.queryParams.scope == "myall" ){
+            result = searchMyData( req.queryParams.query, client );
+            result = result.concat( searchMyProj( req.queryParams.query, client ));
+        } else if ( req.queryParams.scope == "mydata" ){
+            result = searchMyData( req.queryParams.query, client );
+        } else if ( req.queryParams.scope == "myproj" ){
+            result = searchMyProj( req.queryParams.query, client );
+        } else if ( req.queryParams.scope == "shared" ){
+            result = searchShared( req.queryParams.query, client );
+        } else if ( req.queryParams.scope == "public" ){
+            result = searchPublic( req.queryParams.query, client );
+        } else if ( req.queryParams.scope == "all" ){
+            result = searchMyData( req.queryParams.query, client );
+            result = result.concat( searchMyProj( req.queryParams.query, client ));
+            result = result.concat( searchShared( req.queryParams.query, client ));
+            result = result.concat( searchPublic( req.queryParams.query, client ));
+        } else
+            throw g_lib.ERR_INVALID_PARAM;
 
         res.send( result );
     } catch( e ) {
@@ -348,6 +355,7 @@ router.get('/find', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('query', joi.string().required(), "Query expression")
+.queryParam('scope', joi.string().optional(), "Scope: myall,mydata,myproj,shared,public,all")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
 
@@ -395,4 +403,41 @@ router.get('/delete', function (req, res) {
 .summary('Deletes an existing data record')
 .description('Deletes an existing data record');
 
+function searchMyData( query, client ){
+    return g_db._query( "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray();
+}
+
+function searchMyProj( query, client ){
+    // Owned projects
+    var result = g_db._query( "for i,e,p in 2..2 inbound @user owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray();
+
+    // Administered projects
+    result = result.concat( g_db._query( "for i,e,p in 2..2 inbound @user admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray());
+
+    // Member of project
+    result = result.concat( g_db._query( "for i,e,p in 3..3 inbound @user member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray());
+
+    return result;
+}
+
+function searchShared( query, client ){
+    // TODO This is HARD: must check for user- or group-acls to data owned by a user (not a project)
+    // AND all data linked to collections that have ACLs
+    // AND VIEW/LIST permission must be evaluated for all returned items
+    return [];
+}
+
+function searchPublic( query, client ){
+    return g_db._query( "for i in d filter i.public == true let owner = (for j in outbound i._id owner return j._id) filter owner != @user and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray();
+
+    /*
+    var item;
+
+    while ( cursor.hasNext() ) {
+        item = cursor.next();
+        if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
+            result.push({ id: item._id, title: item.title, desc: item.desc, md: item.md });
+        }
+    }*/
+}
 

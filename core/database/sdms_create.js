@@ -66,6 +66,9 @@ db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "local_path" ] });
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "mode" ] });
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "status" ] });
 
+//db.d.ensureIndex({ type: "fulltext", fields: [ "title" ], minLength: 3 })
+//db.d.ensureIndex({ type: "fulltext", fields: [ "descr" ], minLength: 3 })
+
 // Also has user, mode (read/write), status (globus)
 
 
