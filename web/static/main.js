@@ -109,9 +109,10 @@ function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+a_id, null, a_cb );
 }
 
-function aclUpdate( a_id, a_rules, a_cb ) {
+function aclUpdate( a_id, a_rules, a_public, a_cb ) {
     //console.log("update rules:",JSON.stringify(a_rules));
-    _asyncGet( "/api/acl/update?id="+a_id+"&rules="+JSON.stringify(a_rules), null, a_cb );
+    console.log("update acl:",a_public);
+    _asyncGet( "/api/acl/update?id="+a_id+"&rules="+JSON.stringify(a_rules)+"&pub="+a_public, null, a_cb );
 }
 
 function userView( a_id, a_cb ) {
@@ -451,6 +452,7 @@ var PERM_READ           = 0x040;   // Read raw data or list collection items
 var PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
 var PERM_CREATE         = 0x100;   // Create data and collections
 var PERM_ALL            = 0x1FF;
+var PERM_PUBLIC         = 0x043;
 
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();

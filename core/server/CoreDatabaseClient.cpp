@@ -580,6 +580,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         params.push_back({"title",a_request.title()});
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
+    if ( a_request.has_is_public() )
+        params.push_back({"public",a_request.is_public()?"true":"false"});
     if ( a_request.has_alias() )
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_metadata() )
@@ -646,6 +648,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             rec->set_desc( imem->value.GetString() );
+
+        if (( imem = val.FindMember("public")) != val.MemberEnd() )
+            rec->set_is_public( imem->value.GetBool() );
 
         if (( imem = val.FindMember("md")) != val.MemberEnd() )
         {
@@ -959,8 +964,14 @@ DatabaseClient::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDa
     (void) a_reply;
 
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_rules() )
+        params.push_back({"rules",a_request.rules()});
+    if ( a_request.has_is_public() )
+        params.push_back({"public",a_request.is_public()?"true":"false"});
 
-    dbGet( "acl/update", {{"id",a_request.id()},{"rules",a_request.rules()}}, result );
+    dbGet( "acl/update", params, result );
 
     setACLData( a_reply, result );
 }

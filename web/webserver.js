@@ -441,6 +441,9 @@ app.get('/api/dat/update', ( a_req, a_resp ) => {
     if ( a_req.query.desc )
         params.desc = a_req.query.desc;
 
+    if ( a_req.query.public != undefined )
+        params.public = a_req.query.public;
+
     if ( a_req.query.md ) {
         params.metadata = a_req.query.md;
         if ( a_req.query.mdset )
@@ -504,7 +507,8 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/acl/update', ( a_req, a_resp ) => {
-    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules }, a_req, a_resp, function( reply ) {
+    console.log("acl update pub:",a_req.query.pub);
+    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules, isPublic: a_req.query.pub }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

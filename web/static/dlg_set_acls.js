@@ -3,66 +3,69 @@ function makeDlgSetACLs(){
 
     var inst = this;
 
+    //<div style='flex:none'><input type='checkbox' name='public_check' id='public_check'><label for='public_check'>Public data</label></div>
+
     this.content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none'>ID/Alias: <span id='dlg_id'></span></div>\
-                <div class='row-flex' style='flex:1 1 auto'>\
-                    <div class='col-flex' style='flex:1 1 50%'>\
-                        <div style='flex:none;padding:.5rem 0 0 0'>Rules:</div>\
-                        <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                            <div id='dlg_rule_tree' class='no-border'></div>\
-                        </div>\
-                        <div style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                            <button id='dlg_add_user' class='btn small'>+ User</button>\
-                            <button id='dlg_add_group' class='btn small'>+ Group</button>\
-                            <button id='dlg_rem' class='btn small'>Remove</button>\
-                        </div>\
+            <div class='row-flex' style='flex:1 1 auto'>\
+                <div class='col-flex' style='flex:1 1 50%'>\
+                    <div style='flex:none;padding:.5rem 0 0 0'>Rules:</div>\
+                    <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
+                        <div id='dlg_rule_tree' class='no-border'></div>\
                     </div>\
-                    <div style='flex:none'>&nbsp</div>\
-                    <div class='col-flex' style='flex:1 1 50%'>\
-                        <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
-                        <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                            <table class='info_table' style='width:100%'>\
-                            <tr><td>List:</td><td><select id='dlg_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select><br><br><br></td></tr>\
-                            <tr><td>View:</td><td><select id='dlg_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Update:</td><td><select id='dlg_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Admin:</td><td><select id='dlg_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Tag:</td><td><select id='dlg_tag_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Annotate:</td><td><select id='dlg_note_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Read:</td><td><select id='dlg_read_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Write:</td><td><select id='dlg_write_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select id='dlg_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            </table>\
-                        </div>\
-                        <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                            <button id='dlg_grant_all' class='btn small'>Grant</button>\
-                            <button id='dlg_deny_all' class='btn small'>Deny</button>\
-                            <button id='dlg_inherit_all' class='btn small'>Inherit</button>\
-                        </div>\
-                    </div>\
-                    <div id='col_div_1' style='flex:none;display:none'>&nbsp</div>\
-                    <div id='col_div_2' class='col-flex' style='flex:1 1 50%;display:none'>\
-                        <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
-                        <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                            <table class='info_table' style='width:100%'>\
-                            <tr><td>List:</td><td style='overflow:visible'><select id='dlg_inh_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>View:</td><td><select id='dlg_inh_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Update:</td><td><select id='dlg_inh_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Admin:</td><td><select id='dlg_inh_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Tag:</td><td><select id='dlg_inh_tag_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Annotate:</td><td><select id='dlg_inh_note_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Read:</td><td><select id='dlg_inh_read_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Write:</td><td><select id='dlg_inh_write_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            <tr><td>Create:</td><td><select id='dlg_inh_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
-                            </table>\
-                        </div>\
-                        <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                            <button id='dlg_inh_grant_all' class='btn small'>Grant</button>\
-                            <button id='dlg_inh_deny_all' class='btn small'>Deny</button>\
-                            <button id='dlg_inh_inherit_all' class='btn small'>Inherit</button>\
-                        </div>\
+                    <div style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
+                        <button id='dlg_add_user' class='btn small'>+ User</button>\
+                        <button id='dlg_add_group' class='btn small'>+ Group</button>\
+                        <button id='dlg_rem' class='btn small'>Remove</button>\
                     </div>\
                 </div>\
+                <div style='flex:none'>&nbsp</div>\
+                <div class='col-flex' style='flex:1 1 50%'>\
+                    <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
+                    <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
+                        <table class='info_table' style='width:100%'>\
+                        <tr><td>List:</td><td><select id='dlg_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select><br><br><br></td></tr>\
+                        <tr><td>View:</td><td><select id='dlg_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Update:</td><td><select id='dlg_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Admin:</td><td><select id='dlg_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Tag:</td><td><select id='dlg_tag_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Annotate:</td><td><select id='dlg_note_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Read:</td><td><select id='dlg_read_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Write:</td><td><select id='dlg_write_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select id='dlg_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        </table>\
+                    </div>\
+                    <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
+                        <button id='dlg_grant_all' class='btn small'>Grant</button>\
+                        <button id='dlg_deny_all' class='btn small'>Deny</button>\
+                        <button id='dlg_inherit_all' class='btn small'>Inherit</button>\
+                    </div>\
+                </div>\
+                <div id='col_div_1' style='flex:none;display:none'>&nbsp</div>\
+                <div id='col_div_2' class='col-flex' style='flex:1 1 50%;display:none'>\
+                    <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
+                    <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
+                        <table class='info_table' style='width:100%'>\
+                        <tr><td>List:</td><td style='overflow:visible'><select id='dlg_inh_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>View:</td><td><select id='dlg_inh_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Update:</td><td><select id='dlg_inh_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Admin:</td><td><select id='dlg_inh_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Tag:</td><td><select id='dlg_inh_tag_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Annotate:</td><td><select id='dlg_inh_note_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Read:</td><td><select id='dlg_inh_read_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Write:</td><td><select id='dlg_inh_write_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <tr><td>Create:</td><td><select id='dlg_inh_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        </table>\
+                    </div>\
+                    <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
+                        <button id='dlg_inh_grant_all' class='btn small'>Grant</button>\
+                        <button id='dlg_inh_deny_all' class='btn small'>Deny</button>\
+                        <button id='dlg_inh_inherit_all' class='btn small'>Inherit</button>\
+                    </div>\
+                </div>\
+            </div>\
+            <div style='flex:none;padding-top:.5em'><input type='checkbox' name='public_check' id='public_check'>Enable public access (list, view, read)</div>\
         </div>";
 
     this.show = function( item ){
@@ -76,26 +79,24 @@ function makeDlgSetACLs(){
             $("#col_div_1",inst.frame).show();
             $("#col_div_2",inst.frame).show();
             $("#dlg_create_row",inst.frame).show();
-/*
+
             $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh("grant"); });
             $("#dlg_inh_deny_all",inst.frame).click( function(){ inst.setAllPermInh("deny"); });
             $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh("inherit"); });
 
-            $("#dlg_inh_list_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_LIST )});
-            $("#dlg_inh_view_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_VIEW )});
-            $("#dlg_inh_upd_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_UPDATE )});
-            $("#dlg_inh_admin_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_ADMIN )});
-            $("#dlg_inh_tag_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_TAG )});
-            $("#dlg_inh_note_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_NOTE )});
-            $("#dlg_inh_read_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_READ )});
-            $("#dlg_inh_write_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
+            $("#dlg_inh_list_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_LIST )});
+            $("#dlg_inh_view_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_VIEW )});
+            $("#dlg_inh_upd_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_UPDATE )});
+            $("#dlg_inh_admin_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_ADMIN )});
+            $("#dlg_inh_tag_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_TAG )});
+            $("#dlg_inh_note_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_NOTE )});
+            $("#dlg_inh_read_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_READ )});
+            $("#dlg_inh_write_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
 
             $("#dlg_create_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_CREATE )});
             $("#dlg_inh_create_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_CREATE )});
-*/
         }
 
-/*
         $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm("grant"); });
         $("#dlg_deny_all",inst.frame).click( function(){ inst.setAllPerm("deny"); });
         $("#dlg_inherit_all",inst.frame).click( function(){ inst.setAllPerm("inherit"); });
@@ -103,24 +104,26 @@ function makeDlgSetACLs(){
         $("#dlg_add_group",inst.frame).click( function(){ inst.addGroup(); });
         $("#dlg_rem",inst.frame).click( function(){ inst.remUserGroup(); });
 
-        $("#dlg_list_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_LIST )});
-        $("#dlg_view_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_VIEW )});
-        $("#dlg_upd_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_UPDATE )});
-        $("#dlg_admin_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_ADMIN )});
-        $("#dlg_tag_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_TAG )});
-        $("#dlg_note_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_NOTE )});
-        $("#dlg_read_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_READ )});
-        $("#dlg_write_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_WRITE )});
-*/
-    
-    
+        $("#dlg_list_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_LIST )});
+        $("#dlg_view_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_VIEW )});
+        $("#dlg_upd_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_UPDATE )});
+        $("#dlg_admin_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_ADMIN )});
+        $("#dlg_tag_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_TAG )});
+        $("#dlg_note_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_NOTE )});
+        $("#dlg_read_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_READ )});
+        $("#dlg_write_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_WRITE )});
+
+        inst.public = item.public?true:false;
+        $("#public_check",inst.frame).val(item.public);
+        //$("#public_check",inst.frame).on( "change", function(){ inst.publicFlagChanged( this.checked )});
+
         aclView( item.id, function( ok, data ){
             if ( !ok || !data ) {
                 //alert( "Could not get ACLs for " + item.id );
                 alert( data );
                 return;
             }
-            console.log("data",data);
+            //console.log("data",data);
 
             if ( !data.rule )
                 data.rule = [];
@@ -157,13 +160,39 @@ function makeDlgSetACLs(){
                     text: "Ok",
                     click: function() {
                         var dlg_inst = $(this);
-                        console.log( "SAVE ACLS:", inst.new_rules );
-                        aclUpdate( item.id, inst.new_rules, function( ok, data ){
-                            if ( !ok )
-                                alert( "ACL Update Failed", data.errMsg );
-                            else
-                                dlg_inst.dialog('destroy').remove();
-                        });
+
+                        var is_public = $("#public_check",inst.frame).prop("checked");
+                        console.log( "SAVE ACLS:", is_public, inst.new_rules );
+
+                        var conflict = false;
+                        if ( is_public ){
+                            for ( var i in inst.new_rules ) {
+                                if ( inst.new_rules[i].deny & PERM_PUBLIC != 0 ) {
+                                    conflict = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ( conflict ){
+                            confirmChoice("ACL Conflict","One or more ACL rules are set to deny permissions that will be overriden with public access enabled. Proceed?", ["Ok", "Cancel"], function( choice ){
+                                if ( choice == 0 ){
+                                    aclUpdate( item.id, inst.new_rules, is_public, function( ok, data ){
+                                        if ( !ok )
+                                            alert( "ACL Update Failed", data.errMsg );
+                                        else
+                                            dlg_inst.dialog('destroy').remove();
+                                    });
+                                }
+                            });
+                        } else {
+                            aclUpdate( item.id, inst.new_rules, is_public, function( ok, data ){
+                                if ( !ok )
+                                    alert( "ACL Update Failed", data.errMsg );
+                                else
+                                    dlg_inst.dialog('destroy').remove();
+                            });
+                        }
                     }
                 },{
                     text: "Cancel",
@@ -211,15 +240,14 @@ function makeDlgSetACLs(){
                             inst.updateSelection( data.node.key, data.node.data.rule );
                         },
                     });
-                    inst.disablePermControls( true );
                 }
             };
 
             inst.frame.dialog( options );
             $(".btn",inst.frame).button();
-            $("select",inst.frame).selectmenu({
-                    width:"auto",
-            });
+            $("select",inst.frame).selectmenu({ width:"auto" });
+            //$("#public_check",inst.frame).checkboxradio();
+            inst.disablePermControls( true );
         });
     }
 
@@ -250,7 +278,7 @@ function makeDlgSetACLs(){
 
     this.selectHandler = function( obj, perm ){
         if ( inst.cur_rule ) {
-            console.log( "value", obj.val(), "prev val:", inst.cur_rule );
+            //console.log( "value", obj.val(), "prev val:", inst.cur_rule );
 
             var mask = PERM_ALL & ~perm;
             if ( obj.val() == "grant" ) {
@@ -263,13 +291,13 @@ function makeDlgSetACLs(){
                 inst.cur_rule.grant &= mask;
                 inst.cur_rule.deny &= mask;
             }
-            console.log( "new val:", inst.cur_rule );
+            //console.log( "new val:", inst.cur_rule );
         }
     }
 
     this.selectInhHandler = function( obj, perm ){
         if ( inst.cur_rule ) {
-            console.log( "value", obj.val(), "prev val:", inst.cur_rule );
+            //console.log( "value", obj.val(), "prev val:", inst.cur_rule );
 
             var mask = PERM_ALL & ~perm;
             if ( obj.val() == "grant" ) {
@@ -282,9 +310,18 @@ function makeDlgSetACLs(){
                 inst.cur_rule.inhgrant &= mask;
                 inst.cur_rule.inhdeny &= mask;
             }
-            console.log( "new val:", inst.cur_rule );
+            //console.log( "new val:", inst.cur_rule );
         }
     }
+
+    /*
+    this.publicFlagChanged = function( enabled ){
+        inst.public = enabled;
+        //console.log("Public flag is",enabled);
+        //var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+        //var node = tree.getActiveNode();
+        //inst.updateSelection( data.node.key, data.node.data.rule );
+    }*/
 
     this.setAllPerm = function( value ){
         if ( inst.cur_rule ){
@@ -300,15 +337,15 @@ function makeDlgSetACLs(){
             }
         }
 
-        $("#dlg_view_sel",this.frame).val(value);
-        $("#dlg_list_sel",this.frame).val(value);
-        $("#dlg_upd_sel",this.frame).val(value);
-        $("#dlg_admin_sel",this.frame).val(value);
-        $("#dlg_tag_sel",this.frame).val(value);
-        $("#dlg_note_sel",this.frame).val(value);
-        $("#dlg_read_sel",this.frame).val(value);
-        $("#dlg_write_sel",this.frame).val(value);
-        $("#dlg_create_sel",this.frame).val(value);
+        $("#dlg_view_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_list_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_upd_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_admin_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_tag_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_note_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_read_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_write_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_create_sel",this.frame).val(value).selectmenu("refresh");
     }
 
     this.setAllPermInh = function( value ){
@@ -325,15 +362,15 @@ function makeDlgSetACLs(){
             }
         }
 
-        $("#dlg_inh_view_sel",this.frame).val(value);
-        $("#dlg_inh_list_sel",this.frame).val(value);
-        $("#dlg_inh_upd_sel",this.frame).val(value);
-        $("#dlg_inh_admin_sel",this.frame).val(value);
-        $("#dlg_inh_tag_sel",this.frame).val(value);
-        $("#dlg_inh_note_sel",this.frame).val(value);
-        $("#dlg_inh_read_sel",this.frame).val(value);
-        $("#dlg_inh_write_sel",this.frame).val(value);
-        $("#dlg_inh_create_sel",this.frame).val(value);
+        $("#dlg_inh_view_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_list_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_upd_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_admin_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_tag_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_note_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_read_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_write_sel",this.frame).val(value).selectmenu("refresh");
+        $("#dlg_inh_create_sel",this.frame).val(value).selectmenu("refresh");
     }
 
     this.setPermsFromRule = function( rule ){
@@ -368,25 +405,34 @@ function makeDlgSetACLs(){
 
     inst.setPerm = function( id, rule, perm ) {
         if ( rule.deny & perm )
-            $(id,this.frame).val("deny");
+            $(id,this.frame).val("deny").selectmenu("refresh");
         else if ( rule.grant & perm )
-            $(id,this.frame).val("grant");
+            $(id,this.frame).val("grant").selectmenu("refresh");
         else
-            $(id,this.frame).val("inherit");
+            $(id,this.frame).val("inherit").selectmenu("refresh");
     }
 
     inst.setPermInh = function( id, rule, perm ) {
         if ( rule.inhdeny & perm )
-            $(id,this.frame).val("deny");
+            $(id,this.frame).val("deny").selectmenu("refresh");
         else if ( rule.inhgrant & perm )
-            $(id,this.frame).val("grant");
+            $(id,this.frame).val("grant").selectmenu("refresh");
         else
-            $(id,this.frame).val("inherit");
+            $(id,this.frame).val("inherit").selectmenu("refresh");
     }
 
     this.disablePermControls = function( disabled, no_remove ){
-        if ( disabled )
+        console.log("disablePermControls",disabled,no_remove);
+
+        if ( disabled ){
             inst.setAllPerm("inherit");
+        }
+
+        if ( disabled )
+            $("select",inst.frame).selectmenu("disable");
+        else
+            $("select",inst.frame).selectmenu("enable");
+/*
         $("#dlg_view_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_list_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_upd_sel",inst.frame).prop("disabled", disabled );
@@ -396,17 +442,28 @@ function makeDlgSetACLs(){
         $("#dlg_read_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_write_sel",inst.frame).prop("disabled", disabled );
         $("#dlg_create_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_grant_all",inst.frame).prop("disabled", disabled );
-        $("#dlg_deny_all",inst.frame).prop("disabled", disabled );
-        $("#dlg_inherit_all",inst.frame).prop("disabled", disabled );
-        if ( no_remove )
-            $("#dlg_rem",inst.frame).prop("disabled", true );
-        else
-            $("#dlg_rem",inst.frame).prop("disabled", disabled );
+        */
+
+        if ( disabled ){
+            $("#dlg_grant_all",inst.frame).button("disable");
+            $("#dlg_deny_all",inst.frame).button("disable");
+            $("#dlg_inherit_all",inst.frame).button("disable");
+        }else{
+            $("#dlg_grant_all",inst.frame).button("enable");
+            $("#dlg_deny_all",inst.frame).button("enable");
+            $("#dlg_inherit_all",inst.frame).button("enable");
+        }
+
+        if ( no_remove || disabled ){
+            $("#dlg_rem",inst.frame).button("disable");
+        }else{
+            $("#dlg_rem",inst.frame).button("enable" );
+        }
 
         if ( inst.is_coll ) {
             if ( disabled )
                 inst.setAllPermInh("inherit");
+/*
             $("#dlg_inh_view_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_list_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_upd_sel",inst.frame).prop("disabled", disabled );
@@ -416,14 +473,22 @@ function makeDlgSetACLs(){
             $("#dlg_inh_read_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_write_sel",inst.frame).prop("disabled", disabled );
             $("#dlg_inh_create_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_grant_all",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_deny_all",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_inherit_all",inst.frame).prop("disabled", disabled );
+*/
+            if ( disabled ){
+                $("#dlg_inh_grant_all",inst.frame).button("disable");
+                $("#dlg_inh_deny_all",inst.frame).button("disable");
+                $("#dlg_inh_inherit_all",inst.frame).button("disable");
+            }else{
+                $("#dlg_inh_grant_all",inst.frame).button("enable");
+                $("#dlg_inh_deny_all",inst.frame).button("enable");
+                $("#dlg_inh_inherit_all",inst.frame).button("enable");
+            }
         }
     }
 
     this.updateSelection = function( key, rule ){
-        console.log('update:',key);
+        console.log("updateSelection",key,rule);
+
         inst.cur_rule = null;
         for ( var i in inst.new_rules ) {
             if ( inst.new_rules[i].id == key ) {
@@ -442,7 +507,7 @@ function makeDlgSetACLs(){
             inst.disablePermControls( false, true );
             inst.setPermsFromRule( rule );
         } else {
-            inst.disablePermControls( true );
+            inst.disablePermControls( true, true );
         }
     }
 

@@ -207,6 +207,7 @@ function showSelectedInfo( key ){
 
             html += "<table class='info_table'><col width='30%'><col width='70%'>";
             html += "<tr><th>Field</th><th>Value</th></tr>";
+            html += "<tr><td>Public Access:</td><td>" + (item.isPublic?"Enabled":"Disabled") + "</td></tr>";
             html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
             html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
             html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
