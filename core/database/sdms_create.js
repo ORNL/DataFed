@@ -54,6 +54,8 @@ graph._extendEdgeDefinitions(alloc);
 var loc = graph_module._relation("loc", ["d"], ["repo"]);
 graph._extendEdgeDefinitions(loc);
 
+db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
+
 //db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
 

@@ -98,6 +98,9 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.title )
                     obj.title = req.queryParams.title;
 
+                if ( req.queryParams.public )
+                    obj.public = req.queryParams.public;
+
                 if ( req.queryParams.desc )
                     obj.desc = req.queryParams.desc;
 
@@ -142,6 +145,7 @@ router.get('/create', function (req, res) {
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('public', joi.boolean().optional(), "Enable public access")
 .queryParam('parent', joi.string().optional(), "Parent collection ID or alias (default = root)")
 .queryParam('repo', joi.string().optional(), "Optional repo ID for allocation")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
@@ -181,6 +185,11 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.desc != undefined ) {
                     obj.desc = req.queryParams.desc;
+                    do_update = true;
+                }
+
+                if ( req.queryParams.public != undefined ){
+                    obj.public = req.queryParams.public;
                     do_update = true;
                 }
 
@@ -241,6 +250,7 @@ router.get('/update', function (req, res) {
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('alias', joi.string().optional(), "Alias")
+.queryParam('public', joi.boolean().optional(), "Enable public access")
 .queryParam('md', joi.string().optional(), "Metadata (JSON)")
 .queryParam('mdset', joi.boolean().optional().default(false), "Set metadata instead of merging")
 .queryParam('data_size', joi.number().optional(), "Data size (bytes)")
