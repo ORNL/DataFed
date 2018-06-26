@@ -91,7 +91,7 @@ router.get('/create', function (req, res) {
                 }
 
                 if ( !repo_alloc )
-                    throw obj.ERR_NO_ALLOCATION;
+                    throw g_lib.ERR_NO_ALLOCATION;
 
                 var obj = { data_size: 0, rec_time: Math.floor( Date.now()/1000 ) };
 
@@ -297,6 +297,22 @@ router.get('/view', function (req, res) {
 .summary('Get data by ID or alias')
 .description('Get data by ID or alias');
 
+router.get('/loc', function (req, res) {
+    try {
+        // This is a system call - no need to check permissions
+        var repo = g_db.loc.firstExample({ _from: req.queryParams.id });
+        if ( !repo )
+            throw g_lib.ERR_NO_ALLOCATION;
+
+        res.send([{repo_id:repo._to.substr(5),path:repo.path}]);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().required(), "Data ID (not alias)")
+.summary('Get raw data repo location')
+.description('Get raw data repo location');
 
 router.get('/list', function (req, res) {
     try {
@@ -304,21 +320,29 @@ router.get('/list', function (req, res) {
         var owner_id;
 
         if ( req.queryParams.subject ) {
-            owner_id = "u/" + req.queryParams.subject;
-            g_lib.ensureAdminPermUser( client, owner_id );
+            owner_id = (req.queryParams.subject[1]!="/"?"u/":"") + req.queryParams.subject;
         } else {
             owner_id = client._id;
         }
 
         var result;
 
-        if ( req.queryParams.all ) {
-            result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+        if ( req.queryParams.public ){
+            if ( req.queryParams.all ) {
+                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) and v.public == true let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+            } else {
+                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) and v.public == true let l = (for i in inbound v._id item return i._id) filter length(l) == 0 let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+            }
         } else {
-            result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let l = (for i in inbound v._id item return i._id) filter length(l) == 0 let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
-        }
+            if ( req.queryParams.subject )
+                g_lib.ensureAdminPermUser( client, owner_id );
 
-        //const result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
+            if ( req.queryParams.all ) {
+                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+            } else {
+                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let l = (for i in inbound v._id item return i._id) filter length(l) == 0 let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
+            }
+        }
 
         res.send( result );
     } catch( e ) {
@@ -327,7 +351,8 @@ router.get('/list', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('all', joi.boolean().optional().default(false), "List all data (true), or only loose data (false)")
+.queryParam('public', joi.boolean().optional().default(false), "List only public data")
+.queryParam('all', joi.boolean().optional().default(true), "List all data (true), or only loose data (false)")
 .summary('List all data owned by client, or subject')
 .description('List all data owned by client, or subject');
 

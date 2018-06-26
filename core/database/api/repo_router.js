@@ -97,7 +97,7 @@ router.get('/create', function (req, res) {
 .queryParam('admins', joi.array().items(joi.string()).required(), "Repo admin user IDs")
 .summary('Create a repo server record')
 .description('Create a repo server record.');
-
+// TODO Add base path to repo
 
 router.get('/update', function (req, res) {
 })
@@ -190,7 +190,7 @@ router.get('/alloc/set', function (req, res) {
                     if ( alloc ){
                         g_db.alloc.update( alloc._id, { alloc: req.queryParams.alloc });
                     } else {
-                        g_db.alloc.save({ _from: subject._id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: "/" + subject._key + "/" });
+                        g_db.alloc.save({ _from: subject._id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: "/data/" + subject._key + "/" });
                     }
                 }
             }

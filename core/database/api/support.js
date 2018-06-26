@@ -141,7 +141,9 @@ module.exports = ( function() {
 
         var params;
 
-        if ( obj.isDomainAccount( a_client_id )) {
+        if ( a_client_id.startsWith("u/")){
+            return obj.db._document({ _id: a_client_id });
+        } else if ( obj.isDomainAccount( a_client_id )) {
             // Account
             params = { 'id': 'accn/' + a_client_id };
         } else if ( obj.isUUID( a_client_id  )) {
@@ -235,7 +237,7 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermUser = function( a_client, a_user_id ) {
-        if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id }))  { 
+        if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_user_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id })){ 
             return false;
         } else {
             return true;
