@@ -28,7 +28,7 @@
         <div id="content" class="content" style="flex:1 1 100%">
             <div id="tabs">
                 <ul>
-                    <li><a href="#tab-browse">Browse</a></li>
+                    <li><a href="#tab-browse">Data</a></li>
                     <li><a href="#tab-repo">Repos</a></li>
                     <li style='display:none'><a href="#tab-admin">Admin</a></li>
                     <li><a href="#tab-settings">Settings</a></li>
@@ -79,8 +79,11 @@
                             <button class="btn act-data" onclick="xfrSelected(1)" disabled>Download</button>
                             <button class="btn act-data" onclick="moveSelected()" disabled>Move</button>
                         </div>
-                        <div style="flex:none;padding:.5em 0 0 0">Transfer History:</div>
-                        <div id="xfr_hist" style="flex:none">
+                        <div style="flex:none">
+                            <div id="xfr_panel">
+                                <h3>Data Transfers</h3>
+                                <div id="xfr_hist" style="overflow:auto;max-height:5em"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

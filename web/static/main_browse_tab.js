@@ -355,8 +355,9 @@ function generateTitle( item ) {
 }
 
 function setupBrowseTab(){
+    var my_root_key = "c/" + g_user.uid + "_root";
     var tree_source = [
-        {title:"My Data",folder:true,lazy:true,key: "c/" + g_user.uid + "_root", scope: g_user.uid, nodrag: true },
+        {title:"My Data",folder:true,lazy:true,key: my_root_key, user: g_user.uid, scope: g_user.uid, nodrag: true },
         {title:"My Projects",folder:true,lazy:true,key:"myproj", nodrag: true},
         {title:"Shares",folder:true,lazy:true, nodrag: true },
         {title:"Views",folder:true,lazy:true, nodrag: true },
@@ -407,8 +408,7 @@ function setupBrowseTab(){
             },
             dragEnter: function(node, data) {
                 console.log( "enter:", node, data );
-                //if ( node.isFolder() && node.key != "loose" )
-                if ( node.isFolder() && node.data.scope == data.otherNode.data.scope )
+                if ( node.isFolder() && !node.data.notarg && node.data.scope == data.otherNode.data.scope )
                     return "over";
                 else
                     return false;
@@ -429,6 +429,11 @@ function setupBrowseTab(){
                     url: "/api/prj/list/",
                     cache: false
                 };
+            } else if ( data.node.key == "public" ) {
+                data.result = {
+                    url: "/api/dat/list/public?uid=" + data.node.data.scope,
+                    cache: false
+                };
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -437,17 +442,17 @@ function setupBrowseTab(){
             }
         },
         postProcess: function( event, data ) {
-            console.log( "pos proc:", data );
+            //console.log( "pos proc:", data );
             if ( data.node.key == "myproj" ){
                 data.result = [];
                 if ( data.response.length ){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.title + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", scope: item.id, lazy: true });
+                        data.result.push({ title: item.title + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", scope: "p/"+item.id, lazy: true, nodrag:true });
                     }
                 }else{
-                    data.result.push({ title: "(none)", icon: false  });
+                    data.result.push({ title: "(none)", icon: false, nodrag:true });
                 }
             } else if ( data.node.parent ) {
                 data.result = [];
@@ -455,6 +460,12 @@ function setupBrowseTab(){
                 var folder;
                 var entry;
                 var scope = data.node.data.scope;
+                var nodrag = false;
+
+                if ( data.node.key.endsWith("_root") ){
+                    data.result.push({title:"[Public Access Data]",folder:true,lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
+                } else if ( data.node.key == "public" )
+                    nodrag = true;
 
                 for ( var i in data.response.data ) {
                     item = data.response.data[i];
@@ -463,7 +474,8 @@ function setupBrowseTab(){
                     entry = { title: generateTitle( item ), folder: is_folder, scope: scope, key: item.id };
                     if ( is_folder )
                         entry.lazy = true;
-
+                    if ( nodrag )
+                        entry.nodrag = true;
                     data.result.push( entry );
                 }
             }
@@ -541,6 +553,9 @@ function setupBrowseTab(){
             console.log("sel change",ui.item.value);
         }*/
     });
+
+    //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content",active:false});
+    $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
 
     showSelectedInfo("");
 }

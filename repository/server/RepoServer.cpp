@@ -223,14 +223,6 @@ Server::ioRun()
 }
 
 
-
-string
-Server::getDataPath( const string & a_data_id )
-{
-    return string( "/data/" ) + a_data_id.substr(2);
-}
-
-
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
 ::google::protobuf::Message *base_msg = m_msg_buf.unserialize(); \
@@ -300,11 +292,9 @@ Server::procDataDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
 
-    cout << "Repo: data delete request " << request->id() << "\n";
+    cout << "Repo: data delete request " << request->path() << "\n";
 
-    boost::filesystem::path data_path(  getDataPath( request->id() ) );
-
-    cout << "Repo: path " << data_path << "\n";
+    boost::filesystem::path data_path( request->path() );
 
     boost::filesystem::remove( data_path );
 
@@ -317,11 +307,9 @@ Server::procDataGetSizeRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply )
 
-    cout << "Repo: data get size request " << request->id() << "\n";
+    cout << "Repo: data get size request " << request->path() << "\n";
 
-    boost::filesystem::path data_path( getDataPath( request->id() ));
-
-    cout << "Repo: path " << data_path << "\n";
+    boost::filesystem::path data_path( request->path() );
 
     reply.set_id( request->id() );
 

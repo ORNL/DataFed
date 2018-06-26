@@ -515,11 +515,14 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 void
 DatabaseClient::recordList( const RecordListRequest & a_request, RecordDataReply & a_reply )
 {
-    (void) a_request;
-
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+    if ( a_request.has_pub() )
+        params.push_back({"public",a_request.pub()?"true":"false"});
 
-    dbGet( "dat/list", {}, result );
+    dbGet( "dat/list", params, result );
 
     setRecordData( a_reply, result );
 }
@@ -599,9 +602,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
-DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDeleteReply & a_reply )
+DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
 {
-    (void)a_reply;
     rapidjson::Document result;
 
     dbGet( "dat/delete", {{"id",a_request.id()}}, result );
@@ -614,6 +616,27 @@ DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth:
     rapidjson::Value & val = result[0];
 
     a_reply.set_id( val["id"].GetString() );
+    a_reply.set_repo_id( val["repo_id"].GetString() );
+    a_reply.set_path( val["path"].GetString() );
+}
+
+void
+DatabaseClient::recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "dat/loc", {{"id",a_request.id()}}, result );
+
+    if ( !result.IsArray() || result.Size() != 1 )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    rapidjson::Value & val = result[0];
+
+    a_reply.set_id( val["id"].GetString() );
+    a_reply.set_repo_id( val["repo_id"].GetString() );
+    a_reply.set_path( val["path"].GetString() );
 }
 
 void

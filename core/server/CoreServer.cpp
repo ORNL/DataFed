@@ -367,17 +367,20 @@ Server::backgroundMaintenance()
     {
         struct timespec             _t;
         double                      t;
-        //set<spSession>::iterator    isess;
-        vector<string>::iterator    idel;
+        vector<pair<string,string>>::iterator    idel;
         Auth::RepoDataDeleteRequest req;
         MsgBuf::Message *           reply;
         MsgBuf::Frame               frame;
         string                      uid;
-        MsgComm                     repo_comm( m_repos.begin()->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
+        //MsgComm                     repo_comm( m_repos.begin()->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
         map<string,pair<string,size_t>>::iterator itrans_client;
+        map<string,MsgComm*>        repo_map;
+        map<string,MsgComm*>::iterator repo;
 
-        //vector<spSession>           dead_sessions;
-        //dead_sessions.reserve( 10 );
+        for ( map<std::string,RepoData*>::iterator r = m_repos.begin(); r != m_repos.end(); r++ )
+        {
+            repo_map[r->first] = new MsgComm( r->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
+        }
 
         while( m_io_running )
         {
@@ -388,19 +391,6 @@ Server::backgroundMaintenance()
             clock_gettime( CLOCK_REALTIME, &_t );
             t = _t.tv_sec + (_t.tv_nsec*1e-9);
 
-/*
-            for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
-            {
-                if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
-                {
-                    cout << "CLOSING IDLE SESSION\n";
-                    (*isess)->close();
-                    isess = m_sessions.erase( isess );
-                }
-                else
-                    ++isess;
-            }
-*/
 
             // Delete expired transient client credentials
             for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
@@ -422,15 +412,23 @@ Server::backgroundMaintenance()
                 {
                     for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
                     {
-                        req.set_id( *idel );
-                        repo_comm.send( req );
-                        if ( !repo_comm.recv( reply, uid, frame, 5000 ))
+                        repo = repo_map.find( idel->first );
+                        if ( repo != repo_map.end() )
                         {
-                            cout << "No response from repo server!\n";
-                            break;
+                            req.set_path( idel->second );
+                            repo->second->send( req );
+                            if ( !repo->second->recv( reply, uid, frame, 5000 ))
+                            {
+                                cout << "No response from repo server!\n";
+                                break;
+                            }
+                            else
+                                delete reply;
                         }
                         else
-                            delete reply;
+                        {
+                            cout << "Bad repo in delete list: " << idel->first << "\n";
+                        }
                     }
                 }
                 m_data_delete.clear();
@@ -439,15 +437,6 @@ Server::backgroundMaintenance()
             {
                 cout << "Exception on delete data\n";
             }
-    /*
-            for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )
-            {
-                DL_INFO( "Deleting inactive client " << *isess );
-                delete *isess;
-            }
-
-            dead_sessions.clear();
-    */
         }
     }
     catch( TraceException & e )
@@ -473,10 +462,10 @@ Server::handleNewXfr( const XfrData & a_xfr )
 }
 
 void
-Server::dataDelete( const std::string & a_data_id )
+Server::dataDelete( const std::string & a_repo_id, const std::string & a_data_path )
 {
     lock_guard<mutex> lock( m_data_mutex );
-    m_data_delete.push_back( a_data_id );
+    m_data_delete.push_back( make_pair( a_repo_id, a_data_path ));
 }
 
 

@@ -96,7 +96,7 @@ XfrMgr::xfrThreadFunc()
         Auth::RepoDataSizeReply *    sz_rep;
         MsgBuf::Frame                frame;
         string                       uid;
-
+        size_t                       pos;
         map<string,MsgComm*>    repo_comm;
         map<string,MsgComm*>::iterator comm;
 
@@ -135,6 +135,7 @@ XfrMgr::xfrThreadFunc()
                         if ( !db_client.userGetAccessToken( (*ixfr)->token )) {
                             cout << "User " << (*ixfr)->user_id << " has no access token\n";
                             ixfr = m_xfr_active.erase( ixfr );
+                            // TODO This is NOT acceptable way to fail - must clean-up transfer request
                         }
                         else
                         {
@@ -205,6 +206,11 @@ XfrMgr::xfrThreadFunc()
                                         }
 
                                         sz_req.set_id( (*ixfr)->data_id );
+                                        pos = (*ixfr)->repo_path.find_first_of("/");
+                                        if ( pos != string::npos )
+                                            sz_req.set_path( (*ixfr)->repo_path.substr( pos ));
+                                        else
+                                            sz_req.set_path( (*ixfr)->repo_path );
                                         comm->second->send( sz_req );
                                         if ( !comm->second->recv( raw_msg, uid, frame, 10000 ))
                                             cout << "No response from repo server!\n";

@@ -182,7 +182,7 @@
 	cursor: pointer;
 	position: relative;
 	margin: 2px 0 0 0;
-	padding: .5em .5em .5em .7em;
+	padding: .15em .25em .15em .5em;
 	font-size: 100%;
 }
 .ui-accordion .ui-accordion-content {

@@ -84,6 +84,8 @@ message UserDataReply
 
 message RecordListRequest
 {
+    optional string             subject     = 1;
+    optional bool               pub         = 2;
 }
 
 message RecordViewRequest
@@ -127,14 +129,21 @@ message RecordUpdateRequest
     optional uint32             data_time   = 9;
 }
 
+message RecordGetDataLocationRequest
+{
+    required string             id          = 1;
+}
+
 message RecordDeleteRequest
 {
     required string             id          = 1;
 }
 
-message RecordDeleteReply
+message RecordDataLocationReply
 {
     required string             id          = 1;
+    required string             repo_id     = 2;
+    required string             path        = 3;
 }
 
 // ============================ Raw Data Messages
@@ -320,12 +329,13 @@ message ProjectDataReply
 
 message RepoDataDeleteRequest
 {
-    required string             id          = 1;
+    required string             path        = 1;
 }
 
 message RepoDataGetSizeRequest
 {
     required string             id          = 1;
+    required string             path        = 2;
 }
 
 message RepoDataSizeReply

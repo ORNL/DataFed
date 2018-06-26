@@ -95,6 +95,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
+        SET_MSG_HANDLER_DB( proto_id, RecordGetDataLocationRequest, RecordDataLocationReply, recordGetDataLocation );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
@@ -358,8 +359,13 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
     m_db_client.setClient( a_uid );
     m_db_client.recordUpdate( upd_req, upd_reply );
 
-    // Ask FileManager to delete file
-    m_mgr.dataDelete( request->id() );
+    Auth::RecordGetDataLocationRequest loc_req;
+    Auth::RecordDataLocationReply loc_reply;
+    loc_req.set_id( request->id() );
+    m_db_client.recordGetDataLocation( loc_req, loc_reply );
+
+    // Ask manager to delete file
+    m_mgr.dataDelete( loc_reply.repo_id(), loc_reply.path() );
 
     PROC_MSG_END
 }
@@ -367,7 +373,7 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
 bool
 Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, RecordDeleteReply )
+    PROC_MSG_BEGIN( RecordDeleteRequest, RecordDataLocationReply )
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
@@ -377,7 +383,7 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
     m_db_client.recordDelete( *request, reply );
 
     // Ask FileManager to delete file
-    m_mgr.dataDelete( reply.id() );
+    m_mgr.dataDelete( reply.repo_id(), reply.path() );
 
     PROC_MSG_END
 }

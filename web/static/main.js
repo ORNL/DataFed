@@ -401,7 +401,7 @@ function xfrHistoryPoll() {
             }
         }
 
-        //pollTimer = setTimeout( xfrHistoryPoll, 5000 );
+        pollTimer = setTimeout( xfrHistoryPoll, 5000 );
     });
 }
 

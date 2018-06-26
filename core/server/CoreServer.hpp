@@ -41,7 +41,7 @@ private:
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     void                handleNewXfr( const XfrData & a_xfr );
-    void                dataDelete( const std::string & a_data_id );
+    void                dataDelete( const std::string & a_repo_id, const std::string & a_data_path );
 
     void loadKeys( const std::string & a_cred_dir );
     void loadRepositoryConfig();
@@ -75,7 +75,7 @@ private:
     std::thread *                   m_zap_thread;
     std::map<std::string,std::string>   m_auth_clients;
     std::map<std::string,std::pair<std::string,size_t>>   m_trans_auth_clients;
-    std::vector<std::string>        m_data_delete;
+    std::vector<std::pair<std::string,std::string>> m_data_delete;
     XfrMgr                          m_xfr_mgr;
     std::thread *                   m_msg_router_thread;
     std::vector<Worker*>            m_workers;

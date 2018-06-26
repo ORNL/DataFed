@@ -114,7 +114,8 @@ function makeDlgSetACLs(){
         $("#dlg_write_sel",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_WRITE )});
 
         inst.public = item.public?true:false;
-        $("#public_check",inst.frame).val(item.public);
+
+        $("#public_check",inst.frame).prop("checked",item.isPublic);
         //$("#public_check",inst.frame).on( "change", function(){ inst.publicFlagChanged( this.checked )});
 
         aclView( item.id, function( ok, data ){
@@ -162,7 +163,7 @@ function makeDlgSetACLs(){
                         var dlg_inst = $(this);
 
                         var is_public = $("#public_check",inst.frame).prop("checked");
-                        console.log( "SAVE ACLS:", is_public, inst.new_rules );
+                        //console.log( "SAVE ACLS:", is_public, inst.new_rules );
 
                         var conflict = false;
                         if ( is_public ){
