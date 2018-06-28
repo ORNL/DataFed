@@ -106,7 +106,8 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional string             owner       = 5;
+    optional bool               is_public   = 5;
+    optional string             owner       = 6;
 }
 
 message XfrData
@@ -119,9 +120,10 @@ message XfrData
     required string             local_path  = 6;
     required string             user_id     = 7;
     required string             repo_id     = 8;
-    required uint64             updated     = 9;
-    optional string             task_id     = 10; // Only set if status > XFR_INIT
-    optional string             err_msg     = 11; // Only set if status == XFR_FAILED
+    required uint64             started     = 9;
+    required uint64             updated     = 10;
+    optional string             task_id     = 11; // Only set if status > XFR_INIT
+    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
 }
 
 message GroupData

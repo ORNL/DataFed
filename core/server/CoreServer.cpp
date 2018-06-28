@@ -363,20 +363,19 @@ Server::backgroundMaintenance()
 {
     DL_DEBUG( "Maint thread started" );
 
+    struct timespec             _t;
+    double                      t;
+    vector<pair<string,string>>::iterator    idel;
+    Auth::RepoDataDeleteRequest req;
+    MsgBuf::Message *           reply;
+    MsgBuf::Frame               frame;
+    string                      uid;
+    map<string,pair<string,size_t>>::iterator itrans_client;
+    map<string,MsgComm*>        repo_map;
+    map<string,MsgComm*>::iterator repo;
+
     try
     {
-        struct timespec             _t;
-        double                      t;
-        vector<pair<string,string>>::iterator    idel;
-        Auth::RepoDataDeleteRequest req;
-        MsgBuf::Message *           reply;
-        MsgBuf::Frame               frame;
-        string                      uid;
-        //MsgComm                     repo_comm( m_repos.begin()->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
-        map<string,pair<string,size_t>>::iterator itrans_client;
-        map<string,MsgComm*>        repo_map;
-        map<string,MsgComm*>::iterator repo;
-
         for ( map<std::string,RepoData*>::iterator r = m_repos.begin(); r != m_repos.end(); r++ )
         {
             repo_map[r->first] = new MsgComm( r->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
@@ -408,6 +407,7 @@ Server::backgroundMaintenance()
             try
             {
                 // TODO This needs to be re-written in an async manner
+                // TODO Deletes also need to be serialized so they aren't lost in the event of a restart
                 if ( m_data_delete.size() )
                 {
                     for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
@@ -451,6 +451,9 @@ Server::backgroundMaintenance()
     {
         DL_ERROR( "Maint thread: unkown exception " );
     }
+
+    for ( repo = repo_map.begin(); repo != repo_map.end(); repo++ )
+        delete repo->second;
 
     DL_DEBUG( "Maint thread stopped" );
 }

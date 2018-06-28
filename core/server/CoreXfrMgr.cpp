@@ -174,7 +174,7 @@ XfrMgr::xfrThreadFunc()
                             if ( glob.checkTransferStatus( (*ixfr)->token, (*ixfr)->task_id, status, error_msg ))
                             {
                                 cout << "TODO - cancel failed task!\n";
-                                //glob.cancelTask( (*ixfr)->token, (*ixfr)->task_id );
+                                glob.cancelTask( (*ixfr)->token, (*ixfr)->task_id );
                             }
                             cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
 

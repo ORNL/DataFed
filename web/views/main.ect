@@ -70,6 +70,7 @@
                         </div>
                         <div style="flex:none;padding:.25em">
                             <!-- input type="checkbox" id="lock_btn"><label title="Allow drag and drop within Collections & Data window" for="lock_btn">Unlock</label></input -->
+                            <button class="btn" onclick="newProj()">New Proj</button>
                             <button class="btn act-folder act-root" onclick="newData()" disabled>New Data</button>
                             <button class="btn act-folder act-root" onclick="newColl()" disabled>New Coll.</button>
                             <button class="btn act-folder act-data" onclick="editSelected()" disabled>Edit</button>
@@ -80,9 +81,9 @@
                             <button class="btn act-data" onclick="moveSelected()" disabled>Move</button>
                         </div>
                         <div style="flex:none">
-                            <div id="xfr_panel">
+                            <div id="xfr_panel" >
                                 <h3>Data Transfers</h3>
-                                <div id="xfr_hist" style="overflow:auto;max-height:5em"></div>
+                                <div id="xfr_hist" class="text" style="overflow:auto;max-height:5em;padding:.5em"></div>
                             </div>
                         </div>
                     </div>

@@ -61,6 +61,7 @@ body
 
 .text
 {
+    background-image:none!important;
     background: #FFFFFF!important;
     color: #000000!important;
     font-size: 1rem!important;
@@ -127,4 +128,9 @@ ul.ui-effects-placeholder { width:10px !important; }
 
 .ui-popup-container {
     z-index: 110;
+}
+
+span.fancytree-node.project > span.fancytree-icon {
+    background-position: 0 0;
+    background-image: url("/project.gif");
 }

@@ -329,19 +329,34 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     }
                     #endif
 
-                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=u_", 54 ) != 0 )
+                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=", 52 ) != 0 )
                     {
                         syslog( LOG_ERR, "Invalid certificate subject prefix: %s", (char*)client_buf.value );
                     }
                     else
                     {
-                        char uuid[40];
+                        /* Note: For some reason, globus will provide the CN as either a UUID that is linked to the client's account and encoded in base32, OR it will simply provide the client's GlobusID username (possibly depending on how the user authenticated). So, this code attempts to detect the two different cases by looking for a "u_" prefix which seems to be associated with the encoded UUID.*/
 
-                        if ( !decodeUUID( (char*)client_buf.value + 54, uuid ))
+                        char * client_id = 0;
+
+                        // TODO Should check client uuid str len to make sure it won't overflow
+                        if ( strncmp( (char*)client_buf.value + 52, "u_", 2 ) == 0 )
                         {
-                            syslog( LOG_ERR, "Failed to decode subject UUID: %s", (char*)client_buf.value + 54 );
+                            client_id = malloc( 40 );
+
+                            if ( !decodeUUID( (char*)client_buf.value + 54, client_id ))
+                            {
+                                syslog( LOG_ERR, "Failed to decode subject UUID: %s", (char*)client_buf.value + 54 );
+                                free( client_id );
+                                client_id = 0;
+                            }
                         }
                         else
+                        {
+                            client_id = strdup( (char*)client_buf.value + 52 );
+                        }
+
+                        if ( client_id )
                         {
                             CURL * curl = curl_easy_init();
 
@@ -357,7 +372,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
 
                                 url[0] = error[0] = 0;
 
-                                char * esc_client = curl_easy_escape( curl, uuid, 0 );
+                                char * esc_client = curl_easy_escape( curl, client_id, 0 );
                                 char * esc_object = curl_easy_escape( curl, object, 0 );
                                 
                                 strcpy( url, "http://sdms.ornl.gov:8529/_db/sdms/api/authz/gridftp?client=" );
@@ -405,6 +420,8 @@ sdms_gsi_authz_authorize_async( va_list ap )
                                 curl_free( esc_object );
                                 curl_easy_cleanup(curl);
                             }
+
+                            free( client_id );
                         }
                     }
 

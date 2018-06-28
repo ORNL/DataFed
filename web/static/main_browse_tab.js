@@ -3,6 +3,10 @@ var data_md_empty = true;
 var data_md_empty_src = [{title:"(none)", icon:false}];
 var data_md_cur = {};
 var data_md_exp = {};
+var xfrHist;
+var pollSince = 0;
+var pollTimer;
+var my_root_key;
 
 function deleteSelected() {
     var item = $('#data_tree').fancytree('getTree').activeNode;
@@ -34,6 +38,12 @@ function deleteSelected() {
     });
 }
 
+function newProj() {
+    dlgNewEditProj(null,function(data){
+        addNode( data );
+    });
+}
+
 function newData() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
     if ( node && node.key[0] == "c" ) {
@@ -47,7 +57,7 @@ function newData() {
                     coll_id = coll.alias;
             }
 
-            dlgNewEdit(0,null,coll_id,coll.owner,function(data){
+            dlgNewEdit(0,null,coll_id,function(data){
                 addNode( data );
             });
         }); 
@@ -86,13 +96,13 @@ function editSelected() {
     if ( node ) {
         if ( node.key[0] == "c" ) {
             viewColl( node.key, function( data ){
-                dlgNewEdit(1,data.data[0],null,null,function(data){
+                dlgNewEdit(1,data.data[0],null,function(data){
                     updateNodeTitle( data );
                 });
             }); 
         } else if ( node.key[0] == "d" ) {
             viewData( node.key, function( data ){
-                dlgNewEdit(0,data.data[0],null,null,function(data){
+                dlgNewEdit(0,data.data[0],null,function(data){
                     updateNodeTitle( data );
                 });
             }); 
@@ -160,6 +170,10 @@ function updateBtnState( state ){
         $(".btn.act-folder").button("option", "disabled", true);
         $(".btn.act-data").button("option", "disabled", true);
         $(".btn.act-root").button("option", "disabled", false);
+    } else if ( state == "p" ) {
+        $(".btn.act-data").button("option", "disabled", true);
+        $(".btn.act-folder").button("option", "disabled", false);
+        $(".btn.act-root").button("option", "disabled", false);
     } else {
         $(".btn.act-folder").button("option", "disabled", true);
         $(".btn.act-data").button("option", "disabled", true);
@@ -169,9 +183,11 @@ function updateBtnState( state ){
 
 function showSelectedInfo( key ){
     if ( key[0] == "c" /*&& key != root_key*/ ) {
-        //if ( key == root_key )
-        if ( key.endsWith( "_root" ))
+
+        if ( key == my_root_key )
             updateBtnState( "r" );
+        else if ( key.endsWith( "_root" ))
+            updateBtnState( "p" );
         else
             updateBtnState( "c" );
         viewColl( key, function( data ){
@@ -187,6 +203,7 @@ function showSelectedInfo( key ){
 
             html += "<table class='info_table'><col width='30%'><col width='70%'>";
             html += "<tr><th>Field</th><th>Value</th></tr>";
+            html += "<tr><td>Public Access:</td><td>" + (item.isPublic?"Enabled":"Disabled") + "</td></tr>";
             html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
             html += "</table>";
             $("#data_info").html(html);
@@ -317,7 +334,7 @@ function execQuery(){
     var query = $("#query_input").val();
     var scope = $("#query_scope").val();
 
-    //console.log( "query:", query, scope );
+    console.log( "query:", query, scope );
 
     setStatusText("Executing search query...");
     findData( query, scope, function( ok, data ){
@@ -354,14 +371,78 @@ function generateTitle( item ) {
     /*entry = { title: "<span style='display:inline-block;width:20ch'>" + item.id.substr(2) + (alias?" (" + alias + ")":" ") + "</span> \"" + item.title + "\"", folder: is_folder, key: item.id };*/
 }
 
+function xfrUpdateHistory( xfr_list ){
+    var len = xfr_list.length;
+    var html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Status Updated</th><th>Status</th></tr>";
+    var stat;
+    var start = new Date(0);
+    var update = new Date(0);
+    var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+
+    for ( var i = 0; i < len; i++ ) {
+        stat = xfr_list[i];
+        console.log( stat );
+        html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td>";
+        start.setTime( stat.started*1000 );
+        update.setTime( stat.updated*1000 );
+        html += "<td>" + start.toLocaleDateString("en-US", options) + "</td><td>" + update.toLocaleDateString("en-US", options) + "</td><td>";
+
+        if ( stat.status == "XS_FAILED" )
+            html += "FAILED: " + stat.errMsg + "</td></tr>";
+        else
+            html += stat.status.substr(3) + "</td></tr>";
+    }
+    html += "</table>";
+    $("#xfr_hist").html( html );
+}
+
+function xfrHistoryPoll() {
+    console.log( "poll xfr history" );
+    if ( !g_user )
+        return;
+
+    _asyncGet( "/api/xfr/list" + (pollSince?"?since=6":""), null, function( ok, data ){
+        if ( ok ) {
+            if ( pollSince ){
+                // Incremental poll
+                if ( data.xfr && data.xfr.length ) {
+                    // Find and remove any previous entries
+                    for ( var i in data.xfr ){
+                        var xfr = data.xfr[i];
+                        for ( var j in xfrHist ){
+                            if ( xfrHist[i].id == xfr.id ){
+                                xfrHist.splice(i,1);
+                                break;
+                            }
+                        }
+                    }
+                    xfrHist = data.xfr.concat( xfrHist );
+                    xfrUpdateHistory( xfrHist );
+                }
+            }else{
+                //console.log( "xfr status", data );
+                if ( data.xfr && data.xfr.length ) {
+                    xfrHist = data.xfr;
+                    xfrUpdateHistory( xfrHist );
+                } else {
+                    $("#xfr_hist").html("No transfer history");
+                }
+            }
+        }
+        pollSince = 15;
+        pollTimer = setTimeout( xfrHistoryPoll, 5000 );
+    });
+}
+
 function setupBrowseTab(){
-    var my_root_key = "c/" + g_user.uid + "_root";
+    my_root_key = "c/" + g_user.uid + "_root";
+
     var tree_source = [
-        {title:"My Data",folder:true,lazy:true,key: my_root_key, user: g_user.uid, scope: g_user.uid, nodrag: true },
-        {title:"My Projects",folder:true,lazy:true,key:"myproj", nodrag: true},
-        {title:"Shares",folder:true,lazy:true, nodrag: true },
-        {title:"Views",folder:true,lazy:true, nodrag: true },
-        {title:"Search Results",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
+        {title:"My Data",folder:true,icon:false,lazy:true,key: my_root_key, user: g_user.uid, scope: g_user.uid, nodrag: true },
+        {title:"My Projects",folder:true,icon:false,lazy:true,key:"myproj", nodrag: true},
+        {title:"Shares",folder:true,icon:false,lazy:true, nodrag: true },
+        {title:"Views",folder:true,icon:false,lazy:true, nodrag: true },
+        {title:"Search Results",icon:false,folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
     $("#data_tree").fancytree({
@@ -449,7 +530,7 @@ function setupBrowseTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.title + " (" + item.id + ")", folder: true, key: "c/"+item.id+"_root", scope: "p/"+item.id, lazy: true, nodrag:true });
+                        data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root", scope: "p/"+item.id, lazy: true, nodrag:true });
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
@@ -463,7 +544,7 @@ function setupBrowseTab(){
                 var nodrag = false;
 
                 if ( data.node.key.endsWith("_root") ){
-                    data.result.push({title:"[Public Access Data]",folder:true,lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
+                    data.result.push({title:"[Public Access Data]",folder:true,icon:false,lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
                 } else if ( data.node.key == "public" )
                     nodrag = true;
 
@@ -558,4 +639,6 @@ function setupBrowseTab(){
     $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
 
     showSelectedInfo("");
+
+    pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 }

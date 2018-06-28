@@ -25,7 +25,7 @@ function makeDlgSetACLs(){
                     <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
                     <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
                         <table class='info_table' style='width:100%'>\
-                        <tr><td>List:</td><td><select id='dlg_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select><br><br><br></td></tr>\
+                        <tr><td>List:</td><td><select id='dlg_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>View:</td><td><select id='dlg_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>Update:</td><td><select id='dlg_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>Admin:</td><td><select id='dlg_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
@@ -65,7 +65,7 @@ function makeDlgSetACLs(){
                     </div>\
                 </div>\
             </div>\
-            <div style='flex:none;padding-top:.5em'><input type='checkbox' name='public_check' id='public_check'>Enable public access (list, view, read)</div>\
+            <div style='flex:none;padding-top:.5em'><label for='public_check'>Enable public access</label><input type='checkbox' name='public_check' id='public_check'> (list, view, read)</div>\
         </div>";
 
     this.show = function( item ){
@@ -115,8 +115,7 @@ function makeDlgSetACLs(){
 
         inst.public = item.public?true:false;
 
-        $("#public_check",inst.frame).prop("checked",item.isPublic);
-        //$("#public_check",inst.frame).on( "change", function(){ inst.publicFlagChanged( this.checked )});
+        //$("#public_check",inst.frame).prop("checked",item.isPublic);
 
         aclView( item.id, function( ok, data ){
             if ( !ok || !data ) {
@@ -247,7 +246,10 @@ function makeDlgSetACLs(){
             inst.frame.dialog( options );
             $(".btn",inst.frame).button();
             $("select",inst.frame).selectmenu({ width:"auto" });
-            //$("#public_check",inst.frame).checkboxradio();
+            $("#public_check",inst.frame).checkboxradio();
+            $("#public_check",inst.frame).prop("checked",item.isPublic);
+            $("#public_check",inst.frame).checkboxradio("refresh");
+
             inst.disablePermControls( true );
         });
     }

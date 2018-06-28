@@ -192,6 +192,7 @@ message CollCreateRequest
     optional string             desc        = 2;
     optional string             alias       = 3;
     optional string             parent_id   = 4;
+    optional bool               is_public   = 5;
 }
 
 message CollUpdateRequest
@@ -200,6 +201,7 @@ message CollUpdateRequest
     optional string             title       = 2;
     optional string             desc        = 3;
     optional string             alias       = 4;
+    optional bool               is_public   = 5;
 }
 
 message CollDeleteRequest

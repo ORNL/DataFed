@@ -521,8 +521,11 @@ app.get('/api/acl/update', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/xfr/status', ( a_req, a_resp ) => {
-    sendMessage( "XfrListRequest", {}, a_req, a_resp, function( reply ) {
+app.get('/api/xfr/list', ( a_req, a_resp ) => {
+    var params = {};
+    if ( a_req.query.since )
+        params.since = a_req.query.since;
+    sendMessage( "XfrListRequest", params, a_req, a_resp, function( reply ) {
         //console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
@@ -692,7 +695,7 @@ core_sock.on('message', function( delim, frame, client, msg_buf ) {
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
     var ctx = frame.readUInt16LE( 6 );
 
-    console.log( "got msg type:", mtype );
+    //console.log( "got msg type:", mtype );
     //console.log( "client len:", client?client.length:0 );
     //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
 
@@ -761,7 +764,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
             throw "Invalid message type: " + a_msg_name;
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         /* Frame contents (C++)
         uint32_t    size;       // Size of buffer
@@ -795,7 +798,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
 
-        console.log( "sendMsg:", a_msg_name );
+        //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
             core_sock.send([ nullfr, frame, client, msg_buf ]);
         else
@@ -811,7 +814,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
     allocRequestContext( null, function( ctx ){
         var msg_buf = msg.encode(a_msg_data).finish();
-        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         var frame = Buffer.alloc(8);
         frame.writeUInt32LE( msg_buf.length, 0 );
@@ -821,7 +824,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         g_ctx[ctx] = a_cb;
 
-        console.log( "sendMsgDirect:", a_msg_name );
+        //console.log( "sendMsgDirect:", a_msg_name );
         if ( msg_buf.length )
             core_sock.send([ nullfr, frame, a_client, msg_buf ]);
         else

@@ -109,7 +109,7 @@ GlobusTransferClient::get( const char * a_url_path, const char * a_token, const 
 }
 
 void
-GlobusTransferClient::post( const char * a_url_path, const char * a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document & a_body, rapidjson::Document & a_result )
+GlobusTransferClient::post( const char * a_url_path, const char * a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, rapidjson::Document & a_result )
 {
     string  url;
     string  res_json;
@@ -118,7 +118,9 @@ GlobusTransferClient::post( const char * a_url_path, const char * a_token, const
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    a_body.Accept(writer);
+    if ( a_body )
+        a_body->Accept(writer);
+
     //curlReadBuffer out_buf;
     //out_buf->ptr = buffer->GetString();
     //out_buf->size = buffer->GetSize();
@@ -144,15 +146,18 @@ GlobusTransferClient::post( const char * a_url_path, const char * a_token, const
     }
 
     DL_DEBUG( "url: " << url );
-    DL_DEBUG( "body: " << buffer.GetString() );
+    //DL_DEBUG( "body: " << buffer.GetString() );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
     //curl_easy_setopt( m_curl, CURLOPT_READDATA, &out_buf );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
     curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
-    curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, buffer.GetString());
 
+    if ( a_body )
+        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, buffer.GetString());
+    else
+        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, "");
 
     struct curl_slist *list = 0;
 
@@ -160,11 +165,15 @@ GlobusTransferClient::post( const char * a_url_path, const char * a_token, const
     {
         string auth_hdr = "Authorization: Bearer ";
         auth_hdr += a_token;
-        cout << a_token << "\n";
+        //cout << a_token << "\n";
         list = curl_slist_append( list, auth_hdr.c_str() );
     }
 
-    list = curl_slist_append( list, "Content-Type: application/json");
+    if ( a_body )
+    {
+        list = curl_slist_append( list, "Content-Type: application/json");
+    }
+
     curl_easy_setopt( m_curl, CURLOPT_HTTPHEADER, list );
 
     CURLcode res = curl_easy_perform( m_curl );
@@ -253,7 +262,7 @@ GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_i
     xfr_list.PushBack( xfr_item, allocator );
     body.AddMember( "DATA", xfr_list, allocator );
 
-    post( "transfer", a_acc_tok.c_str(), {}, body, result );
+    post( "transfer", a_acc_tok.c_str(), {}, &body, result );
 
     rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
     if ( imem == result.MemberEnd() )
@@ -322,6 +331,29 @@ GlobusTransferClient::checkTransferStatus( const std::string & a_acc_tok, const 
     }
 
     return false;
+}
+
+bool
+GlobusTransferClient::cancelTask( const std::string & a_acc_tok, const std::string & a_task_id )
+{
+    rapidjson::Document result;
+
+    cout << "cancel " << a_task_id << "\n";
+
+    string url = string("task/")+a_task_id+"/cancel";
+    post( url.c_str(), a_acc_tok.c_str(), {}, 0, result );
+
+    rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
+    if ( imem == result.MemberEnd() )
+        EXCEPT( 1, "Invalid response from Globus Xfer API" );
+
+    imem = result.FindMember("code");
+    if ( imem == result.MemberEnd() )
+        EXCEPT( 1, "Invalid response from Globus Xfer API" );
+
+    cout << "code: " << imem->value.GetString() << "\n";
+
+    return true;
 }
 
 /**

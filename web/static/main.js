@@ -169,7 +169,7 @@ function groupDelete( a_uid, a_gid, a_cb ) {
     });
 }
 
-function dlgNewEdit(a_mode,a_data,a_parent,a_owner,a_cb) {
+function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
         "<table style='width:100%'>\
@@ -309,6 +309,115 @@ function dlgNewEdit(a_mode,a_data,a_parent,a_owner,a_cb) {
     frame.dialog( options );
 }
 
+
+function dlgNewEditProj(a_data,a_cb) {
+    var frame = $(document.createElement('div'));
+    frame.html(
+        "<table style='width:100%'>\
+            <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
+            <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
+            <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+            <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
+            <tr><td>Repo ID:</td><td><input type='text' id='repo_id' style='width:100%'></input></td></tr>\
+            </table>" );
+
+    var dlg_title;
+    if ( a_data ) {
+        dlg_title = "Edit Project" + a_data.id;
+    } else {
+        dlg_title = "New Project";
+    }
+
+    var options = {
+        title: dlg_title,
+        modal: true,
+        width: 400,
+        height: 'auto',
+        resizable: true,
+        closeOnEscape: false,
+        buttons: [{
+            text: a_data?"Update":"Create",
+            click: function() {
+                var id;
+                if ( !a_data ){
+                    if ( !id ){
+                        alert("ID cannot be empty");
+                        return;
+                    }
+                    id = encodeURIComponent($("#id",frame).val());
+                }
+
+                var title = encodeURIComponent($("#title",frame).val());
+                if ( !title ) {
+                    alert("Title cannot be empty");
+                    return;
+                }
+                var domain = encodeURIComponent($("#domain",frame).val());
+                if ( !domain ) {
+                    alert("Domain cannot be empty");
+                    return;
+                }
+                // TODO check domain format (aaa.aaa...)
+
+                var desc = encodeURIComponent($("#desc",frame).val());
+                var repo_id = encodeURIComponent($("#repo_id",frame).val());
+
+                var url = "/api/proj/";
+
+                if ( a_data ){
+                    url += "/update?id="+a_data.id;
+                }else{
+                    url += "/create?id="+id;
+                }
+                if ( title )
+                    url += "&title="+title;
+                if ( desc )
+                    url += "&desc="+desc;
+                if ( domain )
+                    url += "&domain="+domain;
+                if ( repo_id )
+                    url += "&repo_id="+repo_id;
+
+                var inst = $(this);
+                _asyncGet( url, null, function( ok, data ){
+                    if ( ok ) {
+                        inst.dialog('destroy').remove();
+                        //console.log( "data:",data);
+                        if ( a_cb )
+                            a_cb(data.data[0]);
+                    } else {
+                        alert( "Error: " + data );
+                    }
+                });
+            }
+        },{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('destroy').remove();
+            }
+        }],
+        open: function(event,ui){
+            if ( a_data ){
+                $("#id",frame).val(a_data.id);
+                $("#title",frame).val(a_data.title);
+                $("#desc",frame).val(a_data.desc);
+                $("#domain",frame).val(a_data.domain);
+                $("#repo_id",frame).css("display","none");
+            } else {
+                $("#id",frame).val("");
+                $("#title",frame).val("");
+                $("#desc",frame).val("");
+                $("#domain",frame).val("");
+                $("#repo_id",frame).val("");
+            }
+        }
+    };
+
+
+    frame.dialog( options );
+}
+
+
 function dlgStartTransfer( a_mode, a_data ) {
     var frame = $(document.createElement('div'));
     frame.html(
@@ -374,37 +483,6 @@ function dlgStartTransfer( a_mode, a_data ) {
 }
 
 
-function xfrHistoryPoll() {
-    console.log( "poll xfr history" );
-    if ( !g_user )
-        return;
-
-    _asyncGet( "/api/xfr/status", null, function( ok, data ){
-        if ( ok ) {
-            //console.log( "xfr status", data );
-            if ( data.xfr && data.xfr.length ) {
-                var len = data.xfr.length>5?5:data.xfr.length;
-                var html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Status</th></tr>";
-                var stat;
-                for ( var i = 0; i < len; i++ ) {
-                    stat = data.xfr[i];
-                    html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td><td>";
-                    if ( stat.status == "XS_FAILED" )
-                    html += "FAILED: " + stat.errMsg + "</td></tr>";
-                    else
-                        html += stat.status.substr(3) + "</td></tr>";
-                }
-                html += "</table>";
-                $("#xfr_hist").html( html );
-            } else {
-                $("#xfr_hist").html("No transfer history");
-            }
-        }
-
-        pollTimer = setTimeout( xfrHistoryPoll, 5000 );
-    });
-}
-
 function setStatusText( text ){
     if ( status_timer )
         clearTimeout( status_timer );
@@ -458,7 +536,5 @@ var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
-
-var pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 
 console.log( "main.js loaded");

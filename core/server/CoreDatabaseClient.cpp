@@ -726,6 +726,8 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_parent_id() )
         params.push_back({"parent",a_request.parent_id()});
+    if ( a_request.has_is_public() )
+        params.push_back({"public",a_request.is_public()?"true":"false"});
 
     dbGet( "col/create", params, result );
 
@@ -745,6 +747,8 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
         params.push_back({"desc",a_request.desc()});
     if ( a_request.has_alias() )
         params.push_back({"alias",a_request.alias()});
+    if ( a_request.has_is_public() )
+        params.push_back({"public",a_request.is_public()?"true":"false"});
 
     dbGet( "col/update", params, result );
 
@@ -862,6 +866,8 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             coll->set_desc( imem->value.GetString() );
+        if (( imem = val.FindMember("public")) != val.MemberEnd() )
+            coll->set_is_public( imem->value.GetBool() );
 
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
         {
@@ -932,6 +938,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_local_path( val["local_path"].GetString() );
         xfr->set_user_id( val["user_id"].GetString() );
         xfr->set_repo_id( val["repo_id"].GetString() );
+        xfr->set_started( val["started"].GetUint64() );
         xfr->set_updated( val["updated"].GetUint64() );
 
         imem = val.FindMember("task_id");
