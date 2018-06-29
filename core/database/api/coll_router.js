@@ -60,6 +60,8 @@ router.get('/create', function (req, res) {
                 var obj = { title: req.queryParams.title };
                 if ( req.queryParams.desc )
                     obj.desc = req.queryParams.desc;
+                if ( req.queryParams.public )
+                    obj.public = req.queryParams.public;
 
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner_id });
@@ -95,6 +97,7 @@ router.get('/create', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('title', joi.string().required(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
+.queryParam('public', joi.boolean().optional(), "Enable public access")
 .queryParam('alias', joi.string().optional(), "Alias")
 .queryParam('parent', joi.string().optional(), "Parent collection ID or alias (default = root)")
 .summary('Creates a new data collection')
@@ -132,6 +135,11 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.desc ) {
                     obj.desc = req.queryParams.desc;
+                    do_update = true;
+                }
+
+                if ( req.queryParams.public != undefined ){
+                    obj.public = req.queryParams.public;
                     do_update = true;
                 }
 
@@ -175,6 +183,7 @@ router.get('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
+.queryParam('public', joi.boolean().optional(), "Enable public access")
 .queryParam('alias', joi.string().optional(), "Alias")
 .queryParam('parent', joi.string().optional(), "Parent collection ID or alias (default = root)")
 .summary('Updates an existing data collection')
@@ -326,6 +335,8 @@ router.get('/read', function (req, res) {
 
             for ( i in items ) {
                 item = items[i];
+                // Since hasPermission call above has established collection read permission (which implies LIST),
+                // only check for local deny settings (much more efficient)
                 if ( g_lib.hasLocalDeny( client, item, g_lib.PERM_LIST ))
                     continue;
                 if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))

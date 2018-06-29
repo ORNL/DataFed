@@ -29,6 +29,7 @@ module.exports = ( function() {
     obj.PERM_CREATE         = 0x100;   // Create new records and collections
     obj.PERM_ALL            = 0x1FF;
     obj.PERM_MEMBER         = 0x1F7;   // Baseline project member permissions (all but admin)
+    obj.PERM_PUBLIC         = 0x043;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
@@ -447,6 +448,11 @@ module.exports = ( function() {
         var result;
         var mask;
 
+        // If object is marked "public", everyone is granted LIST, VIEW, and READ permissions
+        // The current implementation allows users to be denied access to public data (maybe wrong?)
+        if ( a_object.public )
+            perm_found = obj.PERM_PUBLIC;
+
         // Evaluate permissions set directly on object
 
         var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
@@ -507,9 +513,11 @@ module.exports = ( function() {
             }
         }
 
-        // If not all requested permissions have been found, evaluate permissions inherited from parent (owned) containers
+        // If not all requested permissions have been found, evaluate permissions inherited from parent collections
+        // Note that items can only be linked to containers that share the same owner
+        // This evaluation is implemented as a manually guided breadth-first search
 
-        var owner_id = obj.db.owner.firstExample({ _from: a_object._id })._to;
+        //var owner_id = obj.db.owner.firstExample({ _from: a_object._id })._to;
         var children = [a_object];
         var parents;
         var parent;
@@ -520,11 +528,14 @@ module.exports = ( function() {
         while ( 1 ) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter is_same_collection('c',p.vertices[1]) and v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
+            //parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter is_same_collection('c',p.vertices[1]) and v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,inhdeny:v.inhdeny,public:v.pulic}", { children : children }).toArray();
+
             if ( parents.length == 0 )
                 break;
 
-            // Gather INHERITED user, group, and default permissions collectively over all parents
+            // Gather INHERITED user, group, and default permissions collectively over all parents FIRST before evaluating
+            // This enables evaluation of all permissions and selecting the least restrictive.
 
             usr_perm_found = 0; usr_perm_deny = 0;
             grp_perm_found = 0; grp_perm_deny = 0;
@@ -532,6 +543,9 @@ module.exports = ( function() {
 
             for ( i in parents ) {
                 parent = parents[i];
+
+                if ( parent.public )
+                    def_perm_found |= obj.PERM_PUBLIC;
 
                 // User ACL first
                 acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();

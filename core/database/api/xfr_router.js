@@ -52,6 +52,7 @@ router.get('/init', function (req, res) {
 
                 repo_loc = repo_loc[0];
                 var xfr;
+                var now = ((Date.now()/1000)|0);
 
                 if ( req.queryParams.mode == g_lib.XM_PUT ) {
                     xfr = g_db._query( "for i in tr filter i.data_id == @data_id and i.status < 3 return i", { data_id: data_id }).toArray();
@@ -67,7 +68,8 @@ router.get('/init', function (req, res) {
                         local_path: req.queryParams.path,
                         user_id: client._id,
                         repo_id: repo_loc.repo._id,
-                        updated: ((Date.now()/1000)|0)
+                        started: now,
+                        updated: now
                         }, { returnNew: true } );
 
                     result = [xfr.new];
@@ -90,9 +92,6 @@ router.get('/init', function (req, res) {
 
                     if ( xfr.length == 0 )
                     {
-                        // TODO Add configuration info for facility end-points and storage locations
-                        //"fb82a688-3817-11e8-b977-0ac6873fc732/data/" + data_id.substr( 2 )
-
                         xfr = g_db.tr.save({
                             mode: g_lib.XM_GET,
                             status: g_lib.XS_INIT,
@@ -101,7 +100,8 @@ router.get('/init', function (req, res) {
                             local_path: dest_path,
                             user_id: client._id,
                             repo_id: repo_loc.repo._id,
-                            updated: ((Date.now()/1000)|0)
+                            started: now, 
+                            updated: now
                             }, { returnNew: true } );
 
                         result = [xfr.new];

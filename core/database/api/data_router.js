@@ -389,7 +389,7 @@ router.get('/find', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('query', joi.string().required(), "Query expression")
+.queryParam('query', joi.string().optional(), "Query expression")
 .queryParam('scope', joi.string().optional(), "Scope: myall,mydata,myproj,shared,public,all")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
@@ -463,7 +463,8 @@ function searchShared( query, client ){
 }
 
 function searchPublic( query, client ){
-    return g_db._query( "for i in d filter i.public == true let owner = (for j in outbound i._id owner return j._id) filter owner != @user and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray();
+    console.log("searchPublic",query);
+    return g_db._query( "for i in d filter i.public == true let owner = (for j in outbound i._id owner return j._id) filter owner != @user " + (query?" and (" + query + ") ":"") +"return {id:i._id,title:i.title}", { user: client._id } ).toArray();
 
     /*
     var item;
