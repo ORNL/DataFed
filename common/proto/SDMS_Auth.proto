@@ -310,6 +310,32 @@ message ACLDataReply
 
 // ============================ Project Messages
 
+message ProjectCreateRequest
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    required string             domain      = 3;
+    optional string             desc        = 4;
+    optional string             repo        = 5;
+    repeated string             admin       = 6;
+    repeated string             member      = 7;
+}
+
+message ProjectUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             domain      = 3;
+    optional string             desc        = 4;
+    repeated string             admin       = 5;
+    repeated string             member      = 6;
+}
+
+message ProjectDeleteRequest
+{
+    required string             id          = 1;
+}
+
 message ProjectListRequest
 {
     optional bool               by_owner    = 1;

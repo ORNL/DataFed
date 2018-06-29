@@ -9,27 +9,34 @@ var pollTimer;
 var my_root_key;
 
 function deleteSelected() {
-    var item = $('#data_tree').fancytree('getTree').activeNode;
+    var node = $('#data_tree').fancytree('getTree').activeNode;
     var url = "/api/";
     var msg = "<div>Are you sure you want to delete ";
+    var id;
 
-    if ( item.key[0] == "d" ) {
+    if ( node.data.isproj ){
+        msg += "project";
+        url += "prj";
+        id = node.data.scope;
+    }else if( node.key[0] == "d" ) {
         msg += "data";
         url += "dat";
-    } else {
+        id = node.key;
+    }else{
         msg += "collection";
         url += "col";
+        id = node.key;
     }
 
-    msg += " ID " + item.key + "?<div>";
+    msg += " ID " + id + "?<div>";
 
     confirmChoice( "Confirm Deletion", msg, ["Yes","Cancel"], function( choice ){
         if ( choice == 0 ){
             var inst = $(this);
-            url += "/delete?id=" + item.key;
+            url += "/delete?id=" + id;
             _asyncGet( url, null, function( ok, data ){
                 if ( ok ) {
-                    deleteNode( item.key );
+                    deleteNode( node.key );
                 } else {
                     alert( "Delete failed: " + data );
                 }
@@ -94,12 +101,19 @@ function newColl() {
 function editSelected() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
     if ( node ) {
-        if ( node.key[0] == "c" ) {
+        console.log( "edit sel", node, node.data.isproj );
+        if ( node.data.isproj ){
+            viewProj( node.data.scope, function( data ){
+                dlgNewEditProj(data[0],null,function(data){
+                    //updateNodeTitle( data );
+                });
+            });
+        }else if ( node.key[0] == "c" ) {
             viewColl( node.key, function( data ){
                 dlgNewEdit(1,data.data[0],null,function(data){
                     updateNodeTitle( data );
                 });
-            }); 
+            });
         } else if ( node.key[0] == "d" ) {
             viewData( node.key, function( data ){
                 dlgNewEdit(0,data.data[0],null,function(data){
@@ -530,7 +544,7 @@ function setupBrowseTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root", scope: "p/"+item.id, lazy: true, nodrag:true });
+                        data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root",scope:"p/"+item.id,isproj:true,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });

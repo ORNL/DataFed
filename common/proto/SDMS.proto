@@ -69,9 +69,8 @@ message UserData
     optional string             email       = 3;
     optional string             phone       = 4;
     optional bool               is_admin    = 5;
-    optional bool               is_project  = 6;
-    repeated string             admin       = 7;
-    repeated string             ident       = 8;
+    repeated string             admin       = 6;
+    repeated string             ident       = 7;
 }
 
 message ProjectData
@@ -79,10 +78,11 @@ message ProjectData
     required string             id          = 1;
     required string             title       = 2;
     optional string             domain      = 3;
-    optional string             repo        = 4;
-    optional string             owner       = 5;
-    repeated string             admin       = 6;
-    repeated string             member      = 7;
+    optional string             desc        = 4;
+    optional string             repo        = 5;
+    optional string             owner       = 6;
+    repeated string             admin       = 7;
+    repeated string             member      = 8;
 }
 
 message RecordData

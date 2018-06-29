@@ -42,6 +42,9 @@ public:
     void userList( const Auth::UserListRequest & a_request, Auth::UserDataReply & a_reply );
     void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
 
+    void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projDelete( const Auth::ProjectDeleteRequest & a_request, Anon::AckReply & a_reply );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
 

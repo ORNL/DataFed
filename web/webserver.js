@@ -301,6 +301,68 @@ app.get('/api/usr/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/prj/create', ( a_req, a_resp ) => {
+    console.log("get /api/prj/create");
+
+    var params  = {
+        id: a_req.query.id,
+        title: a_req.query.title,
+        domain: a_req.query.domain
+    }
+    if ( a_req.query.repo )
+        params.repo = a_req.query.repo;
+    if ( a_req.query.desc )
+        params.desc = a_req.query.desc;
+    if ( a_req.query.members )
+        params.member = JSON.parse( a_req.query.members );
+    if ( a_req.query.admins )
+        params.admin = JSON.parse( a_req.query.admins );
+
+    sendMessage( "ProjectCreateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.proj );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
+app.get('/api/prj/update', ( a_req, a_resp ) => {
+    console.log("get /api/prj/update");
+
+    var params  = {
+        id: a_req.query.id,
+    }
+    if ( a_req.query.domain )
+        params.domain = a_req.query.domain;
+    if ( a_req.query.title )
+        params.title = a_req.query.title;
+    if ( a_req.query.repo )
+        params.repo = a_req.query.repo;
+    if ( a_req.query.desc )
+        params.desc = a_req.query.desc;
+    if ( a_req.query.members )
+        params.member = JSON.parse( a_req.query.members );
+    if ( a_req.query.admins )
+        params.admin = JSON.parse( a_req.query.admins );
+
+    console.log( "prj upd", params );
+    sendMessage( "ProjectUpdateRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.proj );
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
+app.get('/api/prj/delete', ( a_req, a_resp ) => {
+    sendMessage( "ProjectDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        //console.log( "reply to /api/dat/view", reply );
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/prj/view', ( a_req, a_resp ) => {
     console.log("get /api/prj/view");
 

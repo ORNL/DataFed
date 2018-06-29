@@ -427,9 +427,6 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
         if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
             user->set_is_admin( imem->value.GetBool() );
 
-        if (( imem = val.FindMember("is_project")) != val.MemberEnd() )
-            user->set_is_project( imem->value.GetBool() );
-
         if (( imem = val.FindMember("admins")) != val.MemberEnd() )
         {
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
@@ -442,6 +439,103 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
                 user->add_ident( imem->value[j].GetString() );
         }
     }
+}
+
+void
+DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+
+    params.push_back({"id",a_request.id()});
+    params.push_back({"title",a_request.title()});
+    params.push_back({"domain",a_request.domain()});
+
+    if ( a_request.has_desc() )
+        params.push_back({"desc",a_request.desc()});
+
+    if ( a_request.has_repo() )
+        params.push_back({"repo",a_request.repo()});
+
+    if ( a_request.admin_size() > 0 )
+    {
+        string members = "[";
+        for ( int i = 0; i < a_request.admin_size(); ++i )
+        {
+            if ( i > 0 )
+                members += ",";
+            members += "\"" + a_request.admin(i) + "\"";
+        }
+        members += "]";
+        params.push_back({"admins", members });
+    }
+
+    if ( a_request.member_size() > 0 )
+    {
+        string members = "[";
+        for ( int i = 0; i < a_request.member_size(); ++i )
+        {
+            if ( i > 0 )
+                members += ",";
+            members += "\"" + a_request.member(i) + "\"";
+        }
+        members += "]";
+        params.push_back({"members", members });
+    }
+
+    dbGet( "prj/create", params, result );
+
+    setProjectData( a_reply, result );
+}
+
+void
+DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+
+    params.push_back({"id",a_request.id()});
+
+    if ( a_request.has_title() )
+        params.push_back({"title",a_request.title()});
+
+    if ( a_request.has_domain() )
+        params.push_back({"domain",a_request.domain()});
+
+    if ( a_request.has_desc() )
+        params.push_back({"desc",a_request.desc()});
+
+    string members = "[";
+    for ( int i = 0; i < a_request.admin_size(); ++i )
+    {
+        if ( i > 0 )
+            members += ",";
+        members += "\"" + a_request.admin(i) + "\"";
+    }
+    members += "]";
+    params.push_back({"admins", members });
+
+    members = "[";
+    for ( int i = 0; i < a_request.member_size(); ++i )
+    {
+        if ( i > 0 )
+            members += ",";
+        members += "\"" + a_request.member(i) + "\"";
+    }
+    members += "]";
+    params.push_back({"members", members });
+
+    dbGet( "prj/update", params, result );
+
+    setProjectData( a_reply, result );
+}
+
+void
+DatabaseClient::projDelete( const Auth::ProjectDeleteRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void)a_reply;
+    rapidjson::Document result;
+    dbGet( "prj/delete", {{"id",a_request.id()}}, result );
 }
 
 void
@@ -486,11 +580,14 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
         rapidjson::Value & val = a_result[i];
 
         proj = a_reply.add_proj();
-        proj->set_id( val["uid"].GetString() );
+        proj->set_id( val["id"].GetString() );
         proj->set_title( val["title"].GetString() );
 
         if (( imem = val.FindMember("domain")) != val.MemberEnd() )
             proj->set_domain( imem->value.GetString() );
+
+        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
+            proj->set_desc( imem->value.GetString() );
 
         if (( imem = val.FindMember("repo")) != val.MemberEnd() )
             proj->set_repo( imem->value.GetString() );

@@ -89,6 +89,19 @@ function viewColl( a_id, a_callback ) {
     });
 }
 
+function viewProj( a_id, a_cb ){
+    _asyncGet( "/api/prj/view?id=" + a_id, null, function( ok, data ){
+        if ( ok ) {
+            console.log("viewProj ok, data:", data, typeof data );
+            a_cb( data );
+        }
+        else {
+            console.log("viewProj failed:", data );
+            a_cb();
+        }
+    });
+}
+
 function linkItem( a_item, a_coll, a_cb ) {
     _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll, null, a_cb );
 }
@@ -309,24 +322,53 @@ function dlgNewEdit(a_mode,a_data,a_parent,a_cb) {
     frame.dialog( options );
 }
 
-
+// Dialog that allows creation and editing of Projects
 function dlgNewEditProj(a_data,a_cb) {
+    console.log( "dlgNewEditProj", a_data );
     var frame = $(document.createElement('div'));
-    frame.html(
-        "<table style='width:100%'>\
-            <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
-            <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
-            <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
-            <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
-            <tr><td>Repo ID:</td><td><input type='text' id='repo_id' style='width:100%'></input></td></tr>\
-            </table>" );
+    var html = "<div class='col-flex' style='height:100%'>\
+        <div style='flex:none'>\
+            <table style='width:100%'>\
+                <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
+                <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
+                <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+                <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
+                <tr id='repo_row'><td>Repo ID:</td><td><input type='text' id='repo_id' style='width:100%'></input></td></tr>\
+                <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%' disabled></input></td></tr>\
+            </table>\
+        </div>\
+        <div style='flex:none'>&nbsp</div>\
+        <div class='row-flex' style='flex: 1 1 100%'>\
+            <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
+                <div style='flex:none'>Members:</div>\
+                <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
+                    <div id='proj_mem_tree' class='no-border'></div>\
+                </div>\
+                <div style='flex:none;padding-top:.25em'><button id='add_mem_btn' class='btn'>Add</button>&nbsp<button id='rem_mem_btn' class='btn' disabled>Remove</button></div>\
+            </div>\
+            <div style='flex:none'>&nbsp</div>\
+            <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
+                <div style='flex:none'>Admins:</div>\
+                <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
+                    <div id='proj_adm_tree' class='no-border'></div>\
+                </div>\
+                <div style='flex:none;padding-top:.25em'><button id='add_adm_btn' class='btn'>Add</button>&nbsp<button id='rem_adm_btn' class='btn' disabled>Remove</button></div>\
+            </div>\
+        </div>";
+
+    frame.html( html );
 
     var dlg_title;
     if ( a_data ) {
-        dlg_title = "Edit Project" + a_data.id;
+        dlg_title = "Edit Project " + a_data.id;
     } else {
         dlg_title = "New Project";
     }
+    var proj;
+    if ( a_data )
+        proj = Object.assign({}, a_data);
+    else
+        proj = { owner: g_user.uid };
 
     var options = {
         title: dlg_title,
@@ -338,45 +380,54 @@ function dlgNewEditProj(a_data,a_cb) {
         buttons: [{
             text: a_data?"Update":"Create",
             click: function() {
-                var id;
-                if ( !a_data ){
-                    if ( !id ){
-                        alert("ID cannot be empty");
-                        return;
-                    }
-                    id = encodeURIComponent($("#id",frame).val());
-                }
+                proj.id = $("#id",frame).val();
+                proj.domain = $("#domain",frame).val();
+                proj.title = $("#title",frame).val();
+                proj.desc = $("#desc",frame).val();
+                proj.repo = $("#repo_id",frame).val();
 
-                var title = encodeURIComponent($("#title",frame).val());
-                if ( !title ) {
-                    alert("Title cannot be empty");
+                console.log( "project update, old:", a_data, "new:",proj);
+                if ( !proj.id || !proj.domain || !proj.title ){
+                    alert("Missing one or more required fields: ID, title, and domain.");
                     return;
                 }
-                var domain = encodeURIComponent($("#domain",frame).val());
-                if ( !domain ) {
-                    alert("Domain cannot be empty");
-                    return;
-                }
-                // TODO check domain format (aaa.aaa...)
 
-                var desc = encodeURIComponent($("#desc",frame).val());
-                var repo_id = encodeURIComponent($("#repo_id",frame).val());
+                var url = "/api/prj/";
 
-                var url = "/api/proj/";
+                if ( a_data )
+                    url += "update?id=";
+                else
+                    url += "create?id=";
 
-                if ( a_data ){
-                    url += "/update?id="+a_data.id;
-                }else{
-                    url += "/create?id="+id;
-                }
-                if ( title )
-                    url += "&title="+title;
-                if ( desc )
-                    url += "&desc="+desc;
-                if ( domain )
-                    url += "&domain="+domain;
-                if ( repo_id )
-                    url += "&repo_id="+repo_id;
+                url += encodeURIComponent( proj.id );;
+
+                if ( !a_data || proj.domain != a_data.domain )
+                    url += "&domain="+ encodeURIComponent(proj.domain);
+
+                if ( !a_data || proj.title != a_data.title )
+                    url += "&title="+ encodeURIComponent(proj.title);
+
+                if (( !a_data && proj.desc ) || proj.desc != a_data.desc )
+                    url += "&desc="+ encodeURIComponent(proj.desc);
+
+                if ( !a_data && proj.repo )
+                    url += "&repo="+ encodeURIComponent(proj.repo);
+
+                var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
+                var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
+        
+                var admins = [];
+                adm_tree.visit( function(node){
+                    admins.push( node.title );
+                });
+                url += "&admins=" + JSON.stringify( admins );
+
+                var members = [];
+                mem_tree.visit( function(node){
+                    members.push( node.title );
+                });
+                url += "&members=" + JSON.stringify( members );
+                console.log( "URL", url );
 
                 var inst = $(this);
                 _asyncGet( url, null, function( ok, data ){
@@ -397,19 +448,141 @@ function dlgNewEditProj(a_data,a_cb) {
             }
         }],
         open: function(event,ui){
+            var mem_src = [];
+            var adm_src = [];
+
             if ( a_data ){
                 $("#id",frame).val(a_data.id);
+                $("#id",frame).prop("disabled",true);
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
                 $("#domain",frame).val(a_data.domain);
-                $("#repo_id",frame).css("display","none");
-            } else {
-                $("#id",frame).val("");
-                $("#title",frame).val("");
-                $("#desc",frame).val("");
-                $("#domain",frame).val("");
-                $("#repo_id",frame).val("");
+                $("#repo_row",frame).css("display","none");
+                $("#owner_id",frame).val(a_data.owner);
+
+                for ( var i in a_data.member )
+                    mem_src.push({title: a_data.member[i],icon:false,key: "u/"+a_data.member[i] });
+
+                for ( i in a_data.admin )
+                    adm_src.push({title: a_data.admin[i],icon:false,key: "u/"+a_data.admin[i] });
+
+            }else{
+                $("#owner_id",frame).val(g_user.uid);
             }
+
+            $("#proj_mem_tree",frame).fancytree({
+                extensions: ["themeroller"],
+                themeroller: {
+                    activeClass: "ui-state-hover",
+                    addClass: "",
+                    focusClass: "",
+                    hoverClass: "ui-state-active",
+                    selectedClass: ""
+                },
+                source: mem_src,
+                selectMode: 1,
+                checkbox: false,
+                activate: function( event, data ) {
+                    $("#rem_mem_btn",frame).button("option", "disabled", false);
+                }
+            });
+
+            $("#proj_adm_tree",frame).fancytree({
+                extensions: ["themeroller"],
+                themeroller: {
+                    activeClass: "ui-state-hover",
+                    addClass: "",
+                    focusClass: "",
+                    hoverClass: "ui-state-active",
+                    selectedClass: ""
+                },
+                source: adm_src,
+                selectMode: 1,
+                checkbox: false,
+                activate: function( event, data ) {
+                    $("#rem_adm_btn",frame).button("option", "disabled", false);
+                }
+            });
+
+            var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
+            var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
+            var uid;
+            var warn;
+
+            function do_warn(){
+                if ( warn ){
+                    if ( warn == 1 )
+                        setStatusText( "Project owner ignored." );
+                    else if ( warn == 2 )
+                        setStatusText( "Users cannot be both project admins and members." );
+                    else
+                        setStatusText( "Project owner and dual-role member/admin users ignored." );
+                }
+            }
+
+            $("#add_mem_btn",frame).click( function(){
+                dlgPickUser.show( function( uids ){
+                    warn = 0;
+                    for ( i in uids ){
+                        uid = uids[i];
+                        if ( uid == "u/"+proj.owner ){
+                            warn |= 1;
+                            continue;
+                        }
+
+                        if ( adm_tree.getNodeByKey( uid )){
+                            warn |= 2;
+                            continue;
+                        }
+
+                        if ( !mem_tree.getNodeByKey( uid )){
+                            mem_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
+                        }
+                    }
+                    do_warn();
+                });
+            });
+
+            $("#rem_mem_btn",frame).click( function(){
+                var node = mem_tree.getActiveNode();
+                if ( node ){
+                    node.remove();
+                    $("#rem_mem_btn",frame).button("option", "disabled", true);
+                }
+            });
+
+            $("#add_adm_btn",frame).click( function(){
+                dlgPickUser.show( function( uids ){
+                    for ( i in uids ){
+                        uid = uids[i];
+
+                        if ( uid == "u/"+proj.owner ){
+                            warn |= 1;
+                            continue;
+                        }
+
+                        if ( mem_tree.getNodeByKey( uid )){
+                            warn |= 2;
+                            continue;
+                        }
+
+                        if ( !adm_tree.getNodeByKey( uid )){
+                            adm_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
+                        }
+                    }
+                    do_warn();
+                });
+            });
+
+            $("#rem_adm_btn",frame).click( function(){
+                var node = adm_tree.getActiveNode();
+                if ( node ){
+                    node.remove();
+                    $("#rem_adm_btn",frame).button("option", "disabled", true);
+                }
+            });
+
+            $(".btn",frame).button();
         }
     };
 
