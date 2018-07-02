@@ -23,6 +23,7 @@ router.use( "/not", require('./note_router') );
 router.use( "/xfr", require('./xfr_router') );
 router.use( "/authz", require('./authz_router') );
 router.use( "/repo", require('./repo_router') );
+router.use( "/admin", require('./admin_router') );
 
 module.context.use(router);
 
