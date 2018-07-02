@@ -578,7 +578,23 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 
 app.get('/api/acl/update', ( a_req, a_resp ) => {
     console.log("acl update pub:",a_req.query.pub);
-    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules, isPublic: a_req.query.pub }, a_req, a_resp, function( reply ) {
+    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules, ispublic: (a_req.query.pub=="true"?true:false)}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/acl/by_user', ( a_req, a_resp ) => {
+    sendMessage( "ACLByUserRequest", {}, a_req, a_resp, function( reply ) {
+        console.log("reply acl/by_user",reply.user);
+        if ( reply.user )
+            a_resp.send(reply.user);
+        else
+            a_resp.send([]);
+    });
+});
+
+app.get('/api/acl/by_user/list', ( a_req, a_resp ) => {
+    sendMessage( "ACLByUserListRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -820,6 +836,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
         return;
     }
 
+    //console.log("sendMsg parms:",a_msg_data);
     allocRequestContext( a_resp, function( ctx ){
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )

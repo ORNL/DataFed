@@ -680,8 +680,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         params.push_back({"title",a_request.title()});
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
-    if ( a_request.has_is_public() )
-        params.push_back({"public",a_request.is_public()?"true":"false"});
+    if ( a_request.has_ispublic() )
+        params.push_back({"public",a_request.ispublic()?"true":"false"});
     if ( a_request.has_alias() )
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_metadata() )
@@ -770,7 +770,7 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
             rec->set_desc( imem->value.GetString() );
 
         if (( imem = val.FindMember("public")) != val.MemberEnd() )
-            rec->set_is_public( imem->value.GetBool() );
+            rec->set_ispublic( imem->value.GetBool() );
 
         if (( imem = val.FindMember("md")) != val.MemberEnd() )
         {
@@ -823,8 +823,8 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
         params.push_back({"alias",a_request.alias()});
     if ( a_request.has_parent_id() )
         params.push_back({"parent",a_request.parent_id()});
-    if ( a_request.has_is_public() )
-        params.push_back({"public",a_request.is_public()?"true":"false"});
+    if ( a_request.has_ispublic() )
+        params.push_back({"public",a_request.ispublic()?"true":"false"});
 
     dbGet( "col/create", params, result );
 
@@ -844,8 +844,8 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
         params.push_back({"desc",a_request.desc()});
     if ( a_request.has_alias() )
         params.push_back({"alias",a_request.alias()});
-    if ( a_request.has_is_public() )
-        params.push_back({"public",a_request.is_public()?"true":"false"});
+    if ( a_request.has_ispublic() )
+        params.push_back({"public",a_request.ispublic()?"true":"false"});
 
     dbGet( "col/update", params, result );
 
@@ -964,7 +964,7 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             coll->set_desc( imem->value.GetString() );
         if (( imem = val.FindMember("public")) != val.MemberEnd() )
-            coll->set_is_public( imem->value.GetBool() );
+            coll->set_ispublic( imem->value.GetBool() );
 
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
         {
@@ -1088,19 +1088,38 @@ DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataRe
 void
 DatabaseClient::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
 {
-    (void) a_reply;
-
     rapidjson::Document result;
     vector<pair<string,string>> params;
     params.push_back({"id",a_request.id()});
     if ( a_request.has_rules() )
         params.push_back({"rules",a_request.rules()});
-    if ( a_request.has_is_public() )
-        params.push_back({"public",a_request.is_public()?"true":"false"});
+    if ( a_request.has_ispublic() )
+        params.push_back({"public",a_request.ispublic()?"true":"false"});
 
     dbGet( "acl/update", params, result );
 
     setACLData( a_reply, result );
+}
+
+void
+DatabaseClient::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply )
+{
+    (void)a_request;
+    rapidjson::Document result;
+
+    dbGet( "acl/by_user", {}, result );
+
+    setUserData( a_reply, result );
+}
+
+void
+DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::CollDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "acl/by_user/list", {{"owner",a_request.owner()}}, result );
+
+    setCollData( a_reply, result );
 }
 
 void

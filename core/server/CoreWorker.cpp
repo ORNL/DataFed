@@ -111,6 +111,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
+        SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );
+        SET_MSG_HANDLER_DB( proto_id, ACLByUserListRequest, CollDataReply, aclByUserList );
         SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
         SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
         SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
@@ -146,7 +148,6 @@ Worker::workerThread()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                //cout << "W" << m_tid << " got msg " << msg_type << endl;
                 DL_INFO( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
@@ -197,7 +198,7 @@ if ( base_msg ) \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
-        /*DL_INFO( "Rcvd: " << request->DebugString());*/ \
+        DL_INFO( "Rcvd: " << request->DebugString()); \
         replyclass reply; \
         try \
         {

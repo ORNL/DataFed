@@ -217,7 +217,7 @@ function showSelectedInfo( key ){
 
             html += "<table class='info_table'><col width='30%'><col width='70%'>";
             html += "<tr><th>Field</th><th>Value</th></tr>";
-            html += "<tr><td>Public Access:</td><td>" + (item.isPublic?"Enabled":"Disabled") + "</td></tr>";
+            html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
             html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
             html += "</table>";
             $("#data_info").html(html);
@@ -238,7 +238,7 @@ function showSelectedInfo( key ){
 
             html += "<table class='info_table'><col width='30%'><col width='70%'>";
             html += "<tr><th>Field</th><th>Value</th></tr>";
-            html += "<tr><td>Public Access:</td><td>" + (item.isPublic?"Enabled":"Disabled") + "</td></tr>";
+            html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
             html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
             html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
             html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
@@ -454,7 +454,7 @@ function setupBrowseTab(){
     var tree_source = [
         {title:"My Data",folder:true,icon:false,lazy:true,key: my_root_key, user: g_user.uid, scope: g_user.uid, nodrag: true },
         {title:"My Projects",folder:true,icon:false,lazy:true,key:"myproj", nodrag: true},
-        {title:"Shares",folder:true,icon:false,lazy:true, nodrag: true },
+        {title:"Shared Data",folder:true,icon:false,lazy:true,nodrag:true,key:"shared"},
         {title:"Views",folder:true,icon:false,lazy:true, nodrag: true },
         {title:"Search Results",icon:false,folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
@@ -529,6 +529,18 @@ function setupBrowseTab(){
                     url: "/api/dat/list/public?uid=" + data.node.data.scope,
                     cache: false
                 };
+            } else if ( data.node.key == "shared" ) {
+                if ( data.node.data.scope ){
+                    data.result = {
+                        url: "/api/acl/by_user/list?owner=" + data.node.data.scope,
+                        cache: false
+                    };
+                }else{
+                    data.result = {
+                        url: "/api/acl/by_user",
+                        cache: false
+                    };
+                }
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -545,6 +557,17 @@ function setupBrowseTab(){
                     for ( var i in data.response ) {
                         item = data.response[i];
                         data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root",scope:"p/"+item.id,isproj:true,lazy:true,nodrag:true});
+                    }
+                }else{
+                    data.result.push({ title: "(none)", icon: false, nodrag:true });
+                }
+            } else if ( data.node.key == "shared" && !data.node.data.scope ){
+                data.result = [];
+                if ( data.response.length ){
+                    var item;
+                    for ( var i in data.response ) {
+                        item = data.response[i];
+                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:false,folder:true,key:"shared",scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });

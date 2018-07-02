@@ -115,8 +115,6 @@ function makeDlgSetACLs(){
 
         inst.public = item.public?true:false;
 
-        //$("#public_check",inst.frame).prop("checked",item.isPublic);
-
         aclView( item.id, function( ok, data ){
             if ( !ok || !data ) {
                 //alert( "Could not get ACLs for " + item.id );
@@ -162,7 +160,7 @@ function makeDlgSetACLs(){
                         var dlg_inst = $(this);
 
                         var is_public = $("#public_check",inst.frame).prop("checked");
-                        //console.log( "SAVE ACLS:", is_public, inst.new_rules );
+                        console.log( "SAVE ACLS:", is_public, inst.new_rules );
 
                         var conflict = false;
                         if ( is_public ){
@@ -247,7 +245,7 @@ function makeDlgSetACLs(){
             $(".btn",inst.frame).button();
             $("select",inst.frame).selectmenu({ width:"auto" });
             $("#public_check",inst.frame).checkboxradio();
-            $("#public_check",inst.frame).prop("checked",item.isPublic);
+            $("#public_check",inst.frame).prop("checked",item.ispublic);
             $("#public_check",inst.frame).checkboxradio("refresh");
 
             inst.disablePermControls( true );
