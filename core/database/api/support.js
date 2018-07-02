@@ -439,7 +439,7 @@ module.exports = ( function() {
      * known not to be owned by the client (and that the client is not an admin). In this case, those checks
      * would add performance cost for no benefit.
      */
-    obj.hasPermission = function( a_client, a_object, a_req_perm ) {
+    obj.hasPermission = function( a_client, a_object, a_req_perm, any ) {
         //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
 
         var perm_found  = 0;
@@ -454,7 +454,7 @@ module.exports = ( function() {
             perm_found = obj.PERM_PUBLIC;
 
         // Evaluate permissions set directly on object
-
+console.log("1",a_object._id);
         var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
         for ( var i in acls ) {
             acl = acls[i];
@@ -463,7 +463,7 @@ module.exports = ( function() {
             perm_deny |= acl.deny;
         }
         //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
-        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
         //console.log("eval res:", result );
         if ( result != null ) {
             //console.log("result (usr acl):", result );
@@ -471,6 +471,7 @@ module.exports = ( function() {
         }
 
         // Evaluate group permissions on object
+console.log("2",a_object._id);
 
         acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
 
@@ -488,7 +489,7 @@ module.exports = ( function() {
 
         //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
 
-        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+        result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
 
         //console.log("eval res:", result );
         if ( result != null ) {
@@ -506,7 +507,7 @@ module.exports = ( function() {
             perm_deny |= ( a_object.deny & mask );
 
             //console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
-            result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+            result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
             if ( result != null ) {
                 //console.log("result (def perm):", result );
                 return result;
@@ -527,6 +528,7 @@ module.exports = ( function() {
 
         while ( 1 ) {
             // Find all parent collections owned by object owner
+            console.log("3");
 
             //parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter is_same_collection('c',p.vertices[1]) and v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
             parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,inhdeny:v.inhdeny,public:v.pulic}", { children : children }).toArray();
@@ -547,6 +549,8 @@ module.exports = ( function() {
                 if ( parent.public )
                     def_perm_found |= obj.PERM_PUBLIC;
 
+                console.log("4",parent._id);
+
                 // User ACL first
                 acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
                 for ( i in acls ) {
@@ -554,6 +558,7 @@ module.exports = ( function() {
                     usr_perm_found |= ( acl.inhgrant | acl.inhdeny );
                     usr_perm_deny |= acl.inhdeny;
                 }
+                console.log("5",parent._id);
 
                 // Group ACL next
                 acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
@@ -579,7 +584,7 @@ module.exports = ( function() {
                 perm_found |= usr_perm_found;
                 perm_deny |= ( usr_perm_deny & mask );
 
-                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
                 if ( result != null ) {
                     //console.log("result (prnt usr acl):", result );
                     return result;
@@ -592,7 +597,7 @@ module.exports = ( function() {
                 perm_found |= grp_perm_found;
                 perm_deny |= ( grp_perm_deny & mask );
 
-                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
                 if ( result != null ) {
                     //console.log("result (prnt grp acl):", result );
                     return result;
@@ -604,7 +609,7 @@ module.exports = ( function() {
                 perm_found |= def_perm_found;
                 perm_deny |= ( def_perm_deny & mask );
 
-                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny );
+                result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
                 if ( result != null ) {
                     //console.log("result (prnt def perm):", result );
                     return result;
@@ -804,14 +809,26 @@ module.exports = ( function() {
         return false;
     };
 
-    obj.evalPermissions = function( a_req_perm, a_perm_found, a_perm_deny ) {
-        if (( a_perm_found & a_req_perm ) != a_req_perm )
-            return null;
-
-        if (( a_req_perm & a_perm_deny ) != 0 )
-            return false;
-        else
-            return true;
+    obj.evalPermissions = function( a_req_perm, a_perm_found, a_perm_deny, any ) {
+        if ( any ){
+            // If deny mask includes ALL requested permissions, return false (denied)
+            if (( a_req_perm & a_perm_deny ) == a_req_perm )
+                return false;
+            // If any requested permission have been found, return true (granted)
+            if ( a_perm_found & a_req_perm )
+                return true;
+            else
+                return null; // Else, keep looking
+        } else {
+            // If deny mask includes ANY requested permissions, return false (denied)
+            if (( a_req_perm & a_perm_deny ) != 0 )
+                return false;
+            // If not all requested permissions have been found return NULL (keep looking)
+            if ( a_perm_found & a_req_perm != a_req_perm )
+                return null;
+            else
+                return true; // Else, permission granted
+        }
     };
 
     return obj;
