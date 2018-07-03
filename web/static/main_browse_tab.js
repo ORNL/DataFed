@@ -87,7 +87,7 @@ function newColl() {
                 else
                     coll_id = coll.alias;
             }
-            dlgNewEdit(1,null,coll_id,coll.owner,function(data){
+            dlgNewEdit(1,null,coll_id,function(data){
                 addNode( data );
             });
         }); 
@@ -173,7 +173,7 @@ function xfrSelected( a_mode ) {
     }
 }
 
-function updateBtnState( state ){
+function updateBtnState( state, admin ){
     if ( state == "c" ) {
         $(".btn.act-data").not(".act-folder").button("option", "disabled", true);
         $(".btn.act-folder").button("option", "disabled", false);
@@ -188,6 +188,7 @@ function updateBtnState( state ){
         $(".btn.act-data").button("option", "disabled", true);
         $(".btn.act-folder").button("option", "disabled", false);
         $(".btn.act-root").button("option", "disabled", false);
+        $(".btn.act-admin").button("option", "disabled", !admin);
     } else {
         $(".btn.act-folder").button("option", "disabled", true);
         $(".btn.act-data").button("option", "disabled", true);
@@ -195,62 +196,67 @@ function updateBtnState( state ){
 
 }
 
-function showSelectedInfo( key ){
-    if ( key[0] == "c" /*&& key != root_key*/ ) {
-
-        if ( key == my_root_key )
-            updateBtnState( "r" );
-        else if ( key.endsWith( "_root" ))
-            updateBtnState( "p" );
-        else
-            updateBtnState( "c" );
-        viewColl( key, function( data ){
-            var item = data.data[0];
-            var html = "Collection, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
-            $("#data_ident").html( html );
-
-            html = "\"" + item.title + "\"<br>";
-            if ( item.desc )
-                html += "<p>\"" + item.desc + "\"</p>";
-            else
-                html += "<br>";
-
-            html += "<table class='info_table'><col width='30%'><col width='70%'>";
-            html += "<tr><th>Field</th><th>Value</th></tr>";
-            html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
-            html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
-            html += "</table>";
-            $("#data_info").html(html);
-            showSelectedMetadata();
-        }); 
-    } else if ( key[0] == "d" ) {
-        updateBtnState( "d" );
-        viewData( key, function( data ){
-            var item = data.data[0];
-            var html = "Data Record, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
-            $("#data_ident").html( html );
-
-            var html = "\"" + item.title + "\"<br>";
-            if ( item.desc )
-                html += "<p>\"" + item.desc + "\"</p>";
-            else
-                html += "<br>";
-
-            html += "<table class='info_table'><col width='30%'><col width='70%'>";
-            html += "<tr><th>Field</th><th>Value</th></tr>";
-            html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
-            html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
-            html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
-            html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
-            html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
-            html += "</table>";
-            $("#data_info").html(html);
-            showSelectedMetadata( item.metadata );
-        }); 
-    } else {
+function showSelectedInfo( node ){
+    if ( !node ){
         updateBtnState();
         $("#data_info").html("(no information available)<br><br><br>");
         showSelectedMetadata();
+    }else{
+        if ( node.key[0] == "c" /*&& key != root_key*/ ) {
+            if ( node.key == my_root_key )
+                updateBtnState( "r" );
+            else if ( node.data.isproj ) //node.key.endsWith( "_root" ))
+                updateBtnState( "p", node.data.admin );
+            else
+                updateBtnState( "c" );
+            viewColl( node.key, function( data ){
+                var item = data.data[0];
+                var html = "Collection, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
+                $("#data_ident").html( html );
+
+                html = "\"" + item.title + "\"<br>";
+                if ( item.desc )
+                    html += "<p>\"" + item.desc + "\"</p>";
+                else
+                    html += "<br>";
+
+                html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                html += "<tr><th>Field</th><th>Value</th></tr>";
+                html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
+                html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
+                html += "</table>";
+                $("#data_info").html(html);
+                showSelectedMetadata();
+            }); 
+        } else if ( node.key[0] == "d" ) {
+            updateBtnState( "d" );
+            viewData( node.key, function( data ){
+                var item = data.data[0];
+                var html = "Data Record, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
+                $("#data_ident").html( html );
+
+                var html = "\"" + item.title + "\"<br>";
+                if ( item.desc )
+                    html += "<p>\"" + item.desc + "\"</p>";
+                else
+                    html += "<br>";
+
+                html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                html += "<tr><th>Field</th><th>Value</th></tr>";
+                html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
+                html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
+                html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
+                html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
+                html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
+                html += "</table>";
+                $("#data_info").html(html);
+                showSelectedMetadata( item.metadata );
+            }); 
+        } else {
+            updateBtnState();
+            $("#data_info").html("(no information available)<br><br><br>");
+            showSelectedMetadata();
+        }
     }
 }
 
@@ -372,7 +378,7 @@ function execQuery(){
         srch_node.setExpanded( true );
 
         if ( !tree.activeNode )
-            showSelectedInfo( "" );
+            showSelectedInfo();
     });
 }
 
@@ -453,9 +459,12 @@ function setupBrowseTab(){
 
     var tree_source = [
         {title:"My Data",folder:true,icon:false,lazy:true,key: my_root_key, user: g_user.uid, scope: g_user.uid, nodrag: true },
-        {title:"My Projects",folder:true,icon:false,lazy:true,key:"myproj", nodrag: true},
+        //{title:"My Projects",folder:true,icon:false,lazy:true,key:"myproj", nodrag: true},
+        {title:"My Projects",folder:true,icon:false,nodrag:true,lazy:true,key:"proj_adm"},
+        {title:"Team Projects",folder:true,icon:false,nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:false,lazy:true,nodrag:true,key:"shared"},
-        {title:"Views",folder:true,icon:false,lazy:true, nodrag: true },
+        {title:"Favorites",folder:true,icon:false,lazy:true,nodrag:true,key:"favorites"},
+        {title:"Views",folder:true,icon:false,lazy:true,nodrag:true,key:"views"},
         {title:"Search Results",icon:false,folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
@@ -519,9 +528,14 @@ function setupBrowseTab(){
         source: tree_source,
         selectMode: 1,
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "myproj" ){
+            if ( data.node.key == "proj_adm" ){
                 data.result = {
-                    url: "/api/prj/list/",
+                    url: "/api/prj/list?owner=true&admin=true",
+                    cache: false
+                };
+            } else if ( data.node.key == "proj_mem" ){
+                data.result = {
+                    url: "/api/prj/list?member=true",
                     cache: false
                 };
             } else if ( data.node.key == "public" ) {
@@ -541,6 +555,8 @@ function setupBrowseTab(){
                         cache: false
                     };
                 }
+            } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
+                data.result = [{title:"Not Implemented", icon:false}];
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -550,13 +566,15 @@ function setupBrowseTab(){
         },
         postProcess: function( event, data ) {
             //console.log( "pos proc:", data );
-            if ( data.node.key == "myproj" ){
+            if ( data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
                 data.result = [];
                 if ( data.response.length ){
                     var item;
+                    var admin = (data.node.key=="proj_adm"?true:false);
+
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root",scope:"p/"+item.id,isproj:true,lazy:true,nodrag:true});
+                        data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root",scope:"p/"+item.id,isproj:true,admin:admin,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
@@ -572,6 +590,8 @@ function setupBrowseTab(){
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
                 }
+            } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
+                // Not implemented yet
             } else if ( data.node.parent ) {
                 data.result = [];
                 var item;
@@ -601,7 +621,7 @@ function setupBrowseTab(){
         activate: function( event, data ) {
             //console.log("click",data.node );
             //data.node.setSelected(true);
-            showSelectedInfo( data.node.key );
+            showSelectedInfo( data.node );
         },
         /*select: function(event, data){
             console.log("select",data.node.isSelected(),data.node.data);
@@ -675,7 +695,7 @@ function setupBrowseTab(){
     //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content",active:false});
     $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
 
-    showSelectedInfo("");
+    showSelectedInfo();
 
     pollTimer = setTimeout( xfrHistoryPoll, 1000 );
 }

@@ -559,7 +559,7 @@ DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::Proj
     if ( a_request.has_by_member() && a_request.by_member() )
         params.push_back({"by_member","true"});
 
-    dbGet( "prj/list", {}, result );
+    dbGet( "prj/list", params, result );
 
     setProjectData( a_reply, result );
 }

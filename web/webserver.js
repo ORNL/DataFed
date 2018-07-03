@@ -377,8 +377,16 @@ app.get('/api/prj/view', ( a_req, a_resp ) => {
 
 app.get('/api/prj/list', ( a_req, a_resp ) => {
     console.log("get /api/prj/list");
+    var params = {};
+    if ( a_req.query.owner )
+        params.byOwner = a_req.query.owner=="true"?true:false;
+    if ( a_req.query.admin )
+        params.byAdmin = a_req.query.admin=="true"?true:false;
+    if ( a_req.query.member )
+        params.byMember = a_req.query.member=="true"?true:false;
 
-    sendMessage( "ProjectListRequest", { by_owner: true, by_admin: true, by_member: true }, a_req, a_resp, function( reply ) {
+    console.log( "prj list:", params );
+    sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
         console.log( "reply:", reply.proj );
         if ( reply.proj )
             a_resp.send(reply.proj);
