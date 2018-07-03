@@ -693,7 +693,11 @@ app.get('/api/link', ( a_req, a_resp ) => {
 app.get('/api/unlink', ( a_req, a_resp ) => {
     console.log("unlink ", a_req.query.item,"from",a_req.query.coll );
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: [a_req.query.item] }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply);
+        console.log("unlink reply:", reply );
+        if ( reply.rooted )
+            a_resp.send(reply.rooted);
+        else
+            a_resp.send([]);
     });
 });
 

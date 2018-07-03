@@ -407,7 +407,7 @@ function dlgNewEditProj(a_data,a_cb) {
                 if ( !a_data || proj.title != a_data.title )
                     url += "&title="+ encodeURIComponent(proj.title);
 
-                if (( !a_data && proj.desc ) || proj.desc != a_data.desc )
+                if (( !a_data && proj.desc ) || (a_data && (proj.desc != a_data.desc )))
                     url += "&desc="+ encodeURIComponent(proj.desc);
 
                 if ( !a_data && proj.repo )
@@ -433,9 +433,9 @@ function dlgNewEditProj(a_data,a_cb) {
                 _asyncGet( url, null, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();
-                        //console.log( "data:",data);
+                        console.log( "data:",data);
                         if ( a_cb )
-                            a_cb(data.data[0]);
+                            a_cb(data[0]);
                     } else {
                         alert( "Error: " + data );
                     }

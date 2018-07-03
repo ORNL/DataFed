@@ -85,6 +85,12 @@ message ProjectData
     repeated string             member      = 8;
 }
 
+message ListingData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+}
+
 message RecordData
 {
     required string             id          = 1;

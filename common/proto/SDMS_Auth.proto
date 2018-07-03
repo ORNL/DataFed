@@ -239,6 +239,11 @@ message CollWriteRequest
     optional bool               rem_all     = 4;
 }
 
+message CollWriteReply
+{
+    repeated ListingData        rooted      = 1;
+}
+
 message CollGetParentsRequest
 {
     required string             id          = 1;

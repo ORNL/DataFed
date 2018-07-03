@@ -316,38 +316,49 @@ function showSelectedMetadata( md_str )
 
 function addNode( item ){
     console.log( "addnode", item );
-    // Get collections that this item belongs to
-    getParents( item.id, function( ok, data ) {
-        if ( ok ) {
-            var tree = $("#data_tree").fancytree("getTree");
-            var par = data.data;
-            var scope;
+    var tree = $("#data_tree").fancytree("getTree");
 
-            if ( par && par.length ) {
-                var updnodes = [];
-                tree.visit(function(node){
-                    if ( node.isFolder() ) {
-                        for ( var i in par ) {
-                            if ( par[i].id == node.key ) {
-                                updnodes.push( node );
-                                scope = node.data.scope;
-                                break;
+    if ( item.id.startsWith("p/")){
+        // Projects can only be added to "my projects"
+        var node = tree.getNodeByKey("proj_adm");
+        if ( node ){
+            var prj_id = item.id.substr(2);
+            node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:true,lazy:true,nodrag:true});
+        }
+    }else{
+        // Data and/or collections
+        // Get collections that this item belongs to
+        getParents( item.id, function( ok, data ) {
+            if ( ok ) {
+                var par = data.data;
+                var scope;
+
+                if ( par && par.length ) {
+                    var updnodes = [];
+                    tree.visit(function(node){
+                        if ( node.isFolder() ) {
+                            for ( var i in par ) {
+                                if ( par[i].id == node.key ) {
+                                    updnodes.push( node );
+                                    scope = node.data.scope;
+                                    break;
+                                }
                             }
                         }
+                    });
+                    if ( updnodes.length ) {
+                        var nodedat = {title: generateTitle( item ), key: item.id, folder:item.id[0]=="c"?true:false, scope: scope };
+                        for ( var i in updnodes ) {
+                            updnodes[i].addNode( nodedat );
+                        }
                     }
-                });
-                if ( updnodes.length ) {
-                    var nodedat = {title: generateTitle( item ), key: item.id, folder:item.id[0]=="c"?true:false, scope: scope };
-                    for ( var i in updnodes ) {
-                        updnodes[i].addNode( nodedat );
-                    }
+                } else {
+                    // No parents - loose data
+                    tree.rootNode.children[1].addNode({title: generateTitle( item ), ket: item.id });
                 }
-            } else {
-                // No parents - loose data
-                tree.rootNode.children[1].addNode({title: generateTitle( item ), ket: item.id });
             }
-        }
-    });
+        });
+    }
 }
 
 function execQuery(){
@@ -556,7 +567,7 @@ function setupBrowseTab(){
                     };
                 }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
-                data.result = [{title:"Not Implemented", icon:false}];
+                data.result = [{title:"(not implemented yet)", icon:false}];
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -571,10 +582,12 @@ function setupBrowseTab(){
                 if ( data.response.length ){
                     var item;
                     var admin = (data.node.key=="proj_adm"?true:false);
+                    var prj_id;
 
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ extraClasses:"project", title: item.title + " (" + item.id + ")",icon:true, folder: true, key: "c/"+item.id+"_root",scope:"p/"+item.id,isproj:true,admin:admin,lazy:true,nodrag:true});
+                        prj_id = item.id.substr(2);
+                        data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:admin,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
@@ -638,8 +651,23 @@ function setupBrowseTab(){
                     //}
                 } else {
                     //console.log("unlink",data.node );
-                    unlinkItem( data.node.key, data.node.parent.key, function() {
-                        data.node.remove();
+                    unlinkItem( data.node.key, data.node.parent.key, function( ok, rooted ) {
+                        if ( ok ){
+                            var plist = data.node.getParentList();
+                            console.log( plist );
+                            var parent;
+                            for ( i in plist ){
+                                if ( plist[i].data.scope ){
+                                    parent = plist[i];
+                                    break;
+                                }
+                            }
+                            console.log( "rooted:", rooted, "parent:",parent );
+                            data.node.remove();
+                            for ( var i in rooted ){
+                                parent.addNode({ title: generateTitle( rooted[i] ),scope:parent.data.scope, key:rooted[i].id });
+                            }
+                        }
                     });
                 }
             }

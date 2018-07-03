@@ -891,10 +891,8 @@ DatabaseClient::collRead( const CollReadRequest & a_request, CollDataReply & a_r
 }
 
 void
-DatabaseClient::collWrite( const CollWriteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::CollWriteReply & a_reply )
 {
-    (void) a_reply;
-
     string add_list, rem_list;
 
     if ( a_request.add_size() > 0 )
@@ -930,6 +928,20 @@ DatabaseClient::collWrite( const CollWriteRequest & a_request, Anon::AckReply & 
     rapidjson::Document result;
 
     dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
+
+    if ( !result.IsArray() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+
+    ListingData * listing;
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        rapidjson::Value & val = result[i];
+
+        listing = a_reply.add_rooted();
+        listing->set_id( val["id"].GetString() );
+        listing->set_title( val["title"].GetString() );
+    }
 }
 
 void
