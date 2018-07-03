@@ -421,11 +421,23 @@ router.get('/write', function (req, res) {
                 }
 
                 var i, obj;
+                var loose = [];
 
                 if ( req.queryParams.remove ) {
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
+                        if ( !g_db.item.firstExample({ _to: obj._id })){
+                            loose.push({ id: obj._id, title: obj.title });
+                        }
+                    }
+
+                    if ( loose.length ){
+                        var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
+                        var root_id = "c/"+owner_id.substr(2)+"_root";
+                        for ( i in loose ){
+                            g_db.item.save({ _from: root_id, _to: loose[i].id });
+                        }
                     }
                 }
 
@@ -436,6 +448,8 @@ router.get('/write', function (req, res) {
                             g_db.item.save({ _from: coll_id, _to: obj._id });
                     }
                 }
+
+                res.send( loose );
             }
         });
     } catch( e ) {

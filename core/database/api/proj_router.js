@@ -96,7 +96,7 @@ router.get('/create', function (req, res) {
                     }
                 }
 
-                proj.new.id = proj.new._key;
+                proj.new.id = proj.new._id;
                 delete proj.new._id;
                 delete proj.new._key;
                 delete proj.new._rev;
@@ -114,7 +114,7 @@ router.get('/create', function (req, res) {
 .queryParam('id', joi.string().required(), "ID for new project")
 .queryParam('title', joi.string().required(), "Title (must be unque within domain)")
 .queryParam('domain', joi.string().required(), "Domain or topic (in reverse dotted notation)")
-.queryParam('desc', joi.string().required(), "Description")
+.queryParam('desc', joi.string().optional(), "Description")
 .queryParam('repo', joi.string().optional(), "Repository ID (must be associated with client)")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Additional project administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
@@ -196,7 +196,7 @@ router.get('/update', function (req, res) {
                         proj.new.members = members;
                 }
 
-                proj.new.id = proj.new._key;
+                proj.new.id = proj.new._id;
                 proj.new.owner = owner_id;
 
                 delete proj.new._id;
@@ -243,7 +243,7 @@ router.get('/view', function (req, res) {
                 proj.members = [];
         }
 
-        proj.id = proj._key;
+        proj.id = proj._id;
         proj.owner = owner_id;
 
         delete proj._id;
@@ -261,7 +261,7 @@ router.get('/view', function (req, res) {
 .description('View project information');
 
 router.get('/list/all', function (req, res) {
-    res.send( g_db._query( "for i in p return { id: i._key, name: i.name }" ));
+    res.send( g_db._query( "for i in p return { id: i._id, name: i.name }" ));
 })
 .summary('List projects')
 .description('List projects');
@@ -278,17 +278,17 @@ router.get('/list', function (req, res) {
         qry = "";
 
     if ( !count || req.queryParams.by_owner ){
-        qry += "for v in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',v) return { id: v._key, title: v.title }";
+        qry += "for v in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',v) return { id: v._id, title: v.title }";
         comma = (count != 1);
     }
 
     if ( !count || req.queryParams.by_admin ){
-        qry += (comma?"),(":"") + "for v in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',v) return { id: v._key, title: v.title }";
+        qry += (comma?"),(":"") + "for v in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',v) return { id: v._id, title: v.title }";
         comma = (count != 1);
     }
 
     if ( !count || req.queryParams.by_member )
-        qry += (comma?"),(":"") + "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { id: v._key, title: v.title }";
+        qry += (comma?"),(":"") + "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { id: v._id, title: v.title }";
 
     if ( comma )
         qry += ")) return x";

@@ -113,7 +113,7 @@ router.get('/create', function (req, res) {
                 console.log("Save owner");
                 g_db.owner.save({ _from: data.new._id, _to: owner_id });
                 console.log("Save loc", repo_alloc );
-                g_db.loc.save({ _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path });
+                g_db.loc.save({ _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key });
 
                 if ( req.queryParams.alias ) {
                     g_lib.validateAlias( req.queryParams.alias );
@@ -411,9 +411,11 @@ router.get('/delete', function (req, res) {
                 g_lib.ensureAdminPermObject( client, data_id );
 
                 var data = g_db.d.document( data_id );
-                var obj;
+                var loc = g_db.loc.firstExample({_from: data_id });
+                result.push({ id: data_id, repo_id: loc._to, path: loc.path });
 
                 const graph = require('@arangodb/general-graph')._graph('sdmsg');
+                var obj;
 
                 // Delete attached notes and aliases
                 var objects = g_db._query( "for v in 1..1 outbound @data note, alias return v._id", { data: data._id }).toArray();
@@ -423,8 +425,6 @@ router.get('/delete', function (req, res) {
                 }
 
                 graph.d.remove( data._id );
-
-                result.push({ id: data_id });
             }
         });
 
