@@ -20,10 +20,11 @@
     </head>
     <body>
     <div class="col-flex" style="height:100%;width:100%">
-        <div class="header" style="flex:none">
-            <div class="row-flex">
+        <div class="header" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center">
+            <div style="font-size: 2em">Scientific Data Management System</div>
+            <!-- div class="row-flex">
                 <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;"><button class="btn" onclick="logout()">Log Out</button></div>
-            </div>
+            </div -->
         </div>
         <div id="content" class="content" style="flex:1 1 100%">
             <div id="tabs">
@@ -80,7 +81,7 @@
                             <button class="btn act-data" onclick="xfrSelected(1)" disabled>Download</button>
                             <button class="btn act-data" onclick="moveSelected()" disabled>Move</button>
                         </div>
-                        <div style="flex:none">
+                        <div style="flex:none;padding:.25em">
                             <div id="xfr_panel" >
                                 <h3>Data Transfers</h3>
                                 <div id="xfr_hist" class="text" style="overflow:auto;max-height:5em;padding:.5em"></div>
@@ -122,6 +123,8 @@
                 <div style="flex:none" >User: <span id="uname"></span></div>
                 <div style="flex:none" >&nbsp&nbsp&nbsp</div>
                 <div id="status_text" class="status-bar" style="flex:1 1 100%;text-align:center"></div>
+                <div style="flex:none" >&nbsp&nbsp&nbsp</div>
+                <div style="flex:none" ><button class="btn small" onclick="logout()">Log Out</button></div>
             </div>
         </div>
     </div>
