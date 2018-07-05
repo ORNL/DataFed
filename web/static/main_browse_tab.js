@@ -642,6 +642,7 @@ function setupBrowseTab(){
         click: function(event, data) {
             // TODO Revisit unlink feature
             if ( drag_enabled && data.originalEvent.ctrlKey ) {
+                /*
                 if ( data.node.isFolder() ){
                     //if ( data.node.key != "loose" && data.node.key != root_key && data.node.parent.key != root_key ){
                         //console.log("move to root",data.node );
@@ -649,27 +650,34 @@ function setupBrowseTab(){
                             data.node.moveTo( data.node.getParentList()[0], "over" );
                         });
                     //}
-                } else {
+                } else {*/
                     //console.log("unlink",data.node );
                     unlinkItem( data.node.key, data.node.parent.key, function( ok, rooted ) {
                         if ( ok ){
-                            var plist = data.node.getParentList();
-                            console.log( plist );
-                            var parent;
-                            for ( i in plist ){
-                                if ( plist[i].data.scope ){
-                                    parent = plist[i];
-                                    break;
+                            if ( rooted.length == 0 )
+                                data.node.remove();
+                            else{
+                                // Don't care about what's in rooted array - only one item unlinked at a time here
+                                var plist = data.node.getParentList();
+                                //console.log( plist );
+                                var parent;
+                                for ( i in plist ){
+                                    if ( plist[i].data.scope ){
+                                        parent = plist[i];
+                                        break;
+                                    }
                                 }
-                            }
-                            console.log( "rooted:", rooted, "parent:",parent );
-                            data.node.remove();
-                            for ( var i in rooted ){
-                                parent.addNode({ title: generateTitle( rooted[i] ),scope:parent.data.scope, key:rooted[i].id });
+                                console.log( "rooted:", rooted, "parent:",parent );
+                                data.node.moveTo( parent, "over" );
+
+                                //for ( var i in rooted ){
+
+                                    //parent.addNode({ title: generateTitle( rooted[i] ),scope:parent.data.scope, key:rooted[i].id });
+                                //}
                             }
                         }
                     });
-                }
+                //}
             }
         }
     });
