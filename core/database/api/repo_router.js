@@ -71,9 +71,9 @@ router.get('/create', function (req, res) {
                 var repo = g_db.repo.save( obj, { returnNew: true });
 
                 for ( var i in req.queryParams.admins ) {
-                    if ( !g_db._exists( "u/" + req.queryParams.admins[i] ))
+                    if ( !g_db._exists( req.queryParams.admins[i] ))
                         throw g_lib.ERR_USER_NOT_FOUND;
-                    g_db.admin.save({ _from: repo._id, _to: "u/" + req.queryParams.admins[i] });
+                    g_db.admin.save({ _from: repo._id, _to: req.queryParams.admins[i] });
                 }
 
                 repo.new.id = repo.new._id;

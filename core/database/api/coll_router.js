@@ -235,7 +235,7 @@ router.get('/priv/list', function (req, res) {
         var owner_id;
 
         if ( req.queryParams.subject ) {
-            owner_id = "u/" + req.queryParams.subject;
+            owner_id = req.queryParams.subject;
         } else {
             owner_id = client._id;
         }
@@ -268,7 +268,7 @@ router.get('/view', function (req, res) {
         }
 
         var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-        coll.owner = owner_id.substr(2);
+        coll.owner = owner_id;
 
         var alias = g_db._query("for v in 1..1 outbound @coll alias return v", { coll: coll_id }).toArray();
         if ( alias.length ) {

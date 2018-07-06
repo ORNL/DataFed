@@ -281,7 +281,7 @@ router.get('/view', function (req, res) {
         data.repo = g_db.loc.firstExample({ _from: data_id });
         if ( data.repo )
             data.repo = data.repo._to;
-        data.owner = owner_id.substr(2);
+        data.owner = owner_id;
         delete data._rev;
         delete data._key;
         data.id = data._id;
@@ -320,7 +320,7 @@ router.get('/list', function (req, res) {
         var owner_id;
 
         if ( req.queryParams.subject ) {
-            owner_id = (req.queryParams.subject[1]!="/"?"u/":"") + req.queryParams.subject;
+            owner_id = req.queryParams.subject;
         } else {
             owner_id = client._id;
         }

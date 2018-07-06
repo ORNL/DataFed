@@ -63,13 +63,13 @@ router.get('/create', function (req, res) {
                 var mem_grp;
 
                 // Projects have a special "members" group associated with root
-                mem_grp = g_db.g.save({ uid: "p/" + req.queryParams.id, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
+                mem_grp = g_db.g.save({ uid: req.queryParams.id, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
                 g_db.owner.save({ _from: mem_grp._id, _to: proj._id });
                 g_db.acl.save({ _from: root._id, _to: mem_grp._id, grant: g_lib.PERM_MEMBER, inhgrant: g_lib.PERM_MEMBER });
 
                 proj.new.admins = [];
                 proj.new.members = [];
-                proj.new.owner = client._key;
+                proj.new.owner = client._id;
                 var uid;
 
                 if ( req.queryParams.admins ) {
@@ -77,9 +77,9 @@ router.get('/create', function (req, res) {
                         uid = req.queryParams.admins[i];
                         if ( uid == client._key )
                             continue;
-                        if ( !g_db._exists( "u/" + uid ))
+                        if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
-                        g_db.admin.save({ _from: proj._id, _to: "u/" + uid });
+                        g_db.admin.save({ _from: proj._id, _to: uid });
                         proj.new.admins.push( uid );
                     }
                 }
@@ -89,9 +89,9 @@ router.get('/create', function (req, res) {
                         uid = req.queryParams.members[i];
                         if ( uid == client._key || proj.new.admins.indexOf( uid ) != -1 )
                             continue;
-                        if ( !g_db._exists( "u/" + uid ))
+                        if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
-                        g_db.member.save({ _from: mem_grp._id, _to: "u/" + uid });
+                        g_db.member.save({ _from: mem_grp._id, _to: uid });
                         proj.new.members.push( uid );
                     }
                 }
@@ -133,9 +133,9 @@ router.get('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var proj_id = (req.queryParams.id.startsWith("p/")?"":"p/") + req.queryParams.id;
+                var proj_id = req.queryParams.id;
                 g_lib.ensureAdminPermProj( client, proj_id );
-                var owner_id = g_db.owner.firstExample({ _from: proj_id })._to.substr(2);
+                var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
                 var obj = {};
 
@@ -165,15 +165,15 @@ router.get('/update', function (req, res) {
                         uid = req.queryParams.admins[i];
                         if ( uid == owner_id )
                             continue;
-                        if ( !g_db._exists( "u/" + uid ))
+                        if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
-                        g_db.admin.save({ _from: proj._id, _to: "u/" + uid });
+                        g_db.admin.save({ _from: proj._id, _to: uid });
                         proj.new.admins.push( uid );
                     }
                 }else{
                     var admins = g_db._query( "for i in admin filter i._from == @proj return i._to", { proj: proj_id }).toArray();
                     for ( i in admins ) {
-                        proj.new.admins.push( admins[i].substr( 2 ));
+                        proj.new.admins.push( admins[i]);
                     }
                 }
 
@@ -184,9 +184,9 @@ router.get('/update', function (req, res) {
                         uid = req.queryParams.members[i];
                         if ( uid == owner_id || proj.new.admins.indexOf( uid ) != -1 )
                             continue;
-                        if ( !g_db._exists( "u/" + uid ))
+                        if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
-                        g_db.member.save({ _from: mem_grp._id, _to: "u/" + uid });
+                        g_db.member.save({ _from: mem_grp._id, _to: uid });
                         proj.new.members.push( uid );
                     }
                 }else{
@@ -226,8 +226,8 @@ router.get('/update', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         var client = g_lib.getUserFromClientID( req.queryParams.client );
-        var proj = g_db.p.document({ _id: (req.queryParams.id.startsWith("p/")?"":"p/") + req.queryParams.id });
-        var owner_id = g_db.owner.firstExample({_from: proj._id })._to.substr(2);
+        var proj = g_db.p.document({ _id: req.queryParams.id });
+        var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
         var admins = g_db._query("for v in 1..1 outbound @proj admin return v._key", { proj: proj._id } ).toArray();
         if ( admins.length ) {
             proj.admins = admins;
@@ -338,7 +338,7 @@ router.get('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var proj_id = (req.queryParams.id.startsWith("p/")?"":"p/") + req.queryParams.id;
+                var proj_id = req.queryParams.id;
                 g_lib.ensureAdminPermProj( client, proj_id );
 
                 var objects;

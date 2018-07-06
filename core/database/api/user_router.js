@@ -78,7 +78,7 @@ router.get('/create', function (req, res) {
                     g_db.ident.save({ _from: user._id, _to: uuid });
                 }
 
-                user.new.uid = user.new._key;
+                user.new.uid = user.new._id;
                 if ( req.queryParams.admins )
                     user.new.admins = req.queryParams.admins;
 
@@ -119,7 +119,7 @@ router.get('/update', function (req, res) {
                 var user_id;
 
                 if ( req.queryParams.subject ) {
-                    user_id = "u/" + req.queryParams.subject;
+                    user_id = req.queryParams.subject;
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -144,7 +144,7 @@ router.get('/update', function (req, res) {
 
                 var user = g_db._update( user_id, obj, { keepNull: false, returnNew: true });
 
-                user.new.uid = user.new._key;
+                user.new.uid = user.new._id;
 
                 delete user.new._id;
                 delete user.new._key;
@@ -188,7 +188,7 @@ router.get('/find/by_uuids', function (req, res) {
             user.idents = idents;
         }
 
-        user.uid = user._key;
+        user.uid = user._id;
 
         delete user._id;
         delete user._key;
@@ -216,7 +216,7 @@ router.get('/keys/set', function (req, res) {
                 var user_id;
 
                 if ( req.queryParams.subject ) {
-                    user_id = "u/" + req.queryParams.subject;
+                    user_id = req.queryParams.subject;
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -256,9 +256,9 @@ router.get('/keys/get', function( req, res ) {
         }
 
         if ( !user.pub_key || !user.priv_key )
-            res.send([{ uid: user._key }]);
+            res.send([{ uid: user._id }]);
         else
-            res.send([{ uid: user._key, pub_key: user.pub_key, priv_key: user.priv_key }]);
+            res.send([{ uid: user._id, pub_key: user.pub_key, priv_key: user.priv_key }]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -293,7 +293,7 @@ router.get('/token/set', function (req, res) {
                 var user_id;
 
                 if ( req.queryParams.subject ) {
-                    user_id = "u/" + req.queryParams.subject;
+                    user_id = req.queryParams.subject;
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -397,7 +397,7 @@ router.get('/view', function (req, res) {
             }
         }
 
-        user.uid = user._key;
+        user.uid = user._id;
 
         delete user._id;
         delete user._key;
@@ -421,9 +421,9 @@ router.get('/view', function (req, res) {
 
 router.get('/list', function (req, res) {
     if ( req.queryParams.details ) {
-        res.send( g_db._query( "for i in u return { uid: i._key, name: i.name, email: i.email }" ));
+        res.send( g_db._query( "for i in u return { uid: i._id, name: i.name, email: i.email }" ));
     } else {
-        res.send( g_db._query( "for i in u return { uid: i._key, name: i.name }" ));
+        res.send( g_db._query( "for i in u return { uid: i._id, name: i.name }" ));
     }
 })
 .queryParam('details', joi.boolean().optional(), "Show additional user details")
@@ -443,7 +443,7 @@ router.get('/delete', function (req, res) {
                 var user_id;
 
                 if ( req.queryParams.subject ) {
-                    user_id = "u/" + req.queryParams.subject;
+                    user_id = req.queryParams.subject;
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -455,7 +455,7 @@ router.get('/delete', function (req, res) {
                 var i;
 
                 // Delete linked accounts
-                objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
+                objects = g_db._query( "for v in 1..1 outbound @user ident return v._key", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
@@ -572,13 +572,8 @@ router.get('/ident/remove', function (req, res) {
 
                 if ( g_lib.isUUID( req.queryParams.ident )) {
                     g_graph.uuid.remove( "uuid/" + req.queryParams.ident );
-                    //g_db.uuid.remove({ _id: "uuid/" + req.queryParams.ident });
                 } else if ( g_lib.isDomainAccount( req.queryParams.ident )) {
-                    //const acc = g_db.accn.document({ _key: req.queryParams.ident });
-                    //g_db.ident.removeByExample({ _to: acc._id });
-
                     g_graph.accn.remove( "accn/" + req.queryParams.ident );
-                    //g_db.accn.remove({ _id: "accn/" + req.queryParams.ident });
                 } else
                     throw g_lib.ERR_INVALID_IDENT;
             }

@@ -34,10 +34,7 @@ router.get('/create', function (req, res) {
                 var uid;
 
                 if ( req.queryParams.proj ) {
-                    if ( req.queryParams.proj.startsWith("p/"))
-                        uid = req.queryParams.proj;
-                    else
-                        uid = "p/" + req.queryParams.proj;
+                    uid = req.queryParams.proj;
                     g_lib.ensureAdminPermProj( client, uid );
                 } else {
                     uid = client._id;
@@ -52,10 +49,10 @@ router.get('/create', function (req, res) {
                     var mem;
                     for ( var i in req.queryParams.members ) {
                         mem = req.queryParams.members[i];
-                        if ( !g_db._exists( "u/"+mem ))
+                        if ( !g_db._exists( mem ))
                             throw g_lib.ERR_USER_NOT_FOUND;
 
-                        g_db.member.save({ _from: group._id, _to: "u/"+mem });
+                        g_db.member.save({ _from: group._id, _to: mem });
                     }
                 }else{
                     group.new.members = [];
@@ -99,8 +96,6 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.proj ) {
                     var uid = req.queryParams.proj;
-                    if ( !uid.startsWith("p/"))
-                        uid = "p/" + uid;
                     group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
@@ -136,11 +131,11 @@ router.get('/update', function (req, res) {
                     for ( i in req.queryParams.add ) {
                         mem = req.queryParams.add[i];
 
-                        if ( !g_db._exists( "u/" + mem ))
+                        if ( !g_db._exists( mem ))
                             throw g_lib.ERR_USER_NOT_FOUND;
 
-                        if ( !g_db.member.firstExample({ _from: group._id, _to: "u/" + mem  }) )
-                            g_db.member.save({ _from: group._id, _to: "u/" + mem });
+                        if ( !g_db.member.firstExample({ _from: group._id, _to: mem  }) )
+                            g_db.member.save({ _from: group._id, _to: mem });
                     }
                 }
 
@@ -150,7 +145,7 @@ router.get('/update', function (req, res) {
                     for ( i in req.queryParams.rem ) {
                         mem = req.queryParams.rem[i];
 
-                        edge = g_db.member.firstExample({ _from: group._id, _to: "u/" + mem  });
+                        edge = g_db.member.firstExample({ _from: group._id, _to: mem  });
                         if ( edge )
                             g_db._remove( edge );
                     }
@@ -195,8 +190,6 @@ router.get('/delete', function (req, res) {
 
                 if ( req.queryParams.proj ) {
                     var uid = req.queryParams.proj;
-                    if ( !uid.startsWith("p/"))
-                        uid = "p/" + uid;
                     group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
@@ -231,10 +224,7 @@ router.get('/list', function (req, res) {
         var owner_id;
 
         if ( req.queryParams.proj ) {
-            if ( req.queryParams.proj.startsWith("p/"))
-                owner_id = req.queryParams.proj;
-            else
-                owner_id = "p/" + req.queryParams.proj;
+            owner_id = req.queryParams.proj;
             g_lib.ensureAdminPermProj( client, owner_id );
         } else {
             owner_id = client._id;
@@ -260,8 +250,6 @@ router.get('/view', function (req, res) {
 
         if ( req.queryParams.proj ) {
             var uid = req.queryParams.proj;
-            if ( !uid.startsWith("p/"))
-                uid = "p/" + uid;
             group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
             if ( !group )
                 throw g_lib.ERR_GROUP_NOT_FOUND;
@@ -274,7 +262,7 @@ router.get('/view', function (req, res) {
         }
 
         var result = { uid: group.uid, gid: group.gid, title: group.title, desc: group.desc };
-        result.members = g_db._query( "for v in 1..1 outbound @group member return v._key", { group: group._id }).toArray();
+        result.members = g_db._query( "for v in 1..1 outbound @group member return v._id", { group: group._id }).toArray();
         res.send( [result] );
 
     } catch( e ) {
