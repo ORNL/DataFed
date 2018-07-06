@@ -11,9 +11,10 @@ function makeDlgPickUser(){
             </div>\
         </div>";
 
-    this.show = function( cb ){
+    this.show = function( a_uid, cb ){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
+        inst.uid = a_uid;
 
         var options = {
             title: "Select User(s)",
@@ -45,9 +46,10 @@ function makeDlgPickUser(){
             }],
             open: function(event,ui){
                 var src = [
-                    {title:"By Groups",folder:true,lazy:true,checkbox:false,key:"groups"},
-                    {title:"By Projects",folder:true,lazy:true,checkbox:false,key:"projects"},
-                    {title:"All",folder:true,lazy:true,checkbox:false,key:"all"}
+                    {title:"Collaborators",icon:false,folder:true,lazy:true,checkbox:false,key:"collab"},
+                    {title:"By Groups",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
+                    {title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"},
+                    {title:"All",icon:false,folder:true,lazy:true,checkbox:false,key:"all"}
                 ];
 
                 $("#dlg_user_tree",inst.frame).fancytree({
@@ -63,21 +65,58 @@ function makeDlgPickUser(){
                     selectMode: 2,
                     checkbox: true,
                     lazyLoad: function( event, data ) {
-                        if ( data.node.key == "all" ) {
+                        console.log( "lazy load:", data );
+                        if ( data.node.key == "collab" ) {
                             data.result = {
-                                url: "/api/usr/list",
+                                url: "/api/usr/list/collab",
+                                cache: false
+                            };
+                        } else if ( data.node.key == "groups" ) {
+                            data.result = {
+                                url: "/api/grp/list?uid="+inst.uid,
+                                cache: false
+                            };
+                        } else if ( data.node.key == "projects" ) {
+                            data.result = {
+                                url: "/api/prj/list",
+                                cache: false
+                            };
+                        } else if ( data.node.key == "all" ) {
+                            data.result = {
+                                url: "/api/usr/list/all",
+                                cache: false
+                            };
+                        } else if ( data.node.key.startsWith("g/")){
+                            data.result = {
+                                url: "/api/grp/view?uid="+inst.uid+"&gid="+data.node.key.substr(2),
                                 cache: false
                             };
                         }
                     },
                     postProcess: function( event, data ) {
-                        //console.log( "post proc:", data );
-                        if ( data.node.key == "all" ){
+                        console.log( "post proc:", data );
+                        if ( data.node.key == "collab" || data.node.key == "all" ){
                             data.result = [];
                             var user;
                             for ( var i in data.response ) {
                                 user = data.response[i];
                                 data.result.push({ title: user.name + " ("+user.uid.substr(2) +")", key: user.uid });
+                            }
+                        } else if ( data.node.key == "groups" ){
+                            console.log("groups");
+                            data.result = [];
+                            var group;
+                            for ( var i in data.response ) {
+                                group = data.response[i];
+                                data.result.push({ title: group.title + " ("+group.gid +")",icon:false,checkbox:false,folder:true,lazy:true,key:"g/"+group.gid });
+                            }
+                        } else if ( data.node.key.startsWith("g/")){
+                            console.log("group",data.node.key);
+                            data.result = [];
+                            var mem;
+                            for ( var i in data.response.member ) {
+                                mem = data.response.member[i];
+                                data.result.push({ title: mem.substr(2),icon:false,key:mem});
                             }
                         }
                     }

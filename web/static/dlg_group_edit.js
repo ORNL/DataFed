@@ -84,9 +84,10 @@ function makeDlgGroupEdit(){
 
 
         src = [
-            {title:"By Groups",folder:true,lazy:true,checkbox:false,key:"groups"},
-            {title:"By Projects",folder:true,lazy:true,checkbox:false,key:"projects"},
-            {title:"All",folder:true,lazy:true,checkbox:false,key:"all"}
+            {title:"Collaborators",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
+            {title:"By Groups",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
+            {title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"},
+            {title:"All",icon:false,folder:true,lazy:true,checkbox:false,key:"all"}
         ];
 
         $("#avail_list",inst.frame).fancytree({
@@ -104,7 +105,7 @@ function makeDlgGroupEdit(){
             lazyLoad: function( event, data ) {
                 if ( data.node.key == "all" ) {
                     data.result = {
-                        url: "/api/usr/list",
+                        url: "/api/usr/list/all",
                         cache: false
                     };
                 }
