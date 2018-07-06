@@ -419,7 +419,7 @@ router.get('/view', function (req, res) {
 .description('View user information');
 
 
-router.get('/list', function (req, res) {
+router.get('/list/all', function (req, res) {
     if ( req.queryParams.details ) {
         res.send( g_db._query( "for i in u return { uid: i._id, name: i.name, email: i.email }" ));
     } else {
@@ -427,9 +427,29 @@ router.get('/list', function (req, res) {
     }
 })
 .queryParam('details', joi.boolean().optional(), "Show additional user details")
-.summary('List users')
-.description('List users');
+.summary('List all users')
+.description('List all users');
 
+router.get('/list/collab', function (req, res) {
+    var client = g_lib.getUserFromClientID( req.queryParams.client );
+
+    if ( req.queryParams.details ) {
+        res.send( g_db._query( "for i in u return { uid: i._id, name: i.name, email: i.email }" ));
+    } else {
+        // Members of owned groups
+        // Owned User ACLs
+        // Members of groups client belongs to (not owned - projects and ACLs)
+        // Owner of user-ACLs of with client is the subject
+        // Members and admins of owned projects
+        // Owner and admins of member projects (members gathered by group members above)
+
+        res.send( g_db._query( "for x in union_distinct((for v in 2..2 inbound @user owner, outbound member, outbound acl filter is_same_collection('u',v) return { uid: v._id, name: v.name }),(for v in 2..2 inbound @user owner, outbound acl filter is_same_collection('u',v) return { uid: v._id, name: v.name })) return x" ));
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('details', joi.boolean().optional(), "Show additional user details")
+.summary('List collaborators of client')
+.description('List collaborators of client (from groups, projects, and ACLs)');
 
 router.get('/delete', function (req, res) {
     try {
