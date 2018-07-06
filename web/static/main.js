@@ -461,10 +461,10 @@ function dlgNewEditProj(a_data,a_cb) {
                 $("#owner_id",frame).val(a_data.owner);
 
                 for ( var i in a_data.member )
-                    mem_src.push({title: a_data.member[i],icon:false,key: "u/"+a_data.member[i] });
+                    mem_src.push({title: a_data.member[i],icon:false,key: a_data.member[i] });
 
                 for ( i in a_data.admin )
-                    adm_src.push({title: a_data.admin[i],icon:false,key: "u/"+a_data.admin[i] });
+                    adm_src.push({title: a_data.admin[i],icon:false,key: a_data.admin[i] });
 
             }else{
                 $("#owner_id",frame).val(g_user.uid);
@@ -525,7 +525,7 @@ function dlgNewEditProj(a_data,a_cb) {
                     warn = 0;
                     for ( i in uids ){
                         uid = uids[i];
-                        if ( uid == "u/"+proj.owner ){
+                        if ( uid == proj.owner ){
                             warn |= 1;
                             continue;
                         }
@@ -556,7 +556,7 @@ function dlgNewEditProj(a_data,a_cb) {
                     for ( i in uids ){
                         uid = uids[i];
 
-                        if ( uid == "u/"+proj.owner ){
+                        if ( uid == proj.owner ){
                             warn |= 1;
                             continue;
                         }
@@ -704,6 +704,8 @@ var PERM_WRITE          = 0x080;   // Write raw data or add/remove collection it
 var PERM_CREATE         = 0x100;   // Create data and collections
 var PERM_ALL            = 0x1FF;
 var PERM_PUBLIC         = 0x043;
+var PERM_READONLY       = 0x073;
+var PERM_READWRITE      = 0x0F7;
 
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();

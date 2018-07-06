@@ -92,6 +92,29 @@ body
     background-color: #fff;
 }
 
+.perm_table
+{
+    border:none;
+    border-collapse:collapse;
+    width:100%;
+    text-align:left;
+}
+
+.perm_table tr:nth-child(even)
+{
+    background-color: #eee;
+}
+
+.perm_table tr:nth-child(odd)
+{
+    background-color: #fff;
+}
+
+.perm_table td:nth-child(2)
+{
+    text-align:right;
+}
+
 td
 {
     vertical-align:top;

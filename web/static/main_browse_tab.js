@@ -3,8 +3,8 @@ var data_md_empty = true;
 var data_md_empty_src = [{title:"(none)", icon:false}];
 var data_md_cur = {};
 var data_md_exp = {};
-var xfrHist;
-var pollSince = 0;
+var xfrHist = [];
+var pollSince = 24*3600; // First poll = 24 hours =  sec
 var pollTimer;
 var my_root_key;
 
@@ -404,61 +404,54 @@ function generateTitle( item ) {
 
 function xfrUpdateHistory( xfr_list ){
     var len = xfr_list.length;
-    var html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Status Updated</th><th>Status</th></tr>";
-    var stat;
-    var start = new Date(0);
-    var update = new Date(0);
-    var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+    var html;
+    if ( len == 0 ){
+        html = "(no recent transfers)";
+    }else{
+        html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Status Updated</th><th>Status</th></tr>";
+        var stat;
+        var start = new Date(0);
+        var update = new Date(0);
+        var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
 
-    for ( var i = 0; i < len; i++ ) {
-        stat = xfr_list[i];
-        console.log( stat );
-        html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td>";
-        start.setTime( stat.started*1000 );
-        update.setTime( stat.updated*1000 );
-        html += "<td>" + start.toLocaleDateString("en-US", options) + "</td><td>" + update.toLocaleDateString("en-US", options) + "</td><td>";
+        for ( var i = 0; i < len; i++ ) {
+            stat = xfr_list[i];
+            console.log( stat );
+            html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td>";
+            start.setTime( stat.started*1000 );
+            update.setTime( stat.updated*1000 );
+            html += "<td>" + start.toLocaleDateString("en-US", options) + "</td><td>" + update.toLocaleDateString("en-US", options) + "</td><td>";
 
-        if ( stat.status == "XS_FAILED" )
-            html += "FAILED: " + stat.errMsg + "</td></tr>";
-        else
-            html += stat.status.substr(3) + "</td></tr>";
+            if ( stat.status == "XS_FAILED" )
+                html += "FAILED: " + stat.errMsg + "</td></tr>";
+            else
+                html += stat.status.substr(3) + "</td></tr>";
+        }
+        html += "</table>";
     }
-    html += "</table>";
     $("#xfr_hist").html( html );
 }
 
 function xfrHistoryPoll() {
-    console.log( "poll xfr history" );
     if ( !g_user )
         return;
 
     _asyncGet( "/api/xfr/list" + (pollSince?"?since=6":""), null, function( ok, data ){
         if ( ok ) {
-            if ( pollSince ){
-                // Incremental poll
-                if ( data.xfr && data.xfr.length ) {
-                    // Find and remove any previous entries
-                    for ( var i in data.xfr ){
-                        var xfr = data.xfr[i];
-                        for ( var j in xfrHist ){
-                            if ( xfrHist[i].id == xfr.id ){
-                                xfrHist.splice(i,1);
-                                break;
-                            }
+            if ( data.xfr && data.xfr.length ) {
+                // Find and remove any previous entries
+                for ( var i in data.xfr ){
+                    var xfr = data.xfr[i];
+                    for ( var j in xfrHist ){
+                        if ( xfrHist[i].id == xfr.id ){
+                            xfrHist.splice(i,1);
+                            break;
                         }
                     }
-                    xfrHist = data.xfr.concat( xfrHist );
-                    xfrUpdateHistory( xfrHist );
                 }
-            }else{
-                //console.log( "xfr status", data );
-                if ( data.xfr && data.xfr.length ) {
-                    xfrHist = data.xfr;
-                    xfrUpdateHistory( xfrHist );
-                } else {
-                    $("#xfr_hist").html("No transfer history");
-                }
+                xfrHist = data.xfr.concat( xfrHist );
             }
+            xfrUpdateHistory( xfrHist );
         }
         pollSince = 15;
         pollTimer = setTimeout( xfrHistoryPoll, 5000 );
@@ -598,7 +591,7 @@ function setupBrowseTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:false,folder:true,key:"shared",scope:"u/"+item.uid,lazy:true,nodrag:true});
+                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:false,folder:true,key:"shared",scope:item.uid,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
@@ -632,52 +625,30 @@ function setupBrowseTab(){
             }
         },
         activate: function( event, data ) {
-            //console.log("click",data.node );
-            //data.node.setSelected(true);
             showSelectedInfo( data.node );
         },
-        /*select: function(event, data){
-            console.log("select",data.node.isSelected(),data.node.data);
-        },*/
         click: function(event, data) {
-            // TODO Revisit unlink feature
             if ( drag_enabled && data.originalEvent.ctrlKey ) {
-                /*
-                if ( data.node.isFolder() ){
-                    //if ( data.node.key != "loose" && data.node.key != root_key && data.node.parent.key != root_key ){
-                        //console.log("move to root",data.node );
-                        linkItemUnlinkSource( data.node.key, "root", data.node.parent.key, function() {
-                            data.node.moveTo( data.node.getParentList()[0], "over" );
-                        });
-                    //}
-                } else {*/
-                    //console.log("unlink",data.node );
-                    unlinkItem( data.node.key, data.node.parent.key, function( ok, rooted ) {
-                        if ( ok ){
-                            if ( rooted.length == 0 )
-                                data.node.remove();
-                            else{
-                                // Don't care about what's in rooted array - only one item unlinked at a time here
-                                var plist = data.node.getParentList();
-                                //console.log( plist );
-                                var parent;
-                                for ( i in plist ){
-                                    if ( plist[i].data.scope ){
-                                        parent = plist[i];
-                                        break;
-                                    }
+                unlinkItem( data.node.key, data.node.parent.key, function( ok, rooted ) {
+                    if ( ok ){
+                        if ( rooted.length == 0 )
+                            data.node.remove();
+                        else{
+                            // Don't care about what's in rooted array - only one item unlinked at a time here
+                            var plist = data.node.getParentList();
+                            //console.log( plist );
+                            var parent;
+                            for ( i in plist ){
+                                if ( plist[i].data.scope ){
+                                    parent = plist[i];
+                                    break;
                                 }
-                                console.log( "rooted:", rooted, "parent:",parent );
-                                data.node.moveTo( parent, "over" );
-
-                                //for ( var i in rooted ){
-
-                                    //parent.addNode({ title: generateTitle( rooted[i] ),scope:parent.data.scope, key:rooted[i].id });
-                                //}
                             }
+                            console.log( "rooted:", rooted, "parent:",parent );
+                            data.node.moveTo( parent, "over" );
                         }
-                    });
-                //}
+                    }
+                });
             }
         }
     });
@@ -722,13 +693,8 @@ function setupBrowseTab(){
     });
     $("#query_scope").selectmenu({
         width:"auto"
-        /*,
-        change: function(event,ui){
-            console.log("sel change",ui.item.value);
-        }*/
     });
 
-    //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content",active:false});
     $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
 
     showSelectedInfo();

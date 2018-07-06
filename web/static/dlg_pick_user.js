@@ -77,7 +77,7 @@ function makeDlgPickUser(){
                             var user;
                             for ( var i in data.response ) {
                                 user = data.response[i];
-                                data.result.push({ title: user.name + " ("+user.uid +")", key: "u/"+user.uid });
+                                data.result.push({ title: user.name + " ("+user.uid.substr(2) +")", key: user.uid });
                             }
                         }
                     }

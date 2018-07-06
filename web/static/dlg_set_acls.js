@@ -14,17 +14,18 @@ function makeDlgSetACLs(){
                     <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
                         <div id='dlg_rule_tree' class='no-border'></div>\
                     </div>\
-                    <div style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                        <button id='dlg_add_user' class='btn small'>+ User</button>\
-                        <button id='dlg_add_group' class='btn small'>+ Group</button>\
+                    <div style='flex:none;line-height:1.5em'>\
+                        <button id='dlg_add_user' class='btn small'>Add User</button>\
+                        <button id='dlg_add_group' class='btn small'>Add Group</button><br>\
+                        <button id='dlg_edit' class='btn small'>Edit</button>\
                         <button id='dlg_rem' class='btn small'>Remove</button>\
                     </div>\
                 </div>\
                 <div style='flex:none'>&nbsp</div>\
-                <div class='col-flex' style='flex:1 1 50%'>\
+                <div class='col-flex' style='flex:none'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
                     <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                        <table class='info_table' style='width:100%'>\
+                        <table class='perm_table' style='width:100%'>\
                         <tr><td>List:</td><td><select id='dlg_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>View:</td><td><select id='dlg_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>Update:</td><td><select id='dlg_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
@@ -36,18 +37,20 @@ function makeDlgSetACLs(){
                         <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select id='dlg_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         </table>\
                     </div>\
-                    <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                        <button id='dlg_grant_all' class='btn small'>Grant</button>\
-                        <button id='dlg_deny_all' class='btn small'>Deny</button>\
-                        <button id='dlg_inherit_all' class='btn small'>Inherit</button>\
+                    <div style='flex:none;line-height:1.5em'>\
+                        <button id='dlg_read_only' class='btn small'>Read Only</button>\
+                        <button id='dlg_read_write' class='btn small'>Read/Write</button><br>\
+                        <button id='dlg_grant_all' class='btn small'>Grant *</button>\
+                        <button id='dlg_deny_all' class='btn small'>Deny *</button>\
+                        <button id='dlg_inherit_all' class='btn small'>Inh. *</button>\
                     </div>\
                 </div>\
-                <div id='col_div_1' style='flex:none;display:none'>&nbsp</div>\
-                <div id='col_div_2' class='col-flex' style='flex:1 1 50%;display:none'>\
+                <div id='col_div_1' style='flex:none'>&nbsp</div>\
+                <div id='col_div_2' class='col-flex' style='flex:none'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
                     <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                        <table class='info_table' style='width:100%'>\
-                        <tr><td>List:</td><td style='overflow:visible'><select id='dlg_inh_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
+                        <table class='perm_table' style='width:100%'>\
+                        <tr><td>List:</td><td><select id='dlg_inh_list_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>View:</td><td><select id='dlg_inh_view_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>Update:</td><td><select id='dlg_inh_upd_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         <tr><td>Admin:</td><td><select id='dlg_inh_admin_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
@@ -58,14 +61,16 @@ function makeDlgSetACLs(){
                         <tr><td>Create:</td><td><select id='dlg_inh_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         </table>\
                     </div>\
-                    <div  style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                        <button id='dlg_inh_grant_all' class='btn small'>Grant</button>\
-                        <button id='dlg_inh_deny_all' class='btn small'>Deny</button>\
-                        <button id='dlg_inh_inherit_all' class='btn small'>Inherit</button>\
+                    <div  style='flex:none;line-height:1.5em'>\
+                        <button id='dlg_inh_read_only' class='btn small'>Read Only</button>\
+                        <button id='dlg_inh_read_write' class='btn small'>Read/Write</button><br>\
+                        <button id='dlg_inh_grant_all' class='btn small'>Grant *</button>\
+                        <button id='dlg_inh_deny_all' class='btn small'>Deny *</button>\
+                        <button id='dlg_inh_inherit_all' class='btn small'>Inh. *</button>\
                     </div>\
                 </div>\
             </div>\
-            <div style='flex:none;padding-top:.5em'><label for='public_check'>Enable public access</label><input type='checkbox' name='public_check' id='public_check'> (list, view, read)</div>\
+            <div style='flex:none;padding-top:.5em'><label for='public_check'>Enable public access</label><input type='checkbox' name='public_check' id='public_check'></div>\
         </div>";
 
     this.show = function( item ){
@@ -76,10 +81,10 @@ function makeDlgSetACLs(){
         inst.is_coll = (item.id[0]=="c");
 
         if ( inst.is_coll ){
-            $("#col_div_1",inst.frame).show();
-            $("#col_div_2",inst.frame).show();
             $("#dlg_create_row",inst.frame).show();
 
+            $("#dlg_inh_read_only",inst.frame).click( function(){ inst.setAllPermInh("readonly"); });
+            $("#dlg_inh_read_write",inst.frame).click( function(){ inst.setAllPermInh("readwrite"); });
             $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh("grant"); });
             $("#dlg_inh_deny_all",inst.frame).click( function(){ inst.setAllPermInh("deny"); });
             $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh("inherit"); });
@@ -95,8 +100,14 @@ function makeDlgSetACLs(){
 
             $("#dlg_create_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_CREATE )});
             $("#dlg_inh_create_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_CREATE )});
+        }else{
+            $("#col_div_1",inst.frame).hide();
+            $("#col_div_2",inst.frame).hide();
         }
 
+
+        $("#dlg_read_only",inst.frame).click( function(){ inst.setAllPerm("readonly"); });
+        $("#dlg_read_write",inst.frame).click( function(){ inst.setAllPerm("readwrite"); });
         $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm("grant"); });
         $("#dlg_deny_all",inst.frame).click( function(){ inst.setAllPerm("deny"); });
         $("#dlg_inherit_all",inst.frame).click( function(){ inst.setAllPerm("inherit"); });
@@ -150,7 +161,7 @@ function makeDlgSetACLs(){
             var options = {
                 title: "Sharing for " + (inst.is_coll?"Collection \"":"Data \"") + item.title + "\"",
                 modal: true,
-                width: inst.is_coll?600:425,
+                width: inst.is_coll?660:440,
                 height: 'auto',
                 resizable: true,
                 closeOnEscape: false,
@@ -223,11 +234,13 @@ function makeDlgSetACLs(){
                         },
                         postProcess: function( event, data ) {
                             if ( data.node.key.startsWith("g/")){
-                                //console.log("resp:",data.response);
                                 data.result = [];
+                                if ( data.response.desc )
+                                    data.result.push({title: "["+data.response.desc+"]", icon: false });
+
                                 if ( data.response.member && data.response.member.length ){
                                     for ( var i in data.response.member ) {
-                                        data.result.push({ title: data.response.member[i], icon: false });
+                                        data.result.push({ title: data.response.member[i].substr(2), icon: false });
                                     }
                                 }else{
                                     data.result.push({ title: "(empty)", icon: false  });
@@ -243,7 +256,7 @@ function makeDlgSetACLs(){
 
             inst.frame.dialog( options );
             $(".btn",inst.frame).button();
-            $("select",inst.frame).selectmenu({ width:"auto" });
+            $("select",inst.frame).selectmenu({ width:"20em"});
             $("#public_check",inst.frame).checkboxradio();
             $("#public_check",inst.frame).prop("checked",item.ispublic);
             $("#public_check",inst.frame).checkboxradio("refresh");
@@ -271,7 +284,7 @@ function makeDlgSetACLs(){
         var src = [
             {title:"Users",folder:true,children:user_rules,key:"users"},
             {title:"Groups",folder:true,children:group_rules,key:"groups"},
-            {title:"Default", folder:false, key:"default", rule:def_rule }
+            {title:"Default Permissions",folder:false,icon:false,key:"default",rule:def_rule }
         ];
 
         return src;
@@ -279,8 +292,6 @@ function makeDlgSetACLs(){
 
     this.selectHandler = function( obj, perm ){
         if ( inst.cur_rule ) {
-            //console.log( "value", obj.val(), "prev val:", inst.cur_rule );
-
             var mask = PERM_ALL & ~perm;
             if ( obj.val() == "grant" ) {
                 inst.cur_rule.grant |= perm;
@@ -292,14 +303,11 @@ function makeDlgSetACLs(){
                 inst.cur_rule.grant &= mask;
                 inst.cur_rule.deny &= mask;
             }
-            //console.log( "new val:", inst.cur_rule );
         }
     }
 
     this.selectInhHandler = function( obj, perm ){
         if ( inst.cur_rule ) {
-            //console.log( "value", obj.val(), "prev val:", inst.cur_rule );
-
             var mask = PERM_ALL & ~perm;
             if ( obj.val() == "grant" ) {
                 inst.cur_rule.inhgrant |= perm;
@@ -311,22 +319,18 @@ function makeDlgSetACLs(){
                 inst.cur_rule.inhgrant &= mask;
                 inst.cur_rule.inhdeny &= mask;
             }
-            //console.log( "new val:", inst.cur_rule );
         }
     }
 
-    /*
-    this.publicFlagChanged = function( enabled ){
-        inst.public = enabled;
-        //console.log("Public flag is",enabled);
-        //var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
-        //var node = tree.getActiveNode();
-        //inst.updateSelection( data.node.key, data.node.data.rule );
-    }*/
-
     this.setAllPerm = function( value ){
         if ( inst.cur_rule ){
-            if ( value == "grant" ){
+            if ( value == "readonly" ){
+                inst.cur_rule.grant = PERM_READONLY;
+                inst.cur_rule.deny = 0;
+            } else if ( value == "readwrite" ){
+                inst.cur_rule.grant = PERM_READWRITE;
+                inst.cur_rule.deny = 0;
+            } else if ( value == "grant" ){
                 inst.cur_rule.grant = PERM_ALL;
                 inst.cur_rule.deny = 0;
             } else if ( value == "deny" ){
@@ -337,21 +341,30 @@ function makeDlgSetACLs(){
                 inst.cur_rule.deny = 0;
             }
         }
-
-        $("#dlg_view_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_list_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_upd_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_admin_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_tag_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_note_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_read_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_write_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_create_sel",this.frame).val(value).selectmenu("refresh");
+        if ( value == "readonly" || value == "readwrite" ){
+            inst.setPermsFromRule( inst.cur_rule );
+        } else {
+            $("#dlg_view_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_list_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_upd_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_admin_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_tag_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_note_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_read_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_write_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_create_sel",this.frame).val(value).selectmenu("refresh");
+        }
     }
 
     this.setAllPermInh = function( value ){
         if ( inst.cur_rule ){
-                if ( value == "grant" ){
+            if ( value == "readonly" ){
+                inst.cur_rule.inhgrant = PERM_READONLY;
+                inst.cur_rule.inhdeny = 0;
+            } else if ( value == "readwrite" ){
+                inst.cur_rule.inhgrant = PERM_READWRITE;
+                inst.cur_rule.inhdeny = 0;
+            } else if ( value == "grant" ){
                 inst.cur_rule.inhgrant = PERM_ALL;
                 inst.cur_rule.inhdeny = 0;
             } else if ( value == "deny" ){
@@ -363,19 +376,23 @@ function makeDlgSetACLs(){
             }
         }
 
-        $("#dlg_inh_view_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_list_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_upd_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_admin_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_tag_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_note_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_read_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_write_sel",this.frame).val(value).selectmenu("refresh");
-        $("#dlg_inh_create_sel",this.frame).val(value).selectmenu("refresh");
+        if ( value == "readonly" || value == "readwrite" ){
+            inst.setPermsFromRule( inst.cur_rule );
+        } else {
+            $("#dlg_inh_view_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_list_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_upd_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_admin_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_tag_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_note_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_read_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_write_sel",this.frame).val(value).selectmenu("refresh");
+            $("#dlg_inh_create_sel",this.frame).val(value).selectmenu("refresh");
+        }
     }
 
     this.setPermsFromRule = function( rule ){
-        console.log( "setPermsFromRule", rule );
+        //console.log( "setPermsFromRule", rule );
         if ( !rule ) {
             inst.setAllPerm("inherit");
             if ( inst.is_coll )
@@ -433,23 +450,16 @@ function makeDlgSetACLs(){
             $("select",inst.frame).selectmenu("disable");
         else
             $("select",inst.frame).selectmenu("enable");
-/*
-        $("#dlg_view_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_list_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_upd_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_admin_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_tag_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_note_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_read_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_write_sel",inst.frame).prop("disabled", disabled );
-        $("#dlg_create_sel",inst.frame).prop("disabled", disabled );
-        */
 
         if ( disabled ){
+            $("#dlg_read_only",inst.frame).button("disable");
+            $("#dlg_read_write",inst.frame).button("disable");
             $("#dlg_grant_all",inst.frame).button("disable");
             $("#dlg_deny_all",inst.frame).button("disable");
             $("#dlg_inherit_all",inst.frame).button("disable");
         }else{
+            $("#dlg_read_only",inst.frame).button("enable");
+            $("#dlg_read_write",inst.frame).button("enable");
             $("#dlg_grant_all",inst.frame).button("enable");
             $("#dlg_deny_all",inst.frame).button("enable");
             $("#dlg_inherit_all",inst.frame).button("enable");
@@ -464,22 +474,16 @@ function makeDlgSetACLs(){
         if ( inst.is_coll ) {
             if ( disabled )
                 inst.setAllPermInh("inherit");
-/*
-            $("#dlg_inh_view_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_list_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_upd_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_admin_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_tag_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_note_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_read_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_write_sel",inst.frame).prop("disabled", disabled );
-            $("#dlg_inh_create_sel",inst.frame).prop("disabled", disabled );
-*/
+
             if ( disabled ){
+                $("#dlg_inh_read_only",inst.frame).button("disable");
+                $("#dlg_inh_read_write",inst.frame).button("disable");
                 $("#dlg_inh_grant_all",inst.frame).button("disable");
                 $("#dlg_inh_deny_all",inst.frame).button("disable");
                 $("#dlg_inh_inherit_all",inst.frame).button("disable");
             }else{
+                $("#dlg_inh_read_only",inst.frame).button("enable");
+                $("#dlg_inh_read_write",inst.frame).button("enable");
                 $("#dlg_inh_grant_all",inst.frame).button("enable");
                 $("#dlg_inh_deny_all",inst.frame).button("enable");
                 $("#dlg_inh_inherit_all",inst.frame).button("enable");
@@ -516,16 +520,19 @@ function makeDlgSetACLs(){
         console.log("add user" );
 
         dlgPickUser.show( function( uids ){
-            var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
-            var id;
-            var rule;
-            for ( var i in uids ){
-                id = uids[i];
-                if ( !tree.getNodeByKey( id )){
-                    rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
-                    inst.new_rules.push( rule );
-                    tree.rootNode.children[0].addNode({title: id.substr(2), key: id, rule: rule });
+            if ( uids.length > 0 ){
+                var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+                var id;
+                var rule;
+                for ( var i in uids ){
+                    id = uids[i];
+                    if ( !tree.getNodeByKey( id )){
+                        rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
+                        inst.new_rules.push( rule );
+                        tree.rootNode.children[0].addNode({title: id.substr(2),icon:false,key:id,rule:rule });
+                    }
                 }
+                tree.activateKey( uids[0] );
             }
         });
     }
@@ -534,16 +541,19 @@ function makeDlgSetACLs(){
         console.log("add group" );
 
         dlgGroups.show( inst.uid, function( gids ){
-            var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
-            var id;
-            var rule;
-            for ( var i in gids ){
-                id = gids[i];
-                if ( !tree.getNodeByKey( id )){
-                    rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
-                    inst.new_rules.push( rule );
-                    tree.rootNode.children[1].addNode({title: id.substr(2), key: id, rule: rule, folder:true, lazy:true });
+            if ( gids.length > 0 ){
+                var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+                var id;
+                var rule;
+                for ( var i in gids ){
+                    id = gids[i];
+                    if ( !tree.getNodeByKey( id )){
+                        rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
+                        inst.new_rules.push( rule );
+                        tree.rootNode.children[1].addNode({title: id.substr(2),icon:false,key:id,rule:rule,folder:true,lazy:true });
+                    }
                 }
+                tree.activateKey( gids[0] );
             }
         }, true );
     }

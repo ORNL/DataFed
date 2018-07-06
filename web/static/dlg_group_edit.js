@@ -49,7 +49,7 @@ function makeDlgGroupEdit(){
                 $("#btn_clear",inst.frame).button("enable" );
 
                 for ( var i in group.member ){
-                    src.push({ title: group.member[i], icon: false, key: group.member[i]});
+                    src.push({ title: group.member[i].substr(2), icon: false, key: group.member[i]});
                 }
             }else
                 group.member = [];
@@ -116,7 +116,7 @@ function makeDlgGroupEdit(){
                     var user;
                     for ( var i in data.response ) {
                         user = data.response[i];
-                        data.result.push({ title: user.name + " ("+user.uid +")", key: user.uid });
+                        data.result.push({ title: user.name + " ("+user.uid.substr(2)+")", key: user.uid });
                     }
                 }
             }
@@ -177,7 +177,9 @@ function makeDlgGroupEdit(){
                             if ( !ok ){
                                 alert( data );
                             } else {
+                                console.log( "data:", data );
                                 dlg_inst.dialog('destroy').remove();
+                                cb( data );
                             }
                         });
                     } else {
@@ -185,7 +187,9 @@ function makeDlgGroupEdit(){
                             if ( !ok ){
                                 alert( data );
                             } else {
+                                console.log( "data:", data );
                                 dlg_inst.dialog('destroy').remove();
+                                cb( data );
                             }
                         });
                     }
@@ -194,6 +198,7 @@ function makeDlgGroupEdit(){
                 text: "Cancel",
                 click: function() {
                     $(this).dialog('destroy').remove();
+                    cb();
                 }
             }],
             open: function(event,ui){
@@ -231,7 +236,7 @@ function makeDlgGroupEdit(){
             key = sel[i].key;
             if ( inst.group.member.indexOf( key ) == -1 ){
                 inst.group.member.push( key );
-                tree2.rootNode.addNode({ title: key, icon: false, key: key });
+                tree2.rootNode.addNode({ title: key.substr(2), icon: false, key: key });
             }
         }
         if ( inst.group.member.length )

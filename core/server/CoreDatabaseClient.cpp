@@ -39,7 +39,7 @@ DatabaseClient::~DatabaseClient()
 void
 DatabaseClient::setClient( const std::string & a_client )
 {
-    m_client_uid = a_client;
+    m_client_uid = a_client.size()?(string("u/") + a_client):"";
     m_client = curl_easy_escape( m_curl, a_client.c_str(), 0 );
 }
 
