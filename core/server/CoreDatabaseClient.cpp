@@ -370,14 +370,24 @@ DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply &
 
 
 void
-DatabaseClient::userList( const UserListRequest & a_request, UserDataReply & a_reply )
+DatabaseClient::userListAll( const UserListAllRequest & a_request, UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     if ( a_request.has_details() && a_request.details() )
         params.push_back({"details","true"});
 
     rapidjson::Document result;
-    dbGet( "usr/list", params, result );
+    dbGet( "usr/list/all", params, result );
+
+    setUserData( a_reply, result );
+}
+
+void
+DatabaseClient::userListCollab( const UserListCollabRequest & a_request, UserDataReply & a_reply )
+{
+    (void)a_request;
+    rapidjson::Document result;
+    dbGet( "usr/list/collab", {}, result );
 
     setUserData( a_reply, result );
 }

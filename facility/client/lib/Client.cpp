@@ -303,7 +303,7 @@ Client::userView( const string & a_uid, bool a_details )
 spUserDataReply
 Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
 {
-    Auth::UserListRequest req;
+    Auth::UserListAllRequest req;
     Auth::UserDataReply * reply;
 
     if ( a_details )

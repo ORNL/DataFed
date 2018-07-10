@@ -11,10 +11,13 @@ function makeDlgPickUser(){
             </div>\
         </div>";
 
-    this.show = function( a_uid, cb ){
+    this.show = function( a_uid, a_excl, cb ){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
         inst.uid = a_uid;
+        inst.excl = a_excl;
+
+        console.log("Exclude:", inst.excl );
 
         var options = {
             title: "Select User(s)",
@@ -48,9 +51,10 @@ function makeDlgPickUser(){
                 var src = [
                     {title:"Collaborators",icon:false,folder:true,lazy:true,checkbox:false,key:"collab"},
                     {title:"By Groups",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
-                    {title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"},
                     {title:"All",icon:false,folder:true,lazy:true,checkbox:false,key:"all"}
                 ];
+
+                //src.push({title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"});
 
                 $("#dlg_user_tree",inst.frame).fancytree({
                     extensions: ["themeroller"],
@@ -65,7 +69,6 @@ function makeDlgPickUser(){
                     selectMode: 2,
                     checkbox: true,
                     lazyLoad: function( event, data ) {
-                        console.log( "lazy load:", data );
                         if ( data.node.key == "collab" ) {
                             data.result = {
                                 url: "/api/usr/list/collab",
@@ -74,11 +77,6 @@ function makeDlgPickUser(){
                         } else if ( data.node.key == "groups" ) {
                             data.result = {
                                 url: "/api/grp/list?uid="+inst.uid,
-                                cache: false
-                            };
-                        } else if ( data.node.key == "projects" ) {
-                            data.result = {
-                                url: "/api/prj/list",
                                 cache: false
                             };
                         } else if ( data.node.key == "all" ) {
@@ -94,29 +92,29 @@ function makeDlgPickUser(){
                         }
                     },
                     postProcess: function( event, data ) {
-                        console.log( "post proc:", data );
                         if ( data.node.key == "collab" || data.node.key == "all" ){
                             data.result = [];
                             var user;
                             for ( var i in data.response ) {
                                 user = data.response[i];
-                                data.result.push({ title: user.name + " ("+user.uid.substr(2) +")", key: user.uid });
+                                if ( inst.excl.indexOf( user.uid ) == -1 )
+                                    data.result.push({ title: user.name + " ("+user.uid.substr(2) +")", key: user.uid });
                             }
                         } else if ( data.node.key == "groups" ){
-                            console.log("groups");
                             data.result = [];
                             var group;
                             for ( var i in data.response ) {
                                 group = data.response[i];
-                                data.result.push({ title: group.title + " ("+group.gid +")",icon:false,checkbox:false,folder:true,lazy:true,key:"g/"+group.gid });
+                                if ( inst.excl.indexOf( "g/"+group.gid ) == -1 )
+                                    data.result.push({ title: group.title + " ("+group.gid +")",icon:false,checkbox:false,folder:true,lazy:true,key:"g/"+group.gid });
                             }
                         } else if ( data.node.key.startsWith("g/")){
-                            console.log("group",data.node.key);
                             data.result = [];
                             var mem;
                             for ( var i in data.response.member ) {
                                 mem = data.response.member[i];
-                                data.result.push({ title: mem.substr(2),icon:false,key:mem});
+                                if ( inst.excl.indexOf( mem ) == -1 )
+                                    data.result.push({ title: mem.substr(2),icon:false,key:mem});
                             }
                         }
                     }

@@ -77,8 +77,19 @@ function makeDlgSetACLs(){
         console.log( "show", item );
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
-        inst.uid = item.owner;
         inst.is_coll = (item.id[0]=="c");
+        inst.uid = item.owner;
+
+        if ( item.owner.startsWith("p/")){
+            viewProj( inst.uid, function(proj){
+                inst.excl = [proj[0].owner,"g/members"];
+                if ( proj[0].admin ){
+                    inst.excl = inst.excl.concat( proj[0].admin );
+                }
+            });
+        }else{
+            inst.excl = [inst.uid];
+        }
 
         if ( inst.is_coll ){
             $("#dlg_create_row",inst.frame).show();
@@ -234,6 +245,7 @@ function makeDlgSetACLs(){
                             }
                         },
                         postProcess: function( event, data ) {
+                            console.log("post proc",data);
                             if ( data.node.key.startsWith("g/")){
                                 data.node.setTitle( data.response.title + " (" +data.response.gid + ")" );
                                 data.result = [];
@@ -524,16 +536,20 @@ function makeDlgSetACLs(){
     }
 
     this.addUser = function(){
-        //console.log("add user" );
+        var excl = inst.excl.slice();
+        for ( i in inst.new_rules ){
+            rule = inst.new_rules[i];
+            if ( rule.id.startsWith( "u/" ))
+                excl.push( rule.id );
+        }
 
-        dlgPickUser.show( inst.uid, function( uids ){
+        dlgPickUser.show( inst.uid, excl, function( uids ){
             if ( uids.length > 0 ){
                 var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
-                var id;
-                var rule;
-                for ( var i in uids ){
+                var i,id,rule;
+                for ( i in uids ){
                     id = uids[i];
-                    if ( !tree.getNodeByKey( id )){
+                    if ( inst.excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
                         rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
                         inst.new_rules.push( rule );
                         tree.rootNode.children[0].addNode({title: id.substr(2),icon:false,key:id,rule:rule });
@@ -545,23 +561,58 @@ function makeDlgSetACLs(){
     }
 
     this.addGroup = function(){
-        //console.log("add group" );
+        var rule, node, gid, i;
 
-        dlgGroups.show( inst.uid, function( gids ){
-            if ( gids.length > 0 ){
+        var excl = inst.excl.slice();
+        for ( i in inst.new_rules ){
+            rule = inst.new_rules[i];
+            if ( rule.id.startsWith( "g/" ))
+                excl.push( rule.id );
+        }
+
+        dlgGroups.show( inst.uid, excl, function( gids ){
+            groupList( inst.uid, function( ok, groups ){
                 var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
-                var id;
-                var rule;
-                for ( var i in gids ){
-                    id = gids[i];
-                    if ( !tree.getNodeByKey( id )){
-                        rule = {id: id, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
-                        inst.new_rules.push( rule );
-                        tree.rootNode.children[1].addNode({title:id.substr(2),icon:false,key:id,rule:rule,folder:true,lazy:true });
+
+                if ( ok ){
+                    for ( i in inst.new_rules ){
+                        rule = inst.new_rules[i];
+                        node = tree.getNodeByKey( rule.id );
+
+                        if ( rule.id.startsWith( "g/" )){
+                            gid = rule.id.substr(2);
+                            group = groups.find( function(elem){ return elem.gid == gid } );
+                            if ( group ){
+                                node.resetLazy();
+                                node.setTitle( group.title + " (" + gid + ")");
+                            }else{
+                                inst.new_rules.splice(i,1);
+                                node.remove();
+                            }
+                        }
                     }
                 }
-                tree.activateKey( gids[0] );
-            }
+
+                if ( gids && gids.length > 0 ){
+                    node = tree.getNodeByKey("groups");
+
+                    for ( i in gids ){
+                        gid = gids[i];
+                        if ( !tree.getNodeByKey( gid )){
+                            rule = {id: gid, grant: 0, deny: 0, inhgrant:0, inhdeny: 0 };
+                            inst.new_rules.push( rule );
+                            if ( ok ){
+                                gid = gid.substr(2);
+                                group = groups.find( function(elem){ return elem.gid == gid } );
+                                tree.rootNode.children[1].addNode({title:group.title + " (" + gid + ")",icon:false,key:"g/"+gid,rule:rule,folder:true,lazy:true });
+                            }else
+                                tree.rootNode.children[1].addNode({title:gid.substr(2),icon:false,key:gid,rule:rule,folder:true,lazy:true });
+                        }
+                    }
+
+                    tree.activateKey( gids[0] );
+                }
+            });
         }, true );
     }
 
@@ -571,7 +622,7 @@ function makeDlgSetACLs(){
         if ( node ){
             groupView( inst.uid, node.key, function( ok, group ){
                 if ( ok ){
-                    dlgGroupEdit.show( inst.uid, group, function( group_new ){
+                    dlgGroupEdit.show( inst.uid, inst.excl, group, function( group_new ){
                         if ( group_new ){
                             node.setTitle( group_new.title + " (" +group_new.gid + ")");
                             node.resetLazy();
@@ -583,7 +634,6 @@ function makeDlgSetACLs(){
     }
 
     this.remUserGroup = function(){
-        //console.log("remove user/group", inst.cur_rule);
         if ( inst.cur_rule ){
             var key = inst.cur_rule.id;
             if ( key == "default" )

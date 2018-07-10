@@ -10,31 +10,22 @@ function makeDlgGroupEdit(){
                 <tr><td >Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
                 </table>\
             </div>\
-            <div class='row-flex' style='flex:1 1 100%'>\
-                <div class='col-flex' style='flex:1 1 40%'>\
-                    <div style='flex:none'>Members:</div>\
-                    <div class='ui-widget-content text' style='flex:1 1 100%;overflow:auto'>\
-                        <div id='member_list' class='no-border' style='overflow:auto'></div>\
-                    </div>\
-                    <div style='flex:none;padding:.25rem'><button id='btn_remove' class='btn small'>Remove</button>&nbsp<button id='btn_clear' class='btn small'>Clear</button></div>\
-                </div>\
-                <div>&nbsp</div>\
-                <div class='col-flex' style='flex:1 1 60%'>\
-                    <div style='flex:none'>Available:</div>\
-                    <div class='ui-widget-content text' style='flex:1 1 100%;overflow:auto'>\
-                        <div id='avail_list' class='no-border' style='overflow:auto'></div>\
-                    </div>\
-                    <div style='flex:none;padding:.25rem'><button id='btn_add' class='btn small'>Add</button></div>\
-                </div>\
+            <div style='flex:none'>Members:</div>\
+            <div class='ui-widget-content text' style='flex:1 1 100%;overflow:auto'>\
+                <div id='member_list' class='no-border' style='overflow:auto'></div>\
+            </div>\
+            <div style='flex:none;padding:.25rem'><button id='btn_add' class='btn small'>Add</button>&nbsp<button id='btn_remove' class='btn small'>Remove</button>&nbsp<button id='btn_clear' class='btn small'>Clear</button></div>\
             </div>\
         </div>";
 
-    this.show = function( a_uid, group, cb ){
+    this.show = function( a_uid, a_excl, group, cb ){
 
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
         inst.uid = a_uid;
-        console.log("uid =",inst.uid);
+        inst.excl = a_excl;
+
+        console.log("Exclude:", inst.excl );
 
         $(".btn",inst.frame).button();
 
@@ -51,8 +42,11 @@ function makeDlgGroupEdit(){
                 for ( var i in group.member ){
                     src.push({ title: group.member[i].substr(2), icon: false, key: group.member[i]});
                 }
-            }else
+            }else{
                 group.member = [];
+                $("#btn_clear",inst.frame).button("disable" );
+            }
+
             inst.group = jQuery.extend(true, {}, group );
         } else {
             inst.group = { member: [] };
@@ -80,47 +74,6 @@ function makeDlgGroupEdit(){
                 console.log( "activated" );
                 inst.userSelected();
             },
-        });
-
-
-        src = [
-            {title:"Collaborators",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
-            {title:"By Groups",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
-            {title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"},
-            {title:"All",icon:false,folder:true,lazy:true,checkbox:false,key:"all"}
-        ];
-
-        $("#avail_list",inst.frame).fancytree({
-            extensions: ["themeroller"],
-            themeroller: {
-                activeClass: "ui-state-hover",
-                addClass: "",
-                focusClass: "",
-                hoverClass: "ui-state-active",
-                selectedClass: ""
-            },
-            source: src,
-            selectMode: 2,
-            checkbox: true,
-            lazyLoad: function( event, data ) {
-                if ( data.node.key == "all" ) {
-                    data.result = {
-                        url: "/api/usr/list/all",
-                        cache: false
-                    };
-                }
-            },
-            postProcess: function( event, data ) {
-                //console.log( "post proc:", data );
-                if ( data.node.key == "all" ){
-                    data.result = [];
-                    var user;
-                    for ( var i in data.response ) {
-                        user = data.response[i];
-                        data.result.push({ title: user.name + " ("+user.uid.substr(2)+")", key: user.uid });
-                    }
-                }
-            }
         });
 
         var options = {
@@ -224,26 +177,27 @@ function makeDlgGroupEdit(){
                 node.remove();
             }
             $("#btn_remove",inst.frame).button("disable");
+            if ( inst.group.member.length == 0 )
+                $("#btn_clear",inst.frame).button("enable" );
         }
     }
 
     this.addUsers = function(){
-        var tree = $("#avail_list",inst.frame).fancytree("getTree");
-        var sel = tree.getSelectedNodes();
-        var tree2 = $("#member_list",inst.frame).fancytree("getTree");
-        var key;
-
-        for ( var i in sel ){
-            key = sel[i].key;
-            if ( inst.group.member.indexOf( key ) == -1 ){
-                inst.group.member.push( key );
-                tree2.rootNode.addNode({ title: key.substr(2), icon: false, key: key });
+        dlgPickUser.show( inst.uid, inst.excl, function( uids ){
+            if ( uids.length > 0 ){
+                var tree = $("#member_list",inst.frame).fancytree("getTree");
+                var i,id;
+                for ( i in uids ){
+                    id = uids[i];
+                    if ( inst.excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
+                        tree.rootNode.addNode({title: id.substr(2),icon:false,key:id });
+                        inst.group.member.push(id);
+                    }
+                }
+                if ( inst.group.member.length )
+                    $("#btn_clear",inst.frame).button("enable" );
             }
-        }
-        if ( inst.group.member.length )
-            $("#btn_clear",inst.frame).button("enable" );
-
-        tree.selectAll( false );
+        });
     }
 
     this.clearUsers = function(){

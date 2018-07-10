@@ -89,7 +89,7 @@ void
 Server::loadRepositoryConfig()
 {
     DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
-    db_client.setClient( "sdms" );
+    //db_client.setClient( "sdms" );
 
     vector<RepoData*> repos;
 
@@ -497,7 +497,7 @@ Server::zapHandler()
         string uid;
         DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
 
-        db_client.setClient( "sdms" );
+        //db_client.setClient( "sdms" );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );

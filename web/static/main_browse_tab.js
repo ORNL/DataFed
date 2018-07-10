@@ -416,7 +416,6 @@ function xfrUpdateHistory( xfr_list ){
 
         for ( var i = 0; i < len; i++ ) {
             stat = xfr_list[i];
-            console.log( stat );
             html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td>";
             start.setTime( stat.started*1000 );
             update.setTime( stat.updated*1000 );
@@ -436,7 +435,7 @@ function xfrHistoryPoll() {
     if ( !g_user )
         return;
 
-    _asyncGet( "/api/xfr/list" + (pollSince?"?since=6":""), null, function( ok, data ){
+    _asyncGet( "/api/xfr/list" + (pollSince?"?since="+pollSince:""), null, function( ok, data ){
         if ( ok ) {
             if ( data.xfr && data.xfr.length ) {
                 // Find and remove any previous entries
@@ -453,8 +452,8 @@ function xfrHistoryPoll() {
             }
             xfrUpdateHistory( xfrHist );
         }
-        pollSince = 15;
-        pollTimer = setTimeout( xfrHistoryPoll, 5000 );
+        pollSince = 10;
+        pollTimer = setTimeout( xfrHistoryPoll, 1000*(pollSince-1));
     });
 }
 

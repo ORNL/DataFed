@@ -16,10 +16,11 @@ function makeDlgGroups(){
             </div>\
         </div>";
 
-    this.show = function( a_uid, cb, select ){
+    this.show = function( a_uid, a_excl, cb, select ){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
         inst.uid = a_uid;
+        inst.excl = a_excl;
 
         $("#dlg_add_grp",inst.frame).click( inst.addGroup );
         $("#dlg_edit_grp",inst.frame).click( inst.editGroup );
@@ -39,11 +40,8 @@ function makeDlgGroups(){
                         groups = [];
                         var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
                         var sel = tree.getSelectedNodes();
-                        var key;
                         for ( var i in sel ){
-                            key = sel[i].key;
-                            if ( groups.indexOf( key ) == -1 )
-                                groups.push( "g/"+key );
+                            groups.push( sel[i].key );
                         }
                         cb( groups );
                     } else if ( cb )
@@ -59,7 +57,8 @@ function makeDlgGroups(){
                     var group;
                     for ( var i in data ){
                         group = data[i];
-                        src.push({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:group.gid });
+                        if ( inst.excl.indexOf( "g/" + group.gid ) == -1 )
+                            src.push({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
                     }
 
                     $("#dlg_group_tree",inst.frame).fancytree({
@@ -76,7 +75,7 @@ function makeDlgGroups(){
                         checkbox: select,
                         lazyLoad: function( event, data ) {
                             data.result = {
-                                url: "/api/grp/view?uid="+inst.uid+"&gid="+data.node.key,
+                                url: "/api/grp/view?uid="+inst.uid+"&gid="+data.node.key.substr(2),
                                 cache: false
                             };
                         },
@@ -94,12 +93,12 @@ function makeDlgGroups(){
                         },
                         activate: function( event, data ) {
                             console.log( data.node.key );
-                            if ( data.node.key.startsWith("u/")){
-                                $("#dlg_edit_grp",inst.frame).button("disable");
-                                $("#dlg_rem_grp",inst.frame).button("disable");
-                            }else{
+                            if ( data.node.key.startsWith("g/")){
                                 $("#dlg_edit_grp",inst.frame).button("enable" );
                                 $("#dlg_rem_grp",inst.frame).button("enable" );
+                            }else{
+                                $("#dlg_edit_grp",inst.frame).button("disable");
+                                $("#dlg_rem_grp",inst.frame).button("disable");
                             }
                     }
                     });
@@ -110,6 +109,7 @@ function makeDlgGroups(){
             options.buttons.push({
                 text: "Cancel",
                 click: function() {
+                    cb();
                     $( this ).dialog( "close" );
                 }
             });
@@ -126,10 +126,10 @@ function makeDlgGroups(){
 
     this.addGroup = function( ){
         console.log("Add group");
-        dlgGroupEdit.show( inst.uid, null, function( group ){
+        dlgGroupEdit.show( inst.uid, inst.excl, null, function( group ){
             if ( group ){
                 var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
-                tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:group.gid });
+                tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
             }
         });
     }
@@ -139,10 +139,10 @@ function makeDlgGroups(){
         var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            confirmChoice( "Confirm Delete", "Delete group '" + node.key + "'?", ["Delete","Cancel"], function( choice ) {
+            confirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Delete","Cancel"], function( choice ) {
                 console.log( choice );
                 if ( choice == 0 ) {
-                    groupDelete( inst.uid, node.key, function() {
+                    groupDelete( inst.uid, node.key.substr(2), function() {
                         node.remove();
                         inst.selectNone();
                     });
@@ -157,9 +157,9 @@ function makeDlgGroups(){
         var node = tree.getActiveNode();
         if ( node ){
             console.log( "node", node );
-            groupView( inst.uid, node.key, function( ok, group ){
+            groupView( inst.uid, node.key.substr(2), function( ok, group ){
                 if ( ok ){
-                    dlgGroupEdit.show( inst.uid, group, function( group_new ){
+                    dlgGroupEdit.show( inst.uid, inst.excl, group, function( group_new ){
                         if ( group_new ){
                             node.setTitle( group_new.title + " (" +group_new.gid + ")");
                             node.resetLazy();

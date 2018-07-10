@@ -39,7 +39,8 @@ public:
     void userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply );
     void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
     void userUpdate( const Auth::UserUpdateRequest & a_request, Auth::UserDataReply & a_reply );
-    void userList( const Auth::UserListRequest & a_request, Auth::UserDataReply & a_reply );
+    void userListAll( const Auth::UserListAllRequest & a_request, Auth::UserDataReply & a_reply );
+    void userListCollab( const Auth::UserListCollabRequest & a_request, Auth::UserDataReply & a_reply );
     void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
 
     void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );

@@ -292,12 +292,24 @@ app.get('/api/usr/view', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/usr/list', ( a_req, a_resp ) => {
+app.get('/api/usr/list/all', ( a_req, a_resp ) => {
     console.log("get /api/usr/list");
 
-    sendMessage( "UserListRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "UserListRequest reply:", reply );
+    sendMessage( "UserListAllRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "UserListAllRequest reply" );
         a_resp.send(reply.user);
+    });
+});
+
+app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
+    console.log("get /api/usr/list");
+
+    sendMessage( "UserListCollabRequest", {}, a_req, a_resp, function( reply ) {
+        console.log( "UserListCollabRequest reply", reply );
+        if ( reply.user )
+            a_resp.send(reply.user);
+        else
+            a_resp.send([]);
     });
 });
 
