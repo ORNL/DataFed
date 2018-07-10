@@ -75,7 +75,7 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.admins ) {
                     for ( i in req.queryParams.admins ) {
                         uid = req.queryParams.admins[i];
-                        if ( uid == client._key )
+                        if ( uid == client._id )
                             continue;
                         if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
@@ -87,7 +87,7 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.members ) {
                     for ( i in req.queryParams.members ) {
                         uid = req.queryParams.members[i];
-                        if ( uid == client._key || proj.new.admins.indexOf( uid ) != -1 )
+                        if ( uid == client._id || proj.new.admins.indexOf( uid ) != -1 )
                             continue;
                         if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
@@ -190,7 +190,7 @@ router.get('/update', function (req, res) {
                         proj.new.members.push( uid );
                     }
                 }else{
-                    var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._key", { proj: proj_id }).toArray();
+                    var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._id", { proj: proj_id }).toArray();
 
                     if ( members.length )
                         proj.new.members = members;
@@ -228,14 +228,14 @@ router.get('/view', function (req, res) {
         var client = g_lib.getUserFromClientID( req.queryParams.client );
         var proj = g_db.p.document({ _id: req.queryParams.id });
         var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
-        var admins = g_db._query("for v in 1..1 outbound @proj admin return v._key", { proj: proj._id } ).toArray();
+        var admins = g_db._query("for v in 1..1 outbound @proj admin return v._id", { proj: proj._id } ).toArray();
         if ( admins.length ) {
             proj.admins = admins;
         } else
             proj.admins = [];
 
         if ( g_lib.getProjectRole( client, proj ) != g_lib.PROJ_NO_ROLE ){
-            var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._key", { proj: proj._id }).toArray();
+            var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._id", { proj: proj._id }).toArray();
 
             if ( members.length ) {
                 proj.members = members;
