@@ -73,15 +73,15 @@
                         </div>
                         <div style="flex:none;padding:.25em">
                             <!-- input type="checkbox" id="lock_btn"><label title="Allow drag and drop within Collections & Data window" for="lock_btn">Unlock</label></input -->
-                            <button class="btn" onclick="newProj()">New Proj</button>
-                            <button class="btn act-folder act-root" onclick="newData()" disabled>New Data</button>
-                            <button class="btn act-folder act-root" onclick="newColl()" disabled>New Coll.</button>
-                            <button class="btn act-folder act-data act-admin" onclick="editSelected()" disabled>Edit</button>
-                            <button class="btn act-folder act-data act-admin" onclick="deleteSelected()" disabled>Delete</button>
-                            <button class="btn act-folder act-data act-admin act-root" onclick="shareSelected()" disabled>Sharing</button>
-                            <button class="btn act-data" onclick="xfrSelected(0)" disabled>Upload</button>
-                            <button class="btn act-data" onclick="xfrSelected(1)" disabled>Download</button>
-                            <button class="btn act-data" onclick="moveSelected()" disabled>Move</button>
+                            <button class="btn" id="btn_new_proj" onclick="newProj()">New Proj</button>
+                            <button class="btn" id="btn_new_data" onclick="newData()" disabled>New Data</button>
+                            <button class="btn" id="btn_new_coll" onclick="newColl()" disabled>New Coll.</button>
+                            <button class="btn" id="btn_edit" onclick="editSelected()" disabled>Edit</button>
+                            <button class="btn" id="btn_del" onclick="deleteSelected()" disabled>Delete</button>
+                            <button class="btn" id="btn_share" onclick="shareSelected()" disabled>Sharing</button>
+                            <button class="btn" id="btn_upload" onclick="xfrSelected(0)" disabled>Upload</button>
+                            <button class="btn" id="btn_download" onclick="xfrSelected(1)" disabled>Download</button>
+                            <button class="btn" id="btn_move" onclick="moveSelected()" disabled>Move</button>
                         </div>
                         <div style="flex:none;padding:.25em">
                             <div id="xfr_panel" >

@@ -174,24 +174,47 @@ function xfrSelected( a_mode ) {
 }
 
 function updateBtnState( state, admin ){
+    console.log("updBtn",state,admin);
     if ( state == "c" ) {
-        $(".btn.act-data").not(".act-folder").button("option", "disabled", true);
-        $(".btn.act-folder").button("option", "disabled", false);
+        $("#btn_new_data").button("option","disabled",false);
+        $("#btn_new_coll").button("option","disabled",false);
+        $("#btn_edit").button("option","disabled",false);
+        $("#btn_del").button("option","disabled",false);
+        $("#btn_share").button("option","disabled",false);
+        $("#btn_upload").button("option","disabled",true);
+        $("#btn_download").button("option","disabled",true);
     } else if ( state == "d" ) {
-        $(".btn.act-folder").button("option", "disabled", true);
-        $(".btn.act-data").button("option", "disabled", false);
+        $("#btn_new_data").button("option","disabled",true);
+        $("#btn_new_coll").button("option","disabled",true);
+        $("#btn_edit").button("option","disabled",false);
+        $("#btn_del").button("option","disabled",false);
+        $("#btn_share").button("option","disabled",false);
+        $("#btn_upload").button("option","disabled",false);
+        $("#btn_download").button("option","disabled",false);
     } else if ( state == "r" ) {
-        $(".btn.act-folder").button("option", "disabled", true);
-        $(".btn.act-data").button("option", "disabled", true);
-        $(".btn.act-root").button("option", "disabled", false);
+        $("#btn_new_data").button("option","disabled",false);
+        $("#btn_new_coll").button("option","disabled",false);
+        $("#btn_edit").button("option","disabled",true);
+        $("#btn_del").button("option","disabled",true);
+        $("#btn_share").button("option","disabled",!admin);
+        $("#btn_upload").button("option","disabled",true);
+        $("#btn_download").button("option","disabled",true);
     } else if ( state == "p" ) {
-        $(".btn.act-data").button("option", "disabled", true);
-        $(".btn.act-folder").button("option", "disabled", false);
-        $(".btn.act-root").button("option", "disabled", false);
-        $(".btn.act-admin").button("option", "disabled", !admin);
+        $("#btn_new_data").button("option","disabled",true);
+        $("#btn_new_coll").button("option","disabled",true);
+        $("#btn_edit").button("option","disabled",!admin);
+        $("#btn_del").button("option","disabled",!admin);
+        $("#btn_share").button("option","disabled",true);
+        $("#btn_upload").button("option","disabled",true);
+        $("#btn_download").button("option","disabled",true);
     } else {
-        $(".btn.act-folder").button("option", "disabled", true);
-        $(".btn.act-data").button("option", "disabled", true);
+        $("#btn_new_data").button("option","disabled",true);
+        $("#btn_new_coll").button("option","disabled",true);
+        $("#btn_edit").button("option","disabled",true);
+        $("#btn_del").button("option","disabled",true);
+        $("#btn_share").button("option","disabled",true);
+        $("#btn_upload").button("option","disabled",true);
+        $("#btn_download").button("option","disabled",true);
     }
 
 }
@@ -203,10 +226,9 @@ function showSelectedInfo( node ){
         showSelectedMetadata();
     }else{
         if ( node.key[0] == "c" /*&& key != root_key*/ ) {
-            if ( node.key == my_root_key )
-                updateBtnState( "r" );
-            else if ( node.data.isproj ) //node.key.endsWith( "_root" ))
-                updateBtnState( "p", node.data.admin );
+            //if ( node.key == my_root_key )
+            if ( node.data.isroot )
+                updateBtnState( "r", node.data.admin );
             else
                 updateBtnState( "c" );
             viewColl( node.key, function( data ){
@@ -223,7 +245,7 @@ function showSelectedInfo( node ){
                 html += "<table class='info_table'><col width='30%'><col width='70%'>";
                 html += "<tr><th>Field</th><th>Value</th></tr>";
                 html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
-                html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
+                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
                 html += "</table>";
                 $("#data_info").html(html);
                 showSelectedMetadata();
@@ -247,13 +269,52 @@ function showSelectedInfo( node ){
                 html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
                 html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
                 html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
-                html += "<tr><td>Owner:</td><td>" + (item.owner?item.owner:"n/a") + "</td></tr>";
+                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                html += "</table>";
+                $("#data_info").html(html);
+                showSelectedMetadata( item.metadata );
+            }); 
+        } else if ( node.key.startsWith("p/") ) {
+            viewProj( node.key, function( data ){
+                var item = data[0];
+                updateBtnState("p",node.data.admin);
+                var html = "Project, ID: " + item.id;
+                $("#data_ident").html( html );
+
+                var html = "\"" + item.title + "\"<br>";
+                if ( item.desc )
+                    html += "<p>\"" + item.desc + "\"</p>";
+                else
+                    html += "<br>";
+
+                html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                html += "<tr><th>Field</th><th>Value</th></tr>";
+                html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
+                html += "<tr><td>Repo:</td><td>" + item.repo + "</td></tr>";
+                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                html += "<tr><td>Admins:</td><td>";
+                if ( item.admin && item.admin.length ){
+                    for ( var i in item.admin )
+                        html += item.admin[i].substr(2) + " ";
+                }else{
+                    html += "(none)";
+                }
+                html += "</td></tr>";
+                html += "<tr><td>Members:</td><td>";
+                if ( item.member && item.member.length ){
+                    for ( var i in item.member )
+                        html += item.member[i].substr(2) + " ";
+                }else{
+                    html += "(none)";
+                }
+                html += "</td></tr>";
                 html += "</table>";
                 $("#data_info").html(html);
                 showSelectedMetadata( item.metadata );
             }); 
         } else {
             updateBtnState();
+            $("#data_ident").html( "" );
             $("#data_info").html("(no information available)<br><br><br>");
             showSelectedMetadata();
         }
@@ -323,7 +384,11 @@ function addNode( item ){
         var node = tree.getNodeByKey("proj_adm");
         if ( node ){
             var prj_id = item.id.substr(2);
-            node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:true,lazy:true,nodrag:true});
+            node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:admin,nodrag:true,children:[
+                {title: "Root Collection",icon:true,folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:true,nodrag:true}
+            ]});
+
+            //node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:true,lazy:true,nodrag:true});
         }
     }else{
         // Data and/or collections
@@ -461,8 +526,7 @@ function setupBrowseTab(){
     my_root_key = "c/" + g_user.uid + "_root";
 
     var tree_source = [
-        {title:"My Data",folder:true,icon:false,lazy:true,key: my_root_key, user: g_user.uid, scope: g_user.uid, nodrag: true },
-        //{title:"My Projects",folder:true,icon:false,lazy:true,key:"myproj", nodrag: true},
+        {title:"My Data",folder:true,icon:false,lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
         {title:"My Projects",folder:true,icon:false,nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Team Projects",folder:true,icon:false,nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:false,lazy:true,nodrag:true,key:"shared"},
@@ -579,7 +643,9 @@ function setupBrowseTab(){
                     for ( var i in data.response ) {
                         item = data.response[i];
                         prj_id = item.id.substr(2);
-                        data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:admin,lazy:true,nodrag:true});
+                        data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:admin,nodrag:true,children:[
+                            {title: "Root Collection",icon:true,folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:admin,nodrag:true}
+                        ]});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
@@ -605,8 +671,9 @@ function setupBrowseTab(){
                 var scope = data.node.data.scope;
                 var nodrag = false;
 
-                if ( data.node.key.endsWith("_root") ){
-                    data.result.push({title:"[Public Access Data]",folder:true,icon:false,lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
+                //if ( data.node.key.endsWith("_root") ){
+                if ( data.node.data.isroot ){
+                        data.result.push({title:"[Public Access Data]",folder:true,icon:false,lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
                 } else if ( data.node.key == "public" )
                     nodrag = true;
 
