@@ -112,6 +112,10 @@ app.get('/ui/main', (request, response) => {
         response.redirect( '/ui' );
 });
 
+app.get('/ui/docs', (request, response) => {
+    response.render( 'docs' );
+});
+
 app.get('/ui/register', (request, response) => {
     console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
 

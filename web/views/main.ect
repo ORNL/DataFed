@@ -34,7 +34,7 @@
                     <li><a href="#tab-repo">Repos</a></li>
                     <li style='display:none'><a href="#tab-admin">Admin</a></li>
                     <li><a href="#tab-settings">Settings</a></li>
-                <span style="float:right;position:relative;z-index:1"><button class="btn small" onclick="help()">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span>
+                <span style="float:right;position:relative;z-index:1"><button class="btn small" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span>
                 </ul>
                 <div id="tab-browse">
                     <div class="col-flex" style="padding:0;height:100%;box-sizing:border-box">
@@ -81,7 +81,7 @@
                             <button class="btn" id="btn_share" onclick="shareSelected()" disabled>Sharing</button>
                             <button class="btn" id="btn_upload" onclick="xfrSelected(0)" disabled>Upload</button>
                             <button class="btn" id="btn_download" onclick="xfrSelected(1)" disabled>Download</button>
-                            <button class="btn" id="btn_move" onclick="moveSelected()" disabled>Move</button>
+                            <!-- button class="btn" id="btn_move" onclick="moveSelected()" disabled>Move</button -->
                         </div>
                         <div style="flex:none;padding:.25em">
                             <div id="xfr_panel" >
