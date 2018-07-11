@@ -182,39 +182,21 @@ function dlgNewEditProj(a_data,a_cb) {
             var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
             var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
             var uid;
-            var warn;
-
-            function do_warn(){
-                if ( warn ){
-                    if ( warn == 1 )
-                        setStatusText( "Project owner ignored." );
-                    else if ( warn == 2 )
-                        setStatusText( "Users cannot be both project admins and members." );
-                    else
-                        setStatusText( "Project owner and dual-role member/admin users ignored." );
-                }
-            }
 
             $("#add_mem_btn",frame).click( function(){
-                dlgPickUser.show( g_user.uid, function( uids ){
-                    warn = 0;
+                var excl = [proj.owner];
+                adm_tree.visit(function(node){
+                    excl.push(node.key);
+                });
+                mem_tree.visit(function(node){
+                    excl.push(node.key);
+                });
+
+                dlgPickUser.show( g_user.uid, excl, function( uids ){
                     for ( i in uids ){
                         uid = uids[i];
-                        if ( uid == proj.owner ){
-                            warn |= 1;
-                            continue;
-                        }
-
-                        if ( adm_tree.getNodeByKey( uid )){
-                            warn |= 2;
-                            continue;
-                        }
-
-                        if ( !mem_tree.getNodeByKey( uid )){
-                            mem_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
-                        }
+                        mem_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
                     }
-                    do_warn();
                 });
             });
 
@@ -227,25 +209,23 @@ function dlgNewEditProj(a_data,a_cb) {
             });
 
             $("#add_adm_btn",frame).click( function(){
-                dlgPickUser.show( g_user.uid, function( uids ){
+                var excl = [proj.owner];
+                adm_tree.visit(function(node){
+                    console.log("excl adm:",node.key);
+                    excl.push(node.key);
+                });
+                mem_tree.visit(function(node){
+                    console.log("excl mem:",node.key);
+                    excl.push(node.key);
+                });
+                console.log("excl:",excl);
+                dlgPickUser.show( g_user.uid, excl, function( uids ){
+                    console.log("sel:",uids);
                     for ( i in uids ){
                         uid = uids[i];
 
-                        if ( uid == proj.owner ){
-                            warn |= 1;
-                            continue;
-                        }
-
-                        if ( mem_tree.getNodeByKey( uid )){
-                            warn |= 2;
-                            continue;
-                        }
-
-                        if ( !adm_tree.getNodeByKey( uid )){
-                            adm_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
-                        }
+                        adm_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
                     }
-                    do_warn();
                 });
             });
 

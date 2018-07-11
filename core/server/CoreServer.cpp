@@ -68,6 +68,7 @@ void
 Server::loadKeys( const std::string & a_cred_dir )
 {
     string fname = a_cred_dir + "sdms-core-key.pub";
+    cout << "Loading CoreServer public key from: " << fname << "\n";
     ifstream inf( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open file: " << fname );
@@ -75,6 +76,7 @@ Server::loadKeys( const std::string & a_cred_dir )
     inf.close();
 
     fname = a_cred_dir + "sdms-core-key.priv";
+    cout << "Loading CoreServer private key from: " << fname << "\n";
     inf.open( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open file: " << fname );
@@ -82,7 +84,7 @@ Server::loadKeys( const std::string & a_cred_dir )
     inf.close();
 
     cout << "pub key["<<m_pub_key<<"]\n";
-    cout << "priv key["<<m_priv_key<<"]\n";
+    //cout << "priv key["<<m_priv_key<<"]\n";
 }
 
 void
@@ -305,13 +307,15 @@ Server::msgRouter()
 void
 Server::ioSecure()
 {
+    /*
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = true;
     sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
     sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
     sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    */
 
-    MsgComm frontend( "tcp://*:9002", MsgComm::ROUTER, true, &sec_ctx );
+    MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
     MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
     frontend.proxy( backend, true );

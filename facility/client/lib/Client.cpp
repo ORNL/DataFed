@@ -47,8 +47,8 @@ Client::verifyCredentials( const std::string & a_cred_path )
 {
     try
     {
-        string key = loadKeyFile( a_cred_path + "user-key-pub" );
-        key = loadKeyFile( a_cred_path + "user-key-priv" );
+        string key = loadKeyFile( a_cred_path + "sdms-user-key.pub" );
+        key = loadKeyFile( a_cred_path + "sdms-user-key.priv" );
         return true;
     }
     catch(...)
@@ -81,13 +81,15 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = false;
     //sec_ctx.domain;
-    sec_ctx.server_key = loadKeyFile( m_cred_path + "core-key-pub" );
+    cout << "Loading CoreServer public key from: " << m_cred_path + "sdms-core-key.pub" << "\n";
+    sec_ctx.server_key = loadKeyFile( m_cred_path + "sdms-core-key.pub" );
 
     if ( a_load_certs )
     {
-        cout << "Load keys\n";
-        sec_ctx.public_key = loadKeyFile( m_cred_path + "user-key-pub" );
-        sec_ctx.private_key = loadKeyFile( m_cred_path + "user-key-priv" );
+        cout << "Loading Client public key from: " << m_cred_path + "sdms-user-key.pub" << "\n";
+        sec_ctx.public_key = loadKeyFile( m_cred_path + "sdms-user-key.pub" );
+        cout << "Loading Client private key from: " << m_cred_path + "sdms-user-key.priv" << "\n";
+        sec_ctx.private_key = loadKeyFile( m_cred_path + "sdms-user-key.priv" );
     }
     else
     {
@@ -190,7 +192,7 @@ void Client::setup()
         // TODO Ensure readable by user only
 
         //cout << "Saving " << m_key_file << "\n";
-        string fname = m_cred_path + "user-key-pub";
+        string fname = m_cred_path + "sdms-user-key.pub";
         boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
         ofstream outf( fname );
         if ( !outf.is_open() || !outf.good() )
@@ -201,7 +203,7 @@ void Client::setup()
         boost::filesystem::permissions( fname, boost::filesystem::owner_read );
 
         //cout << "Saving " << m_cert_file << "\n";
-        fname = m_cred_path + "user-key-priv";
+        fname = m_cred_path + "sdms-user-key.priv";
         boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
         outf.open( fname );
         if ( !outf.is_open() || !outf.good() )

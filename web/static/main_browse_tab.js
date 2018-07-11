@@ -17,7 +17,7 @@ function deleteSelected() {
     if ( node.data.isproj ){
         msg += "project";
         url += "prj";
-        id = node.data.scope;
+        id = node.key;
     }else if( node.key[0] == "d" ) {
         msg += "data";
         url += "dat";
@@ -56,13 +56,7 @@ function newData() {
     if ( node && node.key[0] == "c" ) {
         viewColl( node.key, function( data ){
             var coll = data.data[0];
-            var coll_id = coll.id;
-            if ( coll.alias ){
-                if ( coll.owner != g_user.uid )
-                    coll_id = coll.owner + ":" + coll.alias;
-                else
-                    coll_id = coll.alias;
-            }
+            var coll_id = coll.alias?coll.alias:coll.id;
 
             dlgNewEdit(0,null,coll_id,function(data){
                 addNode( data );
@@ -80,13 +74,8 @@ function newColl() {
     if ( node && node.key[0] == "c" ) {
         viewColl( node.key, function( data ){
             var coll = data.data[0];
-            var coll_id = coll.id;
-            if ( coll.alias ){
-                if ( coll.owner != g_user.uid )
-                    coll_id = coll.owner + ":" + coll.alias;
-                else
-                    coll_id = coll.alias;
-            }
+            var coll_id = coll.alias?coll.alias:coll.id;
+
             dlgNewEdit(1,null,coll_id,function(data){
                 addNode( data );
             });
@@ -103,7 +92,7 @@ function editSelected() {
     if ( node ) {
         console.log( "edit sel", node, node.data.isproj );
         if ( node.data.isproj ){
-            viewProj( node.data.scope, function( data ){
+            viewProj( node.key, function( data ){
                 dlgNewEditProj(data[0],null,function(data){
                     //updateNodeTitle( data );
                 });
@@ -384,7 +373,7 @@ function addNode( item ){
         var node = tree.getNodeByKey("proj_adm");
         if ( node ){
             var prj_id = item.id.substr(2);
-            node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:admin,nodrag:true,children:[
+            node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:true,nodrag:true,children:[
                 {title: "Root Collection",icon:true,folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:true,nodrag:true}
             ]});
 
@@ -430,7 +419,7 @@ function execQuery(){
     var query = $("#query_input").val();
     var scope = $("#query_scope").val();
 
-    console.log( "query:", query, scope );
+    //console.log( "query:", query, scope );
 
     setStatusText("Executing search query...");
     findData( query, scope, function( ok, data ){
@@ -623,7 +612,7 @@ function setupBrowseTab(){
                     };
                 }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
-                data.result = [{title:"(not implemented yet)", icon:false}];
+                data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -643,7 +632,7 @@ function setupBrowseTab(){
                     for ( var i in data.response ) {
                         item = data.response[i];
                         prj_id = item.id.substr(2);
-                        data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:admin,nodrag:true,children:[
+                        data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,isproj:true,admin:admin,nodrag:true,children:[
                             {title: "Root Collection",icon:true,folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:admin,nodrag:true}
                         ]});
                     }
@@ -695,14 +684,35 @@ function setupBrowseTab(){
         },
         click: function(event, data) {
             if ( drag_enabled && data.originalEvent.ctrlKey ) {
+                //console.log("unlink", data );
+                if ( data.node.data.nodrag )
+                    return;
+
+                // Prevent unlinking top-level folders
+                var plist;
+                if ( data.node.folder ){
+                    plist = data.node.getParentList();
+
+                    if ( !plist.length || plist[plist.length-1].data.nodrag )
+                        return;
+                }
+
                 unlinkItem( data.node.key, data.node.parent.key, function( ok, rooted ) {
                     if ( ok ){
                         if ( rooted.length == 0 )
                             data.node.remove();
                         else{
                             // Don't care about what's in rooted array - only one item unlinked at a time here
-                            var plist = data.node.getParentList();
                             //console.log( plist );
+                            if ( !plist )
+                                plist = data.node.getParentList();
+
+                            console.log( "plist:", plist );
+
+                            // If item was already at root, don't move node
+                            if ( plist[plist.length-1].data.nodrag )
+                                return;
+    
                             var parent;
                             for ( i in plist ){
                                 if ( plist[i].data.scope ){
