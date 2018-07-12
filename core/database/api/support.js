@@ -71,6 +71,7 @@ module.exports = ( function() {
     obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
     obj.ERR_INVALID_DOMAIN        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid domain" ]);
+    obj.ERR_INVALID_ALLOC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid allocation" ]);
     obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid parameter(s)" ]);
     obj.ERR_INVALID_COLLECTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid collection" ]);
     obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
@@ -261,12 +262,14 @@ module.exports = ( function() {
         if ( owner_id == a_client._id )
             return true;
 
-        if ( obj.db.admin.firstExample({ _from: owner_id, _to: a_client._id }))
-            return true;
+        if ( owner_id[0] == "p" ){
+            // Object owned by a project
+            if ( obj.db.admin.firstExample({ _from: owner_id, _to: a_client._id }))
+                return true;
 
-        if ( obj.db.owner.firstExample({ _from: owner_id, _to: a_client._id }))
-            return true;
-
+            if ( obj.db.owner.firstExample({ _from: owner_id, _to: a_client._id }))
+                return true;
+        }
 
         return false;
     };
@@ -312,7 +315,7 @@ module.exports = ( function() {
         } else {
             var alias_id = "a/";
             if ( a_id.indexOf(":") == -1 )
-                alias_id += a_client._key + ":" + a_id;
+                alias_id += "u:"+a_client._key + ":" + a_id;
             else
                 alias_id += a_id;
 
@@ -440,7 +443,7 @@ module.exports = ( function() {
      * would add performance cost for no benefit.
      */
     obj.hasPermission = function( a_client, a_object, a_req_perm, any ) {
-        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id );
+        console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
 
         var perm_found  = 0;
         var perm_deny   = 0;
@@ -450,11 +453,13 @@ module.exports = ( function() {
 
         // If object is marked "public", everyone is granted LIST, VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
-        if ( a_object.public )
+        if ( a_object.public ){
+            console.log("obj is public");
             perm_found = obj.PERM_PUBLIC;
+        }
 
         // Evaluate permissions set directly on object
-console.log("1",a_object._id);
+
         var acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
         for ( var i in acls ) {
             acl = acls[i];
@@ -466,16 +471,13 @@ console.log("1",a_object._id);
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
         //console.log("eval res:", result );
         if ( result != null ) {
-            //console.log("result (usr acl):", result );
+            console.log("perm (loc usr acl):", result );
             return result;
         }
 
         // Evaluate group permissions on object
-console.log("2",a_object._id);
 
         acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
-
-        //console.log("eval group", acls );
 
         mask = ~perm_found;
         for ( i in acls ) {
@@ -493,7 +495,7 @@ console.log("2",a_object._id);
 
         //console.log("eval res:", result );
         if ( result != null ) {
-            //console.log("result (grp acl):", result );
+            console.log("perm (loc grp acl):", result );
             return result;
         }
 
@@ -509,7 +511,7 @@ console.log("2",a_object._id);
             //console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
             result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
             if ( result != null ) {
-                //console.log("result (def perm):", result );
+                console.log("perm (loc def):", result );
                 return result;
             }
         }
@@ -528,7 +530,6 @@ console.log("2",a_object._id);
 
         while ( 1 ) {
             // Find all parent collections owned by object owner
-            console.log("3");
 
             //parents = obj.db._query( "for i in @children for v, e, p in 2..2 inbound i item, outbound owner filter is_same_collection('c',p.vertices[1]) and v._id == @owner return p.vertices[1]", { children : children, owner: owner_id }).toArray();
             parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,inhdeny:v.inhdeny,public:v.pulic}", { children : children }).toArray();
@@ -546,10 +547,10 @@ console.log("2",a_object._id);
             for ( i in parents ) {
                 parent = parents[i];
 
-                if ( parent.public )
+                if ( parent.public ){
+                    console.log("parent is public");
                     def_perm_found |= obj.PERM_PUBLIC;
-
-                console.log("4",parent._id);
+                }
 
                 // User ACL first
                 acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
@@ -558,7 +559,6 @@ console.log("2",a_object._id);
                     usr_perm_found |= ( acl.inhgrant | acl.inhdeny );
                     usr_perm_deny |= acl.inhdeny;
                 }
-                console.log("5",parent._id);
 
                 // Group ACL next
                 acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
@@ -586,7 +586,7 @@ console.log("2",a_object._id);
 
                 result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
                 if ( result != null ) {
-                    //console.log("result (prnt usr acl):", result );
+                    console.log("result (prnt usr acl):", result );
                     return result;
                 }
             }
@@ -599,7 +599,7 @@ console.log("2",a_object._id);
 
                 result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
                 if ( result != null ) {
-                    //console.log("result (prnt grp acl):", result );
+                    console.log("result (prnt grp acl):", result );
                     return result;
                 }
             }
@@ -611,7 +611,7 @@ console.log("2",a_object._id);
 
                 result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
                 if ( result != null ) {
-                    //console.log("result (prnt def perm):", result );
+                    console.log("result (prnt def):", result );
                     return result;
                 }
             }
@@ -621,7 +621,7 @@ console.log("2",a_object._id);
             children = parents;
         }
 
-        //console.log("result (last): false" );
+        console.log("perm (last): false" );
 
         return false;
     };
@@ -824,7 +824,7 @@ console.log("2",a_object._id);
             if (( a_req_perm & a_perm_deny ) != 0 )
                 return false;
             // If not all requested permissions have been found return NULL (keep looking)
-            if ( a_perm_found & a_req_perm != a_req_perm )
+            if (( a_perm_found & a_req_perm ) != a_req_perm )
                 return null;
             else
                 return true; // Else, permission granted

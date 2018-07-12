@@ -117,7 +117,7 @@ router.get('/create', function (req, res) {
 
                 if ( req.queryParams.alias ) {
                     g_lib.validateAlias( req.queryParams.alias );
-                    var alias_key = owner_id.substr(2) + ":" + req.queryParams.alias;
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
@@ -223,7 +223,7 @@ router.get('/update', function (req, res) {
                     }
 
                     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-                    var alias_key = owner_id.substr(2) + ":" + req.queryParams.alias;
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
@@ -275,7 +275,7 @@ router.get('/view', function (req, res) {
 
         var alias = g_db._query("for v in 1..1 outbound @data alias return v", { data: data_id }).toArray();
         if ( alias.length ) {
-            data.alias = alias[0]._key.substr( owner_id.length - 1 );
+            data.alias = alias[0]._key;
         }
 
         data.repo = g_db.loc.firstExample({ _from: data_id });
