@@ -8,7 +8,6 @@ function dlgNewEditProj(a_data,a_cb) {
                 <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
                 <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
-                <tr id='repo_row'><td>Repo ID:</td><td><input type='text' id='repo_id' style='width:100%'></input></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%' disabled></input></td></tr>\
             </table>\
         </div>\
@@ -59,7 +58,6 @@ function dlgNewEditProj(a_data,a_cb) {
                 proj.domain = $("#domain",frame).val();
                 proj.title = $("#title",frame).val();
                 proj.desc = $("#desc",frame).val();
-                proj.repo = $("#repo_id",frame).val();
 
                 console.log( "project update, old:", a_data, "new:",proj);
                 if ( !proj.id || !proj.domain || !proj.title ){
@@ -84,9 +82,6 @@ function dlgNewEditProj(a_data,a_cb) {
 
                 if (( !a_data && proj.desc ) || (a_data && (proj.desc != a_data.desc )))
                     url += "&desc="+ encodeURIComponent(proj.desc);
-
-                if ( !a_data && proj.repo )
-                    url += "&repo="+ encodeURIComponent(proj.repo);
 
                 var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
                 var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
@@ -132,14 +127,13 @@ function dlgNewEditProj(a_data,a_cb) {
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
                 $("#domain",frame).val(a_data.domain);
-                $("#repo_row",frame).css("display","none");
                 $("#owner_id",frame).val(a_data.owner);
 
                 for ( var i in a_data.member )
-                    mem_src.push({title: a_data.member[i],icon:false,key: a_data.member[i] });
+                    mem_src.push({title: a_data.member[i].substr(2),icon:false,key: a_data.member[i] });
 
                 for ( i in a_data.admin )
-                    adm_src.push({title: a_data.admin[i],icon:false,key: a_data.admin[i] });
+                    adm_src.push({title: a_data.admin[i].substr(2),icon:false,key: a_data.admin[i] });
 
             }else{
                 $("#owner_id",frame).val(g_user.uid);

@@ -54,37 +54,33 @@ function newProj() {
 function newData() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
     if ( node && node.key[0] == "c" ) {
-        viewColl( node.key, function( data ){
-            var coll = data.data[0];
-            var coll_id = coll.alias?coll.alias:coll.id;
+        viewColl( node.key, function( coll ){
+            if ( coll ){
+                var coll_id = coll.alias?coll.alias:coll.id;
 
-            dlgNewEdit(0,null,coll_id,function(data){
-                addNode( data );
-            });
+                dlgNewEdit(0,null,coll_id,function(data){
+                    addNode( data );
+                });
+            }else
+                alert("Cannot access parent collection.");
         }); 
-    } /*else {
-        dlgNewEdit(0,null,null,function(data){
-            addNode( data );
-        });
-    }*/
+    }
 }
 
 function newColl() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
     if ( node && node.key[0] == "c" ) {
-        viewColl( node.key, function( data ){
-            var coll = data.data[0];
-            var coll_id = coll.alias?coll.alias:coll.id;
+        viewColl( node.key, function( coll ){
+            if ( coll ){
+                var coll_id = coll.alias?coll.alias:coll.id;
 
-            dlgNewEdit(1,null,coll_id,function(data){
-                addNode( data );
-            });
+                dlgNewEdit(1,null,coll_id,function(data){
+                    addNode( data );
+                });
+            }else
+                alert("Cannot access parent collection.");
         }); 
-    }/* else {
-        dlgNewEdit(1,null,null,function(data){
-            addNode( data );
-        });
-    }*/
+    }
 }
 
 function editSelected() {
@@ -93,21 +89,30 @@ function editSelected() {
         console.log( "edit sel", node, node.data.isproj );
         if ( node.data.isproj ){
             viewProj( node.key, function( data ){
-                dlgNewEditProj(data[0],null,function(data){
+                if ( data ){
+                    dlgNewEditProj(data,null,function(data){
                     //updateNodeTitle( data );
-                });
+                    });
+                }else
+                    alert( "Cannot access project." );
             });
         }else if ( node.key[0] == "c" ) {
             viewColl( node.key, function( data ){
-                dlgNewEdit(1,data.data[0],null,function(data){
-                    updateNodeTitle( data );
-                });
+                if ( data ){
+                    dlgNewEdit(1,data,null,function(data){
+                        updateNodeTitle( data );
+                    });
+                }else
+                    alert( "Cannot access collection." );
             });
         } else if ( node.key[0] == "d" ) {
             viewData( node.key, function( data ){
-                dlgNewEdit(0,data.data[0],null,function(data){
-                    updateNodeTitle( data );
-                });
+                if ( data ){
+                    dlgNewEdit(0,data,null,function(data){
+                        updateNodeTitle( data );
+                    });
+                }else
+                    alert( "Cannot access data record." );
             }); 
         }
     }
@@ -117,12 +122,18 @@ function shareSelected() {
     var node = $('#data_tree').fancytree('getTree').activeNode;
     if ( node ) {
         if ( node.key[0] == "c" ){
-            viewColl( node.key, function( data ){
-                dlgSetACLs.show( data.data[0] );
+            viewColl( node.key, function( coll ){
+                if ( coll )
+                    dlgSetACLs.show( coll );
+                else
+                    alert("Cannot access collection.");
             });
         } else {
             viewData( node.key, function( data ){
-                dlgSetACLs.show( data.data[0] );
+                if ( data )
+                    dlgSetACLs.show( data );
+                else
+                    alert( "Cannot access data record." );
             });
         }
     }
@@ -157,7 +168,10 @@ function xfrSelected( a_mode ) {
 
     if ( key[0] == "d" ) {
         viewData( key, function( data ){
-            dlgStartTransfer( a_mode, data.data[0] );
+            if ( data )
+                dlgStartTransfer( a_mode, data );
+            else
+                alert( "Cannot access data record." );
         }); 
     }
 }
@@ -208,104 +222,126 @@ function updateBtnState( state, admin ){
 
 }
 
+function reloadSelected(){
+    console.log("reload selected item!");
+}
+
+function noInfoAvail(){
+    updateBtnState();
+    $("#data_info").html("(no information available)<br><br><br>");
+    showSelectedMetadata();
+}
+
 function showSelectedInfo( node ){
+    var html;
+
     if ( !node ){
         updateBtnState();
         $("#data_info").html("(no information available)<br><br><br>");
         showSelectedMetadata();
     }else{
-        if ( node.key[0] == "c" /*&& key != root_key*/ ) {
-            //if ( node.key == my_root_key )
-            if ( node.data.isroot )
-                updateBtnState( "r", node.data.admin );
-            else
-                updateBtnState( "c" );
-            viewColl( node.key, function( data ){
-                var item = data.data[0];
-                var html = "Collection, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
-                $("#data_ident").html( html );
+        if ( node.key[0] == "c" ) {
+            html = "Collection, ID: " + node.key;
+            $("#data_ident").html( html );
 
-                html = "\"" + item.title + "\"<br>";
-                if ( item.desc )
-                    html += "<p>\"" + item.desc + "\"</p>";
-                else
-                    html += "<br>";
+            viewColl( node.key, function( item ){
+                if ( item ){
+                    if ( node.data.isroot )
+                        updateBtnState( "r", node.data.admin );
+                    else
+                        updateBtnState( "c" );
+    
+                    html = "\"" + item.title + "\"<br>";
+                    if ( item.desc )
+                        html += "<p>\"" + item.desc + "\"</p>";
+                    else
+                        html += "<br>";
 
-                html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                html += "<tr><th>Field</th><th>Value</th></tr>";
-                html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
-                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
-                html += "</table>";
-                $("#data_info").html(html);
-                showSelectedMetadata();
+                    html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                    html += "<tr><th>Field</th><th>Value</th></tr>";
+                    html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
+                    html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                    html += "</table>";
+                    $("#data_info").html(html);
+                    showSelectedMetadata();
+                }else{
+                    noInfoAvail();
+                }
             }); 
         } else if ( node.key[0] == "d" ) {
-            updateBtnState( "d" );
-            viewData( node.key, function( data ){
-                var item = data.data[0];
-                var html = "Data Record, ID: " + item.id + (item.alias?", Alias: " + item.alias:"");
-                $("#data_ident").html( html );
+            html = "Data Record, ID: " + node.key;
+            $("#data_ident").html( html );
 
-                var html = "\"" + item.title + "\"<br>";
-                if ( item.desc )
-                    html += "<p>\"" + item.desc + "\"</p>";
-                else
-                    html += "<br>";
+            viewData( node.key, function( item ){
+                if ( item ){
+                    updateBtnState( "d" );
 
-                html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                html += "<tr><th>Field</th><th>Value</th></tr>";
-                html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
-                html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
-                html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
-                html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
-                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
-                html += "</table>";
-                $("#data_info").html(html);
-                showSelectedMetadata( item.metadata );
+                    html = "\"" + item.title + "\"<br>";
+                    if ( item.desc )
+                        html += "<p>\"" + item.desc + "\"</p>";
+                    else
+                        html += "<br>";
+
+                    html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                    html += "<tr><th>Field</th><th>Value</th></tr>";
+                    html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
+                    html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
+                    html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
+                    html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
+                    html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                    html += "</table>";
+                    $("#data_info").html(html);
+                    showSelectedMetadata( item.metadata );
+                }else{
+                    noInfoAvail();
+                }
             }); 
         } else if ( node.key.startsWith("p/") ) {
-            viewProj( node.key, function( data ){
-                var item = data[0];
-                updateBtnState("p",node.data.admin);
-                var html = "Project, ID: " + item.id;
-                $("#data_ident").html( html );
+            html = "Project, ID: " + node.key;
+            $("#data_ident").html( html );
 
-                var html = "\"" + item.title + "\"<br>";
-                if ( item.desc )
-                    html += "<p>\"" + item.desc + "\"</p>";
-                else
-                    html += "<br>";
+            viewProj( node.key, function( item ){
+                if ( item ){
+                    updateBtnState("p",node.data.admin);
 
-                html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                html += "<tr><th>Field</th><th>Value</th></tr>";
-                html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
-                html += "<tr><td>Repo:</td><td>" + item.repo + "</td></tr>";
-                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                html += "<tr><td>Admins:</td><td>";
-                if ( item.admin && item.admin.length ){
-                    for ( var i in item.admin )
-                        html += item.admin[i].substr(2) + " ";
+                    var html = "\"" + item.title + "\"<br>";
+                    if ( item.desc )
+                        html += "<p>\"" + item.desc + "\"</p>";
+                    else
+                        html += "<br>";
+
+                    html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                    html += "<tr><th>Field</th><th>Value</th></tr>";
+                    html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                    html += "<tr><td>Admins:</td><td>";
+                    if ( item.admin && item.admin.length ){
+                        for ( var i in item.admin )
+                            html += item.admin[i].substr(2) + " ";
+                    }else{
+                        html += "(none)";
+                    }
+                    html += "</td></tr>";
+                    html += "<tr><td>Members:</td><td>";
+                    if ( item.member && item.member.length ){
+                        for ( var i in item.member )
+                            html += item.member[i].substr(2) + " ";
+                    }else{
+                        html += "(none)";
+                    }
+                    html += "</td></tr>";
+                    html += "</table>";
+                    $("#data_info").html(html);
+                    showSelectedMetadata( item.metadata );
                 }else{
-                    html += "(none)";
+                    noInfoAvail();
                 }
-                html += "</td></tr>";
-                html += "<tr><td>Members:</td><td>";
-                if ( item.member && item.member.length ){
-                    for ( var i in item.member )
-                        html += item.member[i].substr(2) + " ";
-                }else{
-                    html += "(none)";
-                }
-                html += "</td></tr>";
-                html += "</table>";
-                $("#data_info").html(html);
-                showSelectedMetadata( item.metadata );
             }); 
         } else {
-            updateBtnState();
+            noInfoAvail();
             $("#data_ident").html( "" );
-            $("#data_info").html("(no information available)<br><br><br>");
-            showSelectedMetadata();
         }
     }
 }
@@ -373,8 +409,8 @@ function addNode( item ){
         var node = tree.getNodeByKey("proj_adm");
         if ( node ){
             var prj_id = item.id.substr(2);
-            node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:true,nodrag:true,children:[
-                {title: "Root Collection",icon:true,folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:true,nodrag:true}
+            node.addNode({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:true,nodrag:true,children:[
+                {title: "Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:true,nodrag:true}
             ]});
 
             //node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:true,lazy:true,nodrag:true});
@@ -401,14 +437,15 @@ function addNode( item ){
                         }
                     });
                     if ( updnodes.length ) {
-                        var nodedat = {title: generateTitle( item ), key: item.id, folder:item.id[0]=="c"?true:false, scope: scope };
+                        var nodedat;
+                        if ( item.id[0] == "c" )
+                            nodedat = {title:generateTitle(item),key:item.id,folder:true,icon:"ui-icon ui-icon-folder",scope:scope};
+                        else
+                            nodedat = {title:generateTitle( item ),key:item.id,icon:"ui-icon ui-icon-file",scope:scope};
                         for ( var i in updnodes ) {
                             updnodes[i].addNode( nodedat );
                         }
                     }
-                } else {
-                    // No parents - loose data
-                    tree.rootNode.children[1].addNode({title: generateTitle( item ), ket: item.id });
                 }
             }
         });
@@ -515,13 +552,16 @@ function setupBrowseTab(){
     my_root_key = "c/" + g_user.uid + "_root";
 
     var tree_source = [
-        {title:"My Data",folder:true,icon:false,lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
-        {title:"My Projects",folder:true,icon:false,nodrag:true,lazy:true,key:"proj_adm"},
-        {title:"Team Projects",folder:true,icon:false,nodrag:true,lazy:true,key:"proj_mem"},
-        {title:"Shared Data",folder:true,icon:false,lazy:true,nodrag:true,key:"shared"},
-        {title:"Favorites",folder:true,icon:false,lazy:true,nodrag:true,key:"favorites"},
-        {title:"Views",folder:true,icon:false,lazy:true,nodrag:true,key:"views"},
-        {title:"Search Results",icon:false,folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
+        
+        //{title:"My Root Collection <button class='btn-refresh tiny' onclick=\"console.log('Hello!')\"></button>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
+
+        {title:"My Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
+        {title:"My Projects",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
+        {title:"Team Projects",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
+        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",lazy:true,nodrag:true,key:"shared"},
+        {title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
+        {title:"Views",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
+        {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
     $("#data_tree").fancytree({
@@ -594,11 +634,6 @@ function setupBrowseTab(){
                     url: "/api/prj/list?member=true",
                     cache: false
                 };
-            } else if ( data.node.key == "public" ) {
-                data.result = {
-                    url: "/api/dat/list/public?uid=" + data.node.data.scope,
-                    cache: false
-                };
             } else if ( data.node.key == "shared" ) {
                 if ( data.node.data.scope ){
                     data.result = {
@@ -620,6 +655,17 @@ function setupBrowseTab(){
                 };
             }
         },
+        loadError:function( event, data ) {
+            console.log("load error, data:", data );
+            var error = data.error;
+            if ( error.responseText ){
+                data.message = error.responseText;
+                //data.details = data.responseText;
+            } else if (error.status && error.statusText) {
+                data.message = "Ajax error: " + data.message;
+                data.details = "Ajax error: " + error.statusText + ", status code = " + error.status;
+            }
+        },
         postProcess: function( event, data ) {
             //console.log( "pos proc:", data );
             if ( data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
@@ -632,8 +678,9 @@ function setupBrowseTab(){
                     for ( var i in data.response ) {
                         item = data.response[i];
                         prj_id = item.id.substr(2);
-                        data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,isproj:true,admin:admin,nodrag:true,children:[
-                            {title: "Root Collection",icon:true,folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:admin,nodrag:true}
+                        //data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,
+                        data.result.push({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key: "p/"+prj_id,isproj:true,admin:admin,nodrag:true,children:[
+                            {title: "Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:admin,nodrag:true}
                         ]});
                     }
                 }else{
@@ -654,15 +701,11 @@ function setupBrowseTab(){
                 // Not implemented yet
             } else if ( data.node.parent ) {
                 data.result = [];
-                var item;
-                var folder;
-                var entry;
-                var scope = data.node.data.scope;
-                var nodrag = false;
+                var item,entry,scope = data.node.data.scope,nodrag = false;
 
                 //if ( data.node.key.endsWith("_root") ){
                 if ( data.node.data.isroot ){
-                        data.result.push({title:"[Public Access Data]",folder:true,icon:false,lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
+                        data.result.push({title:"[Public Access Data]",folder:true,icon:"ui-icon ui-icon-alert",lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
                 } else if ( data.node.key == "public" )
                     nodrag = true;
 
@@ -671,8 +714,12 @@ function setupBrowseTab(){
                     is_folder = item.id[0]=="c"?true:false;
 
                     entry = { title: generateTitle( item ), folder: is_folder, scope: scope, key: item.id };
-                    if ( is_folder )
+                    if ( is_folder ){
                         entry.lazy = true;
+                        entry.icon = "ui-icon ui-icon-folder";
+                    } else {
+                        entry.icon = "ui-icon ui-icon-file";
+                    }
                     if ( nodrag )
                         entry.nodrag = true;
                     data.result.push( entry );
@@ -770,6 +817,8 @@ function setupBrowseTab(){
     $("#query_scope").selectmenu({
         width:"auto"
     });
+
+    $(".btn-refresh").button({icon:"ui-icon-refresh"});
 
     $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
 

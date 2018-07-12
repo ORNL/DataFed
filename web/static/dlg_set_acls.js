@@ -82,10 +82,14 @@ function makeDlgSetACLs(){
 
         if ( item.owner.startsWith("p/")){
             viewProj( inst.uid, function(proj){
-                inst.excl = [proj[0].owner,"g/members"];
-                if ( proj[0].admin ){
-                    inst.excl = inst.excl.concat( proj[0].admin );
+                if (!proj){
+                    alert("Unable to access project data");
+                    dlg_inst.dialog('destroy').remove();
+                    return;
                 }
+                inst.excl = [proj.owner,"g/members"];
+                if ( proj.admin )
+                    inst.excl = inst.excl.concat( proj.admin );
             });
         }else{
             inst.excl = [inst.uid];
@@ -109,8 +113,8 @@ function makeDlgSetACLs(){
             $("#dlg_inh_read_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_READ )});
             $("#dlg_inh_write_sel",inst.frame).on( "selectmenuchange",function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
 
-            $("#dlg_create_sel",inst.frame).change( function(){ inst.selectHandler( $(this), PERM_CREATE )});
-            $("#dlg_inh_create_sel",inst.frame).change( function(){ inst.selectInhHandler( $(this), PERM_CREATE )});
+            $("#dlg_create_sel",inst.frame).on( "selectmenuchange", function(){ console.log("yo1"); inst.selectHandler( $(this), PERM_CREATE )});
+            $("#dlg_inh_create_sel",inst.frame).on( "selectmenuchange", function(){ console.log("yo2"); inst.selectInhHandler( $(this), PERM_CREATE )});
         }else{
             $("#col_div_1",inst.frame).hide();
             $("#col_div_2",inst.frame).hide();

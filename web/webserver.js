@@ -384,10 +384,10 @@ app.get('/api/prj/view', ( a_req, a_resp ) => {
 
     sendMessage( "ProjectViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         console.log( "reply:", reply.proj );
-        if ( reply.proj )
-            a_resp.send(reply.proj);
+        if ( reply.proj && reply.proj.length )
+            a_resp.send(reply.proj[0]);
         else
-            a_resp.send([]);
+            a_resp.send();
     });
 });
 
@@ -553,7 +553,10 @@ app.get('/api/dat/delete', ( a_req, a_resp ) => {
 app.get('/api/dat/view', ( a_req, a_resp ) => {
     sendMessage( "RecordViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         //console.log( "reply to /api/dat/view", reply );
-        a_resp.send(reply);
+        if ( reply.data && reply.data.length )
+            a_resp.send(reply.data[0]);
+        else
+            a_resp.send();
     });
 });
 
@@ -674,13 +677,16 @@ app.get('/api/col/delete', ( a_req, a_resp ) => {
 app.get('/api/col/view', ( a_req, a_resp ) => {
     sendMessage( "CollViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         console.log( "reply to /api/col/view", reply );
-        a_resp.send(reply);
+        if ( reply.data && reply.data.length )
+            a_resp.send(reply.data[0]);
+        else
+            a_resp.send();
     });
 });
 
 app.get('/api/col/read', ( a_req, a_resp ) => {
     sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/col/read", reply );
+        console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
 });

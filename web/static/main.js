@@ -52,16 +52,19 @@ function _asyncGet( a_path, a_raw_json_data, a_callback ) {
     });
 }
 
-function viewData( a_id, a_callback ) {
+function viewData( a_id, a_cb ) {
     console.log("viewData()");
     _asyncGet( "/api/dat/view?id=" + a_id, null, function( ok, data ){
         if ( ok ) {
             console.log("viewData ok, data:", data, typeof data );
-            a_callback( data );
+            if ( data )
+                a_cb( data );
+            else
+                a_cb();
         }
         else {
             console.log("viewData failed:", data );
-            a_callback();
+            a_cb();
         }
     });
 }
@@ -75,16 +78,23 @@ function findData( a_query, a_scope, a_callback ) {
     _asyncGet("/api/dat/find?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
 }
 
-function viewColl( a_id, a_callback ) {
+function viewColl( a_id, a_cb ) {
     console.log("viewColl()");
     _asyncGet( "/api/col/view?id=" + a_id, null, function( ok, data ){
         if ( ok ) {
             console.log("viewColl ok, data:", data, typeof data );
-            a_callback( data );
+            if ( data )
+                a_cb( data );
+            else
+                a_cb();
         }
         else {
-            console.log("viewColl failed:", data );
-            a_callback();
+            //console.log("viewColl failed:", data );
+            a_cb();
+            /*
+            dlgAlert("Error Viewing Collection", "Collection ID: " + a_id + "<br>Reason: " + data, function(){
+                a_cb();
+            });*/
         }
     });
 }
@@ -93,7 +103,10 @@ function viewProj( a_id, a_cb ){
     _asyncGet( "/api/prj/view?id=" + a_id, null, function( ok, data ){
         if ( ok ) {
             console.log("viewProj ok, data:", data, typeof data );
-            a_cb( data );
+            if ( data )
+                a_cb( data );
+            else
+                a_cb();
         }
         else {
             console.log("viewProj failed:", data );
@@ -420,6 +433,25 @@ function confirmChoice( title, msg, btns, cb ) {
             });
         })(i);
     }
+
+    div.dialog( options );
+}
+
+function dlgAlert( title, msg, cb ) {
+    var div = $(document.createElement('div'));
+    div.html( msg );
+    var options = {
+        title: title,
+        modal: true,
+        buttons: [{
+            text: "Ok",
+            click: function() {
+                $(this).dialog('destroy').remove();
+                if ( cb )
+                    cb();
+            }
+        }]
+    };
 
     div.dialog( options );
 }

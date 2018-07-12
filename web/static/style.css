@@ -74,6 +74,14 @@ body
     font-size: 1rem!important;
 }
 
+.btn-refresh
+{
+    margin: 0!important;
+    padding: 0px 0px 2px 0px!important;
+    font-size: .8rem!important;
+    border-radius:6px!important;
+}
+
 .info_table
 {
     border:none;
@@ -153,7 +161,57 @@ ul.ui-effects-placeholder { width:10px !important; }
     z-index: 110;
 }
 
-span.fancytree-node.project > span.fancytree-icon {
-    background-position: 0 0;
-    background-image: url("/project.gif");
+.ui-icon-folder
+{
+    color: #dFbF40
+}
+
+.ui-icon-box
+{
+    color: #0000FF
+}
+
+.ui-icon-view-icons
+{
+    color: #0000FF
+}
+
+.ui-icon-view-icons-b
+{
+    color: #6000FF
+}
+
+.ui-icon-file
+{
+    color: #008F00
+}
+
+.ui-icon-alert
+{
+    color: #FF5F00
+}
+
+.ui-icon-heart
+{
+    color: #ff0000
+}
+
+.ui-icon-circle-plus
+{
+    color: #009090
+}
+
+.ui-icon-view-list
+{
+    color: #808080
+}
+
+.ui-icon-zoom
+{
+    color: #000000
+}
+
+.ui-icon-reload
+{
+    color: #008000
 }
