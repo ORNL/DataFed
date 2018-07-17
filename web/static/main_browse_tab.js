@@ -37,6 +37,7 @@ function deleteSelected() {
             _asyncGet( url, null, function( ok, data ){
                 if ( ok ) {
                     deleteNode( node.key );
+                    updateBtnState();
                 } else {
                     alert( "Delete failed: " + data );
                 }
@@ -46,7 +47,7 @@ function deleteSelected() {
 }
 
 function newProj() {
-    dlgNewEditProj(null,function(data){
+    dlgProjNewEdit(null,function(data){
         addNode( data );
     });
 }
@@ -58,7 +59,7 @@ function newData() {
             if ( coll ){
                 var coll_id = coll.alias?coll.alias:coll.id;
 
-                dlgNewEdit(0,null,coll_id,function(data){
+                dlgDataNewEdit(0,null,coll_id,function(data){
                     addNode( data );
                 });
             }else
@@ -74,7 +75,7 @@ function newColl() {
             if ( coll ){
                 var coll_id = coll.alias?coll.alias:coll.id;
 
-                dlgNewEdit(1,null,coll_id,function(data){
+                dlgDataNewEdit(1,null,coll_id,function(data){
                     addNode( data );
                 });
             }else
@@ -90,8 +91,9 @@ function editSelected() {
         if ( node.data.isproj ){
             viewProj( node.key, function( data ){
                 if ( data ){
-                    dlgNewEditProj(data,null,function(data){
-                    //updateNodeTitle( data );
+                    dlgProjNewEdit(data,function(data){
+                        console.log("edit proj cb:",data);
+                        updateNodeTitle( data );
                     });
                 }else
                     alert( "Cannot access project." );
@@ -99,7 +101,7 @@ function editSelected() {
         }else if ( node.key[0] == "c" ) {
             viewColl( node.key, function( data ){
                 if ( data ){
-                    dlgNewEdit(1,data,null,function(data){
+                    dlgDataNewEdit(1,data,null,function(data){
                         updateNodeTitle( data );
                     });
                 }else
@@ -108,7 +110,7 @@ function editSelected() {
         } else if ( node.key[0] == "d" ) {
             viewData( node.key, function( data ){
                 if ( data ){
-                    dlgNewEdit(0,data,null,function(data){
+                    dlgDataNewEdit(0,data,null,function(data){
                         updateNodeTitle( data );
                     });
                 }else
@@ -223,7 +225,13 @@ function updateBtnState( state, admin ){
 }
 
 function reloadSelected(){
-    console.log("reload selected item!");
+    var tree = $("#data_tree").fancytree("getTree");
+    var node = tree.activeNode;
+    if ( node ){
+        var exp = node.isExpanded();
+        node.resetLazy();
+        node.setExpanded(exp);
+    }
 }
 
 function noInfoAvail(){
@@ -409,11 +417,9 @@ function addNode( item ){
         var node = tree.getNodeByKey("proj_adm");
         if ( node ){
             var prj_id = item.id.substr(2);
-            node.addNode({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key: "p/"+prj_id,scope:prj_id,isproj:true,admin:true,nodrag:true,children:[
-                {title: "Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:true,nodrag:true}
+            node.addNode({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key:item.id,scope:item.id,isproj:true,admin:true,nodrag:true,children:[
+                {title: "Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:item.id,isroot:true,admin:true,nodrag:true}
             ]});
-
-            //node.addNode({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "c/"+prj_id+"_root",scope:prj_id,isproj:true,admin:true,lazy:true,nodrag:true});
         }
     }else{
         // Data and/or collections
@@ -486,7 +492,7 @@ function execQuery(){
 
 function generateTitle( item ) {
     if ( item.alias )
-        return "\"" + item.title + "\" (" + item.alias.substr(item.alias.indexOf(":") + 1) + ")";
+        return "\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")";
     else
         return "\"" + item.title + "\" [" + item.id.substr(2) + "]";
 
@@ -555,12 +561,15 @@ function setupBrowseTab(){
         
         //{title:"My Root Collection <button class='btn-refresh tiny' onclick=\"console.log('Hello!')\"></button>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
 
-        {title:"My Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
-        {title:"My Projects",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
-        {title:"Team Projects",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
-        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",lazy:true,nodrag:true,key:"shared"},
-        {title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-        {title:"Views",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
+        {title:"My Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+        {title:"My Projects <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
+        {title:"Team Projects <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
+        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
+            {title:"By User <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",nodrag:true,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
+        ]},
+        {title:"Favorites <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
+        {title:"Views <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
         {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
@@ -634,7 +643,7 @@ function setupBrowseTab(){
                     url: "/api/prj/list?member=true",
                     cache: false
                 };
-            } else if ( data.node.key == "shared" ) {
+            } else if ( data.node.key == "shared_user" ) {
                 if ( data.node.data.scope ){
                     data.result = {
                         url: "/api/acl/by_user/list?owner=" + data.node.data.scope,
@@ -646,8 +655,25 @@ function setupBrowseTab(){
                         cache: false
                     };
                 }
+            } else if ( data.node.key == "shared_proj" ) {
+                if ( data.node.data.scope ){
+                    data.result = {
+                        url: "/api/acl/by_proj/list?owner=" + data.node.data.scope,
+                        cache: false
+                    };
+                }else{
+                    data.result = {
+                        url: "/api/acl/by_proj",
+                        cache: false
+                    };
+                }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
+            } else if ( data.node.key == "public" ) {
+                data.result = {
+                    url: "/api/dat/list/public?uid=" + data.node.data.scope,
+                    cache: false
+                };
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -679,20 +705,31 @@ function setupBrowseTab(){
                         item = data.response[i];
                         prj_id = item.id.substr(2);
                         //data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,
-                        data.result.push({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key: "p/"+prj_id,isproj:true,admin:admin,nodrag:true,children:[
-                            {title: "Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:prj_id,isroot:true,admin:admin,nodrag:true}
+                        data.result.push({ title: generateTitle(item),icon:"ui-icon ui-icon-box",folder:true,key: item.id,isproj:true,admin:admin,nodrag:true,children:[
+                            {title: "Root Collection <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:item.id,isroot:true,admin:admin,nodrag:true}
                         ]});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
                 }
-            } else if ( data.node.key == "shared" && !data.node.data.scope ){
+            } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
                 data.result = [];
                 if ( data.response.length ){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:false,folder:true,key:"shared",scope:item.uid,lazy:true,nodrag:true});
+                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:"ui-icon ui-icon-person",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
+                    }
+                }else{
+                    data.result.push({ title: "(none)", icon: false, nodrag:true });
+                }
+            } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
+                data.result = [];
+                if ( data.response.length ){
+                    var item;
+                    for ( var i in data.response ) {
+                        item = data.response[i];
+                        data.result.push({ title: generateTitle(item),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj",scope:item.id,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
@@ -713,7 +750,7 @@ function setupBrowseTab(){
                     item = data.response.data[i];
                     is_folder = item.id[0]=="c"?true:false;
 
-                    entry = { title: generateTitle( item ), folder: is_folder, scope: scope, key: item.id };
+                    entry = { title: generateTitle( item ),folder:is_folder,scope:scope,key:item.id };
                     if ( is_folder ){
                         entry.lazy = true;
                         entry.icon = "ui-icon ui-icon-folder";

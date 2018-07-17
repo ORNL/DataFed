@@ -626,6 +626,21 @@ app.get('/api/acl/by_user/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/acl/by_proj', ( a_req, a_resp ) => {
+    sendMessage( "ACLByProjRequest", {}, a_req, a_resp, function( reply ) {
+        if ( reply.proj )
+            a_resp.send(reply.proj);
+        else
+            a_resp.send([]);
+    });
+});
+
+app.get('/api/acl/by_proj/list', ( a_req, a_resp ) => {
+    sendMessage( "ACLByProjListRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/xfr/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.since )

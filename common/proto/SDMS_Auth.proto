@@ -324,6 +324,15 @@ message ACLByUserListRequest
     required string             owner       = 1;
 }
 
+message ACLByProjRequest
+{
+}
+
+message ACLByProjListRequest
+{
+    required string             owner       = 1;
+}
+
 message ACLDataReply
 {
     repeated ACLRule            rule        = 1;

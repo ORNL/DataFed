@@ -1,5 +1,4 @@
-function dlgNewEditProj(a_data,a_cb) {
-    console.log( "dlgNewEditProj", a_data );
+function dlgProjNewEdit(a_data,a_cb) {
     var frame = $(document.createElement('div'));
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\

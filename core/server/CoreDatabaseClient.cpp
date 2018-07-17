@@ -1145,6 +1145,27 @@ DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Au
 }
 
 void
+DatabaseClient::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply )
+{
+    (void)a_request;
+    rapidjson::Document result;
+
+    dbGet( "acl/by_proj", {}, result );
+
+    setProjectData( a_reply, result );
+}
+
+void
+DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::CollDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "acl/by_proj/list", {{"owner",a_request.owner()}}, result );
+
+    setCollData( a_reply, result );
+}
+
+void
 DatabaseClient::setACLData( ACLDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
