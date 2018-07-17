@@ -267,6 +267,47 @@ router.get('/by_user/list', function (req, res) {
 .summary('Lists data and collections shared with client by owner')
 .description('Lists data and collections shared with client by owner');
 
+router.get('/by_proj', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        var result = g_db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('p',v) return {id:v._id,title:v.title})) return x", { user: client._id });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.summary('List users that have shared data or collections with client')
+.description('List users that have shared data or collections with client');
+
+router.get('/by_proj/list', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const owner_id = req.queryParams.owner;
+
+        var items = g_db._query("let pr=(for v1,e1,p1 in 2..2 inbound @user member, outbound owner filter is_same_collection('p',v1) and p1.vertices[1].gid == 'members' return v1._id) for x in union_distinct((for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @owner let r = p.vertices[1] return {_id:r._id, public:r.public,grant:r.grant,deny:r.deny,title:r.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and p.vertices[1].gid != 'members' and is_same_collection('acl',p.edges[1]) and v._id == @owner let r = p.vertices[2] return {_id:r._id, public:r.public,grant:r.grant,deny:r.deny,title:r.title})) filter pr none == x._id return x", { user: client._id, owner: owner_id }).toArray();
+
+        var result = [];
+        var item;
+        for ( var i in items ){
+            item = items[i];
+            console.log("item",item);
+            if ( g_lib.hasPermission( client, item, g_lib.PERM_ALL, true ))
+                result.push({id:item._id,title:item.title});
+        }
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('owner', joi.string().required(), "Owner ID")
+.summary('Lists data and collections shared with client by owner')
+.description('Lists data and collections shared with client by owner');
+
 function postProcACLRules( rules, object ) {
     var rule;
     var idx;
