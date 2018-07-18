@@ -609,17 +609,16 @@ function makeBrowserTab(){
                             return false;
                     }
 
-                    if ( data.otherNode.parent.key == "loose" ){
-                        linkItem( data.otherNode.key, node.key, function() {
-                            data.otherNode.moveTo( node, data.hitMode );
-                        });
-                    } else if ( inst.drag_mode || data.otherNode.isFolder() ){
+                    if ( inst.drag_mode ){
                         linkItemUnlinkSource( data.otherNode.key, node.key, node.parent.key, function() {
                             data.otherNode.moveTo( node, data.hitMode );
                         });
                     }else{
                         linkItem( data.otherNode.key, node.key, function() {
-                            data.otherNode.copyTo( node, data.hitMode );
+                            if ( data.otherNode.isFolder())
+                                data.otherNode.moveTo( node, data.hitMode );
+                            else
+                                data.otherNode.copyTo( node, data.hitMode );
                         });
                     }
                 });

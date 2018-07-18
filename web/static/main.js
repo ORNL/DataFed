@@ -56,11 +56,8 @@ function viewData( a_id, a_cb ) {
     console.log("viewData()");
     _asyncGet( "/api/dat/view?id=" + a_id, null, function( ok, data ){
         if ( ok ) {
-            console.log("viewData ok, data:", data, typeof data );
-            if ( data )
-                a_cb( data );
-            else
-                a_cb();
+            console.log("viewData ok, data:", data );
+            a_cb( data );
         }
         else {
             console.log("viewData failed:", data );
