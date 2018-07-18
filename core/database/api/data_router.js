@@ -314,47 +314,6 @@ router.get('/loc', function (req, res) {
 .summary('Get raw data repo location')
 .description('Get raw data repo location');
 
-router.get('/list', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var owner_id;
-
-        if ( req.queryParams.subject ) {
-            owner_id = req.queryParams.subject;
-        } else {
-            owner_id = client._id;
-        }
-
-        var result;
-
-        if ( req.queryParams.public ){
-            if ( req.queryParams.all ) {
-                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) and v.public == true let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
-            } else {
-                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) and v.public == true let l = (for i in inbound v._id item return i._id) filter length(l) == 0 let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
-            }
-        } else {
-            if ( req.queryParams.subject )
-                g_lib.ensureAdminPermUser( client, owner_id );
-
-            if ( req.queryParams.all ) {
-                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
-            } else {
-                result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('d', v) let l = (for i in inbound v._id item return i._id) filter length(l) == 0 let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { owner: owner_id }).toArray();
-            }
-        }
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('public', joi.boolean().optional().default(false), "List only public data")
-.queryParam('all', joi.boolean().optional().default(true), "List all data (true), or only loose data (false)")
-.summary('List all data owned by client, or subject')
-.description('List all data owned by client, or subject');
 
 // TODO Add limit, offset, and details options
 // TODO Add options for ALL, user/project, or collection (recursize or not) options
