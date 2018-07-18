@@ -87,6 +87,8 @@ module.exports = ( function() {
     obj.ERR_KEYS_NOT_DEFINED      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Keys not defined" ]);
     obj.ERR_TOKEN_NOT_DEFINED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Token not defined" ]);
     obj.ERR_CANNOT_DEL_ROOT       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot delete root collection" ]);
+    obj.ERR_CANNOT_LINK_ROOT      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot link root collection" ]);
+    obj.ERR_CANNOT_UNLINK_ROOT    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot unlink root collection" ]);
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
     obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
     obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
@@ -226,6 +228,10 @@ module.exports = ( function() {
         if ( alloc.usage >= alloc.alloc )
             throw obj.ERR_ALLOCATION_EXCEEDED;
         return alloc;
+    };
+
+    obj.getRootID = function( owner_id ){
+        return "c/"+owner_id.substr(2)+"_root";
     };
 
     obj.getObject = function( a_obj_id, a_client ) {

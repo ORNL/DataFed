@@ -201,8 +201,8 @@ router.get('/delete', function (req, res) {
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
 
                 g_lib.ensureAdminPermObject( client, coll_id );
-
                 var coll = g_db.c.document( coll_id );
+                var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
                 if ( coll.is_root )
                     throw g_lib.ERR_CANNOT_DEL_ROOT;
@@ -216,7 +216,24 @@ router.get('/delete', function (req, res) {
                     g_graph[obj[0]].remove( obj );
                 }
 
+                objects = g_db._query( "for v in 1..1 outbound @coll item return {id:v._id,title:v.title}", { coll: coll._id }).toArray();
+
                 g_graph.c.remove( coll._id );
+
+                var rooted = [];
+                var root_id = g_lib.getRootID( owner_id );
+                console.log("root_id",root_id);
+                // Relink any orphaned items to root
+                for ( i in objects ) {
+                    obj = objects[i];
+                    console.log("obj.id",obj.id);
+                    if ( !g_db.item.firstExample({ _to: obj.id }) ){
+                        g_db.item.save({ _from: root_id, _to: obj.id });
+                        rooted.push(obj);
+                    }
+                }
+
+                res.send( rooted );
             }
         });
     } catch( e ) {
@@ -357,51 +374,6 @@ router.get('/read', function (req, res) {
 .description('Read contents of a collection by ID or alias');
 
 
-router.get('/read2', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-        var coll_id = g_lib.resolveID( req.queryParams.id, client );
-        var coll = g_db.c.document( coll_id );
-
-        if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_READ ))
-                throw g_lib.ERR_PERM_DENIED;
-        }
-
-//"for i in d filter i.metadata.x == 3 let a = (for v in outbound i._id alias return v._id) let o = (for v in outbound i._id owner return v._id) return {id: i._id, title: i.title,alias:a[0],owner:o[0]}"
-
-        const items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, grant: v.grant, deny: v.deny, inh_grant: v.inh_grant, inh_deny: v.inh_deny, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
-
-        var result = [];
-        var item;
-        var mode = 0;
-
-        if ( req.queryParams.mode == "c" )
-            mode = 1;
-        else if ( req.queryParams.mode == "d" )
-            mode = 2;
-
-        for ( var i in items ) {
-            item = items[i];
-            if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
-                if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
-                    result.push({ id: item._id, title: item.title, alias: item.alias });
-            }
-        }
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Collection ID or alias to list")
-.queryParam('mode', joi.string().valid('a','d','c').optional(), "Read mode: (a)ll, (d)ata only, (c)ollections only")
-.summary('Read contents of a collection by ID or alias')
-.description('Read contents of a collection by ID or alias');
-
-
 router.get('/write', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -420,23 +392,20 @@ router.get('/write', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var i, obj;
+                var i, obj,idx;
                 var loose = [];
 
                 if ( req.queryParams.remove ) {
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
-                        g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
-                        if ( !g_db.item.firstExample({ _to: obj._id })){
-                            loose.push({ id: obj._id, title: obj.title });
-                        }
-                    }
+                        if ( obj._id[0] == "c" && obj.is_root )
+                            throw g_lib.ERR_CANNOT_UNLINK_ROOT;
 
-                    if ( loose.length ){
-                        var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-                        var root_id = "c/"+owner_id.substr(2)+"_root";
-                        for ( i in loose ){
-                            g_db.item.save({ _from: root_id, _to: loose[i].id });
+                        g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
+                        // If item has no parent collection AND it's not being added, link to root
+                        if ( !g_db.item.firstExample({ _to: obj._id }) ){
+                            console.log("found poten loose:",obj._id);
+                            loose.push({ id: obj._id, title: obj.title });
                         }
                     }
                 }
@@ -444,8 +413,34 @@ router.get('/write', function (req, res) {
                 if ( req.queryParams.add ) {
                     for ( i in req.queryParams.add ) {
                         obj = g_lib.getObject( req.queryParams.add[i], client );
-                        if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }) == null )
+                        // Ignore if obj already in this collection?
+                        if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id })){
+                            // If obj is a collection, unlink from current parent
+                            if ( obj._id[0] == "c" ){
+                                if ( obj.is_root )
+                                    throw g_lib.ERR_CANNOT_LINK_ROOT;
+                                g_db.item.removeByExample({ _to: obj._id });
+                            }
+
                             g_db.item.save({ _from: coll_id, _to: obj._id });
+                            for ( idx in loose ){
+                                if ( loose[idx].id == obj._id ){
+                                    console.log("remove poten loose:",obj._id);
+
+                                    loose.slice(idx,1);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ( loose.length ){
+                    var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
+                    var root_id = "c/"+owner_id.substr(2)+"_root";
+                    for ( i in loose ){
+                        console.log("relink loose item", loose[i].id );
+                        g_db.item.save({ _from: root_id, _to: loose[i].id });
                     }
                 }
 
