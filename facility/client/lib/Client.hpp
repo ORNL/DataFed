@@ -22,6 +22,7 @@ namespace SDMS {
 namespace Facility {
 
 typedef std::shared_ptr<Auth::UserDataReply> spUserDataReply;
+typedef std::shared_ptr<Auth::ListingReply> spListingReply;
 typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
 typedef std::shared_ptr<Auth::XfrDataReply> spXfrDataReply;
@@ -88,12 +89,12 @@ public:
     spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spUserDataReply     userUpdate( const std::string & a_uid, const char * a_email );
 
-    spRecordDataReply   recordList();
+
     spRecordDataReply   recordCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_coll_id = 0 );
     spRecordDataReply   recordUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, bool a_md_merge = true );
     spRecordDataReply   recordView( const std::string & a_id );
-    spRecordDataReply   recordFind( const std::string & a_query );
     void                recordDelete( const std::string & a_id );
+    spListingReply      recordFind( const std::string & a_query );
 
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spCollDataReply     collCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_coll_id = 0 );

@@ -454,9 +454,9 @@ int find_records()
         query.append( " " );
     }
 
-    spRecordDataReply rep = g_client->recordFind( query );
-    cout << rep->data_size() << " match(es) found:\n\n";
-    printData( rep, true );
+    spListingReply rep = g_client->recordFind( query );
+    cout << rep->item_size() << " match(es) found:\n\n";
+    //printData( rep, true );
 
     return 0;
 }
@@ -559,11 +559,11 @@ int data()
         spRecordDataReply rep = g_client->recordView( g_args[1] );
         printData( rep );
     }
-    else if( g_args[0] == "list" || g_args[0] == "l" )
+    /*else if( g_args[0] == "list" || g_args[0] == "l" )
     {
-        spRecordDataReply rep = g_client->recordList();
+        spListingReply rep = g_client->list();
         printData( rep, true );
-    }
+    }*/
     else if( g_args[0] == "create" || g_args[0] == "c" )
     {
         if ( g_args.size() != 1 )
@@ -942,7 +942,7 @@ int main( int a_argc, char ** a_argv )
     addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", get_data );
     addCommand( "", "put", "Put data into repository", "put [id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", put_data );
     addCommand( "s", "status", "View data transfer status", "status <xfr_id>\n\nGet status of specified data transfer.", xfr_status );
-    addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (l)ist, (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
+    addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
     addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
     addCommand( "u", "user", "User management", "user <cmd> [id [args]]\n\nUser commands: (l)ist, (v)iew, (u)pdate.", user );

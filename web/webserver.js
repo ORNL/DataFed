@@ -92,7 +92,6 @@ app.get('/', (request, response) => {
 
 app.get('/ui', (request, response) => {
     console.log("get /ui");
-
     console.log( "sdms cookie:", request.cookies['sdms'] );
 
     if ( request.cookies['sdms'] )
@@ -103,7 +102,6 @@ app.get('/ui', (request, response) => {
 
 app.get('/ui/main', (request, response) => {
     console.log("get /ui/main");
-
     console.log( "sdms cookie:", request.cookies['sdms'] );
 
     if ( request.cookies['sdms'] )
@@ -242,74 +240,28 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             a_resp.redirect( "/ui/main" );
         }
     });
-
-    /*
-    allocRequestContext( a_response, function( ctx ){
-        var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
-        var msg = g_msg_by_name["UserCreateRequest"];
-        var msg_buf = msg.encode({ uid: uid, password: a_request.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }).finish();
-        var frame = Buffer.alloc(8);
-        frame.writeUInt32LE( msg_buf.length, 0 );
-        frame.writeUInt8( msg._pid, 4 );
-        frame.writeUInt8( msg._mid, 5 );
-        frame.writeUInt16LE( ctx, 6 );
-
-        g_ctx[ctx] = function( reply ){
-            console.log( "reply to /ui/do_register", reply );
-            if ( reply.errCode ) {
-                // TODO Need to provide error information as query string
-                a_response.redirect( "/ui/error" );
-            } else {
-                // Save access token
-                saveToken( uid, a_request.query.acc_tok, a_request.query.ref_tok );
-
-                a_response.cookie( 'sdms', uid, { httpOnly: true });
-                //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
-                a_response.redirect( "/ui/main" );
-            }
-        };
-
-        //console.log("frame buffer", frame.toString('hex'));
-        //console.log("msg buffer", msg_buf.toString('hex'));
-
-        console.log( "send (do_reg): UserCreateRequest" );
-        core_sock.send([ nullfr, frame, nullfr, msg_buf ]);
-    });
-    */
 });
 
 app.get('/api/usr/find', ( a_req, a_resp ) => {
-    console.log("get /api/usr/find");
-
     sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
-        console.log( "UserFindByUUIDsRequest reply:", reply );
         a_resp.send(reply.user[0]);
     });
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
-    console.log("get /api/usr/view");
-
     sendMessage( "UserViewRequest", { uid: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log( "UserViewRequest reply:", reply );
         a_resp.send(reply.user[0]);
     });
 });
 
 app.get('/api/usr/list/all', ( a_req, a_resp ) => {
-    console.log("get /api/usr/list");
-
     sendMessage( "UserListAllRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "UserListAllRequest reply" );
         a_resp.send(reply.user);
     });
 });
 
 app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
-    console.log("get /api/usr/list");
-
     sendMessage( "UserListCollabRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "UserListCollabRequest reply", reply );
         if ( reply.user )
             a_resp.send(reply.user);
         else
@@ -318,8 +270,6 @@ app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/create', ( a_req, a_resp ) => {
-    console.log("get /api/prj/create");
-
     var params  = {
         id: a_req.query.id,
         title: a_req.query.title,
@@ -335,7 +285,6 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
         params.admin = JSON.parse( a_req.query.admins );
 
     sendMessage( "ProjectCreateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.proj );
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -344,8 +293,6 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/update', ( a_req, a_resp ) => {
-    console.log("get /api/prj/update");
-
     var params  = {
         id: a_req.query.id,
     }
@@ -362,9 +309,7 @@ app.get('/api/prj/update', ( a_req, a_resp ) => {
     if ( a_req.query.admins )
         params.admin = JSON.parse( a_req.query.admins );
 
-    console.log( "prj upd", params );
     sendMessage( "ProjectUpdateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.proj );
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -374,16 +319,12 @@ app.get('/api/prj/update', ( a_req, a_resp ) => {
 
 app.get('/api/prj/delete', ( a_req, a_resp ) => {
     sendMessage( "ProjectDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/dat/view", reply );
         a_resp.send(reply);
     });
 });
 
 app.get('/api/prj/view', ( a_req, a_resp ) => {
-    console.log("get /api/prj/view");
-
     sendMessage( "ProjectViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.proj );
         if ( reply.proj && reply.proj.length )
             a_resp.send(reply.proj[0]);
         else
@@ -392,7 +333,6 @@ app.get('/api/prj/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/list', ( a_req, a_resp ) => {
-    console.log("get /api/prj/list");
     var params = {};
     if ( a_req.query.owner )
         params.byOwner = a_req.query.owner=="true"?true:false;
@@ -401,9 +341,7 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
     if ( a_req.query.member )
         params.byMember = a_req.query.member=="true"?true:false;
 
-    console.log( "prj list:", params );
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.proj );
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -412,10 +350,7 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
-    console.log("get /api/prj/list/by_admin");
-
     sendMessage( "ProjectListByAdminRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.proj );
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -424,10 +359,7 @@ app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/list/by_member', ( a_req, a_resp ) => {
-    console.log("get /api/prj/list/by_member");
-
     sendMessage( "ProjectListByMemberRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.proj );
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -436,8 +368,6 @@ app.get('/api/prj/list/by_member', ( a_req, a_resp ) => {
 });
 
 app.get('/api/grp/create', ( a_req, a_resp ) => {
-    console.log("get /api/grp/create");
-
     var params  = {
         group: {
             uid: a_req.query.uid,
@@ -449,14 +379,11 @@ app.get('/api/grp/create', ( a_req, a_resp ) => {
     };
 
     sendMessage( "GroupCreateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "GroupCreateRequest reply:", reply );
         a_resp.send(reply.group[0]);
     });
 });
 
 app.get('/api/grp/update', ( a_req, a_resp ) => {
-    console.log("get /api/grp/update");
-
     var params  = {
         uid: a_req.query.uid,
         gid: a_req.query.gid,
@@ -466,38 +393,32 @@ app.get('/api/grp/update', ( a_req, a_resp ) => {
         remUid: a_req.query.rem?JSON.parse( a_req.query.rem ):null,
     };
 
-    console.log("params",params);
-
     sendMessage( "GroupUpdateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "GroupUpdateRequest reply:", reply );
         a_resp.send(reply.group[0]);
     });
 });
 
 app.get('/api/grp/view', ( a_req, a_resp ) => {
-    console.log("get /api/grp/view");
-
     sendMessage( "GroupViewRequest", { uid: a_req.query.uid, gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
-        console.log( "GroupViewRequest reply:", reply );
         a_resp.send(reply.group[0]);
     });
 });
 
 app.get('/api/grp/list', ( a_req, a_resp ) => {
-    console.log("get /api/grp/list");
-
     sendMessage( "GroupListRequest", { uid: a_req.query.uid }, a_req, a_resp, function( reply ) {
-        console.log( "GroupListRequest reply:", reply );
         a_resp.send(reply.group);
     });
 });
 
 app.get('/api/grp/delete', ( a_req, a_resp ) => {
-    console.log("get /api/grp/delete");
-
     sendMessage( "GroupDeleteRequest", { uid: a_req.query.uid, gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
-        console.log( "GroupDeleteRequest reply:", reply );
         a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/find', ( a_req, a_resp ) => {
+    sendMessage( "RecordFindRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply.item?reply.item:[]);
     });
 });
 
@@ -511,7 +432,6 @@ app.get('/api/dat/create', ( a_req, a_resp ) => {
     };
 
     sendMessage( "RecordCreateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/dat/create", reply );
         a_resp.send(reply);
     });
 });
@@ -537,7 +457,6 @@ app.get('/api/dat/update', ( a_req, a_resp ) => {
     }
 
     sendMessage( "RecordUpdateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/dat/update", reply );
         a_resp.send(reply);
     });
 });
@@ -545,14 +464,12 @@ app.get('/api/dat/update', ( a_req, a_resp ) => {
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
     sendMessage( "RecordDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/dat/view", reply );
         a_resp.send(reply);
     });
 });
 
 app.get('/api/dat/view', ( a_req, a_resp ) => {
     sendMessage( "RecordViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/dat/view", reply );
         if ( reply.data && reply.data.length )
             a_resp.send(reply.data[0]);
         else
@@ -560,42 +477,18 @@ app.get('/api/dat/view', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/dat/list', ( a_req, a_resp ) => {
-    sendMessage( "RecordListRequest", {}, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/dat/list", reply );
-        a_resp.send(reply);
-    });
-});
-
 app.get('/api/dat/get', ( a_req, a_resp ) => {
     sendMessage( "DataGetRequest", { id: a_req.query.id, local: a_req.query.path }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
 });
 
 app.get('/api/dat/put', ( a_req, a_resp ) => {
     sendMessage( "DataPutRequest", { id: a_req.query.id, local: a_req.query.path }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
 });
 
-app.get('/api/dat/list/public', ( a_req, a_resp ) => {
-    console.log( "/api/dat/list/public", a_req.query.uid );
-    sendMessage( "RecordListRequest", { subject: a_req.query.uid, pub: true }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/col/read", reply );
-        a_resp.send(reply);
-    });
-});
-
-app.get('/api/dat/find', ( a_req, a_resp ) => {
-    console.log( "/api/dat/find", a_req.query.query );
-    sendMessage( "RecordFindRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/col/read", reply );
-        a_resp.send(reply);
-    });
-});
 
 app.get('/api/acl/view', ( a_req, a_resp ) => {
     sendMessage( "ACLViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
@@ -604,7 +497,6 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/acl/update', ( a_req, a_resp ) => {
-    console.log("acl update pub:",a_req.query.pub);
     sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules, ispublic: (a_req.query.pub=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -612,7 +504,6 @@ app.get('/api/acl/update', ( a_req, a_resp ) => {
 
 app.get('/api/acl/by_user', ( a_req, a_resp ) => {
     sendMessage( "ACLByUserRequest", {}, a_req, a_resp, function( reply ) {
-        console.log("reply acl/by_user",reply.user);
         if ( reply.user )
             a_resp.send(reply.user);
         else
@@ -646,7 +537,6 @@ app.get('/api/xfr/list', ( a_req, a_resp ) => {
     if ( a_req.query.since )
         params.since = a_req.query.since;
     sendMessage( "XfrListRequest", params, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
 });
@@ -660,7 +550,6 @@ app.get('/api/col/create', ( a_req, a_resp ) => {
     };
 
     sendMessage( "CollCreateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/col/create", reply );
         a_resp.send(reply);
     });
 });
@@ -677,21 +566,18 @@ app.get('/api/col/update', ( a_req, a_resp ) => {
         params.desc = a_req.query.desc;
 
     sendMessage( "CollUpdateRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/col/update", reply );
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/delete', ( a_req, a_resp ) => {
     sendMessage( "CollDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        //console.log( "reply to /api/dat/view", reply );
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/view', ( a_req, a_resp ) => {
     sendMessage( "CollViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/col/view", reply );
         if ( reply.data && reply.data.length )
             a_resp.send(reply.data[0]);
         else
@@ -701,7 +587,6 @@ app.get('/api/col/view', ( a_req, a_resp ) => {
 
 app.get('/api/col/read', ( a_req, a_resp ) => {
     sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/col/read", reply );
         a_resp.send(reply);
     });
 });
@@ -713,13 +598,9 @@ app.get('/api/col/get_parents', ( a_req, a_resp ) => {
 });
 
 app.get('/api/link', ( a_req, a_resp ) => {
-    console.log("link ", a_req.query.item,"to",a_req.query.coll );
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: [a_req.query.item] }, a_req, a_resp, function( reply ) {
-        console.log( "reply to /api/link" );
         if ( a_req.query.unlink ) {
             sendMessage( "CollWriteRequest", { id: a_req.query.unlink, rem: [a_req.query.item] }, a_req, a_resp, function( reply2 ) {
-                console.log( "reply2 to /api/link" );
-
                 a_resp.send(reply2);
             });
         } else
@@ -728,9 +609,7 @@ app.get('/api/link', ( a_req, a_resp ) => {
 });
 
 app.get('/api/unlink', ( a_req, a_resp ) => {
-    console.log("unlink ", a_req.query.item,"from",a_req.query.coll );
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: [a_req.query.item] }, a_req, a_resp, function( reply ) {
-        console.log("unlink reply:", reply );
         if ( reply.rooted )
             a_resp.send(reply.rooted);
         else
@@ -771,8 +650,6 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
         msg._mid = i;
         msg._msg_type = (pid << 8) | i;
 
-        //console.log( "msg", msg._msg_type, msg.name );
-
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
     }
@@ -800,8 +677,6 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
         msg._mid = i;
         msg._msg_type = (pid << 8) | i;
 
-        //console.log( "msg", msg._msg_type, msg.name );
-
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
     }
@@ -811,7 +686,6 @@ function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
     console.log( "save token", a_uid, a_acc_tok, a_ref_tok );
 
     sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok }, function( reply ) {
-        console.log( "reply to saveToken" );
     });
 }
 
@@ -825,7 +699,6 @@ core_sock.on('message', function( delim, frame, client, msg_buf ) {
     //console.log( "got msg type:", mtype );
     //console.log( "client len:", client?client.length:0 );
     //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
-
     //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
 
     var msg_class = g_msg_by_id[mtype];
@@ -965,29 +838,6 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 
-app.get('/ui/test', ( a_req, a_resp ) => {
-    console.log("TEST");
-    var client = a_req.cookies[ 'sdms' ];
-
-    var userinfo = JSON.parse( a_req.cookies[ 'sdms-user' ] );
-    for ( var i in userinfo.identities_set ) {
-        request.get({
-            uri: 'https://auth.globus.org/v2/api/identities/' + userinfo.identities_set[i],
-            headers: {
-                'Content-Type' : 'application/x-www-form-urlencoded',
-                'Accept' : 'application/json',
-            },
-            auth: {
-                user: oauth_credentials.clientId,
-                pass: oauth_credentials.clientSecret
-            }
-        }, function( error, response, body ) {
-            console.log( "ids resp:",error, body );
-        });
-    }
-
-    a_resp.send({'result':'OK'});
-});
 
 var httpsServer = https.createServer( web_credentials, app );
 httpsServer.listen( port );

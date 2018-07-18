@@ -49,13 +49,12 @@ public:
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
 
-    void recordList( const Auth::RecordListRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordFind( const Auth::RecordFindRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
     void recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    void recordFind( const Auth::RecordFindRequest & a_request, Auth::ListingReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
@@ -63,7 +62,7 @@ public:
     void collDelete( const Auth::CollDeleteRequest & a_request, Anon::AckReply & a_reply );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::CollDataReply & a_reply );
-    void collWrite( const Auth::CollWriteRequest & a_request, Auth::CollWriteReply & a_reply );
+    void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
     void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply );
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
@@ -74,9 +73,9 @@ public:
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );
     void aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply );
-    void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::CollDataReply & a_reply );
+    void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply );
     void aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply );
-    void aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::CollDataReply & a_reply );
+    void aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply );
 
     void groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply );
@@ -92,6 +91,7 @@ private:
     void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
+    void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );

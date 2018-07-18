@@ -417,18 +417,8 @@ Client::parseQuery( const string & a_query )
 }
 #endif
 
-spRecordDataReply
-Client::recordList()
-{
-    Auth::RecordListRequest req;
-    Auth::RecordDataReply * reply;
 
-    send<>( req, reply, m_ctx++ );
-
-    return spRecordDataReply( reply );
-}
-
-spRecordDataReply
+spListingReply
 Client::recordFind( const std::string & a_query )
 {
     Auth::RecordFindRequest req;
@@ -436,11 +426,11 @@ Client::recordFind( const std::string & a_query )
     //req.set_query( parseQuery( a_query ));
     req.set_query( a_query );
 
-    Auth::RecordDataReply * reply;
+    Auth::ListingReply * reply;
 
     send<>( req, reply, m_ctx++ );
 
-    return spRecordDataReply( reply );
+    return spListingReply( reply );
 }
 
 spRecordDataReply

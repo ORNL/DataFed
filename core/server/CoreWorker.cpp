@@ -95,7 +95,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectDeleteRequest, AckReply, projDelete );
         SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
-        SET_MSG_HANDLER_DB( proto_id, RecordListRequest, RecordDataReply, recordList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
@@ -106,16 +105,16 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollDeleteRequest, AckReply, collDelete );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, CollWriteReply, collWrite );
+        SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, CollGetParentsRequest, CollDataReply, collGetParents );
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
         SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
         SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );
-        SET_MSG_HANDLER_DB( proto_id, ACLByUserListRequest, CollDataReply, aclByUserList );
+        SET_MSG_HANDLER_DB( proto_id, ACLByUserListRequest, ListingReply, aclByUserList );
         SET_MSG_HANDLER_DB( proto_id, ACLByProjRequest, ProjectDataReply, aclByProj );
-        SET_MSG_HANDLER_DB( proto_id, ACLByProjListRequest, CollDataReply, aclByProjList );
+        SET_MSG_HANDLER_DB( proto_id, ACLByProjListRequest, ListingReply, aclByProjList );
         SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
         SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
         SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
@@ -398,7 +397,7 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 bool
 Worker::procRecordFindRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordFindRequest, RecordDataReply )
+    PROC_MSG_BEGIN( RecordFindRequest, ListingReply )
 
     m_db_client.setClient( a_uid );
     RecordFindRequest req2;

@@ -248,11 +248,19 @@ function showSelectedInfo( node ){
         $("#data_info").html("(no information available)<br><br><br>");
         showSelectedMetadata();
     }else{
-        if ( node.key[0] == "c" ) {
-            html = "Collection, ID: " + node.key;
+        var key;
+        if ( node.key == "shared_proj" && node.data.scope )
+            key = node.data.scope;
+        else
+            key = node.key;
+
+        console.log( "node:", node, key );
+
+        if ( key[0] == "c" ) {
+            html = "Collection, ID: " + key;
             $("#data_ident").html( html );
 
-            viewColl( node.key, function( item ){
+            viewColl( key, function( item ){
                 if ( item ){
                     if ( node.data.isroot )
                         updateBtnState( "r", node.data.admin );
@@ -277,11 +285,11 @@ function showSelectedInfo( node ){
                     noInfoAvail();
                 }
             }); 
-        } else if ( node.key[0] == "d" ) {
-            html = "Data Record, ID: " + node.key;
+        } else if ( key[0] == "d" ) {
+            html = "Data Record, ID: " + key;
             $("#data_ident").html( html );
 
-            viewData( node.key, function( item ){
+            viewData( key, function( item ){
                 if ( item ){
                     updateBtnState( "d" );
 
@@ -306,11 +314,11 @@ function showSelectedInfo( node ){
                     noInfoAvail();
                 }
             }); 
-        } else if ( node.key.startsWith("p/") ) {
-            html = "Project, ID: " + node.key;
+        } else if ( key.startsWith("p/")) {
+            html = "Project, ID: " + key;
             $("#data_ident").html( html );
 
-            viewProj( node.key, function( item ){
+            viewProj( key, function( item ){
                 if ( item ){
                     updateBtnState("p",node.data.admin);
 
@@ -465,16 +473,16 @@ function execQuery(){
     //console.log( "query:", query, scope );
 
     setStatusText("Executing search query...");
-    findData( query, scope, function( ok, data ){
-        //console.log( "qry res:", ok, data );
+    dataFind( query, scope, function( ok, items ){
+        console.log( "qry res:", ok, items );
 
         var tree = $("#data_tree").fancytree("getTree");
         var srch_node = tree.getNodeByKey("search");
         var results = [];
-        if ( data.data && data.data.length > 0 ){
-            setStatusText( "Found " + data.data.length + " result" + (data.data.length==1?"":"s"));
-            for ( var i in data.data ){
-                var item = data.data[i];
+        if ( items.length > 0 ){
+            setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
+            for ( var i in items ){
+                var item = items[i];
                 results.push({title: generateTitle( item ), icon:false, key: item.id, nodrag: true });
             }
         } else {
@@ -565,8 +573,8 @@ function setupBrowseTab(){
         {title:"My Projects <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Team Projects <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
-            {title:"By User <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",nodrag:true,folder:true,lazy:true,key:"shared_user"},
-            {title:"By Project <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
+            {title:"By User <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
         {title:"Favorites <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         {title:"Views <i class='ui-icon ui-icon-reload' onclick=\"reloadSelected()\"",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
@@ -669,11 +677,6 @@ function setupBrowseTab(){
                 }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
-            } else if ( data.node.key == "public" ) {
-                data.result = {
-                    url: "/api/dat/list/public?uid=" + data.node.data.scope,
-                    cache: false
-                };
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + data.node.key,
@@ -738,13 +741,7 @@ function setupBrowseTab(){
                 // Not implemented yet
             } else if ( data.node.parent ) {
                 data.result = [];
-                var item,entry,scope = data.node.data.scope,nodrag = false;
-
-                //if ( data.node.key.endsWith("_root") ){
-                if ( data.node.data.isroot ){
-                        data.result.push({title:"[Public Access Data]",folder:true,icon:"ui-icon ui-icon-alert",lazy:true,key:"public",scope:scope,nodrag:true,notarg:true});
-                } else if ( data.node.key == "public" )
-                    nodrag = true;
+                var item,entry,scope = data.node.data.scope;
 
                 for ( var i in data.response.data ) {
                     item = data.response.data[i];
@@ -757,8 +754,7 @@ function setupBrowseTab(){
                     } else {
                         entry.icon = "ui-icon ui-icon-file";
                     }
-                    if ( nodrag )
-                        entry.nodrag = true;
+
                     data.result.push( entry );
                 }
             }

@@ -620,18 +620,17 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 }
 
 void
-DatabaseClient::recordList( const RecordListRequest & a_request, RecordDataReply & a_reply )
+DatabaseClient::recordFind( const RecordFindRequest & a_request, ListingReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
-    if ( a_request.has_subject() )
-        params.push_back({"subject",a_request.subject()});
-    if ( a_request.has_pub() )
-        params.push_back({"public",a_request.pub()?"true":"false"});
+    params.push_back({"query",a_request.query()});
+    if ( a_request.has_scope() )
+        params.push_back({"scope",a_request.scope()});
 
-    dbGet( "dat/list", params, result );
+    dbGet( "/dat/find", params, result );
 
-    setRecordData( a_reply, result );
+    setListingData( a_reply, result );
 }
 
 void
@@ -640,20 +639,6 @@ DatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply
     rapidjson::Document result;
 
     dbGet( "dat/view", {{"id",a_request.id()}}, result );
-
-    setRecordData( a_reply, result );
-}
-
-void
-DatabaseClient::recordFind( const RecordFindRequest & a_request, RecordDataReply & a_reply )
-{
-    rapidjson::Document result;
-    vector<pair<string,string>> params;
-    params.push_back({"query",a_request.query()});
-    if ( a_request.has_scope() )
-        params.push_back({"scope",a_request.scope()});
-
-    dbGet( "dat/find", params, result );
 
     setRecordData( a_reply, result );
 }
@@ -901,7 +886,7 @@ DatabaseClient::collRead( const CollReadRequest & a_request, CollDataReply & a_r
 }
 
 void
-DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::CollWriteReply & a_reply )
+DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::ListingReply & a_reply )
 {
     string add_list, rem_list;
 
@@ -939,19 +924,7 @@ DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::CollWriteRe
 
     dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
 
-    if ( !result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-
-    ListingData * listing;
-
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
-    {
-        rapidjson::Value & val = result[i];
-
-        listing = a_reply.add_rooted();
-        listing->set_id( val["id"].GetString() );
-        listing->set_title( val["title"].GetString() );
-    }
+    setListingData( a_reply, result );
 }
 
 void
@@ -999,6 +972,27 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             coll->set_owner( imem->value.GetString() );
+    }
+}
+
+void
+DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    ListingData* item;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        item = a_reply.add_item();
+        item->set_id( val["id"].GetString() );
+        item->set_title( val["title"].GetString() );
     }
 }
 
@@ -1135,13 +1129,13 @@ DatabaseClient::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::User
 }
 
 void
-DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::CollDataReply & a_reply )
+DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply )
 {
     rapidjson::Document result;
 
     dbGet( "acl/by_user/list", {{"owner",a_request.owner()}}, result );
 
-    setCollData( a_reply, result );
+    setListingData( a_reply, result );
 }
 
 void
@@ -1156,13 +1150,13 @@ DatabaseClient::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::Proj
 }
 
 void
-DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::CollDataReply & a_reply )
+DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply )
 {
     rapidjson::Document result;
 
     dbGet( "acl/by_proj/list", {{"owner",a_request.owner()}}, result );
 
-    setCollData( a_reply, result );
+    setListingData( a_reply, result );
 }
 
 void

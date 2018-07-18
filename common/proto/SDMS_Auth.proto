@@ -87,6 +87,13 @@ message UserDataReply
     repeated SDMS.UserData      user        = 1;
 }
 
+// ============================ Data Record AND Collection Messages
+
+message ListingReply
+{
+    repeated ListingData        item        = 1;
+}
+
 // ============================ Data Record Messages
 
 message RecordListRequest
@@ -101,11 +108,6 @@ message RecordViewRequest
     optional bool               details     = 2;
 }
 
-message RecordFindRequest
-{
-    required string             query       = 1;
-    optional string             scope       = 2;
-}
 
 // Returned for any command the returns one or more user records
 message RecordDataReply
@@ -144,6 +146,12 @@ message RecordGetDataLocationRequest
 message RecordDeleteRequest
 {
     required string             id          = 1;
+}
+
+message RecordFindRequest
+{
+    required string             query       = 1;
+    optional string             scope       = 2;
 }
 
 message RecordDataLocationReply
@@ -244,11 +252,6 @@ message CollWriteRequest
     repeated string             add         = 2;
     repeated string             rem         = 3;
     optional bool               rem_all     = 4;
-}
-
-message CollWriteReply
-{
-    repeated ListingData        rooted      = 1;
 }
 
 message CollGetParentsRequest

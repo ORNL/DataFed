@@ -74,7 +74,7 @@ function createData( a_title, a_alias, a_desc, a_md, a_coll, a_callback ) {
     _asyncGet( "/api/dat/create?title="+a_title+"&alias="+a_alias+"&desc="+a_desc+"&md="+a_md+"&coll="+a_coll, null, a_callback );
 }
 
-function findData( a_query, a_scope, a_callback ) {
+function dataFind( a_query, a_scope, a_callback ) {
     _asyncGet("/api/dat/find?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
 }
 
