@@ -1,0 +1,19 @@
+<div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
+    <div class="row-flex" style="flex:1 1 100%">
+        <div class="col-flex" style="flex:1 1 40%;padding:.25em">
+            <div style="flex:none">Repositories:</div>
+            <div class="ui-widget-content text" style="flex:1 1 100%;overflow:auto">
+                <div id="repo_tree" class="no-border"></div>
+            </div>
+        </div>
+        <div class="col-flex" style="flex:1 1 60%;padding:.25em">
+            <div style="flex:none">Selection Details:</div>
+            <div id="repo_info" class="ui-widget-content text" style="flex:1 1 100%"></div>
+        </div>
+    </div>
+    <div style="flex:none;padding:.25em">
+        <button class="btn act-repo" onclick="allocAdd()" disabled>Add Allocation</button>
+        <button class="btn act-repo" onclick="allocEdit()" disabled>Edit Allocation</button>
+        <button class="btn act-repo" onclick="allocDelete()" disabled>Delete Allocation</button>
+    </div>
+</div>

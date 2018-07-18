@@ -41,7 +41,7 @@ function dlgProjNewEdit(a_data,a_cb) {
     if ( a_data )
         proj = Object.assign({}, a_data);
     else
-        proj = { owner: g_user.uid };
+        proj = { owner: "u/"+g_user.uid };
 
     var options = {
         title: dlg_title,

@@ -34,90 +34,16 @@
                     <li><a href="#tab-browse">Dashboard</a></li>
                     <li><a href="#tab-repo">Repos</a></li>
                     <li style='display:none'><a href="#tab-admin">Admin</a></li>
-                    <li><a href="#tab-settings">Settings</a></li>
-                <span style="float:right;position:relative;z-index:1"><button class="btn small" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span>
+                    <span style="float:right;position:relative;z-index:1"><button class="btn small" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span>
                 </ul>
                 <div id="tab-browse">
-                    <div class="col-flex" style="padding:0;height:100%;box-sizing:border-box">
-                        <div class="row-flex" style="flex:none;align-items:center;padding: 0 0 .5em .25em">
-                            <div style="flex:none;padding-right:.25em">
-                                Search Query:
-                            </div>
-                            <div style="flex:1 1 100%;padding-right:.5em">
-                                <input id="query_input" type='text' style="width:100%"></input>
-                            </div>
-                            <div style="flex:none;padding-right:.25em">
-                                <select id="query_scope">
-                                        <option value="myall" selected>My Data &amp Projects</option>
-                                        <option value="mydata">My Data</option>
-                                        <option value="myproj">My Projects</option>
-                                        <option value="shared">Shared Data</option>
-                                        <option value="public">Public Data</option>
-                                        <option value="all">All Data</option>
-                                </select>
-                                <button class="btn" onclick="execQuery()">Search</button>
-                            </div>
-                        </div>
-                        <div class="row-flex" style="flex:1 1 100%">
-                            <div class="col-flex" style="flex:1 1 40%;padding:.25em;min-width:0">
-                                <div style="flex:none">Collections &amp Data:</div>
-                                <div class="ui-widget-content text" style="flex:0 1 100%;overflow:auto">
-                                    <div id="data_tree" class="no-border"></div>
-                                </div>
-                            </div>
-                            <div class="col-flex" style="flex:0 0 60%;padding:.25em">
-                                <div style="flex:none">Selection Details: <span id="data_ident"></span></div>
-                                <div id="data_info" class="ui-widget-content text" style="flex:none"></div>
-                                <div style="flex:none;padding-top:.5em">Selection Metadata:</div>
-                                <div class="ui-widget-content text" style="flex:1 1 100%"><div id="data_md_tree" class="no-border"></div></div>
-                            </div>
-                        </div>
-                        <div style="flex:none;padding:.25em">
-                            <!-- input type="checkbox" id="lock_btn"><label title="Allow drag and drop within Collections & Data window" for="lock_btn">Unlock</label></input -->
-                            <button class="btn" id="btn_new_proj" onclick="newProj()">New Proj</button>
-                            <button class="btn" id="btn_new_data" onclick="newData()" disabled>New Data</button>
-                            <button class="btn" id="btn_new_coll" onclick="newColl()" disabled>New Coll.</button>
-                            <button class="btn" id="btn_edit" onclick="editSelected()" disabled>Edit</button>
-                            <button class="btn" id="btn_del" onclick="deleteSelected()" disabled>Delete</button>
-                            <button class="btn" id="btn_share" onclick="shareSelected()" disabled>Sharing</button>
-                            <button class="btn" id="btn_upload" onclick="xfrSelected(0)" disabled>Upload</button>
-                            <button class="btn" id="btn_download" onclick="xfrSelected(1)" disabled>Download</button>
-                            <!-- button class="btn" id="btn_move" onclick="moveSelected()" disabled>Move</button -->
-                        </div>
-                        <div style="flex:none;padding:.25em">
-                            <div id="xfr_panel" >
-                                <h3>Recent Data Transfers</h3>
-                                <div id="xfr_hist" class="text" style="overflow:auto;max-height:5em;padding:.5em"></div>
-                            </div>
-                        </div>
-                    </div>
+                    <% include 'tab_browser.ect' %>
                 </div>
                 <div id="tab-repo">
-                    <div class="col-flex" style="padding:0;height:100%;box-sizing: border-box;">
-                        <div class="row-flex" style="flex:1 1 100%">
-                            <div class="col-flex" style="flex:1 1 40%;padding:.25em">
-                                <div style="flex:none">Repositories:</div>
-                                <div class="ui-widget-content text" style="flex:1 1 100%;overflow:auto">
-                                    <div id="repo_tree" class="no-border"></div>
-                                </div>
-                            </div>
-                            <div class="col-flex" style="flex:1 1 60%;padding:.25em">
-                                <div style="flex:none">Selection Details:</div>
-                                <div id="repo_info" class="ui-widget-content text" style="flex:1 1 100%"></div>
-                            </div>
-                        </div>
-                        <div style="flex:none;padding:.25em">
-                            <button class="btn act-repo" onclick="allocAdd()" disabled>Add Allocation</button>
-                            <button class="btn act-repo" onclick="allocEdit()" disabled>Edit Allocation</button>
-                            <button class="btn act-repo" onclick="allocDelete()" disabled>Delete Allocation</button>
-                        </div>
-                    </div>
+                    <% include 'tab_repo.ect' %>
                 </div>
                 <div id="tab-admin">
-                Admin Stuff
-                </div>
-                <div id="tab-settings">
-                Settings Stuff
+                    <% include 'tab_admin.ect' %>
                 </div>
             </div>
         </div>
@@ -138,9 +64,6 @@
             $("#tabs").tabs("refresh");
         }
 
-        var drag_mode = 0;
-        var drag_enabled = 1;
-
         window.addEventListener( "resize", resizeHandler );
 
         document.getElementById("uname").innerHTML = g_user.name;
@@ -160,18 +83,9 @@
         });
 
         $(".btn").button();
-
-
-        /*
-        $( "#lock_btn" ).button().click(function() {
-            if ( this.checked )
-                drag_enabled = 1;
-            else
-                drag_enabled = 0;
-        });*/
         $( document ).tooltip({ show: { effect: "slideDown", delay: 500 }});
 
-        setupBrowseTab();
+        var tab_browser = makeBrowserTab();
         setupRepoTab();
         setStatusText("SDMS Ready");
     </script>
