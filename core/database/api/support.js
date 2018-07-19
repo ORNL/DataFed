@@ -244,6 +244,16 @@ module.exports = ( function() {
         }
     };
 
+    obj.deleteObject = function( id ){
+        // Delete attached notes and aliases
+        var item,items = obj.db._query( "for v in 1..1 outbound @id note, alias return v._id", { id: id }).toArray();
+        for ( var i in items ) {
+            item = items[i];
+            obj.graph[item[0]].remove( item );
+        }
+        obj.graph[id[0]].remove( id );
+    };
+
     obj.hasAdminPermUser = function( a_client, a_user_id ) {
         if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_user_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id })){ 
             return false;
