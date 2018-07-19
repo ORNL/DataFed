@@ -59,7 +59,7 @@ public:
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
-    void collDelete( const Auth::CollDeleteRequest & a_request, Anon::AckReply & a_reply );
+    void collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::CollDataReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
@@ -90,6 +90,7 @@ private:
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
     void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
+    void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
     void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );

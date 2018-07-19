@@ -543,7 +543,7 @@ Client::collView( const std::string & a_id )
 }
 
 spCollDataReply
-Client::collRead( const std::string & a_coll_id, CollMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
+Client::collRead( const std::string & a_coll_id, CollReadMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     Auth::CollReadRequest req;
 

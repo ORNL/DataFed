@@ -81,6 +81,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordFindRequest, &Worker::procRecordFindRequest );
+        SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, UserSaveTokensRequest, AckReply, userSaveTokens );
@@ -102,7 +103,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
-        SET_MSG_HANDLER_DB( proto_id, CollDeleteRequest, AckReply, collDelete );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, CollDataReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
@@ -371,10 +371,15 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
     m_db_client.recordGetDataLocation( loc_req, loc_reply );
 
     // Ask manager to delete file
-    m_mgr.dataDelete( loc_reply.repo_id(), loc_reply.path() );
+    for ( int i = 0; i < loc_reply.location_size(); i++ )
+    {
+        const RecordDataLocation & loc = loc_reply.location(i);
+        m_mgr.dataDelete( loc.repo_id(), loc.path() );
+    }
 
     PROC_MSG_END
 }
+
 
 bool
 Worker::procRecordDeleteRequest( const std::string & a_uid )
@@ -388,8 +393,34 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
     m_db_client.setClient( a_uid );
     m_db_client.recordDelete( *request, reply );
 
+    // Ask FileManager to delete file(s)
+    for ( int i = 0; i < reply.location_size(); i++ )
+    {
+        const RecordDataLocation & loc = reply.location(i);
+        m_mgr.dataDelete( loc.repo_id(), loc.path() );
+    }
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procCollectionDeleteRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( CollDeleteRequest, RecordDataLocationReply )
+
+    // TODO Acquire write lock here
+    // TODO Need better error handling (plus retry)
+
+    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    m_db_client.setClient( a_uid );
+    m_db_client.collDelete( *request, reply );
+
     // Ask FileManager to delete file
-    m_mgr.dataDelete( reply.repo_id(), reply.path() );
+    for ( int i = 0; i < reply.location_size(); i++ )
+    {
+        const RecordDataLocation & loc = reply.location(i);
+        m_mgr.dataDelete( loc.repo_id(), loc.path() );
+    }
 
     PROC_MSG_END
 }

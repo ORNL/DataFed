@@ -700,16 +700,7 @@ DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth:
 
     dbGet( "dat/delete", {{"id",a_request.id()}}, result );
 
-    if ( !result.IsArray() || result.Size() != 1 )
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-
-    rapidjson::Value & val = result[0];
-
-    a_reply.set_id( val["id"].GetString() );
-    a_reply.set_repo_id( val["repo_id"].GetString() );
-    a_reply.set_path( val["path"].GetString() );
+    setRecordLocationData( a_reply, result );
 }
 
 void
@@ -719,16 +710,28 @@ DatabaseClient::recordGetDataLocation( const Auth::RecordGetDataLocationRequest 
 
     dbGet( "dat/loc", {{"id",a_request.id()}}, result );
 
-    if ( !result.IsArray() || result.Size() != 1 )
+    setRecordLocationData( a_reply, result );
+}
+
+void
+DatabaseClient::setRecordLocationData( RecordDataLocationReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 
-    rapidjson::Value & val = result[0];
+    RecordDataLocation* loc;
 
-    a_reply.set_id( val["id"].GetString() );
-    a_reply.set_repo_id( val["repo_id"].GetString() );
-    a_reply.set_path( val["path"].GetString() );
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        loc = a_reply.add_location();
+        loc->set_id( val["id"].GetString() );
+        loc->set_repo_id( val["repo_id"].GetString() );
+        loc->set_path( val["path"].GetString() );
+    }
 }
 
 void
@@ -848,14 +851,21 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 }
 
 void
-DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
 {
     (void)a_reply;
     rapidjson::Document result;
 
-    dbGet( "col/delete", {{"id",a_request.id()}}, result );
-}
+    const char * mode;
+    if ( a_request.mode() == CDM_ALL )
+        mode = "all";
+    else
+        mode = "owned";
 
+    dbGet( "col/delete", {{"id",a_request.id()},{"mode",mode}}, result );
+
+    setRecordLocationData( a_reply, result );
+}
 
 void
 DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
@@ -874,9 +884,9 @@ DatabaseClient::collRead( const CollReadRequest & a_request, CollDataReply & a_r
     const char * mode = "a";
     if ( a_request.has_mode() )
     {
-        if ( a_request.mode() == CM_DATA )
+        if ( a_request.mode() == CRM_DATA )
             mode = "d";
-        else if ( a_request.mode() == CM_COLL )
+        else if ( a_request.mode() == CRM_COLL )
             mode = "c";
     }
 

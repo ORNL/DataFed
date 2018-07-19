@@ -37,11 +37,17 @@ enum XfrStatus
     XS_FAILED       = 4;
 }
 
-enum CollMode
+enum CollReadMode
 {
-    CM_ALL          = 0;
-    CM_COLL         = 1;
-    CM_DATA         = 2;
+    CRM_ALL         = 0;
+    CRM_COLL        = 1;
+    CRM_DATA        = 2;
+}
+
+enum CollDelMode
+{
+    CDM_ALL         = 0;
+    CDM_OWNED       = 1;
 }
 
 enum Permissions
@@ -104,6 +110,13 @@ message RecordData
     optional uint64             rec_time    = 9;
     optional uint64             data_time   = 10;
     optional string             owner       = 11;
+}
+
+message RecordDataLocation
+{
+    required string             id          = 1;
+    required string             repo_id     = 2;
+    required string             path        = 3;
 }
 
 message CollData

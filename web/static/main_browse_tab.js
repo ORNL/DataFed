@@ -20,41 +20,51 @@ function makeBrowserTab(){
     this.drag_enabled = true;
 
     this.deleteSelected = function(){
-        var node = inst.data_tree.activeNode;
-        var url = "/api/";
-        var msg = "<div>Are you sure you want to delete ";
-        var id;
+        var msg,node = inst.data_tree.activeNode,msg = "<div>Are you sure you want to delete ";
 
-        if ( node.data.isproj ){
-            msg += "project";
-            url += "prj";
-            id = node.key;
-        }else if( node.key[0] == "d" ) {
-            msg += "data";
-            url += "dat";
-            id = node.key;
+        if ( node.key[0] == "c" ) {
+            msg += "collection ID " + node.key + "?<p>Choose the 'ALL' option to delete <i>ALL</i> sub-collections and data, or the 'OWNED' option to delete all sub-collections and any data that is NOT linked to other independent collections.</p><div>";
+
+            confirmChoice( "Confirm Deletion", msg, ["All","OWNED","Cancel"], function( choice ){
+                console.log( "choice:",choice);
+                if ( choice != 2 ){
+                    url = "/api/col/delete?id=" + node.key + "&mode=" + (choice==0?"all":"owned");
+                    console.log( url);
+                    _asyncGet( url, null, function( ok, data ){
+                        if ( ok ) {
+                            inst.deleteNode( node.key );
+                            inst.updateBtnState();
+                        } else {
+                            alert( "Delete failed: " + data );
+                        }
+                    });
+                }
+            });
         }else{
-            msg += "collection";
-            url += "col";
-            id = node.key;
-        }
+            var url = "/api/";
 
-        msg += " ID " + id + "?<div>";
-
-        confirmChoice( "Confirm Deletion", msg, ["Yes","Cancel"], function( choice ){
-            if ( choice == 0 ){
-                var inst = $(this);
-                url += "/delete?id=" + id;
-                _asyncGet( url, null, function( ok, data ){
-                    if ( ok ) {
-                        deleteNode( node.key );
-                        updateBtnState();
-                    } else {
-                        alert( "Delete failed: " + data );
-                    }
-                });
+            if ( node.data.isproj ){
+                msg += "project ID " + node.key + "? This will delete <i>ALL</i> data and collections owned by the project.<div>";
+                url += "prj";
+            } else {
+                msg += "data ID " + node.key + "?<div>";
+                url += "dat";
             }
-        });
+
+            confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
+                if ( choice == 0 ){
+                    url += "/delete?id=" + node.key;
+                    _asyncGet( url, null, function( ok, data ){
+                        if ( ok ) {
+                            inst.deleteNode( node.key );
+                            inst.updateBtnState();
+                        } else {
+                            alert( "Delete failed: " + data );
+                        }
+                    });
+                }
+            });
+        }
     }
 
     this.newProj = function() {
