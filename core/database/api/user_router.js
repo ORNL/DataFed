@@ -395,6 +395,21 @@ router.get('/view', function (req, res) {
             if ( idents.length ) {
                 user.idents = idents;
             }
+
+            user.allocs = g_db.alloc.byExample({_from:user._id}).toArray();
+            if ( user.allocs.length ) {
+                var alloc;
+
+                for ( var i in user.allocs ){
+                    alloc = user.allocs[i];
+                    delete alloc._from;
+                    alloc.repo = alloc._to.substr(5);
+                    delete alloc._to;
+                    delete alloc._key;
+                    delete alloc._id;
+                    delete alloc._rev;
+                }
+            }
         }
 
         user.uid = user._id;

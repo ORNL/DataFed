@@ -234,7 +234,23 @@ router.get('/view', function (req, res) {
                 proj.members = members;
             } else
                 proj.members = [];
+
+            proj.allocs = g_db.alloc.byExample({_from:proj._id}).toArray();
+            if ( proj.allocs.length ) {
+                var alloc;
+
+                for ( var i in proj.allocs ){
+                    alloc = proj.allocs[i];
+                    delete alloc._from;
+                    alloc.repo = alloc._to.substr(5);
+                    delete alloc._to;
+                    delete alloc._key;
+                    delete alloc._id;
+                    delete alloc._rev;
+                }
+            }
         }
+
 
         proj.id = proj._id;
         proj.owner = owner_id;

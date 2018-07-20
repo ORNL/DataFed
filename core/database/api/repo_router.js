@@ -29,9 +29,9 @@ router.get('/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        var repo = g_db.repo.document( req.queryParams.id );
+        var repo = g_db.repo.document( "repo/"+req.queryParams.id );
 
-        repo.id = repo._id;
+        repo.id = repo._key;
         delete repo._id;
         delete repo._key;
         delete repo._rev;
@@ -154,20 +154,23 @@ router.get('/alloc/list/by_repo', function (req, res) {
 .summary('List all allocations for a repo')
 .description('List all allocations a repo');
 
-router.get('/alloc/list/by_user', function (req, res) {
-    var user = g_lib.getUserFromClientID( req.queryParams.client );
-
-    var result = g_db._query("for v, e in 1..1 outbound @user alloc return { id: e._to, alloc: e.alloc, path: e.path }", { user: user._id } ).toArray();
+router.get('/alloc/list/by_owner', function (req, res) {
+    var result = g_db.alloc.byExample({_from: req.queryParams.owner}).toArray();
     var obj;
     for ( var i in result ){
         obj = result[i];
-        obj.id = obj.id.substr(5);
+        delete obj._from;
+        obj.repo = obj._to.substr(5);
+        delete obj._to;
+        delete obj._key;
+        delete obj._id;
+        delete obj._rev;
     }
     res.send( result );
 })
-.queryParam('client', joi.string().required(), "Client ID")
-.summary('List user\'s repo allocations')
-.description('List user\'s repo allocations');
+.queryParam('owner', joi.string().required(), "Owner ID (user or project)")
+.summary('List owner\'s repo allocations')
+.description('List owner\'s repo allocations (user or project ID)');
 
 router.get('/alloc/set', function (req, res) {
     try {
@@ -178,19 +181,28 @@ router.get('/alloc/set', function (req, res) {
             },
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
-                var subject = g_lib.getUserFromClientID( req.queryParams.subject );
+                var subject_id;
+                if ( req.queryParams.subject.startsWith("p/"))
+                    subject_id = req.queryParams.subject;
+                else
+                    subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
                 var repo = g_db.repo.document( "repo/" + req.queryParams.repo );
 
                 g_lib.ensureAdminPermRepo( client, repo._id );
 
                 if ( req.queryParams.alloc == 0 ){
-                    g_db.alloc.removeByExample({ _from: subject._id, _to: repo._id });
+                    g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
                 } else {
-                    var alloc = g_db.alloc.firstExample({ _from: subject._id, _to: repo._id });
+                    var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
                     if ( alloc ){
                         g_db.alloc.update( alloc._id, { alloc: req.queryParams.alloc });
                     } else {
-                        g_db.alloc.save({ _from: subject._id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: "/data/" + subject._key + "/" });
+                        var path;
+                        if ( subject_id[0] == "p" )
+                            path = "/data/project/";
+                        else
+                            path = "/data/user/";
+                        g_db.alloc.save({ _from: subject_id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: path + subject_id.substr(2) + "/" });
                     }
                 }
             }
