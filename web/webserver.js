@@ -249,7 +249,7 @@ app.get('/api/usr/find', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
-    sendMessage( "UserViewRequest", { uid: a_req.query.id }, a_req, a_resp, function( reply ) {
+    sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.send(reply.user[0]);
     });
 });

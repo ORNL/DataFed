@@ -138,8 +138,8 @@ function aclUpdate( a_id, a_rules, a_public, a_cb ) {
     _asyncGet( "/api/acl/update?id="+a_id+"&rules="+JSON.stringify(a_rules)+"&pub="+a_public, null, a_cb );
 }
 
-function userView( a_id, a_cb ) {
-    _asyncGet( "/api/usr/view?id="+a_id, null, a_cb );
+function userView( a_id, a_details, a_cb ) {
+    _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
 }
 
 function groupView( a_uid, a_gid, a_cb ) {

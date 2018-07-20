@@ -265,15 +265,40 @@ function makeBrowserTab(){
             inst.data_info.html("(no information available)<br><br><br>");
             inst.showSelectedMetadata();
         }else{
-            var key;
+            var key,i;
             if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
             else
                 key = node.key;
 
-            console.log( "node:", node, key );
+            //console.log( "node:", node, key );
+            if ( key == "mydata" ) {
+                html = "My Data";
+                inst.data_ident.html( html );
+                inst.updateBtnState();
+                inst.showSelectedMetadata();
 
-            if ( key[0] == "c" ) {
+                userView( g_user.uid, true, function( ok, user ){
+                    if ( ok && user ){
+                        html = "Data owned by " + user.name + "<br><br>";
+
+                        html += "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html += "<tr><th>Field</th><th>Value</th></tr>";
+                        html += "<tr><td>Allocation(s):</td><td>";
+                        if ( user.alloc && user.alloc.length ){
+                            var alloc;
+                            for ( i in user.alloc ){
+                                alloc = user.alloc[i]
+                                html += alloc.repo + ": " + alloc.alloc + " GB total, " + alloc.usage + " GB used<br>";
+                            }
+                        }else{
+                            html += "(none)";
+                        }
+                        html += "</table>";
+                        inst.data_info.html(html);
+                    }
+                });
+            }else if ( key[0] == "c" ) {
                 html = "Collection, ID: " + key;
                 inst.data_ident.html( html );
 
@@ -351,7 +376,7 @@ function makeBrowserTab(){
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
                         html += "<tr><td>Admins:</td><td>";
                         if ( item.admin && item.admin.length ){
-                            for ( var i in item.admin )
+                            for ( i in item.admin )
                                 html += item.admin[i].substr(2) + " ";
                         }else{
                             html += "(none)";
@@ -359,8 +384,18 @@ function makeBrowserTab(){
                         html += "</td></tr>";
                         html += "<tr><td>Members:</td><td>";
                         if ( item.member && item.member.length ){
-                            for ( var i in item.member )
+                            for ( i in item.member )
                                 html += item.member[i].substr(2) + " ";
+                        }else{
+                            html += "(none)";
+                        }
+                        html += "<tr><td>Allocation(s):</td><td>";
+                        if ( item.alloc && item.alloc.length ){
+                            var alloc;
+                            for ( i in item.alloc ){
+                                alloc = item.alloc[i]
+                                html += alloc.repo + ": " + alloc.alloc + " GB total, " + alloc.usage + " GB used<br>";
+                            }
                         }else{
                             html += "(none)";
                         }
@@ -577,10 +612,8 @@ function makeBrowserTab(){
 
 
     var tree_source = [
-        
-        //{title:"My Root Collection <button class='btn-refresh tiny' onclick=\"console.log('Hello!')\"></button>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:my_root_key,user:g_user.uid,scope:g_user.uid,nodrag:true,isroot:true,admin:true},
-
-        {title:"My Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,children:[{
+            title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Team Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[

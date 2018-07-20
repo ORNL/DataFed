@@ -5,18 +5,20 @@ function makeDlgSetACLs(){
 
     //<div style='flex:none'><input type='checkbox' name='public_check' id='public_check'><label for='public_check'>Public data</label></div>
 
+
     this.content =
-        "<div class='col-flex' style='height:100%'>\
+        "<div class='col-flex' style='height:100%;width:100%;min-height:0;overflow:none'>\
             <div style='flex:none'>ID/Alias: <span id='dlg_id'></span></div>\
-            <div class='row-flex' style='flex:1 1 auto'>\
-                <div class='col-flex' style='flex:1 1 50%'>\
+            <div class='row-flex' style='flex:1 1 100%;width:100%;min-height:0'>\
+                <div class='col-flex' style='flex:1 1 10%;min-width:0;min-height:0;'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Rules:</div>\
-                    <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                        <div id='dlg_rule_tree' class='no-border'></div>\
+                    <div class='ui-widget-content text' style='flex:1 1 50%;min-height:0;min-width:0;width:100%;max-width:100%;overflow:auto'>\
+                        <div id='dlg_rule_tree' class='no-border' style='min-height:0'></div>\
                     </div>\
-                    <div style='flex:none;line-height:1.5em'>\
+                    <div style='flex:none;padding:2px 0 0 0;white-space:nowrap'>\
                         <button id='dlg_add_user' class='btn small'>Add User</button>\
-                        <button id='dlg_add_group' class='btn small'>Add Group</button><br>\
+                        <button id='dlg_add_group' class='btn small'>Add Group</button>\
+                    </div><div style='flex:none;padding:2px 0 0 0'>\
                         <button id='dlg_edit' class='btn small'>Edit</button>\
                         <button id='dlg_rem' class='btn small'>Remove</button>\
                     </div>\
@@ -37,9 +39,10 @@ function makeDlgSetACLs(){
                         <tr id='dlg_create_row' style='display:none'><td>Create:</td><td><select class='sel' id='dlg_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         </table>\
                     </div>\
-                    <div style='flex:none;line-height:1.5em'>\
+                    <div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button id='dlg_read_only' class='btn small'>Read Only</button>\
-                        <button id='dlg_read_write' class='btn small'>Read/Write</button><br>\
+                        <button id='dlg_read_write' class='btn small'>Read/Write</button>\
+                    </div><div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button id='dlg_grant_all' class='btn small'>Grant *</button>\
                         <button id='dlg_deny_all' class='btn small'>Deny *</button>\
                         <button id='dlg_inherit_all' class='btn small'>Inh. *</button>\
@@ -61,9 +64,10 @@ function makeDlgSetACLs(){
                         <tr><td>Create:</td><td><select class='inhsel' id='dlg_inh_create_sel'><option value='grant'>Grant</option><option value='deny'>Deny</option><option value='inherit'>Inherit</option></select></td></tr>\
                         </table>\
                     </div>\
-                    <div  style='flex:none;line-height:1.5em'>\
+                    <div  style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button id='dlg_inh_read_only' class='btn small'>Read Only</button>\
-                        <button id='dlg_inh_read_write' class='btn small'>Read/Write</button><br>\
+                        <button id='dlg_inh_read_write' class='btn small'>Read/Write</button>\
+                    </div><div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button id='dlg_inh_grant_all' class='btn small'>Grant *</button>\
                         <button id='dlg_inh_deny_all' class='btn small'>Deny *</button>\
                         <button id='dlg_inh_inherit_all' class='btn small'>Inh. *</button>\
@@ -258,7 +262,7 @@ function makeDlgSetACLs(){
 
                                 if ( data.response.member && data.response.member.length ){
                                     for ( var i in data.response.member ) {
-                                        data.result.push({ title: data.response.member[i].substr(2), icon:false });
+                                        data.result.push({ title: data.response.member[i].substr(2), icon:"ui-icon ui-icon-person" });
                                     }
                                 }else{
                                     data.result.push({ title: "(empty)", icon: false  });
@@ -282,6 +286,10 @@ function makeDlgSetACLs(){
             inst.disablePermControls( true );
             $("#dlg_edit",inst.frame).button("disable");
             $("#dlg_rem",inst.frame).button("disable");
+
+            // Switch dialog to fixed-hieght mode
+            var height = inst.frame.parent().height();
+            inst.frame.dialog( "option", "height", height + 10 );
         });
     }
 
@@ -294,17 +302,17 @@ function makeDlgSetACLs(){
         for ( var i in rules ){
             sub = rules[i];
             if ( sub.id.startsWith( "u/" ))
-                user_rules.push({title:sub.id.substring(2),icon:false,key:sub.id,rule:sub });
+                user_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-person",key:sub.id,rule:sub });
             else if ( sub.id.startsWith( "g/" ))
-                group_rules.push({title:sub.id.substring(2),icon:false,key:sub.id,rule:sub,folder:true,lazy:true });
+                group_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-persons",key:sub.id,rule:sub,folder:true,lazy:true });
             else
                 def_rule = sub;
         }
 
         var src = [
-            {title:"Users",folder:true,children:user_rules,key:"users"},
-            {title:"Groups",folder:true,children:group_rules,key:"groups"},
-            {title:"Default Permissions",folder:false,icon:false,key:"default",rule:def_rule }
+            {title:"Default",icon:"ui-icon ui-icon-settings",folder:false,key:"default",rule:def_rule },
+            {title:"Groups",icon:"ui-icon ui-icon-folder",folder:true,children:group_rules,key:"groups"},
+            {title:"Users",icon:"ui-icon ui-icon-folder",folder:true,children:user_rules,key:"users"}
         ];
 
         return src;

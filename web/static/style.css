@@ -146,9 +146,12 @@ td
 ul.ui-effects-placeholder { width:10px !important; }
 
 .ui-fancytree.fancytree-container { 
+    height: 100%;
+    /*width: 100%;*/
     border: none;
     font-size: 1rem;
 }
+
 
 /* Hide all jQ dialog close buttons */
 .ui-dialog-titlebar-close {
@@ -161,9 +164,24 @@ ul.ui-effects-placeholder { width:10px !important; }
     z-index: 110;
 }
 
+.ui-icon-person
+{
+    color: #0000FF
+}
+
+.ui-icon-persons
+{
+    color: #6000FF
+}
+
 .ui-icon-folder
 {
     color: #dFbF40
+}
+
+.ui-icon-copy
+{
+    color: #008F00
 }
 
 .ui-icon-box

@@ -68,6 +68,14 @@ enum Permissions
 
 // ============================ Data Structures
 
+message AllocData
+{
+    required string             repo        = 1;
+    required uint32             alloc       = 2;
+    required uint32             usage       = 3;
+    required string             path        = 4;
+}
+
 message UserData
 {
     required string             uid         = 1;
@@ -77,6 +85,7 @@ message UserData
     optional bool               is_admin    = 5;
     repeated string             admin       = 6;
     repeated string             ident       = 7;
+    repeated AllocData          alloc       = 9;
 }
 
 message ProjectData
@@ -85,10 +94,10 @@ message ProjectData
     required string             title       = 2;
     optional string             domain      = 3;
     optional string             desc        = 4;
-    optional string             repo        = 5;
     optional string             owner       = 6;
     repeated string             admin       = 7;
     repeated string             member      = 8;
+    repeated AllocData          alloc       = 9;
 }
 
 message ListingData

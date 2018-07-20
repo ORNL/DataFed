@@ -4,12 +4,10 @@ function makeDlgPickUser(){
     var inst = this;
 
     this.content =
-        "<div class='col-flex' style='height:100%'>\
-            <div style='flex:none;padding:.5rem 0 0 0'>Users:</div>\
-            <div class='ui-widget-content text' style='flex:1 1 auto;overflow:auto'>\
-                <div id='dlg_user_tree' class='no-border'></div>\
-            </div>\
+        "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
+            <div id='dlg_user_tree' class='no-border'></div>\
         </div>";
+
 
     this.show = function( a_uid, a_excl, cb ){
         inst.frame = $(document.createElement('div'));
@@ -23,7 +21,7 @@ function makeDlgPickUser(){
             title: "Select User(s)",
             modal: true,
             width: 400,
-            height: 'auto',
+            height: 500,
             resizable: true,
             closeOnEscape: false,
             buttons: [{
@@ -49,9 +47,9 @@ function makeDlgPickUser(){
             }],
             open: function(event,ui){
                 var src = [
-                    {title:"Collaborators",icon:false,folder:true,lazy:true,checkbox:false,key:"collab"},
-                    {title:"By Groups",icon:false,folder:true,lazy:true,checkbox:false,key:"groups"},
-                    {title:"All",icon:false,folder:true,lazy:true,checkbox:false,key:"all"}
+                    {title:"Collaborators",icon:"ui-icon ui-icon-view-list",folder:true,lazy:true,checkbox:false,key:"collab"},
+                    {title:"By Groups",icon:"ui-icon ui-icon-view-list",folder:true,lazy:true,checkbox:false,key:"groups"},
+                    {title:"All",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,checkbox:false,key:"all"}
                 ];
 
                 //src.push({title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"});
@@ -98,7 +96,7 @@ function makeDlgPickUser(){
                             for ( var i in data.response ) {
                                 user = data.response[i];
                                 if ( inst.excl.indexOf( user.uid ) == -1 )
-                                    data.result.push({ title: user.name + " ("+user.uid.substr(2) +")", key: user.uid });
+                                    data.result.push({ title: user.name + " ("+user.uid.substr(2) +")",icon:"ui-icon ui-icon-person",key: user.uid });
                             }
                         } else if ( data.node.key == "groups" ){
                             data.result = [];
@@ -106,7 +104,7 @@ function makeDlgPickUser(){
                             for ( var i in data.response ) {
                                 group = data.response[i];
                                 if ( inst.excl.indexOf( "g/"+group.gid ) == -1 )
-                                    data.result.push({ title: group.title + " ("+group.gid +")",icon:false,checkbox:false,folder:true,lazy:true,key:"g/"+group.gid });
+                                    data.result.push({ title: group.title + " ("+group.gid +")",icon:"ui-icon ui-icon-persons",checkbox:false,folder:true,lazy:true,key:"g/"+group.gid });
                             }
                         } else if ( data.node.key.startsWith("g/")){
                             data.result = [];
@@ -114,7 +112,7 @@ function makeDlgPickUser(){
                             for ( var i in data.response.member ) {
                                 mem = data.response.member[i];
                                 if ( inst.excl.indexOf( mem ) == -1 )
-                                    data.result.push({ title: mem.substr(2),icon:false,key:mem});
+                                    data.result.push({ title: mem.substr(2),icon:"ui-icon ui-icon-person",key:mem});
                             }
                         }
                     }

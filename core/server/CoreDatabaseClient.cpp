@@ -421,6 +421,7 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
     }
 
     UserData* user;
+    AllocData* alloc;
     rapidjson::Value::MemberIterator imem;
 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
@@ -447,6 +448,20 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
         {
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
                 user->add_ident( imem->value[j].GetString() );
+        }
+
+        if (( imem = val.FindMember("allocs")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+            {
+                rapidjson::Value & alloc_val = imem->value[j];
+
+                alloc = user->add_alloc();
+                alloc->set_repo(alloc_val["repo"].GetString());
+                alloc->set_alloc(alloc_val["alloc"].GetUint());
+                alloc->set_usage(alloc_val["usage"].GetUint());
+                alloc->set_path(alloc_val["path"].GetString());
+            }
         }
     }
 }
@@ -583,6 +598,7 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
     }
 
     ProjectData* proj;
+    AllocData* alloc;
     rapidjson::Value::MemberIterator imem;
 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
@@ -599,9 +615,6 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             proj->set_desc( imem->value.GetString() );
 
-        if (( imem = val.FindMember("repo")) != val.MemberEnd() )
-            proj->set_repo( imem->value.GetString() );
-
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             proj->set_owner( imem->value.GetString() );
 
@@ -615,6 +628,20 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
         {
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
                 proj->add_member( imem->value[j].GetString() );
+        }
+
+        if (( imem = val.FindMember("allocs")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+            {
+                rapidjson::Value & alloc_val = imem->value[j];
+
+                alloc = proj->add_alloc();
+                alloc->set_repo(alloc_val["repo"].GetString());
+                alloc->set_alloc(alloc_val["alloc"].GetUint());
+                alloc->set_usage(alloc_val["usage"].GetUint());
+                alloc->set_path(alloc_val["path"].GetString());
+            }
         }
     }
 }
