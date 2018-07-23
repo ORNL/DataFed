@@ -226,13 +226,12 @@ router.get('/view', function (req, res) {
 .summary('View current ACL on an object')
 .description('View current ACL on an object (data record or collection)');
 
+
 router.get('/by_user', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var result = g_db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._key,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._key,name:v.name})) return x", { user: client._id });
-
-        res.send( result );
+        res.send( g_lib.usersWithClientACLs( client._id ));
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -240,6 +239,7 @@ router.get('/by_user', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .summary('List users that have shared data or collections with client')
 .description('List users that have shared data or collections with client');
+
 
 router.get('/by_user/list', function (req, res) {
     try {
@@ -252,10 +252,11 @@ router.get('/by_user/list', function (req, res) {
         var item;
         for ( var i in items ){
             item = items[i];
-            console.log("item",item);
+            //console.log("item",item);
             if ( g_lib.hasPermission( client, item, g_lib.PERM_ALL, true ))
                 result.push({id:item._id,title:item.title});
         }
+        console.log("acl by_user list",result);
 
         res.send( result );
     } catch( e ) {

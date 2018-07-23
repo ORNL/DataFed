@@ -317,30 +317,36 @@ router.get('/loc', function (req, res) {
 
 // TODO Add limit, offset, and details options
 // TODO Add options for ALL, user/project, or collection (recursize or not) options
-router.get('/find', function (req, res) {
+router.get('/search', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         var result = [];
+        var scope;
+        if ( req.queryParams.scope )
+            scope = parseInt( req.queryParams.scope, 10 );
+        else
+            scope = g_lib.SS_MY_DATA | g_lib.SS_MY_PROJ;
 
-        if ( !req.queryParams.scope || req.queryParams.scope == "myall" ){
+        console.log("search scope:", scope );
+
+        if ( scope & g_lib.SS_MY_DATA )
             result = searchMyData( req.queryParams.query, client );
+
+        if ( scope & g_lib.SS_MY_PROJ )
             result = result.concat( searchMyProj( req.queryParams.query, client ));
-        } else if ( req.queryParams.scope == "mydata" ){
-            result = searchMyData( req.queryParams.query, client );
-        } else if ( req.queryParams.scope == "myproj" ){
-            result = searchMyProj( req.queryParams.query, client );
-        } else if ( req.queryParams.scope == "shared" ){
-            result = searchShared( req.queryParams.query, client );
-        } else if ( req.queryParams.scope == "public" ){
-            result = searchPublic( req.queryParams.query, client );
-        } else if ( req.queryParams.scope == "all" ){
-            result = searchMyData( req.queryParams.query, client );
-            result = result.concat( searchMyProj( req.queryParams.query, client ));
-            result = result.concat( searchShared( req.queryParams.query, client ));
+
+        if ( scope & g_lib.SS_TEAM_PROJ )
+            result = result.concat( searchTeamProj( req.queryParams.query, client ));
+
+        if ( scope & g_lib.SS_USER_SHARE )
+            result = result.concat( searchUserShared( req.queryParams.query, client ));
+
+        if ( scope & g_lib.SS_PROJ_SHARE )
+            result = result.concat( searchProjShared( req.queryParams.query, client ));
+
+        if ( scope & g_lib.SS_PUBLIC )
             result = result.concat( searchPublic( req.queryParams.query, client ));
-        } else
-            throw g_lib.ERR_INVALID_PARAM;
 
         res.send( result );
     } catch( e ) {
@@ -349,7 +355,7 @@ router.get('/find', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('query', joi.string().optional(), "Query expression")
-.queryParam('scope', joi.string().optional(), "Scope: myall,mydata,myproj,shared,public,all")
+.queryParam('scope', joi.number().optional(), "Scope")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
 
@@ -408,13 +414,27 @@ function searchMyProj( query, client ){
     // Administered projects
     result = result.concat( g_db._query( "for i,e,p in 2..2 inbound @user admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray());
 
+    return result;
+}
+
+function searchTeamProj( query, client ){
     // Member of project
-    result = result.concat( g_db._query( "for i,e,p in 3..3 inbound @user member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray());
+    var result = g_db._query( "for i,e,p in 3..3 inbound @user member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { user: client._id } ).toArray();
 
     return result;
 }
 
-function searchShared( query, client ){
+function searchUserShared( query, client ){
+    console.log("searchUserShared");
+    var users = g_lib.usersWithClientACLs( client._id );
+    for ( var i in users ){
+        users[i] = "u/"+users[i].uid;
+    }
+    return g_db._query( "for u in @users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { users: users } ).toArray();
+}
+
+function searchProjShared( query, client ){
+    console.log("searchProjShared");
     // TODO This is HARD: must check for user- or group-acls to data owned by a user (not a project)
     // AND all data linked to collections that have ACLs
     // AND VIEW/LIST permission must be evaluated for all returned items

@@ -44,6 +44,13 @@ module.exports = ( function() {
     obj.PROJ_MEMBER         = 1;
     obj.PROJ_ADMIN          = 2;
 
+    obj.SS_MY_DATA          = 0x01;
+    obj.SS_MY_PROJ          = 0x02;
+    obj.SS_TEAM_PROJ        = 0x04;
+    obj.SS_USER_SHARE       = 0x08;
+    obj.SS_PROJ_SHARE       = 0x10;
+    obj.SS_PUBLIC           = 0x20;
+
     /*
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
@@ -847,6 +854,12 @@ module.exports = ( function() {
         }
     };
 
+    obj.usersWithClientACLs = function( client_id ){
+        var result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._key,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._key,name:v.name})) return x", { user: client_id }).toArray();
+        console.log("usersWithACLs:",result);
+        return result;
+    };
+    
     return obj;
 }() );
 
