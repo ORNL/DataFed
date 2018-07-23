@@ -50,6 +50,16 @@ enum CollDelMode
     CDM_OWNED       = 1;
 }
 
+enum SearchScope
+{
+    SS_MY_DATA      = 0x01;
+    SS_MY_PROJ      = 0x02;
+    SS_TEAM_PROJ    = 0x04;
+    SS_USER_SHARE   = 0x08;
+    SS_PROJ_SHARE   = 0x10;
+    SS_PUBLIC       = 0x20;
+}
+
 enum Permissions
 {
     PERM_NONE       = 0x000;

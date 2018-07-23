@@ -519,9 +519,22 @@ function makeBrowserTab(){
 
     this.execQuery = function(){
         var query = $("#query_input").val();
-        var scope = $("#query_scope").val();
+        var scope = 0;
 
-        //console.log( "query:", query, scope );
+        if( $("#scope_mydat",inst.frame).prop("checked"))
+            scope |= SS_MY_DATA;
+        if( $("#scope_myproj",inst.frame).prop("checked"))
+            scope |= SS_MY_PROJ;
+        if( $("#scope_teamproj",inst.frame).prop("checked"))
+            scope |= SS_TEAM_PROJ;
+        if( $("#scope_usershare",inst.frame).prop("checked"))
+            scope |= SS_USER_SHARE;
+        if( $("#scope_projhare",inst.frame).prop("checked"))
+            scope |= SS_PROJ_SHARE;
+        if( $("#scope_public",inst.frame).prop("checked"))
+            scope |= SS_PUBLIC;
+
+        console.log( "query:", query, scope );
 
         setStatusText("Executing search query...");
         dataFind( query, scope, function( ok, items ){
@@ -544,7 +557,7 @@ function makeBrowserTab(){
             srch_node.setExpanded( true );
 
             if ( !inst.data_tree.activeNode )
-            inst.showSelectedInfo();
+                inst.showSelectedInfo();
         });
     }
 
@@ -739,7 +752,7 @@ function makeBrowserTab(){
             }
         },
         postProcess: function( event, data ) {
-            //console.log( "pos proc:", data );
+            console.log( "pos proc:", data );
             if ( data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
                 data.result = [];
                 if ( data.response.length ){
@@ -785,9 +798,11 @@ function makeBrowserTab(){
             } else if ( data.node.parent ) {
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
+                var items = data.response.data?data.response.data:data.response.item;
+                console.log(items);
 
-                for ( var i in data.response.data ) {
-                    item = data.response.data[i];
+                for ( var i in items ) {
+                    item = items[i];
                     is_folder = item.id[0]=="c"?true:false;
 
                     entry = { title: inst.generateTitle( item ),folder:is_folder,scope:scope,key:item.id };
@@ -903,12 +918,11 @@ function makeBrowserTab(){
         if (e.keyCode == 13)
             execQuery();
     });
-    $("#query_scope").selectmenu({
-        width:"auto"
-    });
-
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
+    $("#search_panel").accordion({collapsible:true,heightStyle:"content"});
+
+    $(".scope",inst.frame).checkboxradio();
 
     inst.showSelectedInfo();
 

@@ -33,7 +33,7 @@ private:
     bool procDataDeleteRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );
-    bool procRecordFindRequest( const std::string & a_uid );
+    bool procRecordSearchRequest( const std::string & a_uid );
 
     typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
 

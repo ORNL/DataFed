@@ -647,15 +647,15 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 }
 
 void
-DatabaseClient::recordFind( const RecordFindRequest & a_request, ListingReply & a_reply )
+DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
     params.push_back({"query",a_request.query()});
     if ( a_request.has_scope() )
-        params.push_back({"scope",a_request.scope()});
+        params.push_back({"scope",to_string(a_request.scope())});
 
-    dbGet( "/dat/find", params, result );
+    dbGet( "/dat/search", params, result );
 
     setListingData( a_reply, result );
 }

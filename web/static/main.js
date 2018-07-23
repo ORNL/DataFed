@@ -72,7 +72,7 @@ function createData( a_title, a_alias, a_desc, a_md, a_coll, a_callback ) {
 }
 
 function dataFind( a_query, a_scope, a_callback ) {
-    _asyncGet("/api/dat/find?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
+    _asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
 }
 
 function viewColl( a_id, a_cb ) {
@@ -326,6 +326,13 @@ var PERM_ALL            = 0x1FF;
 var PERM_PUBLIC         = 0x043;
 var PERM_READONLY       = 0x073;
 var PERM_READWRITE      = 0x0F7;
+
+var SS_MY_DATA          = 0x01;
+var SS_MY_PROJ          = 0x02;
+var SS_TEAM_PROJ        = 0x04;
+var SS_USER_SHARE       = 0x08;
+var SS_PROJ_SHARE       = 0x10;
+var SS_PUBLIC           = 0x20;
 
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();

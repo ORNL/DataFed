@@ -1,23 +1,7 @@
 <div class="col-flex" style="padding:0;height:100%;box-sizing:border-box">
-    <div class="row-flex" style="flex:none;align-items:center;padding: 0 0 .5em .25em">
-        <div style="flex:none;padding-right:.25em">
-            Search Query:
-        </div>
-        <div style="flex:1 1 100%;padding-right:.5em">
-            <input id="query_input" type='text' style="width:100%"></input>
-        </div>
-        <div style="flex:none;padding-right:.25em">
-            <select id="query_scope">
-                    <option value="myall" selected>My Data &amp Projects</option>
-                    <option value="mydata">My Data</option>
-                    <option value="myproj">My Projects</option>
-                    <option value="shared">Shared Data</option>
-                    <option value="public">Public Data</option>
-                    <option value="all">All Data</option>
-            </select>
-            <button class="btn" onclick="execQuery()">Search</button>
-        </div>
+    <div style="flex:none;padding-right:.25em">
     </div>
+
     <div class="row-flex" style="flex:1 1 100%">
         <div class="col-flex" style="flex:1 1 40%;padding:.25em;min-width:0">
             <div style="flex:none">Collections &amp Data:</div>
@@ -42,6 +26,24 @@
         <button class="btn" id="btn_upload" disabled>Upload</button>
         <button class="btn" id="btn_download" disabled>Download</button>
         <button class="btn" id="btn_allocs" style='float:right'>Allocations</button>
+    </div>
+    <div style="flex:none;padding:.25em">
+        <div id="search_panel">
+            <h3>Data Search</h3>
+            <div class="text"  style="padding:.5em">
+                <table style='width:100%'>
+                <tr><td style="vertical-align:middle">Query:</td><td><input id="query_input" type='text' style="width:100%"></input></td><td>&nbsp<button class="btn" onclick="execQuery()">Search</button></td></tr>
+                <tr><td style="vertical-align:middle">Scope:</td><td>
+                <label for='scope_mydat'>My Data</label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>
+                <label for='scope_myproj'>My Projects</label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>
+                <label for='scope_teamproj'>Team Projects</label><input class='scope' type='checkbox' name='scope_teamproj' id='scope_teamproj'>
+                <label for='scope_usershare'>User-Shared</label><input class='scope' type='checkbox' name='scope_usershare' id='scope_usershare'>
+                <label for='scope_projshare'>Project-Shared</label><input class='scope' type='checkbox' name='scope_projshare' id='scope_projshare'>
+                <label for='scope_public'>Public Data</label><input class='scope' type='checkbox' name='scope_public' id='scope_public'>
+                </td><td></td>
+                </table>
+            </div>
+        </div>
     </div>
     <div style="flex:none;padding:.25em">
         <div id="xfr_panel" >

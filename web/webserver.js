@@ -416,8 +416,8 @@ app.get('/api/grp/delete', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/dat/find', ( a_req, a_resp ) => {
-    sendMessage( "RecordFindRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
+app.get('/api/dat/search', ( a_req, a_resp ) => {
+    sendMessage( "RecordSearchRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
 });

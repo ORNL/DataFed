@@ -148,10 +148,10 @@ message RecordDeleteRequest
     required string             id          = 1;
 }
 
-message RecordFindRequest
+message RecordSearchRequest
 {
     required string             query       = 1;
-    optional string             scope       = 2;
+    optional uint32             scope       = 2;
 }
 
 message RecordDataLocationReply

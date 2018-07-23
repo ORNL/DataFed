@@ -80,7 +80,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest  );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RecordFindRequest, &Worker::procRecordFindRequest );
+        SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
 
         // Requests that can be handled by DB client directly
@@ -426,16 +426,16 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procRecordFindRequest( const std::string & a_uid )
+Worker::procRecordSearchRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordFindRequest, ListingReply )
+    PROC_MSG_BEGIN( RecordSearchRequest, ListingReply )
 
     m_db_client.setClient( a_uid );
-    RecordFindRequest req2;
+    RecordSearchRequest req2;
     req2.set_query( parseQuery( request->query() ));
     if ( request->has_scope())
         req2.set_scope( request->scope() );
-    m_db_client.recordFind( req2, reply );
+    m_db_client.recordSearch( req2, reply );
 
     PROC_MSG_END
 }

@@ -421,7 +421,7 @@ Client::parseQuery( const string & a_query )
 spListingReply
 Client::recordFind( const std::string & a_query )
 {
-    Auth::RecordFindRequest req;
+    Auth::RecordSearchRequest req;
 
     //req.set_query( parseQuery( a_query ));
     req.set_query( a_query );
