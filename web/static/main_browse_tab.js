@@ -529,7 +529,7 @@ function makeBrowserTab(){
             scope |= SS_TEAM_PROJ;
         if( $("#scope_usershare",inst.frame).prop("checked"))
             scope |= SS_USER_SHARE;
-        if( $("#scope_projhare",inst.frame).prop("checked"))
+        if( $("#scope_projshare",inst.frame).prop("checked"))
             scope |= SS_PROJ_SHARE;
         if( $("#scope_public",inst.frame).prop("checked"))
             scope |= SS_PUBLIC;
