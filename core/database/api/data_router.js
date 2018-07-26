@@ -435,11 +435,11 @@ function searchUserShared( query, client ){
 
 function searchProjShared( query, client ){
     console.log("searchProjShared");
-    // TODO This is HARD: must check for user- or group-acls to data owned by a user (not a project)
-    // AND all data linked to collections that have ACLs
-    // AND VIEW/LIST permission must be evaluated for all returned items
-    return [];
-}
+    var proj = g_lib.projectsWithClientACLs( client._id );
+    for ( var i in proj ){
+        proj[i] = proj[i].id;
+    }
+    return g_db._query( "for p in @proj for i in 1..1 inbound p owner filter IS_SAME_COLLECTION('d',i) and (" + query + ") return {id:i._id,title:i.title}", { proj: proj } ).toArray();}
 
 function searchPublic( query, client ){
     console.log("searchPublic",query);

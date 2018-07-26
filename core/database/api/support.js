@@ -856,12 +856,20 @@ module.exports = ( function() {
 
     obj.usersWithClientACLs = function( client_id ){
         var result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._key,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._key,name:v.name})) return x", { user: client_id }).toArray();
-        console.log("usersWithACLs:",result);
+
+        //console.log("usersWithACLs:",result);
         return result;
     };
-    
+
+    obj.projectsWithClientACLs = function( client_id ){
+        // Get projects that have ACLs set for client AND where client is not owner, admin, or member of project
+        var result = obj.db._query("for pr in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 2..2 inbound @user member, outbound owner filter is_same_collection('g',p.vertices[1]) and p.vertices[1].gid != 'members' and is_same_collection('p',v) return {id:v._id,title:v.title})) let m = (for v,e,p in 2..2 inbound pr.id owner, outbound member filter p.vertices[1].gid == 'members' and v._id == @user return v._id) filter length(m) == 0 return pr", { user: client_id }).toArray();
+
+        //console.log("projectsWithACLs:",result);
+        return result;
+    };
+
+
     return obj;
 }() );
 
-
-        

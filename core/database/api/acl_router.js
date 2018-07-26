@@ -272,8 +272,10 @@ router.get('/by_proj', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
+        var result = g_lib.projectsWithClientACLs( client._id );
+        /*
         var result = g_db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('p',v) return {id:v._id,title:v.title})) return x", { user: client._id });
-
+        */
         res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
