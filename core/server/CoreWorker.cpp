@@ -84,6 +84,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
 
         // Requests that can be handled by DB client directly
+        
+        SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
         SET_MSG_HANDLER_DB( proto_id, UserSaveTokensRequest, AckReply, userSaveTokens );
         SET_MSG_HANDLER_DB( proto_id, UserCreateRequest, UserDataReply, userCreate );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );

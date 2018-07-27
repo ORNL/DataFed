@@ -489,6 +489,11 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/has_perms', ( a_req, a_resp ) => {
+    sendMessage( "CheckPermsRequest", { id: a_req.query.id, perms: a_req.query.perms }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
 
 app.get('/api/acl/view', ( a_req, a_resp ) => {
     sendMessage( "ACLViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {

@@ -132,6 +132,16 @@ function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+a_id, null, a_cb );
 }
 
+function hasPerms( a_id, a_perms, a_cb ){
+    _asyncGet( "/api/has_perms?id="+a_id+"&perms="+a_perms, null, function(ok,data){
+        console.log("hasPerm",a_id,a_perms,ok,data);
+        if ( ok )
+            a_cb( data.granted );
+        else
+            a_cb( 0 );
+    });
+}
+
 function aclUpdate( a_id, a_rules, a_public, a_cb ) {
     //console.log("update rules:",JSON.stringify(a_rules));
     console.log("update acl:",a_public);

@@ -5,19 +5,19 @@
         <title>SDMS Welcome</title>
     </head>
     <body>
-        <div class="col-flex" style="height:100%">
+        <div class="col-flex ui-widget-content" style="height:100%;border:none">
             <div class="header" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center">
-                <div style="flex:1;font-size: 2em">Scientific Data Management System - Welcome!</div>
+                <div style="flex:1;font-size: 2em">Scientific Data Management System</div>
             </div>
-            <div id="content" class="ui-widget-content" style="padding:5em 10em;font-size:120%;flex:1 1 100%">
-                <center><button class="btn" onclick="location.href='/ui/login'">Log-In / Register</button></center>
+            <div class="ui-widget-header" style="flex:none;padding:.5em">
+                <span style="font-size: 1.5em">Welcome!</span><span style="float:right"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp&nbsp<button class="btn" onclick="location.href='/ui/login'">Log-In / Register</button></span>
+            </div>
+            <div id="content" class="" style="padding:3em 10em;font-size:120%;flex:1 1 50%">
                 <h1>About</h1>
                 <p>The Scientific Data Management System, or SDMS, is a distributed data control and coordination tool for scientific research efforts spanning multiple (geographically dispersed) experimental, compute, and analytic facilities. The key features of the SDMS are support for efficient storage and transfer of Big-Data, full-life-cycle data management, fine-grained access control, metadata-driven data discovery, and subscription-based data dissemination.</p>
                 <h2>Requirements</h2>
                 <p>A Globus Online account with a linked Globus ID identity is required to access the SDMS. If you do not have a Globus Online account, or have not yet linked a Globus ID identity, please sign-up (for free) at <a href="https://www.globusid.org/">GlobusID.org</a> then return to this page to register for SDMS access.</p>
                 <p>The SDMS utilizes Globus for automated file transfers on behalf of SDMS users (i.e. from jobs scipts, worklows, or applications). During registration, new users wil be redirected to a Globus authorization page where appropriate permissions must be granted to the SDMS application in order for automated file transfers to function. Please refer to the online SDMS documentation for additional information and requirements associated with data transfers.</p>
-                <br>
-                <center><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button></center>
             </div>
             <div class="footer" style="flex:none">
                 User: Not Logged In

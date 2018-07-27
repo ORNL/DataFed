@@ -20,51 +20,59 @@ function makeBrowserTab(){
     this.drag_enabled = true;
 
     this.deleteSelected = function(){
-        var msg,node = inst.data_tree.activeNode,msg = "<div>Are you sure you want to delete ";
-
-        if ( node.key[0] == "c" ) {
-            msg += "collection ID " + node.key + "?<p>Choose the 'ALL' option to delete <i>ALL</i> sub-collections and data, or the 'OWNED' option to delete all sub-collections and any data that is NOT linked to other independent collections.</p><div>";
-
-            confirmChoice( "Confirm Deletion", msg, ["All","OWNED","Cancel"], function( choice ){
-                console.log( "choice:",choice);
-                if ( choice != 2 ){
-                    url = "/api/col/delete?id=" + node.key + "&mode=" + (choice==0?"all":"owned");
-                    console.log( url);
-                    _asyncGet( url, null, function( ok, data ){
-                        if ( ok ) {
-                            inst.deleteNode( node.key );
-                            inst.updateBtnState();
-                        } else {
-                            alert( "Delete failed: " + data );
-                        }
-                    });
-                }
-            });
-        }else{
-            var url = "/api/";
-
-            if ( node.data.isproj ){
-                msg += "project ID " + node.key + "? This will delete <i>ALL</i> data and collections owned by the project.<div>";
-                url += "prj";
-            } else {
-                msg += "data ID " + node.key + "?<div>";
-                url += "dat";
+        var node = inst.data_tree.activeNode;
+        hasPerms( node.key, PERM_ADMIN, function( perms ){
+            if (( perms & PERM_ADMIN ) == 0 ){
+                dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                return;
             }
 
-            confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
-                if ( choice == 0 ){
-                    url += "/delete?id=" + node.key;
-                    _asyncGet( url, null, function( ok, data ){
-                        if ( ok ) {
-                            inst.deleteNode( node.key );
-                            inst.updateBtnState();
-                        } else {
-                            alert( "Delete failed: " + data );
-                        }
-                    });
+            var msg,msg = "<div>Are you sure you want to delete ";
+
+            if ( node.key[0] == "c" ) {
+                msg += "collection ID " + node.key + "?<p>Choose the 'ALL' option to delete <i>ALL</i> sub-collections and data, or the 'OWNED' option to delete all sub-collections and any data that is NOT linked to other independent collections.</p><div>";
+
+                confirmChoice( "Confirm Deletion", msg, ["All","OWNED","Cancel"], function( choice ){
+                    console.log( "choice:",choice);
+                    if ( choice != 2 ){
+                        url = "/api/col/delete?id=" + node.key + "&mode=" + (choice==0?"all":"owned");
+                        console.log( url);
+                        _asyncGet( url, null, function( ok, data ){
+                            if ( ok ) {
+                                inst.deleteNode( node.key );
+                                inst.updateBtnState();
+                            } else {
+                                alert( "Delete failed: " + data );
+                            }
+                        });
+                    }
+                });
+            }else{
+                var url = "/api/";
+
+                if ( node.data.isproj ){
+                    msg += "project ID " + node.key + "? This will delete <i>ALL</i> data and collections owned by the project.<div>";
+                    url += "prj";
+                } else {
+                    msg += "data ID " + node.key + "?<div>";
+                    url += "dat";
                 }
-            });
-        }
+
+                confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
+                    if ( choice == 0 ){
+                        url += "/delete?id=" + node.key;
+                        _asyncGet( url, null, function( ok, data ){
+                            if ( ok ) {
+                                inst.deleteNode( node.key );
+                                inst.updateBtnState();
+                            } else {
+                                alert( "Delete failed: " + data );
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 
     this.newProj = function() {
@@ -76,89 +84,117 @@ function makeBrowserTab(){
     this.newData = function() {
         var node = inst.data_tree.activeNode;
         if ( node && node.key[0] == "c" ) {
-            viewColl( node.key, function( coll ){
-                if ( coll ){
-                    var coll_id = coll.alias?coll.alias:coll.id;
+            hasPerms( node.key, PERM_CREATE, function( perms ){
+                if (( perms & PERM_CREATE ) == 0 ){
+                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                    return;
+                }
 
-                    dlgDataNewEdit(0,null,coll_id,function(data){
-                        inst.addNode( data );
-                    });
-                }else
-                    alert("Cannot access parent collection.");
-            }); 
+                viewColl( node.key, function( coll ){
+                    if ( coll ){
+                        var coll_id = coll.alias?coll.alias:coll.id;
+
+                        dlgDataNewEdit(0,null,coll_id,function(data){
+                            inst.addNode( data );
+                        });
+                    }else
+                        alert("Cannot access parent collection.");
+                });
+            });
         }
     }
 
     this.newColl = function() {
         var node = inst.data_tree.activeNode;
         if ( node && node.key[0] == "c" ) {
-            viewColl( node.key, function( coll ){
-                if ( coll ){
-                    var coll_id = coll.alias?coll.alias:coll.id;
+            hasPerms( node.key, PERM_CREATE, function( perms ){
+                if (( perms & PERM_CREATE ) == 0 ){
+                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                    return;
+                }
 
-                    dlgDataNewEdit(1,null,coll_id,function(data){
-                        inst.addNode( data );
-                    });
-                }else
-                    alert("Cannot access parent collection.");
-            }); 
+                viewColl( node.key, function( coll ){
+                    if ( coll ){
+                        var coll_id = coll.alias?coll.alias:coll.id;
+
+                        dlgDataNewEdit(1,null,coll_id,function(data){
+                            inst.addNode( data );
+                        });
+                    }else
+                        alert("Cannot access parent collection.");
+                });
+            });
         }
     }
 
     this.editSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
-            console.log( "edit sel", node, node.data.isproj );
-            if ( node.data.isproj ){
-                viewProj( node.key, function( data ){
-                    if ( data ){
-                        dlgProjNewEdit(data,function(data){
-                            console.log("edit proj cb:",data);
-                            inst.updateNodeTitle( data );
-                        });
-                    }else
-                        alert( "Cannot access project." );
-                });
-            }else if ( node.key[0] == "c" ) {
-                viewColl( node.key, function( data ){
-                    if ( data ){
-                        dlgDataNewEdit(1,data,null,function(data){
-                            inst.updateNodeTitle( data );
-                        });
-                    }else
-                        alert( "Cannot access collection." );
-                });
-            } else if ( node.key[0] == "d" ) {
-                viewData( node.key, function( data ){
-                    if ( data ){
-                        dlgDataNewEdit(0,data,null,function(data){
-                            inst.updateNodeTitle( data );
-                        });
-                    }else
-                        alert( "Cannot access data record." );
-                }); 
-            }
+            //console.log( "edit sel", node, node.data.isproj );
+            hasPerms( node.key, PERM_UPDATE, function( perms ){
+                if (( perms & PERM_UPDATE ) == 0 ){
+                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                    return;
+                }
+
+                if ( node.data.isproj ){
+                    viewProj( node.key, function( data ){
+                        if ( data ){
+                            dlgProjNewEdit(data,function(data){
+                                console.log("edit proj cb:",data);
+                                inst.updateNodeTitle( data );
+                            });
+                        }else
+                            alert( "Cannot access project." );
+                    });
+                }else if ( node.key[0] == "c" ) {
+                    viewColl( node.key, function( data ){
+                        if ( data ){
+                            dlgDataNewEdit(1,data,null,function(data){
+                                inst.updateNodeTitle( data );
+                            });
+                        }else
+                            alert( "Cannot access collection." );
+                    });
+                } else if ( node.key[0] == "d" ) {
+                    viewData( node.key, function( data ){
+                        if ( data ){
+                            dlgDataNewEdit(0,data,null,function(data){
+                                inst.updateNodeTitle( data );
+                            });
+                        }else
+                            alert( "Cannot access data record." );
+                    }); 
+                }
+            });
         }
     }
 
     this.shareSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
-            if ( node.key[0] == "c" ){
-                viewColl( node.key, function( coll ){
-                    if ( coll )
-                        dlgSetACLs.show( coll );
-                    else
-                        alert("Cannot access collection.");
-                });
-            } else {
-                viewData( node.key, function( data ){
-                    if ( data )
-                        dlgSetACLs.show( data );
-                    else
-                        alert( "Cannot access data record." );
-                });
-            }
+            hasPerms( node.key, PERM_ADMIN, function( perms ){
+                if (( perms & PERM_ADMIN ) == 0 ){
+                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                    return;
+                }
+
+                if ( node.key[0] == "c" ){
+                    viewColl( node.key, function( coll ){
+                        if ( coll )
+                            dlgSetACLs.show( coll );
+                        else
+                            alert("Cannot access collection.");
+                    });
+                } else {
+                    viewData( node.key, function( data ){
+                        if ( data )
+                            dlgSetACLs.show( data );
+                        else
+                            alert( "Cannot access data record." );
+                    });
+                }
+            });
         }
     }
 
@@ -188,12 +224,19 @@ function makeBrowserTab(){
         var key = inst.data_tree.activeNode.key;
 
         if ( key[0] == "d" ) {
-            viewData( key, function( data ){
-                if ( data )
-                    dlgStartTransfer( a_mode, data );
-                else
-                    alert( "Cannot access data record." );
-            }); 
+            hasPerms( key, a_mode==1?PERM_READ:PERM_WRITE, function( perms ){
+                if (( perms & ( a_mode==1?PERM_READ:PERM_WRITE )) == 0 ){
+                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                    return;
+                }
+
+                viewData( key, function( data ){
+                    if ( data )
+                        dlgStartTransfer( a_mode, data );
+                    else
+                        alert( "Cannot access data record." );
+                }); 
+            });
         }
     }
 

@@ -1389,8 +1389,6 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
     }
 }
 
-
-/*
 void
 DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
@@ -1401,6 +1399,7 @@ DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply
     a_reply.set_granted( result["granted"].GetInt() );
 }
 
+/*
 uint16_t
 DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 {
