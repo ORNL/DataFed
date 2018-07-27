@@ -95,3 +95,41 @@ router.get('/xfr/pre', function (req, res) {
 .summary('Performs pre-transfer authorization')
 .description('Performs pre-transfer authorization. Returns required globus transfer parameters');
 
+router.get('/check', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var result = req.queryParams.perms;
+        var id = req.queryParams.id;
+        var ty = id[0];
+
+        if ( id[1] != "/" )
+            throw g_lib.ERR_INVALID_PARAM;
+
+        if ( ty == "p" ){
+            var role = g_lib.getProjectRole( client._id, id );
+            if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only LIST and VIEW permissions
+                if (( req.queryParams.perms & ~(g_lib.PERM_LIST | g_lib.PERM_VIEW)) != 0 )
+                    result = 0;
+            } else if ( role == g_lib.PROJ_MEMBER ){ // Members have all but ADMIN and UPDATE
+                if (( req.queryParams.perms & ~g_lib.PERM_MEMBER) != 0 )
+                    result = 0;
+            }
+        }else if ( ty == "d" || ty == "c" ){
+            if ( !g_lib.hasAdminPermObject( client, id )){
+                var obj = g_db[ty].document( id );
+                if (!g_lib.hasPermission( client, obj, req.queryParams.perms ))
+                    result = 0;
+            }
+        }else
+            throw g_lib.ERR_INVALID_PARAM;
+
+        res.send({ granted: result });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "Object ID")
+.queryParam('perms', joi.number().required(), "Permission bits")
+.summary('Checks client permissions for object')
+.description('Checks client permissions for object (projects, data, collections');

@@ -225,7 +225,8 @@ router.get('/list', function (req, res) {
 
         if ( req.queryParams.proj ) {
             owner_id = req.queryParams.proj;
-            g_lib.ensureAdminPermProj( client, owner_id );
+            if ( g_lib.getProjectRole( client._id, owner_id ) == g_lib.PROJ_NO_ROLE )
+                throw g_lib.ERR_PERM_DENIED;
         } else {
             owner_id = client._id;
         }
@@ -254,7 +255,8 @@ router.get('/view', function (req, res) {
             if ( !group )
                 throw g_lib.ERR_GROUP_NOT_FOUND;
 
-            g_lib.ensureAdminPermObject( client, group._id );
+            if ( g_lib.getProjectRole( client._id, uid ) == g_lib.PROJ_NO_ROLE )
+                throw g_lib.ERR_PERM_DENIED;
         } else {
             group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
             if ( !group )

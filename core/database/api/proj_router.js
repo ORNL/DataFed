@@ -227,7 +227,7 @@ router.get('/view', function (req, res) {
         } else
             proj.admins = [];
 
-        if ( g_lib.getProjectRole( client, proj ) != g_lib.PROJ_NO_ROLE ){
+        if ( g_lib.getProjectRole( client._id, proj._id ) != g_lib.PROJ_NO_ROLE ){
             var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._id", { proj: proj._id }).toArray();
 
             if ( members.length ) {

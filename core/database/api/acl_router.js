@@ -101,7 +101,11 @@ router.get('/update', function (req, res) {
                 if ( !is_coll && object._id[0] != "d" )
                     throw g_lib.ERR_INVALID_ID;
 
-                g_lib.ensureAdminPermObject( client, object._id );
+                if ( !g_lib.hasAdminPermObject( client, object._id )){
+                    if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ) )
+                        throw g_lib.ERR_PERM_DENIED;
+                }
+
                 var do_upd = false;
                 var new_obj = {};
 

@@ -201,14 +201,14 @@ module.exports = ( function() {
         return result[0];
     };
 
-    obj.getProjectRole = function( a_client, a_proj ){
-        if ( obj.db.owner.firstExample({ _from: a_proj._id, _to: a_client._id }))
+    obj.getProjectRole = function( a_client_id, a_proj_id ){
+        if ( obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client_id }))
             return obj.PROJ_ADMIN;
 
-        if ( obj.db.admin.firstExample({ _from: a_proj._id, _to: a_client._id }))
+        if ( obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client_id }))
             return obj.PROJ_ADMIN;
 
-        var res = obj.db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' and v._id == @proj return { id: v._id }", { user: a_client._id, proj: a_proj._id }).toArray();
+        var res = obj.db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' and v._id == @proj return { id: v._id }", { user: a_client_id, proj: a_proj_id }).toArray();
 
         if ( res.length == 1 )
             return obj.PROJ_MEMBER;
@@ -467,6 +467,7 @@ module.exports = ( function() {
      */
     obj.hasPermission = function( a_client, a_object, a_req_perm, any ) {
         console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
+        console.log("grant:", a_object.grant, "deny:", a_object.deny );
 
         var perm_found  = 0;
         var perm_deny   = 0;
@@ -490,7 +491,7 @@ module.exports = ( function() {
             perm_found |= ( acl.grant | acl.deny );
             perm_deny |= acl.deny;
         }
-        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+        console.log("perm_req (post user):", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
         //console.log("eval res:", result );
         if ( result != null ) {
@@ -512,7 +513,7 @@ module.exports = ( function() {
             }
         }
 
-        //console.log("perm_req:", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
+        console.log("perm_req (post group):", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
 
         result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
 
@@ -526,18 +527,21 @@ module.exports = ( function() {
         //console.log("check default, perm_found:", perm_found );
 
         mask = ~perm_found;
-        if ( mask & ( a_object.grant | a_object.deny ) > 0 ) {
-            //console.log("default perm has bits", a_object.grant, a_object.deny );
+        console.log("mask:",mask,"eval:",( a_object.grant | a_object.deny ),"eval2:",mask & ( a_object.grant | a_object.deny ));
+        if (( mask & ( a_object.grant | a_object.deny )) > 0 ) {
+            console.log("default perm has bits", a_object.grant, a_object.deny );
             perm_found |= ( a_object.grant | a_object.deny );
             perm_deny |= ( a_object.deny & mask );
 
-            //console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
+            console.log("def perm_founf:", perm_found, "perm_deny:", perm_deny );
             result = obj.evalPermissions( a_req_perm, perm_found, perm_deny, any );
             if ( result != null ) {
                 console.log("perm (loc def):", result );
                 return result;
             }
         }
+
+        console.log("perm_req (post def):", a_req_perm, "perm_found:", perm_found, "perm_deny:", perm_deny );
 
         // If not all requested permissions have been found, evaluate permissions inherited from parent collections
         // Note that items can only be linked to containers that share the same owner
