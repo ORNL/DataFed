@@ -107,12 +107,12 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.md )
                     obj.md = JSON.parse( req.queryParams.md );
 
-                console.log("Save data");
+                //console.log("Save data");
 
                 var data = g_db.d.save( obj, { returnNew: true });
-                console.log("Save owner");
+                //console.log("Save owner");
                 g_db.owner.save({ _from: data.new._id, _to: owner_id });
-                console.log("Save loc", repo_alloc );
+                //console.log("Save loc", repo_alloc );
                 g_db.loc.save({ _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key });
 
                 if ( req.queryParams.alias ) {
@@ -159,15 +159,16 @@ router.get('/update', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
-                write: ["d","a","owner","alias"]
+                read: ["u","uuid","accn","loc"],
+                write: ["d","a","owner","alias","alloc"]
             },
             action: function() {
                 var data;
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
+                var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+
                 if ( !g_lib.hasAdminPermObject( client, data_id )) {
-                    data = g_db.d.document( data_id );
                     if ( !g_lib.hasPermission( client, data, g_lib.PERM_UPDATE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
@@ -201,6 +202,17 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.data_size != undefined ) {
                     obj.data_size = req.queryParams.data_size;
                     do_update = true;
+
+                    data = g_db.d.document( data_id );
+                    if ( obj.data_size != data.data_size ){
+                        var loc = g_db.loc.firstExample({ _from: data_id });
+                        if ( loc ){
+                            console.log("owner:",owner_id,"repo:",loc._to);
+                            var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                            var usage = Math.max(0,alloc.usage - data.data_size + obj.data_size);
+                            g_db._update( alloc._id, {usage:usage});
+                        }
+                    }
                 }
 
                 if ( req.queryParams.data_time != undefined ) {
@@ -222,7 +234,6 @@ router.get('/update', function (req, res) {
                         g_db.alias.remove( old_alias );
                     }
 
-                    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
                     var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
 
                     g_db.a.save({ _key: alias_key });
