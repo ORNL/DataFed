@@ -100,9 +100,6 @@ XfrMgr::xfrThreadFunc()
         map<string,MsgComm*>    repo_comm;
         map<string,MsgComm*>::iterator comm;
 
-        // TODO - This is just for demo, must use core server to communicate with repos
-        //MsgComm  repo_comm( "tcp://localhost:9000", MsgComm::DEALER, false, & m_mgr.getSecurityContext() );
-
         while( m_run )
         {
             sleep( 1 );

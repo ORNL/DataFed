@@ -1389,6 +1389,51 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
     }
 }
 
+
+void
+DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/alloc/list/by_owner", {{"owner",m_client_uid}}, result );
+
+    setAllocData( a_reply, result );
+}
+
+
+void
+DatabaseClient::repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/alloc/list/by_owner", {{"owner",a_request.id()}}, result );
+
+    setAllocData( a_reply, result );
+}
+
+void
+DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    AllocData * alloc;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        alloc = a_reply.add_alloc();
+        alloc->set_repo(val["repo"].GetString());
+        alloc->set_alloc(val["alloc"].GetUint());
+        alloc->set_usage(val["usage"].GetUint());
+        alloc->set_path(val["path"].GetString());
+    }
+}
+
 void
 DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {

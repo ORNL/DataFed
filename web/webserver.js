@@ -620,14 +620,18 @@ app.get('/api/unlink', ( a_req, a_resp ) => {
     });
 });
 
-// TODO Finish this!!!
-app.get('/api/repo/list/by_alloc', ( a_req, a_resp ) => {
-    sendMessage( "RepoListByAllocRequest", {}, a_req, a_resp, function( reply ) {
+
+app.get('/api/repo/alloc/list/by_user', ( a_req, a_resp ) => {
+    sendMessage( "RepoListUserAllocationsRequest", {}, a_req, a_resp, function( reply ) {
         console.log( "reply:", reply.alloc );
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
-            a_resp.send([]);
+        a_resp.send(reply.alloc?reply.alloc:[]);
+    });
+});
+
+app.get('/api/repo/alloc/list/by_proj', ( a_req, a_resp ) => {
+    sendMessage( "RepoListProjectAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        console.log( "reply:", reply.alloc );
+        a_resp.send(reply.alloc?reply.alloc:[]);
     });
 });
 

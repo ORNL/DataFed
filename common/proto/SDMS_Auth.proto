@@ -403,3 +403,17 @@ message RepoDataSizeReply
     required string             id          = 1;
     required uint64             size        = 2;
 }
+
+message RepoListUserAllocationsRequest
+{
+}
+
+message RepoListProjectAllocationsRequest
+{
+    required string             id          = 1;
+}
+
+message RepoAllocationsReply
+{
+    repeated AllocData          alloc       = 1;
+}

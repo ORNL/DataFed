@@ -83,6 +83,8 @@ public:
     void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply );
 
+    void repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
+    void repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
@@ -96,6 +98,7 @@ private:
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
+    void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
 
     CURL *      m_curl;
     char *      m_client;
