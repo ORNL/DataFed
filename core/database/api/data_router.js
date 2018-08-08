@@ -152,7 +152,6 @@ router.get('/create', function (req, res) {
 .summary('Creates a new data record')
 .description('Creates a new data record');
 
-
 router.get('/update', function (req, res) {
     try {
         var result = [];
@@ -289,9 +288,7 @@ router.get('/view', function (req, res) {
             data.alias = alias[0]._key;
         }
 
-        data.repo = g_db.loc.firstExample({ _from: data_id });
-        if ( data.repo )
-            data.repo = data.repo._to;
+        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
         data.owner = owner_id;
         delete data._rev;
         delete data._key;
@@ -378,7 +375,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","n","owner","item","acl","tag","note","alias","loc"]
+                write: ["d","a","n","owner","item","acl","tag","note","alias","loc","alloc"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -388,6 +385,15 @@ router.get('/delete', function (req, res) {
 
                 var data = g_db.d.document( data_id );
                 var loc = g_db.loc.firstExample({_from: data_id });
+
+                // Adjust allocation for data size
+                if ( data.data_size ){
+                    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+                    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                    var usage = Math.max(0,alloc.usage - data.data_size);
+                    g_db._update( alloc._id, {usage:usage});
+                }
+
                 result.push({ id: data_id, repo_id: loc._to, path: loc.path });
 
                 const graph = require('@arangodb/general-graph')._graph('sdmsg');
