@@ -7,6 +7,7 @@ function makeBrowserTab(){
     inst.data_ident = $("#data_ident",inst.frame);
     inst.data_info = $("#data_info",inst.frame);
     this.xfr_hist = $("#xfr_hist",inst.frame);
+    this.alloc_stat = $("#alloc_stat",inst.frame);
     this.data_tree = null;
     this.data_md_tree = null;
     this.data_md_empty = true;
@@ -198,6 +199,13 @@ function makeBrowserTab(){
         }
     }
 
+    this.editAllocSelected = function(){
+        var node = inst.data_tree.activeNode;
+        if ( node ) {
+            dlgAllocations.show();
+        }
+    }
+
     this.updateNodeTitle = function( data ){
         console.log( "upnodetitle", data );
         var title = inst.generateTitle( data );
@@ -250,6 +258,7 @@ function makeBrowserTab(){
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
+            $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "d" ) {
             $("#btn_new_data",inst.frame).button("option","disabled",true);
             $("#btn_new_coll",inst.frame).button("option","disabled",true);
@@ -258,6 +267,7 @@ function makeBrowserTab(){
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",false);
             $("#btn_download",inst.frame).button("option","disabled",false);
+            $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "r" ) {
             $("#btn_new_data",inst.frame).button("option","disabled",false);
             $("#btn_new_coll",inst.frame).button("option","disabled",false);
@@ -266,6 +276,7 @@ function makeBrowserTab(){
             $("#btn_share",inst.frame).button("option","disabled",!admin);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
+            $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "p" ) {
             $("#btn_new_data",inst.frame).button("option","disabled",true);
             $("#btn_new_coll",inst.frame).button("option","disabled",true);
@@ -274,6 +285,7 @@ function makeBrowserTab(){
             $("#btn_share",inst.frame).button("option","disabled",true);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
+            $("#btn_alloc",inst.frame).button("option","disabled",false);
         } else {
             $("#btn_new_data",inst.frame).button("option","disabled",true);
             $("#btn_new_coll",inst.frame).button("option","disabled",true);
@@ -282,6 +294,7 @@ function makeBrowserTab(){
             $("#btn_share",inst.frame).button("option","disabled",true);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
+            $("#btn_alloc",inst.frame).button("option","disabled",state != "m");
         }
     }
 
@@ -318,7 +331,7 @@ function makeBrowserTab(){
             if ( key == "mydata" ) {
                 html = "My Data";
                 inst.data_ident.html( html );
-                inst.updateBtnState();
+                inst.updateBtnState("m");
                 inst.showSelectedMetadata();
 
                 userView( g_user.uid, true, function( ok, user ){
@@ -328,11 +341,13 @@ function makeBrowserTab(){
                         html += "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><th>Field</th><th>Value</th></tr>";
                         html += "<tr><td>Allocation(s):</td><td>";
+
                         if ( user.alloc && user.alloc.length ){
-                            var alloc;
+                            var alloc,free;
                             for ( i in user.alloc ){
                                 alloc = user.alloc[i]
-                                html += alloc.repo + ": " + alloc.alloc + " GB total, " + alloc.usage + " GB used<br>";
+                                free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
+                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
                             }
                         }else{
                             html += "(none)";
@@ -388,7 +403,8 @@ function makeBrowserTab(){
                         html += "<tr><th>Field</th><th>Value</th></tr>";
                         html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
-                        html += "<tr><td>Data Size (bytes):</td><td>" + (item.dataSize?item.dataSize:"n/a") + "</td></tr>";
+                        html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
+                        html += "<tr><td>Data Size:</td><td>" + sizeToString( item.dataSize ) + "</td></tr>";
                         html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
                         html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
@@ -434,10 +450,11 @@ function makeBrowserTab(){
                         }
                         html += "<tr><td>Allocation(s):</td><td>";
                         if ( item.alloc && item.alloc.length ){
-                            var alloc;
+                            var alloc,free;
                             for ( i in item.alloc ){
                                 alloc = item.alloc[i]
-                                html += alloc.repo + ": " + alloc.alloc + " GB total, " + alloc.usage + " GB used<br>";
+                                free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
+                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
                             }
                         }else{
                             html += "(none)";
@@ -662,10 +679,9 @@ function makeBrowserTab(){
                 inst.xfrUpdateHistory( inst.xfrHist );
             }
             inst.pollSince = 10;
-            inst.pollTimer = setTimeout( inst.xfrHistoryPoll, 1000*(inst.pollSince-1));
+            inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000*(inst.pollSince-1));
         });
     }
-
 
     var tree_source = [
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,children:[{
@@ -955,6 +971,7 @@ function makeBrowserTab(){
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(0) });
     $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(1) });
+    $("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
     $("#query_input").on('keyup', function (e) {
@@ -962,12 +979,17 @@ function makeBrowserTab(){
             execQuery();
     });
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
-    $("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
-    $("#search_panel").accordion({collapsible:true,heightStyle:"content"});
+    //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
+    //$("#search_panel").accordion({collapsible:true,heightStyle:"content"});
+
+    $("#footer-tabs").tabs({heightStyle:"fill",collapsible: true}).css({
+        /*'min-height': '50px',*/
+        'overflow': 'auto'
+    });
 
     $(".scope",inst.frame).checkboxradio();
 
     inst.showSelectedInfo();
 
-    this.pollTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
+    this.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
 }

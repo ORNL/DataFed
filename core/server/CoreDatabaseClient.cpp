@@ -458,8 +458,8 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
 
                 alloc = user->add_alloc();
                 alloc->set_repo(alloc_val["repo"].GetString());
-                alloc->set_alloc(alloc_val["alloc"].GetUint());
-                alloc->set_usage(alloc_val["usage"].GetUint());
+                alloc->set_alloc(alloc_val["alloc"].GetUint64());
+                alloc->set_usage(alloc_val["usage"].GetUint64());
                 alloc->set_path(alloc_val["path"].GetString());
             }
         }
@@ -638,8 +638,8 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 
                 alloc = proj->add_alloc();
                 alloc->set_repo(alloc_val["repo"].GetString());
-                alloc->set_alloc(alloc_val["alloc"].GetUint());
-                alloc->set_usage(alloc_val["usage"].GetUint());
+                alloc->set_alloc(alloc_val["alloc"].GetUint64());
+                alloc->set_usage(alloc_val["usage"].GetUint64());
                 alloc->set_path(alloc_val["path"].GetString());
             }
         }
@@ -806,17 +806,19 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
             //rec->set_metadata( imem->value.GetString() );
         }
 
-        if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
-            rec->set_data_path( imem->value.GetString() );
+        //if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
+        //    rec->set_data_path( imem->value.GetString() );
+        if (( imem = val.FindMember("repo_id")) != val.MemberEnd() )
+            rec->set_repo_id( imem->value.GetString() );
 
         if (( imem = val.FindMember("data_size")) != val.MemberEnd() )
             rec->set_data_size( imem->value.GetUint64() );
 
         if (( imem = val.FindMember("data_time")) != val.MemberEnd() )
-            rec->set_data_time( imem->value.GetUint64() );
+            rec->set_data_time( imem->value.GetUint() );
 
         if (( imem = val.FindMember("rec_time")) != val.MemberEnd() )
-            rec->set_rec_time( imem->value.GetUint64() );
+            rec->set_rec_time( imem->value.GetUint() );
     }
     //cout << "SetRecordData done" << endl;
 }
@@ -1088,8 +1090,8 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_local_path( val["local_path"].GetString() );
         xfr->set_user_id( val["user_id"].GetString() );
         xfr->set_repo_id( val["repo_id"].GetString() );
-        xfr->set_started( val["started"].GetUint64() );
-        xfr->set_updated( val["updated"].GetUint64() );
+        xfr->set_started( val["started"].GetUint() );
+        xfr->set_updated( val["updated"].GetUint() );
 
         imem = val.FindMember("task_id");
         if ( imem != val.MemberEnd() )
@@ -1393,6 +1395,8 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
 void
 DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
+    (void)a_request;
+
     rapidjson::Document result;
 
     dbGet( "repo/alloc/list/by_owner", {{"owner",m_client_uid}}, result );
@@ -1428,8 +1432,8 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
 
         alloc = a_reply.add_alloc();
         alloc->set_repo(val["repo"].GetString());
-        alloc->set_alloc(val["alloc"].GetUint());
-        alloc->set_usage(val["usage"].GetUint());
+        alloc->set_alloc(val["alloc"].GetUint64());
+        alloc->set_usage(val["usage"].GetUint64());
         alloc->set_path(val["path"].GetString());
     }
 }

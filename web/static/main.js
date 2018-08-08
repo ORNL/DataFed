@@ -29,8 +29,9 @@ function _asyncGet( a_path, a_raw_json_data, a_callback ) {
         data: a_raw_json_data,
         dataType: 'json',
         success : function( a_data ) {
-            if ( a_callback )
+            if ( a_callback ){
                 a_callback( true, a_data );
+            }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
             //console.log( 'asyncGet error: ', a_xhr );
@@ -143,8 +144,6 @@ function hasPerms( a_id, a_perms, a_cb ){
 }
 
 function aclUpdate( a_id, a_rules, a_public, a_cb ) {
-    //console.log("update rules:",JSON.stringify(a_rules));
-    console.log("update acl:",a_public);
     _asyncGet( "/api/acl/update?id="+a_id+"&rules="+JSON.stringify(a_rules)+"&pub="+a_public, null, a_cb );
 }
 
@@ -321,6 +320,19 @@ function dlgAlert( title, msg, cb ) {
     div.dialog( options );
 }
 
+function sizeToString( a_bytes ){
+    if ( a_bytes < 1024 )
+        return a_bytes + " B";
+    else if ( a_bytes < 1048576 )
+        return Math.floor( a_bytes / 102.4 )/10 + " KB";
+    else if ( a_bytes < 1073741824 )
+        return Math.floor( a_bytes / 104857.6 )/10 + " MB";
+    else if ( a_bytes < 1099511627776 )
+        return Math.floor( a_bytes / 107374182.4 )/10 + " GB";
+    else
+        return Math.floor( a_bytes / 109951162777.6 )/10 + " TB";
+}
+
 var status_timer;
 
 var PERM_LIST           = 0x001;   // Find record by browsing
@@ -348,5 +360,6 @@ var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
+var dlgAllocations = new makeDlgAllocations();
 
 console.log( "main.js loaded");

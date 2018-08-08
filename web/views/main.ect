@@ -10,6 +10,7 @@
         <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_group_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_allocations.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main_repo_tab.js"></script>
@@ -77,7 +78,7 @@
             }
         });
 
-        $("#tabs").tabs({heightStyle:"fill"}).css({
+        $("#tabs").tabs({heightStyle:"fill",collapsible: true}).css({
             'min-height': '50px',
             'overflow': 'auto'
         });

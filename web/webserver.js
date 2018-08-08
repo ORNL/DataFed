@@ -244,28 +244,25 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
 
 app.get('/api/usr/find', ( a_req, a_resp ) => {
     sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.user[0]);
+        a_resp.json( reply.user[0] );
     });
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
     sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.user[0]);
+        a_resp.json( reply.user[0] );
     });
 });
 
 app.get('/api/usr/list/all', ( a_req, a_resp ) => {
     sendMessage( "UserListAllRequest", {}, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.user);
+        a_resp.json(reply.user);
     });
 });
 
 app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
     sendMessage( "UserListCollabRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.user )
-            a_resp.send(reply.user);
-        else
-            a_resp.send([]);
+        a_resp.json(reply.user?reply.user:[]);
     });
 });
 
@@ -542,7 +539,7 @@ app.get('/api/xfr/list', ( a_req, a_resp ) => {
     if ( a_req.query.since )
         params.since = a_req.query.since;
     sendMessage( "XfrListRequest", params, a_req, a_resp, function( reply ) {
-        a_resp.send(reply);
+        a_resp.json(reply);
     });
 });
 
@@ -623,15 +620,33 @@ app.get('/api/unlink', ( a_req, a_resp ) => {
 
 app.get('/api/repo/alloc/list/by_user', ( a_req, a_resp ) => {
     sendMessage( "RepoListUserAllocationsRequest", {}, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.alloc );
-        a_resp.send(reply.alloc?reply.alloc:[]);
+        // Note: uint64 size values are sent as strings and must be parsed here
+        if ( reply.alloc && reply.alloc.length ){
+            var reply2 = [];
+            var alloc;
+            for ( var i in reply.alloc ){
+                alloc = reply.alloc[i];
+                reply2.push({repo:alloc.repo,alloc:parseInt(alloc.alloc),usage:parseInt(alloc.usage),path:alloc.path});
+            }
+            a_resp.json(reply2);
+        } else
+            a_resp.json([]);
     });
 });
 
 app.get('/api/repo/alloc/list/by_proj', ( a_req, a_resp ) => {
     sendMessage( "RepoListProjectAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        console.log( "reply:", reply.alloc );
-        a_resp.send(reply.alloc?reply.alloc:[]);
+        // Note: uint64 size values are sent as strings and must be parsed here
+        if ( reply.alloc && reply.alloc.length ){
+            var reply2 = [];
+            var alloc;
+            for ( var i in reply.alloc ){
+                alloc = reply.alloc[i];
+                reply2.push({repo:alloc.repo,alloc:parseInt(alloc.alloc),usage:parseInt(alloc.usage),path:alloc.path});
+            }
+            a_resp.json(reply2);
+        } else
+            a_resp.json([]);
     });
 });
 
@@ -760,6 +775,9 @@ function allocRequestContext( a_response, a_callback ) {
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
     var client = a_req.cookies[ 'sdms' ];
+
+    a_resp.setHeader('Content-Type', 'application/json');
+
     if ( !client ) {
         a_resp.status(403).send( "Not authorized" );
         return;

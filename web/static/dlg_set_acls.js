@@ -301,6 +301,7 @@ function makeDlgSetACLs(){
 
         for ( var i in rules ){
             sub = rules[i];
+
             if ( sub.id.startsWith( "u/" ))
                 user_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-person",key:sub.id,rule:sub });
             else if ( sub.id.startsWith( "g/" ))
