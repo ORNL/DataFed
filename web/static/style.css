@@ -38,7 +38,7 @@ body
     background: #004000;
     color: #ffffff;
     /*font-size: 1.6em;*/
-    padding: .5em;
+    /*padding: .5em;*/
 }
 
 .content
@@ -88,6 +88,11 @@ body
     border-collapse:collapse;
     width:100%;
     text-align:left;
+}
+
+.info_table td
+{
+    vertical-align:middle;
 }
 
 .info_table tr:nth-child(even)

@@ -617,6 +617,17 @@ app.get('/api/unlink', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/list', ( a_req, a_resp ) => {
+    var params = {};
+    if ( a_req.query.admin )
+        params.admin = a_req.query.admin;
+    if ( a_req.query.details )
+        params.details = a_req.query.details;
+    sendMessage( "RepoListRequest", params, a_req, a_resp, function( reply ) {
+        console.log( "repo list:",reply.repo);
+        a_resp.json(reply.repo?reply.repo:[]);
+    });
+});
 
 app.get('/api/repo/alloc/list/by_user', ( a_req, a_resp ) => {
     sendMessage( "RepoListUserAllocationsRequest", {}, a_req, a_resp, function( reply ) {

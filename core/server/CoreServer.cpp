@@ -96,6 +96,7 @@ Server::loadRepositoryConfig()
     vector<RepoData*> repos;
 
     db_client.repoList( repos );
+
     for ( vector<RepoData*>::iterator r = repos.begin(); r != repos.end(); ++r )
     {
         m_repos[(*r)->id()] = *r;

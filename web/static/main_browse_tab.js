@@ -3,7 +3,8 @@ function makeBrowserTab(){
 
     var inst = this;
 
-    inst.frame = $("#tab-browse");
+    inst.frame = $("#content");
+    //inst.frame = $("#tab-browse");
     inst.data_ident = $("#data_ident",inst.frame);
     inst.data_info = $("#data_info",inst.frame);
     this.xfr_hist = $("#xfr_hist",inst.frame);
@@ -683,6 +684,30 @@ function makeBrowserTab(){
         });
     }
 
+    this.setupRepoTab = function(){
+        _asyncGet( "/api/repo/list?admin=u/"+g_user.uid+"&details=true", null, function(ok,data){
+            if ( ok ){
+                var html;
+                console.log( "repo data:",data);
+                if ( data && data.length ){
+                    html = "<table class='info_table'><tr><th>Repo ID</th><th>Title</th><th>Address</th><th>Endpoint UUID</th><th>Capacity</th></tr>";
+                    var repo;
+                    for ( var i in data ){
+                        repo = data[i];
+                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.totalSz )+"</td><td><button class='btn small'>Admin</button></td></tr>";
+                    }
+                    html += "</table>";
+                }else{
+                    html = "No administered repositories";
+                }
+
+                $("#repo_list").html( html );
+                $(".btn","#repo_list").button();
+
+            }
+        });
+    }
+
     var tree_source = [
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,children:[{
             title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
@@ -981,6 +1006,17 @@ function makeBrowserTab(){
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
     //$("#search_panel").accordion({collapsible:true,heightStyle:"content"});
+
+    userView( g_user.uid, true, function( ok, user ){
+        if ( ok && user ){
+            g_user.isAdmin = user.isAdmin;
+            g_user.isRepoAdmin = user.isRepoAdmin;
+            if ( g_user.isRepoAdmin ){
+                setupRepoTab();
+                $('[href="#tab-repo"]').closest('li').show();
+            }
+        }
+    });
 
     $("#footer-tabs").tabs({heightStyle:"fill",collapsible: true}).css({
         /*'min-height': '50px',*/

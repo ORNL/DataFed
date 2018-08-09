@@ -2,17 +2,9 @@ function makeDlgAllocations(){
     var inst = this;
 
     this.content =
-        "<div class='col-flex' style='height:100%'>\
-            <div style='flex:none;padding:.5rem 0 0 0'>Groups:</div>\
-            <div class='ui-widget-content text' style='flex:1 1 100%;overflow:auto'>\
-                <div id='dlg_group_tree' class='no-border'></div>\
-            </div>\
-            <div style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
-                <button id='dlg_add_grp' class='btn small'>New</button>\
-                <button id='dlg_edit_grp' class='btn small' disabled>Edit</button>\
-                <button id='dlg_rem_grp' class='btn small' disabled>Delete</button>\
-            </div>\
-        </div>";
+        "This is a placeholder for UI that will allow regular users to request new user/project allocations \
+        or update existing allocations. Until this capability is implemented, users must manually request allcations \
+        from repository or system administrators.";
 
     this.show = function(){
         inst.frame = $(document.createElement('div'));
@@ -22,10 +14,10 @@ function makeDlgAllocations(){
         //$("#dlg_add_grp",inst.frame).click( inst.addGroup );
 
         var options = {
-            title: "Allocation Configuration",
+            title: "Allocations",
             modal: true,
-            width: 500,
-            height: 400,
+            width: 400,
+            height: 300,
             resizable: true,
             closeOnEscape: false,
             buttons: [{

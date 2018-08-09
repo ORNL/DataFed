@@ -201,39 +201,6 @@ DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
     return string("/data/") + id.substr(2);
 }
 
-void
-DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
-{
-    rapidjson::Document result;
-
-    dbGet( "repo/list", {}, result );
-
-    if ( !result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-
-    RepoData* repo;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
-    {
-        rapidjson::Value & val = result[i];
-
-        repo = new RepoData();
-        repo->set_id( val["_id"].GetString() );
-        repo->set_total_sz( val["total_sz"].GetUint64() );
-        repo->set_pub_key( val["pub_key"].GetString() );
-        repo->set_address( val["address"].GetString() );
-        repo->set_endpoint( val["endpoint"].GetString() );
-
-        if (( imem = val.FindMember("title")) != val.MemberEnd() )
-            repo->set_title( imem->value.GetString() );
-        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
-            repo->set_desc( imem->value.GetString() );
-
-        a_repos.push_back( repo );
-    }
-}
-
 
 bool
 DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
@@ -437,6 +404,9 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
 
         if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
             user->set_is_admin( imem->value.GetBool() );
+
+        if (( imem = val.FindMember("is_repo_admin")) != val.MemberEnd() )
+            user->set_is_repo_admin( imem->value.GetBool() );
 
         if (( imem = val.FindMember("admins")) != val.MemberEnd() )
         {
@@ -1388,6 +1358,72 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
             for ( rapidjson::SizeType m = 0; m < imem->value.Size(); m++ )
                 group->add_member( imem->value[m].GetString() );
         }
+    }
+}
+
+void
+DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    if ( a_request.has_admin() )
+        params.push_back({"admin", a_request.admin()});
+    if ( a_request.has_details() )
+        params.push_back({"details", a_request.details()?"true":"false"});
+
+    dbGet( "repo/list", params, result );
+
+    setRepoData( &a_reply, 0, result );
+}
+
+void
+DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/list", {{"details","true"}}, result );
+
+    setRepoData( 0, &a_repos, result );
+}
+
+void
+DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result )
+{
+    if ( !a_reply && !a_repos )
+        EXCEPT( ID_INTERNAL_ERROR, "Missing parameters" );
+
+    if ( !a_result.IsArray() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+
+    RepoData* repo;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        if ( a_reply )
+            repo = a_reply->add_repo();
+        else
+            repo = new RepoData();
+
+        repo->set_id( val["id"].GetString() );
+        if (( imem = val.FindMember("title")) != val.MemberEnd() )
+            repo->set_title( imem->value.GetString() );
+        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
+            repo->set_desc( imem->value.GetString() );
+        if (( imem = val.FindMember("total_sz")) != val.MemberEnd() )
+            repo->set_total_sz( imem->value.GetUint64() );
+        if (( imem = val.FindMember("address")) != val.MemberEnd() )
+            repo->set_address( imem->value.GetString() );
+        if (( imem = val.FindMember("endpoint")) != val.MemberEnd() )
+            repo->set_endpoint( imem->value.GetString() );
+        if (( imem = val.FindMember("pub_key")) != val.MemberEnd() )
+            repo->set_pub_key( imem->value.GetString() );
+
+        if ( a_repos )
+            a_repos->push_back( repo );
+
     }
 }
 

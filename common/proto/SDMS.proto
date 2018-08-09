@@ -88,14 +88,15 @@ message AllocData
 
 message UserData
 {
-    required string             uid         = 1;
-    required string             name        = 2;
-    optional string             email       = 3;
-    optional string             phone       = 4;
-    optional bool               is_admin    = 5;
-    repeated string             admin       = 6;
-    repeated string             ident       = 7;
-    repeated AllocData          alloc       = 9;
+    required string             uid             = 1;
+    required string             name            = 2;
+    optional string             email           = 3;
+    optional string             phone           = 4;
+    optional bool               is_admin        = 5;
+    optional bool               is_repo_admin   = 6;
+    repeated string             admin           = 7;
+    repeated string             ident           = 8;
+    repeated AllocData          alloc           = 9;
 }
 
 message ProjectData
@@ -188,8 +189,8 @@ message RepoData
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    required uint64             total_sz    = 4;
-    required string             pub_key     = 5;
-    required string             address     = 6;
-    required string             endpoint    = 7;
+    optional uint64             total_sz    = 4;
+    optional string             pub_key     = 5;
+    optional string             address     = 6;
+    optional string             endpoint    = 7;
 }

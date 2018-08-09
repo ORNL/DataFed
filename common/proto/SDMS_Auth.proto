@@ -404,6 +404,17 @@ message RepoDataSizeReply
     required uint64             size        = 2;
 }
 
+message RepoListRequest
+{
+    optional string             admin       = 1;
+    optional bool               details     = 2;
+}
+
+message RepoDataReply
+{
+    repeated SDMS.RepoData      repo        = 1;
+}
+
 message RepoListUserAllocationsRequest
 {
 }

@@ -31,7 +31,6 @@ public:
     void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
     bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok );
     bool userGetAccessToken( std::string & a_token );
-    void repoList( std::vector<RepoData*> & a_repos );
     
     void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
 
@@ -83,6 +82,8 @@ public:
     void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply );
 
+    void repoList( std::vector<RepoData*> & a_repos );
+    void repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
 
@@ -99,6 +100,7 @@ private:
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
+    void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );
 
     CURL *      m_curl;
     char *      m_client;

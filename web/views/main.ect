@@ -13,7 +13,6 @@
         <script type="text/javascript" charset="utf-8" src="/dlg_allocations.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/main_repo_tab.js"></script>
         <script type="text/javascript">
             loadUser();
             if ( !g_user || !g_user.active )
@@ -23,30 +22,13 @@
     </head>
     <body>
     <div class="col-flex" style="height:100%;width:100%">
-        <div class="header" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center">
-            <div style="font-size: 2em">Scientific Data Management System</div>
-            <!-- div class="row-flex">
-                <div style="flex:1;font-size: 2em">Scientific Data Management System</div><div style="flex:none;"><button class="btn" onclick="logout()">Log Out</button></div>
-            </div -->
+        <div class="header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em">
+            <div style="flex:1 1 100%;font-size:2em;">Scientific Data Management System</div>
+            <div style="flex:none"><span class="" style="padding:.35em;display:block;background:rgba(0, 0, 0, 0.5)"><button class="btn small" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span></div>
         </div>
-        <div id="content" class="content" style="flex:1 1 100%">
-            <div id="tabs">
-                <ul>
-                    <li><a href="#tab-browse">Dashboard</a></li>
-                    <li><a href="#tab-repo">Repositories</a></li>
-                    <li style='display:none'><a href="#tab-admin">Admin</a></li>
-                    <span style="float:right;position:relative;z-index:1"><button class="btn small" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span>
-                </ul>
-                <div id="tab-browse">
-                    <% include 'tab_browser.ect' %>
-                </div>
-                <div id="tab-repo">
-                    <% include 'tab_repo.ect' %>
-                </div>
-                <div id="tab-admin">
-                    <% include 'tab_admin.ect' %>
-                </div>
-            </div>
+        <div id="content" class="content  ui-widget-content" style="flex:1 1 100%">
+            <% include 'tab_browser.ect' %>
+
         </div>
         <div class="footer" style="flex:none">
             <div class="row-flex">
@@ -58,36 +40,12 @@
     </div>
     </body>
     <script>
-        function resizeHandler() {
-            console.log("resized!");
-            $('#tabs').tabs().height(50);
-            $('#tabs').tabs().height($("#content").height()-9);
-            $("#tabs").tabs("refresh");
-        }
-
-        window.addEventListener( "resize", resizeHandler );
-
         document.getElementById("uname").innerHTML = g_user.name;
-
-        userView( g_user.uid, function( ok, user ){
-            console.log( "Use info (db):", ok, user );
-            if ( ok && user ){
-                g_user.isAdmin = user.isAdmin;
-                if ( g_user.isAdmin )
-                    $('[href="#tab-admin"]').closest('li').show();
-            }
-        });
-
-        $("#tabs").tabs({heightStyle:"fill",collapsible: true}).css({
-            'min-height': '50px',
-            'overflow': 'auto'
-        });
 
         $(".btn").button();
         $( document ).tooltip({ show: { effect: "slideDown", delay: 500 }});
 
         var tab_browser = makeBrowserTab();
-        setupRepoTab();
         setStatusText("SDMS Ready");
     </script>
 </html>

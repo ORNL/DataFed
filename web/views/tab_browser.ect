@@ -4,15 +4,16 @@
 
     <div class="row-flex" style="flex:1 1 100%">
         <div class="col-flex" style="flex:1 1 40%;padding:.25em;min-width:0">
-            <div style="flex:none">Collections &amp Data:</div>
+            <div style="flex:none;padding:.25em" class="ui-widget-header">Data Browser:</div>
             <div class="ui-widget-content text" style="flex:0 1 100%;overflow:auto">
                 <div id="data_tree" class="no-border"></div>
             </div>
         </div>
         <div class="col-flex" style="flex:0 0 60%;padding:.25em">
-            <div style="flex:none">Selection Details: <span id="data_ident"></span></div>
+            <div style="flex:none;padding:.25em" class="ui-widget-header">Selection Details: <span id="data_ident"></span></div>
             <div id="data_info" class="ui-widget-content text" style="flex:none"></div>
-            <div style="flex:none;padding-top:.5em">Selection Metadata:</div>
+            <div style="flex:none">&nbsp</div>
+            <div style="flex:none;padding:.25em" class="ui-widget-header">Selection Metadata:</div>
             <div class="ui-widget-content text" style="flex:1 1 100%"><div id="data_md_tree" class="no-border"></div></div>
         </div>
     </div>
@@ -32,6 +33,7 @@
             <ul>
                 <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-xfer">Transfers</a></li>
+                <li style='display:none'><a href="#tab-repo">Repositories</a></li>
             </ul>
             <div id="tab-search" class="text" style="padding:0">
                 <div class="text"  style="padding:.5em">
@@ -51,30 +53,9 @@
             <div id="tab-xfer" class="text" style="padding:0">
                 <div id="xfr_hist" class="text" style="max-height:5em;padding:.5em"></div>
             </div>
-        </div>
-    </div>
-
-        <!-- div id="search_panel">
-            <h3>Data Search</h3>
-            <div class="text"  style="padding:.5em">
-                <table style='width:100%'>
-                <tr><td style="vertical-align:middle">Query:</td><td><input id="query_input" type='text' style="width:100%"></input></td><td>&nbsp<button class="btn" onclick="execQuery()">Search</button></td></tr>
-                <tr><td style="vertical-align:middle">Scope:</td><td>
-                <label for='scope_mydat'>My Data</label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>
-                <label for='scope_myproj'>My Projects</label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>
-                <label for='scope_teamproj'>Team Projects</label><input class='scope' type='checkbox' name='scope_teamproj' id='scope_teamproj'>
-                <label for='scope_usershare'>User-Shared</label><input class='scope' type='checkbox' name='scope_usershare' id='scope_usershare'>
-                <label for='scope_projshare'>Project-Shared</label><input class='scope' type='checkbox' name='scope_projshare' id='scope_projshare'>
-                <label for='scope_public'>Public Data</label><input class='scope' type='checkbox' name='scope_public' id='scope_public'>
-                </td><td></td>
-                </table>
+            <div id="tab-repo" class="text" style="padding:0">
+                <div id="repo_list" class="text" style="max-height:5em;padding:.5em"></div>
             </div>
         </div>
     </div>
-    <div style="flex:none;padding:.25em">
-        <div id="xfr_panel" >
-            <h3>Recent Data Transfers</h3>
-            <div id="xfr_hist" class="text" style="overflow:auto;max-height:5em;padding:.5em"></div>
-        </div>
-    </div -->
 </div>
