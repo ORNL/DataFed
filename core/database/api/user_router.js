@@ -390,6 +390,10 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_MISSING_REQ_OPTION;
         }
 
+        var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
+        if ( repos.length )
+            user.is_repo_admin = true;
+
         if ( req.queryParams.details ) {
             var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
             if ( idents.length ) {

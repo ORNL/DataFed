@@ -19,12 +19,37 @@ module.exports = router;
 
 
 router.get('/list', function (req, res) {
-    var result = g_db._query( "for i in repo return i").toArray();
+    var result;
+
+    if ( req.queryParams.admin ){
+        result = g_db._query( "for v in 1..1 inbound @admin admin filter is_same_collection('repo',v) return v",{admin:req.queryParams.admin}).toArray();
+    }else{
+        result = g_db._query( "for i in repo return i").toArray();
+    }
+
+    var repo;
+    for ( var i in result ){
+        repo = result[i];
+
+        repo.id = repo._id;
+        delete repo._id;
+        delete repo._key;
+        delete repo._rev;
+
+        if ( !req.queryParams.details ){
+            delete repo.total_sz;
+            delete repo.pub_key;
+            delete repo.address;
+            delete repo.endpoint;
+        }
+    }
+
     res.send( result );
 })
+.queryParam('admin', joi.string().optional(), "Admin UID of repo(s) to list")
 .queryParam('details', joi.boolean().optional(), "Show additional record details")
-.summary('List all repo servers')
-.description('List all repo servers');
+.summary('List repo servers')
+.description('List repo servers. Will list all if no admin UID is provided; otherwise, repos administered by UID.');
 
 
 router.get('/view', function (req, res) {
