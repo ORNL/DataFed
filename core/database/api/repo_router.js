@@ -54,14 +54,18 @@ router.get('/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        var repo = g_db.repo.document( "repo/"+req.queryParams.id );
+        var repo = g_db.repo.document( req.queryParams.id );
 
-        repo.id = repo._key;
+        repo.admins = [];
+        var admins = g_db.admin.byExample({_from:req.queryParams.id}).toArray();
+        for ( var i in admins )
+            repo.admins.push( admins[i]._to );
+        repo.id = repo._id;
         delete repo._id;
         delete repo._key;
         delete repo._rev;
 
-        res.send( repo );
+        res.send([repo]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -162,16 +166,12 @@ router.get('/delete', function (req, res) {
 
 router.get('/alloc/list/by_repo', function (req, res) {
     var client = g_lib.getUserFromClientID( req.queryParams.client );
-    var repo = g_db.repo.document( "repo/" + req.queryParams.repo );
+    var repo = g_db.repo.document( req.queryParams.repo );
 
     g_lib.ensureAdminPermRepo( client, repo._id );
 
-    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return { uid: v._id, name: v.name, alloc: e.alloc, path: e.path }", { repo: repo._id } ).toArray();
-    var obj;
-    for ( var i in result ){
-        obj = result[i];
-        obj.uid = obj.uid.substr(2);
-    }
+    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return {id:v._id,name:v.name?v.name:v.title,repo:@repo,alloc:e.alloc,usage:e.usage,path:e.path}", { repo: repo._id } ).toArray();
+
     res.send( result );
 })
 .queryParam('client', joi.string().required(), "Client ID")
@@ -185,7 +185,7 @@ router.get('/alloc/list/by_owner', function (req, res) {
     for ( var i in result ){
         obj = result[i];
         delete obj._from;
-        obj.repo = obj._to.substr(5);
+        obj.repo = obj._to;
         delete obj._to;
         delete obj._key;
         delete obj._id;

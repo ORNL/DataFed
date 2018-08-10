@@ -538,6 +538,11 @@ MsgComm::init( SockType a_sock_type, const SecurityContext * a_sec_ctx, void * a
     zmq_setsockopt( m_socket, ZMQ_TCP_KEEPALIVE_IDLE, &value, sizeof( int ));
     value = 5;
     zmq_setsockopt( m_socket, ZMQ_TCP_KEEPALIVE_INTVL, &value, sizeof( int ));
+    value = 500;
+    zmq_setsockopt( m_socket, ZMQ_RECONNECT_IVL, &value, sizeof( int ));
+    value = 4000;
+    zmq_setsockopt( m_socket, ZMQ_RECONNECT_IVL_MAX, &value, sizeof( int ));
+
 
     if ( m_bound )
     {
