@@ -1387,6 +1387,16 @@ DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
 }
 
 void
+DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/view", {{"id",a_request.id()}}, result );
+
+    setRepoData( &a_reply, 0, result );
+}
+
+void
 DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result )
 {
     if ( !a_reply && !a_repos )
@@ -1421,12 +1431,27 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
         if (( imem = val.FindMember("pub_key")) != val.MemberEnd() )
             repo->set_pub_key( imem->value.GetString() );
 
+        if (( imem = val.FindMember("admins")) != val.MemberEnd() )
+        {
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                repo->add_admin( imem->value[j].GetString() );
+        }
+
         if ( a_repos )
             a_repos->push_back( repo );
 
     }
 }
 
+void
+DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/alloc/list/by_repo", {{"repo",a_request.id()}}, result );
+
+    setAllocData( a_reply, result );
+}
 
 void
 DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
@@ -1451,6 +1476,7 @@ DatabaseClient::repoListProjectAllocations( const Auth::RepoListProjectAllocatio
     setAllocData( a_reply, result );
 }
 
+
 void
 DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result )
 {
@@ -1471,6 +1497,10 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
         alloc->set_alloc(val["alloc"].GetUint64());
         alloc->set_usage(val["usage"].GetUint64());
         alloc->set_path(val["path"].GetString());
+        if (( imem = val.FindMember("id")) != val.MemberEnd() )
+            alloc->set_id( imem->value.GetString() );
+        if (( imem = val.FindMember("name")) != val.MemberEnd() )
+            alloc->set_name( imem->value.GetString() );
     }
 }
 

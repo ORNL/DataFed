@@ -151,6 +151,14 @@ function userView( a_id, a_details, a_cb ) {
     _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
 }
 
+function repoView( a_id, a_cb ){
+    _asyncGet( "/api/repo/view?id="+a_id, null, a_cb );
+}
+
+function allocList( a_id, a_cb ){
+    _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
+}
+
 function groupView( a_uid, a_gid, a_cb ) {
     if ( a_gid.startsWith("g/" ))
         _asyncGet( "/api/grp/view?uid="+a_uid+"&gid="+a_gid.substr(2), null, a_cb );
@@ -361,5 +369,6 @@ var dlgPickUser = new makeDlgPickUser();
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgAllocations = new makeDlgAllocations();
+var dlgRepoAdmin = new makeDlgRepoAdmin();
 
 console.log( "main.js loaded");

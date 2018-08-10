@@ -685,6 +685,7 @@ function makeBrowserTab(){
     }
 
     this.setupRepoTab = function(){
+        console.log("setupRepoTab");
         _asyncGet( "/api/repo/list?admin=u/"+g_user.uid+"&details=true", null, function(ok,data){
             if ( ok ){
                 var html;
@@ -694,7 +695,7 @@ function makeBrowserTab(){
                     var repo;
                     for ( var i in data ){
                         repo = data[i];
-                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.totalSz )+"</td><td><button class='btn small'>Admin</button></td></tr>";
+                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.totalSz )+"</td><td><button class='btn small' onclick='dlgRepoAdmin.show(\""+repo.id+"\")'>Admin</button></td></tr>";
                     }
                     html += "</table>";
                 }else{

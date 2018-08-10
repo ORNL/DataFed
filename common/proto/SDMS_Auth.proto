@@ -410,9 +410,19 @@ message RepoListRequest
     optional bool               details     = 2;
 }
 
+message RepoViewRequest
+{
+    required string             id          = 1;
+}
+
 message RepoDataReply
 {
     repeated SDMS.RepoData      repo        = 1;
+}
+
+message RepoListAllocationsRequest
+{
+    required string             id          = 1;
 }
 
 message RepoListUserAllocationsRequest

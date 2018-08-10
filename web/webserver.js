@@ -629,35 +629,28 @@ app.get('/api/repo/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/view', ( a_req, a_resp ) => {
+    sendMessage( "RepoViewRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        console.log( "repo:",reply.repo);
+        a_resp.json(reply.repo?reply.repo:[]);
+    });
+});
+
+app.get('/api/repo/alloc/list/by_repo', ( a_req, a_resp ) => {
+    sendMessage( "RepoListAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        a_resp.json(reply.alloc?reply.alloc:[]);
+    });
+});
+
 app.get('/api/repo/alloc/list/by_user', ( a_req, a_resp ) => {
     sendMessage( "RepoListUserAllocationsRequest", {}, a_req, a_resp, function( reply ) {
-        // Note: uint64 size values are sent as strings and must be parsed here
-        if ( reply.alloc && reply.alloc.length ){
-            var reply2 = [];
-            var alloc;
-            for ( var i in reply.alloc ){
-                alloc = reply.alloc[i];
-                reply2.push({repo:alloc.repo,alloc:parseInt(alloc.alloc),usage:parseInt(alloc.usage),path:alloc.path});
-            }
-            a_resp.json(reply2);
-        } else
-            a_resp.json([]);
+        a_resp.json(reply.alloc?reply.alloc:[]);
     });
 });
 
 app.get('/api/repo/alloc/list/by_proj', ( a_req, a_resp ) => {
     sendMessage( "RepoListProjectAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        // Note: uint64 size values are sent as strings and must be parsed here
-        if ( reply.alloc && reply.alloc.length ){
-            var reply2 = [];
-            var alloc;
-            for ( var i in reply.alloc ){
-                alloc = reply.alloc[i];
-                reply2.push({repo:alloc.repo,alloc:parseInt(alloc.alloc),usage:parseInt(alloc.usage),path:alloc.path});
-            }
-            a_resp.json(reply2);
-        } else
-            a_resp.json([]);
+        a_resp.json(reply.alloc?reply.alloc:[]);
     });
 });
 

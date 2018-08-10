@@ -84,6 +84,8 @@ public:
 
     void repoList( std::vector<RepoData*> & a_repos );
     void repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply );
+    void repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply );
+    void repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
 

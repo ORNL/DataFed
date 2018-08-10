@@ -84,6 +84,8 @@ message AllocData
     required uint64             alloc       = 2;
     required uint64             usage       = 3;
     required string             path        = 4;
+    optional string             id          = 5;
+    optional string             name        = 6;
 }
 
 message UserData
@@ -193,4 +195,5 @@ message RepoData
     optional string             pub_key     = 5;
     optional string             address     = 6;
     optional string             endpoint    = 7;
+    repeated string             admin       = 8;
 }
