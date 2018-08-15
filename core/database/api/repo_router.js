@@ -197,6 +197,45 @@ router.get('/alloc/list/by_owner', function (req, res) {
 .summary('List owner\'s repo allocations')
 .description('List owner\'s repo allocations (user or project ID)');
 
+router.get('/alloc/stats', function (req, res) {
+    var sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1].data_size", { repo: req.queryParams.repo, subj: req.queryParams.subject }).toArray();
+
+
+    var size;
+    var count = 0;
+    var tot_sz = 0;
+    var hist = [0,0,0,0,0];
+
+    for ( var i in sizes ){
+        size = sizes[i];
+        if ( size > 0 ){
+            tot_sz += size;
+            count++;
+            if ( size < 1024 )
+                hist[0]++;
+            else if ( size < 1048576 )
+                hist[1]++;
+            else if ( size < 1073741824 )
+                hist[2]++;
+            else if ( size < 1099511627776 )
+                hist[3]++;
+            else
+                hist[4]++;
+        }
+    }
+
+    if ( count > 0 ){
+        for ( i = 0; i < 5; ++i )
+            hist[i] = 100*hist[i]/count;
+    }
+
+    res.send({records:sizes.length,files:count,total_sz:tot_sz,histogram:hist});
+})
+.queryParam('repo', joi.string().required(), "Repo ID")
+.queryParam('subject', joi.string().required(), "User/project ID of allocation")
+.summary('View allocation statistics')
+.description('View allocation statistics');
+
 router.get('/alloc/set', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -211,7 +250,7 @@ router.get('/alloc/set', function (req, res) {
                     subject_id = req.queryParams.subject;
                 else
                     subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
-                var repo = g_db.repo.document( "repo/" + req.queryParams.repo );
+                var repo = g_db.repo.document( req.queryParams.repo );
 
                 g_lib.ensureAdminPermRepo( client, repo._id );
 
