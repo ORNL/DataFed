@@ -159,6 +159,14 @@ function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
 }
 
+function allocStats( a_repo, a_subject, a_cb ){
+    _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+"&subject="+a_subject, null, a_cb );
+}
+
+function allocSet( a_repo, a_subject, a_alloc, a_cb ){
+    _asyncGet( "/api/repo/alloc/set?repo="+a_repo+"&subject="+a_subject+"&alloc="+a_alloc, null, a_cb );
+}
+
 function groupView( a_uid, a_gid, a_cb ) {
     if ( a_gid.startsWith("g/" ))
         _asyncGet( "/api/grp/view?uid="+a_uid+"&gid="+a_gid.substr(2), null, a_cb );
@@ -329,7 +337,9 @@ function dlgAlert( title, msg, cb ) {
 }
 
 function sizeToString( a_bytes ){
-    if ( a_bytes < 1024 )
+    if ( a_bytes == 0 )
+        return "0";
+    else if ( a_bytes < 1024 )
         return a_bytes + " B";
     else if ( a_bytes < 1048576 )
         return Math.floor( a_bytes / 102.4 )/10 + " KB";
@@ -339,6 +349,65 @@ function sizeToString( a_bytes ){
         return Math.floor( a_bytes / 107374182.4 )/10 + " GB";
     else
         return Math.floor( a_bytes / 109951162777.6 )/10 + " TB";
+}
+
+function parseSize( a_size_str ){
+    var result = null, val;
+    var tokens = a_size_str.toUpperCase().trim().split(" ");
+    console.log( "tokens:", tokens );
+    for ( var i in tokens ){
+        if ( tokens[i].length == 0 ){
+            console.log( "splice at", i );
+            tokens.splice(i,1);
+        }
+    }
+    console.log( "tokens:", tokens );
+
+    if ( tokens.length == 2 ){
+        val = parseFloat(tokens[0]);
+        if ( val != NaN ){
+            switch(tokens[1]){
+                case "PB": val *= 1024;
+                case "TB": val *= 1024;
+                case "GB": val *= 1024;
+                case "MB": val *= 1024;
+                case "KB": val *= 1024;
+                case "B":
+                    result = val;
+                    break;
+            }
+        }
+    }else if( tokens.length == 1 ){
+        if ( tokens[0].endsWith("B")){
+            var len = tokens[0].length;
+            var numchar = "0123456789.";
+            if ( numchar.indexOf( tokens[0][len-2] ) != -1 ){
+                val = parseFloat( tokens[0].substr(0,len-1));
+                if ( val != NaN )
+                    result = val;
+            }else{
+                val = parseFloat( tokens[0].substr(0,len-2));
+                if ( val != NaN ){
+                    switch(tokens[0][len-2]){
+                        case "P": val *= 1024;
+                        case "T": val *= 1024;
+                        case "G": val *= 1024;
+                        case "M": val *= 1024;
+                        case "K": val *= 1024;
+                            result = val;
+                            break;
+                    }
+                }
+            }
+        }else{
+            val = parseFloat( tokens[0] );
+            if ( val != NaN )
+                result = val;
+        }
+    }
+    if ( result != null )
+        result = Math.ceil( result );
+    return result;
 }
 
 var status_timer;
@@ -370,5 +439,6 @@ var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgAllocations = new makeDlgAllocations();
 var dlgRepoAdmin = new makeDlgRepoAdmin();
+var dlgAllocNewEdit = new makeDlAllocNewEdit();
 
 console.log( "main.js loaded");

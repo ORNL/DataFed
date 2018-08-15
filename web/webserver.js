@@ -654,6 +654,22 @@ app.get('/api/repo/alloc/list/by_proj', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
+    console.log("alloc stats");
+    sendMessage( "RepoAllocationStatsRequest", {repo:a_req.query.repo,subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
+        console.log("alloc stats reply", reply.alloc);
+        a_resp.json(reply.alloc?reply.alloc:{});
+    });
+});
+
+app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
+    console.log("alloc set");
+    sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,alloc:a_req.query.alloc}, a_req, a_resp, function( reply ) {
+        console.log("alloc set reply");
+        a_resp.json(reply.alloc?reply.alloc:{});
+    });
+});
+
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;

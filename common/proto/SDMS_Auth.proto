@@ -438,3 +438,22 @@ message RepoAllocationsReply
 {
     repeated AllocData          alloc       = 1;
 }
+
+message RepoAllocationStatsRequest
+{
+    required string             repo        = 1;
+    required string             subject     = 2;
+}
+
+message RepoAllocationStatsReply
+{
+    required AllocStatsData     alloc       = 1;
+}
+
+// Reply is ACK/NACK
+message RepoAllocationSetRequest
+{
+    required string             repo        = 1;
+    required string             subject     = 2;
+    required uint64             alloc       = 3;
+}

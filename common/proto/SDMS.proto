@@ -88,6 +88,14 @@ message AllocData
     optional string             name        = 6;
 }
 
+message AllocStatsData
+{
+    required uint32             records     = 1;
+    required uint32             files       = 2;
+    required uint64             total_sz    = 3;
+    repeated float              histogram   = 4;
+}
+
 message UserData
 {
     required string             uid             = 1;

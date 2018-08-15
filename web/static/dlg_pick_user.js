@@ -9,7 +9,7 @@ function makeDlgPickUser(){
         </div>";
 
 
-    this.show = function( a_uid, a_excl, cb ){
+    this.show = function( a_uid, a_excl, a_single_sel, cb ){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
         inst.uid = a_uid;
@@ -64,7 +64,7 @@ function makeDlgPickUser(){
                         selectedClass: ""
                     },
                     source: src,
-                    selectMode: 2,
+                    selectMode: a_single_sel?1:2,
                     checkbox: true,
                     lazyLoad: function( event, data ) {
                         if ( data.node.key == "collab" ) {

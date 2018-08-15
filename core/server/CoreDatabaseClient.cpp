@@ -1505,6 +1505,40 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
 }
 
 void
+DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/alloc/stats", {{"repo",a_request.repo()},{"subject",a_request.subject()}}, result );
+
+    setAllocStatsData( a_reply, result );
+}
+
+void
+DatabaseClient::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result )
+{
+    AllocStatsData * stats;
+
+    stats = a_reply.mutable_alloc();
+    stats->set_records(a_result["records"].GetUint());
+    stats->set_files(a_result["files"].GetUint());
+    stats->set_total_sz(a_result["total_sz"].GetUint64());
+
+    rapidjson::Value::MemberIterator imem = a_result.FindMember("histogram");
+    for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
+        stats->add_histogram(imem->value[i].GetDouble());
+}
+
+void
+DatabaseClient::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void)a_reply;
+    rapidjson::Document result;
+
+    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"alloc",to_string(a_request.alloc())}}, result );
+}
+
+void
 DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
     rapidjson::Document result;

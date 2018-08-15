@@ -185,7 +185,7 @@ function dlgProjNewEdit(a_data,a_cb) {
                     excl.push(node.key);
                 });
 
-                dlgPickUser.show( g_user.uid, excl, function( uids ){
+                dlgPickUser.show( "u/"+g_user.uid, excl, false, function( uids ){
                     for ( i in uids ){
                         uid = uids[i];
                         mem_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
@@ -212,7 +212,7 @@ function dlgProjNewEdit(a_data,a_cb) {
                     excl.push(node.key);
                 });
                 console.log("excl:",excl);
-                dlgPickUser.show( g_user.uid, excl, function( uids ){
+                dlgPickUser.show( "u/"+g_user.uid, excl, false, function( uids ){
                     console.log("sel:",uids);
                     for ( i in uids ){
                         uid = uids[i];

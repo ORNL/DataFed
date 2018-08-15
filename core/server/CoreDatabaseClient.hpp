@@ -88,6 +88,8 @@ public:
     void repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
+    void repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply );
+    void repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
@@ -103,6 +105,8 @@ private:
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );
+    void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result );
+
 
     CURL *      m_curl;
     char *      m_client;
