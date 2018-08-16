@@ -41,7 +41,17 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 var alias = encodeURIComponent($("#alias",frame).val());
                 var desc = encodeURIComponent($("#desc",frame).val());
                 var coll = encodeURIComponent($("#coll",frame).val());
-                var md = encodeURIComponent($("#md",frame).val());
+                var metadata = $("#md",frame).val().trim();
+                if ( metadata.length ){
+                    try{
+                        JSON.parse( metadata );
+                    }catch(e){
+                        dlgAlert("Input Error","Metadata field must be valid JSON.");
+                        return;
+                    }
+                }
+
+                var md = encodeURIComponent(metadata);
 
                 var url = "/api/";
                 if ( a_mode )
