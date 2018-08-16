@@ -348,7 +348,9 @@ router.get('/delete', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
+                console.log("pr del 1");
                 g_lib.ensureAdminPermProj( client, proj_id );
+                console.log("pr del 2");
 
                 var objects;
                 var obj;
@@ -356,11 +358,14 @@ router.get('/delete', function (req, res) {
 
                 // Delete collections, data, groups, notes
                 objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id }).toArray();
+                console.log("pr del 3");
                 for ( i in objects ) {
                     obj = objects[i];
+                    console.log("del",obj);
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
+                console.log("pr del 4");
                 g_graph.p.remove( proj_id );
             }
         });

@@ -37,7 +37,7 @@ router.get('/list', function (req, res) {
         delete repo._rev;
 
         if ( !req.queryParams.details ){
-            delete repo.total_sz;
+            delete repo.capacity;
             delete repo.pub_key;
             delete repo.address;
             delete repo.endpoint;
@@ -85,7 +85,7 @@ router.get('/create', function (req, res) {
             action: function() {
                 var obj = {
                     _key: req.queryParams.id,
-                    total_sz: req.queryParams.total_sz,
+                    capacity: req.queryParams.capacity,
                     pub_key: req.queryParams.pub_key,
                     address: req.queryParams.address,
                     endpoint: req.queryParams.endpoint
@@ -119,7 +119,7 @@ router.get('/create', function (req, res) {
 .queryParam('id', joi.string().required(), "Repo server ID")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
-.queryParam('total_sz', joi.number().required(), "Total storage size (capacity) (GB)")
+.queryParam('capacity', joi.number().required(), "Total storage capacity (in bytes)")
 .queryParam('pub_key', joi.string().required(), "Repo server public key")
 .queryParam('address', joi.string().required(), "Repo server address")
 .queryParam('endpoint', joi.string().required(), "Repo server endpoint")
@@ -129,14 +129,47 @@ router.get('/create', function (req, res) {
 // TODO Add base path to repo
 
 router.get('/update', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u"],
+                write: ["repo","admin"]
+            },
+            action: function() {
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                g_lib.ensureAdminPermRepo( client, req.queryParams.id );
+                var obj = {};
+
+                if ( req.queryParams.title )
+                    obj.title = req.queryParams.title;
+
+                if ( req.queryParams.desc )
+                    obj.desc = req.queryParams.desc;
+
+                if ( req.queryParams.capacity )
+                    obj.capacity = req.queryParams.capacity;
+
+                g_db._update( req.queryParams.id, obj );
+    
+                if ( req.queryParams.admins ){
+                    g_db.admin.removeByExample({_from: req.queryParams.id});
+                    for ( var i in req.queryParams.admins ) {
+                        if ( !g_db._exists( req.queryParams.admins[i] ))
+                            throw g_lib.ERR_USER_NOT_FOUND;
+                        g_db.admin.save({ _from: req.queryParams.id, _to: req.queryParams.admins[i] });
+                    }
+                }
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
 })
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Repo server ID")
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
-.queryParam('total_sz', joi.number().optional(), "Total storage size (capacity) (GB)")
-.queryParam('pub_key', joi.string().optional(), "Repo server public key")
-.queryParam('address', joi.string().optional(), "Repo server address")
-.queryParam('endpoint', joi.string().optional(), "Repo server endpoint")
+.queryParam('capacity', joi.number().optional(), "Total storage capacity (in bytes)")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Repo admin user IDs")
 .summary('Update a repo server record')
 .description('Update a repo server record');
@@ -150,6 +183,9 @@ router.get('/delete', function (req, res) {
                 write: ["repo","alloc","loc"]
             },
             action: function() {
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                g_lib.ensureAdminPermRepo( client, req.queryParams.id );
+
                 const graph = require('@arangodb/general-graph')._graph('sdmsg');
 
                 // TODO There may be other tasks to perform prior to deleting server record
@@ -160,6 +196,7 @@ router.get('/delete', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Repo server ID")
 .summary('Delete repo server record')
 .description('Delete repo server record');
@@ -198,43 +235,60 @@ router.get('/alloc/list/by_owner', function (req, res) {
 .description('List owner\'s repo allocations (user or project ID)');
 
 router.get('/alloc/stats', function (req, res) {
-    var sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1].data_size", { repo: req.queryParams.repo, subj: req.queryParams.subject }).toArray();
+    try {
+        var client = g_lib.getUserFromClientID( req.queryParams.client );
+        var sizes;
 
-
-    var size;
-    var count = 0;
-    var tot_sz = 0;
-    var hist = [0,0,0,0,0];
-
-    for ( var i in sizes ){
-        size = sizes[i];
-        if ( size > 0 ){
-            tot_sz += size;
-            count++;
-            if ( size < 1024 )
-                hist[0]++;
-            else if ( size < 1048576 )
-                hist[1]++;
-            else if ( size < 1073741824 )
-                hist[2]++;
-            else if ( size < 1099511627776 )
-                hist[3]++;
+        if ( req.queryParams.subject ){
+            if ( req.queryParams.subject.startsWith("u/"))
+                g_lib.ensureAdminPermUser( client, req.queryParams.subject );
             else
-                hist[4]++;
+                g_lib.ensureAdminPermProj( client, req.queryParams.subject );
+            sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1].data_size", { repo: req.queryParams.repo, subj: req.queryParams.subject }).toArray();
+        }else{
+            g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
+
+            sizes = g_db._query("for v in 1..1 inbound @repo loc return v.data_size", { repo: req.queryParams.repo }).toArray();
         }
-    }
 
-    if ( count > 0 ){
-        for ( i = 0; i < 5; ++i )
-            hist[i] = 100*hist[i]/count;
-    }
+        var size;
+        var count = 0;
+        var tot_sz = 0;
+        var hist = [0,0,0,0,0];
 
-    res.send({records:sizes.length,files:count,total_sz:tot_sz,histogram:hist});
+        for ( var i in sizes ){
+            size = sizes[i];
+            if ( size > 0 ){
+                tot_sz += size;
+                count++;
+                if ( size < 1024 )
+                    hist[0]++;
+                else if ( size < 1048576 )
+                    hist[1]++;
+                else if ( size < 1073741824 )
+                    hist[2]++;
+                else if ( size < 1099511627776 )
+                    hist[3]++;
+                else
+                    hist[4]++;
+            }
+        }
+
+        if ( count > 0 ){
+            for ( i = 0; i < 5; ++i )
+                hist[i] = 100*hist[i]/count;
+        }
+
+        res.send({records:sizes.length,files:count,total_sz:tot_sz,histogram:hist});
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
 })
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('repo', joi.string().required(), "Repo ID")
-.queryParam('subject', joi.string().required(), "User/project ID of allocation")
+.queryParam('subject', joi.string().optional(), "User/project ID of allocation")
 .summary('View allocation statistics')
-.description('View allocation statistics');
+.description('View allocation statistics (or repo stats if no subject provided)');
 
 router.get('/alloc/set', function (req, res) {
     try {
@@ -255,6 +309,11 @@ router.get('/alloc/set', function (req, res) {
                 g_lib.ensureAdminPermRepo( client, repo._id );
 
                 if ( req.queryParams.alloc == 0 ){
+                    // Check if there are any records using this repo and fail if so
+                    var records = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1]._id", { repo: repo._id, subj: subject_id }).toArray();
+                    if ( records.length )
+                        throw g_lib.ERR_ALLOC_IN_USE;
+
                     g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
                 } else {
                     var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
