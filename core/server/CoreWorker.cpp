@@ -124,6 +124,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
         SET_MSG_HANDLER_DB( proto_id, RepoListRequest, RepoDataReply, repoList );
         SET_MSG_HANDLER_DB( proto_id, RepoViewRequest, RepoDataReply, repoView );
+        SET_MSG_HANDLER_DB( proto_id, RepoUpdateRequest, AckReply, repoUpdate );
         SET_MSG_HANDLER_DB( proto_id, RepoListAllocationsRequest, RepoAllocationsReply, repoListAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListUserAllocationsRequest, RepoAllocationsReply, repoListUserAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListProjectAllocationsRequest, RepoAllocationsReply, repoListProjectAllocations );

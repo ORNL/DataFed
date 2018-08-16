@@ -636,6 +636,22 @@ app.get('/api/repo/view', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/update', ( a_req, a_resp ) => {
+    var params = {id:a_req.query.id};
+    if ( a_req.query.title )
+        params.title = a_req.query.title;
+    if ( a_req.query.desc )
+        params.desc = a_req.query.desc;
+    if ( a_req.query.capacity )
+        params.capacity = a_req.query.capacity;
+    if ( a_req.query.admins )
+        params.admin = JSON.parse( a_req.query.admins );
+    console.log("repo upd params:", params );
+    sendMessage( "RepoUpdateRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.json({});
+    });
+});
+
 app.get('/api/repo/alloc/list/by_repo', ( a_req, a_resp ) => {
     sendMessage( "RepoListAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:[]);
@@ -665,8 +681,8 @@ app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
     console.log("alloc set");
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,alloc:a_req.query.alloc}, a_req, a_resp, function( reply ) {
-        console.log("alloc set reply");
-        a_resp.json(reply.alloc?reply.alloc:{});
+        //console.log("alloc set reply");
+        a_resp.json({});
     });
 });
 

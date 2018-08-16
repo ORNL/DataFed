@@ -695,8 +695,9 @@ function makeBrowserTab(){
                     var repo;
                     for ( var i in data ){
                         repo = data[i];
-                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.totalSz )+"</td><td><button class='btn small' onclick='dlgRepoAdmin.show(\""+repo.id+"\")'>Admin</button></td></tr>";
+                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.capacity )+"</td><td><button class='btn small repo_adm' repo='"+repo.id+"'>Admin</button></td></tr>";
                     }
+                    //onclick='dlgRepoAdmin.show(\""+repo.id+"\")'
                     html += "</table>";
                 }else{
                     html = "No administered repositories";
@@ -704,7 +705,7 @@ function makeBrowserTab(){
 
                 $("#repo_list").html( html );
                 $(".btn","#repo_list").button();
-
+                $(".repo_adm","#repo_list").click( function(ev){ dlgRepoAdmin.show($(this).attr("repo"),function(){ inst.setupRepoTab();}); });
             }
         });
     }

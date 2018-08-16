@@ -151,8 +151,23 @@ function userView( a_id, a_details, a_cb ) {
     _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
 }
 
-function repoView( a_id, a_cb ){
-    _asyncGet( "/api/repo/view?id="+a_id, null, a_cb );
+function repoView( a_repo, a_cb ){
+    _asyncGet( "/api/repo/view?id="+a_repo, null, a_cb );
+}
+
+function repoUpdate( a_repo, a_title, a_desc, a_capacity, a_admins, a_cb ){
+    console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
+    var url = "/api/repo/update?id="+a_repo;
+    if ( a_title )
+        url += "&title="+encodeURIComponent(a_title);
+    if ( a_desc )
+        url += "&desc="+encodeURIComponent(a_desc);
+    if ( a_capacity != null )
+        url += "&capacity="+a_capacity;
+    if ( a_admins )
+        url += "&admins=" + JSON.stringify( a_admins );
+    console.log( url );
+    _asyncGet( url, null, a_cb );
 }
 
 function allocList( a_id, a_cb ){
@@ -160,7 +175,7 @@ function allocList( a_id, a_cb ){
 }
 
 function allocStats( a_repo, a_subject, a_cb ){
-    _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+"&subject="+a_subject, null, a_cb );
+    _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+(a_subject?"&subject="+a_subject:""), null, a_cb );
 }
 
 function allocSet( a_repo, a_subject, a_alloc, a_cb ){
@@ -181,9 +196,9 @@ function groupList( a_uid, a_cb ) {
 function groupCreate( a_uid, a_group, a_cb ) {
     var url = "/api/grp/create?uid="+a_uid+"&gid="+a_group.gid;
     if ( a_group.title )
-        url += "&title="+a_group.title;
+        url += "&title="+encodeURIComponent(a_group.title);
     if ( a_group.desc )
-        url += "&desc="+a_group.desc;
+        url += "&desc="+encodeURIComponent(a_group.desc);
     if ( a_group.member && a_group.member.length )
         url += "&member=" + JSON.stringify( a_group.member );
 

@@ -199,7 +199,7 @@ message RepoData
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional uint64             total_sz    = 4;
+    optional uint64             capacity    = 4;
     optional string             pub_key     = 5;
     optional string             address     = 6;
     optional string             endpoint    = 7;

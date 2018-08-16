@@ -415,6 +415,15 @@ message RepoViewRequest
     required string             id          = 1;
 }
 
+message RepoUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional uint64             capacity    = 4;
+    repeated string             admin       = 5;
+}
+
 message RepoDataReply
 {
     repeated SDMS.RepoData      repo        = 1;
@@ -442,7 +451,7 @@ message RepoAllocationsReply
 message RepoAllocationStatsRequest
 {
     required string             repo        = 1;
-    required string             subject     = 2;
+    optional string             subject     = 2;
 }
 
 message RepoAllocationStatsReply

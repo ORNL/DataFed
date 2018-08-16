@@ -1397,6 +1397,36 @@ DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDat
 }
 
 void
+DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void) a_reply;
+
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id", a_request.id()});
+    if ( a_request.has_title() )
+        params.push_back({"title", a_request.title()});
+    if ( a_request.has_desc() )
+        params.push_back({"desc", a_request.desc()});
+    if ( a_request.has_capacity() )
+        params.push_back({"capacity", to_string( a_request.capacity() )});
+    if ( a_request.admin_size() > 0 )
+    {
+        string admins = "[";
+        for ( int i = 0; i < a_request.admin_size(); ++i )
+        {
+            if ( i > 0 )
+                admins += ",";
+            admins += "\"" + a_request.admin(i) + "\"";
+        }
+        admins += "]";
+        params.push_back({"admins", admins });
+    }
+
+    dbGet( "repo/update", params, result );
+}
+
+void
 DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result )
 {
     if ( !a_reply && !a_repos )
@@ -1422,8 +1452,8 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
             repo->set_title( imem->value.GetString() );
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             repo->set_desc( imem->value.GetString() );
-        if (( imem = val.FindMember("total_sz")) != val.MemberEnd() )
-            repo->set_total_sz( imem->value.GetUint64() );
+        if (( imem = val.FindMember("capacity")) != val.MemberEnd() )
+            repo->set_capacity( imem->value.GetUint64() );
         if (( imem = val.FindMember("address")) != val.MemberEnd() )
             repo->set_address( imem->value.GetString() );
         if (( imem = val.FindMember("endpoint")) != val.MemberEnd() )
@@ -1508,8 +1538,12 @@ void
 DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"repo",a_request.repo()});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
 
-    dbGet( "repo/alloc/stats", {{"repo",a_request.repo()},{"subject",a_request.subject()}}, result );
+    dbGet( "repo/alloc/stats", params, result );
 
     setAllocStatsData( a_reply, result );
 }

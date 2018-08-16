@@ -3,13 +3,13 @@ function makeDlAllocNewEdit(){
 
     this.content =
         "<table width='100%'>\
-        <tr><td id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%' readonly></input></td></tr>\
-        <tr id='subj_btn_row' style='display:none'><td>Select:</td><td>\
+        <tr><td style='vertical-align:middle' id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%' disabled></input></td></tr>\
+        <tr id='subj_btn_row' style='display:none'><td style='vertical-align:middle'>Select:</td><td>\
                 <button class='btn small' id='set_user'>User</button>\
                 <button class='btn small' id='set_proj'>Project</button>\
             </td></tr>\
-        <tr><td>Allocation:</td><td><input type='text' id='alloc' style='width:100%'></input></td></tr>\
-        <tr><td>Usage:</td><td><input type='text' id='usage' style='width:100%' readonly></input></td></tr>\
+        <tr><td style='vertical-align:middle'>Allocation:</td><td><input type='text' id='alloc' style='width:100%'></input></td></tr>\
+        <tr><td style='vertical-align:middle'>Usage:</td><td><input type='text' id='usage' style='width:100%' readonly></input></td></tr>\
         </table>\
         ";
 
@@ -30,7 +30,7 @@ function makeDlAllocNewEdit(){
         }else{
             inst.alloc = {repo:a_repo,id:null,alloc:0,usage:0};
             $("#subj_btn_row",inst.frame).show();
-            $("#subject",inst.frame).prop("readonly",false);
+            $("#subject",inst.frame).prop("disabled",false);
             $("#usage",inst.frame).val( "0" );
             $(".btn",inst.frame).button();
 
@@ -80,10 +80,10 @@ function makeDlAllocNewEdit(){
                         return;
                     }
 
-                    if ( alloc < inst.alloc.usage ){
+                    /*if ( alloc < inst.alloc.usage ){
                         dlgAlert("Data Entry Error","Allocation cannot be less than current usage.");
                         return;
-                    }
+                    }*/
 
                     inst.alloc.alloc = alloc;
                     var dlg_inst = $(this);
