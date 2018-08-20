@@ -404,6 +404,16 @@ message RepoDataSizeReply
     required uint64             size        = 2;
 }
 
+message RepoPathCreateRequest
+{
+    required string             path        = 1;
+}
+
+message RepoPathDeleteRequest
+{
+    required string             path        = 1;
+}
+
 message RepoListRequest
 {
     optional string             admin       = 1;
@@ -466,3 +476,13 @@ message RepoAllocationSetRequest
     required string             subject     = 2;
     required uint64             alloc       = 3;
 }
+
+// Reply is ACK/NACK
+message RepoAuthzRequest
+{
+    required string             repo        = 1;
+    required string             client      = 2;
+    required string             file        = 3;
+    required string             action      = 4;
+}
+
