@@ -88,8 +88,12 @@ router.get('/create', function (req, res) {
                     capacity: req.queryParams.capacity,
                     pub_key: req.queryParams.pub_key,
                     address: req.queryParams.address,
-                    endpoint: req.queryParams.endpoint
+                    endpoint: req.queryParams.endpoint,
+                    path: req.queryParams.endpoint
                 };
+
+                if ( !obj.path.endsWith("/"))
+                    obj.path += "/";
 
                 if ( req.queryParams.title )
                     obj.title = req.queryParams.title;
@@ -123,6 +127,7 @@ router.get('/create', function (req, res) {
 .queryParam('pub_key', joi.string().required(), "Repo server public key")
 .queryParam('address', joi.string().required(), "Repo server address")
 .queryParam('endpoint', joi.string().required(), "Repo server endpoint")
+.queryParam('path', joi.string().required(), "Repo server data path")
 .queryParam('admins', joi.array().items(joi.string()).required(), "Repo admin user IDs")
 .summary('Create a repo server record')
 .description('Create a repo server record.');
@@ -322,9 +327,9 @@ router.get('/alloc/set', function (req, res) {
                     } else {
                         var path;
                         if ( subject_id[0] == "p" )
-                            path = "/data/project/";
+                            path = repo.path + "project/";
                         else
-                            path = "/data/user/";
+                            path = repo.path + "user/";
                         g_db.alloc.save({ _from: subject_id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: path + subject_id.substr(2) + "/" });
                     }
                 }
