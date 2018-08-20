@@ -1460,6 +1460,8 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
             repo->set_endpoint( imem->value.GetString() );
         if (( imem = val.FindMember("pub_key")) != val.MemberEnd() )
             repo->set_pub_key( imem->value.GetString() );
+        if (( imem = val.FindMember("path")) != val.MemberEnd() )
+            repo->set_path( imem->value.GetString() );
 
         if (( imem = val.FindMember("admins")) != val.MemberEnd() )
         {

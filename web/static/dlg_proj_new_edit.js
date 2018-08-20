@@ -58,11 +58,13 @@ function dlgProjNewEdit(a_data,a_cb) {
                 proj.title = $("#title",frame).val();
                 proj.desc = $("#desc",frame).val();
 
-                console.log( "project update, old:", a_data, "new:",proj);
                 if ( !proj.id || !proj.domain || !proj.title ){
-                    alert("Missing one or more required fields: ID, title, and domain.");
+                    dlgAlert("Input Error","Missing one or more required fields: ID, title, and domain.");
                     return;
                 }
+
+                if ( !isValidID( proj.id ))
+                    return;
 
                 var url = "/api/prj/";
 

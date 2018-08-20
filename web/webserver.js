@@ -321,6 +321,7 @@ app.get('/api/prj/delete', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/view', ( a_req, a_resp ) => {
+    console.log("ID: ["+a_req.query.id+"]");
     sendMessage( "ProjectViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         if ( reply.proj && reply.proj.length )
             a_resp.send(reply.proj[0]);

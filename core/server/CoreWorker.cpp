@@ -82,6 +82,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &Worker::procRepoAllocationSetRequest );
 
         // Requests that can be handled by DB client directly
         
@@ -129,7 +130,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoListUserAllocationsRequest, RepoAllocationsReply, repoListUserAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListProjectAllocationsRequest, RepoAllocationsReply, repoListProjectAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
     }
     catch( TraceException & e)
     {
@@ -446,6 +446,28 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     if ( request->has_scope())
         req2.set_scope( request->scope() );
     m_db_client.recordSearch( req2, reply );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procRepoAllocationSetRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RepoAllocationSetRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+    m_db_client.repoAllocationSet( *request, reply );
+    cout << "procRepoAllocationSetRequest, alloc: " << request->alloc() << endl;
+    if ( request->alloc() > 0 )
+    {
+        cout << "create path!\n";
+        m_mgr.repoPathCreate( request->repo(), request->subject() );
+    }
+    else
+    {
+        cout << "delete path!\n";
+        m_mgr.repoPathDelete( request->repo(), request->subject() );
+    }
 
     PROC_MSG_END
 }

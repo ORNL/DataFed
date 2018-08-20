@@ -38,6 +38,8 @@ private:
     const std::string & getDbUser() { return m_db_user; }
     const std::string & getDbPass() { return m_db_pass; }
     const std::string * getRepoAddress( const std::string & a_repo_id );
+    void                repoPathCreate( const std::string & a_repo_id, const std::string & a_id );
+    void                repoPathDelete( const std::string & a_repo_id, const std::string & a_id );
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     void                handleNewXfr( const XfrData & a_xfr );
@@ -76,6 +78,8 @@ private:
     std::map<std::string,std::string>   m_auth_clients;
     std::map<std::string,std::pair<std::string,size_t>>   m_trans_auth_clients;
     std::vector<std::pair<std::string,std::string>> m_data_delete;
+    std::vector<std::pair<std::string,std::string>> m_path_create;
+    std::vector<std::pair<std::string,std::string>> m_path_delete;
     XfrMgr                          m_xfr_mgr;
     std::thread *                   m_msg_router_thread;
     std::vector<Worker*>            m_workers;

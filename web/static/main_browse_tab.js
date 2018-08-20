@@ -37,7 +37,7 @@ function makeBrowserTab(){
                 confirmChoice( "Confirm Deletion", msg, ["All","OWNED","Cancel"], function( choice ){
                     console.log( "choice:",choice);
                     if ( choice != 2 ){
-                        url = "/api/col/delete?id=" + node.key + "&mode=" + (choice==0?"all":"owned");
+                        url = "/api/col/delete?id=" + encodeURIComponent(node.key) + "&mode=" + (choice==0?"all":"owned");
                         console.log( url);
                         _asyncGet( url, null, function( ok, data ){
                             if ( ok ) {
@@ -62,7 +62,7 @@ function makeBrowserTab(){
 
                 confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
                     if ( choice == 0 ){
-                        url += "/delete?id=" + node.key;
+                        url += "/delete?id=" + encodeURIComponent(node.key);
                         _asyncGet( url, null, function( ok, data ){
                             if ( ok ) {
                                 inst.deleteNode( node.key );
@@ -322,6 +322,7 @@ function makeBrowserTab(){
             inst.data_info.html("(no information available)<br><br><br>");
             inst.showSelectedMetadata();
         }else{
+            console.log( "node key:", node.key );
             var key,i;
             if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
@@ -691,11 +692,11 @@ function makeBrowserTab(){
                 var html;
                 console.log( "repo data:",data);
                 if ( data && data.length ){
-                    html = "<table class='info_table'><tr><th>Repo ID</th><th>Title</th><th>Address</th><th>Endpoint UUID</th><th>Capacity</th></tr>";
+                    html = "<table class='info_table'><tr><th>Repo ID</th><th>Title</th><th>Address</th><th>Endpoint UUID</th><th>Capacity</th><th>Path</th></tr>";
                     var repo;
                     for ( var i in data ){
                         repo = data[i];
-                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.capacity )+"</td><td><button class='btn small repo_adm' repo='"+repo.id+"'>Admin</button></td></tr>";
+                        html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.capacity )+"</td><td>"+repo.path+"</td><td><button class='btn small repo_adm' repo='"+repo.id+"'>Admin</button></td></tr>";
                     }
                     //onclick='dlgRepoAdmin.show(\""+repo.id+"\")'
                     html += "</table>";
@@ -796,7 +797,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "shared_user" ) {
                 if ( data.node.data.scope ){
                     data.result = {
-                        url: "/api/acl/by_user/list?owner=" + data.node.data.scope,
+                        url: "/api/acl/by_user/list?owner=" + encodeURIComponent(data.node.data.scope),
                         cache: false
                     };
                 }else{
@@ -808,7 +809,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "shared_proj" ) {
                 if ( data.node.data.scope ){
                     data.result = {
-                        url: "/api/acl/by_proj/list?owner=" + data.node.data.scope,
+                        url: "/api/acl/by_proj/list?owner=" + encodeURIComponent(data.node.data.scope),
                         cache: false
                     };
                 }else{
@@ -821,7 +822,7 @@ function makeBrowserTab(){
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
             } else {
                 data.result = {
-                    url: "/api/col/read?id=" + data.node.key,
+                    url: "/api/col/read?id=" + encodeURIComponent( data.node.key ),
                     cache: false
                 };
             }

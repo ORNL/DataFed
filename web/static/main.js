@@ -55,7 +55,7 @@ function _asyncGet( a_path, a_raw_json_data, a_callback ) {
 
 function viewData( a_id, a_cb ) {
     console.log("viewData()");
-    _asyncGet( "/api/dat/view?id=" + a_id, null, function( ok, data ){
+    _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
             console.log("viewData ok, data:", data );
             a_cb( data );
@@ -67,10 +67,11 @@ function viewData( a_id, a_cb ) {
     });
 }
 
+/*
 function createData( a_title, a_alias, a_desc, a_md, a_coll, a_callback ) {
     console.log("createData()");
-    _asyncGet( "/api/dat/create?title="+a_title+"&alias="+a_alias+"&desc="+a_desc+"&md="+a_md+"&coll="+a_coll, null, a_callback );
-}
+    _asyncGet( "/api/dat/create?title="+encodeURIComponent(a_title)+"&alias="+a_alias+"&desc="+a_desc+"&md="+a_md+"&coll="+a_coll, null, a_callback );
+}*/
 
 function dataFind( a_query, a_scope, a_callback ) {
     _asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
@@ -78,7 +79,7 @@ function dataFind( a_query, a_scope, a_callback ) {
 
 function viewColl( a_id, a_cb ) {
     console.log("viewColl()");
-    _asyncGet( "/api/col/view?id=" + a_id, null, function( ok, data ){
+    _asyncGet( "/api/col/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
             console.log("viewColl ok, data:", data, typeof data );
             if ( data )
@@ -98,43 +99,43 @@ function viewColl( a_id, a_cb ) {
 }
 
 function viewProj( a_id, a_cb ){
-    _asyncGet( "/api/prj/view?id=" + a_id, null, function( ok, data ){
+    _asyncGet( "/api/prj/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            console.log("viewProj ok, data:", data, typeof data );
+            //console.log("viewProj ok, data:", data, typeof data );
             if ( data )
                 a_cb( data );
             else
                 a_cb();
         }
         else {
-            console.log("viewProj failed:", data );
+            //console.log("viewProj failed:", data );
             a_cb();
         }
     });
 }
 
 function linkItem( a_item, a_coll, a_cb ) {
-    _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll, null, a_cb );
+    _asyncGet( "/api/link?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
 function linkItemUnlinkSource( a_item, a_coll, a_source, a_cb ) {
-    _asyncGet( "/api/link?item="+a_item+"&coll="+a_coll+"&unlink="+a_source, null, a_cb );
+    _asyncGet( "/api/link?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll)+"&unlink="+encodeURIComponent(a_source), null, a_cb );
 }
 
 function unlinkItem( a_item, a_coll, a_cb ) {
-    _asyncGet( "/api/unlink?item="+a_item+"&coll="+a_coll, null, a_cb );
+    _asyncGet( "/api/unlink?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
 function getParents( a_id, a_cb ) {
-    _asyncGet( "/api/col/get_parents?id="+a_id, null, a_cb );
+    _asyncGet( "/api/col/get_parents?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
 function aclView( a_id, a_cb ) {
-    _asyncGet( "/api/acl/view?id="+a_id, null, a_cb );
+    _asyncGet( "/api/acl/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
 function hasPerms( a_id, a_perms, a_cb ){
-    _asyncGet( "/api/has_perms?id="+a_id+"&perms="+a_perms, null, function(ok,data){
+    _asyncGet( "/api/has_perms?id="+encodeURIComponent(a_id)+"&perms="+a_perms, null, function(ok,data){
         console.log("hasPerm",a_id,a_perms,ok,data);
         if ( ok )
             a_cb( data.granted );
@@ -144,7 +145,7 @@ function hasPerms( a_id, a_perms, a_cb ){
 }
 
 function aclUpdate( a_id, a_rules, a_public, a_cb ) {
-    _asyncGet( "/api/acl/update?id="+a_id+"&rules="+JSON.stringify(a_rules)+"&pub="+a_public, null, a_cb );
+    _asyncGet( "/api/acl/update?id="+encodeURIComponent(a_id)+"&rules="+encodeURIComponent(JSON.stringify(a_rules))+"&pub="+a_public, null, a_cb );
 }
 
 function userView( a_id, a_details, a_cb ) {
@@ -175,26 +176,27 @@ function allocList( a_id, a_cb ){
 }
 
 function allocStats( a_repo, a_subject, a_cb ){
-    _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+(a_subject?"&subject="+a_subject:""), null, a_cb );
+    _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+(a_subject?"&subject="+encodeURIComponent(a_subject):""), null, a_cb );
 }
 
 function allocSet( a_repo, a_subject, a_alloc, a_cb ){
-    _asyncGet( "/api/repo/alloc/set?repo="+a_repo+"&subject="+a_subject+"&alloc="+a_alloc, null, a_cb );
+    _asyncGet( "/api/repo/alloc/set?repo="+a_repo+"&subject="+encodeURIComponent(a_subject)+"&alloc="+a_alloc, null, a_cb );
 }
 
 function groupView( a_uid, a_gid, a_cb ) {
     if ( a_gid.startsWith("g/" ))
-        _asyncGet( "/api/grp/view?uid="+a_uid+"&gid="+a_gid.substr(2), null, a_cb );
+        _asyncGet( "/api/grp/view?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid.substr(2)), null, a_cb );
     else
-        _asyncGet( "/api/grp/view?uid="+a_uid+"&gid="+a_gid, null, a_cb );
+        _asyncGet( "/api/grp/view?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid), null, a_cb );
 }
 
 function groupList( a_uid, a_cb ) {
-    _asyncGet( "/api/grp/list?uid="+a_uid, null, a_cb );
+    _asyncGet( "/api/grp/list?uid="+encodeURIComponent(a_uid), null, a_cb );
 }
 
+
 function groupCreate( a_uid, a_group, a_cb ) {
-    var url = "/api/grp/create?uid="+a_uid+"&gid="+a_group.gid;
+    var url = "/api/grp/create?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_group.gid);
     if ( a_group.title )
         url += "&title="+encodeURIComponent(a_group.title);
     if ( a_group.desc )
@@ -209,11 +211,11 @@ function groupCreate( a_uid, a_group, a_cb ) {
 }
 
 function groupUpdate( a_group, a_cb ) {
-    var url = "/api/grp/update?uid="+a_group.uid+"&gid="+a_group.gid;
+    var url = "/api/grp/update?uid="+encodeURIComponent(a_group.uid)+"&gid="+encodeURIComponent(a_group.gid);
     if ( a_group.title )
-        url += "&title="+a_group.title;
+        url += "&title="+encodeURIComponent(a_group.title);
     if ( a_group.desc )
-        url += "&desc="+a_group.desc;
+        url += "&desc="+encodeURIComponent(a_group.desc);
     if ( a_group.add && a_group.add.length )
         url += "&add=" + JSON.stringify(a_group.add);
     if ( a_group.rem && a_group.rem.length )
@@ -226,7 +228,7 @@ function groupUpdate( a_group, a_cb ) {
 }
 
 function groupDelete( a_uid, a_gid, a_cb ) {
-    _asyncGet( "/api/grp/delete?uid="+a_uid+"&gid="+(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
+    _asyncGet( "/api/grp/delete?uid="+a_uid+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
         if ( ok && a_cb )
             a_cb();
     });
@@ -424,6 +426,53 @@ function parseSize( a_size_str ){
         result = Math.ceil( result );
     return result;
 }
+
+function isValidID( id ){
+    var len = id.length;
+    if ( !len ){
+        dlgAlert("Invalid ID","ID cannot be blank.");
+        return false;
+    }
+
+    var code, i;
+    var allowed = [43,45,46,95];
+
+    for ( i = 0; i < len; i++ ){
+        code = id.charCodeAt(i);
+        if (!(code > 47 && code < 58) && // numeric (0-9)
+            !(code > 64 && code < 91) && // upper alpha (A-Z)
+            !(code > 96 && code < 123)){ // lower alpha (a-z)
+            if ( allowed.indexOf( code ) == -1 || i == 0 ){
+                dlgAlert("Invalid ID","IDs can only contain upper/lower case letters, numbers, and the punctuation characters '.', '-', '+', and '_'. IDs also cannot start with a puncuation character.");
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
+
+function isValidAlias( alias ){
+    var len = alias.length;
+    if ( len ){
+        var code, i;
+        var allowed = [43,45,46,95];
+
+        for ( i = 0; i < len; i++ ){
+            code = alias.charCodeAt(i);
+            if (!(code > 47 && code < 58) && // numeric (0-9)
+                !(code > 64 && code < 91) && // upper alpha (A-Z)
+                !(code > 96 && code < 123)){ // lower alpha (a-z)
+                if ( allowed.indexOf( code ) == -1 || i == 0 ){
+                    dlgAlert("Invalid Alias","Aliases can only contain upper/lower case letters, numbers, and the punctuation characters '.', '-', '+', and '_'. Aliases also cannot start with a puncuation character.");
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+};
 
 var status_timer;
 

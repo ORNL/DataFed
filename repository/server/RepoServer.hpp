@@ -35,6 +35,8 @@ private:
     void        procStatusRequest();
     void        procDataDeleteRequest();
     void        procDataGetSizeRequest();
+    void        procPathCreateRequest();
+    void        procPathDeleteRequest();
 
     typedef void (Server::*msg_fun_t)();
 

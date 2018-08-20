@@ -44,6 +44,8 @@ Server::Server( const std::string & a_cred_dir, uint32_t a_port ) :
 
     SET_MSG_HANDLER( proto_id, RepoDataDeleteRequest, &Server::procDataDeleteRequest );
     SET_MSG_HANDLER( proto_id, RepoDataGetSizeRequest, &Server::procDataGetSizeRequest );
+    SET_MSG_HANDLER( proto_id, RepoPathCreateRequest, &Server::procPathCreateRequest );
+    SET_MSG_HANDLER( proto_id, RepoPathDeleteRequest, &Server::procPathDeleteRequest );
 }
 
 
@@ -328,6 +330,38 @@ Server::procDataGetSizeRequest()
 }
 
 
+void
+Server::procPathCreateRequest()
+{
+    PROC_MSG_BEGIN( Auth::RepoPathCreateRequest, Anon::AckReply )
+
+    cout << "Repo: path create request " << request->path() << "\n";
+
+    boost::filesystem::path data_path( request->path() );
+    if ( !boost::filesystem::exists( data_path ))
+    {
+        boost::filesystem::create_directory( data_path );
+    }
+
+    PROC_MSG_END
+}
+
+
+void
+Server::procPathDeleteRequest()
+{
+    PROC_MSG_BEGIN( Auth::RepoPathDeleteRequest, Anon::AckReply )
+
+    cout << "Repo: path delete request " << request->path() << "\n";
+
+    boost::filesystem::path data_path( request->path() );
+    if ( boost::filesystem::exists( data_path ))
+    {
+        boost::filesystem::remove( data_path );
+    }
+
+    PROC_MSG_END
+}
 
 
 }}

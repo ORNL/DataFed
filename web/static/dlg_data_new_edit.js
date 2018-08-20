@@ -32,13 +32,23 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
         buttons: [{
             text: a_data?"Update":"Create",
             click: function() {
+                console.log( "Create data" );
+
                 var title = encodeURIComponent($("#title",frame).val());
                 if ( !title ) {
+                    console.log( "bad title" );
                     alert("Title cannot be empty");
                     return;
                 }
 
                 var alias = encodeURIComponent($("#alias",frame).val());
+                if ( !isValidAlias( alias )){
+                    console.log( "bad alias" );
+
+                    return;
+                }
+
+                alias = encodeURIComponent(alias);
                 var desc = encodeURIComponent($("#desc",frame).val());
                 var coll = encodeURIComponent($("#coll",frame).val());
                 var metadata = $("#md",frame).val().trim();
@@ -52,6 +62,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 }
 
                 var md = encodeURIComponent(metadata);
+                console.log( "build url" );
 
                 var url = "/api/";
                 if ( a_mode )
@@ -98,6 +109,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 console.log( "URL in js", url );
 
                 var inst = $(this);
+
                 _asyncGet( url, null, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();

@@ -247,7 +247,7 @@ function makeDlgSetACLs(){
                         lazyLoad: function( event, data ) {
                             if ( data.node.key.startsWith("g/")){
                                 data.result = {
-                                    url: "/api/grp/view?uid="+inst.uid+"&gid="+data.node.key.substr(2),
+                                    url: "/api/grp/view?uid="+encodeURIComponent(inst.uid)+"&gid="+encodeURIComponent(data.node.key.substr(2)),
                                     cache: false
                                 };
                             }

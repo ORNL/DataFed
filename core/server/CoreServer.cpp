@@ -370,14 +370,17 @@ Server::backgroundMaintenance()
 
     struct timespec             _t;
     double                      t;
-    vector<pair<string,string>>::iterator    idel;
+    vector<pair<string,string>>::iterator    iter;
     Auth::RepoDataDeleteRequest req;
+    Auth::RepoPathCreateRequest path_create_req;
+    Auth::RepoPathDeleteRequest path_delete_req;
     MsgBuf::Message *           reply;
     MsgBuf::Frame               frame;
     string                      uid;
     map<string,pair<string,size_t>>::iterator itrans_client;
     map<string,MsgComm*>        repo_map;
     map<string,MsgComm*>::iterator repo;
+    string path;
 
     try
     {
@@ -415,12 +418,15 @@ Server::backgroundMaintenance()
                 // TODO Deletes also need to be serialized so they aren't lost in the event of a restart
                 if ( m_data_delete.size() )
                 {
-                    for ( idel = m_data_delete.begin(); idel !=  m_data_delete.end(); ++idel )
+                    for ( iter = m_data_delete.begin(); iter !=  m_data_delete.end(); ++iter )
                     {
-                        repo = repo_map.find( idel->first );
+                        repo = repo_map.find( iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            req.set_path( idel->second );
+                            path = iter->second;
+                            cout << "Data delete path: " << path;
+
+                            req.set_path( path );
                             repo->second->send( req );
                             if ( !repo->second->recv( reply, uid, frame, 5000 ))
                             {
@@ -432,11 +438,67 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            cout << "Bad repo in delete list: " << idel->first << "\n";
+                            cout << "Bad repo in delete list: " << iter->first << "\n";
                         }
                     }
+                    m_data_delete.clear();
                 }
-                m_data_delete.clear();
+
+                // TODO This needs to be re-written in an async manner
+                // TODO Deletes also need to be serialized so they aren't lost in the event of a restart
+                if ( m_path_create.size() )
+                {
+                    for ( iter = m_path_create.begin(); iter != m_path_create.end(); ++iter )
+                    {
+                        repo = repo_map.find( iter->first );
+                        if ( repo != repo_map.end() )
+                        {
+                            path = m_repos[iter->first]->path() + ( iter->second[0]=='u'?"user/":"project/" )+ iter->second.substr(2);
+                            cout << "Path create: " << path;
+                            path_create_req.set_path( path );
+                            repo->second->send( path_create_req );
+                            if ( !repo->second->recv( reply, uid, frame, 5000 ))
+                            {
+                                cout << "No response from repo server!\n";
+                                break;
+                            }
+                            else
+                                delete reply;
+                        }
+                        else
+                        {
+                            cout << "Bad repo in path create list: " << iter->first << "\n";
+                        }
+                    }
+                    m_path_create.clear();
+                }
+
+                if ( m_path_delete.size() )
+                {
+                    for ( iter = m_path_delete.begin(); iter != m_path_delete.end(); ++iter )
+                    {
+                        repo = repo_map.find( iter->first );
+                        if ( repo != repo_map.end() )
+                        {
+                            path = m_repos[iter->first]->path() + ( iter->second[0]=='u'?"user/":"project/" )+ iter->second.substr(2);
+                            cout << "Path delete: " << path;
+                            path_delete_req.set_path( path );
+                            repo->second->send( path_delete_req );
+                            if ( !repo->second->recv( reply, uid, frame, 5000 ))
+                            {
+                                cout << "No response from repo server!\n";
+                                break;
+                            }
+                            else
+                                delete reply;
+                        }
+                        else
+                        {
+                            cout << "Bad repo in path delete list: " << iter->first << "\n";
+                        }
+                    }
+                    m_path_delete.clear();
+                }
             }
             catch( ... )
             {
@@ -626,6 +688,28 @@ Server::getRepoAddress( const std::string & a_repo_id )
         return &r->second->address(); // This is safe with current protobuf implementation
     else
         return 0;
+}
+
+void
+Server::repoPathCreate( const std::string & a_repo_id, const std::string & a_id )
+{
+    map<string,RepoData*>::iterator r = m_repos.find( a_repo_id );
+    if ( r != m_repos.end() )
+    {
+        lock_guard<mutex> lock( m_data_mutex );
+        m_path_create.push_back( make_pair( a_repo_id, a_id ));
+    }
+}
+
+void
+Server::repoPathDelete( const std::string & a_repo_id, const std::string & a_id )
+{
+    map<string,RepoData*>::iterator r = m_repos.find( a_repo_id );
+    if ( r != m_repos.end() )
+    {
+        lock_guard<mutex> lock( m_data_mutex );
+        m_path_delete.push_back( make_pair( a_repo_id, a_id ));
+    }
 }
 
 void
