@@ -139,29 +139,33 @@ XfrMgr::xfrThreadFunc()
                             // Get new submission ID
                             string sub_id = glob.getSubmissionID( (*ixfr)->token );
 
-                            // True = ok, false = temp failure, exception = perm failure
-                            if ( (*ixfr)->mode == XM_PUT )
-                                res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
-                            else
-                                res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->repo_path, (*ixfr)->local_path, (*ixfr)->task_id );
-
-                            if ( res )
+                            try
                             {
-                                cout << "xfr running with task id: " << (*ixfr)->task_id << "\n";
-                                // Update DB entry
-                                db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
-                                (*ixfr)->stage = 1;
-                                (*ixfr)->poll = INIT_POLL_PERIOD;
+                                // True = ok, false = temp failure, exception = perm failure
+                                if ( (*ixfr)->mode == XM_PUT )
+                                    res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
+                                else
+                                    res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->repo_path, (*ixfr)->local_path, (*ixfr)->task_id );
+
+                                if ( res )
+                                {
+                                    cout << "xfr running with task id: " << (*ixfr)->task_id << "\n";
+                                    // Update DB entry
+                                    db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                                    (*ixfr)->stage = 1;
+                                    (*ixfr)->poll = INIT_POLL_PERIOD;
+                                }
+
+                                ixfr++;
                             }
-
-                            ixfr++;
+                            catch( TraceException & e )
+                            {
+                                // Permanent failure, e.what()
+                                (*ixfr)->status = XS_FAILED;
+                                db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, e.toString() );
+                                ixfr = m_xfr_active.erase( ixfr );
+                            }
                         }
-
-                        /*
-                            status = XS_FAILED;
-                            db_client.xfrUpdate( (*ixfr)->id, &status, result );
-                            ixfr = m_xfr_active.erase( ixfr );
-                        */
                     }
                     else
                     {
@@ -220,7 +224,7 @@ XfrMgr::xfrThreadFunc()
                                             delete sz_rep;
                                         }
                                     }
-
+                                    cout << "XFR - Update record " << (*ixfr)->data_id << ",  size: " << file_size << endl;
                                     // Update DB record with new file stats
                                     upd_req.set_id( (*ixfr)->data_id );
                                     upd_req.set_data_size( file_size );
@@ -228,6 +232,7 @@ XfrMgr::xfrThreadFunc()
                                     reply.Clear();
 
                                     db_client.recordUpdate( upd_req, reply );
+                                    cout << "Back from send" << endl;
                                 }
                             }
 

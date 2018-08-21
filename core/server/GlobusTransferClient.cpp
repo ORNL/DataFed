@@ -31,11 +31,11 @@ GlobusTransferClient::~GlobusTransferClient()
     curl_easy_cleanup( m_curl );
 }
 
-void
-GlobusTransferClient::get( const char * a_url_path, const char * a_token, const vector<pair<string,string>> &a_params, rapidjson::Document & a_result )
+long
+GlobusTransferClient::get( const char * a_url_path, const char * a_token, const vector<pair<string,string>> &a_params, string & a_result )
 {
     string  url;
-    string  res_json;
+    //string  res_json;
     char    error[CURL_ERROR_SIZE];
 
     error[0] = 0;
@@ -63,7 +63,7 @@ GlobusTransferClient::get( const char * a_url_path, const char * a_token, const 
     DL_DEBUG( "url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
     //curl_easy_setopt( m_curl, CURLOPT_READDATA, 0 );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
     curl_easy_setopt( m_curl, CURLOPT_HTTPGET, 1 );
@@ -88,9 +88,11 @@ GlobusTransferClient::get( const char * a_url_path, const char * a_token, const 
     curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
 
     if ( res != CURLE_OK )
-        EXCEPT_PARAM( 1, "Globus API failed. error: " << error << ", " << curl_easy_strerror( res ));
+        EXCEPT_PARAM( 1, "CURL error [" << error << "], " << curl_easy_strerror( res ));
 
+    return http_code;
 
+/*
     if ( http_code < 200 || http_code > 299 )
         EXCEPT_PARAM( 1, "Globus API failed. Code: " << http_code << ", err: " << error << ", res: " << res_json );
 
@@ -106,13 +108,14 @@ GlobusTransferClient::get( const char * a_url_path, const char * a_token, const 
             EXCEPT( 1, "Invalid JSON returned from Globus API" );
         }
     }
+*/
 }
 
-void
-GlobusTransferClient::post( const char * a_url_path, const char * a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, rapidjson::Document & a_result )
+long
+GlobusTransferClient::post( const char * a_url_path, const char * a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, string & a_result )
 {
     string  url;
-    string  res_json;
+    //string  res_json;
     char    error[CURL_ERROR_SIZE];
     error[0] = 0;
 
@@ -149,7 +152,7 @@ GlobusTransferClient::post( const char * a_url_path, const char * a_token, const
     //DL_DEBUG( "body: " << buffer.GetString() );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
     //curl_easy_setopt( m_curl, CURLOPT_READDATA, &out_buf );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
     curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
@@ -185,36 +188,35 @@ GlobusTransferClient::post( const char * a_url_path, const char * a_token, const
     curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
 
     if ( res != CURLE_OK )
-        EXCEPT_PARAM( 1, "Globus API failed. error: " << error << ", " << curl_easy_strerror( res ));
+        EXCEPT_PARAM( 1, "CURL error [" << error << "], " << curl_easy_strerror( res ));
 
-
-    if ( http_code < 200 || http_code > 299 )
-        EXCEPT_PARAM( 1, "Globus API failed. Code: " << http_code << ", err: " << error << ", res: " << res_json );
-
-    if ( res_json.size() )
-    {
-        cout << "About to parse[" << res_json << "]" << endl;
-        a_result.Parse( res_json.c_str() );
-
-        if ( a_result.HasParseError() )
-        {
-            rapidjson::ParseErrorCode ec = a_result.GetParseError();
-            cerr << "Parse error: " << rapidjson::GetParseError_En( ec ) << endl;
-            EXCEPT( 1, "Invalid JSON returned from Globus API" );
-        }
-    }
+    return http_code;
 }
 
 std::string
 GlobusTransferClient::getSubmissionID( std::string & a_token )
 {
+    string raw_result;
+    long code = get( "submission_id", a_token.c_str(), {}, raw_result );
+
+    cout << "getSubID get code: " << code << endl;
+
     rapidjson::Document result;
-    get( "submission_id", a_token.c_str(), {}, result );
+
+    if ( !raw_result.size() )
+        EXCEPT( 1, "Empty response from Globus" );
+
+    // Try to decode result as JSON - even if call failed
+    cout << "About to parse[" << raw_result << "]" << endl;
+    result.Parse( raw_result.c_str() );
+
+    if ( result.HasParseError() )
+        EXCEPT( 1, "Invalid response from Globus" );
 
     rapidjson::Value::MemberIterator imem = result.FindMember("value");
     
     if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Value missing from JSON returned by Globus API" );
+        EXCEPT( 1, "Invalid response from Globus" );
 
     return imem->value.GetString();
 }
@@ -223,7 +225,6 @@ bool
 GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_id, const string & a_src_path, const string & a_dst_path, string & a_task_id )
 {
     rapidjson::Document body;
-    rapidjson::Document result;
     string src_ep, src_path;
     string dst_ep, dst_path;
 
@@ -262,33 +263,61 @@ GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_i
     xfr_list.PushBack( xfr_item, allocator );
     body.AddMember( "DATA", xfr_list, allocator );
 
-    post( "transfer", a_acc_tok.c_str(), {}, &body, result );
+    string raw_result;
+    long code = post( "transfer", a_acc_tok.c_str(), {}, &body, raw_result );
 
-    rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Invalid response from Globus Xfer API" );
+    cout << "transfer post code: " << code << endl;
 
-    imem = result.FindMember("code");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Invalid response from Globus Xfer API" );
+    rapidjson::Document result;
 
-    if ( strcmp( imem->value.GetString(), "Accepted" ) != 0 )
+    if ( !raw_result.size() )
+        EXCEPT( 1, "Empty response from Globus" );
+
+    // Try to decode result as JSON - even if call failed
+    cout << "About to parse[" << raw_result << "]" << endl;
+    result.Parse( raw_result.c_str() );
+
+    if ( result.HasParseError() )
+        EXCEPT( 1, "Invalid response from Globus" );
+
+    rapidjson::Value::MemberIterator imem;
+
+    if ( code < 200 || code > 202 )
     {
         imem = result.FindMember("message");
         if ( imem == result.MemberEnd() )
-            cout << "Xfr NOT accepted (no reason)\n";
+            EXCEPT( 1, "Unknown Globus transfer failure" );
         else
-            cout << "Xfr NOT accepted: " <<  imem->value.GetString() << "\n";
-        return false;
+            EXCEPT( 1, imem->value.GetString() );
     }
+    else
+    {
+        imem = result.FindMember("DATA_TYPE");
+        if ( imem == result.MemberEnd() )
+            EXCEPT( 1, "Invalid response from Globus" );
 
-    imem = result.FindMember("task_id");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Invalid response from Globus Xfer API" );
+        imem = result.FindMember("code");
+        if ( imem == result.MemberEnd() )
+            EXCEPT( 1, "Invalid response from Globus" );
 
-    a_task_id = imem->value.GetString();
+        if ( strcmp( imem->value.GetString(), "Accepted" ) != 0 )
+        {
+            imem = result.FindMember("message");
+            if ( imem == result.MemberEnd() )
+                cout << "Xfr NOT accepted (no reason)\n";
+            else
+                cout << "Xfr NOT accepted: " <<  imem->value.GetString() << "\n";
+            return false;
+        }
 
-    return true;
+        imem = result.FindMember("task_id");
+        if ( imem == result.MemberEnd() )
+            EXCEPT( 1, "Invalid response from Globus" );
+
+        a_task_id = imem->value.GetString();
+
+        return true;
+    }
 }
 
 bool
@@ -297,13 +326,30 @@ GlobusTransferClient::checkTransferStatus( const std::string & a_acc_tok, const 
     a_status = XS_INIT;
     a_err_msg.clear();
 
-    rapidjson::Document result;
-
+    string raw_result;
     string url = "task/";
     url.append( a_task_id );
     url.append( "/event_list" );
 
-    get( url.c_str(), a_acc_tok.c_str(), {}, result );
+    long code = get( url.c_str(), a_acc_tok.c_str(), {}, raw_result );
+
+    cout << "check transfer status get code: " << code << endl;
+
+    if ( code < 200 || code > 202 )
+        EXCEPT( 1, "Unknown Globus transfer failure" );
+
+    rapidjson::Document result;
+
+    if ( !raw_result.size() )
+        EXCEPT( 1, "Empty response from Globus" );
+
+    // Try to decode result as JSON - even if call failed
+    cout << "About to parse[" << raw_result << "]" << endl;
+    result.Parse( raw_result.c_str() );
+
+    if ( result.HasParseError() )
+        EXCEPT( 1, "Invalid response from Globus" );
+
 
     rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
     if ( imem == result.MemberEnd() || strcmp( imem->value.GetString(), "event_list" ) != 0 )
@@ -336,12 +382,29 @@ GlobusTransferClient::checkTransferStatus( const std::string & a_acc_tok, const 
 bool
 GlobusTransferClient::cancelTask( const std::string & a_acc_tok, const std::string & a_task_id )
 {
-    rapidjson::Document result;
+    string raw_result;
 
     cout << "cancel " << a_task_id << "\n";
 
     string url = string("task/")+a_task_id+"/cancel";
-    post( url.c_str(), a_acc_tok.c_str(), {}, 0, result );
+    long code = post( url.c_str(), a_acc_tok.c_str(), {}, 0, raw_result );
+
+    cout << "cancel task post code: " << code << endl;
+
+    if ( code < 200 || code > 202 )
+        EXCEPT( 1, "Unknown Globus transfer failure" );
+
+    rapidjson::Document result;
+
+    if ( !raw_result.size() )
+        EXCEPT( 1, "Empty response from Globus" );
+
+    // Try to decode result as JSON - even if call failed
+    cout << "About to parse[" << raw_result << "]" << endl;
+    result.Parse( raw_result.c_str() );
+
+    if ( result.HasParseError() )
+        EXCEPT( 1, "Invalid response from Globus" );
 
     rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
     if ( imem == result.MemberEnd() )
