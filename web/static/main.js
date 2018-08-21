@@ -236,16 +236,18 @@ function groupDelete( a_uid, a_gid, a_cb ) {
 
 function dlgStartTransfer( a_mode, a_data ) {
     var frame = $(document.createElement('div'));
-    frame.html(
-        "<table style='width:100%'>\
-        <tr><td>Title:</td><td><input disabled type='text' id='title' style='width:100%'></input></td></tr>\
-        <tr><td>Alias:</td><td><input disabled type='text' id='alias' style='width:100%'></input></td></tr>\
-        <tr><td >Description:</td><td><textarea disabled id='desc' rows=3 style='width:100%'></textarea></td></tr>\
-        <tr><td>Metadata:</td><td><textarea disabled id='md' rows=3 style='width:100%'></textarea></td></tr>\
-        <tr><td>Path:</td><td><input type='text' id='path' style='width:100%'></input></td></tr>\
-        </table>" );
+    frame.html( "<span id='prefix'>Source</span> Path:<input type='text' id='path' style='width:100%'></input>" );
 
-    var dlg_title = (a_mode?"Download Data ":"Upload Data ") + a_data.id;
+    var dlg_title = (a_mode?"Download Data ":"Upload Data ");
+    if ( a_data.alias ){
+        var pos = a_data.alias.lastIndexOf(":");
+        dlg_title += "\"" + a_data.alias.substr(pos+1) + "\" [" + a_data.id + "]";
+    }else
+        dlg_title += a_data.id;
+
+    if ( a_mode )
+        $("#prefix",frame).html("Destination");
+    $("#path",frame).val("olcf#dtn_atlas/~/");
 
     var options = {
         title: dlg_title,
@@ -285,14 +287,7 @@ function dlgStartTransfer( a_mode, a_data ) {
             click: function() {
                 $(this).dialog('destroy').remove();
             }
-        }],
-        open: function(event,ui){
-            $("#title",frame).val(a_data.title);
-            $("#alias",frame).val(a_data.alias);
-            $("#desc",frame).val(a_data.desc);
-            $("#md",frame).val(a_data.metadata);
-            $("#path",frame).val("olcf#dtn_atlas/~/");
-        }
+        }]
     };
 
     frame.dialog( options );
