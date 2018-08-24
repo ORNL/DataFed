@@ -21,6 +21,7 @@ function makeDlgGroups(){
         inst.frame.html( inst.content );
         inst.uid = a_uid;
         inst.excl = a_excl;
+        inst.select = select;
 
         $("#dlg_add_grp",inst.frame).click( inst.addGroup );
         $("#dlg_edit_grp",inst.frame).click( inst.editGroup );
@@ -129,7 +130,9 @@ function makeDlgGroups(){
         dlgGroupEdit.show( inst.uid, inst.excl, null, function( group ){
             if ( group ){
                 var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
-                tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
+                var node = tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
+                if ( inst.select )
+                    node.setSelected();
             }
         });
     }

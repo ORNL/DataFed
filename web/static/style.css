@@ -8,7 +8,7 @@ body
 {
     font-family: "arial", "sans-serif";
     height: 100%;
-    width: 100%;
+    /*width: 100%;*/
     margin: 0;
     box-sizing: border-box;
 }
@@ -33,17 +33,16 @@ body
     align-content:flex-start;*/
 }
 
+.content
+{
+    background: #404040!important;
+}
+
+/*
 .header
 {
     background: #004000;
     color: #ffffff;
-    /*font-size: 1.6em;*/
-    /*padding: .5em;*/
-}
-
-.content
-{
-    background: #004000;
 }
 
 .footer
@@ -67,6 +66,7 @@ body
     font-size: 1rem!important;
     font-style: normal!important;
 }
+*/
 
 .small {
     margin: 0!important;
@@ -92,9 +92,9 @@ body
 
 .info_table td
 {
-    vertical-align:middle;
+    vertical-align:top;
 }
-
+/*
 .info_table tr:nth-child(even)
 {
     background-color: #eee;
@@ -104,6 +104,7 @@ body
 {
     background-color: #fff;
 }
+*/
 
 .info_table_fixed
 {
@@ -149,17 +150,19 @@ body
 {
     text-align:right;
 }
-
+/*
 td
 {
     vertical-align:top;
 }
+*/
 
 .no-border
 {
     border:none!important;
 }
 
+/*
 .ui-selectablexx
 {
     background-color: #808080;
@@ -169,16 +172,17 @@ td
 {
     background-color: #80FF80;
 }
+*/
 
-ul.ui-effects-placeholder { width:10px !important; }
+/*ul.ui-effects-placeholder { width:10px !important; }*/
 
+/*
 .ui-fancytree.fancytree-container { 
     height: 100%;
-    /*width: 100%;*/
     border: none;
     font-size: 1rem;
 }
-
+*/
 
 /* Hide all jQ dialog close buttons */
 .ui-dialog-titlebar-close {
@@ -187,9 +191,11 @@ ul.ui-effects-placeholder { width:10px !important; }
 
 :focus { outline: none; }
 
+/*
 .ui-popup-container {
     z-index: 110;
 }
+*/
 
 .ui-icon-person
 {
@@ -259,4 +265,22 @@ ul.ui-effects-placeholder { width:10px !important; }
 .ui-icon-reload
 {
     color: #008000
+}
+
+.custom-combobox {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-combobox-toggle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-left: -1px;
+    padding: 0;
+}
+
+.custom-combobox-input {
+    margin: 0;
+    padding: 5px 10px;
 }

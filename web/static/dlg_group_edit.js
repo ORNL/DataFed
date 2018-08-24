@@ -87,13 +87,11 @@ function makeDlgGroupEdit(){
                 text: "Ok",
                 click: function() {
                     inst.group.gid = $("#gid",inst.frame).val();
+                    if ( !isValidID(inst.group.gid))
+                        return;
+
                     inst.group.title = $("#title",inst.frame).val();
                     inst.group.desc = $("#desc",inst.frame).val();
-
-                    if ( !inst.group.gid.length ){
-                        alert("Group ID cannot be empty");
-                        return;
-                    }
 
                     var dlg_inst = $(this);
                     var uid;

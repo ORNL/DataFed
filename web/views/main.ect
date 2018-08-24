@@ -13,6 +13,7 @@
         <script type="text/javascript" charset="utf-8" src="/dlg_allocations.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_repo_admin.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_start_xfer.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
         <script type="text/javascript">
@@ -24,19 +25,20 @@
     </head>
     <body>
     <div class="col-flex" style="height:100%;width:100%">
-        <div class="header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em">
+        <!-- div class="ui-widget-header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em" -->
+        <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
             <div style="flex:1 1 100%;font-size:2em;">Scientific Data Management System</div>
-            <div style="flex:none"><span class="" style="padding:.35em;display:block;background:rgba(0, 0, 0, 0.5)"><button class="btn small" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn small" onclick="logout()">Log Out</button></span></div>
+            <div style="flex:none"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="logout()">Log Out</button></div>
         </div>
-        <div id="content" class="content  ui-widget-content" style="flex:1 1 100%">
+        <div id="content" class="content" style="flex:1 1 100%">
             <% include 'tab_browser.ect' %>
 
         </div>
-        <div class="footer" style="flex:none">
+        <div class="ui-widget-header" style="flex:none;padding:.25em">
             <div class="row-flex">
                 <div style="flex:none" >User: <span id="uname"></span></div>
                 <div style="flex:none" >&nbsp&nbsp&nbsp</div>
-                <div id="status_text" class="status-bar" style="flex:1 1 100%;text-align:center"></div>
+                <div id="status_text" class="ui-state-highlight no-border" style="height:1.1em;flex:1 1 100%;text-align:center;font-size:.9em;font-style:normal"></div>
             </div>
         </div>
     </div>

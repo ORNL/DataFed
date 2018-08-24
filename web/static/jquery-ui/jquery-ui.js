@@ -1,6 +1,6 @@
-/*! jQuery UI - v1.12.1 - 2018-05-08
+/*! jQuery UI - v1.12.1 - 2018-08-24
 * http://jqueryui.com
-* Includes: widget.js, position.js, data.js, disable-selection.js, focusable.js, form-reset-mixin.js, jquery-1-7.js, keycode.js, labels.js, scroll-parent.js, tabbable.js, unique-id.js, widgets/draggable.js, widgets/droppable.js, widgets/resizable.js, widgets/selectable.js, widgets/sortable.js, widgets/accordion.js, widgets/autocomplete.js, widgets/button.js, widgets/checkboxradio.js, widgets/controlgroup.js, widgets/datepicker.js, widgets/dialog.js, widgets/menu.js, widgets/mouse.js, widgets/progressbar.js, widgets/selectmenu.js, widgets/slider.js, widgets/spinner.js, widgets/tabs.js, widgets/tooltip.js, effect.js, effects/effect-blind.js, effects/effect-bounce.js, effects/effect-clip.js, effects/effect-drop.js, effects/effect-explode.js, effects/effect-fade.js, effects/effect-fold.js, effects/effect-highlight.js, effects/effect-puff.js, effects/effect-pulsate.js, effects/effect-scale.js, effects/effect-shake.js, effects/effect-size.js, effects/effect-slide.js, effects/effect-transfer.js
+* Includes: widget.js, position.js, data.js, disable-selection.js, focusable.js, form-reset-mixin.js, jquery-1-7.js, keycode.js, labels.js, scroll-parent.js, tabbable.js, unique-id.js, widgets/draggable.js, widgets/droppable.js, widgets/resizable.js, widgets/selectable.js, widgets/sortable.js, widgets/accordion.js, widgets/autocomplete.js, widgets/button.js, widgets/checkboxradio.js, widgets/controlgroup.js, widgets/datepicker.js, widgets/dialog.js, widgets/menu.js, widgets/mouse.js, widgets/progressbar.js, widgets/selectmenu.js, widgets/slider.js, widgets/spinner.js, widgets/tabs.js, widgets/tooltip.js, effect.js, effects/effect-blind.js, effects/effect-bounce.js, effects/effect-clip.js, effects/effect-drop.js, effects/effect-explode.js, effects/effect-fade.js, effects/effect-highlight.js, effects/effect-puff.js, effects/effect-scale.js, effects/effect-shake.js, effects/effect-size.js, effects/effect-slide.js, effects/effect-transfer.js
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
 
 (function( factory ) {
@@ -18141,81 +18141,6 @@ var effectsEffectFade = $.effects.define( "fade", "toggle", function( options, d
 
 
 /*!
- * jQuery UI Effects Fold 1.12.1
- * http://jqueryui.com
- *
- * Copyright jQuery Foundation and other contributors
- * Released under the MIT license.
- * http://jquery.org/license
- */
-
-//>>label: Fold Effect
-//>>group: Effects
-//>>description: Folds an element first horizontally and then vertically.
-//>>docs: http://api.jqueryui.com/fold-effect/
-//>>demos: http://jqueryui.com/effect/
-
-
-
-var effectsEffectFold = $.effects.define( "fold", "hide", function( options, done ) {
-
-	// Create element
-	var element = $( this ),
-		mode = options.mode,
-		show = mode === "show",
-		hide = mode === "hide",
-		size = options.size || 15,
-		percent = /([0-9]+)%/.exec( size ),
-		horizFirst = !!options.horizFirst,
-		ref = horizFirst ? [ "right", "bottom" ] : [ "bottom", "right" ],
-		duration = options.duration / 2,
-
-		placeholder = $.effects.createPlaceholder( element ),
-
-		start = element.cssClip(),
-		animation1 = { clip: $.extend( {}, start ) },
-		animation2 = { clip: $.extend( {}, start ) },
-
-		distance = [ start[ ref[ 0 ] ], start[ ref[ 1 ] ] ],
-
-		queuelen = element.queue().length;
-
-	if ( percent ) {
-		size = parseInt( percent[ 1 ], 10 ) / 100 * distance[ hide ? 0 : 1 ];
-	}
-	animation1.clip[ ref[ 0 ] ] = size;
-	animation2.clip[ ref[ 0 ] ] = size;
-	animation2.clip[ ref[ 1 ] ] = 0;
-
-	if ( show ) {
-		element.cssClip( animation2.clip );
-		if ( placeholder ) {
-			placeholder.css( $.effects.clipToBox( animation2 ) );
-		}
-
-		animation2.clip = start;
-	}
-
-	// Animate
-	element
-		.queue( function( next ) {
-			if ( placeholder ) {
-				placeholder
-					.animate( $.effects.clipToBox( animation1 ), duration, options.easing )
-					.animate( $.effects.clipToBox( animation2 ), duration, options.easing );
-			}
-
-			next();
-		} )
-		.animate( animation1, duration, options.easing )
-		.animate( animation2, duration, options.easing )
-		.queue( done );
-
-	$.effects.unshift( element, queuelen, 4 );
-} );
-
-
-/*!
  * jQuery UI Effects Highlight 1.12.1
  * http://jqueryui.com
  *
@@ -18500,56 +18425,6 @@ var effectsEffectPuff = $.effects.define( "puff", "hide", function( options, don
 	} );
 
 	$.effects.effect.scale.call( this, newOptions, done );
-} );
-
-
-/*!
- * jQuery UI Effects Pulsate 1.12.1
- * http://jqueryui.com
- *
- * Copyright jQuery Foundation and other contributors
- * Released under the MIT license.
- * http://jquery.org/license
- */
-
-//>>label: Pulsate Effect
-//>>group: Effects
-//>>description: Pulsates an element n times by changing the opacity to zero and back.
-//>>docs: http://api.jqueryui.com/pulsate-effect/
-//>>demos: http://jqueryui.com/effect/
-
-
-
-var effectsEffectPulsate = $.effects.define( "pulsate", "show", function( options, done ) {
-	var element = $( this ),
-		mode = options.mode,
-		show = mode === "show",
-		hide = mode === "hide",
-		showhide = show || hide,
-
-		// Showing or hiding leaves off the "last" animation
-		anims = ( ( options.times || 5 ) * 2 ) + ( showhide ? 1 : 0 ),
-		duration = options.duration / anims,
-		animateTo = 0,
-		i = 1,
-		queuelen = element.queue().length;
-
-	if ( show || !element.is( ":visible" ) ) {
-		element.css( "opacity", 0 ).show();
-		animateTo = 1;
-	}
-
-	// Anims - 1 opacity "toggles"
-	for ( ; i < anims; i++ ) {
-		element.animate( { opacity: animateTo }, duration, options.easing );
-		animateTo = 1 - animateTo;
-	}
-
-	element.animate( { opacity: animateTo }, duration, options.easing );
-
-	element.queue( done );
-
-	$.effects.unshift( element, queuelen, anims + 1 );
 } );
 
 

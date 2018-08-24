@@ -5,16 +5,16 @@
     <div class="row-flex" style="flex:1 1 100%">
         <div class="col-flex" style="flex:1 1 40%;padding:.25em;min-width:0">
             <div style="flex:none;padding:.25em" class="ui-widget-header">Data Browser:</div>
-            <div class="ui-widget-content text" style="flex:0 1 100%;overflow:auto">
+            <div class="ui-widget-content" style="flex:0 1 100%;overflow:auto">
                 <div id="data_tree" class="no-border"></div>
             </div>
         </div>
         <div class="col-flex" style="flex:0 0 60%;padding:.25em">
             <div style="flex:none;padding:.25em" class="ui-widget-header">Selection Details: <span id="data_ident"></span></div>
-            <div id="data_info" class="ui-widget-content text" style="flex:none"></div>
+            <div id="data_info" class="ui-widget-content" style="flex:none"></div>
             <div style="flex:none">&nbsp</div>
             <div style="flex:none;padding:.25em" class="ui-widget-header">Selection Metadata:</div>
-            <div class="ui-widget-content text" style="flex:1 1 100%"><div id="data_md_tree" class="no-border"></div></div>
+            <div class="ui-widget-content" style="flex:1 1 100%"><div id="data_md_tree" class="no-border"></div></div>
         </div>
     </div>
     <div style="flex:none;padding:.25em">
@@ -24,19 +24,19 @@
         <button class="btn" id="btn_edit" disabled>Edit</button>
         <button class="btn" id="btn_del" disabled>Delete</button>
         <button class="btn" id="btn_share" disabled>Sharing</button>
-        <button class="btn" id="btn_upload" disabled>Upload</button>
-        <button class="btn" id="btn_download" disabled>Download</button>
+        <button class="btn" id="btn_download" disabled>Get</button>
+        <button class="btn" id="btn_upload" disabled>Put</button>
         <button class="btn" id="btn_alloc" style="float:right" disabled>Allocations</button>
     </div>
-    <div style="flex:none;padding:0">
+    <div id="footer" style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0">
             <ul>
                 <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-xfer">Transfers</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
             </ul>
-            <div id="tab-search" class="text" style="padding:0">
-                <div class="text"  style="padding:.5em">
+            <div id="tab-search" class="content" style="padding:0">
+                <div  style="padding:.5em">
                     <table style='width:100%'>
                         <tr><td style="vertical-align:middle">Query:</td><td><input id="query_input" type='text' style="width:100%"></input></td><td>&nbsp<button class="btn" onclick="execQuery()">Search</button></td></tr>
                         <tr><td style="vertical-align:middle">Scope:</td><td>
@@ -50,10 +50,10 @@
                     </table>
                 </div>
             </div>
-            <div id="tab-xfer" class="text" style="padding:0">
+            <div id="tab-xfer" class="content" style="padding:0">
                 <div id="xfr_hist" class="text" style="max-height:5em;padding:.5em"></div>
             </div>
-            <div id="tab-repo" class="text" style="padding:0">
+            <div id="tab-repo" class="content" style="padding:0">
                 <div id="repo_list" class="text" style="max-height:5em;padding:.5em"></div>
             </div>
         </div>

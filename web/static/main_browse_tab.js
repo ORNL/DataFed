@@ -636,15 +636,15 @@ function makeBrowserTab(){
         if ( len == 0 ){
             html = "(no recent transfers)";
         }else{
-            html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Status Updated</th><th>Status</th></tr>";
+            html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
             var stat;
             var start = new Date(0);
             var update = new Date(0);
-            var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+            var options = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false };
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
-                html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Download":"Upload") + "</td><td>" + stat.localPath + "</td>";
+                html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Get":"Put") + "</td><td>" + stat.localPath + "</td>";
                 start.setTime( stat.started*1000 );
                 update.setTime( stat.updated*1000 );
                 html += "<td>" + start.toLocaleDateString("en-US", options) + "</td><td>" + update.toLocaleDateString("en-US", options) + "</td><td>";
@@ -744,27 +744,30 @@ function makeBrowserTab(){
                 }
             },
             dragDrop: function(node, data) {
-                node.setExpanded(true).always(function(){
-                    //console.log("drop in",node,data);
+                console.log("drop in",node,data);
 
-                    for ( var i in node.children ){
-                        if ( node.children[i].key == data.otherNode.key )
-                            return false;
-                    }
-
-                    if ( inst.drag_mode ){
-                        linkItemUnlinkSource( data.otherNode.key, node.key, node.parent.key, function() {
-                            data.otherNode.moveTo( node, data.hitMode );
-                        });
-                    }else{
-                        linkItem( data.otherNode.key, node.key, function() {
-                            if ( data.otherNode.isFolder())
+                if ( inst.drag_mode ){
+                    linkItemUnlinkSource( data.otherNode.key, node.key, node.parent.key, function( ok, msg ) {
+                        if ( ok ){
+                            node.setExpanded(true).always(function(){
                                 data.otherNode.moveTo( node, data.hitMode );
-                            else
-                                data.otherNode.copyTo( node, data.hitMode );
-                        });
-                    }
-                });
+                            });
+                        }else
+                            dlgAlert("Link Error", msg );
+                    });
+                }else{
+                    linkItem( data.otherNode.key, node.key, function( ok, msg ) {
+                        if ( ok ){
+                            node.setExpanded(true).always(function(){
+                                if ( data.otherNode.isFolder())
+                                    data.otherNode.moveTo( node, data.hitMode );
+                                else
+                                    data.otherNode.copyTo( node, data.hitMode );
+                            });
+                        }else
+                            dlgAlert("Link Error", msg );
+                    });
+                }
             },
             dragEnter: function(node, data) {
                 console.log( "enter:", node, data );
@@ -948,7 +951,8 @@ function makeBrowserTab(){
                             console.log( "rooted:", rooted, "parent:",parent );
                             data.node.moveTo( parent, "over" );
                         }
-                    }
+                    }else
+                        dlgAlert( "Unlink Error", rooted );
                 });
             }
         }
@@ -1007,6 +1011,7 @@ function makeBrowserTab(){
             execQuery();
     });
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
+    $('input').addClass("ui-widget ui-widget-content ui-corner-all");
     //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
     //$("#search_panel").accordion({collapsible:true,heightStyle:"content"});
 
