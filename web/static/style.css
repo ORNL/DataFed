@@ -189,6 +189,11 @@ td
     visibility: hidden;
 }
 
+.ui-tabs-nav{
+    border-bottom-left-radius: 0!important;
+    border-bottom-right-radius: 0!important;
+}
+
 :focus { outline: none; }
 
 /*
@@ -259,7 +264,7 @@ td
 
 .ui-icon-zoom
 {
-    color: #000000
+    color: #FFFFFF
 }
 
 .ui-icon-reload
@@ -267,20 +272,11 @@ td
     color: #008000
 }
 
-.custom-combobox {
-    position: relative;
-    display: inline-block;
+.ep-act
+{
+    color: #00E000!important;
 }
-
-.custom-combobox-toggle {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    margin-left: -1px;
-    padding: 0;
-}
-
-.custom-combobox-input {
-    margin: 0;
-    padding: 5px 10px;
+.ep-inact
+{
+    color: #FF0000!important;
 }

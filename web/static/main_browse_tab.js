@@ -712,8 +712,8 @@ function makeBrowserTab(){
     }
 
     var tree_source = [
-        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,children:[{
-            title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
+        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,expanded:true,children:[{
+            title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Team Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
@@ -1032,8 +1032,9 @@ function makeBrowserTab(){
     });
 
     $(".scope",inst.frame).checkboxradio();
-
+    var node = inst.data_tree.getNodeByKey( inst.my_root_key );
+    node.load();
+    node.setExpanded();
     inst.showSelectedInfo();
-
     this.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
 }

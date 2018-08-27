@@ -194,6 +194,8 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                         a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
                     } else {
                         // Registered, save access token
+                        userinfo.acc_tok = xfr_token.access_token;
+                        userinfo.ref_tok = xfr_token.refresh_token;
                         saveToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token );
 
                         // TODO Account may be disable from SDMS (active = false)
@@ -234,7 +236,8 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
         } else {
             // Save access token
             saveToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok );
-
+            userinfo.acc_tok = a_req.query.acc_tok;
+            userinfo.ref_tok = a_req.query.ref_tok;
             a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true });
             //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
             a_resp.redirect( "/ui/main" );
@@ -686,6 +689,24 @@ app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
         a_resp.json({});
     });
 });
+
+app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
+    console.log("ep autocomp");
+    var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    //console.log( 'userinfo', userinfo );
+
+    request.get({
+        uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
+        auth: {
+            bearer: userinfo.acc_tok,
+        }
+    }, function( error, response, body ) {
+        //console.log( 'got result:', error, response, body );
+        a_resp.json(JSON.parse(body));
+    });
+
+});
+
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )

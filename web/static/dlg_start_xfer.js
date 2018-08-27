@@ -3,13 +3,10 @@ function dlgStartTransfer( a_mode, a_data ) {
     //frame.html( "<span id='prefix'>Source</span> Path:<input type='text' id='path' style='width:95%'></input>" );
 
     frame.html( "<div class='ui-widget'>\
-        <label><span id='prefix'>Source</span> Path:</label>\
-        <select id='path'>\
-            <option value=''>Select one...</option>\
-            <option value='ActionScript'>ActionScript</option>\
-            <option value='AppleScript'>AppleScript</option>\
-            <option value='Asp'>Asp</option>\
-        </select>\
+        <span id='prefix'>Source</span> Path:<br>\
+        <input class='ui-widget-content' id='path' style='width:100%'></input><br><br>\
+        Matching&nbspEndpoints:&nbsp\
+        <select id='results' disabled><option disabled selected>No Matches</option></select>\
     </div>");
     
     var dlg_title = (a_mode?"Get Data ":"Put Data ");
@@ -22,24 +19,61 @@ function dlgStartTransfer( a_mode, a_data ) {
     if ( a_mode )
         $("#prefix",frame).html("Destination");
 
+    var sel = $( "#results",frame );
+    var path_in = $("#path",frame);
+    var ep_list = null;
+
+    sel.on('selectmenuchange', function( ev, ui ) {
+        if ( ep_list && ui.item ){
+            var ep = ep_list[ui.item.index-1];
+            //console.log( "index:",ui.item.index);
+            path_in.val((ep.canonical_name || ep.id) + (ep.default_directory?ep.default_directory:"/") );
+        }
+    });
+
     var in_timer;
     function inTimerExpired(){
         console.log("timer expired");
+        epAutocomplete( path_in.val(), function( ok, data ){
+            console.log("ep matches:", data );
+            if ( ok ){
+                if ( data.DATA && data.DATA.length ){
+                    ep_list = data.DATA;
+                    var ep;
+                    var html = "<option disabled selected>" + data.DATA.length + " match" + (data.DATA.length>1?"es":"") + "</option>";
+                    for ( var i in data.DATA ){
+                        ep = data.DATA[i];
+                        html += "<option>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
+
+                        //html += "<option class='" + (ep.activated?"ep-act":"ep-inact") + "'>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
+
+                        //console.log( ep.display_name || ep.canonical_name || ep.id, ep.description, ep.organization );
+                    }
+                    //console.log( html );
+                    sel.html( html );
+                    sel.selectmenu("refresh");
+                    sel.selectmenu("enable");
+                }else{
+                    ep_list = null;
+                    sel.html( "<option disabled selected>No Matches</option>" );
+                    sel.selectmenu("refresh");
+                    sel.selectmenu("disable");
+                }
+            }
+        });
     }
 
-    /*
-    $("#path",frame).on('input', function(){
+    path_in.on('input', function(){
+        clearTimeout( in_timer );
         console.log("keypress - reset timer");
-        in_timer = setTimeout( inTimerExpired, 1000 );
+        in_timer = setTimeout( inTimerExpired, 750 );
     });
-*/
 
-    //$("#path",frame).val("olcf#dtn_atlas/~/");
 
     var options = {
         title: dlg_title,
         modal: true,
-        width: 400,
+        width: 'auto',
         height: 'auto',
         resizable: true,
         closeOnEscape: false,
@@ -76,7 +110,9 @@ function dlgStartTransfer( a_mode, a_data ) {
             }
         }],
         open: function(){
-            $("#path",frame).combobox();
+            //$("#path",frame).combobox();
+            $(".btn",frame).button();
+            $( "#results",frame ).selectmenu();
         }
     };
 
