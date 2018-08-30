@@ -278,7 +278,8 @@ function makeDlgSetACLs(){
 
             inst.frame.dialog( options );
             $(".btn",inst.frame).button();
-            $("select",inst.frame).selectmenu({ width:"20em"});
+            //$("select",inst.frame).selectmenu({ width:"20em"});
+            $("select",inst.frame).selectmenu({width:"100px"});
             $("#public_check",inst.frame).checkboxradio();
             $("#public_check",inst.frame).prop("checked",item.ispublic);
             $("#public_check",inst.frame).checkboxradio("refresh");

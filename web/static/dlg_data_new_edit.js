@@ -1,12 +1,12 @@
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
-        "<table style='width:100%'>\
+        "<table class='form-table'>\
             <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
             <tr><td>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>\
-            <tr><td >Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
-            <tr id='dlg_md_row'><td>Metadata:</td><td><textarea id='md' rows=3 style='width:100%'></textarea></td></tr>\
-            <tr id='dlg_md_row2'><td>Metadata mode:</td><td>\
+            <tr><td >Description:</td><td><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
+            <tr id='dlg_md_row'><td>Metadata:</td><td><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
+            <tr id='dlg_md_row2'><td>MD-mode:</td><td>\
                 <input type='radio' id='md_merge' name='md_mode' value='merge' checked>\
                 <label for='md_merge'>Merge</label>\
                 <input type='radio' id='md_set'  name='md_mode' value='set'>\
@@ -22,10 +22,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
         dlg_title = a_mode?"New Collection":"New Data";
     }
 
+    $('input',frame).addClass("ui-widget ui-widget-content");
+    $('textarea',frame).addClass("ui-widget ui-widget-content");
+
     var options = {
         title: dlg_title,
         modal: true,
-        width: 400,
+        width: 500,
         height: 'auto',
         resizable: true,
         closeOnEscape: false,

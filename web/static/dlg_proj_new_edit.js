@@ -2,7 +2,7 @@ function dlgProjNewEdit(a_data,a_cb) {
     var frame = $(document.createElement('div'));
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\
-            <table style='width:100%'>\
+            <table class='form-table'>\
                 <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
@@ -43,10 +43,13 @@ function dlgProjNewEdit(a_data,a_cb) {
     else
         proj = { owner: "u/"+g_user.uid };
 
+    $('input',frame).addClass("ui-widget ui-widget-content");
+    $('textarea',frame).addClass("ui-widget ui-widget-content");
+    
     var options = {
         title: dlg_title,
         modal: true,
-        width: 400,
+        width: 500,
         height: 'auto',
         resizable: true,
         closeOnEscape: false,
@@ -63,15 +66,16 @@ function dlgProjNewEdit(a_data,a_cb) {
                     return;
                 }
 
-                if ( !isValidID( proj.id ))
-                    return;
-
                 var url = "/api/prj/";
 
                 if ( a_data )
                     url += "update?id=";
-                else
+                else{
+                    if ( !isValidID( proj.id ))
+                        return;
+
                     url += "create?id=";
+                }
 
                 url += encodeURIComponent( proj.id );;
 

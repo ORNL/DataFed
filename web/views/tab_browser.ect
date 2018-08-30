@@ -6,13 +6,34 @@
                 <div id="data_tree" class="no-border" style="min-height:0"></div>
             </div>
         </div>
-        <div class="col-flex" style="flex:0 0 60%;padding:.25em">
+        <div class="col-flex" style="flex:1 1 60%;padding:.25em .25em .25em 0;min-width:0;;min-height:0">
+            <div style="flex:none;padding:.25em" class="ui-widget-header ui-corner-tr ui-corner-tl">Selection Information:</div>
+            <div class="ui-widget-content" style="flex:1;min-height:0;overflow:auto;padding:.25em">
+                <div id="sel_gen"></div><br>
+                <div id="sel_descr_hdr" style="" class="sub-header">Description</div>
+                <div style="padding:.25em" class="ui-widget-content" >
+                        <div id="sel_descr"></div>
+                </div>
+                <p>
+                <div id="sel_details_hdr" class="sub-header">Details</div>
+                <div style="padding:.25em" class="ui-widget-content" >
+                    <div id="sel_details"></div>
+                </div>
+                <p>
+                <div id="sel_md_hdr" class="sub-header">Metadata</div>
+                <div style="padding:.25em" class="ui-widget-content" >
+                    <div id="sel_md">
+                        <div id="data_md_tree" class="no-border"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- div class="col-flex" style="flex:0 0 60%;padding:.25em">
             <div style="flex:none;padding:.25em" class="ui-widget-header ui-corner-tr ui-corner-tl">Selection Details: <span id="data_ident"></span></div>
             <div id="data_info" class="ui-widget-content" style="flex:none;overflow:auto"></div>
-            <!-- div style="flex:none">&nbsp</div -->
             <div style="flex:none;padding:.25em" class="ui-widget-header ui-corner-tr ui-corner-tl">Selection Metadata:</div>
             <div class="ui-widget-content" style="flex:2;min-height:0;overflow:auto"><div id="data_md_tree" class="no-border"></div></div>
-        </div>
+        </div -->
     </div>
     <div style="flex:none;padding:.25em">
         <button class="btn" id="btn_new_proj">New Proj</button>

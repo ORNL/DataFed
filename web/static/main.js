@@ -470,6 +470,7 @@ var dlgAllocations = new makeDlgAllocations();
 var dlgRepoAdmin = new makeDlgRepoAdmin();
 var dlgAllocNewEdit = new makeDlAllocNewEdit();
 var g_ep_recent = [];
+var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false };
 
 epRecentLoad();
 

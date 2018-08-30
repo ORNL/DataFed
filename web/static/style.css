@@ -38,6 +38,18 @@ body
     background: #404040!important;
 }
 
+.sub-header
+{
+    padding:.25em!important;
+    border-bottom-left-radius:0!important;
+    border-bottom-right-radius:0!important;
+}
+
+.sel
+{
+    padding:.15em!important;
+}
+
 /*
 .header
 {
@@ -80,6 +92,20 @@ body
     padding: 0px 0px 2px 0px!important;
     font-size: .8rem!important;
     border-radius:6px!important;
+}
+
+.form-table
+{
+    width:100%;
+}
+
+.form-table td:last-child{
+    width:100%;
+}
+
+.form-table td
+{
+    vertical-align:top;
 }
 
 .info_table
@@ -135,7 +161,13 @@ body
     width:100%;
     text-align:left;
 }
+/*
+.perm_table td:last-child{
+    width:50%;
+}
+*/
 
+/*
 .perm_table tr:nth-child(even)
 {
     background-color: #eee;
@@ -144,12 +176,15 @@ body
 .perm_table tr:nth-child(odd)
 {
     background-color: #fff;
-}
+}*/
 
+/*
 .perm_table td:nth-child(2)
 {
     text-align:right;
 }
+*/
+
 /*
 td
 {

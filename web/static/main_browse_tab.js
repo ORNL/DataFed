@@ -5,8 +5,10 @@ function makeBrowserTab(){
 
     inst.frame = $("#content");
     //inst.frame = $("#tab-browse");
-    inst.data_ident = $("#data_ident",inst.frame);
-    inst.data_info = $("#data_info",inst.frame);
+    //inst.data_ident = $("#data_ident",inst.frame);
+    inst.sel_gen = $("#sel_gen",inst.frame);
+    inst.sel_details = $("#sel_details",inst.frame);
+    inst.sel_descr = $("#sel_descr",inst.frame);
     this.xfr_hist = $("#xfr_hist",inst.frame);
     this.alloc_stat = $("#alloc_stat",inst.frame);
     this.data_tree = null;
@@ -308,40 +310,27 @@ function makeBrowserTab(){
         }
     }
 
-    this.noInfoAvail = function(){
-        inst.updateBtnState();
-        inst.data_info.html("(no information available)<br><br><br>");
-        inst.showSelectedMetadata();
-    }
-
     this.showSelectedInfo = function( node ){
-        var html;
-
         if ( !node ){
-            inst.updateBtnState();
-            inst.data_info.html("(no information available)<br><br><br>");
-            inst.showSelectedMetadata();
+            inst.noInfoAvail();
         }else{
-            console.log( "node key:", node.key );
-            var key,i;
+            //console.log( "node key:", node.key );
+            var key,i,html;
+
             if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
             else
                 key = node.key;
 
-            //console.log( "node:", node, key );
             if ( key == "mydata" ) {
-                html = "My Data";
-                inst.data_ident.html( html );
+                inst.sel_gen.html( "My Data" );
+                inst.sel_descr.html( "Location for creating and organizing personal data and collections." );
                 inst.updateBtnState("m");
                 inst.showSelectedMetadata();
 
                 userView( g_user.uid, true, function( ok, user ){
                     if ( ok && user ){
-                        html = "Data owned by " + user.name + "<br><br>";
-
-                        html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                        html += "<tr><th>Field</th><th>Value</th></tr>";
+                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Allocation(s):</td><td>";
 
                         if ( user.alloc && user.alloc.length ){
@@ -355,13 +344,12 @@ function makeBrowserTab(){
                             html += "(none)";
                         }
                         html += "</table>";
-                        inst.data_info.html(html);
+                        inst.sel_details.html(html);
+
+                        inst.showSelectedMetadata();
                     }
                 });
             }else if ( key[0] == "c" ) {
-                html = "Collection, ID: " + key;
-                inst.data_ident.html( html );
-
                 viewColl( key, function( item ){
                     if ( item ){
                         if ( node.data.isroot )
@@ -369,76 +357,86 @@ function makeBrowserTab(){
                         else
                             inst.updateBtnState( "c" );
         
-                        html = "\"" + item.title + "\"<br>";
+                        html = "Collection ID: " + key;
+                        if ( item.alias )
+                            html += ", Alias: " + item.alias;
+                        html += "<p>\"" + item.title + "\"";
+                        inst.sel_gen.html(html);
+    
                         if ( item.desc )
-                            html += "<p>\"" + item.desc + "\"</p>";
+                            inst.sel_descr.html(item.desc);
                         else
-                            html += "<br>";
+                            inst.sel_descr.html("(none)");
 
-                        html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                        html += "<tr><th>Field</th><th>Value</th></tr>";
-                        html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
+                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
                         html += "</table>";
-                        inst.data_info.html(html);
+                        inst.sel_details.html(html);
+
                         inst.showSelectedMetadata();
                     }else{
                         inst.noInfoAvail();
                     }
                 }); 
             } else if ( key[0] == "d" ) {
-                html = "Data Record, ID: " + key;
-                inst.data_ident.html( html );
-
                 viewData( key, function( item ){
                     if ( item ){
+                        date = new Date();
                         inst.updateBtnState( "d" );
 
-                        html = "\"" + item.title + "\"<br>";
-                        if ( item.desc )
-                            html += "<p>\"" + item.desc + "\"</p>";
-                        else
-                            html += "<br>";
+                        html = "Data ID: " + key;
+                        if ( item.alias )
+                        html += ", Alias: " + item.alias;
+                        html += "<p>\"" + item.title + "\"";
+                        inst.sel_gen.html(html);
 
-                        html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                        html += "<tr><th>Field</th><th>Value</th></tr>";
-                        html += "<tr><td>Alias:</td><td>" + (item.alias?item.alias:"(none)") + "</td></tr>";
+                        if ( item.desc )
+                            inst.sel_descr.html(item.desc);
+                        else
+                            inst.sel_descr.html("(none)");
+
+                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
                         html += "<tr><td>Data Size:</td><td>" + sizeToString( item.dataSize ) + "</td></tr>";
-                        html += "<tr><td>Data Updated:</td><td>" + (item.dataTime?Date(item.dataTime*1000).toString():"n/a") + "</td></tr>";
-                        html += "<tr><td>Record Updated:</td><td>" + (item.recTime?Date(item.recTime*1000).toString():"n/a") + "</td></tr>";
+                        if ( item.dataTime ){
+                            date.setTime(item.dataTime*1000);
+                            html += "<tr><td>Data Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
+                        }
+                        if ( item.recTime ){
+                            date.setTime(item.recTime*1000);
+                            html += "<tr><td>Record Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
                         html += "</table>";
-                        inst.data_info.html(html);
+
+                        inst.sel_details.html(html);
                         inst.showSelectedMetadata( item.metadata );
                     }else{
                         inst.noInfoAvail();
                     }
                 }); 
             } else if ( key.startsWith("p/")) {
-                html = "Project, ID: " + key;
-                inst.data_ident.html( html );
-
                 viewProj( key, function( item ){
                     if ( item ){
                         inst.updateBtnState("p",node.data.admin);
 
-                        var html = "\"" + item.title + "\"<br>";
-                        if ( item.desc )
-                            html += "<p>\"" + item.desc + "\"</p>";
-                        else
-                            html += "<br>";
+                        htm = "Project ID: " + key + "<p>\"" + item.title + "\"";
+                        inst.sel_gen.html(html);
 
-                        html += "<table class='info_table'><col width='30%'><col width='70%'>";
-                        html += "<tr><th>Field</th><th>Value</th></tr>";
+                        if ( item.desc )
+                            inst.sel_descr.html(item.desc);
+                        else
+                            inst.sel_descr.html("(none)");
+
+                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
                         html += "<tr><td>Admins:</td><td>";
                         if ( item.admin && item.admin.length ){
                             for ( i in item.admin )
-                                html += item.admin[i].substr(2) + " ";
+                            html += item.admin[i].substr(2) + " ";
                         }else{
                             html += "(none)";
                         }
@@ -461,20 +459,31 @@ function makeBrowserTab(){
                         }else{
                             html += "(none)";
                         }
-                        html += "</td></tr>";
-                        html += "</table>";
-                        inst.data_info.html(html);
-                        inst.showSelectedMetadata( item.metadata );
+
+                        html += "</td></tr></table>";
+                        inst.sel_details.html(html);
+
+                        inst.showSelectedMetadata();
                     }else{
                         inst.noInfoAvail();
                     }
                 }); 
             } else {
                 inst.noInfoAvail();
-                inst.data_ident.html( "" );
+                //inst.data_ident.html( "" );
             }
         }
+
     }
+
+    this.noInfoAvail = function(){
+        inst.updateBtnState();
+        inst.sel_gen.html("(no information)");
+        inst.sel_descr.html("(no information)");
+        inst.sel_details.html("(no information)");
+        inst.showSelectedMetadata();
+    }
+
 
     this.buildObjSrcTree = function( obj, base ){
         //console.log("build", base);
@@ -641,14 +650,13 @@ function makeBrowserTab(){
             var stat;
             var start = new Date(0);
             var update = new Date(0);
-            var options = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false };
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
                 html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Get":"Put") + "</td><td>" + stat.localPath + "</td>";
                 start.setTime( stat.started*1000 );
                 update.setTime( stat.updated*1000 );
-                html += "<td>" + start.toLocaleDateString("en-US", options) + "</td><td>" + update.toLocaleDateString("en-US", options) + "</td><td>";
+                html += "<td>" + start.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + update.toLocaleDateString("en-US", g_date_opts) + "</td><td>";
 
                 if ( stat.status == "XS_FAILED" )
                     html += "FAILED: " + stat.errMsg + "</td></tr>";
@@ -1013,8 +1021,6 @@ function makeBrowserTab(){
     });
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     $('input').addClass("ui-widget ui-widget-content ui-corner-all");
-    //$("#xfr_panel").accordion({collapsible:true,heightStyle:"content"});
-    //$("#search_panel").accordion({collapsible:true,heightStyle:"content"});
 
     userView( g_user.uid, true, function( ok, user ){
         if ( ok && user ){
@@ -1030,6 +1036,17 @@ function makeBrowserTab(){
     $("#footer-tabs").tabs({heightStyle:"fill",collapsible: true}).css({
         /*'min-height': '50px',*/
         'overflow': 'auto'
+    });
+
+    $("#sel_descr_hdr").button().click( function(){
+        $("#sel_descr").slideToggle();
+    });
+    $("#sel_details_hdr").button().click( function(){
+        $("#sel_details").slideToggle();
+    });
+    $("#sel_md_hdr").button().click( function(){
+        $("#sel_md").slideToggle();
+
     });
 
     $(".scope",inst.frame).checkboxradio();

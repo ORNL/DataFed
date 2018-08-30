@@ -63,13 +63,6 @@ function dlgStartTransfer( a_mode, a_data ) {
         });
     }
 
-    path_in.on('input', function(){
-        clearTimeout( in_timer );
-        console.log("keypress - reset timer");
-        in_timer = setTimeout( inTimerExpired, 750 );
-    });
-
-
     var options = {
         title: dlg_title,
         modal: true,
@@ -110,6 +103,7 @@ function dlgStartTransfer( a_mode, a_data ) {
                             epRecentSave();
                         }
 
+                        clearTimeout( in_timer );
                         inst.dialog('destroy').remove();
                     } else {
                         alert( "Error: " + data );
@@ -119,6 +113,7 @@ function dlgStartTransfer( a_mode, a_data ) {
         },{
             text: "Cancel",
             click: function() {
+                clearTimeout( in_timer );
                 $(this).dialog('destroy').remove();
             }
         }],
@@ -130,6 +125,11 @@ function dlgStartTransfer( a_mode, a_data ) {
             }
             $(".btn",frame).button();
             matches.selectmenu();
+
+            path_in.on('input', function(){
+                clearTimeout( in_timer );
+                in_timer = setTimeout( inTimerExpired, 750 );
+            });
         }
     };
 

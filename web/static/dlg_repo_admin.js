@@ -54,6 +54,9 @@ function makeDlgRepoAdmin(){
         inst.alloc = null;
         inst.changed = 0;
 
+        $('input',inst.frame).addClass("ui-widget ui-widget-content");
+        $('textarea',inst.frame).addClass("ui-widget ui-widget-content");
+    
         $("#admin_tree",inst.frame).fancytree({
             extensions: ["themeroller"],
             themeroller: {
