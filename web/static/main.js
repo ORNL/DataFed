@@ -242,6 +242,27 @@ function epAutocomplete( a_term, a_cb ){
     });
 }
 
+function epRecentLoad( a_cb ){
+    console.log("epRecentLoad");
+    _asyncGet( "/ui/ep/recent/load", null, function( ok, data ){
+        console.log("epRecentLoad",ok,data);
+        
+        if ( ok ){
+            g_ep_recent = data;
+        }
+
+        if ( a_cb )
+            a_cb();
+    });
+}
+
+function epRecentSave( a_cb ){
+    console.log("epRecentSave",g_ep_recent);
+    _asyncGet( "/ui/ep/recent/save?recent="+encodeURIComponent(JSON.stringify(g_ep_recent)), null, function( ok, data ){
+        if ( a_cb )
+            a_cb();
+    });
+}
 
 function setStatusText( text ){
     if ( status_timer )
@@ -448,6 +469,9 @@ var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgAllocations = new makeDlgAllocations();
 var dlgRepoAdmin = new makeDlgRepoAdmin();
 var dlgAllocNewEdit = new makeDlAllocNewEdit();
+var g_ep_recent = [];
+
+epRecentLoad();
 
 //$('.status-bar').addClass("ui-widget ui-widget-content ui-corner-all");
 

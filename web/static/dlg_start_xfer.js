@@ -6,7 +6,7 @@ function dlgStartTransfer( a_mode, a_data ) {
         <span id='prefix'>Source</span> Path:<br>\
         <input class='ui-widget-content' id='path' style='width:100%'></input><br><br>\
         Matching&nbspEndpoints:&nbsp\
-        <select id='results' disabled><option disabled selected>No Matches</option></select>\
+        <select id='matches' disabled><option disabled selected>No Matches</option></select><br>\
     </div>");
     
     var dlg_title = (a_mode?"Get Data ":"Put Data ");
@@ -19,11 +19,11 @@ function dlgStartTransfer( a_mode, a_data ) {
     if ( a_mode )
         $("#prefix",frame).html("Destination");
 
-    var sel = $( "#results",frame );
+    var matches = $( "#matches",frame );
     var path_in = $("#path",frame);
     var ep_list = null;
 
-    sel.on('selectmenuchange', function( ev, ui ) {
+    matches.on('selectmenuchange', function( ev, ui ) {
         if ( ep_list && ui.item ){
             var ep = ep_list[ui.item.index-1];
             //console.log( "index:",ui.item.index);
@@ -43,21 +43,21 @@ function dlgStartTransfer( a_mode, a_data ) {
                     var html = "<option disabled selected>" + data.DATA.length + " match" + (data.DATA.length>1?"es":"") + "</option>";
                     for ( var i in data.DATA ){
                         ep = data.DATA[i];
-                        html += "<option>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
+                        html += "<option title='" + ep.description + "'>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
 
                         //html += "<option class='" + (ep.activated?"ep-act":"ep-inact") + "'>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
 
                         //console.log( ep.display_name || ep.canonical_name || ep.id, ep.description, ep.organization );
                     }
                     //console.log( html );
-                    sel.html( html );
-                    sel.selectmenu("refresh");
-                    sel.selectmenu("enable");
+                    matches.html( html );
+                    matches.selectmenu("refresh");
+                    matches.selectmenu("enable");
                 }else{
                     ep_list = null;
-                    sel.html( "<option disabled selected>No Matches</option>" );
-                    sel.selectmenu("refresh");
-                    sel.selectmenu("disable");
+                    matches.html( "<option disabled selected>No Matches</option>" );
+                    matches.selectmenu("refresh");
+                    matches.selectmenu("disable");
                 }
             }
         });
@@ -80,7 +80,8 @@ function dlgStartTransfer( a_mode, a_data ) {
         buttons: [{
             text: a_mode?"Get":"Put",
             click: function() {
-                var path = encodeURIComponent($("#path",frame).val());
+                var raw_path = $("#path",frame).val();
+                var path = encodeURIComponent(raw_path);
                 if ( !path ) {
                     alert("Path cannot be empty");
                     return;
@@ -97,6 +98,18 @@ function dlgStartTransfer( a_mode, a_data ) {
                 var inst = $(this);
                 _asyncGet( url, null, function( ok, data ){
                     if ( ok ) {
+                        var p = g_ep_recent.indexOf(raw_path);
+                        if ( p < 0 ){
+                            g_ep_recent.unshift(raw_path);
+                            if ( g_ep_recent.length > 20 )
+                                g_ep_recent.length = 20;
+                            epRecentSave();
+                        }else if ( p > 0 ) {
+                            g_ep_recent.unshift( g_ep_recent[p] );
+                            g_ep_recent.splice( p+1, 1 );
+                            epRecentSave();
+                        }
+
                         inst.dialog('destroy').remove();
                     } else {
                         alert( "Error: " + data );
@@ -110,9 +123,13 @@ function dlgStartTransfer( a_mode, a_data ) {
             }
         }],
         open: function(){
-            //$("#path",frame).combobox();
+            if ( g_ep_recent.length ){
+                path_in.val( g_ep_recent[0] );
+                path_in.select();
+                path_in.autocomplete({ source: g_ep_recent });
+            }
             $(".btn",frame).button();
-            $( "#results",frame ).selectmenu();
+            matches.selectmenu();
         }
     };
 

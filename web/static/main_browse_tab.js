@@ -477,7 +477,7 @@ function makeBrowserTab(){
     }
 
     this.buildObjSrcTree = function( obj, base ){
-        console.log("build", base);
+        //console.log("build", base);
 
         var src = [];
         var fkey;
@@ -510,12 +510,13 @@ function makeBrowserTab(){
                 inst.data_md_exp[i]--;
             }
 
-            console.log( "exp st", inst.data_md_exp );
+            //console.log( "exp st", inst.data_md_exp );
             // TODO Use data_md_tree.isExapnded() to do lazy loading in case user's don't want to see metadata
             var md = JSON.parse( md_str );
-            if ( inst.data_md_exp["md"] )
-            inst.data_md_exp["md"] = 10;
-            var src = [{title:"md", icon: true, folder: true, expanded: inst.data_md_exp["md"]?true:false, children: inst.buildObjSrcTree(md,"md")}];
+            if ( inst.data_md_exp["Metadata"] )
+                inst.data_md_exp["Metadata"] = 10;
+
+            var src = [{title:"Metadata", icon: "ui-icon ui-icon-folder", folder: true, expanded: inst.data_md_exp["Metadata"]?true:false, children: inst.buildObjSrcTree(md,"Metadata")}];
 
             //console.log("md:",md);
             //console.log("keys:",Object.keys(md));

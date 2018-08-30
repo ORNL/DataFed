@@ -707,6 +707,18 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
 
 });
 
+app.get('/ui/ep/recent/load', ( a_req, a_resp ) => {
+    console.log("ep recent load");
+    var recent = a_req.cookies['sdms-recent'];
+    console.log("cookie",recent);
+    a_resp.json(recent?JSON.parse(recent):[]);
+});
+
+app.get('/ui/ep/recent/save', ( a_req, a_resp ) => {
+    console.log("ep recent save",a_req.query.recent, typeof a_req.query.recent);
+    a_resp.cookie( 'sdms-recent', a_req.query.recent, { path: "/ui" });
+    a_resp.json({});
+});
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )

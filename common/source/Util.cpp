@@ -127,6 +127,7 @@ string parseQuery( const string & a_query )
             {
                 //cout << "start: " << v.start << ", len: " << v.len << "\n";
                 tmp = a_query.substr( v.start, v.len );
+                cout << "token[" << tmp << "]" << endl;
                 if ( tmp == "id" )
                 {
                     result.append( "i._id'" );
@@ -137,7 +138,7 @@ string parseQuery( const string & a_query )
                     result.append( tmp );
                     result.append( "']" );
                 }
-                else if ( tmp != "true" && tmp != "false" && tmp != "null" )
+                else if ( tmp != "true" && tmp != "false" && tmp != "null" && tmp != "in" && tmp != "not" && tmp[0] != '[' )
                 {
                     result.append( "i." );
                     result.append( tmp );
@@ -163,7 +164,7 @@ string parseQuery( const string & a_query )
     if ( state == 3 )
     {
         tmp = a_query.substr( v.start, v.len );
-        if ( tmp != "true" && tmp != "false" && tmp != "null" )
+        if ( tmp != "true" && tmp != "false" && tmp != "null" && tmp[0] != '[' )
             result.append( "i." );
 
         result.append( tmp );
