@@ -153,8 +153,8 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
                     if ( old_alias ) {
-                        g_db.a.remove( old_alias._to );
-                        g_db.alias.remove( old_alias );
+                        const graph = require('@arangodb/general-graph')._graph('sdmsg');
+                        graph.a.remove( old_alias._to );
                     }
 
                     var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
@@ -417,11 +417,13 @@ router.get('/write', function (req, res) {
 
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
+                var is_admin = false;
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
                         throw g_lib.ERR_PERM_DENIED;
-                }
+                }else
+                    is_admin = true;
 
                 var i, obj,idx;
                 var loose = [];
@@ -431,6 +433,11 @@ router.get('/write', function (req, res) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
                         if ( obj._id[0] == "c" && obj.is_root )
                             throw g_lib.ERR_CANNOT_UNLINK_ROOT;
+
+                        if ( !is_admin ) {
+                            if ( !g_lib.hasPermission( client, obj, g_lib.PERM_ADMIN ))
+                                throw g_lib.ERR_PERM_DENIED;
+                        }
 
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
                         // If item has no parent collection AND it's not being added, link to root
@@ -447,6 +454,11 @@ router.get('/write', function (req, res) {
                         // Ignore if obj already in this collection?
                         if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id })){
                             // If obj is a collection, unlink from current parent
+                            if ( !is_admin ) {
+                                if ( !g_lib.hasPermission( client, obj, g_lib.PERM_ADMIN ))
+                                    throw g_lib.ERR_PERM_DENIED;
+                            }
+
                             if ( obj._id[0] == "c" ){
                                 if ( obj.is_root )
                                     throw g_lib.ERR_CANNOT_LINK_ROOT;

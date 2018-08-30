@@ -162,10 +162,10 @@ router.get('/update', function (req, res) {
                 write: ["d","a","owner","alias","alloc"]
             },
             action: function() {
-                var data;
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+                var data = g_db.d.document( data_id );
 
                 if ( !g_lib.hasAdminPermObject( client, data_id )) {
                     if ( !g_lib.hasPermission( client, data, g_lib.PERM_UPDATE ))
@@ -206,7 +206,7 @@ router.get('/update', function (req, res) {
                     if ( obj.data_size != data.data_size ){
                         var loc = g_db.loc.firstExample({ _from: data_id });
                         if ( loc ){
-                            console.log("owner:",owner_id,"repo:",loc._to);
+                            //console.log("owner:",owner_id,"repo:",loc._to);
                             var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
                             var usage = Math.max(0,alloc.usage - data.data_size + obj.data_size);
                             g_db._update( alloc._id, {usage:usage});
@@ -222,15 +222,13 @@ router.get('/update', function (req, res) {
                 if ( do_update ) {
                     data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.queryParams.mdset?false:true });
                     data = data.new;
-                } else {
-                    data = g_db.d.document( data_id );
                 }
 
                 if ( req.queryParams.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: data_id });
                     if ( old_alias ) {
-                        g_db.a.remove( old_alias._to );
-                        g_db.alias.remove( old_alias );
+                        const graph = require('@arangodb/general-graph')._graph('sdmsg');
+                        graph.a.remove( old_alias._to );
                     }
 
                     var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
