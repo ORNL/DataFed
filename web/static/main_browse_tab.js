@@ -87,14 +87,22 @@ function makeBrowserTab(){
 
     this.newData = function() {
         var node = inst.data_tree.activeNode;
-        if ( node && node.key[0] == "c" ) {
-            hasPerms( node.key, PERM_CREATE, function( perms ){
+        if ( node ){
+            var parent;
+            if ( node.key[0] == "d" ) {
+                parent = node.parent.key;
+            }else if (node.key[0] == "c" ){
+                parent = node.key;
+            }else
+                return;
+
+            hasPerms( parent, PERM_CREATE, function( perms ){
                 if (( perms & PERM_CREATE ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
 
-                viewColl( node.key, function( coll ){
+                viewColl( parent, function( coll ){
                     if ( coll ){
                         var coll_id = coll.alias?coll.alias:coll.id;
 
@@ -110,14 +118,22 @@ function makeBrowserTab(){
 
     this.newColl = function() {
         var node = inst.data_tree.activeNode;
-        if ( node && node.key[0] == "c" ) {
-            hasPerms( node.key, PERM_CREATE, function( perms ){
+        if ( node ){
+            var parent;
+            if ( node.key[0] == "d" ) {
+                parent = node.parent.key;
+            }else if (node.key[0] == "c" ){
+                parent = node.key;
+            }else
+                return;
+
+            hasPerms( parent, PERM_CREATE, function( perms ){
                 if (( perms & PERM_CREATE ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
 
-                viewColl( node.key, function( coll ){
+                viewColl( parent, function( coll ){
                     if ( coll ){
                         var coll_id = coll.alias?coll.alias:coll.id;
 
@@ -251,11 +267,11 @@ function makeBrowserTab(){
         }
     }
 
-    this.updateBtnState = function( state, admin ){
+    this.updateBtnState = function( state, admin, no_new ){
         console.log("updBtn",state,admin);
         if ( state == "c" ) {
-            $("#btn_new_data",inst.frame).button("option","disabled",false);
-            $("#btn_new_coll",inst.frame).button("option","disabled",false);
+            $("#btn_new_data",inst.frame).button("option","disabled",no_new);
+            $("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_del",inst.frame).button("option","disabled",false);
             $("#btn_share",inst.frame).button("option","disabled",false);
@@ -263,8 +279,8 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",true);
             $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "d" ) {
-            $("#btn_new_data",inst.frame).button("option","disabled",true);
-            $("#btn_new_coll",inst.frame).button("option","disabled",true);
+            $("#btn_new_data",inst.frame).button("option","disabled",no_new);
+            $("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_del",inst.frame).button("option","disabled",false);
             $("#btn_share",inst.frame).button("option","disabled",false);
@@ -314,7 +330,7 @@ function makeBrowserTab(){
         if ( !node ){
             inst.noInfoAvail();
         }else{
-            //console.log( "node key:", node.key );
+            console.log( "node key:", node.key );
             var key,i,html;
 
             if ( node.key == "shared_proj" && node.data.scope )
@@ -355,7 +371,7 @@ function makeBrowserTab(){
                         if ( node.data.isroot )
                             inst.updateBtnState( "r", node.data.admin );
                         else
-                            inst.updateBtnState( "c" );
+                            inst.updateBtnState( "c", null, false );
         
                         html = "Collection ID: " + key;
                         if ( item.alias )
@@ -383,7 +399,7 @@ function makeBrowserTab(){
                 viewData( key, function( item ){
                     if ( item ){
                         date = new Date();
-                        inst.updateBtnState( "d" );
+                        inst.updateBtnState( "d", null, node.data.nonew?true:false );
 
                         html = "Data ID: " + key;
                         if ( item.alias )
@@ -618,7 +634,7 @@ function makeBrowserTab(){
                 setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                 for ( var i in items ){
                     var item = items[i];
-                    results.push({title:inst.generateTitle( item ), icon:false, key: item.id, nodrag: true });
+                    results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",key: item.id,nodrag:true,nonew:true});
                 }
             } else {
                 setStatusText("No results found");

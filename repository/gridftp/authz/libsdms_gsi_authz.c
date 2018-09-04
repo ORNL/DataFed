@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -193,8 +194,36 @@ sdms_gsi_authz_init()
     strncpy( db_pass, temp, MAX_DB_PASS_LEN );
     db_user[MAX_DB_PASS_LEN] = 0;
 */
-    strcpy( db_user, "root" );
-    strcpy( db_pass, "sdms!" );
+
+    //strcpy( db_user, "root" );
+    //strcpy( db_pass, "sdms!" );
+    FILE *fptr;
+    char buf[1000];
+    char *token;
+
+    fptr = fopen("/etc/grid-security/db.conf","r");
+    if(fptr == NULL)
+    {
+        syslog(LOG_INFO, "Error open /etc/grid-security/db.conf");
+    }
+    else
+    {
+      while(fgets(buf,1000,fptr) != NULL)
+      {
+        if (strlen(buf) < 4 || buf[0] == '#') continue;
+        token = strtok(buf," \t");
+        if (strstr(token,"user"))
+        {
+           token = strtok(NULL," \t");
+           strcpy(db_user,token);
+        }
+        if (strstr(token,"password"))
+        {
+            token = strtok(NULL," \t");
+            strcpy(db_pass,token);
+        }
+      }
+    }
 
     return 0;
 }
