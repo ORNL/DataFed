@@ -194,7 +194,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","d","a","n","owner","item","loc","acl","tag","note","alias"]
+                write: ["c","d","a","n","owner","item","loc","acl","tag","note","alias","alloc"]
             },
             action: function() {
                 var all,i,obj;
@@ -233,7 +233,7 @@ router.get('/delete', function (req, res) {
                 // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
                 // at the final instance of this data (thie link count will be 1 then).
 
-                var locations = [];
+                var locations=[], alloc={};
                 var c,cur,next = [coll._id];
 
                 while ( next.length ){
@@ -241,7 +241,7 @@ router.get('/delete', function (req, res) {
                     next = [];
                     for ( c in cur ){
                         coll = cur[c];
-                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,links:links,loc:loc[0]}", { coll: coll }).toArray();
+                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.data_size,links:links,loc:loc[0]}", { coll: coll }).toArray();
 
                         for ( i in objects ) {
                             obj = objects[i];
@@ -249,6 +249,10 @@ router.get('/delete', function (req, res) {
                                 if ( all || obj.links == 1 ){
                                     // Save location and delete
                                     locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
+                                    if ( alloc[obj.loc.repo] )
+                                        alloc[obj.loc.repo] += obj.size;
+                                    else
+                                        alloc[obj.loc.repo] = obj.size;
                                     g_lib.deleteObject( obj.id );
                                 }else{
                                     // Unlink from current collection
@@ -261,6 +265,12 @@ router.get('/delete', function (req, res) {
 
                         g_lib.deleteObject( coll );
                     }
+                }
+
+                for ( i in alloc ){
+                    console.log( "update alloc for ", alloc );
+                    obj = g_db.alloc.firstExample({_from: owner_id, _to: i});
+                    g_db._update( obj._id, { usage: obj.usage - alloc[i] });
                 }
 
                 res.send( locations );
