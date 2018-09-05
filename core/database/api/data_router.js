@@ -57,7 +57,7 @@ router.get('/create', function (req, res) {
                     }
                 }else{
                     console.log("Default collection");
-                    parent_id = "c/" + client._key + "_root";
+                    parent_id = g_lib.getRootID(client._id);
                     owner_id = client._id;
                 }
 

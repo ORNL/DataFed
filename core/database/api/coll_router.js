@@ -53,7 +53,7 @@ router.get('/create', function (req, res) {
                         }
                     }
                 }else{
-                    parent_id = "c/" + client._key + "_root";
+                    parent_id = g_lib.getRootID(client._id);
                     owner_id = client._id;
                 }
 
@@ -490,7 +490,7 @@ router.get('/write', function (req, res) {
 
                 if ( loose.length ){
                     var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-                    var root_id = "c/"+owner_id.substr(2)+"_root";
+                    var root_id = g_lib.getRootID(owner_id);
                     for ( i in loose ){
                         console.log("relink loose item", loose[i].id );
                         g_db.item.save({ _from: root_id, _to: loose[i].id });

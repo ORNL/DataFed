@@ -57,9 +57,9 @@ router.get('/create', function (req, res) {
 
                 var user = g_db.u.save( user_data, { returnNew: true });
 
-                var root = g_db.c.save({ _key: req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name + " (" + req.queryParams.uid +")" }, { returnNew: true });
+                var root = g_db.c.save({ _key: "u_" + req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name + " (" + req.queryParams.uid +")" }, { returnNew: true });
 
-                var alias = g_db.a.save({ _key: req.queryParams.uid + ":root" }, { returnNew: true });
+                var alias = g_db.a.save({ _key: "u:" + req.queryParams.uid + ":root" }, { returnNew: true });
                 g_db.owner.save({ _from: alias._id, _to: user._id });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });

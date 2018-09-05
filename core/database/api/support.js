@@ -239,7 +239,7 @@ module.exports = ( function() {
     };
 
     obj.getRootID = function( owner_id ){
-        return "c/"+owner_id.substr(2)+"_root";
+        return "c/"+owner_id[0]+"_"+owner_id.substr(2)+"_root";
     };
 
     obj.getObject = function( a_obj_id, a_client ) {
