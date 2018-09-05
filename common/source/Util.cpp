@@ -130,7 +130,7 @@ string parseQuery( const string & a_query )
                 cout << "token[" << tmp << "]" << endl;
                 if ( tmp == "id" )
                 {
-                    result.append( "i._id'" );
+                    result.append( "i._id" );
                 }
                 else if ( tmp == "desc" )
                 {

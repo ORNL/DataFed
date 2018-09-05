@@ -34,7 +34,6 @@ router.get('/init', function (req, res) {
                 var data = g_db.d.document( data_id );
                 //var data_loc = g_db.loc.firstExample({_from: data_id });
 
-
                 if ( !g_lib.hasAdminPermObject( client, data._id )) {
                     var perms;
                     if ( req.queryParams.mode == g_lib.XM_PUT )
@@ -43,6 +42,17 @@ router.get('/init', function (req, res) {
                         perms = g_lib.PERM_READ;
                     if ( !g_lib.hasPermission( client, data, perms ))
                         throw g_lib.ERR_PERM_DENIED;
+                }
+
+                var dest_id,dest_data;
+
+                if ( req.queryParams.mode == g_lib.XM_COPY ){
+                    dest_id = g_lib.resolveID( req.queryParams.path, client );
+                    if ( !g_lib.hasAdminPermObject( client, dest_id )) {
+                        dest_data = g_db.d.document( dest_id );
+                        if ( !g_lib.hasPermission( client, dest_data, g_lib.PERM_WRITE ))
+                            throw g_lib.ERR_PERM_DENIED;
+                    }
                 }
 
                 // Get data storage location
@@ -73,7 +83,7 @@ router.get('/init', function (req, res) {
                         }, { returnNew: true } );
 
                     result = [xfr.new];
-                } else {
+                } else if ( req.queryParams.mode == g_lib.XM_GET ) {
                     if ( !data.data_size )
                         throw g_lib.ERR_XFR_NO_RAW_DATA;
 
@@ -108,6 +118,35 @@ router.get('/init', function (req, res) {
                     } else {
                         result = xfr;
                     }
+                } else {
+                    if ( !data.data_size )
+                        throw g_lib.ERR_XFR_NO_RAW_DATA;
+
+                    xfr = g_db._query( "for i in tr filter ( i.data_id == @src_id or i.data_id == @dst_id ) and i.status < 3 return i", { src_id: data_id, dst_id: dest_id }).toArray();
+                    // If there are any active puts/gets/copies for same data, this is a conflict
+                    if ( xfr.length != 0 )
+                        throw g_lib.ERR_XFR_CONFLICT;
+
+                    // Get data dest storage location
+                    var repo_loc_dst = g_db._query("for v,e in 1..1 outbound @data loc return { repo: v, loc: e }", { data: dest_id } ).toArray();
+                    if ( repo_loc_dst.length != 1 )
+                        throw g_lib.ERR_INTERNAL_FAULT;
+
+                    repo_loc_dst = repo_loc_dst[0];
+
+                    xfr = g_db.tr.save({
+                        mode: g_lib.XM_COPY,
+                        status: g_lib.XS_INIT,
+                        data_id: dest_id,
+                        repo_path: repo_loc_dst.repo.endpoint + repo_loc_dst.loc.path,
+                        local_path: repo_loc.repo.endpoint + repo_loc.loc.path,
+                        user_id: client._id,
+                        repo_id: repo_loc_dst.repo._id,
+                        started: now, 
+                        updated: now
+                        }, { returnNew: true } );
+
+                    result = [xfr.new];
                 }
             }
         });

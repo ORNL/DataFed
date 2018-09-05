@@ -39,6 +39,7 @@ module.exports = ( function() {
 
     obj.XM_GET              = 0;
     obj.XM_PUT              = 1;
+    obj.XM_COPY             = 2;
 
     obj.PROJ_NO_ROLE        = 0;
     obj.PROJ_MEMBER         = 1;
