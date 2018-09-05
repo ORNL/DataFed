@@ -695,15 +695,15 @@ function makeBrowserTab(){
                     for ( var i in data.xfr ){
                         var xfr = data.xfr[i];
                         for ( var j in inst.xfrHist ){
-                            if ( inst.xfrHist[i].id == xfr.id ){
-                                inst.xfrHist.splice(i,1);
+                            if ( inst.xfrHist[j].id == xfr.id ){
+                                inst.xfrHist.splice(j,1);
                                 break;
                             }
                         }
                     }
                     inst.xfrHist = data.xfr.concat( inst.xfrHist );
+                    inst.xfrUpdateHistory( inst.xfrHist );
                 }
-                inst.xfrUpdateHistory( inst.xfrHist );
             }
             inst.pollSince = 10;
             inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000*(inst.pollSince-1));

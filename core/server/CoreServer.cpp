@@ -327,7 +327,7 @@ Server::ioSecure()
 void
 Server::ioInsecure()
 {
-    MsgComm comm( "tcp://*:9001", MsgComm::ROUTER, true );
+    MsgComm comm( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
 
     int linger = 100;
     void * ctx = MsgComm::getContext();

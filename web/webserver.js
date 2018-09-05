@@ -68,7 +68,7 @@ var g_ctx = new Array( MAX_CTX );
 g_ctx.fill(null);
 var g_ctx_next = 0;
 
-var serv_addr = 'tcp://sdms.ornl.gov:9001';
+var serv_addr = 'tcp://sdms.ornl.gov:7513';
 const nullfr = Buffer.from([]);
 var core_sock = zmq.socket('dealer');
 core_sock.connect( serv_addr );
