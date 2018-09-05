@@ -76,8 +76,9 @@ Worker::setupMsgHandlers()
 
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
-        SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest  );
-        SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest  );
+        SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
+        SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
+        SET_MSG_HANDLER( proto_id, DataCopyRequest, &Worker::procDataCopyRequest );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
@@ -352,6 +353,22 @@ Worker::procDataPutRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
     m_db_client.xfrInit( request->id(), request->local(), XM_PUT, reply );
+
+    if ( reply.xfr_size() != 1 )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+
+    m_mgr.handleNewXfr( reply.xfr(0) );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procDataCopyRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( DataCopyRequest, XfrDataReply )
+
+    m_db_client.setClient( a_uid );
+    m_db_client.xfrInit( request->source_id(), request->dest_id(), XM_COPY, reply );
 
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );

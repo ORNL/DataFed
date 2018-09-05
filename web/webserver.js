@@ -462,6 +462,16 @@ app.get('/api/dat/update', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/copy', ( a_req, a_resp ) => {
+    var params  = {
+        sourceId: a_req.query.src,
+        destId: a_req.query.dst
+    };
+    console.log("dat/copy", params, typeof params.source_id, typeof params.dest_id );
+    sendMessage( "DataCopyRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
     sendMessage( "RecordDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {

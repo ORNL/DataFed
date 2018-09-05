@@ -54,7 +54,6 @@ function _asyncGet( a_path, a_raw_json_data, a_callback ) {
 }
 
 function viewData( a_id, a_cb ) {
-    console.log("viewData()");
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
             console.log("viewData ok, data:", data );
@@ -65,6 +64,11 @@ function viewData( a_id, a_cb ) {
             a_cb();
         }
     });
+}
+
+function copyData( a_src_id, a_dst_id, a_cb ){
+    console.log("copyData",a_src_id, a_dst_id);
+    _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
 
 /*

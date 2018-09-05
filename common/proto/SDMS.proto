@@ -26,6 +26,7 @@ enum XfrMode
 {
     XM_GET          = 0;
     XM_PUT          = 1;
+    XM_COPY         = 2;
 }
 
 enum XfrStatus

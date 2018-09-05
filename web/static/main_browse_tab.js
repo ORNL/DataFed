@@ -106,7 +106,7 @@ function makeBrowserTab(){
                     if ( coll ){
                         var coll_id = coll.alias?coll.alias:coll.id;
 
-                        dlgDataNewEdit(0,null,coll_id,function(data){
+                        dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,function(data){
                             inst.addNode( data );
                         });
                     }else
@@ -137,7 +137,7 @@ function makeBrowserTab(){
                     if ( coll ){
                         var coll_id = coll.alias?coll.alias:coll.id;
 
-                        dlgDataNewEdit(1,null,coll_id,function(data){
+                        dlgCollNewEdit(null,coll_id,function(data){
                             inst.addNode( data );
                         });
                     }else
@@ -170,7 +170,7 @@ function makeBrowserTab(){
                 }else if ( node.key[0] == "c" ) {
                     viewColl( node.key, function( data ){
                         if ( data ){
-                            dlgDataNewEdit(1,data,null,function(data){
+                            dlgCollNewEdit(data,null,function(data){
                                 inst.updateNodeTitle( data );
                             });
                         }else
@@ -179,13 +179,38 @@ function makeBrowserTab(){
                 } else if ( node.key[0] == "d" ) {
                     viewData( node.key, function( data ){
                         if ( data ){
-                            dlgDataNewEdit(0,data,null,function(data){
+                            dlgDataNewEdit(DLG_DATA_EDIT,data,null,function(data){
                                 inst.updateNodeTitle( data );
                             });
                         }else
                             alert( "Cannot access data record." );
                     }); 
                 }
+            });
+        }
+    }
+
+    this.copySelected = function(){
+        var node = inst.data_tree.activeNode;
+        if ( node && node.key[0] == "d" ) {
+            //console.log( "edit sel", node, node.data.isproj );
+            hasPerms( node.key, PERM_READ, function( perms ){
+                if (( perms & PERM_READ ) == 0 ){
+                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                    return;
+                }
+
+                viewData( node.key, function( data ){
+                    if ( data ){
+                        console.log( "data", data );
+                        dlgDataNewEdit(DLG_DATA_COPY,data,null,function(data2){
+                            inst.addNode( data2 );
+                            if ( data.dataSize )
+                                copyData( node.key, data2.id );
+                        });
+                    }else
+                        alert( "Cannot access data record." );
+                }); 
             });
         }
     }
@@ -273,6 +298,7 @@ function makeBrowserTab(){
             $("#btn_new_data",inst.frame).button("option","disabled",no_new);
             $("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
+            $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",false);
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",true);
@@ -282,6 +308,7 @@ function makeBrowserTab(){
             $("#btn_new_data",inst.frame).button("option","disabled",no_new);
             $("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
+            $("#btn_copy",inst.frame).button("option","disabled",false);
             $("#btn_del",inst.frame).button("option","disabled",false);
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",false);
@@ -291,6 +318,7 @@ function makeBrowserTab(){
             $("#btn_new_data",inst.frame).button("option","disabled",false);
             $("#btn_new_coll",inst.frame).button("option","disabled",false);
             $("#btn_edit",inst.frame).button("option","disabled",true);
+            $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
             $("#btn_share",inst.frame).button("option","disabled",!admin);
             $("#btn_upload",inst.frame).button("option","disabled",true);
@@ -300,6 +328,7 @@ function makeBrowserTab(){
             $("#btn_new_data",inst.frame).button("option","disabled",true);
             $("#btn_new_coll",inst.frame).button("option","disabled",true);
             $("#btn_edit",inst.frame).button("option","disabled",!admin);
+            $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",!admin);
             $("#btn_share",inst.frame).button("option","disabled",true);
             $("#btn_upload",inst.frame).button("option","disabled",true);
@@ -309,6 +338,7 @@ function makeBrowserTab(){
             $("#btn_new_data",inst.frame).button("option","disabled",true);
             $("#btn_new_coll",inst.frame).button("option","disabled",true);
             $("#btn_edit",inst.frame).button("option","disabled",true);
+            $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
             $("#btn_share",inst.frame).button("option","disabled",true);
             $("#btn_upload",inst.frame).button("option","disabled",true);
@@ -669,7 +699,18 @@ function makeBrowserTab(){
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
-                html += "<tr><td>" + stat.dataId + "</td><td>" + (stat.mode=="XM_GET"?"Get":"Put") + "</td><td>" + stat.localPath + "</td>";
+                html += "<tr><td>" + stat.dataId + "</td><td>";
+                switch(stat.mode){
+                    case "XM_GET": html += "Get"; break;
+                    case "XM_PUT": html += "Put"; break;
+                    case "XM_COPY": html += "Copy"; break;
+                }
+                html += "</td><td>";
+                if ( stat.mode == "XM_COPY" )
+                    html += "d/" + stat.localPath.substr( stat.localPath.lastIndexOf("/") + 1);
+                else
+                    html += stat.localPath;
+                html += "</td>";
                 start.setTime( stat.started*1000 );
                 update.setTime( stat.updated*1000 );
                 html += "<td>" + start.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + update.toLocaleDateString("en-US", g_date_opts) + "</td><td>";
@@ -1024,6 +1065,7 @@ function makeBrowserTab(){
     $("#btn_new_data",inst.frame).on('click', inst.newData );
     $("#btn_new_coll",inst.frame).on('click', inst.newColl );
     $("#btn_edit",inst.frame).on('click', inst.editSelected );
+    $("#btn_copy",inst.frame).on('click', inst.copySelected );
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(0) });
