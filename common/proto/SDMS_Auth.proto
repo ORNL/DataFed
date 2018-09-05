@@ -196,6 +196,12 @@ message DataDeleteRequest
     required string             id          = 1;
 }
 
+message DataCopyRequest
+{
+    required string             source_id   = 1;
+    required string             dest_id     = 2;
+}
+
 
 // ============================ Collection Messages
 

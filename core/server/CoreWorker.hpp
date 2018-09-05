@@ -30,6 +30,7 @@ private:
     bool procGenerateCredentialsRequest( const std::string & a_uid );
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
+    bool procDataCopyRequest( const std::string & a_uid );
     bool procDataDeleteRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );

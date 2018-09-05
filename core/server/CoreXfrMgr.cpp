@@ -142,10 +142,10 @@ XfrMgr::xfrThreadFunc()
                             try
                             {
                                 // True = ok, false = temp failure, exception = perm failure
-                                if ( (*ixfr)->mode == XM_PUT )
-                                    res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
-                                else
+                                if ( (*ixfr)->mode == XM_GET )
                                     res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->repo_path, (*ixfr)->local_path, (*ixfr)->task_id );
+                                else
+                                    res = glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
 
                                 if ( res )
                                 {
@@ -186,7 +186,7 @@ XfrMgr::xfrThreadFunc()
                                 // Update DB entry
                                 db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
 
-                                if ( (*ixfr)->mode == XM_PUT )
+                                if ( (*ixfr)->mode == XM_PUT || (*ixfr)->mode == XM_COPY )
                                 {
                                     mod_time = time(0);
                                     file_size = 0;

@@ -1,3 +1,9 @@
+var DLG_DATA_NEW = 0;
+var DLG_DATA_EDIT = 1;
+var DLG_DATA_COPY = 2;
+var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
+var DLG_DATA_BTN_LABEL = ["Create", "Update", "Copy"];
+
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
@@ -5,22 +11,23 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
             <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
             <tr><td>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>\
             <tr><td >Description:</td><td><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
-            <tr id='dlg_md_row'><td>Metadata:</td><td><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
+            <tr><td>Metadata:</td><td><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
             <tr id='dlg_md_row2'><td>MD-mode:</td><td>\
                 <input type='radio' id='md_merge' name='md_mode' value='merge' checked>\
                 <label for='md_merge'>Merge</label>\
                 <input type='radio' id='md_set'  name='md_mode' value='set'>\
-                <label for='md_mode'>Set</label>\
+                <label for='md_mode'>Replace</label>\
                 </td></tr>\
             <tr id='dlg_coll_row'><td>Parent:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>\
             </table>" );
 
     var dlg_title;
-    if ( a_data ) {
-        dlg_title = (a_mode?"Edit Collection ":"Edit Data ") + a_data.id;
-    } else {
-        dlg_title = a_mode?"New Collection":"New Data";
-    }
+    if ( a_data && ( a_mode == DLG_DATA_EDIT || a_mode == DLG_DATA_COPY ))
+        dlg_title = DLG_DATA_LABEL[a_mode] + " Data " + a_data.id;
+    else if ( a_mode == DLG_DATA_NEW )
+        dlg_title = "New Data";
+    else
+        return;
 
     $('input',frame).addClass("ui-widget ui-widget-content");
     $('textarea',frame).addClass("ui-widget ui-widget-content");
@@ -33,7 +40,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
         resizable: true,
         closeOnEscape: false,
         buttons: [{
-            text: a_data?"Update":"Create",
+            text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
                 console.log( "Create data" );
 
@@ -67,13 +74,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 var md = encodeURIComponent(metadata);
                 console.log( "build url" );
 
-                var url = "/api/";
-                if ( a_mode )
-                    url += "col";
-                else
-                    url += "dat";
+                var url = "/api/dat";
 
-                if ( a_data )
+                if ( a_data && a_mode == DLG_DATA_EDIT )
                     url += "/update?id="+a_data.id + "&";
                 else
                     url += "/create?"
@@ -94,15 +97,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                     delim = "&";
                 }
 
-                if ( a_mode == 0 ){
-                    if ( md ) {
-                        url += delim + "md="+md;
-                        delim = "&";
+                if ( md ) {
+                    url += delim + "md="+md;
+                    delim = "&";
 
-                        if ( a_data ) {
-                            if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
-                                url += "&mdset=true";
-                        }
+                    if ( a_data ) {
+                        if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
+                            url += "&mdset=true";
                     }
                 }
 
@@ -139,11 +140,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 }
                 $("#desc",frame).val(a_data.desc);
                 $("#md",frame).val(a_data.metadata);
-                $("#dlg_coll_row",frame).css("display","none");
-                if ( a_mode )
+
+                if ( a_mode == DLG_DATA_EDIT ){
+                    $("#dlg_coll_row",frame).css("display","none");
+                }else{
+                    $("#coll",frame).val("root");
                     $("#dlg_md_row2",frame).css("display","none");
-                else
-                    $("#dlg_md_row2",frame).css("display","show");
+                }
             } else {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
@@ -153,12 +156,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 $("#dlg_coll_row",frame).css("display","show");
                 $("#dlg_md_row2",frame).css("display","none");
             }
-
-            if ( a_mode ){
-                $("#md",frame).val("");
-                $("#dlg_md_row",frame).css("display","none");
-            } else
-                $("#dlg_md_row",frame).css("display","show");
         }
     };
 
