@@ -2,67 +2,12 @@
 #include <iomanip>
 #include "TraceException.hpp"
 #include "MsgComm.hpp"
+#include "Util.hpp"
 
 using namespace std;
 
 
 #define MAX_ADDR_LEN 1000
-
-
-void hexDump( const char * a_buffer, const char *a_buffer_end, ostream & a_out )
-{
-    const unsigned char * p = (unsigned char *) a_buffer;
-    const unsigned char * e = (unsigned char *) a_buffer_end;
-    bool done = false;
-
-    int l = 0, i = 0;
-    while ( !done )
-    {
-        a_out << setw(4) << setfill('0') << dec << l << ": ";
-
-        for ( i = 0; i < 16; ++i )
-        {
-            if ( i == 8 )
-                a_out << "  ";
-
-            if ( p + i != e )
-            {
-                a_out << hex << setw(2) << setfill('0') << ((unsigned short)(*(p+i))) << " ";
-            }
-            else
-            {
-                done = true;
-
-                for ( ; i < 16; ++i )
-                    a_out << "   ";
-
-                break;
-            }
-        }
-
-        a_out << "  ";
-
-        for ( i = 0; i < 16; ++i )
-        {
-            if ( p + i != e )
-            {
-                if ( isprint( *(p + i )))
-                    a_out << *(p+i);
-                else
-                    a_out << ".";
-            }
-            else
-                break;
-        }
-
-        a_out << "\n";
-
-        p += 16;
-        l += 16;
-    }
-
-    a_out << dec;
-}
 
 
 void freeBuffer( void * a_data, void * a_hint )

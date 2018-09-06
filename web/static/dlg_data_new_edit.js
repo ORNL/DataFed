@@ -42,79 +42,73 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
         buttons: [{
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
-                console.log( "Create data" );
+                var obj = {};
+                var tmp;
 
-                var title = encodeURIComponent($("#title",frame).val());
-                if ( !title ) {
-                    console.log( "bad title" );
-                    alert("Title cannot be empty");
+                obj.title = $("#title",frame).val().trim();
+                if ( !obj.title ) {
+                    dlgAlert( "Data Entry Error", "Title cannot be empty");
                     return;
                 }
 
-                var alias = encodeURIComponent($("#alias",frame).val());
-                if ( !isValidAlias( alias )){
-                    console.log( "bad alias" );
+                tmp = $("#alias",frame).val().trim();
+                if ( tmp.length ){
+                    if ( !isValidAlias( tmp ))
+                        return;
 
-                    return;
+                    obj.alias = tmp;
                 }
 
-                alias = encodeURIComponent(alias);
-                var desc = encodeURIComponent($("#desc",frame).val());
-                var coll = encodeURIComponent($("#coll",frame).val());
-                var metadata = $("#md",frame).val().trim();
-                if ( metadata.length ){
+                tmp = $("#desc",frame).val().trim();
+                if ( tmp.length )
+                    obj.desc = tmp;
+
+                tmp = $("#coll",frame).val().trim();
+                if ( tmp.length )
+                    obj.parentId = tmp;
+
+                tmp = $("#md",frame).val().trim();
+                if ( tmp.length ){
                     try{
-                        JSON.parse( metadata );
+                        JSON.parse( tmp );
+                        obj.metadata = tmp;
                     }catch(e){
                         dlgAlert("Input Error","Metadata field must be valid JSON.");
                         return;
                     }
                 }
 
-                var md = encodeURIComponent(metadata);
-                console.log( "build url" );
-
-                var url = "/api/dat";
-
-                if ( a_data && a_mode == DLG_DATA_EDIT )
-                    url += "/update?id="+a_data.id + "&";
-                else
-                    url += "/create?"
-                var delim = "";
-
-                if ( title ) {
-                    url += "title="+title;
-                    delim = "&";
+                if ( obj.md && a_data ) {
+                    if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
+                        obj.mdset = true;
                 }
 
-                if ( alias ) {
-                    url += delim + "alias="+alias;
-                    delim = "&";
-                }
+                var url = "/api/dat/";
 
-                if ( desc ) {
-                    url += delim + "desc="+desc;
-                    delim = "&";
-                }
+                if ( a_data && a_mode == DLG_DATA_EDIT ){
+                    url += "update";
+                    obj.id = a_data.id;
 
-                if ( md ) {
-                    url += delim + "md="+md;
-                    delim = "&";
-
-                    if ( a_data ) {
-                        if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
-                            url += "&mdset=true";
+                    if ( obj.title && obj.title == a_data.title )
+                        delete obj.title;
+                    if ( obj.desc && obj.desc == a_data.desc )
+                        delete obj.desc;
+                    if ( obj.alias && obj.alias == a_data.alias )
+                        delete obj.alias;
+                    if ( obj.metadata && obj.metadata == a_data.metadata ){
+                        delete obj.metadata;
+                        delete obj.mdset;
                     }
-                }
 
-                if ( coll )
-                    url += delim + "coll="+coll;
+                }else
+                    url += "create"
 
-                console.log( "URL in js", url );
 
                 var inst = $(this);
 
-                _asyncGet( url, null, function( ok, data ){
+                console.log( "create data", obj );
+
+                _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();
                         //console.log( "data:",data);
@@ -136,8 +130,10 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){
                     var idx =  a_data.alias.lastIndexOf(":");
-                    $("#alias",frame).val(idx==-1?a_data.alias:a_data.alias.substr(idx+1));
+                    a_data.alias = (idx==-1?a_data.alias:a_data.alias.substr(idx+1));
+                    $("#alias",frame).val(a_data.alias);
                 }
+
                 $("#desc",frame).val(a_data.desc);
                 $("#md",frame).val(a_data.metadata);
 

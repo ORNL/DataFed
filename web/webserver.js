@@ -13,6 +13,7 @@
 'use strict';
 
 const express = require('express'); // For REST api
+var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
 var request = require('request');
@@ -76,6 +77,7 @@ console.log('Connected to SDMS at', serv_addr );
 
 //console.log(  __dirname + '/static' );
 app.use( express.static( __dirname + '/static' ));
+app.use(bodyParser.json({ type: 'application/json'}));
 app.use( cookieParser() );
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
@@ -423,41 +425,18 @@ app.get('/api/dat/search', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/dat/create', ( a_req, a_resp ) => {
-    var params  = {
-        title: a_req.query.title,
-        alias: a_req.query.alias,
-        desc: a_req.query.desc,
-        metadata: a_req.query.md,
-        parentId:  a_req.query.coll
-    };
+app.post('/api/dat/create', ( a_req, a_resp ) => {
+    console.log( "dat create", a_req.body );
 
-    sendMessage( "RecordCreateRequest", params, a_req, a_resp, function( reply ) {
+    sendMessage( "RecordCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
-app.get('/api/dat/update', ( a_req, a_resp ) => {
-    var params = { id:  a_req.query.id };
-    if ( a_req.query.title )
-        params.title = a_req.query.title;
+app.post('/api/dat/update', ( a_req, a_resp ) => {
+    console.log( "dat update", a_req.body );
 
-    if ( a_req.query.alias )
-        params.alias = a_req.query.alias;
-
-    if ( a_req.query.desc )
-        params.desc = a_req.query.desc;
-
-    if ( a_req.query.public != undefined )
-        params.public = a_req.query.public;
-
-    if ( a_req.query.md ) {
-        params.metadata = a_req.query.md;
-        if ( a_req.query.mdset )
-            params.mdset = true;
-    }
-
-    sendMessage( "RecordUpdateRequest", params, a_req, a_resp, function( reply ) {
+    sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -557,31 +536,14 @@ app.get('/api/xfr/list', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/col/create', ( a_req, a_resp ) => {
-    var params  = {
-        title: a_req.query.title,
-        alias: a_req.query.alias,
-        desc: a_req.query.desc,
-        parentId: a_req.query.coll
-    };
-
-    sendMessage( "CollCreateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/col/create', ( a_req, a_resp ) => {
+    sendMessage( "CollCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
-app.get('/api/col/update', ( a_req, a_resp ) => {
-    var params = { id:  a_req.query.id };
-    if ( a_req.query.title )
-        params.title = a_req.query.title;
-
-    if ( a_req.query.alias )
-        params.alias = a_req.query.alias;
-
-    if ( a_req.query.desc )
-        params.desc = a_req.query.desc;
-
-    sendMessage( "CollUpdateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/col/update', ( a_req, a_resp ) => {
+    sendMessage( "CollUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

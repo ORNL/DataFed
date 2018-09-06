@@ -21,13 +21,47 @@ function logout() {
     window.location = "/ui/logout";
 }
 
-function _asyncGet( a_path, a_raw_json_data, a_callback ) {
+function _asyncGet( a_url, a_raw_json_data, a_callback ) {
     $.ajax({
-        url : a_path,
+        url : a_url,
         global : false,
-        type : 'get',
+        type : 'GET',
         data: a_raw_json_data,
         dataType: 'json',
+        success : function( a_data ) {
+            if ( a_callback ){
+                a_callback( true, a_data );
+            }
+        },
+        error : function( a_xhr, a_status, a_thrownError ) {
+            //console.log( 'asyncGet error: ', a_xhr );
+            //console.log( 'asyncGet error: ', a_status );
+            //console.log( 'asyncGet error: ', a_thrownError );
+            //console.log( 'asyncGet error: ', a_xhr.responseText );
+            if ( a_callback ) {
+                if ( a_xhr.responseText )
+                    a_callback( false, a_xhr.responseText );
+                else if ( a_thrownError )
+                    a_callback( false, a_thrownError );
+                else if ( a_status )
+                    a_callback( false, a_status );
+                else
+                    a_callback( false, "Unknown error" );
+            }
+        },
+        timeout: 5000
+    });
+}
+
+function _asyncPost( a_url, a_raw_json_data, a_callback ) {
+    console.log("post",a_raw_json_data);
+    $.ajax({
+        url : a_url,
+        //global : false,
+        type : 'POST',
+        data: JSON.stringify(a_raw_json_data, null, 0),
+        dataType: 'json',
+        contentType: "application/json; charset=utf-8",
         success : function( a_data ) {
             if ( a_callback ){
                 a_callback( true, a_data );
@@ -70,12 +104,6 @@ function copyData( a_src_id, a_dst_id, a_cb ){
     console.log("copyData",a_src_id, a_dst_id);
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
-
-/*
-function createData( a_title, a_alias, a_desc, a_md, a_coll, a_callback ) {
-    console.log("createData()");
-    _asyncGet( "/api/dat/create?title="+encodeURIComponent(a_title)+"&alias="+a_alias+"&desc="+a_desc+"&md="+a_md+"&coll="+a_coll, null, a_callback );
-}*/
 
 function dataFind( a_query, a_scope, a_callback ) {
     _asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);

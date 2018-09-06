@@ -205,8 +205,10 @@ function makeBrowserTab(){
                         console.log( "data", data );
                         dlgDataNewEdit(DLG_DATA_COPY,data,null,function(data2){
                             inst.addNode( data2 );
-                            if ( data.dataSize )
+                            if ( data.dataSize && parseInt(data.dataSize) > 0 ){
+                                console.log( "Copy data, size:",data.dataSize);
                                 copyData( node.key, data2.id );
+                            }
                         });
                     }else
                         alert( "Cannot access data record." );

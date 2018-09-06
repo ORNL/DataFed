@@ -77,6 +77,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( m_curl, CURLOPT_HTTPGET, 1 );
 
     CURLcode res = curl_easy_perform( m_curl );
 
@@ -154,6 +155,7 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( m_curl, CURLOPT_HTTPGET, 1 );
 
     CURLcode res = curl_easy_perform( m_curl );
 
@@ -164,6 +166,88 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
         return true;
     else
         return false;
+}
+
+long
+DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, rapidjson::Document & a_result )
+{
+    cout << "dbPost " << a_url_path << " [" << *a_body << "]" << endl;
+
+    string  url;
+    string  res_json;
+    char    error[CURL_ERROR_SIZE];
+
+    error[0] = 0;
+
+    url.reserve( 512 );
+
+    // TODO Get URL base from ctor
+    url.append( m_db_url );
+    url.append( a_url_path );
+    url.append( "?client=" );
+    url.append( m_client );
+
+    char * esc_txt;
+
+    for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
+    {
+        url.append( "&" );
+        url.append( iparam->first.c_str() );
+        url.append( "=" );
+        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        url.append( esc_txt );
+        curl_free( esc_txt );
+    }
+
+    DL_DEBUG( "url: " << url );
+
+    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
+    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
+    if ( a_body )
+        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body->c_str() );
+
+    CURLcode res = curl_easy_perform( m_curl );
+
+    long http_code = 0;
+    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+    if ( res == CURLE_OK )
+    {
+        if ( res_json.size() )
+        {
+            cout << "About to parse[" << res_json << "]" << endl;
+            a_result.Parse( res_json.c_str() );
+        }
+
+        if ( http_code >= 200 && http_code < 300 )
+        {
+            if ( a_result.HasParseError() )
+            {
+                rapidjson::ParseErrorCode ec = a_result.GetParseError();
+                cerr << "Parse error: " << rapidjson::GetParseError_En( ec ) << endl;
+                EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+            }
+
+            return http_code;
+        }
+        else
+        {
+            if ( res_json.size() && !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
+            {
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].GetString() );
+            }
+            else
+            {
+                EXCEPT_PARAM( ID_BAD_REQUEST, "SDMS DB service call failed. Code: " << http_code << ", err: " << error );
+            }
+        }
+    }
+    else
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "SDMS DB interface failed. error: " << error << ", " << curl_easy_strerror( res ));
+    }
 }
 
 void
@@ -645,18 +729,18 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
 {
     rapidjson::Document result;
 
-    vector<pair<string,string>> params;
-    params.push_back({"title",a_request.title()});
+    string body = "{\"title\":\"" + a_request.title() + "\"";
     if ( a_request.has_desc() )
-        params.push_back({"desc",a_request.desc()});
+        body += ",\"desc\":\"" + a_request.desc() + "\"";
     if ( a_request.has_alias() )
-        params.push_back({"alias",a_request.alias()});
+        body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
-        params.push_back({"md",a_request.metadata()});
+        body += ",\"md\":" + a_request.metadata();
     if ( a_request.has_parent_id() )
-        params.push_back({"parent",a_request.parent_id()});
+        body += ",\"parent\":\"" + a_request.parent_id() + "\"";
+    body += "}";
 
-    dbGet( "dat/create", params, result );
+    dbPost( "dat/create", {}, &body, result );
 
     setRecordData( a_reply, result );
 }
@@ -666,26 +750,28 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 {
     rapidjson::Document result;
 
-    vector<pair<string,string>> params;
-    params.push_back({"id",a_request.id()});
+    string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
-        params.push_back({"title",a_request.title()});
+        body += ",\"title\":\"" + a_request.title() + "\"";
     if ( a_request.has_desc() )
-        params.push_back({"desc",a_request.desc()});
-    if ( a_request.has_ispublic() )
-        params.push_back({"public",a_request.ispublic()?"true":"false"});
+        body += ",\"desc\":\"" + a_request.desc() + "\"";
     if ( a_request.has_alias() )
-        params.push_back({"alias",a_request.alias()});
+        body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
-        params.push_back({"md",a_request.metadata()});
-    if ( a_request.has_mdset() )
-        params.push_back({"mdset",a_request.mdset()?"true":"false"});
+    {
+        body += ",\"md\":" + a_request.metadata();
+        if ( a_request.has_mdset() )
+            body += ",\"mdset\":" + a_request.mdset()?"true":"false";
+    }
+    if ( a_request.has_ispublic() )
+        body += ",\"public\":" + a_request.ispublic()?"true":"false";
     if ( a_request.has_data_size() )
-        params.push_back({"data_size",to_string(a_request.data_size())});
+        body += ",\"data_size\":" + to_string(a_request.data_size());
     if ( a_request.has_data_time() )
-        params.push_back({"data_time",to_string(a_request.data_time())});
+        body += ",\"data_time\":" + to_string(a_request.data_time());
+    body += "}";
 
-    dbGet( "dat/update", params, result );
+    dbPost( "dat/update", {}, &body, result );
 
     setRecordData( a_reply, result );
 }
@@ -812,18 +898,18 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
 {
     rapidjson::Document result;
 
-    vector<pair<string,string>> params;
-    params.push_back({"title",a_request.title()});
+    string body = "{\"title\":\"" + a_request.title() + "\"";
     if ( a_request.has_desc() )
-        params.push_back({"desc",a_request.desc()});
+        body += ",\"desc\":\"" + a_request.desc() + "\"";
     if ( a_request.has_alias() )
-        params.push_back({"alias",a_request.alias()});
+        body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_parent_id() )
-        params.push_back({"parent",a_request.parent_id()});
+        body += ",\"parent\":\"" + a_request.parent_id() + "\"";
     if ( a_request.has_ispublic() )
-        params.push_back({"public",a_request.ispublic()?"true":"false"});
+        body += ",\"public\":" + a_request.ispublic()?"true":"false";
+    body += "}";
 
-    dbGet( "col/create", params, result );
+    dbPost( "col/create", {}, &body, result );
 
     setCollData( a_reply, result );
 }
@@ -833,18 +919,18 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 {
     rapidjson::Document result;
 
-    vector<pair<string,string>> params;
-    params.push_back({"id",a_request.id()});
+    string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
-        params.push_back({"title",a_request.title()});
+        body += ",\"title\":\"" + a_request.title() + "\"";
     if ( a_request.has_desc() )
-        params.push_back({"desc",a_request.desc()});
+        body += ",\"desc\":\"" + a_request.desc() + "\"";
     if ( a_request.has_alias() )
-        params.push_back({"alias",a_request.alias()});
+        body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_ispublic() )
-        params.push_back({"public",a_request.ispublic()?"true":"false"});
+        body += ",\"public\":" + a_request.ispublic()?"true":"false";
+    body += "}";
 
-    dbGet( "col/update", params, result );
+    dbPost( "col/update", {}, &body, result );
 
     setCollData( a_reply, result );
 }
