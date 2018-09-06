@@ -1,3 +1,5 @@
+#!/usr/bin/env nodejs
+
 /*jshint strict: global */
 /*jshint esversion: 6 */
 /*jshint multistr: true */
@@ -18,66 +20,80 @@ var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
 var request = require('request');
 const fs = require('fs');
+const ini = require('ini');
 var protobuf = require("protobufjs");
 var zmq = require("zeromq");
 const app = express();
 var ECT = require('ect'); // for html templates
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
-const port = 443;
-
-var server_key = process.env.SDMS_WEB_KEY || 'sdms_web_key.pem';
-var server_cert = process.env.SDMS_WEB_CERT || 'sdms_web_cert.pem';
-
-var privateKey  = fs.readFileSync( server_key, 'utf8');
-var certificate = fs.readFileSync( server_cert, 'utf8');
-var web_credentials = {key: privateKey, cert: certificate};
-var g_anon;
-var g_auth;
-var g_msg_by_id = {};
-var g_msg_by_name = {};
-
-const oauth_credentials = {
-    clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
-    clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
-    authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
-    accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-    redirectUri: 'https://sdms.ornl.gov:443/ui/authn',
-    scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
-};
-
-//scopes: ['openid','urn:globus:auth:scope:transfer.api.globus.org:all']
-
-// Initialize the OAuth2 Library
 const ClientOAuth2 = require('client-oauth2');
-var globus_auth = new ClientOAuth2( oauth_credentials );
-
-//--- This is a HACK to gt around lack of host cert
-var agentOptions;
-var agent;
-
-agentOptions = {
-    host : 'sdms.ornl.gov',
-    port : '443',
-    path : '/',
-    rejectUnauthorized : false
-};
-
-agent = new https.Agent(agentOptions);
 
 const MAX_CTX = 50;
+
+var g_host;
+var g_port;
+var g_server_key_file;
+var g_server_cert_file;
+var g_msg_by_id = {};
+var g_msg_by_name = {};
+var g_core_sock = zmq.socket('dealer');
+var g_core_serv_addr;
+var globus_auth;
 var g_ctx = new Array( MAX_CTX );
-g_ctx.fill(null);
 var g_ctx_next = 0;
-
-var serv_addr = 'tcp://sdms.ornl.gov:7513';
 const nullfr = Buffer.from([]);
-var core_sock = zmq.socket('dealer');
-core_sock.connect( serv_addr );
-console.log('Connected to SDMS at', serv_addr );
 
-//console.log(  __dirname + '/static' );
+g_ctx.fill(null);
+
+function defaultSettings(){
+    g_host = "sdms.ornl.gov";
+    g_port = 443;
+    g_server_key_file = 'sdms_web_key.pem';
+    g_server_cert_file = 'sdms_web_cert.pem';
+    g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
+}
+
+function startServer(){
+    console.log( "host:", g_host );
+    console.log( "port:", g_port );
+    console.log( "server key file:", g_server_key_file );
+    console.log( "server cert file:", g_server_cert_file );
+    console.log( "core server addr:", g_core_serv_addr );
+
+    g_core_sock.connect( g_core_serv_addr );
+
+    const oauth_credentials = {
+        clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
+        clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
+        authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
+        accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
+        redirectUri: 'https://'+g_host+':'+g_port+'/ui/authn',
+        scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
+    };
+
+    globus_auth = new ClientOAuth2( oauth_credentials );
+
+    //--- This is a HACK to gt around lack of host cert
+    /*
+    var agentOptions = {
+        host : g_host,
+        port : g_port,
+        path : '/',
+        rejectUnauthorized : false
+    };
+
+    var agent = new https.Agent(agentOptions);
+    */
+
+    var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
+    var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
+
+    var httpsServer = https.createServer( {key: privateKey, cert: certificate}, app );
+    httpsServer.listen( g_port );
+}
+
 app.use( express.static( __dirname + '/static' ));
-app.use(bodyParser.json({ type: 'application/json'}));
+app.use( bodyParser.json({ type: 'application/json'}));
 app.use( cookieParser() );
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
@@ -326,7 +342,6 @@ app.get('/api/prj/delete', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/view', ( a_req, a_resp ) => {
-    console.log("ID: ["+a_req.query.id+"]");
     sendMessage( "ProjectViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         if ( reply.proj && reply.proj.length )
             a_resp.send(reply.proj[0]);
@@ -692,59 +707,6 @@ app.get('/ui/ep/recent/save', ( a_req, a_resp ) => {
     a_resp.json({});
 });
 
-protobuf.load("SDMS_Anon.proto", function(err, root) {
-    if ( err )
-        throw err;
-
-    g_anon = root;
-
-    console.log('anon protobuf loaded');
-
-    var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
-    if ( !msg )
-        throw "Missing Protocol enum in SDMS.Anon proto file";
-    
-    var mlist = msg.parent.order;
-    var pid = msg.values.ID;
-
-    for ( var i = 0; i < mlist.length - 1; i++ ) {
-        msg = mlist[i+1];
-
-        msg._pid = pid;
-        msg._mid = i;
-        msg._msg_type = (pid << 8) | i;
-
-        g_msg_by_id[ msg._msg_type ] = msg;
-        g_msg_by_name[ msg.name ] = msg;
-    }
-});
-
-protobuf.load("SDMS_Auth.proto", function(err, root) {
-    if ( err )
-        throw err;
-
-    g_auth = root;
-
-    console.log('auth protobuf loaded');
-
-    var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
-    if ( !msg )
-        throw "Missing Protocol enum in SDMS.Auth proto file";
-    
-    var mlist = msg.parent.order;
-    var pid = msg.values.ID;
-    // Skip first entry which is Protocol enum
-    for ( var i = 0; i < mlist.length-1; i++ ) {
-        msg = mlist[i+1];
-
-        msg._pid = pid;
-        msg._mid = i;
-        msg._msg_type = (pid << 8) | i;
-
-        g_msg_by_id[ msg._msg_type ] = msg;
-        g_msg_by_name[ msg.name ] = msg;
-    }
-});
 
 function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
     console.log( "save token", a_uid, a_acc_tok, a_ref_tok );
@@ -753,47 +715,6 @@ function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
     });
 }
 
-core_sock.on('message', function( delim, frame, client, msg_buf ) {
-    //console.log( "got msg", delim, frame, msg_buf );
-    //console.log( "frame", frame.toString('hex') );
-    var mlen = frame.readUInt32LE( 0 );
-    var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
-    var ctx = frame.readUInt16LE( 6 );
-
-    //console.log( "got msg type:", mtype );
-    //console.log( "client len:", client?client.length:0 );
-    //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
-    //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
-
-    var msg_class = g_msg_by_id[mtype];
-    var msg;
-
-    if ( msg_class ) {
-        // Only try to decode if there is a payload
-        if ( msg_buf && msg_buf.length ) {
-            try {
-                msg = msg_class.decode( msg_buf );
-                if ( !msg )
-                    console.log( "decode failed" );
-            } catch ( err ) {
-                console.log( "decode failed:", err );
-            }
-        } else {
-            msg = msg_class;
-        }
-    } else {
-        console.log( "unkown mtype" );
-    }
-
-    var f = g_ctx[ctx];
-    if ( f ) {
-        g_ctx[ctx] = null;
-        g_ctx_next = ctx;
-        f( msg );
-    } else {
-        console.log( "no callback found!" );
-    }
-});
 
 function allocRequestContext( a_response, a_callback ) {
     var ctx = g_ctx_next;
@@ -868,9 +789,9 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
 
         //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
-            core_sock.send([ nullfr, frame, client, msg_buf ]);
+            g_core_sock.send([ nullfr, frame, client, msg_buf ]);
         else
-            core_sock.send([ nullfr, frame, client ]);
+            g_core_sock.send([ nullfr, frame, client ]);
     });
 }
 
@@ -894,17 +815,148 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         //console.log( "sendMsgDirect:", a_msg_name );
         if ( msg_buf.length )
-            core_sock.send([ nullfr, frame, a_client, msg_buf ]);
+            g_core_sock.send([ nullfr, frame, a_client, msg_buf ]);
         else
-            core_sock.send([ nullfr, frame, a_client ]);
+            g_core_sock.send([ nullfr, frame, a_client ]);
     });
 }
 
+protobuf.load("SDMS_Anon.proto", function(err, root) {
+    if ( err )
+        throw err;
+
+    //g_anon = root;
+
+    console.log('anon protobuf loaded');
+
+    var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
+    if ( !msg )
+        throw "Missing Protocol enum in SDMS.Anon proto file";
+    
+    var mlist = msg.parent.order;
+    var pid = msg.values.ID;
+
+    for ( var i = 0; i < mlist.length - 1; i++ ) {
+        msg = mlist[i+1];
+
+        msg._pid = pid;
+        msg._mid = i;
+        msg._msg_type = (pid << 8) | i;
+
+        g_msg_by_id[ msg._msg_type ] = msg;
+        g_msg_by_name[ msg.name ] = msg;
+    }
+});
+
+protobuf.load("SDMS_Auth.proto", function(err, root) {
+    if ( err )
+        throw err;
+
+    //g_auth = root;
+
+    console.log('auth protobuf loaded');
+
+    var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
+    if ( !msg )
+        throw "Missing Protocol enum in SDMS.Auth proto file";
+    
+    var mlist = msg.parent.order;
+    var pid = msg.values.ID;
+    // Skip first entry which is Protocol enum
+    for ( var i = 0; i < mlist.length-1; i++ ) {
+        msg = mlist[i+1];
+
+        msg._pid = pid;
+        msg._mid = i;
+        msg._msg_type = (pid << 8) | i;
+
+        g_msg_by_id[ msg._msg_type ] = msg;
+        g_msg_by_name[ msg.name ] = msg;
+    }
+});
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 
+g_core_sock.on('message', function( delim, frame, client, msg_buf ) {
+    //console.log( "got msg", delim, frame, msg_buf );
+    //console.log( "frame", frame.toString('hex') );
+    var mlen = frame.readUInt32LE( 0 );
+    var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
+    var ctx = frame.readUInt16LE( 6 );
 
-var httpsServer = https.createServer( web_credentials, app );
-httpsServer.listen( port );
+    //console.log( "got msg type:", mtype );
+    //console.log( "client len:", client?client.length:0 );
+    //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
+    //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
+
+    var msg_class = g_msg_by_id[mtype];
+    var msg;
+
+    if ( msg_class ) {
+        // Only try to decode if there is a payload
+        if ( msg_buf && msg_buf.length ) {
+            try {
+                msg = msg_class.decode( msg_buf );
+                if ( !msg )
+                    console.log( "decode failed" );
+            } catch ( err ) {
+                console.log( "decode failed:", err );
+            }
+        } else {
+            msg = msg_class;
+        }
+    } else {
+        console.log( "unkown mtype" );
+    }
+
+    var f = g_ctx[ctx];
+    if ( f ) {
+        g_ctx[ctx] = null;
+        g_ctx_next = ctx;
+        f( msg );
+    } else {
+        console.log( "no callback found!" );
+    }
+});
+
+if ( process.argv.length > 2 ){
+    // Only argument supported is path to a configuration file
+    defaultSettings();
+
+    console.log( "Reading configuration from file", process.argv[2] );
+    try{
+        var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
+        if ( config.server ){
+            g_host = config.server.host || g_host;
+            g_port = config.server.port || g_port;
+            g_server_key_file = config.server.key_file || g_server_key_file;
+            g_server_cert_file = config.server.cert_file || g_server_cert_file;
+        }
+        if ( config.core ){
+            g_core_serv_addr = config.core.server_address || g_core_serv_addr;
+        }
+    }catch( e ){
+        console.log( "Could not open/parse configuration file", process.argv[2] );
+        console.log( e.message );
+    }
+
+    startServer();
+
+/*
+    fs.readFile( process.argv[2], function (err, data) {
+        if (!err) {
+            console.log(data.toString());
+            startServer();
+        }else{
+            console.log( "Could not open configuration file", process.argv[2] );
+            defaultSettings();
+            startServer();
+        }
+    });
+    */
+}else{
+    defaultSettings();
+    startServer();
+}
