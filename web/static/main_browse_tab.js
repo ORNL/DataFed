@@ -161,8 +161,8 @@ function makeBrowserTab(){
                     viewProj( node.key, function( data ){
                         if ( data ){
                             dlgProjNewEdit(data,function(data){
-                                console.log("edit proj cb:",data);
                                 inst.updateNodeTitle( data );
+                                inst.showSelectedInfo( node );
                             });
                         }else
                             alert( "Cannot access project." );
@@ -172,6 +172,7 @@ function makeBrowserTab(){
                         if ( data ){
                             dlgCollNewEdit(data,null,function(data){
                                 inst.updateNodeTitle( data );
+                                inst.showSelectedInfo( node );
                             });
                         }else
                             alert( "Cannot access collection." );
@@ -181,6 +182,7 @@ function makeBrowserTab(){
                         if ( data ){
                             dlgDataNewEdit(DLG_DATA_EDIT,data,null,function(data){
                                 inst.updateNodeTitle( data );
+                                inst.showSelectedInfo( node );
                             });
                         }else
                             alert( "Cannot access data record." );
