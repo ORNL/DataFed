@@ -20,7 +20,7 @@ module.exports = router;
 
 //===== COLLECTION API FUNCTIONS =====
 
-router.get('/create', function (req, res) {
+router.post('/create', function (req, res) {
     try {
         var result = [];
 
@@ -34,8 +34,8 @@ router.get('/create', function (req, res) {
                 var owner_id;
                 var parent_id;
 
-                if ( req.queryParams.parent ) {
-                    parent_id = g_lib.resolveID( req.queryParams.parent, client );
+                if ( req.body.parent ) {
+                    parent_id = g_lib.resolveID( req.body.parent, client );
 
                     if ( parent_id[0] != "c" )
                         throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
@@ -57,26 +57,26 @@ router.get('/create', function (req, res) {
                     owner_id = client._id;
                 }
 
-                var obj = { title: req.queryParams.title };
-                if ( req.queryParams.desc )
-                    obj.desc = req.queryParams.desc;
-                if ( req.queryParams.public )
-                    obj.public = req.queryParams.public;
+                var obj = { title: req.body.title };
+                if ( req.body.desc )
+                    obj.desc = req.body.desc;
+                if ( req.body.public )
+                    obj.public = req.body.public;
 
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner_id });
     
                 g_graph.item.save({ _from: parent_id, _to: coll._id });
 
-                if ( req.queryParams.alias ) {
-                    g_lib.validateAlias( req.queryParams.alias );
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
+                if ( req.body.alias ) {
+                    g_lib.validateAlias( req.body.alias );
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
 
-                    coll.new.alias = req.queryParams.alias;
+                    coll.new.alias = req.body.alias;
                 }
 
                 coll = coll.new;
@@ -95,15 +95,17 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('title', joi.string().required(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
-.queryParam('public', joi.boolean().optional(), "Enable public access")
-.queryParam('alias', joi.string().optional(), "Alias")
-.queryParam('parent', joi.string().optional(), "Parent collection ID or alias (default = root)")
-.summary('Creates a new data collection')
-.description('Creates a new data collection');
+.body(joi.object({
+    title: joi.string().required(),
+    desc: joi.string().optional(),
+    alias: joi.string().optional(),
+    public: joi.boolean().optional(),
+    parent: joi.string().optional()
+}).required(), 'Collection fields')
+.summary('Create a new data collection')
+.description('Create a new data collection from JSON body');
 
-router.get('/update', function (req, res) {
+router.post('/update', function (req, res) {
     try {
         var result = [];
 
@@ -115,31 +117,31 @@ router.get('/update', function (req, res) {
             action: function() {
                 var coll;
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var coll_id = g_lib.resolveID( req.queryParams.id, client );
+                var coll_id = g_lib.resolveID( req.body.id, client );
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     coll = g_db.c.document( coll_id );
                     if ( !g_lib.hasPermission( client, coll, g_lib.PERM_UPDATE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                if ( req.queryParams.alias )
-                    g_lib.validateAlias( req.queryParams.alias );
+                if ( req.body.alias )
+                    g_lib.validateAlias( req.body.alias );
 
                 var obj = {};
                 var do_update = false;
 
-                if ( req.queryParams.title ) {
-                    obj.title = req.queryParams.title;
+                if ( req.body.title ) {
+                    obj.title = req.body.title;
                     do_update = true;
                 }
 
-                if ( req.queryParams.desc ) {
-                    obj.desc = req.queryParams.desc;
+                if ( req.body.desc ) {
+                    obj.desc = req.body.desc;
                     do_update = true;
                 }
 
-                if ( req.queryParams.public != undefined ){
-                    obj.public = req.queryParams.public;
+                if ( req.body.public != undefined ){
+                    obj.public = req.body.public;
                     do_update = true;
                 }
 
@@ -150,7 +152,7 @@ router.get('/update', function (req, res) {
                     coll = g_db.c.document( coll_id );
                 }
 
-                if ( req.queryParams.alias ) {
+                if ( req.body.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
@@ -158,12 +160,12 @@ router.get('/update', function (req, res) {
                     }
 
                     var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll_id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    coll.alias = req.queryParams.alias;
+                    coll.alias = req.body.alias;
                 }
 
                 delete coll._rev;
@@ -181,13 +183,15 @@ router.get('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('title', joi.string().optional(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
-.queryParam('public', joi.boolean().optional(), "Enable public access")
-.queryParam('alias', joi.string().optional(), "Alias")
-.queryParam('parent', joi.string().optional(), "Parent collection ID or alias (default = root)")
-.summary('Updates an existing data collection')
-.description('Updates an existing data collection');
+.body(joi.object({
+    id: joi.string().required(),
+    title: joi.string().optional(),
+    desc: joi.string().optional(),
+    alias: joi.string().optional(),
+    public: joi.boolean().optional()
+}).required(), 'Collection fields')
+.summary('Update an existing collection')
+.description('Update an existing collection from JSON body');
 
 router.get('/delete', function (req, res) {
     try {

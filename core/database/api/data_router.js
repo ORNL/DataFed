@@ -20,7 +20,7 @@ module.exports = router;
 //==================== DATA API FUNCTIONS
 
 
-router.get('/create', function (req, res) {
+router.post('/create', function (req, res) {
     try {
         var result = [];
 
@@ -35,10 +35,10 @@ router.get('/create', function (req, res) {
                 var parent_id;
                 var repo_alloc;
 
-                if ( req.queryParams.parent ) {
+                if ( req.body.parent ) {
                     console.log("Has collection");
 
-                    parent_id = g_lib.resolveID( req.queryParams.parent, client );
+                    parent_id = g_lib.resolveID( req.body.parent, client );
 
                     if ( parent_id[0] != "c" )
                         throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
@@ -64,8 +64,8 @@ router.get('/create', function (req, res) {
                 if ( owner_id != client._id ){
                     console.log("Project");
                     // Storage location uses either project, or, if none, then owner's allocation(s)
-                    if ( req.queryParams.repo ) {
-                        repo_alloc = g_lib.verifyRepo( owner_id, req.queryParams.repo );
+                    if ( req.body.repo ) {
+                        repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
                     } else {
                         repo_alloc = g_lib.assignRepo( owner_id );
                         if ( !repo_alloc ){
@@ -83,8 +83,8 @@ router.get('/create', function (req, res) {
                 }else{
                     console.log("Owner");
                     // Storage location uses client allocation(s)
-                    if ( req.queryParams.repo ) {
-                        repo_alloc = g_lib.verifyRepo( client._id, req.queryParams.repo );
+                    if ( req.body.repo ) {
+                        repo_alloc = g_lib.verifyRepo( client._id, req.body.repo );
                     } else {
                         repo_alloc = g_lib.assignRepo( client._id );
                     }
@@ -95,17 +95,19 @@ router.get('/create', function (req, res) {
 
                 var obj = { data_size: 0, rec_time: Math.floor( Date.now()/1000 ) };
 
-                if ( req.queryParams.title )
-                    obj.title = req.queryParams.title;
+                obj.title = req.body.title;
 
-                if ( req.queryParams.public )
-                    obj.public = req.queryParams.public;
+                if ( req.body.public )
+                    obj.public = req.body.public;
 
-                if ( req.queryParams.desc )
-                    obj.desc = req.queryParams.desc;
+                if ( req.body.desc )
+                    obj.desc = req.body.desc;
 
-                if ( req.queryParams.md )
-                    obj.md = JSON.parse( req.queryParams.md );
+                if ( req.body.md ){
+                    console.log( "metadata:", req.body.md );
+                    obj.md = req.body.md; //JSON.parse( req.body.md );
+                    //console.log( "parsed:", obj.md );
+                }
 
                 //console.log("Save data");
 
@@ -115,14 +117,14 @@ router.get('/create', function (req, res) {
                 //console.log("Save loc", repo_alloc );
                 g_db.loc.save({ _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key });
 
-                if ( req.queryParams.alias ) {
-                    g_lib.validateAlias( req.queryParams.alias );
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
+                if ( req.body.alias ) {
+                    g_lib.validateAlias( req.body.alias );
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    data.new.alias = req.queryParams.alias;
+                    data.new.alias = req.body.alias;
                 }
 
                 g_db.item.save({ _from: parent_id, _to: data.new._id });
@@ -142,17 +144,19 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('title', joi.string().optional(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
-.queryParam('alias', joi.string().optional(), "Alias")
-.queryParam('public', joi.boolean().optional(), "Enable public access")
-.queryParam('parent', joi.string().optional(), "Parent collection ID or alias (default = root)")
-.queryParam('repo', joi.string().optional(), "Optional repo ID for allocation")
-.queryParam('md', joi.string().optional(), "Metadata (JSON)")
-.summary('Creates a new data record')
-.description('Creates a new data record');
+.body(joi.object({
+    title: joi.string().required(),
+    desc: joi.string().optional(),
+    alias: joi.string().optional(),
+    public: joi.boolean().optional(),
+    parent: joi.string().optional(),
+    repo: joi.string().optional(),
+    md: joi.any().optional()
+}).required(), 'Record fields')
+.summary('Create a new data record')
+.description('Create a new data record from JSON body');
 
-router.get('/update', function (req, res) {
+router.post('/update', function (req, res) {
     try {
         var result = [];
 
@@ -163,7 +167,7 @@ router.get('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data_id = g_lib.resolveID( req.queryParams.id, client );
+                var data_id = g_lib.resolveID( req.body.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
                 var data = g_db.d.document( data_id );
 
@@ -172,34 +176,34 @@ router.get('/update', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                if ( req.queryParams.alias )
-                    g_lib.validateAlias( req.queryParams.alias );
+                if ( req.body.alias )
+                    g_lib.validateAlias( req.body.alias );
 
                 var obj = { rec_time: Math.floor( Date.now()/1000 ) };
                 var do_update = false;
 
-                if ( req.queryParams.title != undefined ) {
-                    obj.title = req.queryParams.title;
+                if ( req.body.title != undefined ) {
+                    obj.title = req.body.title;
                     do_update = true;
                 }
 
-                if ( req.queryParams.desc != undefined ) {
-                    obj.desc = req.queryParams.desc;
+                if ( req.body.desc != undefined ) {
+                    obj.desc = req.body.desc;
                     do_update = true;
                 }
 
-                if ( req.queryParams.public != undefined ){
-                    obj.public = req.queryParams.public;
+                if ( req.body.public != undefined ){
+                    obj.public = req.body.public;
                     do_update = true;
                 }
 
-                if ( req.queryParams.md != undefined ) {
-                    obj.md = JSON.parse( req.queryParams.md );
+                if ( req.body.md != undefined ) {
+                    obj.md = req.body.md;
                     do_update = true;
                 }
 
-                if ( req.queryParams.data_size != undefined ) {
-                    obj.data_size = req.queryParams.data_size;
+                if ( req.body.data_size != undefined ) {
+                    obj.data_size = req.body.data_size;
                     do_update = true;
 
                     data = g_db.d.document( data_id );
@@ -214,29 +218,29 @@ router.get('/update', function (req, res) {
                     }
                 }
 
-                if ( req.queryParams.data_time != undefined ) {
-                    obj.data_time = req.queryParams.data_time;
+                if ( req.body.data_time != undefined ) {
+                    obj.data_time = req.body.data_time;
                     do_update = true;
                 }
 
                 if ( do_update ) {
-                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.queryParams.mdset?false:true });
+                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
                     data = data.new;
                 }
 
-                if ( req.queryParams.alias ) {
+                if ( req.body.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: data_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
                         graph.a.remove( old_alias._to );
                     }
 
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.queryParams.alias;
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    data.alias = req.queryParams.alias;
+                    data.alias = req.body.alias;
                 }
 
                 delete data._rev;
@@ -254,17 +258,19 @@ router.get('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Data record ID or alias")
-.queryParam('title', joi.string().optional(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
-.queryParam('alias', joi.string().optional(), "Alias")
-.queryParam('public', joi.boolean().optional(), "Enable public access")
-.queryParam('md', joi.string().optional(), "Metadata (JSON)")
-.queryParam('mdset', joi.boolean().optional().default(false), "Set metadata instead of merging")
-.queryParam('data_size', joi.number().optional(), "Data size (bytes)")
-.queryParam('data_time', joi.number().optional(), "Data modification time")
-.summary('Updates an existing data record')
-.description('Updates an existing data record');
+.body(joi.object({
+    id: joi.string().required(),
+    title: joi.string().optional(),
+    desc: joi.string().optional(),
+    alias: joi.string().optional(),
+    public: joi.boolean().optional(),
+    md: joi.any().optional(),
+    mdset: joi.boolean().optional().default(false),
+    data_size: joi.number().optional(),
+    data_time: joi.number().optional()
+}).required(), 'Record fields')
+.summary('Update an existing data record')
+.description('Update an existing data record from JSON body');
 
 
 router.get('/view', function (req, res) {
