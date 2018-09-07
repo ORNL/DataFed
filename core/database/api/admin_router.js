@@ -27,7 +27,7 @@ router.get('/check', function (req, res) {
                 write: []
             },
             action: function() {
-                var edges = ["owner","member","item","acl","tag","note","ident","admin","alias","alloc","loc"];
+                var edges = ["owner","member","item","acl","ident","admin","alias","alloc","loc"];
                 var ecoll;
                 var subres;
                 var count = 0;
@@ -79,10 +79,6 @@ router.get('/check', function (req, res) {
                 subres = g_db._query("for i in p let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
                 result.p = subres;
-
-                subres = g_db._query("for i in n let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
-                count += subres.length;
-                result.n = subres;
 
                 result.vcount = count;
             }

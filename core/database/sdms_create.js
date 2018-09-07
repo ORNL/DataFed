@@ -13,15 +13,16 @@ graph._addVertexCollection("p");    // Project
 graph._addVertexCollection("g");    // Group
 graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
-graph._addVertexCollection("t");    // Tag
-graph._addVertexCollection("n");    // Note
+//graph._addVertexCollection("t");    // Tag
+//graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
-graph._addVertexCollection("l");    // Label
+//graph._addVertexCollection("l");    // Label
 graph._addVertexCollection("tr");   // Transfers
 graph._addVertexCollection("repo"); // Repository servers
 
 
-var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u","p"]);
+//var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u","p"]);
+var owner = graph_module._relation("owner", ["d","c","p","g","a"], ["u","p"]);
 graph._extendEdgeDefinitions(owner);
 
 var mem = graph_module._relation("member", ["g"], ["u"]);
@@ -33,11 +34,11 @@ graph._extendEdgeDefinitions(item);
 var acl = graph_module._relation("acl", ["d","c"], ["u","g"]);
 graph._extendEdgeDefinitions(acl);
 
-var tag = graph_module._relation("tag", ["d","c"], ["t"]);
-graph._extendEdgeDefinitions(tag);
+//var tag = graph_module._relation("tag", ["d","c"], ["t"]);
+//graph._extendEdgeDefinitions(tag);
 
-var note = graph_module._relation("note", ["d","c"], ["n"]);
-graph._extendEdgeDefinitions(note);
+//var note = graph_module._relation("note", ["d","c"], ["n"]);
+//graph._extendEdgeDefinitions(note);
 
 var ident = graph_module._relation("ident", ["u"], ["accn","uuid"]);
 graph._extendEdgeDefinitions(ident);

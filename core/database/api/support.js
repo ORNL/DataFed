@@ -254,8 +254,8 @@ module.exports = ( function() {
     };
 
     obj.deleteObject = function( id ){
-        // Delete attached notes and aliases
-        var item,items = obj.db._query( "for v in 1..1 outbound @id note, alias return v._id", { id: id }).toArray();
+        // Delete attached aliases
+        var item,items = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: id }).toArray();
         for ( var i in items ) {
             item = items[i];
             obj.graph[item[0]].remove( item );

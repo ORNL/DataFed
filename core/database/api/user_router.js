@@ -469,7 +469,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","admin"],
-                write: ["u","g","uuid","accn","c","d","n","a","acl","owner","ident","alias","admin","member","item","tag","note","alloc","loc"]
+                write: ["u","p","g","uuid","accn","c","d","a","acl","owner","ident","alias","admin","member","item","alloc","loc"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -482,22 +482,38 @@ router.get('/delete', function (req, res) {
                 else {
                     user_id = client._id;
                 }
+                console.log( "delete user", user_id );
 
-                var objects;
-                var obj;
-                var i;
+                var objects,subobjects,obj,subobj,i,j;
 
                 // Delete linked accounts
-                objects = g_db._query( "for v in 1..1 outbound @user ident return v._key", { user: user_id }).toArray();
+                objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
+                    console.log( "del ident", obj );
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
+                }
+
+                // Delete owned projects
+                objects = g_db._query( "for v in 1..1 inbound @user owner filter is_same_collection('p',v) return v._id", { user: user_id }).toArray();
+                for ( i in objects ) {
+                    obj = objects[i];
+                    console.log( "del proj", obj );
+                    subobjects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: obj }).toArray();
+                    for ( j in subobjects ) {
+                        subobj = subobjects[j];
+                        console.log("del subobj",subobj);
+                        g_graph[subobj.substr(0,subobj.indexOf("/"))].remove( subobj );
+                    }
+
+                    g_graph.p.remove( obj );
                 }
 
                 // Delete collections, data, groups, notes
                 objects = g_db._query( "for v in 1..1 inbound @user owner return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
+                    console.log( "del owned", obj );
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 

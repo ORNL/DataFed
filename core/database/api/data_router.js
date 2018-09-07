@@ -379,7 +379,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","n","owner","item","acl","tag","note","alias","loc","alloc"]
+                write: ["d","a","owner","item","acl","alias","loc","alloc"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -403,8 +403,8 @@ router.get('/delete', function (req, res) {
                 const graph = require('@arangodb/general-graph')._graph('sdmsg');
                 var obj;
 
-                // Delete attached notes and aliases
-                var objects = g_db._query( "for v in 1..1 outbound @data note, alias return v._id", { data: data._id }).toArray();
+                // Delete attached aliases
+                var objects = g_db._query( "for v in 1..1 outbound @data alias return v._id", { data: data._id }).toArray();
                 for ( var i in objects ) {
                     obj = objects[i];
                     graph[obj[0]].remove( obj );

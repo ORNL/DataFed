@@ -198,7 +198,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","d","a","n","owner","item","loc","acl","tag","note","alias","alloc"]
+                write: ["c","d","a","owner","item","loc","acl","alias","alloc"]
             },
             action: function() {
                 var all,i,obj;
@@ -220,8 +220,8 @@ router.get('/delete', function (req, res) {
                 if ( coll.is_root )
                     throw g_lib.ERR_CANNOT_DEL_ROOT;
 
-                // Delete attached notes and aliases
-                var objects = g_db._query( "for v in 1..1 outbound @coll note, alias return v._id", { coll: coll._id }).toArray();
+                // Delete attached aliases
+                var objects = g_db._query( "for v in 1..1 outbound @coll alias return v._id", { coll: coll._id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
                     g_graph[obj[0]].remove( obj );
