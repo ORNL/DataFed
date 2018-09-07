@@ -1,0 +1,10 @@
+[Unit]
+Description=SDMS Web Server
+[Service]
+PIDFile=/tmp/sdms-ws.pid
+Restart=always
+KillSignal=SIGQUIT
+WorkingDirectory=/home/cades/SDMS/web
+ExecStart=/home/cades/SDMS/web/sdms-ws.js
+[Install]
+WantedBy=multi-user.target

@@ -41,6 +41,7 @@ var g_core_serv_addr;
 var globus_auth;
 var g_ctx = new Array( MAX_CTX );
 var g_ctx_next = 0;
+var g_oauth_credentials;
 const nullfr = Buffer.from([]);
 
 g_ctx.fill(null);
@@ -62,7 +63,7 @@ function startServer(){
 
     g_core_sock.connect( g_core_serv_addr );
 
-    const oauth_credentials = {
+    g_oauth_credentials = {
         clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
         clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
         authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
@@ -71,7 +72,7 @@ function startServer(){
         scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
     };
 
-    globus_auth = new ClientOAuth2( oauth_credentials );
+    globus_auth = new ClientOAuth2( g_oauth_credentials );
 
     //--- This is a HACK to gt around lack of host cert
     /*
@@ -109,8 +110,8 @@ app.get('/', (request, response) => {
 });
 
 app.get('/ui', (request, response) => {
-    console.log("get /ui");
-    console.log( "sdms cookie:", request.cookies['sdms'] );
+    //console.log("get /ui");
+    //console.log( "sdms cookie:", request.cookies['sdms'] );
 
     if ( request.cookies['sdms'] )
         response.redirect( '/ui/main' );
@@ -119,8 +120,8 @@ app.get('/ui', (request, response) => {
 });
 
 app.get('/ui/main', (request, response) => {
-    console.log("get /ui/main");
-    console.log( "sdms cookie:", request.cookies['sdms'] );
+    //console.log("get /ui/main");
+    //console.log( "sdms cookie:", request.cookies['sdms'] );
 
     if ( request.cookies['sdms'] )
         response.render( 'main' );
@@ -133,20 +134,20 @@ app.get('/ui/docs', (request, response) => {
 });
 
 app.get('/ui/register', (request, response) => {
-    console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
+    //console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
 
     response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok });
 });
 
 app.get('/ui/login', (request, response) => {
-    console.log("get /ui/login");
+    //console.log("get /ui/login");
 
     var uri = globus_auth.code.getUri();
     response.redirect(uri);
 });
 
 app.get('/ui/logout', (request, response) => {
-    console.log("get /ui/logout");
+    //console.log("get /ui/logout");
 
     response.clearCookie( 'sdms' );
     response.clearCookie( 'sdms-user', { path: "/ui" } );
@@ -154,13 +155,13 @@ app.get('/ui/logout', (request, response) => {
 });
 
 app.get('/ui/error', (request, response) => {
-    console.log("get /ui/error");
+    //console.log("get /ui/error");
 
     response.render('error');
 });
 
 app.get('/ui/authn', ( a_request, a_response ) => {
-    console.log( 'get /user_auth', a_request.originalUrl );
+    //console.log( 'get /user_auth', a_request.originalUrl );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
@@ -186,8 +187,8 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                 'Accept' : 'application/json',
             },
             auth: {
-                user: oauth_credentials.clientId,
-                pass: oauth_credentials.clientSecret
+                user: g_oauth_credentials.clientId,
+                pass: g_oauth_credentials.clientSecret
             },
             body: 'token=' + client_token.accessToken + '&include=identities_set'
         }, function( error, response, body ) {
@@ -441,7 +442,7 @@ app.get('/api/dat/search', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/create', ( a_req, a_resp ) => {
-    console.log( "dat create", a_req.body );
+    //console.log( "dat create", a_req.body );
 
     sendMessage( "RecordCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -449,7 +450,7 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/update', ( a_req, a_resp ) => {
-    console.log( "dat update", a_req.body );
+    //console.log( "dat update", a_req.body );
 
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -461,7 +462,7 @@ app.get('/api/dat/copy', ( a_req, a_resp ) => {
         sourceId: a_req.query.src,
         destId: a_req.query.dst
     };
-    console.log("dat/copy", params, typeof params.source_id, typeof params.dest_id );
+
     sendMessage( "DataCopyRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -603,7 +604,6 @@ app.get('/api/link', ( a_req, a_resp ) => {
 
 app.get('/api/unlink', ( a_req, a_resp ) => {
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: [a_req.query.item] }, a_req, a_resp, function( reply ) {
-        console.log("unlink rooted:",reply.item);
         a_resp.send(reply.item?reply.item:[]);
     });
 });
@@ -615,14 +615,12 @@ app.get('/api/repo/list', ( a_req, a_resp ) => {
     if ( a_req.query.details )
         params.details = a_req.query.details;
     sendMessage( "RepoListRequest", params, a_req, a_resp, function( reply ) {
-        console.log( "repo list:",reply.repo);
         a_resp.json(reply.repo?reply.repo:[]);
     });
 });
 
 app.get('/api/repo/view', ( a_req, a_resp ) => {
     sendMessage( "RepoViewRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        console.log( "repo:",reply.repo);
         a_resp.json(reply.repo?reply.repo:[]);
     });
 });
@@ -637,7 +635,6 @@ app.get('/api/repo/update', ( a_req, a_resp ) => {
         params.capacity = a_req.query.capacity;
     if ( a_req.query.admins )
         params.admin = JSON.parse( a_req.query.admins );
-    console.log("repo upd params:", params );
     sendMessage( "RepoUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -662,25 +659,19 @@ app.get('/api/repo/alloc/list/by_proj', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
-    console.log("alloc stats");
     sendMessage( "RepoAllocationStatsRequest", {repo:a_req.query.repo,subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
-        console.log("alloc stats reply", reply.alloc);
         a_resp.json(reply.alloc?reply.alloc:{});
     });
 });
 
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
-    console.log("alloc set");
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,alloc:a_req.query.alloc}, a_req, a_resp, function( reply ) {
-        //console.log("alloc set reply");
         a_resp.json({});
     });
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
-    console.log("ep autocomp");
     var userinfo = JSON.parse(a_req.cookies['sdms-user']);
-    //console.log( 'userinfo', userinfo );
 
     request.get({
         uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
@@ -688,29 +679,23 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
-        //console.log( 'got result:', error, response, body );
         a_resp.json(JSON.parse(body));
     });
 
 });
 
 app.get('/ui/ep/recent/load', ( a_req, a_resp ) => {
-    console.log("ep recent load");
     var recent = a_req.cookies['sdms-recent'];
-    console.log("cookie",recent);
     a_resp.json(recent?JSON.parse(recent):[]);
 });
 
 app.get('/ui/ep/recent/save', ( a_req, a_resp ) => {
-    console.log("ep recent save",a_req.query.recent, typeof a_req.query.recent);
     a_resp.cookie( 'sdms-recent', a_req.query.recent, { path: "/ui" });
     a_resp.json({});
 });
 
 
 function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
-    console.log( "save token", a_uid, a_acc_tok, a_ref_tok );
-
     sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok }, function( reply ) {
     });
 }
@@ -825,9 +810,7 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;
 
-    //g_anon = root;
-
-    console.log('anon protobuf loaded');
+    console.log('SDMS_Anon.proto loaded');
 
     var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
     if ( !msg )
@@ -852,9 +835,7 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
     if ( err )
         throw err;
 
-    //g_auth = root;
-
-    console.log('auth protobuf loaded');
+    console.log('SDMS_Auth.proto loaded');
 
     var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
     if ( !msg )
@@ -943,19 +924,6 @@ if ( process.argv.length > 2 ){
     }
 
     startServer();
-
-/*
-    fs.readFile( process.argv[2], function (err, data) {
-        if (!err) {
-            console.log(data.toString());
-            startServer();
-        }else{
-            console.log( "Could not open configuration file", process.argv[2] );
-            defaultSettings();
-            startServer();
-        }
-    });
-    */
 }else{
     defaultSettings();
     startServer();
