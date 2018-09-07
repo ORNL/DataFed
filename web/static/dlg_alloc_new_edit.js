@@ -46,6 +46,8 @@ function makeDlAllocNewEdit(){
             });
         }
 
+        $('input',inst.frame).addClass("ui-widget ui-widget-content");
+
         var options = {
             title: (a_alloc?"Edit":"Add") + " Allocation",
             modal: true,

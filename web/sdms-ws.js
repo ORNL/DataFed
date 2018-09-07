@@ -101,7 +101,7 @@ app.engine( 'ect', ectRenderer.render );
 
 
 app.get('/', (request, response) => {
-    console.log("get /");
+    console.log("Initial site access from ", request.connection.remoteAddress );
 
     if ( request.cookies['sdms'] )
         response.redirect( '/ui/main' );
@@ -135,8 +135,10 @@ app.get('/ui/docs', (request, response) => {
 
 app.get('/ui/register', (request, response) => {
     //console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
+    if ( !request.cookies['sdms-user'] )
+        response.redirect( '/' );
 
-    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok });
+    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname });
 });
 
 app.get('/ui/login', (request, response) => {
@@ -210,7 +212,9 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                         console.log("User not registered", userinfo );
                         a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
                         //a_response.redirect( "/ui/register" );
-                        a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token );
+                        console.log("uid", userinfo.uid, "uname", userinfo.name );
+
+                        a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
                     } else {
                         // Registered, save access token
                         userinfo.acc_tok = xfr_token.access_token;
@@ -258,7 +262,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             userinfo.acc_tok = a_req.query.acc_tok;
             userinfo.ref_tok = a_req.query.ref_tok;
             a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true });
-            //a_response.cookie( 'sdms-user', JSON.stringify( user ), { path:"/ui" });
+            a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui" });
             a_resp.redirect( "/ui/main" );
         }
     });
@@ -671,7 +675,10 @@ app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
+    console.log("/ui/eo/autocomp", a_req.query.term);
+
     var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    console.log("userinfo", userinfo );
 
     request.get({
         uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
@@ -679,7 +686,11 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
+        console.log("error", error );
+        console.log("response", response );
+        console.log("body",  body );
         a_resp.json(JSON.parse(body));
+        console.log("parsed" );
     });
 
 });

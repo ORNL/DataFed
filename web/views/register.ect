@@ -5,15 +5,17 @@
         <title>SDMS Register</title>
     </head>
     <body>
-        <div class="col-flex" style="height:100%">
-            <div class="header" style="flex:none">
-                <div class="row-flex">
-                    <div style="flex:1;font-size: 2em">Scientific Data Management System - Registration</div><div style="flex:none;display:flex;justify-content:flex-end"><button class="btn" onclick="location.href='/ui'">Home</button></div>
+        <div class="col-flex ui-widget-content" style="height:100%;border:none">
+            <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
+                <div style="flex:1 1 100%;font-size:2em;">Scientific Data Management System</div>
+                <div style="flex:none">
+                    <button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp
+                    <button class="btn" onclick="location.href='/ui'">Home</button>
                 </div>
             </div>
-            <div id="content" class="ui-widget-content" style="padding:5em;flex:1 1 100%">
-                <p>TO DO: Restrict to specific organizations, projects, and/or staff groups.</p>
-                <p>Please enter a password for your new SDMS account. This password is needed for the SDMS command-line interface (CLI). The SDMS CLI can be used to generate local credentials to support automatic authentication.</p>
+            <div id="content" class="ui-widget-content" style="padding:5em;flex:1 1 100%;font-size:1.2em">
+                <p>Your SDMS user ID is "<%- @uid %>".</p>
+                <p>Please enter a password for your new SDMS account. This password is needed to authenticate via the SDMS command-line interface (CLI) prior to configuring local credentials. This password can be changed at any time in the future via the SDMS web application.</p>
                 <br>
                 <table style="margin:1em auto">
                 <tr><td>New Password:</td><td><input type="password" id="pw1"></td></tr>
@@ -22,13 +24,14 @@
                 <tr><td></td><td><button class="btn" onclick="register()" type="button">Register</button></td></tr>
                 </table>
             </div>
-            <div class="footer" style="flex:none">
-                User: Not Registered
+            <div class="ui-widget-header" style="flex:none;padding:.25em">
+                User: <%- @uname %>
             </div>
         </div>
     </body>
     <script>
         $(".btn").button();
+        $('input').addClass("ui-widget ui-widget-content");
 
         function register() {
             var pw1 = document.getElementById('pw1').value;

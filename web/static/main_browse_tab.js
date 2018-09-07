@@ -19,7 +19,7 @@ function makeBrowserTab(){
     this.data_md_exp = {};
     this.xfrHist = [];
     this.pollSince = 24*3600; // First poll = 24 hours =  sec
-    this.my_root_key = "c/" + g_user.uid + "_root";
+    this.my_root_key = "c/u_" + g_user.uid + "_root";
     this.drag_mode = 0;
     this.drag_enabled = true;
 
@@ -472,7 +472,7 @@ function makeBrowserTab(){
                     if ( item ){
                         inst.updateBtnState("p",node.data.admin);
 
-                        htm = "Project ID: " + key + "<p>\"" + item.title + "\"";
+                        html = "Project ID: " + key + "<p>\"" + item.title + "\"";
                         inst.sel_gen.html(html);
 
                         if ( item.desc )
@@ -599,7 +599,7 @@ function makeBrowserTab(){
             if ( node ){
                 var prj_id = item.id.substr(2);
                 node.addNode({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key:item.id,scope:item.id,isproj:true,admin:true,nodrag:true,children:[
-                    {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:item.id,isroot:true,admin:true,nodrag:true}
+                    {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:item.id,isroot:true,admin:true,nodrag:true}
                 ]});
             }
         }else{
@@ -925,7 +925,7 @@ function makeBrowserTab(){
                         prj_id = item.id.substr(2);
                         //data.result.push({ extraClasses:"project", title: item.title + " (" + prj_id + ")",icon:true, folder: true, key: "p/"+prj_id,
                         data.result.push({ title: inst.generateTitle(item),icon:"ui-icon ui-icon-box",folder:true,key: item.id,isproj:true,admin:admin,nodrag:true,children:[
-                            {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/"+prj_id+"_root",scope:item.id,isroot:true,admin:admin,nodrag:true}
+                            {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:item.id,isroot:true,admin:admin,nodrag:true}
                         ]});
                     }
                 }else{
@@ -1082,7 +1082,7 @@ function makeBrowserTab(){
             execQuery();
     });
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
-    $('input').addClass("ui-widget ui-widget-content ui-corner-all");
+    $('input').addClass("ui-widget ui-widget-content");
 
     userView( g_user.uid, true, function( ok, user ){
         if ( ok && user ){
@@ -1108,7 +1108,6 @@ function makeBrowserTab(){
     });
     $("#sel_md_hdr").button().click( function(){
         $("#sel_md").slideToggle();
-
     });
 
     $(".scope",inst.frame).checkboxradio();
