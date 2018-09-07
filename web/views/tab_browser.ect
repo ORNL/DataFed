@@ -36,9 +36,10 @@
         </div -->
     </div>
     <div style="flex:none;padding:.25em">
-        <button class="btn" id="btn_new_proj">New Proj</button>
+        <button class="btn" id="btn_new">New...</button>
+        <!-- button class="btn" id="btn_new_proj">New Proj</button>
         <button class="btn" id="btn_new_data" disabled>New Data</button>
-        <button class="btn" id="btn_new_coll" disabled>New Coll.</button>
+        <button class="btn" id="btn_new_coll" disabled>New Coll.</button -->
         <button class="btn" id="btn_edit" disabled>Edit</button>
         <button class="btn" id="btn_copy" disabled>Copy</button>
         <button class="btn" id="btn_del" disabled>Delete</button>
@@ -78,3 +79,8 @@
         </div>
     </div>
 </div>
+<ul id="newmenu" class="ui-state-hover" style="display:none;z-index:1000;width:8em;padding:.25em">
+    <li><div id="btn_new_proj">Project</div></li>
+    <li><div id="btn_new_data">Data</div></li>
+    <li><div id="btn_new_coll">Collection</div></li>
+</ul>

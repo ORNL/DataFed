@@ -79,6 +79,14 @@ function makeBrowserTab(){
         });
     }
 
+    this.newMenu = function(){
+        $("#newmenu").toggle().position({
+            my: "left bottom",
+            at: "left top",
+            of: this
+        }); //"fade"); //.focus(); //slideToggle({direction: "up"});
+    }
+
     this.newProj = function() {
         dlgProjNewEdit(null,function(data){
             inst.addNode( data );
@@ -1065,9 +1073,10 @@ function makeBrowserTab(){
     this.data_md_tree = $("#data_md_tree").fancytree("getTree");
 
     // Connect event/click handlers
-    $("#btn_new_proj",inst.frame).on('click', inst.newProj );
-    $("#btn_new_data",inst.frame).on('click', inst.newData );
-    $("#btn_new_coll",inst.frame).on('click', inst.newColl );
+    $("#btn_new",inst.frame).on('click', inst.newMenu );
+    $("#btn_new_proj",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newProj(); });
+    $("#btn_new_data",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newData(); });
+    $("#btn_new_coll",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newColl(); });
     $("#btn_edit",inst.frame).on('click', inst.editSelected );
     $("#btn_copy",inst.frame).on('click', inst.copySelected );
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
@@ -1111,6 +1120,13 @@ function makeBrowserTab(){
     });
 
     $(".scope",inst.frame).checkboxradio();
+
+    $("#newmenu").menu();
+
+    $("#newmenu").mouseleave(function(){
+        $("#newmenu").hide();
+    });
+
     var node = inst.data_tree.getNodeByKey( inst.my_root_key );
     node.load();
     node.setExpanded();
