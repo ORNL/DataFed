@@ -82,7 +82,7 @@ function makeBrowserTab(){
     this.newMenu = function(){
         $("#newmenu").toggle().position({
             my: "left bottom",
-            at: "left top",
+            at: "left bottom",
             of: this
         }); //"fade"); //.focus(); //slideToggle({direction: "up"});
     }
@@ -101,8 +101,12 @@ function makeBrowserTab(){
                 parent = node.parent.key;
             }else if (node.key[0] == "c" ){
                 parent = node.key;
-            }else
+            }else{
+                dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
+                    inst.addNode( data );
+                });
                 return;
+            }
 
             hasPerms( parent, PERM_CREATE, function( perms ){
                 if (( perms & PERM_CREATE ) == 0 ){
@@ -121,6 +125,10 @@ function makeBrowserTab(){
                         alert("Cannot access parent collection.");
                 });
             });
+        }else{
+            dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
+                inst.addNode( data );
+            });
         }
     }
 
@@ -132,8 +140,12 @@ function makeBrowserTab(){
                 parent = node.parent.key;
             }else if (node.key[0] == "c" ){
                 parent = node.key;
-            }else
+            }else{
+                dlgCollNewEdit(null,"root",function(data){
+                    inst.addNode( data );
+                });
                 return;
+            }
 
             hasPerms( parent, PERM_CREATE, function( perms ){
                 if (( perms & PERM_CREATE ) == 0 ){
@@ -151,6 +163,10 @@ function makeBrowserTab(){
                     }else
                         alert("Cannot access parent collection.");
                 });
+            });
+        }else{
+            dlgCollNewEdit(null,"root",function(data){
+                inst.addNode( data );
             });
         }
     }
@@ -307,8 +323,8 @@ function makeBrowserTab(){
     this.updateBtnState = function( state, admin, no_new ){
         console.log("updBtn",state,admin);
         if ( state == "c" ) {
-            $("#btn_new_data",inst.frame).button("option","disabled",no_new);
-            $("#btn_new_coll",inst.frame).button("option","disabled",no_new);
+            //$("#btn_new_data",inst.frame).button("option","disabled",no_new);
+            //$("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",false);
@@ -317,8 +333,8 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",true);
             $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "d" ) {
-            $("#btn_new_data",inst.frame).button("option","disabled",no_new);
-            $("#btn_new_coll",inst.frame).button("option","disabled",no_new);
+            //$("#btn_new_data",inst.frame).button("option","disabled",no_new);
+            //$("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_copy",inst.frame).button("option","disabled",false);
             $("#btn_del",inst.frame).button("option","disabled",false);
@@ -327,8 +343,8 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",false);
             $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "r" ) {
-            $("#btn_new_data",inst.frame).button("option","disabled",false);
-            $("#btn_new_coll",inst.frame).button("option","disabled",false);
+            //$("#btn_new_data",inst.frame).button("option","disabled",false);
+            //$("#btn_new_coll",inst.frame).button("option","disabled",false);
             $("#btn_edit",inst.frame).button("option","disabled",true);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
@@ -337,8 +353,8 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",true);
             $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "p" ) {
-            $("#btn_new_data",inst.frame).button("option","disabled",true);
-            $("#btn_new_coll",inst.frame).button("option","disabled",true);
+            //$("#btn_new_data",inst.frame).button("option","disabled",true);
+            //$("#btn_new_coll",inst.frame).button("option","disabled",true);
             $("#btn_edit",inst.frame).button("option","disabled",!admin);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",!admin);
@@ -347,8 +363,8 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",true);
             $("#btn_alloc",inst.frame).button("option","disabled",false);
         } else {
-            $("#btn_new_data",inst.frame).button("option","disabled",true);
-            $("#btn_new_coll",inst.frame).button("option","disabled",true);
+            //$("#btn_new_data",inst.frame).button("option","disabled",true);
+            //$("#btn_new_coll",inst.frame).button("option","disabled",true);
             $("#btn_edit",inst.frame).button("option","disabled",true);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
@@ -1123,8 +1139,28 @@ function makeBrowserTab(){
 
     $("#newmenu").menu();
 
+    /*
     $("#newmenu").mouseleave(function(){
         $("#newmenu").hide();
+    });
+    */
+    this.menutimer = null;
+    $("#newmenu").mouseout(function(){
+        console.log("mouseout");
+        if ( !this.menutimer ){
+            this.menutimer = setTimeout( function(){
+                $("#newmenu").hide();
+                this.menutimer = null;
+            }, 1000 );
+        }
+    });
+
+    $("#newmenu").mouseover(function(){
+        console.log("mouseover");
+        if ( this.menutimer ){
+            clearTimeout(this.menutimer);
+            this.menutimer = null;
+        }
     });
 
     var node = inst.data_tree.getNodeByKey( inst.my_root_key );
