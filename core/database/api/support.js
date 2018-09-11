@@ -231,7 +231,7 @@ module.exports = ( function() {
     };
 
     obj.verifyRepo = function( a_user_id, a_repo_id ){
-        var alloc = obj.db.alloc.firstExample({ _from: a_user_id, _to: "repo/" + a_repo_id });
+        var alloc = obj.db.alloc.firstExample({ _from: a_user_id, _to: a_repo_id });
         if ( !alloc )
             throw obj.ERR_NO_ALLOCATION;
         if ( alloc.usage >= alloc.alloc )

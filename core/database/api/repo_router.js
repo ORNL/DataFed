@@ -239,6 +239,33 @@ router.get('/alloc/list/by_owner', function (req, res) {
 .summary('List owner\'s repo allocations')
 .description('List owner\'s repo allocations (user or project ID)');
 
+router.get('/alloc/list/by_object', function (req, res) {
+    var client = g_lib.getUserFromClientID( req.queryParams.client );
+    var obj_id = g_lib.resolveID( req.queryParams.object, client );
+    var owner_id = g_db.owner.firstExample({_from: obj_id})._to;
+    var result = g_db.alloc.byExample({_from: owner_id}).toArray();
+    if ( result.length == 0 && owner_id[0] == "p" ){
+        owner_id = g_db.owner.firstExample({_from: owner_id})._to;
+        result = g_db.alloc.byExample({_from: owner_id}).toArray();
+    }
+
+    var obj;
+    for ( var i in result ){
+        obj = result[i];
+        delete obj._from;
+        obj.repo = obj._to;
+        delete obj._to;
+        delete obj._key;
+        delete obj._id;
+        delete obj._rev;
+    }
+    res.send( result );
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('object', joi.string().required(), "Object ID (data or collection ID or alias)")
+.summary('List object repo allocations')
+.description('List object repo allocations');
+
 router.get('/alloc/stats', function (req, res) {
     try {
         var client = g_lib.getUserFromClientID( req.queryParams.client );
