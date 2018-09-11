@@ -101,7 +101,7 @@ function viewData( a_id, a_cb ) {
 }
 
 function copyData( a_src_id, a_dst_id, a_cb ){
-    console.log("copyData",a_src_id, a_dst_id);
+    //console.log("copyData",a_src_id, a_dst_id);
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
 

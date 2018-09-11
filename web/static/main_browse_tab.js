@@ -233,7 +233,12 @@ function makeBrowserTab(){
                             inst.addNode( data2 );
                             if ( data.dataSize && parseInt(data.dataSize) > 0 ){
                                 console.log( "Copy data, size:",data.dataSize);
-                                copyData( node.key, data2.id );
+                                copyData( node.key, data2.id, function( ok, data ){
+                                    if ( ok )
+                                        dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                                    else
+                                        dlgAlert( "Transfer Error", data );
+                                });
                             }
                         });
                     }else
@@ -720,14 +725,15 @@ function makeBrowserTab(){
         if ( len == 0 ){
             html = "(no recent transfers)";
         }else{
-            html = "<table class='info_table'><tr><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
+            html = "<table class='info_table'><tr><th>Xfr ID</th><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
             var stat;
             var start = new Date(0);
             var update = new Date(0);
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
-                html += "<tr><td>" + stat.dataId + "</td><td>";
+                html += "<tr><td>" + stat.id + "</td><td>" + stat.dataId + "</td><td>";
+
                 switch(stat.mode){
                     case "XM_GET": html += "Get"; break;
                     case "XM_PUT": html += "Put"; break;

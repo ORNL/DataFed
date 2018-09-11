@@ -105,8 +105,9 @@ function dlgStartTransfer( a_mode, a_data ) {
 
                         clearTimeout( in_timer );
                         inst.dialog('destroy').remove();
+                        dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
                     } else {
-                        alert( "Error: " + data );
+                        dlgAlert( "Transfer Error", data );
                     }
                 });
             }

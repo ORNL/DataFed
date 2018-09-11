@@ -157,6 +157,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
             }
         }],
         open: function(event,ui){
+            var parent;
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){
@@ -172,28 +173,31 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                     $("#dlg_coll_row",frame).css("display","none");
                     $("#dlg_alloc_row",frame).css("display","none");
                 }else{
-                    $("#coll",frame).val("root");
+                    parent = "root";
                     $("#dlg_md_row2",frame).css("display","none");
                 }
             } else {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
+                $("#md",frame).val("");
+                $("#dlg_md_row2",frame).css("display","none");
+                parent = a_parent?a_parent:"root";
+            }
+
+            if ( parent ){
                 var changetimer;
-                $("#coll",frame).val(a_parent?a_parent:"").on( "input", function(){
+                $("#coll",frame).val( parent ).on( "input", function(){
                     if ( changetimer )
                         clearTimeout( changetimer );
                     else{
-                        console.log("dsiable action btn");
                         $("#do_it").button("disable");
                     }
 
                     changetimer = setTimeout( updateAllocSelect, 1000 );
                 });
-                updateAllocSelect();
-                $("#md",frame).val("");
-                $("#dlg_md_row2",frame).css("display","none");
                 $("#alloc",frame).selectmenu();
+                updateAllocSelect();
             }
         }
     };
