@@ -780,11 +780,10 @@ function makeBrowserTab(){
     }
 
     this.setupRepoTab = function(){
-        console.log("setupRepoTab");
         _asyncGet( "/api/repo/list?admin=u/"+g_user.uid+"&details=true", null, function(ok,data){
             if ( ok ){
                 var html;
-                console.log( "repo data:",data);
+
                 if ( data && data.length ){
                     html = "<table class='info_table'><tr><th>Repo ID</th><th>Title</th><th>Address</th><th>Endpoint UUID</th><th>Capacity</th><th>Path</th></tr>";
                     var repo;
@@ -1139,14 +1138,8 @@ function makeBrowserTab(){
 
     $("#newmenu").menu();
 
-    /*
-    $("#newmenu").mouseleave(function(){
-        $("#newmenu").hide();
-    });
-    */
     this.menutimer = null;
     $("#newmenu").mouseout(function(){
-        console.log("mouseout");
         if ( !this.menutimer ){
             this.menutimer = setTimeout( function(){
                 $("#newmenu").hide();
@@ -1156,7 +1149,6 @@ function makeBrowserTab(){
     });
 
     $("#newmenu").mouseover(function(){
-        console.log("mouseover");
         if ( this.menutimer ){
             clearTimeout(this.menutimer);
             this.menutimer = null;

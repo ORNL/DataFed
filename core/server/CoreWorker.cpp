@@ -130,6 +130,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoListAllocationsRequest, RepoAllocationsReply, repoListAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListUserAllocationsRequest, RepoAllocationsReply, repoListUserAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListProjectAllocationsRequest, RepoAllocationsReply, repoListProjectAllocations );
+        SET_MSG_HANDLER_DB( proto_id, RepoListOwnerAllocationsRequest, RepoAllocationsReply, repoListOwnerAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
     }
     catch( TraceException & e)

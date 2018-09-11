@@ -89,6 +89,7 @@ public:
     void repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
+    void repoListOwnerAllocations( const Auth::RepoListOwnerAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply );
     void repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply );
 

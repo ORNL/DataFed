@@ -738,6 +738,8 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
         body += ",\"md\":" + a_request.metadata();
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
+    if ( a_request.has_repo_id() )
+        body += ",\"repo\":\"" + a_request.repo_id() + "\"";
     body += "}";
 
     dbPost( "dat/create", {}, &body, result );
@@ -1590,6 +1592,16 @@ DatabaseClient::repoListProjectAllocations( const Auth::RepoListProjectAllocatio
     rapidjson::Document result;
 
     dbGet( "repo/alloc/list/by_owner", {{"owner",a_request.id()}}, result );
+
+    setAllocData( a_reply, result );
+}
+
+void
+DatabaseClient::repoListOwnerAllocations( const Auth::RepoListOwnerAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "repo/alloc/list/by_object", {{"object",a_request.id()}}, result );
 
     setAllocData( a_reply, result );
 }

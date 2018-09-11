@@ -123,6 +123,7 @@ message RecordCreateRequest
     optional bool               ispublic    = 4;
     optional string             metadata    = 5;
     optional string             parent_id   = 6;
+    optional string             repo_id     = 7;
 }
 
 message RecordUpdateRequest
@@ -455,6 +456,11 @@ message RepoListUserAllocationsRequest
 }
 
 message RepoListProjectAllocationsRequest
+{
+    required string             id          = 1;
+}
+
+message RepoListOwnerAllocationsRequest
 {
     required string             id          = 1;
 }
