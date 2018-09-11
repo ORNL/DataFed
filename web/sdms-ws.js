@@ -569,7 +569,7 @@ app.post('/api/col/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/delete', ( a_req, a_resp ) => {
-    sendMessage( "CollDeleteRequest", { id: a_req.query.id, mode:(a_req.query.mode=="all"?0:1) }, a_req, a_resp, function( reply ) {
+    sendMessage( "CollDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

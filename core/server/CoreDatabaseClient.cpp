@@ -940,16 +940,9 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 void
 DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
 {
-    (void)a_reply;
     rapidjson::Document result;
 
-    const char * mode;
-    if ( a_request.mode() == CDM_ALL )
-        mode = "all";
-    else
-        mode = "owned";
-
-    dbGet( "col/delete", {{"id",a_request.id()},{"mode",mode}}, result );
+    dbGet( "col/delete", {{"id",a_request.id()}}, result );
 
     setRecordLocationData( a_reply, result );
 }

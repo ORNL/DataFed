@@ -34,19 +34,17 @@ function makeBrowserTab(){
             var msg,msg = "<div>Are you sure you want to delete ";
 
             if ( node.key[0] == "c" ) {
-                msg += "collection ID " + node.key + "?<p>Choose the 'ALL' option to delete <i>ALL</i> sub-collections and data, or the 'OWNED' option to delete all sub-collections and any data that is NOT linked to other independent collections.</p><div>";
+                msg += "collection ID " + node.key + "?<p>Note that this action will delete all contained data records that are not linked to other collections.</p><div>";
 
-                confirmChoice( "Confirm Deletion", msg, ["All","OWNED","Cancel"], function( choice ){
-                    console.log( "choice:",choice);
-                    if ( choice != 2 ){
-                        url = "/api/col/delete?id=" + encodeURIComponent(node.key) + "&mode=" + (choice==0?"all":"owned");
-                        console.log( url);
+                confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
+                    if ( choice == 0 ){
+                        url = "/api/col/delete?id=" + encodeURIComponent(node.key);
                         _asyncGet( url, null, function( ok, data ){
                             if ( ok ) {
                                 inst.deleteNode( node.key );
                                 inst.updateBtnState();
                             } else {
-                                alert( "Delete failed: " + data );
+                                dlgAlert( "Collection Delete Error", data );
                             }
                         });
                     }

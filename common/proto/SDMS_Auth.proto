@@ -227,7 +227,6 @@ message CollUpdateRequest
 message CollDeleteRequest
 {
     required string             id          = 1;
-    required CollDelMode        mode        = 2;
 }
 
 message CollListRequest
