@@ -201,14 +201,7 @@ router.get('/delete', function (req, res) {
                 write: ["c","d","a","owner","item","loc","acl","alias","alloc"]
             },
             action: function() {
-                var all,i,obj;
-
-                if ( req.queryParams.mode == "owned" )
-                    all = false;
-                else if ( req.queryParams.mode == "all" )
-                    all = true;
-                else
-                    throw g_lib.ERR_INVALID_PARAM;
+                var i,obj;
 
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
@@ -250,7 +243,7 @@ router.get('/delete', function (req, res) {
                         for ( i in objects ) {
                             obj = objects[i];
                             if ( obj.id[0] == "d" ){
-                                if ( all || obj.links == 1 ){
+                                if ( obj.links == 1 ){
                                     // Save location and delete
                                     locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
                                     if ( alloc[obj.loc.repo] )
@@ -286,9 +279,8 @@ router.get('/delete', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias")
-.queryParam('mode', joi.string().required(), "Delete mode (all or owned)")
 .summary('Deletes an existing data collection')
-.description('Deletes an existing data collection and either ALL contained data (mode=all) or only OWNED data (mode=owned)');
+.description('Deletes an existing data collection and contained data');
 
 // This is an OWNER or ADMIN only function, other users must navigate the collection hierarchy
 router.get('/priv/list', function (req, res) {
