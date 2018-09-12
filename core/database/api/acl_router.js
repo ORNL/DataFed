@@ -50,7 +50,6 @@ function parsePermAction( a_perm_str ) {
 
         for ( var i in pstr ) {
             switch( pstr[i] ) {
-                case 'l': result.val |= g_lib.PERM_LIST; break;
                 case 'v': result.val |= g_lib.PERM_VIEW; break;
                 case 'u': result.val |= g_lib.PERM_UPDATE; break;
                 case 'a': result.val |= g_lib.PERM_ADMIN; break;
@@ -120,27 +119,19 @@ router.get('/update', function (req, res) {
                     for ( var i in req.queryParams.rules ) {
                         rule = req.queryParams.rules[i];
 
-                        if ( !is_coll && ( rule.inhgrant || rule.inhdeny ))
+                        if ( !is_coll && rule.inhgrant )
                             throw g_lib.ERR_INVALID_PERM;
 
                         if ( rule.id == "default" || rule.id == "def" ) {
                             new_obj.grant = rule.grant;
-                            new_obj.deny = rule.deny;
 
                             if ( new_obj.grant == 0 )
                                 new_obj.grant = null;
 
-                            if ( new_obj.deny == 0 )
-                                new_obj.deny = null;
-
                             new_obj.inhgrant = rule.inhgrant;
-                            new_obj.inhdeny = rule.inhdeny;
 
                             if ( new_obj.inhgrant == 0 )
                                 new_obj.inhgrant = null;
-
-                            if ( new_obj.inhdeny == 0 )
-                                new_obj.inhdeny = null;
 
                             do_upd = true;
                         } else {
@@ -160,12 +151,8 @@ router.get('/update', function (req, res) {
                             obj = { _from : object._id, _to:rule.id };
                             if ( rule.grant )
                                 obj.grant = rule.grant;
-                            if ( rule.deny )
-                                obj.deny = rule.deny;
                             if ( rule.inhgrant )
                                 obj.inhgrant = rule.inhgrant;
-                            if ( rule.inhdeny )
-                                obj.inhdeny = rule.inhdeny;
 
                             g_db.acl.save( obj );
                         }
@@ -184,7 +171,7 @@ router.get('/update', function (req, res) {
                     g_db._update( object._id, new_obj, { keepNull: false } );
 
 
-                result = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, deny: e.deny, inhgrant: e.inhgrant, inhdeny: e.inhdeny }", { object: object._id }).toArray();
+                result = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", { object: object._id }).toArray();
                 postProcACLRules( result, object );
             }
         });
@@ -217,7 +204,7 @@ router.get('/view', function (req, res) {
         }//else
             //console.log( "hasAdminPermObject = true");
 
-        var rules = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, deny: e.deny, inhgrant: e.inhgrant, inhdeny: e.inhdeny }", { object: object._id }).toArray();
+        var rules = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", { object: object._id }).toArray();
         postProcACLRules( rules, object );
 
         res.send( rules );
@@ -250,7 +237,7 @@ router.get('/by_user/list', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
 
-        var items = g_db._query("for x in union_distinct((for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @owner let r = p.vertices[1] return {_id:r._id, public:r.public,grant:r.grant,deny:r.deny,title:r.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and v._id == @owner let r = p.vertices[2] return {_id:r._id, public:r.public,grant:r.grant,deny:r.deny,title:r.title})) return x", { user: client._id, owner: owner_id }).toArray();
+        var items = g_db._query("for x in union_distinct((for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @owner let r = p.vertices[1] return {_id:r._id, public:r.public,grant:r.grant,title:r.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and v._id == @owner let r = p.vertices[2] return {_id:r._id, public:r.public,grant:r.grant,title:r.title})) return x", { user: client._id, owner: owner_id }).toArray();
 
         var result = [];
         var item;
@@ -294,13 +281,12 @@ router.get('/by_proj/list', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
 
-        var items = g_db._query("let pr=(for v1,e1,p1 in 2..2 inbound @user member, outbound owner filter is_same_collection('p',v1) and p1.vertices[1].gid == 'members' return v1._id) for x in union_distinct((for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @owner let r = p.vertices[1] return {_id:r._id, public:r.public,grant:r.grant,deny:r.deny,title:r.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and p.vertices[1].gid != 'members' and is_same_collection('acl',p.edges[1]) and v._id == @owner let r = p.vertices[2] return {_id:r._id, public:r.public,grant:r.grant,deny:r.deny,title:r.title})) filter pr none == x._id return x", { user: client._id, owner: owner_id }).toArray();
+        var items = g_db._query("let pr=(for v1,e1,p1 in 2..2 inbound @user member, outbound owner filter is_same_collection('p',v1) and p1.vertices[1].gid == 'members' return v1._id) for x in union_distinct((for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @owner let r = p.vertices[1] return {_id:r._id, public:r.public,grant:r.grant,title:r.title}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and p.vertices[1].gid != 'members' and is_same_collection('acl',p.edges[1]) and v._id == @owner let r = p.vertices[2] return {_id:r._id, public:r.public,grant:r.grant,title:r.title})) filter pr none == x._id return x", { user: client._id, owner: owner_id }).toArray();
 
         var result = [];
         var item;
         for ( var i in items ){
             item = items[i];
-            console.log("item",item);
             if ( g_lib.hasPermission( client, item, g_lib.PERM_ALL, true ))
                 result.push({id:item._id,title:item.title});
         }
@@ -317,7 +303,6 @@ router.get('/by_proj/list', function (req, res) {
 
 function postProcACLRules( rules, object ) {
     var rule;
-    var idx;
 
     for ( var i in rules ) {
         rule = rules[i];
@@ -330,26 +315,16 @@ function postProcACLRules( rules, object ) {
         if ( rule.grant == null )
             delete rule.grant;
 
-        if ( rule.deny == null )
-            delete rule.deny;
-
         if ( rule.inhgrant == null )
             delete rule.inhgrant;
-
-        if ( rule.inhdeny == null )
-            delete rule.inhdeny;
     }
 
-    if ( object.deny || object.grant || object.inhdeny || object.inhgrant ) {
+    if ( object.grant || object.inhgrant ) {
         rule = { id: 'default' };
         if ( object.grant != null )
             rule.grant = object.grant;
-        if ( object.deny != null )
-            rule.deny = object.deny;
         if ( object.inhgrant != null )
             rule.inhgrant = object.inhgrant;
-        if ( object.inhdeny != null )
-            rule.inhdeny = object.inhdeny;
         
         rules.push( rule );
     }

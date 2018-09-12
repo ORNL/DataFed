@@ -342,6 +342,97 @@ router.get('/search', function (req, res) {
 
         console.log("search scope:", scope );
 
+        var query = "",count = 0,users,proj,i;
+
+        if ( scope & g_lib.SS_MY_DATA ) count++;
+        if ( scope & g_lib.SS_MY_PROJ ) count++;
+        if ( scope & g_lib.SS_TEAM_PROJ ) count++;
+        if ( scope & g_lib.SS_USER_SHARE ) count++;
+        if ( scope & g_lib.SS_PROJ_SHARE ) count++;
+        if ( scope & g_lib.SS_PUBLIC ) count++;
+
+        if ( count == 0 )
+            throw g_lib.ERR_INVALID_PARAM;
+
+        if ( count > 1 )
+            query = "for x in union(";
+
+        var comma = false;
+
+        if ( scope & g_lib.SS_MY_DATA ){
+            //result = searchMyData( req.queryParams.query, client );
+            query += (count>1?"(":"") + "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('d',i) and (" + req.queryParams.query + ") return {id:i._id,title:i.title}" + (count>1?")":"");
+            comma = true;
+        }
+
+        if ( scope & g_lib.SS_MY_PROJ ){
+            // Owned projects
+            query += (comma?",":"") + "(for i,e,p in 2..2 inbound @user owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) and (" + req.queryParams.query + ") return {id:i._id,title:i.title}),";
+
+            // Administered projects
+            query += "(for i,e,p in 2..2 inbound @user admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) and (" + req.queryParams.query + ") return {id:i._id,title:i.title})";
+
+            comma = true;
+        }
+
+        if ( scope & g_lib.SS_TEAM_PROJ ){
+            query += (comma?",":"") + (count>1?"(":"") + "for i,e,p in 3..3 inbound @user member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) and (" + req.queryParams.query + ") return {id:i._id,title:i.title}" + (count>1?")":"");
+
+            comma = true;
+        }
+
+        if ( scope & g_lib.SS_USER_SHARE ){
+            users = g_lib.usersWithClientACLs( client._id );
+            for ( i in users )
+                users[i] = "u/"+users[i].uid;
+
+            query += (comma?",":"") + (count>1?"(":"") + "for u in @users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) and (" + req.queryParams.query + ") return {id:i._id,title:i.title}" + (count>1?")":"");
+
+            comma = true;
+        }
+
+        if ( scope & g_lib.SS_PROJ_SHARE ){
+            proj = g_lib.projectsWithClientACLs( client._id );
+            for ( i in proj )
+                proj[i] = proj[i].id;
+
+            query += (comma?",":"") + (count>1?"(":"") + "for p in @proj for i in 1..1 inbound p owner filter IS_SAME_COLLECTION('d',i) and (" + req.queryParams.query + ") return {id:i._id,title:i.title}" + (count>1?")":"");
+
+            comma = true;
+        }
+
+        if ( scope & g_lib.SS_PUBLIC ){
+            query += (comma?",":"") + (count>1?"(":"") + "for i in d filter i.public == true let owner = (for j in outbound i._id owner return j._id) filter owner != @user and (" + req.queryParams.query + ") return {id:i._id,title:i.title}" + (count>1?")":"");
+        }
+
+        if ( count > 1 )
+            query += ") sort x.title return x";
+
+        result = g_db._query( query, { user: client._id, users: users, proj: proj } ).toArray();
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('query', joi.string().optional(), "Query expression")
+.queryParam('scope', joi.number().optional(), "Scope")
+.summary('Find all data records that match query')
+.description('Find all data records that match query');
+
+router.get('/search2', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        var result = [];
+        var scope;
+        if ( req.queryParams.scope )
+            scope = parseInt( req.queryParams.scope, 10 );
+        else
+            scope = g_lib.SS_MY_DATA | g_lib.SS_MY_PROJ;
+
+        console.log("search scope:", scope );
+
         if ( scope & g_lib.SS_MY_DATA )
             result = searchMyData( req.queryParams.query, client );
 
@@ -370,7 +461,6 @@ router.get('/search', function (req, res) {
 .queryParam('scope', joi.number().optional(), "Scope")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
-
 
 router.get('/delete', function (req, res) {
     try {
@@ -465,15 +555,5 @@ function searchProjShared( query, client ){
 function searchPublic( query, client ){
     console.log("searchPublic",query);
     return g_db._query( "for i in d filter i.public == true let owner = (for j in outbound i._id owner return j._id) filter owner != @user " + (query?" and (" + query + ") ":"") +"return {id:i._id,title:i.title}", { user: client._id } ).toArray();
-
-    /*
-    var item;
-
-    while ( cursor.hasNext() ) {
-        item = cursor.next();
-        if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
-            result.push({ id: item._id, title: item.title, desc: item.desc, md: item.md });
-        }
-    }*/
 }
 

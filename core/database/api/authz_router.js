@@ -107,8 +107,8 @@ router.get('/check', function (req, res) {
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
-            if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only LIST and VIEW permissions
-                if (( req.queryParams.perms & ~(g_lib.PERM_LIST | g_lib.PERM_VIEW)) != 0 )
+            if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only VIEW permissions
+                if (( req.queryParams.perms & ~g_lib.PERM_VIEW) != 0 )
                     result = 0;
             } else if ( role == g_lib.PROJ_MEMBER ){ // Members have all but ADMIN and UPDATE
                 if (( req.queryParams.perms & ~g_lib.PERM_MEMBER) != 0 )
@@ -133,3 +133,4 @@ router.get('/check', function (req, res) {
 .queryParam('perms', joi.number().required(), "Permission bits")
 .summary('Checks client permissions for object')
 .description('Checks client permissions for object (projects, data, collections');
+

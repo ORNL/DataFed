@@ -345,11 +345,6 @@ router.get('/view', function (req, res) {
 .description('View collection information by ID or alias');
 
 
-/* This version of read assumes that if a client has read permissions for a collection, then
- * the items in the collection only need to be checked for local overrides to the LIST permission.
- * Have READ access to a collection translates to having LIST access for the contained items,
- * unless LIST is explicitly revoked on an item (i.e. not inherited)
-*/
 router.get('/read', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -369,7 +364,7 @@ router.get('/read', function (req, res) {
 
         if ( g_lib.hasAdminPermObject( client, coll_id )) {
             // No need to perform pernission checks on items if client has admin perm on collection
-            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) sort left(v._id,1), v.title return { id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
 
             if ( mode > 0 ) {
                 for ( i in items ) {
@@ -385,17 +380,12 @@ router.get('/read', function (req, res) {
             if ( !g_lib.hasPermission( client, coll, g_lib.PERM_READ ))
                 throw g_lib.ERR_PERM_DENIED;
 
-            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, grant: v.grant, deny: v.deny, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
 
             for ( i in items ) {
                 item = items[i];
-                // Since hasPermission call above has established collection read permission (which implies LIST),
-                // only check for local deny settings (much more efficient)
-                if ( g_lib.hasLocalDeny( client, item, g_lib.PERM_LIST ))
-                    continue;
                 if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
                     result.push({ id: item._id, title: item.title, alias: item.alias });
-                //}
             }
         }
 
