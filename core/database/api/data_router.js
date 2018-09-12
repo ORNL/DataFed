@@ -465,15 +465,5 @@ function searchProjShared( query, client ){
 function searchPublic( query, client ){
     console.log("searchPublic",query);
     return g_db._query( "for i in d filter i.public == true let owner = (for j in outbound i._id owner return j._id) filter owner != @user " + (query?" and (" + query + ") ":"") +"return {id:i._id,title:i.title}", { user: client._id } ).toArray();
-
-    /*
-    var item;
-
-    while ( cursor.hasNext() ) {
-        item = cursor.next();
-        if ( g_lib.hasAdminPermObject( client, item._id ) || g_lib.hasPermission( client, item, g_lib.PERM_LIST )) {
-            result.push({ id: item._id, title: item.title, desc: item.desc, md: item.md });
-        }
-    }*/
 }
 
