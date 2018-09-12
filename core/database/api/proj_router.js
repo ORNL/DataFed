@@ -300,7 +300,7 @@ router.get('/list', function (req, res) {
         qry += (comma?"),(":"") + "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { id: v._id, title: v.title }";
 
     if ( comma )
-        qry += ")) return x";
+        qry += ")) sort x.title return x";
 
     res.send( g_db._query( qry, { user: client._id }));
 

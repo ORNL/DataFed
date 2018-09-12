@@ -364,7 +364,7 @@ router.get('/read', function (req, res) {
 
         if ( g_lib.hasAdminPermObject( client, coll_id )) {
             // No need to perform pernission checks on items if client has admin perm on collection
-            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) sort left(v._id,1), v.title return { id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
 
             if ( mode > 0 ) {
                 for ( i in items ) {
