@@ -63,19 +63,17 @@ enum SearchScope
 
 enum Permissions
 {
-    PERM_NONE       = 0x000;
-    PERM_LIST       = 0x001;   // Find record by browsing
-    PERM_VIEW       = 0x002;   // Read public record fields (not collection items or raw data)
-    PERM_UPDATE     = 0x004;   // Update public record fields
-    PERM_ADMIN      = 0x008;   // Read, write admin fields, delete record
-    PERM_TAG        = 0x010;   // Add/remove tags on record
-    PERM_NOTE       = 0x020;   // Add, remove, edit annotations on record
-    PERM_READ       = 0x040;   // Read raw data or list collection items
-    PERM_WRITE      = 0x080;   // Write raw data or add/remove collection items
-    PERM_CREATE     = 0x100;   // Create new data or collections
-    PERM_ALL        = 0x1FF;
+    PERM_NONE       = 0x00;
+    PERM_CREATE     = 0x01;   // Create new data or collections
+    PERM_VIEW       = 0x02;   // Read public record fields (not collection items or raw data)
+    PERM_UPDATE     = 0x04;   // Update public record fields
+    PERM_ADMIN      = 0x08;   // Read, write admin fields, delete record
+    PERM_READ       = 0x10;   // Read raw data or list collection items
+    PERM_WRITE      = 0x20;   // Write raw data or add/remove collection items
+    PERM_TAG        = 0x40;   // Add/remove tags on record
+    PERM_NOTE       = 0x80;   // Add, remove, edit annotations on record
+    PERM_ALL        = 0xFF;
 }
-
 
 // ============================ Data Structures
 

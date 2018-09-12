@@ -28,6 +28,8 @@ function makeDlgGroupEdit(){
         console.log("Exclude:", inst.excl );
 
         $(".btn",inst.frame).button();
+        $('input',inst.frame).addClass("ui-widget ui-widget-content");
+        $('textarea',inst.frame).addClass("ui-widget ui-widget-content");
 
         var src = [];
 

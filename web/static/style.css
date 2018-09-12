@@ -50,6 +50,12 @@ body
     padding:.15em!important;
 }
 
+.ui-checkboxradio-label
+{
+    padding:.15em!important;
+    border-radius:0!important;
+}
+
 /*
 .header
 {

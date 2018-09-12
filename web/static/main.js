@@ -477,18 +477,17 @@ function isValidAlias( alias ){
 
 var status_timer;
 
-var PERM_LIST           = 0x001;   // Find record by browsing
+var PERM_CREATE         = 0x001;   // Create data and collections
 var PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
 var PERM_UPDATE         = 0x004;   // Update public record fields
 var PERM_ADMIN          = 0x008;   // Read, write admin fields, delete record
-var PERM_TAG            = 0x010;   // Add/remove tags on record
-var PERM_NOTE           = 0x020;   // Add, remove, edit annotations on record
-var PERM_READ           = 0x040;   // Read raw data or list collection items
-var PERM_WRITE          = 0x080;   // Write raw data or add/remove collection items
-var PERM_CREATE         = 0x100;   // Create data and collections
-var PERM_ALL            = 0x1FF;
-var PERM_PUBLIC         = 0x043;
-var PERM_READONLY       = 0x073;
+var PERM_READ           = 0x010;   // Read raw data or list collection items
+var PERM_WRITE          = 0x020;   // Write raw data or add/remove collection items
+var PERM_TAG            = 0x040;   // Add/remove tags on record
+var PERM_NOTE           = 0x080;   // Add, remove, edit annotations on record
+var PERM_ALL            = 0x0FF;
+var PERM_PUBLIC         = 0x012;
+var PERM_READONLY       = 0x0D2;
 var PERM_READWRITE      = 0x0F7;
 
 var SS_MY_DATA          = 0x01;
