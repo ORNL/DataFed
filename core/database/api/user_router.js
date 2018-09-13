@@ -238,6 +238,37 @@ router.get('/keys/set', function (req, res) {
 .summary('Set user public and private keys')
 .description('Set user public and private keys');
 
+router.get('/keys/clear', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["u"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var user_id;
+
+                if ( req.queryParams.subject ) {
+                    user_id = req.queryParams.subject;
+                    g_lib.ensureAdminPermUser( client, user_id );
+                }
+                else {
+                    user_id = client._id;
+                }
+
+                var obj = { pub_key: null, priv_key: null };
+                g_db._update( user_id, obj, { keepNull: false });
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user")
+.summary('Clear user public and private keys')
+.description('Clear user public and private keys');
 
 router.get('/keys/get', function( req, res ) {
     try {
