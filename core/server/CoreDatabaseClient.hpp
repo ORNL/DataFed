@@ -28,6 +28,7 @@ public:
     bool uidByPubKey( const std::string & a_pub_key, std::string & a_uid );
     bool userGetKeys( std::string & a_pub_key, std::string & a_priv_key);
     void userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key );
+    void userClearKeys();
     void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
     bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok );
     bool userGetAccessToken( std::string & a_token );

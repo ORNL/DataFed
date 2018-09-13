@@ -27,14 +27,14 @@ function makeDlgSetACLs(){
                 <div class='col-flex' style='flex:none'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
-                        <div><label for='dlg_view_cb'></label><input type='checkbox' id='dlg_view_cb'>&nbsp View</div>\
-                        <div id='dlg_create_row' style='display:none'><label for='dlg_create_cb'></label><input type='checkbox' id='dlg_create_cb'>&nbsp Create</div>\
-                        <div><label for='dlg_upd_cb'></label><input type='checkbox' id='dlg_upd_cb'>&nbsp Update</div>\
-                        <div><label for='dlg_read_cb'></label><input type='checkbox' id='dlg_read_cb'>&nbsp Read</div>\
-                        <div><label for='dlg_write_cb'></label><input type='checkbox' id='dlg_write_cb'>&nbsp Write</div>\
+                        <div style='padding:.1em'><label for='dlg_view_cb'></label><input type='checkbox' id='dlg_view_cb'>&nbsp View</div>\
+                        <div id='dlg_create_row' style='padding:.1em;display:none'><label for='dlg_create_cb'></label><input type='checkbox' id='dlg_create_cb'>&nbsp Create</div>\
+                        <div style='padding:.1em'><label for='dlg_upd_cb'></label><input type='checkbox' id='dlg_upd_cb'>&nbsp Update</div>\
+                        <div style='padding:.1em'><label for='dlg_read_cb'></label><input type='checkbox' id='dlg_read_cb'>&nbsp Read</div>\
+                        <div style='padding:.1em'><label for='dlg_write_cb'></label><input type='checkbox' id='dlg_write_cb'>&nbsp Write</div>\
                         <!-- div><label for='dlg_tag_cb'></label><input type='checkbox' id='dlg_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_note_cb'></label><input type='checkbox' id='dlg_note_cb'>&nbsp Annotate</div -->\
-                        <div><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
+                        <div style='padding:.1em'><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
                     </div>\
                     <div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set permissions to \"read only\"' id='dlg_read_only' class='btn small'>RO</button>\
@@ -48,14 +48,14 @@ function makeDlgSetACLs(){
                 <div id='col_div_2' class='col-flex' style='flex:none'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
-                        <div><label for='dlg_inh_view_cb'></label><input type='checkbox' id='dlg_inh_view_cb'>&nbsp View</div>\
-                        <div><label for='dlg_inh_create_cb'></label><input type='checkbox' id='dlg_inh_create_cb'>&nbsp Create</div>\
-                        <div><label for='dlg_inh_upd_cb'></label><input type='checkbox' id='dlg_inh_upd_cb'>&nbsp Update</div>\
-                        <div><label for='dlg_inh_read_cb'></label><input type='checkbox' id='dlg_inh_read_cb'>&nbsp Read</div>\
-                        <div><label for='dlg_inh_write_cb'></label><input type='checkbox' id='dlg_inh_write_cb'>&nbsp Write</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_view_cb'></label><input type='checkbox' id='dlg_inh_view_cb'>&nbsp View</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_create_cb'></label><input type='checkbox' id='dlg_inh_create_cb'>&nbsp Create</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_upd_cb'></label><input type='checkbox' id='dlg_inh_upd_cb'>&nbsp Update</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_read_cb'></label><input type='checkbox' id='dlg_inh_read_cb'>&nbsp Read</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_write_cb'></label><input type='checkbox' id='dlg_inh_write_cb'>&nbsp Write</div>\
                         <!-- div><label for='dlg_inh_tag_cb'></label><input type='checkbox' id='dlg_inh_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_inh_note_cb'></label><input type='checkbox' id='dlg_inh_note_cb'>&nbsp Annotate</div -->\
-                        <div><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
                     </div>\
                     <div  style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set inherited permissions to \"read-only\"' id='dlg_inh_read_only' class='btn small'>RO</button>\

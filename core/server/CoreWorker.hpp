@@ -28,6 +28,7 @@ private:
     bool procStatusRequest( const std::string & a_uid );
     bool procAuthenticateRequest( const std::string & a_uid );
     bool procGenerateCredentialsRequest( const std::string & a_uid );
+    bool procRevokeCredentialsRequest( const std::string & a_uid );
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataCopyRequest( const std::string & a_uid );

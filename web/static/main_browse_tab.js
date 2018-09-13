@@ -326,28 +326,22 @@ function makeBrowserTab(){
     this.updateBtnState = function( state, admin, no_new ){
         console.log("updBtn",state,admin);
         if ( state == "c" ) {
-            //$("#btn_new_data",inst.frame).button("option","disabled",no_new);
-            //$("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",false);
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
-            $("#btn_alloc",inst.frame).button("option","disabled",true);
+            //$("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "d" ) {
-            //$("#btn_new_data",inst.frame).button("option","disabled",no_new);
-            //$("#btn_new_coll",inst.frame).button("option","disabled",no_new);
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_copy",inst.frame).button("option","disabled",false);
             $("#btn_del",inst.frame).button("option","disabled",false);
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",false);
             $("#btn_download",inst.frame).button("option","disabled",false);
-            $("#btn_alloc",inst.frame).button("option","disabled",true);
+            //$("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "r" ) {
-            //$("#btn_new_data",inst.frame).button("option","disabled",false);
-            //$("#btn_new_coll",inst.frame).button("option","disabled",false);
             $("#btn_edit",inst.frame).button("option","disabled",true);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
@@ -356,25 +350,21 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",true);
             $("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "p" ) {
-            //$("#btn_new_data",inst.frame).button("option","disabled",true);
-            //$("#btn_new_coll",inst.frame).button("option","disabled",true);
             $("#btn_edit",inst.frame).button("option","disabled",!admin);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",!admin);
             $("#btn_share",inst.frame).button("option","disabled",true);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
-            $("#btn_alloc",inst.frame).button("option","disabled",false);
+            //$("#btn_alloc",inst.frame).button("option","disabled",false);
         } else {
-            //$("#btn_new_data",inst.frame).button("option","disabled",true);
-            //$("#btn_new_coll",inst.frame).button("option","disabled",true);
             $("#btn_edit",inst.frame).button("option","disabled",true);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
             $("#btn_share",inst.frame).button("option","disabled",true);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
-            $("#btn_alloc",inst.frame).button("option","disabled",state != "m");
+            //$("#btn_alloc",inst.frame).button("option","disabled",state != "m");
         }
     }
 
@@ -1102,7 +1092,7 @@ function makeBrowserTab(){
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(0) });
     $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(1) });
-    $("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
+    //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
     $("#query_input").on('keyup', function (e) {
@@ -1123,7 +1113,7 @@ function makeBrowserTab(){
         }
     });
 
-    $("#footer-tabs").tabs({heightStyle:"fill",collapsible: true}).css({
+    $("#footer-tabs").tabs({heightStyle:"auto",collapsible: true}).css({
         /*'min-height': '50px',*/
         'overflow': 'auto'
     });
@@ -1138,9 +1128,45 @@ function makeBrowserTab(){
         $("#sel_md").slideToggle();
     });
 
+    $("#btn_upd_pw").click( function(){
+        var pw1 = $('#cli_new_pw').val();
+        var pw2 = $('#cli_confirm_pw').val();
+        if ( pw1.length == 0 )
+            dlgAlert( "Update CLI Password", "Password cannot be empty" );
+        else if ( pw1 != pw2 )
+            dlgAlert( "Update CLI Password", "Passwords do not match" );
+        else{
+            $('#cli_new_pw').val("");
+            $('#cli_confirm_pw').val("");
+            _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&pw="+pw1, null, function( ok, data ){
+                if ( ok )
+                    dlgAlert( "Update CLI Password", "Password successfully updated." );
+                else
+                    dlgAlert( "Update CLI Password", "Password update failed: " + data );
+            });
+        }
+    });
+
+    $("#btn_revoke_cred").click( function(){
+        confirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Revoke","Cancel"], function(choice){
+            if ( choice == 0 ){
+                _asyncGet( "/api/usr/revoke_cred", null, function( ok, data ){
+                    if ( ok )
+                        dlgAlert( "Revoke CLI Credentials", "Credentials successfully revoked." );
+                    else
+                        dlgAlert( "Revoke CLI Credentials", "Credential revoke failed: " + data );
+                });
+                }
+        });
+    });
+
     $(".scope",inst.frame).checkboxradio();
 
     $("#newmenu").menu();
+
+    $("#theme-sel").val(g_theme).selectmenu({ width: "auto"  }).on('selectmenuchange', function( ev, ui ) {
+        themeSet( ui.item.value );
+    });
 
     this.menutimer = null;
     $("#newmenu").mouseout(function(){

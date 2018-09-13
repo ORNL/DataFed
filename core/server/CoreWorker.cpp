@@ -76,6 +76,7 @@ Worker::setupMsgHandlers()
 
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
+        SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &Worker::procRevokeCredentialsRequest );
         SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
         SET_MSG_HANDLER( proto_id, DataCopyRequest, &Worker::procDataCopyRequest );
@@ -326,6 +327,19 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 
     reply.set_pub_key( pub_key );
     reply.set_priv_key( priv_key );
+
+    PROC_MSG_END
+}
+
+
+bool
+Worker::procRevokeCredentialsRequest( const std::string & a_uid )
+{
+    (void)a_uid;
+    PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+    m_db_client.userClearKeys();
 
     PROC_MSG_END
 }

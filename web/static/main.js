@@ -475,6 +475,13 @@ function isValidAlias( alias ){
     return true;
 };
 
+
+function themeSet( theme ){
+    g_theme = theme;
+    $("#jq-theme-css").attr({href : "/jquery-ui-"+g_theme+"/jquery-ui.css" });
+    _asyncGet( "/ui/theme/save?theme="+theme, null, null );
+}
+
 var status_timer;
 
 var PERM_CREATE         = 0x001;   // Create data and collections

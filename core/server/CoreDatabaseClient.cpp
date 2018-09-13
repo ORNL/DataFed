@@ -323,6 +323,14 @@ DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & 
 }
 
 void
+DatabaseClient::userClearKeys()
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/keys/clear", {}, result );
+}
+
+void
 DatabaseClient::userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok )
 {
     string result;
@@ -413,6 +421,8 @@ DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply &
     params.push_back({"subject",a_request.uid()});
     if ( a_request.has_email() )
         params.push_back({"email",a_request.email()});
+    if ( a_request.has_password() )
+        params.push_back({"password",a_request.password()});
 
     dbGet( "usr/update", params, result );
 

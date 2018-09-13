@@ -46,35 +46,61 @@
         <button class="btn" id="btn_share" disabled>Sharing</button>
         <button class="btn" id="btn_download" disabled>Get</button>
         <button class="btn" id="btn_upload" disabled>Put</button>
-        <button class="btn" id="btn_alloc" style="float:right" disabled>Allocations</button>
+        <!-- button class="btn" id="btn_alloc" style="float:right" disabled>Allocations</button -->
     </div>
     <div id="footer" style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0">
             <ul>
                 <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-xfer">Transfers</a></li>
+                <li><a href="#tab-settings">Settings</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
             </ul>
             <div id="tab-search" class="content" style="padding:0">
-                <div  style="padding:.5em">
+                <div class='tab-inner-div'>
                     <table style='width:100%'>
                         <tr><td style="vertical-align:middle">Query:</td><td><input id="query_input" type='text' style="width:100%"></input></td><td>&nbsp<button class="btn" onclick="execQuery()">Search</button></td></tr>
                         <tr><td style="vertical-align:middle">Scope:</td><td>
-                        <label for='scope_mydat'>My Data</label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>
-                        <label for='scope_myproj'>My Projects</label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>
-                        <label for='scope_teamproj'>Team Projects</label><input class='scope' type='checkbox' name='scope_teamproj' id='scope_teamproj'>
-                        <label for='scope_usershare'>User-Shared</label><input class='scope' type='checkbox' name='scope_usershare' id='scope_usershare'>
-                        <label for='scope_projshare'>Project-Shared</label><input class='scope' type='checkbox' name='scope_projshare' id='scope_projshare'>
-                        <label for='scope_public'>Public Data</label><input class='scope' type='checkbox' name='scope_public' id='scope_public'>
+                        <label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbspMy Data&nbsp 
+                        <label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbspMy Projects&nbsp 
+                        <label for='scope_teamproj'></label><input class='scope' type='checkbox' name='scope_teamproj' id='scope_teamproj'>&nbspTeam Projects&nbsp 
+                        <label for='scope_usershare'></label><input class='scope' type='checkbox' name='scope_usershare' id='scope_usershare'>&nbspUser-Shared&nbsp 
+                        <label for='scope_projshare'></label><input class='scope' type='checkbox' name='scope_projshare' id='scope_projshare'>&nbspProject-Shared&nbsp 
+                        <label for='scope_public'></label><input class='scope' type='checkbox' name='scope_public' id='scope_public'>&nbspPublic
                         </td><td></td>
                     </table>
                 </div>
             </div>
             <div id="tab-xfer" class="content" style="padding:0">
-                <div id="xfr_hist" class="text" style="max-height:5em;padding:.5em"></div>
+                <div id="xfr_hist" class="text tab-inner-div"></div>
+            </div>
+            <div id="tab-settings" class="content" style="padding:0">
+                <div class='row-flex tab-inner-div'>
+                    <div style='flex:none'>
+                        <fieldset style='padding:.5em;height:4em'>
+                            <legend>Command-Line Interface</legend>
+                            <table class='setting-table'>
+                                <tr><td>New password:</td><td><input type="password" id='cli_new_pw'></input></td><td rowspan="2"><button class='btn' id='btn_upd_pw'>Update</button></td></tr>
+                                <tr><td>Confirm:</td><td><input type="password" id='cli_confirm_pw'></input></td></tr>
+                            </table>
+                        </fieldset>
+                    </div>
+                    <div style='flex:none'>
+                        <fieldset style='padding:.5em;height:4em'>
+                            <legend>Credentials</legend>
+                            <button class='btn' id='btn_revoke_cred'>Revoke All</button>
+                        </fieldset>
+                    </div>
+                    <div style='flex:none'>
+                        <fieldset style='padding:.5em;height:4em'>
+                            <legend>User Interface</legend>
+                            Theme: <select id='theme-sel'><option value='light'>Light</option><option value='dark'>Dark</option></select>
+                        </fieldset>
+                    </div>
+                </div>
             </div>
             <div id="tab-repo" class="content" style="padding:0">
-                <div id="repo_list" class="text" style="max-height:5em;padding:.5em"></div>
+                <div id="repo_list" class="text tab-inner-div"></div>
             </div>
         </div>
     </div>

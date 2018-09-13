@@ -115,22 +115,29 @@ app.get('/ui', (request, response) => {
 
     if ( request.cookies['sdms'] )
         response.redirect( '/ui/main' );
-    else
-        response.render('index');
+    else{
+        var theme = request.cookies['sdms-theme']|| "light";
+        console.log("theme",theme);
+        response.render('index',{theme:theme});
+    }
 });
 
 app.get('/ui/main', (request, response) => {
     //console.log("get /ui/main");
     //console.log( "sdms cookie:", request.cookies['sdms'] );
 
-    if ( request.cookies['sdms'] )
-        response.render( 'main' );
-    else
+    if ( request.cookies['sdms'] ){
+        var theme = request.cookies['sdms-theme'] || "light";
+        console.log("theme",theme);
+        response.render( 'main',{theme:theme});
+    }else
         response.redirect( '/ui' );
 });
 
 app.get('/ui/docs', (request, response) => {
-    response.render( 'docs' );
+    var theme = request.cookies['sdms-theme'] || "light";
+    console.log("theme",theme);
+    response.render( 'docs',{theme:theme});
 });
 
 app.get('/ui/register', (request, response) => {
@@ -138,7 +145,10 @@ app.get('/ui/register', (request, response) => {
     if ( !request.cookies['sdms-user'] )
         response.redirect( '/' );
 
-    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname });
+    var theme = request.cookies['sdms-theme'] || "light";
+    console.log("theme",theme);
+
+    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname, theme: theme });
 });
 
 app.get('/ui/login', (request, response) => {
@@ -158,8 +168,9 @@ app.get('/ui/logout', (request, response) => {
 
 app.get('/ui/error', (request, response) => {
     //console.log("get /ui/error");
-
-    response.render('error');
+    var theme = request.cookies['sdms-theme'] || "light";
+    console.log("theme",theme);
+    response.render('error',{theme:theme});
 });
 
 app.get('/ui/authn', ( a_request, a_response ) => {
@@ -277,6 +288,25 @@ app.get('/api/usr/find', ( a_req, a_resp ) => {
 app.get('/api/usr/view', ( a_req, a_resp ) => {
     sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
+    });
+});
+
+app.get('/api/usr/update', ( a_req, a_resp ) => {
+    var params = { uid: a_req.query.uid };
+    if ( a_req.query.email )
+        params.email = a_req.query.email;
+    if ( a_req.query.pw )
+        params.password = a_req.query.pw;
+
+    sendMessage( "UserUpdateRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.json( reply.user[0] );
+    });
+});
+
+app.get('/api/usr/revoke_cred', ( a_req, a_resp ) => {
+    console.log("/api/usr/revoke_cred");
+    sendMessage( "RevokeCredentialsRequest", {}, a_req, a_resp, function( reply ) {
+        a_resp.json({});
     });
 });
 
@@ -684,7 +714,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
     console.log("/ui/eo/autocomp", a_req.query.term);
 
     var userinfo = JSON.parse(a_req.cookies['sdms-user']);
-    console.log("userinfo", userinfo );
+    //console.log("userinfo", userinfo );
 
     request.get({
         uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
@@ -692,11 +722,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
-        console.log("error", error );
-        console.log("response", response );
-        console.log("body",  body );
         a_resp.json(JSON.parse(body));
-        console.log("parsed" );
     });
 
 });
@@ -711,6 +737,15 @@ app.get('/ui/ep/recent/save', ( a_req, a_resp ) => {
     a_resp.json({});
 });
 
+app.get('/ui/theme/load', ( a_req, a_resp ) => {
+    var theme = a_req.cookies['sdms-theme'];
+    a_resp.send( theme );
+});
+
+app.get('/ui/theme/save', ( a_req, a_resp ) => {
+    a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui" });
+    a_resp.send("");
+});
 
 function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
     sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok }, function( reply ) {

@@ -33,10 +33,12 @@ body
     align-content:flex-start;*/
 }
 
+/*
 .content
 {
     background: #404040!important;
 }
+*/
 
 .sub-header
 {
@@ -52,8 +54,17 @@ body
 
 .ui-checkboxradio-label
 {
-    padding:.15em!important;
+    /*padding:.15em!important;*/
+    padding:0 2px!important;
+    margin:0!important;
     border-radius:0!important;
+}
+
+.tab-inner-div
+{
+    padding:.5em;
+    height:5.5em;
+    overflow:auto;
 }
 
 /*
@@ -98,6 +109,11 @@ body
     padding: 0px 0px 2px 0px!important;
     font-size: .8rem!important;
     border-radius:6px!important;
+}
+
+.setting-table th,td
+{
+    padding: 0 .25em 0 0;
 }
 
 .form-table

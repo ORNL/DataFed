@@ -38,7 +38,7 @@
             <div class="row-flex">
                 <div style="flex:none" >User: <span id="uname"></span></div>
                 <div style="flex:none" >&nbsp&nbsp&nbsp</div>
-                <div id="status_text" class="ui-state-highlight no-border" style="height:1.1em;flex:1 1 100%;text-align:center;font-size:.9em;font-style:normal"></div>
+                <div id="status_text" class="ui-widget ui-widget-content no-border" style="height:1.1em;flex:1 1 100%;text-align:center;font-size:.9em;font-style:normal"></div>
             </div>
         </div>
     </div>
@@ -49,6 +49,7 @@
         $(".btn").button();
         $( document ).tooltip({ show: { effect: "slideDown", delay: 500 }});
 
+        var g_theme = "<%- @theme %>";
         var tab_browser = makeBrowserTab();
         setStatusText("SDMS Ready");
     </script>
