@@ -11,6 +11,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Protobuf REQUIRED)
 
+OPTION(CLIENT_ONLY "Build client only" OFF)
+
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
@@ -42,7 +44,9 @@ set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory( common )
-add_subdirectory( core )
 add_subdirectory( facility )
-add_subdirectory( repository )
+IF(NOT CLIENT_ONLY)
+	add_subdirectory( core )
+	add_subdirectory( repository )
+ENDIF(NOT CLIENT_ONLY)
 

@@ -75,7 +75,7 @@ public:
 
     Client& operator=( const Client & ) = delete;
 
-    void                start();
+    std::string         start();
     void                stop();
 
     bool                test( size_t a_iter );

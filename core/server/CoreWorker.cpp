@@ -71,6 +71,7 @@ Worker::setupMsgHandlers()
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Worker::procStatusRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Worker::procAuthenticateRequest );
+        SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &Worker::procGetAuthStatusRequest );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -297,6 +298,25 @@ Worker::procAuthenticateRequest( const std::string & a_uid )
 
     cout << "Authenticated " << request->uid() << "\n";
     m_mgr.authorizeClient( a_uid, request->uid() );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procGetAuthStatusRequest( const std::string & a_uid )
+{
+    (void)a_uid;
+    PROC_MSG_BEGIN( GetAuthStatusRequest, GetAuthStatusReply )
+
+    if ( strncmp( a_uid.c_str(), "anon_", 5 ) == 0 )
+    {
+        reply.set_auth( false );
+    }
+    else
+    {
+        reply.set_auth( true );
+        reply.set_uid( a_uid );
+    }
 
     PROC_MSG_END
 }

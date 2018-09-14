@@ -120,8 +120,21 @@ Client::~Client()
     delete m_comm;
 }
 
-void Client::start()
+std::string Client::start()
 {
+    string uid;
+
+    Anon::GetAuthStatusRequest req;
+    Anon::GetAuthStatusReply * reply = 0;
+
+    send<>( req, reply, m_ctx++ );
+
+    if ( reply->auth() )
+        uid = reply->uid();
+
+    delete reply;
+
+    return uid;
 }
 
 void Client::stop()

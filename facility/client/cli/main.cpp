@@ -31,7 +31,9 @@ namespace po = boost::program_options;
 
 Client * g_client = 0;
 
+const char * ServerStatusText[] = { "NORMAL", "DEGRADED", "FAILED", "OFFLINE" };
 const char * StatusText[] = { "INITIAL", "ACTIVE", "INACTIVE", "SUCCEEDED", "FAILED" };
+
 
 //typedef map<string,pair<string,int (*)()>> cmd_t;
 
@@ -386,6 +388,14 @@ int help()
                 icmd->second->help( true );
         }
     }
+
+    return 0;
+}
+
+int ping()
+{
+    ServiceStatus stat = g_client->status();
+    cout << "Core server status: " << ServerStatusText[stat] << "\n";
 
     return 0;
 }
@@ -949,6 +959,7 @@ int main( int a_argc, char ** a_argv )
     addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
+    addCommand( "", "ping", "Ping core server","ping\n\nPing core server to test communication.", ping );
 
     buildCmdMap();
 
@@ -1056,10 +1067,13 @@ int main( int a_argc, char ** a_argv )
         }
 
         Client client( host, port, timeout, cred_path, !manual_auth );
-        client.start();
+        string uid = client.start();
 
-        if ( manual_auth )
+        if ( manual_auth || !uid.size() )
         {
+            if ( !manual_auth )
+                cout << "Local credentials are not recognized, manual authentication required.\n";
+
             string uname;
             string password;
 
@@ -1077,6 +1091,10 @@ int main( int a_argc, char ** a_argv )
             tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
             client.authenticate( uname, password );
+        }
+        else
+        {
+            cout << "Authenticated as " << uid << "\n";
         }
 
         g_client = &client;

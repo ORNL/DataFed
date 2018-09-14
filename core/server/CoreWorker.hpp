@@ -25,6 +25,7 @@ private:
     void workerThread();
     template<typename RQ, typename RP, void (DatabaseClient::*func)( const RQ &, RP &)>
     bool dbPassThrough( const std::string & a_uid );
+    bool procGetAuthStatusRequest( const std::string & a_uid );
     bool procStatusRequest( const std::string & a_uid );
     bool procAuthenticateRequest( const std::string & a_uid );
     bool procGenerateCredentialsRequest( const std::string & a_uid );
