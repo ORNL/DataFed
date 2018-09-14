@@ -60,6 +60,13 @@ body
     border-radius:0!important;
 }
 
+.my-check
+{
+    display:inline-block;
+    white-space:nowrap;
+    padding:.25em .5em 0 0;
+}
+
 .tab-inner-div
 {
     padding:.5em;
