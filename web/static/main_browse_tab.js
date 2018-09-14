@@ -1160,6 +1160,39 @@ function makeBrowserTab(){
         });
     });
 
+    var emailTimer;
+    var emailFilter = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    var emailBad = false;
+
+    $("#new_email").val( g_user.email ).on('input', function(){
+        if ( emailTimer )
+            clearTimeout( emailTimer);
+
+        if ( emailBad ){
+            $("#new_email").removeClass('ui-state-error');
+            emailBad = false;
+        }
+
+        emailTimer = setTimeout( function(){
+            emailTimer = null;
+            var email = $("#new_email").val();
+
+            if (!emailFilter.test(String(email).toLowerCase())) {
+                setStatusText( 'Invalid e-mail entry' );
+                $("#new_email").addClass('ui-state-error');
+                emailBad = true;
+            }else{
+                _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&email="+email, null, function( ok, data ){
+                    if ( !ok )
+                        dlgAlert( "Update E-mail", "E-mail update failed: " + data );
+                    else
+                        setStatusText( 'E-mail updated' );
+                });
+            }
+
+        }, 1200 );
+    });;
+
     $(".scope",inst.frame).checkboxradio();
 
     $("#newmenu").menu();
