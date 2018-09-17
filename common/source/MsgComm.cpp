@@ -247,7 +247,6 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
     return true;
 }
 
-
 void
 MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
 {

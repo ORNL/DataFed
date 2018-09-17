@@ -206,7 +206,9 @@ void Client::setup()
 
         //cout << "Saving " << m_key_file << "\n";
         string fname = m_cred_path + "sdms-user-key.pub";
-        boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+        if ( boost::filesystem::exists( fname ))
+            boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+
         ofstream outf( fname );
         if ( !outf.is_open() || !outf.good() )
             EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
@@ -217,7 +219,9 @@ void Client::setup()
 
         //cout << "Saving " << m_cert_file << "\n";
         fname = m_cred_path + "sdms-user-key.priv";
-        boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+        if ( boost::filesystem::exists( fname ))
+            boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+
         outf.open( fname );
         if ( !outf.is_open() || !outf.good() )
             EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );

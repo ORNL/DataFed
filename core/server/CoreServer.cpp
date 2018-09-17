@@ -320,15 +320,15 @@ Server::ioSecure()
     MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
     frontend.proxy( backend, true );
-
-    //zmq_proxy( comm.getSocket(), backend, 0 );
 }
 
 void
 Server::ioInsecure()
 {
-    MsgComm comm( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
+    MsgComm frontend( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
+    MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
+    /*
     int linger = 100;
     void * ctx = MsgComm::getContext();
     void *backend = zmq_socket( ctx, ZMQ_DEALER );
@@ -336,6 +336,9 @@ Server::ioInsecure()
     zmq_connect( backend, "inproc://msg_proc" );
 
     zmq_proxy( comm.getSocket(), backend, 0 );
+    */
+
+    zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
 }
 
 /*
