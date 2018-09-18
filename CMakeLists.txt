@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Protobuf REQUIRED)
+find_package(Boost REQUIRED)
 
 OPTION(CLIENT_ONLY "Build client only" OFF)
 
@@ -29,6 +30,16 @@ endif()
 if ( DEFINED ENV{ZMQ_LIB_DIR})
 	message( "ZMQ_LIB_DIR:" $ENV{ZMQ_LIB_DIR} )
 	link_directories( $ENV{ZMQ_LIB_DIR}  )
+endif()
+
+if ( DEFINED ENV{PBUF_INC_DIR})
+        message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
+        include_directories( $ENV{PBUF_INC_DIR} )
+endif()
+
+if ( DEFINED ENV{PBUF_LIB_DIR})
+        message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
+        link_directories( $ENV{PBUF_LIB_DIR}  )
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
