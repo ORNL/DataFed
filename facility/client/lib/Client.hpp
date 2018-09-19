@@ -82,6 +82,8 @@ public:
 
     void                authenticate( const std::string & a_uid, const std::string & a_password );
     void                setup();
+    void                setDefaultEndpoint( const std::string & a_def_ep );
+    const std::string & getDefaultEndpoint() const;
 
     ServiceStatus       status();
 
@@ -141,6 +143,7 @@ private:
     uint16_t                    m_ctx;
     std::condition_variable     m_start_cvar;
     std::mutex                  m_mutex;
+    std::string                 m_def_ep;
 };
 
 }}

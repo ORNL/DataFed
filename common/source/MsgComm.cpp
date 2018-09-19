@@ -460,7 +460,7 @@ MsgComm::reset()
 void
 MsgComm::init( SockType a_sock_type, const SecurityContext * a_sec_ctx, void * a_zmq_ctx )
 {
-    cout << "Init conn to " << m_address << "\n";
+    //cout << "Init conn to " << m_address << "\n";
 
     int rc;
     void * ctx = a_zmq_ctx?a_zmq_ctx:getContext();

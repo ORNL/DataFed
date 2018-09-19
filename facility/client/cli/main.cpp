@@ -35,8 +35,6 @@ const char * ServerStatusText[] = { "NORMAL", "DEGRADED", "FAILED", "OFFLINE" };
 const char * StatusText[] = { "INITIAL", "ACTIVE", "INACTIVE", "SUCCEEDED", "FAILED" };
 
 
-//typedef map<string,pair<string,int (*)()>> cmd_t;
-
 typedef int (*cmd_func_t)();
 
 struct CmdInfo
@@ -110,12 +108,13 @@ uint32_t        g_to;
 int32_t         g_status;
 string          g_cmd;
 vector<string>  g_args;
-string          g_out_form_str;
+bool            g_out_json;
+bool            g_out_csv;
+bool            g_out_text;
 OutputFormat    g_out_form = TEXT;
 
 
 po::options_description g_opts_command( "Command options" );
-
 
 
 void printUsers( spUserDataReply a_reply )
@@ -332,25 +331,81 @@ void printXfrData( spXfrDataReply a_reply )
     {
         time_t t;
 
+        if ( g_out_form == JSON )
+            cout << "{\"transfers\":[";
+        else if ( g_out_form == CSV )
+            cout << "\"Trans ID\",\"Data ID\",\"Mode\",\"Status\",\"Error\",\"Path\",\"Updated\"\n";
+
+        struct tm* gmt_time;
+
         for ( int i = 0; i < a_reply->xfr_size(); i++ )
         {
+            if ( g_out_form == JSON && i > 0 )
+                cout << ",";
+
             const XfrData & xfr = a_reply->xfr(i);
+            switch( g_out_form )
+            {
+            case TEXT:
+                cout << "Trans ID: " << xfr.id() << "\n";
+                cout << "Data ID : " << xfr.data_id() << "\n";
+                cout << "Mode    : " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
+                cout << "Status  : " << StatusText[xfr.status()] << "\n";
+                if ( xfr.has_err_msg() )
+                    cout << "Error   : " << xfr.err_msg() << "\n";
+                cout << "Path    : " << xfr.local_path() << "\n";
+                t = (time_t)xfr.updated();
+                gmt_time = localtime(&t);
+                cout << "Updated : " << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\n";
+                cout << "\n";
+                break;
+            case CSV:
+                cout << "\"" << xfr.id() << "\",";
+                cout << "\"" << xfr.data_id() << "\",";
+                cout << "\"" << (xfr.mode()==XM_GET?"GET":"PUT") << "\",";
+                cout << "\"" << StatusText[xfr.status()] << "\",";
+                cout << "\"" << (xfr.has_err_msg()?xfr.err_msg():"") << "\",";
+                cout << "\"" << xfr.local_path() << "\",";
+                t = (time_t)xfr.updated();
+                gmt_time = localtime(&t);
+                cout << "\"" << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\"\n";
+                break;
+            case JSON:
+                cout << "{\"TransID\":\"" << xfr.id() << "\",";
+                cout << "\"DataID\":\"" << xfr.data_id() << "\",";
+                cout << "\"Mode\":\"" << (xfr.mode()==XM_GET?"GET":"PUT") << "\",";
+                cout << "\"Status\":\"" << StatusText[xfr.status()] << "\",";
+                if ( xfr.has_err_msg() )
+                    cout << "\"Error\":\"" << xfr.err_msg() << "\",";
+                cout << "\"Path\":\"" << xfr.local_path() << "\",";
+                t = (time_t)xfr.updated();
+                gmt_time = localtime(&t);
+                cout << "\"Updated\":\"" << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\"";
+                cout << "}";
+                break;
+            }
+        }
 
-            cout << "  Xfr ID  : " << xfr.id() << "\n";
-            cout << "  Data ID : " << xfr.data_id() << "\n";
-            cout << "  Mode    : " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
-            cout << "  Status  : " << StatusText[xfr.status()] << "\n";
-            if ( xfr.has_err_msg() )
-                cout << "  Error   : " << xfr.err_msg() << "\n";
-            cout << "  Path    : " << xfr.local_path() << "\n";
-            t = (time_t)xfr.updated();
-            cout << "  Updated : " << ctime( &t );
-
-            cout << "\n";
+        if ( g_out_form == JSON )
+        {
+            cout << "]}\n";
         }
     }
     else
-        cout << "  No transfers\n";
+    {
+        switch( g_out_form )
+        {
+        case TEXT:
+            cout << "No matching transfers\n";
+            break;
+        case CSV:
+            cout << "\"No matching transfers\"\n";
+            break;
+        case JSON:
+            cout << "{\"transfers\":[]}";
+            break;
+        }
+    }
 }
 
 int no_console()
@@ -395,7 +450,18 @@ int help()
 int ping()
 {
     ServiceStatus stat = g_client->status();
-    cout << "Core server status: " << ServerStatusText[stat] << "\n";
+    switch ( g_out_form )
+    {
+    case TEXT:
+        cout << ServerStatusText[stat] << "\n";
+        break;
+    case CSV:
+        cout << "\"" << ServerStatusText[stat] << "\"\n";
+        break;
+    case JSON:
+        cout << "{\"status\":\"" << ServerStatusText[stat] << "\"}\n";
+        break;
+    }
 
     return 0;
 }
@@ -683,7 +749,7 @@ int coll()
 }
 
 
-int xfr_status()
+int xfr_list()
 {
     if ( g_args.size() == 0 )
     {
@@ -713,6 +779,34 @@ int xfr_status()
         return -1;
 
     return 0;
+}
+
+int xfr_status()
+{
+    if ( g_args.size() == 1 )
+    {
+        spXfrDataReply xfr = g_client->xfrView( g_args[0] );
+
+        if ( xfr->xfr_size() )
+        {
+            switch( g_out_form )
+            {
+            case TEXT:
+                cout << StatusText[xfr->xfr(0).status()] << "\n";
+                break;
+            case CSV:
+                cout << "\"" << StatusText[xfr->xfr(0).status()] << "\"\n";
+                break;
+            case JSON:
+                cout << "{\"status\":\"" << StatusText[xfr->xfr(0).status()] << "\"}\n";
+                break;
+            }
+        }
+
+        return 0;
+    }
+    else
+        return -1;
 }
 
 int user()
@@ -876,7 +970,7 @@ enum OptionResult
     OPTS_ERROR
 };
 
-OptionResult processArgs( int a_argc, const char ** a_argv, po::options_description & a_opts_desc, po::positional_options_description & a_opts_pos )
+OptionResult processArgs( int a_argc, const char ** a_argv, po::options_description & a_opts_desc, po::positional_options_description & a_opts_pos, bool a_throw = true )
 {
     g_wait = false;
     g_title.clear();
@@ -920,25 +1014,19 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
             optfile.close();
         }
 
-        if ( opt_map.count( "output-format" ))
-        {
-            if ( g_out_form_str == "text" )
-                g_out_form = TEXT;
-            else if ( g_out_form_str == "json" )
-                g_out_form = JSON;
-            else if ( g_out_form_str == "csv" )
-                g_out_form = CSV;
-            else
-            {
-                cout << "Invalid value for output format\n";
-                return OPTS_ERROR;
-            }
-        }
+        if ( g_out_json  )
+            g_out_form = JSON;
+        else if ( g_out_csv )
+            g_out_form = CSV;
+        else if ( g_out_text )
+            g_out_form = TEXT;
     }
     catch( po::unknown_option & e )
     {
-        cout << "error!\n";
-        cout << e.what() << endl;
+        if ( a_throw )
+            throw e;
+
+        cerr << "ERROR " << e.what() << "\n";
         return OPTS_ERROR;
     }
 
@@ -951,13 +1039,14 @@ int main( int a_argc, char ** a_argv )
     addCommand( "?", "help", "Show help", "Use 'help <cmd>' to show help for a specific command.", help );
     addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", get_data );
     addCommand( "", "put", "Put data into repository", "put [id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", put_data );
-    addCommand( "s", "status", "View data transfer status", "status <xfr_id>\n\nGet status of specified data transfer.", xfr_status );
+    addCommand( "t", "trans", "List data transfers with details", "trans [id]\n\nList details of specified or matching data transfers. Use --since, --from, --to, and --status for match criteria.", xfr_list );
+    addCommand( "s", "status", "Get data transfer status", "status <id>\n\nGet status of data transfer specified by <id> parameter.", xfr_status );
     addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
     addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
     addCommand( "u", "user", "User management", "user <cmd> [id [args]]\n\nUser commands: (l)ist, (v)iew, (u)pdate.", user );
-    addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
-    addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
+    //addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
+    //addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
     addCommand( "", "ping", "Ping core server","ping\n\nPing core server to test communication.", ping );
 
@@ -966,9 +1055,11 @@ int main( int a_argc, char ** a_argv )
     string      host = "sdms.ornl.gov";
     uint16_t    port = 7512;
     uint32_t    timeout = 10000;
-    string      home = getenv("HOME");
-    string      cred_path = home + "/.sdms/";
+    const char* home = getenv("HOME");
+    string      cred_path = string(home?home:"") + "/.sdms/";
     bool        manual_auth = false;
+    const char* def_ep = getenv("SDMS_CLI_DEFEP");
+    bool        non_interact = false;
 
     po::options_description opts_startup( "Program options" );
     po::options_description opts_hidden( "Hidden options" );
@@ -994,10 +1085,12 @@ int main( int a_argc, char ** a_argv )
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
-        ("output-format,O",po::value<string>( &g_out_form_str ),"Output format (text,json,csv)")
-        ("name,n",po::value<string>( &g_name ),"Specify user name for update command")
-        ("email,e",po::value<string>( &g_email ),"Specify user email for update command")
-        ("globus_id,g",po::value<string>( &g_globus_id ),"Specify user globus_id for update command")
+        ("text,T",po::bool_switch( &g_out_text ),"Output in TEXT format (default)")
+        ("json,J",po::bool_switch( &g_out_json ),"Output in JSON format (default is TEXT)")
+        ("csv,C",po::bool_switch( &g_out_csv ),"Output in CSV format (default is TEXT)")
+        //("name,n",po::value<string>( &g_name ),"Specify user name for update command")
+        //("email,e",po::value<string>( &g_email ),"Specify user email for update command")
+        //("globus_id,g",po::value<string>( &g_globus_id ),"Specify user globus_id for update command")
         ("details,D",po::bool_switch( &g_details ),"Retrieve extra details for supported commands")
         ("since",po::value<uint32_t>( &g_since ),"Specify time since 'now' in seconds")
         ("from",po::value<uint32_t>( &g_from ),"Specify absolute 'from' time")
@@ -1020,7 +1113,10 @@ int main( int a_argc, char ** a_argv )
     try
     {
         OptionResult res = processArgs( a_argc, (const char**)a_argv, opts_all, opts_pos );
-        
+
+        if ( g_cmd.size() )
+            non_interact = true;
+
         if ( res == OPTS_HELP )
         {
             cout << "SDMS CLI Client, ver. " << VERSION << "\n";
@@ -1038,41 +1134,27 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        if ( res == OPTS_ERROR )
-        {
-            return 1;
-        }
+        if ( manual_auth && non_interact )
+            EXCEPT( 0, "Manual authentication required" );
 
-/*
-        bool load_cred = true;
-
-        // Must process "gen-cred" command before client init
-        if ( g_cmd == "gen-cred" )
-        {
-            if ( g_args.size() != 0 )
-            {
-                cout << "ERROR\n";
-                cerr << "Invalid arguments for command '" << g_cmd << "'.\n";
-                g_cmd_map["gen-cred"]->help( true );
-                return 1;
-            }
-
-            load_cred = false;
-        }
-*/
         if ( !manual_auth && !Client::verifyCredentials( cred_path ))
         {
-            cout << "No client credentials found, manual authentication required\n";
+            if ( non_interact )
+                EXCEPT( 0, "Manual authentication required" );
+
+            cerr << "No client credentials found, manual authentication required.\n";
             manual_auth = true;
         }
 
         Client client( host, port, timeout, cred_path, !manual_auth );
         string uid = client.start();
+        if ( def_ep )
+            client.setDefaultEndpoint( def_ep );
 
         if ( manual_auth || !uid.size() )
         {
             if ( !manual_auth )
-                cout << "Local credentials are not recognized, manual authentication required.\n";
+                cerr << "Client credentials are invalid, manual authentication required.\n";
 
             string uname;
             string password;
@@ -1092,7 +1174,7 @@ int main( int a_argc, char ** a_argv )
 
             client.authenticate( uname, password );
         }
-        else
+        else if ( !non_interact )
         {
             cout << "Authenticated as " << uid << "\n";
         }
@@ -1108,19 +1190,13 @@ int main( int a_argc, char ** a_argv )
             {
                 int ec = icmd->second->func();
                 if ( ec < 0 )
-                {
-                    cerr << "Invalid arguments.\n";
-                    icmd->second->help( true );
-                    cout << "\n";
-                    return 1;
-                }
+                    EXCEPT_PARAM( 0, "Invalid arguments to command " << g_cmd );
+
                 return ec;
             }
             else
             {
-                cout << "ERROR\n";
-                cerr << "Unknown command '" << g_cmd << "'\n";
-                return 1;
+                EXCEPT_PARAM( 0, "unknown command " << g_cmd );
             }
         }
         else
@@ -1151,7 +1227,7 @@ int main( int a_argc, char ** a_argv )
                 {
                     tok.tokens().insert( tok.tokens().begin(),  "sdms" );
 
-                    if ( processArgs( tok.tokens().size(), &tok.tokens()[0], opts_console, opts_pos ) == OPTS_OK )
+                    if ( processArgs( tok.tokens().size(), &tok.tokens()[0], opts_console, opts_pos, false ) == OPTS_OK )
                     {
                         if ( g_cmd.size() )
                         {
@@ -1193,14 +1269,12 @@ int main( int a_argc, char ** a_argv )
     }
     catch( TraceException &e )
     {
-        cout << "ERROR\n";
-        cerr << e.toString() << "\n";
+        cerr << "ERROR " << e.toString() << "\n";
         return 1;
     }
     catch( exception &e )
     {
-        cout << "ERROR\n";
-        cerr << e.what() << "\n";
+        cerr << "ERROR " << e.what() << "\n";
         return 1;
     }
 

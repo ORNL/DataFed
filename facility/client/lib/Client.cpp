@@ -37,7 +37,7 @@ string loadKeyFile( const string & a_fname )
     inf >> key;
     inf.close();
 
-    cout << "loaded " << a_fname << ": [" << key << "]\n";
+    //cout << "loaded " << a_fname << ": [" << key << "]\n";
 
     return key;
 }
@@ -81,19 +81,19 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = false;
     //sec_ctx.domain;
-    cout << "Loading CoreServer public key from: " << m_cred_path + "sdms-core-key.pub" << "\n";
+    //cout << "Loading CoreServer public key from: " << m_cred_path + "sdms-core-key.pub" << "\n";
     sec_ctx.server_key = loadKeyFile( m_cred_path + "sdms-core-key.pub" );
 
     if ( a_load_certs )
     {
-        cout << "Loading Client public key from: " << m_cred_path + "sdms-user-key.pub" << "\n";
+        //cout << "Loading Client public key from: " << m_cred_path + "sdms-user-key.pub" << "\n";
         sec_ctx.public_key = loadKeyFile( m_cred_path + "sdms-user-key.pub" );
-        cout << "Loading Client private key from: " << m_cred_path + "sdms-user-key.priv" << "\n";
+        //cout << "Loading Client private key from: " << m_cred_path + "sdms-user-key.priv" << "\n";
         sec_ctx.private_key = loadKeyFile( m_cred_path + "sdms-user-key.priv" );
     }
     else
     {
-        cout << "Gen temp keys\n";
+        //cout << "Gen temp keys\n";
         char pub_key[41];
         char priv_key[41];
 
@@ -189,7 +189,7 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
         return;
     }
 
-    EXCEPT( 0, "Timeout waiting for reply from server" );
+    EXCEPT( 0, "TIMEOUT" );
 }
 
 
@@ -239,6 +239,17 @@ void Client::setup()
     }
 }
 
+void
+Client::setDefaultEndpoint( const std::string & a_def_ep )
+{
+    m_def_ep = a_def_ep;
+}
+
+const std::string &
+Client::getDefaultEndpoint() const
+{
+    return m_def_ep;
+}
 
 bool Client::test( size_t a_iter )
 {
@@ -656,7 +667,37 @@ Client::dataGet( const std::string & a_data_id, const std::string & a_local_path
     Auth::XfrDataReply *    rep;
 
     req.set_id( a_data_id );
-    req.set_local( a_local_path );
+
+    bool prefix = false;
+    string dest = a_local_path;
+
+    if ( dest[0] == '/' )
+    {
+        prefix = true;
+    }
+    else if ( dest.compare( 0, 2, "./" ) == 0 )
+    {
+        prefix = true;
+        char buf[1024];
+        dest = string(getcwd( buf, 1024 )) + dest.substr(1);
+    }
+    else if ( a_local_path.compare( 0, 2, "~/" ) == 0 )
+    {
+        prefix = true;
+        dest = string("/") + dest;
+    }
+
+    if ( prefix )
+    {
+        if ( !m_def_ep.size())
+        {
+            EXCEPT( 0, "No default end-point set." );
+        }
+
+        dest = m_def_ep + dest;
+    }
+
+    req.set_local( dest );
 
     send<>( req, rep, m_ctx++ );
 
