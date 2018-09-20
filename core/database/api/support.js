@@ -51,6 +51,13 @@ module.exports = ( function() {
     obj.SS_PROJ_SHARE       = 0x10;
     obj.SS_PUBLIC           = 0x20;
 
+    obj.MAX_TITLE_LEN       = 80;
+    obj.MAX_ALIAS_LEN       = 40;
+    obj.MAX_DESC_LEN        = 4000;
+    obj.MAX_DESC_SHORT_LEN  = 400;
+    obj.MAX_PROJ_ID_LEN     = 40;
+    obj.MAX_GROUP_ID_LEN    = 40;
+
 
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
@@ -64,6 +71,8 @@ module.exports = ( function() {
     obj.ERR_AUTHN_FAILED          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Authentication failed" ]);
     obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission denied" ]);
     obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
+    obj.ERR_INVALID_PROJ_ID       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid project ID" ]);
+    obj.ERR_INVALID_GROUP_ID      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid group ID" ]);
     obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
     obj.ERR_INVALID_DOMAIN        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid domain" ]);
@@ -74,8 +83,10 @@ module.exports = ( function() {
     obj.ERR_CLIENT_NOT_FOUND      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Client not found" ]);
     obj.ERR_UID_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "UID not found" ]);
     obj.ERR_GROUP_NOT_FOUND       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Group not found" ]);
+    obj.ERR_GROUP_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 409, "Group ID already in use" ]);
     obj.ERR_OBJ_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Object not found" ]);
     obj.ERR_ALIAS_NOT_FOUND       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Alias not found" ]);
+    obj.ERR_ALIAS_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 409, "Alias already in use" ]);
     obj.ERR_USER_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "User not found" ]);
     obj.ERR_DATA_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data record not found" ]);
     obj.ERR_COLL_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Collection not found" ]);
@@ -98,6 +109,12 @@ module.exports = ( function() {
     obj.ERR_EMAIL_REQUIRED        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "E-mail required" ]);
     obj.ERR_MEM_GRP_PROTECTED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Operation not allow on project 'members' group" ]);
     obj.ERR_ALLOC_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Allocation in use" ]);
+    obj.ERR_ALIAS_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Alias too long ("+obj.MAX_ALIAS_LEN+" char limit)" ]);
+    obj.ERR_TITLE_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Title too long ("+obj.MAX_TITLE_LEN+" char limit)" ]);
+    obj.ERR_DESC_TOO_LONG         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Description too long ("+obj.MAX_DESC_LEN+" char limit)" ]);
+    obj.ERR_DESC_SHORT_TOO_LONG   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Description too long ("+obj.MAX_DESC_SHORT_LEN+" char limit)" ]);
+    obj.ERR_GROUP_ID_TOO_LONG     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Group ID too long ("+obj.MAX_GROUP_ID_LEN+" char limit)" ]);
+    obj.ERR_PROJ_ID_TOO_LONG      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project ID too long ("+obj.MAX_PROJ_ID_LEN+" char limit)" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
@@ -112,6 +129,9 @@ module.exports = ( function() {
             switch ( e.errorNum ) {
                 case 1202:
                     res.throw( 404, "Record does not exist" );
+                    break;
+                case 1210:
+                    res.throw( 409, "Conflicting ID or alias" );
                     break;
                 default:
                     res.throw( 500, "Unexpected DB exception: " + e );
@@ -316,11 +336,49 @@ module.exports = ( function() {
             throw obj.ERR_PERM_DENIED;
     };
 
-    obj.validateAlias = function( a_alias, a_client ) {
+    obj.validateAlias = function( a_alias ) {
+        if ( a_alias.length > obj.MAX_ALIAS_LEN )
+            throw obj.ERR_ALIAS_TOO_LONG;
+
         for ( var i = 0; i < a_alias.length; ++i ) {
             if ( obj.bad_chars.indexOf( a_alias[i] ) != -1 )
                 throw obj.ERR_INVALID_ALIAS;
         }
+    };
+
+    obj.validateProjectID = function( a_proj_id ) {
+        if ( a_proj_id.length > obj.MAX_PROJ_ID_LEN )
+            throw obj.ERR_PROJ_ID_TOO_LONG;
+
+        for ( var i = 0; i < a_proj_id.length; ++i ) {
+            if ( obj.bad_chars.indexOf( a_proj_id[i] ) != -1 )
+                throw obj.ERR_INVALID_PROJ_ID;
+        }
+    };
+
+    obj.validateGroupID = function( a_group_id ) {
+        if ( a_group_id.length > obj.MAX_GROUP_ID_LEN )
+            throw obj.ERR_GROUP_ID_TOO_LONG;
+
+        for ( var i = 0; i < a_group_id.length; ++i ) {
+            if ( obj.bad_chars.indexOf( a_group_id[i] ) != -1 )
+                throw obj.ERR_INVALID_GROUP_ID;
+        }
+    };
+
+    obj.validateTitle = function( a_title ) {
+        if ( a_title.length > obj.MAX_TITLE_LEN )
+            throw obj.ERR_TITLE_TOO_LONG;
+    };
+
+    obj.validateDesc = function( a_desc ) {
+        if ( a_desc && a_desc.length > obj.MAX_DESC_LEN )
+            throw obj.ERR_DESC_TOO_LONG;
+    };
+
+    obj.validateDescShort = function( a_desc ) {
+        if ( a_desc && a_desc.length > obj.MAX_DESC_SHORT_LEN )
+            throw obj.ERR_DESC_SHORT_TOO_LONG;
     };
 
     obj.resolveID = function( a_id, a_client ) {

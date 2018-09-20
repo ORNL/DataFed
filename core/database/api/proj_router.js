@@ -37,6 +37,10 @@ router.get('/create', function (req, res) {
                         throw g_lib.ERR_INVALID_DOMAIN;
                 }
 
+                g_lib.validateProjectID( req.queryParams.id );
+                g_lib.validateTitle( req.queryParams.title );
+                g_lib.validateDescShort( req.queryParams.desc );
+
                 var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, domain: req.queryParams.domain };
 
                 if ( req.queryParams.desc )
@@ -129,6 +133,9 @@ router.get('/update', function (req, res) {
                 var proj_id = req.queryParams.id;
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
+
+                g_lib.validateTitle( req.queryParams.title );
+                g_lib.validateDescShort( req.queryParams.desc );
 
                 var obj = {};
 

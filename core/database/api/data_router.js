@@ -35,9 +35,10 @@ router.post('/create', function (req, res) {
                 var parent_id;
                 var repo_alloc;
 
-                if ( req.body.parent ) {
-                    console.log("Has collection");
+                g_lib.validateTitle( req.body.title );
+                g_lib.validateDesc( req.body.desc );
 
+                if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
 
                     if ( parent_id[0] != "c" )
@@ -56,13 +57,11 @@ router.post('/create', function (req, res) {
                         }
                     }
                 }else{
-                    console.log("Default collection");
                     parent_id = g_lib.getRootID(client._id);
                     owner_id = client._id;
                 }
 
                 if ( owner_id != client._id ){
-                    console.log("Project");
                     // Storage location uses either project, or, if none, then owner's allocation(s)
                     if ( req.body.repo ) {
                         repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
@@ -81,7 +80,6 @@ router.post('/create', function (req, res) {
                         }
                     }
                 }else{
-                    console.log("Owner");
                     // Storage location uses client allocation(s)
                     if ( req.body.repo ) {
                         repo_alloc = g_lib.verifyRepo( client._id, req.body.repo );
@@ -104,7 +102,6 @@ router.post('/create', function (req, res) {
                     obj.desc = req.body.desc;
 
                 if ( req.body.md ){
-                    console.log( "metadata:", req.body.md );
                     obj.md = req.body.md; //JSON.parse( req.body.md );
                     //console.log( "parsed:", obj.md );
                 }
@@ -120,6 +117,9 @@ router.post('/create', function (req, res) {
                 if ( req.body.alias ) {
                     g_lib.validateAlias( req.body.alias );
                     var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+
+                    if ( g_db.a.exists({ _key: alias_key }))
+                        throw g_lib.ERR_ALIAS_IN_USE;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
@@ -175,6 +175,9 @@ router.post('/update', function (req, res) {
                     if ( !g_lib.hasPermission( client, data, g_lib.PERM_UPDATE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
+
+                g_lib.validateTitle( req.body.title );
+                g_lib.validateDesc( req.body.desc );
 
                 if ( req.body.alias )
                     g_lib.validateAlias( req.body.alias );
@@ -236,6 +239,9 @@ router.post('/update', function (req, res) {
                     }
 
                     var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+
+                    if ( g_db.a.exists({ _key: alias_key }))
+                        throw g_lib.ERR_ALIAS_IN_USE;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });

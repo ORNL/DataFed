@@ -40,6 +40,13 @@ router.get('/create', function (req, res) {
                     uid = client._id;
                 }
 
+                g_lib.validateGroupID( req.queryParams.gid );
+                g_lib.validateTitle( req.queryParams.title );
+                g_lib.validateDescShort( req.queryParams.desc );
+
+                if ( g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid }))
+                    throw g_lib.ERR_GROUP_IN_USE;
+
                 var group = g_db.g.save({ uid: uid, gid: req.queryParams.gid, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
 
                 g_db.owner.save({ _from: group._id, _to: uid });
@@ -93,6 +100,9 @@ router.get('/update', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
+
+                g_lib.validateTitle( req.queryParams.title );
+                g_lib.validateDescShort( req.queryParams.desc );
 
                 if ( req.queryParams.proj ) {
                     var uid = req.queryParams.proj;

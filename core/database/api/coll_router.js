@@ -34,6 +34,9 @@ router.post('/create', function (req, res) {
                 var owner_id;
                 var parent_id;
 
+                g_lib.validateTitle( req.body.title );
+                g_lib.validateDescShort( req.body.desc );
+
                 if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
 
@@ -123,6 +126,9 @@ router.post('/update', function (req, res) {
                     if ( !g_lib.hasPermission( client, coll, g_lib.PERM_UPDATE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
+
+                g_lib.validateTitle( req.body.title );
+                g_lib.validateDescShort( req.body.desc );
 
                 if ( req.body.alias )
                     g_lib.validateAlias( req.body.alias );
