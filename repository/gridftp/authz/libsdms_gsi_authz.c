@@ -1,20 +1,14 @@
-#include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <stdbool.h>
-
 #include <curl/curl.h>
-
 #include <globus_types.h>
 #include <globus_error_hierarchy.h>
 #include <gssapi.h>
-
-
-// Must define these here b/c globus doesn't seem to provide dev headers for GSI authz
-typedef void * globus_gsi_authz_handle_t;
-typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_handle_t handle, globus_result_t result ); 
+#include "libsdms_gsi_authz.h"
+#include "test.h"
 
 
 // TODO This value must be pulled from server config (max concurrency)
@@ -24,6 +18,16 @@ typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_ha
 
 char    db_user[MAX_DB_USER_LEN+1];
 char    db_pass[MAX_DB_PASS_LEN+1];
+
+void uuidToStr( unsigned char * a_uuid, char * a_out );
+bool decodeUUID( const char * a_input, char * a_uuid );
+
+struct ContextHandleEntry
+{
+    globus_gsi_authz_handle_t   handle;
+    gss_ctx_id_t                context;
+};
+static struct ContextHandleEntry   g_active_contexts[MAX_ACTIVE_CTX];
 
 void uuidToStr( unsigned char * a_uuid, char * a_out )
 {
@@ -100,15 +104,6 @@ bool decodeUUID( const char * a_input, char * a_uuid )
 
     return true;
 }
-
-// TODO This is a brute-force context lookup solution. Needs to be replaced with an indexed look-up
-struct ContextHandleEntry
-{
-    globus_gsi_authz_handle_t   handle;
-    gss_ctx_id_t                context;
-};
-
-static struct ContextHandleEntry   g_active_contexts[MAX_ACTIVE_CTX];
 
 gss_ctx_id_t findContext( globus_gsi_authz_handle_t a_handle )
 {
@@ -194,36 +189,8 @@ sdms_gsi_authz_init()
     strncpy( db_pass, temp, MAX_DB_PASS_LEN );
     db_user[MAX_DB_PASS_LEN] = 0;
 */
-
-    //strcpy( db_user, "root" );
-    //strcpy( db_pass, "sdms!" );
-    FILE *fptr;
-    char buf[1000];
-    char *token;
-
-    fptr = fopen("/etc/grid-security/db.conf","r");
-    if(fptr == NULL)
-    {
-        syslog(LOG_INFO, "Error open /etc/grid-security/db.conf");
-    }
-    else
-    {
-      while(fgets(buf,1000,fptr) != NULL)
-      {
-        if (strlen(buf) < 4 || buf[0] == '#') continue;
-        token = strtok(buf," \t");
-        if (strstr(token,"user"))
-        {
-           token = strtok(NULL," \t");
-           strcpy(db_user,token);
-        }
-        if (strstr(token,"password"))
-        {
-            token = strtok(NULL," \t");
-            strcpy(db_pass,token);
-        }
-      }
-    }
+    strcpy( db_user, "root" );
+    strcpy( db_pass, "sdms!" );
 
     return 0;
 }
@@ -388,6 +355,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         if ( client_id )
                         {
                             CURL * curl = curl_easy_init();
+                            write2file();
 
                             if ( !curl )
                             {
