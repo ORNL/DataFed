@@ -14,6 +14,7 @@
 #include <readline/history.h>
 #include "TraceException.hpp"
 #include "SmartTokenizer.hpp"
+#include "Util.hpp"
 #include "Client.hpp"
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
@@ -66,6 +67,7 @@ typedef map<string,CmdInfo*> cmd_map_t;
 
 cmd_list_t  g_cmd_list;
 cmd_map_t   g_cmd_map;
+
 
 void addCommand( const char * a_cmd_short, const char * a_cmd_long, const char * a_desc_short, const char * a_desc_long, cmd_func_t a_func )
 {
@@ -206,56 +208,104 @@ void printGroups( spGroupDataReply a_reply )
     else cout << "No results\n";
 }
 
-void printData( spRecordDataReply a_rep, bool a_list = false )
+void printData( spRecordDataReply a_rep )
 {
+    if ( g_out_form == JSON )
+        cout << "{\"Data\":[";
+    else if ( g_out_form == CSV )
+    {
+        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Size\"";
+        if ( g_details )
+            cout << ",\"DataTS\",\"RecTS\",\"Meta\"";
+        cout << "\n";
+    }
+
     if ( a_rep->data_size() )
     {
-        size_t pos;
+        time_t      t;
+        struct tm*  pTM;
+
         for ( int i = 0; i < a_rep->data_size(); i++ )
         {
             const RecordData & rec = a_rep->data(i);
 
-            if ( a_list )
-            {
-                cout << left << setw(12) << rec.id();
-                if ( rec.has_owner() )
-                    cout << " " << left << setw(12) << rec.owner();
+            if ( g_out_form == JSON && i > 0 )
+                cout << ",";
 
-                if ( rec.has_alias() )
-                {
-                    pos = rec.alias().find_first_of(":");
-                    if ( pos != string::npos )
-                        cout << " " << left << setw(16) << rec.alias().substr( pos + 1 );
-                }
-                else
-                    cout << " " << setw(16) << " ";
-
-                cout << " \"" << rec.title() << "\"";
-                cout << "\n";
-            }
-            else
+            switch ( g_out_form )
             {
-                cout << "   id : " << rec.id() << "\n";
+            case TEXT:
+                cout << "DataID " << rec.id() << "\n";
                 if ( rec.has_alias() )
-                    cout << "alias : " << rec.alias() << "\n";
-                cout << "title : " << rec.title() << "\n";
+                    cout << "Alias  " << rec.alias() << "\n";
+                cout << "Title  " << rec.title() << "\n";
                 if ( rec.has_desc() )
-                    cout << " desc : " << rec.desc() << "\n";
+                    cout << "Desc   " << rec.desc() << "\n";
                 if ( rec.has_owner() )
-                    cout << "owner : " << rec.owner() << "\n";
-                if ( rec.has_metadata() )
-                    cout << " meta : " << rec.metadata() << "\n";
+                    cout << "Owner  " << rec.owner() << "\n";
                 if ( rec.has_data_size() )
-                    cout << " size : " << rec.data_size() << "\n";
-                if ( rec.has_data_time() )
-                    cout << " dt   : " << rec.data_time() << "\n";
-                if ( rec.has_rec_time() )
-                    cout << " rt   : " << rec.rec_time() << "\n";
+                    cout << "Size   " << rec.data_size() << "\n";
+                if ( g_details )
+                {
+                    if ( rec.has_data_time() )
+                    {
+                        t = (time_t)rec.data_time();
+                        pTM = localtime(&t);
+                        cout << "DataTS " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                    }
+                    if ( rec.has_rec_time() )
+                    {
+                        t = (time_t)rec.rec_time();
+                        pTM = localtime(&t);
+                        cout << "RecTS  " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                    }
+                    if ( rec.has_metadata() )
+                        cout << "Meta   " << rec.metadata() << "\n";
+                }
+                break;
+            case CSV:
+                cout << "\"" << rec.id() << "\""
+                    << ",\"" << ( rec.has_alias()?rec.alias():"" ) << "\""
+                    << ",\"" << escapeCSV( rec.title() ) << "\""
+                    << ",\"" << ( rec.has_desc()?escapeCSV( rec.desc() ):"" ) << "\""
+                    << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
+                    << "," << ( rec.has_data_size()?rec.data_size():0 );
+                    if ( g_details )
+                    {
+                        cout << "," << ( rec.has_data_time()?rec.data_time():0 )
+                            << "," << ( rec.has_rec_time()?rec.rec_time():0 )
+                            << ",\"" << ( rec.has_metadata()?escapeCSV( rec.metadata() ):"" ) << "\"";
+                    }
+                    cout << "\n";
+                break;
+            case JSON:
+                cout << "{\"DataID\":\"" << rec.id() << "\"";
+                if ( rec.has_alias() )
+                    cout << ",\"Alias\":\"" << rec.alias() << "\"";
+                cout << ",\"Title\":\"" << rec.title() << "\"";
+                if ( rec.has_desc() )
+                    cout << ",\"Desc\":\"" << rec.desc() << "\"";
+                if ( rec.has_owner() )
+                    cout << ",\"Owner\":\"" << rec.owner() << "\"";
+                if ( rec.has_data_size() )
+                    cout << ",\"Size\":" << rec.data_size();
+                if ( g_details )
+                {
+                    if ( rec.has_data_time() )
+                        cout << ",\"DataTS\":" << rec.data_time();
+                    if ( rec.has_rec_time() )
+                        cout << ",\"RecTS\":" << rec.rec_time();
+                    if ( rec.has_metadata() )
+                        cout << ",\"Meta\":" << rec.metadata() << "";
+                }
+                cout << "}";
+                break;
             }
         }
     }
-    else
-        cout << "No results\n";
+
+    if ( g_out_form == JSON )
+        cout << "]}\n";
 }
 
 void printCollData( spCollDataReply a_reply, bool a_list = false )
@@ -334,7 +384,7 @@ void printXfrData( spXfrDataReply a_reply )
         if ( g_out_form == JSON )
             cout << "{\"transfers\":[";
         else if ( g_out_form == CSV )
-            cout << "\"Trans ID\",\"Data ID\",\"Mode\",\"Status\",\"Error\",\"Path\",\"Updated\"\n";
+            cout << "\"TransID\",\"DataID\",\"Mode\",\"Status\",\"Error\",\"Path\",\"StatusTS\"\n";
 
         struct tm* gmt_time;
 
@@ -347,16 +397,16 @@ void printXfrData( spXfrDataReply a_reply )
             switch( g_out_form )
             {
             case TEXT:
-                cout << "Trans ID: " << xfr.id() << "\n";
-                cout << "Data ID : " << xfr.data_id() << "\n";
-                cout << "Mode    : " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
-                cout << "Status  : " << StatusText[xfr.status()] << "\n";
+                cout << "TransID   " << xfr.id() << "\n";
+                cout << "DataID    " << xfr.data_id() << "\n";
+                cout << "Mode      " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
+                cout << "Status    " << StatusText[xfr.status()] << "\n";
                 if ( xfr.has_err_msg() )
-                    cout << "Error   : " << xfr.err_msg() << "\n";
-                cout << "Path    : " << xfr.local_path() << "\n";
+                    cout << "Error     " << xfr.err_msg() << "\n";
+                cout << "Path      " << xfr.local_path() << "\n";
                 t = (time_t)xfr.updated();
                 gmt_time = localtime(&t);
-                cout << "Updated : " << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\n";
+                cout << "StatusTS  " << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\n";
                 cout << "\n";
                 break;
             case CSV:
@@ -366,9 +416,7 @@ void printXfrData( spXfrDataReply a_reply )
                 cout << "\"" << StatusText[xfr.status()] << "\",";
                 cout << "\"" << (xfr.has_err_msg()?xfr.err_msg():"") << "\",";
                 cout << "\"" << xfr.local_path() << "\",";
-                t = (time_t)xfr.updated();
-                gmt_time = localtime(&t);
-                cout << "\"" << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\"\n";
+                cout << xfr.updated() << "\n";
                 break;
             case JSON:
                 cout << "{\"TransID\":\"" << xfr.id() << "\",";
@@ -378,10 +426,7 @@ void printXfrData( spXfrDataReply a_reply )
                 if ( xfr.has_err_msg() )
                     cout << "\"Error\":\"" << xfr.err_msg() << "\",";
                 cout << "\"Path\":\"" << xfr.local_path() << "\",";
-                t = (time_t)xfr.updated();
-                gmt_time = localtime(&t);
-                cout << "\"Updated\":\"" << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\"";
-                cout << "}";
+                cout << "\"StatusTS\":" << xfr.updated() << "}";
                 break;
             }
         }
@@ -543,34 +588,42 @@ int get_data()
     if ( g_args.size() != 2 )
         return -1;
 
+    int stat = 0;
+
     spXfrDataReply xfrs = g_client->dataGet( g_args[0], g_args[1] );
 
     if ( g_wait )
     {
-        const string & xfr_id = xfrs->xfr(0).id();
-        spXfrDataReply xfr_stat;
-
-        xfr_stat = g_client->xfrView( xfr_id );
-        XfrStatus status = xfr_stat->xfr(0).status();
-
+        string xfr_id = xfrs->xfr(0).id();
+        XfrStatus status = xfrs->xfr(0).status();
         while ( status < 3 )
         {
             sleep( 5 );
-            xfr_stat = g_client->xfrView( xfr_id );
-            status = xfr_stat->xfr(0).status();
+            xfrs = g_client->xfrView( xfr_id );
+            status = xfrs->xfr(0).status();
         }
 
-        cout << StatusText[status] << "\n";
-
         if ( status != 3 )
-            return 1;
-    }
-    else
-    {
-        cout << xfrs->xfr(0).id() << "\n";
+            stat = 1;
     }
 
-    return 0;
+    const XfrData & xfr = xfrs->xfr(0);
+
+    switch ( g_out_form )
+    {
+    case TEXT:
+        cout << "TransID  " << xfr.id() << "\nStatus   " << StatusText[xfr.status()] << "\nPath     " << xfr.local_path() << "\n";
+        break;
+    case CSV:
+        cout << "\"TransID\",\"Status\",\"Path\"\n";
+        cout << "\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
+        break;
+    case JSON:
+        cout << "{\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
+        break;
+    }
+
+    return stat;
 }
 
 
@@ -593,36 +646,45 @@ int put_data()
     else
         return -1;
 
+    int stat = 0;
+
     // Push data to record
 
     spXfrDataReply xfrs = g_client->dataPut( data_id, *g_args.rbegin() );
 
     if ( g_wait )
     {
-        const string & xfr_id = xfrs->xfr(0).id();
-        spXfrDataReply xfr_stat;
-
-        xfr_stat = g_client->xfrView( xfr_id );
-        XfrStatus status = xfr_stat->xfr(0).status();
-
+        string xfr_id = xfrs->xfr(0).id();
+        XfrStatus status = xfrs->xfr(0).status();
         while ( status < 3 )
         {
             sleep( 5 );
-            xfr_stat = g_client->xfrView( xfr_id );
-            status = xfr_stat->xfr(0).status();
+            xfrs = g_client->xfrView( xfr_id );
+            status = xfrs->xfr(0).status();
         }
 
-        cout << StatusText[status] << "\n";
-
         if ( status != 3 )
-            return 1;
-    }
-    else
-    {
-        cout << xfrs->xfr(0).id() << "\n";
+            stat = 1;
     }
 
-    return 0;
+    const XfrData & xfr = xfrs->xfr(0);
+
+    switch ( g_out_form )
+    {
+    case TEXT:
+        cout << "TransID  " << xfr.id() << "\nStatus   " << StatusText[xfr.status()] << "\nPath     " << xfr.local_path() << "\n";
+        break;
+    case CSV:
+        cout << "\"TransID\",\"Status\",\"Path\"\n";
+        cout << "\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
+        break;
+    case JSON:
+        cout << "{\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
+        break;
+    }
+
+    return stat;
+
 }
 
 int data()
@@ -635,11 +697,6 @@ int data()
         spRecordDataReply rep = g_client->recordView( g_args[1] );
         printData( rep );
     }
-    /*else if( g_args[0] == "list" || g_args[0] == "l" )
-    {
-        spListingReply rep = g_client->list();
-        printData( rep, true );
-    }*/
     else if( g_args[0] == "create" || g_args[0] == "c" )
     {
         if ( g_args.size() != 1 )

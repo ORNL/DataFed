@@ -739,9 +739,9 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
 {
     rapidjson::Document result;
 
-    string body = "{\"title\":\"" + a_request.title() + "\"";
+    string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
-        body += ",\"desc\":\"" + a_request.desc() + "\"";
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
@@ -764,9 +764,9 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
-        body += ",\"title\":\"" + a_request.title() + "\"";
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
-        body += ",\"desc\":\"" + a_request.desc() + "\"";
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )

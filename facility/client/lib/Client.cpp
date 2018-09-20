@@ -660,31 +660,27 @@ Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_ite
     delete rep;
 }
 
-spXfrDataReply
-Client::dataGet( const std::string & a_data_id, const std::string & a_local_path )
+string
+Client::applyPrefix( const string & a_path )
 {
-    Auth::DataGetRequest    req;
-    Auth::XfrDataReply *    rep;
-
-    req.set_id( a_data_id );
-
     bool prefix = false;
-    string dest = a_local_path;
+    string result;
 
-    if ( dest[0] == '/' )
+    if ( a_path[0] == '/' )
     {
         prefix = true;
+        result = a_path;
     }
-    else if ( dest.compare( 0, 2, "./" ) == 0 )
+    else if ( a_path.compare( 0, 2, "./" ) == 0 )
     {
         prefix = true;
         char buf[1024];
-        dest = string(getcwd( buf, 1024 )) + dest.substr(1);
+        result = string(getcwd( buf, 1024 )) + a_path.substr(1);
     }
-    else if ( a_local_path.compare( 0, 2, "~/" ) == 0 )
+    else if ( a_path.compare( 0, 2, "~/" ) == 0 )
     {
         prefix = true;
-        dest = string("/") + dest;
+        result = string("/") + a_path;
     }
 
     if ( prefix )
@@ -694,10 +690,22 @@ Client::dataGet( const std::string & a_data_id, const std::string & a_local_path
             EXCEPT( 0, "No default end-point set." );
         }
 
-        dest = m_def_ep + dest;
+        return m_def_ep + result;
     }
+    else
+    {
+        return a_path;
+    }
+}
 
-    req.set_local( dest );
+spXfrDataReply
+Client::dataGet( const std::string & a_data_id, const std::string & a_local_path )
+{
+    Auth::DataGetRequest    req;
+    Auth::XfrDataReply *    rep;
+
+    req.set_id( a_data_id );
+    req.set_local( applyPrefix( a_local_path ));
 
     send<>( req, rep, m_ctx++ );
 
@@ -712,7 +720,7 @@ Client::dataPut( const std::string & a_data_id, const std::string & a_local_path
     Auth::XfrDataReply *    rep;
 
     req.set_id( a_data_id );
-    req.set_local( a_local_path );
+    req.set_local( applyPrefix( a_local_path ));
 
     send<>( req, rep, m_ctx++ );
 

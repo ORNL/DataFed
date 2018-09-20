@@ -227,3 +227,53 @@ void hexDump( const char * a_buffer, const char *a_buffer_end, ostream & a_out )
         l += 16;
     }
 }
+
+string escapeCSV( const string & a_value )
+{
+    string::size_type p1 = 0,p2;
+    string result;
+    result.reserve( a_value.size() + 20 );
+
+    while ( 1 )
+    {
+        p2 = a_value.find( '"', p1 );
+        if ( p2 == string::npos )
+        {
+            result.append( a_value, p1, p2 );
+            break;
+        }
+
+        result.append( a_value, p1, p2 - p1 + 1 );
+        result.append( "\"" );
+        p1 = p2 + 1;
+    }
+
+    return result;
+}
+
+string escapeJSON( const std::string & a_value )
+{
+    static const char* values[] = {
+        "\\u0000","\\u0001","\\u0002","\\u0003","\\u0004","\\u0005","\\u0006","\\u0007",
+        "\\u0008","\\u0009","\\u000A","\\u000B","\\u000C","\\u000D","\\u000E","\\u000F",
+        "\\u0010","\\u0011","\\u0012","\\u0013","\\u0014","\\u0015","\\u0016","\\u0017",
+        "\\u0018","\\u0019","\\u001A","\\u001B","\\u001C","\\u001D","\\u001E","\\u001F"
+    };
+
+    string result;
+    result.reserve( a_value.size()*2 );
+
+    for ( auto c = a_value.cbegin(); c != a_value.cend(); c++ )
+    {
+        if ( *c == '"' )
+            result.append( "\\\"" );
+        else if ( *c == '\\' )
+            result.append( "\\\\" );
+        else if ( '\x00' <= *c && *c <= '\x1f')
+            result.append( values[(size_t)*c] );
+        else
+            result.append( 1, *c );
+    }
+
+    return result;
+}

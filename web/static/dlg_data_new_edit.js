@@ -90,13 +90,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 if ( tmp.length )
                     obj.desc = tmp;
 
-                obj.repoId = $("#alloc").val();
-                if ( obj.repoId == "bad" ){
-                    dlgAlert( "Data Entry Error", "Parent collection is invalid");
-                    return;
-                }
+                if ( a_mode != DLG_DATA_EDIT ){
+                    obj.repoId = $("#alloc").val();
+                    if ( obj.repoId == "bad" ){
+                        dlgAlert( "Data Entry Error", "Parent collection is invalid");
+                        return;
+                    }
 
-                obj.parentId = $("#coll",frame).val().trim();
+                    obj.parentId = $("#coll",frame).val().trim();
+                }
 
                 tmp = $("#md",frame).val().trim();
                 if ( tmp.length ){

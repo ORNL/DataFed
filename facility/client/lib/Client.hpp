@@ -132,6 +132,7 @@ private:
     template<typename RQT,typename RPT>
     void            send( RQT & a_request, RPT *& a_reply, uint16_t a_context );
     std::string     parseQuery( const std::string & a_query );
+    std::string     applyPrefix( const std::string & a_path );
 
 
     std::string                 m_host;
