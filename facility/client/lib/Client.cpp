@@ -364,6 +364,19 @@ Client::userUpdate( const std::string & a_uid, const char * a_email )
     return spUserDataReply( reply );
 }
 
+spProjectDataReply
+Client::projectView( const std::string & a_id )
+{
+    Auth::ProjectViewRequest req;
+    Auth::ProjectDataReply * reply;
+
+    req.set_id( a_id );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
 #if 0
 string
 Client::parseQuery( const string & a_query )
@@ -570,7 +583,7 @@ Client::collView( const std::string & a_id )
     return spCollDataReply( reply );
 }
 
-spCollDataReply
+spListingReply
 Client::collRead( const std::string & a_coll_id, CollReadMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
 {
     Auth::CollReadRequest req;
@@ -585,11 +598,11 @@ Client::collRead( const std::string & a_coll_id, CollReadMode a_mode, bool a_det
     if ( a_count )
         req.set_count( a_count );
 
-    Auth::CollDataReply * reply;
+    Auth::ListingReply * reply;
 
     send<>( req, reply, m_ctx++ );
 
-    return spCollDataReply( reply );
+    return spListingReply( reply );
 }
 
 spCollDataReply

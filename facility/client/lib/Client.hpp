@@ -22,6 +22,7 @@ namespace SDMS {
 namespace Facility {
 
 typedef std::shared_ptr<Auth::UserDataReply> spUserDataReply;
+typedef std::shared_ptr<Auth::ProjectDataReply> spProjectDataReply;
 typedef std::shared_ptr<Auth::ListingReply> spListingReply;
 typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
@@ -91,6 +92,7 @@ public:
     spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spUserDataReply     userUpdate( const std::string & a_uid, const char * a_email );
 
+    spProjectDataReply  projectView( const std::string & a_id );
 
     spRecordDataReply   recordCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_coll_id = 0 );
     spRecordDataReply   recordUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, bool a_md_merge = true );
@@ -102,7 +104,7 @@ public:
     spCollDataReply     collCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_coll_id = 0 );
     spCollDataReply     collUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0 );
     spCollDataReply     collView( const std::string & a_id );
-    spCollDataReply     collRead( const std::string & a_coll_id, CollReadMode a_mode = CRM_ALL, bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spListingReply      collRead( const std::string & a_coll_id, CollReadMode a_mode = CRM_ALL, bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     void                collAddItem( const std::string & a_coll_id, const std::string & a_item_id );
     void                collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id );
 

@@ -103,7 +103,6 @@ message UserData
     optional string             phone           = 4;
     optional bool               is_admin        = 5;
     optional bool               is_repo_admin   = 6;
-    repeated string             admin           = 7;
     repeated string             ident           = 8;
     repeated AllocData          alloc           = 9;
 }
@@ -124,6 +123,7 @@ message ListingData
 {
     required string             id          = 1;
     required string             title       = 2;
+    optional string             alias       = 3;
 }
 
 message RecordData

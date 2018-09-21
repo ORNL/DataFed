@@ -114,15 +114,31 @@ bool            g_out_json;
 bool            g_out_csv;
 bool            g_out_text;
 OutputFormat    g_out_form = TEXT;
-
+string          g_cur_sel;
+string          g_cur_col;
+string          g_cur_alias_prefix;
 
 po::options_description g_opts_command( "Command options" );
 
 
+string resolveID( const string & a_id )
+{
+    if ( a_id.size() > 2 && a_id[1] == '/' )
+        return a_id;
+
+    if ( a_id.find_first_of( ":" ) != string::npos )
+        return a_id;
+
+    return g_cur_alias_prefix + a_id;
+}
+
 void printUsers( spUserDataReply a_reply )
 {
     if ( g_out_form == JSON )
-        cout << "{\"users\":[";
+        cout << "{\"Users\":[";
+    else if ( g_out_form == CSV )
+        cout << "\"UserID\",\"Name\",\"Email\",\"Phone\",\"Admin\"\n";
+
     if ( a_reply->user_size() )
     {
         for ( int i = 0; i < a_reply->user_size(); i++ )
@@ -134,43 +150,41 @@ void printUsers( spUserDataReply a_reply )
             switch ( g_out_form )
             {
             case TEXT:
-                cout << "  UID    : " << user.uid() << "\n";
-                cout << "  Name   : " << user.name() << "\n";
+                cout << "UserID   " << user.uid() << "\n";
+                cout << "Name     " << user.name() << "\n";
                 if ( user.has_email() )
-                    cout << "  email  : " << user.email() << "\n";
+                    cout << "Email    " << user.email() << "\n";
                 if ( user.has_phone() )
-                    cout << "  phone  : " << user.phone() << "\n";
+                    cout << "Phone    " << user.phone() << "\n";
                 if ( user.has_is_admin() )
-                    cout << "  admin  : " << user.is_admin() << "\n";
+                    cout << "Admin     " << user.is_admin() << "\n";
+                //if ( user.has_is_repo_admin() )
+                //    cout << "RepoAdmin " << user.is_repo_admin() << "\n";
 
+                /*
                 if ( user.ident_size() )
                 {
                     cout << "  idents :\n";
                     for ( int j = 0; j < user.ident_size(); j++ )
                         cout << "    " << user.ident(j) << "\n";
-                }
-
-                if ( user.admin_size() )
-                {
-                    cout << "  admins :";
-                    for ( int j = 0; j < user.admin_size(); j++ )
-                        cout << " " << user.admin(j);
-                    cout << "\n";
-                }
+                }*/
 
                 break;
             case JSON:
-                cout << "{\"uid\":\"" << user.uid() << "\",\"name\":\"" << user.name() << "\"";
+                cout << "{\"UserID\":\"" << user.uid() << "\",\"Name\":\"" << user.name() << "\"";
                 if ( user.has_email() )
-                    cout << ",\"email\":\"" << user.email() << "\"";
+                    cout << ",\"Email\":\"" << user.email() << "\"";
                 if ( user.has_phone() )
-                    cout << ",\"phone\":\"" << user.phone() << "\"";
+                    cout << ",\"Phone\":\"" << user.phone() << "\"";
                 if ( user.has_is_admin() )
-                    cout << ",\"admin\":" << (user.is_admin()?"true":"false");
+                    cout << ",\"Admin\":" << (user.is_admin()?"true":"false");
                 cout << "}";
                 break;
             case CSV:
-                cout << "\"" << user.uid() << "\",\"" << user.name() << "\"\n";
+                cout << "\"" << user.uid() << "\",\"" << user.name() << "\""
+                    << ",\"" << ( user.has_email()?user.email():"" ) << "\""
+                    << ",\"" << ( user.has_phone()?user.phone():"" ) << "\""
+                    << "," << ( user.has_is_admin()?user.is_admin():false ) << "\n";
                 break;
             }
 
@@ -182,6 +196,60 @@ void printUsers( spUserDataReply a_reply )
         cout << "]}\n";
 }
 
+void printProjects( spProjectDataReply a_reply )
+{
+    if ( g_out_form == JSON )
+        cout << "{\"Projects\":[";
+    else if ( g_out_form == CSV )
+        cout << "\"ProjID\",\"Title\",\"Domain\",\"Desc\",\"Owner\"\n";
+
+    if ( a_reply->proj_size() )
+    {
+        for ( int i = 0; i < a_reply->proj_size(); i++ )
+        {
+            if ( g_out_form == JSON && i > 0 )
+                cout << ",";
+
+            const ProjectData & proj = a_reply->proj(i);
+            switch ( g_out_form )
+            {
+            case TEXT:
+                cout << "ProjID  " << proj.id() << "\n";
+                cout << "Title   " << proj.title() << "\n";
+                if ( proj.has_domain() )
+                    cout << "Domain  " << proj.domain() << "\n";
+                if ( proj.has_desc() )
+                    cout << "Desc    " << proj.desc() << "\n";
+                if ( proj.has_owner() )
+                    cout << "Owner   " << proj.owner() << "\n";
+                break;
+            case JSON:
+                cout << "{\"ProjID\":\"" << proj.id() << "\",\"Title\":\"" << escapeJSON( proj.title() ) << "\"";
+                if ( proj.has_domain() )
+                    cout << ",\"Domain\":\"" << proj.domain() << "\"";
+                if ( proj.has_desc() )
+                    cout << ",\"Desc\":\"" << escapeJSON( proj.desc() ) << "\"";
+                if ( proj.has_owner() )
+                    cout << ",\"Owner\":\"" << proj.owner() << "\"";
+                cout << "}";
+                break;
+            case CSV:
+                cout << "\"" << proj.id() << "\",\"" << escapeCSV( proj.title() ) << "\""
+                    << ",\"" << ( proj.has_domain()?proj.domain():"" ) << "\""
+                    << ",\"" << ( proj.has_desc()?escapeCSV( proj.desc() ):"" ) << "\""
+                    << ",\"" << ( proj.has_owner()?proj.owner():"") << "\"\n";
+                break;
+            }
+
+            if ( g_out_form == TEXT )
+                cout << "\n";
+        }
+    }
+    if ( g_out_form == JSON )
+        cout << "]}\n";
+}
+
+#if 0
 void printGroups( spGroupDataReply a_reply )
 {
     if ( a_reply->group_size() )
@@ -207,6 +275,7 @@ void printGroups( spGroupDataReply a_reply )
     }
     else cout << "No results\n";
 }
+#endif
 
 void printData( spRecordDataReply a_rep )
 {
@@ -282,9 +351,9 @@ void printData( spRecordDataReply a_rep )
                 cout << "{\"DataID\":\"" << rec.id() << "\"";
                 if ( rec.has_alias() )
                     cout << ",\"Alias\":\"" << rec.alias() << "\"";
-                cout << ",\"Title\":\"" << rec.title() << "\"";
+                cout << ",\"Title\":\"" << escapeJSON( rec.title() ) << "\"";
                 if ( rec.has_desc() )
-                    cout << ",\"Desc\":\"" << rec.desc() << "\"";
+                    cout << ",\"Desc\":\"" << escapeJSON( rec.desc() ) << "\"";
                 if ( rec.has_owner() )
                     cout << ",\"Owner\":\"" << rec.owner() << "\"";
                 if ( rec.has_data_size() )
@@ -308,49 +377,56 @@ void printData( spRecordDataReply a_rep )
         cout << "]}\n";
 }
 
-void printCollData( spCollDataReply a_reply, bool a_list = false )
+void printCollData( spCollDataReply a_reply )
 {
-    if ( a_reply->data_size() )
+    if ( a_reply->coll_size() )
     {
-        size_t pos;
-        for ( int i = 0; i < a_reply->data_size(); i++ )
+        for ( int i = 0; i < a_reply->coll_size(); i++ )
         {
-            const CollData & data = a_reply->data(i);
+            const CollData & coll = a_reply->coll(i);
 
-            if ( a_list )
-            {
-                cout << left << setw(12) << data.id();
-                if ( data.has_owner() )
-                    cout << " " << left << setw(12) << data.owner();
-
-                if ( data.has_alias() )
-                {
-                    pos = data.alias().find_first_of(":");
-                    if ( pos != string::npos )
-                        cout << " " << left << setw(16) << data.alias().substr( pos + 1 );
-                }
-                else
-                    cout << " " << setw(16) << " ";
-
-                cout << " \"" << data.title() << "\"";
-                cout << "\n";
-            }
-            else
-            {
-                cout << "  id    : " << data.id() << "\n";
-                if ( data.has_alias() )
-                    cout << "  alias : " << data.alias() << "\n";
-                cout << "  title : " << data.title() << "\n";
-                if ( data.has_owner() )
-                    cout << "  owner : " << data.owner() << "\n";
-                cout << "\n";
-            }
+            cout << "  id    : " << coll.id() << "\n";
+            if ( coll.has_alias() )
+                cout << "  alias : " << coll.alias() << "\n";
+            cout << "  title : " << coll.title() << "\n";
+            if ( coll.has_owner() )
+                cout << "  owner : " << coll.owner() << "\n";
+            cout << "\n";
         }
     }
     else
         cout << "No results\n";
 }
 
+void printListing( spListingReply a_reply )
+{
+    if ( a_reply->item_size() )
+    {
+        size_t pos;
+        for ( int i = 0; i < a_reply->item_size(); i++ )
+        {
+            const ListingData & item = a_reply->item(i);
+
+            cout << left << setw(12) << item.id();
+
+            if ( item.has_alias() )
+            {
+                pos = item.alias().find_last_of(":");
+                if ( pos != string::npos )
+                    cout << " " << left << setw(16) << item.alias().substr( pos + 1 );
+            }
+            else
+                cout << " " << setw(16) << " ";
+
+            cout << " \"" << item.title() << "\"";
+            cout << "\n";
+        }
+    }
+    else
+        cout << "\n";
+}
+
+#if 0
 void printACLs( spACLDataReply a_reply )
 {
     if ( a_reply->rule_size() )
@@ -374,6 +450,7 @@ void printACLs( spACLDataReply a_reply )
     else
         cout << "  No ACLs set\n";
 }
+#endif
 
 void printXfrData( spXfrDataReply a_reply )
 {
@@ -694,7 +771,7 @@ int data()
         if ( g_args.size() != 2 )
             return -1;
 
-        spRecordDataReply rep = g_client->recordView( g_args[1] );
+        spRecordDataReply rep = g_client->recordView( resolveID( g_args[1] ));
         printData( rep );
     }
     else if( g_args[0] == "create" || g_args[0] == "c" )
@@ -710,7 +787,7 @@ int data()
         if ( g_args.size() != 2 )
             return -1;
 
-        spRecordDataReply rep = updateRecord( g_args[1] );
+        spRecordDataReply rep = updateRecord( resolveID( g_args[1] ));
         printData( rep );
     }
     else if( g_args[0] == "clear" || g_args[0] == "r" )
@@ -726,7 +803,7 @@ int data()
         if ( g_args.size() != 2 )
             return -1;
 
-        g_client->recordDelete( g_args[1] );
+        g_client->recordDelete( resolveID( g_args[1] ));
         cout << "SUCCESS\n";
     }
     else
@@ -741,7 +818,7 @@ int coll()
     {
         if ( g_args.size() == 2 )
         {
-            spCollDataReply rep = g_client->collView( g_args[1] );
+            spCollDataReply rep = g_client->collView( resolveID( g_args[1] ));
             printCollData( rep );
         }
         else
@@ -751,13 +828,13 @@ int coll()
     {
         if ( g_args.size() == 1 )
         {
-            spCollDataReply rep = g_client->collRead( "root" );
-            printCollData( rep, true );
+            spListingReply rep = g_client->collRead( "root" );
+            printListing( rep );
         }
         else if ( g_args.size() == 2 )
         {
-            spCollDataReply rep = g_client->collRead( g_args[1] );
-            printCollData( rep, true );
+            spListingReply rep = g_client->collRead( g_args[1] );
+            printListing( rep );
         }
         else
             return -1;
@@ -778,7 +855,7 @@ int coll()
         if ( g_args.size() != 2 )
             return -1;
 
-        spCollDataReply rep = g_client->collUpdate( g_args[1], g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
+        spCollDataReply rep = g_client->collUpdate( resolveID( g_args[1] ), g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
         printCollData( rep );
     }
     else if( g_args[0] == "delete" || g_args[0] == "d" )
@@ -898,6 +975,13 @@ int user()
     return 0;
 }
 
+
+int project()
+{
+    return 0;
+}
+
+#if 0
 int group()
 {
     if ( g_args.size() >= 2 )
@@ -1010,11 +1094,118 @@ int acl()
 
     return 0;
 }
+#endif
 
 int setup()
 {
     g_client->setup();
     cout << "SUCCESS\n";
+
+    return 0;
+}
+
+int select()
+{
+    if ( g_args.size() == 1 )
+    {
+        string new_sel = g_args[0];
+
+        if ( new_sel.compare( 0, 2, "p/" ) == 0 )
+        {
+            spProjectDataReply rep = g_client->projectView( new_sel );
+            cout << "Switched to project: " << new_sel << "\n";
+            if ( g_details )
+            {
+                cout << "\n";
+                printProjects( rep );
+            }
+
+            g_cur_sel = new_sel;
+            g_cur_col = "c/p_" + g_cur_sel.substr(2) + "_root";
+            g_cur_alias_prefix = "p:" + g_cur_sel.substr(2) + ":";
+        }
+        else
+        {
+            if ( new_sel.compare( 0, 2, "u/" ) != 0 )
+                new_sel = "u/" + new_sel;
+
+            spUserDataReply rep = g_client->userView( new_sel, false );
+
+            cout << "Switched to user: " << new_sel << "\n";
+            if ( g_details )
+            {
+                cout << "\n";
+                printUsers( rep );
+            }
+
+            g_cur_sel = new_sel;
+            g_cur_col = "c/u_" + g_cur_sel.substr(2) + "_root";
+            g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
+        }
+    }
+    else if ( g_args.size() == 0 )
+    {
+        cout << "Current selection: " << g_cur_sel << "\n";
+        if ( g_details )
+        {
+            cout << "\n";
+
+            if ( g_cur_sel.compare( 0, 2, "p/" ) == 0 )
+            {
+                spProjectDataReply rep = g_client->projectView( g_cur_sel );
+                printProjects( rep );
+            }
+            else
+            {
+                spUserDataReply rep = g_client->userView( g_cur_sel, false );
+                printUsers( rep );
+            }
+        }
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
+int pc()
+{
+    cout << g_cur_col << "\n";
+    return 0;
+}
+
+int cd()
+{
+    if ( g_args.size() == 0 || ( g_args.size() == 1 && g_args[0] == "/" ))
+    {
+        if ( g_cur_sel[0] == 'p' )
+            g_cur_col = "c/p_" + g_cur_sel.substr(2) + "_root";
+        else
+            g_cur_col = "c/u_" + g_cur_sel.substr(2) + "_root";
+    }
+    else if ( g_args.size() == 1 )
+    {
+        spCollDataReply rep = g_client->collView( resolveID( g_args[0] ));
+        g_cur_col = rep->coll(0).id();
+
+        if ( rep->coll(0).owner() != g_cur_sel )
+        {
+            g_cur_sel = rep->coll(0).owner();
+            g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
+            cout << "Switched to " << ( g_cur_sel[0] == 'u'?"user":"project" ) << ": " << g_cur_sel  << "\n";
+        }
+    }
+    else
+        return -1;
+
+    return 0;
+}
+
+int ls()
+{
+
+    spListingReply rep = g_client->collRead( g_cur_col );
+    printListing( rep );
 
     return 0;
 }
@@ -1101,9 +1292,15 @@ int main( int a_argc, char ** a_argv )
     addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
     addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
-    addCommand( "u", "user", "User management", "user <cmd> [id [args]]\n\nUser commands: (l)ist, (v)iew, (u)pdate.", user );
+    addCommand( "u", "user", "List/view users by affiliation", "user <cmd> [id]\n\nList users by (c)ollaborators or (s)hared access, (v)iew user information.", user );
+    addCommand( "p", "project", "List/view projects by affiliation", "project <cmd> [id]\n\nList projects by (o)wnership, (t)eam membership, or (s)hared access, (v)iew project information.", project );
+
     //addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     //addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
+    addCommand( "", "sel", "Select user or project","sel [<id>]\n\nSelect the specified user or project for collection navigation. If no id is provided, prints the current user or project.", select );
+    addCommand( "", "pwd", "Print working \"directory\" (collection)","pwd\n\nPrint current working \"directory\" (collection) and parent hierarchy.", pc );
+    addCommand( "", "cd", "Change \"directory\" (collection)","cd <id/cmd>\n\nChange current \"directory\" (collection). The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", cd );
+    addCommand( "", "ls", "List current collection","ls [<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' for the parent of the current working collection.", ls );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
     addCommand( "", "ping", "Ping core server","ping\n\nPing core server to test communication.", ping );
 
@@ -1230,11 +1427,19 @@ int main( int a_argc, char ** a_argv )
             tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
             client.authenticate( uname, password );
+            g_cur_sel = uname;
+            if ( g_cur_sel.compare( 0, 2, "u/" ) != 0 )
+                g_cur_sel = "u/" + g_cur_sel;
         }
         else if ( !non_interact )
         {
             cout << "Authenticated as " << uid << "\n";
+            g_cur_sel = uid;
         }
+
+
+        g_cur_col = "c/u_" + g_cur_sel.substr(2) + "_root";
+        g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
 
         g_client = &client;
 

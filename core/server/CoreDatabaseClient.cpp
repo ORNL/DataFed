@@ -502,12 +502,6 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
         if (( imem = val.FindMember("is_repo_admin")) != val.MemberEnd() )
             user->set_is_repo_admin( imem->value.GetBool() );
 
-        if (( imem = val.FindMember("admins")) != val.MemberEnd() )
-        {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-                user->add_admin( imem->value[j].GetString() );
-        }
-
         if (( imem = val.FindMember("idents")) != val.MemberEnd() )
         {
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
@@ -910,9 +904,9 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
 {
     rapidjson::Document result;
 
-    string body = "{\"title\":\"" + a_request.title() + "\"";
+    string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
-        body += ",\"desc\":\"" + a_request.desc() + "\"";
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_parent_id() )
@@ -933,9 +927,9 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
-        body += ",\"title\":\"" + a_request.title() + "\"";
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
-        body += ",\"desc\":\"" + a_request.desc() + "\"";
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_ispublic() )
@@ -968,7 +962,7 @@ DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDat
 }
 
 void
-DatabaseClient::collRead( const CollReadRequest & a_request, CollDataReply & a_reply )
+DatabaseClient::collRead( const CollReadRequest & a_request, ListingReply & a_reply )
 {
     rapidjson::Document result;
     const char * mode = "a";
@@ -982,7 +976,7 @@ DatabaseClient::collRead( const CollReadRequest & a_request, CollDataReply & a_r
 
     dbGet( "col/read", {{"id",a_request.id()},{"mode",mode}}, result );
 
-    setCollData( a_reply, result );
+    setListingData( a_reply, result );
 }
 
 void
@@ -1052,7 +1046,7 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
     {
         rapidjson::Value & val = a_result[i];
 
-        coll = a_reply.add_data();
+        coll = a_reply.add_coll();
         coll->set_id( val["id"].GetString() );
         coll->set_title( val["title"].GetString() );
 
@@ -1093,6 +1087,8 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
         item = a_reply.add_item();
         item->set_id( val["id"].GetString() );
         item->set_title( val["title"].GetString() );
+        if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
+            item->set_alias( imem->value.GetString() );
     }
 }
 

@@ -93,9 +93,11 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
         open: function(event,ui){
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
-                var idx =  a_data.alias.lastIndexOf(":");
-                a_data.alias = (idx==-1?a_data.alias:a_data.alias.substr(idx+1));
-                $("#alias",frame).val(a_data.alias);
+                if ( a_data.alias ){
+                    var idx =  a_data.alias.lastIndexOf(":");
+                    a_data.alias = (idx==-1?a_data.alias:a_data.alias.substr(idx+1));
+                    $("#alias",frame).val(a_data.alias);
+                }
                 $("#desc",frame).val(a_data.desc);
                 $("#parent_row",frame).css("display","none");
             } else {
