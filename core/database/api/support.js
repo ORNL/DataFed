@@ -337,6 +337,9 @@ module.exports = ( function() {
     };
 
     obj.validateAlias = function( a_alias ) {
+        if ( !a_alias )
+            return;
+
         if ( a_alias.length > obj.MAX_ALIAS_LEN )
             throw obj.ERR_ALIAS_TOO_LONG;
 
@@ -367,7 +370,7 @@ module.exports = ( function() {
     };
 
     obj.validateTitle = function( a_title ) {
-        if ( a_title.length > obj.MAX_TITLE_LEN )
+        if ( a_title && a_title.length > obj.MAX_TITLE_LEN )
             throw obj.ERR_TITLE_TOO_LONG;
     };
 

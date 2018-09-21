@@ -130,8 +130,9 @@ router.post('/update', function (req, res) {
                 g_lib.validateTitle( req.body.title );
                 g_lib.validateDescShort( req.body.desc );
 
-                if ( req.body.alias )
+                if ( req.body.alias ){
                     g_lib.validateAlias( req.body.alias );
+                }
 
                 var obj = {};
                 var do_update = false;
