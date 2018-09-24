@@ -507,11 +507,15 @@ router.get('/write', function (req, res) {
 router.get('/get_parents', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var item_id = g_lib.resolveID( req.queryParams.id, client );
+        var items, item_id = g_lib.resolveID( req.queryParams.id, client );
 
-        // TODO How to check non-owner permission for this?
+        // TODO Check non-owner permission for this?
 
-        const items = g_db._query( "for v in 1..1 inbound @item item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { item: item_id }).toArray();
+        if ( req.queryParams.all ){
+            items = g_db._query( "for v in 1..20 inbound @item item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { item: item_id }).toArray();
+        }else{
+            items = g_db._query( "for v in 1..1 inbound @item item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { item: item_id }).toArray();
+        }
 
         res.send( items );
     } catch( e ) {
@@ -520,6 +524,7 @@ router.get('/get_parents', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of child item")
+.queryParam('all', joi.boolean().optional(), "Get all parents (true), or just immediate (false, default)" )
 .summary('Get parent collection(s) of item')
 .description('Get parent collection(s) of item');
 
