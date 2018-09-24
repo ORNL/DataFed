@@ -673,6 +673,19 @@ Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_ite
     delete rep;
 }
 
+spCollDataReply
+Client::collGetParents( const std::string & a_id, bool a_all )
+{
+    Auth::CollGetParentsRequest req;
+    req.set_id( a_id );
+    req.set_all( a_all );
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
 string
 Client::applyPrefix( const string & a_path )
 {

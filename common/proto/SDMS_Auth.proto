@@ -267,6 +267,7 @@ message CollWriteRequest
 message CollGetParentsRequest
 {
     required string             id          = 1;
+    optional bool               all         = 2;
 }
 
 message CollDataReply

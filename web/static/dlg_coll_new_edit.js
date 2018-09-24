@@ -78,7 +78,7 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                         inst.dialog('destroy').remove();
                         //console.log( "data:",data);
                         if ( a_cb )
-                            a_cb(data.data[0]);
+                            a_cb(data.coll[0]);
                     } else {
                         alert( "Error: " + data );
                     }

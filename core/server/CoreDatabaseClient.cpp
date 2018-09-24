@@ -894,7 +894,7 @@ DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_r
     if ( a_request.has_user() )
         dbGet( "col/priv/list", {{"subject",a_request.user()}}, result );
     else
-            dbGet( "col/priv/list", {}, result );
+        dbGet( "col/priv/list", {}, result );
 
     setCollData( a_reply, result );
 }
@@ -1025,8 +1025,12 @@ void
 DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_all() )
+        params.push_back({"all",a_request.all()?"true":"false"});
 
-    dbGet( "col/get_parents", {{"id",a_request.id()}}, result );
+    dbGet( "col/get_parents", params, result );
 
     setCollData( a_reply, result );
 }

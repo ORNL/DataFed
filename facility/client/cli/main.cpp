@@ -1168,9 +1168,41 @@ int select()
     return 0;
 }
 
-int pc()
+int pwd()
 {
-    cout << g_cur_col << "\n";
+    spCollDataReply rep = g_client->collGetParents( g_cur_col, true );
+    size_t pos;
+
+    for ( int i = rep->coll_size() - 2; i >= 0 ; i-- )
+    {
+        if ( rep->coll(i).has_alias() )
+        {
+            pos = rep->coll(i).alias().find_last_of(":");
+            cout << "/" << rep->coll(i).alias().substr( pos + 1 );;
+        }
+        else
+            cout << "/[" << rep->coll(i).id() << "]";
+    }
+
+    if ( rep->coll_size() > 0 )
+    {
+        rep = g_client->collView( g_cur_col );
+        if ( rep->coll_size() )
+        {
+            if ( rep->coll(0).has_alias() )
+            {
+                pos = rep->coll(0).alias().find_last_of(":");
+                cout << "/" << rep->coll(0).alias().substr( pos + 1 );;
+            }
+            else
+                cout << "/[" << rep->coll(0).id() << "]";
+        }
+    }
+    else
+        cout << "/";
+
+    cout << "\n";
+
     return 0;
 }
 
@@ -1185,14 +1217,24 @@ int cd()
     }
     else if ( g_args.size() == 1 )
     {
-        spCollDataReply rep = g_client->collView( resolveID( g_args[0] ));
-        g_cur_col = rep->coll(0).id();
-
-        if ( rep->coll(0).owner() != g_cur_sel )
+        spCollDataReply rep;
+        if ( g_args[0] == ".." )
         {
-            g_cur_sel = rep->coll(0).owner();
-            g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
-            cout << "Switched to " << ( g_cur_sel[0] == 'u'?"user":"project" ) << ": " << g_cur_sel  << "\n";
+            rep = g_client->collGetParents( g_cur_col );
+            if ( rep->coll_size() )
+                g_cur_col = rep->coll(0).id();
+        }
+        else
+        {
+            rep = g_client->collView( resolveID( g_args[0] ));
+            g_cur_col = rep->coll(0).id();
+
+            if ( rep->coll(0).owner() != g_cur_sel )
+            {
+                g_cur_sel = rep->coll(0).owner();
+                g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
+                cout << "Switched to " << ( g_cur_sel[0] == 'u'?"user":"project" ) << ": " << g_cur_sel  << "\n";
+            }
         }
     }
     else
@@ -1203,9 +1245,43 @@ int cd()
 
 int ls()
 {
+    spListingReply rep;
 
-    spListingReply rep = g_client->collRead( g_cur_col );
-    printListing( rep );
+    if ( g_args.size() == 0 )
+    {
+        rep = g_client->collRead( g_cur_col );
+        printListing( rep );
+    }
+    else if ( g_args.size() == 1 )
+    {
+        string id;
+        if ( g_args[0] == "/" )
+        {
+            if ( g_cur_sel[0] == 'p' )
+                id = "c/p_" + g_cur_sel.substr(2) + "_root";
+            else
+                id = "c/u_" + g_cur_sel.substr(2) + "_root";
+        }
+        else if ( g_args[0] == ".." )
+        {
+            spCollDataReply rep2 = g_client->collGetParents( g_cur_col );
+            if ( rep2->coll_size() )
+                id = rep2->coll(0).id();
+            else
+            {
+                cout << "Already at root\n";
+                return 1;
+            }
+        }
+        else
+            id = g_args[0];
+
+        rep = g_client->collRead( id );
+        printListing( rep );
+    }
+    else
+        return -1;
+
 
     return 0;
 }
@@ -1298,7 +1374,7 @@ int main( int a_argc, char ** a_argv )
     //addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     //addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
     addCommand( "", "sel", "Select user or project","sel [<id>]\n\nSelect the specified user or project for collection navigation. If no id is provided, prints the current user or project.", select );
-    addCommand( "", "pwd", "Print working \"directory\" (collection)","pwd\n\nPrint current working \"directory\" (collection) and parent hierarchy.", pc );
+    addCommand( "", "pwd", "Print working \"directory\" (collection)","pwd\n\nPrint current working \"directory\" (collection) and parent hierarchy.", pwd );
     addCommand( "", "cd", "Change \"directory\" (collection)","cd <id/cmd>\n\nChange current \"directory\" (collection). The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", cd );
     addCommand( "", "ls", "List current collection","ls [<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' for the parent of the current working collection.", ls );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );

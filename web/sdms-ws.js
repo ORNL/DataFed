@@ -606,8 +606,8 @@ app.get('/api/col/delete', ( a_req, a_resp ) => {
 
 app.get('/api/col/view', ( a_req, a_resp ) => {
     sendMessage( "CollViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        if ( reply.data && reply.data.length )
-            a_resp.send(reply.data[0]);
+        if ( reply.coll && reply.coll.length )
+            a_resp.send(reply.coll[0]);
         else
             a_resp.send();
     });
