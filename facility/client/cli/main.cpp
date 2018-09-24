@@ -816,25 +816,15 @@ int coll()
 {
     if ( g_args[0] == "view" || g_args[0] == "v" )
     {
-        if ( g_args.size() == 2 )
-        {
-            spCollDataReply rep = g_client->collView( resolveID( g_args[1] ));
-            printCollData( rep );
-        }
-        else
-            return -1;
-    }
-    else if( g_args[0] == "l" )
-    {
         if ( g_args.size() == 1 )
         {
-            spListingReply rep = g_client->collRead( "root" );
-            printListing( rep );
+            spCollDataReply rep = g_client->collView( g_cur_col );
+            printCollData( rep );
         }
         else if ( g_args.size() == 2 )
         {
-            spListingReply rep = g_client->collRead( g_args[1] );
-            printListing( rep );
+            spCollDataReply rep = g_client->collView( resolveID( g_args[1] ));
+            printCollData( rep );
         }
         else
             return -1;
@@ -945,32 +935,19 @@ int xfr_status()
 
 int user()
 {
-    if ( g_args[0] == "list" || g_args[0] == "l" )
-    {
-        if ( g_args.size() != 1 )
-            return -1;
-
-        spUserDataReply rep = g_client->userList( g_details );
-        printUsers( rep );
-    }
-    else if ( g_args[0] == "view" || g_args[0] == "v" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
-
-        spUserDataReply rep = g_client->userView( g_args[1], g_details );
-        printUsers( rep );
-    }
-    else if ( g_args[0] == "update" || g_args[0] == "u" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
-
-        spUserDataReply rep = g_client->userUpdate( g_args[1], g_email.size()?g_email.c_str():0 );
-        printUsers( rep );
-    }
-    else
+    if ( g_args.size() != 1 )
         return -1;
+
+    spUserDataReply rep;
+
+    if ( g_args[0] == "collab" || g_args[0] == "c" )
+        rep = g_client->userListCollaborators( g_details );
+    else if ( g_args[0] == "shared" || g_args[0] == "s" )
+        rep = g_client->userListShared( g_details );
+    else
+        rep = g_client->userView( g_args[0], g_details );
+
+    printUsers( rep );
 
     return 0;
 }
@@ -978,6 +955,22 @@ int user()
 
 int project()
 {
+    if ( g_args.size() != 1 )
+        return -1;
+
+    spProjectDataReply rep;
+
+    if ( g_args[0] == "my" || g_args[0] == "m" )
+        rep = g_client->projectListMine();
+    else if ( g_args[0] == "team" || g_args[0] == "t" )
+        rep = g_client->projectListTeam();
+    else if ( g_args[0] == "shared" || g_args[0] == "s" )
+        rep = g_client->projectListShared();
+    else
+        rep = g_client->projectView( g_args[0] );
+
+    printProjects( rep );
+
     return 0;
 }
 
@@ -1274,7 +1267,7 @@ int ls()
             }
         }
         else
-            id = g_args[0];
+            id = resolveID( g_args[0] );
 
         rep = g_client->collRead( id );
         printListing( rep );
@@ -1366,10 +1359,10 @@ int main( int a_argc, char ** a_argv )
     addCommand( "t", "trans", "List data transfers with details", "trans [id]\n\nList details of specified or matching data transfers. Use --since, --from, --to, and --status for match criteria.", xfr_list );
     addCommand( "s", "status", "Get data transfer status", "status <id>\n\nGet status of data transfer specified by <id> parameter.", xfr_status );
     addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
-    addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
+    addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
-    addCommand( "u", "user", "List/view users by affiliation", "user <cmd> [id]\n\nList users by (c)ollaborators or (s)hared access, (v)iew user information.", user );
-    addCommand( "p", "project", "List/view projects by affiliation", "project <cmd> [id]\n\nList projects by (o)wnership, (t)eam membership, or (s)hared access, (v)iew project information.", project );
+    addCommand( "u", "user", "List/view users by affiliation", "user <cmd/id>\n\nList users by (c)ollaborators or (s)hared access, or view user information if an ID is given.", user );
+    addCommand( "p", "project", "List/view projects by affiliation", "project <cmd> [id]\n\nList (m)y projects, (t)eam projects, or projects with (s)hared access, or view project information if an ID is given.", project );
 
     //addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     //addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );

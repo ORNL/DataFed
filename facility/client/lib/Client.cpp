@@ -331,9 +331,9 @@ Client::userView( const string & a_uid, bool a_details )
 }
 
 spUserDataReply
-Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
+Client::userListCollaborators( bool a_details, uint32_t a_offset, uint32_t a_count )
 {
-    Auth::UserListAllRequest req;
+    Auth::UserListCollabRequest req;
     Auth::UserDataReply * reply;
 
     if ( a_details )
@@ -343,6 +343,29 @@ Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
     if ( a_count )
         req.set_count( a_count );
 
+    send<>( req, reply, m_ctx++ );
+
+    return spUserDataReply( reply );
+}
+
+spUserDataReply
+Client::userListShared( bool a_details, uint32_t a_offset, uint32_t a_count )
+{
+    (void)a_details;
+    (void)a_offset;
+    (void)a_count;
+
+    Auth::ACLByUserRequest req;
+    Auth::UserDataReply * reply;
+
+/*
+    if ( a_details )
+        req.set_details( a_details );
+    if ( a_offset )
+        req.set_offset( a_offset );
+    if ( a_count )
+        req.set_count( a_count );
+*/
     send<>( req, reply, m_ctx++ );
 
     return spUserDataReply( reply );
@@ -362,6 +385,44 @@ Client::userUpdate( const std::string & a_uid, const char * a_email )
     send<>( req, reply, m_ctx++ );
 
     return spUserDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectListMine()
+{
+    Auth::ProjectListRequest req;
+    Auth::ProjectDataReply * reply;
+
+    req.set_by_owner( true );
+    req.set_by_admin( true );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectListTeam()
+{
+    Auth::ProjectListRequest req;
+    Auth::ProjectDataReply * reply;
+
+    req.set_by_member( true );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectListShared()
+{
+    Auth::ACLByProjRequest req;
+    Auth::ProjectDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
 }
 
 spProjectDataReply

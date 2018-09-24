@@ -7,7 +7,6 @@ enum Protocol
     ID = 2;
 }
 
-
 // ============================ Setup/Config Messages
 
 message GenerateCredentialsRequest

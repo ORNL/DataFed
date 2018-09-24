@@ -89,9 +89,13 @@ public:
     ServiceStatus       status();
 
     spUserDataReply     userView( const std::string & a_uid, bool a_details );
-    spUserDataReply     userList( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spUserDataReply     userListCollaborators( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spUserDataReply     userListShared( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spUserDataReply     userUpdate( const std::string & a_uid, const char * a_email );
 
+    spProjectDataReply  projectListMine();
+    spProjectDataReply  projectListTeam();
+    spProjectDataReply  projectListShared();
     spProjectDataReply  projectView( const std::string & a_id );
 
     spRecordDataReply   recordCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_coll_id = 0 );
