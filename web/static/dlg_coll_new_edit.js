@@ -76,7 +76,7 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();
-                        //console.log( "data:",data);
+                        console.log( "data:",data);
                         if ( a_cb )
                             a_cb(data.coll[0]);
                     } else {

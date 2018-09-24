@@ -606,11 +606,11 @@ spRecordDataReply createRecord()
 
         inf.close();
 
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str() );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), g_cur_col.c_str() );
     }
     else
     {
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, g_cur_col.c_str() );
     }
 }
 
@@ -837,7 +837,7 @@ int coll()
         if ( !g_title.size() )
             EXCEPT_PARAM( 1, "Title option is required for create command" );
 
-        spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
+        spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_cur_col.c_str() );
         printCollData( rep );
     }
     else if( g_args[0] == "update" || g_args[0] == "u" )

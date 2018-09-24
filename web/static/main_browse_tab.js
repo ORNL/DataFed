@@ -624,7 +624,7 @@ function makeBrowserTab(){
             // Get collections that this item belongs to
             getParents( item.id, function( ok, data ) {
                 if ( ok ) {
-                    var par = data.data;
+                    var par = data.coll;
                     var scope;
 
                     if ( par && par.length ) {
@@ -837,7 +837,8 @@ function makeBrowserTab(){
                     linkItemUnlinkSource( data.otherNode.key, node.key, node.parent.key, function( ok, msg ) {
                         if ( ok ){
                             node.setExpanded(true).always(function(){
-                                data.otherNode.moveTo( node, data.hitMode );
+                                if ( !inst.data_tree.getNodeByKey( data.otherNode.key, node ))
+                                    data.otherNode.moveTo( node, data.hitMode );
                             });
                         }else
                             dlgAlert("Link Error", msg );
@@ -846,10 +847,12 @@ function makeBrowserTab(){
                     linkItem( data.otherNode.key, node.key, function( ok, msg ) {
                         if ( ok ){
                             node.setExpanded(true).always(function(){
-                                if ( data.otherNode.isFolder())
-                                    data.otherNode.moveTo( node, data.hitMode );
-                                else
-                                    data.otherNode.copyTo( node, data.hitMode );
+                                if ( !inst.data_tree.getNodeByKey( data.otherNode.key, node )){
+                                    if ( data.otherNode.isFolder())
+                                        data.otherNode.moveTo( node, data.hitMode );
+                                    else
+                                        data.otherNode.copyTo( node, data.hitMode );
+                                }
                             });
                         }else
                             dlgAlert("Link Error", msg );
