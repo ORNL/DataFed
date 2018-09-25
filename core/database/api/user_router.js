@@ -668,3 +668,28 @@ router.get('/ident/remove', function (req, res) {
 .description('Remove linked identity from user account');
 
 
+router.get('/ep/get', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        res.send( client.eps?client.eps:[] );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.summary('Get recent end-points')
+.description('Get recent end-points');
+
+router.get('/ep/set', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        g_db._update( client._id, {eps:req.queryParams.eps}, { keepNull: false });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('eps', joi.array().items(joi.string()).required(), "End-points (UUIDs or legacy names)")
+.summary('Set recent end-points')
+.description('Set recent end-points');
+
