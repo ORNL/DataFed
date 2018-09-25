@@ -60,7 +60,8 @@ router.post('/create', function (req, res) {
                     owner_id = client._id;
                 }
 
-                var obj = { title: req.body.title };
+                var time = Math.floor( Date.now()/1000 );
+                var obj = { title: req.body.title, ct: time, ut: time };
                 if ( req.body.desc )
                     obj.desc = req.body.desc;
                 if ( req.body.public )
@@ -134,7 +135,8 @@ router.post('/update', function (req, res) {
                     g_lib.validateAlias( req.body.alias );
                 }
 
-                var obj = {};
+                var time = Math.floor( Date.now()/1000 );
+                var obj = {ut:time};
                 var do_update = false;
 
                 if ( req.body.title ) {

@@ -41,7 +41,8 @@ router.get('/create', function (req, res) {
                 g_lib.validateTitle( req.queryParams.title );
                 g_lib.validateDescShort( req.queryParams.desc );
 
-                var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, domain: req.queryParams.domain };
+                var time = Math.floor( Date.now()/1000 );
+                var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, domain: req.queryParams.domain, ct: time, ut: time };
 
                 if ( req.queryParams.desc )
                     proj_data.desc = req.queryParams.desc;
@@ -137,7 +138,8 @@ router.get('/update', function (req, res) {
                 g_lib.validateTitle( req.queryParams.title );
                 g_lib.validateDescShort( req.queryParams.desc );
 
-                var obj = {};
+                var time = Math.floor( Date.now()/1000 );
+                var obj = {ut:time};
 
                 if ( req.queryParams.domain ){
                     if ( req.queryParams.domain.startsWith("user.")){
@@ -355,9 +357,7 @@ router.get('/delete', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
-                console.log("pr del 1");
                 g_lib.ensureAdminPermProj( client, proj_id );
-                console.log("pr del 2");
 
                 var objects;
                 var obj;
@@ -365,14 +365,11 @@ router.get('/delete', function (req, res) {
 
                 // Delete collections, data, groups, notes
                 objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id }).toArray();
-                console.log("pr del 3");
                 for ( i in objects ) {
                     obj = objects[i];
-                    console.log("del",obj);
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
-                console.log("pr del 4");
                 g_graph.p.remove( proj_id );
             }
         });

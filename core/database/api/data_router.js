@@ -91,7 +91,8 @@ router.post('/create', function (req, res) {
                 if ( !repo_alloc )
                     throw g_lib.ERR_NO_ALLOCATION;
 
-                var obj = { data_size: 0, rec_time: Math.floor( Date.now()/1000 ) };
+                var time = Math.floor( Date.now()/1000 );
+                var obj = { size: 0, ct: time, ut: time };
 
                 obj.title = req.body.title;
 
@@ -182,7 +183,7 @@ router.post('/update', function (req, res) {
                 if ( req.body.alias )
                     g_lib.validateAlias( req.body.alias );
 
-                var obj = { rec_time: Math.floor( Date.now()/1000 ) };
+                var obj = { ut: Math.floor( Date.now()/1000 ) };
                 var do_update = false;
 
                 if ( req.body.title != undefined ) {
@@ -205,24 +206,24 @@ router.post('/update', function (req, res) {
                     do_update = true;
                 }
 
-                if ( req.body.data_size != undefined ) {
-                    obj.data_size = req.body.data_size;
+                if ( req.body.size != undefined ) {
+                    obj.size = req.body.size;
                     do_update = true;
 
                     data = g_db.d.document( data_id );
-                    if ( obj.data_size != data.data_size ){
+                    if ( obj.size != data.size ){
                         var loc = g_db.loc.firstExample({ _from: data_id });
                         if ( loc ){
                             //console.log("owner:",owner_id,"repo:",loc._to);
                             var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                            var usage = Math.max(0,alloc.usage - data.data_size + obj.data_size);
+                            var usage = Math.max(0,alloc.usage - data.size + obj.size);
                             g_db._update( alloc._id, {usage:usage});
                         }
                     }
                 }
 
-                if ( req.body.data_time != undefined ) {
-                    obj.data_time = req.body.data_time;
+                if ( req.body.dt != undefined ) {
+                    obj.dt = req.body.dt;
                     do_update = true;
                 }
 
@@ -272,8 +273,8 @@ router.post('/update', function (req, res) {
     public: joi.boolean().optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
-    data_size: joi.number().optional(),
-    data_time: joi.number().optional()
+    size: joi.number().optional(),
+    dt: joi.number().optional()
 }).required(), 'Record fields')
 .summary('Update an existing data record')
 .description('Update an existing data record from JSON body');
@@ -487,10 +488,10 @@ router.get('/delete', function (req, res) {
                 var loc = g_db.loc.firstExample({_from: data_id });
 
                 // Adjust allocation for data size
-                if ( data.data_size ){
+                if ( data.size ){
                     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
                     var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                    var usage = Math.max(0,alloc.usage - data.data_size);
+                    var usage = Math.max(0,alloc.usage - data.size);
                     g_db._update( alloc._id, {usage:usage});
                 }
 
