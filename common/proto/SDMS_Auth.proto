@@ -91,6 +91,20 @@ message UserDataReply
     repeated SDMS.UserData      user        = 1;
 }
 
+message UserGetRecentEPRequest
+{
+}
+
+message UserGetRecentEPReply
+{
+    repeated string             ep          = 1;
+}
+
+message UserSetRecentEPRequest
+{
+    repeated string             ep          = 1;
+}
+
 // ============================ Data Record AND Collection Messages
 
 message ListingReply

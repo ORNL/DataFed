@@ -728,13 +728,20 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/recent/load', ( a_req, a_resp ) => {
-    var recent = a_req.cookies['sdms-recent'];
-    a_resp.json(recent?JSON.parse(recent):[]);
+    sendMessage( "UserGetRecentEPRequest", {}, a_req, a_resp, function( reply ) {
+        a_resp.json(reply.ep?reply.ep:[]);
+    });
+
+    //var recent = a_req.cookies['sdms-recent'];
+    //a_resp.json(recent?JSON.parse(recent):[]);
 });
 
-app.get('/ui/ep/recent/save', ( a_req, a_resp ) => {
-    a_resp.cookie( 'sdms-recent', a_req.query.recent, { path: "/ui" });
-    a_resp.json({});
+app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
+    sendMessage( "UserSetRecentEPRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json({});
+    });
+    //a_resp.cookie( 'sdms-recent', a_req.query.recent, { path: "/ui" });
+    //a_resp.json({});
 });
 
 app.get('/ui/theme/load', ( a_req, a_resp ) => {

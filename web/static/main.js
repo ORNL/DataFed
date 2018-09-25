@@ -294,7 +294,7 @@ function epRecentLoad( a_cb ){
 
 function epRecentSave( a_cb ){
     console.log("epRecentSave",g_ep_recent);
-    _asyncGet( "/ui/ep/recent/save?recent="+encodeURIComponent(JSON.stringify(g_ep_recent)), null, function( ok, data ){
+    _asyncPost( "/ui/ep/recent/save",{ep:g_ep_recent}, function( ok, data ){
         if ( a_cb )
             a_cb();
     });

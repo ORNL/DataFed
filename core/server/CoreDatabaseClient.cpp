@@ -474,6 +474,38 @@ DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request,
 }
 
 void
+DatabaseClient::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply )
+{
+    (void)a_request;
+    rapidjson::Document result;
+
+    dbGet( "usr/ep/get", {}, result );
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        a_reply.add_ep( result[i].GetString() );
+    }
+}
+
+void
+DatabaseClient::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void) a_reply;
+    rapidjson::Document result;
+
+    string eps = "[";
+    for ( int i = 0; i < a_request.ep_size(); i++ )
+    {
+        if ( i )
+            eps += ",";
+        eps += "\"" + a_request.ep(i) + "\"";
+    }
+    eps += "]";
+
+    dbGet( "usr/ep/set", {{"eps",eps}}, result );
+}
+
+void
 DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
