@@ -438,6 +438,14 @@ function makeBrowserTab(){
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                        if ( item.ct ){
+                            date.setTime(item.ct*1000);
+                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        if ( item.ut ){
+                            date.setTime(item.ut*1000);
+                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
                         html += "</table>";
                         inst.sel_details.html(html);
 
@@ -466,14 +474,18 @@ function makeBrowserTab(){
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
-                        html += "<tr><td>Data Size:</td><td>" + sizeToString( item.dataSize ) + "</td></tr>";
-                        if ( item.dataTime ){
-                            date.setTime(item.dataTime*1000);
-                            html += "<tr><td>Data Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
+                        html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
+                        if ( item.ct ){
+                            date.setTime(item.ct*1000);
+                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
                         }
-                        if ( item.recTime ){
-                            date.setTime(item.recTime*1000);
-                            html += "<tr><td>Record Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        if ( item.ut ){
+                            date.setTime(item.ut*1000);
+                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        if ( item.dt ){
+                            date.setTime(item.dt*1000);
+                            html += "<tr><td>Uploaded:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
                         }
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
                         html += "</table>";
@@ -500,6 +512,14 @@ function makeBrowserTab(){
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                        if ( item.ct ){
+                            date.setTime(item.ct*1000);
+                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        if ( item.ut ){
+                            date.setTime(item.ut*1000);
+                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
                         html += "<tr><td>Admins:</td><td>";
                         if ( item.admin && item.admin.length ){
                             for ( i in item.admin )

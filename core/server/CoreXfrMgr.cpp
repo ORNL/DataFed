@@ -227,8 +227,8 @@ XfrMgr::xfrThreadFunc()
                                     cout << "XFR - Update record " << (*ixfr)->data_id << ",  size: " << file_size << endl;
                                     // Update DB record with new file stats
                                     upd_req.set_id( (*ixfr)->data_id );
-                                    upd_req.set_data_size( file_size );
-                                    upd_req.set_data_time( mod_time );
+                                    upd_req.set_size( file_size );
+                                    upd_req.set_dt( mod_time );
                                     reply.Clear();
 
                                     db_client.recordUpdate( upd_req, reply );

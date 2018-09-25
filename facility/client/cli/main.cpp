@@ -201,10 +201,13 @@ void printProjects( spProjectDataReply a_reply )
     if ( g_out_form == JSON )
         cout << "{\"Projects\":[";
     else if ( g_out_form == CSV )
-        cout << "\"ProjID\",\"Title\",\"Domain\",\"Desc\",\"Owner\"\n";
+        cout << "\"ProjID\",\"Title\",\"Domain\",\"Desc\",\"Owner\",\"Created\",\"Updated\"\n";
 
     if ( a_reply->proj_size() )
     {
+        time_t      t;
+        struct tm*  pTM;
+
         for ( int i = 0; i < a_reply->proj_size(); i++ )
         {
             if ( g_out_form == JSON && i > 0 )
@@ -222,6 +225,18 @@ void printProjects( spProjectDataReply a_reply )
                     cout << "Desc    " << proj.desc() << "\n";
                 if ( proj.has_owner() )
                     cout << "Owner   " << proj.owner() << "\n";
+                if ( proj.has_ct() )
+                {
+                    t = (time_t)proj.ct();
+                    pTM = localtime(&t);
+                    cout << "Created " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                }
+                if ( proj.has_ut() )
+                {
+                    t = (time_t)proj.ut();
+                    pTM = localtime(&t);
+                    cout << "Updated " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                }
                 break;
             case JSON:
                 cout << "{\"ProjID\":\"" << proj.id() << "\",\"Title\":\"" << escapeJSON( proj.title() ) << "\"";
@@ -231,13 +246,19 @@ void printProjects( spProjectDataReply a_reply )
                     cout << ",\"Desc\":\"" << escapeJSON( proj.desc() ) << "\"";
                 if ( proj.has_owner() )
                     cout << ",\"Owner\":\"" << proj.owner() << "\"";
+                if ( proj.has_ct() )
+                    cout << ",\"Created\":" << proj.ct();
+                if ( proj.has_ut() )
+                    cout << ",\"Updated\":" << proj.ut();
                 cout << "}";
                 break;
             case CSV:
                 cout << "\"" << proj.id() << "\",\"" << escapeCSV( proj.title() ) << "\""
                     << ",\"" << ( proj.has_domain()?proj.domain():"" ) << "\""
                     << ",\"" << ( proj.has_desc()?escapeCSV( proj.desc() ):"" ) << "\""
-                    << ",\"" << ( proj.has_owner()?proj.owner():"") << "\"\n";
+                    << ",\"" << ( proj.has_owner()?proj.owner():"") << "\""
+                    << ",\"" << ( proj.has_ct()?proj.ct():0) << "\""
+                    << ",\"" << ( proj.has_ut()?proj.ut():0) << "\"\n";
                 break;
             }
 
@@ -282,12 +303,7 @@ void printData( spRecordDataReply a_rep )
     if ( g_out_form == JSON )
         cout << "{\"Data\":[";
     else if ( g_out_form == CSV )
-    {
-        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Size\"";
-        if ( g_details )
-            cout << ",\"DataTS\",\"RecTS\",\"Meta\"";
-        cout << "\n";
-    }
+        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Size\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
 
     if ( a_rep->data_size() )
     {
@@ -304,33 +320,36 @@ void printData( spRecordDataReply a_rep )
             switch ( g_out_form )
             {
             case TEXT:
-                cout << "DataID " << rec.id() << "\n";
+                cout << "DataID   " << rec.id() << "\n";
                 if ( rec.has_alias() )
-                    cout << "Alias  " << rec.alias() << "\n";
-                cout << "Title  " << rec.title() << "\n";
+                    cout << "Alias    " << rec.alias() << "\n";
+                cout << "Title    " << rec.title() << "\n";
                 if ( rec.has_desc() )
-                    cout << "Desc   " << rec.desc() << "\n";
+                    cout << "Desc     " << rec.desc() << "\n";
                 if ( rec.has_owner() )
-                    cout << "Owner  " << rec.owner() << "\n";
-                if ( rec.has_data_size() )
-                    cout << "Size   " << rec.data_size() << "\n";
-                if ( g_details )
+                    cout << "Owner    " << rec.owner() << "\n";
+                if ( rec.has_size() )
+                    cout << "Size     " << rec.size() << "\n";
+                if ( rec.has_dt() )
                 {
-                    if ( rec.has_data_time() )
-                    {
-                        t = (time_t)rec.data_time();
-                        pTM = localtime(&t);
-                        cout << "DataTS " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
-                    }
-                    if ( rec.has_rec_time() )
-                    {
-                        t = (time_t)rec.rec_time();
-                        pTM = localtime(&t);
-                        cout << "RecTS  " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
-                    }
-                    if ( rec.has_metadata() )
-                        cout << "Meta   " << rec.metadata() << "\n";
+                    t = (time_t)rec.dt();
+                    pTM = localtime(&t);
+                    cout << "Uploaded " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
                 }
+                if ( rec.has_ct() )
+                {
+                    t = (time_t)rec.ct();
+                    pTM = localtime(&t);
+                    cout << "Created  " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                }
+                if ( rec.has_ut() )
+                {
+                    t = (time_t)rec.ut();
+                    pTM = localtime(&t);
+                    cout << "Updated  " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                }
+                if ( rec.has_metadata() )
+                    cout << "Meta     " << rec.metadata() << "\n";
                 break;
             case CSV:
                 cout << "\"" << rec.id() << "\""
@@ -338,14 +357,11 @@ void printData( spRecordDataReply a_rep )
                     << ",\"" << escapeCSV( rec.title() ) << "\""
                     << ",\"" << ( rec.has_desc()?escapeCSV( rec.desc() ):"" ) << "\""
                     << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
-                    << "," << ( rec.has_data_size()?rec.data_size():0 );
-                    if ( g_details )
-                    {
-                        cout << "," << ( rec.has_data_time()?rec.data_time():0 )
-                            << "," << ( rec.has_rec_time()?rec.rec_time():0 )
-                            << ",\"" << ( rec.has_metadata()?escapeCSV( rec.metadata() ):"" ) << "\"";
-                    }
-                    cout << "\n";
+                    << "," << ( rec.has_size()?rec.size():0 )
+                    << "," << ( rec.has_dt()?rec.dt():0 )
+                    << "," << ( rec.has_ct()?rec.ct():0 )
+                    << "," << ( rec.has_ut()?rec.ut():0 )
+                    << ",\"" << ( rec.has_metadata()?escapeCSV( rec.metadata() ):"" ) << "\"\n";
                 break;
             case JSON:
                 cout << "{\"DataID\":\"" << rec.id() << "\"";
@@ -356,17 +372,16 @@ void printData( spRecordDataReply a_rep )
                     cout << ",\"Desc\":\"" << escapeJSON( rec.desc() ) << "\"";
                 if ( rec.has_owner() )
                     cout << ",\"Owner\":\"" << rec.owner() << "\"";
-                if ( rec.has_data_size() )
-                    cout << ",\"Size\":" << rec.data_size();
-                if ( g_details )
-                {
-                    if ( rec.has_data_time() )
-                        cout << ",\"DataTS\":" << rec.data_time();
-                    if ( rec.has_rec_time() )
-                        cout << ",\"RecTS\":" << rec.rec_time();
-                    if ( rec.has_metadata() )
-                        cout << ",\"Meta\":" << rec.metadata() << "";
-                }
+                if ( rec.has_size() )
+                    cout << ",\"Size\":" << rec.size();
+                if ( rec.has_dt() )
+                    cout << ",\"Uploaded\":" << rec.dt();
+                if ( rec.has_ct() )
+                    cout << ",\"Created\":" << rec.ct();
+                if ( rec.has_ut() )
+                    cout << ",\"Updated\":" << rec.ut();
+                if ( rec.has_metadata() )
+                    cout << ",\"Meta\":" << rec.metadata();
                 cout << "}";
                 break;
             }
@@ -379,23 +394,65 @@ void printData( spRecordDataReply a_rep )
 
 void printCollData( spCollDataReply a_reply )
 {
+    if ( g_out_form == JSON )
+        cout << "{\"Collections\":[";
+    else if ( g_out_form == CSV )
+        cout << "\"CollID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Created\",\"Updated\"\n";
+
     if ( a_reply->coll_size() )
     {
+        time_t      t;
+        struct tm*  pTM;
+
         for ( int i = 0; i < a_reply->coll_size(); i++ )
         {
             const CollData & coll = a_reply->coll(i);
 
-            cout << "  id    : " << coll.id() << "\n";
-            if ( coll.has_alias() )
-                cout << "  alias : " << coll.alias() << "\n";
-            cout << "  title : " << coll.title() << "\n";
-            if ( coll.has_owner() )
-                cout << "  owner : " << coll.owner() << "\n";
-            cout << "\n";
+            switch ( g_out_form )
+            {
+            case TEXT:
+                cout << "CollID  " << coll.id() << "\n";
+                if ( coll.has_alias() )
+                    cout << "Alias   " << coll.alias() << "\n";
+                cout << "Title   " << coll.title() << "\n";
+                if ( coll.has_desc() )
+                    cout << "Desc    " << coll.desc() << "\n";
+                if ( coll.has_owner() )
+                    cout << "Owner   " << coll.owner() << "\n";
+                if ( coll.has_ct() )
+                {
+                    t = (time_t)coll.ct();
+                    pTM = localtime(&t);
+                    cout << "Created " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                }
+                if ( coll.has_ut() )
+                {
+                    t = (time_t)coll.ut();
+                    pTM = localtime(&t);
+                    cout << "Updated " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
+                }
+                cout << "\n";
+                break;
+            case CSV:
+                break;
+            case JSON:
+                cout << "{\"CollID\":\"" << coll.id() << "\"";
+                if ( coll.has_alias() )
+                    cout << ",\"Alias\":" << coll.alias() << "\"";
+                cout << ",\"Title\"" << escapeJSON( coll.title() ) << "\"";
+                if ( coll.has_desc() )
+                    cout << ",\"Desc\":" << escapeJSON( coll.desc() ) << "\"";
+                if ( coll.has_owner() )
+                    cout << ",\"Owner\":" << coll.owner() << "\"";
+                if ( coll.has_ct() )
+                    cout << ",\"Created\":" << coll.ct();
+                if ( coll.has_ut() )
+                    cout << ",\"Updated\":" << coll.ut();
+                cout << "\n";
+                break;
+            }
         }
     }
-    else
-        cout << "No results\n";
 }
 
 void printListing( spListingReply a_reply )

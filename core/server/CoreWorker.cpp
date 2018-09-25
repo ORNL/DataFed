@@ -424,7 +424,7 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
     Auth::RecordDataReply upd_reply;
 
     upd_req.set_id( request->id() );
-    upd_req.set_data_size( 0 );
+    upd_req.set_size( 0 );
 
     m_db_client.setClient( a_uid );
     m_db_client.recordUpdate( upd_req, upd_reply );

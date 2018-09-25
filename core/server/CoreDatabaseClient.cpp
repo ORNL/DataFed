@@ -708,6 +708,12 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             proj->set_owner( imem->value.GetString() );
 
+        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
+            proj->set_ct( imem->value.GetUint() );
+
+        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
+            proj->set_ut( imem->value.GetUint() );
+
         if (( imem = val.FindMember("admins")) != val.MemberEnd() )
         {
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
@@ -803,10 +809,10 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
     }
     if ( a_request.has_ispublic() )
         body += ",\"public\":" + a_request.ispublic()?"true":"false";
-    if ( a_request.has_data_size() )
-        body += ",\"data_size\":" + to_string(a_request.data_size());
-    if ( a_request.has_data_time() )
-        body += ",\"data_time\":" + to_string(a_request.data_time());
+    if ( a_request.has_size() )
+        body += ",\"size\":" + to_string(a_request.size());
+    if ( a_request.has_dt() )
+        body += ",\"dt\":" + to_string(a_request.dt());
     body += "}";
 
     dbPost( "dat/update", {}, &body, result );
@@ -905,14 +911,17 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
         if (( imem = val.FindMember("repo_id")) != val.MemberEnd() )
             rec->set_repo_id( imem->value.GetString() );
 
-        if (( imem = val.FindMember("data_size")) != val.MemberEnd() )
-            rec->set_data_size( imem->value.GetUint64() );
+        if (( imem = val.FindMember("size")) != val.MemberEnd() )
+            rec->set_size( imem->value.GetUint64() );
 
-        if (( imem = val.FindMember("data_time")) != val.MemberEnd() )
-            rec->set_data_time( imem->value.GetUint() );
+        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
+            rec->set_ct( imem->value.GetUint() );
 
-        if (( imem = val.FindMember("rec_time")) != val.MemberEnd() )
-            rec->set_rec_time( imem->value.GetUint() );
+        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
+            rec->set_ut( imem->value.GetUint() );
+
+        if (( imem = val.FindMember("dt")) != val.MemberEnd() )
+            rec->set_dt( imem->value.GetUint() );
     }
     //cout << "SetRecordData done" << endl;
 }
@@ -1099,6 +1108,11 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
             }
         }
 
+        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
+            coll->set_ct( imem->value.GetUint() );
+
+        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
+            coll->set_ut( imem->value.GetUint() );
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             coll->set_owner( imem->value.GetString() );
