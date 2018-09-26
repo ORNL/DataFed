@@ -137,29 +137,18 @@ router.post('/update', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
-                var do_update = false;
 
-                if ( req.body.title ) {
+                if ( req.body.title )
                     obj.title = req.body.title;
-                    do_update = true;
-                }
 
-                if ( req.body.desc ) {
+                if ( req.body.desc )
                     obj.desc = req.body.desc;
-                    do_update = true;
-                }
 
-                if ( req.body.public != undefined ){
+                if ( req.body.public != undefined )
                     obj.public = req.body.public;
-                    do_update = true;
-                }
 
-                if ( do_update ) {
-                    coll = g_db._update( coll_id, obj, { returnNew: true });
-                    coll = coll.new;
-                } else {
-                    coll = g_db.c.document( coll_id );
-                }
+                coll = g_db._update( coll_id, obj, { returnNew: true });
+                coll = coll.new;
 
                 if ( req.body.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
@@ -423,6 +412,7 @@ router.get('/write', function (req, res) {
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
                 var is_admin = false;
+                var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
@@ -433,21 +423,32 @@ router.get('/write', function (req, res) {
                 var i, obj,idx;
                 var loose = [];
 
+                // Enforce following link/unlink rules:
+                // 1. Root collection may not be linked
+                // 2. Items can only be linked once to a given collection
+                // 3. Only items sharing the same owner as the target collection may be linked
+                // 4. Linking and unlinking requires WRITE permission on parent collections and ADMIN permission on item
+                // 5. Circular links are not allowed (linking a parent into a child collection)
+                // 6. Collections can only be linked to one parent
+                // 7. All records and collections must have at least one parent (except root)
+
                 if ( req.queryParams.remove ) {
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
-                        if ( obj._id[0] == "c" && obj.is_root )
-                            throw g_lib.ERR_CANNOT_UNLINK_ROOT;
 
+                        // 2. Check if item is in this collection
+                        if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
+                            throw g_lib.ERR_ITEM_NOT_LINKED;
+                    
                         if ( !is_admin ) {
                             if ( !g_lib.hasPermission( client, obj, g_lib.PERM_ADMIN ))
                                 throw g_lib.ERR_PERM_DENIED;
                         }
 
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
-                        // If item has no parent collection AND it's not being added, link to root
+
+                        // 7. If item has no parent collection AND it's not being added, link to root
                         if ( !g_db.item.firstExample({ _to: obj._id }) ){
-                            console.log("found poten loose:",obj._id);
                             loose.push({ id: obj._id, title: obj.title });
                         }
                     }
@@ -456,40 +457,51 @@ router.get('/write', function (req, res) {
                 if ( req.queryParams.add ) {
                     for ( i in req.queryParams.add ) {
                         obj = g_lib.getObject( req.queryParams.add[i], client );
-                        // Ignore if obj already in this collection?
-                        if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id })){
-                            // If obj is a collection, unlink from current parent
-                            if ( !is_admin ) {
-                                if ( !g_lib.hasPermission( client, obj, g_lib.PERM_ADMIN ))
-                                    throw g_lib.ERR_PERM_DENIED;
-                            }
 
-                            if ( obj._id[0] == "c" ){
-                                if ( obj.is_root )
-                                    throw g_lib.ERR_CANNOT_LINK_ROOT;
-                                g_db.item.removeByExample({ _to: obj._id });
-                            }
+                        // 1. Check if item is a root collection
+                        if ( obj.is_root )
+                            throw g_lib.ERR_CANNOT_LINK_ROOT;
 
-                            g_db.item.save({ _from: coll_id, _to: obj._id });
-                            for ( idx in loose ){
-                                if ( loose[idx].id == obj._id ){
-                                    console.log("remove poten loose:",obj._id);
+                        // 2. Check if item is already in this collection
+                        if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
+                            throw g_lib.ERR_ITEM_ALREADY_LINKED;
 
-                                    loose.slice(idx,1);
-                                    break;
-                                }
+                        // 3. Check if item has same owner as this collection
+                        if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
+                            throw g_lib.ERR_CANNOT_CROSS_LINK;
+
+                        // 4. Check for proper permission on item
+                        if ( !is_admin ) {
+                            if ( !g_lib.hasPermission( client, obj, g_lib.PERM_ADMIN ))
+                                throw g_lib.ERR_PERM_DENIED;
+                        }
+
+                        if ( obj._id[0] == "c" ){
+                            // 5. Check for circular dependency
+                            if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
+                                throw g_lib.ERR_CIRCULAR_LINK;
+
+                            // 6. Collections can only be linked to one parent
+                            g_db.item.removeByExample({ _to: obj._id });
+                        }
+
+                        g_db.item.save({ _from: coll_id, _to: obj._id });
+
+                        // 7. If item has no parent collection AND it's not being added, link to root
+                        for ( idx in loose ){
+                            if ( loose[idx].id == obj._id ){
+                                loose.slice(idx,1);
+                                break;
                             }
                         }
                     }
                 }
 
+                // 7. Re-link loose items to root
                 if ( loose.length ){
-                    var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
                     var root_id = g_lib.getRootID(owner_id);
-                    for ( i in loose ){
-                        console.log("relink loose item", loose[i].id );
+                    for ( i in loose )
                         g_db.item.save({ _from: root_id, _to: loose[i].id });
-                    }
                 }
 
                 res.send( loose );

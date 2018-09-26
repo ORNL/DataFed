@@ -79,7 +79,6 @@ module.exports = ( function() {
     obj.ERR_INVALID_ALLOC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid allocation" ]);
     obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid parameter(s)" ]);
     obj.ERR_INVALID_COLLECTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid collection" ]);
-    obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
     obj.ERR_CLIENT_NOT_FOUND      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Client not found" ]);
     obj.ERR_UID_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "UID not found" ]);
     obj.ERR_GROUP_NOT_FOUND       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Group not found" ]);
@@ -94,8 +93,11 @@ module.exports = ( function() {
     obj.ERR_KEYS_NOT_DEFINED      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Keys not defined" ]);
     obj.ERR_TOKEN_NOT_DEFINED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Token not defined" ]);
     obj.ERR_CANNOT_DEL_ROOT       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot delete root collection" ]);
+    obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
+    obj.ERR_ITEM_NOT_LINKED       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item not in collection" ]);
+    obj.ERR_CANNOT_CROSS_LINK     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot link items across different users/projects" ]);
     obj.ERR_CANNOT_LINK_ROOT      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot link root collection" ]);
-    obj.ERR_CANNOT_UNLINK_ROOT    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot unlink root collection" ]);
+    obj.ERR_CIRCULAR_LINK         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Link would cause circular dependency" ]);
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
     obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
     obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
@@ -334,6 +336,19 @@ module.exports = ( function() {
     obj.ensureAdminPermRepo = function( a_client, a_repo_id ) {
         if ( !obj.hasAdminPermRepo( a_client, a_repo_id ))
             throw obj.ERR_PERM_DENIED;
+    };
+
+    obj.isSrcParentOfDest = function( a_src_id, a_dest_id ){
+        var parent;
+        var child_id = a_dest_id;
+        while ( 1 ){
+            parent = obj.db.item.firstExample({_to: child_id});
+            if ( !parent )
+                return false;
+            if ( parent._from == a_src_id )
+                return true;
+            child_id = parent._from;
+        }
     };
 
     obj.validateAlias = function( a_alias ) {

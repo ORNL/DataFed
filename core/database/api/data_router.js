@@ -184,31 +184,21 @@ router.post('/update', function (req, res) {
                     g_lib.validateAlias( req.body.alias );
 
                 var obj = { ut: Math.floor( Date.now()/1000 ) };
-                var do_update = false;
 
-                if ( req.body.title != undefined ) {
+                if ( req.body.title != undefined )
                     obj.title = req.body.title;
-                    do_update = true;
-                }
 
-                if ( req.body.desc != undefined ) {
+                if ( req.body.desc != undefined )
                     obj.desc = req.body.desc;
-                    do_update = true;
-                }
 
-                if ( req.body.public != undefined ){
+                if ( req.body.public != undefined )
                     obj.public = req.body.public;
-                    do_update = true;
-                }
 
-                if ( req.body.md != undefined ) {
+                if ( req.body.md != undefined )
                     obj.md = req.body.md;
-                    do_update = true;
-                }
 
                 if ( req.body.size != undefined ) {
                     obj.size = req.body.size;
-                    do_update = true;
 
                     data = g_db.d.document( data_id );
                     if ( obj.size != data.size ){
@@ -222,15 +212,10 @@ router.post('/update', function (req, res) {
                     }
                 }
 
-                if ( req.body.dt != undefined ) {
+                if ( req.body.dt != undefined )
                     obj.dt = req.body.dt;
-                    do_update = true;
-                }
 
-                if ( do_update ) {
-                    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
-                    data = data.new;
-                }
+                data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
 
                 if ( req.body.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: data_id });
