@@ -1372,14 +1372,15 @@ int ls()
 
 int link()
 {
+    bool fin;
+
     if ( g_args.size() == 2 )
     {
-        bool fin;
-        string id = resolveCollID( g_args[0], fin );
-        g_client->collAddItem( id, resolveID( g_args[0] ) );
+        string id = resolveCollID( g_args[1], fin );
+        g_client->collAddItem( id, resolveCollID( g_args[0], fin ) );
     }
     else if ( g_args.size() == 1 )
-        g_client->collAddItem( g_cur_col, resolveID( g_args[0] ));
+        g_client->collAddItem( g_cur_col, resolveCollID( g_args[0], fin ));
     else
         return -1;
 
@@ -1388,14 +1389,15 @@ int link()
 
 int unlink()
 {
+    bool fin;
+
     if ( g_args.size() == 2 )
     {
-        bool fin;
-        string id = resolveCollID( g_args[0], fin );
-        g_client->collRemoveItem( id, resolveID( g_args[0] ) );
+        string id = resolveCollID( g_args[1], fin );
+        g_client->collRemoveItem( id, resolveCollID( g_args[0], fin ) );
     }
     else if ( g_args.size() == 1 )
-        g_client->collRemoveItem( g_cur_col, resolveID( g_args[0] ));
+        g_client->collRemoveItem( g_cur_col, resolveCollID( g_args[0], fin ));
     else
         return -1;
 
