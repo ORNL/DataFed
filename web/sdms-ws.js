@@ -49,8 +49,8 @@ g_ctx.fill(null);
 function defaultSettings(){
     g_host = "sdms.ornl.gov";
     g_port = 443;
-    g_server_key_file = 'sdms_web_key.pem';
-    g_server_cert_file = 'sdms_web_cert.pem';
+    g_server_key_file = 'sdms_web_key';
+    g_server_cert_file = 'sdms_web_cert';
     g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
 }
 

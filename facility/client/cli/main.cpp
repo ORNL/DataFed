@@ -132,6 +132,42 @@ string resolveID( const string & a_id )
     return g_cur_alias_prefix + a_id;
 }
 
+string resolveCollID( const string & a_id, bool & a_final )
+{
+    a_final = false;
+
+    if ( a_id == "." )
+    {
+        a_final = true;
+        return g_cur_col;
+    }
+    else if ( a_id == "/" )
+    {
+        a_final = true;
+        if ( g_cur_sel[0] == 'p' )
+            return "c/p_" + g_cur_sel.substr(2) + "_root";
+        else
+            return "c/u_" + g_cur_sel.substr(2) + "_root";
+    }
+    else if ( a_id == ".." )
+    {
+        spCollDataReply rep = g_client->collGetParents( g_cur_col );
+        if ( rep->coll_size() )
+        {
+            a_final = true;
+            return rep->coll(0).id();
+        }
+        else
+            EXCEPT( 1, "Already at root" );
+    }
+    else if ( a_id.size() > 2 && a_id[1] == '/' )
+        return a_id;
+    else if ( a_id.find_first_of( ":" ) != string::npos )
+        return a_id;
+    else
+        return g_cur_alias_prefix + a_id;
+}
+
 void printUsers( spUserDataReply a_reply )
 {
     if ( g_out_form == JSON )
@@ -407,6 +443,8 @@ void printCollData( spCollDataReply a_reply )
         for ( int i = 0; i < a_reply->coll_size(); i++ )
         {
             const CollData & coll = a_reply->coll(i);
+            if ( g_out_form == JSON && i > 0 )
+                cout << ",";
 
             switch ( g_out_form )
             {
@@ -434,25 +472,35 @@ void printCollData( spCollDataReply a_reply )
                 cout << "\n";
                 break;
             case CSV:
+                cout << "\"" << coll.id() << "\""
+                    << ",\"" << (coll.has_alias()?coll.alias():"") << "\""
+                    << ",\"" << escapeCSV( coll.title() ) << "\""
+                    << ",\"" << (coll.has_desc()?escapeCSV( coll.desc() ):"") << "\""
+                    << ",\"" << (coll.has_owner()?coll.owner():"") << "\""
+                    << "," << (coll.has_ct()?coll.ct():0)
+                    << "," << (coll.has_ut()?coll.ut():0)
+                    << "\n";
                 break;
             case JSON:
                 cout << "{\"CollID\":\"" << coll.id() << "\"";
                 if ( coll.has_alias() )
-                    cout << ",\"Alias\":" << coll.alias() << "\"";
-                cout << ",\"Title\"" << escapeJSON( coll.title() ) << "\"";
+                    cout << ",\"Alias\":\"" << coll.alias() << "\"";
+                cout << ",\"Title\":\"" << escapeJSON( coll.title() ) << "\"";
                 if ( coll.has_desc() )
-                    cout << ",\"Desc\":" << escapeJSON( coll.desc() ) << "\"";
+                    cout << ",\"Desc\":\"" << escapeJSON( coll.desc() ) << "\"";
                 if ( coll.has_owner() )
-                    cout << ",\"Owner\":" << coll.owner() << "\"";
+                    cout << ",\"Owner\":\"" << coll.owner() << "\"";
                 if ( coll.has_ct() )
                     cout << ",\"Created\":" << coll.ct();
                 if ( coll.has_ut() )
                     cout << ",\"Updated\":" << coll.ut();
-                cout << "\n";
+                cout << "}";
                 break;
             }
         }
     }
+    if ( g_out_form == JSON )
+        cout << "]}\n";
 }
 
 void printListing( spListingReply a_reply )
@@ -908,21 +956,25 @@ int coll()
     else if( g_args[0] == "delete" || g_args[0] == "d" )
     {
         cout << "NOT IMPLEMENTED YET\n";
-    }
+    }/*
     else if( g_args[0] == "add" || g_args[0] == "a" )
     {
-        if ( g_args.size() != 3 )
+        if ( g_args.size() == 3 )
+            g_client->collAddItem( resolveID( g_args[1] ), resolveID( g_args[2] ));
+        else if ( g_args.size() == 2 )
+            g_client->collAddItem( g_cur_col, resolveID( g_args[1] ));
+        else
             return -1;
-
-        g_client->collAddItem( g_args[1], g_args[2] );
     }
     else if( g_args[0] == "remove" || g_args[0] == "r" )
     {
-        if ( g_args.size() != 3 )
+        if ( g_args.size() == 3 )
+            g_client->collRemoveItem( resolveID( g_args[1] ), resolveID( g_args[2] ));
+        else if ( g_args.size() == 2 )
+            g_client->collRemoveItem( g_cur_col, resolveID( g_args[1] ));
+        else
             return -1;
-
-        g_client->collRemoveItem( g_args[1], g_args[2] );
-    }
+    }*/
     else
         return -1;
 
@@ -1258,7 +1310,7 @@ int pwd()
 
 int cd()
 {
-    if ( g_args.size() == 0 || ( g_args.size() == 1 && g_args[0] == "/" ))
+    if ( g_args.size() == 0 )
     {
         if ( g_cur_sel[0] == 'p' )
             g_cur_col = "c/p_" + g_cur_sel.substr(2) + "_root";
@@ -1267,16 +1319,15 @@ int cd()
     }
     else if ( g_args.size() == 1 )
     {
-        spCollDataReply rep;
-        if ( g_args[0] == ".." )
+        bool fin;
+        string id = resolveCollID( g_args[0], fin );
+
+        if ( !fin )
         {
-            rep = g_client->collGetParents( g_cur_col );
-            if ( rep->coll_size() )
-                g_cur_col = rep->coll(0).id();
-        }
-        else
-        {
-            rep = g_client->collView( resolveID( g_args[0] ));
+            spCollDataReply rep = g_client->collView( id );
+            if ( !rep->coll_size() )
+                EXCEPT( 1, "Invalid collection" );
+
             g_cur_col = rep->coll(0).id();
 
             if ( rep->coll(0).owner() != g_cur_sel )
@@ -1285,6 +1336,10 @@ int cd()
                 g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
                 cout << "Switched to " << ( g_cur_sel[0] == 'u'?"user":"project" ) << ": " << g_cur_sel  << "\n";
             }
+        }
+        else
+        {
+            g_cur_col = id;
         }
     }
     else
@@ -1304,34 +1359,96 @@ int ls()
     }
     else if ( g_args.size() == 1 )
     {
-        string id;
-        if ( g_args[0] == "/" )
-        {
-            if ( g_cur_sel[0] == 'p' )
-                id = "c/p_" + g_cur_sel.substr(2) + "_root";
-            else
-                id = "c/u_" + g_cur_sel.substr(2) + "_root";
-        }
-        else if ( g_args[0] == ".." )
-        {
-            spCollDataReply rep2 = g_client->collGetParents( g_cur_col );
-            if ( rep2->coll_size() )
-                id = rep2->coll(0).id();
-            else
-            {
-                cout << "Already at root\n";
-                return 1;
-            }
-        }
-        else
-            id = resolveID( g_args[0] );
-
-        rep = g_client->collRead( id );
+        bool fin;
+        rep = g_client->collRead( resolveCollID( g_args[0], fin ) );
         printListing( rep );
     }
     else
         return -1;
 
+
+    return 0;
+}
+
+int link()
+{
+    if ( g_args.size() == 2 )
+    {
+        bool fin;
+        string id = resolveCollID( g_args[0], fin );
+        g_client->collAddItem( id, resolveID( g_args[0] ) );
+    }
+    else if ( g_args.size() == 1 )
+        g_client->collAddItem( g_cur_col, resolveID( g_args[0] ));
+    else
+        return -1;
+
+    return 0;
+}
+
+int unlink()
+{
+    if ( g_args.size() == 2 )
+    {
+        bool fin;
+        string id = resolveCollID( g_args[0], fin );
+        g_client->collRemoveItem( id, resolveID( g_args[0] ) );
+    }
+    else if ( g_args.size() == 1 )
+        g_client->collRemoveItem( g_cur_col, resolveID( g_args[0] ));
+    else
+        return -1;
+
+    return 0;
+}
+
+int move()
+{
+    bool src_fin, dest_fin;
+    string src_id, dest_id, item_id;
+
+    if ( g_args.size() == 3 )
+    {
+        src_id = resolveCollID( g_args[1], src_fin );
+        dest_id = resolveCollID( g_args[2], dest_fin );
+    }
+    else if ( g_args.size() == 2 )
+    {
+        src_id = g_cur_col;
+        src_fin = true;
+        dest_id = resolveCollID( g_args[1], dest_fin );
+    }
+    else
+        return -1;
+
+    item_id = resolveID( g_args[0] );
+
+    if ( !src_fin )
+    {
+        spCollDataReply rep = g_client->collView( src_id );
+        if ( !rep->coll_size() )
+            EXCEPT( 1, "Invalid source collection" );
+        src_id = rep->coll(0).id();
+    }
+
+    if ( !dest_fin )
+    {
+        spCollDataReply rep = g_client->collView( dest_id );
+        if ( !rep->coll_size() )
+            EXCEPT( 1, "Invalid destination collection" );
+        dest_id = rep->coll(0).id();
+    }
+
+    if ( dest_id != src_id && item_id != src_id && item_id != dest_id )
+    {
+        g_client->collAddItem( dest_id, item_id );
+        g_client->collRemoveItem( src_id, item_id );
+    }
+    else
+    {
+        cerr << "ERROR Invalid parameter(s)\n";
+        return 1;
+    }
 
     return 0;
 }
@@ -1416,7 +1533,7 @@ int main( int a_argc, char ** a_argv )
     addCommand( "t", "trans", "List data transfers with details", "trans [id]\n\nList details of specified or matching data transfers. Use --since, --from, --to, and --status for match criteria.", xfr_list );
     addCommand( "s", "status", "Get data transfer status", "status <id>\n\nGet status of data transfer specified by <id> parameter.", xfr_status );
     addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
-    addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (v)iew, (c)reate, (u)pdate, (d)elete, (a)dd, (r)emove", coll );
+    addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (v)iew, (c)reate, (u)pdate, (d)elete", coll );
     addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
     addCommand( "u", "user", "List/view users by affiliation", "user <cmd/id>\n\nList users by (c)ollaborators or (s)hared access, or view user information if an ID is given.", user );
     addCommand( "p", "project", "List/view projects by affiliation", "project <cmd> [id]\n\nList (m)y projects, (t)eam projects, or projects with (s)hared access, or view project information if an ID is given.", project );
@@ -1426,7 +1543,12 @@ int main( int a_argc, char ** a_argv )
     addCommand( "", "sel", "Select user or project","sel [<id>]\n\nSelect the specified user or project for collection navigation. If no id is provided, prints the current user or project.", select );
     addCommand( "", "pwd", "Print working \"directory\" (collection)","pwd\n\nPrint current working \"directory\" (collection) and parent hierarchy.", pwd );
     addCommand( "", "cd", "Change \"directory\" (collection)","cd <id/cmd>\n\nChange current \"directory\" (collection). The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", cd );
-    addCommand( "", "ls", "List current collection","ls [<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' for the parent of the current working collection.", ls );
+    addCommand( "", "ls", "List current collection","ls [<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, '..' for the parent of the current working collection, or \".\" (or omitted) for the current collection.", ls );
+    //addCommand( "", "cp", "Copy data into a collection","cp <data_id> [<coll_id>]>\n\n\"Copies\" a data record into either the specified collection, or the current collection if <coll_id> is not provided. The command does not create an actual copy of the data, rather it creates a link to the data in the specified collection. Use the \"dup\" command to create a new data record from an existing record.", cp );
+    //addCommand( "", "mv", "Move data/collection into a collection","mv <id> [<coll_id>]>\n\n\"Moves\" a data record or a collection into either the specified collection, or the current collection if <coll_id> is not provided. The command creates a new link to the data/collection in the specified collection, and unlinks it from the.", mv );
+    addCommand( "ln", "link", "Link item into a collection","link <id> [<coll_id>]>\n\nLinks a data record or collection into the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being linked is a collection, it will be unlinked from it's current location before being linked into the new location.", link );
+    addCommand( "ul", "unlink", "Unlink item from a collection","unlink <id> [<coll_id>]>\n\nUnlinks a data record or collection from the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being unlinked has no other links, it will be unlinked from the specified location and re-linked into the root collection.", unlink );
+    addCommand( "mv", "move", "Move link item to new collection","move <id> [<src_id>] <dest_id>>\n\nMoves item links from source collection <src_id> to destination collection <dest_id>. If the <src_id> paramter is omitted, the current collection is used. Collection ids may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" for the current colleciton.", move );
     addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
     addCommand( "", "ping", "Ping core server","ping\n\nPing core server to test communication.", ping );
 

@@ -710,7 +710,7 @@ void
 Client::collAddItem( const std::string & a_coll_id, const std::string & a_item_id )
 {
     Auth::CollWriteRequest  req;
-    Anon::AckReply *        rep;
+    Auth::ListingReply *    rep;
 
     req.set_id( a_coll_id );
     req.add_add( a_item_id );
@@ -724,7 +724,7 @@ void
 Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id )
 {
     Auth::CollWriteRequest  req;
-    Anon::AckReply *        rep;
+    Auth::ListingReply *    rep;
 
     req.set_id( a_coll_id );
     req.add_rem( a_item_id );
