@@ -93,7 +93,8 @@ public:
     void repoListOwnerAllocations( const Auth::RepoListOwnerAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply );
     void repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply );
-
+    void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
+    
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
