@@ -9,6 +9,76 @@
     background: #F0F0F0!important;
 }
 
+.ui-icon-person
+{
+    color: #0000FF
+}
+
+.ui-icon-persons
+{
+    color: #6000FF
+}
+
+.ui-icon-folder
+{
+    color: #dFbF40
+}
+
+.ui-icon-copy
+{
+    color: #008F00
+}
+
+.ui-icon-box
+{
+    color: #0000FF
+}
+
+.ui-icon-view-icons
+{
+    color: #0000FF
+}
+
+.ui-icon-view-icons-b
+{
+    color: #6000FF
+}
+
+.ui-icon-file
+{
+    color: #008F00
+}
+
+.ui-icon-alert
+{
+    color: #FF5F00
+}
+
+.ui-icon-heart
+{
+    color: #ff0000
+}
+
+.ui-icon-circle-plus
+{
+    color: #009090
+}
+
+.ui-icon-view-list
+{
+    color: #808080
+}
+
+.ui-icon-zoom
+{
+    color: #000000
+}
+
+.ui-icon-reload
+{
+    color: #008000
+}
+
 .ui-draggable-handle {
 	-ms-touch-action: none;
 	touch-action: none;
