@@ -805,7 +805,10 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
     {
         body += ",\"md\":" + a_request.metadata();
         if ( a_request.has_mdset() )
-            body += ",\"mdset\":" + a_request.mdset()?"true":"false";
+        {
+            body += ",\"mdset\":";
+            body += (a_request.mdset()?"true":"false");
+        }
     }
     if ( a_request.has_ispublic() )
         body += ",\"public\":" + a_request.ispublic()?"true":"false";

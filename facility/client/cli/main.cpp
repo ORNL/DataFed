@@ -168,6 +168,22 @@ string resolveCollID( const string & a_id, bool & a_final )
         return g_cur_alias_prefix + a_id;
 }
 
+void printError( const std::string & a_msg )
+{
+    switch( g_out_form )
+    {
+    case TEXT:
+        cerr << "ERROR " << a_msg << "\n";
+        break;
+    case CSV:
+        cerr << "\"ERROR\",\"" << escapeCSV( a_msg ) << "\"\n";
+        break;
+    case JSON:
+        cerr << "{\"ERROR\":\"" << escapeJSON( a_msg ) << "\"}\n";
+        break;
+    }
+}
+
 void printUsers( spUserDataReply a_reply )
 {
     if ( g_out_form == JSON )
@@ -1651,7 +1667,9 @@ int main( int a_argc, char ** a_argv )
         }
 
         Client client( host, port, timeout, cred_path, !manual_auth );
+
         string uid = client.start();
+
         if ( def_ep )
             client.setDefaultEndpoint( def_ep );
 
@@ -1681,12 +1699,12 @@ int main( int a_argc, char ** a_argv )
             if ( g_cur_sel.compare( 0, 2, "u/" ) != 0 )
                 g_cur_sel = "u/" + g_cur_sel;
         }
-        else if ( !non_interact )
+        else
         {
-            cout << "Authenticated as " << uid << "\n";
+            if ( !non_interact )
+                cout << "Authenticated as " << uid << "\n";
             g_cur_sel = uid;
         }
-
 
         g_cur_col = "c/u_" + g_cur_sel.substr(2) + "_root";
         g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
@@ -1756,37 +1774,37 @@ int main( int a_argc, char ** a_argv )
                                 int ec = icmd->second->func();
                                 if ( ec < 0 )
                                 {
-                                    cout << "Invalid arguments.\n";
+                                    printError( "Invalid arguments" );
                                     icmd->second->help( true );
                                     cout << "\n";
                                 }
                             }
                             else
                             {
-                                cout << "Unknown command\n";
+                                printError( "Unknown command" );
                             }
                         }
                     }
                 }
                 catch( TraceException &e )
                 {
-                    cout << e.toString() << "\n";
+                    printError( e.toString() );
                 }
                 catch( exception &e )
                 {
-                    cout << e.what() << "\n";
+                    printError( e.what() );
                 }
             }
         }
     }
     catch( TraceException &e )
     {
-        cerr << "ERROR " << e.toString() << "\n";
+        printError( e.toString() );
         return 1;
     }
     catch( exception &e )
     {
-        cerr << "ERROR " << e.what() << "\n";
+        printError( e.what() );
         return 1;
     }
 
