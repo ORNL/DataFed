@@ -216,6 +216,7 @@ router.post('/update', function (req, res) {
                     obj.dt = req.body.dt;
 
                 data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
+                data = data.new;
 
                 if ( req.body.alias ) {
                     var old_alias = g_db.alias.firstExample({ _from: data_id });
