@@ -85,6 +85,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &Worker::procRepoAllocationSetRequest );
+        SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
 
         // Requests that can be handled by DB client directly
         
@@ -503,5 +504,19 @@ Worker::procRepoAllocationSetRequest( const std::string & a_uid )
 
     PROC_MSG_END
 }
+
+bool
+Worker::procRepoAuthzRequest( const std::string & a_uid )
+{
+    (void)a_uid;
+    PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
+    
+    m_db_client.setClient( request->client() );
+    m_db_client.repoAuthz( *request, reply );
+
+    PROC_MSG_END
+}
+
+
 
 }}
