@@ -155,40 +155,20 @@ Server::loadKeys( const std::string & a_cred_dir )
         EXCEPT_PARAM( 1, "Could not open file: " << fname );
     inf >> m_core_key;
     inf.close();
-
-    cout << "pub key["<<m_pub_key<<"]\n";
-    cout << "priv key["<<m_priv_key<<"]\n";
-    cout << "core key["<<m_core_key<<"]\n";
 }
 
 void
 Server::ioRun()
 {
-    DL_INFO( "io thread started" );
+    DL_INFO( "I/O thread started, listening on port " << m_port );
 
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = false;
-    sec_ctx.public_key = m_pub_key; //"B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    sec_ctx.private_key = m_priv_key; //"k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
-    sec_ctx.server_key = m_core_key; //"B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
+    sec_ctx.public_key = m_pub_key;
+    sec_ctx.private_key = m_priv_key;
+    sec_ctx.server_key = m_core_key;
 
     MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::ROUTER, true, &sec_ctx );
-
-#if 0
-    MsgComm test( string("tcp://localhost:9001"), ZMQ_DEALER, false, 0 );
-    StatusRequest stat_req;
-    MsgBuf::Message * msg;
-    MsgBuf::Frame frame;
-    test.send( stat_req );
-    if ( !test.recv( msg, frame, 5000 ))
-    {
-        cout << "Core server did not respond\n";
-    }
-    else
-    {
-        cout << "Core server responded with " << frame.getMsgType() << "\n";
-    }
-#endif
 
     uint16_t msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;
@@ -201,7 +181,7 @@ Server::ioRun()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                //cout << "Get msg type: " << msg_type << "\n";
+                DL_DEBUG( "Got msg type: " << msg_type );
 
                 handler = m_msg_handlers.find( msg_type );
                 if ( handler != m_msg_handlers.end() )
@@ -217,11 +197,11 @@ Server::ioRun()
         }
         catch( ... )
         {
-            DL_ERROR( "Exception in msg handler" );
+            DL_ERROR( "Unhandled exception in msg handler" );
         }
     }
 
-    DL_INFO( "io thread stopped" );
+    DL_INFO( "I/O thread stopped" );
 }
 
 
@@ -281,7 +261,7 @@ Server::procStatusRequest()
 {
     PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
 
-    cout << "Repo: status request\n";
+    DL_DEBUG( "Status request" );
 
     reply.set_status( SS_NORMAL );
 
@@ -294,7 +274,7 @@ Server::procDataDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
 
-    cout << "Repo: data delete request " << request->path() << "\n";
+    DL_DEBUG( "Data delete request for " << request->path() );
 
     boost::filesystem::path data_path( request->path() );
 
@@ -309,7 +289,7 @@ Server::procDataGetSizeRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply )
 
-    cout << "Repo: data get size request " << request->path() << "\n";
+    DL_DEBUG( "Data get size request for " << request->path() );
 
     boost::filesystem::path data_path( request->path() );
 
@@ -318,12 +298,12 @@ Server::procDataGetSizeRequest()
     if ( boost::filesystem::exists( data_path ))
     {
         reply.set_size( boost::filesystem::file_size( data_path ));
-        cout << "Repo: size: " << reply.size() << "\n";
+        DL_DEBUG( "size: " << reply.size() );
     }
     else
     {
         reply.set_size( 0 );
-        cout << "Repo: path does not exist\n";
+        DL_ERROR( "DataGetSizeReq - path does not exist: "  << request->path() );
     }
 
     PROC_MSG_END
@@ -335,7 +315,7 @@ Server::procPathCreateRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoPathCreateRequest, Anon::AckReply )
 
-    cout << "Repo: path create request " << request->path() << "\n";
+    DL_DEBUG( "Path create request " << request->path() );
 
     boost::filesystem::path data_path( request->path() );
     if ( !boost::filesystem::exists( data_path ))
@@ -352,7 +332,7 @@ Server::procPathDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoPathDeleteRequest, Anon::AckReply )
 
-    cout << "Repo: path delete request " << request->path() << "\n";
+    DL_DEBUG( "Path delete request " << request->path() );
 
     boost::filesystem::path data_path( request->path() );
     if ( boost::filesystem::exists( data_path ))

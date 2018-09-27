@@ -52,13 +52,13 @@ struct CmdInfo
         cout << " - " << desc_short << "\n";
 
         if ( a_full )
-            cout << desc_long << "\n";
+            cout << "\n  Usage: " << cmd_long << " " << desc_long << "\n";
     }
 
-    string      cmd_short;
-    string      cmd_long;
-    string      desc_short;
-    string      desc_long;
+    string              cmd_short;
+    string              cmd_long;
+    string              desc_short;
+    string              desc_long;
     cmd_func_t  func;
 };
 
@@ -117,6 +117,7 @@ OutputFormat    g_out_form = TEXT;
 string          g_cur_sel;
 string          g_cur_col;
 string          g_cur_alias_prefix;
+string          g_select;
 
 po::options_description g_opts_command( "Command options" );
 
@@ -168,6 +169,22 @@ string resolveCollID( const string & a_id, bool & a_final )
         return g_cur_alias_prefix + a_id;
 }
 
+void printSuccess()
+{
+    switch( g_out_form )
+    {
+    case TEXT:
+        cerr << "SUCCESS\n";
+        break;
+    case CSV:
+        cerr << "\"SUCCESS\"\n";
+        break;
+    case JSON:
+        cerr << "{\"Status\":\"SUCCESS\"}\n";
+        break;
+    }
+}
+
 void printError( const std::string & a_msg )
 {
     switch( g_out_form )
@@ -179,7 +196,7 @@ void printError( const std::string & a_msg )
         cerr << "\"ERROR\",\"" << escapeCSV( a_msg ) << "\"\n";
         break;
     case JSON:
-        cerr << "{\"ERROR\":\"" << escapeJSON( a_msg ) << "\"}\n";
+        cerr << "{\"Status\":\"ERROR\",\"Message\":\"" << escapeJSON( a_msg ) << "\"}\n";
         break;
     }
 }
@@ -663,28 +680,23 @@ int help()
     if ( g_args.size() == 0 )
     {
         cout << "Usage: command [args] [options] \n";
-        cout << "      \"help all\" to list all commands\n";
-        cout << "      \"help [command]\" for command-specific help\n\n";
-        cout << g_opts_command << endl;
+        cout << "      Use \"help [command]\" for command-specific help\n";
+        cout << "      Use ctrl-c or \"exit\" to exit shell\n\n";
+        cout << g_opts_command << "\nAvailable commands:\n\n";
+
+        for ( cmd_list_t::iterator icmd = g_cmd_list.begin(); icmd != g_cmd_list.end(); ++icmd )
+        {
+            cout << "  ";
+            icmd->help();
+        }
     }
     else
     {
-        if ( g_args[0] == "all" )
-        {
-            cout << "Available commands:\n\n";
-            for ( cmd_list_t::iterator icmd = g_cmd_list.begin(); icmd != g_cmd_list.end(); ++icmd )
-                icmd->help();
-
-            cout << "\n";
-        }
+        cmd_map_t::iterator icmd = g_cmd_map.find( g_args[0] );
+        if ( icmd == g_cmd_map.end() )
+            printError( "Unknown command" );
         else
-        {
-            cmd_map_t::iterator icmd = g_cmd_map.find( g_args[0] );
-            if ( icmd == g_cmd_map.end() )
-                cout << "Unknown command '" << g_args[0] << "'\n";
-            else
-                icmd->second->help( true );
-        }
+            icmd->second->help( true );
     }
 
     return 0;
@@ -781,7 +793,40 @@ int find_records()
 }
 
 
-int get_data()
+
+int data_view()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    spRecordDataReply rep = g_client->recordView( resolveID( g_args[0] ));
+    printData( rep );
+
+    return 0;
+}
+
+int data_create()
+{
+    if ( g_args.size() != 0 )
+        return -1;
+
+    spRecordDataReply rep = createRecord();
+    printData( rep );
+
+    return 0;
+}
+
+int data_update()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    spRecordDataReply rep = updateRecord( resolveID( g_args[0] ));
+    printData( rep );
+    return 0;
+}
+
+int data_get()
 {
     if ( g_args.size() != 2 )
         return -1;
@@ -825,7 +870,7 @@ int get_data()
 }
 
 
-int put_data()
+int data_put()
 {
     string data_id;
 
@@ -885,47 +930,39 @@ int put_data()
 
 }
 
-int data()
+int data_clear()
 {
-    if ( g_args[0] == "view" || g_args[0] == "v" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
+    if ( g_args.size() != 1 )
+        return -1;
 
-        spRecordDataReply rep = g_client->recordView( resolveID( g_args[1] ));
-        printData( rep );
+    g_client->dataDelete( g_args[0] );
+    printSuccess();
+
+    return 0;
+}
+
+int data_delete()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    g_client->recordDelete( resolveID( g_args[0] ));
+    printSuccess();
+
+    return 0;
+}
+
+int coll_view()
+{
+    if ( g_args.size() == 0 )
+    {
+        spCollDataReply rep = g_client->collView( g_cur_col );
+        printCollData( rep );
     }
-    else if( g_args[0] == "create" || g_args[0] == "c" )
+    else if ( g_args.size() == 1 )
     {
-        if ( g_args.size() != 1 )
-            return -1;
-
-        spRecordDataReply rep = createRecord();
-        printData( rep );
-    }
-    else if( g_args[0] == "update" || g_args[0] == "u" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
-
-        spRecordDataReply rep = updateRecord( resolveID( g_args[1] ));
-        printData( rep );
-    }
-    else if( g_args[0] == "clear" || g_args[0] == "r" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
-
-        g_client->dataDelete( g_args[1] );
-        cout << "SUCCESS\n";
-    }
-    else if( g_args[0] == "delete" || g_args[0] == "d" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
-
-        g_client->recordDelete( resolveID( g_args[1] ));
-        cout << "SUCCESS\n";
+        spCollDataReply rep = g_client->collView( resolveID( g_args[0] ));
+        printCollData( rep );
     }
     else
         return -1;
@@ -933,67 +970,34 @@ int data()
     return 0;
 }
 
-int coll()
+int coll_create()
 {
-    if ( g_args[0] == "view" || g_args[0] == "v" )
-    {
-        if ( g_args.size() == 1 )
-        {
-            spCollDataReply rep = g_client->collView( g_cur_col );
-            printCollData( rep );
-        }
-        else if ( g_args.size() == 2 )
-        {
-            spCollDataReply rep = g_client->collView( resolveID( g_args[1] ));
-            printCollData( rep );
-        }
-        else
-            return -1;
-    }
-    else if( g_args[0] == "create" || g_args[0] == "c" )
-    {
-        if ( g_args.size() != 1 )
-            return -1;
-
-        if ( !g_title.size() )
-            EXCEPT_PARAM( 1, "Title option is required for create command" );
-
-        spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_cur_col.c_str() );
-        printCollData( rep );
-    }
-    else if( g_args[0] == "update" || g_args[0] == "u" )
-    {
-        if ( g_args.size() != 2 )
-            return -1;
-
-        spCollDataReply rep = g_client->collUpdate( resolveID( g_args[1] ), g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
-        printCollData( rep );
-    }
-    else if( g_args[0] == "delete" || g_args[0] == "d" )
-    {
-        cout << "NOT IMPLEMENTED YET\n";
-    }/*
-    else if( g_args[0] == "add" || g_args[0] == "a" )
-    {
-        if ( g_args.size() == 3 )
-            g_client->collAddItem( resolveID( g_args[1] ), resolveID( g_args[2] ));
-        else if ( g_args.size() == 2 )
-            g_client->collAddItem( g_cur_col, resolveID( g_args[1] ));
-        else
-            return -1;
-    }
-    else if( g_args[0] == "remove" || g_args[0] == "r" )
-    {
-        if ( g_args.size() == 3 )
-            g_client->collRemoveItem( resolveID( g_args[1] ), resolveID( g_args[2] ));
-        else if ( g_args.size() == 2 )
-            g_client->collRemoveItem( g_cur_col, resolveID( g_args[1] ));
-        else
-            return -1;
-    }*/
-    else
+    if ( g_args.size() != 0 )
         return -1;
 
+    if ( !g_title.size() )
+        EXCEPT_PARAM( 1, "Title is required" );
+
+    spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_cur_col.c_str() );
+    printCollData( rep );
+
+    return 0;
+}
+
+int coll_update()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    spCollDataReply rep = g_client->collUpdate( resolveID( g_args[0] ), g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0 );
+    printCollData( rep );
+
+    return 0;
+}
+
+int coll_delete()
+{
+    cout << "NOT IMPLEMENTED YET\n";
     return 0;
 }
 
@@ -1058,6 +1062,73 @@ int xfr_status()
         return -1;
 }
 
+int ep_get()
+{
+    if ( g_args.size() != 0 )
+        return -1;
+    const string & ep = g_client->getDefaultEndpoint();
+    switch( g_out_form )
+    {
+    case TEXT:
+        cout << ep << "\n";
+        break;
+    case CSV:
+        cout << "\"" << ep << "\"\n";
+        break;
+    case JSON:
+        cout << "{\"ep\":\"" << ep << "\"}\n";
+        break;
+    }
+
+    return 0;
+}
+
+int ep_set()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    if ( g_args[0].find_first_of("/") != string::npos )
+        EXCEPT( 1, "Do not include slashes in end-point name/UUID" );
+
+    g_client->setDefaultEndpoint( g_args[0] );
+    printSuccess();
+    return 0;
+}
+
+int ep_list()
+{
+    if ( g_args.size() != 0 )
+        return -1;
+    spUserGetRecentEPReply rep = g_client->getRecentEndpoints();
+
+    if ( g_out_form == JSON )
+        cout << "{\"eps\":[";
+
+    for ( int i = 0; i < rep->ep_size(); i++ )
+    {
+        switch( g_out_form )
+        {
+        case TEXT:
+            cout << rep->ep(i) << "\n";
+            break;
+        case CSV:
+            cout << "\"" << rep->ep(i) << "\"\n";
+            break;
+        case JSON:
+            if ( i )
+                cout << ",";
+            cout << "\"" << rep->ep(i) << "\"";
+            break;
+        }
+    }
+
+    if ( g_out_form == JSON )
+        cout << "]}\n";
+
+    return 0;
+}
+
 int user()
 {
     if ( g_args.size() != 1 )
@@ -1066,9 +1137,9 @@ int user()
     spUserDataReply rep;
 
     if ( g_args[0] == "collab" || g_args[0] == "c" )
-        rep = g_client->userListCollaborators( g_details );
+        rep = g_client->userListCollaborators();
     else if ( g_args[0] == "shared" || g_args[0] == "s" )
-        rep = g_client->userListShared( g_details );
+        rep = g_client->userListShared();
     else
         rep = g_client->userView( g_args[0], g_details );
 
@@ -1248,7 +1319,6 @@ int select()
                 new_sel = "u/" + new_sel;
 
             spUserDataReply rep = g_client->userView( new_sel, false );
-
             cout << "Switched to user: " << new_sel << "\n";
             if ( g_details )
             {
@@ -1286,7 +1356,33 @@ int select()
     return 0;
 }
 
-int pwd()
+void select( const string & a_new_sel )
+{
+    if ( a_new_sel.compare( 0, 2, "p/" ) == 0 )
+    {
+        spProjectDataReply rep = g_client->projectView( a_new_sel );
+
+        g_cur_sel = a_new_sel;
+        g_cur_col = "c/p_" + g_cur_sel.substr(2) + "_root";
+        g_cur_alias_prefix = "p:" + g_cur_sel.substr(2) + ":";
+    }
+    else
+    {
+        string id;
+        if ( a_new_sel.compare( 0, 2, "u/" ) != 0 )
+            id = "u/" + a_new_sel;
+        else
+            id = a_new_sel;
+
+        spUserDataReply rep = g_client->userView( id, false );
+
+        g_cur_sel = id;
+        g_cur_col = "c/u_" + g_cur_sel.substr(2) + "_root";
+        g_cur_alias_prefix = "u:" + g_cur_sel.substr(2) + ":";
+    }
+}
+
+int pwc()
 {
     spCollDataReply rep = g_client->collGetParents( g_cur_col, true );
     size_t pos;
@@ -1542,33 +1638,59 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
     return OPTS_OK;
 }
 
+int exit_shell()
+{
+    exit(0);
+}
 
 int main( int a_argc, char ** a_argv )
 {
     addCommand( "?", "help", "Show help", "Use 'help <cmd>' to show help for a specific command.", help );
-    addCommand( "", "get", "Get data from repository", "get <id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", get_data );
-    addCommand( "", "put", "Put data into repository", "put [id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created. Data record fields may be set or updated using the indicated options. For new records, the 'title' option is required. The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", put_data );
-    addCommand( "t", "trans", "List data transfers with details", "trans [id]\n\nList details of specified or matching data transfers. Use --since, --from, --to, and --status for match criteria.", xfr_list );
-    addCommand( "s", "status", "Get data transfer status", "status <id>\n\nGet status of data transfer specified by <id> parameter.", xfr_status );
-    addCommand( "d", "data", "Data management", "data <cmd> [args]\n\nData commands: (v)iew, (c)reate, (u)pdate, clea(r), (d)elete", data );
-    addCommand( "c", "coll", "Collection management", "coll <cmd> [args]\n\nCollection commands: (v)iew, (c)reate, (u)pdate, (d)elete", coll );
-    addCommand( "", "find", "Find data by metadata query", "find <query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
-    addCommand( "u", "user", "List/view users by affiliation", "user <cmd/id>\n\nList users by (c)ollaborators or (s)hared access, or view user information if an ID is given.", user );
-    addCommand( "p", "project", "List/view projects by affiliation", "project <cmd> [id]\n\nList (m)y projects, (t)eam projects, or projects with (s)hared access, or view project information if an ID is given.", project );
+
+    // Data Commands
+    addCommand("dv","data-view", "View data record", "<id>\n\nViews fields of specified data record. The <id> argument may be an identifier or an alias.", data_view );
+    addCommand("dc","data-create", "Create data record", "-t <title> [-a] [-d] [-md|-f [-r]]\n\nCreates a new data record using fields provided via options (see general help for option descriptions).", data_create );
+    addCommand("du","data-update", "Update data record", "<id> [-t] [-a] [-d] [-md|-f [-r]]\n\nUpdates an existing data record using fields provided via options (see general help for option descriptions).  The <id> argument may be an identifier or an alias.", data_update );
+    addCommand( "get", "data-get", "Get data from repository", "<id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", data_get );
+    addCommand( "put", "data-put", "Put data into repository", "[id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created (see help on data command for details). The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", data_put );
+    addCommand("","data-clear", "Clear raw data", "<id>\n\nDeletes raw data associated with an existing data record. The <id> argument may be an identifier or an alias.", data_clear );
+    addCommand("","data-delete", "Delete data record", "<id>\n\nDeletes an existing data record, including raw data. The <id> argument may be an identifier or an alias.", data_delete );
+    addCommand( "find", "data-find", "Find data by metadata query", "<query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
+
+    // Collection commands
+    addCommand( "cv", "coll-view", "View collection record", "<id>\n\nView fields of specified collection record. The <id> argument may be an identifier or an alias. This command does not list items linked to the collection; for this, see the \"ls\" command.", coll_view );
+    addCommand( "cc", "coll-create", "Create collection record", "-t <title> [-a] [-d]\n\nCreates a new collection record using fields provided via options (see general help for option descriptions). The new collection is created as a child of the current working collection (root by default).", coll_create );
+    addCommand( "cu", "coll-update", "Update collection record", "<id> [-t] [-a] [-d]\n\nUpdates an existing collection record using fields provided via options (see general help for option descriptions). The <id> argument may be an identifier or an alias.", coll_update );
+    addCommand( "", "coll-delete", "Delete collection record", "<id>\n\nCollection commands: (v)iew, (c)reate, (u)pdate, (d)elete", coll_delete );
+
+
+    // Transfer related commands
+    addCommand( "xl", "xfr-list", "List data transfers", "[<id>] [--since] [--from] [--to] [--status]\n\nList details of specified stransfer (using <id>) or data transfers that match specified options.", xfr_list );
+    addCommand( "xs", "xfr-status", "Get data transfer status", "<id>\n\nGet status of data transfer specified by <id> parameter.", xfr_status );
+    addCommand( "epg", "ep-get", "Get default end-point", "\n\nGet current default end-point.", ep_get );
+    addCommand( "eps", "ep-set", "Set default end-point", "<name/uuid>\n\nSet current default end-point to specified legacy name or UUID.", ep_set );
+    addCommand( "epl", "ep-list", "List recent end-points", "\n\nList recently used end-points.", ep_list );
+
+    addCommand( "u", "user", "List/view users by affiliation", "<cmd>\n\nList or view user depending on value of <cmd> argument: \"collab\" lists collaborators (team members, users granted explicit access, etc.), \"shared\" lists users sharing data with current user, or specify a user ID to view a specific user.", user );
+
+    addCommand( "p", "project", "List/view projects by affiliation", "project <cmd/id>\n\nList (m)y projects, (t)eam projects, or projects with (s)hared access, or view project information if an ID is given.", project );
+
+    // File-system-like commands
+    addCommand( "", "sel", "Select user or project","[<id>]\n\nSelect the specified user or project for collection navigation. If no id is provided, prints the current user or project.", select );
+    addCommand( "", "pwc", "Print working collection","\n\nPrint current workingcollection with parent hierarchy.", pwc );
+    addCommand( "", "cd", "Change \"directory\" (collection)","<id/cmd>\n\nChange current \"directory\" (collection). The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", cd );
+    addCommand( "", "ls", "List current collection","[<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, '..' for the parent of the current working collection, or \".\" (or omitted) for the current collection.", ls );
+    addCommand( "ln", "link", "Link item into a collection","<id> [<coll_id>]>\n\nLinks a data record or collection into the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being linked is a collection, it will be unlinked from it's current location before being linked into the new location.", link );
+    addCommand( "ul", "unlink", "Unlink item from a collection","<id> [<coll_id>]>\n\nUnlinks a data record or collection from the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being unlinked has no other links, it will be unlinked from the specified location and re-linked into the root collection.", unlink );
+    addCommand( "mv", "move", "Move link item to new collection","<id> [<src_id>] <dest_id>>\n\nMoves item links from source collection <src_id> to destination collection <dest_id>. If the <src_id> paramter is omitted, the current collection is used. Collection ids may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" for the current colleciton.", move );
+    addCommand( "", "setup", "Setup local environment","\n\nSetup the local environment for non-interactive use by installing encryption keys in facility-specified location.", setup );
+    addCommand( "", "status", "Check ststus of core server","\n\nGets core server status to to verify communication and system readiness.", ping );
+    addCommand( "", "exit", "Exit interactive shell","", exit_shell );
 
     //addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
     //addCommand( "g", "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
-    addCommand( "", "sel", "Select user or project","sel [<id>]\n\nSelect the specified user or project for collection navigation. If no id is provided, prints the current user or project.", select );
-    addCommand( "", "pwd", "Print working \"directory\" (collection)","pwd\n\nPrint current working \"directory\" (collection) and parent hierarchy.", pwd );
-    addCommand( "", "cd", "Change \"directory\" (collection)","cd <id/cmd>\n\nChange current \"directory\" (collection). The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", cd );
-    addCommand( "", "ls", "List current collection","ls [<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, '..' for the parent of the current working collection, or \".\" (or omitted) for the current collection.", ls );
     //addCommand( "", "cp", "Copy data into a collection","cp <data_id> [<coll_id>]>\n\n\"Copies\" a data record into either the specified collection, or the current collection if <coll_id> is not provided. The command does not create an actual copy of the data, rather it creates a link to the data in the specified collection. Use the \"dup\" command to create a new data record from an existing record.", cp );
     //addCommand( "", "mv", "Move data/collection into a collection","mv <id> [<coll_id>]>\n\n\"Moves\" a data record or a collection into either the specified collection, or the current collection if <coll_id> is not provided. The command creates a new link to the data/collection in the specified collection, and unlinks it from the.", mv );
-    addCommand( "ln", "link", "Link item into a collection","link <id> [<coll_id>]>\n\nLinks a data record or collection into the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being linked is a collection, it will be unlinked from it's current location before being linked into the new location.", link );
-    addCommand( "ul", "unlink", "Unlink item from a collection","unlink <id> [<coll_id>]>\n\nUnlinks a data record or collection from the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being unlinked has no other links, it will be unlinked from the specified location and re-linked into the root collection.", unlink );
-    addCommand( "mv", "move", "Move link item to new collection","move <id> [<src_id>] <dest_id>>\n\nMoves item links from source collection <src_id> to destination collection <dest_id>. If the <src_id> paramter is omitted, the current collection is used. Collection ids may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" for the current colleciton.", move );
-    addCommand( "", "setup", "Setup local environment","setup\n\nSetup the local environment.", setup );
-    addCommand( "", "ping", "Ping core server","ping\n\nPing core server to test communication.", ping );
 
     buildCmdMap();
 
@@ -1595,6 +1717,7 @@ int main( int a_argc, char ** a_argv )
         ("port,p",po::value<uint16_t>( &port ),"Service port")
         ("cfg",po::value<string>( &g_cfg_file ),"Use config file for options")
         ("login,l",po::bool_switch( &manual_auth )->default_value(false),"Manually login to SDMS")
+        ("sel",po::value<string>( &g_select ),"Select user or project prior to executing command")
         ;
 
     g_opts_command.add_options()
@@ -1640,11 +1763,17 @@ int main( int a_argc, char ** a_argv )
         if ( res == OPTS_HELP )
         {
             cout << "SDMS CLI Client, ver. " << VERSION << "\n";
-            cout << "Usage: sdms [options] command [args] [cmd options]\n";
-            cout << "      \"help all\" to list all commands\n";
+            cout << "Usage: sdms [command [args]] [options]\n";
             cout << "      \"help [command]\" for command-specific help\n\n";
-            cout << opts_startup << endl;
+            cout << opts_startup << "\nAvailable commands:\n\n";
 
+            for ( cmd_list_t::iterator icmd = g_cmd_list.begin(); icmd != g_cmd_list.end(); ++icmd )
+            {
+                cout << "  ";
+                icmd->help();
+            }
+
+            cout << "\n\nRunning the sdms CLI without specifying a command starts an interactive shell.\n\n";
             return 1;
         }
 
@@ -1653,6 +1782,9 @@ int main( int a_argc, char ** a_argv )
             cout << VERSION << endl;
             return 1;
         }
+
+        if ( !non_interact )
+            cout << "SDMS CLI Client, ver. " << VERSION << "\n";
 
         if ( manual_auth && non_interact )
             EXCEPT( 0, "Manual authentication required" );
@@ -1718,6 +1850,11 @@ int main( int a_argc, char ** a_argv )
             icmd = g_cmd_map.find( g_cmd );
             if ( icmd != g_cmd_map.end() )
             {
+                if ( g_select.size() )
+                {
+                    select( g_select );
+                }
+
                 int ec = icmd->second->func();
                 if ( ec < 0 )
                     EXCEPT_PARAM( 0, "Invalid arguments to command " << g_cmd );
@@ -1726,7 +1863,7 @@ int main( int a_argc, char ** a_argv )
             }
             else
             {
-                EXCEPT_PARAM( 0, "unknown command " << g_cmd );
+                EXCEPT_PARAM( 0, "Unknown command " << g_cmd );
             }
         }
         else
@@ -1735,8 +1872,7 @@ int main( int a_argc, char ** a_argv )
             size_t len;
             SmartTokenizer<> tok;
 
-            cout << "SDMS CLI Client, ver. " << VERSION << "\n";
-            cout << "Console mode. Use Ctrl-C or type \"exit\" to terminate program.\n\n";
+            cout << "Console mode. Use Ctrl-C or type \"exit\" to terminate program. Type \"help\" or \"?\" for help.\n\n";
 
             while ( 1 )
             {

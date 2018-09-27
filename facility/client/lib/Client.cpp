@@ -251,6 +251,17 @@ Client::getDefaultEndpoint() const
     return m_def_ep;
 }
 
+spUserGetRecentEPReply
+Client::getRecentEndpoints()
+{
+    Auth::UserGetRecentEPRequest req;
+    Auth::UserGetRecentEPReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spUserGetRecentEPReply( reply );
+}
+
 bool Client::test( size_t a_iter )
 {
     Anon::StatusReply     in;
@@ -331,13 +342,11 @@ Client::userView( const string & a_uid, bool a_details )
 }
 
 spUserDataReply
-Client::userListCollaborators( bool a_details, uint32_t a_offset, uint32_t a_count )
+Client::userListCollaborators( uint32_t a_offset, uint32_t a_count )
 {
     Auth::UserListCollabRequest req;
     Auth::UserDataReply * reply;
 
-    if ( a_details )
-        req.set_details( a_details );
     if ( a_offset )
         req.set_offset( a_offset );
     if ( a_count )
@@ -349,9 +358,8 @@ Client::userListCollaborators( bool a_details, uint32_t a_offset, uint32_t a_cou
 }
 
 spUserDataReply
-Client::userListShared( bool a_details, uint32_t a_offset, uint32_t a_count )
+Client::userListShared(uint32_t a_offset, uint32_t a_count )
 {
-    (void)a_details;
     (void)a_offset;
     (void)a_count;
 

@@ -29,6 +29,7 @@ typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
 typedef std::shared_ptr<Auth::XfrDataReply> spXfrDataReply;
 typedef std::shared_ptr<Auth::ACLDataReply> spACLDataReply;
 typedef std::shared_ptr<Auth::GroupDataReply> spGroupDataReply;
+typedef std::shared_ptr<Auth::UserGetRecentEPReply> spUserGetRecentEPReply;
 
 enum DestFlags : uint16_t
 {
@@ -85,12 +86,13 @@ public:
     void                setup();
     void                setDefaultEndpoint( const std::string & a_def_ep );
     const std::string & getDefaultEndpoint() const;
+    spUserGetRecentEPReply getRecentEndpoints();
 
     ServiceStatus       status();
 
     spUserDataReply     userView( const std::string & a_uid, bool a_details );
-    spUserDataReply     userListCollaborators( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
-    spUserDataReply     userListShared( bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spUserDataReply     userListCollaborators( uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spUserDataReply     userListShared( uint32_t a_offset = 0, uint32_t a_count = 0 );
     spUserDataReply     userUpdate( const std::string & a_uid, const char * a_email );
 
     spProjectDataReply  projectListMine();

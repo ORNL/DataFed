@@ -65,8 +65,6 @@ Worker::setupMsgHandlers()
 
     try
     {
-        cout << "setup worker msg handlers\n";
-
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Worker::procStatusRequest );
@@ -148,7 +146,7 @@ Worker::setupMsgHandlers()
 void
 Worker::workerThread()
 {
-    cout << "W" << m_tid << " started" << endl;
+    DL_DEBUG( "W" << m_tid << " thread started" );
 
     MsgComm         comm( "inproc://workers", MsgComm::DEALER, false );
     uint16_t        msg_type;
@@ -166,11 +164,11 @@ Worker::workerThread()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                DL_INFO( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
-                    DL_INFO( "W"<<m_tid<<" unauthorized access" );
+                    DL_WARN( "W"<<m_tid<<" unauthorized access attempt from anon user" );
                     m_msg_buf.serialize( nack );
                     comm.send( m_msg_buf );
                 }
@@ -298,7 +296,8 @@ Worker::procAuthenticateRequest( const std::string & a_uid )
     m_db_client.setClient( request->uid() );
     m_db_client.clientAuthenticate( request->password() );
 
-    cout << "Authenticated " << request->uid() << "\n";
+    DL_DEBUG( "Authenticated " << request->uid() );
+
     m_mgr.authorizeClient( a_uid, request->uid() );
 
     PROC_MSG_END
@@ -511,15 +510,15 @@ Worker::procRepoAllocationSetRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
     m_db_client.repoAllocationSet( *request, reply );
-    cout << "procRepoAllocationSetRequest, alloc: " << request->alloc() << endl;
+    DL_DEBUG( "procRepoAllocationSetRequest, alloc: " << request->alloc() );
     if ( request->alloc() > 0 )
     {
-        cout << "create path!\n";
+        DL_DEBUG( "Create/ensure path for " << request->subject() );
         m_mgr.repoPathCreate( request->repo(), request->subject() );
     }
     else
     {
-        cout << "delete path!\n";
+        DL_DEBUG( "Delete path for " << request->subject() );
         m_mgr.repoPathDelete( request->repo(), request->subject() );
     }
 

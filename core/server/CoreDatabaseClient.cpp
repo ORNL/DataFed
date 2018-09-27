@@ -818,6 +818,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"dt\":" + to_string(a_request.dt());
     body += "}";
 
+cout << "data update: " << body << "\n";
+
     dbPost( "dat/update", {}, &body, result );
 
     setRecordData( a_reply, result );
