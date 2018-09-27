@@ -8,16 +8,10 @@
 #include <globus_error_hierarchy.h>
 #include <gssapi.h>
 #include "libsdms_gsi_authz.h"
-#include "test.h"
-
+#include "sdms_db_authz.h"
 
 // TODO This value must be pulled from server config (max concurrency)
 #define MAX_ACTIVE_CTX 25
-#define MAX_DB_USER_LEN 32
-#define MAX_DB_PASS_LEN 32
-
-char    db_user[MAX_DB_USER_LEN+1];
-char    db_pass[MAX_DB_PASS_LEN+1];
 
 void uuidToStr( unsigned char * a_uuid, char * a_out );
 bool decodeUUID( const char * a_input, char * a_uuid );
@@ -188,9 +182,10 @@ sdms_gsi_authz_init()
     syslog( LOG_INFO, "SDMS_DB_PASS = %s", temp );
     strncpy( db_pass, temp, MAX_DB_PASS_LEN );
     db_user[MAX_DB_PASS_LEN] = 0;
-*/
+
     strcpy( db_user, "root" );
     strcpy( db_pass, "sdms!" );
+*/
 
     return 0;
 }
@@ -286,6 +281,13 @@ sdms_gsi_authz_authorize_async( va_list ap )
     //void *                      authz_system_state  = va_arg(ap, void *);
 
     syslog( LOG_ERR, "handle %p", handle );
+    
+    if ( strcmp( action, "lookup" ) == 0 || strcmp( action, "chdir" ) == 0  )
+    {
+        result = GLOBUS_SUCCESS;
+        callback(callback_arg, handle, result);
+        return result;
+    }
 
     //syslog( LOG_ERR, "sdms_gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
     
@@ -354,70 +356,8 @@ sdms_gsi_authz_authorize_async( va_list ap )
 
                         if ( client_id )
                         {
-                            CURL * curl = curl_easy_init();
-                            write2file();
-
-                            if ( !curl )
-                            {
-                                syslog( LOG_ERR, "curl authz easy init failed!" );
-                            }
-                            else
-                            {
-                                char url[1024];
-                                //char resp[1024];
-                                char error[CURL_ERROR_SIZE];
-
-                                url[0] = error[0] = 0;
-
-                                char * esc_client = curl_easy_escape( curl, client_id, 0 );
-                                char * esc_object = curl_easy_escape( curl, object, 0 );
-                                
-                                strcpy( url, "http://sdms.ornl.gov:8529/_db/sdms/api/authz/gridftp?client=" );
-                                strcat( url, esc_client );
-                                strcat( url, "&file=" );
-                                strcat( url, esc_object );
-                                strcat( url, "&act=" );
-                                strcat( url, action );
-
-                                syslog( LOG_INFO, "url: %s", url );
-
-                                curl_easy_setopt( curl, CURLOPT_URL, url );
-                                curl_easy_setopt( curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-                                curl_easy_setopt( curl, CURLOPT_USERNAME, db_user );
-                                curl_easy_setopt( curl, CURLOPT_PASSWORD, db_pass );
-                                //curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0 );
-                                curl_easy_setopt( curl, CURLOPT_TCP_NODELAY, 1 );
-                                //curl_easy_setopt( curl, CURLOPT_WRITEDATA, resp );
-                                //curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
-                                curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, error );
-
-                                CURLcode res = curl_easy_perform( curl );
-
-                                long http_code = 0;
-                                curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &http_code );
-
-                                if ( res == CURLE_OK )
-                                {
-                                    if ( http_code >= 200 && http_code < 300 )
-                                    {
-                                        result = GLOBUS_SUCCESS;
-                                    }
-                                    else
-                                    {
-                                        syslog( LOG_ERR, "authz call failed, server code %ld", http_code );
-                                    }
-                                }
-                                else
-                                {
-                                    syslog( LOG_ERR, "authz call error: %s", error );
-                                    syslog( LOG_ERR, "curl authz call failed: %s", curl_easy_strerror( res ));
-                                }
-
-                                curl_free( esc_client );
-                                curl_free( esc_object );
-                                curl_easy_cleanup(curl);
-                            }
-
+                            if (authzdb(client_id, object, action) == 0 )
+                                result = GLOBUS_SUCCESS;
                             free( client_id );
                         }
                     }
