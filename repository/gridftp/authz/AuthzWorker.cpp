@@ -18,9 +18,12 @@ namespace SDMS {
 
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
-AuthzWorker::AuthzWorker( const std::string & a_cred_dir, const std::string & a_authz_file )
+AuthzWorker::AuthzWorker(const std::string & a_authz_file )
 {
     string line;
+    string cred_dir;
+    m_timeout = 5000;
+    
     ifstream configFile(a_authz_file);
     if(configFile.is_open()) {
         while(getline(configFile,line)) {
@@ -37,6 +40,14 @@ AuthzWorker::AuthzWorker( const std::string & a_cred_dir, const std::string & a_
                 if (token == "url") {
                     iss >> token;
                     m_url = token;
+                }
+                if (token == "cred_dir") {
+                    iss >> token;
+                    cred_dir = token;
+                }
+                if (token == "timeout") {
+                    iss >> token;
+                    m_timeout = stoi(token);
                 }
             }
         }
@@ -83,7 +94,7 @@ AuthzWorker::run(char * client_id, char * object, char * action)
     
     authzcomm.send(auth_req);
 
-    if ( !authzcomm.recv( reply, uid, frame, 5000 ))
+    if ( !authzcomm.recv( reply, uid, frame, m_timeout ))
     {
         //cout << "Core AuthzWorker did not respond\n";
     }
