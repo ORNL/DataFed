@@ -6,5 +6,6 @@ Restart=always
 KillSignal=SIGQUIT
 WorkingDirectory=/home/cades/SDMS/core/server
 ExecStart=/home/cades/SDMS/build/core/server/sdms-core -c /home/cades/.sdms/
+User=cades
 [Install]
 WantedBy=multi-user.target

@@ -37,8 +37,6 @@ size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata
         return 0;
 
     size_t len = size*nmemb;
-    //strncat( userdata, ptr, len );
-    //cout << "curl rcv " << len << " bytes from " << (void*)ptr << " into " << userdata << endl;
     ((string*)userdata)->append( ptr, len );
     return len;
 }
@@ -128,7 +126,7 @@ string parseQuery( const string & a_query )
             {
                 //cout << "start: " << v.start << ", len: " << v.len << "\n";
                 tmp = a_query.substr( v.start, v.len );
-                cout << "token[" << tmp << "]" << endl;
+                //cout << "token[" << tmp << "]" << endl;
                 if ( tmp == "id" )
                 {
                     result.append( "i._id" );
@@ -171,7 +169,7 @@ string parseQuery( const string & a_query )
         result.append( tmp );
     }
 
-    cout << "[" << a_query << "]=>[" << result << "]\n";
+    //cout << "[" << a_query << "]=>[" << result << "]\n";
     return result;
 }
 

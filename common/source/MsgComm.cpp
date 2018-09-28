@@ -200,7 +200,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, uint32_t a_timeout )
 
     if ( zmq_msg_size( &msg ) != sizeof( MsgBuf::Frame ))
     {
-        hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
+        //hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
         EXCEPT_PARAM( 1, "RCV Invalid message frame received. Expected " << sizeof( MsgBuf::Frame ) << " got " << zmq_msg_size( &msg ) );
     }
 
@@ -330,7 +330,7 @@ MsgComm::proxy( MsgComm & a_backend, bool a_uid_from_wire )
 
             if ( zmq_msg_size( &msg ) != sizeof( MsgBuf::Frame ))
             {
-                hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
+                //hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
                 EXCEPT_PARAM( 1, "Invalid message frame received. Expected " << sizeof( MsgBuf::Frame ) << " got " << zmq_msg_size( &msg ) );
             }
 
@@ -423,15 +423,6 @@ MsgComm::setupSecurityContext( const SecurityContext * a_sec_ctx )
         if (( rc = zmq_setsockopt( m_socket, ZMQ_CURVE_SERVERKEY, a_sec_ctx->server_key.c_str(), 40 )) == -1 )
             EXCEPT( 1, "Set ZMQ_CURVE_SERVERKEY failed." );
     }
-
-/*
-    rc = zmq_setsockopt( m_socket, ZMQ_ZAP_DOMAIN, "global", 0 );
-    if ( rc == -1 )
-    {
-        cout << "Set ZMQ_CURVE_SERVER failed.\n";
-        return 1;
-    }
-*/
 }
 
 void

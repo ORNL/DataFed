@@ -164,7 +164,7 @@ Worker::workerThread()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                DL_TRACE( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
@@ -214,7 +214,7 @@ if ( base_msg ) \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
-        DL_INFO( "Rcvd: " << request->DebugString()); \
+        DL_TRACE( "Rcvd: " << request->DebugString()); \
         replyclass reply; \
         try \
         {
@@ -293,10 +293,12 @@ Worker::procAuthenticateRequest( const std::string & a_uid )
     (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
 
+    DL_INFO( "Starting manual authentication for " << request->uid() );
+
     m_db_client.setClient( request->uid() );
     m_db_client.clientAuthenticate( request->password() );
 
-    DL_DEBUG( "Authenticated " << request->uid() );
+    DL_INFO( "Manual authentication SUCCESS for " << request->uid() );
 
     m_mgr.authorizeClient( a_uid, request->uid() );
 
@@ -327,6 +329,8 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+
+    DL_INFO( "Generating new credentials for " << a_uid );
 
     m_db_client.setClient( a_uid );
 
@@ -359,6 +363,8 @@ Worker::procRevokeCredentialsRequest( const std::string & a_uid )
     (void)a_uid;
     PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply )
 
+    DL_INFO( "Revoking credentials for " << a_uid );
+
     m_db_client.setClient( a_uid );
     m_db_client.userClearKeys();
 
@@ -370,6 +376,8 @@ bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
+
+    DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->local() );
 
     m_db_client.setClient( a_uid );
     m_db_client.xfrInit( request->id(), request->local(), XM_GET, reply );
@@ -387,6 +395,8 @@ Worker::procDataPutRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
 
+    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->local() );
+
     m_db_client.setClient( a_uid );
     m_db_client.xfrInit( request->id(), request->local(), XM_PUT, reply );
 
@@ -403,6 +413,8 @@ Worker::procDataCopyRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataCopyRequest, XfrDataReply )
 
+    DL_INFO( "Data COPY, uid: " << a_uid << ", src: " << request->source_id() << ", dest: " << request->dest_id() );
+
     m_db_client.setClient( a_uid );
     m_db_client.xfrInit( request->source_id(), request->dest_id(), XM_COPY, reply );
 
@@ -418,6 +430,8 @@ bool
 Worker::procDataDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
+
+    DL_INFO( "Data RAW-DELETE, uid: " << a_uid << ", id: " << request->id() );
 
     Auth::RecordUpdateRequest upd_req;
     Auth::RecordDataReply upd_reply;
@@ -449,6 +463,8 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordDeleteRequest, RecordDataLocationReply )
 
+    DL_INFO( "Data REC-DELETE, uid: " << a_uid << ", id: " << request->id() );
+
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
@@ -470,6 +486,8 @@ bool
 Worker::procCollectionDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( CollDeleteRequest, RecordDataLocationReply )
+
+    DL_INFO( "Collection DELETE, uid: " << a_uid << ", id: " << request->id() );
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)

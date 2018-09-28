@@ -72,7 +72,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         curl_free( esc_txt );
     }
 
-    DL_DEBUG( "url: " << url );
+    DL_TRACE( "get url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -88,7 +88,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            cout << "About to parse[" << res_json << "]" << endl;
+            DL_TRACE( "About to parse[" << res_json << "]" );
             a_result.Parse( res_json.c_str() );
         }
 
@@ -97,8 +97,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
             if ( a_result.HasParseError() )
             {
                 rapidjson::ParseErrorCode ec = a_result.GetParseError();
-                cerr << "Parse error: " << rapidjson::GetParseError_En( ec ) << endl;
-                EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+                EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << rapidjson::GetParseError_En( ec ));
             }
 
             return http_code;
@@ -150,7 +149,7 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
         curl_free( esc_txt );
     }
 
-    DL_DEBUG( "url: " << url );
+    DL_TRACE( "get raw url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
@@ -171,7 +170,7 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
 long
 DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, rapidjson::Document & a_result )
 {
-    cout << "dbPost " << a_url_path << " [" << *a_body << "]" << endl;
+    DL_DEBUG( "dbPost " << a_url_path << " [" << *a_body << "]" );
 
     string  url;
     string  res_json;
@@ -199,7 +198,7 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
         curl_free( esc_txt );
     }
 
-    DL_DEBUG( "url: " << url );
+    DL_TRACE( "post url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -217,7 +216,7 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
     {
         if ( res_json.size() )
         {
-            cout << "About to parse[" << res_json << "]" << endl;
+            DL_TRACE( "About to parse[" << res_json << "]" );
             a_result.Parse( res_json.c_str() );
         }
 
@@ -226,8 +225,7 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
             if ( a_result.HasParseError() )
             {
                 rapidjson::ParseErrorCode ec = a_result.GetParseError();
-                cerr << "Parse error: " << rapidjson::GetParseError_En( ec ) << endl;
-                EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+                EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << rapidjson::GetParseError_En( ec ));
             }
 
             return http_code;
@@ -818,8 +816,6 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"dt\":" + to_string(a_request.dt());
     body += "}";
 
-cout << "data update: " << body << "\n";
-
     dbPost( "dat/update", {}, &body, result );
 
     setRecordData( a_reply, result );
@@ -869,8 +865,6 @@ DatabaseClient::setRecordLocationData( RecordDataLocationReply & a_reply, rapidj
 void
 DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
 {
-    //cout << "SetRecordData" << endl;
-
     if ( !a_result.IsArray() )
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
@@ -928,7 +922,6 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
         if (( imem = val.FindMember("dt")) != val.MemberEnd() )
             rec->set_dt( imem->value.GetUint() );
     }
-    //cout << "SetRecordData done" << endl;
 }
 
 
@@ -1390,33 +1383,27 @@ DatabaseClient::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::G
         params.push_back({"desc", a_request.desc()});
     if ( a_request.add_uid_size() > 0 )
     {
-        cout << "Adding group members: ";
         string members = "[";
         for ( int i = 0; i < a_request.add_uid_size(); ++i )
         {
             if ( i > 0 )
                 members += ",";
             members += "\"" + a_request.add_uid(i) + "\"";
-            cout << " " << a_request.add_uid(i);
         }
         members += "]";
         params.push_back({"add",  members });
-        cout << endl;
     }
     if ( a_request.rem_uid_size() > 0 )
     {
-        cout << "Removing group members: ";
         string members = "[";
         for ( int i = 0; i < a_request.rem_uid_size(); ++i )
         {
             if ( i > 0 )
                 members += ",";
             members += "\"" + a_request.rem_uid(i) + "\"";
-            cout << " " << a_request.rem_uid(i);
         }
         members += "]";
         params.push_back({"rem",  members });
-        cout << endl;
     }
 
     dbGet( "grp/update", params, result );

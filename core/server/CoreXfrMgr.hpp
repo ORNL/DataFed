@@ -25,13 +25,11 @@ public:
     void newXfr( const XfrData & a_xfr );
 
 private:
-    void    xfrThreadFunc();
-
     struct XfrDataInfo
     {
         XfrDataInfo( const XfrData & a_xfr ) :
             id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),data_id(a_xfr.data_id()),repo_path(a_xfr.repo_path()),
-            local_path(a_xfr.local_path()),user_id(a_xfr.user_id()),repo_id(a_xfr.repo_id()),stage(0),poll(0),backoff(0)
+            local_path(a_xfr.local_path()),user_id(a_xfr.user_id()),repo_id(a_xfr.repo_id()),stage(0),poll(0),backoff(0),fail_count(0)
         {
             if ( a_xfr.has_task_id() )
                 task_id = a_xfr.task_id();
@@ -50,7 +48,11 @@ private:
         int             stage; // (0=not started,1=started,2=active)
         int             poll;
         int             backoff;
+        int             fail_count;
     };
+
+    void    xfrThreadFunc();
+    void    xfrBackOffPolling( const std::list<XfrDataInfo*>::iterator & ixfr );
 
     IWorkerMgr &                        m_mgr;
     bool                                m_run;

@@ -181,7 +181,7 @@ Server::ioRun()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                DL_DEBUG( "Got msg type: " << msg_type );
+                DL_TRACE( "Got msg type: " << msg_type );
 
                 handler = m_msg_handlers.find( msg_type );
                 if ( handler != m_msg_handlers.end() )

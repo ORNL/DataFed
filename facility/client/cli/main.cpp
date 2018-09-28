@@ -118,6 +118,7 @@ string          g_cur_sel;
 string          g_cur_col;
 string          g_cur_alias_prefix;
 string          g_select;
+string          g_cur_xfr;
 
 po::options_description g_opts_command( "Command options" );
 
@@ -833,7 +834,9 @@ int data_get()
 
     int stat = 0;
 
-    spXfrDataReply xfrs = g_client->dataGet( g_args[0], g_args[1] );
+    spXfrDataReply xfrs = g_client->dataGet( resolveID( g_args[0] ), g_args[1] );
+
+    g_cur_xfr = xfrs->xfr(0).id();
 
     if ( g_wait )
     {
@@ -883,7 +886,7 @@ int data_put()
     else if ( g_args.size() == 2 )
     {
         // Update existing record if options are provided
-        data_id = g_args[0];
+        data_id = resolveID( g_args[0] );
         spRecordDataReply rep = updateRecord( data_id );
     }
     else
@@ -894,6 +897,8 @@ int data_put()
     // Push data to record
 
     spXfrDataReply xfrs = g_client->dataPut( data_id, *g_args.rbegin() );
+
+    g_cur_xfr = xfrs->xfr(0).id();
 
     if ( g_wait )
     {
@@ -935,7 +940,7 @@ int data_clear()
     if ( g_args.size() != 1 )
         return -1;
 
-    g_client->dataDelete( g_args[0] );
+    g_client->dataDelete( resolveID( g_args[0] ));
     printSuccess();
 
     return 0;
@@ -1036,9 +1041,23 @@ int xfr_list()
 
 int xfr_status()
 {
-    if ( g_args.size() == 1 )
+    if ( g_args.size() == 0 ||  g_args.size() == 1 )
     {
-        spXfrDataReply xfr = g_client->xfrView( g_args[0] );
+        string id;
+        if ( g_args.size() == 0 )
+        {
+            if ( !g_cur_xfr.size() )
+            {
+                printError( "No recent transfer" );
+                return 1;
+            }
+
+            id = g_cur_xfr;
+        }
+        else
+            id = g_args[0];
+
+        spXfrDataReply xfr = g_client->xfrView( id );
 
         if ( xfr->xfr_size() )
         {

@@ -18,9 +18,6 @@ using namespace std;
 
 namespace SDMS {
 
-//using namespace SDMS::Anon;
-//using namespace SDMS::Auth;
-
 namespace Core {
 
 
@@ -32,9 +29,6 @@ Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, 
     m_maint_thread(0),
     m_num_threads(a_num_threads),
     m_io_running(false),
-    //m_endpoint( asio::ip::tcp::v4(), m_port ),
-    //m_acceptor( m_io_service, m_endpoint ),
-    //m_context( asio::ssl::context::tlsv12 ),
     m_db_url(a_db_url),
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
@@ -46,10 +40,8 @@ Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, 
     loadKeys( a_cred_dir );
 
     m_sec_ctx.is_server = true;
-    m_sec_ctx.public_key = m_pub_key; //"B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    m_sec_ctx.private_key = m_priv_key; //"k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
-
-    //m_auth_clients["B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9["] = "repo1";
+    m_sec_ctx.public_key = m_pub_key;
+    m_sec_ctx.private_key = m_priv_key;
     loadRepositoryConfig();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
@@ -68,23 +60,18 @@ void
 Server::loadKeys( const std::string & a_cred_dir )
 {
     string fname = a_cred_dir + "sdms-core-key.pub";
-    cout << "Loading CoreServer public key from: " << fname << "\n";
     ifstream inf( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
-        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+        EXCEPT_PARAM( 1, "Could not open public key file: " << fname );
     inf >> m_pub_key;
     inf.close();
 
     fname = a_cred_dir + "sdms-core-key.priv";
-    cout << "Loading CoreServer private key from: " << fname << "\n";
     inf.open( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
-        EXCEPT_PARAM( 1, "Could not open file: " << fname );
+        EXCEPT_PARAM( 1, "Could not open private key file: " << fname );
     inf >> m_priv_key;
     inf.close();
-
-    cout << "pub key["<<m_pub_key<<"]\n";
-    //cout << "priv key["<<m_priv_key<<"]\n";
 }
 
 void
@@ -407,7 +394,7 @@ Server::backgroundMaintenance()
             {
                 if ( itrans_client->second.second < t )
                 {
-                    cout << "Delete expired trans client " << itrans_client->second.first << "\n";
+                    DL_DEBUG( "Purging expired transient client " << itrans_client->second.first );
                     itrans_client = m_trans_auth_clients.erase( itrans_client );
                 }
                 else
@@ -426,14 +413,13 @@ Server::backgroundMaintenance()
                         repo = repo_map.find( iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            path = iter->second;
-                            cout << "Data delete path: " << path;
+                            DL_DEBUG( "Sending data-delete req to " << repo->first << ", path: " << iter->second );
 
-                            req.set_path( path );
+                            req.set_path( iter->second );
                             repo->second->send( req );
-                            if ( !repo->second->recv( reply, uid, frame, 5000 ))
+                            if ( !repo->second->recv( reply, uid, frame, 10000 ))
                             {
-                                cout << "No response from repo server!\n";
+                                DL_ERROR( "No response to data-delete req from " << repo->first << " for path: " << iter->second );
                                 break;
                             }
                             else
@@ -441,14 +427,14 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            cout << "Bad repo in delete list: " << iter->first << "\n";
+                            DL_ERROR( "Bad repo in delete list: " << iter->first << ", for path " << iter->second );
                         }
                     }
                     m_data_delete.clear();
                 }
 
-                // TODO This needs to be re-written in an async manner
-                // TODO Deletes also need to be serialized so they aren't lost in the event of a restart
+                // TODO This needs to be re-written in an async manner, and be durable
+
                 if ( m_path_create.size() )
                 {
                     for ( iter = m_path_create.begin(); iter != m_path_create.end(); ++iter )
@@ -457,12 +443,12 @@ Server::backgroundMaintenance()
                         if ( repo != repo_map.end() )
                         {
                             path = m_repos[iter->first]->path() + ( iter->second[0]=='u'?"user/":"project/" )+ iter->second.substr(2);
-                            cout << "Path create: " << path;
+                            DL_DEBUG( "Sending path-create to repo " << repo->first << " for path: " << path );
                             path_create_req.set_path( path );
                             repo->second->send( path_create_req );
                             if ( !repo->second->recv( reply, uid, frame, 5000 ))
                             {
-                                cout << "No response from repo server!\n";
+                                DL_ERROR( "No response to path-create req from " << repo->first << " for path: " << iter->second );
                                 break;
                             }
                             else
@@ -470,7 +456,7 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            cout << "Bad repo in path create list: " << iter->first << "\n";
+                            DL_ERROR( "Bad repo in path create list: " << iter->first << ", for path " << iter->second );
                         }
                     }
                     m_path_create.clear();
@@ -484,12 +470,12 @@ Server::backgroundMaintenance()
                         if ( repo != repo_map.end() )
                         {
                             path = m_repos[iter->first]->path() + ( iter->second[0]=='u'?"user/":"project/" )+ iter->second.substr(2);
-                            cout << "Path delete: " << path;
+                            DL_DEBUG( "Sending path-delete to repo " << repo->first << " for path: " << path );
                             path_delete_req.set_path( path );
                             repo->second->send( path_delete_req );
                             if ( !repo->second->recv( reply, uid, frame, 5000 ))
                             {
-                                cout << "No response from repo server!\n";
+                                DL_ERROR( "No response to path-delete req from " << repo->first << " for path: " << iter->second );
                                 break;
                             }
                             else
@@ -497,15 +483,23 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            cout << "Bad repo in path delete list: " << iter->first << "\n";
+                            DL_ERROR( "Bad repo in path delete list: " << iter->first << ", for path " << iter->second );
                         }
                     }
                     m_path_delete.clear();
                 }
             }
+            catch( TraceException & e )
+            {
+                DL_ERROR( "Maint thread proc-loop: " << e.toString() );
+            }
+            catch( exception & e )
+            {
+                DL_ERROR( "Maint thread proc-loop: " << e.what() );
+            }
             catch( ... )
             {
-                cout << "Exception on delete data\n";
+                DL_ERROR( "Maint thread proc-loop: unkown exception " );
             }
         }
     }
@@ -582,8 +576,6 @@ Server::zapHandler()
                 if ( !(poll_items[0].revents & ZMQ_POLLIN ))
                     continue;
 
-                cout << "Got zap data\n";
-
                 if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
                     EXCEPT( 1, "Rcv version failed." );
                 version[rc] = 0;
@@ -612,7 +604,7 @@ Server::zapHandler()
                 if ( !zmq_z85_encode( client_key_text, (uint8_t*)client_key, 32 ))
                     EXCEPT( 1, "Encode of client_key failed." );
 
-                cout << "ZAP request:" <<
+                /* cout << "ZAP request:" <<
                     "\n\tversion: " << version <<
                     "\n\trequest_id: " << request_id <<
                     "\n\tdomain: " << domain <<
@@ -620,28 +612,29 @@ Server::zapHandler()
                     "\n\tidentity_property: " << identity_property <<
                     "\n\tmechanism: " << mechanism <<
                     "\n\tclient_key: " << client_key_text << "\n";
+                */
 
                 // Always accept - but only set UID if it's a known client (by key)
                 if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
                 {
-                    cout << "ZAP: Known pre-authorized client\n";
                     uid = iclient->second;
+                    DL_DEBUG( "ZAP: Known pre-authorized client connected: " << uid );
                 }
                 else if (( itrans_client = m_trans_auth_clients.find( client_key_text )) != m_trans_auth_clients.end())
                 {
-                    cout << "ZAP: Known transient client\n";
                     uid = itrans_client->second.first;
+                    DL_DEBUG( "ZAP: Known transient client connected: " << uid );
                 }
                 else
                 {
                     if ( db_client.uidByPubKey( client_key_text, uid ) )
                     {
-                        cout << "ZAP: Known client " << uid << "\n";
+                        DL_DEBUG( "ZAP: Known client connected: " << uid );
                     }
                     else
                     {
                         uid = string("anon_") + client_key_text;
-                        cout << "ZAP: UNKNOWN client " << uid << "\n";
+                        DL_DEBUG( "ZAP: Unknown client connected: " << uid );
                     }
                 }
 
@@ -654,15 +647,15 @@ Server::zapHandler()
             }
             catch( TraceException & e )
             {
-                cout << "ZAP handler:" << e.toString() << "\n";
+                DL_ERROR( "ZAP handler:" << e.toString() );
             }
             catch( exception & e )
             {
-                cout << "ZAP handler:" << e.what() << "\n";
+                DL_ERROR( "ZAP handler:" << e.what() );
             }
             catch( ... )
             {
-                cout << "ZAP handler: unknown exception type\n";
+                DL_ERROR( "ZAP handler: Unknown exception" );
             }
         }
 
@@ -725,7 +718,7 @@ Server::authorizeClient( const std::string & a_cert_uid, const std::string & a_u
         lock_guard<mutex> lock( m_data_mutex );
         clock_gettime( CLOCK_REALTIME, &_t );
 
-        m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, _t.tv_sec + 10 );
+        m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, _t.tv_sec + 30 );
     }
 }
 
