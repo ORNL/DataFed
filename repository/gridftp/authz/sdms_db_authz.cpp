@@ -25,9 +25,8 @@ int authzdb(char * client_id, char * object, char * action)
 
     try
     {
-        string cred_dir = "home/cades/.sdms/";
         string authz_file = "/etc/grid-security/sdms-authz.conf";
-        AuthzWorker server( cred_dir, authz_file);
+        AuthzWorker server( authz_file);
         result = server.run(client_id, object, action);
     }
     catch( TraceException &e )
