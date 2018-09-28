@@ -57,7 +57,7 @@ AuthzWorker::AuthzWorker(const std::string & a_authz_file )
         //cout << "Error opening file.\n";
     }
 
-    loadKeys( a_cred_dir );
+    loadKeys( cred_dir );
 
     uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
