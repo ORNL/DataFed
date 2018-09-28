@@ -236,7 +236,7 @@ router.get('/delete', function (req, res) {
                     next = [];
                     for ( c in cur ){
                         coll = cur[c];
-                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.data_size,links:links,loc:loc[0]}", { coll: coll }).toArray();
+                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.size,links:links,loc:loc[0]}", { coll: coll }).toArray();
 
                         for ( i in objects ) {
                             obj = objects[i];

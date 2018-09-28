@@ -276,11 +276,11 @@ router.get('/alloc/stats', function (req, res) {
                 g_lib.ensureAdminPermUser( client, req.queryParams.subject );
             else
                 g_lib.ensureAdminPermProj( client, req.queryParams.subject );
-            sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1].data_size", { repo: req.queryParams.repo, subj: req.queryParams.subject }).toArray();
+            sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1].size", { repo: req.queryParams.repo, subj: req.queryParams.subject }).toArray();
         }else{
             g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
 
-            sizes = g_db._query("for v in 1..1 inbound @repo loc return v.data_size", { repo: req.queryParams.repo }).toArray();
+            sizes = g_db._query("for v in 1..1 inbound @repo loc return v.size", { repo: req.queryParams.repo }).toArray();
         }
 
         var size;

@@ -84,7 +84,7 @@ router.get('/init', function (req, res) {
 
                     result = [xfr.new];
                 } else if ( req.queryParams.mode == g_lib.XM_GET ) {
-                    if ( !data.data_size )
+                    if ( !data.size )
                         throw g_lib.ERR_XFR_NO_RAW_DATA;
 
                     var dest_path = req.queryParams.path;
@@ -119,7 +119,7 @@ router.get('/init', function (req, res) {
                         result = xfr;
                     }
                 } else {
-                    if ( !data.data_size )
+                    if ( !data.size )
                         throw g_lib.ERR_XFR_NO_RAW_DATA;
 
                     xfr = g_db._query( "for i in tr filter ( i.data_id == @src_id or i.data_id == @dst_id ) and i.status < 3 return i", { src_id: data_id, dst_id: dest_id }).toArray();
