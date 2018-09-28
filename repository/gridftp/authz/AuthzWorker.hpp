@@ -17,7 +17,7 @@ namespace SDMS {
 class AuthzWorker
 {
 public:
-    AuthzWorker( const std::string & a_cred_dir, const std::string & a_authz_file );
+    AuthzWorker( const std::string & a_authz_file );
     virtual ~AuthzWorker();
 
     AuthzWorker& operator=( const AuthzWorker & ) = delete;
@@ -38,6 +38,7 @@ private:
     
     std::string                     m_repo;
     std::string                     m_url;
+    uint32_t                        m_timeout;
 
     std::map<uint16_t,msg_fun_t>    m_msg_handlers;
 };
