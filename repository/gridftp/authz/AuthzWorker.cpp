@@ -18,10 +18,11 @@ namespace SDMS {
 
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
-AuthzWorker::AuthzWorker(const std::string & a_authz_file )
+AuthzWorker::AuthzWorker( const std::string & a_authz_file )
 {
     string line;
-    string cred_dir;
+    
+    string cred_dir = "home/cades/.sdms/";
     m_timeout = 5000;
     
     ifstream configFile(a_authz_file);
