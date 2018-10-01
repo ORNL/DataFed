@@ -345,7 +345,8 @@ function makeBrowserTab(){
             $("#btn_edit",inst.frame).button("option","disabled",true);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
-            $("#btn_share",inst.frame).button("option","disabled",!admin);
+            //$("#btn_share",inst.frame).button("option","disabled",!admin);
+            $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
             $("#btn_alloc",inst.frame).button("option","disabled",true);
@@ -383,6 +384,8 @@ function makeBrowserTab(){
         }else{
             console.log( "node key:", node.key );
             var key,i,html;
+            var date = new Date();
+
 
             if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
@@ -457,7 +460,6 @@ function makeBrowserTab(){
             } else if ( key[0] == "d" ) {
                 viewData( key, function( item ){
                     if ( item ){
-                        date = new Date();
                         inst.updateBtnState( "d", null, node.data.nonew?true:false );
 
                         html = "Data ID: " + key;
