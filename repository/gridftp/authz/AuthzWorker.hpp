@@ -38,6 +38,7 @@ private:
     
     std::string                     m_repo;
     std::string                     m_url;
+    
     uint32_t                        m_timeout;
 
     std::map<uint16_t,msg_fun_t>    m_msg_handlers;
