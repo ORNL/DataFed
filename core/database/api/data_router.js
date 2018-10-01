@@ -23,6 +23,7 @@ module.exports = router;
 router.post('/create', function (req, res) {
     try {
         var result = [];
+        console.log( "create data" );
 
         g_db._executeTransaction({
             collections: {
@@ -62,22 +63,29 @@ router.post('/create', function (req, res) {
                 }
 
                 if ( owner_id != client._id ){
+                    console.log( "not owner" );
                     // Storage location uses either project, or, if none, then owner's allocation(s)
                     if ( req.body.repo ) {
-                        repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
+                        console.log( "repo specified" );
+                        repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: req.body.repo });
+                        //repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
                     } else {
+                        console.log( "repo not specified" );
                         repo_alloc = g_lib.assignRepo( owner_id );
-                        if ( !repo_alloc ){
-                            // Project does not have it's own allocation, use one from project owner
-                            // Note: owner_id is the owner of the collection, which is the project, we need the owner of the project
-                            var proj = g_db.p.document( owner_id );
-                            var proj_owner = g_db.owner.firstExample({_from:owner_id})._to;
-                            // If project has a specified repo, use that; otherwise let system assign one
-                            if ( proj.repo )
-                                repo_alloc = g_lib.verifyRepo( proj_owner, proj.repo );
-                            else
-                                repo_alloc = g_lib.assignRepo( proj_owner );
-                        }
+                    }
+                    if ( !repo_alloc ){
+                        console.log( "alloc not found" );
+                        // Project does not have it's own allocation, use one from project owner
+                        // Note: owner_id is the owner of the collection, which is the project, we need the owner of the project
+                        var proj = g_db.p.document( owner_id );
+                        var proj_owner = g_db.owner.firstExample({_from:owner_id})._to;
+                        // If project has a specified repo, use that; otherwise let system assign one
+                        console.log( "try again with", proj_owner );
+
+                        if ( proj.repo )
+                            repo_alloc = g_lib.verifyRepo( proj_owner, proj.repo );
+                        else
+                            repo_alloc = g_lib.assignRepo( proj_owner );
                     }
                 }else{
                     // Storage location uses client allocation(s)
