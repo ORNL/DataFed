@@ -459,7 +459,7 @@ app.get('/api/grp/view', ( a_req, a_resp ) => {
 
 app.get('/api/grp/list', ( a_req, a_resp ) => {
     sendMessage( "GroupListRequest", { uid: a_req.query.uid }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.group);
+        a_resp.send(reply.group?reply.group:[]);
     });
 });
 
