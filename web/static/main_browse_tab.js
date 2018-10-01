@@ -95,10 +95,12 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         if ( node ){
             var parent;
-            if ( node.key[0] == "d" ) {
+            if ( node.key.startsWith("d/")) {
                 parent = node.parent.key;
-            }else if (node.key[0] == "c" ){
+            }else if (node.key.startsWith("c/")){
                 parent = node.key;
+            }else if (node.key.startsWith("p/")){
+                parent = "c/p_"+node.key.substr(2)+"_root";
             }else{
                 dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
                     inst.addNode( data );
@@ -134,10 +136,12 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         if ( node ){
             var parent;
-            if ( node.key[0] == "d" ) {
+            if ( node.key.startsWith("d/")) {
                 parent = node.parent.key;
-            }else if (node.key[0] == "c" ){
+            }else if (node.key.startsWith("c/")){
                 parent = node.key;
+            }else if (node.key.startsWith("p/")){
+                parent = "c/p_"+node.key.substr(2)+"_root";
             }else{
                 dlgCollNewEdit(null,"root",function(data){
                     inst.addNode( data );
