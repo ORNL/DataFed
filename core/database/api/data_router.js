@@ -313,11 +313,13 @@ router.get('/view', function (req, res) {
 router.get('/loc', function (req, res) {
     try {
         // This is a system call - no need to check permissions
-        var repo = g_db.loc.firstExample({ _from: req.queryParams.id });
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var repo = g_db.loc.firstExample({ _from: data_id });
         if ( !repo )
-            throw g_lib.ERR_NO_ALLOCATION;
+            throw g_lib.ERR_NO_RAW_DATA;
 
-        res.send([{repo_id:repo._to.substr(5),path:repo.path}]);
+        res.send({ id: data_id, repo_id:repo._to, path:repo.path });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -465,7 +467,7 @@ router.get('/search2', function (req, res) {
 
 router.get('/delete', function (req, res) {
     try {
-        var result = [];
+        var result;
 
         g_db._executeTransaction({
             collections: {
@@ -489,7 +491,7 @@ router.get('/delete', function (req, res) {
                     g_db._update( alloc._id, {usage:usage});
                 }
 
-                result.push({ id: data_id, repo_id: loc._to, path: loc.path });
+                result = { id: data_id, repo_id: loc._to, path: loc.path };
 
                 const graph = require('@arangodb/general-graph')._graph('sdmsg');
                 var obj;
