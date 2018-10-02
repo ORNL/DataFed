@@ -822,44 +822,47 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
-DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+//DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+DatabaseClient::recordDelete( const std::string & a_id, RecordDataLocation & a_loc )
 {
     rapidjson::Document result;
 
-    dbGet( "dat/delete", {{"id",a_request.id()}}, result );
+    dbGet( "dat/delete", {{"id",a_id}}, result );
 
-    setRecordLocationData( a_reply, result );
+    setRecordLocationData( a_loc, result );
 }
 
 void
-DatabaseClient::recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+//DatabaseClient::recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+DatabaseClient::recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc )
 {
     rapidjson::Document result;
 
-    dbGet( "dat/loc", {{"id",a_request.id()}}, result );
+    dbGet( "dat/loc", {{"id",a_id}}, result );
 
-    setRecordLocationData( a_reply, result );
+    setRecordLocationData( a_loc, result );
 }
 
 void
-DatabaseClient::setRecordLocationData( RecordDataLocationReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setRecordLocationData( RecordDataLocation & a_loc, rapidjson::Document & a_result )
 {
-    if ( !a_result.IsArray() )
+/*    if ( !a_result.IsArray() )
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
-
+*/
+/*
     RecordDataLocation* loc;
 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
     {
         rapidjson::Value & val = a_result[i];
-
-        loc = a_reply.add_location();
-        loc->set_id( val["id"].GetString() );
-        loc->set_repo_id( val["repo_id"].GetString() );
-        loc->set_path( val["path"].GetString() );
-    }
+*/
+        //loc = a_reply.add_location();
+        a_loc.set_id( a_result["id"].GetString() );
+        a_loc.set_repo_id( a_result["repo_id"].GetString() );
+        a_loc.set_path( a_result["path"].GetString() );
+  //  }
 }
 
 void
@@ -981,13 +984,26 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 }
 
 void
-DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+//DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+DatabaseClient::collDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs )
 {
     rapidjson::Document result;
 
-    dbGet( "col/delete", {{"id",a_request.id()}}, result );
+    dbGet( "col/delete", {{"id",a_id}}, result );
 
-    setRecordLocationData( a_reply, result );
+    a_locs.resize(result.Size());
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        rapidjson::Value & val = result[i];
+        RecordDataLocation & loc = a_locs[i];
+
+        loc.set_id( val["id"].GetString() );
+        loc.set_repo_id( val["repo_id"].GetString() );
+        loc.set_path( val["path"].GetString() );
+
+        //setRecordLocationData( a_locs[i], val );
+    }
 }
 
 void

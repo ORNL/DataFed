@@ -105,7 +105,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
-        SET_MSG_HANDLER_DB( proto_id, RecordGetDataLocationRequest, RecordDataLocationReply, recordGetDataLocation );
+        //SET_MSG_HANDLER_DB( proto_id, RecordGetDataLocationRequest, RecordDataLocationReply, recordGetDataLocation );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
@@ -433,26 +433,35 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
 
     DL_INFO( "Data RAW-DELETE, uid: " << a_uid << ", id: " << request->id() );
 
-    Auth::RecordUpdateRequest upd_req;
-    Auth::RecordDataReply upd_reply;
+    // Get data path and delete raw data first, then update data record
 
-    upd_req.set_id( request->id() );
-    upd_req.set_size( 0 );
+    //Auth::RecordGetDataLocationRequest loc_req;
+    //Auth::RecordDataLocationReply loc_reply;
+    //loc_req.set_id( request->id() );
+    DL_DEBUG("get location");
 
-    m_db_client.setClient( a_uid );
-    m_db_client.recordUpdate( upd_req, upd_reply );
+    //m_db_client.recordGetDataLocation( loc_req, loc_reply );
+    RecordDataLocation loc;
+    m_db_client.recordGetDataLocation( request->id(), loc );
+    //DL_DEBUG("location res size: " << loc_reply.location_size() );
 
-    Auth::RecordGetDataLocationRequest loc_req;
-    Auth::RecordDataLocationReply loc_reply;
-    loc_req.set_id( request->id() );
-    m_db_client.recordGetDataLocation( loc_req, loc_reply );
-
-    // Ask manager to delete file
-    for ( int i = 0; i < loc_reply.location_size(); i++ )
-    {
-        const RecordDataLocation & loc = loc_reply.location(i);
+    //if ( loc_reply.location_size() == 1 )
+    //{
+        DL_DEBUG("location: " << loc.path() );
+        // Ask manager to delete file
+        //const RecordDataLocation & loc = loc_reply.location(0);
         m_mgr.dataDelete( loc.repo_id(), loc.path() );
-    }
+
+        Auth::RecordUpdateRequest upd_req;
+        Auth::RecordDataReply upd_reply;
+
+        upd_req.set_id( request->id() );
+        upd_req.set_size( 0 );
+        DL_DEBUG("send record update");
+
+        m_db_client.setClient( a_uid );
+        m_db_client.recordUpdate( upd_req, upd_reply );
+    //}
 
     PROC_MSG_END
 }
@@ -461,7 +470,7 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
 bool
 Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, RecordDataLocationReply )
+    PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
 
     DL_INFO( "Data REC-DELETE, uid: " << a_uid << ", id: " << request->id() );
 
@@ -469,15 +478,18 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    //RecordDataLocationReply rep;
+    RecordDataLocation loc;
+
     m_db_client.setClient( a_uid );
-    m_db_client.recordDelete( *request, reply );
+    m_db_client.recordDelete( request->id(), loc );
 
     // Ask FileManager to delete file(s)
-    for ( int i = 0; i < reply.location_size(); i++ )
-    {
-        const RecordDataLocation & loc = reply.location(i);
+    //for ( int i = 0; i < reply.location_size(); i++ )
+    //{
+        //const RecordDataLocation & loc = rep.location(i);
         m_mgr.dataDelete( loc.repo_id(), loc.path() );
-    }
+    //}
 
     PROC_MSG_END
 }
@@ -485,7 +497,7 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 bool
 Worker::procCollectionDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( CollDeleteRequest, RecordDataLocationReply )
+    PROC_MSG_BEGIN( CollDeleteRequest, AckReply )
 
     DL_INFO( "Collection DELETE, uid: " << a_uid << ", id: " << request->id() );
 
@@ -494,13 +506,14 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.setClient( a_uid );
-    m_db_client.collDelete( *request, reply );
+    vector<RecordDataLocation> locs;
+    m_db_client.collDelete( request->id(), locs );
 
     // Ask FileManager to delete file
-    for ( int i = 0; i < reply.location_size(); i++ )
+    for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
     {
-        const RecordDataLocation & loc = reply.location(i);
-        m_mgr.dataDelete( loc.repo_id(), loc.path() );
+        //const RecordDataLocation & loc = reply.location(i);
+        m_mgr.dataDelete( l->repo_id(), l->path() );
     }
 
     PROC_MSG_END

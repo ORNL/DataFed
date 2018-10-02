@@ -157,10 +157,10 @@ message RecordUpdateRequest
     optional uint32             dt          = 9;
 }
 
-message RecordGetDataLocationRequest
+/*message RecordGetDataLocationRequest
 {
     required string             id          = 1;
-}
+}*/
 
 message RecordDeleteRequest
 {
@@ -172,11 +172,11 @@ message RecordSearchRequest
     required string             query       = 1;
     optional uint32             scope       = 2;
 }
-
+/*
 message RecordDataLocationReply
 {
     repeated RecordDataLocation location    = 1;
-}
+}*/
 
 // ============================ Raw Data Messages
 

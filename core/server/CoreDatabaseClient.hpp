@@ -54,14 +54,17 @@ public:
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
-    void recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    //void recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    //void recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    void recordDelete( const std::string & a_id, RecordDataLocation & a_loc );
+    void recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
-    void collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    //void collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    void collDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
@@ -103,7 +106,8 @@ private:
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
     void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
-    void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
+    //void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
+    void setRecordLocationData( RecordDataLocation & a_loc, rapidjson::Document & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
     void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
@@ -112,7 +116,6 @@ private:
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result );
-
 
     CURL *      m_curl;
     char *      m_client;
