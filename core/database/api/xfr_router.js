@@ -85,7 +85,7 @@ router.get('/init', function (req, res) {
                     result = [xfr.new];
                 } else if ( req.queryParams.mode == g_lib.XM_GET ) {
                     if ( !data.size )
-                        throw g_lib.ERR_XFR_NO_RAW_DATA;
+                        throw g_lib.ERR_XFR_RAW_DATA;
 
                     var dest_path = req.queryParams.path;
                     if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
@@ -120,7 +120,7 @@ router.get('/init', function (req, res) {
                     }
                 } else {
                     if ( !data.size )
-                        throw g_lib.ERR_XFR_NO_RAW_DATA;
+                        throw g_lib.ERR_NO_RAW_DATA;
 
                     xfr = g_db._query( "for i in tr filter ( i.data_id == @src_id or i.data_id == @dst_id ) and i.status < 3 return i", { src_id: data_id, dst_id: dest_id }).toArray();
                     // If there are any active puts/gets/copies for same data, this is a conflict
