@@ -107,11 +107,11 @@ router.get('/check', function (req, res) {
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
-            if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only VIEW permissions
-                if (( req.queryParams.perms & ~g_lib.PERM_VIEW) != 0 )
+            if (( role == g_lib.PROJ_NO_ROLE ) || ( role == g_lib.PROJ_MEMBER )){ // Non members have only VIEW permissions
+                if (( req.queryParams.perms & ~g_lib.PERM_VIEW ) != 0 )
                     result = 0;
-            } else if ( role == g_lib.PROJ_MEMBER ){ // Members have all but ADMIN and UPDATE
-                if (( req.queryParams.perms & ~g_lib.PERM_MEMBER) != 0 )
+            } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
+                if (( req.queryParams.perms & ~g_lib.PERM_MANAGER ) != 0 )
                     result = 0;
             }
         }else if ( ty == "d" || ty == "c" ){

@@ -35,7 +35,7 @@ router.get('/create', function (req, res) {
 
                 if ( req.queryParams.proj ) {
                     uid = req.queryParams.proj;
-                    g_lib.ensureAdminPermProj( client, uid );
+                    g_lib.ensureManagerPermProj( client, uid );
                 } else {
                     uid = client._id;
                 }
@@ -109,7 +109,8 @@ router.get('/update', function (req, res) {
                     group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
-                    g_lib.ensureAdminPermObject( client, group._id );
+                    //g_lib.ensureAdminPermObject( client, group._id );
+                    g_lib.ensureManagerPermProj( client, uid );
                 } else {
                     group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
                     if ( !group )
@@ -204,7 +205,9 @@ router.get('/delete', function (req, res) {
                     if ( !group )
                         throw g_lib.ERR_GROUP_NOT_FOUND;
 
-                    g_lib.ensureAdminPermObject( client, group._id );
+                    //g_lib.ensureAdminPermObject( client, group._id );
+                    g_lib.ensureManagerPermProj( client, uid );
+
                     // Make sure special members project is protected
                     if ( group.gid == "members" )
                         throw g_lib.ERR_MEM_GRP_PROTECTED;

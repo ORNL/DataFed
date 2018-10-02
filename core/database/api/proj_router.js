@@ -227,6 +227,8 @@ router.get('/update', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
+        // TODO Enforce view permission
+
         var client = g_lib.getUserFromClientID( req.queryParams.client );
         var proj = g_db.p.document({ _id: req.queryParams.id });
         var owner_id = g_db.owner.firstExample({_from: proj._id })._to;

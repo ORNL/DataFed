@@ -51,7 +51,7 @@ router.post('/create', function (req, res) {
                         if ( !g_lib.hasAdminPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
 
-                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_CREATE ))
+                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_WRITE ))
                                 throw g_lib.ERR_PERM_DENIED;
                         }
                     }
@@ -124,7 +124,7 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveID( req.body.id, client );
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     coll = g_db.c.document( coll_id );
-                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_UPDATE ))
+                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 

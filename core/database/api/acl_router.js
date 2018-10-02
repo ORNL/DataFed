@@ -51,12 +51,11 @@ function parsePermAction( a_perm_str ) {
         for ( var i in pstr ) {
             switch( pstr[i] ) {
                 case 'v': result.val |= g_lib.PERM_VIEW; break;
-                case 'u': result.val |= g_lib.PERM_UPDATE; break;
+                case 'r': result.val |= g_lib.PERM_READ; break;
+                case 'w': result.val |= g_lib.PERM_WRITE; break;
                 case 'a': result.val |= g_lib.PERM_ADMIN; break;
                 case 't': result.val |= g_lib.PERM_TAG; break;
                 case 'n': result.val |= g_lib.PERM_NOTE; break;
-                case 'r': result.val |= g_lib.PERM_READ; break;
-                case 'w': result.val |= g_lib.PERM_WRITE; break;
                 default: throw g_lib.ERR_INVALID_PERM;
             }
         }
@@ -101,7 +100,7 @@ router.get('/update', function (req, res) {
                     throw g_lib.ERR_INVALID_ID;
 
                 if ( !g_lib.hasAdminPermObject( client, object._id )){
-                    if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ) )
+                    if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 

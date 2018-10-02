@@ -18,17 +18,16 @@ module.exports = ( function() {
     obj.bad_chars = "/:\" ";
 
     obj.PERM_NONE           = 0x00;
-    obj.PERM_CREATE         = 0x01;   // Create new records and collections
-    obj.PERM_VIEW           = 0x02;   // Read public record fields (not collection items or raw data)
-    obj.PERM_UPDATE         = 0x04;   // Update public record fields
-    obj.PERM_ADMIN          = 0x08;   // Read, write admin fields, delete record
-    obj.PERM_READ           = 0x10;   // Read raw data or list collection items
-    obj.PERM_WRITE          = 0x20;   // Write raw data or add/remove collection items
-    obj.PERM_TAG            = 0x40;   // Add/remove tags on record
-    obj.PERM_NOTE           = 0x80;   // Add, remove, edit annotations on record
-    obj.PERM_ALL            = 0xFF;
-    obj.PERM_MEMBER         = 0xF7;   // Baseline project member permissions (all but admin)
-    obj.PERM_PUBLIC         = 0x12;
+    obj.PERM_VIEW           = 0x01;   // Read public record fields (not collection items or raw data)
+    obj.PERM_READ           = 0x02;   // Read raw data or list collection items
+    obj.PERM_WRITE          = 0x04;   // Write record fields, raw data, add/remove collection items, delete record
+    obj.PERM_ADMIN          = 0x08;   // Set access controls on record
+    obj.PERM_TAG            = 0x10;   // Add/remove tags on record
+    obj.PERM_NOTE           = 0x20;   // Add, remove, edit annotations on record
+    obj.PERM_ALL            = 0x3F;
+    obj.PERM_MEMBER         = 0x37;   // Default member perm
+    obj.PERM_MANAGER        = 0x37;   // Project record only - all but ADMIN
+    obj.PERM_PUBLIC         = 0x03;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
@@ -40,9 +39,10 @@ module.exports = ( function() {
     obj.XM_PUT              = 1;
     obj.XM_COPY             = 2;
 
-    obj.PROJ_NO_ROLE        = 0;
-    obj.PROJ_MEMBER         = 1;
-    obj.PROJ_ADMIN          = 2;
+    obj.PROJ_NO_ROLE        = 0;    // No permissions
+    obj.PROJ_MEMBER         = 1;    // Data/collection Permissions derived from "members" group and other ACLs
+    obj.PROJ_MANAGER        = 2;    // Adds permission to manage groups and grants ADMIN permission on all data/collections
+    obj.PROJ_ADMIN          = 3;    // Grants all permissions (edit and delete project)
 
     obj.SS_MY_DATA          = 0x01;
     obj.SS_MY_PROJ          = 0x02;
@@ -218,7 +218,7 @@ module.exports = ( function() {
             return obj.PROJ_ADMIN;
 
         if ( obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client_id }))
-            return obj.PROJ_ADMIN;
+            return obj.PROJ_MANAGER;
 
         var res = obj.db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' and v._id == @proj return { id: v._id }", { user: a_client_id, proj: a_proj_id }).toArray();
 
@@ -283,6 +283,14 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermProj = function( a_client, a_proj_id ) {
+        if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }))  { 
+            return false;
+        } else {
+            return true;
+        }
+    };
+
+    obj.hasManagerPermProj = function( a_client, a_proj_id ) {
         if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client._id }))  { 
             return false;
         } else {
@@ -325,6 +333,11 @@ module.exports = ( function() {
 
     obj.ensureAdminPermProj = function( a_client, a_user_id ) {
         if ( !obj.hasAdminPermProj( a_client, a_user_id ))
+            throw obj.ERR_PERM_DENIED;
+    };
+
+    obj.ensureManagerPermProj = function( a_client, a_user_id ) {
+        if ( !obj.hasManagerPermProj( a_client, a_user_id ))
             throw obj.ERR_PERM_DENIED;
     };
 
