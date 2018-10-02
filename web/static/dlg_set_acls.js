@@ -11,7 +11,7 @@ function makeDlgSetACLs(){
             <div style='flex:none'>ID/Alias: <span id='dlg_id'></span></div>\
             <div class='row-flex' style='flex:1 1 100%;width:100%;min-height:0'>\
                 <div class='col-flex' style='flex:1 1 10%;min-width:0;min-height:0;'>\
-                    <div style='flex:none;padding:.5rem 0 0 0'>Rules:</div>\
+                    <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
                     <div class='ui-widget-content text' style='flex:1 1 50%;min-height:0;min-width:0;width:100%;max-width:100%;overflow:auto'>\
                         <div id='dlg_rule_tree' class='no-border' style='min-height:0'></div>\
                     </div>\
@@ -25,16 +25,14 @@ function makeDlgSetACLs(){
                 </div>\
                 <div style='flex:none'>&nbsp</div>\
                 <div class='col-flex' style='flex:none'>\
-                    <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
+                    <div style='flex:none;padding:.5rem 0 0 0'>Local:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                         <div style='padding:.1em'><label for='dlg_view_cb'></label><input type='checkbox' id='dlg_view_cb'>&nbsp View</div>\
-                        <div id='dlg_create_row' style='padding:.1em;display:none'><label for='dlg_create_cb'></label><input type='checkbox' id='dlg_create_cb'>&nbsp Create</div>\
-                        <div style='padding:.1em'><label for='dlg_upd_cb'></label><input type='checkbox' id='dlg_upd_cb'>&nbsp Update</div>\
                         <div style='padding:.1em'><label for='dlg_read_cb'></label><input type='checkbox' id='dlg_read_cb'>&nbsp Read</div>\
                         <div style='padding:.1em'><label for='dlg_write_cb'></label><input type='checkbox' id='dlg_write_cb'>&nbsp Write</div>\
+                        <div style='padding:.1em'><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
                         <!-- div><label for='dlg_tag_cb'></label><input type='checkbox' id='dlg_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_note_cb'></label><input type='checkbox' id='dlg_note_cb'>&nbsp Annotate</div -->\
-                        <div style='padding:.1em'><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
                     </div>\
                     <div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set permissions to \"read only\"' id='dlg_read_only' class='btn small'>RO</button>\
@@ -49,13 +47,11 @@ function makeDlgSetACLs(){
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                         <div style='padding:.1em'><label for='dlg_inh_view_cb'></label><input type='checkbox' id='dlg_inh_view_cb'>&nbsp View</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_create_cb'></label><input type='checkbox' id='dlg_inh_create_cb'>&nbsp Create</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_upd_cb'></label><input type='checkbox' id='dlg_inh_upd_cb'>&nbsp Update</div>\
                         <div style='padding:.1em'><label for='dlg_inh_read_cb'></label><input type='checkbox' id='dlg_inh_read_cb'>&nbsp Read</div>\
                         <div style='padding:.1em'><label for='dlg_inh_write_cb'></label><input type='checkbox' id='dlg_inh_write_cb'>&nbsp Write</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
                         <!-- div><label for='dlg_inh_tag_cb'></label><input type='checkbox' id='dlg_inh_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_inh_note_cb'></label><input type='checkbox' id='dlg_inh_note_cb'>&nbsp Annotate</div -->\
-                        <div style='padding:.1em'><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
                     </div>\
                     <div  style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set inherited permissions to \"read-only\"' id='dlg_inh_read_only' class='btn small'>RO</button>\
@@ -93,23 +89,17 @@ function makeDlgSetACLs(){
         }
 
         if ( inst.is_coll ){
-            $("#dlg_create_row",inst.frame).show();
-
             $("#dlg_inh_read_only",inst.frame).click( function(){ inst.setAllPermInh("readonly"); });
             $("#dlg_inh_read_write",inst.frame).click( function(){ inst.setAllPermInh("readwrite"); });
             $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh(true); });
             $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh(false); });
 
             $("#dlg_inh_view_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_VIEW )});
-            $("#dlg_inh_upd_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_UPDATE )});
+            $("#dlg_inh_read_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_READ )});
+            $("#dlg_inh_write_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
             $("#dlg_inh_admin_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_ADMIN )});
             //$("#dlg_inh_tag_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_TAG )});
             //$("#dlg_inh_note_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_NOTE )});
-            $("#dlg_inh_read_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_READ )});
-            $("#dlg_inh_write_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
-
-            $("#dlg_create_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_CREATE )});
-            $("#dlg_inh_create_cb",inst.frame).on( "change", function(){ inst.selectInhHandler( $(this), PERM_CREATE )});
         }else{
             $("#col_div_1",inst.frame).hide();
             $("#col_div_2",inst.frame).hide();
@@ -126,12 +116,11 @@ function makeDlgSetACLs(){
         $("#dlg_edit",inst.frame).click( function(){ inst.editGroup(); });
 
         $("#dlg_view_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_VIEW )});
-        $("#dlg_upd_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_UPDATE )});
+        $("#dlg_read_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_READ )});
+        $("#dlg_write_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_WRITE )});
         $("#dlg_admin_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_ADMIN )});
         //$("#dlg_tag_cb",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_TAG )});
         //$("#dlg_note_cb",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_NOTE )});
-        $("#dlg_read_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_READ )});
-        $("#dlg_write_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_WRITE )});
 
         inst.public = item.public?true:false;
 
@@ -321,13 +310,11 @@ function makeDlgSetACLs(){
             inst.setPermsFromRule( inst.cur_rule );
         } else {
             $("#dlg_view_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_upd_cb",this.frame).prop("checked",value).checkboxradio("refresh");
+            $("#dlg_read_cb",this.frame).prop("checked",value).checkboxradio("refresh");
+            $("#dlg_write_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             $("#dlg_admin_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             //$("#dlg_tag_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             //$("#dlg_note_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_read_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_write_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_create_cb",this.frame).prop("checked",value).checkboxradio("refresh");
         }
     }
 
@@ -348,13 +335,11 @@ function makeDlgSetACLs(){
             inst.setPermsFromRule( inst.cur_rule );
         } else {
             $("#dlg_inh_view_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_upd_cb",this.frame).prop("checked",value).checkboxradio("refresh");
+            $("#dlg_inh_read_cb",this.frame).prop("checked",value).checkboxradio("refresh");
+            $("#dlg_inh_write_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             $("#dlg_inh_admin_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             //$("#dlg_inh_tag_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             //$("#dlg_inh_note_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_read_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_write_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_create_cb",this.frame).prop("checked",value).checkboxradio("refresh");
         }
     }
 
@@ -366,22 +351,18 @@ function makeDlgSetACLs(){
                 inst.setAllPermInh(false);
         } else {
             inst.setPerm( "#dlg_view_cb", rule, PERM_VIEW );
-            inst.setPerm( "#dlg_upd_cb", rule, PERM_UPDATE );
+            inst.setPerm( "#dlg_read_cb", rule, PERM_READ );
+            inst.setPerm( "#dlg_write_cb", rule, PERM_WRITE );
             inst.setPerm( "#dlg_admin_cb", rule, PERM_ADMIN );
             //inst.setPerm( "#dlg_tag_cb", rule, PERM_TAG );
             //inst.setPerm( "#dlg_note_cb", rule, PERM_NOTE );
-            inst.setPerm( "#dlg_read_cb", rule, PERM_READ );
-            inst.setPerm( "#dlg_write_cb", rule, PERM_WRITE );
-            inst.setPerm( "#dlg_create_cb", rule, PERM_CREATE );
             if ( inst.is_coll ) {
                 inst.setPermInh( "#dlg_inh_view_cb", rule, PERM_VIEW );
-                inst.setPermInh( "#dlg_inh_upd_cb", rule, PERM_UPDATE );
+                inst.setPermInh( "#dlg_inh_read_cb", rule, PERM_READ );
+                inst.setPermInh( "#dlg_inh_write_cb", rule, PERM_WRITE );
                 inst.setPermInh( "#dlg_inh_admin_cb", rule, PERM_ADMIN );
                 //inst.setPermInh( "#dlg_inh_tag_cb", rule, PERM_TAG );
                 //inst.setPermInh( "#dlg_inh_note_cb", rule, PERM_NOTE );
-                inst.setPermInh( "#dlg_inh_read_cb", rule, PERM_READ );
-                inst.setPermInh( "#dlg_inh_write_cb", rule, PERM_WRITE );
-                inst.setPermInh( "#dlg_inh_create_cb", rule, PERM_CREATE );
             }
         }
     }

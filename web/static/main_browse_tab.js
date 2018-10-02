@@ -108,8 +108,8 @@ function makeBrowserTab(){
                 return;
             }
 
-            hasPerms( parent, PERM_CREATE, function( perms ){
-                if (( perms & PERM_CREATE ) == 0 ){
+            hasPerms( parent, PERM_WRITE, function( perms ){
+                if (( perms & PERM_WRITE ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -149,8 +149,8 @@ function makeBrowserTab(){
                 return;
             }
 
-            hasPerms( parent, PERM_CREATE, function( perms ){
-                if (( perms & PERM_CREATE ) == 0 ){
+            hasPerms( parent, PERM_WRITE, function( perms ){
+                if (( perms & PERM_WRITE ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -177,8 +177,8 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         if ( node ) {
             //console.log( "edit sel", node, node.data.isproj );
-            hasPerms( node.key, PERM_UPDATE, function( perms ){
-                if (( perms & PERM_UPDATE ) == 0 ){
+            hasPerms( node.key, PERM_ADMIN, function( perms ){
+                if (( perms & PERM_ADMIN ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -223,7 +223,7 @@ function makeBrowserTab(){
         if ( node && node.key[0] == "d" ) {
             //console.log( "edit sel", node, node.data.isproj );
             hasPerms( node.key, PERM_READ, function( perms ){
-                if (( perms & PERM_READ ) == 0 ){
+                if (( perms & PERM_READ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -386,10 +386,9 @@ function makeBrowserTab(){
         if ( !node ){
             inst.noInfoAvail();
         }else{
-            console.log( "node key:", node.key );
+            //console.log( "node key:", node.key );
             var key,i,html;
             var date = new Date();
-
 
             if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
@@ -638,7 +637,7 @@ function makeBrowserTab(){
 
         if ( item.id.startsWith("p/")){
             // Projects can only be added to "my projects"
-            var node = inst.data_tree.getNodeByKey("proj_adm");
+            var node = inst.data_tree.getNodeByKey("proj_own");
             if ( node ){
                 var prj_id = item.id.substr(2);
                 node.addNode({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key:item.id,scope:item.id,isproj:true,admin:true,nodrag:true,children:[
@@ -827,8 +826,9 @@ function makeBrowserTab(){
     var tree_source = [
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,expanded:true,children:[{
             title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
-        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
-        {title:"Team Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
+        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
+        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
+        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
@@ -903,9 +903,14 @@ function makeBrowserTab(){
         source: tree_source,
         selectMode: 1,
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "proj_adm" ){
+            if ( data.node.key == "proj_own" ){
                 data.result = {
-                    url: "/api/prj/list?owner=true&admin=true",
+                    url: "/api/prj/list?owner=true",
+                    cache: false
+                };
+            } else if ( data.node.key == "proj_adm" ){
+                data.result = {
+                    url: "/api/prj/list?admin=true",
                     cache: false
                 };
             } else if ( data.node.key == "proj_mem" ){
@@ -958,12 +963,12 @@ function makeBrowserTab(){
             }
         },
         postProcess: function( event, data ) {
-            console.log( "pos proc:", data );
-            if ( data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
+            //console.log( "pos proc:", data );
+            if ( data.node.key == "proj_own" || data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
                 data.result = [];
                 if ( data.response.length ){
                     var item;
-                    var admin = (data.node.key=="proj_adm"?true:false);
+                    var admin = (data.node.key=="proj_own"?true:false);
                     var prj_id;
 
                     for ( var i in data.response ) {

@@ -484,18 +484,16 @@ function themeSet( theme ){
 
 var status_timer;
 
-var PERM_CREATE         = 0x001;   // Create data and collections
-var PERM_VIEW           = 0x002;   // Read public record fields (not collection items or raw data)
-var PERM_UPDATE         = 0x004;   // Update public record fields
-var PERM_ADMIN          = 0x008;   // Read, write admin fields, delete record
-var PERM_READ           = 0x010;   // Read raw data or list collection items
-var PERM_WRITE          = 0x020;   // Write raw data or add/remove collection items
-var PERM_TAG            = 0x040;   // Add/remove tags on record
-var PERM_NOTE           = 0x080;   // Add, remove, edit annotations on record
-var PERM_ALL            = 0x0FF;
-var PERM_PUBLIC         = 0x012;
-var PERM_READONLY       = 0x0D2;
-var PERM_READWRITE      = 0x0F7;
+var PERM_VIEW           = 0x01;   // Read public record fields (not collection items or raw data)
+var PERM_READ           = 0x02;   // Read raw data or list collection items
+var PERM_WRITE          = 0x04;   // Write raw data or add/remove collection items
+var PERM_ADMIN          = 0x08;   // Read, write admin fields, delete record
+var PERM_TAG            = 0x10;   // Add/remove tags on record
+var PERM_NOTE           = 0x20;   // Add, remove, edit annotations on record
+var PERM_ALL            = 0x3F;
+var PERM_PUBLIC         = 0x03;
+var PERM_READONLY       = 0x33;
+var PERM_READWRITE      = 0x37;
 
 var SS_MY_DATA          = 0x01;
 var SS_MY_PROJ          = 0x02;
