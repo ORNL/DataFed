@@ -216,6 +216,7 @@ function makeDlgRepoAdmin(){
             if ( node ){
                 allocStats( a_repo_id, node.key, function( ok, data ){
                     if ( ok ){
+                        //console.log("stats:",data);
                         // Update alloc tree with latest total_sz
                         node.data.alloc.totalSz = data.totalSz;
                         //node.setTitle( node.key.substr(2) + "  (" +sizeToString(data.totalSz) +"/"+sizeToString( node.data.alloc.alloc )+")");
@@ -227,11 +228,11 @@ function makeDlgRepoAdmin(){
                         <tr><td>No. of Files:</td><td>" + data.files + "</td></tr>\
                         <tr><td>Total size:</td><td>" + sizeToString( data.totalSz ) + "</td></tr>\
                         <tr><td>Average size:</td><td>" + sizeToString( data.files>0?data.totalSz/data.files:0 ) + "</td></tr>\
-                        <tr><td>&lt 1 KB:</td><td>" + data.histogram[0] + " %</td></tr>\
-                        <tr><td>1 KB to 1 MB:</td><td>" + data.histogram[1] + " %</td></tr>\
-                        <tr><td>1 MB to 1 GB:</td><td>" + data.histogram[2] + " %</td></tr>\
-                        <tr><td>1 GB to 1 TB:</td><td>" + data.histogram[3] + " %</td></tr>\
-                        <tr><td>&gt 1 TB:</td><td>" + data.histogram[4] + " %</td></tr>\
+                        <tr><td>&lt 1 KB:</td><td>" + data.histogram[0].toFixed(1) + " %</td></tr>\
+                        <tr><td>1 KB to 1 MB:</td><td>" + data.histogram[1].toFixed(1) + " %</td></tr>\
+                        <tr><td>1 MB to 1 GB:</td><td>" + data.histogram[2].toFixed(1) + " %</td></tr>\
+                        <tr><td>1 GB to 1 TB:</td><td>" + data.histogram[3].toFixed(1) + " %</td></tr>\
+                        <tr><td>&gt 1 TB:</td><td>" + data.histogram[4].toFixed(1) + " %</td></tr>\
                         </table>";
 
                         dlgAlert( "Allocation Statistics", msg );
