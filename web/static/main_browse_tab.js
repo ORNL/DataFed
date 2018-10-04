@@ -410,7 +410,7 @@ function makeBrowserTab(){
                             for ( i in user.alloc ){
                                 alloc = user.alloc[i]
                                 free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
-                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)";
+                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
                             }
                         }else{
                             html += "(none)";
