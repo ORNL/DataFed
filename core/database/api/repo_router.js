@@ -244,10 +244,6 @@ router.get('/alloc/list/by_object', function (req, res) {
     var obj_id = g_lib.resolveID( req.queryParams.object, client );
     var owner_id = g_db.owner.firstExample({_from: obj_id})._to;
     var result = g_db.alloc.byExample({_from: owner_id}).toArray();
-    if ( result.length == 0 && owner_id[0] == "p" ){
-        owner_id = g_db.owner.firstExample({_from: owner_id})._to;
-        result = g_db.alloc.byExample({_from: owner_id}).toArray();
-    }
 
     var obj;
     for ( var i in result ){
@@ -273,7 +269,11 @@ router.get('/alloc/stats', function (req, res) {
 
         if ( req.queryParams.subject ){
             g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
-            sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1].size", { repo: req.queryParams.repo, subj: req.queryParams.subject }).toArray();
+            var alloc = g_db.alloc.firstExample({_from:req.queryParams.subject,_to:req.queryParams.repo});
+            if ( alloc ){
+                sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj || p.edges[0].parent == @alloc return p.vertices[1].size", { repo: req.queryParams.repo, alloc: alloc._id, subj: req.queryParams.subject }).toArray();
+            }else
+                sizes = [];
         }else{
             g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
 

@@ -172,6 +172,34 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.desc )
                     obj.desc = req.queryParams.desc;
 
+                if ( req.queryParams.sub_repo ){
+                    // Verify there isn't a real allocation present
+                    if ( g_db.alloc.firstExample({_from:proj_id}))
+                        throw g_lib.ERR_ALLOC_IN_USE;
+
+                    // Verify that there are no existing data records
+                    var data = g_db._query("for v in 1..1 inbound @proj owner filter IS_SAME_COLLECTION('d',v) return v._id",{proj:proj_id}).toArray();
+                    if ( data.length )
+                        throw g_lib.ERR_ALLOC_IN_USE;
+                    if ( req.queryParams.sub_repo != 'none' ){
+                        var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
+                        if (  req.queryParams.sub_alloc <= 0 )
+                            throw g_lib.ERR_INVALID_PARAM;
+                        if ( req.queryParams.sub_alloc > alloc.alloc )
+                            throw g_lib.ERR_ALLOCATION_EXCEEDED;
+
+                        obj.sub_repo = req.queryParams.sub_repo;
+                        obj.sub_alloc = req.queryParams.sub_alloc;
+                        obj.sub_usage = 0;
+                    }else{
+                        obj.sub_repo = null;
+                        obj.sub_alloc = null;
+                        obj.sub_usage = null;
+                    }
+                }else if ( req.queryParams.sub_alloc ){
+                    obj.sub_alloc = req.queryParams.sub_alloc;
+                }
+
                 var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
                 var uid, i;
@@ -236,6 +264,8 @@ router.get('/update', function (req, res) {
 .queryParam('title', joi.string().optional(), "New title")
 .queryParam('domain', joi.string().optional(), "Domain or topic (in reverse dotted notation)")
 .queryParam('desc', joi.string().optional(), "Description")
+.queryParam('sub_repo', joi.string().optional(), "Sub-allocaiton repo ID")
+.queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
 .summary('Update project information')
