@@ -53,7 +53,7 @@ router.post('/create', function (req, res) {
                         if ( !g_lib.hasAdminPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
 
-                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_WRITE ))
+                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_WR_DATA ))
                                 throw g_lib.ERR_PERM_DENIED;
                         }
                     }
@@ -62,30 +62,44 @@ router.post('/create', function (req, res) {
                     owner_id = client._id;
                 }
 
+                var alloc_parent = null;
+
                 if ( owner_id != client._id ){
                     console.log( "not owner" );
-                    // Storage location uses either project, or, if none, then owner's allocation(s)
                     if ( req.body.repo ) {
+                        // If a repo is specified, must be a real allocation - verify it as usual
                         console.log( "repo specified" );
-                        repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: req.body.repo });
-                        //repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
+                        //repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: req.body.repo });
+                        repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
                     } else {
+                        // If a repo is not specified, must check for project sub-allocation
                         console.log( "repo not specified" );
-                        repo_alloc = g_lib.assignRepo( owner_id );
-                    }
-                    if ( !repo_alloc ){
-                        console.log( "alloc not found" );
-                        // Project does not have it's own allocation, use one from project owner
-                        // Note: owner_id is the owner of the collection, which is the project, we need the owner of the project
-                        var proj = g_db.p.document( owner_id );
-                        var proj_owner = g_db.owner.firstExample({_from:owner_id})._to;
-                        // If project has a specified repo, use that; otherwise let system assign one
-                        console.log( "try again with", proj_owner );
 
-                        if ( proj.repo )
-                            repo_alloc = g_lib.verifyRepo( proj_owner, proj.repo );
-                        else
-                            repo_alloc = g_lib.assignRepo( proj_owner );
+                        if ( owner_id[0] == 'p' ){
+                            // For projects, use sub-allocation if defined, otherwise auto-assign from project owner
+                            console.log( "owner is a project" );
+                            var proj = g_db.p.document( owner_id );
+                            if ( proj.sub_repo ){
+                                console.log( "project has sub allocation" );
+                                // Make sure soft capacitt hasn't been exceeded
+                                if ( proj.sub_usage > proj.sub_alloc )
+                                    throw g_lib.ERR_ALLOCATION_EXCEEDED;
+
+                                // TODO Handle multiple project owners?
+                                var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
+                                repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
+                                // Make sure hard capacity hasn't been exceeded
+                                if ( repo_alloc.usage > repo_alloc.capacity )
+                                    throw g_lib.ERR_ALLOCATION_EXCEEDED;
+
+                                alloc_parent = repo_alloc._id;
+                            }
+                        }
+
+                        if ( !repo_alloc ){
+                            // Try to auto-assign an available allocation
+                            repo_alloc = g_lib.assignRepo( owner_id );
+                        }
                     }
                 }else{
                     // Storage location uses client allocation(s)
@@ -120,8 +134,12 @@ router.post('/create', function (req, res) {
                 var data = g_db.d.save( obj, { returnNew: true });
                 //console.log("Save owner");
                 g_db.owner.save({ _from: data.new._id, _to: owner_id });
+
                 //console.log("Save loc", repo_alloc );
-                g_db.loc.save({ _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key });
+                var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key };
+                if ( alloc_parent )
+                    loc.parent = alloc_parent;
+                g_db.loc.save(loc);
 
                 if ( req.body.alias ) {
                     g_lib.validateAlias( req.body.alias );
@@ -172,7 +190,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","owner","alias","alloc"]
+                write: ["d","a","p","owner","alias","alloc"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -181,7 +199,19 @@ router.post('/update', function (req, res) {
                 var data = g_db.d.document( data_id );
 
                 if ( !g_lib.hasAdminPermObject( client, data_id )) {
-                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_WRITE ))
+                    // Required permissions depend on which fields are being modified:
+                    // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
+                    var perms = 0;
+                    if ( req.body.md )
+                        perms |= g_lib.PERM_WR_META;
+
+                    if ( req.body.size || req.body.dt )
+                        perms |= g_lib.PERM_WR_DATA;
+
+                    if ( req.body.title || req.body.alias  || req.body.desc || req.body.public )
+                        perms |= g_lib.PERM_ADMIN;
+
+                    if ( !g_lib.hasPermission( client, data, perms ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -213,8 +243,19 @@ router.post('/update', function (req, res) {
                         var loc = g_db.loc.firstExample({ _from: data_id });
                         if ( loc ){
                             //console.log("owner:",owner_id,"repo:",loc._to);
-                            var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                            var usage = Math.max(0,alloc.usage - data.size + obj.size);
+                            var alloc, usage;
+                            if ( loc.parent ){
+                                alloc = g_db.alloc.document( loc.parent );
+                                // Update project sub allocation
+                                var proj = g_db.p.document( owner_id );
+                                usage = Math.max(0,proj.sub_usage - data.size + obj.size);
+                                g_db._update( proj._id, {sub_usage:usage});
+                            }else{
+                                alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                            }
+
+                            // Update primary/parent allocation
+                            usage = Math.max(0,alloc.usage - data.size + obj.size);
                             g_db._update( alloc._id, {usage:usage});
                         }
                     }
@@ -472,24 +513,37 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","owner","item","acl","alias","loc","alloc"]
+                write: ["d","a","owner","item","acl","alias","loc","alloc","p"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
                 var data_id = g_lib.resolveID( req.queryParams.id, client );
-                g_lib.ensureAdminPermObject( client, data_id );
-
                 var data = g_db.d.document( data_id );
+
+                if ( !g_lib.hasAdminPermObject( client, data_id )){
+                    if ( !g_lib.hasPermission( client, data, g_lib.PERM_ADMIN ))
+                        throw g_lib.ERR_PERM_DENIED;
+                }
+
                 var loc = g_db.loc.firstExample({_from: data_id });
 
                 // Adjust allocation for data size
                 if ( data.size ){
                     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-                    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                    var usage = Math.max(0,alloc.usage - data.size);
+                    var alloc, usage;
+                    if ( loc.parent ){
+                        alloc = g_db.alloc.document( loc.parent );
+                        // Update project sub allocation
+                        var proj = g_db.p.document( owner_id );
+                        usage = Math.max(0,proj.sub_usage - data.size);
+                        g_db._update( proj._id, {sub_usage:usage});
+                    }else{
+                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                    }
+                    usage = Math.max(0,alloc.usage - data.size);
                     g_db._update( alloc._id, {usage:usage});
-                }
+            }
 
                 result = { id: data_id, repo_id: loc._to, path: loc.path };
 

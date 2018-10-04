@@ -31,11 +31,11 @@ router.get('/gridftp', function (req, res) {
         var req_perm = 0;
         switch ( req.queryParams.act ) {
             case "read":
-                req_perm = g_lib.PERM_READ;
+                req_perm = g_lib.PERM_RD_DATA;
                 break;
             case "write":
             case "create":
-                req_perm = g_lib.PERM_WRITE;
+                req_perm = g_lib.PERM_WR_DATA;
                 break;
             case "delete":
                 throw g_lib.ERR_INVALID_ACTION;
@@ -108,7 +108,7 @@ router.get('/check', function (req, res) {
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
             if (( role == g_lib.PROJ_NO_ROLE ) || ( role == g_lib.PROJ_MEMBER )){ // Non members have only VIEW permissions
-                if (( req.queryParams.perms & ~g_lib.PERM_VIEW ) != 0 )
+                if ( req.queryParams.perms != g_lib.PERM_VIEW )
                     result = 0;
             } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
                 if (( req.queryParams.perms & ~g_lib.PERM_MANAGER ) != 0 )

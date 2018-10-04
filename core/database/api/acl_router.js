@@ -51,8 +51,8 @@ function parsePermAction( a_perm_str ) {
         for ( var i in pstr ) {
             switch( pstr[i] ) {
                 case 'v': result.val |= g_lib.PERM_VIEW; break;
-                case 'r': result.val |= g_lib.PERM_READ; break;
-                case 'w': result.val |= g_lib.PERM_WRITE; break;
+                case 'r': result.val |= (g_lib.PERM_RD_META|g_lib.PERM_RD_DATA); break;
+                case 'w': result.val |= (g_lib.PERM_WR_META|g_lib.PERM_WR_DATA); break;
                 case 'a': result.val |= g_lib.PERM_ADMIN; break;
                 case 't': result.val |= g_lib.PERM_TAG; break;
                 case 'n': result.val |= g_lib.PERM_NOTE; break;

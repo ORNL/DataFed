@@ -47,8 +47,23 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.desc )
                     proj_data.desc = req.queryParams.desc;
 
+                if ( req.queryParams.sub_repo ){
+                    var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
+                    //var alloc_sz = parseInt( req.queryParams.sub_alloc );
+                    //if ( isNaN(alloc_sz) || alloc_sz <= 0 )
+                    if (  req.queryParams.sub_alloc <= 0 )
+                        throw g_lib.ERR_INVALID_PARAM;
+                    if ( req.queryParams.sub_alloc > alloc.alloc ) // Ok to over-allocate across projects
+                        throw g_lib.ERR_ALLOCATION_EXCEEDED;
+
+                    proj_data.sub_repo = req.queryParams.sub_repo;
+                    proj_data.sub_alloc = req.queryParams.sub_alloc;
+                    proj_data.sub_usage = 0;
+                }
+    
                 var proj = g_db.p.save( proj_data, { returnNew: true });
                 g_db.owner.save({ _from: proj._id, _to: client._id });
+
 
                 var root = g_db.c.save({ _key: "p_" + req.queryParams.id + "_root", is_root: true, title: "root", desc: "Root collection for project " + req.queryParams.id }, { returnNew: true });
 
@@ -114,6 +129,8 @@ router.get('/create', function (req, res) {
 .queryParam('title', joi.string().required(), "Title (must be unque within domain)")
 .queryParam('domain', joi.string().required(), "Domain or topic (in reverse dotted notation)")
 .queryParam('desc', joi.string().optional(), "Description")
+.queryParam('sub_repo', joi.string().optional(), "Sub-allocaiton repo ID")
+.queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Additional project administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
 .summary('Create new project')

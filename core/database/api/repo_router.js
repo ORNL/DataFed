@@ -336,16 +336,20 @@ router.get('/alloc/set', function (req, res) {
                 var repo = g_db.repo.document( req.queryParams.repo );
 
                 g_lib.ensureAdminPermRepo( client, repo._id );
+                var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
 
-                if ( req.queryParams.alloc == 0 ){
+                if ( req.queryParams.alloc == 0 && alloc ){
                     // Check if there are any records using this repo and fail if so
+                    // Check for sub allocations
+                    if ( g_db.loc.firstExample({ parent: alloc._id }))
+                        throw g_lib.ERR_ALLOC_IN_USE;
+                    // Check for direct use of allocation
                     var records = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1]._id", { repo: repo._id, subj: subject_id }).toArray();
                     if ( records.length )
                         throw g_lib.ERR_ALLOC_IN_USE;
 
                     g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
                 } else {
-                    var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
                     if ( alloc ){
                         g_db.alloc.update( alloc._id, { alloc: req.queryParams.alloc });
                     } else {

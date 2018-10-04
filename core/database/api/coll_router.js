@@ -51,7 +51,7 @@ router.post('/create', function (req, res) {
                         if ( !g_lib.hasAdminPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
 
-                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_WRITE ))
+                            if ( !g_lib.hasPermission( client, parent_coll, g_lib.PERM_WR_DATA ))
                                 throw g_lib.ERR_PERM_DENIED;
                         }
                     }
@@ -124,7 +124,7 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveID( req.body.id, client );
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     coll = g_db.c.document( coll_id );
-                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
+                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_ADMIN ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -203,9 +203,13 @@ router.get('/delete', function (req, res) {
 
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
-
-                g_lib.ensureAdminPermObject( client, coll_id );
                 var coll = g_db.c.document( coll_id );
+
+                if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_ADMIN ))
+                        throw g_lib.ERR_PERM_DENIED;
+                }
+
                 var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
                 if ( coll.is_root )
@@ -359,10 +363,11 @@ router.get('/read', function (req, res) {
             mode = 1;
         else if ( req.queryParams.mode == "d" )
             mode = 2;
+        var qry = "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) sort left(v._id,1), v.title return { id: v._id, title: v.title, alias: a[0] }";
 
         if ( g_lib.hasAdminPermObject( client, coll_id )) {
             // No need to perform pernission checks on items if client has admin perm on collection
-            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) sort left(v._id,1), v.title return { id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+            items = g_db._query( qry, { coll: coll_id }).toArray();
 
             if ( mode > 0 ) {
                 for ( i in items ) {
@@ -375,15 +380,15 @@ router.get('/read', function (req, res) {
             }
 
         } else {
-            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_READ ))
+            if ( !g_lib.hasPermission( client, coll, g_lib.PERM_RD_DATA ))
                 throw g_lib.ERR_PERM_DENIED;
 
-            items = g_db._query( "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) return { _id: v._id, title: v.title, alias: a[0] }", { coll: coll_id }).toArray();
+            items = g_db._query( qry, { coll: coll_id }).toArray();
 
             for ( i in items ) {
                 item = items[i];
-                if ( !mode || (mode == 1 && item._id[0] == 'c') || (mode == 2 && item._id[0] == 'd' ))
-                    result.push({ id: item._id, title: item.title, alias: item.alias });
+                if ( !mode || (mode == 1 && item.id[0] == 'c') || (mode == 2 && item.id[0] == 'd' ))
+                    result.push({ id: item.id, title: item.title, alias: item.alias });
             }
         }
 
@@ -415,7 +420,7 @@ router.get('/write', function (req, res) {
                 var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WRITE ))
+                    if ( !g_lib.hasPermission( client, coll, g_lib.PERM_WR_DATA ))
                         throw g_lib.ERR_PERM_DENIED;
                 }else
                     is_admin = true;
