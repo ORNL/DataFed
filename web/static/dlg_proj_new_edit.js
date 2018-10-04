@@ -64,6 +64,9 @@ function dlgProjNewEdit(a_data,a_cb) {
                 proj.domain = $("#domain",frame).val();
                 proj.title = $("#title",frame).val();
                 proj.desc = $("#desc",frame).val();
+                proj.subRepo = $("#suballoc",frame).val();
+                proj.subAlloc = $("#suballoc_size",frame).val();
+                console.log("proj:",proj);
 
                 if ( !proj.id || !proj.domain || !proj.title ){
                     dlgAlert("Input Error","Missing one or more required fields: ID, title, and domain.");
@@ -91,35 +94,40 @@ function dlgProjNewEdit(a_data,a_cb) {
 
                 if (( !a_data && proj.desc ) || (a_data && (proj.desc != a_data.desc )))
                     url += "&desc="+ encodeURIComponent(proj.desc);
-                
-                var alloc = $("#suballoc",frame).val();
-                console.log( "alloc", alloc );
 
-                if ( alloc != "none" ){
-                    var alloc_sz = parseSize( $("#suballoc_size",frame).val() );
-                    console.log( "alloc_sz", alloc_sz );
-                    if ( alloc_sz == null || alloc_sz <= 0 ){
-                        dlgAlert("Input Error","Invalid sub-allocation size.");
-                        return;
-                    }
-
-                    for ( var i in alloc_list ){
-                        if ( alloc_list[i].repo == alloc ){
-                            if ( alloc_sz > alloc_list[i].alloc ){
-                                dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
-                                return;
-                            }
-
-                            break;
+                if ( proj.subRepo != "ignore" && (( !a_data && proj.subRepo != "none" ) || (a_data && (proj.subRepo != a_data.subRepo || proj.subAlloc != a_data.subAlloc )))){
+                    console.log("repo:",proj.subRepo );
+                    if ( proj.subRepo == "none" ){
+                        url += "&sub_repo=none";
+                    }else{
+                        var alloc_sz = parseSize( proj.subAlloc );
+                        console.log( "alloc_sz", alloc_sz );
+                        if ( alloc_sz == null || alloc_sz < 0 ){
+                            dlgAlert("Input Error","Invalid sub-allocation size.");
+                            return;
                         }
-                    }
 
-                    url += "&sub_repo=" + alloc + "&sub_alloc=" + alloc_sz;
+                        for ( var i in alloc_list ){
+                            if ( alloc_list[i].repo == proj.subRepo ){
+                                if ( alloc_sz > alloc_list[i].alloc ){
+                                    dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
+                                    return;
+                                }
+
+                                break;
+                            }
+                        }
+
+                        if ( a_data && (proj.subRepo == a_data.subRepo))
+                            url += "&sub_alloc=" + alloc_sz;
+                        else
+                            url += "&sub_repo=" + proj.subRepo + "&sub_alloc=" + alloc_sz;
+                    }
                 }
 
                 var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
                 var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
-        
+
                 var admins = [];
                 adm_tree.visit( function(node){
                     admins.push( node.key );
@@ -141,7 +149,7 @@ function dlgProjNewEdit(a_data,a_cb) {
                         if ( a_cb )
                             a_cb(data[0]);
                     } else {
-                        alert( "Error: " + data );
+                        dlgAlert( "Project " + (a_data?"Update":"Create") + " Error", data );
                     }
                 });
             }
@@ -152,31 +160,38 @@ function dlgProjNewEdit(a_data,a_cb) {
             }
         }],
         open: function(event,ui){
-            allocListByUser( function( ok, data ){
-                //console.log( ok, data );
-                var allc_opt = "<option value='none'>None</option>";
+            if ( a_data && a_data.alloc ){
+                $("#suballoc",frame).html("<option value='ignore'>Allocation(s) in use</option>").selectmenu({width:"auto",disabled:true});
+            }else{
+                allocListByUser( function( ok, data ){
+                    console.log( ok, data );
+                    var alloc_opt = "<option value='none'>None</option>";
 
-                if ( ok ){
-                    alloc_list = data;
-                    var alloc;
-                    for ( var i in data ){
-                        alloc = data[i];
-                        //console.log( "alloc", alloc );
-                        allc_opt += "<option value='"+alloc.repo+"'>"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
+                    if ( ok ){
+                        alloc_list = data;
+                        var alloc;
+                        for ( var i in data ){
+                            alloc = data[i];
+
+                            alloc_opt += "<option value='"+alloc.repo+"'";
+                            if ( a_data && a_data.subRepo == alloc.repo )
+                                alloc_opt += " selected";
+                            console.log( "alloc", alloc );
+                            alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
+                        }
                     }
-                }
 
-                $("#suballoc",frame).html(allc_opt).selectmenu({width:"auto"}).on('selectmenuchange', function( ev, ui ) {
-                    //console.log("alloc changed",ui.item.value);
+                    $("#suballoc",frame).html(alloc_opt).selectmenu({width:"auto"}).on('selectmenuchange', function( ev, ui ) {
+                        console.log("alloc changed",ui.item.value,$("#suballoc",frame).val());
 
-                    if ( ui.item.value == "none" ){
-                        $("#suballoc_size",frame).val("").prop("disabled",true);
-                    }else{
-                        $("#suballoc_size",frame).prop("disabled",false);
-                    }
+                        if ( ui.item.value == "none" ){
+                            $("#suballoc_size",frame).val("").prop("disabled",true);
+                        }else{
+                            $("#suballoc_size",frame).prop("disabled",false);
+                        }
+                    });
                 });
-            });
-
+            }
             var mem_src = [];
             var adm_src = [];
 
@@ -187,6 +202,10 @@ function dlgProjNewEdit(a_data,a_cb) {
                 $("#desc",frame).val(a_data.desc);
                 $("#domain",frame).val(a_data.domain);
                 $("#owner_id",frame).val(a_data.owner);
+                if ( a_data.subRepo ){
+                    $("#suballoc_size",frame).val(a_data.subAlloc).prop("disabled",false);
+                    console.log("init slloc sz:",$("#suballoc_size",frame).val());
+                }
 
                 for ( var i in a_data.member )
                     mem_src.push({title: a_data.member[i].substr(2),icon:false,key: a_data.member[i] });

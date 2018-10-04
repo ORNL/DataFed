@@ -384,8 +384,10 @@ message ProjectUpdateRequest
     optional string             title       = 2;
     optional string             domain      = 3;
     optional string             desc        = 4;
-    repeated string             admin       = 5;
-    repeated string             member      = 6;
+    optional string             sub_repo    = 5;
+    optional uint64             sub_alloc   = 6;
+    repeated string             admin       = 7;
+    repeated string             member      = 8;
 }
 
 message ProjectDeleteRequest

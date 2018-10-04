@@ -57,19 +57,27 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 if ( !have_cap || !data.length ){
                     if ( data.length && !have_cap ){
                         dlgAlert("Data Allocation Error","All available storage allocations are full.");
+                        frame.dialog('destroy').remove();
+                        return;
                     }else{
                         viewColl( coll_id, function( data2 ){
                             console.log(data2);
                             if ( data2 ){
                                 if ( data2.owner.startsWith( "u/" )){
                                     dlgAlert("Data Allocation Error","No available storage allocations.");
+                                    frame.dialog('destroy').remove();
+                                    return;
                                 }else{
                                     viewProj( data2.owner, function( proj ){
                                         if ( proj ){
                                             if ( !proj.subRepo ){
                                                 dlgAlert("Data Allocation Error","No available storage allocations.");
+                                                frame.dialog('destroy').remove();
+                                                return;
                                             }else if ( parseInt( proj.subUsage ) >= parseInt( proj.subAlloc )){
                                                 dlgAlert("Data Allocation Error","Project sub-allocation is full.");
+                                                frame.dialog('destroy').remove();
+                                                return;
                                             }else{
                                                 $("#do_it").button("enable");
                                             }

@@ -359,8 +359,12 @@ app.get('/api/prj/update', ( a_req, a_resp ) => {
         params.title = a_req.query.title;
     if ( a_req.query.repo )
         params.repo = a_req.query.repo;
-    if ( a_req.query.desc )
+    if ( a_req.query.desc  )
         params.desc = a_req.query.desc;
+    if ( a_req.query.sub_repo )
+        params.subRepo = a_req.query.sub_repo;
+    if ( a_req.query.sub_alloc )
+        params.subAlloc = a_req.query.sub_alloc;
     if ( a_req.query.members )
         params.member = JSON.parse( a_req.query.members );
     if ( a_req.query.admins )

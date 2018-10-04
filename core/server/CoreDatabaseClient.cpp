@@ -621,6 +621,12 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
 
+    if ( a_request.has_sub_repo() )
+        params.push_back({"sub_repo",a_request.sub_repo()});
+
+    if ( a_request.has_sub_alloc() )
+        params.push_back({"sub_alloc",to_string(a_request.sub_alloc())});
+
     string members = "[";
     for ( int i = 0; i < a_request.admin_size(); ++i )
     {
