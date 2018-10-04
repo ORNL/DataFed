@@ -35,17 +35,17 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
-        //console.log("update alloc sel:",  );
+        console.log("updateAllocSelect", coll_id );
         allocListByOwner( coll_id, function( ok, data ){
-            //console.log( ok, data );
+            console.log( "updateAllocSelect", ok, data );
             var html;
             if ( ok ){
                 var alloc;
-                html = "";
+                html = "<option value='default'>Default</option>";
                 for ( var i in data ){
                     alloc = data[i];
                     //console.log( "alloc", alloc );
-                    html += "<option value='"+alloc.repo+"'>"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " used of " + sizeToString(alloc.alloc) +")</option>"
+                    html += "<option value='"+alloc.repo+"'>"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
                 }
                 $("#do_it").button("enable");
 
@@ -91,11 +91,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                     obj.desc = tmp;
 
                 if ( a_mode != DLG_DATA_EDIT ){
-                    obj.repoId = $("#alloc").val();
-                    if ( obj.repoId == "bad" ){
+                    var repo_id = $("#alloc").val();
+                    if ( repo_id == "bad" ){
                         dlgAlert( "Data Entry Error", "Parent collection is invalid");
                         return;
-                    }
+                    }else if (repo_id != 'default' )
+                        obj.repoId = repo_id;
 
                     obj.parentId = $("#coll",frame).val().trim();
                 }
@@ -148,7 +149,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                         if ( a_cb )
                             a_cb(data.data[0]);
                     } else {
-                        alert( "Error: " + data );
+                        dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );
                     }
                 });
             }

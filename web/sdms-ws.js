@@ -332,6 +332,10 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
         params.repo = a_req.query.repo;
     if ( a_req.query.desc )
         params.desc = a_req.query.desc;
+    if ( a_req.query.sub_repo ){
+        params.subRepo = a_req.query.sub_repo;
+        params.subAlloc = a_req.query.sub_alloc;
+    }
     if ( a_req.query.members )
         params.member = JSON.parse( a_req.query.members );
     if ( a_req.query.admins )

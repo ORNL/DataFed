@@ -28,8 +28,10 @@ function makeDlgSetACLs(){
                     <div style='flex:none;padding:.5rem 0 0 0'>Local:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                         <div style='padding:.1em'><label for='dlg_view_cb'></label><input type='checkbox' id='dlg_view_cb'>&nbsp View</div>\
-                        <div style='padding:.1em'><label for='dlg_read_cb'></label><input type='checkbox' id='dlg_read_cb'>&nbsp Read</div>\
-                        <div style='padding:.1em'><label for='dlg_write_cb'></label><input type='checkbox' id='dlg_write_cb'>&nbsp Write</div>\
+                        <div style='padding:.1em'><label for='dlg_rd_meta_cb'></label><input type='checkbox' id='dlg_rd_meta_cb'>&nbsp Read Meta</div>\
+                        <div style='padding:.1em'><label for='dlg_rd_data_cb'></label><input type='checkbox' id='dlg_rd_data_cb'>&nbsp Read Data</div>\
+                        <div style='padding:.1em'><label for='dlg_wr_meta_cb'></label><input type='checkbox' id='dlg_wr_meta_cb'>&nbsp Write Meta</div>\
+                        <div style='padding:.1em'><label for='dlg_wr_data_cb'></label><input type='checkbox' id='dlg_wr_data_cb'>&nbsp Write Data</div>\
                         <div style='padding:.1em'><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
                         <!-- div><label for='dlg_tag_cb'></label><input type='checkbox' id='dlg_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_note_cb'></label><input type='checkbox' id='dlg_note_cb'>&nbsp Annotate</div -->\
@@ -47,8 +49,10 @@ function makeDlgSetACLs(){
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                         <div style='padding:.1em'><label for='dlg_inh_view_cb'></label><input type='checkbox' id='dlg_inh_view_cb'>&nbsp View</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_read_cb'></label><input type='checkbox' id='dlg_inh_read_cb'>&nbsp Read</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_write_cb'></label><input type='checkbox' id='dlg_inh_write_cb'>&nbsp Write</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_rd_meta_cb'></label><input type='checkbox' id='dlg_inh_rd_meta_cb'>&nbsp Read Meta</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_rd_data_cb'></label><input type='checkbox' id='dlg_inh_rd_data_cb'>&nbsp Read Data</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_wr_meta_cb'></label><input type='checkbox' id='dlg_inh_wr_meta_cb'>&nbsp Write Meta</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_wr_data_cb'></label><input type='checkbox' id='dlg_inh_wr_data_cb'>&nbsp Write Data</div>\
                         <div style='padding:.1em'><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
                         <!-- div><label for='dlg_inh_tag_cb'></label><input type='checkbox' id='dlg_inh_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_inh_note_cb'></label><input type='checkbox' id='dlg_inh_note_cb'>&nbsp Annotate</div -->\
@@ -80,7 +84,7 @@ function makeDlgSetACLs(){
                     dlg_inst.dialog('destroy').remove();
                     return;
                 }
-                inst.excl = [proj.owner,"g/members"];
+                inst.excl = [proj.owner]; //[proj.owner,"g/members"];
                 if ( proj.admin )
                     inst.excl = inst.excl.concat( proj.admin );
             });
@@ -89,14 +93,16 @@ function makeDlgSetACLs(){
         }
 
         if ( inst.is_coll ){
-            $("#dlg_inh_read_only",inst.frame).click( function(){ inst.setAllPermInh("readonly"); });
-            $("#dlg_inh_read_write",inst.frame).click( function(){ inst.setAllPermInh("readwrite"); });
-            $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh(true); });
-            $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh(false); });
+            $("#dlg_inh_read_only",inst.frame).click( function(){ inst.setAllPermInh(PERM_READONLY); });
+            $("#dlg_inh_read_write",inst.frame).click( function(){ inst.setAllPermInh(PERM_READWRITE); });
+            $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh(PERM_ALL); });
+            $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh(0); });
 
             $("#dlg_inh_view_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_VIEW )});
-            $("#dlg_inh_read_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_READ )});
-            $("#dlg_inh_write_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_WRITE )});
+            $("#dlg_inh_rd_meta_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_RD_META )});
+            $("#dlg_inh_rd_data_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_RD_DATA )});
+            $("#dlg_inh_wr_meta_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_WR_META )});
+            $("#dlg_inh_wr_data_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_WR_DATA )});
             $("#dlg_inh_admin_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_ADMIN )});
             //$("#dlg_inh_tag_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_TAG )});
             //$("#dlg_inh_note_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_NOTE )});
@@ -106,18 +112,20 @@ function makeDlgSetACLs(){
         }
 
 
-        $("#dlg_read_only",inst.frame).click( function(){ inst.setAllPerm("readonly"); });
-        $("#dlg_read_write",inst.frame).click( function(){ inst.setAllPerm("readwrite"); });
-        $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm(true); });
-        $("#dlg_inherit_all",inst.frame).click( function(){ inst.setAllPerm(false); });
+        $("#dlg_read_only",inst.frame).click( function(){ inst.setAllPerm(PERM_READONLY); });
+        $("#dlg_read_write",inst.frame).click( function(){ inst.setAllPerm(PERM_READWRITE); });
+        $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm(PERM_ALL); });
+        $("#dlg_inherit_all",inst.frame).click( function(){ inst.setAllPerm(0); });
         $("#dlg_add_user",inst.frame).click( function(){ inst.addUser(); });
         $("#dlg_add_group",inst.frame).click( function(){ inst.addGroup(); });
         $("#dlg_rem",inst.frame).click( function(){ inst.remUserGroup(); });
         $("#dlg_edit",inst.frame).click( function(){ inst.editGroup(); });
 
         $("#dlg_view_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_VIEW )});
-        $("#dlg_read_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_READ )});
-        $("#dlg_write_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_WRITE )});
+        $("#dlg_rd_meta_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_RD_META )});
+        $("#dlg_rd_data_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_RD_DATA )});
+        $("#dlg_wr_meta_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_WR_META )});
+        $("#dlg_wr_data_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_WR_DATA )});
         $("#dlg_admin_cb",inst.frame).on( "change", function(){ inst.selectHandler( $(this), PERM_ADMIN )});
         //$("#dlg_tag_cb",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_TAG )});
         //$("#dlg_note_cb",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_NOTE )});
@@ -295,24 +303,19 @@ function makeDlgSetACLs(){
     }
 
     this.setAllPerm = function( value ){
+        if ( inst.is_coll )
+            value &= ~(PERM_RD_META|PERM_WR_META);
+
         if ( inst.cur_rule ){
-            if ( value == "readonly" ){
-                inst.cur_rule.grant = PERM_READONLY;
-            } else if ( value == "readwrite" ){
-                inst.cur_rule.grant = PERM_READWRITE;
-            } else if ( value ){
-                inst.cur_rule.grant = PERM_ALL;
-            } else {
-                inst.cur_rule.grant = 0;
-            }
-        }
-        if ( value == "readonly" || value == "readwrite" ){
+            inst.cur_rule.grant = value;
             inst.setPermsFromRule( inst.cur_rule );
         } else {
-            $("#dlg_view_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_read_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_write_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_admin_cb",this.frame).prop("checked",value).checkboxradio("refresh");
+            inst.setPermFromVal("#dlg_view_cb",value,PERM_VIEW);
+            inst.setPermFromVal("#dlg_rd_meta_cb",value,PERM_RD_META);
+            inst.setPermFromVal("#dlg_rd_data_cb",value,PERM_RD_DATA);
+            inst.setPermFromVal("#dlg_wr_meta_cb",value,PERM_WR_META);
+            inst.setPermFromVal("#dlg_wr_data_cb",value,PERM_WR_DATA);
+            inst.setPermFromVal("#dlg_admin_cb",value,PERM_ADMIN);
             //$("#dlg_tag_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             //$("#dlg_note_cb",this.frame).prop("checked",value).checkboxradio("refresh");
         }
@@ -320,24 +323,15 @@ function makeDlgSetACLs(){
 
     this.setAllPermInh = function( value ){
         if ( inst.cur_rule ){
-            if ( value == "readonly" ){
-                inst.cur_rule.inhgrant = PERM_READONLY;
-            } else if ( value == "readwrite" ){
-                inst.cur_rule.inhgrant = PERM_READWRITE;
-            } else if ( value ){
-                inst.cur_rule.inhgrant = PERM_ALL;
-            } else {
-                inst.cur_rule.inhgrant = 0;
-            }
-        }
-
-        if ( value == "readonly" || value == "readwrite" ){
+            inst.cur_rule.inhgrant = value;
             inst.setPermsFromRule( inst.cur_rule );
         } else {
-            $("#dlg_inh_view_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_read_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_write_cb",this.frame).prop("checked",value).checkboxradio("refresh");
-            $("#dlg_inh_admin_cb",this.frame).prop("checked",value).checkboxradio("refresh");
+            inst.setPermFromVal("#dlg_inh_view_cb",value,PERM_VIEW);
+            inst.setPermFromVal("#dlg_inh_rd_meta_cb",value,PERM_RD_META);
+            inst.setPermFromVal("#dlg_inh_rd_data_cb",value,PERM_RD_DATA);
+            inst.setPermFromVal("#dlg_inh_wr_meta_cb",value,PERM_WR_META);
+            inst.setPermFromVal("#dlg_inh_wr_data_cb",value,PERM_WR_DATA);
+            inst.setPermFromVal("#dlg_inh_admin_cb",value,PERM_ADMIN);
             //$("#dlg_inh_tag_cb",this.frame).prop("checked",value).checkboxradio("refresh");
             //$("#dlg_inh_note_cb",this.frame).prop("checked",value).checkboxradio("refresh");
         }
@@ -350,44 +344,57 @@ function makeDlgSetACLs(){
             if ( inst.is_coll )
                 inst.setAllPermInh(false);
         } else {
-            inst.setPerm( "#dlg_view_cb", rule, PERM_VIEW );
-            inst.setPerm( "#dlg_read_cb", rule, PERM_READ );
-            inst.setPerm( "#dlg_write_cb", rule, PERM_WRITE );
-            inst.setPerm( "#dlg_admin_cb", rule, PERM_ADMIN );
+            inst.setPermFromRule( "#dlg_view_cb", rule, PERM_VIEW );
+            inst.setPermFromRule( "#dlg_rd_meta_cb", rule, PERM_RD_META );
+            inst.setPermFromRule( "#dlg_rd_data_cb", rule, PERM_RD_DATA );
+            inst.setPermFromRule( "#dlg_wr_meta_cb", rule, PERM_WR_META );
+            inst.setPermFromRule( "#dlg_wr_data_cb", rule, PERM_WR_DATA );
+            inst.setPermFromRule( "#dlg_admin_cb", rule, PERM_ADMIN );
             //inst.setPerm( "#dlg_tag_cb", rule, PERM_TAG );
             //inst.setPerm( "#dlg_note_cb", rule, PERM_NOTE );
             if ( inst.is_coll ) {
-                inst.setPermInh( "#dlg_inh_view_cb", rule, PERM_VIEW );
-                inst.setPermInh( "#dlg_inh_read_cb", rule, PERM_READ );
-                inst.setPermInh( "#dlg_inh_write_cb", rule, PERM_WRITE );
-                inst.setPermInh( "#dlg_inh_admin_cb", rule, PERM_ADMIN );
+                inst.setPermFromRuleInh( "#dlg_inh_view_cb", rule, PERM_VIEW );
+                inst.setPermFromRuleInh( "#dlg_inh_rd_meta_cb", rule, PERM_RD_META );
+                inst.setPermFromRuleInh( "#dlg_inh_rd_data_cb", rule, PERM_RD_DATA );
+                inst.setPermFromRuleInh( "#dlg_inh_wr_meta_cb", rule, PERM_WR_META );
+                inst.setPermFromRuleInh( "#dlg_inh_wr_data_cb", rule, PERM_WR_DATA );
+                inst.setPermFromRuleInh( "#dlg_inh_admin_cb", rule, PERM_ADMIN );
                 //inst.setPermInh( "#dlg_inh_tag_cb", rule, PERM_TAG );
                 //inst.setPermInh( "#dlg_inh_note_cb", rule, PERM_NOTE );
             }
         }
     }
 
-    inst.setPerm = function( id, rule, perm ) {
+    inst.setPermFromRule = function( id, rule, perm ) {
         $(id,this.frame).prop("checked",(rule.grant & perm)?true:false).checkboxradio("refresh");
     }
 
-    inst.setPermInh = function( id, rule, perm ) {
+    inst.setPermFromRuleInh = function( id, rule, perm ) {
         $(id,this.frame).prop("checked",(rule.inhgrant & perm)?true:false).checkboxradio("refresh");
     }
+
+    inst.setPermFromVal = function( id, value, perm ) {
+        $(id,this.frame).prop("checked",(value & perm)?true:false).checkboxradio("refresh");
+    }
+
 
     this.disablePermControls = function( disabled ){
         if ( inst.disable_state === disabled )
             return;
 
         if ( disabled ){
-            inst.setAllPerm(false);
+            inst.setAllPerm(0);
             $(":checkbox:not(#public_check)",inst.frame).checkboxradio("disable");
             $("#dlg_read_only",inst.frame).button("disable");
             $("#dlg_read_write",inst.frame).button("disable");
             $("#dlg_grant_all",inst.frame).button("disable");
             $("#dlg_inherit_all",inst.frame).button("disable");
         }else{
-            $(":checkbox:not(#public_check)",inst.frame).checkboxradio("enable");
+            if ( inst.is_coll )
+                $(":checkbox:not(#public_check, #dlg_rd_meta_cb, #dlg_wr_meta_cb)",inst.frame).checkboxradio("enable");
+                //$(":checkbox",inst.frame).not("#public_check, #dlg_rd_meta_cb, #dlg_wr_meta_cb").checkboxradio("enable");
+            else
+                $(":checkbox:not(#public_check)",inst.frame).checkboxradio("enable");
             $("#dlg_read_only",inst.frame).button("enable");
             $("#dlg_read_write",inst.frame).button("enable");
             $("#dlg_grant_all",inst.frame).button("enable");
@@ -396,7 +403,7 @@ function makeDlgSetACLs(){
 
         if ( inst.is_coll ) {
             if ( disabled ){
-                inst.setAllPermInh(false);
+                inst.setAllPermInh(0);
                 $("#dlg_inh_read_only",inst.frame).button("disable");
                 $("#dlg_inh_read_write",inst.frame).button("disable");
                 $("#dlg_inh_grant_all",inst.frame).button("disable");

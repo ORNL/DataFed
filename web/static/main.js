@@ -206,6 +206,9 @@ function repoUpdate( a_repo, a_title, a_desc, a_capacity, a_admins, a_cb ){
 function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
 }
+function allocListByUser( a_cb ){
+    _asyncGet( "/api/repo/alloc/list/by_user", null, a_cb );
+}
 
 function allocListByOwner( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_owner?id="+a_id, null, a_cb );
@@ -383,7 +386,7 @@ function parseSize( a_size_str ){
 
     if ( tokens.length == 2 ){
         val = parseFloat(tokens[0]);
-        if ( val != NaN ){
+        if ( !isNaN(val) ){
             switch(tokens[1]){
                 case "PB": val *= 1024;
                 case "TB": val *= 1024;
@@ -401,11 +404,11 @@ function parseSize( a_size_str ){
             var numchar = "0123456789.";
             if ( numchar.indexOf( tokens[0][len-2] ) != -1 ){
                 val = parseFloat( tokens[0].substr(0,len-1));
-                if ( val != NaN )
+                if ( !isNaN(val))
                     result = val;
             }else{
                 val = parseFloat( tokens[0].substr(0,len-2));
-                if ( val != NaN ){
+                if ( !isNaN(val) ){
                     switch(tokens[0][len-2]){
                         case "P": val *= 1024;
                         case "T": val *= 1024;
@@ -419,7 +422,7 @@ function parseSize( a_size_str ){
             }
         }else{
             val = parseFloat( tokens[0] );
-            if ( val != NaN )
+            if ( !isNaN(val) )
                 result = val;
         }
     }
@@ -484,16 +487,17 @@ function themeSet( theme ){
 
 var status_timer;
 
-var PERM_VIEW           = 0x01;   // Read public record fields (not collection items or raw data)
-var PERM_READ           = 0x02;   // Read raw data or list collection items
-var PERM_WRITE          = 0x04;   // Write raw data or add/remove collection items
-var PERM_ADMIN          = 0x08;   // Read, write admin fields, delete record
-var PERM_TAG            = 0x10;   // Add/remove tags on record
-var PERM_NOTE           = 0x20;   // Add, remove, edit annotations on record
-var PERM_ALL            = 0x3F;
-var PERM_PUBLIC         = 0x03;
-var PERM_READONLY       = 0x33;
-var PERM_READWRITE      = 0x37;
+var PERM_VIEW           = 0x01;
+var PERM_RD_META        = 0x02;
+var PERM_RD_DATA        = 0x04;
+var PERM_WR_META        = 0x08;
+var PERM_WR_DATA        = 0x10;
+var PERM_ADMIN          = 0x20;
+var PERM_TAG            = 0x40;
+var PERM_NOTE           = 0x80;
+var PERM_ALL            = 0xFF;
+var PERM_READONLY       = 0x07;
+var PERM_READWRITE      = 0x1F;
 
 var SS_MY_DATA          = 0x01;
 var SS_MY_PROJ          = 0x02;

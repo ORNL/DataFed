@@ -101,35 +101,33 @@ function makeBrowserTab(){
                 parent = node.key;
             }else if (node.key.startsWith("p/")){
                 parent = "c/p_"+node.key.substr(2)+"_root";
-            }else{
-                dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
-                    inst.addNode( data );
+            }
+
+            if ( parent ){
+                hasPerms( parent, PERM_WR_DATA, function( perms ){
+                    if (( perms & PERM_WR_DATA ) == 0 ){
+                        dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                        return;
+                    }
+
+                    viewColl( parent, function( coll ){
+                        if ( coll ){
+                            var coll_id = coll.alias?coll.alias:coll.id;
+
+                            dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,function(data){
+                                inst.addNode( data );
+                            });
+                        }else
+                            alert("Cannot access parent collection.");
+                    });
                 });
                 return;
             }
-
-            hasPerms( parent, PERM_WRITE, function( perms ){
-                if (( perms & PERM_WRITE ) == 0 ){
-                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
-                    return;
-                }
-
-                viewColl( parent, function( coll ){
-                    if ( coll ){
-                        var coll_id = coll.alias?coll.alias:coll.id;
-
-                        dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,function(data){
-                            inst.addNode( data );
-                        });
-                    }else
-                        alert("Cannot access parent collection.");
-                });
-            });
-        }else{
-            dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
-                inst.addNode( data );
-            });
         }
+
+        dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
+            inst.addNode( data );
+        });
     }
 
     this.newColl = function() {
@@ -149,8 +147,8 @@ function makeBrowserTab(){
                 return;
             }
 
-            hasPerms( parent, PERM_WRITE, function( perms ){
-                if (( perms & PERM_WRITE ) == 0 ){
+            hasPerms( parent, PERM_WR_DATA, function( perms ){
+                if (( perms & PERM_WR_DATA ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -222,8 +220,8 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         if ( node && node.key[0] == "d" ) {
             //console.log( "edit sel", node, node.data.isproj );
-            hasPerms( node.key, PERM_READ, function( perms ){
-                if (( perms & PERM_READ) == 0 ){
+            hasPerms( node.key, PERM_READONLY, function( perms ){
+                if ( perms != PERM_READONLY ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -311,8 +309,9 @@ function makeBrowserTab(){
         var key = inst.data_tree.activeNode.key;
 
         if ( key[0] == "d" ) {
-            hasPerms( key, a_mode==1?PERM_READ:PERM_WRITE, function( perms ){
-                if (( perms & ( a_mode==1?PERM_READ:PERM_WRITE )) == 0 ){
+            var perm = (a_mode==1?PERM_RD_DATA:PERM_WR_DATA);
+            hasPerms( key, perm, function( perms ){
+                if ( perms != perm ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -411,7 +410,7 @@ function makeBrowserTab(){
                             for ( i in user.alloc ){
                                 alloc = user.alloc[i]
                                 free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
-                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
+                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)";
                             }
                         }else{
                             html += "(none)";
@@ -548,6 +547,9 @@ function makeBrowserTab(){
                                 free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
                                 html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
                             }
+                        }else if( item.subRepo ){
+                            free = Math.max( Math.floor(10000*(item.subAlloc - item.subUsage)/item.subAlloc)/100, 0 );
+                            html += item.subRepo + ": (sub-alloc) " + sizeToString( item.subAlloc ) + " total, " + sizeToString( item.subUsage ) + " used (" + free + " % free)";
                         }else{
                             html += "(none)";
                         }
@@ -1190,7 +1192,7 @@ function makeBrowserTab(){
                     else
                         dlgAlert( "Revoke CLI Credentials", "Credential revoke failed: " + data );
                 });
-                }
+            }
         });
     });
 

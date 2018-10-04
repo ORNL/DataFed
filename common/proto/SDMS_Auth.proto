@@ -372,9 +372,10 @@ message ProjectCreateRequest
     required string             title       = 2;
     required string             domain      = 3;
     optional string             desc        = 4;
-    optional string             repo        = 5;
-    repeated string             admin       = 6;
-    repeated string             member      = 7;
+    optional string             sub_repo    = 5;
+    optional uint64             sub_alloc   = 6;
+    repeated string             admin       = 7;
+    repeated string             member      = 8;
 }
 
 message ProjectUpdateRequest

@@ -8,6 +8,8 @@ function dlgProjNewEdit(a_data,a_cb) {
                 <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
                 <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%' disabled></input></td></tr>\
+                <tr><td>Sub&#8209;allocation:</td><td><select id='suballoc'><option value='1'>None</option></select></td></tr>\
+                <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%' disabled></input></td></tr>\
             </table>\
         </div>\
         <div style='flex:none'>&nbsp</div>\
@@ -43,9 +45,11 @@ function dlgProjNewEdit(a_data,a_cb) {
     else
         proj = { owner: "u/"+g_user.uid };
 
+    var alloc_list = [];
+
     $('input',frame).addClass("ui-widget ui-widget-content");
     $('textarea',frame).addClass("ui-widget ui-widget-content");
-    
+
     var options = {
         title: dlg_title,
         modal: true,
@@ -87,6 +91,31 @@ function dlgProjNewEdit(a_data,a_cb) {
 
                 if (( !a_data && proj.desc ) || (a_data && (proj.desc != a_data.desc )))
                     url += "&desc="+ encodeURIComponent(proj.desc);
+                
+                var alloc = $("#suballoc",frame).val();
+                console.log( "alloc", alloc );
+
+                if ( alloc != "none" ){
+                    var alloc_sz = parseSize( $("#suballoc_size",frame).val() );
+                    console.log( "alloc_sz", alloc_sz );
+                    if ( alloc_sz == null || alloc_sz <= 0 ){
+                        dlgAlert("Input Error","Invalid sub-allocation size.");
+                        return;
+                    }
+
+                    for ( var i in alloc_list ){
+                        if ( alloc_list[i].repo == alloc ){
+                            if ( alloc_sz > alloc_list[i].alloc ){
+                                dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
+                                return;
+                            }
+
+                            break;
+                        }
+                    }
+
+                    url += "&sub_repo=" + alloc + "&sub_alloc=" + alloc_sz;
+                }
 
                 var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
                 var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
@@ -123,6 +152,31 @@ function dlgProjNewEdit(a_data,a_cb) {
             }
         }],
         open: function(event,ui){
+            allocListByUser( function( ok, data ){
+                //console.log( ok, data );
+                var allc_opt = "<option value='none'>None</option>";
+
+                if ( ok ){
+                    alloc_list = data;
+                    var alloc;
+                    for ( var i in data ){
+                        alloc = data[i];
+                        //console.log( "alloc", alloc );
+                        allc_opt += "<option value='"+alloc.repo+"'>"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
+                    }
+                }
+
+                $("#suballoc",frame).html(allc_opt).selectmenu({width:"auto"}).on('selectmenuchange', function( ev, ui ) {
+                    //console.log("alloc changed",ui.item.value);
+
+                    if ( ui.item.value == "none" ){
+                        $("#suballoc_size",frame).val("").prop("disabled",true);
+                    }else{
+                        $("#suballoc_size",frame).prop("disabled",false);
+                    }
+                });
+            });
+
             var mem_src = [];
             var adm_src = [];
 

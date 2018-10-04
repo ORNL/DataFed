@@ -438,7 +438,6 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
     //Auth::RecordGetDataLocationRequest loc_req;
     //Auth::RecordDataLocationReply loc_reply;
     //loc_req.set_id( request->id() );
-    DL_DEBUG("get location");
 
     //m_db_client.recordGetDataLocation( loc_req, loc_reply );
     RecordDataLocation loc;
@@ -447,7 +446,6 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
 
     //if ( loc_reply.location_size() == 1 )
     //{
-        DL_DEBUG("location: " << loc.path() );
         // Ask manager to delete file
         //const RecordDataLocation & loc = loc_reply.location(0);
         m_mgr.dataDelete( loc.repo_id(), loc.path() );
@@ -457,7 +455,6 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
 
         upd_req.set_id( request->id() );
         upd_req.set_size( 0 );
-        DL_DEBUG("send record update");
 
         m_db_client.setClient( a_uid );
         m_db_client.recordUpdate( upd_req, upd_reply );

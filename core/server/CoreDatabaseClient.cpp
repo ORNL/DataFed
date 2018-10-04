@@ -567,8 +567,11 @@ DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
 
-    if ( a_request.has_repo() )
-        params.push_back({"repo",a_request.repo()});
+    if ( a_request.has_sub_repo() )
+        params.push_back({"sub_repo",a_request.sub_repo()});
+
+    if ( a_request.has_sub_alloc() )
+        params.push_back({"sub_alloc",to_string(a_request.sub_alloc())});
 
     if ( a_request.admin_size() > 0 )
     {
@@ -702,6 +705,15 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             proj->set_desc( imem->value.GetString() );
+
+        if (( imem = val.FindMember("sub_repo")) != val.MemberEnd() )
+            proj->set_sub_repo( imem->value.GetString() );
+
+        if (( imem = val.FindMember("sub_alloc")) != val.MemberEnd() )
+            proj->set_sub_alloc( imem->value.GetUint64() );
+
+        if (( imem = val.FindMember("sub_usage")) != val.MemberEnd() )
+            proj->set_sub_usage( imem->value.GetUint64() );
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             proj->set_owner( imem->value.GetString() );

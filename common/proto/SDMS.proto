@@ -65,12 +65,14 @@ enum Permissions
 {
     PERM_NONE       = 0x00;
     PERM_VIEW       = 0x01;   // Read public record fields (not collection items or raw data)
-    PERM_READ       = 0x02;   // Read raw data or list collection items
-    PERM_WRITE      = 0x04;   // Write raw data or add/remove collection items
-    PERM_ADMIN      = 0x08;   // Read, write admin fields, delete record
-    PERM_TAG        = 0x10;   // Add/remove tags on record
-    PERM_NOTE       = 0x20;   // Add, remove, edit annotations on record
-    PERM_ALL        = 0x3F;
+    PERM_RD_META    = 0x02;   // Read raw data or list collection items
+    PERM_RD_DATA    = 0x04;   // Read raw data or list collection items
+    PERM_WR_META    = 0x08;   // Write raw data or add/remove collection items
+    PERM_WR_DATA    = 0x10;   // Write raw data or add/remove collection items
+    PERM_ADMIN      = 0x20;   // Read, write admin fields, delete record
+    PERM_TAG        = 0x40;   // Add/remove tags on record
+    PERM_NOTE       = 0x80;   // Add, remove, edit annotations on record
+    PERM_ALL        = 0xFF;
 }
 
 // ============================ Data Structures
@@ -111,12 +113,15 @@ message ProjectData
     required string             title       = 2;
     optional string             domain      = 3;
     optional string             desc        = 4;
-    optional string             owner       = 6;
-    optional uint32             ct          = 7;
-    optional uint32             ut          = 8;
-    repeated string             admin       = 9;
-    repeated string             member      = 10;
-    repeated AllocData          alloc       = 11;
+    optional string             sub_repo    = 5;
+    optional uint64             sub_alloc   = 6;
+    optional uint64             sub_usage   = 7;
+    optional string             owner       = 8;
+    optional uint32             ct          = 9;
+    optional uint32             ut          = 10;
+    repeated string             admin       = 11;
+    repeated string             member      = 12;
+    repeated AllocData          alloc       = 13;
 }
 
 message ListingData
