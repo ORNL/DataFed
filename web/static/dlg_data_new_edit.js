@@ -35,20 +35,59 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
-        console.log("updateAllocSelect", coll_id );
+        //console.log("updateAllocSelect", coll_id );
         allocListByOwner( coll_id, function( ok, data ){
-            console.log( "updateAllocSelect", ok, data );
+            //console.log( "updateAllocSelect", ok, data );
             var html;
+            var have_cap = false;
             if ( ok ){
                 var alloc;
                 html = "<option value='default'>Default</option>";
                 for ( var i in data ){
                     alloc = data[i];
-                    //console.log( "alloc", alloc );
-                    html += "<option value='"+alloc.repo+"'>"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
+                    console.log( "alloc", alloc );
+                    html += "<option value='"+alloc.repo + "'";
+                    if ( parseInt( alloc.usage ) < parseInt( alloc.alloc ))
+                        have_cap = true;
+                    else
+                        html += " disabled";
+                    html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>";
                 }
-                $("#do_it").button("enable");
 
+                if ( !have_cap || !data.length ){
+                    if ( data.length && !have_cap ){
+                        dlgAlert("Data Allocation Error","All available storage allocations are full.");
+                    }else{
+                        viewColl( coll_id, function( data2 ){
+                            console.log(data2);
+                            if ( data2 ){
+                                if ( data2.owner.startsWith( "u/" )){
+                                    dlgAlert("Data Allocation Error","No available storage allocations.");
+                                }else{
+                                    viewProj( data2.owner, function( proj ){
+                                        if ( proj ){
+                                            if ( !proj.subRepo ){
+                                                dlgAlert("Data Allocation Error","No available storage allocations.");
+                                            }else if ( parseInt( proj.subUsage ) >= parseInt( proj.subAlloc )){
+                                                dlgAlert("Data Allocation Error","Project sub-allocation is full.");
+                                            }else{
+                                                $("#do_it").button("enable");
+                                            }
+                                        }else{
+                                            $("#do_it").button("enable");
+                                        }
+                                    });
+                                }
+                            }else{
+                                // Something went wrong - collection changed, no view permission?
+                                // Just go ahead and let user try to create since we can't confirm default is valid here
+                                $("#do_it").button("enable");
+                            }
+                        });
+                    }
+                }else{
+                    $("#do_it").button("enable");
+                }
             }else{
                 html="<option value='bad'>----</option>";
             }
@@ -176,8 +215,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                     $("#dlg_coll_row",frame).css("display","none");
                     $("#dlg_alloc_row",frame).css("display","none");
                 }else{
-                    parent = "root";
                     $("#dlg_md_row2",frame).css("display","none");
+                    parent = "root";
                 }
             } else {
                 $("#title",frame).val("");
@@ -185,11 +224,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_cb) {
                 $("#desc",frame).val("");
                 $("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
-                parent = a_parent?a_parent:"root";
+                if ( a_parent )
+                    parent = a_parent;
             }
 
             if ( parent ){
                 var changetimer;
+                $("#do_it").button("disable");
                 $("#coll",frame).val( parent ).on( "input", function(){
                     if ( changetimer )
                         clearTimeout( changetimer );
