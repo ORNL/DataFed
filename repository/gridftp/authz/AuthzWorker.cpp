@@ -22,7 +22,7 @@ AuthzWorker::AuthzWorker( const std::string & a_authz_file )
 {
     string line;
     
-    string cred_dir = "home/cades/.sdms/";
+    string cred_dir = "/home/cades/.sdms/";
     m_timeout = 5000;
     
     ifstream configFile(a_authz_file);
