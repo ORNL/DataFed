@@ -440,7 +440,7 @@ module.exports = ( function() {
      * known not to be owned by the client (and that the client is not an admin). In this case, those checks
      * would add performance cost for no benefit.
      */
-    obj.hasPermission = function( a_client, a_object, a_req_perm, any ) {
+    obj.hasPermissions = function( a_client, a_object, a_req_perm, any ) {
         //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
         //console.log("grant:", a_object.grant );
 
@@ -554,7 +554,6 @@ module.exports = ( function() {
         return false;
     };
 
-
     obj.evalPermissions = function( a_req_perm, a_perm_found, any ) {
         if ( any ){
             // If any requested permission have been found, return true (granted)
@@ -571,6 +570,115 @@ module.exports = ( function() {
         }
     };
 
+    obj.getPermissions = function( a_client, a_object, a_req_perm ) {
+        //console.log("get perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
+        //console.log("grant:", a_object.grant );
+
+        var perm_found=0,acl,acls,i;
+
+        // If object is marked "public", everyone is granted VIEW, and READ permissions
+        // The current implementation allows users to be denied access to public data (maybe wrong?)
+
+        if ( a_object.public )
+            perm_found = obj.PERM_PUBLIC;
+
+        if ( a_object.grant )
+            perm_found |= a_object.grant;
+
+        if ( obj.evalGetPerm( a_req_perm, perm_found ))
+            return a_req_perm;
+
+        // Evaluate permissions set directly on object
+
+        acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+
+        if ( acls.length ){
+            for ( i in acls ) {
+                acl = acls[i];
+                //console.log("user_perm:",acl);
+                perm_found |= acl.grant;
+            }
+
+            if ( obj.evalGetPerm( a_req_perm, perm_found ))
+                return a_req_perm;
+        }
+
+        // Evaluate group permissions on object
+
+        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+        if ( acls.length ){
+            for ( i in acls ) {
+                acl = acls[i];
+                //console.log("group_perm:",acl);
+                perm_found |= acl.grant;
+            }
+
+            if ( obj.evalGetPerm( a_req_perm, perm_found ))
+                return a_req_perm;
+        }
+
+        // If not all requested permissions have been found, evaluate permissions inherited from parent collections
+        // Note that items can only be linked to containers that share the same owner
+
+        var children = [a_object];
+        var parents,parent;
+
+        while ( 1 ) {
+            // Find all parent collections owned by object owner
+
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.pulic}", { children : children }).toArray();
+
+            if ( parents.length == 0 )
+                break;
+
+            for ( i in parents ) {
+                parent = parents[i];
+
+                if ( parent.public )
+                    perm_found |= obj.PERM_PUBLIC;
+
+                if ( parent.inhgrant )
+                    perm_found |= parent.inhgrant;
+
+                if ( obj.evalGetPerm( a_req_perm, perm_found ))
+                    return a_req_perm;
+
+                // User ACL
+                acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
+                if ( acls.length ){
+                    for ( i in acls ) {
+                        acl = acls[i];
+                        perm_found |= acl.inhgrant;
+                    }
+
+                    if ( obj.evalGetPerm( a_req_perm, perm_found ))
+                        return a_req_perm;
+                }
+
+                // Group ACL
+                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
+                if ( acls.length ){
+                    for ( i in acls ) {
+                        acl = acls[i];
+                        perm_found |= acl.inhgrant;
+                    }
+
+                    if ( obj.evalGetPerm( a_req_perm, perm_found ))
+                        return a_req_perm;
+                }
+            }
+
+            // If there are still missing require permissions...
+            // Determine which parents are candidates for further evaluation (have req bits not set in inherited permissions)
+            children = parents;
+        }
+
+        return perm_found & a_req_perm;
+    };
+
+    obj.evalGetPerm = function( a_req_perm, a_perm_found ) {
+        return (( a_perm_found & a_req_perm ) == a_req_perm );
+    };
 
     obj.usersWithClientACLs = function( client_id ){
         var result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._key,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._key,name:v.name})) sort x.name return x", { user: client_id }).toArray();

@@ -51,7 +51,7 @@ router.get('/gridftp', function (req, res) {
         var data = g_db.d.document( "d/" + req.queryParams.file.substr( idx + 1 ));
 
         if ( !g_lib.hasAdminPermObject( client, data._id )) {
-            if ( !g_lib.hasPermission( client, data, req_perm ))
+            if ( !g_lib.hasPermissions( client, data, req_perm ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -74,7 +74,7 @@ router.get('/xfr/pre', function (req, res) {
         var data = g_db.d.document( data_id );
 
         if ( !g_lib.hasAdminPermObject( client, data._id )) {
-            if ( !g_lib.hasPermission( client, data, req.queryParams.perms ))
+            if ( !g_lib.hasPermissions( client, data, req.queryParams.perms ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
@@ -95,12 +95,13 @@ router.get('/xfr/pre', function (req, res) {
 .summary('Performs pre-transfer authorization')
 .description('Performs pre-transfer authorization. Returns required globus transfer parameters');
 
-router.get('/check', function (req, res) {
+router.get('/perm/check', function (req, res) {
     try {
+        console.log("check perm:",req.queryParams.client,req.queryParams.perms);
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var result = req.queryParams.perms;
-        var id = req.queryParams.id;
-        var ty = id[0];
+        var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
+        var result = true;
+        var id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
 
         if ( id[1] != "/" )
             throw g_lib.ERR_INVALID_PARAM;
@@ -108,17 +109,17 @@ router.get('/check', function (req, res) {
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
             if (( role == g_lib.PROJ_NO_ROLE ) || ( role == g_lib.PROJ_MEMBER )){ // Non members have only VIEW permissions
-                if ( req.queryParams.perms != g_lib.PERM_VIEW )
-                    result = 0;
+                if ( perms != g_lib.PERM_VIEW )
+                    result = false;
             } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
-                if (( req.queryParams.perms & ~g_lib.PERM_MANAGER ) != 0 )
-                    result = 0;
+                if (( perms & ~g_lib.PERM_MANAGER ) != 0 )
+                    result = false;
             }
         }else if ( ty == "d" || ty == "c" ){
             if ( !g_lib.hasAdminPermObject( client, id )){
+                console.log("no admin perm");
                 var obj = g_db[ty].document( id );
-                if (!g_lib.hasPermission( client, obj, req.queryParams.perms ))
-                    result = 0;
+                result = g_lib.hasPermissions( client, obj, perms );
             }
         }else
             throw g_lib.ERR_INVALID_PARAM;
@@ -129,8 +130,43 @@ router.get('/check', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Object ID")
-.queryParam('perms', joi.number().required(), "Permission bits")
+.queryParam('id', joi.string().required(), "Object ID or alias")
+.queryParam('perms', joi.number().optional(), "Permission bit mask to check (default = ALL)")
 .summary('Checks client permissions for object')
 .description('Checks client permissions for object (projects, data, collections');
 
+router.get('/perm/get', function (req, res) {
+    try {
+        console.log("get perm:",req.queryParams.client,req.queryParams.perms);
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var result = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
+        var id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
+
+        if ( ty == "p" ){
+            var role = g_lib.getProjectRole( client._id, id );
+            if (( role == g_lib.PROJ_NO_ROLE ) || ( role == g_lib.PROJ_MEMBER )){ // Non members have only VIEW permissions
+                result &= g_lib.PERM_VIEW;
+            } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
+                result &= g_lib.PERM_MANAGER;
+            }
+        }else if ( ty == "d" || ty == "c" ){
+            if ( !g_lib.hasAdminPermObject( client, id )){
+                console.log("no admin perm");
+                var obj = g_db[ty].document( id );
+                result = g_lib.getPermissions( client, obj, result );
+            }
+        }else
+            throw g_lib.ERR_INVALID_PARAM;
+
+         console.log("result:",result);
+
+        res.send({ granted: result });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "Object ID or alias")
+.queryParam('perms', joi.number().optional(), "Permission bit mask to get (default = all)")
+.summary('Gets client permissions for object')
+.description('Gets client permissions for object (projects, data, collections. Note this is potentially slower than using "check" method.');

@@ -100,7 +100,7 @@ router.get('/update', function (req, res) {
                     throw g_lib.ERR_INVALID_ID;
 
                 if ( !g_lib.hasAdminPermObject( client, object._id )){
-                    if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ))
+                    if ( !g_lib.hasPermissions( client, object, g_lib.PERM_ADMIN ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -196,12 +196,9 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_INVALID_ID;
 
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
-            //console.log( "hasAdminPermObject = false");
-            if ( !g_lib.hasPermission( client, object, g_lib.PERM_ADMIN ))
+            if ( !g_lib.hasPermissions( client, object, g_lib.PERM_ADMIN ))
                 throw g_lib.ERR_PERM_DENIED;
-            //console.log( "hasPerm(admin) = true");
-        }//else
-            //console.log( "hasAdminPermObject = true");
+        }
 
         var rules = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", { object: object._id }).toArray();
         postProcACLRules( rules, object );
@@ -243,7 +240,7 @@ router.get('/by_user/list', function (req, res) {
         for ( var i in items ){
             item = items[i];
             //console.log("item",item);
-            if ( g_lib.hasPermission( client, item, g_lib.PERM_ALL, true ))
+            if ( g_lib.hasPermissions( client, item, g_lib.PERM_ALL, true ))
                 result.push({id:item._id,title:item.title});
         }
         console.log("acl by_user list",result);
@@ -286,7 +283,7 @@ router.get('/by_proj/list', function (req, res) {
         var item;
         for ( var i in items ){
             item = items[i];
-            if ( g_lib.hasPermission( client, item, g_lib.PERM_ALL, true ))
+            if ( g_lib.hasPermissions( client, item, g_lib.PERM_ALL, true ))
                 result.push({id:item._id,title:item.title});
         }
 

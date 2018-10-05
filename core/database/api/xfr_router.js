@@ -40,7 +40,7 @@ router.get('/init', function (req, res) {
                         perms = g_lib.PERM_WR_DATA;
                     else
                         perms = g_lib.PERM_RD_DATA;
-                    if ( !g_lib.hasPermission( client, data, perms ))
+                    if ( !g_lib.hasPermissions( client, data, perms ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -50,7 +50,7 @@ router.get('/init', function (req, res) {
                     dest_id = g_lib.resolveID( req.queryParams.path, client );
                     if ( !g_lib.hasAdminPermObject( client, dest_id )) {
                         dest_data = g_db.d.document( dest_id );
-                        if ( !g_lib.hasPermission( client, dest_data, g_lib.PERM_WR_DATA ))
+                        if ( !g_lib.hasPermissions( client, dest_data, g_lib.PERM_WR_DATA ))
                             throw g_lib.ERR_PERM_DENIED;
                     }
                 }
