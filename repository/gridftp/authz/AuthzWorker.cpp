@@ -30,7 +30,6 @@ AuthzWorker::AuthzWorker( const std::string & a_authz_file )
         while(getline(configFile,line)) {
             if (line.length() < 4 || line.at(0) == '#') continue;
             else {
-                cout << line << '\n';
                 istringstream iss(line);
                 string token;
                 iss >> token;
