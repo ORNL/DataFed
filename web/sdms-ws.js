@@ -537,8 +537,22 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/has_perms', ( a_req, a_resp ) => {
-    sendMessage( "CheckPermsRequest", { id: a_req.query.id, perms: a_req.query.perms }, a_req, a_resp, function( reply ) {
+app.get('/api/perms/check', ( a_req, a_resp ) => {
+    var params = { id: a_req.query.id };
+    if ( a_req.query.perms != undefined )
+        params.perms = a_req.query.perms;
+    if ( a_req.query.any != undefined )
+        params.any = a_req.query.any;
+    sendMessage( "CheckPermsRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/perms/get', ( a_req, a_resp ) => {
+    var params = { id: a_req.query.id };
+    if ( a_req.query.perms != undefined )
+        params.perms = a_req.query.perms;
+    sendMessage( "GetPermsRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

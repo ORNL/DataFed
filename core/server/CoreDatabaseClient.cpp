@@ -1751,11 +1751,30 @@ void
 DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({ "id", a_request.id()});
+    if ( a_request.has_perms() )
+        params.push_back({ "perms", to_string( a_request.perms()) });
 
-    dbGet( "authz/check", {{"id",a_request.id()},{"perms",to_string( a_request.perms()) }}, result );
+    dbGet( "authz/perm/check", params, result );
+
+    a_reply.set_granted( result["granted"].GetBool() );
+}
+
+void
+DatabaseClient::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({ "id", a_request.id()});
+    if ( a_request.has_perms() )
+        params.push_back({ "perms", to_string( a_request.perms()) });
+
+    dbGet( "authz/perm/get", params, result );
 
     a_reply.set_granted( result["granted"].GetInt() );
 }
+
 
 /*
 uint16_t

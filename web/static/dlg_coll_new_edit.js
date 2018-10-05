@@ -15,8 +15,8 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
         dlg_title = "New Collection";
     }
 
-    $('input',frame).addClass("ui-widget ui-widget-content");
-    $('textarea',frame).addClass("ui-widget ui-widget-content");
+    inputTheme($('input',frame));
+    inputTheme($('textarea',frame));
 
     var options = {
         title: dlg_title,
@@ -90,7 +90,7 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                 $(this).dialog('destroy').remove();
             }
         }],
-        open: function(event,ui){
+        open: function(){
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){

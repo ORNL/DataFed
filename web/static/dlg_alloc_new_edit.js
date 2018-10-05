@@ -3,7 +3,7 @@ function makeDlAllocNewEdit(){
 
     this.content =
         "<table width='100%'>\
-        <tr><td style='vertical-align:middle' id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%' disabled></input></td></tr>\
+        <tr><td style='vertical-align:middle' id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%'></input></td></tr>\
         <tr id='subj_btn_row' style='display:none'><td style='vertical-align:middle'>Select:</td><td>\
                 <button class='btn small' id='set_user'>User</button>\
                 <button class='btn small' id='set_proj'>Project</button>\
@@ -17,6 +17,8 @@ function makeDlAllocNewEdit(){
         inst.frame = $(document.createElement('div'));
         inst.frame.html( inst.content );
 
+        inputTheme($('input',inst.frame));
+
         if ( a_alloc ){
             inst.alloc = a_alloc;
             if ( a_alloc.id.startsWith("p/"))
@@ -24,13 +26,13 @@ function makeDlAllocNewEdit(){
             else
                 $("#subj_label",inst.frame).html( "User&nbspID:" );
 
-            $("#subject",inst.frame).val( a_alloc.id );
+            inputDisable($("#subject",inst.frame)).val( a_alloc.id );
             $("#alloc",inst.frame).val( a_alloc.alloc );
             $("#usage",inst.frame).val( a_alloc.usage );
         }else{
             inst.alloc = {repo:a_repo,id:null,alloc:0,usage:0};
             $("#subj_btn_row",inst.frame).show();
-            $("#subject",inst.frame).prop("disabled",false);
+            $("#subject",inst.frame);
             $("#usage",inst.frame).val( "0" );
             $(".btn",inst.frame).button();
 
@@ -46,7 +48,7 @@ function makeDlAllocNewEdit(){
             });
         }
 
-        $('input',inst.frame).addClass("ui-widget ui-widget-content");
+        inputDisable($("#usage",inst.frame));
 
         var options = {
             title: (a_alloc?"Edit":"Add") + " Allocation",

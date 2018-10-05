@@ -28,13 +28,13 @@ function makeDlgGroupEdit(){
         console.log("Exclude:", inst.excl );
 
         $(".btn",inst.frame).button();
-        $('input',inst.frame).addClass("ui-widget ui-widget-content");
-        $('textarea',inst.frame).addClass("ui-widget ui-widget-content");
+        inputTheme($('input',inst.frame));
+        inputTheme($('textarea',inst.frame));
 
         var src = [];
 
         if ( group ){
-            $("#gid",inst.frame).val( group.gid ).prop("disabled", true);
+            inputDisable($("#gid",inst.frame)).val( group.gid );
             $("#title",inst.frame).val( group.title );
             $("#desc",inst.frame).val( group.desc );
 

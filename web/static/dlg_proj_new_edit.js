@@ -7,9 +7,9 @@ function dlgProjNewEdit(a_data,a_cb) {
                 <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
                 <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
-                <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%' disabled></input></td></tr>\
+                <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
                 <tr><td>Sub&#8209;allocation:</td><td><select id='suballoc'><option value='1'>None</option></select></td></tr>\
-                <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%' disabled></input></td></tr>\
+                <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%'></input></td></tr>\
             </table>\
         </div>\
         <div style='flex:none'>&nbsp</div>\
@@ -47,8 +47,9 @@ function dlgProjNewEdit(a_data,a_cb) {
 
     var alloc_list = [];
 
-    $('input',frame).addClass("ui-widget ui-widget-content");
-    $('textarea',frame).addClass("ui-widget ui-widget-content");
+    inputTheme($('input',frame));
+    inputTheme($('textarea',frame));
+    inputDisable($('#owner_id',frame));
 
     var options = {
         title: dlg_title,
@@ -162,6 +163,7 @@ function dlgProjNewEdit(a_data,a_cb) {
         open: function(event,ui){
             if ( a_data && a_data.alloc ){
                 $("#suballoc",frame).html("<option value='ignore'>Allocation(s) in use</option>").selectmenu({width:"auto",disabled:true});
+                inputDisable($("#suballoc_size",frame))
             }else{
                 allocListByUser( function( ok, data ){
                     console.log( ok, data );
@@ -170,14 +172,24 @@ function dlgProjNewEdit(a_data,a_cb) {
                     if ( ok ){
                         alloc_list = data;
                         var alloc;
+                        var found = false;
                         for ( var i in data ){
                             alloc = data[i];
 
                             alloc_opt += "<option value='"+alloc.repo+"'";
-                            if ( a_data && a_data.subRepo == alloc.repo )
+                            if ( a_data && a_data.subRepo == alloc.repo ){
                                 alloc_opt += " selected";
+                                found = true;
+                            }
                             console.log( "alloc", alloc );
                             alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
+                        }
+
+                        if ( found )
+                            inputEnable($("#suballoc_size",frame))
+                        else{
+                            // Unlikely
+                            inputDisable($("#suballoc_size",frame))
                         }
                     }
 
@@ -185,9 +197,9 @@ function dlgProjNewEdit(a_data,a_cb) {
                         console.log("alloc changed",ui.item.value,$("#suballoc",frame).val());
 
                         if ( ui.item.value == "none" ){
-                            $("#suballoc_size",frame).val("").prop("disabled",true);
+                            inputDisable($("#suballoc_size",frame)).val("");
                         }else{
-                            $("#suballoc_size",frame).prop("disabled",false);
+                            inputEnable($("#suballoc_size",frame));
                         }
                     });
                 });
@@ -196,16 +208,13 @@ function dlgProjNewEdit(a_data,a_cb) {
             var adm_src = [];
 
             if ( a_data ){
-                $("#id",frame).val(a_data.id);
-                $("#id",frame).prop("disabled",true);
+                inputDisable($("#id",frame)).val(a_data.id);
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
                 $("#domain",frame).val(a_data.domain);
                 $("#owner_id",frame).val(a_data.owner);
-                if ( a_data.subRepo ){
-                    $("#suballoc_size",frame).val(a_data.subAlloc).prop("disabled",false);
-                    console.log("init slloc sz:",$("#suballoc_size",frame).val());
-                }
+                if ( a_data.subRepo )
+                    $("#suballoc_size",frame).val(a_data.subAlloc);
 
                 for ( var i in a_data.member )
                     mem_src.push({title: a_data.member[i].substr(2),icon:false,key: a_data.member[i] });

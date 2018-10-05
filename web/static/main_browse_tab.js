@@ -25,9 +25,9 @@ function makeBrowserTab(){
 
     this.deleteSelected = function(){
         var node = inst.data_tree.activeNode;
-        hasPerms( node.key, PERM_ADMIN, function( perms ){
-            if (( perms & PERM_ADMIN ) == 0 ){
-                dlgAlert( "Cannot Perform Action", "Permission Denied." );
+        checkPerms( node.key, PERM_ADMIN, function( granted ){
+            if ( !granted ){
+                alertPermDenied();
                 return;
             }
 
@@ -104,17 +104,17 @@ function makeBrowserTab(){
             }
 
             if ( parent ){
-                hasPerms( parent, PERM_WR_DATA, function( perms ){
-                    if (( perms & PERM_WR_DATA ) == 0 ){
-                        dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                checkPerms( parent, PERM_WR_DATA, function( granted ){
+                    if ( !granted ){
+                        alertPermDenied();
                         return;
                     }
-
+    
                     viewColl( parent, function( coll ){
                         if ( coll ){
                             var coll_id = coll.alias?coll.alias:coll.id;
 
-                            dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,function(data){
+                            dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,0,function(data){
                                 inst.addNode( data );
                             });
                         }else
@@ -125,7 +125,7 @@ function makeBrowserTab(){
             }
         }
 
-        dlgDataNewEdit(DLG_DATA_NEW,null,"root",function(data){
+        dlgDataNewEdit(DLG_DATA_NEW,null,"root",0,function(data){
             inst.addNode( data );
         });
     }
@@ -147,9 +147,9 @@ function makeBrowserTab(){
                 return;
             }
 
-            hasPerms( parent, PERM_WR_DATA, function( perms ){
-                if (( perms & PERM_WR_DATA ) == 0 ){
-                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+            checkPerms( parent, PERM_WR_DATA, function( granted ){
+                if ( !granted ){
+                    alertPermDenied();
                     return;
                 }
 
@@ -174,9 +174,17 @@ function makeBrowserTab(){
     this.editSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
-            //console.log( "edit sel", node, node.data.isproj );
-            hasPerms( node.key, PERM_ADMIN, function( perms ){
-                if (( perms & PERM_ADMIN ) == 0 ){
+            if ( node.data.isproj || node.key[0] == "c")
+                req_perms = PERM_ADMIN;
+            else if ( node.key[0] == "d" )
+                req_perms = PERM_ADMIN | PERM_WR_META;
+            else
+                return;
+
+            getPerms( node.key, req_perms, function( perms ){
+                console.log("perms:",perms);
+
+                if (( perms & req_perms ) == 0 ){
                     dlgAlert( "Cannot Perform Action", "Permission Denied." );
                     return;
                 }
@@ -204,7 +212,7 @@ function makeBrowserTab(){
                 } else if ( node.key[0] == "d" ) {
                     viewData( node.key, function( data ){
                         if ( data ){
-                            dlgDataNewEdit(DLG_DATA_EDIT,data,null,function(data){
+                            dlgDataNewEdit(DLG_DATA_EDIT,data,null,perms,function(data){
                                 inst.updateNodeTitle( data );
                                 inst.showSelectedInfo( node );
                             });
@@ -220,16 +228,16 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         if ( node && node.key[0] == "d" ) {
             //console.log( "edit sel", node, node.data.isproj );
-            hasPerms( node.key, PERM_READONLY, function( perms ){
-                if ( perms != PERM_READONLY ){
-                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+            checkPerms( node.key, PERM_READONLY, function( granted ){
+                if ( !granted ){
+                    alertPermDenied();
                     return;
                 }
 
                 viewData( node.key, function( data ){
                     if ( data ){
                         console.log( "data", data );
-                        dlgDataNewEdit(DLG_DATA_COPY,data,null,function(data2){
+                        dlgDataNewEdit(DLG_DATA_COPY,data,null,0,function(data2){
                             inst.addNode( data2 );
                             if ( data.dataSize && parseInt(data.dataSize) > 0 ){
                                 console.log( "Copy data, size:",data.dataSize);
@@ -251,9 +259,9 @@ function makeBrowserTab(){
     this.shareSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
-            hasPerms( node.key, PERM_ADMIN, function( perms ){
-                if (( perms & PERM_ADMIN ) == 0 ){
-                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+            checkPerms( node.key, PERM_ADMIN, function( granted ){
+                if ( !granted ){
+                    alertPermDenied();
                     return;
                 }
 
@@ -310,9 +318,9 @@ function makeBrowserTab(){
 
         if ( key[0] == "d" ) {
             var perm = (a_mode==1?PERM_RD_DATA:PERM_WR_DATA);
-            hasPerms( key, perm, function( perms ){
-                if ( perms != perm ){
-                    dlgAlert( "Cannot Perform Action", "Permission Denied." );
+            checkPerms( key, perm, function( granted ){
+                if ( !granted ){
+                    alertPermDenied();
                     return;
                 }
 
@@ -1136,7 +1144,7 @@ function makeBrowserTab(){
             execQuery();
     });
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
-    $('input').addClass("ui-widget ui-widget-content");
+    inputTheme( $('input'));
 
     userView( g_user.uid, true, function( ok, user ){
         if ( ok && user ){

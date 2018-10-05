@@ -166,14 +166,28 @@ function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
-function hasPerms( a_id, a_perms, a_cb ){
-    _asyncGet( "/api/has_perms?id="+encodeURIComponent(a_id)+"&perms="+a_perms, null, function(ok,data){
-        console.log("hasPerm",a_id,a_perms,ok,data);
+function checkPerms( a_id, a_perms, a_cb ){
+    _asyncGet( "/api/perms/check?id="+encodeURIComponent(a_id)+(a_perms?("&perms="+a_perms):""), null, function(ok,data){
+        console.log("checkPerm",a_id,a_perms,ok,data);
         if ( ok )
             a_cb( data.granted );
         else
-            a_cb( 0 );
+            a_cb( false );
     });
+}
+
+function getPerms( a_id, a_perms, a_cb ){
+    _asyncGet( "/api/perms/get?id="+encodeURIComponent(a_id)+(a_perms?("&perms="+a_perms):""), null, function(ok,data){
+        //console.log("getPerm",a_id,a_perms,ok,data);
+        if ( ok )
+            a_cb( data.granted );
+        else
+            a_cb( false );
+    });
+}
+
+function alertPermDenied(){
+    dlgAlert( "Cannot Perform Action", "Permission Denied." );
 }
 
 function aclUpdate( a_id, a_rules, a_public, a_cb ) {
@@ -485,6 +499,21 @@ function themeSet( theme ){
     _asyncGet( "/ui/theme/save?theme="+theme, null, null );
 }
 
+function inputTheme( a_objs ){
+    a_objs.addClass("ui-widget ui-widget-content");
+    return a_objs;
+}
+
+function inputDisable( a_objs ){
+    a_objs.prop("disabled",true).removeClass("ui-widget-content").addClass("ui-state-disabled");
+    return a_objs;
+}
+
+function inputEnable( a_objs ){
+    a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
+    return a_objs;
+}
+
 var status_timer;
 
 var PERM_VIEW           = 0x01;
@@ -517,7 +546,5 @@ var g_ep_recent = [];
 var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false };
 
 epRecentLoad();
-
-//$('.status-bar').addClass("ui-widget ui-widget-content ui-corner-all");
 
 console.log( "main.js loaded");

@@ -32,8 +32,9 @@ public:
     void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
     bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok );
     bool userGetAccessToken( std::string & a_token );
-    
+
     void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
+    void getPerms( const Auth::GetPermsRequest & a_request, Auth::GetPermsReply & a_reply );
 
     void userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply );
     void userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply );
