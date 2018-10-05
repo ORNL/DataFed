@@ -190,7 +190,7 @@ AuthzWorker::procStatusRequest()
 {
     PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
 
-    cout << "Repo: status request\n";
+    //cout << "Repo: status request\n";
 
     reply.set_status( SS_NORMAL );
 
