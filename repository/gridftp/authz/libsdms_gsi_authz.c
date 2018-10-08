@@ -3,7 +3,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <stdbool.h>
-#include <curl/curl.h>
 #include <globus_types.h>
 #include <globus_error_hierarchy.h>
 #include <gssapi.h>
@@ -145,47 +144,12 @@ bool clearContext( globus_gsi_authz_handle_t a_handle )
     return true;
 }
 
-/**
- * @brief HTTP response buffer write callback
- * @param ptr - Incomming data
- * @param size - Number of data elemenets
- * @param nmemb - Size of a data element (bytes)
- * @param userdata - User-provided data
- * @return Number of bytes consumed
- * 
- * This funciton can be used by the CURL API to receive and store server response data. It is currently not
- * used by this module, but is available if needed in the future.
- */
-size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata )
-{
-    size_t len = size*nmemb;
-    strncat( userdata, ptr, len );
-    return len;
-}
-
-
 globus_result_t
 sdms_gsi_authz_init()
 {
     openlog( "sdms_gsi_authz", 0, LOG_AUTH );
     syslog( LOG_INFO, "libsdms_gsi_authz_init\n" );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
-
-    curl_global_init(CURL_GLOBAL_ALL);
-/*
-    char * temp = getenv("SDMS_DB_USER");
-    syslog( LOG_INFO, "SDMS_DB_USER = %s", temp );
-    strncpy( db_user, temp, MAX_DB_USER_LEN );
-    db_user[MAX_DB_USER_LEN] = 0;
-
-    temp = getenv("SDMS_DB_PASS");
-    syslog( LOG_INFO, "SDMS_DB_PASS = %s", temp );
-    strncpy( db_pass, temp, MAX_DB_PASS_LEN );
-    db_user[MAX_DB_PASS_LEN] = 0;
-
-    strcpy( db_user, "root" );
-    strcpy( db_pass, "sdms!" );
-*/
 
     return 0;
 }
@@ -194,8 +158,6 @@ globus_result_t
 sdms_gsi_authz_destroy()
 {
     syslog( LOG_INFO, "sdms_gsi_authz_destroy\n" );
-
-    curl_global_cleanup();
 
     return 0;
 }
