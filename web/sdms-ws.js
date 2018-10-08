@@ -117,7 +117,6 @@ app.get('/ui', (request, response) => {
         response.redirect( '/ui/main' );
     else{
         var theme = request.cookies['sdms-theme']|| "light";
-        console.log("theme",theme);
         response.render('index',{theme:theme});
     }
 });
@@ -128,7 +127,6 @@ app.get('/ui/main', (request, response) => {
 
     if ( request.cookies['sdms'] ){
         var theme = request.cookies['sdms-theme'] || "light";
-        console.log("theme",theme);
         response.render( 'main',{theme:theme});
     }else
         response.redirect( '/ui' );
@@ -136,7 +134,6 @@ app.get('/ui/main', (request, response) => {
 
 app.get('/ui/docs', (request, response) => {
     var theme = request.cookies['sdms-theme'] || "light";
-    console.log("theme",theme);
     response.render( 'docs',{theme:theme});
 });
 
@@ -146,7 +143,6 @@ app.get('/ui/register', (request, response) => {
         response.redirect( '/' );
 
     var theme = request.cookies['sdms-theme'] || "light";
-    console.log("theme",theme);
 
     response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname, theme: theme });
 });
@@ -169,7 +165,6 @@ app.get('/ui/logout', (request, response) => {
 app.get('/ui/error', (request, response) => {
     //console.log("get /ui/error");
     var theme = request.cookies['sdms-theme'] || "light";
-    console.log("theme",theme);
     response.render('error',{theme:theme});
 });
 

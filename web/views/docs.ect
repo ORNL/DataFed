@@ -2,32 +2,83 @@
 <html>
     <head>
         <% include 'head.ect' %>
-        <title>SDMS Docs</title>
+        <title>SDMS Help</title>
     </head>
 
 <body class='' style='height:100%'>
     <div class="col-flex" style="height:100%;width:100%">
         <div class="ui-widget-header" style="flex:none;padding:.25em .5em">
-            <div style="font-size:2em;">Scientific Data Management System</div>
+            <div style="font-size:2em;">Scientific Data Management System - Help</div>
         </div>
 
         <div class='row-flex' style="flex:auto;min-height:0px">
             <div class="ui-widget-content content" style="flex:none;overflow:auto;padding:.25em">
                 <h2>Contents</h2>
                 <a href='#s1'>1. Introduction</a><br>
+                &nbsp&nbsp<a href='#s11'>1.1 Background</a><br>
                 <a href='#s2'>2. Registration</a><br>
-                <a href='#s3'>3. User Interface</a><br>
-                <a href='#s3'>4. Common Tasks</a><br>
+                <a href='#s3'>3. Storage Allocations</a><br>
+                <a href='#s4'>4. User Interface</a><br>
+                &nbsp&nbsp<a href='#s41'>4.1 Data Browser</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s411'>4.1.1 My Data</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s412'>4.1.2 My Projects</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s413'>4.1.3 Managed Projects</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s414'>4.1.4 Memeber Projects</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s415'>4.1.5 Shared Data</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s416'>4.1.6 Search Results</a><br>
+                &nbsp&nbsp<a href='#s42'>4.2 Search</a><br>
+                &nbsp&nbsp<a href='#s43'>4.3 Transfers</a><br>
+                &nbsp&nbsp<a href='#s44'>4.4 Settings</a><br>
+                <a href='#s5'>5. Common Tasks</a><br>
             </div>
             <div class='ui-widget-content' style='flex:auto;height:auto;overflow:auto;padding: 0em 2em 0em 2em'>
 
-<h1 id='s1'>1. Introduction</h1>
+<h2 id='s1'>1. Introduction</h2>
+<p>This page provides brief documentation for the Web Portal associated with the Scientific Data Management System.</p>
 
-<h1 id='s2'>2. Registration</h1>
+<p><i>Note: the SDMS Web Portal is a single-page web application writen for modern web browsers supporting the latest versions of HTML/CSS and Javascript. Do not use web browser navigation functions (i.e. forward/back) from within the portal.</i><p>
 
-<h1 id='s3'>3. User Interface</h1>
+<h3 id='s11'>1.1 Background</h3>
+<p>The SDMS is a federated data <i>access</i> and <i>management</i> system for general scientific research and collaboration across geographically distributed facilities.</p>
 
-<h1 id='s4'>4. Common Tasks</h1>
+<h2 id='s2'>2. Registration</h2>
+<p>Briefly, SDMS registration is a three-step process:</p>
+<ol>
+<li>Have, or obtain, a free Globus Online account</li>
+<li>Authenticate and authorize SDMS access via Globus Online</li>
+<li>Create an SDMS password</li>
+</ol>
+<p>User registration is required in order to access the SDMS. Registration is free and secure, but requires users to have, or obtain, a free <a href="https://www.globus.org" target="_blank">Globus Online</a> account. Many universities and research facilities, worldwide, are "member organizations" of Globus and typically provide Globus accounts for their students, staff, and/or users. If your home institute does not provide Globus accounts, you can obtain a personal Globus account through Globus ID, located <a href="https://www.globusid.org" target="_blank">here</a>.</p>
+
+<p>SDMS registration utilizes a standard Globus authentication and authorization process. When you click the "register" button on the SDMS welcome page, you will be redirected to Globus for authentication (log-in) based on your Globus account. Globus will then ask you to authorize the SDMS to access your Globus identitiy and to allow the SDMS to transfer data on your behalf. Once this process is complete, you will be redirected to an SDMS post-registration page where you will create an SDMS password. This password is only used when manully authenticating from the SDMS command-line interface, and it can be updated from the SDMS Web Portal at any time.</p>
+
+<p>Note that the SDMS will only initiate data transfers when you (or a process running as you) explicity request it to. Further, SDMS data transfers are constrained to be between SDMS data storage repositories and Globus endpoints that you have pre-authorized (or "activated") for access. Globus end-point activation is transient and access will expire within a period determined by the host institute.</p>
+
+<h2 id='s3'>3. Storage Allocations</h2>
+<p>Briefly, SDMS storage allocations:</p>
+<ol>
+<li>Are required to create and manage personal data within the SDMS.</li>
+<li>Are granted by, or requested from, SDMS member organizations.</li>
+<li>Are not required to access data shared by other users or projects.</li>
+</ol>
+<p>Registering and gaining access to the SDMS does not, in itself, grant users the ability to create or manage data within the SDMS. This is due to the fact taht the SDMS does not provide any data storage of its own, but instead relies on <i>federated</i> storage provided by SDMS member organizations. This "federated storage" is implemented through a network of geographically distributed "data repositories" that are owned and maintained by specific SDMS member organization, yet potentially accessible by all SDMS users. It is the SDMS member organizations that individually determine how storage allocations are assigned to specific users.</p>
+
+<p>Typically, SDMS users with an account at one or more SDMS member organizations will be automatically granted storage allocations by those organizations on associated data repositories. For unaffiliated users, storage allocations may be explicitly requested from an SDMS member organizations. SDMS member organizations are free to define and enact their own data storage policies; therefore, users wishing to acquire storage a specific allocation must contact the associated organization for information on how to proceed.</p>
+
+<p>Even though unaffiliated users with no storage allocation cannot use the SDMS to create and manage their own data, the SDMS is still allows these users to locate, access, and monitor data owned by other SDMS users or projects. (See Section 5, below, for relevant details on data collaboration and subscription.)</p>
+
+<h2 id='s4'>4. User Interface</h2>
+<h3 id='s41'>4.1 Data Browser</h3>
+<h4 id='s411'>4.1.1 My Data</h4>
+<h4 id='s412'>4.1.2 My Projects</h4>
+<h4 id='s413'>4.1.3 Managed Projects</h4>
+<h4 id='s414'>4.1.4 Member Projects</h4>
+<h4 id='s415'>4.1.5 Shared Data</h4>
+<h4 id='s416'>4.1.6 Search Results</h4>
+<h3 id='s42'>4.2 Search</h3>
+<h3 id='s43'>4.3 Transfers</h3>
+<h3 id='s44'>4.4 Settings</h3>
+<h2 id='s5'>5. Common Tasks</h2>
 
             </div>
         </div>
