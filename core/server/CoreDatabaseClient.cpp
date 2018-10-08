@@ -1775,6 +1775,15 @@ DatabaseClient::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_r
     a_reply.set_granted( result["granted"].GetInt() );
 }
 
+void
+DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void)a_reply;
+    rapidjson::Document result;
+
+    dbGet( "authz/gridftp", {{"file",a_request.file()},{"act",a_request.action()}}, result );
+}
+
 
 /*
 uint16_t

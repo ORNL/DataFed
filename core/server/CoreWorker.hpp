@@ -38,6 +38,7 @@ private:
     bool procCollectionDeleteRequest( const std::string & a_uid );
     bool procRecordSearchRequest( const std::string & a_uid );
     bool procRepoAllocationSetRequest( const std::string & a_uid );
+    bool procRepoAuthzRequest( const std::string & a_uid );
 
     typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
 
