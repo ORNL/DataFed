@@ -138,7 +138,7 @@ Worker::setupMsgHandlers()
     }
     catch( TraceException & e)
     {
-        DL_ERROR( e.toString() );
+        DL_ERROR( "CoreWorker::setupMsgHandlers, exception: " << e.toString() );
         throw;
     }
 }
