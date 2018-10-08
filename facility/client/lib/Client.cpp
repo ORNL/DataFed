@@ -550,7 +550,7 @@ Client::recordView( const std::string & a_id )
 }
 
 spRecordDataReply
-Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_coll_id )
+Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_coll_id, const char * a_repo_id )
 {
     Auth::RecordCreateRequest req;
 
@@ -563,6 +563,13 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
         req.set_metadata( a_metadata );
     if ( a_coll_id )
         req.set_parent_id( a_coll_id );
+    if ( a_repo_id )
+    {
+        if ( strncmp(a_repo_id,"repo/",5) != 0 )
+            req.set_repo_id( string("repo/")+a_repo_id );
+        else
+            req.set_repo_id( a_repo_id );
+    }
 
     Auth::RecordDataReply * reply;
 

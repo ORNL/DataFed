@@ -100,7 +100,7 @@ public:
     spProjectDataReply  projectListShared();
     spProjectDataReply  projectView( const std::string & a_id );
 
-    spRecordDataReply   recordCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_coll_id = 0 );
+    spRecordDataReply   recordCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, const char * a_coll_id = 0, const char * a_repo_id = 0 );
     spRecordDataReply   recordUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0, const char * a_metadata = 0, bool a_md_merge = true );
     spRecordDataReply   recordView( const std::string & a_id );
     void                recordDelete( const std::string & a_id );

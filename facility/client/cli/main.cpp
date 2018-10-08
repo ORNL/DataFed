@@ -99,6 +99,7 @@ string          g_alias;
 string          g_meta;
 string          g_meta_file;
 bool            g_meta_replace;
+string          g_repo;
 string          g_name;
 string          g_email;
 string          g_globus_id;
@@ -373,7 +374,7 @@ void printData( spRecordDataReply a_rep )
     if ( g_out_form == JSON )
         cout << "{\"Data\":[";
     else if ( g_out_form == CSV )
-        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Size\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
+        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Size\",\"Repo\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
 
     if ( a_rep->data_size() )
     {
@@ -400,6 +401,8 @@ void printData( spRecordDataReply a_rep )
                     cout << "Owner    " << rec.owner() << "\n";
                 if ( rec.has_size() )
                     cout << "Size     " << rec.size() << "\n";
+                if ( rec.has_repo_id() )
+                    cout << "Repo     " << rec.repo_id() << "\n";
                 if ( rec.has_dt() )
                 {
                     t = (time_t)rec.dt();
@@ -428,6 +431,7 @@ void printData( spRecordDataReply a_rep )
                     << ",\"" << ( rec.has_desc()?escapeCSV( rec.desc() ):"" ) << "\""
                     << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
                     << "," << ( rec.has_size()?rec.size():0 )
+                    << "," << ( rec.has_repo_id()?rec.repo_id():0 )
                     << "," << ( rec.has_dt()?rec.dt():0 )
                     << "," << ( rec.has_ct()?rec.ct():0 )
                     << "," << ( rec.has_ut()?rec.ut():0 )
@@ -444,6 +448,8 @@ void printData( spRecordDataReply a_rep )
                     cout << ",\"Owner\":\"" << rec.owner() << "\"";
                 if ( rec.has_size() )
                     cout << ",\"Size\":" << rec.size();
+                if ( rec.has_repo_id() )
+                    cout << ",\"Repo\":" << rec.repo_id();
                 if ( rec.has_dt() )
                     cout << ",\"Uploaded\":" << rec.dt();
                 if ( rec.has_ct() )
@@ -740,11 +746,11 @@ spRecordDataReply createRecord()
 
         inf.close();
 
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), g_cur_col.c_str() );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), g_cur_col.c_str(), g_repo.size()?g_repo.c_str():0 );
     }
     else
     {
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, g_cur_col.c_str() );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, g_cur_col.c_str(), g_repo.size()?g_repo.c_str():0 );
     }
 }
 
@@ -1757,6 +1763,7 @@ int main( int a_argc, char ** a_argv )
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
+        ("repo,R",po::value<string>( &g_repo ),"Use specific storage allocation by repo ID for new data")
         ("text,T",po::bool_switch( &g_out_text ),"Output in TEXT format (default)")
         ("json,J",po::bool_switch( &g_out_json ),"Output in JSON format (default is TEXT)")
         ("csv,C",po::bool_switch( &g_out_csv ),"Output in CSV format (default is TEXT)")
