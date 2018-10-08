@@ -138,6 +138,8 @@ Server::run( bool a_async )
 void
 Server::stop( bool a_wait )
 {
+    // TODO This method is not being used currently
+    (void)a_wait;
     unique_lock<mutex> lock(m_api_mutex);
 
     if ( m_io_running )

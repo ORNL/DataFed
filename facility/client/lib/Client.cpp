@@ -32,7 +32,7 @@ string loadKeyFile( const string & a_fname )
 
     ifstream inf( a_fname );
     if ( !inf.is_open() || !inf.good() )
-        EXCEPT_PARAM( 0, "Could not open " << a_fname << " for write" );
+        EXCEPT_PARAM( 0, "Could not open " << a_fname << " for read" );
 
     inf >> key;
     inf.close();
@@ -58,10 +58,10 @@ Client::verifyCredentials( const std::string & a_cred_path )
 }
 
 
-Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, bool a_load_certs ) :
+Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_service_cred_dir, const std::string & a_client_cred_dir, bool a_load_certs ) :
     m_host( a_host ),
     m_port( a_port ),
-    m_cred_path( a_cred_path ),
+    m_cred_dir( a_client_cred_dir ),
     m_timeout( a_timeout )
 {
     REG_PROTO( SDMS::Anon );
@@ -73,23 +73,21 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
 
     m_uid = uid;
 
-    if ( m_cred_path.size() && *m_cred_path.rbegin() != '/' )
-        m_cred_path += "/";
-
-    // TODO - Key files should be configurable
+    if ( m_cred_dir.size() && *m_cred_dir.rbegin() != '/' )
+        m_cred_dir += "/";
 
     MsgComm::SecurityContext sec_ctx;
     sec_ctx.is_server = false;
-    //sec_ctx.domain;
-    //cout << "Loading CoreServer public key from: " << m_cred_path + "sdms-core-key.pub" << "\n";
-    sec_ctx.server_key = loadKeyFile( m_cred_path + "sdms-core-key.pub" );
+
+    if ( a_service_cred_dir.size() && *a_service_cred_dir.rbegin() != '/' )
+        sec_ctx.server_key = loadKeyFile( a_service_cred_dir + "/sdms-core-key.pub" );
+    else
+        sec_ctx.server_key = loadKeyFile( a_service_cred_dir + "sdms-core-key.pub" );
 
     if ( a_load_certs )
     {
-        //cout << "Loading Client public key from: " << m_cred_path + "sdms-user-key.pub" << "\n";
-        sec_ctx.public_key = loadKeyFile( m_cred_path + "sdms-user-key.pub" );
-        //cout << "Loading Client private key from: " << m_cred_path + "sdms-user-key.priv" << "\n";
-        sec_ctx.private_key = loadKeyFile( m_cred_path + "sdms-user-key.priv" );
+        sec_ctx.public_key = loadKeyFile( m_cred_dir + "sdms-user-key.pub" );
+        sec_ctx.private_key = loadKeyFile( m_cred_dir + "sdms-user-key.priv" );
     }
     else
     {
@@ -103,12 +101,6 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
         sec_ctx.public_key = pub_key;
         sec_ctx.private_key = priv_key;
     }
-
-    /*
-    sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
-    sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    */
 
     m_comm = new MsgComm( a_host, a_port, MsgComm::DEALER, false, &sec_ctx );
 }
@@ -202,10 +194,11 @@ void Client::setup()
 
     try
     {
-        // TODO Ensure readable by user only
+        if ( !boost::filesystem::exists( m_cred_dir ))
+            boost::filesystem::create_directories(m_cred_dir);
 
         //cout << "Saving " << m_key_file << "\n";
-        string fname = m_cred_path + "sdms-user-key.pub";
+        string fname = m_cred_dir + "sdms-user-key.pub";
         if ( boost::filesystem::exists( fname ))
             boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
 
@@ -218,7 +211,7 @@ void Client::setup()
         boost::filesystem::permissions( fname, boost::filesystem::owner_read );
 
         //cout << "Saving " << m_cert_file << "\n";
-        fname = m_cred_path + "sdms-user-key.priv";
+        fname = m_cred_dir + "sdms-user-key.priv";
         if ( boost::filesystem::exists( fname ))
             boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
 

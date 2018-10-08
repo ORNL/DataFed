@@ -1717,10 +1717,19 @@ int main( int a_argc, char ** a_argv )
     uint16_t    port = 7512;
     uint32_t    timeout = 10000;
     const char* home = getenv("HOME");
-    string      cred_path = string(home?home:"") + "/.sdms/";
+    string      client_cred_dir = string(home?home:"") + "/.sdms/";
+    string      service_cred_dir = "/etc/sdms/";
     bool        manual_auth = false;
-    const char* def_ep = getenv("SDMS_CLI_DEFEP");
+    const char* def_ep = getenv("SDMS_CLIENT_DEFAULT_EP");
     bool        non_interact = false;
+
+    const char *tmp = getenv("SDMS_SERVICE_CRED_DIR");
+    if ( tmp )
+        service_cred_dir = tmp;
+
+    tmp = getenv("SDMS_CLIENT_CRED_DIR");
+    if ( tmp )
+        client_cred_dir = tmp;
 
     po::options_description opts_startup( "Program options" );
     po::options_description opts_hidden( "Hidden options" );
@@ -1731,7 +1740,8 @@ int main( int a_argc, char ** a_argv )
     opts_startup.add_options()
         ("help,?", "Show help")
         ("version,v", "Show version number")
-        ("cred-dir,c",po::value<string>( &cred_path ),"User credentials directory")
+        ("client-cred-dir,c",po::value<string>( &client_cred_dir ),"Client credentials directory")
+        ("serv-cred-dir,s",po::value<string>( &service_cred_dir ),"SDMS service credentials directory")
         ("host,h",po::value<string>( &host ),"Service hostname/IP")
         ("port,p",po::value<uint16_t>( &port ),"Service port")
         ("cfg",po::value<string>( &g_cfg_file ),"Use config file for options")
@@ -1808,7 +1818,7 @@ int main( int a_argc, char ** a_argv )
         if ( manual_auth && non_interact )
             EXCEPT( 0, "Manual authentication required" );
 
-        if ( !manual_auth && !Client::verifyCredentials( cred_path ))
+        if ( !manual_auth && !Client::verifyCredentials( client_cred_dir ))
         {
             if ( non_interact )
                 EXCEPT( 0, "Manual authentication required" );
@@ -1817,7 +1827,7 @@ int main( int a_argc, char ** a_argv )
             manual_auth = true;
         }
 
-        Client client( host, port, timeout, cred_path, !manual_auth );
+        Client client( host, port, timeout, service_cred_dir, client_cred_dir, !manual_auth );
 
         string uid = client.start();
 

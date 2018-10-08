@@ -71,7 +71,7 @@ class Client
 {
 public:
 
-    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_cred_path, bool a_load_certs );
+    Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_service_cred_dir, const std::string & a_client_cred_dir, bool a_load_certs );
     Client( const Client & ) = delete;
     ~Client();
 
@@ -146,7 +146,7 @@ private:
 
     std::string                 m_host;
     uint32_t                    m_port;
-    std::string                 m_cred_path;
+    std::string                 m_cred_dir;
     std::string                 m_uid;
     MsgComm *                   m_comm;
     uint32_t                    m_timeout;

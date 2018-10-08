@@ -29,7 +29,7 @@ int main( int a_argc, char ** a_argv )
         string      cfg_file;
         bool        gen_keys = false;
         const char* home = getenv("HOME");
-        string      cred_dir = string(home?home:"") + "/.sdms/";
+        string      cred_dir = "/etc/sdms/";
 
         po::options_description opts( "Options" );
 
