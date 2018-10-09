@@ -1690,7 +1690,7 @@ int main( int a_argc, char ** a_argv )
 
 
     // Transfer related commands
-    addCommand( "xl", "xfr-list", "List data transfers", "[<id>] [--since] [--from] [--to] [--status]\n\nList details of specified stransfer (using <id>) or data transfers that match specified options.", xfr_list );
+    addCommand( "xl", "xfr-list", "List data transfers", "[<id>] [--since] [--from] [--to] [--status]\n\nList details of specified transfer (using <id>) or data transfers that match specified options.", xfr_list );
     addCommand( "xs", "xfr-status", "Get data transfer status", "<id>\n\nGet status of data transfer specified by <id> parameter.", xfr_status );
     addCommand( "epg", "ep-get", "Get default end-point", "\n\nGet current default end-point.", ep_get );
     addCommand( "eps", "ep-set", "Set default end-point", "<name/uuid>\n\nSet current default end-point to specified legacy name or UUID.", ep_set );
@@ -1707,9 +1707,9 @@ int main( int a_argc, char ** a_argv )
     addCommand( "", "ls", "List current collection","[<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, '..' for the parent of the current working collection, or \".\" (or omitted) for the current collection.", ls );
     addCommand( "ln", "link", "Link item into a collection","<id> [<coll_id>]>\n\nLinks a data record or collection into the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being linked is a collection, it will be unlinked from it's current location before being linked into the new location.", link );
     addCommand( "ul", "unlink", "Unlink item from a collection","<id> [<coll_id>]>\n\nUnlinks a data record or collection from the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being unlinked has no other links, it will be unlinked from the specified location and re-linked into the root collection.", unlink );
-    addCommand( "mv", "move", "Move link item to new collection","<id> [<src_id>] <dest_id>>\n\nMoves item links from source collection <src_id> to destination collection <dest_id>. If the <src_id> paramter is omitted, the current collection is used. Collection ids may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" for the current colleciton.", move );
+    addCommand( "mv", "move", "Move link item to new collection","<id> [<src_id>] <dest_id>>\n\nMoves item links from source collection <src_id> to destination collection <dest_id>. If the <src_id> paramter is omitted, the current collection is used. Collection ids may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" for the current collection.", move );
     addCommand( "", "setup", "Setup local environment","\n\nSetup the local environment for non-interactive use by installing encryption keys in facility-specified location.", setup );
-    addCommand( "", "status", "Check ststus of core server","\n\nGets core server status to to verify communication and system readiness.", ping );
+    addCommand( "", "status", "Check status of core server","\n\nGets core server status to to verify communication and system readiness.", ping );
     addCommand( "", "exit", "Exit interactive shell","", exit_shell );
 
     //addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs for record or collection <id> (as ID or alias)", acl );
