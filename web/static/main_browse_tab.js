@@ -393,7 +393,7 @@ function makeBrowserTab(){
         if ( !node ){
             inst.noInfoAvail();
         }else{
-            //console.log( "node key:", node.key );
+            console.log( "node key:", node.key );
             var key,i,html;
             var date = new Date();
 
@@ -570,6 +570,22 @@ function makeBrowserTab(){
                         inst.noInfoAvail();
                     }
                 }); 
+            } else if ( key == "shared_user" && node.data.scope ) {
+                inst.updateBtnState();
+                //console.log( "user", node.data.scope, node );
+                userView( node.data.scope, false, function( ok, item ){
+                    if ( ok && item ){
+                        html = "User ID: " + item.uid + "<p>" + item.name;
+                        inst.sel_gen.html(html);
+                        inst.sel_descr.html("");
+                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
+                        inst.sel_details.html(html);
+                        inst.showSelectedMetadata();
+                    }else{
+                        inst.noInfoAvail();
+                    }
+                });
             } else {
                 inst.noInfoAvail();
                 //inst.data_ident.html( "" );
@@ -834,11 +850,11 @@ function makeBrowserTab(){
     }
 
     var tree_source = [
-        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-copy",folder:true,expanded:true,children:[{
+        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[{
             title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
-        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons-b",nodrag:true,lazy:true,key:"proj_mem"},
+        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
@@ -998,7 +1014,7 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:"ui-icon ui-icon-person",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
+                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });

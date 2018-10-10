@@ -195,6 +195,7 @@ function aclUpdate( a_id, a_rules, a_public, a_cb ) {
 }
 
 function userView( a_id, a_details, a_cb ) {
+    console.log("userView ",a_id);
     _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
 }
 
