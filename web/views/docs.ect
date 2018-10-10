@@ -16,19 +16,32 @@
                 <h2>Contents</h2>
                 <a href='#s1'>1. Introduction</a><br>
                 &nbsp&nbsp<a href='#s11'>1.1 Interfaces</a><br>
+                &nbsp&nbsp<a href='#s12'>1.2 System Concepts</a><br>
                 <a href='#s2'>2. Registration</a><br>
                 <a href='#s3'>3. Storage Allocations</a><br>
                 &nbsp&nbsp<a href='#s31'>3. Multiple Allocations</a><br>
-                <a href='#s4'>4.1 Web Portal UI</a><br>
-                &nbsp&nbsp<a href='#s41'>4.1 My Data</a><br>
-                &nbsp&nbsp<a href='#s42'>4.2 My Projects</a><br>
-                &nbsp&nbsp<a href='#s43'>4.3 Managed Projects</a><br>
-                &nbsp&nbsp<a href='#s44'>4.4 Member Projects</a><br>
-                &nbsp&nbsp<a href='#s45'>4.5 Shared Data</a><br>
-                &nbsp&nbsp<a href='#s46'>4.6 Search Results</a><br>
-                &nbsp&nbsp<a href='#s47'>4.7 Search</a><br>
-                &nbsp&nbsp<a href='#s48'>4.8 Transfers</a><br>
-                &nbsp&nbsp<a href='#s49'>4.9 Settings</a><br>
+                <a href='#s4'>4. Web Portal UI</a><br>
+                &nbsp&nbsp<a href='#s41'>4.1 Data Browser</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s411'>4.1.1 Drag and Drop</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s412'>4.1.2 My Data</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s413'>4.1.3 My Projects</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s414'>4.1.4 Managed Projects</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s415'>4.1.5 Member Projects</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s416'>4.1.6 Shared Data</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s417'>4.1.7 Search Results</a><br>
+                &nbsp&nbsp<a href='#s42'>4.2 Selection Information</a><br>
+                &nbsp&nbsp<a href='#s43'>4.3 Action Buttons</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s431'>4.3.1 New</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s432'>4.3.2 Edit</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s433'>4.3.3 Copy</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s434'>4.3.4 Delete</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s435'>4.3.5 Share</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s436'>4.3.6 Get</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s437'>4.3.7 Put</a><br>
+                &nbsp&nbsp<a href='#s44'>4.4 Search</a><br>
+                &nbsp&nbsp<a href='#s45'>4.5 Transfers</a><br>
+                &nbsp&nbsp<a href='#s46'>4.6 Settings</a><br>
+                &nbsp&nbsp<a href='#s47'>4.6 Header and Footer</a><br>
             </div>
             <div class='ui-widget-content' style='flex:auto;height:auto;overflow:auto;padding: 0em 2em 0em 2em'>
 
@@ -42,6 +55,22 @@
 
 <p>There are two ways to access the SDMS: 1) the SDMS Web Portal, and 2) the SDMS command-line interface (CLI). This on-line documentation primarily covers the SDMS Web Portal; however, the SDMS CLI is critical for accessing and managing data from within computational and analytics environments. The CLI was specifically created to ease the data management burden of computational scientists within HPC facilities with complex security environments.</p>
 <p>The SDMS Web Portal provides full access to the SDMS through a graphical user interface. Whereas the SDMS CLI is intended primarily for accessing and updating data, the SDMS Web Portal is intended to facilitate tasks such as creating and organizing collections of data, sharing data with other users, managing projects, data browsing, and performing metadata queries.</p>
+
+<h3 id='s12'>1.2 System Concepts</h3>
+<p>The SDMS aggregates and abstracts the federation of distributed data, storage systems, facilities, users, groups, and projects into a single logical unit - with a common nomenclature and uniform access patterns. Some of the components of the SDMS represent real physical systems; whereas others are purely abstract. These components are defined as follows:</p>
+<ul>
+    <li><b>Data Record</b> - A single unit of data with associated unique identity, attributes, metadata, and raw data.</li>
+    <li><b>Collection</b> - An organizational unit with a unique identity and attributes that aggregates data records and/or subordinate collections.</li>
+    <li><b>Root Collection</b> - A special collection associated with all users and projects that serves as a default parent container.</li>
+    <li><b>User</b> - A person that is identified by a unique Globus account, with optionally linked facility accounts.</li>
+    <li><b>Group</b> - A set of users with a unique identity and attributes used for project membership and access control purposes.</li>
+    <li><b>Project</b> - An abstract unit with a unique identity and attributes composed of one or more member users and providing collective ownership of data.</li>
+    <li><b>Access Control</b> - A set of inheritable permissions associated with a data record or collection that applies to specific users and/or groups, or, optionally, to users that are not explicitly specified.</li>
+    <li><b>Facility</b> - A physical location that houses one or more data storage systems or compute resources that is federated into the SDMS network.</li>
+    <li><b>Data Repository</b> - A logical unit with associated unique identity and attributes that represents a federated storage system located at a given facility.</li>
+    <li><b>Storage Allocation</b> - A logical relationship between a user or project and a data repository specifying an allowed storage capacity.</li>
+</ul>
+<p>A key concept of the SDMS is that while users are presented as a single abstract system, data is physically distributed across member facilities and data repositories. From a logical viewpoint, users do not need to know where data is physically stored within the SDMS - data can be accessed from any supported facility by using assigned data record identifiers or user-defined aliases. From a performance standpoint, the physical storage location of data may matter - depending on where the data is being accessed from. For this reason, the SDMS will support data repository caching to optimize frequently accessed data. In addition, users with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.</p>
 
 <h2 id='s2'>2. Registration</h2>
 
@@ -64,34 +93,67 @@
 <p>It is typical for SDMS users to have multiple storage allocations on different data repositories. In this case, a default storage allocation may be specified, or a specific storage allocation selected when creating new SDMS data records. Data can be accessed in a consistent manner no matter which data repository it is stored on; however, the physical location of a data repository in relation to the point of use of data can impact initial access time.</p>
 
 <h2 id='s4'>4. Web Portal User Interface</h2>
-<p>The <a href="https://sdms.ornl.gov" target="sdms_target">SDMS web portal</a> provides access to all SDMS functionality in the form of an graphical web application. The web portal provides easy-to-use features that make it the best tool for organizing, managing, and sharing collections of data; whereas the SDMS command-line-interface (CLI) is best used for directly accessing or updating raw data from within a compute or analytics environment.</p>
 
-<p>The focal-point of the portal is a "Data Browser" that allows users to navigate through data, collections, and projects that they own or have access to. Depending on a users role and/or access permission, a variety of actions may be performed on the data, collections, and projects presented in the Data Browser (i.e. editing, sharing, etc.). Additional features include searching with metadata-based queries, viewing recent data transfers, and managing settings. Sections 4.1 through 4.6 describe the location and function(s) of the major elements of the web portal. Note that the web portal is implemented as a <i>single-page</i> application; therefore, web browser navigation functions (i.e. forward/back) should not be used.</p>
-<h4>Browser Cookies</h4>
-<p><i>Note tha the SDMS web portal uses browser cookies to store user identity and context information. Once these cookies are set, the SDMS web portal tracks a user's Globus Online authentication status and, while logged-in to Globus, users will be granted access to the SDMS portal without requiring an additional log-in. If a user wishes to disable web portal access, they must explicitly log-out of Globus using the "log-out" link <h href="https://www.globus.org/" target="_blank">here</h>.</i></p>
+<p>The focal-point of the <a href="https://sdms.ornl.gov" target="sdms_target">SDMS web portal</a> is the "Data Browser" that allows users to navigate through data, collections, and projects that they own or have access to. Depending on a users role and/or access permission, a variety of actions may be performed on the data, collections, and projects presented in the Data Browser (i.e. editing, sharing, etc.). Additional features include searching with metadata-based queries, viewing recent data transfers, and managing settings. Sections 4.1 through 4.6 describe the location and function(s) of the major elements of the web portal. Note that the web portal is implemented as a <i>single-page</i> application; therefore, web browser navigation functions (i.e. forward/back) should not be used.</p>
+
+<p><i>Note that the SDMS web portal uses browser cookies to store user identity and context information. Once these cookies are set, the SDMS web portal tracks a user's Globus Online authentication status and, while logged-in to Globus, users will be granted access to the SDMS portal without requiring an additional log-in. If a user wishes to disable web portal access, they must explicitly log-out of Globus using the "log-out" link <h href="https://www.globus.org/" target="_blank">here</h>.</i></p>
 
 <h3 id='s41'>4.1 Data Browser</h3>
-<p>The "Data Browser", located on the left hand side of the interface, contains a navigable tree structure organized into categories. When an item in the browser tree is selected (by either clicking on them, or using keyboard navigation), information about the item is displayed in the "Selection Information" panel located to the right of the browser panel.</p>
-    <h4 id='s421'>4.2.1 My Data</h4>
-        <p>This category of the Data Browser shows data records and collections owned by the current user. All valid actions are permitted on these data records and collections.</p>
-    <h4 id='s422'>4.2.2 My Projects</h4>
-        <p>This category of the Data Browser shows projects that are owned by the current user. All valid actions are permitted on these projects.</p>
-    <h4 id='s423'>4.2.3 Managed Projects</h4>
-        <p>This category of the Data Browser shows projects that are managed by the current user. Project managers are allowed to add/remove project members and set permissions on the root collection.</p>
-    <h4 id='s424'>4.2.4 Member Projects</h4>
-        <p>This category of the Data Browser shows projects that the current user is a member of. Project members are allowed to create and access data and collections per the permissions set by the project owner and/or manager.</p>
-    <h4 id='s425'>4.2.5 Shared Data</h4>
-    <h4 id='s426'>4.2.6 Search Results</h4>
-<h3 id='s43'>4.3 Selection Information</h3>
-<h3 id='s44'>4.4 Action Buttons</h3>
-<h3 id='s45'>4.5 Footer</h3>
-    <p>The "footer" is the section of the user interface directly below the "action buttons" and contains a set of tabs for searching, view recent data transfers, and user settings. The footer can be collapsed and expanded by clicking the active tab.</p>
-<h3 id='s451'>4.5.1 Search Tab</h3>
-    <p>The "Search" tab on the Web Portal footer allows users to query the SDMS for data matching a specified metadata expression within a specified scope.</p>
-<h3 id='s452'>4.5.2 Transfer Tab</h3>
-    <p>The "Transfers" tab on the Web Portal footer shows recent data transfers (get/put) initiated either from the SDMS Web Portal or via the CLI.</p>
-<h3 id='s453'>4.5.3 Settings Tab</h3>
-    <p>The "Settings" tab on the Web Portal footer allows the current user to update a number of SDMS configuration parameters, as follows:</p>
+
+<p>The "Data Browser", located on the left hand side of the interface, contains a navigable tree structure organized into categories. When an item in the browser tree is selected (by either clicking on them, or using keyboard navigation), information about the item is displayed in the "Selection Information" panel located to the right of the browser panel. In addition, the "action buttons" located below the data browser may be enabled or disabled depending on what actions are valid for the selected item.</p>
+
+    <h4 id='s411'>4.1.1 Drag and Drop</h4>
+
+    <p>Data records and collections in the browser tree may be organized by dragging items from one location to another. For example, data records in one collection may be dragged into another collection, or an entire collection may be dragged into another collection - whereupon the receiving collection becomes the parent of the moved data record or collection. By default, data records are linked into new locations when dragged, rather than moved. To move a data record, the "Shift" key must be held while dragging the data record. (Collections cannot be linked and are always moved.)</p>
+
+    <p>A data record or collection can be "unlinked" from a parent collection by holding thr "Ctrl" key and clicking the data record. This does not delete the unlinked data record or collection, it simply removes it from the parent collection. In the case of collections, or data records that are not linked to other collections, unlinking will re-link the item to the root collection. This is because all data records and collections must have a parent collection (except for root collection itself).
+    </p>
+
+    <h4 id='s412'>4.1.2 My Data</h4>
+
+        <p>This category shows data records and collections owned by the current user. All actions are permitted on these data records and collections.</p>
+
+    <h4 id='s413'>4.1.3 My Projects</h4>
+
+        <p>This category shows projects that are owned by the current user. All actions are permitted on these projects.</p>
+
+    <h4 id='s414'>4.1.4 Managed Projects</h4>
+
+        <p>This category shows projects that are managed by the current user. Project managers are allowed to add/remove project members and set permissions on the root collection.</p>
+
+    <h4 id='s415'>4.1.5 Member Projects</h4>
+
+        <p>This category shows projects that the current user is a member of. Project members are allowed to create and access data and collections per the permissions set by the project owner and/or manager.</p>
+
+    <h4 id='s416'>4.1.6 Shared Data</h4>
+
+        <p>This category of the shows data and collections that have been explicitly shared with the current user. The current user is allowed to view and/or perform actions on the listed data and collections per the permissions set by the associated user or project sharing the data.</p>
+
+    <h4 id='s417'>4.1.7 Search Results</h4>
+
+        <p>This category shows any matching data records returned from a query initiated under the "Search" tab. Actions are permitted based on permissions set by the owners of matched data records. Note: collections will never be returned as matches.</p>
+
+<h3 id='s42'>4.2 Selection Information</h3>
+<h3 id='s43'>4.3 Action Buttons</h3>
+    <h4 id='s431'>4.3.1 New</h4>
+    - mention metadata format
+    <h4 id='s432'>4.3.2 Edit</h4>
+    - mention admin, wr_meta permission
+    <h4 id='s433'>4.3.3 Copy</h4>
+    <h4 id='s434'>4.3.4 Delete</h4>
+    <h4 id='s435'>4.3.5 Share</h4>
+    - talk about permissions in general
+    <h4 id='s436'>4.3.6 Get</h4>
+    <h4 id='s437'>4.3.7 Put</h4>
+
+<h3 id='s44'>4.4 Search Tab</h3>
+    <p>The "Search" tab below the action buttons allows users to query the SDMS for data matching a specified metadata expression within a specified scope.</p>
+    - Need to describe query language and scopes
+
+<h3 id='s45'>4.5 Transfer Tab</h3>
+    <p>The "Transfers" tab below the action buttons shows recent data transfers (get/put) initiated either from the SDMS Web Portal or via the CLI.</p>
+<h3 id='s46'>4.6 Settings Tab</h3>
+    <p>The "Settings" tab below the action buttons allows the current user to update a number of SDMS configuration parameters, as follows:</p>
     <ul>
         <li><b>CLI Password</b> - This is the password that is required when manually authenticating through the SDMS CLI. This password is only required until the CLI "setup" command is used to generate and install local credentials.</li>
         <li><b>Revoke All Credentials</b> - This button will reset ALL installed CLI credentials. The CLI "setup" command must be used to generate and install new credentials per environment.</li>
@@ -99,18 +161,11 @@
         <li><b>E-mail Address</b> - The E-mail address that will be used to contact the current user.</li>
     </ul>
     <p>These settings are saved automatically whenever they are changed.</p>
-<h3 id='s41'>4.1 Header and Footer</h3>
+<h3 id='s47'>4.7 Header and Footer</h3>
     <p>The "header" is the section of the user interface at the very top of the page amd contains the title, a "help" button (which opens this document), and a "log-out" button. The "footer" is located at the very bottom of the page amd contains the status bar that displays the current user name and informational messages.</p>
-
-
-drag and drop
-actions
-sharing
-edit
-    metadata format
-new/copy/delete
-get/put
-
+<br>
+<br>
+<br>
 
             </div>
         </div>
