@@ -6,7 +6,8 @@ function makeBrowserTab(){
     inst.frame = $("#content");
     //inst.frame = $("#tab-browse");
     //inst.data_ident = $("#data_ident",inst.frame);
-    inst.sel_gen = $("#sel_gen",inst.frame);
+    inst.sel_id = $("#sel_id",inst.frame);
+    inst.sel_title = $("#sel_title",inst.frame);
     inst.sel_details = $("#sel_details",inst.frame);
     inst.sel_descr = $("#sel_descr",inst.frame);
     this.xfr_hist = $("#xfr_hist",inst.frame);
@@ -292,7 +293,6 @@ function makeBrowserTab(){
     }
 
     this.updateNodeTitle = function( data ){
-        console.log( "upnodetitle", data );
         var title = inst.generateTitle( data );
 
         inst.data_tree.visit(function(node){
@@ -403,8 +403,9 @@ function makeBrowserTab(){
                 key = node.key;
 
             if ( key == "mydata" ) {
-                inst.sel_gen.html( "My Data" );
-                inst.sel_descr.html( "Location for creating and organizing personal data and collections." );
+                inst.sel_id.text( "My Data" );
+                inst.sel_title.text( "" );
+                inst.sel_descr.text( "Location for creating and organizing personal data and collections." );
                 inst.updateBtnState("m");
                 inst.showSelectedMetadata();
 
@@ -440,13 +441,15 @@ function makeBrowserTab(){
                         html = "Collection ID: " + key;
                         if ( item.alias )
                             html += ", Alias: " + item.alias;
-                        html += "<p>\"" + item.title + "\"";
-                        inst.sel_gen.html(html);
-    
+                        inst.sel_id.text(html);
+
+                        html = "\"" + item.title + "\"";
+                        inst.sel_title.text(html);
+
                         if ( item.desc )
-                            inst.sel_descr.html(item.desc);
+                            inst.sel_descr.text(item.desc);
                         else
-                            inst.sel_descr.html("(none)");
+                            inst.sel_descr.text("(none)");
 
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
@@ -474,14 +477,14 @@ function makeBrowserTab(){
 
                         html = "Data ID: " + key;
                         if ( item.alias )
-                        html += ", Alias: " + item.alias;
-                        html += "<p>\"" + item.title + "\"";
-                        inst.sel_gen.html(html);
+                            html += ", Alias: " + item.alias;
+                        inst.sel_id.text(html);
+                        inst.sel_title.text("\"" + item.title + "\"");
 
                         if ( item.desc )
-                            inst.sel_descr.html(item.desc);
+                            inst.sel_descr.text( item.desc );
                         else
-                            inst.sel_descr.html("(none)");
+                            inst.sel_descr.text("(none)");
 
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
@@ -513,13 +516,13 @@ function makeBrowserTab(){
                     if ( item ){
                         inst.updateBtnState("p",node.data.admin);
 
-                        html = "Project ID: " + key + "<p>\"" + item.title + "\"";
-                        inst.sel_gen.html(html);
+                        inst.sel_id.text("Project ID: " + key);
+                        inst.sel_title.text("\"" + item.title + "\"");
 
                         if ( item.desc )
-                            inst.sel_descr.html(item.desc);
+                            inst.sel_descr.text(item.desc);
                         else
-                            inst.sel_descr.html("(none)");
+                            inst.sel_descr.text("(none)");
 
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
@@ -575,9 +578,9 @@ function makeBrowserTab(){
                 //console.log( "user", node.data.scope, node );
                 userView( node.data.scope, false, function( ok, item ){
                     if ( ok && item ){
-                        html = "User ID: " + item.uid + "<p>" + item.name;
-                        inst.sel_gen.html(html);
-                        inst.sel_descr.html("");
+                        inst.sel_id.text("User ID: " + item.uid);
+                        inst.sel_title.text(item.name);
+                        inst.sel_descr.text("");
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
                         html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
                         inst.sel_details.html(html);
@@ -596,9 +599,10 @@ function makeBrowserTab(){
 
     this.noInfoAvail = function(){
         inst.updateBtnState();
-        inst.sel_gen.html("(no information)");
-        inst.sel_descr.html("(no information)");
-        inst.sel_details.html("(no information)");
+        inst.sel_id.text("(no information)");
+        inst.sel_title.text("");
+        inst.sel_descr.text("(no information)");
+        inst.sel_details.text("(no information)");
         inst.showSelectedMetadata();
     }
 
@@ -606,22 +610,21 @@ function makeBrowserTab(){
     this.buildObjSrcTree = function( obj, base ){
         //console.log("build", base);
 
-        var src = [];
-        var fkey;
+        var src = [], fkey, k2;
         Object.keys(obj).forEach(function(k) {
+            k2 = escapeHTML(k);
             //console.log(key,typeof md[key]);
-
             if ( typeof obj[k] === 'object' ){
-                fkey=base+"."+k;
+                fkey=base+"."+k2;
                 //console.log( fkey, "=", data_md_exp[fkey] );
                 if ( inst.data_md_exp[fkey] ){
                     inst.data_md_exp[fkey] = 10;
                 }
-                src.push({title:k, icon: true, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: inst.buildObjSrcTree(obj[k],fkey)})
+                src.push({title:k2, icon: true, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: inst.buildObjSrcTree(obj[k],fkey)})
             }else if ( typeof obj[k] === 'string' )
-                src.push({title:k + " : \"" + obj[k] + "\"", icon: false })
+                src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
             else
-                src.push({title:k + " : " + obj[k], icon: false })
+                src.push({title:k2 + " : " + obj[k], icon: false })
         });
 
         return src;
@@ -634,7 +637,7 @@ function makeBrowserTab(){
                 if ( inst.data_md_exp[i] == 1 )
                     delete inst.data_md_exp[i];
                 else
-                inst.data_md_exp[i]--;
+                    inst.data_md_exp[i]--;
             }
 
             //console.log( "exp st", inst.data_md_exp );
@@ -753,9 +756,9 @@ function makeBrowserTab(){
 
     this.generateTitle = function( item ) {
         if ( item.alias )
-            return "\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")";
+            return escapeHTML( "\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")" );
         else
-            return "\"" + item.title + "\" [" + item.id.substr(2) + "]";
+            return escapeHTML( "\"" + item.title + "\" [" + item.id.substr(2) + "]" );
     }
 
     this.xfrUpdateHistory = function( xfr_list ){

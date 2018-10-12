@@ -87,6 +87,35 @@ function _asyncPost( a_url, a_raw_json_data, a_callback ) {
     });
 }
 
+const escapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+    '`': '&#x60;',
+    '=': '&#x3D;'
+};
+
+function escapeHTML(string) {
+    return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+        return escapeMap[s];
+    });
+}
+
+function escapeHTML_slow( txt ){
+    const l = txt.length;
+    var result = "", i = 0, c, m;
+    for ( ; i < l; i++ ){
+        c = txt.charAt(i);
+        m = escapeMap[c];
+        result += m?m:c;
+    }
+
+    return result;
+}
+
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
@@ -315,6 +344,20 @@ function epRecentSave( a_cb ){
     _asyncPost( "/ui/ep/recent/save",{ep:g_ep_recent}, function( ok, data ){
         if ( a_cb )
             a_cb();
+    });
+}
+
+function epDirList( a_ep, a_path, a_cb ){
+    console.log("epDirList",a_ep,a_path);
+    _asyncGet( "/ui/ep/dir/list?ep=" + encodeURIComponent(a_ep) + "&path=" + encodeURIComponent(a_path), null, function( ok, data ){
+        if ( a_cb ){
+            if ( ok )
+                a_cb( data );
+            else{
+                console.log("dir list failed",data);
+                a_cb();
+            }
+        }
     });
 }
 
