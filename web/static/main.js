@@ -317,10 +317,16 @@ function groupDelete( a_uid, a_gid, a_cb ) {
     });
 }
 
+function epView( a_ep, a_cb ){
+    _asyncGet( "/ui/ep/view?ep="+encodeURIComponent(a_ep), null, function( ok, data ){
+        if ( a_cb )
+            a_cb( ok, data );
+    });
+}
 
 function epAutocomplete( a_term, a_cb ){
     _asyncGet( "/ui/ep/autocomp?term="+encodeURIComponent(a_term), null, function( ok, data ){
-        if (  a_cb )
+        if ( a_cb )
             a_cb( ok, data );
     });
 }

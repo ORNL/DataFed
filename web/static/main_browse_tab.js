@@ -325,9 +325,12 @@ function makeBrowserTab(){
                 }
 
                 viewData( key, function( data ){
-                    if ( data )
-                        dlgStartTransfer( a_mode, data );
-                    else
+                    if ( data ){
+                        if ( g_user.uid == "stansberrydv" )
+                            dlgStartTransfer2( a_mode, data );
+                        else
+                            dlgStartTransfer( a_mode, data );
+                    }else
                         alert( "Cannot access data record." );
                 }); 
             });

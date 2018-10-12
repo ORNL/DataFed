@@ -19,7 +19,7 @@ function dlgStartTransfer( a_mode, a_data ) {
     if ( a_mode )
         $("#prefix",frame).html("Destination");
 
-    var matches = $( "#matches",frame );
+    var matches = $("#matches",frame);
     var path_in = $("#path",frame);
     var ep_list = null;
 

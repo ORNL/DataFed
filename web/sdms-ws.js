@@ -727,6 +727,23 @@ app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/ui/ep/view', ( a_req, a_resp ) => {
+    console.log("/ui/ep/view", a_req.query.ep );
+
+    var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    //console.log("userinfo", userinfo );
+
+    request.get({
+        uri: 'https://transfer.api.globusonline.org/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
+        auth: {
+            bearer: userinfo.acc_tok,
+        }
+    }, function( error, response, body ) {
+        a_resp.json(JSON.parse(body));
+    });
+
+});
+
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
     console.log("/ui/eo/autocomp", a_req.query.term);
 
@@ -759,6 +776,25 @@ app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
     });
     //a_resp.cookie( 'sdms-recent', a_req.query.recent, { path: "/ui" });
     //a_resp.json({});
+});
+
+app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
+    console.log("/ui/ep/dir/list", a_req.query.ep, a_req.query.path );
+
+    var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    //console.log("userinfo", userinfo );
+
+    request.get({
+        uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path),
+        auth: {
+            bearer: userinfo.acc_tok,
+        }
+    }, function( error, response, body ) {
+        console.log("ep ls err:",error);
+        console.log("ep ls body sz:",body.length );
+        a_resp.json(JSON.parse(body));
+    });
+
 });
 
 app.get('/ui/theme/load', ( a_req, a_resp ) => {
