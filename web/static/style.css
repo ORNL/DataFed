@@ -118,6 +118,11 @@ body
     border-radius:6px!important;
 }
 
+.btn-icon
+{
+    padding: 0px 0px 0px 0px!important;
+}
+
 .setting-table th,td
 {
     padding: 0 .25em 0 0;

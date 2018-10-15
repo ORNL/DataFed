@@ -785,7 +785,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
     //console.log("userinfo", userinfo );
 
     request.get({
-        uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path),
+        uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
         auth: {
             bearer: userinfo.acc_tok,
         }

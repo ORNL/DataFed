@@ -1,82 +1,122 @@
-function dlgEpBrowse( a_ep, a_mode ) {
+function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
     var frame = $(document.createElement('div'));
     
-    frame.html( "Path: <span id='path'>/</span><button id='up' class='btn'>Up</button><div id='file_tree'></div>");
-    var path = "/";
+    frame.html( "<div class='col-flex' style='height:100%'>\
+                    <div style='flex:none'>\
+                        <div class='row-flex' style='align-items:center'>\
+                            <div style='flex:none'>Path:&nbsp</div>\
+                            <div style='flex:auto'><input type='text' id='path' style='width:100%'></input></div>\
+                            <div style='flex:none'>&nbsp<button id='up' class='btn small'>Up</button></div>\
+                        </div>\
+                    </div>\
+                    <div style='flex:none;padding:.25em'></div>\
+                    <div class='ui-widget-content' style='flex:1 1 100%;min-height:0;overflow:auto'>\
+                        <div id='file_tree' class='no-border' style='min-height:0;overflow:none'></div>\
+                    </div>\
+                </div>");
 
+
+    var path = a_path;
+    var path_in_timer;
+
+    $(".btn",frame).button();
+    inputTheme( $('input:text',frame ));
+    $("#path",frame).val(a_path);
     $(".btn",frame).button();
 
     $("#up",frame).on('click',function(){
-            reloadTree("..");
+        chdir("..");
     });
 
-    function reloadTree( a_path ){
+    function chdir( a_new_path ){
+        if ( a_new_path == "." )
+            return;
+
+        clearTimeout( path_in_timer );
+
+        // Ensure path has a terminal /
+        if ( path.charAt( path.length-1) != "/" )
+            path += "/";
+
         var new_path;
-        if ( a_path == ".." ){
-            if ( path.length == 1 )
+        if ( a_new_path == ".." ){
+
+            if ( path.length == 1 ){
                 return;
-            var idx = path.lastIndexOf("/");
+            }
+
+            var idx = path.lastIndexOf("/", path.length-2);
+
             if ( idx > 0 )
-                new_path = path.substr(0,idx);
+                new_path = path.substr(0,idx+1);
             else
                 new_path = "/";
         }else{
-            if ( path.length > 1 )
-                new_path = path + "/" + a_path;
-            else
-                new_path = path + a_path;
+            new_path = path + a_new_path + "/";
         }
+        //console.log("reload to:",new_path);
 
-        console.log("reload to:",new_path);
+        reloadTree( new_path );
+        path = new_path;
+        $("#path",frame).val( new_path );
+    }
 
-        epDirList( a_ep, new_path,function(data){
+    function reloadTree( a_new_path ){
+        epDirList( a_ep.id, a_new_path, false, function(data){
             if( data ){
                 console.log("got result:",data);
-    
+
                 var tree_source = [];
-    
-                for ( var i in data.DATA ){
-                    entry = data.DATA[i];
-                    /*
-                    if ( entry.type == "dir" ){
-                        tree_source.push({ title: entry.name + " " + entry.permissions, folder:true, lazy: true, key: entry.name });
-                    } else if ( entry.type == "file" ){
-                        tree_source.push({ title: entry.name + " " + entry.size + " " + entry.permissions, key: entry.name });
-                    }*/
-                    if ( entry.type == "dir" ){
-                        tree_source.push({ title: entry.name + " " + entry.permissions, icon: "ui-icon ui-icon-folder", key: entry.name, is_dir: true });
-                    } else if ( entry.type == "file" ){
-                        tree_source.push({ title: entry.name + " " + entry.size + " " + entry.permissions, icon: "ui-icon ui-icon-file", key: entry.name });
+                if ( data.code ){
+                    tree_source.push({ title: "<span class='ui-state-error'>Error: " + data.message + "</span>", icon: false });
+                }else{
+                    tree_source.push({ title: ".", icon: "ui-icon ui-icon-folder", key: ".", is_dir: true });
+                    tree_source.push({ title: "..", icon: "ui-icon ui-icon-folder", key: "..", is_dir: true });
+                    for ( var i in data.DATA ){
+                        entry = data.DATA[i];
+
+                        if ( entry.type == "dir" ){
+                            tree_source.push({ title: entry.name, icon: "ui-icon ui-icon-folder", key: entry.name, is_dir: true });
+                        } else if ( entry.type == "file" ){
+                            tree_source.push({ title: "<span style='float:left;width:5em'>" + sizeToString( entry.size ) + "</span> " + entry.last_modified.substr( 0, entry.last_modified.indexOf("+")) + "&nbsp&nbsp&nbsp" + entry.name, icon: "ui-icon ui-icon-file", key: entry.name });
+                        }
                     }
                 }
                 $("#file_tree").fancytree( "getTree").reload( tree_source );
-                path = new_path;
+                $("#sel_btn").button("disable");
             }
         });
 
     }
 
-    epDirList( a_ep, "/",function(data){
-        if( data ){
-            console.log("got result:",data);
-
-            var tree_source = [];
-
-            for ( var i in data.DATA ){
-                entry = data.DATA[i];
-                /*
-                if ( entry.type == "dir" ){
-                    tree_source.push({ title: entry.name + " " + entry.permissions, folder:true, lazy: true, key: entry.name });
-                } else if ( entry.type == "file" ){
-                    tree_source.push({ title: entry.name + " " + entry.size + " " + entry.permissions, key: entry.name });
-                }*/
-                if ( entry.type == "dir" ){
-                    tree_source.push({ title: entry.name + " " + entry.permissions, icon: "ui-icon ui-icon-folder", key: entry.name, is_dir: true });
-                } else if ( entry.type == "file" ){
-                    tree_source.push({ title: entry.name + " " + entry.size + " " + entry.permissions, icon: "ui-icon ui-icon-file", key: entry.name });
+    var options = {
+        title: "Browse End-Point " + a_ep.name,
+        modal: true,
+        width: '500',
+        height: '400',
+        resizable: true,
+        closeOnEscape: true,
+        buttons: [{
+            id: "sel_btn",
+            text: "Select",
+            click: function() {
+                clearTimeout( path_in_timer );
+                if ( a_cb ){
+                    var node = $("#file_tree").fancytree( "getTree").activeNode;
+                    if ( node ){
+                        a_cb( path + (path.charAt(path.length-1) == "/"?"":"/") + (node.key=="."?"":node.key) );
+                        $(this).dialog('destroy').remove();
+                    }
                 }
             }
-
+        },{
+            text: "Cancel",
+            click: function() {
+                clearTimeout( path_in_timer );
+                $(this).dialog('destroy').remove();
+            }
+        }],
+        open: function(){
             $("#file_tree").fancytree({
                 extensions: ["themeroller"],
                 themeroller: {
@@ -86,62 +126,32 @@ function dlgEpBrowse( a_ep, a_mode ) {
                     hoverClass: "ui-state-active",
                     selectedClass: ""
                 },
-                source: tree_source,
+                source: [{title: "loading...",icon:false}],
                 selectMode: 1,
-                /*lazyLoad: function( event, data ) {
-                    console.log("lazy load",data);
-                    console.log("path:",data.node.getKeyPath());
-                    data.result = {
-                        url: "/ui/ep/dir/list?ep="+encodeURIComponent(a_ep)+"&path="+encodeURIComponent(data.node.getKeyPath() + "/" ),
-                        cache: false
-                    };
-                },*/
-                postProcess: function( event, data ) {
-                    console.log("post proc",data);
-                    if ( data.response.DATA ){
-                        data.result = [];
-
-                        if ( data.response.DATA.length ){
-                            var entry;
-                            for ( var i in data.response.DATA ){
-                                entry = data.response.DATA[i];
-                                if ( entry.type == "dir" ){
-                                    data.result.push({ title: entry.name + " " + entry.permissions, folder:true, lazy: true, key: entry.name });
-                                } else if ( entry.type == "file" ){
-                                    data.result.push({ title: entry.name + " " + entry.size + " " + entry.permissions, key: entry.name });
-                                }
-                            }
-                        }
-                    }
+                activate: function( ev, data ){
+                    console.log("activate");
+                    if (( data.node.data.is_dir && a_mode == "dir" && data.node.key != ".." ) || ( !data.node.data.is_dir && a_mode == "file" ))
+                        $("#sel_btn").button("enable");
+                    else
+                        $("#sel_btn").button("disable");
                 },
                 dblclick: function( event, data ) {
                     console.log("activate", data );
                     if ( data.node.data.is_dir ){
-                        reloadTree( data.node.key );
+                        chdir( data.node.key );
                     }
                 }
             });
-        }
-    });
+            reloadTree( a_path );
+            $("#path",frame).on('input', function(){
+                console.log("path manually changed");
+                clearTimeout( path_in_timer );
+                path_in_timer = setTimeout( function(){
+                    path = $("#path",frame).val();
+                    reloadTree( path );
+                }, 1000 );
+            });
 
-    var options = {
-        title: "Browse End-Point " + a_ep,
-        modal: true,
-        width: '500',
-        height: '400',
-        resizable: true,
-        closeOnEscape: true,
-        buttons: [{
-            text: "Select",
-            click: function() {
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
-            }
-        }],
-        open: function(){
         }
     };
 

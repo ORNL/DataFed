@@ -49,7 +49,7 @@ function _asyncGet( a_url, a_raw_json_data, a_callback ) {
                     a_callback( false, "Unknown error" );
             }
         },
-        timeout: 5000
+        timeout: 10000
     });
 }
 
@@ -353,9 +353,9 @@ function epRecentSave( a_cb ){
     });
 }
 
-function epDirList( a_ep, a_path, a_cb ){
+function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
     console.log("epDirList",a_ep,a_path);
-    _asyncGet( "/ui/ep/dir/list?ep=" + encodeURIComponent(a_ep) + "&path=" + encodeURIComponent(a_path), null, function( ok, data ){
+    _asyncGet( "/ui/ep/dir/list?ep=" + encodeURIComponent(a_ep) + "&path=" + encodeURIComponent(a_path) + "&hidden=" + (a_show_hidden?"true":"false"), null, function( ok, data ){
         if ( a_cb ){
             if ( ok )
                 a_cb( data );
