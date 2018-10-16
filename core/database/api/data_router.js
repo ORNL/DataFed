@@ -321,10 +321,14 @@ router.get('/view', function (req, res) {
 
         var data_id = g_lib.resolveID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
+        var rem_md = false;
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
-            if ( !g_lib.hasPermissions( client, data, g_lib.PERM_VIEW ))
+            var perms = g_lib.getPermissions( client, data, g_lib.PERM_VIEW | g_lib.PERM_RD_META );
+            if (( perms & g_lib.PERM_VIEW ) == 0 )
                 throw g_lib.ERR_PERM_DENIED;
+            if (( perms & g_lib.PERM_RD_META ) == 0 )
+                rem_md = true;
         }
 
         var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
@@ -333,6 +337,9 @@ router.get('/view', function (req, res) {
         if ( alias.length ) {
             data.alias = alias[0]._key;
         }
+
+        if ( rem_md && data.md )
+            delete data.md;
 
         data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
         data.owner = owner_id;
