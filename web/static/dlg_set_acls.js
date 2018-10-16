@@ -28,10 +28,10 @@ function makeDlgSetACLs(){
                     <div style='flex:none;padding:.5rem 0 0 0'>Local:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                         <div style='padding:.1em'><label for='dlg_view_cb'></label><input type='checkbox' id='dlg_view_cb'>&nbsp View</div>\
-                        <div style='padding:.1em'><label for='dlg_rd_meta_cb'></label><input type='checkbox' id='dlg_rd_meta_cb'>&nbsp Read Meta</div>\
-                        <div style='padding:.1em'><label for='dlg_rd_data_cb'></label><input type='checkbox' id='dlg_rd_data_cb'>&nbsp Read Data</div>\
-                        <div style='padding:.1em'><label for='dlg_wr_meta_cb'></label><input type='checkbox' id='dlg_wr_meta_cb'>&nbsp Write Meta</div>\
-                        <div style='padding:.1em'><label for='dlg_wr_data_cb'></label><input type='checkbox' id='dlg_wr_data_cb'>&nbsp Write Data</div>\
+                        <div style='padding:.1em'><label for='dlg_rd_meta_cb'></label><input type='checkbox' id='dlg_rd_meta_cb'>&nbsp Read&nbspMeta</div>\
+                        <div style='padding:.1em'><label for='dlg_rd_data_cb'></label><input type='checkbox' id='dlg_rd_data_cb'>&nbsp Read&nbspData</div>\
+                        <div style='padding:.1em'><label for='dlg_wr_meta_cb'></label><input type='checkbox' id='dlg_wr_meta_cb'>&nbsp&nbspWrite Meta</div>\
+                        <div style='padding:.1em'><label for='dlg_wr_data_cb'></label><input type='checkbox' id='dlg_wr_data_cb'>&nbsp Write&nbspData</div>\
                         <div style='padding:.1em'><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
                         <!-- div><label for='dlg_tag_cb'></label><input type='checkbox' id='dlg_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_note_cb'></label><input type='checkbox' id='dlg_note_cb'>&nbsp Annotate</div -->\
@@ -49,10 +49,10 @@ function makeDlgSetACLs(){
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                         <div style='padding:.1em'><label for='dlg_inh_view_cb'></label><input type='checkbox' id='dlg_inh_view_cb'>&nbsp View</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_rd_meta_cb'></label><input type='checkbox' id='dlg_inh_rd_meta_cb'>&nbsp Read Meta</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_rd_data_cb'></label><input type='checkbox' id='dlg_inh_rd_data_cb'>&nbsp Read Data</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_wr_meta_cb'></label><input type='checkbox' id='dlg_inh_wr_meta_cb'>&nbsp Write Meta</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_wr_data_cb'></label><input type='checkbox' id='dlg_inh_wr_data_cb'>&nbsp Write Data</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_rd_meta_cb'></label><input type='checkbox' id='dlg_inh_rd_meta_cb'>&nbsp Read&nbspMeta</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_rd_data_cb'></label><input type='checkbox' id='dlg_inh_rd_data_cb'>&nbsp Read&nbspData</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_wr_meta_cb'></label><input type='checkbox' id='dlg_inh_wr_meta_cb'>&nbsp Write&nbspMeta</div>\
+                        <div style='padding:.1em'><label for='dlg_inh_wr_data_cb'></label><input type='checkbox' id='dlg_inh_wr_data_cb'>&nbsp Write&nbspData</div>\
                         <div style='padding:.1em'><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
                         <!-- div><label for='dlg_inh_tag_cb'></label><input type='checkbox' id='dlg_inh_tag_cb'>&nbsp Tag</div>\
                         <div><label for='dlg_inh_note_cb'></label><input type='checkbox' id='dlg_inh_note_cb'>&nbsp Annotate</div -->\
