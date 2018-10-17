@@ -459,35 +459,37 @@ module.exports = ( function() {
         if ( result != null )
             return result;
 
-        // Evaluate permissions set directly on object
+        // Evaluate user permissions set directly on object
+        if ( a_object.acls & 1 ){
+            acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
 
-        acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+            if ( acls.length ){
+                for ( i in acls ) {
+                    acl = acls[i];
+                    //console.log("user_perm:",acl);
+                    perm_found |= acl.grant;
+                }
 
-        if ( acls.length ){
-            for ( i in acls ) {
-                acl = acls[i];
-                //console.log("user_perm:",acl);
-                perm_found |= acl.grant;
+                result = obj.evalPermissions( a_req_perm, perm_found, any );
+                if ( result != null )
+                    return result;
             }
-
-            result = obj.evalPermissions( a_req_perm, perm_found, any );
-            if ( result != null )
-                return result;
         }
 
         // Evaluate group permissions on object
+        if ( a_object.acls & 2 ){
+            acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+            if ( acls.length ){
+                for ( i in acls ) {
+                    acl = acls[i];
+                    //console.log("group_perm:",acl);
+                    perm_found |= acl.grant;
+                }
 
-        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
-        if ( acls.length ){
-            for ( i in acls ) {
-                acl = acls[i];
-                //console.log("group_perm:",acl);
-                perm_found |= acl.grant;
+                result = obj.evalPermissions( a_req_perm, perm_found, any );
+                if ( result != null )
+                    return result;
             }
-
-            result = obj.evalPermissions( a_req_perm, perm_found, any );
-            if ( result != null )
-                return result;
         }
 
         // If not all requested permissions have been found, evaluate permissions inherited from parent collections
@@ -500,7 +502,7 @@ module.exports = ( function() {
         while ( 1 ) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.pulic}", { children : children }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.public,acls:v.acls}", { children : children }).toArray();
 
             if ( parents.length == 0 )
                 break;
@@ -519,29 +521,33 @@ module.exports = ( function() {
                     return result;
 
                 // User ACL first
-                acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
-                if ( acls.length ){
-                    for ( i in acls ) {
-                        acl = acls[i];
-                        perm_found |= acl.inhgrant;
-                    }
+                if ( parent.acls && (( parent.acls & 1 ) != 0 )){
+                    acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
+                    if ( acls.length ){
+                        for ( i in acls ) {
+                            acl = acls[i];
+                            perm_found |= acl.inhgrant;
+                        }
 
-                    result = obj.evalPermissions( a_req_perm, perm_found, any );
-                    if ( result != null )
-                        return result;
+                        result = obj.evalPermissions( a_req_perm, perm_found, any );
+                        if ( result != null )
+                            return result;
+                    }
                 }
 
                 // Group ACL next
-                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
-                if ( acls.length ){
-                    for ( i in acls ) {
-                        acl = acls[i];
-                        perm_found |= acl.inhgrant;
-                    }
+                if ( parent.acls && (( parent.acls & 2 ) != 0 )){
+                    acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
+                    if ( acls.length ){
+                        for ( i in acls ) {
+                            acl = acls[i];
+                            perm_found |= acl.inhgrant;
+                        }
 
-                    result = obj.evalPermissions( a_req_perm, perm_found, any );
-                    if ( result != null )
-                        return result;
+                        result = obj.evalPermissions( a_req_perm, perm_found, any );
+                        if ( result != null )
+                            return result;
+                    }
                 }
             }
 
@@ -585,36 +591,41 @@ module.exports = ( function() {
         if ( a_object.grant )
             perm_found |= a_object.grant;
 
-        if ( obj.evalGetPerm( a_req_perm, perm_found ))
+        if (( a_req_perm & perm_found ) == a_req_perm )
             return a_req_perm;
 
         // Evaluate permissions set directly on object
 
-        acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+        if ( a_object.acls && ((a_object.acls & 1 ) != 0 )){
+            acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
 
-        if ( acls.length ){
-            for ( i in acls ) {
-                acl = acls[i];
-                //console.log("user_perm:",acl);
-                perm_found |= acl.grant;
+            if ( acls.length ){
+                for ( i in acls ) {
+                    acl = acls[i];
+                    //console.log("user_perm:",acl);
+                    perm_found |= acl.grant;
+                }
+
+                if (( a_req_perm & perm_found ) == a_req_perm )
+                    return a_req_perm;
             }
-
-            if ( obj.evalGetPerm( a_req_perm, perm_found ))
-                return a_req_perm;
         }
 
         // Evaluate group permissions on object
 
-        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
-        if ( acls.length ){
-            for ( i in acls ) {
-                acl = acls[i];
-                //console.log("group_perm:",acl);
-                perm_found |= acl.grant;
-            }
+        if ( a_object.acls && ((a_object.acls & 2 ) != 0 )){
+            acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
 
-            if ( obj.evalGetPerm( a_req_perm, perm_found ))
-                return a_req_perm;
+            if ( acls.length ){
+                for ( i in acls ) {
+                    acl = acls[i];
+                    //console.log("group_perm:",acl);
+                    perm_found |= acl.grant;
+                }
+
+                if (( a_req_perm & perm_found ) == a_req_perm )
+                    return a_req_perm;
+            }
         }
 
         // If not all requested permissions have been found, evaluate permissions inherited from parent collections
@@ -626,7 +637,7 @@ module.exports = ( function() {
         while ( 1 ) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.pulic}", { children : children }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.public,acls:v.acls}", { children : children }).toArray();
 
             if ( parents.length == 0 )
                 break;
@@ -640,31 +651,35 @@ module.exports = ( function() {
                 if ( parent.inhgrant )
                     perm_found |= parent.inhgrant;
 
-                if ( obj.evalGetPerm( a_req_perm, perm_found ))
+                if (( a_req_perm & perm_found ) == a_req_perm )
                     return a_req_perm;
 
                 // User ACL
-                acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
-                if ( acls.length ){
-                    for ( i in acls ) {
-                        acl = acls[i];
-                        perm_found |= acl.inhgrant;
-                    }
+                if ( parent.acls && (( parent.acls & 1 ) != 0 )){
+                    acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client._id } ).toArray();
+                    if ( acls.length ){
+                        for ( i in acls ) {
+                            acl = acls[i];
+                            perm_found |= acl.inhgrant;
+                        }
 
-                    if ( obj.evalGetPerm( a_req_perm, perm_found ))
-                        return a_req_perm;
+                        if (( a_req_perm & perm_found ) == a_req_perm )
+                            return a_req_perm;
+                    }
                 }
 
                 // Group ACL
-                acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
-                if ( acls.length ){
-                    for ( i in acls ) {
-                        acl = acls[i];
-                        perm_found |= acl.inhgrant;
-                    }
+                if ( parent.acls && (( parent.acls & 2 ) != 0 )){
+                    acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client._id } ).toArray();
+                    if ( acls.length ){
+                        for ( i in acls ) {
+                            acl = acls[i];
+                            perm_found |= acl.inhgrant;
+                        }
 
-                    if ( obj.evalGetPerm( a_req_perm, perm_found ))
-                        return a_req_perm;
+                        if (( a_req_perm & perm_found ) == a_req_perm )
+                            return a_req_perm;
+                    }
                 }
             }
 
@@ -674,10 +689,6 @@ module.exports = ( function() {
         }
 
         return perm_found & a_req_perm;
-    };
-
-    obj.evalGetPerm = function( a_req_perm, a_perm_found ) {
-        return (( a_perm_found & a_req_perm ) == a_req_perm );
     };
 
     obj.usersWithClientACLs = function( client_id ){

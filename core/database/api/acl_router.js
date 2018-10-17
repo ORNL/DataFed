@@ -104,7 +104,7 @@ router.get('/update', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var do_upd = false;
+                var acl_mode = 0;
                 var new_obj = {};
 
                 if ( req.queryParams.rules ){
@@ -112,7 +112,7 @@ router.get('/update', function (req, res) {
                     // Delete existing ACL rules for this object
                     g_db.acl.removeByExample({ _from: object._id });
 
-                    var rule,erule;
+                    var rule;
                     var obj;
 
                     for ( var i in req.queryParams.rules ) {
@@ -132,9 +132,9 @@ router.get('/update', function (req, res) {
                             if ( new_obj.inhgrant == 0 )
                                 new_obj.inhgrant = null;
 
-                            do_upd = true;
                         } else {
                             if ( rule.id.startsWith("g/")){
+                                acl_mode |= 2;
                                 var group = g_db.g.firstExample({ uid: owner_id, gid: rule.id.substr(2) });
 
                                 if ( !group )
@@ -143,6 +143,7 @@ router.get('/update', function (req, res) {
                                 rule.id = group._id;
 
                             } else {
+                                acl_mode |= 1;
                                 if ( !g_db._exists( rule.id ))
                                     throw g_lib.ERR_USER_NOT_FOUND;
                             }
@@ -158,17 +159,16 @@ router.get('/update', function (req, res) {
                     }
                 }
 
+                new_obj.acls = acl_mode;
+
                 if ( req.queryParams.public != undefined ){
-                    do_upd = true;
                     if ( req.queryParams.public )
                         new_obj.public = true;
                     else
                         new_obj.public = null;
                 }
 
-                if ( do_upd )
-                    g_db._update( object._id, new_obj, { keepNull: false } );
-
+                g_db._update( object._id, new_obj, { keepNull: false } );
 
                 result = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", { object: object._id }).toArray();
                 postProcACLRules( result, object );

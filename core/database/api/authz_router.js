@@ -97,7 +97,6 @@ router.get('/xfr/pre', function (req, res) {
 
 router.get('/perm/check', function (req, res) {
     try {
-        console.log("check perm:",req.queryParams.client,req.queryParams.perms);
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
         var result = true;

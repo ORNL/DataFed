@@ -14,8 +14,35 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
+const   perf = require('@arangodb/foxx');
 
 module.exports = router;
+router.get('/test', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
+        var result = true;
+        var item = g_lib.resolveID( req.queryParams.item, client );
+        var obj = g_db[item[0]].document( item );
+
+        var t1 = new Date();
+
+        for ( var i = 0; i < 1000; i++ ){
+            result = g_lib.hasPermissions( client, obj, 3 );
+            //result = g_lib.getPermissions( client, obj, 255 );
+        }
+        var t2 = new Date();
+
+        res.send({ perm: result, time: (t2 - t1)/1000 });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('item', joi.string().required(), "Data/collection ID or alias")
+.summary('Do perf test')
+.description('Do perf test');
 
 router.get('/check', function (req, res) {
     try {
