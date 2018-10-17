@@ -335,8 +335,18 @@ function makeBrowserTab(){
     }
 
     this.updateBtnState = function( state, admin, no_new ){
-        console.log("updBtn",state,admin);
+        var bits;
+
+        switch ( state ){
+            case "c": bits = 0x32;  break;
+            case "d": bits = 0;     break;
+            case "r": bits = 0x37;  break;
+            case "p": bits = 0x3a | (admin?0:5); break;
+            default:  bits = 0x3F;  break;
+        }
+/*
         if ( state == "c" ) {
+
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",false);
@@ -345,6 +355,7 @@ function makeBrowserTab(){
             $("#btn_download",inst.frame).button("option","disabled",true);
             //$("#btn_alloc",inst.frame).button("option","disabled",true);
         } else if ( state == "d" ) {
+            state = 0;
             $("#btn_edit",inst.frame).button("option","disabled",false);
             $("#btn_copy",inst.frame).button("option","disabled",false);
             $("#btn_del",inst.frame).button("option","disabled",false);
@@ -356,7 +367,6 @@ function makeBrowserTab(){
             $("#btn_edit",inst.frame).button("option","disabled",true);
             $("#btn_copy",inst.frame).button("option","disabled",true);
             $("#btn_del",inst.frame).button("option","disabled",true);
-            //$("#btn_share",inst.frame).button("option","disabled",!admin);
             $("#btn_share",inst.frame).button("option","disabled",false);
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
@@ -377,7 +387,22 @@ function makeBrowserTab(){
             $("#btn_upload",inst.frame).button("option","disabled",true);
             $("#btn_download",inst.frame).button("option","disabled",true);
             //$("#btn_alloc",inst.frame).button("option","disabled",state != "m");
-        }
+        }*/
+        console.log("upd btn state",state,admin,bits);
+
+        $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
+        $("#btn_copy",inst.frame).button("option","disabled",(bits & 2) != 0);
+        $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0);
+        $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0);
+        $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0);
+        $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
+
+        inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "copy", (bits & 2) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "del", (bits & 4) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "share", (bits & 8) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "put", (bits & 0x10) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x20) == 0 );
     }
 
     this.reloadSelected = function(){
@@ -867,6 +892,7 @@ function makeBrowserTab(){
         {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
+
     $("#data_tree").fancytree({
         extensions: ["dnd","themeroller"],
         dnd:{
@@ -1108,7 +1134,32 @@ function makeBrowserTab(){
         }
     });
 
-    this.data_tree = $('#data_tree').fancytree('getTree');
+    inst.data_tree_div = $('#data_tree');
+    inst.data_tree = inst.data_tree_div.fancytree('getTree');
+
+    inst.data_tree_div.contextmenu({
+        delegate: "li",
+        show: false,
+        hide: false,
+        menu: [
+            {title: "New", children: [
+                {title: "Data", action: inst.newData, cmd: "newd" },
+                {title: "Collection", action: inst.newColl, cmd: "newc" },
+                {title: "Project", action: newProj, cmd: "newp" }
+                ]},
+            {title: "Edit", action: inst.editSelected, cmd: "edit" },
+            {title: "Copy", cmd: "copy" },
+            {title: "Delete", action: inst.deleteSelected, cmd: "del" },
+            {title: "Sharing", action: inst.shareSelected, cmd: "share" },
+            {title: "Get", action: function(){ inst.xfrSelected(1) }, cmd: "get" },
+            {title: "Put", action: function(){ inst.xfrSelected(0) }, cmd: "put" }
+            ],
+        beforeOpen: function( ev, ui ){
+            console.log("ctxt b4 open");
+            ui.target.click();
+        }
+    });
+
 
     $("#data_md_tree").fancytree({
         extensions: ["themeroller"],
