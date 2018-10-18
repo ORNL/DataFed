@@ -337,7 +337,7 @@ Server::procPathDeleteRequest()
     boost::filesystem::path data_path( request->path() );
     if ( boost::filesystem::exists( data_path ))
     {
-        boost::filesystem::remove( data_path );
+        boost::filesystem::remove_all( data_path );
     }
 
     PROC_MSG_END

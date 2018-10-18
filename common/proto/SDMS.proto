@@ -111,17 +111,16 @@ message ProjectData
 {
     required string             id          = 1;
     required string             title       = 2;
-    optional string             domain      = 3;
-    optional string             desc        = 4;
-    optional string             sub_repo    = 5;
-    optional uint64             sub_alloc   = 6;
-    optional uint64             sub_usage   = 7;
-    optional string             owner       = 8;
-    optional uint32             ct          = 9;
-    optional uint32             ut          = 10;
-    repeated string             admin       = 11;
-    repeated string             member      = 12;
-    repeated AllocData          alloc       = 13;
+    optional string             desc        = 3;
+    optional string             sub_repo    = 4;
+    optional uint64             sub_alloc   = 5;
+    optional uint64             sub_usage   = 6;
+    optional string             owner       = 7;
+    optional uint32             ct          = 8;
+    optional uint32             ut          = 9;
+    repeated string             admin       = 10;
+    repeated string             member      = 11;
+    repeated AllocData          alloc       = 12;
 }
 
 message ListingData

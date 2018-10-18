@@ -48,7 +48,8 @@ public:
 
     void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projDelete( const Auth::ProjectDeleteRequest & a_request, Anon::AckReply & a_reply );
+    //void projDelete( const Auth::ProjectDeleteRequest & a_request, Anon::AckReply & a_reply );
+    void projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
 

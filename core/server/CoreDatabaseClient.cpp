@@ -562,7 +562,6 @@ DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::
 
     params.push_back({"id",a_request.id()});
     params.push_back({"title",a_request.title()});
-    params.push_back({"domain",a_request.domain()});
 
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
@@ -615,9 +614,6 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
     if ( a_request.has_title() )
         params.push_back({"title",a_request.title()});
 
-    if ( a_request.has_domain() )
-        params.push_back({"domain",a_request.domain()});
-
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
 
@@ -653,11 +649,23 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
 }
 
 void
-DatabaseClient::projDelete( const Auth::ProjectDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseClient::projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs )
 {
-    (void)a_reply;
     rapidjson::Document result;
-    dbGet( "prj/delete", {{"id",a_request.id()}}, result );
+
+    dbGet( "prj/delete", {{"id",a_id}}, result );
+
+    a_locs.resize(result.Size());
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        rapidjson::Value & val = result[i];
+        RecordDataLocation & loc = a_locs[i];
+
+        loc.set_id( val["id"].GetString() );
+        loc.set_repo_id( val["repo_id"].GetString() );
+        loc.set_path( val["path"].GetString() );
+    }
 }
 
 void
@@ -705,9 +713,6 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
         proj = a_reply.add_proj();
         proj->set_id( val["id"].GetString() );
         proj->set_title( val["title"].GetString() );
-
-        if (( imem = val.FindMember("domain")) != val.MemberEnd() )
-            proj->set_domain( imem->value.GetString() );
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             proj->set_desc( imem->value.GetString() );

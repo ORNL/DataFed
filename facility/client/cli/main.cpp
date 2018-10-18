@@ -272,7 +272,7 @@ void printProjects( spProjectDataReply a_reply )
     if ( g_out_form == JSON )
         cout << "{\"Projects\":[";
     else if ( g_out_form == CSV )
-        cout << "\"ProjID\",\"Title\",\"Domain\",\"Desc\",\"Owner\",\"Created\",\"Updated\"\n";
+        cout << "\"ProjID\",\"Title\",\"Desc\",\"Owner\",\"Created\",\"Updated\"\n";
 
     if ( a_reply->proj_size() )
     {
@@ -290,8 +290,6 @@ void printProjects( spProjectDataReply a_reply )
             case TEXT:
                 cout << "ProjID  " << proj.id() << "\n";
                 cout << "Title   " << proj.title() << "\n";
-                if ( proj.has_domain() )
-                    cout << "Domain  " << proj.domain() << "\n";
                 if ( proj.has_desc() )
                     cout << "Desc    " << proj.desc() << "\n";
                 if ( proj.has_owner() )
@@ -311,8 +309,6 @@ void printProjects( spProjectDataReply a_reply )
                 break;
             case JSON:
                 cout << "{\"ProjID\":\"" << proj.id() << "\",\"Title\":\"" << escapeJSON( proj.title() ) << "\"";
-                if ( proj.has_domain() )
-                    cout << ",\"Domain\":\"" << proj.domain() << "\"";
                 if ( proj.has_desc() )
                     cout << ",\"Desc\":\"" << escapeJSON( proj.desc() ) << "\"";
                 if ( proj.has_owner() )
@@ -325,7 +321,6 @@ void printProjects( spProjectDataReply a_reply )
                 break;
             case CSV:
                 cout << "\"" << proj.id() << "\",\"" << escapeCSV( proj.title() ) << "\""
-                    << ",\"" << ( proj.has_domain()?proj.domain():"" ) << "\""
                     << ",\"" << ( proj.has_desc()?escapeCSV( proj.desc() ):"" ) << "\""
                     << ",\"" << ( proj.has_owner()?proj.owner():"") << "\""
                     << ",\"" << ( proj.has_ct()?proj.ct():0) << "\""

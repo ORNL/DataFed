@@ -6,7 +6,6 @@ function dlgProjNewEdit(a_data,a_cb) {
                 <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
-                <tr><td>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
                 <tr><td>Sub&#8209;allocation:</td><td><select id='suballoc'><option value='1'>None</option></select></td></tr>\
                 <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%'></input></td></tr>\
@@ -62,17 +61,11 @@ function dlgProjNewEdit(a_data,a_cb) {
             text: a_data?"Update":"Create",
             click: function() {
                 proj.id = $("#id",frame).val();
-                proj.domain = $("#domain",frame).val();
                 proj.title = $("#title",frame).val();
                 proj.desc = $("#desc",frame).val();
                 proj.subRepo = $("#suballoc",frame).val();
                 proj.subAlloc = $("#suballoc_size",frame).val();
                 console.log("proj:",proj);
-
-                if ( !proj.id || !proj.domain || !proj.title ){
-                    dlgAlert("Input Error","Missing one or more required fields: ID, title, and domain.");
-                    return;
-                }
 
                 var url = "/api/prj/";
 
@@ -87,8 +80,10 @@ function dlgProjNewEdit(a_data,a_cb) {
 
                 url += encodeURIComponent( proj.id );;
 
-                if ( !a_data || proj.domain != a_data.domain )
-                    url += "&domain="+ encodeURIComponent(proj.domain);
+                if ( !proj.title ){
+                    dlgAlert("Input Error","Title field is required.");
+                    return;
+                }
 
                 if ( !a_data || proj.title != a_data.title )
                     url += "&title="+ encodeURIComponent(proj.title);
@@ -211,7 +206,6 @@ function dlgProjNewEdit(a_data,a_cb) {
                 inputDisable($("#id",frame)).val(a_data.id);
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
-                $("#domain",frame).val(a_data.domain);
                 $("#owner_id",frame).val(a_data.owner);
                 if ( a_data.subRepo )
                     $("#suballoc_size",frame).val(a_data.subAlloc);

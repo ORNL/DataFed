@@ -550,7 +550,6 @@ function makeBrowserTab(){
                             inst.sel_descr.text("(none)");
 
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
-                        html += "<tr><td>Domain:</td><td>" + item.domain + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
                         if ( item.ct ){
                             date.setTime(item.ct*1000);

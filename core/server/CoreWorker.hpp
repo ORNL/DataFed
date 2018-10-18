@@ -36,6 +36,7 @@ private:
     bool procDataDeleteRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );
+    bool procProjectDeleteRequest( const std::string & a_uid );
     bool procRecordSearchRequest( const std::string & a_uid );
     bool procRepoAllocationSetRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );

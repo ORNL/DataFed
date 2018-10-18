@@ -83,6 +83,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
+        SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &Worker::procProjectDeleteRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &Worker::procRepoAllocationSetRequest );
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
 
@@ -101,7 +102,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserSetRecentEPRequest, AckReply, userSetRecentEP );
         SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ProjectDeleteRequest, AckReply, projDelete );
         SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
@@ -513,6 +513,34 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
     {
         //const RecordDataLocation & loc = reply.location(i);
         m_mgr.dataDelete( l->repo_id(), l->path() );
+    }
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procProjectDeleteRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( ProjectDeleteRequest, AckReply )
+
+    DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id() );
+
+    // TODO Acquire write lock here
+    // TODO Need better error handling (plus retry)
+
+    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    m_db_client.setClient( a_uid );
+    vector<RecordDataLocation> locs;
+    m_db_client.projDelete( request->id(), locs );
+
+    // Ask FileManager to delete file and/or repo project directories
+    for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
+    {
+        //const RecordDataLocation & loc = reply.location(i);
+        if ( l->path() == "all" )
+            m_mgr.repoPathDelete( l->repo_id(), request->id() );
+        else
+            m_mgr.dataDelete( l->repo_id(), l->path() );
     }
 
     PROC_MSG_END
