@@ -333,6 +333,11 @@ router.get('/alloc/set', function (req, res) {
                     subject_id = req.queryParams.subject;
                 else
                     subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+
+                // Ensure subject exists
+                if ( !g_db._exists( subject_id ))
+                    throw g_lib.ERR_INVALID_ID;
+
                 var repo = g_db.repo.document( req.queryParams.repo );
 
                 g_lib.ensureAdminPermRepo( client, repo._id );

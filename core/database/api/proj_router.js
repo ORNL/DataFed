@@ -32,17 +32,12 @@ router.get('/create', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                if ( req.queryParams.domain.startsWith("user.")){
-                    if ( req.queryParams.domain != "user."+client._key)
-                        throw g_lib.ERR_INVALID_DOMAIN;
-                }
-
                 g_lib.validateProjectID( req.queryParams.id );
                 g_lib.validateTitle( req.queryParams.title );
                 g_lib.validateDescShort( req.queryParams.desc );
 
                 var time = Math.floor( Date.now()/1000 );
-                var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, domain: req.queryParams.domain, ct: time, ut: time };
+                var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, ct: time, ut: time };
 
                 if ( req.queryParams.desc )
                     proj_data.desc = req.queryParams.desc;
@@ -126,15 +121,14 @@ router.get('/create', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID for new project")
-.queryParam('title', joi.string().required(), "Title (must be unque within domain)")
-.queryParam('domain', joi.string().required(), "Domain or topic (in reverse dotted notation)")
+.queryParam('title', joi.string().required(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('sub_repo', joi.string().optional(), "Sub-allocaiton repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Additional project administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
 .summary('Create new project')
-.description('Create new project. For personal projects, domain should be user.uid (where \'uid\' is your user ID).');
+.description('Create new project.');
 
 
 router.get('/update', function (req, res) {
@@ -157,14 +151,6 @@ router.get('/update', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
-
-                if ( req.queryParams.domain ){
-                    if ( req.queryParams.domain.startsWith("user.")){
-                        if ( req.queryParams.domain != "user."+client._key)
-                            throw g_lib.ERR_INVALID_DOMAIN;
-                    }
-                    obj.domain = req.queryParams.domain;
-                }
 
                 if ( req.queryParams.title )
                     obj.title = req.queryParams.title;
@@ -262,9 +248,8 @@ router.get('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Project ID")
 .queryParam('title', joi.string().optional(), "New title")
-.queryParam('domain', joi.string().optional(), "Domain or topic (in reverse dotted notation)")
 .queryParam('desc', joi.string().optional(), "Description")
-.queryParam('sub_repo', joi.string().optional(), "Sub-allocaiton repo ID")
+.queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
@@ -407,19 +392,43 @@ router.get('/delete', function (req, res) {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
                 g_lib.ensureAdminPermProj( client, proj_id );
+                var proj = g_db.p.document( proj_id );
+                var size = 0;
+                var objects,obj;
+                var locations=[];
 
-                var objects;
-                var obj;
-                var i;
+                if ( proj.sub_repo ){
+                    // Collect data locations, size
+                    objects = g_db._query( "for v in 1..1 inbound @proj owner filter is_same_collection('d',v) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.size,loc:loc[0]}", { proj: proj_id });
 
-                // Delete collections, data, groups, notes
-                objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id }).toArray();
-                for ( i in objects ) {
-                    obj = objects[i];
+                    while ( objects.hasNext() ) {
+                        obj = objects.next();
+                        // Save location
+                        locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
+                        size += obj.size;
+                    }
+
+                    var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
+                    obj = g_db.alloc.firstExample({_from: owner_id, _to: proj.sub_repo});
+                    g_db._update( obj._id, { usage: obj.usage - size });
+                }else{
+                    objects = g_db.alloc.byExample({ _from: proj_id });
+                    while ( objects.hasNext() ) {
+                        obj = objects.next();
+                        locations.push({id:proj_id,repo_id:obj._to,path:"all"});
+                    }
+                }
+
+                // Delete owned records
+                objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id });
+                while ( objects.hasNext() ) {
+                    obj = objects.next();
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
                 g_graph.p.remove( proj_id );
+
+                res.send( locations );
             }
         });
     } catch( e ) {

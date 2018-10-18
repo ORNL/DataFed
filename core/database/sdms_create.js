@@ -60,7 +60,7 @@ db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: tr
 //db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
 
-db.p.ensureIndex({ type: "hash", unique: true, fields: [ "domain", "title" ], sparse: true });
+//db.p.ensureIndex({ type: "hash", unique: true, fields: [ "domain", "title" ], sparse: true });
 
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 
