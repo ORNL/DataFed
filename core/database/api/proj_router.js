@@ -123,7 +123,7 @@ router.get('/create', function (req, res) {
 .queryParam('id', joi.string().required(), "ID for new project")
 .queryParam('title', joi.string().required(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
-.queryParam('sub_repo', joi.string().optional(), "Sub-allocaiton repo ID")
+.queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Additional project administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")

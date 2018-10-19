@@ -114,9 +114,7 @@ router.post('/create', function (req, res) {
                     throw g_lib.ERR_NO_ALLOCATION;
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { size: 0, ct: time, ut: time };
-
-                obj.title = req.body.title;
+                var obj = { size: 0, ct: time, ut: time, title: req.body.title, owner: owner_id };
 
                 if ( req.body.public )
                     obj.public = req.body.public;
