@@ -13,7 +13,7 @@ graph._addVertexCollection("p");    // Project
 graph._addVertexCollection("g");    // Group
 graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
-//graph._addVertexCollection("t");    // Tag
+graph._addVertexCollection("t");    // Topic
 //graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
 //graph._addVertexCollection("l");    // Label
@@ -34,8 +34,8 @@ graph._extendEdgeDefinitions(item);
 var acl = graph_module._relation("acl", ["d","c"], ["u","g"]);
 graph._extendEdgeDefinitions(acl);
 
-//var tag = graph_module._relation("tag", ["d","c"], ["t"]);
-//graph._extendEdgeDefinitions(tag);
+var topic = graph_module._relation("top", ["d","t"], ["t"]);
+graph._extendEdgeDefinitions(topic);
 
 //var note = graph_module._relation("note", ["d","c"], ["n"]);
 //graph._extendEdgeDefinitions(note);

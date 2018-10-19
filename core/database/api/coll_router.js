@@ -119,11 +119,10 @@ router.post('/update', function (req, res) {
                 write: ["c","a","owner","alias"]
             },
             action: function() {
-                var coll;
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.body.id, client );
+                var coll = g_db.c.document( coll_id );
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-                    coll = g_db.c.document( coll_id );
                     if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_ADMIN ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
@@ -138,14 +137,15 @@ router.post('/update', function (req, res) {
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
 
-                if ( req.body.title )
+                if ( req.body.title != undefined && req.body.title != coll.title )
                     obj.title = req.body.title;
 
-                if ( req.body.desc )
+                if ( req.body.desc != undefined && req.body.desc != coll.desc )
                     obj.desc = req.body.desc;
 
-                if ( req.body.public != undefined )
+                if ( req.body.public != undefined && req.body.public != coll.public ){
                     obj.public = req.body.public;
+                }
 
                 coll = g_db._update( coll_id, obj, { returnNew: true });
                 coll = coll.new;
@@ -164,6 +164,10 @@ router.post('/update', function (req, res) {
                     g_db.alias.save({ _from: coll_id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
                     coll.alias = req.body.alias;
+                }
+
+                if ( obj.public != undefined ){
+                    // Public flag has changed - process all contained items recursively
                 }
 
                 delete coll._rev;

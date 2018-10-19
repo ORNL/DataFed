@@ -120,6 +120,7 @@ module.exports = ( function() {
     obj.ERR_DESC_SHORT_TOO_LONG   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Description too long ("+obj.MAX_DESC_SHORT_LEN+" char limit)" ]);
     obj.ERR_GROUP_ID_TOO_LONG     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Group ID too long ("+obj.MAX_GROUP_ID_LEN+" char limit)" ]);
     obj.ERR_PROJ_ID_TOO_LONG      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project ID too long ("+obj.MAX_PROJ_ID_LEN+" char limit)" ]);
+    obj.ERR_INVALID_TOPIC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid topic path" ]);
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
