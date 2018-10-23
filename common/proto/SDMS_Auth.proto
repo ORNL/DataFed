@@ -148,11 +148,12 @@ message RecordCreateRequest
 {
     required string             title       = 1;
     optional string             desc        = 2;
-    optional string             alias       = 3;
-    optional bool               ispublic    = 4;
-    optional string             metadata    = 5;
-    optional string             parent_id   = 6;
-    optional string             repo_id     = 7;
+    optional string             topic       = 3;
+    optional string             alias       = 4;
+    optional bool               ispublic    = 5;
+    optional string             metadata    = 6;
+    optional string             parent_id   = 7;
+    optional string             repo_id     = 8;
 }
 
 message RecordUpdateRequest
@@ -160,12 +161,13 @@ message RecordUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             alias       = 4;
-    optional bool               ispublic    = 5;
-    optional string             metadata    = 6;
-    optional bool               mdset       = 7;
-    optional uint64             size        = 8;
-    optional uint32             dt          = 9;
+    optional string             topic       = 4;
+    optional string             alias       = 5;
+    optional bool               ispublic    = 6;
+    optional string             metadata    = 7;
+    optional bool               mdset       = 8;
+    optional uint64             size        = 9;
+    optional uint32             dt          = 10;
 }
 
 /*message RecordGetDataLocationRequest
@@ -527,3 +529,21 @@ message RepoAuthzRequest
     required string             action      = 4;
 }
 
+// ============================ Topic Messages
+
+message TopicListRequest
+{
+    optional string             topic_id    = 1;
+}
+
+message TopicLinkRequest
+{
+    required string             topic       = 1;
+    required string             id          = 2;
+}
+
+message TopicUnlinkRequest
+{
+    required string             topic       = 1;
+    required string             id          = 2;
+}

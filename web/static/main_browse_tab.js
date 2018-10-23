@@ -512,6 +512,7 @@ function makeBrowserTab(){
                             inst.sel_descr.text("(none)");
 
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
                         html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
@@ -886,6 +887,7 @@ function makeBrowserTab(){
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
+        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
         {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
@@ -996,8 +998,18 @@ function makeBrowserTab(){
                         cache: false
                     };
                 }
+            } else if ( data.node.key == "topics" ) {
+                data.result = {
+                    url: "/api/top/list",
+                    cache: false
+                };
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
+            } else if ( data.node.key.startsWith("t/") ) {
+                data.result = {
+                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ),
+                    cache: false
+                };
             } else {
                 data.result = {
                     url: "/api/col/read?id=" + encodeURIComponent( data.node.key ),
@@ -1057,6 +1069,25 @@ function makeBrowserTab(){
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, nodrag:true });
+                }
+            } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
+                data.result = [];
+                var item,entry;
+                var items = data.response;
+                console.log("topics response",data.response);
+                for ( var i in items ) {
+                    item = items[i];
+                    is_folder = item.id[0]=="t"?true:false;
+
+                    entry = { title: item.title,folder:is_folder,scope:"topics",key:item.id };
+                    if ( is_folder ){
+                        entry.lazy = true;
+                        entry.icon = "ui-icon ui-icon-minusthick";
+                    } else {
+                        entry.icon = "ui-icon ui-icon-file";
+                    }
+
+                    data.result.push( entry );
                 }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet

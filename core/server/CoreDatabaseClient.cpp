@@ -1,3 +1,5 @@
+#include <cctype>
+#include <algorithm>
 #include <zmq.h>
 #include "Util.hpp"
 #include "DynaLog.hpp"
@@ -795,6 +797,8 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+    if ( a_request.has_topic() )
+        body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
@@ -820,11 +824,13 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+    if ( a_request.has_topic() )
+        body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
     {
-        body += ",\"md\":" + a_request.metadata();
+        body += ",\"md\":" + (a_request.metadata().size()?a_request.metadata():"\"\"");
         if ( a_request.has_mdset() )
         {
             body += ",\"mdset\":";
@@ -918,6 +924,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             rec->set_desc( imem->value.GetString() );
+
+        if (( imem = val.FindMember("topic")) != val.MemberEnd() )
+            rec->set_topic( imem->value.GetString() );
 
         if (( imem = val.FindMember("public")) != val.MemberEnd() )
             rec->set_ispublic( imem->value.GetBool() );
@@ -1789,6 +1798,78 @@ DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckRe
     dbGet( "authz/gridftp", {{"file",a_request.file()},{"act",a_request.action()}}, result );
 }
 
+void
+DatabaseClient::topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    if ( a_request.has_topic_id() )
+        params.push_back({ "id", a_request.topic_id() });
+
+    dbGet( "topic/list", params, result );
+
+    setListingData( a_reply, result );
+}
+
+/*
+string parseTopic( const string & a_topic )
+{
+    string res = "[";
+    string::const_iterator c = a_topic.begin(), p = c;
+
+    for ( ; c != a_topic.end(); ++c )
+    {
+        // Check for valid chars
+        if ( *c == '.' )
+        {
+            if ( c == p )
+                EXCEPT( 1, "Invalid topic" );
+            if ( p != a_topic.begin() )
+                res.append(",\"");
+            else
+                res.append("\"");
+            res.append( p, c );
+            res.append("\"");
+            p = c;
+            p++;
+        }
+        else if ( !isalpha( *c ) && !isdigit( *c ) && *c != '-' )
+            EXCEPT( 1, "Invalid topic" );
+    }
+
+    if ( c == p )
+        EXCEPT( 1, "Invalid topic" );
+
+    if ( p != a_topic.begin() )
+        res.append(",\"");
+    else
+        res.append("\"");
+    res.append( p, c );
+    res.append("\"");
+
+    res.append( "]" );
+    std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+    DL_INFO("topic:" << res );
+    return res;
+}*/
+
+void
+DatabaseClient::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void) a_reply;
+    rapidjson::Document result;
+
+    dbGet( "topic/link", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
+}
+
+void
+DatabaseClient::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void) a_reply;
+    rapidjson::Document result;
+
+    dbGet( "topic/unlink", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
+}
 
 /*
 uint16_t

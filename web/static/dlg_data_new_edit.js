@@ -11,6 +11,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             <tr><td title='Title string (required)'>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
             <tr><td title='Alias ID (optional)'>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>\
             <tr><td title='Description string (optional)'>Description:</td><td><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
+            <tr><td title='Topic string (optional)'>Topic:</td><td><input type='text' id='topic' style='width:100%'></input></td></tr>\
             <tr><td title='Metadata JSON document (optional)'>Metadata:</td><td><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
             <tr id='dlg_md_row2'><td title='Metadata update mode - merge fields or replace entire document'>MD-mode:</td><td>\
                 <input type='radio' id='md_merge' name='md_mode' value='merge' checked />\
@@ -125,18 +126,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     return;
                 }
 
-                tmp = $("#alias",frame).val().trim();
-                if ( tmp.length ){
-                    if ( !isValidAlias( tmp ))
-                        return;
+                obj.alias = $("#alias",frame).val().trim();
+                if ( obj.alias.length && !isValidAlias( obj.alias ))
+                    return;
 
-                    obj.alias = tmp;
-                }
-
-                tmp = $("#desc",frame).val().trim();
-                if ( tmp.length )
-                    obj.desc = tmp;
-
+                obj.desc = $("#desc",frame).val().trim();
+                obj.topic = $("#topic",frame).val().trim();
+    
                 if ( a_mode != DLG_DATA_EDIT ){
                     var repo_id = $("#alloc").val();
                     if ( repo_id == "bad" ){
@@ -148,20 +144,18 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     obj.parentId = $("#coll",frame).val().trim();
                 }
 
-                tmp = $("#md",frame).val().trim();
-                if ( tmp.length ){
+                obj.metadata = $("#md",frame).val().trim();
+                if ( obj.metadata.length ){
                     try{
-                        JSON.parse( tmp );
-                        obj.metadata = tmp;
+                        JSON.parse( obj.metadata );
                     }catch(e){
                         dlgAlert("Input Error","Metadata field must be valid JSON.");
                         return;
                     }
-                }
+                } else if ( a_mode != DLG_DATA_EDIT )
+                    delete obj.metadata;
 
-                if ( obj.md && a_data ) {
-                    if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
-                        obj.mdset = true;
+                if ( a_data ) {
                 }
 
                 var url = "/api/dat/";
@@ -170,16 +164,18 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     url += "update";
                     obj.id = a_data.id;
 
-                    if ( obj.title && obj.title == a_data.title )
+                    if ( obj.title == a_data.title )
                         delete obj.title;
-                    if ( obj.desc && obj.desc == a_data.desc )
+                    if ( obj.desc == a_data.desc )
                         delete obj.desc;
-                    if ( obj.alias && obj.alias == a_data.alias )
+                    if ( obj.topic == a_data.topic )
+                        delete obj.topic;
+                    if ( obj.alias == a_data.alias )
                         delete obj.alias;
-                    if ( obj.metadata && obj.metadata == a_data.metadata ){
+                    if ( obj.metadata == a_data.metadata )
                         delete obj.metadata;
-                        delete obj.mdset;
-                    }
+                    else if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
+                        obj.mdset = true;
 
                 }else
                     url += "create"
@@ -217,6 +213,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
 
                 $("#desc",frame).val(a_data.desc);
+                $("#topic",frame).val(a_data.topic);
                 $("#md",frame).val(a_data.metadata);
 
                 if ( a_mode == DLG_DATA_EDIT ){
@@ -240,6 +237,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
+                $("#topic",frame).val("");
                 $("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )

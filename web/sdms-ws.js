@@ -169,14 +169,14 @@ app.get('/ui/error', (request, response) => {
 });
 
 app.get('/ui/authn', ( a_request, a_response ) => {
-    //console.log( 'get /user_auth', a_request.originalUrl );
+    console.log( '/ui/authn', a_request.originalUrl );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
     globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
-        console.log( 'client token:', client_token );
+        //console.log( 'client token:', client_token );
         var xfr_token = client_token.data.other_tokens[0];
-        console.log( 'xfr token:', xfr_token );
+        //console.log( 'xfr token:', xfr_token );
 
         // TODO - Refresh the current users access token?
         /*
@@ -203,12 +203,13 @@ app.get('/ui/authn', ( a_request, a_response ) => {
             var userinfo = null;
 
             if ( response.statusCode >= 200 && response.statusCode < 300 ) {
-                console.log( 'got user info:', body );
                 userinfo = JSON.parse( body );
                 userinfo.uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
+                console.log( 'user', userinfo.uid, 'authenticated, verifying SDMS account' );
+
                 sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
-                    console.log( "UserFindByUUIDsRequest reply:", reply );
+                    //console.log( "UserFindByUUIDsRequest reply:", reply );
 
                     if ( !reply  ) {
                         console.log("User find error. Reply:", reply );
@@ -218,10 +219,11 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                         console.log("User not registered", userinfo );
                         a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
                         //a_response.redirect( "/ui/register" );
-                        console.log("uid", userinfo.uid, "uname", userinfo.name );
+                        //console.log("uid", userinfo.uid, "uname", userinfo.name );
 
                         a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
                     } else {
+                        console.log( 'user', userinfo.uid, 'verified' );
                         // Registered, save access token
                         userinfo.acc_tok = xfr_token.access_token;
                         userinfo.ref_tok = xfr_token.refresh_token;
@@ -723,6 +725,26 @@ app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
 
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,alloc:a_req.query.alloc}, a_req, a_resp, function( reply ) {
+        a_resp.json({});
+    });
+});
+
+app.get('/api/top/list', ( a_req, a_resp ) => {
+    var params = {topicId:a_req.query.id?a_req.query.id:"t/root"};
+    console.log("params:",params);
+    sendMessage( "TopicListRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.json(reply.item?reply.item:[]);
+    });
+});
+
+app.get('/api/top/link', ( a_req, a_resp ) => {
+    sendMessage( "TopicLinkRequest", {topic:a_req.topic,id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        a_resp.json({});
+    });
+});
+
+app.get('/api/top/unlink', ( a_req, a_resp ) => {
+    sendMessage( "TopicUnlinkRequest", {topic:a_req.topic,id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
 });

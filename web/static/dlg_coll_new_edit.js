@@ -29,7 +29,6 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
             text: a_data?"Update":"Create",
             click: function() {
                 var obj = {};
-                var tmp;
 
                 obj.title = $("#title",frame).val().trim();
                 if ( !obj.title ) {
@@ -37,21 +36,11 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                     return;
                 }
 
-                tmp = $("#alias",frame).val().trim();
-                if ( tmp.length ){
-                    if ( !isValidAlias( tmp ))
-                        return;
+                obj.alias = $("#alias",frame).val().trim();
+                if ( obj.alias.length && !isValidAlias( obj.alias ))
+                    return;
 
-                    obj.alias = tmp;
-                }
-                //console.log( "alias", a_data.alias, obj.alias );
-                tmp = $("#desc",frame).val().trim();
-                if ( tmp.length )
-                    obj.desc = tmp;
-
-                tmp = $("#coll",frame).val().trim();
-                if ( tmp.length )
-                    obj.parentId = tmp;
+                obj.desc = $("#desc",frame).val().trim();
 
                 var url = "/api/col/";
 
@@ -59,15 +48,17 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                     url += "update";
                     obj.id = a_data.id;
 
-                    if ( obj.title && obj.title == a_data.title )
+                    if ( obj.title == a_data.title )
                         delete obj.title;
-                    if ( obj.desc && obj.desc == a_data.desc )
+                    if ( obj.desc == a_data.desc )
                         delete obj.desc;
-                    if ( obj.alias && obj.alias == a_data.alias )
+                    if ( obj.alias == a_data.alias )
                         delete obj.alias;
-                }else
-                    url += "create"
+                }else{
+                    obj.parentId = $("#coll",frame).val().trim();
 
+                    url += "create"
+                }
 
                 var inst = $(this);
 
