@@ -101,10 +101,10 @@ router.post('/create', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     title: joi.string().required(),
-    desc: joi.string().optional(),
-    alias: joi.string().optional(),
+    desc: joi.string().allow('').optional(),
+    alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
-    parent: joi.string().optional()
+    parent: joi.string().allow('').optional()
 }).required(), 'Collection fields')
 .summary('Create a new data collection')
 .description('Create a new data collection from JSON body');
@@ -150,20 +150,22 @@ router.post('/update', function (req, res) {
                 coll = g_db._update( coll_id, obj, { returnNew: true });
                 coll = coll.new;
 
-                if ( req.body.alias ) {
+                if ( req.body.alias != undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
                         graph.a.remove( old_alias._to );
                     }
 
-                    var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                    if ( req.body.alias ){
+                        var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
+                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
 
-                    g_db.a.save({ _key: alias_key });
-                    g_db.alias.save({ _from: coll_id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    coll.alias = req.body.alias;
+                        g_db.a.save({ _key: alias_key });
+                        g_db.alias.save({ _from: coll_id, _to: "a/" + alias_key });
+                        g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
+                        coll.alias = req.body.alias;
+                    }
                 }
 
                 if ( obj.public != undefined ){
@@ -188,8 +190,8 @@ router.post('/update', function (req, res) {
 .body(joi.object({
     id: joi.string().required(),
     title: joi.string().optional(),
-    desc: joi.string().optional(),
-    alias: joi.string().optional(),
+    desc: joi.string().allow('').optional(),
+    alias: joi.string().allow('').optional(),
     public: joi.boolean().optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
@@ -200,7 +202,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","d","a","owner","item","loc","acl","alias","alloc"]
+                write: ["c","d","a","owner","item","loc","acl","alias","alloc","t","top","p"]
             },
             action: function() {
                 var i,obj;
@@ -226,7 +228,7 @@ router.get('/delete', function (req, res) {
                     g_graph[obj[0]].remove( obj );
                 }
 
-                // Recursively collect all linked items (data and collections) for deleteion or unlinking
+                // Recursively collect all linked items (data and collections) for deletion or unlinking
                 // Since this could be a very large and/or deep collection hierarchy, we will use a breadth-first traversal
                 // to delete the collection layer-by-layer, rather than all-at-once. While deleting, any data records that are
                 // actually deleted will have their data locations placed in an array that will be returned to the client. This
@@ -236,7 +238,7 @@ router.get('/delete', function (req, res) {
                 // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
                 // at the final instance of this data (thie link count will be 1 then).
 
-                var locations=[], alloc={};
+                var locations=[], allocs={};
                 var c,cur,next = [coll._id];
 
                 while ( next.length ){
@@ -244,25 +246,26 @@ router.get('/delete', function (req, res) {
                     next = [];
                     for ( c in cur ){
                         coll = cur[c];
-                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.size,links:links,loc:loc[0]}", { coll: coll }).toArray();
+                        //objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {_id:v._id,size:v.size,links:links,loc:loc[0],topic:v.topic}", { coll: coll }).toArray();
+                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,links:links}", { coll: coll }).toArray();
 
                         for ( i in objects ) {
                             obj = objects[i];
-                            if ( obj.id[0] == "d" ){
+                            if ( obj._id[0] == "d" ){
                                 if ( obj.links == 1 ){
                                     // Save location and delete
-                                    locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
-                                    if ( alloc[obj.loc.repo] )
-                                        alloc[obj.loc.repo] += obj.size;
-                                    else
-                                        alloc[obj.loc.repo] = obj.size;
-                                    g_lib.deleteObject( obj.id );
+                                    //locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
+                                    //if ( alloc[obj.loc.repo] )
+                                    //    alloc[obj.loc.repo] += obj.size;
+                                    //else
+                                    //    alloc[obj.loc.repo] = obj.size;
+                                    g_lib.deleteData( obj, allocs, locations );
                                 }else{
                                     // Unlink from current collection
-                                    g_db.item.removeByExample({_from:coll,_to:obj.id});
+                                    g_db.item.removeByExample({_from:coll,_to:obj._id});
                                 }
                             }else{
-                                next.push(obj.id);
+                                next.push(obj._id);
                             }
                         }
 
@@ -270,11 +273,14 @@ router.get('/delete', function (req, res) {
                     }
                 }
 
+                g_lib.updateAllocations( allocs, owner_id );
+
+                /*
                 for ( i in alloc ){
-                    console.log( "update alloc for ", alloc );
+                    //console.log( "update alloc for ", alloc );
                     obj = g_db.alloc.firstExample({_from: owner_id, _to: i});
                     g_db._update( obj._id, { usage: obj.usage - alloc[i] });
-                }
+                }*/
 
                 res.send( locations );
             }

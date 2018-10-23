@@ -125,6 +125,19 @@ module.exports = ( function() {
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
     };
+    obj.isAlphaNumeric = function(str) {
+        var code, i, len;
+
+        for (i = 0, len = str.length; i < len; i++) {
+            code = str.charCodeAt(i);
+            if (!(code > 47 && code < 58) && // numeric (0-9)
+                !(code > 64 && code < 91) && // upper alpha (A-Z)
+                !(code > 96 && code < 123)) { // lower alpha (a-z)
+            return false;
+            }
+        }
+        return true;
+    };
 
     obj.handleException = function( e, res ) {
         console.log( "Service exception:", e );
@@ -274,7 +287,66 @@ module.exports = ( function() {
             item = items[i];
             obj.graph[item[0]].remove( item );
         }
+
         obj.graph[id[0]].remove( id );
+    };
+
+    obj.deleteData = function( a_data, a_allocs, a_locations ){
+        console.log("deleteData",a_data);
+
+        // Delete attached alias
+        var alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: a_data._id });
+        if ( alias.hasNext() ) {
+            console.log("rem alias");
+            obj.graph.d.remove( alias.next() );
+        }
+
+        var top = obj.db.top.firstExample({_from: a_data._id});
+        if ( top ){
+            console.log("unlink topic");
+            obj.topicUnlink( a_data._id );
+        }
+
+        var loc = obj.db.loc.firstExample({_from: a_data._id });
+        a_locations.push({ id: a_data._id, repo_id: loc._to, path: loc.path });
+
+        // Adjust allocation for data size
+        if ( a_data.size ){
+            console.log("has data");
+
+            if ( loc.parent ){
+                console.log("alloc has parent");
+                loc._to = loc.parent;
+            }
+
+            if ( a_allocs[loc._to] )
+                a_allocs[loc._to] += a_data.size;
+            else
+                a_allocs[loc._to] = a_data.size;
+        }
+
+        console.log("removing data record");
+        obj.graph.d.remove( a_data._id );
+    };
+
+    obj.updateAllocations = function( a_allocs, a_owner_id ){
+        console.log("updateAllocations",a_allocs,a_owner_id);
+
+        var alloc;
+        for ( var id in a_allocs ){
+            if ( id.startsWith( "alloc" )){
+                alloc = obj.db.alloc.document({ _id: id });
+                console.log("sub alloc:",alloc);
+
+                var proj = obj.db.p.document( a_owner_id );
+                obj.db._update( proj._id, { sub_usage: proj.sub_usage - a_allocs[id] });
+            }else{
+                alloc = obj.db.alloc.firstExample({_from: a_owner_id, _to: id });
+                console.log("normal alloc:",alloc);
+            }
+
+            obj.db._update( alloc._id, { usage: alloc.usage - a_allocs[id] });
+        }
     };
 
     obj.hasAdminPermUser = function( a_client, a_user_id ) {
@@ -434,9 +506,63 @@ module.exports = ( function() {
         }
     };
 
+    obj.parseTopic = function( a_topic ){
+        var res = [];
+        res = a_topic.split(".");
+
+        if ( res.length == 0 )
+            throw obj.ERR_INVALID_TOPIC;
+
+        for ( var i in res ){
+            if ( res[i].length == 0 || !obj.isAlphaNumeric( res[i] ))
+                throw obj.ERR_INVALID_TOPIC;
+        }
+
+        return res;
+    };
+
+    obj.topicLink = function( a_topic, a_data_id ){
+        var top_ar = obj.parseTopic( a_topic );
+        var i,topic,parent = "t/root";
+
+        for ( i = 0; i < top_ar.length; i++ ){
+            topic = obj.db._query("for v in 1..1 outbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});
+            if ( topic.hasNext() ){
+                parent = topic.next()._id;
+            }else{
+                for ( ; i < top_ar.length; i++ ){
+                    topic = obj.db.t.save({title:top_ar[i]},{returnNew:true});
+                    obj.db.top.save({_from:parent,_to:topic._id});
+                    parent = topic._id;
+                }
+                break;
+            }
+        }
+
+        if ( !obj.db.top.firstExample({_from:parent,_to:a_data_id})){
+            obj.db.top.save({_from:parent,_to:a_data_id});
+        }
+    };
+
+    obj.topicUnlink = function( a_data_id ){
+        var top = obj.db.top.firstExample({_to: a_data_id});
+        var parent = top._from;
+        obj.db.top.remove(top);
+
+        // Unwind path, deleting orphaned topics along the way
+        while ( parent != "t/root" ){
+            if ( obj.db.top.firstExample({ _from: parent }))
+                break;
+            else {
+                top = obj.db.top.firstExample({ _to: parent });
+                parent = top._from;
+                obj.graph.t.remove( top._to );
+            }
+        }
+    };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
-     * ownership or admin privelege - the hasAdminPermObject function performs these checks and should be
+     * ownership or admin privilege - the hasAdminPermObject function performs these checks and should be
      * called first if needed. This function is typically used when filtering a list of objects that are
      * known not to be owned by the client (and that the client is not an admin). In this case, those checks
      * would add performance cost for no benefit.

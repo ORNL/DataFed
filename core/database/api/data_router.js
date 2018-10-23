@@ -28,7 +28,7 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","repo","alloc"],
-                write: ["d","a","loc","owner","alias","item"]
+                write: ["d","a","loc","owner","alias","item","t","top"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -122,6 +122,9 @@ router.post('/create', function (req, res) {
                 if ( req.body.desc )
                     obj.desc = req.body.desc;
 
+                if ( req.body.topic )
+                    obj.topic = req.body.topic.toLowerCase();
+
                 if ( req.body.md ){
                     obj.md = req.body.md; //JSON.parse( req.body.md );
                     //console.log( "parsed:", obj.md );
@@ -152,6 +155,10 @@ router.post('/create', function (req, res) {
                     data.new.alias = req.body.alias;
                 }
 
+                if ( req.body.topic ){
+                    g_lib.topicLink( req.body.topic, data._id );
+                }
+
                 g_db.item.save({ _from: parent_id, _to: data.new._id });
 
                 data.new.id = data.new._id;
@@ -171,11 +178,12 @@ router.post('/create', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     title: joi.string().required(),
-    desc: joi.string().optional(),
-    alias: joi.string().optional(),
+    desc: joi.string().allow('').optional(),
+    topic: joi.string().allow('').optional(),
+    alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
-    parent: joi.string().optional(),
-    repo: joi.string().optional(),
+    parent: joi.string().allow('').optional(),
+    repo: joi.string().allow('').optional(),
     md: joi.any().optional()
 }).required(), 'Record fields')
 .summary('Create a new data record')
@@ -188,7 +196,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc"]
+                write: ["d","a","p","owner","alias","alloc","t","top"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -227,10 +235,22 @@ router.post('/update', function (req, res) {
                 if ( req.body.desc != undefined )
                     obj.desc = req.body.desc;
 
+                if ( req.body.topic != undefined && req.body.topic != data.topic ){
+                    obj.topic = req.body.topic.toLowerCase();
+
+                    if ( data.topic )
+                        g_lib.topicUnlink( data._id );
+
+                    if ( req.body.topic.length )
+                        g_lib.topicLink( req.body.topic, data._id );
+                }
+
                 if ( req.body.public != undefined )
                     obj.public = req.body.public;
 
-                if ( req.body.md != undefined )
+                if ( req.body.md === "" )
+                    obj.md = null;
+                else if ( req.body.md )
                     obj.md = req.body.md;
 
                 if ( req.body.size != undefined ) {
@@ -265,22 +285,23 @@ router.post('/update', function (req, res) {
                 data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
                 data = data.new;
 
-                if ( req.body.alias ) {
+                if ( req.body.alias != undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: data_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
                         graph.a.remove( old_alias._to );
                     }
 
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                    if ( req.body.alias ){
+                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                        if ( g_db.a.exists({ _key: alias_key }))
+                            throw g_lib.ERR_ALIAS_IN_USE;
 
-                    if ( g_db.a.exists({ _key: alias_key }))
-                        throw g_lib.ERR_ALIAS_IN_USE;
-
-                    g_db.a.save({ _key: alias_key });
-                    g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    data.alias = req.body.alias;
+                        g_db.a.save({ _key: alias_key });
+                        g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
+                        g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
+                        data.alias = req.body.alias;
+                    }
                 }
 
                 delete data._rev;
@@ -301,8 +322,9 @@ router.post('/update', function (req, res) {
 .body(joi.object({
     id: joi.string().required(),
     title: joi.string().optional(),
-    desc: joi.string().optional(),
-    alias: joi.string().optional(),
+    desc: joi.string().allow('').optional(),
+    topic: joi.string().allow('').optional(),
+    alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
@@ -513,12 +535,10 @@ router.get('/search2', function (req, res) {
 
 router.get('/delete', function (req, res) {
     try {
-        var result;
-
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","owner","item","acl","alias","loc","alloc","p"]
+                write: ["d","a","owner","item","acl","alias","loc","alloc","p","t","top"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -530,6 +550,18 @@ router.get('/delete', function (req, res) {
                     if ( !g_lib.hasPermissions( client, data, g_lib.PERM_ADMIN ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
+
+                var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+                var allocs = {}, locations = [];
+
+                g_lib.deleteData( data, allocs, locations );
+                g_lib.updateAllocations( allocs, owner_id );
+
+                res.send( locations[0] );
+
+                /*
+                if ( data.topic )
+                    g_lib.topicUnlink( data.topic, data._id );
 
                 var loc = g_db.loc.firstExample({_from: data_id });
 
@@ -548,7 +580,7 @@ router.get('/delete', function (req, res) {
                     }
                     usage = Math.max(0,alloc.usage - data.size);
                     g_db._update( alloc._id, {usage:usage});
-            }
+                }
 
                 result = { id: data_id, repo_id: loc._to, path: loc.path };
 
@@ -563,10 +595,10 @@ router.get('/delete', function (req, res) {
                 }
 
                 graph.d.remove( data._id );
+                */
             }
         });
 
-        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

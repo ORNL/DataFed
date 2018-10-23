@@ -22,14 +22,14 @@ module.exports = router;
 
 router.get('/list', function (req, res) {
     try {
-        var topics = g_db._query("for v in 1..1 outbound @par top return {id:v._id,name:v.name,title:v.title}",{par: req.queryParams.parent?req.queryParams.parent:"t/root" });
+        var topics = g_db._query("for v in 1..1 outbound @par top return {id:v._id,title:v.title}",{par: req.queryParams.id?req.queryParams.id:"t/root" });
 
         res.send( topics );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('parent', joi.string().optional(), "ID of parent topic")
+.queryParam('id', joi.string().optional(), "ID of topic to list (omit for top-level)")
 .summary('List topics')
 .description('List topics with optional parent');
 
@@ -44,15 +44,17 @@ router.get('/link', function (req, res) {
                 if ( !g_db.d.exists( req.queryParams.id ))
                     throw g_lib.ERR_INVALID_ID;
 
+                g_lib.topicLink( req.queryParams.topic.toLowerCase(), req.queryParams.id );
+                /*
                 var i,topic,parent = "t/root";
 
                 for ( i = 0; i < req.queryParams.topic.length; i++ ){
-                    topic = g_db._query("for v in 1..1 outbound @par top filter v.name == @name return v",{par:parent,name:req.queryParams.topic[i]});
+                    topic = g_db._query("for v in 1..1 outbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:req.queryParams.topic[i]});
                     if ( topic.hasNext() ){
                         parent = topic.next()._id;
                     }else{
                         for ( ; i < req.queryParams.topic.length; i++ ){
-                            topic = g_db.t.save({name:req.queryParams.topic[i]},{returnNew:true});
+                            topic = g_db.t.save({title:req.queryParams.topic[i]},{returnNew:true});
                             g_db.top.save({_from:parent,_to:topic._id});
                             parent = topic._id;
                         }
@@ -63,13 +65,14 @@ router.get('/link', function (req, res) {
                 if ( !g_db.top.firstExample({_from:parent,_to:req.queryParams.id})){
                     g_db.top.save({_from:parent,_to:req.queryParams.id});
                 }
+                */
             }
         });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('topic', joi.array().items(joi.string()).required(), "Topic path")
+.queryParam('topic', joi.string().required(), "Topic path")
 .queryParam('id', joi.string().required(), "Data ID to link")
 .summary('Link topic to data')
 .description('Link topic to data');
@@ -85,37 +88,13 @@ router.get('/unlink', function (req, res) {
                 if ( !g_db.d.exists( req.queryParams.id ))
                     throw g_lib.ERR_INVALID_ID;
 
-                var i,topic,parent = "t/root";
-                var path = [];
-
-                for ( i = 0; i < req.queryParams.topic.length; i++ ){
-                    topic = g_db._query("for v in 1..1 outbound @par top filter v.name == @name return v",{par:parent,name:req.queryParams.topic[i]});
-                    if ( topic.hasNext() ){
-                        parent = topic.next()._id;
-                        path.push(parent);
-                    }else{
-                        throw g_lib.ERR_INVALID_TOPIC;
-                    }
-                }
-
-                g_db.top.removeByExample({_from:parent,_to:req.queryParams.id});
-                const graph = require('@arangodb/general-graph')._graph('sdmsg');
-
-                // Unwind path, deleting orphaned topics along the way
-                for ( i = path.length - 1; i >= 0; i-- ){
-                    // Get link count
-                    if ( g_db.top.firstExample({_from:path[i]}))
-                        break;
-                    else
-                        graph.t.remove( path[i] );
-                }
+                g_lib.topicUnlink( req.queryParams.id );
             }
         });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('topic', joi.array().items(joi.string()).required(), "Topic path")
 .queryParam('id', joi.string().required(), "Data ID or alias to unlink")
 .summary('Unlink topic from data')
 .description('Unlink topic from data');
