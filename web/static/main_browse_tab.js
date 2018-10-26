@@ -1082,7 +1082,7 @@ function makeBrowserTab(){
                     entry = { title: item.title,folder:is_folder,scope:"topics",key:item.id };
                     if ( is_folder ){
                         entry.lazy = true;
-                        entry.icon = "ui-icon ui-icon-minusthick";
+                        entry.icon = "ui-icon ui-icon-grip-solid-horizontal";
                     } else {
                         entry.icon = "ui-icon ui-icon-file";
                     }

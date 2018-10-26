@@ -317,6 +317,17 @@ function groupDelete( a_uid, a_gid, a_cb ) {
     });
 }
 
+function topicList( a_parent, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncGet( "/api/top/list?id="+encodeURIComponent(a_parent?a_parent:"t/root"), null, function( ok, data ){
+        if ( a_cb ){
+            a_cb( ok, data );
+        }
+    });
+}
+
 function epView( a_ep, a_cb ){
     _asyncGet( "/ui/ep/view?ep="+encodeURIComponent(a_ep), null, function( ok, data ){
         if ( a_cb )

@@ -7,20 +7,20 @@ var DLG_DATA_BTN_LABEL = ["Create", "Update", "Copy"];
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
-        "<table class='form-table'>\
-            <tr><td title='Title string (required)'>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
-            <tr><td title='Alias ID (optional)'>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>\
-            <tr><td title='Description string (optional)'>Description:</td><td><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
-            <tr><td title='Topic string (optional)'>Topic:</td><td><input type='text' id='topic' style='width:100%'></input></td></tr>\
-            <tr><td title='Metadata JSON document (optional)'>Metadata:</td><td><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
-            <tr id='dlg_md_row2'><td title='Metadata update mode - merge fields or replace entire document'>MD-mode:</td><td>\
+        "<table class='' style='width:100%'>\
+            <tr><td title='Title string (required)'>Title:</td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr>\
+            <tr><td title='Alias ID (optional)'>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
+            <tr><td title='Description string (optional)'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
+            <tr><td title='Topic string (optional)'>Topic:</td><td><input type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
+            <tr><td title='Metadata JSON document (optional)'>Metadata:</td><td colspan='2'><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
+            <tr id='dlg_md_row2'><td title='Metadata update mode - merge fields or replace entire document'>MD-mode:</td><td colspan='2'>\
                 <input type='radio' id='md_merge' name='md_mode' value='merge' checked />\
                 <label for='md_merge'>Merge</label>\
                 <input type='radio' id='md_set' name='md_mode' value='set' />\
                 <label for='md_set'>Replace</label>\
             </td></tr>\
-            <tr id='dlg_coll_row'><td title='Parent collection ID or alias (required)'>Parent:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>\
-            <tr id='dlg_alloc_row'><td title='Data repository allocation (required)' style='vertical-align:middle'>Allocation:</td><td><select id='alloc'><option value='bad'>----</option></select></td></tr>\
+            <tr id='dlg_coll_row'><td title='Parent collection ID or alias (required)'>Parent:</td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
+            <tr id='dlg_alloc_row'><td title='Data repository allocation (required)' style='vertical-align:middle'>Allocation:</td><td colspan='2'><select id='alloc'><option value='bad'>----</option></select></td></tr>\
             </table>" );
 
     var dlg_title, coll_id;
@@ -33,6 +33,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     inputTheme( $('input:text',frame ));
     inputTheme( $('textarea',frame ));
+    $(".btn",frame).button();
+    $("#pick_topic",frame).on("click",function(){
+        dlgPickTopic( function( topic ){
+            $("#topic",frame).val( topic );
+        });
+    });
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();

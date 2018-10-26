@@ -79,15 +79,17 @@
     color: #008000
 }
 
-.ui-icon-minusthick
+/*.ui-icon-minusthick*/
+.ui-icon-grip-solid-horizontal
 {
-    color: #ff8000
+    color: #df6000
 }
 
 .ui-icon-structure
 {
-    color: #ff8000
+    color: #df6000
 }
+
 
 .ui-draggable-handle {
 	-ms-touch-action: none;
