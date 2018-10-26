@@ -174,7 +174,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         delete obj.title;
                     if ( obj.desc == a_data.desc )
                         delete obj.desc;
-                    if ( obj.topic == a_data.topic )
+                    if ( obj.topic.toLowerCase() == a_data.topic )
                         delete obj.topic;
                     if ( obj.alias == a_data.alias )
                         delete obj.alias;

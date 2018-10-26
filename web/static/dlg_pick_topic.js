@@ -38,7 +38,7 @@ function dlgPickTopic( a_cb ){
                     for ( var i in data.response ) {
                         top = data.response[i];
                         if ( top.id.startsWith("t/"))
-                            data.result.push({ title: top.title,folder:true, icon: "ui-icon ui-icon-grip-solid-horizontal",lazy:true,key:top.id } );
+                            data.result.push({ title: top.title.charAt(0).toUpperCase() + top.title.substr(1),folder:true, icon: "ui-icon ui-icon-grip-solid-horizontal",lazy:true,key:top.id } );
                     }
                     if ( !data.result.length )
                         data.result.push({title:"(empty)",icon:false});
@@ -77,17 +77,17 @@ function dlgPickTopic( a_cb ){
                 var node = $("#dlg_topic_tree", frame).fancytree("getTree").activeNode;
                 if ( node ){
                     var topic = "", nodes = node.getParentList( false, true );
-                    //console.log("nodes:",nodes);
+
                     for ( var i = 0; i < nodes.length; i++ ){
                         if ( !nodes[i].key.startsWith("t/"))
                             break;
-                        //console.log("node",i,nodes[i]);
+
                         if ( i > 0 )
                             topic += ".";
                         topic += nodes[i].title;
                     }
 
-                    a_cb( topic );
+                    a_cb( topic.toLowerCase() );
                 }
                 $(this).dialog('destroy').remove();
             }

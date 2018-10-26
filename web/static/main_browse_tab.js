@@ -1074,12 +1074,12 @@ function makeBrowserTab(){
                 data.result = [];
                 var item,entry;
                 var items = data.response;
-                console.log("topics response",data.response);
+
                 for ( var i in items ) {
                     item = items[i];
                     is_folder = item.id[0]=="t"?true:false;
 
-                    entry = { title: item.title,folder:is_folder,scope:"topics",key:item.id };
+                    entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:is_folder,scope:"topics",key:item.id };
                     if ( is_folder ){
                         entry.lazy = true;
                         entry.icon = "ui-icon ui-icon-grip-solid-horizontal";
