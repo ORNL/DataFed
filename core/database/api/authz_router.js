@@ -20,10 +20,7 @@ module.exports = router;
 
 router.get('/gridftp', function (req, res) {
     try {
-        console.log( "authz call" );
-        console.log( "client", req.queryParams.client );
-        console.log( "file", req.queryParams.file );
-        console.log( "act", req.queryParams.act );
+        console.log( "authz client", req.queryParams.client, "repo", req.queryParams.repo, "file", req.queryParams.file, "act", req.queryParams.act );
 
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
@@ -55,11 +52,18 @@ router.get('/gridftp', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
+        // Verify that the file should exist on the associate repo
+        if ( req_perm == g_lib.PERM_WR_DATA ){
+            var loc = g_db.loc.firstExample({_from:data._id});
+            if ( loc._to != req.queryParams.repo )
+                throw g_lib.ERR_INVALID_ALLOC;
+        }
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
+.queryParam('repo', joi.string().required(), "Originating repo ID")
 .queryParam('file', joi.string().required(), "Data file name")
 .queryParam('act', joi.string().required(), "Action")
 .summary('Checks authorization')

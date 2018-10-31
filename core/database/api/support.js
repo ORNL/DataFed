@@ -508,7 +508,7 @@ module.exports = ( function() {
 
     obj.parseTopic = function( a_topic ){
         var res = [];
-        res = a_topic.split(".");
+        res = a_topic.toLowerCase().split(".");
 
         if ( res.length == 0 )
             throw obj.ERR_INVALID_TOPIC;

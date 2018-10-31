@@ -1795,7 +1795,7 @@ DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckRe
     (void)a_reply;
     rapidjson::Document result;
 
-    dbGet( "authz/gridftp", {{"file",a_request.file()},{"act",a_request.action()}}, result );
+    dbGet( "authz/gridftp", {{"repo",a_request.repo()},{"file",a_request.file()},{"act",a_request.action()}}, result );
 }
 
 void

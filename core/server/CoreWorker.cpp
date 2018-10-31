@@ -592,7 +592,7 @@ Worker::procRepoAuthzRequest( const std::string & a_uid )
     (void)a_uid;
     PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
 
-    DL_INFO( "AuthzReq, uid: " << a_uid << ", client: " << request->client() << ", file: " << request->file() << ", act: " << request->action() );
+    DL_INFO( "AuthzReq, uid: " << a_uid << ", client: " << request->client() << ", repo: " << request->repo() << ", file: " << request->file() << ", act: " << request->action() );
 
     m_db_client.setClient( request->client() );
     m_db_client.repoAuthz( *request, reply );
