@@ -637,7 +637,11 @@ function makeBrowserTab(){
 
         var src = [], fkey, k2;
         Object.keys(obj).forEach(function(k) {
-            k2 = escapeHTML(k);
+            if ( k == null )
+                k2 = "null";
+            else
+                k2 = escapeHTML(k);
+
             //console.log(key,typeof md[key]);
             if ( typeof obj[k] === 'object' ){
                 fkey=base+"."+k2;

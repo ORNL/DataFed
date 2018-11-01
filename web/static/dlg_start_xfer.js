@@ -39,8 +39,15 @@ function dlgStartTransfer( a_mode, a_data ) {
             cur_ep = ep_list[ui.item.index-1];
 
             path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
-            $("#browse",frame).button(cur_ep.activated?"enable":"disable");
-            $("#activate",frame).button("enable");
+            if ( cur_ep.activated || cur_ep.expires_in == -1 )
+                $("#browse",frame).button("enable");
+            else
+                $("#browse",frame).button("disable");
+
+            if ( !cur_ep.activated && cur_ep.expires_in == -1 )
+                $("#activate",frame).button("disable");
+            else
+                $("#activate",frame).button("enable");
         }
     });
 
@@ -105,7 +112,7 @@ function dlgStartTransfer( a_mode, a_data ) {
                 }else{
                     cur_ep = null;
                     epAutocomplete( ep, function( ok, data ){
-                        //console.log("ep matches:", data );
+                        console.log("ep matches:", data );
                         if ( ok ){
                             if ( data.DATA && data.DATA.length ){
                                 ep_list = data.DATA;
@@ -114,7 +121,11 @@ function dlgStartTransfer( a_mode, a_data ) {
                                 for ( var i in data.DATA ){
                                     ep = data.DATA[i];
                                     ep.name = ep.canonical_name || ep.id;
-                                    html += "<option title='" + ep.description + "'>" + (ep.display_name || ep.name) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
+                                    html += "<option title='" + ep.description + "'>" + (ep.display_name || ep.name) + " (";
+                                    if ( !ep.activated && ep.expires_in == -1 )
+                                        html += "active)</option>";
+                                    else
+                                        html += (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
 
                                     //html += "<option class='" + (ep.activated?"ep-act":"ep-inact") + "'>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
 

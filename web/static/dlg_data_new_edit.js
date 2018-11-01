@@ -4,26 +4,35 @@ var DLG_DATA_COPY = 2;
 var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
 var DLG_DATA_BTN_LABEL = ["Create", "Update", "Copy"];
 
+//<tr><td title='Metadata JSON document (optional)'>Metadata:</td><td colspan='2'><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>
+
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
-        "<table class='' style='width:100%'>\
-            <tr><td title='Title string (required)'>Title:</td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr>\
-            <tr><td title='Alias ID (optional)'>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
-            <tr><td title='Description string (optional)'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
-            <tr><td title='Topic string (optional)'>Topic:</td><td><input type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
-            <tr><td title='Metadata JSON document (optional)'>Metadata:</td><td colspan='2'><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>\
-            <tr id='dlg_md_row2'><td title='Metadata update mode - merge fields or replace entire document'>MD-mode:</td><td colspan='2'>\
-                <input type='radio' id='md_merge' name='md_mode' value='merge' checked />\
+        "<div class='col-flex' style='height:100%'>\
+            <div style='flex:none'>\
+                <table class='form-table'>\
+                    <tr><td>Title:</td><td colspan='2'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
+                    <tr><td>Alias:</td><td colspan='2'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
+                    <tr><td>Description:</td><td colspan='2'><textarea title='Description string (optional)' id='desc' rows=4 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td>Topic:</td><td><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
+                    <tr id='dlg_coll_row'><td>Parent:</td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
+                    <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='2'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
+                </table>\
+            </div>\
+            <div style='flex:none;padding:1em 2px 2px 2px'>Metadata:</div>\
+            <div class='ui-widget ui-widget-content' style='flex:1 1 100%;min-height:0;padding:0'>\
+                <div id='md' style='height:100%;width:100%'></div>\
+            </div>\
+            <div id='dlg_md_row2' style='flex:none;padding:.5em 2px 2px 2px'><span>Metadata update mode:</span>\
+                <input type='radio' id='md_merge' name='md_mode' value='merge'/>\
                 <label for='md_merge'>Merge</label>\
-                <input type='radio' id='md_set' name='md_mode' value='set' />\
+                <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
                 <label for='md_set'>Replace</label>\
-            </td></tr>\
-            <tr id='dlg_coll_row'><td title='Parent collection ID or alias (required)'>Parent:</td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
-            <tr id='dlg_alloc_row'><td title='Data repository allocation (required)' style='vertical-align:middle'>Allocation:</td><td colspan='2'><select id='alloc'><option value='bad'>----</option></select></td></tr>\
-            </table>" );
+            </div>\
+        </div>" );
 
-    var dlg_title, coll_id;
+    var dlg_title;
     if ( a_data && ( a_mode == DLG_DATA_EDIT || a_mode == DLG_DATA_COPY ))
         dlg_title = DLG_DATA_LABEL[a_mode] + " Data " + a_data.id;
     else if ( a_mode == DLG_DATA_NEW )
@@ -33,12 +42,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     inputTheme( $('input:text',frame ));
     inputTheme( $('textarea',frame ));
+
     $(".btn",frame).button();
     $("#pick_topic",frame).on("click",function(){
         dlgPickTopic( function( topic ){
             $("#topic",frame).val( topic );
         });
     });
+
+    var jsoned;
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
@@ -116,7 +128,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         title: dlg_title,
         modal: true,
         width: 500,
-        height: 'auto',
+        height: 600,
         resizable: true,
         closeOnEscape: false,
         buttons: [{
@@ -136,9 +148,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 if ( obj.alias.length && !isValidAlias( obj.alias ))
                     return;
 
+                var anno = jsoned.getSession().getAnnotations();
+                if ( anno && anno.length ){
+                    dlgAlert( "Data Entry Error", "Metadata field has unresolved errors.");
+                    return;
+                }
+
                 obj.desc = $("#desc",frame).val().trim();
                 obj.topic = $("#topic",frame).val().trim();
-    
+
                 if ( a_mode != DLG_DATA_EDIT ){
                     var repo_id = $("#alloc").val();
                     if ( repo_id == "bad" ){
@@ -150,7 +168,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     obj.parentId = $("#coll",frame).val().trim();
                 }
 
-                obj.metadata = $("#md",frame).val().trim();
+                //obj.metadata = $("#md",frame).val().trim();
+                obj.metadata = jsoned.getValue();
+
+                if ( !obj.metadata.length && a_mode != DLG_DATA_EDIT )
+                    delete obj.metadata;
+/*
                 if ( obj.metadata.length ){
                     try{
                         JSON.parse( obj.metadata );
@@ -160,10 +183,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
                 } else if ( a_mode != DLG_DATA_EDIT )
                     delete obj.metadata;
-
-                if ( a_data ) {
-                }
-
+*/
                 var url = "/api/dat/";
 
                 if ( a_data && a_mode == DLG_DATA_EDIT ){
@@ -193,6 +213,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
+                        jsoned.destroy();
                         inst.dialog('destroy').remove();
                         //console.log( "data:",data);
                         if ( a_cb )
@@ -205,10 +226,27 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         },{
             text: "Cancel",
             click: function() {
+                jsoned.destroy();
                 $(this).dialog('destroy').remove();
             }
         }],
-        open: function(event,ui){
+        resize: function(){
+            jsoned.resize();
+        },
+        open: function(ev,ui){
+            //jsoned = new JSONEditor($("#md",frame)[0],{modes:["tree","code"],history:true,navigationBar:false,colorPicker:false,theme:"chaos"});
+            //var JavaScriptMode = ace.require("ace/mode/json").Mode;
+            jsoned = ace.edit("md", {
+                theme:"ace/theme/chaos",
+                mode:"ace/mode/json",
+                fontSize:16,
+                autoScrollEditorIntoView:true
+                //wrap:true
+            });
+            //jsoned.setTheme("ace/theme/chaos");
+            //jsoned.setFontSize(16);
+            //jsoned.session.setMode(new JavaScriptMode());
+
             var parent;
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
@@ -220,11 +258,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 $("#desc",frame).val(a_data.desc);
                 $("#topic",frame).val(a_data.topic);
-                $("#md",frame).val(a_data.metadata);
+                //$("#md",frame).val(a_data.metadata);
+                jsoned.setValue( a_data.metadata, -1 );
 
                 if ( a_mode == DLG_DATA_EDIT ){
                     if (( a_upd_perms & PERM_WR_META ) == 0 ){
-                        inputDisable( $("#md", frame ));
+                        //inputDisable( $("#md", frame ));
                         $("#md_mode",frame).prop('disabled',true);
                         $("#md_merge",frame).attr('disabled',true);
                         $("#md_set",frame).attr('disabled',true);
@@ -244,11 +283,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
                 $("#topic",frame).val("");
-                $("#md",frame).val("");
+                //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )
                     parent = a_parent;
             }
+
 
             if ( parent ){
                 var changetimer;
@@ -265,6 +305,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#alloc",frame).selectmenu();
                 updateAllocSelect();
             }
+            jsoned.resize();
         }
     };
 

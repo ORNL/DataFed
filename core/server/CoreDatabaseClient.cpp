@@ -935,6 +935,7 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
         {
             rapidjson::StringBuffer buffer;
             rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+            //rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
             imem->value.Accept(writer);
             rec->set_metadata( buffer.GetString() );
             //rec->set_metadata( imem->value.GetString() );

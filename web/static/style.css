@@ -133,8 +133,9 @@ body
     width:100%;
 }
 
-.form-table td:last-child{
-    width:100%;
+/*.form-table td:last-child{*/
+.form-table td:nth-child(2){
+        width:100%;
 }
 
 .form-table td
