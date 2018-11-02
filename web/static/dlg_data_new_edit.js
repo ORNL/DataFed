@@ -20,7 +20,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='2'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
                 </table>\
             </div>\
-            <div style='flex:none;padding:1em 2px 2px 2px'>Metadata:</div>\
+            <div style='flex:none;padding:1em 2px 2px 2px'>Metadata: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span></div>\
             <div class='ui-widget ui-widget-content' style='flex:1 1 100%;min-height:0;padding:0'>\
                 <div id='md' style='height:100%;width:100%'></div>\
             </div>\
@@ -234,19 +234,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             jsoned.resize();
         },
         open: function(ev,ui){
-            //jsoned = new JSONEditor($("#md",frame)[0],{modes:["tree","code"],history:true,navigationBar:false,colorPicker:false,theme:"chaos"});
-            //var JavaScriptMode = ace.require("ace/mode/json").Mode;
-            console.log("theme", g_theme);
             jsoned = ace.edit("md", {
-                theme:(g_theme=="light"?"ace/theme/dawn":"ace/theme/chaos"),
+                theme:(g_theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
                 fontSize:16,
                 autoScrollEditorIntoView:true
                 //wrap:true
             });
-            //jsoned.setTheme("ace/theme/chaos");
-            //jsoned.setFontSize(16);
-            //jsoned.session.setMode(new JavaScriptMode());
 
             var parent;
             if ( a_data ){
