@@ -301,7 +301,7 @@ module.exports = ( function() {
             obj.graph.d.remove( alias.next() );
         }
 
-        var top = obj.db.top.firstExample({_from: a_data._id});
+        var top = obj.db.top.firstExample({_to: a_data._id});
         if ( top ){
             console.log("unlink topic");
             obj.topicUnlink( a_data._id );

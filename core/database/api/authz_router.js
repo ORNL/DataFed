@@ -54,8 +54,10 @@ router.get('/gridftp', function (req, res) {
 
         // Verify that the file should exist on the associate repo
         if ( req_perm == g_lib.PERM_WR_DATA ){
+            console.log("check alloc");
             var loc = g_db.loc.firstExample({_from:data._id});
-            if ( loc._to != req.queryParams.repo )
+            console.log("loc",loc);
+            if ( !loc || loc._to != req.queryParams.repo )
                 throw g_lib.ERR_INVALID_ALLOC;
         }
     } catch( e ) {
