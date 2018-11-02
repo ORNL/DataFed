@@ -745,25 +745,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.execQuery = function(){
-        var query = $("#query_input").val();
-        var scope = 0;
-
-        if( $("#scope_mydat",inst.frame).prop("checked"))
-            scope |= SS_MY_DATA;
-        if( $("#scope_myproj",inst.frame).prop("checked"))
-            scope |= SS_MY_PROJ;
-        if( $("#scope_teamproj",inst.frame).prop("checked"))
-            scope |= SS_TEAM_PROJ;
-        if( $("#scope_usershare",inst.frame).prop("checked"))
-            scope |= SS_USER_SHARE;
-        if( $("#scope_projshare",inst.frame).prop("checked"))
-            scope |= SS_PROJ_SHARE;
-        if( $("#scope_public",inst.frame).prop("checked"))
-            scope |= SS_PUBLIC;
-
-        console.log( "query:", query, scope );
-
+    this.execQuery = function( query, scope ){
         setStatusText("Executing search query...");
         dataFind( query, scope, function( ok, items ){
             console.log( "qry res:", ok, items );
@@ -786,6 +768,32 @@ function makeBrowserTab(){
 
             if ( !inst.data_tree.activeNode )
                 inst.showSelectedInfo();
+        });
+    }
+
+    this.searchDirect = function(){
+        var query = $("#query_input").val();
+        var scope = 0;
+
+        if( $("#scope_mydat",inst.frame).prop("checked"))
+            scope |= SS_MY_DATA;
+        if( $("#scope_myproj",inst.frame).prop("checked"))
+            scope |= SS_MY_PROJ;
+        if( $("#scope_teamproj",inst.frame).prop("checked"))
+            scope |= SS_TEAM_PROJ;
+        if( $("#scope_usershare",inst.frame).prop("checked"))
+            scope |= SS_USER_SHARE;
+        if( $("#scope_projshare",inst.frame).prop("checked"))
+            scope |= SS_PROJ_SHARE;
+        if( $("#scope_public",inst.frame).prop("checked"))
+            scope |= SS_PUBLIC;
+
+        inst.execQuery( query, scope );
+    }
+
+    this.searchWizard = function(){
+        dlgSearchWizard( function( query, scope ){
+            inst.execQuery( query, scope );
         });
     }
 
