@@ -104,18 +104,6 @@ function escapeHTML(string) {
     });
 }
 
-function escapeHTML_slow( txt ){
-    const l = txt.length;
-    var result = "", i = 0, c, m;
-    for ( ; i < l; i++ ){
-        c = txt.charAt(i);
-        m = escapeMap[c];
-        result += m?m:c;
-    }
-
-    return result;
-}
-
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {

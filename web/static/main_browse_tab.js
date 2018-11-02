@@ -633,27 +633,33 @@ function makeBrowserTab(){
 
 
     this.buildObjSrcTree = function( obj, base ){
-        //console.log("build", base);
+        //console.log("build tree", obj, base);
 
-        var src = [], fkey, k2;
+        var src = [], k2;
         Object.keys(obj).forEach(function(k) {
-            if ( k == null )
-                k2 = "null";
-            else
-                k2 = escapeHTML(k);
+            //console.log( "key:",k, "type:", typeof obj[k] );
+            k2 = escapeHTML(k);
 
             //console.log(key,typeof md[key]);
-            if ( typeof obj[k] === 'object' ){
-                fkey=base+"."+k2;
+            if ( obj[k] === null ){
+                //console.log( "is NULL" );
+                src.push({title:k2 + " : null", icon: false })
+            }else if ( typeof obj[k] === 'object' ){
+                //console.log( "is an object" );
+
+                var fkey=base+"."+k2;
                 //console.log( fkey, "=", data_md_exp[fkey] );
                 if ( inst.data_md_exp[fkey] ){
                     inst.data_md_exp[fkey] = 10;
                 }
                 src.push({title:k2, icon: true, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: inst.buildObjSrcTree(obj[k],fkey)})
-            }else if ( typeof obj[k] === 'string' )
+            }else if ( typeof obj[k] === 'string' ){
+                //console.log( "is a string" );
                 src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
-            else
+            }else{
+                //console.log( "is an something else" );
                 src.push({title:k2 + " : " + obj[k], icon: false })
+            }
         });
 
         return src;
