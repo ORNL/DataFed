@@ -236,8 +236,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         open: function(ev,ui){
             //jsoned = new JSONEditor($("#md",frame)[0],{modes:["tree","code"],history:true,navigationBar:false,colorPicker:false,theme:"chaos"});
             //var JavaScriptMode = ace.require("ace/mode/json").Mode;
+            console.log("theme", g_theme);
             jsoned = ace.edit("md", {
-                theme:"ace/theme/chaos",
+                theme:(g_theme=="light"?"ace/theme/dawn":"ace/theme/chaos"),
                 mode:"ace/mode/json",
                 fontSize:16,
                 autoScrollEditorIntoView:true
