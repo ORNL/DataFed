@@ -106,8 +106,13 @@ body
 
 .small {
     margin: 0!important;
-    padding: .1rem .25rem!important;
-    font-size: 1rem!important;
+    padding: 1px .25rem!important;
+    vertical-align: baseline!important;
+}
+
+.drop
+{
+    border-radius:0px 4px 4px 0px!important;
 }
 
 .btn-refresh
@@ -115,7 +120,7 @@ body
     margin: 0!important;
     padding: 0px 0px 2px 0px!important;
     font-size: .8rem!important;
-    border-radius:6px!important;
+    border-radius:4px!important;
 }
 
 .btn-icon
@@ -253,6 +258,19 @@ td
     font-size: 1rem;
 }
 */
+
+.ui-selectmenu-button.ui-button
+{
+    padding: 1px .5em!important;
+    /*vertical-align:bottom!important;*/
+}
+
+.search-wiz-select-button
+{
+    padding: 1px .5em!important;
+    vertical-align:bottom!important;
+    width: 8ch!important;
+}
 
 /* Hide all jQ dialog close buttons */
 .ui-dialog-titlebar-close {

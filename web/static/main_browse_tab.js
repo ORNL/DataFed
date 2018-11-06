@@ -792,7 +792,22 @@ function makeBrowserTab(){
     }
 
     this.searchWizard = function(){
-        dlgSearchWizard( function( query, scope ){
+        dlgSearchWizard( function( query ){
+            $("#query_input").val( query );
+            var scope = 0;
+
+            if( $("#scope_mydat",inst.frame).prop("checked"))
+                scope |= SS_MY_DATA;
+            if( $("#scope_myproj",inst.frame).prop("checked"))
+                scope |= SS_MY_PROJ;
+            if( $("#scope_teamproj",inst.frame).prop("checked"))
+                scope |= SS_TEAM_PROJ;
+            if( $("#scope_usershare",inst.frame).prop("checked"))
+                scope |= SS_USER_SHARE;
+            if( $("#scope_projshare",inst.frame).prop("checked"))
+                scope |= SS_PROJ_SHARE;
+            if( $("#scope_public",inst.frame).prop("checked"))
+                scope |= SS_PUBLIC;
             inst.execQuery( query, scope );
         });
     }
@@ -898,14 +913,14 @@ function makeBrowserTab(){
     var tree_source = [
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[{
             title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
-        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
-        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
-        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
+        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
+        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
+        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
-            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
-            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
+            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
-        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
+        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
         {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
