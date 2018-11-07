@@ -749,30 +749,33 @@ function makeBrowserTab(){
         setStatusText("Executing search query...");
         dataFind( query, scope, function( ok, items ){
             console.log( "qry res:", ok, items );
-
-            var srch_node = inst.data_tree.getNodeByKey("search");
-            var results = [];
-            if ( items.length > 0 ){
-                setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
-                for ( var i in items ){
-                    var item = items[i];
-                    results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",key: item.id,nodrag:true,nonew:true});
+            if ( ok ){
+                var srch_node = inst.data_tree.getNodeByKey("search");
+                var results = [];
+                if ( items.length > 0 ){
+                    setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
+                    for ( var i in items ){
+                        var item = items[i];
+                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",key: item.id,nodrag:true,nonew:true});
+                    }
+                } else {
+                    setStatusText("No results found");
+                    results.push({title:"(no results)",icon:false, nodrag: true});
                 }
-            } else {
-                setStatusText("No results found");
-                results.push({title:"(no results)",icon:false, nodrag: true});
-            }
-            srch_node.removeChildren();
-            srch_node.addChildren( results );
-            srch_node.setExpanded( true );
+                srch_node.removeChildren();
+                srch_node.addChildren( results );
+                srch_node.setExpanded( true );
 
-            if ( !inst.data_tree.activeNode )
-                inst.showSelectedInfo();
+                if ( !inst.data_tree.activeNode )
+                    inst.showSelectedInfo();
+            }else{
+                dlgAlert("Query Error",items);
+            }
         });
     }
 
     this.searchDirect = function(){
-        var query = $("#query_input").val();
+        var query = "{\"fulltext\":{\"fields\":[\"title\",\"desc\"],\"terms\":\"" + $("#query_input").val() + "\"}}";
         var scope = 0;
 
         if( $("#scope_mydat",inst.frame).prop("checked"))
@@ -923,7 +926,7 @@ function makeBrowserTab(){
         {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
-        {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(empty)",icon:false, nodrag: true}],key:"search", nodrag: true },
+        {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
 
@@ -1274,7 +1277,7 @@ function makeBrowserTab(){
 
     $("#query_input").on('keyup', function (e) {
         if (e.keyCode == 13)
-            execQuery();
+            searchDirect();
     });
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     inputTheme( $('input'));

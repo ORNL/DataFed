@@ -5,11 +5,22 @@ function dlgSearchWizard( a_cb ) {
     }
 
     var frame = $(document.createElement('div'));
-    frame.html("<div id='terms1'>Match <b>all</b> of these terms:<button style='float:right' id='add_term1' class='btn small'>Add</button><hr></div>\
-        <div id='terms2' style='padding:1em 0 0 0'>Match <b>any</b> of these terms:<button style='float:right' id='add_term2' class='btn small'>Add</button><hr>\
-        </div>");
+    frame.html("<div id='search-wiz-tabs' style='border:none;padding:0'>\
+        <ul>\
+            <li><a href='#tab-srch-basic'>Basic Search</a></li>\
+            <li><a href='#tab-srch-adv'>Advanced Search</a></li>\
+        </ul>\
+        <div id='tab-srch-basic' style='overflow:auto'>\
+            <div id='terms1'>Match <b>all</b> of these terms:<button style='float:right' id='add_term1' class='btn small'>Add</button><hr></div>\
+            <div id='terms2' style='padding:1em 0 0 0'>Match <b>any</b> of these terms:<button style='float:right' id='add_term2' class='btn small'>Add</button><hr></div>\
+        </div>\
+        <div id='tab-srch-adv' style='overflow:auto'>\
+        </div>\
+        ");
 
-    var valid_terms = ["title","desc","alias","owner","topic","size","ctime","utime"];
+    var valid_terms = ["title","desc","alias","owner","keywords","topic","size","ct","ut"];
+    var autocomp_terms = ["title","desc","alias","owner","keywords","topic","size","ct","ut","md."];
+
     var cur_term = null;
     $(".btn",frame).button();
 
@@ -47,11 +58,31 @@ function dlgSearchWizard( a_cb ) {
     }
 
     function addTerm( target ){
-        var child = $( target, frame ).append("<div class='req-term' style='padding:.25em 0'><input title='Search term' class='term-input' type='text'></input><button class='btn small drop pick-term-btn'><span class='ui-icon ui-icon-triangle-1-s'></span></button>\
-        <select><option value='=='>=</option><option value='!='>!=</option><option value='&lt;'>&lt</option><option value='&lt;='>&lt;=</option><option value='&gt;='>&gt;=</option><option value='&gt;'>&gt;</option><option title='Regular expression' value='=~'>Regex</option><option title='Pattern match' value='like'>Like</option><option title='Defined' value='def'>Def</option><option title='Not defined' value='undef'>!Def</option></select>\
+        var child = $( target, frame ).append("<div class='req-term' style='padding:.25em 0'><input title='Search term' class='term-input' type='text'></input><button tabindex='-1' class='btn small drop pick-term-btn'><span class='ui-icon ui-icon-triangle-1-s'></span></button>\
+        <select><option value='=='>=</option><option value='!='>!=</option><option value='&lt;'>&lt</option><option value='&lt;='>&lt;=</option><option value='&gt;='>&gt;=</option><option value='&gt;'>&gt;</option><option title='Text search' value='text'>Text</option><option title='Regular expression' value='=~'>Regex</option><option title='Pattern match' value='?'>Like</option><option title='Defined' value='def'>Def</option><option title='Not defined' value='undef'>!Def</option></select>\
         <input title='Value to match' type='text'></input>\
         <button class='btn small remove-btn '><span class='ui-icon ui-icon-close' style='color:red'></span></button>\
         </div>");
+        var inp = $( ".term-input", child );
+        inp.autocomplete({
+            source: autocomp_terms,
+            delay:100,
+            autoFocus: true,
+            select: function(event, ui) {
+                this.value = ui.item.value;
+                if ( this.value == "md." ){
+                    event.preventDefault();
+                    inp.focus();
+                }
+                //if (event.keyCode == 9) { 
+                    //event.preventDefault();
+                    //this.value = this.value + " ";
+                    //inp.focus();
+                //}
+                //return false;
+            }
+        });
+
         $( ".btn", child ).button();
         $( "select", child ).selectmenu({width:false,classes:{"ui-selectmenu-button":"search-wiz-select-button"}});
         inputTheme($( "input", child ));
@@ -94,7 +125,7 @@ function dlgSearchWizard( a_cb ) {
                     //console.log("n:",n);
                     if ( isNaN( n )){
                         //console.log("term",term);
-                        if ( term == "ctime" || term == "utime" ){
+                        if ( term == "ct" || term == "ut" ){
                             //console.log("is ctime");
                             n = new Date( val );
                             //console.log("n1:",n);
@@ -117,12 +148,14 @@ function dlgSearchWizard( a_cb ) {
     }
 
     var options = {
-        title: "Search Wizard (UNDER DEVELOPMENT)",
+        dialogClass: 'dlg-no-title',
+        title: "Search Wizard",
         modal: true,
         width: "auto",
         height: 500,
         resizable: false,
         closeOnEscape: true,
+        draggable: false,
         buttons: [{
             text: "Search",
             click: function() {
@@ -186,6 +219,9 @@ function dlgSearchWizard( a_cb ) {
                     <li><div id='set_utime'>Update&nbsp;Time</div></li>\
                     <li><div id='set_md'>Metadata</div></li>\
                 </ul>");
+
+            $("#search-wiz-tabs",frame).tabs();
+
             var termmenu = $("#termmenu",dlg_frame);
             termmenu.menu();
 
@@ -216,11 +252,11 @@ function dlgSearchWizard( a_cb ) {
             $("#set_alias",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("alias"); });
             $("#set_owner",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("owner"); });
             $("#set_size",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("size"); });
-            $("#set_ctime",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("ctime"); });
-            $("#set_utime",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("utime"); });
+            $("#set_ctime",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("ct"); });
+            $("#set_utime",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("ut"); });
             $("#set_md",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("md.",true); });
         }
     };
 
-    frame.dialog( options );
+    frame.dialog( options ).parent().draggable({handle: ".ui-tabs-nav"});
 }

@@ -258,6 +258,24 @@ td
     font-size: 1rem;
 }
 */
+.dlg-no-title .ui-dialog-titlebar
+{
+    display:none;
+    /*border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;*/
+}
+
+.dlg-no-title .ui-dialog-content
+{
+    padding:0px!important;
+}
+
+/*
+.dlg-no-title .ui-tabs-nav
+{
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+}*/
 
 .ui-selectmenu-button.ui-button
 {
