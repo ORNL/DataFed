@@ -125,6 +125,9 @@ router.post('/create', function (req, res) {
                 if ( req.body.topic )
                     obj.topic = req.body.topic.toLowerCase();
 
+                if ( req.body.alias )
+                    obj.alias = req.body.alias.toLowerCase();
+
                 if ( req.body.md ){
                     obj.md = req.body.md; //JSON.parse( req.body.md );
                     //console.log( "parsed:", obj.md );
@@ -179,6 +182,7 @@ router.post('/create', function (req, res) {
 .body(joi.object({
     title: joi.string().required(),
     desc: joi.string().allow('').optional(),
+    keywords: joi.array().items(joi.string()).optional(),
     topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
@@ -323,6 +327,7 @@ router.post('/update', function (req, res) {
     id: joi.string().required(),
     title: joi.string().optional(),
     desc: joi.string().allow('').optional(),
+    keywords: joi.array().items(joi.string()).optional(),
     topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
