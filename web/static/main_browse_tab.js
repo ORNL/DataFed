@@ -775,7 +775,7 @@ function makeBrowserTab(){
     }
 
     this.searchDirect = function(){
-        var query = "{\"fulltext\":{\"fields\":[\"title\",\"desc\"],\"terms\":\"" + $("#query_input").val() + "\"}}";
+        var query = $("#query_input").val();
         var scope = 0;
 
         if( $("#scope_mydat",inst.frame).prop("checked"))

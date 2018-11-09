@@ -73,8 +73,17 @@ void generateKeys( std::string & a_pub_key, std::string & a_priv_key )
 
 string parseQuery( const string & a_query )
 {
-    static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?'};
+    // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
+    // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
+    static set<char> ws = {' ','\t','\n','\r'};
+    static set<char> id_spec = {'.','_','-'};
+    static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?',']','['};
     static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
+    static set<string> terms = {"title","desc","alias","topic","owner","keyw","ct","ut","size"};
+    static set<string> allowed = {"abs","acos","asin","atan","atan2","average","ceil","cos","degrees","exp","exp2",
+        "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
+        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample",
+        "date_now","length","lower","upper","distance","is_in_polygon","true","false","null","in"};
 
     struct Var
     {
@@ -85,88 +94,122 @@ string parseQuery( const string & a_query )
         size_t  len;
     };
 
-    int state = 0;
+    enum ParseState
+    {
+        PS_DEFAULT = 0,
+        PS_SINGLE_QUOTE,
+        PS_DOUBLE_QUOTE,
+        PS_TOKEN
+    };
+
+    ParseState state = PS_DEFAULT;
     Var v;
-    string result;
-    string tmp;
+    string result,last_token,tmp;
+    bool array_deref = false;
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); ++c )
     {
         switch( state )
         {
-        case 0: // Not quoted
-            if ( spec.find( *c ) == spec.end() )
+        case PS_DEFAULT: // Not quoted, not an identifier
+
+            /* NOTES: whitespace outside of quotes can be anywhere
+                even between object deref: x  .  y  [ "foo"  ] [  z[ 2 ]] is OK
+            */
+            if ( ws.find(*c) == ws.end() )
             {
-                if ( nums.find( *c ) == nums.end() )
+                if ( array_deref )
                 {
-                    if ( *c == '\'' )
-                        state = 1;
-                    else if ( *c == '\"' )
-                        state = 2;
-                    else
-                    {
-                        v.start = c - a_query.begin();
-                        //cout << "start: " << v.start << "\n";
-                        v.len = 1;
-                        state = 3;
-                    }
+                }
+
+                if ( *c == '\'' )
+                    state = PS_SINGLE_QUOTE;
+                else if ( *c == '\"' )
+                    state = PS_DOUBLE_QUOTE;
+                else if ( isalpha( *c ))
+                {
+                    v.start = c - a_query.begin();
+                    //cout << "start: " << v.start << "\n";
+                    v.len = 1;
+                    state = PS_TOKEN;
                 }
             }
             break;
-        case 1: // Single quote
-            if ( *c == '\'' )
-                state = 0;
+        case PS_SINGLE_QUOTE: // Single quote (not escaped)
+            if ( *c == '\'' && *(c-1) != '\\' )
+                state = PS_DEFAULT;
             break;
-        case 2: // Double quote
-            if ( *c == '\"' )
-                state = 0;
+        case PS_DOUBLE_QUOTE: // Double quote (not escaped)
+            if ( *c == '\"' && *(c-1) != '\\' )
+                state = PS_DEFAULT;
             break;
-        case 3: // Identifier
-            if ( spec.find( *c ) != spec.end() )
+        case PS_TOKEN: // Token
+            //if ( spec.find( *c ) != spec.end() )
+            if ( !isalnum( *c ) && *c != '.' && *c != '_' )
             {
                 //cout << "start: " << v.start << ", len: " << v.len << "\n";
                 tmp = a_query.substr( v.start, v.len );
                 //cout << "token[" << tmp << "]" << endl;
-                if ( tmp == "id" )
-                {
-                    result.append( "i._id" );
-                }
-                else if ( tmp == "desc" )
+
+                // Determine if identifier needs to be prefixed with "i." by testing agains allowed identifiers
+                if ( tmp == "desc" )
                 {
                     result.append( "i['" );
                     result.append( tmp );
                     result.append( "']" );
                 }
-                else if ( tmp != "true" && tmp != "false" && tmp != "null" && tmp != "in" && tmp != "not" && tmp[0] != '[' )
+                else if ( terms.find( tmp ) != terms.end() || tmp.compare( 0, 3, "md." ) == 0 || ( tmp == "md" && *c == '[' ))
                 {
                     result.append( "i." );
                     result.append( tmp );
+
+                    if ( *c == '[' )
+                        array_deref = true;
+                    else
+                        last_token = tmp;
+                }
+                else if ( allowed.find( tmp ) != allowed.end())
+                {
+                    result.append( tmp );
                 }
                 else
-                    result.append( tmp );
+                    EXCEPT_PARAM(1,"Illegal term in query: " << tmp );
 
                 v.reset();
-                state = 0;
+
+                state = PS_DEFAULT;
             }
             else
                 v.len++;
             break;
         }
 
-        if ( state == 0 && *c == '?' )
-            result += "LIKE";
-        else if ( state != 3 )
+        if ( state == PS_DEFAULT && *c == '?' )
+            result += " LIKE ";
+        else if ( state != PS_TOKEN )
             result += *c;
     }
 
     // Handle identifiers at end of line
-    if ( state == 3 )
+    if ( state == PS_TOKEN )
     {
         tmp = a_query.substr( v.start, v.len );
-        if ( tmp != "true" && tmp != "false" && tmp != "null" && tmp[0] != '[' )
-            result.append( "i." );
 
-        result.append( tmp );
+        if ( tmp == "desc" )
+        {
+            result.append( "i['desc']" );
+        }
+        else if ( terms.find( tmp ) != terms.end() || tmp.compare( 0, 3, "md." ) == 0 )
+        {
+            result.append( "i." );
+            result.append( tmp );
+        }
+        else if ( allowed.find( tmp ) != allowed.end())
+        {
+            result.append( tmp );
+        }
+        else
+            EXCEPT_PARAM(1,"Illegal term in query: " << tmp );
     }
 
     //cout << "[" << a_query << "]=>[" << result << "]\n";

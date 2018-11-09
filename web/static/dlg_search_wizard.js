@@ -10,11 +10,27 @@ function dlgSearchWizard( a_cb ) {
             <li><a href='#tab-srch-basic'>Basic Search</a></li>\
             <li><a href='#tab-srch-adv'>Advanced Search</a></li>\
         </ul>\
-        <div id='tab-srch-basic' style='overflow:auto'>\
-            <div id='terms1'>Match <b>all</b> of these terms:<button style='float:right' id='add_term1' class='btn small'>Add</button><hr></div>\
-            <div id='terms2' style='padding:1em 0 0 0'>Match <b>any</b> of these terms:<button style='float:right' id='add_term2' class='btn small'>Add</button><hr></div>\
+        <div id='tab-srch-basic' style='overflow:auto;height:100%;min-height:0'>\
+            Full-text match:<hr>\
+            <table style='width:30em'>\
+            <tr><td>Title:</td><td style='width:100%'><input style='width:100%' id='ft_title' type='text'></input></td></tr>\
+            <tr><td>Description:</td><td style='width:100%'><input style='width:100%' id='ft_desc' type='text'></input></td></tr>\
+            <tr><td>Keywords:</td><td style='width:100%'><input style='width:100%' id='ft_keyw' type='text'></input></td></tr>\
+            </table><br>\
+            Match <b>all</b> of these terms:<button style='float:right' id='add_term1' class='btn small'>Add</button><hr>\
+            <div id='terms1'></div><br>\
+            Match <b>any</b> of these terms:<button style='float:right' id='add_term2' class='btn small'>Add</button><hr>\
+            <div id='terms2'></div>\
         </div>\
-        <div id='tab-srch-adv' style='overflow:auto'>\
+        <div id='tab-srch-adv' style='overflow:auto;height:100%;min-height:0'>\
+            Full-text match:<hr>\
+            <table style='width:30em'>\
+            <tr><td>Title:</td><td style='width:100%'><input style='width:100%' id='ft_adv_title' type='text'></input></td></tr>\
+            <tr><td>Description:</td><td style='width:100%'><input style='width:100%' id='ft_adv_desc' type='text'></input></td></tr>\
+            <tr><td>Keywords:</td><td style='width:100%'><input style='width:100%' id='ft_adv_keyw' type='text'></input></td></tr>\
+            </table><br>\
+            Search clauses:<button style='float:right' id='add_clause' class='btn small'>Add</button><hr>\
+            <div id='clauses'></div>\
         </div>\
         ");
 
@@ -23,20 +39,31 @@ function dlgSearchWizard( a_cb ) {
 
     var cur_term = null;
     $(".btn",frame).button();
+    inputTheme($( "input[type='text']",frame));
+
+    var terms1div = $("#terms1",frame);
+    var terms2div = $("#terms2",frame);
+    var clauses = $("#clauses",frame);
 
     $("#add_term1",frame).on("click",function(){
-        //console.log("add term 1");
-        addTerm("#terms1");
+        addTerm(terms1div);
     });
 
     $("#add_term2",frame).on("click",function(){
-        //console.log("add term 2");
-        addTerm("#terms2");
+        addTerm(terms2div);
+    });
+
+    $("#add_clause",frame).on("click",function(){
+        addClause();
+    });
+
+    frame.on("click",".add-term",function( ev ){
+        console.log("add term, this", this, "ev", ev );
+        addTerm( $(this).nextAll("div") );
     });
 
     frame.on("click", ".remove-btn", function( ev ){
-        //console.log("remove btn", $(this), ev);
-        $(this).parent().remove();
+        removeTerm( $(this) );
     });
 
     frame.on("click", ".pick-term-btn", function( ev ){
@@ -49,6 +76,12 @@ function dlgSearchWizard( a_cb ) {
         });
     });
 
+    function addClause(){
+        var clause = $("<div>Search clause<button style='float:right' class='btn small add-term'>Add Term</button><hr><div class='wtf'></div></div>").appendTo( clauses );
+        console.log("addClause, new child:", $(".wtf",clause ) );
+        addTerm( $(".wtf",clause ));
+    }
+
     function setTerm( value, focus ){
         //console.log("setTerm",cur_term);
         var input = $( ".term-input", cur_term );
@@ -58,8 +91,9 @@ function dlgSearchWizard( a_cb ) {
     }
 
     function addTerm( target ){
-        var child = $( target, frame ).append("<div class='req-term' style='padding:.25em 0'><input title='Search term' class='term-input' type='text'></input><button tabindex='-1' class='btn small drop pick-term-btn'><span class='ui-icon ui-icon-triangle-1-s'></span></button>\
-        <select><option value='=='>=</option><option value='!='>!=</option><option value='&lt;'>&lt</option><option value='&lt;='>&lt;=</option><option value='&gt;='>&gt;=</option><option value='&gt;'>&gt;</option><option title='Text search' value='text'>Text</option><option title='Regular expression' value='=~'>Regex</option><option title='Pattern match' value='?'>Like</option><option title='Defined' value='def'>Def</option><option title='Not defined' value='undef'>!Def</option></select>\
+        console.log("addTerm", target );
+        var child = target.append("<div class='req-term' style='padding:.25em 0'><input title='Search term' class='term-input' type='text'></input><button tabindex='-1' class='btn small drop pick-term-btn'><span class='ui-icon ui-icon-triangle-1-s'></span></button>\
+        <select><option value='=='>=</option><option value='!='>!=</option><option value='&lt;'>&lt</option><option value='&lt;='>&lt;=</option><option value='&gt;='>&gt;=</option><option value='&gt;'>&gt;</option><option title='Pattern match' value='?'>Pattern</option><option title='Regular expression' value='=~'>Regex</option><option title='Defined' value='def'>Defined</option><option title='Undefined' value='undef'>!Defined</option></select>\
         <input title='Value to match' type='text'></input>\
         <button class='btn small remove-btn '><span class='ui-icon ui-icon-close' style='color:red'></span></button>\
         </div>");
@@ -74,18 +108,46 @@ function dlgSearchWizard( a_cb ) {
                     event.preventDefault();
                     inp.focus();
                 }
-                //if (event.keyCode == 9) { 
-                    //event.preventDefault();
-                    //this.value = this.value + " ";
-                    //inp.focus();
-                //}
-                //return false;
             }
         });
 
         $( ".btn", child ).button();
-        $( "select", child ).selectmenu({width:false,classes:{"ui-selectmenu-button":"search-wiz-select-button"}});
+        $( "select", child ).selectmenu({
+            width:false,
+            classes:{"ui-selectmenu-button":"search-wiz-select-button"},
+            select: function( ev, ui ){
+                //console.log("select",ev,ui);
+                var controls = $(this).parent().children();
+                if ( ui.item.value == "def" || ui.item.value == "undef" ){
+                    //$(controls[4]).val("").prop("disabled","true");
+                    inputDisable($(controls[4])).val("");
+
+                }else{
+                    inputEnable($(controls[4]));
+                    //$(controls[4]).val("").prop("disabled","false");
+                }
+            }
+        });
         inputTheme($( "input", child ));
+    }
+    
+    function clearTerm( div ){
+        var children = div.children();
+        $(children[0]).val("").focus();
+        $(children[2]).val("==").selectmenu("refresh");
+        $(children[4]).val("");
+    }
+
+    function removeTerm( target ){
+        var children = target.parent().parent().children("div");
+        if ( children.length > 1 ){
+            var foc = target.parent().prev().length?target.parent().prev():target.parent().next();
+            console.log("focus:",foc);
+            foc.children()[0].focus();
+            target.parent().remove();
+        }else{
+            clearTerm( target.parent() );
+        }
     }
 
     function parseTerms( div ){
@@ -150,9 +212,9 @@ function dlgSearchWizard( a_cb ) {
     var options = {
         dialogClass: 'dlg-no-title',
         title: "Search Wizard",
-        modal: true,
+        modal: false,
         width: "auto",
-        height: 500,
+        height: 550,
         resizable: false,
         closeOnEscape: true,
         draggable: false,
@@ -220,7 +282,40 @@ function dlgSearchWizard( a_cb ) {
                     <li><div id='set_md'>Metadata</div></li>\
                 </ul>");
 
-            $("#search-wiz-tabs",frame).tabs();
+            $("#search-wiz-tabs",frame).tabs({heightStyle:"fill"});
+
+            terms1div.on("keydown",function(e){
+                console.log("keydown",e);
+                if ( handleHotKey(e,terms1div)){
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            terms2div.on("keydown",function(e){
+                if ( handleHotKey(e,terms2div)){
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            function handleHotKey( ev, context ){
+                if (ev.ctrlKey){
+                    switch( ev.keyCode ) {
+                        case 107: // + = add
+                            addTerm(context);
+                            return true;
+                        case 109: // - = Remove
+                            removeTerm( $(ev.target) );
+                            //if ( context.children("div").length > 1 ){
+                            //    $(ev.target).parent().remove();
+                            return true;
+                        case 82: // R = Reset
+                            clearTerm( $(ev.target).parent() );
+                            return true;
+                    }
+                }
+                return false;
+            }
 
             var termmenu = $("#termmenu",dlg_frame);
             termmenu.menu();
@@ -243,9 +338,16 @@ function dlgSearchWizard( a_cb ) {
                 }
             });
 
-            addTerm("#terms1");
-            addTerm("#terms2");
-        
+            addTerm(terms1div);
+            addTerm(terms1div);
+            addTerm(terms1div);
+            addTerm(terms2div);
+            addTerm(terms2div);
+            addTerm(terms2div);
+            addClause();
+            //addTerm(clause);
+            //addTerm(clause);
+
             $("#set_title",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("title"); });
             $("#set_desc",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("desc"); });
             $("#set_topic",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("topic"); });
