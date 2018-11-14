@@ -2,6 +2,7 @@
 #define UTIL_HPP
 
 #include <string>
+#include <vector>
 
 std::string exec( const char* cmd );
 
@@ -18,5 +19,6 @@ std::string parseQuery( const std::string & a_query );
 void hexDump( const char * a_buffer, const char *a_buffer_end, std::ostream & a_out );
 std::string escapeCSV( const std::string & a_value );
 std::string escapeJSON( const std::string & a_value );
+//std::vector<std::string> smartTokenize( const std::string & a_text, const std::string & a_delim );
 
 #endif

@@ -474,8 +474,17 @@ app.get('/api/grp/delete', ( a_req, a_resp ) => {
     });
 });
 
+/*
 app.get('/api/dat/search', ( a_req, a_resp ) => {
     sendMessage( "RecordSearchRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply.item?reply.item:[]);
+    });
+});
+*/
+
+app.post('/api/dat/search', ( a_req, a_resp ) => {
+    console.log("search:",a_req.body);
+    sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
 });

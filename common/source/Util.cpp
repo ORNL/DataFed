@@ -8,6 +8,9 @@
 #include <string.h>
 #include <array>
 #include <zmq.h>
+#include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
+#include <boost/tokenizer.hpp>
 #include "TraceException.hpp"
 
 using namespace std;
@@ -71,15 +74,46 @@ void generateKeys( std::string & a_pub_key, std::string & a_priv_key )
     a_priv_key = secret_key;
 }
 
-string parseQuery( const string & a_query )
+string parseSearchPhrase( const char * key, const string & a_phrase )
+{
+    // tokenize phrase on ws, comma, and semicolons - properly handling quotes
+    // each token is used as a search phrase and joined based on eny prefix operators:
+    //  + = AND, - = NOT, | = OR
+    //vector<string> tokens = smartTokenize(a_phrase," ,;");
+
+    string separator1("");//dont let quoted arguments escape themselves
+    string separator2(" ");//split on spaces
+    string separator3("\"\'");//let it have quoted arguments
+
+    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
+    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
+
+    string result;
+
+    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
+    {
+        if ( result.size() )
+            result += " and ";
+        if ( (*t)[0] == '-' )
+        {
+            result += string("not phrase(j['") + key + "'],'" + (*t).substr(1) + "','text_en')";
+        }
+        else
+            result += string("phrase(j['" )+ key + "'],'" + *t + "','text_en')";
+    }
+
+    return result;
+}
+
+
+string parseSearchFilter( const string & a_query )
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
-    static set<char> ws = {' ','\t','\n','\r'};
-    static set<char> id_spec = {'.','_','-'};
-    static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?',']','['};
-    static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
-    static set<string> terms = {"title","desc","alias","topic","owner","keyw","ct","ut","size"};
+    //static set<char> id_spec = {'.','_','-'};
+    //static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?',']','['};
+    //static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
+    static set<string> terms = {"title","desc","alias","topic","owner","kw","ctime","ct","ut","size"};
     static set<string> allowed = {"abs","acos","asin","atan","atan2","average","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
         "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample",
@@ -104,35 +138,24 @@ string parseQuery( const string & a_query )
 
     ParseState state = PS_DEFAULT;
     Var v;
-    string result,last_token,tmp;
-    bool array_deref = false;
+    string result,tmp;
+
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); ++c )
     {
         switch( state )
         {
         case PS_DEFAULT: // Not quoted, not an identifier
-
-            /* NOTES: whitespace outside of quotes can be anywhere
-                even between object deref: x  .  y  [ "foo"  ] [  z[ 2 ]] is OK
-            */
-            if ( ws.find(*c) == ws.end() )
+            if ( *c == '\'' )
+                state = PS_SINGLE_QUOTE;
+            else if ( *c == '\"' )
+                state = PS_DOUBLE_QUOTE;
+            else if ( isalpha( *c ))
             {
-                if ( array_deref )
-                {
-                }
-
-                if ( *c == '\'' )
-                    state = PS_SINGLE_QUOTE;
-                else if ( *c == '\"' )
-                    state = PS_DOUBLE_QUOTE;
-                else if ( isalpha( *c ))
-                {
-                    v.start = c - a_query.begin();
-                    //cout << "start: " << v.start << "\n";
-                    v.len = 1;
-                    state = PS_TOKEN;
-                }
+                v.start = c - a_query.begin();
+                //cout << "start: " << v.start << "\n";
+                v.len = 1;
+                state = PS_TOKEN;
             }
             break;
         case PS_SINGLE_QUOTE: // Single quote (not escaped)
@@ -154,19 +177,12 @@ string parseQuery( const string & a_query )
                 // Determine if identifier needs to be prefixed with "i." by testing agains allowed identifiers
                 if ( tmp == "desc" )
                 {
-                    result.append( "i['" );
-                    result.append( tmp );
-                    result.append( "']" );
+                    result.append( "i['desc']" );
                 }
-                else if ( terms.find( tmp ) != terms.end() || tmp.compare( 0, 3, "md." ) == 0 || ( tmp == "md" && *c == '[' ))
+                else if ( terms.find( tmp ) != terms.end() || tmp.compare( 0, 3, "md." ) == 0 )
                 {
                     result.append( "i." );
                     result.append( tmp );
-
-                    if ( *c == '[' )
-                        array_deref = true;
-                    else
-                        last_token = tmp;
                 }
                 else if ( allowed.find( tmp ) != allowed.end())
                 {
@@ -215,6 +231,68 @@ string parseQuery( const string & a_query )
     //cout << "[" << a_query << "]=>[" << result << "]\n";
     return result;
 }
+
+
+string parseQuery( const string & a_query )
+{
+    rapidjson::Document query;
+
+    query.Parse( a_query.c_str() );
+
+    if ( query.HasParseError() )
+    {
+        rapidjson::ParseErrorCode ec = query.GetParseError();
+        EXCEPT_PARAM( 1, "Invalid query: " << rapidjson::GetParseError_En( ec ));
+    }
+
+    string phrase;
+
+    rapidjson::Value::MemberIterator imem = query.FindMember("title");
+    if ( imem != query.MemberEnd() )
+        phrase = parseSearchPhrase( "title", imem->value.GetString() );
+
+    imem = query.FindMember("desc");
+    if ( imem != query.MemberEnd() )
+    {
+        if ( phrase.size() )
+            phrase += " and ";
+        phrase += parseSearchPhrase( "desc", imem->value.GetString() );
+    }
+
+    imem = query.FindMember("keyw");
+    if ( imem != query.MemberEnd() )
+    {
+        if ( phrase.size() )
+            phrase += " and ";
+        phrase += parseSearchPhrase( "keyw", imem->value.GetString() );
+    }
+
+    string filter;
+    imem = query.FindMember("filter");
+    if ( imem != query.MemberEnd() )
+        filter = parseSearchFilter( imem->value.GetString() );
+
+    string result;
+
+    if ( phrase.size() )
+    {
+        result = string("for doc in intersection((for j in search ") + phrase + " return {id:j._id,title:j.title}),(";
+    }
+
+    // For now only mydata scope
+    result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
+    if ( filter.size() )
+        result += " and " + filter;
+    result += " return {id:i._id,title:i.title}";
+
+    if ( phrase.size() )
+    {
+        result += ")) return doc";
+    }
+
+    return result;
+}
+
 
 void hexDump( const char * a_buffer, const char *a_buffer_end, ostream & a_out )
 {

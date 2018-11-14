@@ -745,9 +745,9 @@ function makeBrowserTab(){
         }
     }
 
-    this.execQuery = function( query, scope ){
+    this.execQuery = function( query ){
         setStatusText("Executing search query...");
-        dataFind( query, scope, function( ok, items ){
+        dataFind( query, function( ok, items ){
             console.log( "qry res:", ok, items );
             if ( ok ){
                 var srch_node = inst.data_tree.getNodeByKey("search");
@@ -775,7 +775,23 @@ function makeBrowserTab(){
     }
 
     this.searchDirect = function(){
-        var query = $("#query_input").val();
+        var query = {};
+        var tmp = $("#title_query").val();
+        if ( tmp )
+            query.title = tmp;
+
+        tmp = $("#desc_query").val();
+        if ( tmp )
+            query.desc = tmp;
+
+        tmp = $("#kw_query").val();
+        if ( tmp )
+            query.keyw = tmp;
+    
+        tmp = $("#md_query").val();
+        if ( tmp )
+            query.filter = tmp;
+
         var scope = 0;
 
         if( $("#scope_mydat",inst.frame).prop("checked"))
@@ -791,11 +807,14 @@ function makeBrowserTab(){
         if( $("#scope_public",inst.frame).prop("checked"))
             scope |= SS_PUBLIC;
 
-        inst.execQuery( query, scope );
+        query.scope = scope;
+
+        inst.execQuery( query );
     }
 
     this.searchWizard = function(){
         dlgSearchWizard( function( query ){
+            /*
             $("#query_input").val( query );
             var scope = 0;
 
@@ -812,6 +831,7 @@ function makeBrowserTab(){
             if( $("#scope_public",inst.frame).prop("checked"))
                 scope |= SS_PUBLIC;
             inst.execQuery( query, scope );
+            */
         });
     }
 

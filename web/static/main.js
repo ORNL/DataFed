@@ -122,8 +122,9 @@ function copyData( a_src_id, a_dst_id, a_cb ){
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
 
-function dataFind( a_query, a_scope, a_callback ) {
-    _asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
+function dataFind( a_query, a_callback ) {
+    //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
+    _asyncPost("/api/dat/search",a_query,a_callback);
 }
 
 function viewColl( a_id, a_cb ) {
