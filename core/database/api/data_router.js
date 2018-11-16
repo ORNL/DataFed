@@ -228,10 +228,12 @@ router.post('/update', function (req, res) {
                 g_lib.validateTitle( req.body.title );
                 g_lib.validateDesc( req.body.desc );
 
-                if ( req.body.alias )
-                    g_lib.validateAlias( req.body.alias );
-
                 var obj = { ut: Math.floor( Date.now()/1000 ) };
+
+                if ( req.body.alias ){
+                    g_lib.validateAlias( req.body.alias );
+                    obj.alias = req.body.alias;
+                }
 
                 if ( req.body.title != undefined )
                     obj.title = req.body.title;
@@ -405,7 +407,7 @@ router.get('/loc', function (req, res) {
 
 // TODO Add limit, offset, and details options
 // TODO Add options for ALL, user/project, or collection (recursize or not) options
-router.get('/search', function (req, res) {
+router.get('/search1', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
@@ -537,6 +539,23 @@ router.get('/search2', function (req, res) {
 .queryParam('scope', joi.number().optional(), "Scope")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
+
+router.get('/search', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var params = {};
+        if ( req.queryParams.use_client )
+            params.client = client._id;
+        res.send( g_db._query( req.queryParams.query, params ));
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('query', joi.string().required(), "Query")
+.queryParam('use_client', joi.bool().required(), "Query uses client param")
+.summary('Find all data records that match query in body')
+.description('Find all data records that match query in body');
 
 router.get('/delete', function (req, res) {
     try {

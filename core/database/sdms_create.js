@@ -55,8 +55,20 @@ graph._extendEdgeDefinitions(alloc);
 var loc = graph_module._relation("loc", ["d"], ["repo"]);
 graph._extendEdgeDefinitions(loc);
 
-db.d.ensureIndex({type:"fulltext",fields:["title"]});
-db.d.ensureIndex({type:"fulltext",fields:["desc"]});
+var v0 = db._createView("textview","arangosearch",{});
+
+v0 = db._view("textview");
+v0.properties({
+    links: {
+      "d": {
+        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
+        includeAllFields: false
+      }
+    }
+  },
+  true
+);
+
 
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
 
