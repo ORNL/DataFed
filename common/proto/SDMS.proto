@@ -53,13 +53,21 @@ enum CollDelMode
 
 enum SearchScope
 {
-    SS_MY_DATA      = 0x01;
-    SS_MY_PROJ      = 0x02;
-    SS_TEAM_PROJ    = 0x04;
-    SS_USER_SHARE   = 0x08;
-    SS_PROJ_SHARE   = 0x10;
-    SS_PUBLIC       = 0x20;
+    SS_USER                     = 1;
+    SS_PROJECT                  = 2;
+    SS_OWNED_PROJECTS           = 3;
+    SS_MANAGED_PROJECTS         = 4;
+    SS_MEMBER_PROJECTS          = 5;
+    SS_COLLECTION               = 6;
+    SS_TOPIC                    = 7;
+    SS_SHARED_BY_USER           = 8;
+    SS_SHARED_BY_ANY_USER       = 9;
+    SS_SHARED_BY_PROJECT        = 10;
+    SS_SHARED_BY_ANY_PROJECT    = 11;
+    SS_PUBLIC                   = 12;
+    SS_VIEW                     = 13;
 }
+
 
 enum Permissions
 {

@@ -578,12 +578,19 @@ var PERM_ALL            = 0xFF;
 var PERM_READONLY       = 0x07;
 var PERM_READWRITE      = 0x1F;
 
-var SS_MY_DATA          = 0x01;
-var SS_MY_PROJ          = 0x02;
-var SS_TEAM_PROJ        = 0x04;
-var SS_USER_SHARE       = 0x08;
-var SS_PROJ_SHARE       = 0x10;
-var SS_PUBLIC           = 0x20;
+var SS_USER                     = 1;
+var SS_PROJECT                  = 2;
+var SS_OWNED_PROJECTS           = 3;
+var SS_MANAGED_PROJECTS         = 4;
+var SS_MEMBER_PROJECTS          = 5;
+var SS_COLLECTION               = 6;
+var SS_TOPIC                    = 7;
+var SS_SHARED_BY_USER           = 8;
+var SS_SHARED_BY_ANY_USER       = 9;
+var SS_SHARED_BY_PROJECT        = 10;
+var SS_SHARED_BY_ANY_PROJECT    = 11;
+var SS_PUBLIC                   = 12;
+var SS_VIEW                     = 13;
 
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgPickUser = new makeDlgPickUser();

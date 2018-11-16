@@ -771,8 +771,7 @@ DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingRepl
     rapidjson::Document result;
     vector<pair<string,string>> params;
     params.push_back({"query",a_request.query()});
-    if ( a_request.has_scope() )
-        params.push_back({"scope",to_string(a_request.scope())});
+    params.push_back({"use_client",a_request.use_client()?"true":"false"});
 
     dbGet( "/dat/search", params, result );
 

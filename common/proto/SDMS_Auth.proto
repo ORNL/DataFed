@@ -183,7 +183,7 @@ message RecordDeleteRequest
 message RecordSearchRequest
 {
     required string             query       = 1;
-    optional uint32             scope       = 2;
+    optional bool               use_client  = 2;
 }
 /*
 message RecordDataLocationReply

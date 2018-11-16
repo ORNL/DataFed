@@ -12,6 +12,7 @@
 #include <rapidjson/error/en.h>
 #include <boost/tokenizer.hpp>
 #include "TraceException.hpp"
+#include "SDMS.pb.h"
 
 using namespace std;
 
@@ -74,6 +75,79 @@ void generateKeys( std::string & a_pub_key, std::string & a_priv_key )
     a_priv_key = secret_key;
 }
 
+string parseSearchQuickPhraseWords( const string & key, const vector<string> & words )
+{
+    bool use_or;
+    bool use_not;
+    string word;
+    string result;
+
+    for ( vector<string>::const_iterator t = words.begin(); t != words.end(); ++t )
+    {
+        use_or = use_not = false;
+        if ( (*t)[0] == '|' )
+        {
+            word = (*t).substr(1);
+            use_or = true;
+        }
+        else if ( (*t)[0] == '-' )
+        {
+            word = (*t).substr(1);
+            use_not = true;
+        }
+        else
+            word = *t;
+
+        if ( result.size() )
+            result += (use_or?" or ":" and ");
+
+        result += (use_not?"not ":"") + string("phrase(i['" )+ key + "'],'" + word + "','text_en')";
+    }
+
+    return result;
+}
+
+string parseSearchQuickPhrase( const string & a_phrase )
+{
+    string separator1("");//dont let quoted arguments escape themselves
+    string separator2(" ");//split on spaces
+    string separator3("\"\'");//let it have quoted arguments
+
+    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
+    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
+
+    string result;
+
+    vector<string>  title,desc,keyw;
+    int mode = 7;
+    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
+    {
+        if ( *t == "title:" )
+            mode = 1;
+        else if ( *t == "desc:" || *t == "description:" )
+            mode = 2;
+        else if ( *t == "keyw:" || *t == "keyword:" || *t == "keywords:" )
+            mode = 4;
+        else
+        {
+            if ( mode & 1 ) title.push_back( *t );
+            if ( mode & 2 ) desc.push_back( *t );
+            if ( mode & 4 ) keyw.push_back( *t );
+        }
+    }
+
+    if ( title.size() )
+        result += "(" + parseSearchQuickPhraseWords( "title", title ) + ")";
+
+    if ( desc.size() )
+        result += (result.size()?" or (":"(") + parseSearchQuickPhraseWords( "desc", desc ) + ")";
+
+    if ( keyw.size() )
+        result += (result.size()?" or (":"(") + parseSearchQuickPhraseWords( "keyw", keyw ) + ")";
+
+    return result;
+}
+
 string parseSearchPhrase( const char * key, const string & a_phrase )
 {
     // tokenize phrase on ws, comma, and semicolons - properly handling quotes
@@ -89,35 +163,50 @@ string parseSearchPhrase( const char * key, const string & a_phrase )
     boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
 
     string result;
+    string word;
+    bool use_or;
+    bool use_not;
 
     for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
     {
-        if ( result.size() )
-            result += " and ";
-        if ( (*t)[0] == '-' )
+        use_or = use_not = false;
+        if ( (*t)[0] == '|' )
         {
-            result += string("not phrase(j['") + key + "'],'" + (*t).substr(1) + "','text_en')";
+            word = (*t).substr(1);
+            use_or = true;
+        }
+        else if ( (*t)[0] == '-' )
+        {
+            word = (*t).substr(1);
+            use_not = true;
         }
         else
-            result += string("phrase(j['" )+ key + "'],'" + *t + "','text_en')";
+            word = *t;
+
+        if ( result.size() )
+            result += (use_or?" or ":" and ");
+
+        result += (use_not?"not ":"") + string("phrase(i['" )+ key + "'],'" + word + "','text_en')";
     }
 
     return result;
 }
 
 
-string parseSearchFilter( const string & a_query )
+string parseSearchMetadata( const string & a_query )
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
     //static set<char> id_spec = {'.','_','-'};
     //static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?',']','['};
     //static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
-    static set<string> terms = {"title","desc","alias","topic","owner","kw","ctime","ct","ut","size"};
-    static set<string> allowed = {"abs","acos","asin","atan","atan2","average","ceil","cos","degrees","exp","exp2",
+    static set<string> terms = {"title","desc","alias","topic","owner","keyw","ct","ut","size"};
+    static set<string> funcs = {"abs","acos","asin","atan","atan2","average","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
         "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample",
-        "date_now","length","lower","upper","distance","is_in_polygon","true","false","null","in"};
+        "date_now","length","lower","upper","distance","is_in_polygon"};
+    static set<string> other = {"like","true","false","null","in"};
+
 
     struct Var
     {
@@ -139,10 +228,26 @@ string parseSearchFilter( const string & a_query )
     ParseState state = PS_DEFAULT;
     Var v;
     string result,tmp;
+    char last = 0, next = 0, next_nws = 0;
+    string::const_iterator c2;
 
-
-    for ( string::const_iterator c = a_query.begin(); c != a_query.end(); ++c )
+    for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
+        if ( c+1 != a_query.end() )
+            next = *(c+1);
+        else
+            next = 0;
+
+        next_nws = 0;
+        for ( c2 = c + 1; c2 != a_query.end(); c2++ )
+        {
+            if ( !isspace( *c2 ))
+            {
+                next_nws = *c2;
+                break;
+            }
+        }
+
         switch( state )
         {
         case PS_DEFAULT: // Not quoted, not an identifier
@@ -176,56 +281,58 @@ string parseSearchFilter( const string & a_query )
 
                 // Determine if identifier needs to be prefixed with "i." by testing agains allowed identifiers
                 if ( tmp == "desc" )
-                {
                     result.append( "i['desc']" );
-                }
-                else if ( terms.find( tmp ) != terms.end() || tmp.compare( 0, 3, "md." ) == 0 )
+                else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
+                    result.append( tmp );
+                else if ( terms.find( tmp ) != terms.end() )
                 {
                     result.append( "i." );
                     result.append( tmp );
                 }
-                else if ( allowed.find( tmp ) != allowed.end())
+                else
                 {
+                    if ( tmp.compare( 0, 3, "md." ) == 0 )
+                        result.append( "i." );
+                    else
+                        result.append( "i.md." );
                     result.append( tmp );
                 }
-                else
-                    EXCEPT_PARAM(1,"Illegal term in query: " << tmp );
 
                 v.reset();
 
                 state = PS_DEFAULT;
             }
             else
+            {
                 v.len++;
+
+            }
             break;
         }
 
-        if ( state == PS_DEFAULT && *c == '?' )
-            result += " LIKE ";
+        // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
+
+        if ( state == PS_DEFAULT )
+        {
+            if ( *c == '?' )
+                result += " like ";
+            else if ( *c == '~' )
+                if ( last != '=' )
+                    result += "=~";
+                else
+                    result += '~';
+            else if ( *c == '=' )
+                if ( last != '=' && last != '<' && last != '>' && next != '~' && next != '=' )
+                    result += "==";
+                else
+                    result += '=';
+            else
+                result += *c;
+        }
         else if ( state != PS_TOKEN )
             result += *c;
-    }
 
-    // Handle identifiers at end of line
-    if ( state == PS_TOKEN )
-    {
-        tmp = a_query.substr( v.start, v.len );
-
-        if ( tmp == "desc" )
-        {
-            result.append( "i['desc']" );
-        }
-        else if ( terms.find( tmp ) != terms.end() || tmp.compare( 0, 3, "md." ) == 0 )
-        {
-            result.append( "i." );
-            result.append( tmp );
-        }
-        else if ( allowed.find( tmp ) != allowed.end())
-        {
-            result.append( tmp );
-        }
-        else
-            EXCEPT_PARAM(1,"Illegal term in query: " << tmp );
+        last = *c;
     }
 
     //cout << "[" << a_query << "]=>[" << result << "]\n";
@@ -233,8 +340,10 @@ string parseSearchFilter( const string & a_query )
 }
 
 
-string parseQuery( const string & a_query )
+string parseQuery( const string & a_query, bool & use_client )
 {
+    use_client = false;
+
     rapidjson::Document query;
 
     query.Parse( a_query.c_str() );
@@ -246,49 +355,127 @@ string parseQuery( const string & a_query )
     }
 
     string phrase;
-
-    rapidjson::Value::MemberIterator imem = query.FindMember("title");
+    rapidjson::Value::MemberIterator imem = query.FindMember("quick");
     if ( imem != query.MemberEnd() )
-        phrase = parseSearchPhrase( "title", imem->value.GetString() );
-
-    imem = query.FindMember("desc");
-    if ( imem != query.MemberEnd() )
+        phrase = parseSearchQuickPhrase( imem->value.GetString() );
+    else
     {
-        if ( phrase.size() )
-            phrase += " and ";
-        phrase += parseSearchPhrase( "desc", imem->value.GetString() );
+        rapidjson::Value::MemberIterator imem = query.FindMember("title");
+        if ( imem != query.MemberEnd() )
+            phrase = parseSearchPhrase( "title", imem->value.GetString() );
+
+        imem = query.FindMember("desc");
+        if ( imem != query.MemberEnd() )
+        {
+            if ( phrase.size() )
+                phrase += " and ";
+            phrase += parseSearchPhrase( "desc", imem->value.GetString() );
+        }
+
+        imem = query.FindMember("keyw");
+        if ( imem != query.MemberEnd() )
+        {
+            if ( phrase.size() )
+                phrase += " and ";
+            phrase += parseSearchPhrase( "keyw", imem->value.GetString() );
+        }
     }
 
-    imem = query.FindMember("keyw");
+    string meta;
+    imem = query.FindMember("meta");
     if ( imem != query.MemberEnd() )
-    {
-        if ( phrase.size() )
-            phrase += " and ";
-        phrase += parseSearchPhrase( "keyw", imem->value.GetString() );
-    }
-
-    string filter;
-    imem = query.FindMember("filter");
-    if ( imem != query.MemberEnd() )
-        filter = parseSearchFilter( imem->value.GetString() );
+        meta = parseSearchMetadata( imem->value.GetString() );
 
     string result;
 
     if ( phrase.size() )
+        result += string("for i in intersection((for i in textview search ") + phrase + " return i),(";
+
+    imem = query.FindMember("scopes");
+    if ( imem == query.MemberEnd() )
+        EXCEPT(1,"No query scope provided");
+
+    int scope;
+    rapidjson::Value::MemberIterator imem2;
+
+    if ( imem->value.Size() > 1 )
+        result += "for i in union((";
+
+    for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
     {
-        result = string("for doc in intersection((for j in search ") + phrase + " return {id:j._id,title:j.title}),(";
+        if ( i > 0 )
+            result += "),(";
+
+        rapidjson::Value & val = imem->value[i];
+        imem2 = val.FindMember("scope");
+        if ( imem2 == val.MemberEnd() )
+            EXCEPT(1,"Missing scope value");
+        scope = imem2->value.GetUint();
+
+        switch( scope )
+        {
+        case SDMS::SS_USER:
+            result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i) return i";
+            use_client = true;
+            break;
+        case SDMS::SS_PROJECT:
+            imem2 = val.FindMember("id");
+            if ( imem2 == val.MemberEnd() )
+                EXCEPT(1,"Missing scope 'id' for project");
+            result += string("for i in 1..1 inbound '") + imem2->value.GetString() + "' owner filter is_same_collection('d',i) return i";
+            break;
+        case SDMS::SS_OWNED_PROJECTS:
+            result += "for i,e,p in 2..2 inbound @client owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
+            break;
+        case SDMS::SS_MANAGED_PROJECTS:
+            result += "for i,e,p in 2..2 inbound @client admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
+            break;
+        case SDMS::SS_MEMBER_PROJECTS:
+            result += "for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
+            break;
+        case SDMS::SS_COLLECTION:
+            imem2 = val.FindMember("id");
+            if ( imem2 == val.MemberEnd() )
+                EXCEPT(1,"Missing scope 'id' for collection");
+            result += string("for i in 1..10 outbound '") + imem2->value.GetString() + "' item filter is_same_collection('d',i) return i";
+            break;
+        case SDMS::SS_TOPIC:
+            imem2 = val.FindMember("id");
+            if ( imem2 == val.MemberEnd() )
+                EXCEPT(1,"Missing scope 'id' for topic");
+            result += string("for i in 1..10 inbound '") + imem2->value.GetString() + "' top filter is_same_collection('d',i) return i";
+            break;
+        case SDMS::SS_SHARED_BY_USER:
+            break;
+        case SDMS::SS_SHARED_BY_ANY_USER:
+            break;
+        case SDMS::SS_SHARED_BY_PROJECT:
+            break;
+        case SDMS::SS_SHARED_BY_ANY_PROJECT:
+            break;
+        case SDMS::SS_PUBLIC:
+            result += "for i in d filter i.public == true and i.owner != @client return i";
+            use_client = true;
+            break;
+        case SDMS::SS_VIEW:
+            break;
+        }
     }
 
-    // For now only mydata scope
-    result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
-    if ( filter.size() )
-        result += " and " + filter;
-    result += " return {id:i._id,title:i.title}";
+    if ( imem->value.Size() > 1 )
+        result += ")) return i";
 
     if ( phrase.size() )
-    {
-        result += ")) return doc";
-    }
+        result += "))";
+
+    if ( meta.size() )
+        result += " filter " + meta;
+
+    result += " return {id:i._id,title:i.title}";
+
 
     return result;
 }

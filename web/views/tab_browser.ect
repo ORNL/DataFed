@@ -51,16 +51,19 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
                     <table style='width:100%'>
-                        <tr><td>Title:</td><td><input id="title_query" type='text' style="width:100%"></input></td><td>Desc:</td><td><input id="desc_query" type='text' style="width:100%"></input></td><td>Keywords:</td><td><input id="kw_query" type='text' style="width:100%"></input></td><td><button class="btn small ui-widget ui-widget-content" onclick="searchDirect()"><span class='ui-icon ui-icon-play' style='font-size:1em'></span></button></td></tr>
-                        <tr><td>Query:</td><td colspan='5'><input id="md_query" type='text' style="width:100%"></input></td><td><button title='Search wizard' class='btn small ui-widget ui-widget-content' onclick='searchWizard()'><span class='ui-icon ui-icon-menu' style='font-size:1em'></span></button></td></tr>
-                        <tr><td>Scope:</td><td colspan='6'>
+                        <!-- tr><td>Title:</td><td><input id="title_query" type='text' style="width:100%"></input></td><td>Desc:</td><td><input id="desc_query" type='text' style="width:100%"></input></td><td>Keywords:</td><td><input id="kw_query" type='text' style="width:100%"></input></td><td><button class="btn small ui-widget ui-widget-content" onclick="searchDirect()"><span class='ui-icon ui-icon-play' style='font-size:1em'></span></button></td></tr -->
+
+                        <tr><td>Text:</td><td><input id="text_query" type='text' style="width:100%"></input></td><td><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
+
+                        <tr><td>Metadata:</td><td><input id="meta_query" type='text' style="width:100%"></input></td><td><button class='btn small' onclick='searchWizard()' style='width:12ch'>Advanced</button></td></tr>
+                        <tr><td>Scope:</td><td>
                             <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbspMy Data</span>
                             <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbspMy Projects</span>
-                            <span class='my-check'><label for='scope_teamproj'></label><input class='scope' type='checkbox' name='scope_teamproj' id='scope_teamproj'>&nbspTeam Projects</span>
-                            <span class='my-check'><label for='scope_usershare'></label><input class='scope' type='checkbox' name='scope_usershare' id='scope_usershare'>&nbspUser-Shared</span>
-                            <span class='my-check'><label for='scope_projshare'></label><input class='scope' type='checkbox' name='scope_projshare' id='scope_projshare'>&nbspProject-Shared</span>
+                            <span class='my-check'><label for='scope_otherproj'></label><input class='scope' type='checkbox' name='scope_otherproj' id='scope_otherproj'>&nbspOther Projects</span>
+                            <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbspShared</span>
                             <span class='my-check'><label for='scope_public'></label><input class='scope' type='checkbox' name='scope_public' id='scope_public'>&nbspPublic</span>
-                        </td></tr>
+                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbspSelected</span>
+                        </td><td><button id='btn_srch_clear_select' class='btn small' onclick='searchClearSelection()' style='width:12ch' disabled>Clear Sel.</button></td></tr>
                     </table>
                 </div>
             </div>

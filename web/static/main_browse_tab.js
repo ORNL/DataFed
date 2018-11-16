@@ -344,50 +344,6 @@ function makeBrowserTab(){
             case "p": bits = 0x3a | (admin?0:5); break;
             default:  bits = 0x3F;  break;
         }
-/*
-        if ( state == "c" ) {
-
-            $("#btn_edit",inst.frame).button("option","disabled",false);
-            $("#btn_copy",inst.frame).button("option","disabled",true);
-            $("#btn_del",inst.frame).button("option","disabled",false);
-            $("#btn_share",inst.frame).button("option","disabled",false);
-            $("#btn_upload",inst.frame).button("option","disabled",true);
-            $("#btn_download",inst.frame).button("option","disabled",true);
-            //$("#btn_alloc",inst.frame).button("option","disabled",true);
-        } else if ( state == "d" ) {
-            state = 0;
-            $("#btn_edit",inst.frame).button("option","disabled",false);
-            $("#btn_copy",inst.frame).button("option","disabled",false);
-            $("#btn_del",inst.frame).button("option","disabled",false);
-            $("#btn_share",inst.frame).button("option","disabled",false);
-            $("#btn_upload",inst.frame).button("option","disabled",false);
-            $("#btn_download",inst.frame).button("option","disabled",false);
-            //$("#btn_alloc",inst.frame).button("option","disabled",true);
-        } else if ( state == "r" ) {
-            $("#btn_edit",inst.frame).button("option","disabled",true);
-            $("#btn_copy",inst.frame).button("option","disabled",true);
-            $("#btn_del",inst.frame).button("option","disabled",true);
-            $("#btn_share",inst.frame).button("option","disabled",false);
-            $("#btn_upload",inst.frame).button("option","disabled",true);
-            $("#btn_download",inst.frame).button("option","disabled",true);
-            $("#btn_alloc",inst.frame).button("option","disabled",true);
-        } else if ( state == "p" ) {
-            $("#btn_edit",inst.frame).button("option","disabled",!admin);
-            $("#btn_copy",inst.frame).button("option","disabled",true);
-            $("#btn_del",inst.frame).button("option","disabled",!admin);
-            $("#btn_share",inst.frame).button("option","disabled",true);
-            $("#btn_upload",inst.frame).button("option","disabled",true);
-            $("#btn_download",inst.frame).button("option","disabled",true);
-            //$("#btn_alloc",inst.frame).button("option","disabled",false);
-        } else {
-            $("#btn_edit",inst.frame).button("option","disabled",true);
-            $("#btn_copy",inst.frame).button("option","disabled",true);
-            $("#btn_del",inst.frame).button("option","disabled",true);
-            $("#btn_share",inst.frame).button("option","disabled",true);
-            $("#btn_upload",inst.frame).button("option","disabled",true);
-            $("#btn_download",inst.frame).button("option","disabled",true);
-            //$("#btn_alloc",inst.frame).button("option","disabled",state != "m");
-        }*/
         console.log("upd btn state",state,admin,bits);
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
@@ -756,11 +712,11 @@ function makeBrowserTab(){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                     for ( var i in items ){
                         var item = items[i];
-                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",key: item.id,nodrag:true,nonew:true});
+                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:true,nonew:true});
                     }
                 } else {
                     setStatusText("No results found");
-                    results.push({title:"(no results)",icon:false, nodrag: true});
+                    results.push({title:"(no results)",icon:false,checkbox:false,nodrag: true});
                 }
                 srch_node.removeChildren();
                 srch_node.addChildren( results );
@@ -776,40 +732,70 @@ function makeBrowserTab(){
 
     this.searchDirect = function(){
         var query = {};
-        var tmp = $("#title_query").val();
+        var tmp = $("#text_query").val();
         if ( tmp )
-            query.title = tmp;
+            query.quick = tmp;
 
-        tmp = $("#desc_query").val();
+        tmp = $("#meta_query").val();
         if ( tmp )
-            query.desc = tmp;
+            query.meta = tmp;
 
-        tmp = $("#kw_query").val();
-        if ( tmp )
-            query.keyw = tmp;
-    
-        tmp = $("#md_query").val();
-        if ( tmp )
-            query.filter = tmp;
+        query.scopes = [];
 
-        var scope = 0;
+        if ( $("#scope_selected",inst.frame).prop("checked")){
+            var key, nodes = inst.data_tree.getSelectedNodes();
+            for ( var i in nodes ){
+                key = nodes[i].key;
+                if ( key == "mydata" ){
+                    query.scopes.push({scope:SS_USER});
+                }else if ( key == "proj_own" ){
+                    query.scopes.push({scope:SS_OWNED_PROJECTS});
+                }else if ( key == "proj_adm" ){
+                    query.scopes.push({scope:SS_MANAGED_PROJECTS});
+                }else if ( key == "proj_mem" ){
+                    query.scopes.push({scope:SS_MEMBER_PROJECTS});
+                }else if ( key == "shared_all" ){
+                    query.scopes.push({scope:SS_SHARED_BY_ANY_USER});
+                    query.scopes.push({scope:SS_SHARED_BY_ANY_PROJECT});
+                }else if ( key == "shared_user" ){
+                    if ( nodes[i].data.scope )
+                        query.scopes.push({scope:SS_SHARED_BY_USER,id:nodes[i].data.scope});
+                    else
+                        query.scopes.push({scope:SS_SHARED_BY_ANY_USER});
+                }else if ( key == "shared_proj" ){
+                    if ( nodes[i].data.scope )
+                        query.scopes.push({scope:SS_SHARED_BY_PROJECT,id:nodes[i].data.scope});
+                    else
+                        query.scopes.push({scope:SS_SHARED_BY_ANY_PROJECT});
+                }else if ( key.startsWith("c/") )
+                    query.scopes.push({scope:SS_COLLECTION,id:key,recurse:true});
+                else if ( key.startsWith("p/") )
+                    query.scopes.push({scope:SS_PROJECT,id:key});
+                else if ( key.startsWith("t/") ){
+                    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
+                }
+            }
+        }else{
+            if ( $("#scope_mydat",inst.frame).prop("checked"))
+                query.scopes.push({scope:SS_USER});
+            if ( $("#scope_myproj",inst.frame).prop("checked"))
+                query.scopes.push({scope:SS_OWNED_PROJECTS});
+            if ( $("#scope_otherproj",inst.frame).prop("checked")){
+                query.scopes.push({scope:SS_MANAGED_PROJECTS});
+                query.scopes.push({scope:SS_MEMBER_PROJECTS});
+            }
+            if ( $("#scope_shared",inst.frame).prop("checked")){
+                query.scopes.push({scope:SS_SHARED_BY_ANY_USER});
+                query.scopes.push({scope:SS_SHARED_BY_ANY_PROJECT});
+            }
+            if ( $("#scope_public",inst.frame).prop("checked"))
+                query.scopes.push({scope:SS_PUBLIC});
+        }
 
-        if( $("#scope_mydat",inst.frame).prop("checked"))
-            scope |= SS_MY_DATA;
-        if( $("#scope_myproj",inst.frame).prop("checked"))
-            scope |= SS_MY_PROJ;
-        if( $("#scope_teamproj",inst.frame).prop("checked"))
-            scope |= SS_TEAM_PROJ;
-        if( $("#scope_usershare",inst.frame).prop("checked"))
-            scope |= SS_USER_SHARE;
-        if( $("#scope_projshare",inst.frame).prop("checked"))
-            scope |= SS_PROJ_SHARE;
-        if( $("#scope_public",inst.frame).prop("checked"))
-            scope |= SS_PUBLIC;
+        //console.log("scopes:", query.scopes);
 
-        query.scope = scope;
-
-        inst.execQuery( query );
+        if ( query.scopes.length && ( query.quick || query.meta ))
+            inst.execQuery( query );
     }
 
     this.searchWizard = function(){
@@ -833,6 +819,22 @@ function makeBrowserTab(){
             inst.execQuery( query, scope );
             */
         });
+    }
+
+    this.updateSearchSelectState = function( enabled ){
+        if( enabled && $("#scope_selected",inst.frame).prop("checked")){
+            $(inst.data_tree_div).fancytree("option","checkbox",true);
+            $(inst.data_tree_div).fancytree("option","selectMode",2);
+            $("#btn_srch_clear_select",inst.frame).button("option","disabled",false);
+        }else{
+            $(inst.data_tree_div).fancytree("option","checkbox",false);
+            $(inst.data_tree_div).fancytree("option","selectMode",1);
+            $("#btn_srch_clear_select",inst.frame).button("option","disabled",true);
+        }
+    }
+
+    this.searchClearSelection = function(){
+        inst.data_tree.selectAll(false);
     }
 
     this.generateTitle = function( item ) {
@@ -939,14 +941,14 @@ function makeBrowserTab(){
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
-        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,children:[
+        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
-        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
+        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
-        {title:"Search Results",icon:"ui-icon ui-icon-zoom",folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true },
+        {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
 
 
@@ -1102,7 +1104,7 @@ function makeBrowserTab(){
                         ]});
                     }
                 }else{
-                    data.result.push({ title: "(none)", icon: false, nodrag:true });
+                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
                 data.result = [];
@@ -1113,7 +1115,7 @@ function makeBrowserTab(){
                         data.result.push({ title: item.name + " (" + item.uid + ")",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
                 }else{
-                    data.result.push({ title: "(none)", icon: false, nodrag:true });
+                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
                 data.result = [];
@@ -1124,7 +1126,7 @@ function makeBrowserTab(){
                         data.result.push({ title: inst.generateTitle(item),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj",scope:item.id,lazy:true,nodrag:true});
                     }
                 }else{
-                    data.result.push({ title: "(none)", icon: false, nodrag:true });
+                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
             } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
                 data.result = [];
@@ -1155,14 +1157,10 @@ function makeBrowserTab(){
 
                 for ( var i in items ) {
                     item = items[i];
-                    is_folder = item.id[0]=="c"?true:false;
-
-                    entry = { title: inst.generateTitle( item ),folder:is_folder,scope:scope,key:item.id };
-                    if ( is_folder ){
-                        entry.lazy = true;
-                        entry.icon = "ui-icon ui-icon-folder";
-                    } else {
-                        entry.icon = "ui-icon ui-icon-file";
+                    if ( item.id[0]=="c" ){
+                        entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id };
+                    }else{
+                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:scope,key:item.id };
                     }
 
                     data.result.push( entry );
@@ -1171,6 +1169,17 @@ function makeBrowserTab(){
         },
         activate: function( event, data ) {
             showSelectedInfo( data.node );
+        },
+        select: function( event, data ) {
+            if ( data.node.isSelected() ){
+                data.node.visit( function( node ){
+                    node.setSelected( false );
+                });
+                var parents = data.node.getParentList();
+                for ( i in parents ){
+                    parents[i].setSelected( false );
+                }
+            }
         },
         click: function(event, data) {
             if ( inst.drag_enabled && data.originalEvent.ctrlKey ) {
@@ -1313,7 +1322,16 @@ function makeBrowserTab(){
         }
     });
 
-    $("#footer-tabs").tabs({heightStyle:"auto",collapsible: true}).css({
+    $("#footer-tabs").tabs({
+        heightStyle:"auto",
+        collapsible: true,
+        activate: function(ev,ui){
+            if ( ui.newPanel[0].id == "tab-search" ){
+                inst.updateSearchSelectState( true );
+            } else if ( ui.oldPanel[0].id == "tab-search" ){
+                inst.updateSearchSelectState( false );
+            }
+        }}).css({
         /*'min-height': '50px',*/
         'overflow': 'auto'
     });
@@ -1394,6 +1412,27 @@ function makeBrowserTab(){
     });;
 
     $(".scope",inst.frame).checkboxradio();
+    $(".scope2",inst.frame).checkboxradio();
+
+    $("#scope_selected",inst.frame).on( "change",function(ev){
+        if( $("#scope_selected",inst.frame).prop("checked")){
+            $(".scope",inst.frame).checkboxradio("disable");
+        }else{
+            $(".scope",inst.frame).checkboxradio("enable");
+        }
+
+        inst.updateSearchSelectState( true );
+        /*;
+        if( $("#scope_selected",inst.frame).prop("checked")){
+            $(inst.data_tree_div).fancytree("option","checkbox",true);
+            $(inst.data_tree_div).fancytree("option","selectMode",2);
+            $("#btn_srch_clear_select",inst.frame).button("option","disabled",false);
+        }else{
+            $(inst.data_tree_div).fancytree("option","checkbox",false);
+            $(inst.data_tree_div).fancytree("option","selectMode",1);
+            $("#btn_srch_clear_select",inst.frame).button("option","disabled",true);
+        }*/
+    });
 
     $("#newmenu").menu();
 

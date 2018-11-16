@@ -557,11 +557,11 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     m_db_client.setClient( a_uid );
     RecordSearchRequest req2;
     DL_INFO("about to parse query[" << request->query() << "]" );
-    string q = parseQuery( request->query() );
+    bool use_client = false;
+    string q = parseQuery( request->query(), use_client );
     DL_INFO("parsed query[" << q << "]" );
     req2.set_query( q );
-    if ( request->has_scope())
-        req2.set_scope( request->scope() );
+    req2.set_use_client( use_client );
     m_db_client.recordSearch( req2, reply );
 
     PROC_MSG_END
