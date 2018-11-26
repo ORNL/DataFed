@@ -468,6 +468,7 @@ function makeBrowserTab(){
                             inst.sel_descr.text("(none)");
 
                         html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
                         html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";

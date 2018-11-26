@@ -149,11 +149,12 @@ message RecordCreateRequest
     required string             title       = 1;
     optional string             desc        = 2;
     optional string             topic       = 3;
-    optional string             alias       = 4;
-    optional bool               ispublic    = 5;
-    optional string             metadata    = 6;
-    optional string             parent_id   = 7;
-    optional string             repo_id     = 8;
+    optional string             keyw        = 4;
+    optional string             alias       = 5;
+    optional bool               ispublic    = 6;
+    optional string             metadata    = 7;
+    optional string             parent_id   = 8;
+    optional string             repo_id     = 9;
 }
 
 message RecordUpdateRequest
@@ -161,13 +162,14 @@ message RecordUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             topic       = 4;
-    optional string             alias       = 5;
-    optional bool               ispublic    = 6;
-    optional string             metadata    = 7;
-    optional bool               mdset       = 8;
-    optional uint64             size        = 9;
-    optional uint32             dt          = 10;
+    optional string             keyw        = 4;
+    optional string             topic       = 5;
+    optional string             alias       = 6;
+    optional bool               ispublic    = 7;
+    optional string             metadata    = 8;
+    optional bool               mdset       = 9;
+    optional uint64             size        = 10;
+    optional uint32             dt          = 11;
 }
 
 /*message RecordGetDataLocationRequest

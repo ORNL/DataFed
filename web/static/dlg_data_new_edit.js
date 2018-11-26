@@ -15,6 +15,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     <tr><td>Title:</td><td colspan='2'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='2'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
                     <tr><td>Description:</td><td colspan='2'><textarea title='Description string (optional)' id='desc' rows=4 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td>Keywords:</td><td colspan='2'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
                     <tr><td>Topic:</td><td><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent:</td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                     <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='2'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
@@ -155,6 +156,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
 
                 obj.desc = $("#desc",frame).val().trim();
+                obj.keyw = $("#keyw",frame).val().trim();
                 obj.topic = $("#topic",frame).val().trim();
 
                 if ( a_mode != DLG_DATA_EDIT ){
@@ -173,17 +175,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 if ( !obj.metadata.length && a_mode != DLG_DATA_EDIT )
                     delete obj.metadata;
-/*
-                if ( obj.metadata.length ){
-                    try{
-                        JSON.parse( obj.metadata );
-                    }catch(e){
-                        dlgAlert("Input Error","Metadata field must be valid JSON.");
-                        return;
-                    }
-                } else if ( a_mode != DLG_DATA_EDIT )
-                    delete obj.metadata;
-*/
+
                 var url = "/api/dat/";
 
                 if ( a_data && a_mode == DLG_DATA_EDIT ){
@@ -194,6 +186,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         delete obj.title;
                     if ( obj.desc == a_data.desc )
                         delete obj.desc;
+                    if ( obj.keyw == a_data.keyw )
+                        delete obj.keyw;
                     if ( obj.topic.toLowerCase() == a_data.topic )
                         delete obj.topic;
                     if ( obj.alias == a_data.alias )
@@ -252,9 +246,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
 
                 $("#desc",frame).val(a_data.desc);
+                $("#keyw",frame).val(a_data.keyw);
                 $("#topic",frame).val(a_data.topic);
-                //$("#md",frame).val(a_data.metadata);
-                jsoned.setValue( a_data.metadata, -1 );
+
+                if ( a_data.metadata )
+                    jsoned.setValue( a_data.metadata, -1 );
 
                 if ( a_mode == DLG_DATA_EDIT ){
                     if (( a_upd_perms & PERM_WR_META ) == 0 ){
@@ -277,6 +273,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
+                $("#keyw",frame).val("");
                 $("#topic",frame).val("");
                 //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");

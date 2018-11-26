@@ -796,6 +796,8 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+    if ( a_request.has_keyw() )
+        body += ",\"keyw\":\"" + escapeJSON( a_request.keyw() ) + "\"";
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     if ( a_request.has_alias() )
@@ -823,6 +825,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+    if ( a_request.has_keyw() )
+        body += ",\"keyw\":\"" + escapeJSON( a_request.keyw() ) + "\"";
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     if ( a_request.has_alias() )
@@ -923,6 +927,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             rec->set_desc( imem->value.GetString() );
+
+        if (( imem = val.FindMember("keyw")) != val.MemberEnd() )
+            rec->set_keyw( imem->value.GetString() );
 
         if (( imem = val.FindMember("topic")) != val.MemberEnd() )
             rec->set_topic( imem->value.GetString() );

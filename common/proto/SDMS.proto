@@ -144,15 +144,16 @@ message RecordData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional string             topic       = 5;
-    optional bool               ispublic    = 6;
-    optional string             metadata    = 7;
-    optional string             repo_id     = 8;
-    optional uint64             size        = 9;
-    optional uint32             ct          = 10;
-    optional uint32             ut          = 11;
-    optional uint32             dt          = 12;
-    optional string             owner       = 13;
+    optional string             keyw        = 5;
+    optional string             topic       = 6;
+    optional bool               ispublic    = 7;
+    optional string             metadata    = 8;
+    optional string             repo_id     = 9;
+    optional uint64             size        = 10;
+    optional uint32             ct          = 11;
+    optional uint32             ut          = 12;
+    optional uint32             dt          = 13;
+    optional string             owner       = 14;
 }
 
 message RecordDataLocation
