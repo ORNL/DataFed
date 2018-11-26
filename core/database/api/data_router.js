@@ -122,6 +122,9 @@ router.post('/create', function (req, res) {
                 if ( req.body.desc )
                     obj.desc = req.body.desc;
 
+                if ( req.body.keyw )
+                    obj.keyw = req.body.keyw;
+
                 if ( req.body.topic )
                     obj.topic = req.body.topic.toLowerCase();
 
@@ -182,7 +185,7 @@ router.post('/create', function (req, res) {
 .body(joi.object({
     title: joi.string().required(),
     desc: joi.string().allow('').optional(),
-    keywords: joi.array().items(joi.string()).optional(),
+    keyw: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
@@ -240,6 +243,9 @@ router.post('/update', function (req, res) {
 
                 if ( req.body.desc != undefined )
                     obj.desc = req.body.desc;
+
+                if ( req.body.keyw != undefined )
+                    obj.keyw = req.body.keyw;
 
                 if ( req.body.topic != undefined && req.body.topic != data.topic ){
                     obj.topic = req.body.topic.toLowerCase();
@@ -329,7 +335,7 @@ router.post('/update', function (req, res) {
     id: joi.string().required(),
     title: joi.string().optional(),
     desc: joi.string().allow('').optional(),
-    keywords: joi.array().items(joi.string()).optional(),
+    keyw: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
