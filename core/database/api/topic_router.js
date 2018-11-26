@@ -22,7 +22,7 @@ module.exports = router;
 
 router.get('/list', function (req, res) {
     try {
-        var topics = g_db._query("for v in 1..1 outbound @par top return {id:v._id,title:v.title}",{par: req.queryParams.id?req.queryParams.id:"t/root" });
+        var topics = g_db._query("for v in 1..1 inbound @par top return {id:v._id,title:v.title}",{par: req.queryParams.id?req.queryParams.id:"t/root" });
 
         res.send( topics );
     } catch( e ) {
@@ -45,27 +45,6 @@ router.get('/link', function (req, res) {
                     throw g_lib.ERR_INVALID_ID;
 
                 g_lib.topicLink( req.queryParams.topic.toLowerCase(), req.queryParams.id );
-                /*
-                var i,topic,parent = "t/root";
-
-                for ( i = 0; i < req.queryParams.topic.length; i++ ){
-                    topic = g_db._query("for v in 1..1 outbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:req.queryParams.topic[i]});
-                    if ( topic.hasNext() ){
-                        parent = topic.next()._id;
-                    }else{
-                        for ( ; i < req.queryParams.topic.length; i++ ){
-                            topic = g_db.t.save({title:req.queryParams.topic[i]},{returnNew:true});
-                            g_db.top.save({_from:parent,_to:topic._id});
-                            parent = topic._id;
-                        }
-                        break;
-                    }
-                }
-
-                if ( !g_db.top.firstExample({_from:parent,_to:req.queryParams.id})){
-                    g_db.top.save({_from:parent,_to:req.queryParams.id});
-                }
-                */
             }
         });
     } catch( e ) {

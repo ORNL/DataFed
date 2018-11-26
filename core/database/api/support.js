@@ -292,8 +292,6 @@ module.exports = ( function() {
     };
 
     obj.deleteData = function( a_data, a_allocs, a_locations ){
-        console.log("deleteData",a_data);
-
         // Delete attached alias
         var alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: a_data._id });
         if ( alias.hasNext() ) {
@@ -301,11 +299,9 @@ module.exports = ( function() {
             obj.graph.d.remove( alias.next() );
         }
 
-        var top = obj.db.top.firstExample({_to: a_data._id});
-        if ( top ){
-            console.log("unlink topic");
+        var top = obj.db.top.firstExample({_from: a_data._id});
+        if ( top )
             obj.topicUnlink( a_data._id );
-        }
 
         var loc = obj.db.loc.firstExample({_from: a_data._id });
         a_locations.push({ id: a_data._id, repo_id: loc._to, path: loc.path });
@@ -526,37 +522,40 @@ module.exports = ( function() {
         var i,topic,parent = "t/root";
 
         for ( i = 0; i < top_ar.length; i++ ){
-            topic = obj.db._query("for v in 1..1 outbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});
+            topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});
             if ( topic.hasNext() ){
                 parent = topic.next()._id;
             }else{
                 for ( ; i < top_ar.length; i++ ){
                     topic = obj.db.t.save({title:top_ar[i]},{returnNew:true});
-                    obj.db.top.save({_from:parent,_to:topic._id});
+                    obj.db.top.save({_from:topic._id,_to:parent});
                     parent = topic._id;
                 }
                 break;
             }
         }
 
-        if ( !obj.db.top.firstExample({_from:parent,_to:a_data_id})){
-            obj.db.top.save({_from:parent,_to:a_data_id});
+        if ( !obj.db.top.firstExample({_from:a_data_id,_to:parent})){
+            obj.db.top.save({_from:a_data_id,_to:parent});
         }
     };
 
     obj.topicUnlink = function( a_data_id ){
-        var top = obj.db.top.firstExample({_to: a_data_id});
-        var parent = top._from;
+        var top = obj.db.top.firstExample({_from: a_data_id});
+        if ( !top )
+            return;
+
+        var parent = top._to;
         obj.db.top.remove(top);
 
         // Unwind path, deleting orphaned topics along the way
         while ( parent != "t/root" ){
-            if ( obj.db.top.firstExample({ _from: parent }))
+            if ( obj.db.top.firstExample({ _to: parent }))
                 break;
             else {
-                top = obj.db.top.firstExample({ _to: parent });
-                parent = top._from;
-                obj.graph.t.remove( top._to );
+                top = obj.db.top.firstExample({ _from: parent });
+                parent = top._to;
+                obj.graph.t.remove( top._from );
             }
         }
     };

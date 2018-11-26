@@ -582,44 +582,6 @@ router.get('/delete', function (req, res) {
                 g_lib.updateAllocations( allocs, owner_id );
 
                 res.send( locations[0] );
-
-                /*
-                if ( data.topic )
-                    g_lib.topicUnlink( data.topic, data._id );
-
-                var loc = g_db.loc.firstExample({_from: data_id });
-
-                // Adjust allocation for data size
-                if ( data.size ){
-                    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-                    var alloc, usage;
-                    if ( loc.parent ){
-                        alloc = g_db.alloc.document( loc.parent );
-                        // Update project sub allocation
-                        var proj = g_db.p.document( owner_id );
-                        usage = Math.max(0,proj.sub_usage - data.size);
-                        g_db._update( proj._id, {sub_usage:usage});
-                    }else{
-                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                    }
-                    usage = Math.max(0,alloc.usage - data.size);
-                    g_db._update( alloc._id, {usage:usage});
-                }
-
-                result = { id: data_id, repo_id: loc._to, path: loc.path };
-
-                const graph = require('@arangodb/general-graph')._graph('sdmsg');
-                var obj;
-
-                // Delete attached aliases
-                var objects = g_db._query( "for v in 1..1 outbound @data alias return v._id", { data: data._id }).toArray();
-                for ( var i in objects ) {
-                    obj = objects[i];
-                    graph[obj[0]].remove( obj );
-                }
-
-                graph.d.remove( data._id );
-                */
             }
         });
 
