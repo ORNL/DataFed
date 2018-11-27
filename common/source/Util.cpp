@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <memory>
+#include <algorithm>
 #include <set>
 #include <string>
 #include <string.h>
@@ -75,77 +76,75 @@ void generateKeys( std::string & a_pub_key, std::string & a_priv_key )
     a_priv_key = secret_key;
 }
 
-string parseSearchQuickPhraseWords( const string & key, const vector<string> & words )
+
+
+bool isPhrase( const std::string &str )
 {
-    bool use_or;
-    bool use_not;
-    string word;
-    string result;
-
-    for ( vector<string>::const_iterator t = words.begin(); t != words.end(); ++t )
-    {
-        use_or = use_not = false;
-        if ( (*t)[0] == '|' )
-        {
-            word = (*t).substr(1);
-            use_or = true;
-        }
-        else if ( (*t)[0] == '-' )
-        {
-            word = (*t).substr(1);
-            use_not = true;
-        }
-        else
-            word = *t;
-
-        if ( result.size() )
-            result += (use_or?" or ":" and ");
-
-        result += (use_not?"not ":"") + string("phrase(i['" )+ key + "'],'" + word + "','text_en')";
-    }
-
-    return result;
+    return find_if(str.begin(), str.end(), []( char c ){ return !isalnum(c); }) != str.end();
 }
 
-string parseSearchQuickPhrase( const string & a_phrase )
+string parseSearchTerms( const string & a_key, const vector<string> & a_terms )
 {
-    string separator1("");//dont let quoted arguments escape themselves
-    string separator2(" ");//split on spaces
-    string separator3("\"\'");//let it have quoted arguments
+    vector<string> and_terms;
+    vector<string> nand_terms;
+    vector<string> or_terms;
 
-    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
-    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
-
-    string result;
-
-    vector<string>  title,desc,keyw;
-    int mode = 7;
-    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
+    for ( vector<string>::const_iterator t = a_terms.begin(); t != a_terms.end(); ++t )
     {
-        if ( *t == "title:" )
-            mode = 1;
-        else if ( *t == "desc:" || *t == "description:" )
-            mode = 2;
-        else if ( *t == "keyw:" || *t == "keyword:" || *t == "keywords:" )
-            mode = 4;
-        else
+        switch( (*t)[0] )
         {
-            if ( mode & 1 ) title.push_back( *t );
-            if ( mode & 2 ) desc.push_back( *t );
-            if ( mode & 4 ) keyw.push_back( *t );
+        case '+':
+            and_terms.push_back( (*t).substr(1) );
+            break;
+        case '-':
+            nand_terms.push_back( (*t).substr(1) );
+            break;
+        default:
+            or_terms.push_back( *t );
+            break;
         }
     }
 
-    if ( title.size() )
-        result += "(" + parseSearchQuickPhraseWords( "title", title ) + ")";
+    string result;
+    vector<string>::iterator i;
 
-    if ( desc.size() )
-        result += (result.size()?" or (":"(") + parseSearchQuickPhraseWords( "desc", desc ) + ")";
+    if ( or_terms.size() > 1 )
+        result += "(";
 
-    if ( keyw.size() )
-        result += (result.size()?" or (":"(") + parseSearchQuickPhraseWords( "keyw", keyw ) + ")";
+    for ( i = or_terms.begin(); i != or_terms.end(); i++ )
+    {
+        if ( i != or_terms.begin() )
+            result += " or ";
+        if ( isPhrase( *i ) )
+            result += "phrase(i['" + a_key + "'],'" + *i + "')";
+        else
+            result += "i['" + a_key + "'] == '" + *i + "'";
+    }
 
-    return result;
+    if ( or_terms.size() > 1 )
+        result += ")";
+
+    for ( i = and_terms.begin(); i != and_terms.end(); i++ )
+    {
+        if ( result.size() )
+            result += " and ";
+        if ( isPhrase( *i ) )
+            result += "phrase(i['" + a_key + "'],'" + *i + "')";
+        else
+            result += "i['" + a_key + "'] == '" + *i + "'";
+    }
+
+    for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
+    {
+        if ( result.size() )
+            result += " and ";
+        if ( isPhrase( *i ) )
+            result += "not phrase(i['" + a_key + "'],'" + *i + "')";
+        else
+            result += "i['" + a_key + "'] != '" + *i + "'";
+    }
+
+    return "("+result+")";
 }
 
 string parseSearchPhrase( const char * key, const string & a_phrase )
@@ -162,32 +161,184 @@ string parseSearchPhrase( const char * key, const string & a_phrase )
     boost::escaped_list_separator<char> els(separator1,separator2,separator3);
     boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
 
+    vector<string>  terms;
+
+    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
+        terms.push_back( *t );
+
+    return parseSearchTerms( key, terms );
+}
+
+string parseSearchQuickPhrase( const string & a_phrase )
+{
+    /* This function parses category logic (if present) around "quick" full-
+    text queries. Quick queries are typed into the "quick" text input and are
+    simpler than advanced queries.Categories are title, description, and
+    keywords. Categories may be specified just before query terms:
+
+        title: fusion simulation keywords: -experiment
+
+    If no categories are specified, all categories are searched and the
+    default operator is OR for both categories and terms.
+
+    If one or more categories are specified, the default operator for categories
+    is AND but for terms it is still OR.
+
+    Operator may be specified by prefixing category or term with:
+        +   AND
+        -   AND NOT
+
+    There is no NOR operator since this would produce low-specificity queryies.
+
+    If terms are included before a category is specified, these terms apply to all
+    categories (as if they were copied as-is into each category phrase)
+
+    Categories may only be specified once.
+
+    Phrases are specified with single or double quotations.
+    All punctuation is ignored.
+
+    The order of categories and terms does not matter, they are grouped by operator
+    in an expression such as:
+
+        (term1 or term2 or term3) and term4 and term5 and not term6 and not term7
+        OR terms                        AND terms           NAND terms
+    */
+    static map<string,int> cat_map =
+    {
+        {"t:",1},{"title:",1},
+        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2},
+        {"k:",4},{"key:",4},{"keyw:",4},{"keyword:",4},{"keywords:",4}
+    };
+
+    string separator1("");//dont let quoted arguments escape themselves
+    string separator2(" ");//split on spaces
+    string separator3("\"\'");//let it have quoted arguments
+
+    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
+    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
+
     string result;
-    string word;
-    bool use_or;
-    bool use_not;
+    vector<string>  title,desc,keyw;
+
+    int op = 0;
+    int ops[5] = {0,0,0,0,0};
+    int cat = 7;
+    int count_or = 0;
+    int count_other = 0;
+
+    map<string,int>::const_iterator c;
 
     for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
     {
-        use_or = use_not = false;
-        if ( (*t)[0] == '|' )
+        if ( *(*t).rbegin() == ':' )
         {
-            word = (*t).substr(1);
-            use_or = true;
-        }
-        else if ( (*t)[0] == '-' )
-        {
-            word = (*t).substr(1);
-            use_not = true;
+            if ( (*t)[0] == '+' )
+            {
+                c = cat_map.find((*t).substr(1));
+                op = 2; // AND
+                count_other++;
+            }
+            else if ( (*t)[0] == '-' )
+            {
+                c = cat_map.find((*t).substr(1));
+                op = 3; // NAND
+                count_other++;
+            }
+            else
+            {
+                c = cat_map.find(*t);
+                op = 1; // OR
+                count_or++;
+            }
+
+            if ( c == cat_map.end() )
+                EXCEPT_PARAM(1,"Invalid query scope '" << *t << "'" );
+
+            cat = c->second;
+
+            if ( ops[cat] != 0 )
+                EXCEPT_PARAM(1,"Invalid query - categories may only be specified once." );
+
+            ops[cat] = op;
         }
         else
-            word = *t;
-
-        if ( result.size() )
-            result += (use_or?" or ":" and ");
-
-        result += (use_not?"not ":"") + string("phrase(i['" )+ key + "'],'" + word + "','text_en')";
+        {
+            if ( cat & 1 ) title.push_back( *t );
+            if ( cat & 2 ) desc.push_back( *t );
+            if ( cat & 4 ) keyw.push_back( *t );
+        }
     }
+
+    // Apply default operator for unspecified categories, check for empty categories
+    if ( ops[1] == 0  )
+    {
+        if ( title.size() )
+        {
+            ops[1] = 1;
+            count_or++;
+        }
+    }
+    else if ( !title.size() )
+        EXCEPT(1,"Title category specified without search terms" );
+
+    if ( ops[2] == 0 )
+    {
+        if ( desc.size() )
+        {
+            ops[2] = 1;
+            count_or++;
+        }
+    }
+    else if ( !desc.size() )
+        EXCEPT(1,"Description category specified without search terms" );
+
+    if ( ops[4] == 0 )
+    {
+        if ( keyw.size() )
+        {
+            ops[4] = 1;
+            count_or++;
+        }
+    }
+    else if ( !keyw.size() )
+        EXCEPT(1,"Keywords category specified without search terms" );
+
+    // Build OR phrase
+    if ( count_or > 1 && count_other > 0 )
+        result += "(";
+
+    if ( ops[1] == 1 )
+        result += parseSearchTerms( "title", title );
+
+    if ( ops[2] == 1 )
+        result += (result.size()?" or ":"") + parseSearchTerms( "desc", desc );
+
+    if ( ops[4] == 1 )
+        result += (result.size()?" or ":"") + parseSearchTerms( "keyw", keyw );
+
+    if ( count_or > 1 && count_other > 0 )
+        result += ")";
+
+    // Build AND phrase
+    if ( ops[1] == 2 )
+        result += (result.size()?" and ":"") + parseSearchTerms( "title", title );
+
+    if ( ops[2] == 2 )
+        result += (result.size()?" and ":"") + parseSearchTerms( "desc", desc );
+
+    if ( ops[4] == 2 )
+        result += (result.size()?" and ":"") + parseSearchTerms( "keyw", keyw );
+
+    // Build NAND phrase
+    if ( ops[1] == 3 )
+        result += (result.size()?" and not (":"not (") + parseSearchTerms( "title", title ) + ")";
+
+    if ( ops[2] == 3 )
+        result += (result.size()?" and not (":"not (") + parseSearchTerms( "desc", desc ) + ")";
+
+    if ( ops[4] == 3 )
+        result += (result.size()?" and not (":"not (") + parseSearchTerms( "keyw", keyw ) + ")";
 
     return result;
 }
@@ -368,7 +519,7 @@ string parseQuery( const string & a_query, bool & use_client )
         if ( imem != query.MemberEnd() )
         {
             if ( phrase.size() )
-                phrase += " and ";
+                phrase += " or ";
             phrase += parseSearchPhrase( "desc", imem->value.GetString() );
         }
 
@@ -376,7 +527,7 @@ string parseQuery( const string & a_query, bool & use_client )
         if ( imem != query.MemberEnd() )
         {
             if ( phrase.size() )
-                phrase += " and ";
+                phrase += " or ";
             phrase += parseSearchPhrase( "keyw", imem->value.GetString() );
         }
     }
@@ -389,7 +540,7 @@ string parseQuery( const string & a_query, bool & use_client )
     string result;
 
     if ( phrase.size() )
-        result += string("for i in intersection((for i in textview search ") + phrase + " return i),(";
+        result += string("for i in intersection((for i in textview search analyzer(") + phrase + ",'text_en') return i),(";
 
     imem = query.FindMember("scopes");
     if ( imem == query.MemberEnd() )
