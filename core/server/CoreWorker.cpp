@@ -558,10 +558,14 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     RecordSearchRequest req2;
     DL_INFO("about to parse query[" << request->query() << "]" );
     bool use_client = false;
-    string q = parseQuery( request->query(), use_client );
+    bool use_shared_users = false;
+    bool use_shared_projects = false;
+    string q = parseQuery( request->query(), use_client, use_shared_users, use_shared_projects );
     DL_INFO("parsed query[" << q << "]" );
     req2.set_query( q );
     req2.set_use_client( use_client );
+    req2.set_use_shared_users( use_shared_users );
+    req2.set_use_shared_projects( use_shared_projects );
     m_db_client.recordSearch( req2, reply );
 
     PROC_MSG_END

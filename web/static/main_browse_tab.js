@@ -1144,6 +1144,7 @@ function makeBrowserTab(){
                         entry.icon = "ui-icon ui-icon-grip-solid-horizontal";
                     } else {
                         entry.icon = "ui-icon ui-icon-file";
+                        entry.checkbox = false;
                     }
 
                     data.result.push( entry );

@@ -186,6 +186,8 @@ message RecordSearchRequest
 {
     required string             query       = 1;
     optional bool               use_client  = 2;
+    optional bool               use_shared_users  = 3;
+    optional bool               use_shared_projects  = 4;
 }
 /*
 message RecordDataLocationReply

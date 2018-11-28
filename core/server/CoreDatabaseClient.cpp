@@ -772,6 +772,8 @@ DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingRepl
     vector<pair<string,string>> params;
     params.push_back({"query",a_request.query()});
     params.push_back({"use_client",a_request.use_client()?"true":"false"});
+    params.push_back({"use_shared_users",a_request.use_shared_users()?"true":"false"});
+    params.push_back({"use_shared_projects",a_request.use_shared_projects()?"true":"false"});
 
     dbGet( "/dat/search", params, result );
 

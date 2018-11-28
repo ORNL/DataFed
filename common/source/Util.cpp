@@ -491,7 +491,7 @@ string parseSearchMetadata( const string & a_query )
 }
 
 
-string parseQuery( const string & a_query, bool & use_client )
+string parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
 {
     use_client = false;
 
@@ -600,12 +600,45 @@ string parseQuery( const string & a_query, bool & use_client )
             result += string("for i in 1..10 inbound '") + imem2->value.GetString() + "' top filter is_same_collection('d',i) return i";
             break;
         case SDMS::SS_SHARED_BY_USER:
+            imem2 = val.FindMember("id");
+            if ( imem2 == val.MemberEnd() )
+                EXCEPT(1,"Missing scope 'id' for shared user");
+            //result += "for i in 1..1 inbound " + imem2->value.GetString() + " owner filter IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
+            result += string("for i in union_distinct("
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + imem2->value.GetString() + "' return v),"
+                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + imem2->value.GetString() + "' return v)"
+                ") return i";
             break;
         case SDMS::SS_SHARED_BY_ANY_USER:
+            //result += "for u in @shared_users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
+            use_shared_users = true;
+            result += "for i in union_distinct("
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @users return v),"
+                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @users return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @users return v)"
+                ") return i";
             break;
         case SDMS::SS_SHARED_BY_PROJECT:
+            imem2 = val.FindMember("id");
+            if ( imem2 == val.MemberEnd() )
+                EXCEPT(1,"Missing scope 'id' for shared project");
+            use_client = true;
+            result += string("for i in union_distinct("
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + imem2->value.GetString() + "' return v),"
+                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + imem2->value.GetString() + "' return v)"
+                ") return i";
             break;
         case SDMS::SS_SHARED_BY_ANY_PROJECT:
+            use_shared_projects = true;
+            result += "for i in union_distinct("
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @projs return v),"
+                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @projs return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @projs return v)"
+                ") return i";
             break;
         case SDMS::SS_PUBLIC:
             result += "for i in d filter i.public == true and i.owner != @client return i";
