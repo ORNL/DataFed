@@ -550,8 +550,18 @@ router.get('/search', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var params = {};
+
         if ( req.queryParams.use_client )
             params.client = client._id;
+
+        if ( req.queryParams.use_shared_users ){
+            params.users = g_lib.usersWithClientACLs( client._id, true );
+        }
+
+        if ( req.queryParams.use_shared_projects ){
+            params.projs = g_lib.projectsWithClientACLs( client._id, true );
+        }
+        
         res.send( g_db._query( req.queryParams.query, params ));
     } catch( e ) {
         g_lib.handleException( e, res );
@@ -560,6 +570,8 @@ router.get('/search', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('query', joi.string().required(), "Query")
 .queryParam('use_client', joi.bool().required(), "Query uses client param")
+.queryParam('use_shared_users', joi.bool().required(), "Query uses shared users param")
+.queryParam('use_shared_projects', joi.bool().required(), "Query uses shared projects param")
 .summary('Find all data records that match query in body')
 .description('Find all data records that match query in body');
 

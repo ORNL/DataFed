@@ -61,7 +61,7 @@ router.post('/create', function (req, res) {
                 }
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { title: req.body.title, ct: time, ut: time };
+                var obj = { title: req.body.title, owner: owner_id, ct: time, ut: time };
                 if ( req.body.desc )
                     obj.desc = req.body.desc;
                 if ( req.body.public )

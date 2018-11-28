@@ -386,7 +386,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","admin"],
-                write: ["p","g","uuid","accn","c","d","a","acl","owner","ident","alias","admin","member","item","alloc","loc"]
+                write: ["p","g","uuid","accn","c","d","a","acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -419,6 +419,7 @@ router.get('/delete', function (req, res) {
                     }
                 }
 
+                // TODO - This is BROKEN - doesn't handle topic unlinking NOR clean-up of allocation(s)
                 // Delete owned records
                 objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id });
                 while ( objects.hasNext() ) {
