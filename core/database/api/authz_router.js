@@ -52,14 +52,11 @@ router.get('/gridftp', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        // Verify that the file should exist on the associate repo
-        if ( req_perm == g_lib.PERM_WR_DATA ){
-            console.log("check alloc");
-            var loc = g_db.loc.firstExample({_from:data._id});
-            console.log("loc",loc);
-            if ( !loc || loc._to != req.queryParams.repo )
-                throw g_lib.ERR_INVALID_ALLOC;
-        }
+        // Verify repo and path are correct for record
+        var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
+        var loc = g_db.loc.firstExample({_from:data._id});
+        if ( !loc || loc._to != req.queryParams.repo || loc.path != path )
+            throw g_lib.ERR_INVALID_LOCATION;
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -71,35 +68,6 @@ router.get('/gridftp', function (req, res) {
 .summary('Checks authorization')
 .description('Checks authorization');
 
-
-router.get('/xfr/pre', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-        var data_id = g_lib.resolveID( req.queryParams.id, client );
-        var data = g_db.d.document( data_id );
-
-        if ( !g_lib.hasAdminPermObject( client, data._id )) {
-            if ( !g_lib.hasPermissions( client, data, req.queryParams.perms ))
-                throw g_lib.ERR_PERM_DENIED;
-        }
-
-        // TODO Check/set read/write lock on data record (revision)
-
-        // TODO Add configuration infor for facility end-points and storage locations
-        
-        var result = { id: data_id, src_path: "olcf#sdms/aa/", src_name: data_id.substr( 2 ), globus_id: client.globus_id };
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Data record ID or alias")
-.queryParam('perms', joi.number().required(), "Requested permissions (read/write)")
-.summary('Performs pre-transfer authorization')
-.description('Performs pre-transfer authorization. Returns required globus transfer parameters');
 
 router.get('/perm/check', function (req, res) {
     try {
