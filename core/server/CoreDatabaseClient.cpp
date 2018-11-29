@@ -373,6 +373,13 @@ DatabaseClient::userSaveTokens( const Auth::UserSaveTokensRequest & a_request, A
 }
 
 void
+DatabaseClient::purgeTransferRecords( size_t age )
+{
+    string result;
+    dbGetRaw( "xfr/purge", {{"age",to_string(age)}}, result );
+}
+
+void
 DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;

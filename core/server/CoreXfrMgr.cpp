@@ -101,10 +101,18 @@ XfrMgr::xfrThreadFunc()
         size_t                       pos;
         map<string,MsgComm*>    repo_comm;
         map<string,MsgComm*>::iterator comm;
+        size_t                      purge_timer = 10;
 
         while( m_run )
         {
             sleep( 1 );
+
+            if ( --purge_timer == 0 )
+            {
+                DL_INFO( "Purging old transfer records" );
+                db_client.purgeTransferRecords( m_mgr.getXfrPurgeAge() );
+                purge_timer = m_mgr.getXfrPurgePeriod();
+            }
 
             {
                 lock_guard<mutex> lock( m_xfr_mutex );

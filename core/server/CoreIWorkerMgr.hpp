@@ -20,6 +20,8 @@ public:
     virtual void                dataDelete( const std::string & a_repo_id, const std::string & a_data_path ) = 0;
     virtual void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid ) = 0;
     virtual void                handleNewXfr( const XfrData & a_xfr ) = 0;
+    virtual size_t              getXfrPurgeAge() = 0;
+    virtual size_t              getXfrPurgePeriod() = 0;
 };
 
 }}

@@ -22,7 +22,7 @@ namespace Core {
 class Server : public IWorkerMgr
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
+    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -43,6 +43,8 @@ private:
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     void                handleNewXfr( const XfrData & a_xfr );
+    size_t              getXfrPurgeAge() { return m_xfr_purge_age; }
+    size_t              getXfrPurgePeriod() { return m_xfr_purge_per; }
     void                dataDelete( const std::string & a_repo_id, const std::string & a_data_path );
 
     void loadKeys( const std::string & a_cred_dir );
@@ -71,6 +73,8 @@ private:
     std::string                     m_db_url;
     std::string                     m_db_user;
     std::string                     m_db_pass;
+    size_t                          m_xfr_purge_age;
+    size_t                          m_xfr_purge_per;
     MsgComm::SecurityContext        m_sec_ctx;
     std::map<std::string,RepoData*> m_repos;
     //std::string                     m_repo_address;

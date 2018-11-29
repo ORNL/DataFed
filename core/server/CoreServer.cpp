@@ -21,7 +21,7 @@ namespace SDMS {
 namespace Core {
 
 
-Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
+Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per ) :
     m_port( a_port ),
     m_timeout(a_timeout),
     m_io_secure_thread(0),
@@ -32,6 +32,8 @@ Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, 
     m_db_url(a_db_url),
     m_db_user(a_db_user),
     m_db_pass(a_db_pass),
+    m_xfr_purge_age(a_xfr_purge_age),
+    m_xfr_purge_per(a_xfr_purge_per),
     m_zap_thread(0),
     m_xfr_mgr( *this ),
     m_msg_router_thread(0),
