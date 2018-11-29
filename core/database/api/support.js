@@ -280,23 +280,11 @@ module.exports = ( function() {
         }
     };
 
-    obj.deleteObject = function( id ){
-        // Delete attached aliases
-        var item,items = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: id }).toArray();
-        for ( var i in items ) {
-            item = items[i];
-            obj.graph[item[0]].remove( item );
-        }
-
-        obj.graph[id[0]].remove( id );
-    };
-
     obj.deleteData = function( a_data, a_allocs, a_locations ){
         // Delete attached alias
         var alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: a_data._id });
         if ( alias.hasNext() ) {
-            console.log("rem alias");
-            obj.graph.d.remove( alias.next() );
+            obj.graph.a.remove( alias.next() );
         }
 
         var top = obj.db.top.firstExample({_from: a_data._id});
@@ -308,10 +296,7 @@ module.exports = ( function() {
 
         // Adjust allocation for data size
         if ( a_data.size ){
-            console.log("has data");
-
             if ( loc.parent ){
-                console.log("alloc has parent");
                 loc._to = loc.parent;
             }
 
@@ -321,8 +306,58 @@ module.exports = ( function() {
                 a_allocs[loc._to] = a_data.size;
         }
 
-        console.log("removing data record");
         obj.graph.d.remove( a_data._id );
+    };
+
+    obj.deleteCollection = function( a_coll_id, a_allocs, a_locations ){
+        // Delete collection aliases, if present
+        var alias = obj.db._query( "for v in 1..1 outbound @coll alias return v._id", { coll: a_coll_id });
+        if ( alias.hasNext() ) {
+            obj.graph.a.remove( alias.next() );
+        }
+
+        // Recursively collect all linked items (data and collections) for deletion or unlinking
+        // Since this could be a very large and/or deep collection hierarchy, we will use a breadth-first traversal
+        // to delete the collection layer-by-layer, rather than all-at-once. While deleting, any data records that are
+        // actually deleted will have their data locations placed in an array that will be returned to the client. This
+        // allows the client to coordinate deletion of raw data from associated data repos.
+
+        // Note: data may be linked into the collection hierarchy being deleted more than once. This will cause the
+        // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
+        // at the final instance of this data (thie link count will be 1 then).
+
+        var item,items,coll,c,cur,next = [a_coll_id];
+
+        while ( next.length ){
+            cur = next;
+            next = [];
+            for ( c in cur ){
+                coll = cur[c];
+                items = obj.db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,links:links}", { coll: coll });
+
+                while ( items.hasNext() ) {
+                    item = items.next();
+                    if ( item._id[0] == "d" ){
+                        if ( item.links == 1 ){
+                            // Save location and delete
+                            obj.deleteData( item, a_allocs, a_locations );
+                        }else{
+                            // Unlink from current collection
+                            obj.db.item.removeByExample({_from:coll,_to:item._id});
+                        }
+                    }else{
+                        next.push(item._id);
+                    }
+                }
+
+                alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: coll });
+                if ( alias.hasNext() ) {
+                    obj.graph.a.remove( alias );
+                }
+
+                obj.graph.c.remove( coll );
+            }
+        }
     };
 
     obj.updateAllocations = function( a_allocs, a_owner_id ){

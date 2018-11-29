@@ -221,66 +221,9 @@ router.get('/delete', function (req, res) {
                 if ( coll.is_root )
                     throw g_lib.ERR_CANNOT_DEL_ROOT;
 
-                // Delete attached aliases
-                var objects = g_db._query( "for v in 1..1 outbound @coll alias return v._id", { coll: coll._id }).toArray();
-                for ( i in objects ) {
-                    obj = objects[i];
-                    g_graph[obj[0]].remove( obj );
-                }
-
-                // Recursively collect all linked items (data and collections) for deletion or unlinking
-                // Since this could be a very large and/or deep collection hierarchy, we will use a breadth-first traversal
-                // to delete the collection layer-by-layer, rather than all-at-once. While deleting, any data records that are
-                // actually deleted will have their data locations placed in an array that will be returned to the client. This
-                // allows the client to coordinate deletion of raw data from associated data repos.
-
-                // Note: data may be linked into the collection hierarchy being deleted more than once. This will cause the
-                // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
-                // at the final instance of this data (thie link count will be 1 then).
-
                 var locations=[], allocs={};
-                var c,cur,next = [coll._id];
-
-                while ( next.length ){
-                    cur = next;
-                    next = [];
-                    for ( c in cur ){
-                        coll = cur[c];
-                        //objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {_id:v._id,size:v.size,links:links,loc:loc[0],topic:v.topic}", { coll: coll }).toArray();
-                        objects = g_db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,links:links}", { coll: coll }).toArray();
-
-                        for ( i in objects ) {
-                            obj = objects[i];
-                            if ( obj._id[0] == "d" ){
-                                if ( obj.links == 1 ){
-                                    // Save location and delete
-                                    //locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
-                                    //if ( alloc[obj.loc.repo] )
-                                    //    alloc[obj.loc.repo] += obj.size;
-                                    //else
-                                    //    alloc[obj.loc.repo] = obj.size;
-                                    g_lib.deleteData( obj, allocs, locations );
-                                }else{
-                                    // Unlink from current collection
-                                    g_db.item.removeByExample({_from:coll,_to:obj._id});
-                                }
-                            }else{
-                                next.push(obj._id);
-                            }
-                        }
-
-                        g_lib.deleteObject( coll );
-                    }
-                }
-
+                g_lib.deleteCollection( coll._id, allocs, locations );
                 g_lib.updateAllocations( allocs, owner_id );
-
-                /*
-                for ( i in alloc ){
-                    //console.log( "update alloc for ", alloc );
-                    obj = g_db.alloc.firstExample({_from: owner_id, _to: i});
-                    g_db._update( obj._id, { usage: obj.usage - alloc[i] });
-                }*/
 
                 res.send( locations );
             }

@@ -419,12 +419,18 @@ router.get('/delete', function (req, res) {
                     }
                 }
 
-                // TODO - This is BROKEN - doesn't handle topic unlinking NOR clean-up of allocation(s)
-                // Delete owned records
                 objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id });
+                var top;
+
                 while ( objects.hasNext() ) {
                     obj = objects.next();
-                    g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
+                    if ( obj[0] == "d" ){
+                        top = g_db.top.firstExample({_from: obj});
+                        if ( top )
+                            g_lib.topicUnlink( obj );
+                    }
+                    g_graph[obj[0]].remove( obj );
+                    //g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
                 g_graph.p.remove( proj_id );
