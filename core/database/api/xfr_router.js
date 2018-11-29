@@ -275,3 +275,11 @@ router.get('/list', function (req, res) {
 .queryParam('status', joi.number().optional(), "Return results matching 'status'.")
 .summary('List transfer record')
 .description('View transfer record');
+
+router.get('/purge', function (req, res) {
+    var age = (Date.now()/1000) - req.queryParams.age;
+    g_db._query("for i in tr filter i.started < " + age  + " remove i._key in tr");
+})
+.queryParam('age', joi.number().required(), "Age in seconds.")
+.summary('Purge old transfer records')
+.description('Purge old transfer records older than specified age.');
