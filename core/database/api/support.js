@@ -832,9 +832,9 @@ module.exports = ( function() {
         // Get projects that have ACLs set for client AND where client is not owner, admin, or member of project
         var result;
         if ( id_only ){
-            result = obj.db._query("for pr in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('p',v) return v._id),(for v,e,p in 2..2 inbound @user member, outbound owner filter is_same_collection('g',p.vertices[1]) and p.vertices[1].gid != 'members' and is_same_collection('p',v) return v._id)) let m = (for v,e,p in 2..2 inbound pr.id owner, outbound member filter p.vertices[1].gid == 'members' and v._id == @user return v._id) filter length(m) == 0 return pr", { user: client_id }).toArray();
+            result = obj.db._query("for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return v._id),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return v._id)) return i",{user:client_id});
         }else{
-            result = obj.db._query("for pr in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 2..2 inbound @user member, outbound owner filter is_same_collection('g',p.vertices[1]) and p.vertices[1].gid != 'members' and is_same_collection('p',v) return {id:v._id,title:v.title})) let m = (for v,e,p in 2..2 inbound pr.id owner, outbound member filter p.vertices[1].gid == 'members' and v._id == @user return v._id) filter length(m) == 0 sort pr.title return pr", { user: client_id }).toArray();
+            result = obj.db._query("for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return {id:v._id,title:v.title})) return i",{user:client_id});
         }
         //console.log("projectsWithACLs:",result);
         return result;
