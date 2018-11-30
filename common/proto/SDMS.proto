@@ -136,6 +136,7 @@ message ListingData
     required string             id          = 1;
     required string             title       = 2;
     optional string             alias       = 3;
+    optional bool               locked      = 4;
 }
 
 message RecordData
@@ -154,6 +155,7 @@ message RecordData
     optional uint32             ut          = 12;
     optional uint32             dt          = 13;
     optional string             owner       = 14;
+    optional bool               locked      = 15;
 }
 
 message RecordDataLocation

@@ -505,6 +505,12 @@ app.post('/api/dat/update', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/lock/toggle', ( a_req, a_resp ) => {
+    sendMessage( "RecordLockToggleRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/dat/copy', ( a_req, a_resp ) => {
     var params  = {
         sourceId: a_req.query.src,

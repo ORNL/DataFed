@@ -172,6 +172,22 @@ function makeBrowserTab(){
         }
     }
 
+    this.toggleLock = function(){
+        var node = inst.data_tree.activeNode;
+        if ( node ) {
+            if ( node.key[0] == "d" ){
+                toggleDataLock( node.key, function( ok, data ){
+                    if ( ok ){
+                        inst.updateNodeTitle( data.data[0] );
+                        inst.showSelectedInfo( node );
+                    }else{
+                        dlgAlert("Toggle Lock Failed",data);
+                    }
+                });
+            }
+        }
+    }
+
     this.editSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
@@ -352,6 +368,7 @@ function makeBrowserTab(){
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0);
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0);
         $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
+        $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x20) != 0);
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "copy", (bits & 2) == 0 );
@@ -471,6 +488,7 @@ function makeBrowserTab(){
                         html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
                         html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
+                        html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
                         html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
                         html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
                         if ( item.ct ){
@@ -839,10 +857,17 @@ function makeBrowserTab(){
     }
 
     this.generateTitle = function( item ) {
+        var title = "";
+
+        if ( item.locked )
+            title += " <i class='ui-icon ui-icon-locked'></i> ";
+
         if ( item.alias )
-            return escapeHTML( "\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")" );
+            title += escapeHTML("\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")");
         else
-            return escapeHTML( "\"" + item.title + "\" [" + item.id.substr(2) + "]" );
+            title += escapeHTML("\"" + item.title + "\" [" + item.id.substr(2) + "]");
+
+        return  title;
     }
 
     this.xfrUpdateHistory = function( xfr_list ){
@@ -1301,6 +1326,7 @@ function makeBrowserTab(){
     $("#btn_copy",inst.frame).on('click', inst.copySelected );
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
+    $("#btn_lock",inst.frame).on('click', inst.toggleLock );
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(0) });
     $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(1) });
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
@@ -1437,6 +1463,7 @@ function makeBrowserTab(){
     });
 
     $("#newmenu").menu();
+    $("#lockmenu").menu();
 
     $("#theme-sel").val(g_theme).selectmenu({ width: "auto"  }).on('selectmenuchange', function( ev, ui ) {
         themeSet( ui.item.value );

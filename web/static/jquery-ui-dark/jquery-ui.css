@@ -89,6 +89,11 @@
     color: #ff8000
 }
 
+.ui-icon-locked
+{
+    color: #FF4040
+}
+
 .ui-draggable-handle {
 	-ms-touch-action: none;
 	touch-action: none;

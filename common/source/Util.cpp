@@ -658,7 +658,7 @@ string parseQuery( const string & a_query, bool & use_client, bool & use_shared_
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " return {id:i._id,title:i.title}";
+    result += " return {id:i._id,title:i.title,locked:i.locked}";
 
 
     return result;

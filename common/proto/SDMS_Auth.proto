@@ -172,6 +172,11 @@ message RecordUpdateRequest
     optional uint32             dt          = 11;
 }
 
+message RecordLockToggleRequest
+{
+    required string             id          = 1;
+}
+
 /*message RecordGetDataLocationRequest
 {
     required string             id          = 1;

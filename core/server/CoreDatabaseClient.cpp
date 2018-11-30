@@ -863,7 +863,6 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
-//DatabaseClient::recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
 DatabaseClient::recordDelete( const std::string & a_id, RecordDataLocation & a_loc )
 {
     rapidjson::Document result;
@@ -874,7 +873,16 @@ DatabaseClient::recordDelete( const std::string & a_id, RecordDataLocation & a_l
 }
 
 void
-//DatabaseClient::recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply )
+DatabaseClient::recordLockToggle( const Auth::RecordLockToggleRequest & a_request, Auth::RecordDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "dat/lock/toggle", {{"id",a_request.id()}}, result );
+
+    setRecordData( a_reply, result );
+}
+
+void
 DatabaseClient::recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc )
 {
     rapidjson::Document result;
@@ -972,6 +980,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("dt")) != val.MemberEnd() )
             rec->set_dt( imem->value.GetUint() );
+
+        if (( imem = val.FindMember("locked")) != val.MemberEnd() )
+            rec->set_locked( imem->value.GetBool() );
     }
 }
 
@@ -1201,6 +1212,8 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
         item->set_title( val["title"].GetString() );
         if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
             item->set_alias( imem->value.GetString() );
+        if (( imem = val.FindMember("locked")) != val.MemberEnd() && !imem->value.IsNull() )
+            item->set_locked( imem->value.GetBool() );
     }
 }
 

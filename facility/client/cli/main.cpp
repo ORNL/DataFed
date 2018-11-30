@@ -369,7 +369,7 @@ void printData( spRecordDataReply a_rep )
     if ( g_out_form == JSON )
         cout << "{\"Data\":[";
     else if ( g_out_form == CSV )
-        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Size\",\"Repo\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
+        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Locked\",\"Size\",\"Repo\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
 
     if ( a_rep->data_size() )
     {
@@ -394,6 +394,7 @@ void printData( spRecordDataReply a_rep )
                     cout << "Desc     " << rec.desc() << "\n";
                 if ( rec.has_owner() )
                     cout << "Owner    " << rec.owner() << "\n";
+                cout << "Locked   " << ((rec.has_locked() && rec.locked())?"Yes":"No") << "\n";
                 if ( rec.has_size() )
                     cout << "Size     " << rec.size() << "\n";
                 if ( rec.has_repo_id() )
@@ -425,6 +426,7 @@ void printData( spRecordDataReply a_rep )
                     << ",\"" << escapeCSV( rec.title() ) << "\""
                     << ",\"" << ( rec.has_desc()?escapeCSV( rec.desc() ):"" ) << "\""
                     << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
+                    << "," << ((rec.has_locked() && rec.locked())?"1":"0")
                     << "," << ( rec.has_size()?rec.size():0 )
                     << "," << ( rec.has_repo_id()?rec.repo_id():0 )
                     << "," << ( rec.has_dt()?rec.dt():0 )
@@ -441,6 +443,7 @@ void printData( spRecordDataReply a_rep )
                     cout << ",\"Desc\":\"" << escapeJSON( rec.desc() ) << "\"";
                 if ( rec.has_owner() )
                     cout << ",\"Owner\":\"" << rec.owner() << "\"";
+                cout << ",\"Locked\":" << ((rec.has_locked() && rec.locked())?"true":"false");
                 if ( rec.has_size() )
                     cout << ",\"Size\":" << rec.size();
                 if ( rec.has_repo_id() )
@@ -557,6 +560,11 @@ void printListing( spListingReply a_reply )
             }
             else
                 cout << " " << setw(16) << " ";
+
+            if ( item.has_locked() && item.locked() )
+                cout << " (L)";
+            else
+                cout << "    ";
 
             cout << " \"" << item.title() << "\"";
             cout << "\n";

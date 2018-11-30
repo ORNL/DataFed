@@ -127,23 +127,21 @@ function dataFind( a_query, a_callback ) {
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
 
+function toggleDataLock( a_id, a_cb ){
+    _asyncGet( "/api/dat/lock/toggle?id=" + encodeURIComponent(a_id), null, a_cb );
+}
+
 function viewColl( a_id, a_cb ) {
-    console.log("viewColl()");
     _asyncGet( "/api/col/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            console.log("viewColl ok, data:", data, typeof data );
+            //console.log("viewColl ok, data:", data, typeof data );
             if ( data )
                 a_cb( data );
             else
                 a_cb();
         }
         else {
-            //console.log("viewColl failed:", data );
             a_cb();
-            /*
-            dlgAlert("Error Viewing Collection", "Collection ID: " + a_id + "<br>Reason: " + data, function(){
-                a_cb();
-            });*/
         }
     });
 }

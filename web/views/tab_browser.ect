@@ -36,6 +36,7 @@
         <button class="btn" id="btn_copy" disabled>Copy</button>
         <button class="btn" id="btn_del" disabled>Delete</button>
         <button class="btn" id="btn_share" disabled>Sharing</button>
+        <button class="btn" id="btn_lock" style="width:8ch" disabled>Lock</button>
         <button class="btn" id="btn_download" disabled>Get</button>
         <button class="btn" id="btn_upload" disabled>Put</button>
         <!-- button class="btn" id="btn_alloc" style="float:right" disabled>Allocations</button -->
@@ -51,8 +52,6 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
                     <table style='width:100%'>
-                        <!-- tr><td>Title:</td><td><input id="title_query" type='text' style="width:100%"></input></td><td>Desc:</td><td><input id="desc_query" type='text' style="width:100%"></input></td><td>Keywords:</td><td><input id="kw_query" type='text' style="width:100%"></input></td><td><button class="btn small ui-widget ui-widget-content" onclick="searchDirect()"><span class='ui-icon ui-icon-play' style='font-size:1em'></span></button></td></tr -->
-
                         <tr><td>Text:</td><td><input id="text_query" type='text' style="width:100%"></input></td><td><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
 
                         <tr><td>Metadata:</td><td><input id="meta_query" type='text' style="width:100%"></input></td><td><button class='btn small' onclick='searchWizard()' style='width:12ch'>Advanced</button></td></tr>
@@ -112,5 +111,6 @@
     <li><div id="btn_new_coll">Collection</div></li>
     <li><div id="btn_new_data">Data</div></li>
 </ul>
+
 <div id="ctxtmenu" style="display:none;z-index:1000">
 </div>

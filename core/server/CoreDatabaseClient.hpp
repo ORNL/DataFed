@@ -49,7 +49,6 @@ public:
 
     void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
-    //void projDelete( const Auth::ProjectDeleteRequest & a_request, Anon::AckReply & a_reply );
     void projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
@@ -57,8 +56,7 @@ public:
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
-    //void recordDelete( const Auth::RecordDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
-    //void recordGetDataLocation( const Auth::RecordGetDataLocationRequest & a_request, Auth::RecordDataLocationReply & a_reply );
+    void recordLockToggle( const Auth::RecordLockToggleRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordDelete( const std::string & a_id, RecordDataLocation & a_loc );
     void recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
@@ -66,7 +64,6 @@ public:
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
-    //void collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply );
     void collDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply );
