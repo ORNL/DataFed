@@ -115,10 +115,10 @@ string parseSearchTerms( const string & a_key, const vector<string> & a_terms )
     {
         if ( i != or_terms.begin() )
             result += " or ";
-        if ( isPhrase( *i ) )
-            result += "phrase(i['" + a_key + "'],'" + *i + "')";
-        else
-            result += "i['" + a_key + "'] == '" + *i + "'";
+        //if ( isPhrase( *i ) )
+        result += "phrase(i['" + a_key + "'],'" + *i + "')";
+        //else
+        //    result += "i['" + a_key + "'] == '" + *i + "'";
     }
 
     if ( or_terms.size() > 1 )
@@ -128,20 +128,20 @@ string parseSearchTerms( const string & a_key, const vector<string> & a_terms )
     {
         if ( result.size() )
             result += " and ";
-        if ( isPhrase( *i ) )
-            result += "phrase(i['" + a_key + "'],'" + *i + "')";
-        else
-            result += "i['" + a_key + "'] == '" + *i + "'";
+        //if ( isPhrase( *i ) )
+        result += "phrase(i['" + a_key + "'],'" + *i + "')";
+        //else
+        //    result += "i['" + a_key + "'] == '" + *i + "'";
     }
 
     for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
     {
         if ( result.size() )
             result += " and ";
-        if ( isPhrase( *i ) )
-            result += "not phrase(i['" + a_key + "'],'" + *i + "')";
-        else
-            result += "i['" + a_key + "'] != '" + *i + "'";
+        //if ( isPhrase( *i ) )
+        result += "not phrase(i['" + a_key + "'],'" + *i + "')";
+        //else
+        //    result += "i['" + a_key + "'] != '" + *i + "'";
     }
 
     return "("+result+")";
