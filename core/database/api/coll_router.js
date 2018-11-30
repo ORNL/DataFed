@@ -310,7 +310,14 @@ router.get('/read', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        var result = g_db._query( "for v in 1..1 outbound @coll item return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }", { coll: coll_id });
+        var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title";
+
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined )
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+
+        qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+
+        var result = g_db._query( qry, { coll: coll_id });
 
         res.send( result );
     } catch( e ) {
@@ -319,7 +326,8 @@ router.get('/read', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
-.queryParam('mode', joi.string().valid('a','d','c').optional(), "Read mode: (a)ll, (d)ata only, (c)ollections only")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
 .summary('Read contents of a collection by ID or alias')
 .description('Read contents of a collection by ID or alias');
 
