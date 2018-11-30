@@ -38,12 +38,6 @@ enum XfrStatus
     XS_FAILED       = 4;
 }
 
-enum CollReadMode
-{
-    CRM_ALL         = 0;
-    CRM_COLL        = 1;
-    CRM_DATA        = 2;
-}
 
 enum CollDelMode
 {

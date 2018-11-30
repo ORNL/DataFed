@@ -110,7 +110,7 @@ public:
     spCollDataReply     collCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_coll_id = 0 );
     spCollDataReply     collUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0 );
     spCollDataReply     collView( const std::string & a_id );
-    spListingReply      collRead( const std::string & a_coll_id, CollReadMode a_mode = CRM_ALL, bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
+    spListingReply      collRead( const std::string & a_coll_id, uint32_t a_offset = 0, uint32_t a_count = 0 );
     void                collAddItem( const std::string & a_coll_id, const std::string & a_item_id );
     void                collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id );
     spCollDataReply     collGetParents( const std::string & a_id, bool a_all = false );

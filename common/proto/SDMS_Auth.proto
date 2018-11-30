@@ -285,7 +285,6 @@ message CollViewRequest
 message CollReadRequest
 {
     required string             id          = 1;
-    optional CollReadMode       mode        = 2;
     optional bool               details     = 3;
     optional uint32             offset      = 4;
     optional uint32             count       = 5;

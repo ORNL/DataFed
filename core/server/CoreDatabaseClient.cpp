@@ -1079,16 +1079,14 @@ void
 DatabaseClient::collRead( const CollReadRequest & a_request, ListingReply & a_reply )
 {
     rapidjson::Document result;
-    const char * mode = "a";
-    if ( a_request.has_mode() )
-    {
-        if ( a_request.mode() == CRM_DATA )
-            mode = "d";
-        else if ( a_request.mode() == CRM_COLL )
-            mode = "c";
-    }
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_offset() )
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count() )
+        params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "col/read", {{"id",a_request.id()},{"mode",mode}}, result );
+    dbGet( "col/read", params, result );
 
     setListingData( a_reply, result );
 }

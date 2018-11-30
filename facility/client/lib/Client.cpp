@@ -653,15 +653,11 @@ Client::collView( const std::string & a_id )
 }
 
 spListingReply
-Client::collRead( const std::string & a_coll_id, CollReadMode a_mode, bool a_details, uint32_t a_offset, uint32_t a_count )
+Client::collRead( const std::string & a_coll_id, uint32_t a_offset, uint32_t a_count )
 {
     Auth::CollReadRequest req;
 
     req.set_id( a_coll_id );
-    if ( a_mode )
-        req.set_mode( a_mode );
-    if ( a_details )
-        req.set_details( a_details );
     if ( a_offset )
         req.set_offset( a_offset );
     if ( a_count )
