@@ -128,8 +128,10 @@ router.post('/create', function (req, res) {
                 if ( req.body.topic )
                     obj.topic = req.body.topic.toLowerCase();
 
-                if ( req.body.alias )
+                if ( req.body.alias ){
                     obj.alias = req.body.alias.toLowerCase();
+                    g_lib.validateAlias( obj.alias );
+                }
 
                 if ( req.body.md ){
                     obj.md = req.body.md; //JSON.parse( req.body.md );
@@ -148,9 +150,8 @@ router.post('/create', function (req, res) {
                     loc.parent = alloc_parent;
                 g_db.loc.save(loc);
 
-                if ( req.body.alias ) {
-                    g_lib.validateAlias( req.body.alias );
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                if ( obj.alias ) {
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
 
                     if ( g_db.a.exists({ _key: alias_key }))
                         throw g_lib.ERR_ALIAS_IN_USE;
@@ -158,7 +159,6 @@ router.post('/create', function (req, res) {
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    data.new.alias = req.body.alias;
                 }
 
                 if ( req.body.topic ){
@@ -233,9 +233,9 @@ router.post('/update', function (req, res) {
 
                 var obj = { ut: Math.floor( Date.now()/1000 ) };
 
-                if ( req.body.alias ){
-                    g_lib.validateAlias( req.body.alias );
-                    obj.alias = req.body.alias;
+                if ( req.body.alias != undefined  ){
+                    obj.alias = req.body.alias.toLowerCase();
+                    g_lib.validateAlias( obj.alias );
                 }
 
                 if ( req.body.title != undefined )
@@ -297,22 +297,21 @@ router.post('/update', function (req, res) {
                 data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
                 data = data.new;
 
-                if ( req.body.alias != undefined ) {
+                if ( obj.alias != undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: data_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
                         graph.a.remove( old_alias._to );
                     }
 
-                    if ( req.body.alias ){
-                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                    if ( obj.alias ){
+                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
                         if ( g_db.a.exists({ _key: alias_key }))
                             throw g_lib.ERR_ALIAS_IN_USE;
 
                         g_db.a.save({ _key: alias_key });
                         g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
                         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                        data.alias = req.body.alias;
                     }
                 }
 
@@ -364,18 +363,11 @@ router.get('/view', function (req, res) {
                 rem_md = true;
         }
 
-        //var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-
-        var alias = g_db._query("for v in 1..1 outbound @data alias return v", { data: data_id }).toArray();
-        if ( alias.length ) {
-            data.alias = alias[0]._key;
-        }
-
         if ( rem_md && data.md )
             delete data.md;
 
         data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
-        //data.owner = owner_id;
+
         delete data._rev;
         delete data._key;
         data.id = data._id;
@@ -409,11 +401,6 @@ router.get('/lock/toggle', function (req, res) {
 
         data = g_db._update( data_id, obj, { returnNew: true });
         data = data.new;
-
-        var alias = g_db._query("for v in 1..1 outbound @data alias return v", { data: data_id }).toArray();
-        if ( alias.length ) {
-            data.alias = alias[0]._key;
-        }
 
         data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
 

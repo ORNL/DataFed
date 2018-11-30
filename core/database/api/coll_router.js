@@ -62,25 +62,29 @@ router.post('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = { title: req.body.title, owner: owner_id, ct: time, ut: time };
+
                 if ( req.body.desc )
                     obj.desc = req.body.desc;
+
                 if ( req.body.public )
                     obj.public = req.body.public;
+
+                if ( req.body.alias ) {
+                    obj.alias = req.body.alias.toLowerCase();
+                    g_lib.validateAlias( obj.alias );
+                }
 
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner_id });
 
                 g_graph.item.save({ _from: parent_id, _to: coll._id });
 
-                if ( req.body.alias ) {
-                    g_lib.validateAlias( req.body.alias );
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                if ( obj.alias ) {
+                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-
-                    coll.new.alias = req.body.alias;
                 }
 
                 coll = coll.new;
@@ -130,9 +134,6 @@ router.post('/update', function (req, res) {
                 g_lib.validateTitle( req.body.title );
                 g_lib.validateDescShort( req.body.desc );
 
-                if ( req.body.alias ){
-                    g_lib.validateAlias( req.body.alias );
-                }
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
@@ -143,6 +144,11 @@ router.post('/update', function (req, res) {
                 if ( req.body.desc != undefined && req.body.desc != coll.desc )
                     obj.desc = req.body.desc;
 
+                if ( req.body.alias != undefined ){
+                    obj.alias = req.body.alias.toLowerCase();
+                    g_lib.validateAlias( obj.alias );
+                }
+    
                 if ( req.body.public != undefined && req.body.public != coll.public ){
                     obj.public = req.body.public;
                 }
@@ -150,21 +156,20 @@ router.post('/update', function (req, res) {
                 coll = g_db._update( coll_id, obj, { returnNew: true });
                 coll = coll.new;
 
-                if ( req.body.alias != undefined ) {
+                if ( obj.alias != undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
                         graph.a.remove( old_alias._to );
                     }
 
-                    if ( req.body.alias ){
+                    if ( obj.alias ){
                         var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + req.body.alias;
+                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
 
                         g_db.a.save({ _key: alias_key });
                         g_db.alias.save({ _from: coll_id, _to: "a/" + alias_key });
                         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                        coll.alias = req.body.alias;
                     }
                 }
 
@@ -278,12 +283,6 @@ router.get('/view', function (req, res) {
 
         var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
         coll.owner = owner_id;
-
-        var alias = g_db._query("for v in 1..1 outbound @coll alias return v", { coll: coll_id }).toArray();
-        if ( alias.length ) {
-            coll.alias = alias[0]._key;
-        }
-
         coll.id = coll._id;
         delete coll._id;
         delete coll._key;
@@ -303,47 +302,15 @@ router.get('/view', function (req, res) {
 router.get('/read', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-
         var coll_id = g_lib.resolveID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
-        var result = [];
-        var items;
-        var item;
-        var mode = 0;
-        var i;
 
-        if ( req.queryParams.mode == "c" )
-            mode = 1;
-        else if ( req.queryParams.mode == "d" )
-            mode = 2;
-        var qry = "for v in 1..1 outbound @coll item let a = (for i in outbound v._id alias return i._id) sort left(v._id,1), v.title return { id: v._id, title: v.title, alias: a[0], locked: v.locked }";
-
-        if ( g_lib.hasAdminPermObject( client, coll_id )) {
-            // No need to perform pernission checks on items if client has admin perm on collection
-            items = g_db._query( qry, { coll: coll_id }).toArray();
-
-            if ( mode > 0 ) {
-                for ( i in items ) {
-                    item = items[i];
-                    if ((mode == 1 && item.id[0] == 'c') || (mode == 2 && item.id[0] == 'd' ))
-                        result.push( item );
-                }
-            } else {
-                result = items;
-            }
-
-        } else {
+        if ( !g_lib.hasAdminPermObject( client, coll_id )) {
             if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_DATA ))
                 throw g_lib.ERR_PERM_DENIED;
-
-            items = g_db._query( qry, { coll: coll_id }).toArray();
-
-            for ( i in items ) {
-                item = items[i];
-                if ( !mode || (mode == 1 && item.id[0] == 'c') || (mode == 2 && item.id[0] == 'd' ))
-                    result.push({ id: item.id, title: item.title, alias: item.alias });
-            }
         }
+
+        var result = g_db._query( "for v in 1..1 outbound @coll item return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }", { coll: coll_id });
 
         res.send( result );
     } catch( e ) {
@@ -484,9 +451,9 @@ router.get('/get_parents', function (req, res) {
         // TODO Check non-owner permission for this?
 
         if ( req.queryParams.all ){
-            items = g_db._query( "for v in 1..20 inbound @item item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { item: item_id }).toArray();
+            items = g_db._query( "for v in 1..20 inbound @item item return { id: v._id, title: v.title, alias: v.alias }", { item: item_id }).toArray();
         }else{
-            items = g_db._query( "for v in 1..1 inbound @item item let a = (for i in outbound v._id alias return i._id) return { id: v._id, title: v.title, alias: a[0] }", { item: item_id }).toArray();
+            items = g_db._query( "for v in 1..1 inbound @item item return { id: v._id, title: v.title, alias: v.alias }", { item: item_id }).toArray();
         }
 
         res.send( items );
