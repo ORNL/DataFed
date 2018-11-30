@@ -73,8 +73,7 @@ router.get('/perm/check', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
-        var result = true;
-        var id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
+        var obj,result = true,id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
 
         if ( id[1] != "/" )
             throw g_lib.ERR_INVALID_PARAM;
@@ -88,10 +87,17 @@ router.get('/perm/check', function (req, res) {
                 if (( perms & ~g_lib.PERM_MANAGER ) != 0 )
                     result = false;
             }
-        }else if ( ty == "d" || ty == "c" ){
+        }else if ( ty == "d" ){
             if ( !g_lib.hasAdminPermObject( client, id )){
-                console.log("no admin perm");
-                var obj = g_db[ty].document( id );
+                obj = g_db.d.document( id );
+                if ( obj.locked && ( perms & (g_lib.PERM_RD_DATA | g_lib.PERM_RD_META | g_lib.PERM_WR_DATA | g_lib.PERM_WR_META  | g_lib.PERM_ADMIN)) != 0 )
+                    result = false;
+                else
+                    result = g_lib.hasPermissions( client, obj, perms );
+            }
+        }else if ( ty == "c" ){
+            if ( !g_lib.hasAdminPermObject( client, id )){
+                obj = g_db.c.document( id );
                 result = g_lib.hasPermissions( client, obj, perms );
             }
         }else
@@ -110,10 +116,9 @@ router.get('/perm/check', function (req, res) {
 
 router.get('/perm/get', function (req, res) {
     try {
-        console.log("get perm:",req.queryParams.client,req.queryParams.perms);
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var result = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
-        var id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
+        var obj,id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
@@ -122,16 +127,21 @@ router.get('/perm/get', function (req, res) {
             } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
                 result &= g_lib.PERM_MANAGER;
             }
-        }else if ( ty == "d" || ty == "c" ){
+        }else if ( ty == "d" ){
             if ( !g_lib.hasAdminPermObject( client, id )){
-                console.log("no admin perm");
-                var obj = g_db[ty].document( id );
+                obj = g_db.d.document( id );
+                if ( obj.locked )
+                    result &= ~(g_lib.PERM_RD_DATA | g_lib.PERM_RD_META | g_lib.PERM_WR_DATA | g_lib.PERM_WR_META  | g_lib.PERM_ADMIN);
+
+                result = g_lib.getPermissions( client, obj, result );
+            }
+        }else if ( ty == "c" ){
+            if ( !g_lib.hasAdminPermObject( client, id )){
+                obj = g_db.c.document( id );
                 result = g_lib.getPermissions( client, obj, result );
             }
         }else
             throw g_lib.ERR_INVALID_PARAM;
-
-         console.log("result:",result);
 
         res.send({ granted: result });
     } catch( e ) {
