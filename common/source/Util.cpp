@@ -650,7 +650,11 @@ string parseQuery( const string & a_query, bool & use_client, bool & use_shared_
     }
 
     if ( imem->value.Size() > 1 )
-        result += ")) return i";
+    {
+        result += "))";
+        if ( phrase.size() )
+            result += " return i";
+    }
 
     if ( phrase.size() )
         result += "))";
@@ -658,7 +662,7 @@ string parseQuery( const string & a_query, bool & use_client, bool & use_shared_
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " return {id:i._id,title:i.title,locked:i.locked}";
+    result += " return {id:i._id,title:i.title,alias:i.alias,locked:i.locked}";
 
 
     return result;
