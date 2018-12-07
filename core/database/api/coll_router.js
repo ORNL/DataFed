@@ -311,13 +311,20 @@ router.get('/read', function (req, res) {
         }
 
         var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title";
+        var result;
 
-        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined )
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-
-        qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
-
-        var result = g_db._query( qry, { coll: coll_id });
+            qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+            result = g_db._query( qry, { coll: coll_id },{},{fullCount:true});
+            var tot = result.getExtra().stats.fullCount;
+            result = result.toArray();
+            result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+        }
+        else{
+            qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+            result = g_db._query( qry, { coll: coll_id });
+        }
 
         res.send( result );
     } catch( e ) {
@@ -391,40 +398,39 @@ router.get('/write', function (req, res) {
                     for ( i in req.queryParams.add ) {
                         obj = g_lib.getObject( req.queryParams.add[i], client );
 
-                        // 1. Check if item is a root collection
-                        if ( obj.is_root )
-                            throw g_lib.ERR_CANNOT_LINK_ROOT;
+                        // Check if item is already in this collection
+                        if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id })){
+                            // Check if item is a root collection
+                            if ( obj.is_root )
+                                throw g_lib.ERR_CANNOT_LINK_ROOT;
 
-                        // 2. Check if item is already in this collection
-                        if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
-                            throw g_lib.ERR_ITEM_ALREADY_LINKED;
+                            // Check if item has same owner as this collection
+                            if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
+                                throw g_lib.ERR_CANNOT_CROSS_LINK;
 
-                        // 3. Check if item has same owner as this collection
-                        if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
-                            throw g_lib.ERR_CANNOT_CROSS_LINK;
+                            // Check for proper permission on item
+                            if ( !is_admin ) {
+                                if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_ADMIN ))
+                                    throw g_lib.ERR_PERM_DENIED;
+                            }
 
-                        // 4. Check for proper permission on item
-                        if ( !is_admin ) {
-                            if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_ADMIN ))
-                                throw g_lib.ERR_PERM_DENIED;
-                        }
+                            if ( obj._id[0] == "c" ){
+                                // Check for circular dependency
+                                if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
+                                    throw g_lib.ERR_CIRCULAR_LINK;
 
-                        if ( obj._id[0] == "c" ){
-                            // 5. Check for circular dependency
-                            if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
-                                throw g_lib.ERR_CIRCULAR_LINK;
+                                // Collections can only be linked to one parent
+                                g_db.item.removeByExample({ _to: obj._id });
+                            }
 
-                            // 6. Collections can only be linked to one parent
-                            g_db.item.removeByExample({ _to: obj._id });
-                        }
+                            g_db.item.save({ _from: coll_id, _to: obj._id });
 
-                        g_db.item.save({ _from: coll_id, _to: obj._id });
-
-                        // 7. If item has no parent collection AND it's not being added, link to root
-                        for ( idx in loose ){
-                            if ( loose[idx].id == obj._id ){
-                                loose.slice(idx,1);
-                                break;
+                            // If item has no parent collection AND it's not being added, link to root
+                            for ( idx in loose ){
+                                if ( loose[idx].id == obj._id ){
+                                    loose.slice(idx,1);
+                                    break;
+                                }
                             }
                         }
                     }

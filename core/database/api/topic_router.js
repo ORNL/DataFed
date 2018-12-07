@@ -22,7 +22,7 @@ module.exports = router;
 
 router.get('/list', function (req, res) {
     try {
-        var topics = g_db._query("for v in 1..1 inbound @par top return {id:v._id,title:v.title}",{par: req.queryParams.id?req.queryParams.id:"t/root" });
+        var topics = g_db._query("for v in 1..1 inbound @par top return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}",{par: req.queryParams.id?req.queryParams.id:"t/root" });
 
         res.send( topics );
     } catch( e ) {
