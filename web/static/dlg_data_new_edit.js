@@ -1,8 +1,8 @@
 var DLG_DATA_NEW = 0;
 var DLG_DATA_EDIT = 1;
-var DLG_DATA_COPY = 2;
+var DLG_DATA_DUP = 2;
 var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
-var DLG_DATA_BTN_LABEL = ["Create", "Update", "Copy"];
+var DLG_DATA_BTN_LABEL = ["Create", "Update", "Duplicate"];
 
 //<tr><td title='Metadata JSON document (optional)'>Metadata:</td><td colspan='2'><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>
 
@@ -34,7 +34,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         </div>" );
 
     var dlg_title;
-    if ( a_data && ( a_mode == DLG_DATA_EDIT || a_mode == DLG_DATA_COPY ))
+    if ( a_data && ( a_mode == DLG_DATA_EDIT || a_mode == DLG_DATA_DUP ))
         dlg_title = DLG_DATA_LABEL[a_mode] + " Data " + a_data.id;
     else if ( a_mode == DLG_DATA_NEW )
         dlg_title = "New Data";

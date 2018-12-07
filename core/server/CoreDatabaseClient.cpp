@@ -1205,13 +1205,24 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
     {
         rapidjson::Value & val = a_result[i];
 
-        item = a_reply.add_item();
-        item->set_id( val["id"].GetString() );
-        item->set_title( val["title"].GetString() );
-        if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
-            item->set_alias( imem->value.GetString() );
-        if (( imem = val.FindMember("locked")) != val.MemberEnd() && !imem->value.IsNull() )
-            item->set_locked( imem->value.GetBool() );
+        if (( imem = val.FindMember("paging")) != val.MemberEnd())
+        {
+            a_reply.set_offset( imem->value["off"].GetUint() );
+            a_reply.set_count( imem->value["cnt"].GetUint() );
+            a_reply.set_total( imem->value["tot"].GetUint() );
+        }
+        else
+        {
+            item = a_reply.add_item();
+            item->set_id( val["id"].GetString() );
+            item->set_title( val["title"].GetString() );
+            if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
+                item->set_alias( imem->value.GetString() );
+            if (( imem = val.FindMember("locked")) != val.MemberEnd() && !imem->value.IsNull() )
+                item->set_locked( imem->value.GetBool() );
+            if (( imem = val.FindMember("owner")) != val.MemberEnd() && !imem->value.IsNull() )
+                item->set_owner( imem->value.GetString() );
+        }
     }
 }
 

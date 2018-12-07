@@ -107,7 +107,7 @@ function escapeHTML(string) {
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            console.log("viewData ok, data:", data );
+            //console.log("viewData ok, data:", data );
             a_cb( data );
         }
         else {
@@ -162,16 +162,22 @@ function viewProj( a_id, a_cb ){
     });
 }
 
-function linkItem( a_item, a_coll, a_cb ) {
-    _asyncGet( "/api/link?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll), null, a_cb );
+function linkItems( a_items, a_coll, a_cb ) {
+    _asyncGet( "/api/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
-function linkItemUnlinkSource( a_item, a_coll, a_source, a_cb ) {
-    _asyncGet( "/api/link?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll)+"&unlink="+encodeURIComponent(a_source), null, a_cb );
+function linkItemsUnlinkSource( a_items, a_coll, a_source, a_cb ) {
+    _asyncGet( "/api/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll)+"&unlink="+encodeURIComponent(a_source), null, a_cb );
 }
 
+/*
 function unlinkItem( a_item, a_coll, a_cb ) {
     _asyncGet( "/api/unlink?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll), null, a_cb );
+}*/
+
+function unlinkItems( a_items, a_coll, a_cb ) {
+    console.log("unlinkItems()",a_items);
+    _asyncGet( "/api/unlink?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
 function getParents( a_id, a_cb ) {

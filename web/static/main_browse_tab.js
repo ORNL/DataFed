@@ -23,6 +23,11 @@ function makeBrowserTab(){
     this.my_root_key = "c/u_" + g_user.uid + "_root";
     this.drag_mode = 0;
     this.drag_enabled = true;
+    this.searchSelect = false;
+    this.selectScope = null;
+    this.dragging = false;
+    this.page_sz = 20;
+    this.pasteItems = [];
 
     this.deleteSelected = function(){
         var node = inst.data_tree.activeNode;
@@ -188,6 +193,29 @@ function makeBrowserTab(){
         }
     }
 
+
+    this.unlinkSelected = function(){
+        var sel = inst.data_tree.getSelectedNodes();
+        if ( sel.length ){
+            var items = [];
+            for ( var i in sel ){
+                items.push( sel[i].key );
+            }
+            console.log("items:",items);
+            unlinkItems( items, sel[0].parent.key, function( ok, rooted ) {
+                if ( ok ){
+                    if ( rooted.length ){
+                        console.log("rooted:",rooted);
+                        inst.reloadNode( inst.data_tree.getNodeByKey( inst.my_root_key ));
+                    }else{
+                        inst.reloadNode( sel[0].parent );
+                    }
+                }else
+                    setStatusText( rooted );
+            });
+        }
+    }
+
     this.editSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
@@ -241,7 +269,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.copySelected = function(){
+    this.dupSelected = function(){
         var node = inst.data_tree.activeNode;
         if ( node && node.key[0] == "d" ) {
             //console.log( "edit sel", node, node.data.isproj );
@@ -254,10 +282,9 @@ function makeBrowserTab(){
                 viewData( node.key, function( data ){
                     if ( data ){
                         console.log( "data", data );
-                        dlgDataNewEdit(DLG_DATA_COPY,data,null,0,function(data2){
+                        dlgDataNewEdit(DLG_DATA_DUP,data,null,0,function(data2){
                             inst.addNode( data2 );
                             if ( data.dataSize && parseInt(data.dataSize) > 0 ){
-                                console.log( "Copy data, size:",data.dataSize);
                                 copyData( node.key, data2.id, function( ok, data ){
                                     if ( ok )
                                         dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
@@ -350,40 +377,91 @@ function makeBrowserTab(){
         }
     }
 
-    this.updateBtnState = function( state, admin, no_new ){
+    this.calcActionState = function( state, admin ){
         var bits;
 
         switch ( state ){
-            case "c": bits = 0x32;  break;
+            case "c": bits = 0x72;  break;
             case "d": bits = 0;     break;
-            case "r": bits = 0x37;  break;
-            case "p": bits = 0x3a | (admin?0:5); break;
-            default:  bits = 0x3F;  break;
+            case "r": bits = 0xF7;  break;
+            case "p": bits = 0xFa | (admin?0:5); break;
+            default:  bits = 0xFF;  break;
         }
-        console.log("upd btn state",state,admin,bits);
+        return bits;
+    }
+
+    this.updateBtnState = function( state, admin ){
+        //console.log("upd btn state",state,admin,bits);
+        var bits = calcActionState( state, admin );
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
-        $("#btn_copy",inst.frame).button("option","disabled",(bits & 2) != 0);
+        //$("#btn_dup",inst.frame).button("option","disabled",(bits & 2) != 0);
         $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0);
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0);
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0);
         $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
-        $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x20) != 0);
+        $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
+        //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
-        inst.data_tree_div.contextmenu("enableEntry", "copy", (bits & 2) == 0 );
+        //inst.data_tree_div.contextmenu("enableEntry", "dup", (bits & 2) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "del", (bits & 4) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "share", (bits & 8) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "put", (bits & 0x10) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x20) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "lock", (bits & 0x40) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "unlink", (bits & 0x80) == 0 );
+}
+
+    this.reloadNode = function( node ){
+        console.log("reloadNode",node.key);
+        var save_exp = node.isExpanded();
+        if ( save_exp ){
+            console.log("reloadNode - save exp");
+            var exp = [];
+            node.visit(function(n){
+                if ( n.isExpanded() )
+                    exp.push(n.key);
+            });
+            console.log( "expanded",exp);
+        }
+        //var exp = node.isExpanded();
+        //node.resetLazy();
+        node.load(true).always(function(){
+            if ( save_exp ){
+                console.log("reloadNode - restore exp");
+
+                function expNode( idx ){
+                    if ( idx < exp.length ){
+                        var n = inst.data_tree.getNodeByKey( exp[idx] );
+                        if ( n ){
+                            n.setExpanded(true).always(function(){
+                                expNode( idx + 1 );
+                            });
+                        }else{
+                            expNode( idx + 1 );
+                        }
+                    };
+                }
+
+                expNode(0);
+                /*
+                node.setExpanded(true);
+                var n;
+                for ( i in exp ){
+                    n = inst.data_tree.getNodeByKey( exp[i] );
+                    console.log( "found", n );
+                    if ( n )
+                        n.setExpanded(true);
+                }*/
+            }
+        });
     }
 
     this.reloadSelected = function(){
         var node = inst.data_tree.activeNode;
         if ( node ){
-            var exp = node.isExpanded();
-            node.resetLazy();
-            node.setExpanded(exp);
+            inst.reloadNode( node );
         }
     }
 
@@ -434,7 +512,7 @@ function makeBrowserTab(){
                         if ( node.data.isroot )
                             inst.updateBtnState( "r", node.data.admin );
                         else
-                            inst.updateBtnState( "c", null, false );
+                            inst.updateBtnState( "c", null );
         
                         html = "Collection ID: " + key;
                         if ( item.alias )
@@ -471,7 +549,7 @@ function makeBrowserTab(){
             } else if ( key[0] == "d" ) {
                 viewData( key, function( item ){
                     if ( item ){
-                        inst.updateBtnState( "d", null, node.data.nonew?true:false );
+                        inst.updateBtnState( "d", null );
 
                         html = "Data ID: " + key;
                         if ( item.alias )
@@ -731,7 +809,7 @@ function makeBrowserTab(){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                     for ( var i in items ){
                         var item = items[i];
-                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:true,nonew:true});
+                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,scope:item.owner});
                     }
                 } else {
                     setStatusText("No results found");
@@ -843,13 +921,16 @@ function makeBrowserTab(){
     this.updateSearchSelectState = function( enabled ){
         if( enabled && $("#scope_selected",inst.frame).prop("checked")){
             $(inst.data_tree_div).fancytree("option","checkbox",true);
-            $(inst.data_tree_div).fancytree("option","selectMode",2);
+            //$(inst.data_tree_div).fancytree("option","selectMode",2);
             $("#btn_srch_clear_select",inst.frame).button("option","disabled",false);
+            inst.searchSelect = true;
         }else{
             $(inst.data_tree_div).fancytree("option","checkbox",false);
-            $(inst.data_tree_div).fancytree("option","selectMode",1);
+            //$(inst.data_tree_div).fancytree("option","selectMode",1);
             $("#btn_srch_clear_select",inst.frame).button("option","disabled",true);
+            inst.searchSelect = false;
         }
+        inst.data_tree.selectAll(false);
     }
 
     this.searchClearSelection = function(){
@@ -961,9 +1042,56 @@ function makeBrowserTab(){
         });
     }
 
+    this.treeSelectNode = function( a_node, a_toggle ){
+        if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
+            setStatusText("Cannot select across collections or categories");
+            return;
+        }
+
+        if ( a_toggle ){
+            if ( a_node.isSelected() ){
+                a_node.setSelected( false );
+            }else{
+                a_node.setSelected( true );
+            }
+        }else{
+            a_node.setSelected( true );
+        }
+    }
+
+    this.treeSelectRange = function( a_node ){
+        if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
+            setStatusText("Cannot select across collections or categories");
+            return;
+        }
+
+        var act_node = inst.data_tree.activeNode;
+        if ( act_node ){
+            var parent = act_node.parent;
+            if ( parent == a_node.parent ){
+                var n,sel = false;
+                for ( i in parent.children ){
+                    n = parent.children[i];
+                    if ( sel ){
+                        n.setSelected( true );
+                        if ( n.key == act_node.key || n.key == a_node.key )
+                            break;
+                    }else{
+                        if ( n.key == act_node.key || n.key == a_node.key ){
+                            n.setSelected( true );
+                            sel = true;
+                        }
+                    }
+                }
+            }else{
+                setStatusText("Range select only supported within a single collection.");
+            }
+        }
+    }
+
     var tree_source = [
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[{
-            title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
+            title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
@@ -980,68 +1108,113 @@ function makeBrowserTab(){
 
     $("#data_tree").fancytree({
         extensions: ["dnd","themeroller"],
+        toggleEffect: false,
         dnd:{
+            autoExpandMS: 400,
+            draggable:{
+                zIndex: 1000,
+                scroll: true,
+                //containment: "parent",
+                //revert: false,
+                scrollSpeed: 10,
+                scrollSensitivity: 30
+            },
             dragStart: function(node, data) {
+                console.log( "drag start" );
                 //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
                 if ( !inst.drag_enabled || node.data.nodrag )
                     return false;
 
-                if ( data.originalEvent.shiftKey ) {
-                    inst.drag_mode = 1;
-                    return true;
-                } else if ( data.originalEvent.ctrlKey ) {
-                    return false;
-                } else {
-                    inst.drag_mode = 0;
-                    return true;
+                if ( !node.isSelected() ){
+                    inst.data_tree.selectAll(false);
+                    inst.selectScope = data.node;
+                    node.setSelected(true);
                 }
-            },
-            dragDrop: function(node, data) {
-                console.log("drop in",node,data);
 
-                if ( inst.drag_mode ){
-                    linkItemUnlinkSource( data.otherNode.key, node.key, node.parent.key, function( ok, msg ) {
-                        if ( ok ){
-                            node.setExpanded(true).always(function(){
-                                if ( !inst.data_tree.getNodeByKey( data.otherNode.key, node ))
-                                    data.otherNode.moveTo( node, data.hitMode );
-                            });
-                        }else
-                            dlgAlert("Link Error", msg );
-                    });
-                }else{
-                    linkItem( data.otherNode.key, node.key, function( ok, msg ) {
-                        if ( ok ){
-                            node.setExpanded(true).always(function(){
-                                if ( !inst.data_tree.getNodeByKey( data.otherNode.key, node )){
-                                    if ( data.otherNode.isFolder())
-                                        data.otherNode.moveTo( node, data.hitMode );
-                                    else
-                                        data.otherNode.copyTo( node, data.hitMode );
+                inst.dragging = true;
+
+                if ( data.originalEvent.ctrlKey || !node.parent.key.startsWith("c/") ) {
+                    inst.drag_mode = 0;
+                } else {
+                    inst.drag_mode = 1;
+                }
+                return true;
+            },
+            dragDrop: function(dest_node, data) {
+                inst.dragging = false;
+
+                // data.otherNode = source, node = destination
+                console.log("drop stop in",dest_node.key);
+
+                if ( dest_node.key.startsWith("d/"))
+                    dest_node = dest_node.parent;
+
+                var i,sel = inst.data_tree.getSelectedNodes();
+                if ( sel.length ){
+                    var items = [];
+                    for ( i in sel ){
+                        items.push( sel[i].key );
+                    }
+                    console.log("items:",items);
+
+                    if ( inst.drag_mode ){
+                        //linkItemUnlinkSource( data.otherNode.key, node.key, data.otherNode.parent.key, function( ok, msg ) {
+                        linkItemsUnlinkSource( items, dest_node.key, data.otherNode.parent.key, function( ok, msg ) {
+                            if ( ok ){
+                                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
+                                var i, par = data.otherNode.getParentList();
+                                console.log("Source node parents:",par);
+                                for ( i in par ){
+                                    if ( par[i].key == dest_node.key ){
+                                        console.log("Reload dest node ONLY");
+                                        inst.reloadNode(dest_node);
+                                        return;
+                                    }
                                 }
-                            });
-                        }else
-                            dlgAlert("Link Error", msg );
-                    });
+                                par = dest_node.getParentList();
+                                console.log("Dest node parents:",par);
+                                for ( i in par ){
+                                    if ( par[i].key == data.otherNode.parent.key ){
+                                        console.log("Reload source node ONLY");
+                                        inst.reloadNode(data.otherNode.parent);
+                                        return;
+                                    }
+                                }
+                                console.log("Reload BOTH nodes");
+                                if ( dest_node.isLoaded() )
+                                    inst.reloadNode(dest_node);
+                                inst.reloadNode(data.otherNode.parent);
+                            }else
+                                setStatusText( msg );
+                        });
+                    }else{
+                        linkItems( items, dest_node.key, function( ok, msg ) {
+                            if ( ok ){
+                                if ( dest_node.isLoaded() )
+                                    inst.reloadNode(dest_node);
+                            }else
+                                setStatusText( msg );
+                        });
+                    }
                 }
             },
             dragEnter: function(node, data) {
-                console.log( "enter:", node, data );
-                if ( node.isFolder() && !node.data.notarg && node.data.scope == data.otherNode.data.scope )
+                //console.log( "enter:", node, data );
+                if ( !node.data.notarg && node.data.scope == data.otherNode.data.scope )
                     return "over";
                 else
                     return false;
             }
         },
         themeroller: {
-            activeClass: "ui-state-hover",
+            activeClass: "",
             addClass: "",
             focusClass: "",
-            hoverClass: "ui-state-active",
+            hoverClass: "fancytree-hover",
             selectedClass: ""
         },
         source: tree_source,
-        selectMode: 1,
+        selectMode: 2,
         lazyLoad: function( event, data ) {
             if ( data.node.key == "proj_own" ){
                 data.result = {
@@ -1096,7 +1269,7 @@ function makeBrowserTab(){
                 };
             } else {
                 data.result = {
-                    url: "/api/col/read?id=" + encodeURIComponent( data.node.key ),
+                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+inst.page_sz+"&id=" + encodeURIComponent( data.node.key ),
                     cache: false
                 };
             }
@@ -1158,18 +1331,13 @@ function makeBrowserTab(){
                 data.result = [];
                 var item,entry;
                 var items = data.response;
-
+                //console.log("topic items:",items);
                 for ( var i in items ) {
                     item = items[i];
-                    is_folder = item.id[0]=="t"?true:false;
-
-                    entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:is_folder,scope:"topics",key:item.id };
-                    if ( is_folder ){
-                        entry.lazy = true;
-                        entry.icon = "ui-icon ui-icon-grip-solid-horizontal";
-                    } else {
-                        entry.icon = "ui-icon ui-icon-file";
-                        entry.checkbox = false;
+                    if ( item.id[0]=="t" ){
+                        entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true };
+                    }else{
+                        entry = { title: inst.generateTitle(item),scope:item.owner,key:item.id,icon:"ui-icon ui-icon-file",checkbox:false };
                     }
 
                     data.result.push( entry );
@@ -1177,29 +1345,47 @@ function makeBrowserTab(){
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
             } else if ( data.node.parent ) {
+                console.log("Coll read, off:",data.response.offset,"count:",data.response.count,"total:",data.response.total);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
-                console.log(items);
+                //console.log(items);
+
+                if ( data.response.offset > 0 ){
+                    data.result.push({title:"(Prev)",statusNodeType:"paging",folder:false,icon:false,checkbox:false,offset:data.response.offset - data.response.count});
+                }
 
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
-                        entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id };
+                        entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id, offset: 0 };
                     }else{
                         entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:scope,key:item.id };
                     }
 
                     data.result.push( entry );
                 }
+
+                if ( data.response.total > (data.response.offset + data.response.count) ){
+                    data.result.push({title:"(Next)",statusNodeType:"paging",folder:false,icon:false,checkbox:false,offset:data.response.offset + data.response.count});
+                }
             }
         },
         activate: function( event, data ) {
+            console.log("node activate",data.node);
             showSelectedInfo( data.node );
         },
         select: function( event, data ) {
             if ( data.node.isSelected() ){
-                data.node.visit( function( node ){
+                console.log("node select",data.node);
+            }else{
+                console.log("node deselect",data.node);
+            }
+
+
+            //if ( inst.searchSelect && data.node.isSelected() ){
+            if ( data.node.isSelected() ){
+                    data.node.visit( function( node ){
                     node.setSelected( false );
                 });
                 var parents = data.node.getParentList();
@@ -1209,50 +1395,69 @@ function makeBrowserTab(){
             }
         },
         click: function(event, data) {
-            if ( inst.drag_enabled && data.originalEvent.ctrlKey ) {
-                //console.log("unlink", data );
-                if ( data.node.data.nodrag )
-                    return;
+            //console.log("node click,ev:",event,"which:",event.which);
+            if ( inst.dragging ){ // Suppress click processing on aborted drag
+                inst.dragging = false;
+            }else if ( !inst.searchSelect ){ // Selection "rules" differ for search-select mode
+                if ( event.which == null ){
+                    // Context menu (no mouse event info for some reason)
+                    if ( !data.node.isSelected() ){
+                        inst.data_tree.selectAll(false);
+                        inst.selectScope = data.node;
+                        inst.treeSelectNode(data.node);
+                    }
+                    // Update contextmenu choices
+                    var sel = inst.data_tree.getSelectedNodes();
 
-                // Prevent unlinking top-level folders
-                var plist;
-                if ( data.node.folder ){
-                    plist = data.node.getParentList();
+                    if ( !sel[0].parent.key.startsWith("c/") || sel[0].data.nodrag ){
+                        inst.data_tree_div.contextmenu("enableEntry", "unlink", false );
+                        inst.data_tree_div.contextmenu("enableEntry", "cut", false );
+                    }else{
+                        inst.data_tree_div.contextmenu("enableEntry", "unlink", true );
+                        inst.data_tree_div.contextmenu("enableEntry", "cut", true );
+                    }
 
-                    if ( !plist.length || plist[plist.length-1].data.nodrag )
-                        return;
+                    console.log( "sel 0", sel[0] );
+                    if ( sel[0].data.nodrag )
+                        inst.data_tree_div.contextmenu("enableEntry", "copy", false );
+                    else
+                        inst.data_tree_div.contextmenu("enableEntry", "copy", true );
+
+
+                    //inst.data_tree_div.contextmenu("enableEntry", "copy", (bits & 0x80) == 0 );
+                    if ( inst.pasteItems.length > 0 && sel[0].data.scope == inst.pasteItems[0].data.scope )
+                        inst.data_tree_div.contextmenu("enableEntry", "paste", true );
+                    else
+                        inst.data_tree_div.contextmenu("enableEntry", "paste", false );
+
+                } else if ( data.targetType != "expander" && data.node.data.scope ){
+                    if ( inst.data_tree.getSelectedNodes().length == 0 )
+                        inst.selectScope = data.node;
+
+                    if ( data.originalEvent.shiftKey && data.originalEvent.ctrlKey ) {
+                        inst.treeSelectRange(data.node);
+                    }else if ( data.originalEvent.ctrlKey ) {
+                        inst.treeSelectNode(data.node,true);
+                    }else if ( data.originalEvent.shiftKey ) {
+                        inst.data_tree.selectAll(false);
+                        inst.selectScope = data.node;
+                        inst.treeSelectRange(data.node);
+                    }else{
+                        inst.data_tree.selectAll(false);
+                        inst.selectScope = data.node;
+                        inst.treeSelectNode(data.node);
+                    }
                 }
-
-                unlinkItem( data.node.key, data.node.parent.key, function( ok, rooted ) {
-                    if ( ok ){
-                        if ( rooted.length == 0 )
-                            data.node.remove();
-                        else{
-                            // Don't care about what's in rooted array - only one item unlinked at a time here
-                            //console.log( plist );
-                            if ( !plist )
-                                plist = data.node.getParentList();
-
-                            console.log( "plist:", plist );
-
-                            // If item was already at root, don't move node
-                            if ( plist[plist.length-1].data.nodrag )
-                                return;
-    
-                            var parent;
-                            for ( i in plist ){
-                                if ( plist[i].data.scope ){
-                                    parent = plist[i];
-                                    break;
-                                }
-                            }
-                            console.log( "rooted:", rooted, "parent:",parent );
-                            data.node.moveTo( parent, "over" );
-                        }
-                    }else
-                        dlgAlert( "Unlink Error", rooted );
-                });
             }
+            //}
+        },
+        clickPaging: function(event, data) {
+            console.log("click paging node",data,data.node.parent,data.node.getParent());
+            //var url = "/api/col/read?offset="+ data.node.data.offset +"&count=10&id=" + encodeURIComponent( data.node.parent.key );
+            //console.log("new url:",url);
+            data.node.parent.data.offset = data.node.data.offset;
+            console.log("new offset:",data.node.parent.data.offset);
+            data.node.parent.load(true);
         }
     });
 
@@ -1269,27 +1474,39 @@ function makeBrowserTab(){
                 {title: "Collection", action: inst.newColl, cmd: "newc" },
                 {title: "Project", action: newProj, cmd: "newp" }
                 ]},
-            {title: "Edit", action: inst.editSelected, cmd: "edit" },
-            {title: "Copy", cmd: "copy" },
-            {title: "Delete", action: inst.deleteSelected, cmd: "del" },
-            {title: "Sharing", action: inst.shareSelected, cmd: "share" },
-            {title: "Get", action: function(){ inst.xfrSelected(1) }, cmd: "get" },
-            {title: "Put", action: function(){ inst.xfrSelected(0) }, cmd: "put" }
+            {title: "Record", children: [
+                {title: "Edit", action: inst.editSelected, cmd: "edit" },
+                //{title: "Duplicate", cmd: "dup" },
+                //{title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" },
+                {title: "Delete", action: inst.deleteSelected, cmd: "del" },
+                {title: "Sharing", action: inst.shareSelected, cmd: "share" },
+                {title: "Lock", action: inst.toggleLock, cmd: "lock" },
+                {title: "Get", action: function(){ inst.xfrSelected(1) }, cmd: "get" },
+                {title: "Put", action: function(){ inst.xfrSelected(0) }, cmd: "put" }
+                ]},
+            {title: "Selection", children: [
+                {title: "Cut", action: inst.cutSelected, cmd: "cut" },
+                {title: "Copy", action: inst.copySelected, cmd: "copy" },
+                {title: "Paste", action: inst.pasteSelected, cmd: "paste" },
+                {title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" }
+                ]},
             ],
         beforeOpen: function( ev, ui ){
-            console.log("ctxt b4 open");
-            ui.target.click();
+            console.log("contextmenu before open",ev,ui);
+            //ui.target.click();
+        },
+        open: function( ev, ui ){
+            console.log("contextmenu open",ev,ui);
         }
     });
-
 
     $("#data_md_tree").fancytree({
         extensions: ["themeroller"],
         themeroller: {
-            activeClass: "ui-state-hover",
+            activeClass: "",
             addClass: "",
             focusClass: "",
-            hoverClass: "ui-state-active",
+            hoverClass: "fancytree-hover",
             selectedClass: ""
         },
         source: inst.data_md_empty_src,
@@ -1323,7 +1540,7 @@ function makeBrowserTab(){
     $("#btn_new_data",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newData(); });
     $("#btn_new_coll",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newColl(); });
     $("#btn_edit",inst.frame).on('click', inst.editSelected );
-    $("#btn_copy",inst.frame).on('click', inst.copySelected );
+    //$("#btn_dup",inst.frame).on('click', inst.dupSelected );
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
     $("#btn_lock",inst.frame).on('click', inst.toggleLock );
@@ -1465,8 +1682,12 @@ function makeBrowserTab(){
     $("#newmenu").menu();
     $("#lockmenu").menu();
 
-    $("#theme-sel").val(g_theme).selectmenu({ width: "auto"  }).on('selectmenuchange', function( ev, ui ) {
+    $("#theme-sel").val(g_theme).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
         themeSet( ui.item.value );
+    });
+
+    $("#page-size").val(inst.page_sz).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
+        inst.page_sz = parseInt(ui.item.value);
     });
 
     this.menutimer = null;

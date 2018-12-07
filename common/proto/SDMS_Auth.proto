@@ -121,6 +121,9 @@ message UserSetRecentEPRequest
 message ListingReply
 {
     repeated ListingData        item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
 }
 
 // ============================ Data Record Messages

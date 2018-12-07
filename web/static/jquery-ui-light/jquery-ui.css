@@ -4,6 +4,26 @@
 * To view and modify this theme, visit http://jqueryui.com/themeroller/?scope=&folderName=custom-theme&bgImgOpacityError=50&bgImgOpacityHighlight=80&bgImgOpacityActive=40&bgImgOpacityHover=75&bgImgOpacityDefault=50&bgImgOpacityContent=75&bgImgOpacityHeader=35&cornerRadiusShadow=5px&offsetLeftShadow=8px&offsetTopShadow=8px&thicknessShadow=10px&opacityShadow=20&bgImgOpacityShadow=75&bgTextureShadow=flat&bgColorShadow=%23808080&opacityOverlay=80&bgImgOpacityOverlay=85&bgTextureOverlay=white_lines&bgColorOverlay=%23b9b9b9&iconColorError=%23ffeb33&fcError=%23ffffff&borderColorError=%23ff6b7f&bgTextureError=diagonals_small&bgColorError=%23ff3853&iconColorHighlight=%23000000&fcHighlight=%23363636&borderColorHighlight=%2395ff6e&bgTextureHighlight=dots_medium&bgColorHighlight=%2395ff6e&iconColorActive=%23000000&fcActive=%23000000&borderColorActive=%2329c59c&bgTextureActive=diagonals_small&bgColorActive=%2329c59c&iconColorHover=%23454545&fcHover=%23212121&borderColorHover=%23a0e1cb&bgTextureHover=diagonals_small&bgColorHover=%23a0e1cb&iconColorDefault=%23ffffff&fcDefault=%23333333&borderColorDefault=%2393c3cd&bgTextureDefault=diagonals_small&bgColorDefault=%2393c3cd&iconColorContent=%23c02669&fcContent=%232c4359&borderColorContent=%23aaaaaa&bgTextureContent=flat&bgColorContent=%23ffffff&iconColorHeader=%23ffffff&fcHeader=%23ffffff&borderColorHeader=%232c4359&bgTextureHeader=dots_small&bgColorHeader=%2335414f&cornerRadius=4px&fwDefault=bold&fsDefault=1.2em&ffDefault=Gill%20Sans%2CArial%2Csans-serif
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
 
+.fancytree-active
+{
+    /*font-weight: bold;*/
+	border: 1px solid #212121!important;
+	background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
+}
+
+.fancytree-hover
+{
+	border: 1px solid #212121!important;
+	/*color: #212121;*/
+}
+
+.fancytree-selected
+{
+	background: #29c59c url("images/ui-bg_diagonals-small_40_29c59c_40x40.png") 50% 50% repeat!important;
+	/*font-weight: bold;*/
+	color: #000000!important;
+}
+
 .content
 {
     background: #F0F0F0!important;

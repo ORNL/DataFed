@@ -1,8 +1,8 @@
-<div class="col-flex" style="padding:0;height:100%;box-sizing:border-box">
-    <div class="row-flex" style="flex:1;min-height:0">
-        <div class="col-flex" style="flex:1 1 40%;padding:.25em;min-width:0;;min-height:0">
+<div class="col-flex" style="padding:0;height:100%;box-sizing:border-box;position:relative">
+    <div class="row-flex" style="flex:1;min-height:0;position:relative">
+        <div class="col-flex" style="flex:1 1 40%;padding:.25em;min-width:0;;min-height:0;position:relative">
             <div style="flex:none;padding:.25em" class="ui-widget-header ui-corner-tr ui-corner-tl">Data Browser:</div>
-            <div class="ui-widget-content" style="flex:1;min-height:0;overflow:auto">
+            <div class="ui-widget-content" style="flex:1;min-height:0;overflow:auto;position:relative">
                 <div id="data_tree" class="no-border" style="min-height:0"></div>
             </div>
         </div>
@@ -33,7 +33,7 @@
     <div style="flex:none;padding:.25em">
         <button class="btn" id="btn_new" style="width:11ch">New...</button>
         <button class="btn" id="btn_edit" disabled>Edit</button>
-        <button class="btn" id="btn_copy" disabled>Copy</button>
+        <!-- button class="btn" id="btn_dup" disabled>Duplicate</button -->
         <button class="btn" id="btn_del" disabled>Delete</button>
         <button class="btn" id="btn_share" disabled>Sharing</button>
         <button class="btn" id="btn_lock" style="width:8ch" disabled>Lock</button>
@@ -54,7 +54,7 @@
                     <table style='width:100%'>
                         <tr><td>Text:</td><td><input id="text_query" type='text' style="width:100%"></input></td><td><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
 
-                        <tr><td>Metadata:</td><td><input id="meta_query" type='text' style="width:100%"></input></td><td><button class='btn small' onclick='searchWizard()' style='width:12ch'>Advanced</button></td></tr>
+                        <tr><td>Metadata:</td><td><input id="meta_query" type='text' style="width:100%"></input></td><td><button class='btn small' onclick='searchWizard()' style='width:12ch' disabled>Wizard</button></td></tr>
                         <tr><td>Scope:</td><td>
                             <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbspMy Data</span>
                             <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbspMy Projects</span>
@@ -89,7 +89,18 @@
                     <div style='flex:none'>
                         <fieldset style='padding:.5em;height:4em'>
                             <legend>User Interface</legend>
-                            Theme: <select id='theme-sel'><option value='light'>Light</option><option value='dark'>Dark</option></select>
+                            <table>
+                            <tr><td>Theme:</td><td><select id='theme-sel'>
+                                <option value='light'>Light</option>
+                                <option value='dark'>Dark</option>
+                            </select></td></tr>
+                            <tr><td>Page Size:</td><td><select id='page-size'>
+                                <option value='10'>10</option>
+                                <option value='20'>20</option>
+                                <option value='50'>50</option>
+                                <option value='100'>100</option>
+                            </select></td></tr>
+                            </table>
                         </fieldset>
                     </div>
                     <div style='flex:none'>

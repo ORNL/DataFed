@@ -673,7 +673,7 @@ string parseQuery( const string & a_query, bool & use_client, bool & use_shared_
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " return {id:i._id,title:i.title,alias:i.alias,locked:i.locked}";
+    result += " return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner}";
 
 
     return result;

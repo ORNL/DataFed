@@ -131,6 +131,7 @@ message ListingData
     required string             title       = 2;
     optional string             alias       = 3;
     optional bool               locked      = 4;
+    optional string             owner       = 5;
 }
 
 message RecordData

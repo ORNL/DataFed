@@ -648,7 +648,13 @@ app.get('/api/col/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/read', ( a_req, a_resp ) => {
-    sendMessage( "CollReadRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+    var par = { id: a_req.query.id };
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "CollReadRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -659,10 +665,18 @@ app.get('/api/col/get_parents', ( a_req, a_resp ) => {
     });
 });
 
+// TODO - Link and unlink should be atomic with DB
 app.get('/api/link', ( a_req, a_resp ) => {
-    sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: [a_req.query.item] }, a_req, a_resp, function( reply ) {
+    console.log("link items:",a_req.query.items,",coll:",a_req.query.coll,",unlink:",a_req.query.unlink);
+    var items =  JSON.parse(a_req.query.items)
+    sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: items }, a_req, a_resp, function( reply ) {
         if ( a_req.query.unlink ) {
-            sendMessage( "CollWriteRequest", { id: a_req.query.unlink, rem: [a_req.query.item] }, a_req, a_resp, function( reply2 ) {
+            var unlink_items = [];
+            for ( var i in items ){
+                if ( items[i].charAt(0) == 'd' )
+                    unlink_items.push(items[i]);
+            }
+            sendMessage( "CollWriteRequest", { id: a_req.query.unlink, rem: unlink_items }, a_req, a_resp, function( reply2 ) {
                 a_resp.send(reply2);
             });
         } else
@@ -671,7 +685,8 @@ app.get('/api/link', ( a_req, a_resp ) => {
 });
 
 app.get('/api/unlink', ( a_req, a_resp ) => {
-    sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: [a_req.query.item] }, a_req, a_resp, function( reply ) {
+    console.log("unlink items:",a_req.query.items,"coll:",a_req.query.coll);
+    sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
 });
