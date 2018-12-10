@@ -26,7 +26,7 @@ function makeBrowserTab(){
     this.searchSelect = false;
     this.selectScope = null;
     this.dragging = false;
-    this.page_sz = 20;
+    this.page_sz = 4;
     this.pasteItems = [];
 
     this.deleteSelected = function(){
@@ -193,6 +193,81 @@ function makeBrowserTab(){
         }
     }
 
+    this.copyItems = function( items, dest_node ){
+        var item_keys = [];
+        for( var i in items )
+            item_keys.push( items[i].key );
+
+        linkItems( item_keys, dest_node.key, function( ok, msg ) {
+            if ( ok ){
+                if ( dest_node.isLoaded() )
+                    inst.reloadNode(dest_node);
+            }else
+                setStatusText( msg );
+        });
+    }
+
+    this.moveItems = function( items, dest_node ){
+        console.log("moveItems",items,dest_node,inst.pasteSource);
+        var item_keys = [];
+        for( var i in items )
+            item_keys.push( items[i].key );
+
+        linkItemsUnlinkSource( item_keys, dest_node.key, inst.pasteSource.key, function( ok, msg ) {
+            if ( ok ){
+                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
+                var i, par = inst.pasteSource.getParentList(false,true);
+                console.log("Source node parents:",par);
+                for ( i in par ){
+                    if ( par[i].key == dest_node.key ){
+                        console.log("Reload dest node ONLY");
+                        inst.reloadNode(dest_node);
+                        return;
+                    }
+                }
+                par = dest_node.getParentList(false,true);
+                console.log("Dest node parents:",par);
+                for ( i in par ){
+                    if ( par[i].key == inst.pasteSource.key ){
+                        console.log("Reload source node ONLY");
+                        inst.reloadNode(inst.pasteSource);
+                        return;
+                    }
+                }
+                console.log("Reload BOTH nodes");
+                if ( dest_node.isLoaded() )
+                    inst.reloadNode(dest_node);
+                inst.reloadNode(inst.pasteSource);
+            }else
+                setStatusText( msg );
+        });
+    }
+
+    this.cutSelected = function(){
+        console.log("Cut");
+        inst.pasteItems = inst.data_tree.getSelectedNodes();
+        inst.pasteSource = pasteItems[0].parent;
+    }
+
+    this.copySelected = function(){
+        console.log("Copy");
+        inst.pasteItems = inst.data_tree.getSelectedNodes();
+        inst.pasteSource = null;
+    }
+
+    this.pasteSelected = function(){
+        var node = inst.data_tree.activeNode;
+        if ( node && inst.pasteItems.length ){
+            if ( node.key.startsWith( "d/" ))
+                node = node.parent;
+            if ( inst.pasteSource )
+                inst.moveItems( inst.pasteItems, node );
+            else
+                inst.copyItems( inst.pasteItems, node );
+
+            inst.pasteItems = [];
+        }
+    }
 
     this.unlinkSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
@@ -1089,6 +1164,20 @@ function makeBrowserTab(){
         }
     }
 
+    this.pageLoad = function( coll, offset, count ){
+        //console.log("pageLoad",coll, offset, count);
+        var node = inst.data_tree.getNodeByKey( coll );
+        if ( node ){
+            node.data.offset = offset;
+            //console.log("new offset:",node.data.offset);
+            node.load(true);
+        }
+    }
+
+/*    this.pageLast = function( coll ){
+        console.log("pageLast", coll);
+    }*/
+
     var tree_source = [
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[{
             title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
@@ -1145,56 +1234,13 @@ function makeBrowserTab(){
 
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key);
-
-                if ( dest_node.key.startsWith("d/"))
-                    dest_node = dest_node.parent;
-
                 var i,sel = inst.data_tree.getSelectedNodes();
                 if ( sel.length ){
-                    var items = [];
-                    for ( i in sel ){
-                        items.push( sel[i].key );
-                    }
-                    console.log("items:",items);
-
+                    inst.pasteSource = sel[0].parent;
                     if ( inst.drag_mode ){
-                        //linkItemUnlinkSource( data.otherNode.key, node.key, data.otherNode.parent.key, function( ok, msg ) {
-                        linkItemsUnlinkSource( items, dest_node.key, data.otherNode.parent.key, function( ok, msg ) {
-                            if ( ok ){
-                                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
-                                var i, par = data.otherNode.getParentList();
-                                console.log("Source node parents:",par);
-                                for ( i in par ){
-                                    if ( par[i].key == dest_node.key ){
-                                        console.log("Reload dest node ONLY");
-                                        inst.reloadNode(dest_node);
-                                        return;
-                                    }
-                                }
-                                par = dest_node.getParentList();
-                                console.log("Dest node parents:",par);
-                                for ( i in par ){
-                                    if ( par[i].key == data.otherNode.parent.key ){
-                                        console.log("Reload source node ONLY");
-                                        inst.reloadNode(data.otherNode.parent);
-                                        return;
-                                    }
-                                }
-                                console.log("Reload BOTH nodes");
-                                if ( dest_node.isLoaded() )
-                                    inst.reloadNode(dest_node);
-                                inst.reloadNode(data.otherNode.parent);
-                            }else
-                                setStatusText( msg );
-                        });
+                        inst.moveItems( sel, dest_node, data.otherNode );
                     }else{
-                        linkItems( items, dest_node.key, function( ok, msg ) {
-                            if ( ok ){
-                                if ( dest_node.isLoaded() )
-                                    inst.reloadNode(dest_node);
-                            }else
-                                setStatusText( msg );
-                        });
+                        inst.copyItems( sel, dest_node );
                     }
                 }
             },
@@ -1351,9 +1397,9 @@ function makeBrowserTab(){
                 var items = data.response.data?data.response.data:data.response.item;
                 //console.log(items);
 
-                if ( data.response.offset > 0 ){
+                /*if ( data.response.offset > 0 ){
                     data.result.push({title:"(Prev)",statusNodeType:"paging",folder:false,icon:false,checkbox:false,offset:data.response.offset - data.response.count});
-                }
+                }*/
 
                 for ( var i in items ) {
                     item = items[i];
@@ -1366,9 +1412,21 @@ function makeBrowserTab(){
                     data.result.push( entry );
                 }
 
-                if ( data.response.total > (data.response.offset + data.response.count) ){
+                /*if ( data.response.total > (data.response.offset + data.response.count) ){
                     data.result.push({title:"(Next)",statusNodeType:"paging",folder:false,icon:false,checkbox:false,offset:data.response.offset + data.response.count});
+                }*/
+//<i class='browse-reload ui-icon ui-icon-reload'></i>
+
+                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
+                    var pages = Math.ceil(data.response.total/inst.page_sz), page = 1+data.response.offset/inst.page_sz;
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*inst.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*inst.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*inst.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
+            }
+        },
+        renderNode: function(ev,data){
+            if ( data.node.data.hasBtn ){
+                console.log("init buttons",ev,data);
+                $(".btn",data.node.li).button();
             }
         },
         activate: function( event, data ) {
@@ -1450,7 +1508,7 @@ function makeBrowserTab(){
                 }
             }
             //}
-        },
+        } /*,
         clickPaging: function(event, data) {
             console.log("click paging node",data,data.node.parent,data.node.getParent());
             //var url = "/api/col/read?offset="+ data.node.data.offset +"&count=10&id=" + encodeURIComponent( data.node.parent.key );
@@ -1458,7 +1516,7 @@ function makeBrowserTab(){
             data.node.parent.data.offset = data.node.data.offset;
             console.log("new offset:",data.node.parent.data.offset);
             data.node.parent.load(true);
-        }
+        }*/
     });
 
     inst.data_tree_div = $('#data_tree');
@@ -1469,34 +1527,30 @@ function makeBrowserTab(){
         show: false,
         hide: false,
         menu: [
-            {title: "New", children: [
-                {title: "Data", action: inst.newData, cmd: "newd" },
-                {title: "Collection", action: inst.newColl, cmd: "newc" },
-                {title: "Project", action: newProj, cmd: "newp" }
-                ]},
-            {title: "Record", children: [
+            {title: "Actions", children: [
                 {title: "Edit", action: inst.editSelected, cmd: "edit" },
                 //{title: "Duplicate", cmd: "dup" },
-                //{title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" },
                 {title: "Delete", action: inst.deleteSelected, cmd: "del" },
                 {title: "Sharing", action: inst.shareSelected, cmd: "share" },
                 {title: "Lock", action: inst.toggleLock, cmd: "lock" },
                 {title: "Get", action: function(){ inst.xfrSelected(1) }, cmd: "get" },
                 {title: "Put", action: function(){ inst.xfrSelected(0) }, cmd: "put" }
                 ]},
-            {title: "Selection", children: [
-                {title: "Cut", action: inst.cutSelected, cmd: "cut" },
-                {title: "Copy", action: inst.copySelected, cmd: "copy" },
-                {title: "Paste", action: inst.pasteSelected, cmd: "paste" },
-                {title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" }
+            {title: "New", children: [
+                {title: "Data", action: inst.newData, cmd: "newd" },
+                {title: "Collection", action: inst.newColl, cmd: "newc" },
+                {title: "Project", action: newProj, cmd: "newp" }
                 ]},
+            {title: "----"},
+            {title: "Cut", action: inst.cutSelected, cmd: "cut" },
+            {title: "Copy", action: inst.copySelected, cmd: "copy" },
+            {title: "Paste", action: inst.pasteSelected, cmd: "paste" },
+            {title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" }
             ],
         beforeOpen: function( ev, ui ){
-            console.log("contextmenu before open",ev,ui);
-            //ui.target.click();
-        },
-        open: function( ev, ui ){
-            console.log("contextmenu open",ev,ui);
+            ev.stopPropagation();
+            // Select the target before menu is shown
+            ui.target.click();
         }
     });
 
@@ -1551,8 +1605,9 @@ function makeBrowserTab(){
 
     $("#query_input").on('keyup', function (e) {
         if (e.keyCode == 13)
-            searchDirect();
+            inst.searchDirect();
     });
+
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     inputTheme( $('input'));
 

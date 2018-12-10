@@ -167,6 +167,7 @@ function linkItems( a_items, a_coll, a_cb ) {
 }
 
 function linkItemsUnlinkSource( a_items, a_coll, a_source, a_cb ) {
+    console.log("linkItemsUnlinkSource", a_items, a_coll, a_source );
     _asyncGet( "/api/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll)+"&unlink="+encodeURIComponent(a_source), null, a_cb );
 }
 
