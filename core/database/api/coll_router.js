@@ -48,7 +48,7 @@ router.post('/create', function (req, res) {
 
                     owner_id = g_db.owner.firstExample({_from:parent_id})._to;
                     if ( owner_id != client._id ){
-                        if ( !g_lib.hasAdminPermProj( client, owner_id )){
+                        if ( !g_lib.hasManagerPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
 
                             if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_WR_DATA ))
