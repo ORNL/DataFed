@@ -193,7 +193,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.copyItems = function( items, dest_node ){
+    this.copyItems = function( items, dest_node, cb ){
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
@@ -204,10 +204,12 @@ function makeBrowserTab(){
                     inst.reloadNode(dest_node);
             }else
                 setStatusText( msg );
+            if ( cb )
+                cb();
         });
     }
 
-    this.moveItems = function( items, dest_node ){
+    this.moveItems = function( items, dest_node, cb ){
         console.log("moveItems",items,dest_node,inst.pasteSource);
         var item_keys = [];
         for( var i in items )
@@ -240,32 +242,52 @@ function makeBrowserTab(){
                 inst.reloadNode(inst.pasteSource);
             }else
                 setStatusText( msg );
+
+            if ( cb )
+                cb();
+
         });
     }
 
     this.cutSelected = function(){
-        console.log("Cut");
         inst.pasteItems = inst.data_tree.getSelectedNodes();
         inst.pasteSource = pasteItems[0].parent;
+        inst.pasteMode = "cut";
+        inst.pasteCollections = [];
+        for ( var i in inst.pasteItems ){
+            if ( inst.pasteItems[i].key.startsWith("c/") )
+                inst.pasteCollections.push( inst.pasteItems[i] );
+        }
+        console.log("cutSelected",inst.pasteItems,inst.pasteSource);
     }
 
     this.copySelected = function(){
         console.log("Copy");
         inst.pasteItems = inst.data_tree.getSelectedNodes();
-        inst.pasteSource = null;
+        inst.pasteSource = pasteItems[0].parent;
+        inst.pasteMode = "copy";
+        inst.pasteCollections = [];
+        for ( var i in inst.pasteItems ){
+            if ( inst.pasteItems[i].key.startsWith("c/") )
+                inst.pasteCollections.push( inst.pasteItems[i] );
+        }
     }
 
     this.pasteSelected = function(){
         var node = inst.data_tree.activeNode;
         if ( node && inst.pasteItems.length ){
+            function pasteDone(){
+                inst.pasteItems = [];
+                inst.pasteSource = null;
+                inst.pasteCollections = null;
+            }
+
             if ( node.key.startsWith( "d/" ))
                 node = node.parent;
-            if ( inst.pasteSource )
-                inst.moveItems( inst.pasteItems, node );
+            if ( inst.pasteMode == "cut" )
+                inst.moveItems( inst.pasteItems, node, pasteDone );
             else
-                inst.copyItems( inst.pasteItems, node );
-
-            inst.pasteItems = [];
+                inst.copyItems( inst.pasteItems, node, pasteDone );
         }
     }
 
@@ -1164,6 +1186,25 @@ function makeBrowserTab(){
         }
     }
 
+    this.pasteAllowed = function( dest_node, src_node ){
+        if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
+            if ( inst.pasteSource.key == dest_node.key )
+                return false;
+            if ( inst.pasteCollections.length > 1 ){
+                var i,j,coll,dest_par = dest_node.getParentList(false,true);
+                for ( i in inst.pasteCollections ){
+                    coll = inst.pasteCollections[i];
+                    for ( j in dest_par ){
+                        if ( dest_par[j].key == coll.key )
+                            return false;
+                    }
+                }
+            }
+            return "over";
+        }else
+            return false;
+    }
+
     this.pageLoad = function( coll, offset, count ){
         //console.log("pageLoad",coll, offset, count);
         var node = inst.data_tree.getNodeByKey( coll );
@@ -1220,6 +1261,13 @@ function makeBrowserTab(){
                     node.setSelected(true);
                 }
 
+                inst.pasteItems = inst.data_tree.getSelectedNodes();
+                inst.pasteSource = inst.pasteItems[0].parent;
+                inst.pasteCollections = [];
+                for ( var i in inst.pasteItems ){
+                    if ( inst.pasteItems[i].key.startsWith("c/") )
+                        inst.pasteCollections.push( inst.pasteItems[i] );
+                }
                 inst.dragging = true;
 
                 if ( data.originalEvent.ctrlKey || !node.parent.key.startsWith("c/") ) {
@@ -1234,22 +1282,22 @@ function makeBrowserTab(){
 
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key);
-                var i,sel = inst.data_tree.getSelectedNodes();
-                if ( sel.length ){
-                    inst.pasteSource = sel[0].parent;
-                    if ( inst.drag_mode ){
-                        inst.moveItems( sel, dest_node, data.otherNode );
-                    }else{
-                        inst.copyItems( sel, dest_node );
-                    }
+
+                function pasteDone(){
+                    inst.pasteItems = [];
+                    inst.pasteSource = null;
+                    inst.pasteCollections = null;
+                }
+    
+                if ( inst.drag_mode ){
+                    inst.moveItems( inst.pasteItems, dest_node, data.otherNode, pasteDone );
+                }else{
+                    inst.copyItems( inst.pasteItems, dest_node, pasteDone );
                 }
             },
             dragEnter: function(node, data) {
                 //console.log( "enter:", node, data );
-                if ( !node.data.notarg && node.data.scope == data.otherNode.data.scope )
-                    return "over";
-                else
-                    return false;
+                return inst.pasteAllowed( node, data.otherNode );
             }
         },
         themeroller: {
@@ -1475,15 +1523,24 @@ function makeBrowserTab(){
                         inst.data_tree_div.contextmenu("enableEntry", "cut", true );
                     }
 
-                    console.log( "sel 0", sel[0] );
-                    if ( sel[0].data.nodrag )
+                    var coll_sel = false;
+
+                    // If any collections are selected, copy is not available
+                    for ( i in sel ){
+                        if ( sel[i].key.startsWith("c/")){
+                            coll_sel = true;
+                            break;
+                        }
+                    }
+                    if ( sel[0].data.nodrag || coll_sel )
                         inst.data_tree_div.contextmenu("enableEntry", "copy", false );
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "copy", true );
 
 
                     //inst.data_tree_div.contextmenu("enableEntry", "copy", (bits & 0x80) == 0 );
-                    if ( inst.pasteItems.length > 0 && sel[0].data.scope == inst.pasteItems[0].data.scope )
+                    //if ( inst.pasteItems.length > 0 && sel[0].data.scope == inst.pasteItems[0].data.scope )
+                    if ( inst.pasteItems.length > 0 && inst.pasteAllowed( sel[0], inst.pasteItems[0] ))
                         inst.data_tree_div.contextmenu("enableEntry", "paste", true );
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "paste", false );
