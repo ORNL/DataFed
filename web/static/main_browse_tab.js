@@ -648,7 +648,7 @@ function makeBrowserTab(){
 
                         inst.showSelectedMetadata();
                     }else{
-                        inst.noInfoAvail();
+                        inst.noInfoAvail("Insufficient permissions to view collection.");
                     }
                 }); 
             } else if ( key[0] == "d" ) {
@@ -692,7 +692,7 @@ function makeBrowserTab(){
                         inst.sel_details.html(html);
                         inst.showSelectedMetadata( item.metadata );
                     }else{
-                        inst.noInfoAvail();
+                        inst.noInfoAvail("Insufficient permissions to view data record.");
                     }
                 }); 
             } else if ( key.startsWith("p/")) {
@@ -753,7 +753,7 @@ function makeBrowserTab(){
 
                         inst.showSelectedMetadata();
                     }else{
-                        inst.noInfoAvail();
+                        inst.noInfoAvail("Insufficient permissions to view project.");
                     }
                 }); 
             } else if ( key == "shared_user" && node.data.scope ) {
@@ -780,9 +780,9 @@ function makeBrowserTab(){
 
     }
 
-    this.noInfoAvail = function(){
+    this.noInfoAvail = function( message ){
         inst.updateBtnState();
-        inst.sel_id.text("(no information)");
+        inst.sel_id.text( message?message:"(no information)");
         inst.sel_title.text("");
         inst.sel_descr.text("(no information)");
         inst.sel_details.text("(no information)");
