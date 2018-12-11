@@ -373,7 +373,8 @@ string parseSearchMetadata( const string & a_query )
         PS_DEFAULT = 0,
         PS_SINGLE_QUOTE,
         PS_DOUBLE_QUOTE,
-        PS_TOKEN
+        PS_TOKEN,
+        PS_STOP
     };
 
     ParseState state = PS_DEFAULT;
@@ -381,6 +382,7 @@ string parseSearchMetadata( const string & a_query )
     string result,tmp;
     char last = 0, next = 0, next_nws = 0;
     string::const_iterator c2;
+    bool val_token, last_char = false;
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
@@ -424,11 +426,28 @@ string parseSearchMetadata( const string & a_query )
             break;
         case PS_TOKEN: // Token
             //if ( spec.find( *c ) != spec.end() )
-            if ( !isalnum( *c ) && *c != '.' && *c != '_' )
+            val_token = isalnum( *c ) || *c == '.' || *c == '_';
+            last_char = (( c + 1 ) == a_query.end());
+
+            if ( !val_token || last_char )
             {
                 //cout << "start: " << v.start << ", len: " << v.len << "\n";
-                tmp = a_query.substr( v.start, v.len );
-                //cout << "token[" << tmp << "]" << endl;
+                if ( !val_token )
+                {
+                    tmp = a_query.substr( v.start, v.len );
+                    if ( *c == '\'' )
+                        state = PS_SINGLE_QUOTE;
+                    else if ( *c == '\"' )
+                        state = PS_DOUBLE_QUOTE;
+                    else
+                        state = PS_DEFAULT;
+                }
+                else
+                {
+                    tmp = a_query.substr( v.start, v.len + 1 );
+                    state = PS_STOP;
+                }
+                cout << "token[" << tmp << "]" << endl;
 
                 // Determine if identifier needs to be prefixed with "i." by testing agains allowed identifiers
                 if ( tmp == "desc" )
@@ -451,19 +470,21 @@ string parseSearchMetadata( const string & a_query )
 
                 v.reset();
 
-                state = PS_DEFAULT;
             }
             else
             {
                 v.len++;
-
             }
+            break;
+        default:
             break;
         }
 
         // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
 
-        if ( state == PS_DEFAULT )
+        if ( state == PS_STOP )
+            break;
+        else if ( state == PS_DEFAULT )
         {
             if ( *c == '?' )
                 result += " like ";
@@ -484,6 +505,11 @@ string parseSearchMetadata( const string & a_query )
             result += *c;
 
         last = *c;
+    }
+
+    if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )
+    {
+        EXCEPT(1,"Mismatched quotation marks in query" );
     }
 
     //cout << "[" << a_query << "]=>[" << result << "]\n";
@@ -673,7 +699,7 @@ string parseQuery( const string & a_query, bool & use_client, bool & use_shared_
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner}";
+    result += " limit 100 return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner}";
 
 
     return result;
