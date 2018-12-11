@@ -62,14 +62,14 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
 
                 var inst = $(this);
 
-                console.log( "create coll", obj );
+                //console.log( "create coll", obj );
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();
                         console.log( "data:",data);
                         if ( a_cb )
-                            a_cb(data.coll[0]);
+                            a_cb(data.coll[0],obj.parentId);
                     } else {
                         alert( "Error: " + data );
                     }

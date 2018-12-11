@@ -211,7 +211,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         inst.dialog('destroy').remove();
                         //console.log( "data:",data);
                         if ( a_cb )
-                            a_cb(data.data[0]);
+                            a_cb(data.data[0],obj.parentId);
                     } else {
                         dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );
                     }

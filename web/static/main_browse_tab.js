@@ -98,9 +98,9 @@ function makeBrowserTab(){
     }
 
     this.newData = function() {
+        var parent = "root";
         var node = inst.data_tree.activeNode;
         if ( node ){
-            var parent;
             if ( node.key.startsWith("d/")) {
                 parent = node.parent.key;
             }else if (node.key.startsWith("c/")){
@@ -108,73 +108,83 @@ function makeBrowserTab(){
             }else if (node.key.startsWith("p/")){
                 parent = "c/p_"+node.key.substr(2)+"_root";
             }
-
-            if ( parent ){
-                checkPerms( parent, PERM_WR_DATA, function( granted ){
-                    if ( !granted ){
-                        alertPermDenied();
-                        return;
-                    }
-    
-                    viewColl( parent, function( coll ){
-                        if ( coll ){
-                            var coll_id = coll.alias?coll.alias:coll.id;
-
-                            dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,0,function(data){
-                                inst.addNode( data );
-                            });
-                        }else
-                            alert("Cannot access parent collection.");
-                    });
-                });
-                return;
-            }
         }
 
-        dlgDataNewEdit(DLG_DATA_NEW,null,"root",0,function(data){
-            inst.addNode( data );
+        checkPerms( parent, PERM_WR_DATA, function( granted ){
+            if ( !granted ){
+                alertPermDenied();
+                return;
+            }
+
+            viewColl( parent, function( coll ){
+                if ( coll ){
+                    var coll_id = coll.alias?coll.alias:coll.id;
+
+                    dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,0,function(data,coll){
+                        var node;
+                        if ( coll.startsWith( "c/" )){
+                            node = inst.data_tree.getNodeByKey( coll );
+                            if ( node )
+                                inst.reloadNode( node );
+                        }else{
+                            viewColl( coll, function( data ){
+                                if ( data ){
+                                    node = inst.data_tree.getNodeByKey( data.id );
+                                    if ( node )
+                                        inst.reloadNode( node );
+                                }
+                            });
+                        }
+                    });
+                }else
+                    alert("Cannot access parent collection.");
+            });
         });
     }
 
     this.newColl = function() {
         var node = inst.data_tree.activeNode;
+        var parent = "root";
         if ( node ){
-            var parent;
             if ( node.key.startsWith("d/")) {
                 parent = node.parent.key;
             }else if (node.key.startsWith("c/")){
                 parent = node.key;
             }else if (node.key.startsWith("p/")){
                 parent = "c/p_"+node.key.substr(2)+"_root";
-            }else{
-                dlgCollNewEdit(null,"root",function(data){
-                    inst.addNode( data );
-                });
+            }
+        }
+
+        checkPerms( parent, PERM_WR_DATA, function( granted ){
+            if ( !granted ){
+                alertPermDenied();
                 return;
             }
 
-            checkPerms( parent, PERM_WR_DATA, function( granted ){
-                if ( !granted ){
-                    alertPermDenied();
-                    return;
-                }
+            viewColl( parent, function( coll ){
+                if ( coll ){
+                    var coll_id = coll.alias?coll.alias:coll.id;
 
-                viewColl( parent, function( coll ){
-                    if ( coll ){
-                        var coll_id = coll.alias?coll.alias:coll.id;
-
-                        dlgCollNewEdit(null,coll_id,function(data){
-                            inst.addNode( data );
-                        });
-                    }else
-                        alert("Cannot access parent collection.");
-                });
+                    dlgCollNewEdit(null,coll_id,function(data,coll){
+                        var node;
+                        if ( coll.startsWith( "c/" )){
+                            node = inst.data_tree.getNodeByKey( coll );
+                            if ( node )
+                                inst.reloadNode( node );
+                        }else{
+                            viewColl( coll, function( data ){
+                                if ( data ){
+                                    node = inst.data_tree.getNodeByKey( data.id );
+                                    if ( node )
+                                        inst.reloadNode( node );
+                                }
+                            });
+                        }
+                    });
+                }else
+                    alert("Cannot access parent collection.");
             });
-        }else{
-            dlgCollNewEdit(null,"root",function(data){
-                inst.addNode( data );
-            });
-        }
+        });
     }
 
     this.toggleLock = function(){
