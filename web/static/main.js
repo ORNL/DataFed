@@ -339,7 +339,7 @@ function epAutocomplete( a_term, a_cb ){
 function epRecentLoad( a_cb ){
     console.log("epRecentLoad");
     _asyncGet( "/ui/ep/recent/load", null, function( ok, data ){
-        console.log("epRecentLoad",ok,data);
+        //console.log("epRecentLoad",ok,data);
         
         if ( ok ){
             g_ep_recent = data;

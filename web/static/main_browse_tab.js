@@ -26,7 +26,7 @@ function makeBrowserTab(){
     this.searchSelect = false;
     this.selectScope = null;
     this.dragging = false;
-    this.page_sz = 4;
+    this.page_sz = 20;
     this.pasteItems = [];
 
     this.deleteSelected = function(){
@@ -210,7 +210,7 @@ function makeBrowserTab(){
     }
 
     this.moveItems = function( items, dest_node, cb ){
-        console.log("moveItems",items,dest_node,inst.pasteSource);
+        //console.log("moveItems",items,dest_node,inst.pasteSource);
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
@@ -219,24 +219,24 @@ function makeBrowserTab(){
             if ( ok ){
                 // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
                 var i, par = inst.pasteSource.getParentList(false,true);
-                console.log("Source node parents:",par);
+                //console.log("Source node parents:",par);
                 for ( i in par ){
                     if ( par[i].key == dest_node.key ){
-                        console.log("Reload dest node ONLY");
+                        //console.log("Reload dest node ONLY");
                         inst.reloadNode(dest_node);
                         return;
                     }
                 }
                 par = dest_node.getParentList(false,true);
-                console.log("Dest node parents:",par);
+                //console.log("Dest node parents:",par);
                 for ( i in par ){
                     if ( par[i].key == inst.pasteSource.key ){
-                        console.log("Reload source node ONLY");
+                        //console.log("Reload source node ONLY");
                         inst.reloadNode(inst.pasteSource);
                         return;
                     }
                 }
-                console.log("Reload BOTH nodes");
+                //console.log("Reload BOTH nodes");
                 if ( dest_node.isLoaded() )
                     inst.reloadNode(dest_node);
                 inst.reloadNode(inst.pasteSource);
@@ -258,7 +258,7 @@ function makeBrowserTab(){
             if ( inst.pasteItems[i].key.startsWith("c/") )
                 inst.pasteCollections.push( inst.pasteItems[i] );
         }
-        console.log("cutSelected",inst.pasteItems,inst.pasteSource);
+        //console.log("cutSelected",inst.pasteItems,inst.pasteSource);
     }
 
     this.copySelected = function(){
@@ -298,11 +298,11 @@ function makeBrowserTab(){
             for ( var i in sel ){
                 items.push( sel[i].key );
             }
-            console.log("items:",items);
+            //console.log("items:",items);
             unlinkItems( items, sel[0].parent.key, function( ok, rooted ) {
                 if ( ok ){
                     if ( rooted.length ){
-                        console.log("rooted:",rooted);
+                        //console.log("rooted:",rooted);
                         inst.reloadNode( inst.data_tree.getNodeByKey( inst.my_root_key ));
                     }else{
                         inst.reloadNode( sel[0].parent );
@@ -508,26 +508,33 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x20) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "lock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlink", (bits & 0x80) == 0 );
-}
+    }
+
+    this.reloadDataTree = function(){
+        inst.reloadNode( inst.data_tree.getNodeByKey( inst.my_root_key ) );
+        inst.reloadNode( inst.data_tree.getNodeByKey( "proj_own" ) );
+        inst.reloadNode( inst.data_tree.getNodeByKey( "proj_adm" ) );
+        inst.reloadNode( inst.data_tree.getNodeByKey( "proj_mem" ) );
+        inst.reloadNode( inst.data_tree.getNodeByKey( "shared_user" ) );
+        inst.reloadNode( inst.data_tree.getNodeByKey( "shared_proj" ) );
+    }
 
     this.reloadNode = function( node ){
-        console.log("reloadNode",node.key);
+        if ( node.isLazy() && !node.isLoaded() )
+            return;
+
         var save_exp = node.isExpanded();
         if ( save_exp ){
-            console.log("reloadNode - save exp");
             var exp = [];
             node.visit(function(n){
+                //console.log("node:",n.key);
                 if ( n.isExpanded() )
                     exp.push(n.key);
             });
-            console.log( "expanded",exp);
         }
-        //var exp = node.isExpanded();
-        //node.resetLazy();
+        //console.log( "expanded:", exp );
         node.load(true).always(function(){
             if ( save_exp ){
-                console.log("reloadNode - restore exp");
-
                 function expNode( idx ){
                     if ( idx < exp.length ){
                         var n = inst.data_tree.getNodeByKey( exp[idx] );
@@ -542,15 +549,6 @@ function makeBrowserTab(){
                 }
 
                 expNode(0);
-                /*
-                node.setExpanded(true);
-                var n;
-                for ( i in exp ){
-                    n = inst.data_tree.getNodeByKey( exp[i] );
-                    console.log( "found", n );
-                    if ( n )
-                        n.setExpanded(true);
-                }*/
             }
         });
     }
@@ -1779,16 +1777,6 @@ function makeBrowserTab(){
         }
 
         inst.updateSearchSelectState( true );
-        /*;
-        if( $("#scope_selected",inst.frame).prop("checked")){
-            $(inst.data_tree_div).fancytree("option","checkbox",true);
-            $(inst.data_tree_div).fancytree("option","selectMode",2);
-            $("#btn_srch_clear_select",inst.frame).button("option","disabled",false);
-        }else{
-            $(inst.data_tree_div).fancytree("option","checkbox",false);
-            $(inst.data_tree_div).fancytree("option","selectMode",1);
-            $("#btn_srch_clear_select",inst.frame).button("option","disabled",true);
-        }*/
     });
 
     $("#newmenu").menu();
@@ -1800,6 +1788,7 @@ function makeBrowserTab(){
 
     $("#page-size").val(inst.page_sz).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
         inst.page_sz = parseInt(ui.item.value);
+        inst.reloadDataTree();
     });
 
     this.menutimer = null;
