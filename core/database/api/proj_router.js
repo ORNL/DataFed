@@ -138,7 +138,7 @@ router.get('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","p","uuid","accn"],
-                write: ["p","admin","member"]
+                write: ["p","admin","member","acl"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -193,6 +193,7 @@ router.get('/update', function (req, res) {
                 proj.new.members = [];
 
                 if ( req.queryParams.admins ) {
+                    var links;
                     g_db.admin.removeByExample({ _from: proj_id });
                     for ( i in req.queryParams.admins ) {
                         uid = req.queryParams.admins[i];
@@ -201,9 +202,19 @@ router.get('/update', function (req, res) {
                         if ( !g_db._exists( uid ))
                             throw g_lib.ERR_USER_NOT_FOUND;
                         g_db.admin.save({ _from: proj_id, _to: uid });
+                        // Remove Admin from all groups and ACLs
+                        links = g_db._query("for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @proj return p.edges[0]._id",{user:uid,proj:proj_id});
+                        while ( links.hasNext() ){
+                            g_db.acl.remove( links.next() );
+                        }
+                        links = g_db._query("for v,e,p in 2..2 inbound @user member, outbound owner filter v._id == @proj return p.edges[0]._id",{user:uid,proj:proj_id});
+                        while ( links.hasNext() ){
+                            g_db.member.remove( links.next() );
+                        }
                         proj.new.admins.push( uid );
                     }
                 }else{
+                    // TODO - Why not just assign query result directly to new?
                     var admins = g_db._query( "for i in admin filter i._from == @proj return i._to", { proj: proj_id }).toArray();
                     for ( i in admins ) {
                         proj.new.admins.push( admins[i]);
