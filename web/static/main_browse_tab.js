@@ -1700,9 +1700,10 @@ function makeBrowserTab(){
         heightStyle:"auto",
         collapsible: true,
         activate: function(ev,ui){
-            if ( ui.newPanel[0].id == "tab-search" ){
+            console.log("tab activate:",ui);
+            if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
                 inst.updateSearchSelectState( true );
-            } else if ( ui.oldPanel[0].id == "tab-search" ){
+            } else if ( ui.oldPanel.length && ui.oldPanel[0].id == "tab-search" ){
                 inst.updateSearchSelectState( false );
             }
         }}).css({
@@ -1833,6 +1834,8 @@ function makeBrowserTab(){
             this.menutimer = null;
         }
     });
+
+    //$("#left-panel").resizable({handles:"e"});
 
     var node = inst.data_tree.getNodeByKey( inst.my_root_key );
     node.load();
