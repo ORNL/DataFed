@@ -26,7 +26,6 @@ function makeBrowserTab(){
     this.searchSelect = false;
     this.selectScope = null;
     this.dragging = false;
-    this.page_sz = 20;
     this.pasteItems = [];
 
     this.deleteSelected = function(){
@@ -1371,7 +1370,7 @@ function makeBrowserTab(){
                 };
             } else {
                 data.result = {
-                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+inst.page_sz+"&id=" + encodeURIComponent( data.node.key ),
+                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+g_opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
                     cache: false
                 };
             }
@@ -1474,8 +1473,8 @@ function makeBrowserTab(){
 //<i class='browse-reload ui-icon ui-icon-reload'></i>
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/inst.page_sz), page = 1+data.response.offset/inst.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*inst.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*inst.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*inst.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
             }
         },
@@ -1673,9 +1672,14 @@ function makeBrowserTab(){
             inst.searchDirect();
     });
 
+    if ( g_user.isRepoAdmin ){
+        setupRepoTab();
+        $('[href="#tab-repo"]').closest('li').show();
+    }
+
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     inputTheme( $('input'));
-
+/*
     userView( g_user.uid, true, function( ok, user ){
         if ( ok && user ){
             g_user.isAdmin = user.isAdmin;
@@ -1684,8 +1688,13 @@ function makeBrowserTab(){
                 setupRepoTab();
                 $('[href="#tab-repo"]').closest('li').show();
             }
+            if ( user.options ){
+                console.log("user opts:",user.options);
+                g_opts = JSON.parse( user.options );
+            }
         }
     });
+*/
 
     $("#footer-tabs").tabs({
         heightStyle:"auto",
@@ -1796,9 +1805,16 @@ function makeBrowserTab(){
         themeSet( ui.item.value );
     });
 
-    $("#page-size").val(inst.page_sz).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
-        inst.page_sz = parseInt(ui.item.value);
+    $("#page-size").val(g_opts.page_sz).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
+        g_opts.page_sz = parseInt(ui.item.value);
         inst.reloadDataTree();
+        console.log("save opts");
+        _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&opts="+encodeURIComponent(JSON.stringify(g_opts)), null, function( ok, data ){
+            if ( !ok )
+                dlgAlert( "Update Options Error", data );
+            else
+                console.log("saved");
+        });
     });
 
     this.menutimer = null;

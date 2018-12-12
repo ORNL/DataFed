@@ -62,6 +62,7 @@ message UserCreateRequest
     required string             name        = 3;
     required string             email       = 4;
     repeated string             uuid        = 5;
+    optional string             options     = 6;
 }
 
 message UserViewRequest
@@ -80,6 +81,7 @@ message UserUpdateRequest
     required string             uid         = 1;
     optional string             email       = 2;
     optional string             password    = 3;
+    optional string             options     = 4;
 }
 
 message UserListAllRequest

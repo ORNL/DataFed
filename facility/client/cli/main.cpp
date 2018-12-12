@@ -208,7 +208,7 @@ void printUsers( spUserDataReply a_reply )
     if ( g_out_form == JSON )
         cout << "{\"Users\":[";
     else if ( g_out_form == CSV )
-        cout << "\"UserID\",\"Name\",\"Email\",\"Phone\",\"Admin\"\n";
+        cout << "\"UserID\",\"Name\",\"Email\",\"Admin\"\n";
 
     if ( a_reply->user_size() )
     {
@@ -225,8 +225,6 @@ void printUsers( spUserDataReply a_reply )
                 cout << "Name     " << user.name() << "\n";
                 if ( user.has_email() )
                     cout << "Email    " << user.email() << "\n";
-                if ( user.has_phone() )
-                    cout << "Phone    " << user.phone() << "\n";
                 if ( user.has_is_admin() )
                     cout << "Admin     " << user.is_admin() << "\n";
                 //if ( user.has_is_repo_admin() )
@@ -245,8 +243,6 @@ void printUsers( spUserDataReply a_reply )
                 cout << "{\"UserID\":\"" << user.uid() << "\",\"Name\":\"" << user.name() << "\"";
                 if ( user.has_email() )
                     cout << ",\"Email\":\"" << user.email() << "\"";
-                if ( user.has_phone() )
-                    cout << ",\"Phone\":\"" << user.phone() << "\"";
                 if ( user.has_is_admin() )
                     cout << ",\"Admin\":" << (user.is_admin()?"true":"false");
                 cout << "}";
@@ -254,7 +250,6 @@ void printUsers( spUserDataReply a_reply )
             case CSV:
                 cout << "\"" << user.uid() << "\",\"" << user.name() << "\""
                     << ",\"" << ( user.has_email()?user.email():"" ) << "\""
-                    << ",\"" << ( user.has_phone()?user.phone():"" ) << "\""
                     << "," << ( user.has_is_admin()?user.is_admin():false ) << "\n";
                 break;
             }

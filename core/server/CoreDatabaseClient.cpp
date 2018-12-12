@@ -387,6 +387,8 @@ DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::Use
     params.push_back({"password",a_request.password()});
     params.push_back({"name",a_request.name()});
     params.push_back({"email",a_request.email()});
+    if ( a_request.has_options() )
+        params.push_back({"options",a_request.options()});
     string uuids = "[";
     for ( int i = 0; i < a_request.uuid_size(); i++ )
     {
@@ -430,6 +432,8 @@ DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply &
         params.push_back({"email",a_request.email()});
     if ( a_request.has_password() )
         params.push_back({"password",a_request.password()});
+    if ( a_request.has_options() )
+        params.push_back({"options",a_request.options()});
 
     dbGet( "usr/update", params, result );
 
@@ -534,6 +538,9 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
 
         if (( imem = val.FindMember("email")) != val.MemberEnd() )
             user->set_email( imem->value.GetString() );
+
+        if (( imem = val.FindMember("options")) != val.MemberEnd() )
+            user->set_options( imem->value.GetString() );
 
         if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
             user->set_is_admin( imem->value.GetBool() );

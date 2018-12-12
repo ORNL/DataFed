@@ -65,7 +65,25 @@
         $("input").tooltip({ show: { effect: "slideDown", delay: 500 }});
 
         var g_theme = "<%- @theme %>";
-        var tab_browser = makeBrowserTab();
-        setStatusText("SDMS Ready");
+        var g_opts = { page_sz: 20 };
+        var tab_browser;
+
+        userView( g_user.uid, true, function( ok, user ){
+            if ( ok && user ){
+                console.log("userView (init):",user);
+                g_user.isAdmin = user.isAdmin;
+                g_user.isRepoAdmin = user.isRepoAdmin;
+                if ( user.options ){
+                    console.log("user opts:",user.options);
+                    g_opts = JSON.parse( user.options );
+                }
+
+                tab_browser = makeBrowserTab();
+                setStatusText("SDMS Ready");
+            }else{
+                dlgAlert("System Error","Unable to access user record");
+            }
+        });
+
     </script>
 </html>

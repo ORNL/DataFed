@@ -230,7 +230,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                         saveToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token );
 
                         // TODO Account may be disable from SDMS (active = false)
-                        a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true });
+                        a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 259200 });
                         a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
                         a_response.redirect( "/ui/main" );
                     }
@@ -269,7 +269,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             saveToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok );
             userinfo.acc_tok = a_req.query.acc_tok;
             userinfo.ref_tok = a_req.query.ref_tok;
-            a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true });
+            a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 259200 });
             a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui" });
             a_resp.redirect( "/ui/main" );
         }
@@ -294,6 +294,8 @@ app.get('/api/usr/update', ( a_req, a_resp ) => {
         params.email = a_req.query.email;
     if ( a_req.query.pw )
         params.password = a_req.query.pw;
+    if ( a_req.query.opts )
+        params.options = a_req.query.opts;
 
     sendMessage( "UserUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
@@ -849,15 +851,17 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
 
 });
 
+
 app.get('/ui/theme/load', ( a_req, a_resp ) => {
     var theme = a_req.cookies['sdms-theme'];
     a_resp.send( theme );
 });
 
 app.get('/ui/theme/save', ( a_req, a_resp ) => {
-    a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui" });
+    a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui", maxAge: 100000000 });
     a_resp.send("");
 });
+
 
 function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
     sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok }, function( reply ) {
