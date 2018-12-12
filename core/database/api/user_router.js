@@ -55,6 +55,9 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.email )
                     user_data.email = req.queryParams.email;
 
+                if ( req.queryParams.options )
+                    user_data.options = req.queryParams.options;
+
                 var user = g_db.u.save( user_data, { returnNew: true });
 
                 var root = g_db.c.save({ _key: "u_" + req.queryParams.uid + "_root", is_root: true, title: "root", desc: "Root collection for user " + req.queryParams.name + " (" + req.queryParams.uid +")" }, { returnNew: true });
@@ -99,6 +102,7 @@ router.get('/create', function (req, res) {
 .queryParam('password', joi.string().required(), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().optional(), "Email")
+.queryParam('options', joi.string().optional(), "Application options (JSON string)")
 .queryParam('uuids', joi.array().items(joi.string()).required(), "Globus identities (UUIDs)")
 .queryParam('is_admin', joi.boolean().optional(), "New account is a system administrator")
 .summary('Create new user entry')
@@ -137,6 +141,9 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.email )
                     obj.email = req.queryParams.email;
 
+                if ( req.queryParams.options )
+                    obj.options = req.queryParams.options;
+
                 if ( client.is_admin ) {
                     if ( req.queryParams.is_admin )
                         obj.is_admin = req.queryParams.is_admin;
@@ -168,6 +175,7 @@ router.get('/update', function (req, res) {
 .queryParam('password', joi.string().optional(), "SDMS account password")
 .queryParam('name', joi.string().optional(), "New name")
 .queryParam('email', joi.string().optional(), "New email")
+.queryParam('options', joi.string().optional(), "Application options (JSON string)")
 .queryParam('is_admin', joi.boolean().optional(), "New system administrator flag value")
 .summary('Update user information')
 .description('Update user information');
