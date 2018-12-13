@@ -103,17 +103,17 @@ app.engine( 'ect', ectRenderer.render );
 app.get('/', (request, response) => {
     console.log("Initial site access from ", request.connection.remoteAddress );
 
-    if ( request.cookies['sdms'] )
+    if ( request.cookies['sdms'] && request.cookies['sdms-user'])
         response.redirect( '/ui/main' );
     else
         response.redirect('/ui');
 });
 
 app.get('/ui', (request, response) => {
-    //console.log("get /ui");
+    console.log("get /ui");
     //console.log( "sdms cookie:", request.cookies['sdms'] );
 
-    if ( request.cookies['sdms'] )
+    if ( request.cookies['sdms'] && request.cookies['sdms-user'] )
         response.redirect( '/ui/main' );
     else{
         var theme = request.cookies['sdms-theme']|| "light";
@@ -122,7 +122,7 @@ app.get('/ui', (request, response) => {
 });
 
 app.get('/ui/main', (request, response) => {
-    //console.log("get /ui/main");
+    console.log("get /ui/main");
     //console.log( "sdms cookie:", request.cookies['sdms'] );
 
     if ( request.cookies['sdms'] ){
@@ -148,14 +148,14 @@ app.get('/ui/register', (request, response) => {
 });
 
 app.get('/ui/login', (request, response) => {
-    //console.log("get /ui/login");
+    console.log("get /ui/login");
 
     var uri = globus_auth.code.getUri();
     response.redirect(uri);
 });
 
 app.get('/ui/logout', (request, response) => {
-    //console.log("get /ui/logout");
+    console.log("get /ui/logout");
 
     response.clearCookie( 'sdms' );
     response.clearCookie( 'sdms-user', { path: "/ui" } );
@@ -716,10 +716,13 @@ app.get('/api/repo/update', ( a_req, a_resp ) => {
         params.title = a_req.query.title;
     if ( a_req.query.desc )
         params.desc = a_req.query.desc;
+    if ( a_req.query.domain )
+        params.domain = a_req.query.domain;
     if ( a_req.query.capacity )
         params.capacity = a_req.query.capacity;
     if ( a_req.query.admins )
         params.admin = JSON.parse( a_req.query.admins );
+
     sendMessage( "RepoUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });

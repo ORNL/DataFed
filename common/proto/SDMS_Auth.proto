@@ -481,8 +481,9 @@ message RepoUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional uint64             capacity    = 4;
-    repeated string             admin       = 5;
+    optional string             domain      = 4;
+    optional uint64             capacity    = 5;
+    repeated string             admin       = 6;
 }
 
 message RepoDataReply

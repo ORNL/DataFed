@@ -4,6 +4,7 @@ function loadUser() {
     console.log( "loadUser" );
 
     var user = Cookies.get( 'sdms-user' );
+    console.log( "user cookie: ", user );
 
     if ( user ) {
         g_user = JSON.parse( user );
@@ -226,13 +227,15 @@ function repoView( a_repo, a_cb ){
     _asyncGet( "/api/repo/view?id="+a_repo, null, a_cb );
 }
 
-function repoUpdate( a_repo, a_title, a_desc, a_capacity, a_admins, a_cb ){
+function repoUpdate( a_repo, a_title, a_desc, a_domain, a_capacity, a_admins, a_cb ){
     console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
     var url = "/api/repo/update?id="+a_repo;
     if ( a_title )
         url += "&title="+encodeURIComponent(a_title);
     if ( a_desc )
         url += "&desc="+encodeURIComponent(a_desc);
+    if ( a_domain )
+        url += "&domain="+encodeURIComponent(a_domain);
     if ( a_capacity != null )
         url += "&capacity="+a_capacity;
     if ( a_admins )

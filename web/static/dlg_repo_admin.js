@@ -9,7 +9,8 @@ function makeDlgRepoAdmin(){
                     <table style='width:100%'>\
                         <tr><td style='vertical-align:middle'>ID:</td><td><input type='text' id='id' style='width:100%' disabled></input></td></tr>\
                         <tr><td style='vertical-align:middle'>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
-                        <tr><td style='vertical-align:middle'>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+                        <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;resize:none;padding:0'></textarea></td></tr>\
+                        <tr><td style='vertical-align:middle'>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
                         <tr><td style='vertical-align:middle'>Capacity:</td><td><input type='text' id='capacity' style='width:100%'></input></td></tr>\
                     </table>\
                 </div>\
@@ -139,20 +140,22 @@ function makeDlgRepoAdmin(){
         $(".btn",inst.frame).button();
         $("#title",inst.frame).on('input', function(){ inst.repoInputChanged(1); });
         $("#desc",inst.frame).on('input', function(){ inst.repoInputChanged(2); });
-        $("#capacity",inst.frame).on('input', function(){ inst.repoInputChanged(4); });
+        $("#domain",inst.frame).on('input', function(){ inst.repoInputChanged(4); });
+        $("#capacity",inst.frame).on('input', function(){ inst.repoInputChanged(8); });
 
         $("#apply_btn",inst.frame).click( function(){
             var title = (inst.changed & 1)?$("#title",inst.frame).val():null;
             var desc = (inst.changed & 2)?$("#desc",inst.frame).val():null;
-            var capacity = (inst.changed & 4)?parseSize( $("#capacity",inst.frame).val() ):null;
+            var domain = (inst.changed & 4)?$("#domain",inst.frame).val():null;
+            var capacity = (inst.changed & 8)?parseSize( $("#capacity",inst.frame).val() ):null;
             var admins = null;
-            if ( inst.changed & 8 ){
+            if ( inst.changed & 16 ){
                 admins = [];
                 inst.admin_tree.visit( function(node){
                     admins.push( node.key );
                 });
             }
-            repoUpdate( a_repo_id, title, desc, capacity, admins, function( ok, data ){
+            repoUpdate( a_repo_id, title, desc, domain, capacity, admins, function( ok, data ){
                 if ( ok ){
                     inst.changed = 0;
                     $("#apply_btn",inst.frame).button("option", "disabled", true);
@@ -175,7 +178,7 @@ function makeDlgRepoAdmin(){
                     uid = uids[i];
                     inst.admin_tree.rootNode.addNode({title: uid.substr(2),icon:"ui-icon ui-icon-person",key: uid });
                 }
-                inst.repoInputChanged(8);
+                inst.repoInputChanged(16);
             });
         });
 
@@ -185,7 +188,7 @@ function makeDlgRepoAdmin(){
                 node.remove();
                 $("#rem_adm_btn",inst.frame).button("option", "disabled", true);
             }
-            inst.repoInputChanged(8);
+            inst.repoInputChanged(16);
         });
 
         $("#add_alloc_btn",inst.frame).click( function(){
@@ -261,7 +264,6 @@ function makeDlgRepoAdmin(){
     }
 
     this.repoInputChanged = function( a_bit ){
-        console.log("Input changed!");
         this.changed |= a_bit;
         $("#apply_btn",inst.frame).button("option","disabled",false);
     }
@@ -272,6 +274,7 @@ function makeDlgRepoAdmin(){
             $("#id",inst.frame).val(inst.repo.id.substr(5));
             $("#title",inst.frame).val(inst.repo.title);
             $("#desc",inst.frame).val(inst.repo.desc);
+            $("#domain",inst.frame).val( inst.repo.domain );
             $("#capacity",inst.frame).val( inst.repo.capacity );
             var admin;
             for ( var i in inst.repo.admin ){

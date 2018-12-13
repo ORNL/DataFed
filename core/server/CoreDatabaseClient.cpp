@@ -1630,6 +1630,8 @@ DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Anon::Ack
         params.push_back({"title", a_request.title()});
     if ( a_request.has_desc() )
         params.push_back({"desc", a_request.desc()});
+    if ( a_request.has_domain() )
+        params.push_back({"domain", a_request.domain()});
     if ( a_request.has_capacity() )
         params.push_back({"capacity", to_string( a_request.capacity() )});
     if ( a_request.admin_size() > 0 )
@@ -1682,6 +1684,8 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
             repo->set_endpoint( imem->value.GetString() );
         if (( imem = val.FindMember("pub_key")) != val.MemberEnd() )
             repo->set_pub_key( imem->value.GetString() );
+        if (( imem = val.FindMember("domain")) != val.MemberEnd() )
+            repo->set_domain( imem->value.GetString() );
         if (( imem = val.FindMember("path")) != val.MemberEnd() )
             repo->set_path( imem->value.GetString() );
 
