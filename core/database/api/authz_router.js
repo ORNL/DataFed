@@ -23,6 +23,7 @@ router.get('/gridftp', function (req, res) {
         console.log( "authz client", req.queryParams.client, "repo", req.queryParams.repo, "file", req.queryParams.file, "act", req.queryParams.act );
 
         const client = g_lib.getUserFromClientID( req.queryParams.client );
+        console.log("client:",client);
 
         // Actions: read, write, create, delete, chdir, lookup
         var req_perm = 0;
@@ -45,6 +46,8 @@ router.get('/gridftp', function (req, res) {
         }
 
         var idx = req.queryParams.file.lastIndexOf("/");
+        console.log("doc ID:","d/" + req.queryParams.file.substr( idx + 1 ));
+
         var data = g_db.d.document( "d/" + req.queryParams.file.substr( idx + 1 ));
 
         if ( !g_lib.hasAdminPermObject( client, data._id )) {
@@ -55,6 +58,10 @@ router.get('/gridftp', function (req, res) {
         // Verify repo and path are correct for record
         var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
         var loc = g_db.loc.firstExample({_from:data._id});
+        console.log( "file:",req.queryParams.file);
+        console.log( "req loc:",path);
+        console.log( "actual loc:",loc.path);
+        console.log( "req repo:",req.queryParams.repo,",actual repo",loc._to);
         if ( !loc || loc._to != req.queryParams.repo || loc.path != path )
             throw g_lib.ERR_INVALID_LOCATION;
     } catch( e ) {

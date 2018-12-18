@@ -101,6 +101,9 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.desc )
                     obj.desc = req.queryParams.desc;
 
+                if ( req.queryParams.domain )
+                    obj.domain = req.queryParams.domain;
+
                 var repo = g_db.repo.save( obj, { returnNew: true });
 
                 for ( var i in req.queryParams.admins ) {
@@ -128,6 +131,7 @@ router.get('/create', function (req, res) {
 .queryParam('address', joi.string().required(), "Repo server address")
 .queryParam('endpoint', joi.string().required(), "Repo server endpoint")
 .queryParam('path', joi.string().required(), "Repo server data path")
+.queryParam('domain', joi.string().optional(), "Repo server domain (must be unique)")
 .queryParam('admins', joi.array().items(joi.string()).required(), "Repo admin user IDs")
 .summary('Create a repo server record')
 .description('Create a repo server record.');
@@ -150,6 +154,9 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.desc )
                     obj.desc = req.queryParams.desc;
+
+                if ( req.queryParams.domain )
+                    obj.domain = req.queryParams.domain;
 
                 if ( req.queryParams.capacity )
                     obj.capacity = req.queryParams.capacity;
@@ -175,6 +182,7 @@ router.get('/update', function (req, res) {
 .queryParam('title', joi.string().optional(), "Title")
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('capacity', joi.number().optional(), "Total storage capacity (in bytes)")
+.queryParam('domain', joi.string().optional(), "Repo server domain (must be unique)")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Repo admin user IDs")
 .summary('Update a repo server record')
 .description('Update a repo server record');
