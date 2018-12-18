@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <fstream>
@@ -9,6 +10,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <boost/program_options.hpp>
 
 #define FUSE_USE_VERSION 29
 #include <fuse.h>
@@ -23,6 +25,8 @@
 #include "SDMS_Auth.pb.h"
 
 using namespace std;
+
+#define VERSION "0.1.0"
 
 template <typename T>
 class Queue
@@ -71,13 +75,22 @@ private:
     condition_variable  m_cv;
 };
 
+class CoreProxy;
+
+Queue<CoreProxy*>           g_ready_queue;
 MsgComm::SecurityContext    g_sec_ctx;
+string                      g_core_addr;
+string                      g_root_path;
+string                      g_domain;
+string                      g_repo_id;
 
 class CoreProxy
 {
 public:
-    CoreProxy() : m_run(true), m_path(0), m_uid(0), m_ready( false )
+    CoreProxy( const MsgComm::SecurityContext & a_sec_ctx, const string & a_hostname, const string & a_repo_id, const string & a_core_addr ):
+        m_sec_ctx(a_sec_ctx), m_core_addr(a_core_addr), m_repo_id(a_repo_id), m_run(true), m_path(0), m_ready( false )
     {
+        m_prefix = string("fus://") + a_hostname;
         m_thread = new thread( &CoreProxy::threadFunc, this );
     };
 
@@ -90,7 +103,7 @@ public:
         delete m_thread;
     };
 
-    bool authorize( const char *a_path, int a_uid )
+    bool authorize( const char *a_path, string a_uid )
     {
         DL_INFO( "SDMS-FS (" << this << ") authorize " << a_path << ", " << a_uid  );
 
@@ -118,7 +131,7 @@ public:
 private:
     void threadFunc()
     {
-        MsgComm comm( "tcp://sdms.ornl.gov:7512", MsgComm::DEALER, false, &g_sec_ctx );
+        MsgComm comm( m_core_addr, MsgComm::DEALER, false, &m_sec_ctx );
 
         SDMS::Auth::RepoAuthzRequest    request;
         MsgBuf::Message *               reply;
@@ -126,10 +139,10 @@ private:
         MsgBuf::Frame                   frame;
         string                          client;
 
-        request.set_repo("core");
-        request.set_action("read");
+        request.set_repo( m_repo_id ) ;
+        request.set_action( "read" );
 
-        unique_lock<mutex> lock(m_mutex,defer_lock);
+        unique_lock<mutex> lock( m_mutex, defer_lock );
 
         while( m_run )
         {
@@ -148,8 +161,8 @@ private:
 
             DL_INFO( "SDMS-FS do auth for " << m_path << ", " << m_uid );
 
-            request.set_file( m_path );
-            request.set_client( to_string( m_uid ));
+            request.set_file( m_prefix + m_path );
+            request.set_client( m_uid );
 
             comm.send( request );
 
@@ -177,17 +190,20 @@ private:
         DL_INFO( "SDMS-FS main thread exiting" );
     };
 
-    bool                m_run;
-    thread *            m_thread;
-    mutex               m_mutex;
-    condition_variable  m_cv;
-    const char *        m_path;
-    int                 m_uid;
-    bool                m_auth;
-    bool                m_ready;
+    const MsgComm::SecurityContext &    m_sec_ctx;
+    const string &                      m_core_addr;
+    const string &                      m_repo_id;
+    bool                                m_run;
+    thread *                            m_thread;
+    mutex                               m_mutex;
+    condition_variable                  m_cv;
+    const char *                        m_path;
+    string                              m_uid;
+    bool                                m_auth;
+    string                              m_prefix;
+    bool                                m_ready;
 };
 
-Queue<CoreProxy*>           g_ready_queue;
 
 extern "C" {
 
@@ -195,51 +211,59 @@ static void * fuse_init( struct fuse_conn_info *conn )
 {
     (void) conn;
 
+    char hostname[HOST_NAME_MAX];
+    gethostname( hostname, HOST_NAME_MAX );
+
     for ( int i = 0; i < 4; i++ )
-        g_ready_queue.push( new CoreProxy() );
+        g_ready_queue.push( new CoreProxy( g_sec_ctx, hostname, g_repo_id, g_core_addr ) );
 
     return 0;
 }
 
-static int fuse_getattr( const char *path, struct stat *stbuf )
+inline string prependPath( const char * a_path )
+{
+    return g_root_path + a_path;
+}
+
+static int fuse_getattr( const char * a_path, struct stat * a_stbuf )
 {
     int res;
 
-    res = lstat(path, stbuf);
+    res = lstat( prependPath( a_path ).c_str(), a_stbuf );
     if (res == -1)
         return -errno;
 
     return 0;
 }
 
-static int fuse_open( const char *path, struct fuse_file_info *fi )
+static int fuse_open( const char * a_path, struct fuse_file_info * a_fi )
 {
-    if (( fi->flags & O_RDONLY ) != O_RDONLY )
+    if (( a_fi->flags & O_RDONLY ) != O_RDONLY )
         return -EACCES;
 
-    DL_INFO( "SDMS-FS open" );
-
+    //DL_INFO( "SDMS-FS open" );
+    string path = prependPath( a_path );
     CoreProxy * proxy = g_ready_queue.pop();
-    bool auth = proxy->authorize( path, fuse_get_context()->uid );
+    bool auth = proxy->authorize( path.c_str(), g_domain + to_string( fuse_get_context()->uid ));
     g_ready_queue.push( proxy );
 
     if ( !auth )
         return -EACCES;
 
-    int fd = open( path, fi->flags );
+    int fd = open( path.c_str(), a_fi->flags );
     if (fd == -1)
         return -errno;
 
-    fi->fh = fd;
+    a_fi->fh = fd;
 
     return 0;
 }
 
-static int fuse_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+static int fuse_read( const char * a_path, char * a_buf, size_t a_size, off_t a_offset, struct fuse_file_info * a_fi )
 {
-    (void) path;
+    (void) a_path;
 
-    int res = pread( fi->fh, buf, size, offset );
+    int res = pread( a_fi->fh, a_buf, a_size, a_offset );
 
     if (res == -1)
         return -errno;
@@ -247,22 +271,22 @@ static int fuse_read(const char *path, char *buf, size_t size, off_t offset, str
         return res;
 }
 
-static int fuse_read_buf(const char *path, struct fuse_bufvec **bufp, size_t size, off_t offset, struct fuse_file_info *fi)
+static int fuse_read_buf( const char * a_path, struct fuse_bufvec ** a_bufp, size_t a_size, off_t a_offset, struct fuse_file_info * a_fi )
 {
     struct fuse_bufvec *src;
-    (void) path;
+    (void) a_path;
 
-    src = (struct fuse_bufvec*)malloc(sizeof(struct fuse_bufvec));
-    if (src == NULL)
+    src = (struct fuse_bufvec*) malloc( sizeof( struct fuse_bufvec ));
+    if ( src == NULL )
         return -ENOMEM;
 
-    *src = FUSE_BUFVEC_INIT(size);
+    *src = FUSE_BUFVEC_INIT( a_size );
 
     src->buf[0].flags = (fuse_buf_flags)( FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK );
-    src->buf[0].fd = fi->fh;
-    src->buf[0].pos = offset;
+    src->buf[0].fd = a_fi->fh;
+    src->buf[0].pos = a_offset;
 
-    *bufp = src;
+    *a_bufp = src;
 
     return 0;
 }
@@ -294,15 +318,14 @@ static inline struct xmp_dirp *get_dirp(struct fuse_file_info *fi)
 static int fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
     int res;
-    //struct xmp_dirp *d = malloc(sizeof(struct xmp_dirp));
     struct xmp_dirp *d = new struct xmp_dirp;
     if (d == NULL)
         return -ENOMEM;
 
-    d->dp = opendir(path);
+    d->dp = opendir( prependPath( path ).c_str() );
     if (d->dp == NULL) {
         res = -errno;
-        delete d; //free(d);
+        delete d;
         return res;
     }
 
@@ -379,7 +402,7 @@ static int fuse_releasedir(const char *path, struct fuse_file_info *fi)
     struct xmp_dirp *d = get_dirp(fi);
     (void) path;
     closedir(d->dp);
-    delete d; //free(d);
+    delete d;
     return 0;
 }
 
@@ -403,16 +426,9 @@ string loadKeyFile( const std::string & a_key_file )
 
 int main( int argc, char ** argv )
 {
-    DL_SET_SYSDL_ENABLED( true )
-
-    g_sec_ctx.is_server = false;
-    g_sec_ctx.public_key = loadKeyFile( "/etc/sdms/sdms-repo-key.pub" );
-    g_sec_ctx.private_key = loadKeyFile( "/etc/sdms/sdms-repo-key.priv" );;
-    g_sec_ctx.server_key = loadKeyFile( "/etc/sdms/sdms-core-key.pub" );;
 
     REG_PROTO( SDMS::Anon );
 
-    //umask(0);
     xmp_oper.init       = fuse_init;
     xmp_oper.getattr    = fuse_getattr;
     xmp_oper.open       = fuse_open;
@@ -423,11 +439,113 @@ int main( int argc, char ** argv )
     xmp_oper.readdir    = fuse_readdir;
     xmp_oper.releasedir = fuse_releasedir;
 
-    /*cout << "Calling fuse_open\n";
-    fuse_file_info fi;
-    fi.flags = 0;
-    fuse_open("/fubar", &fi );
-    cout << "back!\n";
-    return 0;*/
-    return fuse_main( argc, argv, &xmp_oper, 0 );
+    try
+    {
+        DL_SET_ENABLED(true);
+        DL_SET_LEVEL(DynaLog::DL_INFO_LEV);
+        DL_SET_CERR_ENABLED(true);
+        DL_SET_SYSDL_ENABLED(true);
+
+        DL_INFO( "SDMS-FS file system starting" );
+
+        string      cfg_file;
+        string      cred_dir = "/etc/sdms/";
+        string      mount_dir;
+
+        g_core_addr = "tcp://sdms.ornl.gov:7512";
+        g_root_path = "/data";
+        g_domain = "sdmsdev";
+        g_repo_id = "repo/core";
+
+        namespace po = boost::program_options;
+
+        po::options_description opts( "Options" );
+
+        opts.add_options()
+            ("help,?", "Show help")
+            ("version,v", "Show version number")
+            ("mount-dir,m",po::value<string>( &mount_dir ),"Mount directory")
+            ("source-dir,s",po::value<string>( &g_root_path ),"Source directory")
+            ("cred-dir,c",po::value<string>( &cred_dir ),"Server credentials directory")
+            ("core-addr,a",po::value<string>( &g_core_addr ),"DataFed core service address")
+            ("domain,d",po::value<string>( &g_domain ),"DataFed domain")
+            ("repo-id,r",po::value<string>( &g_repo_id ),"DataFed repo ID")
+            ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
+            ;
+
+        po::positional_options_description p;
+        p.add("mount-dir", -1);
+
+        try
+        {
+            po::variables_map opt_map;
+            po::store( po::command_line_parser( argc, argv ).options( opts ).positional(p).run(), opt_map );
+            po::notify( opt_map );
+
+            if ( opt_map.count( "help" ) )
+            {
+                cout << "SDMS Direct Access File Service, ver. " << VERSION << "\n";
+                cout << "Usage: sdms-fs [options] mount-dir\n";
+                cout << opts << endl;
+                return 0;
+            }
+
+            if ( opt_map.count( "version" ))
+            {
+                cout << VERSION << endl;
+                return 0;
+            }
+
+            if ( cfg_file.size() )
+            {
+                ifstream optfile( cfg_file.c_str() );
+                if ( !optfile.is_open() )
+                    EXCEPT_PARAM( 1, "Could not open config file: " << cfg_file );
+
+                po::store( po::parse_config_file( optfile, opts, false ), opt_map );
+                po::notify( opt_map );
+
+                optfile.close();
+            }
+
+            if ( !mount_dir.size() )
+                EXCEPT( 1, "Mount-dir must be specified" );
+        }
+        catch( po::unknown_option & e )
+        {
+            DL_ERROR( "Options error: " << e.what() );
+            return 1;
+        }
+
+        if ( *cred_dir.rbegin() != '/' )
+            cred_dir += "/";
+
+        g_domain += ".";
+
+        cout << "mount-dir: " << mount_dir << "\n";
+        cout << "source-dir: " << g_root_path << "\n";
+        cout << "cred-dir: " << cred_dir << "\n";
+        cout << "core-addr: " << g_core_addr << "\n";
+        cout << "domain: " << g_domain << "\n";
+        cout << "repo-id: " << g_repo_id << "\n";
+
+        g_sec_ctx.is_server = false;
+        g_sec_ctx.public_key = loadKeyFile( cred_dir + "sdms-repo-key.pub" );
+        g_sec_ctx.private_key = loadKeyFile( cred_dir + "sdms-repo-key.priv" );;
+        g_sec_ctx.server_key = loadKeyFile( cred_dir + "sdms-core-key.pub" );;
+
+        DL_SET_CERR_ENABLED(false);
+
+        char * subargs[2] = { argv[0], (char*)mount_dir.c_str() };
+
+        return fuse_main( 2, subargs, &xmp_oper, 0 );
+    }
+    catch( TraceException &e )
+    {
+        DL_ERROR( "Exception: " << e.toString() );
+    }
+    catch( exception &e )
+    {
+        DL_ERROR( "Exception: " << e.what() );
+    }
 }
