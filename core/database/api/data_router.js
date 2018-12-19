@@ -440,6 +440,37 @@ router.get('/loc', function (req, res) {
 .summary('Get raw data repo location')
 .description('Get raw data repo location');
 
+router.get('/path', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var data_id = g_lib.resolveID( req.queryParams.id, client );
+
+        if ( !g_lib.hasAdminPermObject( client, data_id )) {
+            var data = g_db.d.document( data_id );
+            var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_DATA );
+            if (( perms & g_lib.PERM_RD_DATA ) == 0 )
+                throw g_lib.ERR_PERM_DENIED;
+        }
+
+        var loc = g_db.loc.firstExample({ _from: data_id });
+        if ( !loc )
+            throw g_lib.ERR_NO_RAW_DATA;
+
+        var repo = g_db.repo.document( loc._to );
+        if ( repo.domain != req.queryParams.domain )
+            throw g_lib.ERR_INVALID_DOMAIN;
+
+        res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().required(), "Data ID (not alias)")
+.queryParam('domain', joi.string().required(), "Client domain")
+.summary('Get raw data local path')
+.description('Get raw data local path');
+
 
 router.get('/search', function (req, res) {
     try {

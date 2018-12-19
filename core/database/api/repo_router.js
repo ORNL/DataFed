@@ -104,6 +104,12 @@ router.get('/create', function (req, res) {
                 if ( req.queryParams.domain )
                     obj.domain = req.queryParams.domain;
 
+                if ( req.queryParams.exp_path ){
+                    obj.exp_path = req.queryParams.exp_path;
+                    if ( !obj.exp_path.endsWith("/"))
+                        obj.exp_path += "/";
+                }
+
                 var repo = g_db.repo.save( obj, { returnNew: true });
 
                 for ( var i in req.queryParams.admins ) {
@@ -132,6 +138,7 @@ router.get('/create', function (req, res) {
 .queryParam('endpoint', joi.string().required(), "Repo server endpoint")
 .queryParam('path', joi.string().required(), "Repo server data path")
 .queryParam('domain', joi.string().optional(), "Repo server domain (must be unique)")
+.queryParam('exp_path', joi.string().optional(), "Repo server export data path")
 .queryParam('admins', joi.array().items(joi.string()).required(), "Repo admin user IDs")
 .summary('Create a repo server record')
 .description('Create a repo server record.');
@@ -158,11 +165,17 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.domain )
                     obj.domain = req.queryParams.domain;
 
+                if ( req.queryParams.exp_path ){
+                    obj.exp_path = req.queryParams.exp_path;
+                    if ( !obj.exp_path.endsWith("/"))
+                        obj.exp_path += "/";
+                }
+
                 if ( req.queryParams.capacity )
                     obj.capacity = req.queryParams.capacity;
 
                 g_db._update( req.queryParams.id, obj );
-    
+
                 if ( req.queryParams.admins ){
                     g_db.admin.removeByExample({_from: req.queryParams.id});
                     for ( var i in req.queryParams.admins ) {
@@ -183,6 +196,7 @@ router.get('/update', function (req, res) {
 .queryParam('desc', joi.string().optional(), "Description")
 .queryParam('capacity', joi.number().optional(), "Total storage capacity (in bytes)")
 .queryParam('domain', joi.string().optional(), "Repo server domain (must be unique)")
+.queryParam('exp_path', joi.string().optional(), "Repo server export data path")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Repo admin user IDs")
 .summary('Update a repo server record')
 .description('Update a repo server record');
