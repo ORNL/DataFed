@@ -358,6 +358,11 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
     reply.set_pub_key( pub_key );
     reply.set_priv_key( priv_key );
 
+    if ( request->has_domain() && request->has_uid() )
+    {
+        m_db_client.clientLinkIdentity( request->domain() + "." + to_string( request->uid() ));
+    }
+
     PROC_MSG_END
 }
 

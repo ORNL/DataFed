@@ -1725,7 +1725,6 @@ int main( int a_argc, char ** a_argv )
     string      service_cred_dir = "/etc/sdms/";
     bool        manual_auth = false;
     const char* def_ep = getenv("SDMS_CLIENT_DEFAULT_EP");
-    const char* domains = getenv("SDMS_CLIENT_DOMAINS");
     bool        non_interact = false;
 
     const char *tmp = getenv("SDMS_SERVICE_CRED_DIR");

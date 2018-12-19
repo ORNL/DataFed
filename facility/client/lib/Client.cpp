@@ -188,6 +188,14 @@ void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
 void Client::setup()
 {
     GenerateCredentialsRequest req;
+
+    const char* domain = getenv("SDMS_CLIENT_DOMAIN");
+    if ( domain )
+    {
+        req.set_domain( domain );
+        req.set_uid( getuid() );
+    }
+
     GenerateCredentialsReply * reply = 0;
 
     send<>( req, reply, m_ctx++ );

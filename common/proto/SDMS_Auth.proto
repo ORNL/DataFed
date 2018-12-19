@@ -11,6 +11,8 @@ enum Protocol
 
 message GenerateCredentialsRequest
 {
+    optional string             domain      = 1;
+    optional uint32             uid         = 2;
 }
 
 message RevokeCredentialsRequest
