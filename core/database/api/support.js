@@ -196,8 +196,10 @@ module.exports = ( function() {
 
         var result = obj.db._query( "for j in inbound @id ident return j", params, { cache: true } ).toArray();
 
-        if ( result.length != 1 )
+        if ( result.length != 1 ){
+            console.log("Client", a_client_id, "not found, params:", params );
             throw obj.ERR_CLIENT_NOT_FOUND;
+        }
 
         return result[0];
     };
