@@ -215,7 +215,8 @@ message RepoData
     optional string             pub_key     = 5;
     optional string             address     = 6;
     optional string             endpoint    = 7;
-    optional string             domain      = 8;
-    optional string             path        = 9;
-    repeated string             admin       = 10;
+    optional string             path        = 8;
+    optional string             domain      = 9;
+    optional string             exp_path    = 10;
+    repeated string             admin       = 11;
 }

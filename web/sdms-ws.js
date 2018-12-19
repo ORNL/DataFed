@@ -718,6 +718,8 @@ app.get('/api/repo/update', ( a_req, a_resp ) => {
         params.desc = a_req.query.desc;
     if ( a_req.query.domain )
         params.domain = a_req.query.domain;
+    if ( a_req.query.exp_path )
+        params.expPath = a_req.query.exp_path;
     if ( a_req.query.capacity )
         params.capacity = a_req.query.capacity;
     if ( a_req.query.admins )

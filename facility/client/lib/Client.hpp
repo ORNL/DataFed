@@ -25,6 +25,7 @@ typedef std::shared_ptr<Auth::UserDataReply> spUserDataReply;
 typedef std::shared_ptr<Auth::ProjectDataReply> spProjectDataReply;
 typedef std::shared_ptr<Auth::ListingReply> spListingReply;
 typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
+typedef std::shared_ptr<Auth::DataPathReply> spDataPathReply;
 typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
 typedef std::shared_ptr<Auth::XfrDataReply> spXfrDataReply;
 typedef std::shared_ptr<Auth::ACLDataReply> spACLDataReply;
@@ -115,6 +116,7 @@ public:
     void                collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id );
     spCollDataReply     collGetParents( const std::string & a_id, bool a_all = false );
 
+    spDataPathReply     dataGetPath( const std::string & a_data_id );
     spXfrDataReply      dataGet( const std::string & a_data_id, const std::string & a_local_path );
     spXfrDataReply      dataPut( const std::string & a_data_id, const std::string & a_local_path );
     void                dataDelete( const std::string & a_id );
@@ -154,6 +156,7 @@ private:
     std::condition_variable     m_start_cvar;
     std::mutex                  m_mutex;
     std::string                 m_def_ep;
+    std::string                 m_domain;
 };
 
 }}

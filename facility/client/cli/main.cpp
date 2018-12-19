@@ -833,47 +833,55 @@ int data_update()
 
 int data_get()
 {
-    if ( g_args.size() != 2 )
-        return -1;
-
-    int stat = 0;
-
-    spXfrDataReply xfrs = g_client->dataGet( resolveID( g_args[0] ), g_args[1] );
-
-    g_cur_xfr = xfrs->xfr(0).id();
-
-    if ( g_wait )
+    if ( g_args.size() == 1 )
     {
-        string xfr_id = xfrs->xfr(0).id();
-        XfrStatus status = xfrs->xfr(0).status();
-        while ( status < 3 )
+        spDataPathReply rep = g_client->dataGetPath( resolveID( g_args[0] ));
+        cout << rep->path() << "\n";
+        return 0;
+    }
+    else if ( g_args.size() == 2 )
+    {
+        int stat = 0;
+
+        spXfrDataReply xfrs = g_client->dataGet( resolveID( g_args[0] ), g_args[1] );
+
+        g_cur_xfr = xfrs->xfr(0).id();
+
+        if ( g_wait )
         {
-            sleep( 5 );
-            xfrs = g_client->xfrView( xfr_id );
-            status = xfrs->xfr(0).status();
+            string xfr_id = xfrs->xfr(0).id();
+            XfrStatus status = xfrs->xfr(0).status();
+            while ( status < 3 )
+            {
+                sleep( 5 );
+                xfrs = g_client->xfrView( xfr_id );
+                status = xfrs->xfr(0).status();
+            }
+
+            if ( status != 3 )
+                stat = 1;
         }
 
-        if ( status != 3 )
-            stat = 1;
+        const XfrData & xfr = xfrs->xfr(0);
+
+        switch ( g_out_form )
+        {
+        case TEXT:
+            cout << "TransID  " << xfr.id() << "\nStatus   " << StatusText[xfr.status()] << "\nPath     " << xfr.local_path() << "\n";
+            break;
+        case CSV:
+            cout << "\"TransID\",\"Status\",\"Path\"\n";
+            cout << "\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
+            break;
+        case JSON:
+            cout << "{\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
+            break;
+        }
+
+        return stat;
     }
-
-    const XfrData & xfr = xfrs->xfr(0);
-
-    switch ( g_out_form )
-    {
-    case TEXT:
-        cout << "TransID  " << xfr.id() << "\nStatus   " << StatusText[xfr.status()] << "\nPath     " << xfr.local_path() << "\n";
-        break;
-    case CSV:
-        cout << "\"TransID\",\"Status\",\"Path\"\n";
-        cout << "\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
-        break;
-    case JSON:
-        cout << "{\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
-        break;
-    }
-
-    return stat;
+    else
+        return -1;
 }
 
 
@@ -1674,7 +1682,7 @@ int main( int a_argc, char ** a_argv )
     addCommand("dv","data-view", "View data record", "<id>\n\nViews fields of specified data record. The <id> argument may be an identifier or an alias.", data_view );
     addCommand("dc","data-create", "Create data record", "-t <title> [-a] [-d] [-md|-f [-r]]\n\nCreates a new data record using fields provided via options (see general help for option descriptions).", data_create );
     addCommand("du","data-update", "Update data record", "<id> [-t] [-a] [-d] [-md|-f [-r]]\n\nUpdates an existing data record using fields provided via options (see general help for option descriptions).  The <id> argument may be an identifier or an alias.", data_update );
-    addCommand( "get", "data-get", "Get data from repository", "<id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used).", data_get );
+    addCommand( "get", "data-get", "Get data from repository", "<id> <dest>\n\nTransfer raw data from repository and place in a specified destination directory. The <id> parameter may be either a data identifier or an alias. The <dest> parameter is the destination path including a globus end-point prefix (if no prefix is specified, the default local end-point will be used). If no destination is specified, this command will return a local path to the (read-only) raw data file if one exists.", data_get );
     addCommand( "put", "data-put", "Put data into repository", "[id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created (see help on data command for details). The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", data_put );
     addCommand("","data-clear", "Clear raw data", "<id>\n\nDeletes raw data associated with an existing data record. The <id> argument may be an identifier or an alias.", data_clear );
     addCommand("","data-delete", "Delete data record", "<id>\n\nDeletes an existing data record, including raw data. The <id> argument may be an identifier or an alias.", data_delete );

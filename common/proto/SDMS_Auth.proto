@@ -250,6 +250,16 @@ message DataCopyRequest
     required string             dest_id     = 2;
 }
 
+message DataPathRequest
+{
+    required string             id          = 1;
+    required string             domain      = 2;
+}
+
+message DataPathReply
+{
+    required string             path        = 1;
+}
 
 // ============================ Collection Messages
 
@@ -483,9 +493,11 @@ message RepoUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             domain      = 4;
-    optional uint64             capacity    = 5;
-    repeated string             admin       = 6;
+    optional string             path        = 4;
+    optional string             domain      = 5;
+    optional string             exp_path    = 6;
+    optional uint64             capacity    = 7;
+    repeated string             admin       = 8;
 }
 
 message RepoDataReply

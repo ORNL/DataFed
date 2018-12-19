@@ -102,6 +102,10 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
         sec_ctx.private_key = priv_key;
     }
 
+    const char* domain = getenv("SDMS_CLIENT_DOMAIN");
+    if ( domain )
+        m_domain = domain;
+
     m_comm = new MsgComm( a_host, a_port, MsgComm::DEALER, false, &sec_ctx );
 }
 
@@ -189,10 +193,9 @@ void Client::setup()
 {
     GenerateCredentialsRequest req;
 
-    const char* domain = getenv("SDMS_CLIENT_DOMAIN");
-    if ( domain )
+    if ( m_domain.size() )
     {
-        req.set_domain( domain );
+        req.set_domain( m_domain );
         req.set_uid( getuid() );
     }
 
@@ -795,6 +798,23 @@ Client::applyPrefix( const string & a_path )
     {
         return a_path;
     }
+}
+
+spDataPathReply
+Client::dataGetPath( const std::string & a_data_id )
+{
+    if ( !m_domain.size() )
+        EXCEPT( 0, "Client must be running within an SDMS domain for direct data access." );
+
+    Auth::DataPathRequest    req;
+    Auth::DataPathReply *    rep;
+
+    req.set_id( a_data_id );
+    req.set_domain( m_domain );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spDataPathReply( rep );
 }
 
 spXfrDataReply

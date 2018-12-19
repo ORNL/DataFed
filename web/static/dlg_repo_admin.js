@@ -11,6 +11,7 @@ function makeDlgRepoAdmin(){
                         <tr><td style='vertical-align:middle'>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                         <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;resize:none;padding:0'></textarea></td></tr>\
                         <tr><td style='vertical-align:middle'>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
+                        <tr><td style='vertical-align:middle'>Exp Path:</td><td><input type='text' id='exp_path' style='width:100%'></input></td></tr>\
                         <tr><td style='vertical-align:middle'>Capacity:</td><td><input type='text' id='capacity' style='width:100%'></input></td></tr>\
                     </table>\
                 </div>\
@@ -142,11 +143,13 @@ function makeDlgRepoAdmin(){
         $("#desc",inst.frame).on('input', function(){ inst.repoInputChanged(2); });
         $("#domain",inst.frame).on('input', function(){ inst.repoInputChanged(4); });
         $("#capacity",inst.frame).on('input', function(){ inst.repoInputChanged(8); });
+        $("#exp_path",inst.frame).on('input', function(){ inst.repoInputChanged(0x20); });
 
         $("#apply_btn",inst.frame).click( function(){
             var title = (inst.changed & 1)?$("#title",inst.frame).val():null;
             var desc = (inst.changed & 2)?$("#desc",inst.frame).val():null;
             var domain = (inst.changed & 4)?$("#domain",inst.frame).val():null;
+            var exp_path = (inst.changed & 0x20)?$("#exp_path",inst.frame).val():null;
             var capacity = (inst.changed & 8)?parseSize( $("#capacity",inst.frame).val() ):null;
             var admins = null;
             if ( inst.changed & 16 ){
@@ -155,7 +158,7 @@ function makeDlgRepoAdmin(){
                     admins.push( node.key );
                 });
             }
-            repoUpdate( a_repo_id, title, desc, domain, capacity, admins, function( ok, data ){
+            repoUpdate( a_repo_id, title, desc, domain, exp_path, capacity, admins, function( ok, data ){
                 if ( ok ){
                     inst.changed = 0;
                     $("#apply_btn",inst.frame).button("option", "disabled", true);
@@ -275,6 +278,7 @@ function makeDlgRepoAdmin(){
             $("#title",inst.frame).val(inst.repo.title);
             $("#desc",inst.frame).val(inst.repo.desc);
             $("#domain",inst.frame).val( inst.repo.domain );
+            $("#exp_path",inst.frame).val( inst.repo.expPath );
             $("#capacity",inst.frame).val( inst.repo.capacity );
             var admin;
             for ( var i in inst.repo.admin ){

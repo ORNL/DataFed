@@ -227,7 +227,7 @@ function repoView( a_repo, a_cb ){
     _asyncGet( "/api/repo/view?id="+a_repo, null, a_cb );
 }
 
-function repoUpdate( a_repo, a_title, a_desc, a_domain, a_capacity, a_admins, a_cb ){
+function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, a_admins, a_cb ){
     console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
     var url = "/api/repo/update?id="+a_repo;
     if ( a_title )
@@ -236,6 +236,8 @@ function repoUpdate( a_repo, a_title, a_desc, a_domain, a_capacity, a_admins, a_
         url += "&desc="+encodeURIComponent(a_desc);
     if ( a_domain )
         url += "&domain="+encodeURIComponent(a_domain);
+    if ( a_exp_path )
+        url += "&exp_path="+encodeURIComponent(a_exp_path);
     if ( a_capacity != null )
         url += "&capacity="+a_capacity;
     if ( a_admins )

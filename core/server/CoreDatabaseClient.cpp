@@ -993,6 +993,16 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
     }
 }
 
+void
+DatabaseClient::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "dat/path", {{"id",a_request.id()},{"domain",a_request.domain()}}, result );
+
+    a_reply.set_path( result["path"].GetString() );
+}
+
 
 void
 DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_reply )
@@ -1630,8 +1640,12 @@ DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Anon::Ack
         params.push_back({"title", a_request.title()});
     if ( a_request.has_desc() )
         params.push_back({"desc", a_request.desc()});
+    if ( a_request.has_path() )
+        params.push_back({"path", a_request.path()});
     if ( a_request.has_domain() )
         params.push_back({"domain", a_request.domain()});
+    if ( a_request.has_exp_path() )
+        params.push_back({"exp_path", a_request.exp_path()});
     if ( a_request.has_capacity() )
         params.push_back({"capacity", to_string( a_request.capacity() )});
     if ( a_request.admin_size() > 0 )
@@ -1684,10 +1698,12 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
             repo->set_endpoint( imem->value.GetString() );
         if (( imem = val.FindMember("pub_key")) != val.MemberEnd() )
             repo->set_pub_key( imem->value.GetString() );
-        if (( imem = val.FindMember("domain")) != val.MemberEnd() )
-            repo->set_domain( imem->value.GetString() );
         if (( imem = val.FindMember("path")) != val.MemberEnd() )
             repo->set_path( imem->value.GetString() );
+        if (( imem = val.FindMember("domain")) != val.MemberEnd() )
+            repo->set_domain( imem->value.GetString() );
+        if (( imem = val.FindMember("exp_path")) != val.MemberEnd() )
+            repo->set_exp_path( imem->value.GetString() );
 
         if (( imem = val.FindMember("admins")) != val.MemberEnd() )
         {
