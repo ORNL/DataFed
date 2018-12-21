@@ -1227,6 +1227,7 @@ function makeBrowserTab(){
     }*/
 
     var tree_source = [
+        //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[{
             title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
@@ -1237,7 +1238,6 @@ function makeBrowserTab(){
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
         {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
-        //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
         {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
@@ -1667,7 +1667,7 @@ function makeBrowserTab(){
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
-    $("#query_input").on('keyup', function (e) {
+    $("#text_query,#meta_query").on('keyup', function (e) {
         if (e.keyCode == 13)
             inst.searchDirect();
     });

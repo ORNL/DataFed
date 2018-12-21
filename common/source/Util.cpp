@@ -454,6 +454,10 @@ string parseSearchMetadata( const string & a_query )
                     result.append( "i['desc']" );
                 else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
                     result.append( tmp );
+                else if ( tmp == "id" )
+                {
+                    result.append( "i._id" );
+                }
                 else if ( terms.find( tmp ) != terms.end() )
                 {
                     result.append( "i." );
