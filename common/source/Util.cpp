@@ -400,22 +400,10 @@ string parseSearchMetadata( const string & a_query )
                 break;
             }
         }
+        cout << "c[" << *c << "]\n";
 
         switch( state )
         {
-        case PS_DEFAULT: // Not quoted, not an identifier
-            if ( *c == '\'' )
-                state = PS_SINGLE_QUOTE;
-            else if ( *c == '\"' )
-                state = PS_DOUBLE_QUOTE;
-            else if ( isalpha( *c ))
-            {
-                v.start = c - a_query.begin();
-                //cout << "start: " << v.start << "\n";
-                v.len = 1;
-                state = PS_TOKEN;
-            }
-            break;
         case PS_SINGLE_QUOTE: // Single quote (not escaped)
             if ( *c == '\'' && *(c-1) != '\\' )
                 state = PS_DEFAULT;
@@ -424,6 +412,27 @@ string parseSearchMetadata( const string & a_query )
             if ( *c == '\"' && *(c-1) != '\\' )
                 state = PS_DEFAULT;
             break;
+        case PS_DEFAULT: // Not quoted, not an identifier
+            if ( *c == '\'' )
+            {
+                state = PS_SINGLE_QUOTE;
+                cout << "single q start\n";
+                break;
+            }
+            else if ( *c == '\"' )
+            {
+                state = PS_DOUBLE_QUOTE;
+                cout << "dbl q start\n";
+                break;
+            }
+            else if ( !isalpha( *c ))
+                break;
+
+            v.start = c - a_query.begin();
+            cout << "tok start: " << v.start << "\n";
+            v.len = 0;
+            state = PS_TOKEN;
+            // FALL-THROUGH to token processing
         case PS_TOKEN: // Token
             //if ( spec.find( *c ) != spec.end() )
             val_token = isalnum( *c ) || *c == '.' || *c == '_';
