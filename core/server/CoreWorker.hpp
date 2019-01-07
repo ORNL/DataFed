@@ -2,6 +2,7 @@
 #define COREWORKER_HPP
 
 #include <thread>
+#include <algorithm>
 #include <zmq.h>
 #include "MsgComm.hpp"
 #include "CoreDatabaseClient.hpp"
@@ -40,6 +41,17 @@ private:
     bool procRecordSearchRequest( const std::string & a_uid );
     bool procRepoAllocationSetRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );
+
+    inline bool isPhrase( const std::string &str )
+    {
+        return find_if(str.begin(), str.end(), []( char c ){ return !isalnum(c); }) != str.end();
+    }
+
+    std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms );
+    std::string parseSearchPhrase( const char * key, const std::string & a_phrase );
+    std::string parseSearchQuickPhrase( const std::string & a_phrase );
+    std::string parseSearchMetadata( const std::string & a_query );
+    std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );
 
     typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
 

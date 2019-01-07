@@ -28,7 +28,6 @@ int main( int a_argc, char ** a_argv )
         uint16_t    port = 9000;
         string      cfg_file;
         bool        gen_keys = false;
-        const char* home = getenv("HOME");
         string      cred_dir = "/etc/sdms/";
 
         po::options_description opts( "Options" );
