@@ -478,28 +478,56 @@ router.get('/view', function (req, res) {
 
 
 router.get('/list/all', function (req, res) {
-    if ( req.queryParams.details ) {
-        res.send( g_db._query( "for i in u return { uid: i._id, name: i.name, email: i.email }" ));
-    } else {
-        res.send( g_db._query( "for i in u return { uid: i._id, name: i.name }" ));
+    var qry = "for i in u sort i.name";
+    var result;
+
+    if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return { uid: i._id, name: i.name }";
+        result = g_db._query( qry, {},{},{fullCount:true});
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+        result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
     }
+    else{
+        qry += " return { uid: i._id, name: i.name }";
+        result = g_db._query( qry );
+    }
+
+    res.send( result );
 })
-.queryParam('details', joi.boolean().optional(), "Show additional user details")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
 .summary('List all users')
 .description('List all users');
 
 router.get('/list/collab', function (req, res) {
     var client = g_lib.getUserFromClientID( req.queryParams.client );
+    var qry = "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 3..3 inbound @user member, outbound owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 2..2 inbound @user owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name })) sort x.name";
+    var result;
 
     // Members of owned groups and owned user ACLS:
     // Members of groups client belongs to (not owned - projects and ACLs)
     // Owner of user-ACLs of with client is the subject
     // Members and admins of owned projects
     // Owner and admins of member projects (members gathered by group members above)
+    if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return x";
+        result = g_db._query( qry, { user: client._id }, {}, {fullCount:true});
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+        result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+    }
+    else{
+        qry += " return x";
+        result = g_db._query( qry, { user: client._id } );
+    }
 
-    res.send( g_db._query( "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 3..3 inbound @user member, outbound owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 2..2 inbound @user owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name })) return x", { user: client._id }));
+    res.send( result );
+    //res.send( g_db._query( "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 3..3 inbound @user member, outbound owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 2..2 inbound @user owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name })) return x", { user: client._id }));
 })
 .queryParam('client', joi.string().required(), "Client ID")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
 .summary('List collaborators of client')
 .description('List collaborators of client (from groups, projects, and ACLs)');
 
