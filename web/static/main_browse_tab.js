@@ -19,7 +19,7 @@ function makeBrowserTab(){
     //this.data_md_cur = {};
     this.data_md_exp = {};
     this.xfrHist = [];
-    this.pollSince = 24*3600; // First poll = 24 hours =  sec
+    this.pollSince = g_opts.xfr_hist * 3600;
     this.my_root_key = "c/u_" + g_user.uid + "_root";
     this.drag_mode = 0;
     this.drag_enabled = true;
@@ -1809,7 +1809,22 @@ function makeBrowserTab(){
     $("#page-size").val(g_opts.page_sz).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
         g_opts.page_sz = parseInt(ui.item.value);
         inst.reloadDataTree();
-        console.log("save opts");
+
+        _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&opts="+encodeURIComponent(JSON.stringify(g_opts)), null, function( ok, data ){
+            if ( !ok )
+                dlgAlert( "Update Options Error", data );
+            else
+                console.log("saved");
+        });
+    });
+
+    $("#xfr-poll-hours").val(g_opts.xfr_hist).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
+        clearTimeout( inst.xfrTimer );
+        g_opts.xfr_hist = parseInt(ui.item.value);
+        inst.xfrHist = [];
+        inst.pollSince = g_opts.xfr_hist * 3600;
+        inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
+
         _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&opts="+encodeURIComponent(JSON.stringify(g_opts)), null, function( ok, data ){
             if ( !ok )
                 dlgAlert( "Update Options Error", data );

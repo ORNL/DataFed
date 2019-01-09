@@ -123,7 +123,7 @@ function dlgStartTransfer( a_mode, a_data ) {
                 }else{
                     cur_ep = null;
                     epAutocomplete( ep, function( ok, data ){
-                        console.log("ep matches:", data );
+                        console.log("ep matches:", ok, data );
                         if ( ok ){
                             if ( data.DATA && data.DATA.length ){
                                 ep_list = data.DATA;
@@ -142,7 +142,7 @@ function dlgStartTransfer( a_mode, a_data ) {
 
                                     //console.log( ep.display_name || ep.canonical_name || ep.id, ep.description, ep.organization );
                                 }
-                                //console.log( html );
+                                console.log( html );
                                 matches.html( html );
                                 matches.selectmenu("refresh");
                                 matches.selectmenu("enable");
@@ -151,6 +151,10 @@ function dlgStartTransfer( a_mode, a_data ) {
                                 matches.html( "<option disabled selected>No Matches</option>" );
                                 matches.selectmenu("refresh");
                                 matches.selectmenu("disable");
+
+                                if ( data.code ){
+                                    dlgAlert( "Globus Error", data.code );
+                                }
                             }
                         }
                     });
