@@ -603,7 +603,6 @@ var SS_PUBLIC                   = 12;
 var SS_VIEW                     = 13;
 
 var dlgSetACLs = new makeDlgSetACLs();
-var dlgPickUser = new makeDlgPickUser();
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgAllocations = new makeDlgAllocations();

@@ -175,7 +175,7 @@ function makeDlgRepoAdmin(){
                 excl.push(node.key);
             });
 
-            dlgPickUser.show( "u/"+g_user.uid, excl, false, function( uids ){
+            dlgPickUser( "u/"+g_user.uid, excl, false, function( uids ){
                 console.log("sel:",uids);
                 for ( i in uids ){
                     uid = uids[i];

@@ -37,7 +37,7 @@ function makeDlAllocNewEdit(){
             $(".btn",inst.frame).button();
 
             $("#set_user",inst.frame).click(function(){
-                dlgPickUser.show( "u/"+g_user.uid, a_excl, true, function( users ){
+                dlgPickUser( "u/"+g_user.uid, a_excl, true, function( users ){
                     inst.alloc.id = users[0];
                     $("#subject",inst.frame).val( inst.alloc.id );
                 });

@@ -445,8 +445,11 @@ void
 DatabaseClient::userListAll( const UserListAllRequest & a_request, UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
-    if ( a_request.has_details() && a_request.details() )
-        params.push_back({"details","true"});
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({"offset",to_string(a_request.offset())});
+        params.push_back({"count",to_string(a_request.count())});
+    }
 
     rapidjson::Document result;
     dbGet( "usr/list/all", params, result );
@@ -459,7 +462,13 @@ DatabaseClient::userListCollab( const UserListCollabRequest & a_request, UserDat
 {
     (void)a_request;
     rapidjson::Document result;
-    dbGet( "usr/list/collab", {}, result );
+    vector<pair<string,string>> params;
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({"offset",to_string(a_request.offset())});
+        params.push_back({"count",to_string(a_request.count())});
+    }
+    dbGet( "usr/list/collab", params, result );
 
     setUserData( a_reply, result );
 }
@@ -532,39 +541,48 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
     {
         rapidjson::Value & val = a_result[i];
 
-        user = a_reply.add_user();
-        user->set_uid( val["uid"].GetString() );
-        user->set_name( val["name"].GetString() );
-
-        if (( imem = val.FindMember("email")) != val.MemberEnd() )
-            user->set_email( imem->value.GetString() );
-
-        if (( imem = val.FindMember("options")) != val.MemberEnd() )
-            user->set_options( imem->value.GetString() );
-
-        if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
-            user->set_is_admin( imem->value.GetBool() );
-
-        if (( imem = val.FindMember("is_repo_admin")) != val.MemberEnd() )
-            user->set_is_repo_admin( imem->value.GetBool() );
-
-        if (( imem = val.FindMember("idents")) != val.MemberEnd() )
+        if (( imem = val.FindMember("paging")) != val.MemberEnd())
         {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-                user->add_ident( imem->value[j].GetString() );
+            a_reply.set_offset( imem->value["off"].GetUint() );
+            a_reply.set_count( imem->value["cnt"].GetUint() );
+            a_reply.set_total( imem->value["tot"].GetUint() );
         }
-
-        if (( imem = val.FindMember("allocs")) != val.MemberEnd() )
+        else
         {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-            {
-                rapidjson::Value & alloc_val = imem->value[j];
+            user = a_reply.add_user();
+            user->set_uid( val["uid"].GetString() );
+            user->set_name( val["name"].GetString() );
 
-                alloc = user->add_alloc();
-                alloc->set_repo(alloc_val["repo"].GetString());
-                alloc->set_alloc(alloc_val["alloc"].GetUint64());
-                alloc->set_usage(alloc_val["usage"].GetUint64());
-                alloc->set_path(alloc_val["path"].GetString());
+            if (( imem = val.FindMember("email")) != val.MemberEnd() )
+                user->set_email( imem->value.GetString() );
+
+            if (( imem = val.FindMember("options")) != val.MemberEnd() )
+                user->set_options( imem->value.GetString() );
+
+            if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
+                user->set_is_admin( imem->value.GetBool() );
+
+            if (( imem = val.FindMember("is_repo_admin")) != val.MemberEnd() )
+                user->set_is_repo_admin( imem->value.GetBool() );
+
+            if (( imem = val.FindMember("idents")) != val.MemberEnd() )
+            {
+                for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                    user->add_ident( imem->value[j].GetString() );
+            }
+
+            if (( imem = val.FindMember("allocs")) != val.MemberEnd() )
+            {
+                for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                {
+                    rapidjson::Value & alloc_val = imem->value[j];
+
+                    alloc = user->add_alloc();
+                    alloc->set_repo(alloc_val["repo"].GetString());
+                    alloc->set_alloc(alloc_val["alloc"].GetUint64());
+                    alloc->set_usage(alloc_val["usage"].GetUint64());
+                    alloc->set_path(alloc_val["path"].GetString());
+                }
             }
         }
     }

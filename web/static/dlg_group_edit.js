@@ -183,7 +183,7 @@ function makeDlgGroupEdit(){
     }
 
     this.addUsers = function(){
-        dlgPickUser.show( inst.uid, inst.excl, false, function( uids ){
+        dlgPickUser( inst.uid, inst.excl, false, function( uids ){
             if ( uids.length > 0 ){
                 var tree = $("#member_list",inst.frame).fancytree("getTree");
                 var i,id;

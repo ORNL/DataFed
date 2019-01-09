@@ -310,14 +310,26 @@ app.get('/api/usr/revoke_cred', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/list/all', ( a_req, a_resp ) => {
-    sendMessage( "UserListAllRequest", {}, a_req, a_resp, function( reply ) {
-        a_resp.json(reply.user);
+    var par = {};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "UserListAllRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 
 app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
-    sendMessage( "UserListCollabRequest", {}, a_req, a_resp, function( reply ) {
-        a_resp.json(reply.user?reply.user:[]);
+    var par = {};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "UserListCollabRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 

@@ -460,7 +460,7 @@ function makeDlgSetACLs(){
                 excl.push( rule.id );
         }
 
-        dlgPickUser.show( inst.uid, excl, false, function( uids ){
+        dlgPickUser( inst.uid, excl, false, function( uids ){
             if ( uids.length > 0 ){
                 var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
                 var i,id,rule;

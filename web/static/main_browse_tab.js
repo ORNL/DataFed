@@ -1212,9 +1212,9 @@ function makeBrowserTab(){
             return false;
     }
 
-    this.pageLoad = function( coll, offset, count ){
-        //console.log("pageLoad",coll, offset, count);
-        var node = inst.data_tree.getNodeByKey( coll );
+    this.pageLoad = function( key, offset ){
+        console.log("pageLoad",key, offset);
+        var node = inst.data_tree.getNodeByKey( key );
         if ( node ){
             node.data.offset = offset;
             //console.log("new offset:",node.data.offset);
@@ -1446,7 +1446,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
             } else if ( data.node.parent ) {
-                console.log("Coll read, off:",data.response.offset,"count:",data.response.count,"total:",data.response.total);
+                //console.log("Coll read, off:",data.response.offset,"count:",data.response.count,"total:",data.response.total);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;

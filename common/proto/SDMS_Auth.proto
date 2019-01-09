@@ -88,14 +88,12 @@ message UserUpdateRequest
 
 message UserListAllRequest
 {
-    optional bool               details     = 1;
     optional uint32             offset      = 2;
     optional uint32             count       = 3;
 }
 
 message UserListCollabRequest
 {
-    optional bool               details     = 1;
     optional uint32             offset      = 2;
     optional uint32             count       = 3;
 }
@@ -104,6 +102,9 @@ message UserListCollabRequest
 message UserDataReply
 {
     repeated SDMS.UserData      user        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
 }
 
 message UserGetRecentEPRequest
