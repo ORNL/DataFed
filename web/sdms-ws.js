@@ -798,6 +798,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
+        console.log( body );
         a_resp.json(JSON.parse(body));
     });
 
@@ -815,6 +816,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
+        console.log( body );
         a_resp.json(JSON.parse(body));
     });
 

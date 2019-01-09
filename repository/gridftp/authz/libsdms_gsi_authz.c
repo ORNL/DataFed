@@ -277,7 +277,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                 maj_stat = gss_display_name( &min_stat, target, &target_buf, &target_type );
                 if ( maj_stat == GSS_S_COMPLETE )
                 {
-                    syslog( LOG_INFO, "client: %s, target: %s, action: %s", (char*)client_buf.value, (char*)target_buf.value, action );
+                    syslog( LOG_INFO, "client: %s, file: %s, action: %s", (char*)client_buf.value, object, action );
 
                     // Testing hack
                     #if 0

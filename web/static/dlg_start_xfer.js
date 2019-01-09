@@ -44,7 +44,7 @@ function dlgStartTransfer( a_mode, a_data ) {
             else
                 $("#browse",frame).button("disable");
 
-            if ( !cur_ep.activated && cur_ep.expires_in == -1 )
+            if ( cur_ep.expires_in == -1 )
                 $("#activate",frame).button("disable");
             else
                 $("#activate",frame).button("enable");
@@ -99,16 +99,27 @@ function dlgStartTransfer( a_mode, a_data ) {
                     //console.log( "OK", data );
                     cur_ep = data;
                     cur_ep.name = cur_ep.canonical_name || cur_ep.id;
-                    var html = "<option title='" + (cur_ep.description?cur_ep.description:"(no info)") + "'>" + (cur_ep.display_name || cur_ep.name) + " (" + (cur_ep.activated?Math.floor( cur_ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
+
+                    var html = "<option title='" + (cur_ep.description?cur_ep.description:"(no info)") + "'>" + (cur_ep.display_name || cur_ep.name) + " (";
+
+                    if ( cur_ep.activated )
+                        html += Math.floor( cur_ep.expires_in/3600 ) + " hrs";
+                    else if ( cur_ep.expires_in == -1 )
+                        html += "active";
+                    else
+                        html += "inactive";
+                        
+                    html += ")</option>";
 
                     matches.html( html );
                     matches.selectmenu("refresh");
                     matches.selectmenu("enable");
 
-                    if ( cur_ep.activated )
+                    if ( cur_ep.activated || cur_ep.expires_in == -1 )
                         $("#browse",frame).button("enable");
 
-                    $("#activate",frame).button("enable");
+                    if ( cur_ep.expires_in != -1 )
+                        $("#activate",frame).button("enable");
                 }else{
                     cur_ep = null;
                     epAutocomplete( ep, function( ok, data ){
