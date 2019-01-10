@@ -22,14 +22,36 @@ module.exports = router;
 
 router.get('/list', function (req, res) {
     try {
-        var topics = g_db._query("for v in 1..1 inbound @par top return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}",{par: req.queryParams.id?req.queryParams.id:"t/root" });
+        var qry = "for v in 1..1 inbound @par top";
+        var result;
 
-        res.send( topics );
+        if ( !req.queryParams.data ){
+            qry += " filter is_same_collection('t',v) sort v.title";
+        }else{
+            qry += " sort is_same_collection('t',v) DESC, v.title";
+        }
+
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}";
+            result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" },{},{fullCount:true});
+            var tot = result.getExtra().stats.fullCount;
+            result = result.toArray();
+            result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+        }
+        else{
+            qry += " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}";
+            result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" });
+        }
+
+        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('id', joi.string().optional(), "ID of topic to list (omit for top-level)")
+.queryParam('data', joi.boolean().default(true), "Include data records (default)")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
 .summary('List topics')
 .description('List topics with optional parent');
 
