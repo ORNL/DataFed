@@ -779,10 +779,16 @@ app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
 });
 
 app.get('/api/top/list', ( a_req, a_resp ) => {
-    var params = {topicId:a_req.query.id?a_req.query.id:"t/root"};
-    console.log("params:",params);
-    sendMessage( "TopicListRequest", params, a_req, a_resp, function( reply ) {
-        a_resp.json(reply.item?reply.item:[]);
+    var par = {topicId:a_req.query.id?a_req.query.id:"t/root"};
+    if ( a_req.query.data == "false" )
+        par.data = false;
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+    console.log( "TopicListRequest", par );
+    sendMessage( "TopicListRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 

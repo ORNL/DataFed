@@ -1237,7 +1237,7 @@ function makeBrowserTab(){
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
-        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics"},
+        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
         {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true },
     ];
@@ -1358,14 +1358,14 @@ function makeBrowserTab(){
                 }
             } else if ( data.node.key == "topics" ) {
                 data.result = {
-                    url: "/api/top/list",
+                    url: "/api/top/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
             } else if ( data.node.key.startsWith("t/") ) {
                 data.result = {
-                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ),
+                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
             } else {
@@ -1431,17 +1431,22 @@ function makeBrowserTab(){
             } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
                 data.result = [];
                 var item,entry;
-                var items = data.response;
-                //console.log("topic items:",items);
+                var items = data.response.item;
+                console.log("topic resp:",data.response);
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="t" ){
-                        entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true };
+                        entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
                     }else{
                         entry = { title: inst.generateTitle(item),scope:item.owner,key:item.id,icon:"ui-icon ui-icon-file",checkbox:false };
                     }
 
                     data.result.push( entry );
+                }
+
+                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
+                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
@@ -1480,7 +1485,6 @@ function makeBrowserTab(){
         },
         renderNode: function(ev,data){
             if ( data.node.data.hasBtn ){
-                console.log("init buttons",ev,data);
                 $(".btn",data.node.li).button();
             }
         },

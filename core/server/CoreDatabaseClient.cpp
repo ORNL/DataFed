@@ -74,7 +74,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         curl_free( esc_txt );
     }
 
-    DL_TRACE( "get url: " << url );
+    DL_INFO( "get url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -1245,6 +1245,7 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
             a_reply.set_offset( imem->value["off"].GetUint() );
             a_reply.set_count( imem->value["cnt"].GetUint() );
             a_reply.set_total( imem->value["tot"].GetUint() );
+            DL_INFO( "Paged, tot:" << imem->value["tot"].GetUint() );
         }
         else
         {
@@ -1888,6 +1889,13 @@ DatabaseClient::topicList( const Auth::TopicListRequest & a_request, Auth::Listi
     vector<pair<string,string>> params;
     if ( a_request.has_topic_id() )
         params.push_back({ "id", a_request.topic_id() });
+    if ( a_request.has_data() )
+        params.push_back({ "data", a_request.data()?"true":"false" });
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({ "offset", to_string( a_request.offset() )});
+        params.push_back({ "count", to_string( a_request.count() )});
+    }
 
     dbGet( "topic/list", params, result );
 

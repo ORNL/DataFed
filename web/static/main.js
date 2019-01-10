@@ -316,11 +316,15 @@ function groupDelete( a_uid, a_gid, a_cb ) {
     });
 }
 
-function topicList( a_parent, a_cb ){
+function topicList( a_parent, a_offset, a_count, a_inc_data, a_cb ){
     if ( !a_cb )
         return;
-
-    _asyncGet( "/api/top/list?id="+encodeURIComponent(a_parent?a_parent:"t/root"), null, function( ok, data ){
+    var url = "/api/top/list?id="+encodeURIComponent(a_parent?a_parent:"t/root");
+    if ( a_inc_data === false )
+        url += "&data=false";
+    if ( a_offset != undefined && a_count != undefined )
+        url += "&offset="+a_offset+"&count="+a_count;
+    _asyncGet( url, null, function( ok, data ){
         if ( a_cb ){
             a_cb( ok, data );
         }
