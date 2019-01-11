@@ -248,6 +248,11 @@ router.get('/alloc/list/by_owner', function (req, res) {
     var obj;
     for ( var i in result ){
         obj = result[i];
+
+        if ( req.queryParams.stats ){
+            obj.stats = getAllocStats( obj._to, req.queryParams.owner );
+        }
+
         delete obj._from;
         obj.repo = obj._to;
         delete obj._to;
@@ -255,9 +260,11 @@ router.get('/alloc/list/by_owner', function (req, res) {
         delete obj._id;
         delete obj._rev;
     }
+
     res.send( result );
 })
 .queryParam('owner', joi.string().required(), "Owner ID (user or project)")
+.queryParam('stats', joi.boolean().optional(), "Include statistics")
 .summary('List owner\'s repo allocations')
 .description('List owner\'s repo allocations (user or project ID)');
 
@@ -284,53 +291,51 @@ router.get('/alloc/list/by_object', function (req, res) {
 .summary('List object repo allocations')
 .description('List object repo allocations');
 
+function getAllocStats( a_repo, a_subject ){
+    var sizes;
+
+    if ( a_subject ){
+        var alloc = g_db.alloc.firstExample({_from:a_subject,_to:a_repo});
+        if ( alloc ){
+            sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj || p.edges[0].parent == @alloc return p.vertices[1].size", { repo: a_repo, alloc: alloc._id, subj: a_subject });
+        }
+    }else{
+        sizes = g_db._query("for v in 1..1 inbound @repo loc return v.size", { repo: a_repo });
+    }
+
+    var size;
+    var count = 0;
+    var file_count = 0;
+    var tot_sz = 0;
+    var hist = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+    var l;
+
+    while ( sizes.hasNext() ){
+        size = sizes.next();
+        count++;
+
+        if ( size > 0 ){
+            tot_sz += size;
+            file_count++;
+            l = Math.floor(Math.log10( size ));
+            hist[Math.min(l,12)]++;
+        }
+    }
+
+    /*if ( file_count > 0 ){
+        for ( var i = 0; i < 12; ++i )
+            hist[i] = 100*hist[i]/file_count;
+    }*/
+
+    return { records:count, files:file_count, total_sz:tot_sz, histogram:hist };
+}
+
 router.get('/alloc/stats', function (req, res) {
     try {
         var client = g_lib.getUserFromClientID( req.queryParams.client );
-        var sizes;
-
-        if ( req.queryParams.subject ){
-            g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
-            var alloc = g_db.alloc.firstExample({_from:req.queryParams.subject,_to:req.queryParams.repo});
-            if ( alloc ){
-                sizes = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj || p.edges[0].parent == @alloc return p.vertices[1].size", { repo: req.queryParams.repo, alloc: alloc._id, subj: req.queryParams.subject }).toArray();
-            }else
-                sizes = [];
-        }else{
-            g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
-
-            sizes = g_db._query("for v in 1..1 inbound @repo loc return v.size", { repo: req.queryParams.repo }).toArray();
-        }
-
-        var size;
-        var count = 0;
-        var tot_sz = 0;
-        var hist = [0,0,0,0,0];
-
-        for ( var i in sizes ){
-            size = sizes[i];
-            if ( size > 0 ){
-                tot_sz += size;
-                count++;
-                if ( size < 1024 )
-                    hist[0]++;
-                else if ( size < 1048576 )
-                    hist[1]++;
-                else if ( size < 1073741824 )
-                    hist[2]++;
-                else if ( size < 1099511627776 )
-                    hist[3]++;
-                else
-                    hist[4]++;
-            }
-        }
-
-        if ( count > 0 ){
-            for ( i = 0; i < 5; ++i )
-                hist[i] = 100*hist[i]/count;
-        }
-
-        res.send({records:sizes.length,files:count,total_sz:tot_sz,histogram:hist});
+        g_lib.ensureAdminPermRepo( client, req.queryParams.repo );
+        var result = getAllocStats( req.queryParams.repo, req.queryParams.subject );
+        res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

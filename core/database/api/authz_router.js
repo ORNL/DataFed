@@ -62,8 +62,8 @@ router.get('/gridftp', function (req, res) {
         console.log( "req loc:",path);
         console.log( "actual loc:",loc.path);
         console.log( "req repo:",req.queryParams.repo,",actual repo",loc._to);
-        if ( !loc || loc._to != req.queryParams.repo || loc.path != path )
-            throw g_lib.ERR_INVALID_LOCATION;
+        //if ( !loc || loc._to != req.queryParams.repo || loc.path != path )
+        //    throw g_lib.ERR_INVALID_LOCATION;
     } catch( e ) {
         g_lib.handleException( e, res );
     }
