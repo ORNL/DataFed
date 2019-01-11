@@ -1669,6 +1669,9 @@ function makeBrowserTab(){
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(0) });
     $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(1) });
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
+
+    $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
+
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
     $("#text_query,#meta_query").on('keyup', function (e) {

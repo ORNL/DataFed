@@ -234,11 +234,13 @@ function makeDlgRepoAdmin(){
                         <tr><td>No. of Files:</td><td>" + data.files + "</td></tr>\
                         <tr><td>Total size:</td><td>" + sizeToString( data.totalSz ) + "</td></tr>\
                         <tr><td>Average size:</td><td>" + sizeToString( data.files>0?data.totalSz/data.files:0 ) + "</td></tr>\
-                        <tr><td>&lt 1 KB:</td><td>" + data.histogram[0].toFixed(1) + " %</td></tr>\
-                        <tr><td>1 KB to 1 MB:</td><td>" + data.histogram[1].toFixed(1) + " %</td></tr>\
-                        <tr><td>1 MB to 1 GB:</td><td>" + data.histogram[2].toFixed(1) + " %</td></tr>\
-                        <tr><td>1 GB to 1 TB:</td><td>" + data.histogram[3].toFixed(1) + " %</td></tr>\
-                        <tr><td>&gt 1 TB:</td><td>" + data.histogram[4].toFixed(1) + " %</td></tr>\
+                        </table><br>Histogram:<br><br><table class='info_table'>\
+                        <tr><th></th><th>1's</th><th>10's</th><th>100's</th></tr>\
+                        <tr><td>B:</td><td>" + data.histogram[0] + "</td><td>"+ data.histogram[1] + "</td><td>"+ data.histogram[2] + "</td></tr>\
+                        <tr><td>KB:</td><td>" + data.histogram[3] + "</td><td>"+ data.histogram[4] + "</td><td>"+ data.histogram[5] + "</td></tr>\
+                        <tr><td>MB:</td><td>" + data.histogram[6] + "</td><td>"+ data.histogram[7] + "</td><td>"+ data.histogram[8] + "</td></tr>\
+                        <tr><td>GB:</td><td>" + data.histogram[9] + "</td><td>"+ data.histogram[10] + "</td><td>"+ data.histogram[11] + "</td></tr>\
+                        <tr><td>TB:</td><td>" + data.histogram[12] + "</td></tr>\
                         </table>";
 
                         dlgAlert( "Allocation Statistics", msg );

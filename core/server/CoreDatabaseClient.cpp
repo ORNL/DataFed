@@ -1749,11 +1749,13 @@ DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_
 void
 DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
-    (void)a_request;
-
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"owner",m_client_uid});
+    if ( a_request.has_stats() )
+        params.push_back({"stats",a_request.stats()?"true":"false"});
 
-    dbGet( "repo/alloc/list/by_owner", {{"owner",m_client_uid}}, result );
+    dbGet( "repo/alloc/list/by_owner", params, result );
 
     setAllocData( a_reply, result );
 }
@@ -1763,8 +1765,12 @@ void
 DatabaseClient::repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"owner",a_request.id()});
+    if ( a_request.has_stats() )
+        params.push_back({"stats",a_request.stats()?"true":"false"});
 
-    dbGet( "repo/alloc/list/by_owner", {{"owner",a_request.id()}}, result );
+    dbGet( "repo/alloc/list/by_owner", params, result );
 
     setAllocData( a_reply, result );
 }
@@ -1789,7 +1795,7 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
     }
 
     AllocData * alloc;
-    rapidjson::Value::MemberIterator imem;
+    rapidjson::Value::MemberIterator imem,imem2;
 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
     {
@@ -1804,6 +1810,16 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
             alloc->set_id( imem->value.GetString() );
         if (( imem = val.FindMember("name")) != val.MemberEnd() )
             alloc->set_name( imem->value.GetString() );
+        if (( imem = val.FindMember("stats")) != val.MemberEnd() )
+        {
+            alloc->mutable_stats()->set_records(imem->value["records"].GetUint());
+            alloc->mutable_stats()->set_files(imem->value["files"].GetUint());
+            alloc->mutable_stats()->set_total_sz(imem->value["total_sz"].GetUint64());
+
+            imem2 = imem->value.FindMember("histogram");
+            for ( rapidjson::SizeType i = 0; i < imem2->value.Size(); i++ )
+                alloc->mutable_stats()->add_histogram(imem2->value[i].GetUint());
+        }
     }
 }
 

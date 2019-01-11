@@ -249,8 +249,8 @@ function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, 
 function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
 }
-function allocListByUser( a_cb ){
-    _asyncGet( "/api/repo/alloc/list/by_user", null, a_cb );
+function allocListByUser( a_inc_stats, a_cb ){
+    _asyncGet( "/api/repo/alloc/list/by_user" + (a_inc_stats?"?stats=true":""), null, a_cb );
 }
 
 function allocListByOwner( a_id, a_cb ){
@@ -609,7 +609,6 @@ var SS_VIEW                     = 13;
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
-var dlgAllocations = new makeDlgAllocations();
 var dlgRepoAdmin = new makeDlgRepoAdmin();
 var dlgAllocNewEdit = new makeDlAllocNewEdit();
 var g_ep_recent = [];

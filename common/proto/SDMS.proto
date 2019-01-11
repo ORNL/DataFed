@@ -79,6 +79,14 @@ enum Permissions
 
 // ============================ Data Structures
 
+message AllocStatsData
+{
+    required uint32             records     = 1;
+    required uint32             files       = 2;
+    required uint64             total_sz    = 3;
+    repeated uint32             histogram   = 4;
+}
+
 message AllocData
 {
     required string             repo        = 1;
@@ -87,14 +95,7 @@ message AllocData
     required string             path        = 4;
     optional string             id          = 5;
     optional string             name        = 6;
-}
-
-message AllocStatsData
-{
-    required uint32             records     = 1;
-    required uint32             files       = 2;
-    required uint64             total_sz    = 3;
-    repeated float              histogram   = 4;
+    optional AllocStatsData     stats       = 7;
 }
 
 message UserData

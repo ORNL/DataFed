@@ -513,11 +513,13 @@ message RepoListAllocationsRequest
 
 message RepoListUserAllocationsRequest
 {
+    optional bool               stats       = 1;
 }
 
 message RepoListProjectAllocationsRequest
 {
     required string             id          = 1;
+    optional bool               stats       = 2;
 }
 
 message RepoListOwnerAllocationsRequest
