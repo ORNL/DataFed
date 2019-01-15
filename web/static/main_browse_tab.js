@@ -1368,7 +1368,7 @@ function makeBrowserTab(){
                     cache: false
                 };
             } else if ( data.node.key.startsWith( "repo/" )) {
-                console.load("load repo (alloc) tree:", data.node.key );
+                console.log("load repo (alloc) tree:", data.node.key );
                 data.result = {
                     url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.key) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
@@ -1469,8 +1469,8 @@ function makeBrowserTab(){
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
-            } else if ( data.node.key.startsWith( "repo/" )) {
-                console.load("post-proc repo (alloc) tree:", data.node.key );
+            //} else if ( data.node.key.startsWith( "repo/" )) {
+            //    console.log("post-proc repo (alloc) tree:", data.node.key );
             } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
                 data.result = [];
                 var item,entry;
