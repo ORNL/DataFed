@@ -249,6 +249,7 @@ router.get('/alloc/list/by_owner', function (req, res) {
     for ( var i in result ){
         obj = result[i];
 
+        obj.id = req.queryParams.owner;
         if ( req.queryParams.stats ){
             obj.stats = getAllocStats( obj._to, req.queryParams.owner );
         }
@@ -277,8 +278,10 @@ router.get('/alloc/list/by_object', function (req, res) {
     var obj;
     for ( var i in result ){
         obj = result[i];
-        delete obj._from;
+        obj.id = owner_id;
         obj.repo = obj._to;
+
+        delete obj._from;
         delete obj._to;
         delete obj._key;
         delete obj._id;

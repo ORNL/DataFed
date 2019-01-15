@@ -145,7 +145,7 @@ router.post('/create', function (req, res) {
                 g_db.owner.save({ _from: data.new._id, _to: owner_id });
 
                 //console.log("Save loc", repo_alloc );
-                var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key };
+                var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key, uid: owner_id };
                 if ( alloc_parent )
                     loc.parent = alloc_parent;
                 g_db.loc.save(loc);
@@ -471,6 +471,51 @@ router.get('/path', function (req, res) {
 .summary('Get raw data local path')
 .description('Get raw data local path');
 
+
+router.get('/list/by_alloc', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var owner_id;
+
+        if ( req.queryParams.subject ) {
+            owner_id = req.queryParams.subject;
+            if ( req.queryParams.subject.startsWith("u/")){
+                g_lib.ensureAdminPermUser( client, owner_id );
+            }else{
+                g_lib.ensureManagerPermProj( client, owner_id );
+            }
+        } else {
+            owner_id = client._id;
+        }
+
+        var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title";
+        var result;
+
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+            qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+            result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id },{},{fullCount:true});
+            var tot = result.getExtra().stats.fullCount;
+            result = result.toArray();
+            result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+        }
+        else{
+            qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+            result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id });
+        }
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('repo', joi.string().required(), "Repo ID")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
+.summary('List data records by allocation')
+.description('List data records by allocation');
 
 router.get('/search', function (req, res) {
     try {
