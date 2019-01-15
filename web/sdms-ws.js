@@ -551,6 +551,21 @@ app.get('/api/dat/view', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
+    var par  = {
+        repo: a_req.query.repo,
+        subject: a_req.query.subject
+    };
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "RecordListByAllocRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/dat/get', ( a_req, a_resp ) => {
     sendMessage( "DataGetRequest", { id: a_req.query.id, local: a_req.query.path }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -750,9 +765,11 @@ app.get('/api/repo/alloc/list/by_repo', ( a_req, a_resp ) => {
 
 app.get('/api/repo/alloc/list/by_user', ( a_req, a_resp ) => {
     var par = {};
+    if ( a_req.query.subject != undefined )
+        par.subject = a_req.query.subject;
     if ( a_req.query.stats == "true" )
         par.stats = true;
-
+    console.log("RepoListUserAllocationsRequest",par)
     sendMessage( "RepoListUserAllocationsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:[]);
     });
@@ -785,6 +802,8 @@ app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
         a_resp.json({});
     });
 });
+
+
 
 app.get('/api/top/list', ( a_req, a_resp ) => {
     var par = {topicId:a_req.query.id?a_req.query.id:"t/root"};

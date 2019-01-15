@@ -813,6 +813,23 @@ DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingRepl
 }
 
 void
+DatabaseClient::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"repo",a_request.repo()});
+    params.push_back({"subject",a_request.subject()});
+    if ( a_request.has_offset() )
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count() )
+        params.push_back({"count",to_string(a_request.count())});
+
+    dbGet( "/dat/list/by_alloc", params, result );
+
+    setListingData( a_reply, result );
+}
+
+void
 DatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
 {
     rapidjson::Document result;
@@ -1751,7 +1768,10 @@ DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequ
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
-    params.push_back({"owner",m_client_uid});
+    if ( a_request.has_subject() )
+        params.push_back({"owner",a_request.subject()});
+    else
+        params.push_back({"owner",m_client_uid});
     if ( a_request.has_stats() )
         params.push_back({"stats",a_request.stats()?"true":"false"});
 

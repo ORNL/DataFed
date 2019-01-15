@@ -139,6 +139,14 @@ message RecordListRequest
     optional bool               pub         = 2;
 }
 
+message RecordListByAllocRequest
+{
+    required string             repo        = 1;
+    optional string             subject     = 2;
+    optional uint32             offset      = 3;
+    optional uint32             count       = 4;
+}
+
 message RecordViewRequest
 {
     required string             id          = 1;
@@ -514,6 +522,7 @@ message RepoListAllocationsRequest
 message RepoListUserAllocationsRequest
 {
     optional bool               stats       = 1;
+    optional string             subject     = 2;
 }
 
 message RepoListProjectAllocationsRequest

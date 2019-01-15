@@ -771,6 +771,22 @@ function makeBrowserTab(){
                         inst.noInfoAvail();
                     }
                 });
+            } else if ( key == "allocs" ) {
+                inst.sel_id.text( "My Allocations" );
+                inst.sel_title.text("");
+                inst.sel_descr.text("Browse all allocations and associated data records.");
+                inst.sel_details.html("");
+            } else if ( key.startsWith( "repo/" )) {
+                inst.sel_id.text( "Allocation on " + key + ", user: " + node.data.scope );
+                inst.sel_title.text("");
+                inst.sel_descr.text("Browse data records by allocation.");
+                html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                // TODO deal with project sub-allocations
+                html += "<tr><td>Repo ID:</td><td>" + key + "</td></tr>";
+                html += "<tr><td>Capacity:</td><td>" + node.data.alloc_capacity + "</td></tr>";
+                html += "<tr><td>Usage:</td><td>" + node.data.alloc_usage + "</td></tr></table>";
+                inst.sel_details.html(html);
+
             } else {
                 inst.noInfoAvail();
                 //inst.data_ident.html( "" );
@@ -1228,8 +1244,10 @@ function makeBrowserTab(){
 
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[{
-            title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true}]},
+        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[
+            {title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+            {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true}
+        ]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
@@ -1344,6 +1362,17 @@ function makeBrowserTab(){
                         cache: false
                     };
                 }
+            } else if ( data.node.key == "allocs" ) {
+                data.result = {
+                    url: "/api/repo/alloc/list/by_user?subject=" + encodeURIComponent(data.node.data.scope),
+                    cache: false
+                };
+            } else if ( data.node.key.startsWith( "repo/" )) {
+                console.load("load repo (alloc) tree:", data.node.key );
+                data.result = {
+                    url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.key) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    cache: false
+                };
             } else if ( data.node.key == "shared_proj" ) {
                 if ( data.node.data.scope ){
                     data.result = {
@@ -1428,6 +1457,20 @@ function makeBrowserTab(){
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
+            } else if ( data.node.key == "allocs" ) {
+                data.result = [];
+                console.log("postProc allocs:", data.response);
+                if ( data.response.length ){
+                    var alloc;
+                    for ( var i in data.response ) {
+                        alloc = data.response[i];
+                        data.result.push({ title: alloc.repo.substr(5),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo,scope:alloc.id,lazy:true,offset:0,alloc_capacity:alloc.alloc,alloc_usage:alloc.usage,nodrag:true});
+                    }
+                }else{
+                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
+                }
+            } else if ( data.node.key.startsWith( "repo/" )) {
+                console.load("post-proc repo (alloc) tree:", data.node.key );
             } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
                 data.result = [];
                 var item,entry;
