@@ -56,7 +56,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
         //console.log("updateAllocSelect", coll_id );
-        allocListByOwner( coll_id, function( ok, data ){
+        allocListByObject( coll_id, function( ok, data ){
             //console.log( "updateAllocSelect", ok, data );
             var html;
             var have_cap = false;

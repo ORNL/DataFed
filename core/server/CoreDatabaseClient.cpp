@@ -1764,7 +1764,7 @@ DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_
 }
 
 void
-DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseClient::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
@@ -1780,23 +1780,8 @@ DatabaseClient::repoListUserAllocations( const Auth::RepoListUserAllocationsRequ
     setAllocData( a_reply, result );
 }
 
-
 void
-DatabaseClient::repoListProjectAllocations( const Auth::RepoListProjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
-{
-    rapidjson::Document result;
-    vector<pair<string,string>> params;
-    params.push_back({"owner",a_request.id()});
-    if ( a_request.has_stats() )
-        params.push_back({"stats",a_request.stats()?"true":"false"});
-
-    dbGet( "repo/alloc/list/by_owner", params, result );
-
-    setAllocData( a_reply, result );
-}
-
-void
-DatabaseClient::repoListOwnerAllocations( const Auth::RepoListOwnerAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseClient::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     rapidjson::Document result;
 

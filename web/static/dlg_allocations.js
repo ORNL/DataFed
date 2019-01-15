@@ -48,7 +48,7 @@ function dlgAllocations(){
         $("#alloc_table",frame).html(html);
     }
 
-    allocListByUser( true, function( ok, data ){
+    allocListBySubject( undefined, true, function( ok, data ){
         //console.log( "allocs:", ok, data );
 
         refreshAllocTable( data );
@@ -64,7 +64,7 @@ function dlgAllocations(){
                 text: "Refresh",
                 click: function() {
                     // TODO Add opt to gather statistics
-                    allocListByUser( true, function( ok, data ){
+                    allocListBySubject( undefined, true, function( ok, data ){
                         refreshAllocTable( data );
                     });
                 }

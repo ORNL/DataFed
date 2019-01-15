@@ -160,7 +160,7 @@ function dlgProjNewEdit(a_data,a_cb) {
                 $("#suballoc",frame).html("<option value='ignore'>Allocation(s) in use</option>").selectmenu({width:"auto",disabled:true});
                 inputDisable($("#suballoc_size",frame))
             }else{
-                allocListByUser( function( ok, data ){
+                allocListBySubject( undefined, false, function( ok, data ){
                     console.log( ok, data );
                     var alloc_opt = "<option value='none'>None</option>";
 

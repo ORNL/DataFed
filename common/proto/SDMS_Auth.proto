@@ -519,19 +519,13 @@ message RepoListAllocationsRequest
     required string             id          = 1;
 }
 
-message RepoListUserAllocationsRequest
+message RepoListSubjectAllocationsRequest
 {
-    optional bool               stats       = 1;
-    optional string             subject     = 2;
-}
-
-message RepoListProjectAllocationsRequest
-{
-    required string             id          = 1;
+    optional string             subject     = 1;
     optional bool               stats       = 2;
 }
 
-message RepoListOwnerAllocationsRequest
+message RepoListObjectAllocationsRequest
 {
     required string             id          = 1;
 }

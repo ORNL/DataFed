@@ -249,12 +249,17 @@ function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, 
 function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
 }
-function allocListByUser( a_inc_stats, a_cb ){
-    _asyncGet( "/api/repo/alloc/list/by_user" + (a_inc_stats?"?stats=true":""), null, a_cb );
+function allocListBySubject( a_subject, a_inc_stats, a_cb ){
+    var url = "/api/repo/alloc/list/by_subject?";
+    if ( a_subject )
+        url += "subject="+encodeURIComponent(a_subject);
+    if ( a_inc_stats )
+        url += (a_subject?"&":"") + "stats=true";
+    _asyncGet( url, null, a_cb );
 }
 
-function allocListByOwner( a_id, a_cb ){
-    _asyncGet( "/api/repo/alloc/list/by_owner?id="+a_id, null, a_cb );
+function allocListByObject( a_id, a_cb ){
+    _asyncGet( "/api/repo/alloc/list/by_object?id="+a_id, null, a_cb );
 }
 
 function allocStats( a_repo, a_subject, a_cb ){

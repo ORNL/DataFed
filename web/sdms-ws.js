@@ -763,30 +763,20 @@ app.get('/api/repo/alloc/list/by_repo', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/repo/alloc/list/by_user', ( a_req, a_resp ) => {
+app.get('/api/repo/alloc/list/by_subject', ( a_req, a_resp ) => {
     var par = {};
     if ( a_req.query.subject != undefined )
         par.subject = a_req.query.subject;
     if ( a_req.query.stats == "true" )
         par.stats = true;
-    console.log("RepoListUserAllocationsRequest",par)
-    sendMessage( "RepoListUserAllocationsRequest", par, a_req, a_resp, function( reply ) {
+    console.log("RepoListSubjectAllocationsRequest",par)
+    sendMessage( "RepoListSubjectAllocationsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:[]);
     });
 });
 
-app.get('/api/repo/alloc/list/by_proj', ( a_req, a_resp ) => {
-    var par = {id:a_req.query.id};
-    if ( a_req.query.stats == "true" )
-        par.stats = true;
-
-    sendMessage( "RepoListProjectAllocationsRequest", par, a_req, a_resp, function( reply ) {
-        a_resp.json(reply.alloc?reply.alloc:[]);
-    });
-});
-
-app.get('/api/repo/alloc/list/by_owner', ( a_req, a_resp ) => {
-    sendMessage( "RepoListOwnerAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
+app.get('/api/repo/alloc/list/by_object', ( a_req, a_resp ) => {
+    sendMessage( "RepoListObjectAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:[]);
     });
 });
