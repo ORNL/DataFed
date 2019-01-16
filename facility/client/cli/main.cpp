@@ -538,12 +538,19 @@ void printCollData( spCollDataReply a_reply )
 
 void printListing( spListingReply a_reply )
 {
-    if ( a_reply->item_size() )
+    if ( g_out_form == JSON )
+        cout << "{\"items\":[";
+    else if ( g_out_form == CSV )
+        cout << "\"id\",\"alias\",\"title\",\"locked\"\n";
+
+    string tmp;
+    for ( int i = 0; i < a_reply->item_size(); i++ )
     {
-        string tmp;
-        for ( int i = 0; i < a_reply->item_size(); i++ )
+        const ListingData & item = a_reply->item(i);
+
+        switch ( g_out_form )
         {
-            const ListingData & item = a_reply->item(i);
+        case TEXT:
             if ( item.has_locked() && item.locked() )
                 cout << "L ";
             else
@@ -560,10 +567,27 @@ void printListing( spListingReply a_reply )
                 cout << setw(19) << " ";
 
             cout << " \"" << item.title() << "\"\n";
+            break;
+        case CSV:
+            cout << "\"" << item.id() << "\""
+                << ",\"" << (item.has_alias()?item.alias():"") << "\""
+                << ",\"" << escapeCSV( item.title() ) << "\""
+                << "," << (item.has_locked() && item.locked()?1:0) << "\n";
+            break;
+        case JSON:
+            cout << "{\"id\":\"" << item.id() << "\"";
+            if ( item.has_alias() )
+                cout << ",\"alias\":\"" << item.alias() << "\"";
+            cout << ",\"title\":\"" << escapeJSON( item.title() ) << "\"";
+            if ( item.has_locked() && item.locked() )
+                cout << ",\"locked\":true";
+            cout << "}";
+            break;
         }
     }
-    else
-        cout << "\n";
+
+    if ( g_out_form == JSON )
+        cout << "]}\n";
 }
 
 #if 0
