@@ -8,11 +8,15 @@ set(SDMS_VERSION ${SDMS_MAJOR_VERSION}.${SDMS_MINOR_VERSION}.${SDMS_PATCH_VERSIO
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-find_package(Protobuf REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Threads REQUIRED)
+#find_package(Protobuf REQUIRED)
+#find_package(Zeromq REQUIRED)
+#find_package(Boost REQUIRED)
 
 OPTION(CLIENT_ONLY "Build client only" OFF)
+
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
@@ -22,25 +26,34 @@ endif()
 
 include_directories( "/usr/include/globus" )
 
-if ( DEFINED ENV{ZMQ_INC_DIR})
+if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
+        message( "BOOST_INC:" $ENV{BOOST_INC} )
+        message( "BOOST_LIB:" $ENV{BOOST_LIB} )
+        include_directories( $ENV{BOOST_INC} )
+        link_directories( $ENV{BOOST_LIB} )
+else()
+	find_package(Boost REQUIRED)
+endif()
+
+if ( DEFINED ENV{ZMQ_INC_DIR} AND DEFINED ENV{ZMQ_LIB_DIR})
 	message( "ZMQ_INC_DIR:" $ENV{ZMQ_INC_DIR} )
-	include_directories( $ENV{ZMQ_INC_DIR} )
-endif()
-
-if ( DEFINED ENV{ZMQ_LIB_DIR})
 	message( "ZMQ_LIB_DIR:" $ENV{ZMQ_LIB_DIR} )
-	link_directories( $ENV{ZMQ_LIB_DIR}  )
+	include_directories( $ENV{ZMQ_INC_DIR} )
+	link_directories( $ENV{ZMQ_LIB_DIR} )
+else()
+	find_package(Zeromq REQUIRED)
 endif()
 
-if ( DEFINED ENV{PBUF_INC_DIR})
+
+if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
         message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
+        message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
         include_directories( $ENV{PBUF_INC_DIR} )
+        link_directories( $ENV{PBUF_LIB_DIR} )
+	set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
 endif()
 
-if ( DEFINED ENV{PBUF_LIB_DIR})
-        message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
-        link_directories( $ENV{PBUF_LIB_DIR}  )
-endif()
+find_package(Protobuf REQUIRED)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
