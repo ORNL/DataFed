@@ -929,11 +929,11 @@ function makeBrowserTab(){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                     for ( var i in items ){
                         var item = items[i];
-                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,scope:item.owner});
+                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner});
                     }
                 } else {
                     setStatusText("No results found");
-                    results.push({title:"(no results)",icon:false,checkbox:false,nodrag: true});
+                    results.push({title:"(no results)",icon:false,checkbox:false,nodrag:true,notarg:true});
                 }
                 srch_node.removeChildren();
                 srch_node.addChildren( results );
@@ -1213,13 +1213,23 @@ function makeBrowserTab(){
         if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
             if ( inst.pasteSource.key == dest_node.key )
                 return false;
-            if ( inst.pasteCollections.length > 1 ){
+
+            if ( inst.pasteCollections.length ){
                 var i,j,coll,dest_par = dest_node.getParentList(false,true);
-                for ( i in inst.pasteCollections ){
-                    coll = inst.pasteCollections[i];
-                    for ( j in dest_par ){
-                        if ( dest_par[j].key == coll.key )
-                            return false;
+                // Prevent collection drop in non-collection hierarchy
+                for ( j in dest_par ){
+                    if ( dest_par[j].data.nocoll )
+                        return false;
+                }
+                // Prevent collection reentrancy
+                // Fancytree handles this when one item selected, must check for multiple items
+                if ( inst.pasteCollections.length > 1 ){
+                    for ( i in inst.pasteCollections ){
+                        coll = inst.pasteCollections[i];
+                        for ( j in dest_par ){
+                            if ( dest_par[j].key == coll.key )
+                                return false;
+                        }
                     }
                 }
             }
@@ -1246,7 +1256,7 @@ function makeBrowserTab(){
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[
             {title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-            {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,checkbox:false}
+            {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,nocoll:true,checkbox:false}
         ]},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
@@ -1313,11 +1323,23 @@ function makeBrowserTab(){
                     inst.pasteSource = null;
                     inst.pasteCollections = null;
                 }
-    
-                if ( inst.drag_mode ){
-                    inst.moveItems( inst.pasteItems, dest_node, data.otherNode, pasteDone );
+
+                var repo,j,dest_par = dest_node.getParentList(false,true);
+                for ( j in dest_par ){
+                    if ( dest_par[j].key.startsWith("repo/")){
+                        repo = dest_par[j].key;
+                        break;
+                    }
+                }
+
+                if ( repo ){
+                    dlgAlert("Move Data","Moving data between allocations is not currently supported.");
                 }else{
-                    inst.copyItems( inst.pasteItems, dest_node, pasteDone );
+                    if ( inst.drag_mode ){
+                        inst.moveItems( inst.pasteItems, dest_node, data.otherNode, pasteDone );
+                    }else{
+                        inst.copyItems( inst.pasteItems, dest_node, pasteDone );
+                    }
                 }
             },
             dragEnter: function(node, data) {
