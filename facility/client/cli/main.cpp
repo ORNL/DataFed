@@ -540,29 +540,26 @@ void printListing( spListingReply a_reply )
 {
     if ( a_reply->item_size() )
     {
-        size_t pos;
+        string tmp;
         for ( int i = 0; i < a_reply->item_size(); i++ )
         {
             const ListingData & item = a_reply->item(i);
+            if ( item.has_locked() && item.locked() )
+                cout << "L ";
+            else
+                cout << "  ";
 
             cout << left << setw(12) << item.id();
 
-            if ( item.has_alias() )
+            if ( item.has_alias() && item.alias().size() )
             {
-                pos = item.alias().find_last_of(":");
-                if ( pos != string::npos )
-                    cout << " " << left << setw(16) << item.alias().substr( pos + 1 );
+                tmp = string("(") + item.alias() + ")";
+                cout << setw(19) << tmp;
             }
             else
-                cout << " " << setw(16) << " ";
+                cout << setw(19) << " ";
 
-            if ( item.has_locked() && item.locked() )
-                cout << " (L)";
-            else
-                cout << "    ";
-
-            cout << " \"" << item.title() << "\"";
-            cout << "\n";
+            cout << " \"" << item.title() << "\"\n";
         }
     }
     else
