@@ -18,6 +18,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
 
     var path = a_path;
     var path_in_timer;
+    var loading = false;
 
     $(".btn",frame).button();
     inputTheme( $('input:text',frame ));
@@ -62,6 +63,8 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
     }
 
     function reloadTree( a_new_path ){
+        loading = true;
+        $("#file_tree").fancytree( "getTree").reload( [] );
         epDirList( a_ep.id, a_new_path, false, function(data){
             if( data ){
                 console.log("got result:",data);
@@ -84,6 +87,9 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                 }
                 $("#file_tree").fancytree( "getTree").reload( tree_source );
                 $("#sel_btn").button("disable");
+                loading = false;
+            }else{
+                loading = false;
             }
         });
 
@@ -137,7 +143,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                 },
                 dblclick: function( event, data ) {
                     console.log("activate", data );
-                    if ( data.node.data.is_dir ){
+                    if ( data.node.data.is_dir && !loading ){
                         chdir( data.node.key );
                     }
                 }
