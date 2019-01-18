@@ -74,7 +74,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         curl_free( esc_txt );
     }
 
-    DL_INFO( "get url: " << url );
+    DL_DEBUG( "get url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -90,7 +90,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            DL_TRACE( "About to parse[" << res_json << "]" );
+            DL_DEBUG( "About to parse[" << res_json << "]" );
             a_result.Parse( res_json.c_str() );
         }
 
@@ -98,6 +98,8 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         {
             if ( a_result.HasParseError() )
             {
+                DL_INFO( "HAS PARSE ERROR" );
+
                 rapidjson::ParseErrorCode ec = a_result.GetParseError();
                 EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << rapidjson::GetParseError_En( ec ));
             }

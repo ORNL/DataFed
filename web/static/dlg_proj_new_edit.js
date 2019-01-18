@@ -71,12 +71,8 @@ function dlgProjNewEdit(a_data,a_cb) {
 
                 if ( a_data )
                     url += "update?id=";
-                else{
-                    if ( !isValidID( proj.id ))
-                        return;
-
+                else
                     url += "create?id=";
-                }
 
                 url += encodeURIComponent( proj.id );;
 

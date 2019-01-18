@@ -290,11 +290,11 @@ app.get('/api/usr/view', ( a_req, a_resp ) => {
 
 app.get('/api/usr/update', ( a_req, a_resp ) => {
     var params = { uid: a_req.query.uid };
-    if ( a_req.query.email )
+    if ( a_req.query.email != undefined )
         params.email = a_req.query.email;
-    if ( a_req.query.pw )
+    if ( a_req.query.pw != undefined )
         params.password = a_req.query.pw;
-    if ( a_req.query.opts )
+    if ( a_req.query.opts != undefined )
         params.options = a_req.query.opts;
 
     sendMessage( "UserUpdateRequest", params, a_req, a_resp, function( reply ) {
@@ -339,17 +339,17 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
         title: a_req.query.title,
         domain: a_req.query.domain
     }
-    if ( a_req.query.repo )
+    if ( a_req.query.repo != undefined )
         params.repo = a_req.query.repo;
-    if ( a_req.query.desc )
+    if ( a_req.query.desc != undefined )
         params.desc = a_req.query.desc;
-    if ( a_req.query.sub_repo ){
+    if ( a_req.query.sub_repo != undefined && a_req.query.sub_alloc != undefined ){
         params.subRepo = a_req.query.sub_repo;
         params.subAlloc = a_req.query.sub_alloc;
     }
-    if ( a_req.query.members )
+    if ( a_req.query.members != undefined )
         params.member = JSON.parse( a_req.query.members );
-    if ( a_req.query.admins )
+    if ( a_req.query.admins != undefined )
         params.admin = JSON.parse( a_req.query.admins );
 
     sendMessage( "ProjectCreateRequest", params, a_req, a_resp, function( reply ) {
@@ -364,19 +364,19 @@ app.get('/api/prj/update', ( a_req, a_resp ) => {
     var params  = {
         id: a_req.query.id,
     }
-    if ( a_req.query.domain )
+    if ( a_req.query.domain != undefined )
         params.domain = a_req.query.domain;
-    if ( a_req.query.title )
+    if ( a_req.query.title != undefined )
         params.title = a_req.query.title;
-    if ( a_req.query.repo )
+    if ( a_req.query.repo != undefined )
         params.repo = a_req.query.repo;
-    if ( a_req.query.desc  )
+    if ( a_req.query.desc != undefined )
         params.desc = a_req.query.desc;
-    if ( a_req.query.sub_repo )
+    if ( a_req.query.sub_repo != undefined )
         params.subRepo = a_req.query.sub_repo;
-    if ( a_req.query.sub_alloc )
+    if ( a_req.query.sub_alloc != undefined )
         params.subAlloc = a_req.query.sub_alloc;
-    if ( a_req.query.members )
+    if ( a_req.query.members != undefined )
         params.member = JSON.parse( a_req.query.members );
     if ( a_req.query.admins )
         params.admin = JSON.parse( a_req.query.admins );
@@ -406,11 +406,11 @@ app.get('/api/prj/view', ( a_req, a_resp ) => {
 
 app.get('/api/prj/list', ( a_req, a_resp ) => {
     var params = {};
-    if ( a_req.query.owner )
+    if ( a_req.query.owner != undefined )
         params.byOwner = a_req.query.owner=="true"?true:false;
-    if ( a_req.query.admin )
+    if ( a_req.query.admin != undefined )
         params.byAdmin = a_req.query.admin=="true"?true:false;
-    if ( a_req.query.member )
+    if ( a_req.query.member != undefined )
         params.byMember = a_req.query.member=="true"?true:false;
 
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
@@ -444,11 +444,15 @@ app.get('/api/grp/create', ( a_req, a_resp ) => {
         group: {
             uid: a_req.query.uid,
             gid: a_req.query.gid,
-            title: a_req.query.title?a_req.query.title:undefined,
-            desc: a_req.query.desc?a_req.query.desc:undefined,
-            member: a_req.query.member?JSON.parse( a_req.query.member ):undefined
         }
     };
+
+    if ( a_req.query.title != undefined )
+        params.group.title = a_req.query.title;
+    if ( a_req.query.desc != undefined )
+        params.group.desc = a_req.query.desc;
+    if ( a_req.query.member != undefined )
+        params.group.member = JSON.parse( a_req.query.member );
 
     sendMessage( "GroupCreateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply.group[0]);
@@ -458,12 +462,17 @@ app.get('/api/grp/create', ( a_req, a_resp ) => {
 app.get('/api/grp/update', ( a_req, a_resp ) => {
     var params  = {
         uid: a_req.query.uid,
-        gid: a_req.query.gid,
-        title: a_req.query.title,
-        desc: a_req.query.desc,
-        addUid: a_req.query.add?JSON.parse( a_req.query.add ):null,
-        remUid: a_req.query.rem?JSON.parse( a_req.query.rem ):null,
+        gid: a_req.query.gid
     };
+
+    if ( a_req.query.title != undefined )
+        params.title = a_req.query.title;
+    if ( a_req.query.desc != undefined )
+        params.desc = a_req.query.desc;
+    if ( a_req.query.add != undefined )
+        params.addUid = JSON.parse( a_req.query.add );
+    if ( a_req.query.rem != undefined )
+        params.remUid = JSON.parse( a_req.query.rem );
 
     sendMessage( "GroupUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply.group[0]);
@@ -513,7 +522,6 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
 
 app.post('/api/dat/update', ( a_req, a_resp ) => {
     console.log( "dat update", a_req.body );
-
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });

@@ -89,9 +89,6 @@ function makeDlgGroupEdit(){
                 text: "Ok",
                 click: function() {
                     inst.group.gid = $("#gid",inst.frame).val();
-                    if ( !isValidID(inst.group.gid))
-                        return;
-
                     inst.group.title = $("#title",inst.frame).val();
                     inst.group.desc = $("#desc",inst.frame).val();
 
@@ -109,29 +106,23 @@ function makeDlgGroupEdit(){
 
                         for ( i in inst.group.member ){
                             uid = inst.group.member[i];
-                            console.log( "check:", uid );
                             if ( group.member.indexOf( uid ) == -1 ){
                                 inst.group.add.push( uid );
-                                console.log( "  adding" );
                             }
                         }
-                        console.log( "Add:", inst.group.add );
 
                         for ( i in group.member ){
                             uid = group.member[i];
-                            console.log( "check:", uid );
                             if ( inst.group.member.indexOf( uid ) == -1 ){
                                 inst.group.rem.push( uid );
-                                console.log( "  removing" );
                             }
                         }
-                        console.log( "Remove:", inst.group.rem );
 
                         groupUpdate( inst.group, function( ok, data ){
                             if ( !ok ){
-                                alert( data );
+                                dlgAlert( "Server Error", data );
                             } else {
-                                console.log( "data:", data );
+                                //console.log( "data:", data );
                                 dlg_inst.dialog('destroy').remove();
                                 cb( data );
                             }
@@ -139,9 +130,9 @@ function makeDlgGroupEdit(){
                     } else {
                         groupCreate( inst.uid, inst.group, function( ok, data ){
                             if ( !ok ){
-                                alert( data );
+                                dlgAlert( "Server Error", data );
                             } else {
-                                console.log( "data:", data );
+                                //console.log( "data:", data );
                                 dlg_inst.dialog('destroy').remove();
                                 cb( data );
                             }

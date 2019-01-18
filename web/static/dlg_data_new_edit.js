@@ -140,14 +140,14 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 var tmp;
 
                 obj.title = $("#title",frame).val().trim();
-                if ( !obj.title ) {
-                    dlgAlert( "Data Entry Error", "Title cannot be empty");
-                    return;
-                }
+                //if ( !obj.title ) {
+                //    dlgAlert( "Data Entry Error", "Title cannot be empty");
+                //    return;
+                //}
 
                 obj.alias = $("#alias",frame).val().trim();
-                if ( obj.alias.length && !isValidAlias( obj.alias ))
-                    return;
+                //if ( obj.alias.length && !isValidAlias( obj.alias ))
+                //    return;
 
                 var anno = jsoned.getSession().getAnnotations();
                 if ( anno && anno.length ){
@@ -203,7 +203,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 var inst = $(this);
 
-                console.log( "create data", obj );
+                console.log( "create/upd data", obj );
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {

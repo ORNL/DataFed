@@ -514,6 +514,7 @@ function parseSize( a_size_str ){
     return result;
 }
 
+/*
 function isValidID( id ){
     var len = id.length;
     if ( !len ){
@@ -560,7 +561,7 @@ function isValidAlias( alias ){
 
     return true;
 };
-
+*/
 
 function themeSet( theme ){
     g_theme = theme;

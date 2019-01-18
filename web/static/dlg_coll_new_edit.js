@@ -31,14 +31,14 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                 var obj = {};
 
                 obj.title = $("#title",frame).val().trim();
-                if ( !obj.title ) {
-                    dlgAlert( "Data Entry Error", "Title cannot be empty");
-                    return;
-                }
+                //if ( !obj.title ) {
+                //    dlgAlert( "Data Entry Error", "Title cannot be empty");
+                //    return;
+                //}
 
                 obj.alias = $("#alias",frame).val().trim();
-                if ( obj.alias.length && !isValidAlias( obj.alias ))
-                    return;
+                //if ( obj.alias.length && !isValidAlias( obj.alias ))
+                //    return;
 
                 obj.desc = $("#desc",frame).val().trim();
 
@@ -71,7 +71,7 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                         if ( a_cb )
                             a_cb(data.coll[0],obj.parentId);
                     } else {
-                        alert( "Error: " + data );
+                        dlgAlert( "Server Error", data );
                     }
                 });
             }
