@@ -34,9 +34,6 @@ router.post('/create', function (req, res) {
                 var owner_id;
                 var parent_id;
 
-                g_lib.validateTitle( req.body.title );
-                g_lib.validateDescShort( req.body.desc );
-
                 if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
 
@@ -61,18 +58,11 @@ router.post('/create', function (req, res) {
                 }
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { title: req.body.title, owner: owner_id, ct: time, ut: time };
+                var obj = { owner: owner_id, ct: time, ut: time };
 
-                if ( req.body.desc )
-                    obj.desc = req.body.desc;
-
-                if ( req.body.public )
-                    obj.public = req.body.public;
-
-                if ( req.body.alias ) {
-                    obj.alias = req.body.alias.toLowerCase();
-                    g_lib.validateAlias( obj.alias );
-                }
+                g_lib.procInputParam( req.body, "title", false, obj );
+                g_lib.procInputParam( req.body, "desc", false, obj );
+                g_lib.procInputParam( req.body, "alias", false, obj );
 
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner_id });
@@ -131,29 +121,14 @@ router.post('/update', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                g_lib.validateTitle( req.body.title );
-                g_lib.validateDescShort( req.body.desc );
-
-
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
 
-                if ( req.body.title != undefined && req.body.title != coll.title )
-                    obj.title = req.body.title;
+                g_lib.procInputParam( req.body, "title", true, obj );
+                g_lib.procInputParam( req.body, "desc", true, obj );
+                g_lib.procInputParam( req.body, "alias", true, obj );
 
-                if ( req.body.desc != undefined && req.body.desc != coll.desc )
-                    obj.desc = req.body.desc;
-
-                if ( req.body.alias != undefined ){
-                    obj.alias = req.body.alias.toLowerCase();
-                    g_lib.validateAlias( obj.alias );
-                }
-    
-                if ( req.body.public != undefined && req.body.public != coll.public ){
-                    obj.public = req.body.public;
-                }
-
-                coll = g_db._update( coll_id, obj, { returnNew: true });
+                coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
 
                 if ( obj.alias != undefined ) {

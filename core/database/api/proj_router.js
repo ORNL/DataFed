@@ -31,16 +31,12 @@ router.get('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-                g_lib.validateProjectID( req.queryParams.id );
-                g_lib.validateTitle( req.queryParams.title );
-                g_lib.validateDescShort( req.queryParams.desc );
-
                 var time = Math.floor( Date.now()/1000 );
-                var proj_data = { _key: req.queryParams.id, title: req.queryParams.title, ct: time, ut: time };
+                var proj_data = { ct: time, ut: time };
 
-                if ( req.queryParams.desc )
-                    proj_data.desc = req.queryParams.desc;
+                g_lib.procInputParam( req.queryParams, "id", false, proj_data );
+                g_lib.procInputParam( req.queryParams, "title", false, proj_data );
+                g_lib.procInputParam( req.queryParams, "desc", false, proj_data );
 
                 if ( req.queryParams.sub_repo ){
                     var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
@@ -55,7 +51,8 @@ router.get('/create', function (req, res) {
                     proj_data.sub_alloc = req.queryParams.sub_alloc;
                     proj_data.sub_usage = 0;
                 }
-    
+
+
                 var proj = g_db.p.save( proj_data, { returnNew: true });
                 g_db.owner.save({ _from: proj._id, _to: client._id });
 
@@ -122,7 +119,7 @@ router.get('/create', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID for new project")
 .queryParam('title', joi.string().required(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('desc', joi.string().optional().allow(""), "Description")
 .queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Additional project administrators (uids)")
@@ -146,17 +143,12 @@ router.get('/update', function (req, res) {
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
-                g_lib.validateTitle( req.queryParams.title );
-                g_lib.validateDescShort( req.queryParams.desc );
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
 
-                if ( req.queryParams.title )
-                    obj.title = req.queryParams.title;
-
-                if ( req.queryParams.desc )
-                    obj.desc = req.queryParams.desc;
+                g_lib.procInputParam( req.queryParams, "title", true, obj );
+                g_lib.procInputParam( req.queryParams, "desc", true, obj );
 
                 if ( req.queryParams.sub_repo ){
                     // Verify there isn't a real allocation present
@@ -259,7 +251,7 @@ router.get('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Project ID")
 .queryParam('title', joi.string().optional(), "New title")
-.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('desc', joi.string().optional().allow(""), "Description")
 .queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")

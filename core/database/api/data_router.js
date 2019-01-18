@@ -36,9 +36,6 @@ router.post('/create', function (req, res) {
                 var parent_id;
                 var repo_alloc;
 
-                g_lib.validateTitle( req.body.title );
-                g_lib.validateDesc( req.body.desc );
-
                 if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
 
@@ -114,24 +111,16 @@ router.post('/create', function (req, res) {
                     throw g_lib.ERR_NO_ALLOCATION;
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { size: 0, ct: time, ut: time, title: req.body.title, owner: owner_id };
+                var obj = { size: 0, ct: time, ut: time, owner: owner_id };
+
+                g_lib.procInputParam( req.body, "title", false, obj );
+                g_lib.procInputParam( req.body, "desc", false, obj );
+                g_lib.procInputParam( req.body, "keyw", false, obj );
+                g_lib.procInputParam( req.body, "alias", false, obj );
+                g_lib.procInputParam( req.body, "topic", false, obj );
 
                 if ( req.body.public )
                     obj.public = req.body.public;
-
-                if ( req.body.desc )
-                    obj.desc = req.body.desc;
-
-                if ( req.body.keyw )
-                    obj.keyw = req.body.keyw;
-
-                if ( req.body.topic )
-                    obj.topic = req.body.topic.toLowerCase();
-
-                if ( req.body.alias ){
-                    obj.alias = req.body.alias.toLowerCase();
-                    g_lib.validateAlias( obj.alias );
-                }
 
                 if ( req.body.md ){
                     obj.md = req.body.md; //JSON.parse( req.body.md );
@@ -161,8 +150,8 @@ router.post('/create', function (req, res) {
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
                 }
 
-                if ( req.body.topic ){
-                    g_lib.topicLink( req.body.topic, data._id );
+                if ( obj.topic ){
+                    g_lib.topicLink( obj.topic, data._id );
                 }
 
                 g_db.item.save({ _from: parent_id, _to: data.new._id });
@@ -183,7 +172,7 @@ router.post('/create', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
-    title: joi.string().required(),
+    title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     keyw: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),
@@ -228,33 +217,22 @@ router.post('/update', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                g_lib.validateTitle( req.body.title );
-                g_lib.validateDesc( req.body.desc );
-
                 var obj = { ut: Math.floor( Date.now()/1000 ) };
 
-                if ( req.body.alias != undefined  ){
-                    obj.alias = req.body.alias.toLowerCase();
-                    g_lib.validateAlias( obj.alias );
-                }
+                g_lib.procInputParam( req.body, "title", true, obj );
+                g_lib.procInputParam( req.body, "desc", true, obj );
+                g_lib.procInputParam( req.body, "keyw", true, obj );
+                g_lib.procInputParam( req.body, "alias", true, obj );
+                g_lib.procInputParam( req.body, "topic", true, obj );
 
-                if ( req.body.title != undefined )
-                    obj.title = req.body.title;
+                console.log("New data title:", obj.title );
 
-                if ( req.body.desc != undefined )
-                    obj.desc = req.body.desc;
-
-                if ( req.body.keyw != undefined )
-                    obj.keyw = req.body.keyw;
-
-                if ( req.body.topic != undefined && req.body.topic != data.topic ){
-                    obj.topic = req.body.topic.toLowerCase();
-
+                if ( obj.topic != undefined && obj.topic != data.topic ){
                     if ( data.topic )
                         g_lib.topicUnlink( data._id );
 
-                    if ( req.body.topic.length )
-                        g_lib.topicLink( req.body.topic, data._id );
+                    if ( obj.topic.length )
+                        g_lib.topicLink( obj.topic, data._id );
                 }
 
                 if ( req.body.public != undefined )
@@ -332,7 +310,7 @@ router.post('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     id: joi.string().required(),
-    title: joi.string().optional(),
+    title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     keyw: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),

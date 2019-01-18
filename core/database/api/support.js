@@ -15,7 +15,6 @@ module.exports = ( function() {
 
     obj.db = require('@arangodb').db;
     obj.graph = require('@arangodb/general-graph')._graph('sdmsg');
-    obj.bad_chars = "/:\" ";
 
     obj.PERM_NONE           = 0x00;
     obj.PERM_VIEW           = 0x01;
@@ -78,6 +77,7 @@ module.exports = ( function() {
     obj.ERR_INVALID_GROUP_ID      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid group ID" ]);
     obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
     obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
+    obj.ERR_INVALID_TITLE         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid title" ]);
     obj.ERR_INVALID_DOMAIN        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid domain" ]);
     obj.ERR_INVALID_ALLOC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid allocation" ]);
     obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid parameter(s)" ]);
@@ -105,7 +105,7 @@ module.exports = ( function() {
     obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
     obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
     obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
-    obj.ERR_NO_RAW_DATA             = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Record has no raw data" ]);
+    obj.ERR_NO_RAW_DATA           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Record has no raw data" ]);
     obj.ERR_XFR_CONFLICT          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data transfer conflict" ]);
     obj.ERR_INTERNAL_FAULT        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Internal server fault" ]);
     obj.ERR_NO_ALLOCATION         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "No storage allocation available" ]);
@@ -115,6 +115,7 @@ module.exports = ( function() {
     obj.ERR_EMAIL_REQUIRED        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "E-mail required" ]);
     obj.ERR_MEM_GRP_PROTECTED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Operation not allow on project 'members' group" ]);
     obj.ERR_ALLOC_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Allocation in use" ]);
+    obj.ERR_INPUT_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Input value too long" ]);
     obj.ERR_ALIAS_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Alias too long ("+obj.MAX_ALIAS_LEN+" char limit)" ]);
     obj.ERR_TITLE_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Title too long ("+obj.MAX_TITLE_LEN+" char limit)" ]);
     obj.ERR_DESC_TOO_LONG         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Description too long ("+obj.MAX_DESC_LEN+" char limit)" ]);
@@ -123,9 +124,97 @@ module.exports = ( function() {
     obj.ERR_PROJ_ID_TOO_LONG      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project ID too long ("+obj.MAX_PROJ_ID_LEN+" char limit)" ]);
     obj.ERR_INVALID_TOPIC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid topic path" ]);
 
+    obj.CHARSET_ID      = 0;
+    obj.CHARSET_ALIAS   = 1;
+    obj.CHARSET_TOPIC   = 2;
+
+    obj.extra_chars = ["_-.","_-.","_-."];
+
+    obj.field_reqs = {
+        title: { required: true, update: true, max_len: 80 },
+        alias: { required: false, update: true, max_len: 60, lower: true, charset: obj.CHARSET_ALIAS },
+        desc: { required: false, update: true, max_len: 4000 },
+        summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc" },
+        keyw: { required: false, update: true, max_len: 200, lower: true },
+        topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC },
+        gid: { required: true, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID },
+        id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key" }
+    };
+
+    obj.procInputParam = function( a_in, a_field, a_update, a_out ){
+        var val, spec = obj.field_reqs[a_field];
+
+        console.log("procInput",a_field,",update:",a_update);
+
+        if ( !spec ){
+            console.log("Spec not found",a_field);
+            throw obj.ERR_INTERNAL_FAULT;
+        }
+
+        if ( spec.in_field )
+            val = a_in[spec.in_field];
+        else
+            val = a_in[a_field];
+
+        console.log("init val",val);
+
+        // Ignore param updates when not allowed to be updated
+        if ( a_update && !spec.update ){
+            console.log("stop b/c no update allowed");
+            return;
+        }
+
+        if ( val && val.length )
+            val = val.trim();
+
+        if ( val && val.length ){
+            // Check length if specified
+            if ( spec.max_len && ( val.length > spec.max_len ))
+                throw obj.ERR_INPUT_TOO_LONG;
+
+            if ( spec.lower )
+                val = val.toLowerCase();
+
+            if ( spec.charset ){
+                var extra = obj.extra_chars[spec.charset];
+                var code, i, len;
+
+                for (i = 0, len = val.length; i < len; i++) {
+                    code = val.charCodeAt(i);
+                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                        !(code > 64 && code < 91) && // upper alpha (A-Z)
+                        !(code > 96 && code < 123)) { // lower alpha (a-z)
+                        if ( extra.indexOf( val.charAt( i )) == -1 )
+                            throw obj.ERR_INVALID_CHAR;
+                    }
+                }
+            }
+            console.log("save new val:",val);
+
+            if ( spec.out_field )
+                a_out[spec.out_field] = val;
+            else
+                a_out[a_field] = val;
+        }else{
+            // Required params must have a value
+            if ( a_update && !spec.required ){
+                if ( val === "" ){
+                    if ( spec.out_field )
+                        a_out[spec.out_field] = null;
+                    else
+                        a_out[a_field] = null;
+                }
+            }else if ( spec.required )
+                throw obj.ERR_MISSING_REQ_OPTION;
+        }
+    };
+
+
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
     };
+
+    /*
     obj.isAlphaNumeric = function(str) {
         var code, i, len;
 
@@ -138,7 +227,7 @@ module.exports = ( function() {
             }
         }
         return true;
-    };
+    };*/
 
     obj.handleException = function( e, res ) {
         console.log( "Service exception:", e );
@@ -474,6 +563,8 @@ module.exports = ( function() {
         }
     };
 
+
+    /*
     obj.validateAlias = function( a_alias ) {
         if ( !a_alias )
             return;
@@ -521,6 +612,7 @@ module.exports = ( function() {
         if ( a_desc && a_desc.length > obj.MAX_DESC_SHORT_LEN )
             throw obj.ERR_DESC_SHORT_TOO_LONG;
     };
+*/
 
     obj.resolveID = function( a_id, a_client ) {
         if ( a_id[1] == '/' ) {
@@ -540,6 +632,7 @@ module.exports = ( function() {
         }
     };
 
+    /*
     obj.parseTopic = function( a_topic ){
         var res = [];
         res = a_topic.toLowerCase().split(".");
@@ -553,10 +646,11 @@ module.exports = ( function() {
         }
 
         return res;
-    };
+    };*/
 
     obj.topicLink = function( a_topic, a_data_id ){
-        var top_ar = obj.parseTopic( a_topic );
+        //var top_ar = obj.parseTopic( a_topic );
+        var top_ar = a_topic.split(".");
         var i,topic,parent = "t/root";
 
         for ( i = 0; i < top_ar.length; i++ ){

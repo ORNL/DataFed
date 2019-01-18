@@ -40,14 +40,16 @@ router.get('/create', function (req, res) {
                     uid = client._id;
                 }
 
-                g_lib.validateGroupID( req.queryParams.gid );
-                g_lib.validateTitle( req.queryParams.title );
-                g_lib.validateDescShort( req.queryParams.desc );
-
                 if ( g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid }))
                     throw g_lib.ERR_GROUP_IN_USE;
 
-                var group = g_db.g.save({ uid: uid, gid: req.queryParams.gid, title: req.queryParams.title, desc: req.queryParams.desc }, { returnNew: true });
+                var obj = { uid: uid };
+
+                g_lib.procInputParam( req.queryParams, "gid", false, obj );
+                g_lib.procInputParam( req.queryParams, "title", false, obj );
+                g_lib.procInputParam( req.queryParams, "summary", false, obj );
+
+                var group = g_db.g.save( obj, { returnNew: true });
 
                 g_db.owner.save({ _from: group._id, _to: uid });
 
@@ -81,8 +83,8 @@ router.get('/create', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('proj', joi.string().optional(), "Project ID (optional)")
 .queryParam('gid', joi.string().required(), "Group ID")
-.queryParam('title', joi.string().optional(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
+.queryParam('title', joi.string().optional().allow(""), "Title")
+.queryParam('desc', joi.string().optional().allow(""), "Description")
 .queryParam('members', joi.array(joi.string()).optional(), "Array of member UIDs")
 .summary('Creates a new group')
 .description('Creates a new group owned by client (or project), with optional members');
@@ -101,9 +103,6 @@ router.get('/update', function (req, res) {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var group;
 
-                g_lib.validateTitle( req.queryParams.title );
-                g_lib.validateDescShort( req.queryParams.desc );
-
                 if ( req.queryParams.proj ) {
                     var uid = req.queryParams.proj;
                     group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
@@ -118,25 +117,17 @@ router.get('/update', function (req, res) {
                 }
 
                 var obj = {};
-                var upd = false;
 
-                if ( req.queryParams.title && group.gid != "members" ) {
-                    obj.title = req.queryParams.title;
-                    upd = true;
-                }
+                if ( group.gid != "members" ) {
+                    g_lib.procInputParam( req.queryParams, "gid", false, obj );
+                    g_lib.procInputParam( req.queryParams, "title", false, obj );
+                    g_lib.procInputParam( req.queryParams, "desc", false, obj );
 
-                if ( req.queryParams.desc && group.gid != "members" ) {
-                    obj.desc = req.queryParams.desc;
-                    upd = true;
-                }
-
-                if ( upd ) {
-                    group = g_db._update( group._id, obj, { returnNew: true });
+                    group = g_db._update( group._id, obj, { keepNull:false, returnNew: true });
                     group = group.new;
                 }
 
-                var mem;
-                var i;
+                var mem,i;
 
                 if ( req.queryParams.add ) {
                     for ( i in req.queryParams.add ) {
@@ -181,7 +172,7 @@ router.get('/update', function (req, res) {
 .queryParam('proj', joi.string().optional(), "Project ID")
 .queryParam('gid', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().optional(), "New title")
-.queryParam('desc', joi.string().optional(), "New description")
+.queryParam('desc', joi.string().optional().allow(""), "New description")
 .queryParam('add', joi.array(joi.string()).optional(), "Array of member UIDs to add to group")
 .queryParam('rem', joi.array(joi.string()).optional(), "Array of member UIDs to remove from group")
 .summary('Updates an existing group')
