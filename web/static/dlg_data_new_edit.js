@@ -12,12 +12,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none'>\
                 <table class='form-table'>\
-                    <tr><td>Title:</td><td colspan='2'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
+                    <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='2'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
                     <tr><td>Description:</td><td colspan='2'><textarea title='Description string (optional)' id='desc' rows=4 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Keywords:</td><td colspan='2'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
                     <tr><td>Topic:</td><td><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
-                    <tr id='dlg_coll_row'><td>Parent:</td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
+                    <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                     <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='2'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
                 </table>\
             </div>\
@@ -31,6 +31,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
                 <label for='md_set'>Replace</label>\
             </div>\
+            <div class='note' style='flex:none;padding:1em 2px 2px 2px'>* Required fields</div>\
         </div>" );
 
     var dlg_title;

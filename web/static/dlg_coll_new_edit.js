@@ -2,10 +2,12 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
     var frame = $(document.createElement('div'));
     frame.html(
         "<table class='form-table'>\
-            <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
+            <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
             <tr><td>Alias:</td><td><input type='text' id='alias' style='width:100%'></input></td></tr>\
             <tr><td >Description:</td><td><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
-            <tr id='parent_row'><td>Parent:</td><td><input type='text' id='coll' style='width:100%'></input></td></tr>\
+            <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td><input type='text' id='coll' style='width:100%'></input></td></tr>\
+            <tr><td>&nbsp</td></tr>\
+            <tr><td colspan='2'><span class='note'>* Required fields</span></td></tr>\
             </table>" );
 
     var dlg_title;
