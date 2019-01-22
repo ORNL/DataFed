@@ -72,6 +72,7 @@ module.exports = ( function() {
 
     obj.ERR_AUTHN_FAILED          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Authentication failed" ]);
     obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission denied" ]);
+    obj.ERR_INVALID_CHAR          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid character" ]);
     obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
     obj.ERR_INVALID_PROJ_ID       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid project ID" ]);
     obj.ERR_INVALID_GROUP_ID      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid group ID" ]);
@@ -131,14 +132,14 @@ module.exports = ( function() {
     obj.extra_chars = ["_-.","_-.","_-."];
 
     obj.field_reqs = {
-        title: { required: true, update: true, max_len: 80 },
-        alias: { required: false, update: true, max_len: 60, lower: true, charset: obj.CHARSET_ALIAS },
-        desc: { required: false, update: true, max_len: 4000 },
-        summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc" },
-        keyw: { required: false, update: true, max_len: 200, lower: true },
-        topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC },
-        gid: { required: true, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID },
-        id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key" }
+        title: { required: true, update: true, max_len: 80, label: 'title' },
+        alias: { required: false, update: true, max_len: 60, lower: true, charset: obj.CHARSET_ALIAS, label: 'alias' },
+        desc: { required: false, update: true, max_len: 4000, label: 'description' },
+        summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
+        keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
+        topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
+        gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
+        id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' }
     };
 
     obj.procInputParam = function( a_in, a_field, a_update, a_out ){
@@ -147,8 +148,7 @@ module.exports = ( function() {
         console.log("procInput",a_field,",update:",a_update);
 
         if ( !spec ){
-            console.log("Spec not found",a_field);
-            throw obj.ERR_INTERNAL_FAULT;
+            throw [obj.ERR_INTERNAL_FAULT,"Input specification for '" + a_field + "' not found. Please context system administrator."];
         }
 
         if ( spec.in_field )
@@ -170,12 +170,12 @@ module.exports = ( function() {
         if ( val && val.length ){
             // Check length if specified
             if ( spec.max_len && ( val.length > spec.max_len ))
-                throw obj.ERR_INPUT_TOO_LONG;
+                throw [obj.ERR_INPUT_TOO_LONG,"'" + spec.label + "' field is too long. Maximum length is " + spec.max_len + "." ];
 
             if ( spec.lower )
                 val = val.toLowerCase();
 
-            if ( spec.charset ){
+            if ( spec.charset != undefined ){
                 var extra = obj.extra_chars[spec.charset];
                 var code, i, len;
 
@@ -185,11 +185,11 @@ module.exports = ( function() {
                         !(code > 64 && code < 91) && // upper alpha (A-Z)
                         !(code > 96 && code < 123)) { // lower alpha (a-z)
                         if ( extra.indexOf( val.charAt( i )) == -1 )
-                            throw obj.ERR_INVALID_CHAR;
+                            throw [obj.ERR_INVALID_CHAR,"Invalid character(s) in '" + spec.label + "' field."];
                     }
                 }
             }
-            console.log("save new val:",val);
+            //console.log("save new val:",val);
 
             if ( spec.out_field )
                 a_out[spec.out_field] = val;
@@ -197,18 +197,20 @@ module.exports = ( function() {
                 a_out[a_field] = val;
         }else{
             // Required params must have a value
-            if ( a_update && !spec.required ){
+            if ( a_update ){
                 if ( val === "" ){
+                    if ( spec.required )
+                        throw [obj.ERR_MISSING_REQ_OPTION,"Required field '" + spec.label + "' cannot be deleted."];
+
                     if ( spec.out_field )
                         a_out[spec.out_field] = null;
                     else
                         a_out[a_field] = null;
                 }
             }else if ( spec.required )
-                throw obj.ERR_MISSING_REQ_OPTION;
-        }
+                throw [obj.ERR_MISSING_REQ_OPTION,"Missing required field '" + spec.label + "'."];
+            }
     };
-
 
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
@@ -234,6 +236,8 @@ module.exports = ( function() {
 
         if ( obj.isInteger( e ) && e >= 0 && e < obj.ERR_COUNT ) {
             res.throw( obj.ERR_INFO[e][0], obj.ERR_INFO[e][1] );
+        } else if ( Array.isArray( e )) {
+            res.throw( obj.ERR_INFO[e[0]][0], e[1] );
         } else if ( e.hasOwnProperty( "errorNum" )) {
             switch ( e.errorNum ) {
                 case 1202:

@@ -94,7 +94,7 @@ router.post('/create', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
-    title: joi.string().required(),
+    title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
@@ -169,7 +169,7 @@ router.post('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     id: joi.string().required(),
-    title: joi.string().optional(),
+    title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional()

@@ -34,7 +34,7 @@ router.get('/create', function (req, res) {
                 var time = Math.floor( Date.now()/1000 );
                 var proj_data = { ct: time, ut: time };
 
-                g_lib.procInputParam( req.queryParams, "id", false, proj_data );
+                g_lib.procInputParam( req.queryParams, "id", false, proj_data ); // Sets _key field
                 g_lib.procInputParam( req.queryParams, "title", false, proj_data );
                 g_lib.procInputParam( req.queryParams, "desc", false, proj_data );
 
@@ -57,9 +57,9 @@ router.get('/create', function (req, res) {
                 g_db.owner.save({ _from: proj._id, _to: client._id });
 
 
-                var root = g_db.c.save({ _key: "p_" + req.queryParams.id + "_root", is_root: true, title: "root", desc: "Root collection for project " + req.queryParams.id }, { returnNew: true });
+                var root = g_db.c.save({ _key: "p_" + proj_data._key + "_root", is_root: true, title: "root", desc: "Root collection for project " + proj_data._key }, { returnNew: true });
 
-                var alias = g_db.a.save({ _key: "p:"+req.queryParams.id+":root" }, { returnNew: true });
+                var alias = g_db.a.save({ _key: "p:"+proj_data._key+":root" }, { returnNew: true });
                 g_db.owner.save({ _from: alias._id, _to: proj._id });
 
                 g_db.alias.save({ _from: root._id, _to: alias._id });
@@ -69,7 +69,7 @@ router.get('/create', function (req, res) {
                 var mem_grp;
 
                 // Projects have a special "members" group associated with root
-                mem_grp = g_db.g.save({ uid: "p/"+req.queryParams.id, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
+                mem_grp = g_db.g.save({ uid: "p/"+proj_data._key, gid: "members", title: "Project Members", desc: "Use to set baseline project member permissions." }, { returnNew: true });
                 g_db.owner.save({ _from: mem_grp._id, _to: proj._id });
                 g_db.acl.save({ _from: root._id, _to: mem_grp._id, grant: g_lib.PERM_MEMBER, inhgrant: g_lib.PERM_MEMBER });
 
@@ -117,8 +117,8 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "ID for new project")
-.queryParam('title', joi.string().required(), "Title")
+.queryParam('id', joi.string().optional().allow(""), "ID for new project")
+.queryParam('title', joi.string().optional().allow(""), "Title")
 .queryParam('desc', joi.string().optional().allow(""), "Description")
 .queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
@@ -143,12 +143,18 @@ router.get('/update', function (req, res) {
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
+                console.log("proj update" );
+                console.log("pu client id:", client._id );
+                console.log("pu proj id:", proj_id );
+                console.log("pu owner id:", owner_id );
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
 
                 g_lib.procInputParam( req.queryParams, "title", true, obj );
                 g_lib.procInputParam( req.queryParams, "desc", true, obj );
+
+                console.log("pu 1" );
 
                 if ( req.queryParams.sub_repo ){
                     // Verify there isn't a real allocation present
@@ -177,6 +183,7 @@ router.get('/update', function (req, res) {
                 }else if ( req.queryParams.sub_alloc ){
                     obj.sub_alloc = req.queryParams.sub_alloc;
                 }
+                console.log("pu 2");
 
                 var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
@@ -212,6 +219,7 @@ router.get('/update', function (req, res) {
                         proj.new.admins.push( admins[i]);
                     }
                 }
+                console.log("pu 3" );
 
                 if ( req.queryParams.members ) {
                     var mem_grp = g_db.g.firstExample({ uid: proj_id, gid: "members" });
@@ -231,6 +239,9 @@ router.get('/update', function (req, res) {
                     if ( members.length )
                         proj.new.members = members;
                 }
+                console.log("pu 4");
+                console.log("pu new",proj.new );
+                console.log("pu new id",proj.new._id );
 
                 proj.new.id = proj.new._id;
                 proj.new.owner = owner_id;
@@ -250,8 +261,8 @@ router.get('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Project ID")
-.queryParam('title', joi.string().optional(), "New title")
-.queryParam('desc', joi.string().optional().allow(""), "Description")
+.queryParam('title', joi.string().optional().allow(''), "New title")
+.queryParam('desc', joi.string().optional().allow(''), "Description")
 .queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
 .queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")

@@ -40,14 +40,14 @@ router.get('/create', function (req, res) {
                     uid = client._id;
                 }
 
-                if ( g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid }))
-                    throw g_lib.ERR_GROUP_IN_USE;
-
                 var obj = { uid: uid };
 
                 g_lib.procInputParam( req.queryParams, "gid", false, obj );
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
                 g_lib.procInputParam( req.queryParams, "summary", false, obj );
+
+                if ( g_db.g.firstExample({ uid: uid, gid: obj.gid }))
+                    throw g_lib.ERR_GROUP_IN_USE;
 
                 var group = g_db.g.save( obj, { returnNew: true });
 
@@ -119,7 +119,7 @@ router.get('/update', function (req, res) {
                 var obj = {};
 
                 if ( group.gid != "members" ) {
-                    g_lib.procInputParam( req.queryParams, "gid", false, obj );
+                    //g_lib.procInputParam( req.queryParams, "gid", false, obj );
                     g_lib.procInputParam( req.queryParams, "title", false, obj );
                     g_lib.procInputParam( req.queryParams, "desc", false, obj );
 
@@ -171,8 +171,8 @@ router.get('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('proj', joi.string().optional(), "Project ID")
 .queryParam('gid', joi.string().required(), "Group ID")
-.queryParam('title', joi.string().optional(), "New title")
-.queryParam('desc', joi.string().optional().allow(""), "New description")
+.queryParam('title', joi.string().allow('').optional(), "New title")
+.queryParam('desc', joi.string().allow('').optional(), "New description")
 .queryParam('add', joi.array(joi.string()).optional(), "Array of member UIDs to add to group")
 .queryParam('rem', joi.array(joi.string()).optional(), "Array of member UIDs to remove from group")
 .summary('Updates an existing group')
