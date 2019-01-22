@@ -32,12 +32,6 @@ function dlgProjNewEdit(a_data,a_cb) {
 
     frame.html( html );
 
-    var dlg_title;
-    if ( a_data ) {
-        dlg_title = "Edit Project " + a_data.id;
-    } else {
-        dlg_title = "New Project";
-    }
     var proj;
     if ( a_data )
         proj = Object.assign({}, a_data);
@@ -51,7 +45,7 @@ function dlgProjNewEdit(a_data,a_cb) {
     inputDisable($('#owner_id',frame));
 
     var options = {
-        title: dlg_title,
+        title: a_data?"Edit Project " + a_data.id:"New Project",
         modal: true,
         width: 500,
         height: 'auto',
@@ -60,39 +54,37 @@ function dlgProjNewEdit(a_data,a_cb) {
         buttons: [{
             text: a_data?"Update":"Create",
             click: function() {
-                proj.id = $("#id",frame).val();
-                proj.title = $("#title",frame).val();
-                proj.desc = $("#desc",frame).val();
-                proj.subRepo = $("#suballoc",frame).val();
-                proj.subAlloc = $("#suballoc_size",frame).val();
-                console.log("proj:",proj);
+                var obj = {};
+
+                var subRepo = $("#suballoc",frame).val();
+                var subAlloc = $("#suballoc_size",frame).val();
 
                 var url = "/api/prj/";
 
-                if ( a_data )
-                    url += "update?id=";
-                else
-                    url += "create?id=";
+                if ( a_data ){
+                    url += "update?id=" + encodeURIComponent( a_data.id );
 
-                url += encodeURIComponent( proj.id );;
+                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
+                }else{
+                    url += "create?id=" + encodeURIComponent( $("#id",frame).val().trim() );
 
-                if ( !proj.title ){
-                    dlgAlert("Input Error","Title field is required.");
-                    return;
+                    obj.title = $("#title",frame).val().trim();
+                    obj.desc = $("#desc",frame).val().trim();
                 }
 
-                if ( !a_data || proj.title != a_data.title )
-                    url += "&title="+ encodeURIComponent(proj.title);
+                if ( obj.title )
+                    url += "&title="+ encodeURIComponent(obj.title);
 
-                if (( !a_data && proj.desc ) || (a_data && (proj.desc != a_data.desc )))
-                    url += "&desc="+ encodeURIComponent(proj.desc);
+                if ( obj.desc )
+                    url += "&desc="+ encodeURIComponent(obj.desc);
 
-                if ( proj.subRepo != "ignore" && (( !a_data && proj.subRepo != "none" ) || (a_data && (proj.subRepo != a_data.subRepo || proj.subAlloc != a_data.subAlloc )))){
-                    console.log("repo:",proj.subRepo );
-                    if ( proj.subRepo == "none" ){
+                if ( subRepo != "ignore" && (( !a_data && subRepo != "none" ) || (a_data && (subRepo != a_data.subRepo || subAlloc != a_data.subAlloc )))){
+                    console.log("repo:",subRepo );
+                    if ( subRepo == "none" ){
                         url += "&sub_repo=none";
                     }else{
-                        var alloc_sz = parseSize( proj.subAlloc );
+                        var alloc_sz = parseSize( subAlloc );
                         console.log( "alloc_sz", alloc_sz );
                         if ( alloc_sz == null || alloc_sz < 0 ){
                             dlgAlert("Input Error","Invalid sub-allocation size.");
@@ -100,7 +92,7 @@ function dlgProjNewEdit(a_data,a_cb) {
                         }
 
                         for ( var i in alloc_list ){
-                            if ( alloc_list[i].repo == proj.subRepo ){
+                            if ( alloc_list[i].repo == subRepo ){
                                 if ( alloc_sz > alloc_list[i].alloc ){
                                     dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
                                     return;
@@ -110,10 +102,10 @@ function dlgProjNewEdit(a_data,a_cb) {
                             }
                         }
 
-                        if ( a_data && (proj.subRepo == a_data.subRepo))
+                        if ( a_data && (subRepo == a_data.subRepo))
                             url += "&sub_alloc=" + alloc_sz;
                         else
-                            url += "&sub_repo=" + proj.subRepo + "&sub_alloc=" + alloc_sz;
+                            url += "&sub_repo=" + subRepo + "&sub_alloc=" + alloc_sz;
                     }
                 }
 

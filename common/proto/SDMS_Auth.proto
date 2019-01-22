@@ -162,7 +162,7 @@ message RecordDataReply
 
 message RecordCreateRequest
 {
-    required string             title       = 1;
+    optional string             title       = 1;
     optional string             desc        = 2;
     optional string             topic       = 3;
     optional string             keyw        = 4;
@@ -274,7 +274,7 @@ message DataPathReply
 
 message CollCreateRequest
 {
-    required string             title       = 1;
+    optional string             title       = 1;
     optional string             desc        = 2;
     optional string             alias       = 3;
     optional string             parent_id   = 4;
@@ -416,7 +416,7 @@ message ACLDataReply
 message ProjectCreateRequest
 {
     required string             id          = 1;
-    required string             title       = 2;
+    optional string             title       = 2;
     optional string             desc        = 3;
     optional string             sub_repo    = 4;
     optional uint64             sub_alloc   = 5;

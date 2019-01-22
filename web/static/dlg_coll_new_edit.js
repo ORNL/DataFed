@@ -31,33 +31,27 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
             text: a_data?"Update":"Create",
             click: function() {
                 var obj = {};
-
-                obj.title = $("#title",frame).val().trim();
-                //if ( !obj.title ) {
-                //    dlgAlert( "Data Entry Error", "Title cannot be empty");
-                //    return;
-                //}
-
-                obj.alias = $("#alias",frame).val().trim();
-                //if ( obj.alias.length && !isValidAlias( obj.alias ))
-                //    return;
-
-                obj.desc = $("#desc",frame).val().trim();
-
                 var url = "/api/col/";
 
                 if ( a_data ){
                     url += "update";
-                    obj.id = a_data.id;
 
-                    if ( obj.title == a_data.title )
-                        delete obj.title;
-                    if ( obj.desc == a_data.desc )
-                        delete obj.desc;
-                    if ( obj.alias == a_data.alias )
-                        delete obj.alias;
+                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
+                    getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
+
+                    if ( Object.keys(obj).length === 0 ){
+                        $(this).dialog('destroy').remove();
+                        return;
+                    }
+
+                    obj.id = a_data.id;
                 }else{
                     obj.parentId = $("#coll",frame).val().trim();
+
+                    getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
+                    getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
+                    getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
 
                     url += "create"
                 }
@@ -69,11 +63,10 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();
-                        console.log( "data:",data);
                         if ( a_cb )
                             a_cb(data.coll[0],obj.parentId);
                     } else {
-                        dlgAlert( "Server Error", data );
+                        dlgAlert( "Collection " + (a_data?"Update":"Create") + " Error", data );
                     }
                 });
             }

@@ -125,7 +125,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         });
     }
 
-
     var options = {
         title: dlg_title,
         modal: true,
@@ -138,17 +137,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
                 var obj = {};
-                var tmp;
-
-                obj.title = $("#title",frame).val().trim();
-                //if ( !obj.title ) {
-                //    dlgAlert( "Data Entry Error", "Title cannot be empty");
-                //    return;
-                //}
-
-                obj.alias = $("#alias",frame).val().trim();
-                //if ( obj.alias.length && !isValidAlias( obj.alias ))
-                //    return;
+                var url = "/api/dat/";
 
                 var anno = jsoned.getSession().getAnnotations();
                 if ( anno && anno.length ){
@@ -156,9 +145,38 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     return;
                 }
 
-                obj.desc = $("#desc",frame).val().trim();
-                obj.keyw = $("#keyw",frame).val().trim();
-                obj.topic = $("#topic",frame).val().trim();
+                if ( a_data && a_mode == DLG_DATA_EDIT ){
+                    url += "update";
+
+                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
+                    getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
+                    getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
+                    getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
+                    getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+
+                    if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
+                        obj.mdset = true;
+
+                    if ( Object.keys(obj).length === 0 ){
+                        jsoned.destroy();
+                        $(this).dialog('destroy').remove();
+                        return;
+                    }
+
+                    obj.id = a_data.id;
+                }else{
+                    url += "create";
+
+                    getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
+                    getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
+                    getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
+                    getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
+                    getUpdatedValue( $("#topic",frame).val(), {}, obj, "topic" );
+                    var tmp = jsoned.getValue();
+                    if ( tmp )
+                        obj.metadata = tmp;
+                }
 
                 if ( a_mode != DLG_DATA_EDIT ){
                     var repo_id = $("#alloc").val();
@@ -171,40 +189,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     obj.parentId = $("#coll",frame).val().trim();
                 }
 
-                //obj.metadata = $("#md",frame).val().trim();
-                obj.metadata = jsoned.getValue();
-
-                if ( !obj.metadata.length && a_mode != DLG_DATA_EDIT )
-                    delete obj.metadata;
-
-                var url = "/api/dat/";
-
-                if ( a_data && a_mode == DLG_DATA_EDIT ){
-                    url += "update";
-                    obj.id = a_data.id;
-
-                    if ( obj.title == a_data.title )
-                        delete obj.title;
-                    if ( obj.desc == a_data.desc )
-                        delete obj.desc;
-                    if ( obj.keyw == a_data.keyw )
-                        delete obj.keyw;
-                    if ( obj.topic.toLowerCase() == a_data.topic )
-                        delete obj.topic;
-                    if ( obj.alias == a_data.alias )
-                        delete obj.alias;
-                    if ( obj.metadata == a_data.metadata )
-                        delete obj.metadata;
-                    else if ( $('input[name=md_mode]:checked', frame ).val() == "set" )
-                        obj.mdset = true;
-
-                }else
-                    url += "create"
-
-
                 var inst = $(this);
-
-                console.log( "create/upd data", obj );
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
