@@ -1027,14 +1027,14 @@ int data_put()
     switch ( g_out_form )
     {
     case TEXT:
-        cout << "TransID  " << xfr.id() << "\nStatus   " << StatusText[xfr.status()] << "\nPath     " << xfr.local_path() << "\n";
+        cout << "DataID   " << data_id << "\nTransID  " << xfr.id() << "\nStatus   " << StatusText[xfr.status()] << "\nPath     " << xfr.local_path() << "\n";
         break;
     case CSV:
-        cout << "\"TransID\",\"Status\",\"Path\"\n";
-        cout << "\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
+        cout << "\"DataID\",\"TransID\",\"Status\",\"Path\"\n";
+        cout << "\"" + data_id + "\",\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
         break;
     case JSON:
-        cout << "{\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
+        cout << "{\"DataID\":\"" + data_id + "\",\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
         break;
     }
 
