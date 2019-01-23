@@ -364,7 +364,7 @@ void printData( spRecordDataReply a_rep )
     if ( g_out_form == JSON )
         cout << "{\"Data\":[";
     else if ( g_out_form == CSV )
-        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Locked\",\"Size\",\"Repo\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
+        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Topic\",\"Keywords\",\"Owner\",\"Locked\",\"Size\",\"Repo\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
 
     if ( a_rep->data_size() )
     {
@@ -381,19 +381,29 @@ void printData( spRecordDataReply a_rep )
             switch ( g_out_form )
             {
             case TEXT:
-                cout << "DataID   " << rec.id() << "\n";
+                cout << "DataID   " << rec.id();
                 if ( rec.has_alias() )
-                    cout << "Alias    " << rec.alias() << "\n";
-                cout << "Title    " << rec.title() << "\n";
+                    cout << " (" << rec.alias() << ")";
+                cout << "\nTitle    " << rec.title() << "\n";
+                cout << "Desc     ";
                 if ( rec.has_desc() )
-                    cout << "Desc     " << rec.desc() << "\n";
-                if ( rec.has_owner() )
-                    cout << "Owner    " << rec.owner() << "\n";
+                {
+                    if ( !g_details && rec.desc().size() > 200 )
+                    {
+                        cout.write( rec.desc().c_str(), 200);
+                        cout << "... (more)\n";
+                    }
+                    else
+                        cout << rec.desc() << "\n";
+                }
+                else
+                    cout << "n/a\n";
+                cout << "Topic    " << (rec.has_topic()?rec.topic():"n/a") << "\n";
+                cout << "Keywords " << (rec.has_keyw()?rec.keyw():"n/a") << "\n";
+                cout << "Owner    " << (rec.has_owner()?rec.owner():"n/a") << "\n";
                 cout << "Locked   " << ((rec.has_locked() && rec.locked())?"Yes":"No") << "\n";
-                if ( rec.has_size() )
-                    cout << "Size     " << rec.size() << "\n";
-                if ( rec.has_repo_id() )
-                    cout << "Repo     " << rec.repo_id() << "\n";
+                cout << "Size     " << (rec.has_size()?to_string(rec.size()):"n/a") << "\n";
+                cout << "Repo     " << (rec.has_repo_id()?rec.repo_id():"n/a") << "\n";
                 if ( rec.has_dt() )
                 {
                     t = (time_t)rec.dt();
@@ -412,14 +422,24 @@ void printData( spRecordDataReply a_rep )
                     pTM = localtime(&t);
                     cout << "Updated  " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
                 }
+                cout << "Meta     ";
                 if ( rec.has_metadata() )
-                    cout << "Meta     " << rec.metadata() << "\n";
+                {
+                    if ( g_details )
+                        cout << rec.metadata() << "\n";
+                    else
+                        cout << "(available)\n";
+                }
+                else
+                    cout << "n/a\n";
                 break;
             case CSV:
                 cout << "\"" << rec.id() << "\""
                     << ",\"" << ( rec.has_alias()?rec.alias():"" ) << "\""
                     << ",\"" << escapeCSV( rec.title() ) << "\""
                     << ",\"" << ( rec.has_desc()?escapeCSV( rec.desc() ):"" ) << "\""
+                    << ",\"" << ( rec.has_topic()?rec.topic():"" ) << "\""
+                    << ",\"" << ( rec.has_keyw()?rec.keyw():"" ) << "\""
                     << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
                     << "," << ((rec.has_locked() && rec.locked())?"1":"0")
                     << "," << ( rec.has_size()?rec.size():0 )
@@ -430,27 +450,31 @@ void printData( spRecordDataReply a_rep )
                     << ",\"" << ( rec.has_metadata()?escapeCSV( rec.metadata() ):"" ) << "\"\n";
                 break;
             case JSON:
-                cout << "{\"DataID\":\"" << rec.id() << "\"";
+                cout << "{\"id\":\"" << rec.id() << "\"";
                 if ( rec.has_alias() )
-                    cout << ",\"Alias\":\"" << rec.alias() << "\"";
-                cout << ",\"Title\":\"" << escapeJSON( rec.title() ) << "\"";
+                    cout << ",\"alias\":\"" << rec.alias() << "\"";
+                cout << ",\"title\":\"" << escapeJSON( rec.title() ) << "\"";
                 if ( rec.has_desc() )
-                    cout << ",\"Desc\":\"" << escapeJSON( rec.desc() ) << "\"";
+                    cout << ",\"desc\":\"" << escapeJSON( rec.desc() ) << "\"";
+                if ( rec.has_topic() )
+                    cout << ",\"topic\":\"" << escapeJSON( rec.topic() ) << "\"";
+                if ( rec.has_keyw() )
+                    cout << ",\"keyw\":\"" << escapeJSON( rec.keyw() ) << "\"";
                 if ( rec.has_owner() )
-                    cout << ",\"Owner\":\"" << rec.owner() << "\"";
-                cout << ",\"Locked\":" << ((rec.has_locked() && rec.locked())?"true":"false");
+                    cout << ",\"owner\":\"" << rec.owner() << "\"";
+                cout << ",\"locked\":" << ((rec.has_locked() && rec.locked())?"true":"false");
                 if ( rec.has_size() )
-                    cout << ",\"Size\":" << rec.size();
+                    cout << ",\"size\":" << rec.size();
                 if ( rec.has_repo_id() )
-                    cout << ",\"Repo\":" << rec.repo_id();
+                    cout << ",\"repo_id\":" << rec.repo_id();
                 if ( rec.has_dt() )
-                    cout << ",\"Uploaded\":" << rec.dt();
+                    cout << ",\"dt\":" << rec.dt();
                 if ( rec.has_ct() )
-                    cout << ",\"Created\":" << rec.ct();
+                    cout << ",\"ct\":" << rec.ct();
                 if ( rec.has_ut() )
-                    cout << ",\"Updated\":" << rec.ut();
+                    cout << ",\"ut\":" << rec.ut();
                 if ( rec.has_metadata() )
-                    cout << ",\"Meta\":" << rec.metadata();
+                    cout << ",\"md\":" << rec.metadata();
                 cout << "}";
                 break;
             }
