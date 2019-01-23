@@ -121,31 +121,68 @@ string          g_cur_col;
 string          g_cur_alias_prefix;
 string          g_select;
 string          g_cur_xfr;
+vector<string>  g_id_index;
 
 po::options_description g_opts_command( "Command options" );
 
+void updateIdIndex( spListingReply a_listing  )
+{
+    g_id_index.clear();
+
+    for ( int i = 0; i < a_listing->item_size(); i++ )
+    {
+        g_id_index.push_back( a_listing->item(i).id() );
+    }
+}
+
+string resolveIndexValue( const string & a_id )
+{
+    if ( a_id.size() == 1 || a_id.size() > 3 || a_id.back() != '.' )
+        return a_id;
+
+    unsigned int i;
+
+    for ( i = 0; i < a_id.size() - 1; i++ )
+    {
+        if ( !isdigit( a_id[i] ) )
+            return a_id;
+    }
+
+    if ( g_id_index.size() == 0 )
+        EXCEPT( 1, "No listing data for index lookup." );
+
+    i = strtoul( a_id.c_str(), NULL, 10 );
+    if ( i == 0 || i > g_id_index.size() )
+        EXCEPT( 1, "Index value out of range." );
+
+    return g_id_index[i - 1];
+}
 
 string resolveID( const string & a_id )
 {
-    if ( a_id.size() > 2 && a_id[1] == '/' )
-        return a_id;
+    string id = resolveIndexValue( a_id );
 
-    if ( a_id.find_first_of( ":" ) != string::npos )
-        return a_id;
+    if ( id.size() > 2 && id[1] == '/' )
+        return id;
 
-    return g_cur_alias_prefix + a_id;
+    if ( id.find_first_of( ":" ) != string::npos )
+        return id;
+
+    return g_cur_alias_prefix + id;
 }
 
 string resolveCollID( const string & a_id, bool & a_final )
 {
     a_final = false;
 
-    if ( a_id == "." )
+    string id = resolveIndexValue( a_id );
+
+    if ( id == "." )
     {
         a_final = true;
         return g_cur_col;
     }
-    else if ( a_id == "/" )
+    else if ( id == "/" )
     {
         a_final = true;
         if ( g_cur_sel[0] == 'p' )
@@ -153,7 +190,7 @@ string resolveCollID( const string & a_id, bool & a_final )
         else
             return "c/u_" + g_cur_sel.substr(2) + "_root";
     }
-    else if ( a_id == ".." )
+    else if ( id == ".." )
     {
         spCollDataReply rep = g_client->collGetParents( g_cur_col );
         if ( rep->coll_size() )
@@ -164,12 +201,12 @@ string resolveCollID( const string & a_id, bool & a_final )
         else
             EXCEPT( 1, "Already at root" );
     }
-    else if ( a_id.size() > 2 && a_id[1] == '/' )
-        return a_id;
-    else if ( a_id.find_first_of( ":" ) != string::npos )
-        return a_id;
+    else if ( id.size() > 2 && id[1] == '/' )
+        return id;
+    else if ( id.find_first_of( ":" ) != string::npos )
+        return id;
     else
-        return g_cur_alias_prefix + a_id;
+        return g_cur_alias_prefix + id;
 }
 
 void printSuccess()
@@ -576,6 +613,8 @@ void printListing( spListingReply a_reply )
         switch ( g_out_form )
         {
         case TEXT:
+            cout << setw(4) << left << (to_string(i + 1) + ". ");
+
             if ( item.has_locked() && item.locked() )
                 cout << "L ";
             else
@@ -845,6 +884,8 @@ int find_records()
     }
 
     spListingReply rep = g_client->recordFind( query );
+    updateIdIndex( rep );
+
     cout << rep->item_size() << " match(es) found:\n\n";
     //printData( rep, true );
 
@@ -1032,6 +1073,7 @@ int coll_view()
     }
     else if ( g_args.size() == 1 )
     {
+        cout << "CV ID: " <<resolveID( g_args[0] ) << "\n";
         spCollDataReply rep = g_client->collView( resolveID( g_args[0] ));
         printCollData( rep );
     }
@@ -1557,12 +1599,14 @@ int ls()
     if ( g_args.size() == 0 )
     {
         rep = g_client->collRead( g_cur_col );
+        updateIdIndex( rep );
         printListing( rep );
     }
     else if ( g_args.size() == 1 )
     {
         bool fin;
         rep = g_client->collRead( resolveCollID( g_args[0], fin ) );
+        updateIdIndex( rep );
         printListing( rep );
     }
     else
