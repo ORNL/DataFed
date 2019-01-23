@@ -96,6 +96,7 @@ bool            g_wait = false;
 string          g_title;
 string          g_desc;
 string          g_alias;
+string          g_parent;
 string          g_meta;
 string          g_meta_file;
 bool            g_meta_replace;
@@ -776,6 +777,14 @@ spRecordDataReply createRecord()
     if ( !g_title.size() )
         EXCEPT_PARAM( 1, "Title option is required for create command" );
 
+    string par = g_cur_col;
+
+    if ( g_parent.size() )
+    {
+        bool fin;
+        par = resolveCollID( g_parent, fin );
+    }
+
     if ( g_meta_file.size() )
     {
         if ( g_meta.size() )
@@ -789,11 +798,11 @@ spRecordDataReply createRecord()
 
         inf.close();
 
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), g_cur_col.c_str(), g_repo.size()?g_repo.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0 );
     }
     else
     {
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, g_cur_col.c_str(), g_repo.size()?g_repo.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0 );
     }
 }
 
@@ -1040,7 +1049,15 @@ int coll_create()
     if ( !g_title.size() )
         EXCEPT_PARAM( 1, "Title is required" );
 
-    spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_cur_col.c_str() );
+    string par = g_cur_col;
+
+    if ( g_parent.size() )
+    {
+        bool fin;
+        par = resolveCollID( g_parent, fin );
+    }
+
+    spCollDataReply rep = g_client->collCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, par.c_str() );
     printCollData( rep );
 
     return 0;
@@ -1496,14 +1513,11 @@ int pwc()
     return 0;
 }
 
-int cd()
+int wc()
 {
     if ( g_args.size() == 0 )
     {
-        if ( g_cur_sel[0] == 'p' )
-            g_cur_col = "c/p_" + g_cur_sel.substr(2) + "_root";
-        else
-            g_cur_col = "c/u_" + g_cur_sel.substr(2) + "_root";
+        pwc();
     }
     else if ( g_args.size() == 1 )
     {
@@ -1657,6 +1671,7 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
     g_title.clear();
     g_desc.clear();
     g_alias.clear();
+    g_parent.clear();
     g_meta.clear();
     g_meta_file.clear();
     g_meta_replace = false;
@@ -1753,8 +1768,8 @@ int main( int a_argc, char ** a_argv )
 
     // File-system-like commands
     addCommand( "", "sel", "Select user or project","[<id>]\n\nSelect the specified user or project for collection navigation. If no id is provided, prints the current user or project.", select );
-    addCommand( "", "pwc", "Print working collection","\n\nPrint current workingcollection with parent hierarchy.", pwc );
-    addCommand( "", "cd", "Change \"directory\" (collection)","<id/cmd>\n\nChange current \"directory\" (collection). The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", cd );
+    //addCommand( "", "pwc", "Print working collection","\n\nPrint current workingcollection with parent hierarchy.", pwc );
+    addCommand( "", "wc", "Print/change working collection","<id/cmd>\n\nPrints working collection if no arguments specified; otherwise changset working collection to specifed value. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, or '..' to move up one collection.", wc );
     addCommand( "", "ls", "List current collection","[<id/cmd>]>\n\nList contents of current working collection or specified location. The 'id/cmd' argument can be a collection ID or alias, '/' for the root collection, '..' for the parent of the current working collection, or \".\" (or omitted) for the current collection.", ls );
     addCommand( "ln", "link", "Link item into a collection","<id> [<coll_id>]\n\nLinks a data record or collection into the specified collection. The <coll_id> paramter may be a collection ID or alias, \"/\" for root (of the current user or project), \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being linked is a collection, it will be unlinked from it's current location before being linked into the new location.", link );
     addCommand( "ul", "unlink", "Unlink item from a collection","<id> [<coll_id>]>\n\nUnlinks a data record or collection from the specified collection. The <coll_id> paramter may be \"/\" for root, \"..\" for the parent of the current collection, or \".\" (or omitted) for the current collection. Note that if the item being unlinked has no other links, it will be unlinked from the specified location and re-linked into the root collection.", unlink );
@@ -1796,13 +1811,13 @@ int main( int a_argc, char ** a_argv )
 
     opts_startup.add_options()
         ("help,?", "Show help")
-        ("version,v", "Show version number")
-        ("client-cred-dir,c",po::value<string>( &client_cred_dir ),"Client credentials directory")
-        ("serv-cred-dir,s",po::value<string>( &service_cred_dir ),"SDMS service credentials directory")
-        ("host,h",po::value<string>( &host ),"Service hostname/IP")
-        ("port,p",po::value<uint16_t>( &port ),"Service port")
+        ("version", "Show version number")
+        ("client-cred-dir,C",po::value<string>( &client_cred_dir ),"Client credentials directory")
+        ("serv-cred-dir,S",po::value<string>( &service_cred_dir ),"SDMS service credentials directory")
+        ("host,H",po::value<string>( &host ),"Service hostname/IP")
+        ("port,P",po::value<uint16_t>( &port ),"Service port")
         ("cfg",po::value<string>( &g_cfg_file ),"Use config file for options")
-        ("login,l",po::bool_switch( &manual_auth )->default_value(false),"Manually login to SDMS")
+        ("login,L",po::bool_switch( &manual_auth )->default_value(false),"Manually login to SDMS")
         ("sel",po::value<string>( &g_select ),"Select user or project prior to executing command")
         ;
 
@@ -1811,6 +1826,7 @@ int main( int a_argc, char ** a_argv )
         ("title,t",po::value<string>( &g_title ),"Specify title for create/update commands")
         ("desc,d",po::value<string>( &g_desc ),"Specify description for create/update commands")
         ("alias,a",po::value<string>( &g_alias ),"Specify alias for create/update commands")
+        ("parent,p",po::value<string>( &g_parent ),"Specify parent collection ID or alias when creating new data record or collection")
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
