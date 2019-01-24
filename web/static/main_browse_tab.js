@@ -466,7 +466,7 @@ function makeBrowserTab(){
         var key = inst.data_tree.activeNode.key;
 
         if ( key[0] == "d" ) {
-            var perm = (a_mode==1?PERM_RD_DATA:PERM_WR_DATA);
+            var perm = (a_mode==XFR_GET?PERM_RD_DATA:PERM_WR_DATA);
             checkPerms( key, perm, function( granted ){
                 if ( !granted ){
                     alertPermDenied();
@@ -1667,8 +1667,8 @@ function makeBrowserTab(){
                 {title: "Delete", action: inst.deleteSelected, cmd: "del" },
                 {title: "Sharing", action: inst.shareSelected, cmd: "share" },
                 {title: "Lock", action: inst.toggleLock, cmd: "lock" },
-                {title: "Get", action: function(){ inst.xfrSelected(1) }, cmd: "get" },
-                {title: "Put", action: function(){ inst.xfrSelected(0) }, cmd: "put" }
+                {title: "Get", action: function(){ inst.xfrSelected(XFR_GET) }, cmd: "get" },
+                {title: "Put", action: function(){ inst.xfrSelected(XFR_PUT) }, cmd: "put" }
                 ]},
             {title: "New", children: [
                 {title: "Data", action: inst.newData, cmd: "newd" },
@@ -1732,8 +1732,8 @@ function makeBrowserTab(){
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
     $("#btn_lock",inst.frame).on('click', inst.toggleLock );
-    $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(0) });
-    $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(1) });
+    $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(XFR_PUT) });
+    $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(XFR_GET) });
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });

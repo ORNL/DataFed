@@ -19,6 +19,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     <tr><td>Topic:</td><td><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                     <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='2'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
+                    <tr id='dlg_put_row'><td>Raw data:</td><td><input title='Raw data remote source (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
                 </table>\
             </div>\
             <div style='flex:none;padding:1em 2px 2px 2px'>Metadata: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span></div>\
@@ -49,6 +50,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     $("#pick_topic",frame).on("click",function(){
         dlgPickTopic( function( topic ){
             $("#topic",frame).val( topic );
+        });
+    });
+
+    $("#pick_source",frame).on("click",function(){
+        dlgStartTransfer( XFR_SELECT, null, function( path ){
+            $("#source_file",frame).val( path );
         });
     });
 
@@ -193,11 +200,23 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
+                        tmp = $("#source_file").val().trim();
+                        if ( tmp && a_mode != DLG_DATA_EDIT ){
+                            xfrStart( data.data[0].id, XFR_PUT, tmp, function( ok2, data2 ){
+                                if ( ok2 ){
+                                    dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                                }else{
+                                    dlgAlert( "Transfer Error", data2 );
+                                }
+                            });
+                        }
+
                         jsoned.destroy();
                         inst.dialog('destroy').remove();
                         //console.log( "data:",data);
                         if ( a_cb )
                             a_cb(data.data[0],obj.parentId);
+
                     } else {
                         dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );
                     }
@@ -251,6 +270,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     $("#dlg_coll_row",frame).css("display","none");
                     $("#dlg_alloc_row",frame).css("display","none");
+                    $("#dlg_put_row",frame).css("display","none");
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     parent = "root";

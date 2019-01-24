@@ -520,54 +520,6 @@ function parseSize( a_size_str ){
     return result;
 }
 
-/*
-function isValidID( id ){
-    var len = id.length;
-    if ( !len ){
-        dlgAlert("Invalid ID","ID cannot be blank.");
-        return false;
-    }
-
-    var code, i;
-    var allowed = [43,45,46,95];
-
-    for ( i = 0; i < len; i++ ){
-        code = id.charCodeAt(i);
-        if (!(code > 47 && code < 58) && // numeric (0-9)
-            !(code > 64 && code < 91) && // upper alpha (A-Z)
-            !(code > 96 && code < 123)){ // lower alpha (a-z)
-            if ( allowed.indexOf( code ) == -1 || i == 0 ){
-                dlgAlert("Invalid ID","IDs can only contain upper/lower case letters, numbers, and the punctuation characters '.', '-', '+', and '_'. IDs also cannot start with a puncuation character.");
-                return false;
-            }
-        }
-    }
-
-    return true;
-};
-
-function isValidAlias( alias ){
-    var len = alias.length;
-    if ( len ){
-        var code, i;
-        var allowed = [43,45,46,95];
-
-        for ( i = 0; i < len; i++ ){
-            code = alias.charCodeAt(i);
-            if (!(code > 47 && code < 58) && // numeric (0-9)
-                !(code > 64 && code < 91) && // upper alpha (A-Z)
-                !(code > 96 && code < 123)){ // lower alpha (a-z)
-                if ( allowed.indexOf( code ) == -1 || i == 0 ){
-                    dlgAlert("Invalid Alias","Aliases can only contain upper/lower case letters, numbers, and the punctuation characters '.', '-', '+', and '_'. Aliases also cannot start with a puncuation character.");
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
-};
-*/
 
 function themeSet( theme ){
     g_theme = theme;
@@ -588,6 +540,40 @@ function inputDisable( a_objs ){
 function inputEnable( a_objs ){
     a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
     return a_objs;
+}
+
+function xfrStart( a_id, a_mode, a_path, a_cb ){
+    var url = "/api/dat/";
+
+    if ( a_mode == XFR_GET )
+        url += "get";
+    else if ( a_mode == XFR_PUT )
+        url += "put";
+    else{
+        return;
+    }
+
+    url += "?id=" + a_id + "&path=" + encodeURIComponent(a_path);
+
+    _asyncGet( url, null, function( ok, data ){
+        if ( ok ) {
+            // TODO - Move recent path update to database service
+            var p = g_ep_recent.indexOf(a_path);
+            if ( p < 0 ){
+                g_ep_recent.unshift(a_path);
+                if ( g_ep_recent.length > 20 )
+                    g_ep_recent.length = 20;
+                epRecentSave();
+            }else if ( p > 0 ) {
+                g_ep_recent.unshift( g_ep_recent[p] );
+                g_ep_recent.splice( p+1, 1 );
+                epRecentSave();
+            }
+        }
+
+        if ( a_cb )
+            a_cb( ok, data );
+    });
 }
 
 var status_timer;
@@ -617,6 +603,10 @@ var SS_SHARED_BY_PROJECT        = 10;
 var SS_SHARED_BY_ANY_PROJECT    = 11;
 var SS_PUBLIC                   = 12;
 var SS_VIEW                     = 13;
+
+var XFR_GET         = 0;
+var XFR_PUT         = 1;
+var XFR_SELECT      = 2;
 
 var dlgSetACLs = new makeDlgSetACLs();
 var dlgGroups = new makeDlgGroups();

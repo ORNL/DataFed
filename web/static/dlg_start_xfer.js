@@ -1,4 +1,4 @@
-function dlgStartTransfer( a_mode, a_data ) {
+function dlgStartTransfer( a_mode, a_data, a_cb ) {
     var frame = $(document.createElement('div'));
     //frame.html( "<span id='prefix'>Source</span> Path:<input type='text' id='path' style='width:95%'></input>" );
 
@@ -14,18 +14,18 @@ function dlgStartTransfer( a_mode, a_data ) {
 
         //<input class='ui-widget-content' id='path' style='width:100%'></input><br>\
 
-    var dlg_title = (a_mode?"Get Data ":"Put Data ");
-    if ( a_data.alias ){
-        var pos = a_data.alias.lastIndexOf(":");
-        dlg_title += "\"" + a_data.alias.substr(pos+1) + "\" [" + a_data.id + "]";
-    }else
-        dlg_title += a_data.id;
+    var label = ["Get","Put","Select"];
+    var dlg_title = label[a_mode] + " Data";
 
+    if ( a_data ){
+        if ( a_data.alias ){
+            var pos = a_data.alias.lastIndexOf(":");
+            dlg_title += " \"" + a_data.alias.substr(pos+1) + "\" [" + a_data.id + "]";
+        }else
+            dlg_title += " " + a_data.id;
 
-    $("#title",frame).html( "\"" + escapeHTML( a_data.title ) + "\"" );
-
-    //if ( a_mode )
-    //    $("#prefix",frame).html("Destination");
+        $("#title",frame).html( "\"" + escapeHTML( a_data.title ) + "\"" );
+    }
 
     var matches = $("#matches",frame);
     var path_in = $("#path",frame);
@@ -70,7 +70,7 @@ function dlgStartTransfer( a_mode, a_data ) {
         else
             path = cur_ep.default_directory?cur_ep.default_directory:"/";
         console.log("path:",path);
-        dlgEpBrowse( cur_ep, path, a_mode?"dir":"file", function( sel ){
+        dlgEpBrowse( cur_ep, path, (a_mode == XFR_GET)?"dir":"file", function( sel ){
             path_in.val( cur_ep.name + sel );
         });
     });
@@ -171,20 +171,44 @@ function dlgStartTransfer( a_mode, a_data ) {
         resizable: true,
         closeOnEscape: false,
         buttons: [{
-            text: a_mode?"Get":"Put",
+            text: label[a_mode],
             click: function() {
-                var raw_path = $("#path",frame).val();
-                var path = encodeURIComponent(raw_path);
-                if ( !path ) {
-                    alert("Path cannot be empty");
+                var raw_path = $("#path",frame).val().trim();
+                if ( !raw_path ) {
+                    dlgAlert("Input Error","Path cannot be empty.");
+                    return;
+                }
+                var inst = $(this);
+                if ( a_mode != XFR_SELECT ){
+                    xfrStart( a_data.id, a_mode, raw_path, function( ok, data ){
+                        if ( ok ){
+                            clearTimeout( in_timer );
+                            inst.dialog('destroy').remove();
+                            dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                        }else{
+                            dlgAlert( "Transfer Error", data );
+                        }
+                    });
+                }else{
+                    a_cb( raw_path );
+                    clearTimeout( in_timer );
+                    $(this).dialog('destroy').remove();
+                }
+/*
+                var url = "/api/dat/";
+
+                if ( a_mode == XFR_GET )
+                    url += "get";
+                else if ( a_mode == XFR_PUT )
+                    url += "put";
+                else{
+                    a_cb( raw_path );
+                    clearTimeout( in_timer );
+                    $(this).dialog('destroy').remove();
                     return;
                 }
 
-                var url = "/api/dat/";
-                if ( a_mode )
-                    url += "get";
-                else
-                    url += "put";
+                var path = encodeURIComponent(raw_path);
 
                 url += "?id=" + a_data.id + "&path=" + path;
 
@@ -210,6 +234,7 @@ function dlgStartTransfer( a_mode, a_data ) {
                         dlgAlert( "Transfer Error", data );
                     }
                 });
+*/
             }
         },{
             text: "Cancel",
