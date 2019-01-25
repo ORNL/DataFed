@@ -36,8 +36,11 @@ router.post('/create', function (req, res) {
                 var parent_id;
                 var repo_alloc;
 
+                console.log("Create new data");
+
                 if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
+                    console.log("parent: ", parent_id);
 
                     if ( parent_id[0] != "c" )
                         throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
@@ -50,11 +53,15 @@ router.post('/create', function (req, res) {
                         if ( !g_lib.hasManagerPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
 
-                            if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_WR_DATA ))
+                            console.log("check admin perm on parent coll: ",parent_id);
+                            if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_ADMIN )){
+                                console.log("NO admin perm on parent coll: ",parent_id);
                                 throw g_lib.ERR_PERM_DENIED;
+                            }
                         }
                     }
                 }else{
+                    console.log("no body?");
                     parent_id = g_lib.getRootID(client._id);
                     owner_id = client._id;
                 }

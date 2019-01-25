@@ -23,13 +23,14 @@ module.exports = ( function() {
     obj.PERM_WR_META        = 0x08;
     obj.PERM_WR_DATA        = 0x10;
     obj.PERM_ADMIN          = 0x20;
-    obj.PERM_TAG            = 0x40;
-    obj.PERM_NOTE           = 0x80;
-    obj.PERM_ALL            = 0xFF;
-    obj.PERM_MEMBER         = 0x17;
-    obj.PERM_MEMBER_INH     = 0xFF;
-    obj.PERM_MANAGER        = 0xDF;
-    obj.PERM_PUBLIC         = 0x07;
+    obj.PERM_LIST           = 0x40;
+    //obj.PERM_TAG            = 0x40;
+    //obj.PERM_NOTE           = 0x80;
+    obj.PERM_ALL            = 0x7F;
+    obj.PERM_MEMBER         = 0x5F;
+    obj.PERM_MEMBER_INH     = 0x7F;
+    obj.PERM_MANAGER        = 0x7F;
+    obj.PERM_PUBLIC         = 0x47;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
@@ -134,7 +135,7 @@ module.exports = ( function() {
     obj.field_reqs = {
         title: { required: true, update: true, max_len: 80, label: 'title' },
         alias: { required: false, update: true, max_len: 60, lower: true, charset: obj.CHARSET_ALIAS, label: 'alias' },
-        desc: { required: false, update: true, max_len: 4000, label: 'description' },
+        desc: { required: false, update: true, max_len: 500, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
         topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
