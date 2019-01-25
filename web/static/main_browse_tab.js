@@ -109,7 +109,7 @@ function makeBrowserTab(){
             }
         }
 
-        checkPerms( parent, PERM_WR_DATA, function( granted ){
+        checkPerms( parent, PERM_ADMIN, function( granted ){
             if ( !granted ){
                 alertPermDenied();
                 return;
@@ -154,7 +154,7 @@ function makeBrowserTab(){
             }
         }
 
-        checkPerms( parent, PERM_WR_DATA, function( granted ){
+        checkPerms( parent, PERM_ADMIN, function( granted ){
             if ( !granted ){
                 alertPermDenied();
                 return;
@@ -1336,7 +1336,7 @@ function makeBrowserTab(){
                     dlgAlert("Move Data","Moving data between allocations is not currently supported.");
                 }else{
                     if ( inst.drag_mode ){
-                        inst.moveItems( inst.pasteItems, dest_node, data.otherNode, pasteDone );
+                        inst.moveItems( inst.pasteItems, dest_node, /*data.otherNode,*/ pasteDone );
                     }else{
                         inst.copyItems( inst.pasteItems, dest_node, pasteDone );
                     }

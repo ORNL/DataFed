@@ -584,11 +584,12 @@ var PERM_RD_DATA        = 0x04;
 var PERM_WR_META        = 0x08;
 var PERM_WR_DATA        = 0x10;
 var PERM_ADMIN          = 0x20;
-var PERM_TAG            = 0x40;
-var PERM_NOTE           = 0x80;
-var PERM_ALL            = 0xFF;
-var PERM_READONLY       = 0x07;
-var PERM_READWRITE      = 0x1F;
+var PERM_LIST           = 0x40;
+//var PERM_TAG            = 0x40;
+//var PERM_NOTE           = 0x80;
+var PERM_ALL            = 0x7F;
+var PERM_READONLY       = 0x47;
+var PERM_READWRITE      = 0x5F;
 
 var SS_USER                     = 1;
 var SS_PROJECT                  = 2;
