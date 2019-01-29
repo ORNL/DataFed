@@ -17,57 +17,6 @@ const   g_lib = require('./support');
 
 module.exports = router;
 
-const PERM_SET = 0;
-const PERM_ADD = 1;
-const PERM_DEL = 2;
-const PERM_NC  = 3;
-
-function parsePermAction( a_perm_str ) {
-    var result = {};
-
-    if ( a_perm_str == null ) {
-        result.act = PERM_NC;
-        return result;
-    }
-
-    var pstr = a_perm_str.trim().toLowerCase();
-
-    if ( pstr.length == 0 ) {
-        result.act = PERM_NC;
-        return result;
-    } else if ( pstr[0] == "+" ) {
-        result.act = PERM_ADD;
-        pstr = pstr.substr(1).trimLeft();
-    } else if ( pstr[0] == "-" ) {
-        result.act = PERM_DEL;
-        pstr = pstr.substr(1).trimLeft();
-    } else {
-        result.act = PERM_SET;
-    }
-
-    if ( isNaN( pstr )) {
-        result.val = 0;
-
-        for ( var i in pstr ) {
-            switch( pstr[i] ) {
-                case 'v': result.val |= g_lib.PERM_VIEW; break;
-                case 'r': result.val |= (g_lib.PERM_RD_META|g_lib.PERM_RD_DATA); break;
-                case 'w': result.val |= (g_lib.PERM_WR_META|g_lib.PERM_WR_DATA); break;
-                case 'a': result.val |= g_lib.PERM_ADMIN; break;
-                case 't': result.val |= g_lib.PERM_TAG; break;
-                case 'n': result.val |= g_lib.PERM_NOTE; break;
-                default: throw g_lib.ERR_INVALID_PERM;
-            }
-        }
-    } else {
-        result.val = parseInt( pstr, 16 );
-    }
-
-    if ( result.val != result.val )
-        throw g_lib.ERR_INVALID_PERM;
-
-    return result;
-}
 
 //==================== ACL API FUNCTIONS
 
@@ -100,7 +49,7 @@ router.get('/update', function (req, res) {
                     throw g_lib.ERR_INVALID_ID;
 
                 if ( !g_lib.hasAdminPermObject( client, object._id )){
-                    if ( !g_lib.hasPermissions( client, object, g_lib.PERM_ADMIN ))
+                    if ( !g_lib.hasPermissions( client, object, g_lib.PERM_SHARE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
@@ -196,7 +145,7 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_INVALID_ID;
 
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
-            if ( !g_lib.hasPermissions( client, object, g_lib.PERM_ADMIN ))
+            if ( !g_lib.hasPermissions( client, object, g_lib.PERM_SHARE ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 

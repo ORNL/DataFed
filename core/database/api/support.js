@@ -16,21 +16,32 @@ module.exports = ( function() {
     obj.db = require('@arangodb').db;
     obj.graph = require('@arangodb/general-graph')._graph('sdmsg');
 
-    obj.PERM_NONE           = 0x00;
-    obj.PERM_VIEW           = 0x01;
-    obj.PERM_RD_META        = 0x02;
-    obj.PERM_RD_DATA        = 0x04;
-    obj.PERM_WR_META        = 0x08;
-    obj.PERM_WR_DATA        = 0x10;
-    obj.PERM_ADMIN          = 0x20;
-    obj.PERM_LIST           = 0x40;
-    //obj.PERM_TAG            = 0x40;
-    //obj.PERM_NOTE           = 0x80;
-    obj.PERM_ALL            = 0x7F;
-    obj.PERM_MEMBER         = 0x5F;
-    obj.PERM_MEMBER_INH     = 0x7F;
-    obj.PERM_MANAGER        = 0x7F;
-    obj.PERM_PUBLIC         = 0x47;
+    obj.PERM_LIST           = 0x0001; // Find record and view ID, alias, title, and owner
+    obj.PERM_RD_REC         = 0x0002; // Read record info (description, keywords, details)
+    obj.PERM_RD_META        = 0x0004; // Read structured metadata
+    obj.PERM_RD_DATA        = 0x0008; // Read raw data
+    obj.PERM_WR_REC         = 0x0010; // Write record info (description, keywords, details)
+    obj.PERM_WR_META        = 0x0020; // Write structured metadata
+    obj.PERM_WR_DATA        = 0x0040; // Write raw data
+    obj.PERM_CREATE         = 0x0080; // Create new child records (collections only)
+    obj.PERM_LINK           = 0x0100; // Link/unlink child records (collections only)
+    obj.PERM_DELETE         = 0x0200; // Delete record
+    obj.PERM_SHARE          = 0x0400; // View/set ACLs
+    obj.PERM_LOCK           = 0x0800; // Lock record
+    obj.PERM_LABEL          = 0x1000; // Label record
+    obj.PERM_TAG            = 0x2000; // Tag record
+    obj.PERM_ANNOTATE       = 0x4000; // Annotate record
+
+    obj.PERM_BAS_VIEW       = 0x0007;
+    obj.PERM_BAS_UPDATE     = 0x0030;
+    obj.PERM_BAS_ADMIN      = 0x4780;
+    
+    obj.PERM_NONE           = 0x0000;
+    obj.PERM_ALL            = 0x7FFF;
+    obj.PERM_MEMBER         = 0x0003; // Project record perms
+    obj.PERM_MANAGER        = 0x0403; // Project record perms
+    obj.PERM_PUBLIC         = 0x000F;
+
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;

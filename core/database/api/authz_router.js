@@ -87,8 +87,11 @@ router.get('/perm/check', function (req, res) {
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
-            if (( role == g_lib.PROJ_NO_ROLE ) || ( role == g_lib.PROJ_MEMBER )){ // Non members have only VIEW permissions
-                if ( perms != g_lib.PERM_VIEW )
+            if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only VIEW permissions
+                if ( perms != g_lib.PERM_LIST )
+                    result = false;
+            }else if ( role == g_lib.PROJ_MEMBER ){ // Non members have only VIEW permissions
+                if (( perms & ~g_lib.PERM_MEMBER ) != 0 )
                     result = false;
             } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
                 if (( perms & ~g_lib.PERM_MANAGER ) != 0 )
@@ -97,7 +100,7 @@ router.get('/perm/check', function (req, res) {
         }else if ( ty == "d" ){
             if ( !g_lib.hasAdminPermObject( client, id )){
                 obj = g_db.d.document( id );
-                if ( obj.locked && ( perms & (g_lib.PERM_RD_DATA | g_lib.PERM_RD_META | g_lib.PERM_WR_DATA | g_lib.PERM_WR_META  | g_lib.PERM_ADMIN)) != 0 )
+                if ( obj.locked )
                     result = false;
                 else
                     result = g_lib.hasPermissions( client, obj, perms );
@@ -129,8 +132,10 @@ router.get('/perm/get', function (req, res) {
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
-            if (( role == g_lib.PROJ_NO_ROLE ) || ( role == g_lib.PROJ_MEMBER )){ // Non members have only VIEW permissions
-                result &= g_lib.PERM_VIEW;
+            if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only VIEW permissions
+                result &= g_lib.PERM_LIST;
+            }else if ( role == g_lib.PROJ_MEMBER ){
+                result &= g_lib.PERM_MEMBER;
             } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
                 result &= g_lib.PERM_MANAGER;
             }
@@ -138,9 +143,9 @@ router.get('/perm/get', function (req, res) {
             if ( !g_lib.hasAdminPermObject( client, id )){
                 obj = g_db.d.document( id );
                 if ( obj.locked )
-                    result &= ~(g_lib.PERM_RD_DATA | g_lib.PERM_RD_META | g_lib.PERM_WR_DATA | g_lib.PERM_WR_META  | g_lib.PERM_ADMIN);
-
-                result = g_lib.getPermissions( client, obj, result );
+                    result = 0;
+                else
+                    result = g_lib.getPermissions( client, obj, result );
             }
         }else if ( ty == "c" ){
             if ( !g_lib.hasAdminPermObject( client, id )){

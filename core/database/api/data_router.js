@@ -54,7 +54,7 @@ router.post('/create', function (req, res) {
                             var parent_coll = g_db.c.document( parent_id );
 
                             console.log("check admin perm on parent coll: ",parent_id);
-                            if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_ADMIN )){
+                            if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE )){
                                 console.log("NO admin perm on parent coll: ",parent_id);
                                 throw g_lib.ERR_PERM_DENIED;
                             }
@@ -218,7 +218,7 @@ router.post('/update', function (req, res) {
                         perms |= g_lib.PERM_WR_DATA;
 
                     if ( req.body.title || req.body.alias  || req.body.desc || req.body.public )
-                        perms |= g_lib.PERM_ADMIN;
+                        perms |= g_lib.PERM_WR_REC;
 
                     if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
                         throw g_lib.ERR_PERM_DENIED;
@@ -341,10 +341,10 @@ router.get('/view', function (req, res) {
         var rem_md = false;
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
-            var perms = g_lib.getPermissions( client, data, g_lib.PERM_VIEW | g_lib.PERM_RD_META );
-            if (( perms & g_lib.PERM_VIEW ) == 0 )
+            var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
+            if ( data.locked || ( perms & ( g_lib.PERM_RD_REC | g_lib.PERM_RD_META )) == 0 )
                 throw g_lib.ERR_PERM_DENIED;
-            if ( data.locked || ( perms & g_lib.PERM_RD_META ) == 0 )
+            if (( perms & g_lib.PERM_RD_META ) == 0 )
                 rem_md = true;
         }
 
@@ -545,7 +545,7 @@ router.get('/delete', function (req, res) {
                 var data = g_db.d.document( data_id );
 
                 if ( !g_lib.hasAdminPermObject( client, data_id )){
-                    if ( data.locked || !g_lib.hasPermissions( client, data, g_lib.PERM_ADMIN ))
+                    if ( data.locked || !g_lib.hasPermissions( client, data, g_lib.PERM_DELETE ))
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
