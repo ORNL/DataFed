@@ -13,6 +13,19 @@ body
     box-sizing: border-box;
 }
 
+/* fancytree animation resize hack*/
+ul.ui-effects-placeholder { width:10px !important; }
+
+
+/*.text
+{
+    background-image:none!important;
+    background: #FFFFFF!important;
+    color: #000000!important;
+    font-size: 1rem!important;
+    font-style: normal!important;
+}*/
+
 .col-flex
 {
     display:flex;

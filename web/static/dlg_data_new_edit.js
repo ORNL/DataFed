@@ -264,7 +264,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         $("#md_merge",frame).attr('disabled',true);
                         $("#md_set",frame).attr('disabled',true);
                     }
-                    if (( a_upd_perms & PERM_ADMIN ) == 0 ){
+                    if (( a_upd_perms & PERM_WR_REC ) == 0 ){
                         inputDisable( $("#title,#desc,#alias", frame ));
                     }
 

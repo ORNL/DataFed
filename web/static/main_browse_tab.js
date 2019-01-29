@@ -30,7 +30,7 @@ function makeBrowserTab(){
 
     this.deleteSelected = function(){
         var node = inst.data_tree.activeNode;
-        checkPerms( node.key, PERM_ADMIN, function( granted ){
+        checkPerms( node.key, PERM_DELETE, function( granted ){
             if ( !granted ){
                 alertPermDenied();
                 return;
@@ -109,7 +109,7 @@ function makeBrowserTab(){
             }
         }
 
-        checkPerms( parent, PERM_ADMIN, function( granted ){
+        checkPerms( parent, PERM_CREATE, function( granted ){
             if ( !granted ){
                 alertPermDenied();
                 return;
@@ -154,7 +154,7 @@ function makeBrowserTab(){
             }
         }
 
-        checkPerms( parent, PERM_ADMIN, function( granted ){
+        checkPerms( parent, PERM_CREATE, function( granted ){
             if ( !granted ){
                 alertPermDenied();
                 return;
@@ -326,9 +326,9 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         if ( node ) {
             if ( node.data.isproj || node.key[0] == "c")
-                req_perms = PERM_ADMIN;
+                req_perms = PERM_WR_REC;
             else if ( node.key[0] == "d" )
-                req_perms = PERM_ADMIN | PERM_WR_META;
+                req_perms = PERM_WR_REC | PERM_WR_META;
             else
                 return;
 
@@ -409,7 +409,7 @@ function makeBrowserTab(){
     this.shareSelected = function() {
         var node = inst.data_tree.activeNode;
         if ( node ) {
-            checkPerms( node.key, PERM_ADMIN, function( granted ){
+            checkPerms( node.key, PERM_SHARE, function( granted ){
                 if ( !granted ){
                     alertPermDenied();
                     return;
@@ -418,14 +418,14 @@ function makeBrowserTab(){
                 if ( node.key[0] == "c" ){
                     viewColl( node.key, function( coll ){
                         if ( coll )
-                            dlgSetACLs.show( coll );
+                            dlgSetACLs( coll );
                         else
                             alert("Cannot access collection.");
                     });
                 } else {
                     viewData( node.key, function( data ){
                         if ( data )
-                            dlgSetACLs.show( data );
+                            dlgSetACLs( data );
                         else
                             alert( "Cannot access data record." );
                     });
@@ -1348,11 +1348,11 @@ function makeBrowserTab(){
             }
         },
         themeroller: {
-            activeClass: "",
+            activeClass: "my-fancytree-active",
             addClass: "",
             focusClass: "",
-            hoverClass: "fancytree-hover",
-            selectedClass: ""
+            hoverClass: "my-fancytree-hover",
+            selectedClass: "my-fancytree-selected"
         },
         source: tree_source,
         selectMode: 2,
@@ -1556,14 +1556,17 @@ function makeBrowserTab(){
         },
         activate: function( event, data ) {
             console.log("node activate",data.node);
+            if ( data.node.selected ){
+                data.node.addClass("my-fancytree-selected");
+            }
             showSelectedInfo( data.node );
         },
         select: function( event, data ) {
-            if ( data.node.isSelected() ){
+            /*if ( data.node.isSelected() ){
                 console.log("node select",data.node);
             }else{
                 console.log("node deselect",data.node);
-            }
+            }*/
 
 
             //if ( inst.searchSelect && data.node.isSelected() ){

@@ -62,7 +62,7 @@ enum SearchScope
     SS_VIEW                     = 13;
 }
 
-
+/*
 enum Permissions
 {
     PERM_NONE       = 0x00;
@@ -72,11 +72,10 @@ enum Permissions
     PERM_WR_META    = 0x08;   // Write raw data or add/remove collection items
     PERM_WR_DATA    = 0x10;   // Write raw data or add/remove collection items
     PERM_ADMIN      = 0x20;   // Read, write admin fields, delete record
-    PERM_LIST       = 0x40;   // Add/remove tags on record
     //PERM_TAG        = 0x40;   // Add/remove tags on record
     //PERM_NOTE       = 0x80;   // Add, remove, edit annotations on record
-    PERM_ALL        = 0x7F;
-}
+    PERM_ALL        = 0x3F;
+}*/
 
 // ============================ Data Structures
 

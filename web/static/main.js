@@ -578,18 +578,30 @@ function xfrStart( a_id, a_mode, a_path, a_cb ){
 
 var status_timer;
 
-var PERM_VIEW           = 0x01;
-var PERM_RD_META        = 0x02;
-var PERM_RD_DATA        = 0x04;
-var PERM_WR_META        = 0x08;
-var PERM_WR_DATA        = 0x10;
-var PERM_ADMIN          = 0x20;
-var PERM_LIST           = 0x40;
-//var PERM_TAG            = 0x40;
-//var PERM_NOTE           = 0x80;
-var PERM_ALL            = 0x7F;
-var PERM_READONLY       = 0x47;
-var PERM_READWRITE      = 0x5F;
+var PERM_LIST           = 0x0001; // Find record and view ID, alias, title, and owner
+var PERM_RD_REC         = 0x0002; // Read record info (description, keywords, details)
+var PERM_RD_META        = 0x0004; // Read structured metadata
+var PERM_RD_DATA        = 0x0008; // Read raw data
+var PERM_WR_REC         = 0x0010; // Write record info (description, keywords, details)
+var PERM_WR_META        = 0x0020; // Write structured metadata
+var PERM_WR_DATA        = 0x0040; // Write raw data
+var PERM_CREATE         = 0x0080; // Create new child records (collections only)
+var PERM_LINK           = 0x0100; // Link/unlink child records (collections only)
+var PERM_DELETE         = 0x0200; // Delete record
+var PERM_SHARE          = 0x0400; // View/set ACLs
+var PERM_LOCK           = 0x0800; // Lock record
+//var PERM_LABEL          = 0x0800; // Label record
+//var PERM_TAG            = 0x1000; // Tag record
+//var PERM_ANNOTATE       = 0x2000; // Annotate record
+var PERM_MAX            = 0x0800; // Lock record
+
+var PERM_BAS_VIEW       = PERM_LIST | PERM_RD_REC | PERM_RD_META;
+var PERM_BAS_UPDATE     = PERM_WR_REC | PERM_WR_META;
+var PERM_BAS_ADMIN      = PERM_DELETE | PERM_SHARE | PERM_LOCK;
+
+var PERM_ALL            = 0xFFF;
+var PERM_READONLY       = 0x00F;
+var PERM_READWRITE      = 0x07F;
 
 var SS_USER                     = 1;
 var SS_PROJECT                  = 2;
@@ -609,7 +621,6 @@ var XFR_GET         = 0;
 var XFR_PUT         = 1;
 var XFR_SELECT      = 2;
 
-var dlgSetACLs = new makeDlgSetACLs();
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgRepoAdmin = new makeDlgRepoAdmin();

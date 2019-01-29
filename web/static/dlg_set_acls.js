@@ -1,16 +1,9 @@
-function makeDlgSetACLs(){
-    console.log("making dialog Set ACLs");
-
-    var inst = this;
-
-    //<div style='flex:none'><input type='checkbox' name='public_check' id='public_check'><label for='public_check'>Public data</label></div>
-
-
-    this.content =
+function dlgSetACLs( item ){
+    var content =
         "<div class='col-flex' style='height:100%;width:100%;min-height:0;overflow:none'>\
             <div style='flex:none'>ID/Alias: <span id='dlg_id'></span></div>\
             <div class='row-flex' style='flex:1 1 100%;width:100%;min-height:0'>\
-                <div class='col-flex' style='flex:1 1 10%;min-width:0;min-height:0;'>\
+                <div class='col-flex' style='flex:1 1 40%;min-width:0;min-height:0;'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
                     <div class='ui-widget-content text' style='flex:1 1 50%;min-height:0;min-width:0;width:100%;max-width:100%;overflow:auto'>\
                         <div id='dlg_rule_tree' class='no-border' style='min-height:0'></div>\
@@ -24,18 +17,9 @@ function makeDlgSetACLs(){
                     </div>\
                 </div>\
                 <div style='flex:none'>&nbsp</div>\
-                <div class='col-flex' style='flex:none'>\
+                <div class='col-flex' style='flex:1 1 30%'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Local:</div>\
-                    <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
-                        <div style='padding:.1em'><label for='dlg_view_cb'></label><input type='checkbox' id='dlg_view_cb'>&nbsp View</div>\
-                        <div class='coll_only' style='padding:.1em'><label for='dlg_list_cb'></label><input type='checkbox' id='dlg_list_cb'>&nbsp List</div>\
-                        <div class='data_only' style='padding:.1em'><label for='dlg_rd_meta_cb'></label><input type='checkbox' id='dlg_rd_meta_cb'>&nbsp Read&nbspMeta</div>\
-                        <div class='data_only' style='padding:.1em'><label for='dlg_rd_data_cb'></label><input type='checkbox' id='dlg_rd_data_cb'>&nbsp Read&nbspData</div>\
-                        <div class='data_only' style='padding:.1em'><label for='dlg_wr_meta_cb'></label><input type='checkbox' id='dlg_wr_meta_cb'>&nbsp&nbspWrite Meta</div>\
-                        <div class='data_only' style='padding:.1em'><label for='dlg_wr_data_cb'></label><input type='checkbox' id='dlg_wr_data_cb'>&nbsp Write&nbspData</div>\
-                        <div style='padding:.1em'><label for='dlg_admin_cb'></label><input type='checkbox' id='dlg_admin_cb'>&nbsp Admin</div>\
-                        <!-- div><label for='dlg_tag_cb'></label><input type='checkbox' id='dlg_tag_cb'>&nbsp Tag</div>\
-                        <div><label for='dlg_note_cb'></label><input type='checkbox' id='dlg_note_cb'>&nbsp Annotate</div -->\
+                    <div id='local_perm_div' class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                     </div>\
                     <div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set permissions to \"read only\"' id='dlg_read_only' class='btn small'>RO</button>\
@@ -46,18 +30,9 @@ function makeDlgSetACLs(){
                     </div>\
                 </div>\
                 <div id='col_div_1' style='flex:none'>&nbsp</div>\
-                <div id='col_div_2' class='col-flex' style='flex:none'>\
+                <div id='col_div_2' class='col-flex' style='flex:1 1 30%'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
-                    <div class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
-                        <div style='padding:.1em'><label for='dlg_inh_view_cb'></label><input type='checkbox' id='dlg_inh_view_cb'>&nbsp View</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_list_cb'></label><input type='checkbox' id='dlg_inh_list_cb'>&nbsp List</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_rd_meta_cb'></label><input type='checkbox' id='dlg_inh_rd_meta_cb'>&nbsp Read&nbspMeta</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_rd_data_cb'></label><input type='checkbox' id='dlg_inh_rd_data_cb'>&nbsp Read&nbspData</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_wr_meta_cb'></label><input type='checkbox' id='dlg_inh_wr_meta_cb'>&nbsp Write&nbspMeta</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_wr_data_cb'></label><input type='checkbox' id='dlg_inh_wr_data_cb'>&nbsp Write&nbspData</div>\
-                        <div style='padding:.1em'><label for='dlg_inh_admin_cb'></label><input type='checkbox' id='dlg_inh_admin_cb'>&nbsp Admin</div>\
-                        <!-- div><label for='dlg_inh_tag_cb'></label><input type='checkbox' id='dlg_inh_tag_cb'>&nbsp Tag</div>\
-                        <div><label for='dlg_inh_note_cb'></label><input type='checkbox' id='dlg_inh_note_cb'>&nbsp Annotate</div -->\
+                    <div id='inh_perm_div' class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                     </div>\
                     <div  style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set inherited permissions to \"read-only\"' id='dlg_inh_read_only' class='btn small'>RO</button>\
@@ -68,221 +43,87 @@ function makeDlgSetACLs(){
                     </div>\
                 </div>\
             </div>\
-            <div style='flex:none;padding-top:.5em'><label for='public_check'></label><input type='checkbox' name='public_check' id='public_check'>&nbsp Enable public access</div>\
+            <!-- div style='flex:none;padding-top:.5em'><label for='public_check'></label><input type='checkbox' name='public_check' id='public_check'>&nbsp Enable public access</div -->\
         </div>";
 
-    this.show = function( item ){
-        console.log( "show", item );
-        inst.frame = $(document.createElement('div'));
-        inst.frame.html( inst.content );
-        inst.is_coll = (item.id[0]=="c");
-        inst.uid = item.owner;
-        inst.disable_state = false;
 
-        inst.view_cb = $("#dlg_view_cb",this.frame);
-        inst.list_cb = $("#dlg_list_cb",this.frame);
-        inst.rd_meta_cb = $("#dlg_rd_meta_cb",this.frame);
-        inst.rd_data_cb = $("#dlg_rd_data_cb",this.frame);
-        inst.wr_meta_cb = $("#dlg_wr_meta_cb",this.frame);
-        inst.wr_data_cb = $("#dlg_wr_data_cb",this.frame);
-        inst.admin_cb = $("#dlg_admin_cb",this.frame);
+    function buildPermList( a_div_id, a_inh, a_mode ){
+        var src = [];
 
-        inst.inh_view_cb = $("#dlg_inh_view_cb",this.frame);
-        inst.inh_list_cb = $("#dlg_inh_list_cb",this.frame);
-        inst.inh_rd_meta_cb = $("#dlg_inh_rd_meta_cb",this.frame);
-        inst.inh_rd_data_cb = $("#dlg_inh_rd_data_cb",this.frame);
-        inst.inh_wr_meta_cb = $("#dlg_inh_wr_meta_cb",this.frame);
-        inst.inh_wr_data_cb = $("#dlg_inh_wr_data_cb",this.frame);
-        inst.inh_admin_cb = $("#dlg_inh_admin_cb",this.frame);
+        src.push({title:"View",folder:true,key: PERM_BAS_VIEW,inh:a_inh,children:[
+            { title:"List",inh:a_inh,key:PERM_LIST },
+            { title:"Read Rec.",inh:a_inh,key:PERM_RD_REC },
+            { title:"Read Meta",inh:a_inh,key:PERM_RD_META }
+        ]});
 
-        if ( inst.is_coll ){
-            $(".data_only",this.frame).hide();
-        }else{
-            $(".coll_only",this.frame).hide();
+        src.push({title:"Update",folder:true,inh:a_inh,key:PERM_BAS_UPDATE,children:[
+            { title:"Write Rec.",inh:a_inh,key:PERM_WR_REC },
+            { title:"Write Meta",inh:a_inh,key:PERM_WR_META }
+        ]});
+
+        if ( a_mode & DATA_MODE ){
+            src.push({title:"Read Data",inh:a_inh,key:PERM_RD_DATA });
+            src.push({title:"Write Data",inh:a_inh,key:PERM_WR_DATA });
         }
 
-        if ( item.owner.startsWith("p/")){
-            viewProj( inst.uid, function(proj){
-                if (!proj){
-                    dlgAlert("Access Error","Unable to read project data");
-                    dlg_inst.dialog('destroy').remove();
+        if ( a_mode & COLL_MODE ){
+            src.push({ title:"Create",inh:a_inh,key:PERM_CREATE });
+            src.push({ title:"Link",inh:a_inh,key:PERM_LINK });
+        }
+
+        //src.push({title:"View",folder:true,key: PERM_VIEW, children:[
+
+        src.push({title:"Admin",folder:true,inh:a_inh,key:PERM_BAS_ADMIN,children:[
+            { title:"Delete",inh:a_inh,key:PERM_DELETE },
+            { title:"Share",inh:a_inh,key:PERM_SHARE },
+            { title:"Lock",inh:a_inh,key:PERM_LOCK }
+        ]});
+    
+        $(a_div_id,frame).fancytree({
+            extensions: ["themeroller"],
+            themeroller: {
+                activeClass: "my-fancytree-selected",
+                addClass: "",
+                focusClass: "",
+                hoverClass: "my-fancytree-hover",
+                selectedClass: ""
+            },
+            source: src,
+            checkbox: true,
+            selectMode: 3,
+            icon:false,
+            click: function( event, data ) {
+                if ( data.targetType == "title" ){
+                    if ( data.node.isSelected() )
+                        data.node.setSelected( false );
+                    else
+                        data.node.setSelected( true );
+                }
+            },
+            select: function( event, data ) {
+                //console.log("selected",data.node.key,typeof data.node.key,data.node.isSelected());
+                if ( !cur_rule )
                     return;
-                }
-                inst.excl = [proj.owner]; //[proj.owner,"g/members"];
-                if ( proj.admin )
-                    inst.excl = inst.excl.concat( proj.admin );
-            });
-        }else{
-            inst.excl = [inst.uid];
-        }
-
-        if ( inst.is_coll ){
-            $("#dlg_inh_read_only",inst.frame).click( function(){ inst.setAllPermInh(PERM_READONLY); });
-            $("#dlg_inh_read_write",inst.frame).click( function(){ inst.setAllPermInh(PERM_READWRITE); });
-            $("#dlg_inh_grant_all",inst.frame).click( function(){ inst.setAllPermInh(PERM_ALL); });
-            $("#dlg_inh_inherit_all",inst.frame).click( function(){ inst.setAllPermInh(0); });
-
-            inst.inh_view_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_VIEW )});
-            inst.inh_list_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_LIST )});
-            inst.inh_rd_meta_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_RD_META )});
-            inst.inh_rd_data_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_RD_DATA )});
-            inst.inh_wr_meta_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_WR_META )});
-            inst.inh_wr_data_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_WR_DATA )});
-            inst.inh_admin_cb.on( "change",function(){ inst.selectInhHandler( $(this), PERM_ADMIN )});
-            //$("#dlg_inh_tag_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_TAG )});
-            //$("#dlg_inh_note_cb",inst.frame).on( "change",function(){ inst.selectInhHandler( $(this), PERM_NOTE )});
-        }else{
-            $("#col_div_1",inst.frame).hide();
-            $("#col_div_2",inst.frame).hide();
-        }
-
-
-        $("#dlg_read_only",inst.frame).click( function(){ inst.setAllPerm(PERM_READONLY); });
-        $("#dlg_read_write",inst.frame).click( function(){ inst.setAllPerm(PERM_READWRITE); });
-        $("#dlg_grant_all",inst.frame).click( function(){ inst.setAllPerm(PERM_ALL); });
-        $("#dlg_inherit_all",inst.frame).click( function(){ inst.setAllPerm(0); });
-        $("#dlg_add_user",inst.frame).click( function(){ inst.addUser(); });
-        $("#dlg_add_group",inst.frame).click( function(){ inst.addGroup(); });
-        $("#dlg_rem",inst.frame).click( function(){ inst.remUserGroup(); });
-        $("#dlg_edit",inst.frame).click( function(){ inst.editGroup(); });
-
-        inst.view_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_VIEW )});
-        inst.list_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_LIST )});
-        inst.rd_meta_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_RD_META )});
-        inst.rd_data_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_RD_DATA )});
-        inst.wr_meta_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_WR_META )});
-        inst.wr_data_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_WR_DATA )});
-        inst.admin_cb.on( "change", function(){ inst.selectHandler( $(this), PERM_ADMIN )});
-        //$("#dlg_tag_cb",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_TAG )});
-        //$("#dlg_note_cb",inst.frame).on( "selectmenuchange", function(){ inst.selectHandler( $(this), PERM_NOTE )});
-
-        inst.public = item.public?true:false;
-
-        aclView( item.id, function( ok, data ){
-            if ( !ok || !data ) {
-                //alert( "Could not get ACLs for " + item.id );
-                alert( data );
-                return;
-            }
-            //console.log("data",data);
-
-            if ( !data.rule )
-                data.rule = [];
-
-            // Insert a default rule if not present (for UI needs)
-            var ins_def = true;
-            for ( var i in data.rule ){
-                if ( data.rule[i].id == "default" ) {
-                    ins_def = false;
-                    break;
-                }
-            }
-
-            if ( ins_def ){
-                data.rule.push({id:"default",grant:0,inhgrant:0});
-            }
-
-            if ( data.rule ) {
-                inst.orig_rules = data.rule.slice();
-                inst.new_rules = data.rule;
-            } else {
-                inst.orig_rules = [];
-                inst.new_rules = [];
-            }
-
-            var options = {
-                title: "Sharing for " + (inst.is_coll?"Collection \"":"Data \"") + item.title + "\"",
-                modal: true,
-                width: inst.is_coll?550:450,
-                height: 'auto',
-                resizable: true,
-                closeOnEscape: false,
-                buttons: [{
-                    text: "Ok",
-                    click: function() {
-                        var dlg_inst = $(this);
-
-                        var is_public = $("#public_check",inst.frame).prop("checked");
-                        console.log( "SAVE ACLS:", is_public, inst.new_rules );
-
-                        aclUpdate( item.id, inst.new_rules, is_public, function( ok, data ){
-                            if ( !ok )
-                                alert( "ACL Update Failed", data.errMsg );
-                            else
-                                dlg_inst.dialog('destroy').remove();
-                        });
+                var perm = parseInt( data.node.key );
+                if ( data.node.isSelected() ){
+                    if ( data.node.data.inh ){
+                        cur_rule.inhgrant |= perm;
+                    }else{
+                        cur_rule.grant |= perm;
                     }
-                },{
-                    text: "Cancel",
-                    click: function() {
-                        $(this).dialog('destroy').remove();
+                }else{
+                    if ( data.node.data.inh ){
+                        cur_rule.inhgrant &= ~perm;
+                    }else{
+                        cur_rule.grant &= ~perm;
                     }
-                }],
-                open: function(event,ui){
-                    $("#dlg_id",inst.frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
-                    var src = inst.buildTreeSource( inst.orig_rules );
-
-                    $("#dlg_rule_tree",inst.frame).fancytree({
-                        extensions: ["themeroller"],
-                        themeroller: {
-                            activeClass: "ui-state-hover",
-                            addClass: "",
-                            focusClass: "",
-                            hoverClass: "ui-state-active",
-                            selectedClass: ""
-                        },
-                        source: src,
-                        selectMode: 1,
-                        lazyLoad: function( event, data ) {
-                            if ( data.node.key.startsWith("g/")){
-                                data.result = {
-                                    url: "/api/grp/view?uid="+encodeURIComponent(inst.uid)+"&gid="+encodeURIComponent(data.node.key.substr(2)),
-                                    cache: false
-                                };
-                            }
-                        },
-                        postProcess: function( event, data ) {
-                            console.log("post proc",data);
-                            if ( data.node.key.startsWith("g/")){
-                                data.node.setTitle( data.response.title + " (" +data.response.gid + ")" );
-                                data.result = [];
-                                if ( data.response.desc )
-                                    data.result.push({title: "["+data.response.desc+"]", icon: false });
-
-                                if ( data.response.member && data.response.member.length ){
-                                    for ( var i in data.response.member ) {
-                                        data.result.push({ title: data.response.member[i].substr(2), icon:"ui-icon ui-icon-person" });
-                                    }
-                                }else{
-                                    data.result.push({ title: "(empty)", icon: false  });
-                                }
-                            }
-                        },
-                        activate: function( event, data ) {
-                            inst.updateSelection( data.node.key, data.node.data.rule );
-                        },
-                    });
                 }
-            };
-
-            inst.frame.dialog( options );
-            $(".btn",inst.frame).button();
-            $(":checkbox",inst.frame).checkboxradio();
-            $("#public_check",inst.frame).checkboxradio();
-            $("#public_check",inst.frame).prop("checked",item.ispublic);
-            $("#public_check",inst.frame).checkboxradio("refresh");
-
-            inst.disablePermControls( true );
-            $("#dlg_edit",inst.frame).button("disable");
-            $("#dlg_rem",inst.frame).button("disable");
-
-            // Switch dialog to fixed-hieght mode
-            var height = inst.frame.parent().height();
-            inst.frame.dialog( "option", "height", height + 10 );
+                data.node.setActive(true);
+            },
         });
     }
 
-    this.buildTreeSource = function( rules ){
+    function buildTreeSource( rules ){
         var user_rules = [];
         var group_rules = [];
         var def_rule = null;
@@ -308,313 +149,152 @@ function makeDlgSetACLs(){
         return src;
     }
 
-    this.selectHandler = function( obj, perm ){
-        if ( inst.cur_rule ) {
-            if (obj.prop("checked")) {
-                inst.cur_rule.grant |= perm;
-                if ( perm > PERM_VIEW ){
-                    inst.cur_rule.grant |= PERM_VIEW;
-                    inst.view_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                }
-                if ( perm == PERM_ADMIN ){
-                    if ( inst.is_coll ){
-                        inst.cur_rule.grant |= PERM_LIST;
-                        inst.list_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                    }else{
-                        inst.cur_rule.grant |= (PERM_RD_META | PERM_RD_DATA | PERM_WR_META | PERM_WR_DATA );
-                        inst.rd_meta_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                        inst.rd_data_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                        inst.wr_meta_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                        inst.wr_data_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                    }
-                }
-            } else {
-                inst.cur_rule.grant &= (PERM_ALL & ~perm);
-                if ( perm == PERM_ADMIN ){
-                    if ( inst.is_coll ){
-                        inst.list_cb.checkboxradio("enable");
-                    }else{
-                        inst.rd_meta_cb.checkboxradio("enable");
-                        inst.rd_data_cb.checkboxradio("enable");
-                        inst.wr_meta_cb.checkboxradio("enable");
-                        inst.wr_data_cb.checkboxradio("enable");
-                    }
-                }else if ( perm > PERM_VIEW ){
-                    if ( inst.cur_rule.grant == PERM_VIEW && inst.cur_rule.id == "default" ){
-                        inst.view_cb.checkboxradio("enable");
-                    }
-                }
-            }
-        }
-    }
 
-    this.selectInhHandler = function( obj, perm ){
-        if ( inst.cur_rule ) {
-            if (obj.prop("checked")) {
-                inst.cur_rule.inhgrant |= perm;
-                if ( perm > PERM_VIEW ){
-                    inst.cur_rule.inhgrant |= PERM_VIEW;
-                    inst.inh_view_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                }
-                if ( perm == PERM_ADMIN ){
-                    inst.cur_rule.inhgrant |= (PERM_LIST | PERM_RD_META | PERM_RD_DATA | PERM_WR_META | PERM_WR_DATA );
-                    inst.inh_list_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                    inst.inh_rd_meta_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                    inst.inh_rd_data_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                    inst.inh_wr_meta_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                    inst.inh_wr_data_cb.prop("checked",true).checkboxradio("disable").checkboxradio("refresh");
-                }
-            } else {
-                inst.cur_rule.inhgrant &= (PERM_ALL & ~perm);
-                if ( perm == PERM_ADMIN ){
-                    inst.inh_list_cb.checkboxradio("enable");
-                    inst.inh_rd_meta_cb.checkboxradio("enable");
-                    inst.inh_rd_data_cb.checkboxradio("enable");
-                    inst.inh_wr_meta_cb.checkboxradio("enable");
-                    inst.inh_wr_data_cb.checkboxradio("enable");
-                }else if ( perm > PERM_VIEW ){
-                    if ( inst.cur_rule.inhgrant == PERM_VIEW ){
-                        inst.inh_view_cb.checkboxradio("enable");
-                    }
-                }
-            }
-        }
-    }
-
-    this.setAllPerm = function( value ){
-        if ( inst.is_coll )
-            value &= ~(PERM_RD_META|PERM_WR_META|PERM_RD_DATA|PERM_WR_DATA);
+    function setAllPerm( value ){
+        if ( is_coll )
+            value &= ~(PERM_RD_DATA|PERM_WR_DATA);
         else
-            value &= ~PERM_LIST;
+            value &= ~(PERM_CREATE|PERM_LINK)
 
-        if ( inst.cur_rule ){
-            inst.cur_rule.grant = value;
-            if ( inst.cur_rule.id != "default" )
-                inst.cur_rule.grant |= PERM_VIEW;
-            inst.setPermsFromRule( inst.cur_rule );
+        if ( cur_rule ){
+            cur_rule.grant = value;
+            setPermsFromRule( cur_rule );
         }
     }
 
-    this.setAllPermInh = function( value ){
-        if ( inst.cur_rule ){
-            inst.cur_rule.inhgrant = value;
-            inst.setPermsFromRule( inst.cur_rule );
+    function setAllPermInh( value ){
+        if ( cur_rule ){
+            cur_rule.inhgrant = value;
+            setPermsFromRule( cur_rule );
         }
     }
 
-    this.setPermsFromRule = function( rule ){
+    function setPermsFromRule( rule ){
         //console.log( "setPermsFromRule", rule );
-        if ( inst.disable_state ){
-            inst.disable_state = false;
-            if ( !inst.is_coll ){
-                $("#dlg_read_only",inst.frame).button("enable");
-                $("#dlg_read_write",inst.frame).button("enable");
-            }
-            $("#dlg_grant_all",inst.frame).button("enable");
-            $("#dlg_inherit_all",inst.frame).button("enable");
+        if ( disable_state ){
+            perm_tree.enable(true);
+            if ( is_coll )
+                inh_perm_tree.enable(true);
+            disable_state = false;
+            $("#dlg_read_only",frame).button("enable");
+            $("#dlg_read_write",frame).button("enable");
+            $("#dlg_grant_all",frame).button("enable");
+            $("#dlg_inherit_all",frame).button("enable");
 
-            if ( inst.is_coll ) {
-                $("#dlg_inh_read_only",inst.frame).button("enable");
-                $("#dlg_inh_read_write",inst.frame).button("enable");
-                $("#dlg_inh_grant_all",inst.frame).button("enable");
-                $("#dlg_inh_inherit_all",inst.frame).button("enable");
-            }
-        }
-
-        inst.view_cb.prop("checked",(rule.grant & PERM_VIEW)?true:false).checkboxradio("refresh");
-        inst.list_cb.prop("checked",(rule.grant & PERM_LIST)?true:false).checkboxradio("refresh");
-        inst.rd_meta_cb.prop("checked",(rule.grant & PERM_RD_META)?true:false).checkboxradio("refresh");
-        inst.rd_data_cb.prop("checked",(rule.grant & PERM_RD_DATA)?true:false).checkboxradio("refresh");
-        inst.wr_meta_cb.prop("checked",(rule.grant & PERM_WR_META)?true:false).checkboxradio("refresh");
-        inst.wr_data_cb.prop("checked",(rule.grant & PERM_WR_DATA)?true:false).checkboxradio("refresh");
-        inst.admin_cb.prop("checked",(rule.grant & PERM_ADMIN)?true:false).checkboxradio("refresh");
-        inst.admin_cb.checkboxradio("enable");
-
-        if ( rule.grant & PERM_ADMIN ){
-            inst.list_cb.checkboxradio("disable");
-            inst.rd_meta_cb.checkboxradio("disable");
-            inst.rd_data_cb.checkboxradio("disable");
-            inst.wr_meta_cb.checkboxradio("disable");
-            inst.wr_data_cb.checkboxradio("disable");
-        }else {
-            if ( inst.is_coll ){
-                inst.list_cb.checkboxradio("enable");
-            }else{
-                inst.rd_meta_cb.checkboxradio("enable");
-                inst.rd_data_cb.checkboxradio("enable");
-                inst.wr_meta_cb.checkboxradio("enable");
-                inst.wr_data_cb.checkboxradio("enable");
+            if ( is_coll ) {
+                $("#dlg_inh_read_only",frame).button("enable");
+                $("#dlg_inh_read_write",frame).button("enable");
+                $("#dlg_inh_grant_all",frame).button("enable");
+                $("#dlg_inh_inherit_all",frame).button("enable");
             }
         }
 
-        if ( rule.grant <= PERM_VIEW && rule.id == "default" ){
-            inst.view_cb.checkboxradio("enable");
-        }else{
-            inst.view_cb.checkboxradio("disable");
+        var i,n;
+        for ( i = 1; i <= PERM_MAX; i*=2 ){
+            n = perm_tree.getNodeByKey( i.toString() );
+            if ( n )
+                n.setSelected( (rule.grant & i) != 0, {noEvents:true});
         }
 
-        if ( inst.is_coll ) {
-            inst.inh_view_cb.prop("checked",(rule.inhgrant & PERM_VIEW)?true:false).checkboxradio("refresh");
-            inst.inh_list_cb.prop("checked",(rule.inhgrant & PERM_LIST)?true:false).checkboxradio("refresh");
-            inst.inh_rd_meta_cb.prop("checked",(rule.inhgrant & PERM_RD_META)?true:false).checkboxradio("refresh");
-            inst.inh_rd_data_cb.prop("checked",(rule.inhgrant & PERM_RD_DATA)?true:false).checkboxradio("refresh");
-            inst.inh_wr_meta_cb.prop("checked",(rule.inhgrant & PERM_WR_META)?true:false).checkboxradio("refresh");
-            inst.inh_wr_data_cb.prop("checked",(rule.inhgrant & PERM_WR_DATA)?true:false).checkboxradio("refresh");
-            inst.inh_admin_cb.prop("checked",(rule.inhgrant & PERM_ADMIN)?true:false).checkboxradio("refresh");
-
-            inst.inh_admin_cb.checkboxradio("enable");
-
-            if ( rule.inhgrant & PERM_ADMIN ){
-                inst.inh_list_cb.checkboxradio("disable");
-                inst.inh_rd_meta_cb.checkboxradio("disable");
-                inst.inh_rd_data_cb.checkboxradio("disable");
-                inst.inh_wr_meta_cb.checkboxradio("disable");
-                inst.inh_wr_data_cb.checkboxradio("disable");
-            }else {
-                inst.inh_list_cb.checkboxradio("enable");
-                inst.inh_rd_meta_cb.checkboxradio("enable");
-                inst.inh_rd_data_cb.checkboxradio("enable");
-                inst.inh_wr_meta_cb.checkboxradio("enable");
-                inst.inh_wr_data_cb.checkboxradio("enable");
-            }
-
-            if ( rule.inhgrant <= PERM_VIEW ){
-                inst.inh_view_cb.checkboxradio("enable");
-            }else{
-                inst.inh_view_cb.checkboxradio("disable");
+        if ( is_coll ) {
+            for ( i = 1; i <= PERM_MAX; i*=2 ){
+                n = inh_perm_tree.getNodeByKey( i.toString() );
+                if ( n )
+                    n.setSelected( (rule.inhgrant & i) != 0, {noEvents:true} );
             }
         }
     }
 
-/*
-    inst.setPermFromRule = function( id, rule, perm ) {
-        $(id,this.frame).prop("checked",(rule.grant & perm)?true:false).checkboxradio("refresh");
-    }
 
-    inst.setPermFromRuleInh = function( id, rule, perm ) {
-        $(id,this.frame).prop("checked",(rule.inhgrant & perm)?true:false).checkboxradio("refresh");
-    }
-
-    inst.setPermFromVal = function( id, value, perm ) {
-        $(id,this.frame).prop("checked",(value & perm)?true:false).checkboxradio("refresh");
-    }
-*/
-
-    this.disablePermControls = function(){
-        if ( inst.disable_state )
+    function disablePermControls(){
+        if ( disable_state )
             return;
 
-        //inst.setAllPerm(0);
-        $(":checkbox:not(#public_check)",inst.frame).prop("checked",false).checkboxradio("refresh").checkboxradio("disable");
-        $("#dlg_read_only",inst.frame).button("disable");
-        $("#dlg_read_write",inst.frame).button("disable");
-        $("#dlg_grant_all",inst.frame).button("disable");
-        $("#dlg_inherit_all",inst.frame).button("disable");
-
-        if ( inst.is_coll ) {
-            //inst.setAllPermInh(0);
-            $("#dlg_inh_read_only",inst.frame).button("disable");
-            $("#dlg_inh_read_write",inst.frame).button("disable");
-            $("#dlg_inh_grant_all",inst.frame).button("disable");
-            $("#dlg_inh_inherit_all",inst.frame).button("disable");
+        var node = perm_tree.getActiveNode();
+        if ( node ){
+            node.setFocus(false);
+            node.setActive(false);
         }
+        perm_tree.enable(false);
+        perm_tree.selectAll(false);
 
-        inst.disable_state = true;
-    }
-
-/*
-    this.disablePermControls = function( disabled ){
-        if ( inst.disable_state === disabled )
-            return;
-
-        if ( disabled ){
-            inst.setAllPerm(0);
-            $(":checkbox:not(#public_check)",inst.frame).checkboxradio("disable");
-            $("#dlg_read_only",inst.frame).button("disable");
-            $("#dlg_read_write",inst.frame).button("disable");
-            $("#dlg_grant_all",inst.frame).button("disable");
-            $("#dlg_inherit_all",inst.frame).button("disable");
-        }else{
-            if ( inst.is_coll )
-                $(":checkbox:not(#public_check, #dlg_rd_meta_cb, #dlg_wr_meta_cb)",inst.frame).checkboxradio("enable");
-                //$(":checkbox",inst.frame).not("#public_check, #dlg_rd_meta_cb, #dlg_wr_meta_cb").checkboxradio("enable");
-            else
-                $(":checkbox:not(#public_check)",inst.frame).checkboxradio("enable");
-            $("#dlg_read_only",inst.frame).button("enable");
-            $("#dlg_read_write",inst.frame).button("enable");
-            $("#dlg_grant_all",inst.frame).button("enable");
-            $("#dlg_inherit_all",inst.frame).button("enable");
-        }
-
-        if ( inst.is_coll ) {
-            if ( disabled ){
-                inst.setAllPermInh(0);
-                $("#dlg_inh_read_only",inst.frame).button("disable");
-                $("#dlg_inh_read_write",inst.frame).button("disable");
-                $("#dlg_inh_grant_all",inst.frame).button("disable");
-                $("#dlg_inh_inherit_all",inst.frame).button("disable");
-            }else{
-                $("#dlg_inh_read_only",inst.frame).button("enable");
-                $("#dlg_inh_read_write",inst.frame).button("enable");
-                $("#dlg_inh_grant_all",inst.frame).button("enable");
-                $("#dlg_inh_inherit_all",inst.frame).button("enable");
+        if ( is_coll ){
+            node = inh_perm_tree.getActiveNode();
+            if ( node ){
+                node.setFocus(false);
+                node.setActive(false);
             }
+            inh_perm_tree.enable(false);
+            inh_perm_tree.selectAll(false);
         }
 
-        inst.disable_state = disabled;
-    }
-*/
+        //$(":checkbox:not(#public_check)",frame).prop("checked",false).checkboxradio("refresh").checkboxradio("disable");
+        $("#dlg_read_only",frame).button("disable");
+        $("#dlg_read_write",frame).button("disable");
+        $("#dlg_grant_all",frame).button("disable");
+        $("#dlg_inherit_all",frame).button("disable");
 
-    this.updateSelection = function( key, rule ){
+        if ( is_coll ) {
+            //setAllPermInh(0);
+            $("#dlg_inh_read_only",frame).button("disable");
+            $("#dlg_inh_read_write",frame).button("disable");
+            $("#dlg_inh_grant_all",frame).button("disable");
+            $("#dlg_inh_inherit_all",frame).button("disable");
+        }
+
+        disable_state = true;
+    }
+
+    function updateSelection( key, rule ){
         //console.log("updateSelection",key,rule);
 
-        inst.cur_rule = null;
-        for ( var i in inst.new_rules ) {
-            if ( inst.new_rules[i].id == key ) {
-                inst.cur_rule = inst.new_rules[i];
+        cur_rule = null;
+        for ( var i in new_rules ) {
+            if ( new_rules[i].id == key ) {
+                cur_rule = new_rules[i];
                 break;
             }
         }
 
         if ( key.startsWith( "u/" )) {
-            //inst.disablePermControls( false );
-            inst.setPermsFromRule( rule );
-            $("#dlg_edit",inst.frame).button("disable");
-            $("#dlg_rem",inst.frame).button("enable" );
+            //disablePermControls( false );
+            setPermsFromRule( rule );
+            $("#dlg_edit",frame).button("disable");
+            $("#dlg_rem",frame).button("enable" );
         } else if ( key.startsWith("g/")) {
-            //inst.disablePermControls(false,(key=='g/members'?true:false));
-            inst.setPermsFromRule(rule);
-            $("#dlg_edit",inst.frame).button("enable");
-            $("#dlg_rem",inst.frame).button("enable" );
+            //disablePermControls(false,(key=='g/members'?true:false));
+            setPermsFromRule(rule);
+            $("#dlg_edit",frame).button("enable");
+            $("#dlg_rem",frame).button("enable" );
         } else if ( key == "default" ) {
-            //inst.disablePermControls( false );
-            inst.setPermsFromRule( rule );
-            $("#dlg_edit",inst.frame).button("disable");
-            $("#dlg_rem",inst.frame).button("disable");
+            //disablePermControls( false );
+            setPermsFromRule( rule );
+            $("#dlg_edit",frame).button("disable");
+            $("#dlg_rem",frame).button("disable");
         } else {
-            inst.disablePermControls();
-            $("#dlg_edit",inst.frame).button("disable");
-            $("#dlg_rem",inst.frame).button("disable");
+            disablePermControls();
+            $("#dlg_edit",frame).button("disable");
+            $("#dlg_rem",frame).button("disable");
         }
     }
 
-    this.addUser = function(){
-        var excl = inst.excl.slice();
-        for ( i in inst.new_rules ){
-            rule = inst.new_rules[i];
+    function addUser(){
+        var new_excl = excl.slice();
+        for ( i in new_rules ){
+            rule = new_rules[i];
             if ( rule.id.startsWith( "u/" ))
-                excl.push( rule.id );
+                new_excl.push( rule.id );
         }
 
-        dlgPickUser( inst.uid, excl, false, function( uids ){
+        dlgPickUser( uid, new_excl, false, function( uids ){
             if ( uids.length > 0 ){
-                var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+                var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
                 var i,id,rule;
                 for ( i in uids ){
                     id = uids[i];
-                    if ( inst.excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
-                        rule = {id: id, grant: inst.is_coll?(PERM_VIEW|PERM_LIST):PERM_VIEW, inhgrant:0 };
-                        inst.new_rules.push( rule );
+                    if ( new_excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
+                        rule = {id: id, grant: PERM_BAS_VIEW, inhgrant:0 };
+                        new_rules.push( rule );
                         tree.rootNode.children[2].addNode({title: id.substr(2),icon:false,key:id,rule:rule });
                     }
                 }
@@ -623,23 +303,23 @@ function makeDlgSetACLs(){
         });
     }
 
-    this.addGroup = function(){
+    function addGroup(){
         var rule, node, gid, i;
 
-        var excl = inst.excl.slice();
-        for ( i in inst.new_rules ){
-            rule = inst.new_rules[i];
+        var new_excl = excl.slice();
+        for ( i in new_rules ){
+            rule = new_rules[i];
             if ( rule.id.startsWith( "g/" ))
-                excl.push( rule.id );
+                new_excl.push( rule.id );
         }
 
-        dlgGroups.show( inst.uid, excl, function( gids ){
-            groupList( inst.uid, function( ok, groups ){
-                var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+        dlgGroups.show( uid, new_excl, function( gids ){
+            groupList( uid, function( ok, groups ){
+                var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
 
                 if ( ok ){
-                    for ( i in inst.new_rules ){
-                        rule = inst.new_rules[i];
+                    for ( i in new_rules ){
+                        rule = new_rules[i];
                         node = tree.getNodeByKey( rule.id );
 
                         if ( rule.id.startsWith( "g/" )){
@@ -649,7 +329,7 @@ function makeDlgSetACLs(){
                                 node.resetLazy();
                                 node.setTitle( group.title + " (" + gid + ")");
                             }else{
-                                inst.new_rules.splice(i,1);
+                                new_rules.splice(i,1);
                                 node.remove();
                             }
                         }
@@ -662,8 +342,8 @@ function makeDlgSetACLs(){
                     for ( i in gids ){
                         gid = gids[i];
                         if ( !tree.getNodeByKey( gid )){
-                            rule = {id: gid, grant: inst.is_coll?(PERM_VIEW|PERM_LIST):PERM_VIEW, inhgrant:0 };
-                            inst.new_rules.push( rule );
+                            rule = {id: gid, grant: PERM_BAS_VIEW, inhgrant:0 };
+                            new_rules.push( rule );
                             if ( ok ){
                                 gid = gid.substr(2);
                                 group = groups.find( function(elem){ return elem.gid == gid } );
@@ -679,13 +359,13 @@ function makeDlgSetACLs(){
         }, true );
     }
 
-    this.editGroup = function(){
-        var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+    function editGroup(){
+        var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            groupView( inst.uid, node.key, function( ok, group ){
+            groupView( uid, node.key, function( ok, group ){
                 if ( ok ){
-                    dlgGroupEdit.show( inst.uid, inst.excl, group, function( group_new ){
+                    dlgGroupEdit.show( uid, excl, group, function( group_new ){
                         if ( group_new ){
                             node.setTitle( group_new.title + " (" +group_new.gid + ")");
                             node.resetLazy();
@@ -696,27 +376,208 @@ function makeDlgSetACLs(){
         }
     }
 
-    this.remUserGroup = function(){
-        if ( inst.cur_rule ){
-            var key = inst.cur_rule.id;
+    function remUserGroup(){
+        if ( cur_rule ){
+            var key = cur_rule.id;
             if ( key == "default" )
                 return;
             if ( key == "g/members" )
                 return;
 
-            var tree = $("#dlg_rule_tree",inst.frame).fancytree("getTree");
+            var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
             var node = tree.getActiveNode();
             if ( node.key == key ){
-                for ( var i in inst.new_rules ) {
-                    if ( inst.new_rules[i].id == key ){
-                        inst.new_rules.splice( i, 1 );
+                for ( var i in new_rules ) {
+                    if ( new_rules[i].id == key ){
+                        new_rules.splice( i, 1 );
                         break;
                     }
                 }
-                inst.cur_rule = null;
-                inst.disablePermControls( true );
+                cur_rule = null;
+                disablePermControls( true );
                 node.remove();
             }
         }
     }
+
+    //console.log( "acls for", item );
+
+    var DATA_MODE = 1;
+    var COLL_MODE = 2;
+    var frame = $(document.createElement('div'));
+    frame.html( content );
+    var is_coll = (item.id[0]=="c");
+    var uid = item.owner;
+    var disable_state = false;
+    var orig_rules = [];
+    var new_rules = [];
+    var cur_rule;
+    var excl = [];
+    var perm_tree, inh_perm_tree;
+
+    if ( item.owner.startsWith("p/")){
+        viewProj( uid, function(proj){
+            if (!proj){
+                dlgAlert("Access Error","Unable to read project data");
+                frame.dialog('destroy').remove();
+                return;
+            }
+            excl = [proj.owner]; //[proj.owner,"g/members"];
+            if ( proj.admin )
+                excl = excl.concat( proj.admin );
+        });
+    }else{
+        excl = [uid];
+    }
+
+    buildPermList( '#local_perm_div', false, is_coll?COLL_MODE:DATA_MODE );
+    perm_tree = $('#local_perm_div',frame).fancytree("getTree");
+    if ( is_coll ){
+        buildPermList( '#inh_perm_div', true, COLL_MODE|DATA_MODE );
+        inh_perm_tree = $('#inh_perm_div',frame).fancytree("getTree");
+    }
+
+
+    if ( is_coll ){
+        $("#dlg_inh_read_only",frame).click( function(){ setAllPermInh(PERM_READONLY); });
+        $("#dlg_inh_read_write",frame).click( function(){ setAllPermInh(PERM_READWRITE); });
+        $("#dlg_inh_grant_all",frame).click( function(){ setAllPermInh(PERM_ALL); });
+        $("#dlg_inh_inherit_all",frame).click( function(){ setAllPermInh(0); });
+    }else{
+        $("#col_div_1",frame).hide();
+        $("#col_div_2",frame).hide();
+    }
+
+    $("#dlg_read_only",frame).click( function(){ setAllPerm(PERM_READONLY); });
+    $("#dlg_read_write",frame).click( function(){ setAllPerm(PERM_READWRITE); });
+    $("#dlg_grant_all",frame).click( function(){ setAllPerm(PERM_ALL); });
+    $("#dlg_inherit_all",frame).click( function(){ setAllPerm(0); });
+    $("#dlg_add_user",frame).click( function(){ addUser(); });
+    $("#dlg_add_group",frame).click( function(){ addGroup(); });
+    $("#dlg_rem",frame).click( function(){ remUserGroup(); });
+    $("#dlg_edit",frame).click( function(){ editGroup(); });
+
+    aclView( item.id, function( ok, data ){
+        if ( !ok || !data ) {
+            //alert( "Could not get ACLs for " + item.id );
+            dlgAlert( "Sharing Error", data );
+            return;
+        }
+        //console.log("data",data);
+
+        if ( !data.rule )
+            data.rule = [];
+
+        // Insert a default rule if not present (for UI needs)
+        var ins_def = true;
+        for ( var i in data.rule ){
+            if ( data.rule[i].id == "default" ) {
+                ins_def = false;
+                break;
+            }
+        }
+
+        if ( ins_def ){
+            data.rule.push({id:"default",grant:0,inhgrant:0});
+        }
+
+        if ( data.rule ) {
+            orig_rules = data.rule.slice();
+            new_rules = data.rule;
+        } else {
+            orig_rules = [];
+            new_rules = [];
+        }
+
+        var options = {
+            title: "Sharing for " + (is_coll?"Collection \"":"Data \"") + item.title + "\"",
+            modal: true,
+            width: is_coll?600:500,
+            height: 'auto',
+            resizable: true,
+            closeOnEscape: false,
+            buttons: [{
+                text: "Ok",
+                click: function() {
+                    var x = $(this);
+
+                    //var is_public = $("#public_check",frame).prop("checked");
+                    //console.log( "SAVE ACLS:", is_public, new_rules );
+
+                    aclUpdate( item.id, new_rules, false, function( ok, data ){
+                        if ( !ok )
+                            dlgAlert( "Sharing Update Failed", data );
+                        else
+                            x.dialog('destroy').remove();
+                    });
+                }
+            },{
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog('destroy').remove();
+                }
+            }],
+            open: function(event,ui){
+                $("#dlg_id",frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
+                var src = buildTreeSource( orig_rules );
+
+                $("#dlg_rule_tree",frame).fancytree({
+                    extensions: ["themeroller"],
+                    themeroller: {
+                        activeClass: "my-fancytree-selected",
+                        addClass: "",
+                        focusClass: "",
+                        hoverClass: "my-fancytree-hover",
+                        selectedClass: ""
+                    },
+                    source: src,
+                    selectMode: 1,
+                    lazyLoad: function( event, data ) {
+                        if ( data.node.key.startsWith("g/")){
+                            data.result = {
+                                url: "/api/grp/view?uid="+encodeURIComponent(uid)+"&gid="+encodeURIComponent(data.node.key.substr(2)),
+                                cache: false
+                            };
+                        }
+                    },
+                    postProcess: function( event, data ) {
+                        console.log("post proc",data);
+                        if ( data.node.key.startsWith("g/")){
+                            data.node.setTitle( data.response.title + " (" +data.response.gid + ")" );
+                            data.result = [];
+                            if ( data.response.desc )
+                                data.result.push({title: "["+data.response.desc+"]", icon: false });
+
+                            if ( data.response.member && data.response.member.length ){
+                                for ( var i in data.response.member ) {
+                                    data.result.push({ title: data.response.member[i].substr(2), icon:"ui-icon ui-icon-person" });
+                                }
+                            }else{
+                                data.result.push({ title: "(empty)", icon: false  });
+                            }
+                        }
+                    },
+                    activate: function( event, data ) {
+                        updateSelection( data.node.key, data.node.data.rule );
+                    },
+                });
+            }
+        };
+
+        frame.dialog( options );
+        $(".btn",frame).button();
+        $(":checkbox",frame).checkboxradio();
+        //$("#public_check",frame).checkboxradio();
+        //$("#public_check",frame).prop("checked",item.ispublic);
+        //$("#public_check",frame).checkboxradio("refresh");
+
+        disablePermControls( true );
+        $("#dlg_edit",frame).button("disable");
+        $("#dlg_rem",frame).button("disable");
+
+        // Switch dialog to fixed-hieght mode
+        var height = frame.parent().height();
+        frame.dialog( "option", "height", height + 10 );
+    });
 }
+
