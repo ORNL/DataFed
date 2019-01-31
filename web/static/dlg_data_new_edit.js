@@ -22,7 +22,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     <tr id='dlg_put_row'><td>Raw data:</td><td><input title='Raw data remote source (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
                 </table>\
             </div>\
-            <div style='flex:none;padding:1em 2px 2px 2px'>Metadata: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span></div>\
+            <div style='flex:none;padding:1em 2px 2px 2px'>Metadata: <span id='md_status'></span><span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span></div>\
             <div class='ui-widget ui-widget-content' style='flex:1 1 100%;min-height:0;padding:0'>\
                 <div id='md' style='height:100%;width:100%'></div>\
             </div>\
@@ -259,13 +259,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 if ( a_mode == DLG_DATA_EDIT ){
                     if (( a_upd_perms & PERM_WR_META ) == 0 ){
-                        //inputDisable( $("#md", frame ));
+                        jsoned.setReadOnly(true);
+                        $("#md_status").text("(read only)");
                         $("#md_mode",frame).prop('disabled',true);
                         $("#md_merge",frame).attr('disabled',true);
                         $("#md_set",frame).attr('disabled',true);
                     }
                     if (( a_upd_perms & PERM_WR_REC ) == 0 ){
-                        inputDisable( $("#title,#desc,#alias", frame ));
+                        inputDisable( $("#title,#desc,#alias,#topic,#keyw", frame ));
+                        $("#pick_topic",frame).button("disable");
                     }
 
                     $("#dlg_coll_row",frame).css("display","none");

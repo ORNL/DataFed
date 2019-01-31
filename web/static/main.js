@@ -578,15 +578,15 @@ function xfrStart( a_id, a_mode, a_path, a_cb ){
 
 var status_timer;
 
-var PERM_LIST           = 0x0001; // Find record and view ID, alias, title, and owner
-var PERM_RD_REC         = 0x0002; // Read record info (description, keywords, details)
-var PERM_RD_META        = 0x0004; // Read structured metadata
-var PERM_RD_DATA        = 0x0008; // Read raw data
-var PERM_WR_REC         = 0x0010; // Write record info (description, keywords, details)
-var PERM_WR_META        = 0x0020; // Write structured metadata
-var PERM_WR_DATA        = 0x0040; // Write raw data
-var PERM_CREATE         = 0x0080; // Create new child records (collections only)
-var PERM_LINK           = 0x0100; // Link/unlink child records (collections only)
+var PERM_RD_REC         = 0x0001; // Read record info (description, keywords, details)
+var PERM_RD_META        = 0x0002; // Read structured metadata
+var PERM_RD_DATA        = 0x0004; // Read raw data
+var PERM_WR_REC         = 0x0008; // Write record info (description, keywords, details)
+var PERM_WR_META        = 0x0010; // Write structured metadata
+var PERM_WR_DATA        = 0x0020; // Write raw data
+var PERM_LIST           = 0x0040; // List contents of collection
+var PERM_LINK           = 0x0080; // Link/unlink child records (collections only)
+var PERM_CREATE         = 0x0100; // Create new child records (collections only)
 var PERM_DELETE         = 0x0200; // Delete record
 var PERM_SHARE          = 0x0400; // View/set ACLs
 var PERM_LOCK           = 0x0800; // Lock record
@@ -595,13 +595,10 @@ var PERM_LOCK           = 0x0800; // Lock record
 //var PERM_ANNOTATE       = 0x2000; // Annotate record
 var PERM_MAX            = 0x0800; // Lock record
 
-var PERM_BAS_VIEW       = PERM_LIST | PERM_RD_REC | PERM_RD_META;
-var PERM_BAS_UPDATE     = PERM_WR_REC | PERM_WR_META;
+var PERM_BAS_READ       = PERM_RD_REC | PERM_RD_META | PERM_RD_DATA | PERM_LIST;
+var PERM_BAS_WRITE      = PERM_WR_REC | PERM_WR_META | PERM_WR_DATA | PERM_LINK | PERM_CREATE;
 var PERM_BAS_ADMIN      = PERM_DELETE | PERM_SHARE | PERM_LOCK;
-
-var PERM_ALL            = 0xFFF;
-var PERM_READONLY       = 0x00F;
-var PERM_READWRITE      = 0x07F;
+var PERM_ALL            = 0x0FFF;
 
 var SS_USER                     = 1;
 var SS_PROJECT                  = 2;

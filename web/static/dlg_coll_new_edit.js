@@ -64,7 +64,7 @@ function dlgCollNewEdit( a_data, a_parent, a_cb ){
                     if ( ok ) {
                         inst.dialog('destroy').remove();
                         if ( a_cb )
-                            a_cb(data.coll[0],obj.parentId);
+                            a_cb(data.coll[0]);
                     } else {
                         dlgAlert( "Collection " + (a_data?"Update":"Create") + " Error", data );
                     }

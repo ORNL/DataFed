@@ -152,6 +152,7 @@ message RecordData
     optional uint32             dt          = 13;
     optional string             owner       = 14;
     optional bool               locked      = 15;
+    optional string             parent_id   = 16;
 }
 
 message RecordDataLocation
@@ -171,6 +172,7 @@ message CollData
     optional string             owner       = 6;
     optional uint32             ct          = 7;
     optional uint32             ut          = 8;
+    optional string             parent_id   = 9;
 }
 
 message XfrData

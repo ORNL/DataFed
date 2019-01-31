@@ -1027,6 +1027,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("locked")) != val.MemberEnd() )
             rec->set_locked( imem->value.GetBool() );
+
+        if (( imem = val.FindMember("parent_id")) != val.MemberEnd() )
+            rec->set_parent_id( imem->value.GetString() );
     }
 }
 
@@ -1238,6 +1241,9 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
 
         if (( imem = val.FindMember("ut")) != val.MemberEnd() )
             coll->set_ut( imem->value.GetUint() );
+
+        if (( imem = val.FindMember("parent_id")) != val.MemberEnd() )
+            coll->set_parent_id( imem->value.GetString() );
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             coll->set_owner( imem->value.GetString() );

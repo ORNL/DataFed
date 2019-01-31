@@ -48,30 +48,28 @@ function dlgSetACLs( item ){
 
 
     function buildPermList( a_div_id, a_inh, a_mode ){
-        var src = [];
+        var src = [], children;
 
-        src.push({title:"View",folder:true,key: PERM_BAS_VIEW,inh:a_inh,children:[
-            { title:"List",inh:a_inh,key:PERM_LIST },
-            { title:"Read Rec.",inh:a_inh,key:PERM_RD_REC },
-            { title:"Read Meta",inh:a_inh,key:PERM_RD_META }
-        ]});
-
-        src.push({title:"Update",folder:true,inh:a_inh,key:PERM_BAS_UPDATE,children:[
-            { title:"Write Rec.",inh:a_inh,key:PERM_WR_REC },
-            { title:"Write Meta",inh:a_inh,key:PERM_WR_META }
-        ]});
-
+        children = [{ title:"Read Rec.",inh:a_inh,key:PERM_RD_REC }];
         if ( a_mode & DATA_MODE ){
-            src.push({title:"Read Data",inh:a_inh,key:PERM_RD_DATA });
-            src.push({title:"Write Data",inh:a_inh,key:PERM_WR_DATA });
+            children.push({ title:"Read Meta",inh:a_inh,key:PERM_RD_META });
+            children.push({title:"Read Data",inh:a_inh,key:PERM_RD_DATA });
         }
-
         if ( a_mode & COLL_MODE ){
-            src.push({ title:"Create",inh:a_inh,key:PERM_CREATE });
-            src.push({ title:"Link",inh:a_inh,key:PERM_LINK });
+            children.push({ title:"List",inh:a_inh,key:PERM_LIST });
         }
+        src.push({title:"Read",folder:true,key: PERM_BAS_READ,inh:a_inh,children:children});
 
-        //src.push({title:"View",folder:true,key: PERM_VIEW, children:[
+        children = [{ title:"Write Rec.",inh:a_inh,key:PERM_WR_REC }];
+        if ( a_mode & DATA_MODE ){
+            children.push({ title:"Write Meta",inh:a_inh,key:PERM_WR_META });
+            children.push({title:"Write Data",inh:a_inh,key:PERM_WR_DATA });
+        }
+        if ( a_mode & COLL_MODE ){
+            children.push({ title:"Link",inh:a_inh,key:PERM_LINK });
+            children.push({ title:"Create",inh:a_inh,key:PERM_CREATE });
+        }
+        src.push({title:"Write",folder:true,inh:a_inh,key:PERM_BAS_WRITE,children:children});
 
         src.push({title:"Admin",folder:true,inh:a_inh,key:PERM_BAS_ADMIN,children:[
             { title:"Delete",inh:a_inh,key:PERM_DELETE },
@@ -100,24 +98,68 @@ function dlgSetACLs( item ){
                         data.node.setSelected( true );
                 }
             },
+            beforeSelect: function( event, data ) {
+                if ( cur_rule && cur_rule.id != "default" ){
+                    if ( is_coll ){
+                        if (( parseInt( data.node.key ) & (PERM_RD_REC|PERM_LIST) ) && data.node.isSelected() )
+                            return false;
+                    }else{
+                        if (( parseInt( data.node.key ) & PERM_RD_REC ) && data.node.isSelected() )
+                            return false;
+                    }
+                }
+            },
             select: function( event, data ) {
                 //console.log("selected",data.node.key,typeof data.node.key,data.node.isSelected());
                 if ( !cur_rule )
                     return;
                 var perm = parseInt( data.node.key );
+                var other = 0;
                 if ( data.node.isSelected() ){
+                    switch( perm ){
+                        case PERM_RD_META: other = PERM_RD_REC; break;
+                        case PERM_RD_DATA: other = PERM_RD_REC; break;
+                        case PERM_WR_REC: other = PERM_RD_REC; break;
+                        case PERM_WR_META: other = PERM_RD_REC|PERM_RD_META; break;
+                        case PERM_WR_DATA: other = PERM_RD_REC|PERM_RD_DATA; break;
+                        case PERM_LIST: other = PERM_RD_REC; break;
+                        case PERM_LINK: other = PERM_RD_REC|PERM_LIST; break;
+                        case PERM_CREATE: other = PERM_RD_REC|PERM_LIST|PERM_LINK; break;
+                        case PERM_BAS_WRITE: other = PERM_RD_REC|PERM_RD_META|PERM_RD_DATA|PERM_LIST; break;
+                    }
                     if ( data.node.data.inh ){
                         cur_rule.inhgrant |= perm;
+                        if ( other )
+                            cur_rule.inhgrant |= other;
                     }else{
                         cur_rule.grant |= perm;
+                        if ( other )
+                            cur_rule.grant |= other;
                     }
                 }else{
+                    switch( perm ){
+                        case PERM_RD_REC: other = PERM_BAS_WRITE|PERM_RD_META|PERM_RD_DATA|PERM_LIST; break;
+                        case PERM_RD_META: other = PERM_WR_META; break;
+                        case PERM_RD_DATA: other = PERM_WR_DATA; break;
+                        case PERM_LIST: other = PERM_LINK|PERM_CREATE; break;
+                        case PERM_LINK: other = PERM_CREATE; break;
+                        case PERM_BAS_READ: other = PERM_WR_REC|PERM_WR_META|PERM_WR_DATA|PERM_LINK|PERM_CREATE; break;
+                    }
                     if ( data.node.data.inh ){
                         cur_rule.inhgrant &= ~perm;
+                        if ( other )
+                            cur_rule.inhgrant &= ~other;
                     }else{
                         cur_rule.grant &= ~perm;
+                        if ( other )
+                            cur_rule.grant &= ~other;
                     }
                 }
+
+                if ( other ){
+                    setPermsFromRule( cur_rule );
+                }
+
                 data.node.setActive(true);
             },
         });
@@ -152,9 +194,9 @@ function dlgSetACLs( item ){
 
     function setAllPerm( value ){
         if ( is_coll )
-            value &= ~(PERM_RD_DATA|PERM_WR_DATA);
+            value &= ~(PERM_RD_META|PERM_WR_META|PERM_RD_DATA|PERM_WR_DATA);
         else
-            value &= ~(PERM_CREATE|PERM_LINK)
+            value &= ~(PERM_CREATE|PERM_LINK|PERM_LIST);
 
         if ( cur_rule ){
             cur_rule.grant = value;
@@ -293,7 +335,7 @@ function dlgSetACLs( item ){
                 for ( i in uids ){
                     id = uids[i];
                     if ( new_excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
-                        rule = {id: id, grant: PERM_BAS_VIEW, inhgrant:0 };
+                        rule = {id: id, grant: PERM_BAS_READ, inhgrant:0 };
                         new_rules.push( rule );
                         tree.rootNode.children[2].addNode({title: id.substr(2),icon:false,key:id,rule:rule });
                     }
@@ -342,7 +384,7 @@ function dlgSetACLs( item ){
                     for ( i in gids ){
                         gid = gids[i];
                         if ( !tree.getNodeByKey( gid )){
-                            rule = {id: gid, grant: PERM_BAS_VIEW, inhgrant:0 };
+                            rule = {id: gid, grant: PERM_BAS_READ, inhgrant:0 };
                             new_rules.push( rule );
                             if ( ok ){
                                 gid = gid.substr(2);
@@ -439,8 +481,8 @@ function dlgSetACLs( item ){
 
 
     if ( is_coll ){
-        $("#dlg_inh_read_only",frame).click( function(){ setAllPermInh(PERM_READONLY); });
-        $("#dlg_inh_read_write",frame).click( function(){ setAllPermInh(PERM_READWRITE); });
+        $("#dlg_inh_read_only",frame).click( function(){ setAllPermInh(PERM_BAS_READ); });
+        $("#dlg_inh_read_write",frame).click( function(){ setAllPermInh(PERM_BAS_READ|PERM_BAS_WRITE); });
         $("#dlg_inh_grant_all",frame).click( function(){ setAllPermInh(PERM_ALL); });
         $("#dlg_inh_inherit_all",frame).click( function(){ setAllPermInh(0); });
     }else{
@@ -448,8 +490,8 @@ function dlgSetACLs( item ){
         $("#col_div_2",frame).hide();
     }
 
-    $("#dlg_read_only",frame).click( function(){ setAllPerm(PERM_READONLY); });
-    $("#dlg_read_write",frame).click( function(){ setAllPerm(PERM_READWRITE); });
+    $("#dlg_read_only",frame).click( function(){ setAllPerm(PERM_BAS_READ); });
+    $("#dlg_read_write",frame).click( function(){ setAllPerm(PERM_BAS_READ|PERM_BAS_WRITE); });
     $("#dlg_grant_all",frame).click( function(){ setAllPerm(PERM_ALL); });
     $("#dlg_inherit_all",frame).click( function(){ setAllPerm(0); });
     $("#dlg_add_user",frame).click( function(){ addUser(); });
@@ -493,7 +535,7 @@ function dlgSetACLs( item ){
             title: "Sharing for " + (is_coll?"Collection \"":"Data \"") + item.title + "\"",
             modal: true,
             width: is_coll?600:500,
-            height: 'auto',
+            height: 450,
             resizable: true,
             closeOnEscape: false,
             buttons: [{

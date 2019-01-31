@@ -402,7 +402,7 @@ void printData( spRecordDataReply a_rep )
     if ( g_out_form == JSON )
         cout << "{\"Data\":[";
     else if ( g_out_form == CSV )
-        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Topic\",\"Keywords\",\"Owner\",\"Locked\",\"Size\",\"Repo\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
+        cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Topic\",\"Keywords\",\"Owner\",\"Locked\",\"Size\",\"Repo\",\"Parent\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
 
     if ( a_rep->data_size() )
     {
@@ -442,6 +442,10 @@ void printData( spRecordDataReply a_rep )
                 cout << "Locked   " << ((rec.has_locked() && rec.locked())?"Yes":"No") << "\n";
                 cout << "Size     " << (rec.has_size()?to_string(rec.size()):"n/a") << "\n";
                 cout << "Repo     " << (rec.has_repo_id()?rec.repo_id():"n/a") << "\n";
+
+                if ( rec.has_parent_id() )
+                    cout << "Parent   " << rec.parent_id() << "\n";
+
                 if ( rec.has_dt() )
                 {
                     t = (time_t)rec.dt();
@@ -481,7 +485,8 @@ void printData( spRecordDataReply a_rep )
                     << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
                     << "," << ((rec.has_locked() && rec.locked())?"1":"0")
                     << "," << ( rec.has_size()?rec.size():0 )
-                    << "," << ( rec.has_repo_id()?rec.repo_id():0 )
+                    << ",\"" << ( rec.has_repo_id()?rec.repo_id():"" ) << "\""
+                    << ",\"" << ( rec.has_parent_id()?rec.parent_id():"" )
                     << "," << ( rec.has_dt()?rec.dt():0 )
                     << "," << ( rec.has_ct()?rec.ct():0 )
                     << "," << ( rec.has_ut()?rec.ut():0 )
@@ -504,7 +509,9 @@ void printData( spRecordDataReply a_rep )
                 if ( rec.has_size() )
                     cout << ",\"size\":" << rec.size();
                 if ( rec.has_repo_id() )
-                    cout << ",\"repo_id\":" << rec.repo_id();
+                    cout << ",\"repo_id\":\"" << rec.repo_id() << "\"";
+                if ( rec.has_parent_id() )
+                    cout << ",\"parent_id\":\"" << rec.parent_id() << "\"";
                 if ( rec.has_dt() )
                     cout << ",\"dt\":" << rec.dt();
                 if ( rec.has_ct() )
@@ -528,7 +535,7 @@ void printCollData( spCollDataReply a_reply )
     if ( g_out_form == JSON )
         cout << "{\"Collections\":[";
     else if ( g_out_form == CSV )
-        cout << "\"CollID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Created\",\"Updated\"\n";
+        cout << "\"CollID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Parent\",\"Created\",\"Updated\"\n";
 
     if ( a_reply->coll_size() )
     {
@@ -552,6 +559,8 @@ void printCollData( spCollDataReply a_reply )
                     cout << "Desc    " << coll.desc() << "\n";
                 if ( coll.has_owner() )
                     cout << "Owner   " << coll.owner() << "\n";
+                if ( coll.has_parent_id() )
+                    cout << "Parent  " << coll.parent_id() << "\n";
                 if ( coll.has_ct() )
                 {
                     t = (time_t)coll.ct();
@@ -572,6 +581,7 @@ void printCollData( spCollDataReply a_reply )
                     << ",\"" << escapeCSV( coll.title() ) << "\""
                     << ",\"" << (coll.has_desc()?escapeCSV( coll.desc() ):"") << "\""
                     << ",\"" << (coll.has_owner()?coll.owner():"") << "\""
+                    << ",\"" << (coll.has_parent_id()?coll.parent_id():"" ) << "\""
                     << "," << (coll.has_ct()?coll.ct():0)
                     << "," << (coll.has_ut()?coll.ut():0)
                     << "\n";
@@ -585,6 +595,8 @@ void printCollData( spCollDataReply a_reply )
                     cout << ",\"Desc\":\"" << escapeJSON( coll.desc() ) << "\"";
                 if ( coll.has_owner() )
                     cout << ",\"Owner\":\"" << coll.owner() << "\"";
+                if ( coll.has_parent_id() )
+                    cout << ",\"parent_id\":\"" << coll.parent_id() << "\"";
                 if ( coll.has_ct() )
                     cout << ",\"Created\":" << coll.ct();
                 if ( coll.has_ut() )
@@ -1073,8 +1085,9 @@ int coll_view()
     }
     else if ( g_args.size() == 1 )
     {
-        cout << "CV ID: " <<resolveID( g_args[0] ) << "\n";
-        spCollDataReply rep = g_client->collView( resolveID( g_args[0] ));
+        bool fin;
+        string id = resolveCollID( g_args[0], fin );
+        spCollDataReply rep = g_client->collView( id );
         printCollData( rep );
     }
     else
@@ -1527,7 +1540,7 @@ int pwc()
         if ( rep->coll(i).has_alias() )
         {
             pos = rep->coll(i).alias().find_last_of(":");
-            cout << "/" << rep->coll(i).alias().substr( pos + 1 );;
+            cout << "/" << rep->coll(i).alias().substr( pos + 1 );
         }
         else
             cout << "/[" << rep->coll(i).id() << "]";

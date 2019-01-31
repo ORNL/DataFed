@@ -115,28 +115,10 @@ function makeBrowserTab(){
                 return;
             }
 
-            viewColl( parent, function( coll ){
-                if ( coll ){
-                    var coll_id = coll.alias?coll.alias:coll.id;
-
-                    dlgDataNewEdit(DLG_DATA_NEW,null,coll_id,0,function(data,coll){
-                        var node;
-                        if ( coll.startsWith( "c/" )){
-                            node = inst.data_tree.getNodeByKey( coll );
-                            if ( node )
-                                inst.reloadNode( node );
-                        }else{
-                            viewColl( coll, function( data ){
-                                if ( data ){
-                                    node = inst.data_tree.getNodeByKey( data.id );
-                                    if ( node )
-                                        inst.reloadNode( node );
-                                }
-                            });
-                        }
-                    });
-                }else
-                    alert("Cannot access parent collection.");
+            dlgDataNewEdit(DLG_DATA_NEW,null,parent,0,function(data,parent_id){
+                var node = inst.data_tree.getNodeByKey( parent_id );
+                if ( node )
+                    inst.reloadNode( node );
             });
         });
     }
@@ -160,29 +142,19 @@ function makeBrowserTab(){
                 return;
             }
 
-            viewColl( parent, function( coll ){
-                if ( coll ){
-                    var coll_id = coll.alias?coll.alias:coll.id;
+            //viewColl( parent, function( coll ){
+                //if ( id ){
+                //    var coll_id = coll.alias?coll.alias:coll.id;
 
-                    dlgCollNewEdit(null,coll_id,function(data,coll){
-                        var node;
-                        if ( coll.startsWith( "c/" )){
-                            node = inst.data_tree.getNodeByKey( coll );
-                            if ( node )
-                                inst.reloadNode( node );
-                        }else{
-                            viewColl( coll, function( data ){
-                                if ( data ){
-                                    node = inst.data_tree.getNodeByKey( data.id );
-                                    if ( node )
-                                        inst.reloadNode( node );
-                                }
-                            });
-                        }
+                    dlgCollNewEdit(null,parent,function(data){
+                        console.log("new collection:",data);
+                        var node = inst.data_tree.getNodeByKey( data.parentId );
+                        if ( node )
+                            inst.reloadNode( node );
                     });
-                }else
-                    alert("Cannot access parent collection.");
-            });
+                //}else
+                //    dlgAlert("Cannot access parent collection.");
+            //});
         });
     }
 
@@ -1464,7 +1436,7 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ")",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
+                        data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
@@ -1475,7 +1447,7 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: inst.generateTitle(item),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj",scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: inst.generateTitle(item) + " <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj",scope:item.id,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
