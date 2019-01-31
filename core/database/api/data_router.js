@@ -164,6 +164,8 @@ router.post('/create', function (req, res) {
                 g_db.item.save({ _from: parent_id, _to: data.new._id });
 
                 data.new.id = data.new._id;
+                data.new.parent_id = parent_id;
+
                 delete data.new._id;
                 delete data.new._key;
                 delete data.new._rev;

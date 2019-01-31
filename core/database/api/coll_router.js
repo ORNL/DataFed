@@ -79,6 +79,7 @@ router.post('/create', function (req, res) {
 
                 coll = coll.new;
                 coll.id = coll._id;
+                coll.parent_id = parent_id;
                 delete coll._id;
                 delete coll._key;
                 delete coll._rev;
@@ -256,9 +257,8 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-        coll.owner = owner_id;
         coll.id = coll._id;
+
         delete coll._id;
         delete coll._key;
         delete coll._rev;

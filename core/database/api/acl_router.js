@@ -177,12 +177,157 @@ router.get('/by_user', function (req, res) {
 .description('List users that have shared data or collections with client');
 
 
+router.get('/by_user/list2', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const owner_id = req.queryParams.owner;
+
+        var result = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id });
+ 
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('owner', joi.string().required(), "Owner ID")
+.summary('Lists data and collections shared with client by owner')
+.description('Lists data and collections shared with client by owner');
+
+function dedupShares( client, shares ){
+    var i,j,k,id;
+    var items = {},item,parent;
+
+    for ( i in shares ){
+        id = shares[i].id;
+        item = {paths:[],data:shares[i]};
+        parent = g_db.item.byExample({_to:item.data.id}).toArray();
+        if ( parent.length ){
+            for ( j in parent ){
+                item.paths.push({path:[id,parent[j]._from],par:null,done:false});
+            }
+        }else{
+            item.paths.push({path:[id],par:null,done:true});
+        }
+        items[id] = item;
+    }
+
+    // Calculate parent paths up to ancestors with shares
+    var work = true,first = true,path;
+    while( work ){
+        work = false;
+        for( i in items ){
+            if (items.hasOwnProperty(i)) {
+                item = items[i];
+                for ( j in item.paths ){
+                    path = item.paths[j];
+                    if ( !path.done ){
+                        id = path.path[path.path.length-1];
+
+                        if ( first ){
+                            if ( id in items ){
+                                path.par = id;
+                                path.done = true;
+                                continue;
+                            }
+                        }
+
+                        parent = g_db.item.firstExample({_to:id});
+                        if ( parent ){
+                            path.path.push(parent._from);
+                            if ( parent._from in items ){
+                                path.par = parent._from;
+                                path.done = true;
+                            }else{
+                                work = true;
+                            }
+                        }else{
+                            path.done = true;
+                        }
+                    }
+                }
+            }
+        }
+        first = false;
+    }
+
+    // Remove any independent shares (no ancestor/descendant)
+    shares=[];
+    for( i in items ){
+        if (items.hasOwnProperty(i)) {
+            item = items[i];
+            parent = false;
+            for ( j in item.paths ){
+                path = item.paths[j];
+                if ( path.par ){
+                    parent = true;
+                }
+            }
+            if ( !parent ){
+                shares.push(item.data);
+                delete items[i];
+            }
+        }
+    }
+
+    // Determine if descendants are navigable from ancestors
+    var perm,coll;
+    for( i in items ){
+        if (items.hasOwnProperty(i)) {
+            item = items[i];
+            work = false;
+
+            for ( j in item.paths ){
+                path = item.paths[j];
+
+                for ( k = path.path.length-1; k > 0; k-- ){
+                    coll = g_db.c.document( path.path[k] );
+                    perm = g_lib.getPermissionsLocal( client, coll );
+                    if ( perm.inhgrant & g_lib.PERM_LIST ){
+                        k = 0;
+                        break;
+                    }
+                    if (( perm.grant & g_lib.PERM_LIST ) == 0 )
+                        break;
+                }
+
+                if ( k == 0 ){
+                    work = true;
+                    break;
+                }
+            }
+
+            if ( !work ){
+                shares.push(item.data);
+            }
+        }
+    }
+
+    shares.sort( function( a, b ){
+        if ( a.id.charAt(0) != b.id.charAt(0) ){
+            if ( a.id.charAt(0) == 'c' )
+                return -1;
+            else
+                return 1;
+        } else
+            return a.title.localeCompare( b.title );
+    });
+
+    return shares;
+}
+
 router.get('/by_user/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
-        var result = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id });
-        res.send( result );
+
+        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
+
+        if ( shares.length < 2 ){
+            res.send(shares);
+        }else{
+            res.send(dedupShares( client, shares ));
+        }
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -209,8 +354,13 @@ router.get('/by_proj/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
-        var result = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id });
-        res.send( result );
+        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
+
+        if ( shares.length < 2 ){
+            res.send(shares);
+        }else{
+            res.send(dedupShares( client, shares ));
+        }
     } catch( e ) {
         g_lib.handleException( e, res );
     }

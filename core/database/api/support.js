@@ -16,15 +16,15 @@ module.exports = ( function() {
     obj.db = require('@arangodb').db;
     obj.graph = require('@arangodb/general-graph')._graph('sdmsg');
 
-    obj.PERM_LIST           = 0x0001; // Find record and view ID, alias, title, and owner
-    obj.PERM_RD_REC         = 0x0002; // Read record info (description, keywords, details)
-    obj.PERM_RD_META        = 0x0004; // Read structured metadata
-    obj.PERM_RD_DATA        = 0x0008; // Read raw data
-    obj.PERM_WR_REC         = 0x0010; // Write record info (description, keywords, details)
-    obj.PERM_WR_META        = 0x0020; // Write structured metadata
-    obj.PERM_WR_DATA        = 0x0040; // Write raw data
-    obj.PERM_CREATE         = 0x0080; // Create new child records (collections only)
-    obj.PERM_LINK           = 0x0100; // Link/unlink child records (collections only)
+    obj.PERM_RD_REC         = 0x0001; // Read record info (description, keywords, details)
+    obj.PERM_RD_META        = 0x0002; // Read structured metadata
+    obj.PERM_RD_DATA        = 0x0004; // Read raw data
+    obj.PERM_WR_REC         = 0x0008; // Write record info (description, keywords, details)
+    obj.PERM_WR_META        = 0x0010; // Write structured metadata
+    obj.PERM_WR_DATA        = 0x0020; // Write raw data
+    obj.PERM_LIST           = 0x0040; // Find record and view ID, alias, title, and owner
+    obj.PERM_LINK           = 0x0080; // Link/unlink child records (collections only)
+    obj.PERM_CREATE         = 0x0100; // Create new child records (collections only)
     obj.PERM_DELETE         = 0x0200; // Delete record
     obj.PERM_SHARE          = 0x0400; // View/set ACLs
     obj.PERM_LOCK           = 0x0800; // Lock record
@@ -32,14 +32,10 @@ module.exports = ( function() {
     obj.PERM_TAG            = 0x2000; // Tag record
     obj.PERM_ANNOTATE       = 0x4000; // Annotate record
 
-    obj.PERM_BAS_VIEW       = 0x0007;
-    obj.PERM_BAS_UPDATE     = 0x0030;
-    obj.PERM_BAS_ADMIN      = 0x4780;
-    
     obj.PERM_NONE           = 0x0000;
     obj.PERM_ALL            = 0x7FFF;
-    obj.PERM_MEMBER         = 0x0003; // Project record perms
-    obj.PERM_MANAGER        = 0x0403; // Project record perms
+    obj.PERM_MEMBER         = 0x0007; // Project record perms
+    obj.PERM_MANAGER        = 0x0407; // Project record perms
     obj.PERM_PUBLIC         = 0x000F;
 
 
@@ -579,7 +575,6 @@ module.exports = ( function() {
         }
     };
 
-
     /*
     obj.validateAlias = function( a_alias ) {
         if ( !a_alias )
@@ -707,6 +702,7 @@ module.exports = ( function() {
             }
         }
     };
+
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
      * ownership or admin privilege - the hasAdminPermObject function performs these checks and should be
@@ -963,6 +959,38 @@ module.exports = ( function() {
         }
 
         return perm_found & a_req_perm;
+    };
+
+    obj.getPermissionsLocal = function( a_client, a_object ) {
+        var perm={grant:0,inhgrant:0},acl,acls,i;
+
+        if ( a_object.grant )
+            perm.grant |= a_object.grant;
+
+        if ( a_object.inhgrant )
+            perm.inhgrant |= a_object.inhgrant;
+
+        if ( a_object.acls & 1 ){
+            acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+
+            for ( i in acls ) {
+                acl = acls[i];
+                perm.grant |= acl.grant;
+                perm.inhgrant |= acl.inhgrant;
+            }
+        }
+
+        // Evaluate group permissions on object
+        if ( a_object.acls & 2 ){
+            acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+            for ( i in acls ) {
+                acl = acls[i];
+                perm.grant |= acl.grant;
+                perm.inhgrant |= acl.inhgrant;
+            }
+        }
+
+        return perm;
     };
 
     obj.usersWithClientACLs = function( client_id, id_only ){

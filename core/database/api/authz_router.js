@@ -88,7 +88,7 @@ router.get('/perm/check', function (req, res) {
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
             if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only VIEW permissions
-                if ( perms != g_lib.PERM_LIST )
+                if ( perms != g_lib.PERM_RD_REC )
                     result = false;
             }else if ( role == g_lib.PROJ_MEMBER ){ // Non members have only VIEW permissions
                 if (( perms & ~g_lib.PERM_MEMBER ) != 0 )
@@ -133,7 +133,7 @@ router.get('/perm/get', function (req, res) {
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
             if ( role == g_lib.PROJ_NO_ROLE ){ // Non members have only VIEW permissions
-                result &= g_lib.PERM_LIST;
+                result &= g_lib.PERM_RD_REC;
             }else if ( role == g_lib.PROJ_MEMBER ){
                 result &= g_lib.PERM_MEMBER;
             } else if ( role == g_lib.PROJ_MANAGER ){ // Managers have all but UPDATE
