@@ -131,6 +131,9 @@ router.post('/create', function (req, res) {
 
                 if ( req.body.md ){
                     obj.md = req.body.md; //JSON.parse( req.body.md );
+                    if ( Array.isArray( obj.md ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+
                     //console.log( "parsed:", obj.md );
                 }
 
@@ -249,8 +252,11 @@ router.post('/update', function (req, res) {
 
                 if ( req.body.md === "" )
                     obj.md = null;
-                else if ( req.body.md )
+                else if ( req.body.md ){
                     obj.md = req.body.md;
+                    if ( Array.isArray( obj.md ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+                }
 
                 if ( req.body.size != undefined ) {
                     obj.size = req.body.size;
