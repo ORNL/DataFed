@@ -460,7 +460,7 @@ function makeBrowserTab(){
 
         switch ( state ){
             case "c": bits = 0x72;  break;
-            case "d": bits = 0;     break;
+            case "d": bits = 0x00;  break;
             case "r": bits = 0xF7;  break;
             case "p": bits = 0xFa | (admin?0:5); break;
             default:  bits = 0xFF;  break;
@@ -469,7 +469,6 @@ function makeBrowserTab(){
     }
 
     this.updateBtnState = function( state, admin ){
-        //console.log("upd btn state",state,admin,bits);
         var bits = calcActionState( state, admin );
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
@@ -1698,10 +1697,14 @@ function makeBrowserTab(){
     this.data_md_tree = $("#data_md_tree").fancytree("getTree");
 
     // Connect event/click handlers
-    $("#btn_new",inst.frame).on('click', inst.newMenu );
-    $("#btn_new_proj",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newProj(); });
-    $("#btn_new_data",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newData(); });
-    $("#btn_new_coll",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newColl(); });
+    //$("#btn_new",inst.frame).on('click', inst.newMenu );
+    //$("#btn_new_proj",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newProj(); });
+    //$("#btn_new_data",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newData(); });
+    //$("#btn_new_coll",inst.frame).on('click', function(){ $("#newmenu").hide(); inst.newColl(); });
+    $("#btn_new_proj",inst.frame).on('click', inst.newProj );
+    $("#btn_new_data",inst.frame).on('click', inst.newData );
+    $("#btn_new_coll",inst.frame).on('click', inst.newColl );
+
     $("#btn_edit",inst.frame).on('click', inst.editSelected );
     //$("#btn_dup",inst.frame).on('click', inst.dupSelected );
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
@@ -1847,7 +1850,7 @@ function makeBrowserTab(){
         inst.updateSearchSelectState( true );
     });
 
-    $("#newmenu").menu();
+    //$("#newmenu").menu();
     $("#lockmenu").menu();
 
     $("#theme-sel").val(g_theme).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {

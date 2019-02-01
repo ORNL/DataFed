@@ -31,14 +31,18 @@
         </div>
     </div>
     <div style="flex:none;padding:.25em">
-        <button class="btn" id="btn_new" style="width:11ch">New...</button>
-        <button class="btn" id="btn_edit" disabled>Edit</button>
+        <!-- button class="btn" id="btn_new" style="width:11ch">New...</button -->
+        <button class="btn" id="btn_new_data" title='Create new data record'>+Data</button>
+        <button class="btn" id="btn_new_coll" title='Create new collection'>+Collection</button>
+        <button class="btn" id="btn_new_proj" title='Create new project'>+Project</button>
+        <span style='padding-left:3em'>&nbsp</span>
+        <button class="btn" id="btn_edit" title='Edit selected item' disabled>Edit</button>
         <!-- button class="btn" id="btn_dup" disabled>Duplicate</button -->
-        <button class="btn" id="btn_del" disabled>Delete</button>
-        <button class="btn" id="btn_share" disabled>Sharing</button>
-        <button class="btn" id="btn_lock" style="width:8ch" disabled>Lock</button>
-        <button class="btn" id="btn_download" disabled>Get</button>
-        <button class="btn" id="btn_upload" disabled>Put</button>
+        <button class="btn" id="btn_del" title='Delete selected item' disabled>Delete</button>
+        <button class="btn" id="btn_share" title='Set sharing permissions on selected item' disabled>Sharing</button>
+        <button class="btn" id="btn_lock" title='Lock selected item' disabled>Lock</button>
+        <button class="btn" id="btn_download" title='Download raw data from selected data record' disabled>Get</button>
+        <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Put</button>
         <!-- button class="btn" id="btn_alloc" style="float:right" disabled>Allocations</button -->
     </div>
     <div id="footer" style="flex:none;padding:0">
@@ -48,7 +52,7 @@
                 <li><a href="#tab-xfer">Transfers</a></li>
                 <li><a href="#tab-settings">Settings</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
-                <button id='btn_alloc' class='btn small' style='float:right'>Allocations</button>
+                <button id='btn_alloc' class='btn small' style='float:right' title='View account allocation statistics'>Allocations</button>
             </ul>
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
@@ -132,11 +136,11 @@
         </div>
     </div>
 </div>
-<ul id="newmenu" class="ui-state-hover" style="display:none;z-index:1000;width:10ch;padding:.25em">
+<!-- ul id="newmenu" class="ui-state-hover" style="display:none;z-index:1000;width:10ch;padding:.25em">
     <li><div id="btn_new_proj">Project</div></li>
     <li><div id="btn_new_coll">Collection</div></li>
     <li><div id="btn_new_data">Data</div></li>
-</ul>
+</ul -->
 
 <div id="ctxtmenu" style="display:none;z-index:1000">
 </div>

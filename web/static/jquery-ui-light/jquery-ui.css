@@ -1418,6 +1418,6 @@ a.ui-button:active,
 	filter: Alpha(Opacity=80); /* support: IE8 */
 }
 .ui-widget-shadow {
-	-webkit-box-shadow: 8px 8px 10px #808080;
-	box-shadow: 8px 8px 10px #808080;
+	-webkit-box-shadow: 8px 8px 10px #404040;
+	box-shadow: 8px 8px 10px #404040;
 }
