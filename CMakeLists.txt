@@ -26,6 +26,11 @@ endif()
 
 include_directories( "/usr/include/globus" )
 
+if ( DEFINED ENV{RAPIDJSON_INC} )
+        message( "RAPIDJSON_INC:" $ENV{RAPIDJSON_INC} )
+        include_directories( $ENV{RAPIDJSON_INC} )
+endif()
+
 if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
         message( "BOOST_INC:" $ENV{BOOST_INC} )
         message( "BOOST_LIB:" $ENV{BOOST_LIB} )
