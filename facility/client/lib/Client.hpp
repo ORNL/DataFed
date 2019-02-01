@@ -16,7 +16,7 @@
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
 
-#define Check(Var,Src,Cls) Cls * Var = dynamic_cast<Cls*>(Src)
+//#define Check(Var,Src,Cls) Cls * Var = dynamic_cast<Cls*>(Src)
 
 namespace SDMS {
 namespace Facility {
@@ -134,6 +134,8 @@ public:
     spGroupDataReply    groupView( const std::string & a_group_id );
     spGroupDataReply    groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids );
     spGroupDataReply    groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids );
+
+    std::string         messageToJSON( const ::google::protobuf::Message * a_msg );
 
     static bool         verifyCredentials( const std::string & a_cred_path );
 

@@ -10,6 +10,8 @@
 
 #include <time.h>
 
+#include "pbjson.hpp"
+
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
 #define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
@@ -1033,6 +1035,15 @@ Client::groupRemove( const std::string & a_group_id, const std::vector<std::stri
     return spGroupDataReply( rep );
 }
 
+string
+Client::messageToJSON( const ::google::protobuf::Message * a_msg )
+{
+    string result;
+
+    pbjson::pb2json( a_msg, result );
+
+    return result;
+}
 
 /*
 spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )

@@ -222,7 +222,7 @@ void printSuccess()
         cerr << "\"SUCCESS\"\n";
         break;
     case JSON:
-        cerr << "{\"Status\":\"SUCCESS\"}\n";
+        cerr << "{\"status\":\"SUCCESS\"}\n";
         break;
     }
 }
@@ -238,7 +238,7 @@ void printError( const std::string & a_msg )
         cerr << "\"ERROR\",\"" << escapeCSV( a_msg ) << "\"\n";
         break;
     case JSON:
-        cerr << "{\"Status\":\"ERROR\",\"Message\":\"" << escapeJSON( a_msg ) << "\"}\n";
+        cerr << "{\"status\":\"ERROR\",\"message\":\"" << escapeJSON( a_msg ) << "\"}\n";
         break;
     }
 }
@@ -246,17 +246,18 @@ void printError( const std::string & a_msg )
 void printUsers( spUserDataReply a_reply )
 {
     if ( g_out_form == JSON )
-        cout << "{\"Users\":[";
-    else if ( g_out_form == CSV )
+    {
+        cout << g_client->messageToJSON( a_reply.get() ) << "\n";
+        return;
+    }
+
+    if ( g_out_form == CSV )
         cout << "\"UserID\",\"Name\",\"Email\",\"Admin\"\n";
 
     if ( a_reply->user_size() )
     {
         for ( int i = 0; i < a_reply->user_size(); i++ )
         {
-            if ( g_out_form == JSON && i > 0 )
-                cout << ",";
-
             const UserData & user = a_reply->user(i);
             switch ( g_out_form )
             {
@@ -279,14 +280,6 @@ void printUsers( spUserDataReply a_reply )
                 }*/
 
                 break;
-            case JSON:
-                cout << "{\"UserID\":\"" << user.uid() << "\",\"Name\":\"" << user.name() << "\"";
-                if ( user.has_email() )
-                    cout << ",\"Email\":\"" << user.email() << "\"";
-                if ( user.has_is_admin() )
-                    cout << ",\"Admin\":" << (user.is_admin()?"true":"false");
-                cout << "}";
-                break;
             case CSV:
                 cout << "\"" << user.uid() << "\",\"" << user.name() << "\""
                     << ",\"" << ( user.has_email()?user.email():"" ) << "\""
@@ -298,15 +291,17 @@ void printUsers( spUserDataReply a_reply )
                 cout << "\n";
         }
     }
-    if ( g_out_form == JSON )
-        cout << "]}\n";
 }
 
 void printProjects( spProjectDataReply a_reply )
 {
     if ( g_out_form == JSON )
-        cout << "{\"Projects\":[";
-    else if ( g_out_form == CSV )
+    {
+        cout << g_client->messageToJSON( a_reply.get() ) << "\n";
+        return;
+    }
+
+    if ( g_out_form == CSV )
         cout << "\"ProjID\",\"Title\",\"Desc\",\"Owner\",\"Created\",\"Updated\"\n";
 
     if ( a_reply->proj_size() )
@@ -316,9 +311,6 @@ void printProjects( spProjectDataReply a_reply )
 
         for ( int i = 0; i < a_reply->proj_size(); i++ )
         {
-            if ( g_out_form == JSON && i > 0 )
-                cout << ",";
-
             const ProjectData & proj = a_reply->proj(i);
             switch ( g_out_form )
             {
@@ -342,18 +334,6 @@ void printProjects( spProjectDataReply a_reply )
                     cout << "Updated " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
                 }
                 break;
-            case JSON:
-                cout << "{\"ProjID\":\"" << proj.id() << "\",\"Title\":\"" << escapeJSON( proj.title() ) << "\"";
-                if ( proj.has_desc() )
-                    cout << ",\"Desc\":\"" << escapeJSON( proj.desc() ) << "\"";
-                if ( proj.has_owner() )
-                    cout << ",\"Owner\":\"" << proj.owner() << "\"";
-                if ( proj.has_ct() )
-                    cout << ",\"Created\":" << proj.ct();
-                if ( proj.has_ut() )
-                    cout << ",\"Updated\":" << proj.ut();
-                cout << "}";
-                break;
             case CSV:
                 cout << "\"" << proj.id() << "\",\"" << escapeCSV( proj.title() ) << "\""
                     << ",\"" << ( proj.has_desc()?escapeCSV( proj.desc() ):"" ) << "\""
@@ -367,8 +347,6 @@ void printProjects( spProjectDataReply a_reply )
                 cout << "\n";
         }
     }
-    if ( g_out_form == JSON )
-        cout << "]}\n";
 }
 
 #if 0
@@ -402,8 +380,12 @@ void printGroups( spGroupDataReply a_reply )
 void printData( spRecordDataReply a_rep )
 {
     if ( g_out_form == JSON )
-        cout << "{\"Data\":[";
-    else if ( g_out_form == CSV )
+    {
+        cout << g_client->messageToJSON( a_rep.get() ) << "\n";
+        return;
+    }
+
+    if ( g_out_form == CSV )
         cout << "\"DataID\",\"Alias\",\"Title\",\"Desc\",\"Topic\",\"Keywords\",\"Owner\",\"Locked\",\"Size\",\"Repo\",\"Parent\",\"Uploaded\",\"Created\",\"Updated\",\"Meta\"\n";
 
     if ( a_rep->data_size() )
@@ -414,9 +396,6 @@ void printData( spRecordDataReply a_rep )
         for ( int i = 0; i < a_rep->data_size(); i++ )
         {
             const RecordData & rec = a_rep->data(i);
-
-            if ( g_out_form == JSON && i > 0 )
-                cout << ",";
 
             switch ( g_out_form )
             {
@@ -494,49 +473,20 @@ void printData( spRecordDataReply a_rep )
                     << "," << ( rec.has_ut()?rec.ut():0 )
                     << ",\"" << ( rec.has_metadata()?escapeCSV( rec.metadata() ):"" ) << "\"\n";
                 break;
-            case JSON:
-                cout << "{\"id\":\"" << rec.id() << "\"";
-                if ( rec.has_alias() )
-                    cout << ",\"alias\":\"" << rec.alias() << "\"";
-                cout << ",\"title\":\"" << escapeJSON( rec.title() ) << "\"";
-                if ( rec.has_desc() )
-                    cout << ",\"desc\":\"" << escapeJSON( rec.desc() ) << "\"";
-                if ( rec.has_topic() )
-                    cout << ",\"topic\":\"" << escapeJSON( rec.topic() ) << "\"";
-                if ( rec.has_keyw() )
-                    cout << ",\"keyw\":\"" << escapeJSON( rec.keyw() ) << "\"";
-                if ( rec.has_owner() )
-                    cout << ",\"owner\":\"" << rec.owner() << "\"";
-                cout << ",\"locked\":" << ((rec.has_locked() && rec.locked())?"true":"false");
-                if ( rec.has_size() )
-                    cout << ",\"size\":" << rec.size();
-                if ( rec.has_repo_id() )
-                    cout << ",\"repo_id\":\"" << rec.repo_id() << "\"";
-                if ( rec.has_parent_id() )
-                    cout << ",\"parent_id\":\"" << rec.parent_id() << "\"";
-                if ( rec.has_dt() )
-                    cout << ",\"dt\":" << rec.dt();
-                if ( rec.has_ct() )
-                    cout << ",\"ct\":" << rec.ct();
-                if ( rec.has_ut() )
-                    cout << ",\"ut\":" << rec.ut();
-                if ( rec.has_metadata() )
-                    cout << ",\"md\":" << rec.metadata();
-                cout << "}";
-                break;
             }
         }
     }
-
-    if ( g_out_form == JSON )
-        cout << "]}\n";
 }
 
 void printCollData( spCollDataReply a_reply )
 {
     if ( g_out_form == JSON )
-        cout << "{\"Collections\":[";
-    else if ( g_out_form == CSV )
+    {
+        cout << g_client->messageToJSON( a_reply.get() ) << "\n";
+        return;
+    }
+
+    if ( g_out_form == CSV )
         cout << "\"CollID\",\"Alias\",\"Title\",\"Desc\",\"Owner\",\"Parent\",\"Created\",\"Updated\"\n";
 
     if ( a_reply->coll_size() )
@@ -547,8 +497,6 @@ void printCollData( spCollDataReply a_reply )
         for ( int i = 0; i < a_reply->coll_size(); i++ )
         {
             const CollData & coll = a_reply->coll(i);
-            if ( g_out_form == JSON && i > 0 )
-                cout << ",";
 
             switch ( g_out_form )
             {
@@ -588,35 +536,20 @@ void printCollData( spCollDataReply a_reply )
                     << "," << (coll.has_ut()?coll.ut():0)
                     << "\n";
                 break;
-            case JSON:
-                cout << "{\"CollID\":\"" << coll.id() << "\"";
-                if ( coll.has_alias() )
-                    cout << ",\"Alias\":\"" << coll.alias() << "\"";
-                cout << ",\"Title\":\"" << escapeJSON( coll.title() ) << "\"";
-                if ( coll.has_desc() )
-                    cout << ",\"Desc\":\"" << escapeJSON( coll.desc() ) << "\"";
-                if ( coll.has_owner() )
-                    cout << ",\"Owner\":\"" << coll.owner() << "\"";
-                if ( coll.has_parent_id() )
-                    cout << ",\"parent_id\":\"" << coll.parent_id() << "\"";
-                if ( coll.has_ct() )
-                    cout << ",\"Created\":" << coll.ct();
-                if ( coll.has_ut() )
-                    cout << ",\"Updated\":" << coll.ut();
-                cout << "}";
-                break;
             }
         }
     }
-    if ( g_out_form == JSON )
-        cout << "]}\n";
 }
 
 void printListing( spListingReply a_reply )
 {
     if ( g_out_form == JSON )
-        cout << "{\"items\":[";
-    else if ( g_out_form == CSV )
+    {
+        cout << g_client->messageToJSON( a_reply.get() ) << "\n";
+        return;
+    }
+
+    if ( g_out_form == CSV )
         cout << "\"id\",\"alias\",\"title\",\"locked\"\n";
 
     string tmp;
@@ -652,20 +585,8 @@ void printListing( spListingReply a_reply )
                 << ",\"" << escapeCSV( item.title() ) << "\""
                 << "," << (item.has_locked() && item.locked()?1:0) << "\n";
             break;
-        case JSON:
-            cout << "{\"id\":\"" << item.id() << "\"";
-            if ( item.has_alias() )
-                cout << ",\"alias\":\"" << item.alias() << "\"";
-            cout << ",\"title\":\"" << escapeJSON( item.title() ) << "\"";
-            if ( item.has_locked() && item.locked() )
-                cout << ",\"locked\":true";
-            cout << "}";
-            break;
         }
     }
-
-    if ( g_out_form == JSON )
-        cout << "]}\n";
 }
 
 #if 0
@@ -696,22 +617,23 @@ void printACLs( spACLDataReply a_reply )
 
 void printXfrData( spXfrDataReply a_reply )
 {
+    if ( g_out_form == JSON )
+    {
+        cout << g_client->messageToJSON( a_reply.get() ) << "\n";
+        return;
+    }
+
     if ( a_reply->xfr_size() )
     {
         time_t t;
 
-        if ( g_out_form == JSON )
-            cout << "{\"transfers\":[";
-        else if ( g_out_form == CSV )
+        if ( g_out_form == CSV )
             cout << "\"TransID\",\"DataID\",\"Mode\",\"Status\",\"Error\",\"Path\",\"StatusTS\"\n";
 
         struct tm* gmt_time;
 
         for ( int i = 0; i < a_reply->xfr_size(); i++ )
         {
-            if ( g_out_form == JSON && i > 0 )
-                cout << ",";
-
             const XfrData & xfr = a_reply->xfr(i);
             switch( g_out_form )
             {
@@ -737,22 +659,7 @@ void printXfrData( spXfrDataReply a_reply )
                 cout << "\"" << xfr.local_path() << "\",";
                 cout << xfr.updated() << "\n";
                 break;
-            case JSON:
-                cout << "{\"TransID\":\"" << xfr.id() << "\",";
-                cout << "\"DataID\":\"" << xfr.data_id() << "\",";
-                cout << "\"Mode\":\"" << (xfr.mode()==XM_GET?"GET":"PUT") << "\",";
-                cout << "\"Status\":\"" << StatusText[xfr.status()] << "\",";
-                if ( xfr.has_err_msg() )
-                    cout << "\"Error\":\"" << xfr.err_msg() << "\",";
-                cout << "\"Path\":\"" << xfr.local_path() << "\",";
-                cout << "\"StatusTS\":" << xfr.updated() << "}";
-                break;
             }
-        }
-
-        if ( g_out_form == JSON )
-        {
-            cout << "]}\n";
         }
     }
     else
@@ -764,9 +671,6 @@ void printXfrData( spXfrDataReply a_reply )
             break;
         case CSV:
             cout << "\"No matching transfers\"\n";
-            break;
-        case JSON:
-            cout << "{\"transfers\":[]}";
             break;
         }
     }
@@ -983,7 +887,7 @@ int data_get()
             cout << "\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
             break;
         case JSON:
-            cout << "{\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
+            cout << "{\"id\":\"" << xfr.id() << "\",\"status\":\"" << StatusText[xfr.status()] << "\",\"local_path\":\"" << xfr.local_path() << "\"}\n";
             break;
         }
 
@@ -1048,7 +952,7 @@ int data_put()
         cout << "\"" + data_id + "\",\"" << xfr.id() << "\",\"" << StatusText[xfr.status()] << "\",\"" << xfr.local_path() << "\"\n";
         break;
     case JSON:
-        cout << "{\"DataID\":\"" + data_id + "\",\"TransID\":\"" << xfr.id() << "\",\"Status\":\"" << StatusText[xfr.status()] << "\",\"Path\":\"" << xfr.local_path() << "\"}\n";
+        cout << "{\"data_id\":\"" + data_id + "\",\"id\":\"" << xfr.id() << "\",\"status\":\"" << StatusText[xfr.status()] << "\",\"local_path\":\"" << xfr.local_path() << "\"}\n";
         break;
     }
 
@@ -1253,7 +1157,10 @@ int ep_list()
     spUserGetRecentEPReply rep = g_client->getRecentEndpoints();
 
     if ( g_out_form == JSON )
-        cout << "{\"eps\":[";
+    {
+        cout << g_client->messageToJSON( rep.get() );
+        return 0;
+    }
 
     for ( int i = 0; i < rep->ep_size(); i++ )
     {
@@ -1265,16 +1172,8 @@ int ep_list()
         case CSV:
             cout << "\"" << rep->ep(i) << "\"\n";
             break;
-        case JSON:
-            if ( i )
-                cout << ",";
-            cout << "\"" << rep->ep(i) << "\"";
-            break;
         }
     }
-
-    if ( g_out_form == JSON )
-        cout << "]}\n";
 
     return 0;
 }
