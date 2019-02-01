@@ -561,7 +561,7 @@ Client::recordView( const std::string & a_id )
 }
 
 spRecordDataReply
-Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_metadata, const char * a_coll_id, const char * a_repo_id )
+Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, const char * a_coll_id, const char * a_repo_id )
 {
     Auth::RecordCreateRequest req;
 
@@ -570,6 +570,10 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
         req.set_desc( a_desc );
     if ( a_alias )
         req.set_alias( a_alias );
+    if ( a_keyw )
+        req.set_keyw( a_keyw );
+    if ( a_topic )
+        req.set_topic( a_topic );
     if ( a_metadata )
         req.set_metadata( a_metadata );
     if ( a_coll_id )
@@ -590,7 +594,7 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
 }
 
 spRecordDataReply
-Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_metadata, bool a_md_merge )
+Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, bool a_md_merge )
 {
     Auth::RecordUpdateRequest req;
 
@@ -601,6 +605,10 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
         req.set_desc( a_desc );
     if ( a_alias )
         req.set_alias( a_alias );
+    if ( a_keyw )
+        req.set_keyw( a_keyw );
+    if ( a_topic )
+        req.set_topic( a_topic );
     if ( a_metadata )
     {
         req.set_metadata( a_metadata );

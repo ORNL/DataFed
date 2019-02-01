@@ -96,6 +96,8 @@ bool            g_wait = false;
 string          g_title;
 string          g_desc;
 string          g_alias;
+string          g_keyw;
+string          g_topic;
 string          g_parent;
 string          g_meta;
 string          g_meta_file;
@@ -849,11 +851,11 @@ spRecordDataReply createRecord()
 
         inf.close();
 
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0 );
     }
     else
     {
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0 );
     }
 }
 
@@ -872,11 +874,11 @@ spRecordDataReply updateRecord( const string & a_id )
 
         inf.close();
 
-        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, metadata.c_str(), !g_meta_replace );
+        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), !g_meta_replace );
     }
     else
     {
-        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_meta.size()?g_meta.c_str():0, !g_meta_replace );
+        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, !g_meta_replace );
     }
 }
 
@@ -1728,6 +1730,8 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
     g_title.clear();
     g_desc.clear();
     g_alias.clear();
+    g_keyw.clear();
+    g_topic.clear();
     g_parent.clear();
     g_meta.clear();
     g_meta_file.clear();
@@ -1883,7 +1887,9 @@ int main( int a_argc, char ** a_argv )
         ("title,t",po::value<string>( &g_title ),"Specify title for create/update commands")
         ("desc,d",po::value<string>( &g_desc ),"Specify description for create/update commands")
         ("alias,a",po::value<string>( &g_alias ),"Specify alias for create/update commands")
-        ("parent,p",po::value<string>( &g_parent ),"Specify parent collection ID or alias when creating new data record or collection")
+        ("keyw,k",po::value<string>( &g_keyw ),"Specify keywords for data create/update commands")
+        ("top",po::value<string>( &g_topic ),"Specify topic for data create/update commands")
+        ("par,p",po::value<string>( &g_parent ),"Specify parent collection ID or alias when creating new data record or collection")
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
