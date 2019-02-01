@@ -1343,7 +1343,7 @@ function makeBrowserTab(){
                     url: "/api/prj/list?member=true",
                     cache: false
                 };
-            } else if ( data.node.key == "shared_user" ) {
+            } else if ( data.node.key.startsWith( "shared_user" )) {
                 if ( data.node.data.scope ){
                     data.result = {
                         url: "/api/acl/by_user/list?owner=" + encodeURIComponent(data.node.data.scope),
@@ -1366,7 +1366,7 @@ function makeBrowserTab(){
                     url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.key) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
-            } else if ( data.node.key == "shared_proj" ) {
+            } else if ( data.node.key.startsWith( "shared_proj" )) {
                 if ( data.node.data.scope ){
                     data.result = {
                         url: "/api/acl/by_proj/list?owner=" + encodeURIComponent(data.node.data.scope),
@@ -1435,7 +1435,7 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user",scope:"u/"+item.uid,lazy:true,nodrag:true});
+                        data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user_"+item.uid,scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
@@ -1446,7 +1446,7 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: inst.generateTitle(item) + " <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj",scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: inst.generateTitle(item) + " <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
