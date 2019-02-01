@@ -259,9 +259,8 @@ void printUsers( spUserDataReply a_reply )
         for ( int i = 0; i < a_reply->user_size(); i++ )
         {
             const UserData & user = a_reply->user(i);
-            switch ( g_out_form )
+            if ( g_out_form == TEXT )
             {
-            case TEXT:
                 cout << "UserID   " << user.uid() << "\n";
                 cout << "Name     " << user.name() << "\n";
                 if ( user.has_email() )
@@ -278,17 +277,14 @@ void printUsers( spUserDataReply a_reply )
                     for ( int j = 0; j < user.ident_size(); j++ )
                         cout << "    " << user.ident(j) << "\n";
                 }*/
-
-                break;
-            case CSV:
+                cout << "\n";
+            }
+            else
+            {
                 cout << "\"" << user.uid() << "\",\"" << user.name() << "\""
                     << ",\"" << ( user.has_email()?user.email():"" ) << "\""
                     << "," << ( user.has_is_admin()?user.is_admin():false ) << "\n";
-                break;
             }
-
-            if ( g_out_form == TEXT )
-                cout << "\n";
         }
     }
 }
@@ -312,9 +308,8 @@ void printProjects( spProjectDataReply a_reply )
         for ( int i = 0; i < a_reply->proj_size(); i++ )
         {
             const ProjectData & proj = a_reply->proj(i);
-            switch ( g_out_form )
+            if ( g_out_form == TEXT )
             {
-            case TEXT:
                 cout << "ProjID  " << proj.id() << "\n";
                 cout << "Title   " << proj.title() << "\n";
                 if ( proj.has_desc() )
@@ -333,18 +328,16 @@ void printProjects( spProjectDataReply a_reply )
                     pTM = localtime(&t);
                     cout << "Updated " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
                 }
-                break;
-            case CSV:
+                cout << "\n";
+            }
+            else
+            {
                 cout << "\"" << proj.id() << "\",\"" << escapeCSV( proj.title() ) << "\""
                     << ",\"" << ( proj.has_desc()?escapeCSV( proj.desc() ):"" ) << "\""
                     << ",\"" << ( proj.has_owner()?proj.owner():"") << "\""
                     << ",\"" << ( proj.has_ct()?proj.ct():0) << "\""
                     << ",\"" << ( proj.has_ut()?proj.ut():0) << "\"\n";
-                break;
             }
-
-            if ( g_out_form == TEXT )
-                cout << "\n";
         }
     }
 }
@@ -397,9 +390,8 @@ void printData( spRecordDataReply a_rep )
         {
             const RecordData & rec = a_rep->data(i);
 
-            switch ( g_out_form )
+            if ( g_out_form == TEXT )
             {
-            case TEXT:
                 cout << "DataID   " << rec.id();
                 if ( rec.has_alias() )
                     cout << " (" << rec.alias() << ")";
@@ -417,6 +409,7 @@ void printData( spRecordDataReply a_rep )
                 }
                 else
                     cout << "n/a\n";
+
                 cout << "Topic    " << (rec.has_topic()?rec.topic():"n/a") << "\n";
                 cout << "Keywords " << (rec.has_keyw()?rec.keyw():"n/a") << "\n";
                 cout << "Owner    " << (rec.has_owner()?rec.owner():"n/a") << "\n";
@@ -455,8 +448,9 @@ void printData( spRecordDataReply a_rep )
                 }
                 else
                     cout << "n/a\n";
-                break;
-            case CSV:
+            }
+            else
+            {
                 cout << "\"" << rec.id() << "\""
                     << ",\"" << ( rec.has_alias()?rec.alias():"" ) << "\""
                     << ",\"" << escapeCSV( rec.title() ) << "\""
@@ -472,7 +466,6 @@ void printData( spRecordDataReply a_rep )
                     << "," << ( rec.has_ct()?rec.ct():0 )
                     << "," << ( rec.has_ut()?rec.ut():0 )
                     << ",\"" << ( rec.has_metadata()?escapeCSV( rec.metadata() ):"" ) << "\"\n";
-                break;
             }
         }
     }
@@ -498,9 +491,8 @@ void printCollData( spCollDataReply a_reply )
         {
             const CollData & coll = a_reply->coll(i);
 
-            switch ( g_out_form )
+            if ( g_out_form == TEXT )
             {
-            case TEXT:
                 cout << "CollID  " << coll.id() << "\n";
                 if ( coll.has_alias() )
                     cout << "Alias   " << coll.alias() << "\n";
@@ -524,8 +516,9 @@ void printCollData( spCollDataReply a_reply )
                     cout << "Updated " << put_time(pTM, "%Y-%m-%d %H:%M:%S") << "\n";
                 }
                 cout << "\n";
-                break;
-            case CSV:
+            }
+            else
+            {
                 cout << "\"" << coll.id() << "\""
                     << ",\"" << (coll.has_alias()?coll.alias():"") << "\""
                     << ",\"" << escapeCSV( coll.title() ) << "\""
@@ -535,7 +528,6 @@ void printCollData( spCollDataReply a_reply )
                     << "," << (coll.has_ct()?coll.ct():0)
                     << "," << (coll.has_ut()?coll.ut():0)
                     << "\n";
-                break;
             }
         }
     }
@@ -557,9 +549,8 @@ void printListing( spListingReply a_reply )
     {
         const ListingData & item = a_reply->item(i);
 
-        switch ( g_out_form )
+        if ( g_out_form == TEXT )
         {
-        case TEXT:
             cout << setw(4) << left << (to_string(i + 1) + ". ");
 
             if ( item.has_locked() && item.locked() )
@@ -578,13 +569,13 @@ void printListing( spListingReply a_reply )
                 cout << setw(19) << " ";
 
             cout << " \"" << item.title() << "\"\n";
-            break;
-        case CSV:
+        }
+        else
+        {
             cout << "\"" << item.id() << "\""
                 << ",\"" << (item.has_alias()?item.alias():"") << "\""
                 << ",\"" << escapeCSV( item.title() ) << "\""
                 << "," << (item.has_locked() && item.locked()?1:0) << "\n";
-            break;
         }
     }
 }
@@ -635,9 +626,8 @@ void printXfrData( spXfrDataReply a_reply )
         for ( int i = 0; i < a_reply->xfr_size(); i++ )
         {
             const XfrData & xfr = a_reply->xfr(i);
-            switch( g_out_form )
+            if ( g_out_form == TEXT )
             {
-            case TEXT:
                 cout << "TransID   " << xfr.id() << "\n";
                 cout << "DataID    " << xfr.data_id() << "\n";
                 cout << "Mode      " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
@@ -649,8 +639,9 @@ void printXfrData( spXfrDataReply a_reply )
                 gmt_time = localtime(&t);
                 cout << "StatusTS  " << put_time(gmt_time, "%Y-%m-%d %H:%M:%S") << "\n";
                 cout << "\n";
-                break;
-            case CSV:
+            }
+            else
+            {
                 cout << "\"" << xfr.id() << "\",";
                 cout << "\"" << xfr.data_id() << "\",";
                 cout << "\"" << (xfr.mode()==XM_GET?"GET":"PUT") << "\",";
@@ -658,21 +649,13 @@ void printXfrData( spXfrDataReply a_reply )
                 cout << "\"" << (xfr.has_err_msg()?xfr.err_msg():"") << "\",";
                 cout << "\"" << xfr.local_path() << "\",";
                 cout << xfr.updated() << "\n";
-                break;
             }
         }
     }
     else
     {
-        switch( g_out_form )
-        {
-        case TEXT:
+        if ( g_out_form == TEXT )
             cout << "No matching transfers\n";
-            break;
-        case CSV:
-            cout << "\"No matching transfers\"\n";
-            break;
-        }
     }
 }
 
@@ -1164,15 +1147,10 @@ int ep_list()
 
     for ( int i = 0; i < rep->ep_size(); i++ )
     {
-        switch( g_out_form )
-        {
-        case TEXT:
+        if ( g_out_form == TEXT )
             cout << rep->ep(i) << "\n";
-            break;
-        case CSV:
+        else
             cout << "\"" << rep->ep(i) << "\"\n";
-            break;
-        }
     }
 
     return 0;
