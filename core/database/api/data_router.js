@@ -36,32 +36,32 @@ router.post('/create', function (req, res) {
                 var parent_id;
                 var repo_alloc;
 
-                console.log("Create new data");
+                //console.log("Create new data");
 
                 if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
-                    console.log("parent: ", parent_id);
+                    //console.log("parent: ", parent_id);
 
                     if ( parent_id[0] != "c" )
-                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
+                        throw [g_lib.ERR_INVALID_PARAM,"Invalid parent collection, " + parent_id];
 
                     if ( !g_db._exists( parent_id ))
-                        throw g_lib.ERR_COLL_NOT_FOUND;
+                        throw [g_lib.ERR_INVALID_PARAM,"Parent collection, "+parent_id+", not found"];
 
                     owner_id = g_db.owner.firstExample({_from:parent_id})._to;
                     if ( owner_id != client._id ){
                         if ( !g_lib.hasManagerPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
 
-                            console.log("check admin perm on parent coll: ",parent_id);
+                            //console.log("check admin perm on parent coll: ",parent_id);
                             if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE )){
-                                console.log("NO admin perm on parent coll: ",parent_id);
+                                //console.log("NO admin perm on parent coll: ",parent_id);
                                 throw g_lib.ERR_PERM_DENIED;
                             }
                         }
                     }
                 }else{
-                    console.log("no body?");
+                    //console.log("no body?");
                     parent_id = g_lib.getRootID(client._id);
                     owner_id = client._id;
                 }
@@ -69,32 +69,32 @@ router.post('/create', function (req, res) {
                 var alloc_parent = null;
 
                 if ( owner_id != client._id ){
-                    console.log( "not owner" );
+                    //console.log( "not owner" );
                     if ( req.body.repo ) {
                         // If a repo is specified, must be a real allocation - verify it as usual
-                        console.log( "repo specified" );
+                        //console.log( "repo specified" );
                         //repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: req.body.repo });
                         repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
                     } else {
                         // If a repo is not specified, must check for project sub-allocation
-                        console.log( "repo not specified" );
+                        //console.log( "repo not specified" );
 
                         if ( owner_id[0] == 'p' ){
                             // For projects, use sub-allocation if defined, otherwise auto-assign from project owner
-                            console.log( "owner is a project" );
+                            //console.log( "owner is a project" );
                             var proj = g_db.p.document( owner_id );
                             if ( proj.sub_repo ){
-                                console.log( "project has sub allocation" );
-                                // Make sure soft capacitt hasn't been exceeded
+                                //console.log( "project has sub allocation" );
+                                // Make sure soft capacity hasn't been exceeded
                                 if ( proj.sub_usage > proj.sub_alloc )
-                                    throw g_lib.ERR_ALLOCATION_EXCEEDED;
+                                    throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+proj.sub_alloc+")"];
 
                                 // TODO Handle multiple project owners?
                                 var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
                                 repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
                                 // Make sure hard capacity hasn't been exceeded
                                 if ( repo_alloc.usage > repo_alloc.capacity )
-                                    throw g_lib.ERR_ALLOCATION_EXCEEDED;
+                                    throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+repo_alloc.capacity+")"];
 
                                 alloc_parent = repo_alloc._id;
                             }
@@ -115,7 +115,7 @@ router.post('/create', function (req, res) {
                 }
 
                 if ( !repo_alloc )
-                    throw g_lib.ERR_NO_ALLOCATION;
+                    throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = { size: 0, ct: time, ut: time, owner: owner_id };
@@ -132,7 +132,7 @@ router.post('/create', function (req, res) {
                 if ( req.body.md ){
                     obj.md = req.body.md; //JSON.parse( req.body.md );
                     if ( Array.isArray( obj.md ))
-                        throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+                        throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
 
                     //console.log( "parsed:", obj.md );
                 }
@@ -153,7 +153,7 @@ router.post('/create', function (req, res) {
                     var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
 
                     if ( g_db.a.exists({ _key: alias_key }))
-                        throw g_lib.ERR_ALIAS_IN_USE;
+                        throw [g_lib.ERR_INVALID_PARAM,"Alias, "+obj.alias+", already in use"];
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
@@ -300,7 +300,7 @@ router.post('/update', function (req, res) {
                     if ( obj.alias ){
                         var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
                         if ( g_db.a.exists({ _key: alias_key }))
-                            throw g_lib.ERR_ALIAS_IN_USE;
+                            throw [g_lib.ERR_INVALID_PARAM,"Alias, "+obj.alias+", already in use"];
 
                         g_db.a.save({ _key: alias_key });
                         g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
@@ -451,7 +451,7 @@ router.get('/path', function (req, res) {
 
         var repo = g_db.repo.document( loc._to );
         if ( repo.domain != req.queryParams.domain )
-            throw g_lib.ERR_INVALID_DOMAIN;
+            throw [g_lib.ERR_INVALID_PARAM,"Conflicting domain"];
 
         res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
     } catch( e ) {

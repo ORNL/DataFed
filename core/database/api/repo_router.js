@@ -114,7 +114,8 @@ router.get('/create', function (req, res) {
 
                 for ( var i in req.queryParams.admins ) {
                     if ( !g_db._exists( req.queryParams.admins[i] ))
-                        throw g_lib.ERR_USER_NOT_FOUND;
+                        throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.admins[i]+", not found"];
+
                     g_db.admin.save({ _from: repo._id, _to: req.queryParams.admins[i] });
                 }
 
@@ -180,7 +181,7 @@ router.get('/update', function (req, res) {
                     g_db.admin.removeByExample({_from: req.queryParams.id});
                     for ( var i in req.queryParams.admins ) {
                         if ( !g_db._exists( req.queryParams.admins[i] ))
-                            throw g_lib.ERR_USER_NOT_FOUND;
+                            throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.admins[i]+", not found"];
                         g_db.admin.save({ _from: req.queryParams.id, _to: req.queryParams.admins[i] });
                     }
                 }
@@ -366,7 +367,7 @@ router.get('/alloc/set', function (req, res) {
 
                 // Ensure subject exists
                 if ( !g_db._exists( subject_id ))
-                    throw g_lib.ERR_INVALID_ID;
+                    throw [g_lib.ERR_NOT_FOUND,"Subject, "+subject_id+", not found"];
 
                 var repo = g_db.repo.document( req.queryParams.repo );
 
@@ -377,11 +378,11 @@ router.get('/alloc/set', function (req, res) {
                     // Check if there are any records using this repo and fail if so
                     // Check for sub allocations
                     if ( g_db.loc.firstExample({ parent: alloc._id }))
-                        throw g_lib.ERR_ALLOC_IN_USE;
+                        throw [g_lib.ERR_IN_USE,"Cannot clear allocation - sub-allocation defined"];
                     // Check for direct use of allocation
                     var records = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1]._id", { repo: repo._id, subj: subject_id }).toArray();
                     if ( records.length )
-                        throw g_lib.ERR_ALLOC_IN_USE;
+                        throw [g_lib.ERR_IN_USE,"Cannot clear allocation - records present"];
 
                     g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
                 } else {

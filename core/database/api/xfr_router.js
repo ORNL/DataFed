@@ -58,7 +58,7 @@ router.get('/init', function (req, res) {
                 // Get data storage location
                 var repo_loc = g_db._query("for v,e in 1..1 outbound @data loc return { repo: v, loc: e }", { data: data_id } ).toArray();
                 if ( repo_loc.length != 1 )
-                    throw g_lib.ERR_INTERNAL_FAULT;
+                    throw [g_lib.ERR_INTERNAL_FAULT,"No storage location for data record, " + data_id];
 
                 repo_loc = repo_loc[0];
                 var xfr;
@@ -68,7 +68,7 @@ router.get('/init', function (req, res) {
                     xfr = g_db._query( "for i in tr filter i.data_id == @data_id and i.status < 3 return i", { data_id: data_id }).toArray();
                     // If there are any active puts/gets for same data, this is a conflict
                     if ( xfr.length != 0 )
-                        throw g_lib.ERR_XFR_CONFLICT;
+                        throw [g_lib.ERR_XFR_CONFLICT,"Transfer conflict - transfer(s) in-progress for " + data_id];
 
                     xfr = g_db.tr.save({
                         mode: g_lib.XM_PUT,
@@ -85,7 +85,7 @@ router.get('/init', function (req, res) {
                     result = [xfr.new];
                 } else if ( req.queryParams.mode == g_lib.XM_GET ) {
                     if ( !data.size )
-                        throw g_lib.ERR_XFR_RAW_DATA;
+                        throw [g_lib.ERR_NO_RAW_DATA,"Data record, "+data_id+", has no raw data"];
 
                     var dest_path = req.queryParams.path;
                     if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
@@ -97,7 +97,7 @@ router.get('/init', function (req, res) {
 
                     for ( var i in xfr ) {
                         if ( xfr[i].mode == g_lib.XM_PUT || xfr[i].user_id != client._id )
-                            throw g_lib.ERR_XFR_CONFLICT;
+                            throw [g_lib.ERR_XFR_CONFLICT,"Transfer conflict - put in-progress for " + data_id];
                     }
 
                     if ( xfr.length == 0 )
@@ -120,17 +120,17 @@ router.get('/init', function (req, res) {
                     }
                 } else {
                     if ( !data.size )
-                        throw g_lib.ERR_NO_RAW_DATA;
+                        throw [g_lib.ERR_NO_RAW_DATA,"Data record, "+data_id+", has no raw data"];
 
                     xfr = g_db._query( "for i in tr filter ( i.data_id == @src_id or i.data_id == @dst_id ) and i.status < 3 return i", { src_id: data_id, dst_id: dest_id }).toArray();
                     // If there are any active puts/gets/copies for same data, this is a conflict
                     if ( xfr.length != 0 )
-                        throw g_lib.ERR_XFR_CONFLICT;
+                        throw [g_lib.ERR_XFR_CONFLICT,"Transfer conflict - transfer(s) in progress for source and/or destination"];
 
                     // Get data dest storage location
                     var repo_loc_dst = g_db._query("for v,e in 1..1 outbound @data loc return { repo: v, loc: e }", { data: dest_id } ).toArray();
                     if ( repo_loc_dst.length != 1 )
-                        throw g_lib.ERR_INTERNAL_FAULT;
+                        throw [g_lib.ERR_INTERNAL_FAULT,"No storage location for data record, " + dest_id];
 
                     repo_loc_dst = repo_loc_dst[0];
 
@@ -226,7 +226,7 @@ router.get('/list', function (req, res) {
         var filter = "";
 
         if (( req.queryParams.from != undefined || req.queryParams.to != undefined ) && req.queryParams.since != undefined )
-            throw g_lib.ERR_INVALID_PARAM;
+            throw [g_lib.ERR_INVALID_PARAM,"Cannot specify both time range and elapsed time"];
 
         if ( req.queryParams.from != undefined ) {
             filter += "i.updated >= " + req.queryParams.from;

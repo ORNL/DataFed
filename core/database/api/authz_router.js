@@ -36,13 +36,13 @@ router.get('/gridftp', function (req, res) {
                 req_perm = g_lib.PERM_WR_DATA;
                 break;
             case "delete":
-                throw g_lib.ERR_INVALID_ACTION;
+                throw g_lib.ERR_PERM_DENIED;
             case "chdir":
             case "lookup":
                 // For TESTING, allow these actions
                 return;
             default:
-                throw g_lib.ERR_INVALID_ACTION;
+                throw [g_lib.ERR_INVALID_PARAM,"Invalid gridFTP action: ", req.queryParams.act];
         }
 
         var idx = req.queryParams.file.lastIndexOf("/");
@@ -63,7 +63,7 @@ router.get('/gridftp', function (req, res) {
         console.log( "actual loc:",loc.path);
         console.log( "req repo:",req.queryParams.repo,",actual repo",loc._to);
         //if ( !loc || loc._to != req.queryParams.repo || loc.path != path )
-        //    throw g_lib.ERR_INVALID_LOCATION;
+        //    throw g_lib.ERR_;
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -83,7 +83,7 @@ router.get('/perm/check', function (req, res) {
         var obj,result = true,id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
 
         if ( id[1] != "/" )
-            throw g_lib.ERR_INVALID_PARAM;
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid ID, "+req.queryParams.id];
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
@@ -111,7 +111,7 @@ router.get('/perm/check', function (req, res) {
                 result = g_lib.hasPermissions( client, obj, perms );
             }
         }else
-            throw g_lib.ERR_INVALID_PARAM;
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid ID, "+req.queryParams.id];
 
         res.send({ granted: result });
     } catch( e ) {
@@ -129,6 +129,9 @@ router.get('/perm/get', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var result = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
         var obj,id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
+
+        if ( id[1] != "/" )
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid ID, "+req.queryParams.id];
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
@@ -153,7 +156,7 @@ router.get('/perm/get', function (req, res) {
                 result = g_lib.getPermissions( client, obj, result );
             }
         }else
-            throw g_lib.ERR_INVALID_PARAM;
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid ID, "+req.queryParams.id];
 
         res.send({ granted: result });
     } catch( e ) {

@@ -61,14 +61,6 @@ module.exports = ( function() {
     obj.SS_PROJ_SHARE       = 0x10;
     obj.SS_PUBLIC           = 0x20;
 
-    obj.MAX_TITLE_LEN       = 80;
-    obj.MAX_ALIAS_LEN       = 40;
-    obj.MAX_DESC_LEN        = 4000;
-    obj.MAX_DESC_SHORT_LEN  = 400;
-    obj.MAX_PROJ_ID_LEN     = 40;
-    obj.MAX_GROUP_ID_LEN    = 40;
-
-
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
         grant: joi.number().optional(),
@@ -78,60 +70,22 @@ module.exports = ( function() {
     obj.ERR_INFO = [];
     obj.ERR_COUNT = 0;
 
-    obj.ERR_AUTHN_FAILED          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Authentication failed" ]);
-    obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission denied" ]);
+    obj.ERR_AUTHN_FAILED          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Authentication Failed" ]);
+    obj.ERR_PERM_DENIED           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Permission Denied" ]);
+    obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid Parameter" ]);
+    obj.ERR_INPUT_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Input value too long" ]);
     obj.ERR_INVALID_CHAR          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid character" ]);
-    obj.ERR_INVALID_ID            = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid ID" ]);
-    obj.ERR_INVALID_PROJ_ID       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid project ID" ]);
-    obj.ERR_INVALID_GROUP_ID      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid group ID" ]);
-    obj.ERR_INVALID_IDENT         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid client identity" ]);
-    obj.ERR_INVALID_ALIAS         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid alias" ]);
-    obj.ERR_INVALID_TITLE         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid title" ]);
-    obj.ERR_INVALID_DOMAIN        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid domain" ]);
-    obj.ERR_INVALID_ALLOC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid allocation" ]);
-    obj.ERR_INVALID_PARAM         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid parameter(s)" ]);
-    obj.ERR_INVALID_COLLECTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid collection" ]);
-    obj.ERR_INVALID_LOCATION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid repo location" ]);
-    obj.ERR_CLIENT_NOT_FOUND      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Client not found" ]);
-    obj.ERR_UID_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "UID not found" ]);
-    obj.ERR_GROUP_NOT_FOUND       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Group not found" ]);
-    obj.ERR_GROUP_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 409, "Group ID already in use" ]);
-    obj.ERR_OBJ_NOT_FOUND         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Object not found" ]);
-    obj.ERR_ALIAS_NOT_FOUND       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Alias not found" ]);
-    obj.ERR_ALIAS_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 409, "Alias already in use" ]);
-    obj.ERR_USER_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "User not found" ]);
-    obj.ERR_DATA_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data record not found" ]);
-    obj.ERR_COLL_NOT_FOUND        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Collection not found" ]);
-    obj.ERR_PARENT_NOT_COLL       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Parent is not a collection" ]);
-    obj.ERR_KEYS_NOT_DEFINED      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Keys not defined" ]);
-    obj.ERR_TOKEN_NOT_DEFINED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Token not defined" ]);
-    obj.ERR_CANNOT_DEL_ROOT       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot delete root collection" ]);
-    obj.ERR_ITEM_ALREADY_LINKED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item already in collection" ]);
-    obj.ERR_ITEM_NOT_LINKED       = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Item not in collection" ]);
-    obj.ERR_CANNOT_CROSS_LINK     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot link items across different users/projects" ]);
-    obj.ERR_CANNOT_LINK_ROOT      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Cannot link root collection" ]);
-    obj.ERR_CIRCULAR_LINK         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Link would cause circular dependency" ]);
-    obj.ERR_MISSING_REQ_OPTION    = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required options" ]);
-    obj.ERR_INVALID_PERM          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid permission" ]);
-    obj.ERR_INVALID_ACTION        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid gridftp action" ]);
+    obj.ERR_NOT_FOUND             = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Record Not Found" ]);
+    obj.ERR_IN_USE                = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Value In Use" ]);
+    obj.ERR_LINK                  = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Collection Link Error" ]);
+    obj.ERR_UNLINK                = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Collection Unlink Error" ]);
+    obj.ERR_MISSING_REQ_PARAM     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Missing one or more required parameters" ]);
     obj.ERR_NO_RAW_DATA           = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Record has no raw data" ]);
     obj.ERR_XFR_CONFLICT          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Data transfer conflict" ]);
     obj.ERR_INTERNAL_FAULT        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Internal server fault" ]);
     obj.ERR_NO_ALLOCATION         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "No storage allocation available" ]);
     obj.ERR_ALLOCATION_EXCEEDED   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Storage allocation exceeded" ]);
-    obj.ERR_PROJ_REQUIRES_ADMIN   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project requires at least one admin" ]);
-    obj.ERR_PASSWORD_REQUIRED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Password required" ]);
-    obj.ERR_EMAIL_REQUIRED        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "E-mail required" ]);
-    obj.ERR_MEM_GRP_PROTECTED     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Operation not allow on project 'members' group" ]);
-    obj.ERR_ALLOC_IN_USE          = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Allocation in use" ]);
-    obj.ERR_INPUT_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Input value too long" ]);
-    obj.ERR_ALIAS_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Alias too long ("+obj.MAX_ALIAS_LEN+" char limit)" ]);
-    obj.ERR_TITLE_TOO_LONG        = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Title too long ("+obj.MAX_TITLE_LEN+" char limit)" ]);
-    obj.ERR_DESC_TOO_LONG         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Description too long ("+obj.MAX_DESC_LEN+" char limit)" ]);
-    obj.ERR_DESC_SHORT_TOO_LONG   = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Description too long ("+obj.MAX_DESC_SHORT_LEN+" char limit)" ]);
-    obj.ERR_GROUP_ID_TOO_LONG     = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Group ID too long ("+obj.MAX_GROUP_ID_LEN+" char limit)" ]);
-    obj.ERR_PROJ_ID_TOO_LONG      = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Project ID too long ("+obj.MAX_PROJ_ID_LEN+" char limit)" ]);
-    obj.ERR_INVALID_TOPIC         = obj.ERR_COUNT++; obj.ERR_INFO.push([ 400, "Invalid topic path" ]);
+
 
     obj.CHARSET_ID      = 0;
     obj.CHARSET_ALIAS   = 1;
@@ -153,7 +107,7 @@ module.exports = ( function() {
     obj.procInputParam = function( a_in, a_field, a_update, a_out ){
         var val, spec = obj.field_reqs[a_field];
 
-        console.log("procInput",a_field,",update:",a_update);
+        //console.log("procInput",a_field,",update:",a_update);
 
         if ( !spec ){
             throw [obj.ERR_INTERNAL_FAULT,"Input specification for '" + a_field + "' not found. Please context system administrator."];
@@ -164,11 +118,11 @@ module.exports = ( function() {
         else
             val = a_in[a_field];
 
-        console.log("init val",val);
+        //console.log("init val",val);
 
         // Ignore param updates when not allowed to be updated
         if ( a_update && !spec.update ){
-            console.log("stop b/c no update allowed");
+            //console.log("stop b/c no update allowed");
             return;
         }
 
@@ -208,7 +162,7 @@ module.exports = ( function() {
             if ( a_update ){
                 if ( val === "" ){
                     if ( spec.required )
-                        throw [obj.ERR_MISSING_REQ_OPTION,"Required field '" + spec.label + "' cannot be deleted."];
+                        throw [obj.ERR_MISSING_REQ_PARAM,"Required field '" + spec.label + "' cannot be deleted."];
 
                     if ( spec.out_field )
                         a_out[spec.out_field] = null;
@@ -216,7 +170,7 @@ module.exports = ( function() {
                         a_out[a_field] = null;
                 }
             }else if ( spec.required )
-                throw [obj.ERR_MISSING_REQ_OPTION,"Missing required field '" + spec.label + "'."];
+                throw [obj.ERR_MISSING_REQ_PARAM,"Missing required field '" + spec.label + "'."];
             }
     };
 
@@ -299,7 +253,7 @@ module.exports = ( function() {
 
         if ( result.length != 1 ){
             console.log("Client", a_client_id, "not found, params:", params );
-            throw obj.ERR_CLIENT_NOT_FOUND;
+            throw [obj.ERR_NOT_FOUND,"Client, "+a_client_id+", not found"];
         }
 
         return result[0];
@@ -309,7 +263,7 @@ module.exports = ( function() {
         var result = obj.db._query( "for i in ident filter i._to in @ids return distinct document(i._from)", { ids: a_uuids }).toArray();
 
         if ( result.length != 1 )
-            throw obj.ERR_USER_NOT_FOUND;
+            throw [obj.ERR_NOT_FOUND,"No user matching Globus IDs found"];
 
         return result[0];
     };
@@ -319,7 +273,7 @@ module.exports = ( function() {
         var result = obj.db._query( "for i in u filter i.pub_key == @key return i._id", { key: a_pub_key }).toArray();
 
         if ( result.length != 1 )
-            throw obj.ERR_USER_NOT_FOUND;
+            throw [obj.ERR_NOT_FOUND,"No user matching authentication key found"];
 
         return result[0];
     };
@@ -329,7 +283,7 @@ module.exports = ( function() {
 
         console.log( "key res:", result );
         if ( result.length != 1 )
-            throw obj.ERR_USER_NOT_FOUND;
+            throw [obj.ERR_NOT_FOUND,"No user matching authentication key found"];
 
         return result[0];
     };
@@ -380,7 +334,7 @@ module.exports = ( function() {
         try {
             return obj.db._document( id );
         } catch( e ) {
-            throw obj.ERR_OBJ_NOT_FOUND;
+            throw [obj.ERR_NOT_FOUND,"Object, "+a_obj_id+", not found"];
         }
     };
 
@@ -575,56 +529,6 @@ module.exports = ( function() {
         }
     };
 
-    /*
-    obj.validateAlias = function( a_alias ) {
-        if ( !a_alias )
-            return;
-
-        if ( a_alias.length > obj.MAX_ALIAS_LEN )
-            throw obj.ERR_ALIAS_TOO_LONG;
-
-        for ( var i = 0; i < a_alias.length; ++i ) {
-            if ( obj.bad_chars.indexOf( a_alias[i] ) != -1 )
-                throw obj.ERR_INVALID_ALIAS;
-        }
-    };
-
-    obj.validateProjectID = function( a_proj_id ) {
-        if ( a_proj_id.length > obj.MAX_PROJ_ID_LEN )
-            throw obj.ERR_PROJ_ID_TOO_LONG;
-
-        for ( var i = 0; i < a_proj_id.length; ++i ) {
-            if ( obj.bad_chars.indexOf( a_proj_id[i] ) != -1 )
-                throw obj.ERR_INVALID_PROJ_ID;
-        }
-    };
-
-    obj.validateGroupID = function( a_group_id ) {
-        if ( a_group_id.length > obj.MAX_GROUP_ID_LEN )
-            throw obj.ERR_GROUP_ID_TOO_LONG;
-
-        for ( var i = 0; i < a_group_id.length; ++i ) {
-            if ( obj.bad_chars.indexOf( a_group_id[i] ) != -1 )
-                throw obj.ERR_INVALID_GROUP_ID;
-        }
-    };
-
-    obj.validateTitle = function( a_title ) {
-        if ( a_title && a_title.length > obj.MAX_TITLE_LEN )
-            throw obj.ERR_TITLE_TOO_LONG;
-    };
-
-    obj.validateDesc = function( a_desc ) {
-        if ( a_desc && a_desc.length > obj.MAX_DESC_LEN )
-            throw obj.ERR_DESC_TOO_LONG;
-    };
-
-    obj.validateDescShort = function( a_desc ) {
-        if ( a_desc && a_desc.length > obj.MAX_DESC_SHORT_LEN )
-            throw obj.ERR_DESC_SHORT_TOO_LONG;
-    };
-*/
-
     obj.resolveID = function( a_id, a_client ) {
         if ( a_id[1] == '/' ) {
             return a_id;
@@ -637,27 +541,12 @@ module.exports = ( function() {
 
             var alias = obj.db.alias.firstExample({ _to: alias_id });
             if ( !alias )
-                throw obj.ERR_ALIAS_NOT_FOUND;
+                throw [obj.ERR_NOT_FOUND,"Alias, "+a_id+", not found"];
 
             return alias._from;
         }
     };
 
-    /*
-    obj.parseTopic = function( a_topic ){
-        var res = [];
-        res = a_topic.toLowerCase().split(".");
-
-        if ( res.length == 0 )
-            throw obj.ERR_INVALID_TOPIC;
-
-        for ( var i in res ){
-            if ( res[i].length == 0 || !obj.isAlphaNumeric( res[i] ))
-                throw obj.ERR_INVALID_TOPIC;
-        }
-
-        return res;
-    };*/
 
     obj.topicLink = function( a_topic, a_data_id ){
         //var top_ar = obj.parseTopic( a_topic );

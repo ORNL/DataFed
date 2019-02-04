@@ -75,7 +75,7 @@ router.get('/create', function (req, res) {
                 for ( i in req.queryParams.uuids ) {
                     uuid = "uuid/" + req.queryParams.uuids[i];
                     if ( g_db._exists({ _id: uuid }))
-                        throw g_lib.ERR_INVALID_IDENT;
+                        throw [g_lib.ERR_IN_USE,"Identity value, "+uuid+", already in use"];
 
                     g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
                     g_db.ident.save({ _from: user._id, _to: uuid });
@@ -286,12 +286,10 @@ router.get('/keys/get', function( req, res ) {
             try {
                 user = g_db.u.document({ _id: req.queryParams.subject });
             } catch ( e ) {
-                throw g_lib.ERR_USER_NOT_FOUND;
+                throw [g_lib.ERR_NOT_FOUND,"User, "+ req.queryParams.subject +", not found"];
             }
-        } else if ( req.queryParams.client ) {
+        }else{
             user = g_lib.getUserFromClientID( req.queryParams.client );
-        } else {
-            throw g_lib.ERR_MISSING_REQ_OPTION;
         }
 
         if ( !user.pub_key || !user.priv_key )
@@ -362,18 +360,19 @@ router.get('/token/get', function( req, res ) {
             try {
                 user = g_db.u.document({ _id: req.queryParams.subject });
             } catch ( e ) {
-                throw g_lib.ERR_USER_NOT_FOUND;
+                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.subject+", not found"];
             }
-        } else if ( req.queryParams.client ) {
-            user = g_lib.getUserFromClientID( req.queryParams.client );
         } else {
-            throw g_lib.ERR_MISSING_REQ_OPTION;
+            user = g_lib.getUserFromClientID( req.queryParams.client );
         }
 
-        if ( !user.access )
-            throw g_lib.ERR_TOKEN_NOT_DEFINED;
+        var result = {};
+        if ( user.access )
+        result.access = user.access;
+        if ( user.refresh )
+        result.refresh = user.refresh;
 
-        res.send({ access: user.access, refresh: user.refresh });
+        res.send(result);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -391,16 +390,14 @@ router.get('/token/get/access', function( req, res ) {
             try {
                 user = g_db.u.document({ _id: req.queryParams.subject });
             } catch ( e ) {
-                throw g_lib.ERR_USER_NOT_FOUND;
+                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.subject+", not found"];
             }
-        } else if ( req.queryParams.client ) {
-            user = g_lib.getUserFromClientID( req.queryParams.client );
         } else {
-            throw g_lib.ERR_MISSING_REQ_OPTION;
+            user = g_lib.getUserFromClientID( req.queryParams.client );
         }
 
         if ( !user.access )
-            throw g_lib.ERR_TOKEN_NOT_DEFINED;
+            throw [g_lib.ERR_NOT_FOUND,"No access token found"];
 
         res.send( user.access );
     } catch( e ) {
@@ -421,12 +418,10 @@ router.get('/view', function (req, res) {
             try {
                 user = g_db.u.document({ _id: req.queryParams.subject });
             } catch ( e ) {
-                throw g_lib.ERR_USER_NOT_FOUND;
+                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.subject+", not found"];
             }
-        } else if ( req.queryParams.client ) {
-            user = g_lib.getUserFromClientID( req.queryParams.client );
         } else {
-            throw g_lib.ERR_MISSING_REQ_OPTION;
+            user = g_lib.getUserFromClientID( req.queryParams.client );
         }
 
         var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
@@ -648,7 +643,7 @@ router.get('/ident/add', function (req, res) {
                         id = g_db.accn.save( accn, { returnNew: true });
                     }
                 } else
-                    throw g_lib.ERR_INVALID_IDENT;
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid identity value: "+req.queryParams.ident];
 
                 if ( req.queryParams.subject ) {
                     const user = g_db.u.document( req.queryParams.subject );
@@ -691,7 +686,7 @@ router.get('/ident/remove', function (req, res) {
                 } else if ( g_lib.isDomainAccount( req.queryParams.ident )) {
                     g_graph.accn.remove( "accn/" + req.queryParams.ident );
                 } else
-                    throw g_lib.ERR_INVALID_IDENT;
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid identity value: "+req.queryParams.ident];
             }
         });
     } catch( e ) {

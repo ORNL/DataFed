@@ -64,7 +64,7 @@ router.get('/link', function (req, res) {
             },
             action: function() {
                 if ( !g_db.d.exists( req.queryParams.id ))
-                    throw g_lib.ERR_INVALID_ID;
+                    throw [g_lib.ERR_NOT_FOUND,"Data record, "+req.queryParams.id+", not found"];
 
                 g_lib.topicLink( req.queryParams.topic.toLowerCase(), req.queryParams.id );
             }
@@ -87,7 +87,7 @@ router.get('/unlink', function (req, res) {
             },
             action: function() {
                 if ( !g_db.d.exists( req.queryParams.id ))
-                    throw g_lib.ERR_INVALID_ID;
+                    throw [g_lib.ERR_NOT_FOUND,"Data record, "+req.queryParams.id+", not found"];
 
                 g_lib.topicUnlink( req.queryParams.id );
             }

@@ -38,10 +38,10 @@ router.post('/create', function (req, res) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
 
                     if ( parent_id[0] != "c" )
-                        throw g_lib.ERR_PARENT_NOT_A_COLLECTION;
+                        throw [g_lib.ERR_INVALID_PARAM,"Invalid parent ID,"+req.body.parent];
 
                     if ( !g_db._exists( parent_id ))
-                        throw g_lib.ERR_COLL_NOT_FOUND;
+                        throw [g_lib.ERR_INVALID_PARAM,"Parent collection not found,"+req.body.parent];
 
                     owner_id = g_db.owner.firstExample({_from:parent_id})._to;
                     if ( owner_id != client._id ){
@@ -200,7 +200,7 @@ router.get('/delete', function (req, res) {
                 var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
                 if ( coll.is_root )
-                    throw g_lib.ERR_CANNOT_DEL_ROOT;
+                    throw [g_lib.ERR_INVALID_PARAM,"Cannot delete root collection"];
 
                 var locations=[], allocs={};
                 g_lib.deleteCollection( coll._id, allocs, locations );
@@ -353,7 +353,7 @@ router.get('/write', function (req, res) {
 
                         // 2. Check if item is in this collection
                         if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
-                            throw g_lib.ERR_ITEM_NOT_LINKED;
+                            throw [g_lib.ERR_UNLINK,obj._id+" is not in collection " + coll_id];
                     
                         if ( !is_admin ) {
                             if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_LINK ))
@@ -374,38 +374,39 @@ router.get('/write', function (req, res) {
                         obj = g_lib.getObject( req.queryParams.add[i], client );
 
                         // Check if item is already in this collection
-                        if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id })){
-                            // Check if item is a root collection
-                            if ( obj.is_root )
-                                throw g_lib.ERR_CANNOT_LINK_ROOT;
+                        if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
+                            throw [g_lib.ERR_LINK,obj._id+" already linked to "+coll_id];
 
-                            // Check if item has same owner as this collection
-                            if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
-                                throw g_lib.ERR_CANNOT_CROSS_LINK;
+                        // Check if item is a root collection
+                        if ( obj.is_root )
+                            throw [g_lib.ERR_LINK,"Cannot link root collection"];
 
-                            // Check for proper permission on item
-                            if ( !is_admin ) {
-                                if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_LINK ))
-                                    throw g_lib.ERR_PERM_DENIED;
-                            }
+                        // Check if item has same owner as this collection
+                        if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
+                            throw [g_lib.ERR_LINK,obj._id+" and "+coll_id+" have different owners"];
 
-                            if ( obj._id[0] == "c" ){
-                                // Check for circular dependency
-                                if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
-                                    throw g_lib.ERR_CIRCULAR_LINK;
+                        // Check for proper permission on item
+                        if ( !is_admin ) {
+                            if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_LINK ))
+                                throw g_lib.ERR_PERM_DENIED;
+                        }
 
-                                // Collections can only be linked to one parent
-                                g_db.item.removeByExample({ _to: obj._id });
-                            }
+                        if ( obj._id[0] == "c" ){
+                            // Check for circular dependency
+                            if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
+                                throw [g_lib.ERR_LINK,"Cannot link ancestor, "+obj._id+", to descendant, "+coll_id];
 
-                            g_db.item.save({ _from: coll_id, _to: obj._id });
+                            // Collections can only be linked to one parent
+                            g_db.item.removeByExample({ _to: obj._id });
+                        }
 
-                            // If item has no parent collection AND it's not being added, link to root
-                            for ( idx in loose ){
-                                if ( loose[idx].id == obj._id ){
-                                    loose.slice(idx,1);
-                                    break;
-                                }
+                        g_db.item.save({ _from: coll_id, _to: obj._id });
+
+                        // If item has no parent collection AND it's not being added, link to root
+                        for ( idx in loose ){
+                            if ( loose[idx].id == obj._id ){
+                                loose.slice(idx,1);
+                                break;
                             }
                         }
                     }

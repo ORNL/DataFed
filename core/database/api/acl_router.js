@@ -46,7 +46,7 @@ router.get('/update', function (req, res) {
                     is_coll = false;
 
                 if ( !is_coll && object._id[0] != "d" )
-                    throw g_lib.ERR_INVALID_ID;
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid object type, "+object._id];
 
                 if ( !g_lib.hasAdminPermObject( client, object._id )){
                     if ( !g_lib.hasPermissions( client, object, g_lib.PERM_SHARE ))
@@ -68,7 +68,7 @@ router.get('/update', function (req, res) {
                         rule = req.queryParams.rules[i];
 
                         if ( !is_coll && rule.inhgrant )
-                            throw g_lib.ERR_INVALID_PERM;
+                            throw [g_lib.ERR_INVALID_PARAM,"Inherited permissions cannot be applied to data records"];
 
                         if ( rule.id == "default" || rule.id == "def" ) {
                             new_obj.grant = rule.grant;
@@ -87,14 +87,14 @@ router.get('/update', function (req, res) {
                                 var group = g_db.g.firstExample({ uid: owner_id, gid: rule.id.substr(2) });
 
                                 if ( !group )
-                                    throw g_lib.ERR_GROUP_NOT_FOUND;
+                                    throw [g_lib.ERR_NOT_FOUND,"Group "+rule.id+" not found"];
 
                                 rule.id = group._id;
 
                             } else {
                                 acl_mode |= 1;
                                 if ( !g_db._exists( rule.id ))
-                                    throw g_lib.ERR_USER_NOT_FOUND;
+                                    throw [g_lib.ERR_NOT_FOUND,"User "+rule.id+" not found"];
                             }
 
                             obj = { _from : object._id, _to:rule.id };
@@ -142,7 +142,7 @@ router.get('/view', function (req, res) {
         var object = g_lib.getObject( req.queryParams.id, client );
 
         if ( object._id[0] != "c" && object._id[0] != "d" )
-            throw g_lib.ERR_INVALID_ID;
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid object type, "+object._id];
 
         if ( !g_lib.hasAdminPermObject( client, object._id )) {
             if ( !g_lib.hasPermissions( client, object, g_lib.PERM_SHARE ))

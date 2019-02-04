@@ -43,9 +43,9 @@ router.get('/create', function (req, res) {
                     //var alloc_sz = parseInt( req.queryParams.sub_alloc );
                     //if ( isNaN(alloc_sz) || alloc_sz <= 0 )
                     if (  req.queryParams.sub_alloc <= 0 )
-                        throw g_lib.ERR_INVALID_PARAM;
+                        throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
                     if ( req.queryParams.sub_alloc > alloc.alloc ) // Ok to over-allocate across projects
-                        throw g_lib.ERR_ALLOCATION_EXCEEDED;
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: " + alloc.alloc +")"];
 
                     proj_data.sub_repo = req.queryParams.sub_repo;
                     proj_data.sub_alloc = req.queryParams.sub_alloc;
@@ -84,7 +84,8 @@ router.get('/create', function (req, res) {
                         if ( uid == client._id )
                             continue;
                         if ( !g_db._exists( uid ))
-                            throw g_lib.ERR_USER_NOT_FOUND;
+                            throw [g_lib.ERR_NOT_FOUND,"User, "+uid+", not found"];
+
                         g_db.admin.save({ _from: proj._id, _to: uid });
                         proj.new.admins.push( uid );
                     }
@@ -96,7 +97,8 @@ router.get('/create', function (req, res) {
                         if ( uid == client._id || proj.new.admins.indexOf( uid ) != -1 )
                             continue;
                         if ( !g_db._exists( uid ))
-                            throw g_lib.ERR_USER_NOT_FOUND;
+                            throw [g_lib.ERR_NOT_FOUND,"User, "+uid+", not found"];
+
                         g_db.member.save({ _from: mem_grp._id, _to: uid });
                         proj.new.members.push( uid );
                     }
@@ -143,10 +145,10 @@ router.get('/update', function (req, res) {
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
-                console.log("proj update" );
-                console.log("pu client id:", client._id );
-                console.log("pu proj id:", proj_id );
-                console.log("pu owner id:", owner_id );
+                //console.log("proj update" );
+                //console.log("pu client id:", client._id );
+                //console.log("pu proj id:", proj_id );
+                //console.log("pu owner id:", owner_id );
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
@@ -154,23 +156,23 @@ router.get('/update', function (req, res) {
                 g_lib.procInputParam( req.queryParams, "title", true, obj );
                 g_lib.procInputParam( req.queryParams, "desc", true, obj );
 
-                console.log("pu 1" );
+                //console.log("pu 1" );
 
                 if ( req.queryParams.sub_repo ){
                     // Verify there isn't a real allocation present
                     if ( g_db.alloc.firstExample({_from:proj_id}))
-                        throw g_lib.ERR_ALLOC_IN_USE;
+                        throw [g_lib.ERR_IN_USE,"Project sub-allocation not allowed (allocation defined)"];
 
                     // Verify that there are no existing data records
                     var data = g_db._query("for v in 1..1 inbound @proj owner filter IS_SAME_COLLECTION('d',v) return v._id",{proj:proj_id}).toArray();
                     if ( data.length )
-                        throw g_lib.ERR_ALLOC_IN_USE;
+                        throw [g_lib.ERR_IN_USE,"Project sub-allocation not allowed (existing records)"];
                     if ( req.queryParams.sub_repo != 'none' ){
                         var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
                         if (  req.queryParams.sub_alloc <= 0 )
-                            throw g_lib.ERR_INVALID_PARAM;
+                            throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
                         if ( req.queryParams.sub_alloc > alloc.alloc )
-                            throw g_lib.ERR_ALLOCATION_EXCEEDED;
+                            throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+alloc.alloc+")"];
 
                         obj.sub_repo = req.queryParams.sub_repo;
                         obj.sub_alloc = req.queryParams.sub_alloc;
@@ -199,7 +201,8 @@ router.get('/update', function (req, res) {
                         if ( uid == owner_id )
                             continue;
                         if ( !g_db._exists( uid ))
-                            throw g_lib.ERR_USER_NOT_FOUND;
+                            throw [g_lib.ERR_NOT_FOUND,"User, "+uid+", not found"];
+
                         g_db.admin.save({ _from: proj_id, _to: uid });
                         // Remove Admin from all groups and ACLs
                         links = g_db._query("for v,e,p in 2..2 inbound @user acl, outbound owner filter v._id == @proj return p.edges[0]._id",{user:uid,proj:proj_id});
@@ -229,7 +232,8 @@ router.get('/update', function (req, res) {
                         if ( uid == owner_id || proj.new.admins.indexOf( uid ) != -1 )
                             continue;
                         if ( !g_db._exists( uid ))
-                            throw g_lib.ERR_USER_NOT_FOUND;
+                            throw [g_lib.ERR_NOT_FOUND,"User, "+uid+", not found"];
+
                         g_db.member.save({ _from: mem_grp._id, _to: uid });
                         proj.new.members.push( uid );
                     }
