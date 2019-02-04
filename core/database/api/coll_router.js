@@ -326,14 +326,15 @@ router.get('/write', function (req, res) {
 
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
-                var is_admin = false;
                 var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-                    if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LINK ))
+                    var req_perm = g_lib.PERM_LINK;
+                    if ( req.queryParams.remove && req.queryParams.remove.length )
+                        req_perm |= g_lib.PERM_SHARE;
+                    if ( !g_lib.hasPermissions( client, coll, req_perm ))
                         throw g_lib.ERR_PERM_DENIED;
-                }else
-                    is_admin = true;
+                }
 
                 var i, obj,idx;
                 var loose = [];
@@ -351,18 +352,11 @@ router.get('/write', function (req, res) {
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
 
-                        // 2. Check if item is in this collection
                         if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
                             throw [g_lib.ERR_UNLINK,obj._id+" is not in collection " + coll_id];
-                    
-                        if ( !is_admin ) {
-                            if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_LINK ))
-                                throw g_lib.ERR_PERM_DENIED;
-                        }
 
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
 
-                        // 7. If item has no parent collection AND it's not being added, link to root
                         if ( !g_db.item.firstExample({ _to: obj._id }) ){
                             loose.push({ id: obj._id, title: obj.title });
                         }
@@ -384,12 +378,6 @@ router.get('/write', function (req, res) {
                         // Check if item has same owner as this collection
                         if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
                             throw [g_lib.ERR_LINK,obj._id+" and "+coll_id+" have different owners"];
-
-                        // Check for proper permission on item
-                        if ( !is_admin ) {
-                            if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_LINK ))
-                                throw g_lib.ERR_PERM_DENIED;
-                        }
 
                         if ( obj._id[0] == "c" ){
                             // Check for circular dependency
@@ -432,6 +420,64 @@ router.get('/write', function (req, res) {
 .queryParam('remove', joi.array().items(joi.string()).optional(), "Array of item IDs to remove")
 .summary('Add/remove items in a collection')
 .description('Add/remove items in a collection');
+
+router.get('/move', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var src_id = g_lib.resolveID( req.queryParams.source, client );
+        var src = g_db.c.document( src_id );
+        var dst_id = g_lib.resolveID( req.queryParams.dest, client );
+        var dst = g_db.c.document( dst_id );
+
+        if ( src.owner != dst.owner )
+            throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
+
+        if ( !g_lib.hasAdminPermObject( client, src_id )) {
+            if ( !g_lib.hasPermissions( client, src, g_lib.PERM_LINK | g_lib.PERM_SHARE ))
+                throw g_lib.ERR_PERM_DENIED;
+        }
+
+        if ( !g_lib.hasAdminPermObject( client, dst_id )) {
+            if ( !g_lib.hasPermissions( client, dst, g_lib.PERM_LINK ))
+                throw g_lib.ERR_PERM_DENIED;
+        }
+
+        var i,item;
+
+        for ( i in req.queryParams.items ) {
+            // TODO - should aliases be resolved with client or owner ID?
+            item = g_lib.getObject( req.queryParams.item[i], client );
+
+            if ( item.is_root )
+                throw [g_lib.ERR_LINK,"Cannot link root collection"];
+
+            if ( !g_db.item.firstExample({ _from: src_id, _to: item._id }))
+                throw [g_lib.ERR_UNLINK,item._id+" is not in collection " + src_id];
+
+            if ( g_db.item.firstExample({ _from: dst_id, _to: item._id }))
+                throw [g_lib.ERR_LINK,item._id+" is already in collection " + dst_id];
+
+            if ( item._id[0] == "c" ){
+                // Check for circular dependency
+                if ( item._id == dst_id || g_lib.isSrcParentOfDest( item._id, dst_id ))
+                    throw [g_lib.ERR_LINK,"Cannot link ancestor, "+item._id+", to descendant, "+dst_id];
+            }
+
+            g_db.item.removeByExample({ _from: src_id, _to: item._id });
+            g_db.item.save({ _from: dst_id, _to: item._id });
+        }
+
+        res.send({});
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('items', joi.array(joi.string()).optional(), "Items IDs/aliases to move")
+.queryParam('source', joi.string().required(), "Source collection ID/alias" )
+.queryParam('dest', joi.string().required(), "Destination collection ID/alias" )
+.summary('Move items from source collection to destination collection')
+.description('Move items from source collection to destination collection');
 
 router.get('/get_parents', function (req, res) {
     try {
