@@ -73,7 +73,7 @@ function makeBrowserTab(){
                                 inst.deleteNode( node.key );
                                 inst.updateBtnState();
                             } else {
-                                alert( "Delete failed: " + data );
+                                dlgAlert( "Delete Failed", data );
                             }
                         });
                     }
@@ -325,8 +325,7 @@ function makeBrowserTab(){
                                 inst.updateNodeTitle( data );
                                 inst.showSelectedInfo( node );
                             });
-                        }else
-                            alert( "Cannot access project." );
+                        }
                     });
                 }else if ( node.key[0] == "c" ) {
                     viewColl( node.key, function( data ){
@@ -335,8 +334,7 @@ function makeBrowserTab(){
                                 inst.updateNodeTitle( data );
                                 inst.showSelectedInfo( node );
                             });
-                        }else
-                            alert( "Cannot access collection." );
+                        }
                     });
                 } else if ( node.key[0] == "d" ) {
                     viewData( node.key, function( data ){
@@ -345,8 +343,7 @@ function makeBrowserTab(){
                                 inst.updateNodeTitle( data );
                                 inst.showSelectedInfo( node );
                             });
-                        }else
-                            alert( "Cannot access data record." );
+                        }
                     }); 
                 }
             });
@@ -377,8 +374,7 @@ function makeBrowserTab(){
                                 });
                             }
                         });
-                    }else
-                        alert( "Cannot access data record." );
+                    }
                 }); 
             });
         }
@@ -397,15 +393,11 @@ function makeBrowserTab(){
                     viewColl( node.key, function( coll ){
                         if ( coll )
                             dlgSetACLs( coll );
-                        else
-                            alert("Cannot access collection.");
                     });
                 } else {
                     viewData( node.key, function( data ){
                         if ( data )
                             dlgSetACLs( data );
-                        else
-                            alert( "Cannot access data record." );
                     });
                 }
             });
@@ -454,8 +446,7 @@ function makeBrowserTab(){
                 viewData( key, function( data ){
                     if ( data ){
                         dlgStartTransfer( a_mode, data );
-                    }else
-                        alert( "Cannot access data record." );
+                    }
                 }); 
             });
         }

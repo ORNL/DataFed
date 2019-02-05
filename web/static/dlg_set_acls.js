@@ -501,7 +501,6 @@ function dlgSetACLs( item ){
 
     aclView( item.id, function( ok, data ){
         if ( !ok || !data ) {
-            //alert( "Could not get ACLs for " + item.id );
             dlgAlert( "Sharing Error", data );
             return;
         }

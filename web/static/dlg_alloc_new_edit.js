@@ -44,7 +44,7 @@ function makeDlAllocNewEdit(){
             });
 
             $("#set_proj",inst.frame).click(function(){
-                alert("Feature not implemented yet");
+                dlgAlert("ERROR","Feature not implemented yet");
             });
         }
 

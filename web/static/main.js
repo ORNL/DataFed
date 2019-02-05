@@ -118,7 +118,8 @@ function viewData( a_id, a_cb ) {
             a_cb( data );
         }
         else {
-            console.log("viewData failed:", data );
+            //console.log("viewData failed:", data );
+            setStatusText("View Data Error: " + data);
             a_cb();
         }
     });
@@ -148,6 +149,7 @@ function viewColl( a_id, a_cb ) {
                 a_cb();
         }
         else {
+            setStatusText("View Collection Error: " + data);
             a_cb();
         }
     });
@@ -164,6 +166,7 @@ function viewProj( a_id, a_cb ){
         }
         else {
             //console.log("viewProj failed:", data );
+            setStatusText("View Project Error: "+data);
             a_cb();
         }
     });
