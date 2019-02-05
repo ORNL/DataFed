@@ -446,7 +446,7 @@ router.get('/move', function (req, res) {
 
         for ( i in req.queryParams.items ) {
             // TODO - should aliases be resolved with client or owner ID?
-            item = g_lib.getObject( req.queryParams.item[i], client );
+            item = g_lib.getObject( req.queryParams.items[i], client );
 
             if ( item.is_root )
                 throw [g_lib.ERR_LINK,"Cannot link root collection"];
