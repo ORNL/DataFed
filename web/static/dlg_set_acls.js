@@ -116,16 +116,13 @@ function dlgSetACLs( item ){
                 var perm = parseInt( data.node.key );
                 var other = 0;
                 if ( data.node.isSelected() ){
+                    other = PERM_RD_REC;
                     switch( perm ){
-                        case PERM_RD_META: other = PERM_RD_REC; break;
-                        case PERM_RD_DATA: other = PERM_RD_REC; break;
-                        case PERM_WR_REC: other = PERM_RD_REC; break;
-                        case PERM_WR_META: other = PERM_RD_REC|PERM_RD_META; break;
-                        case PERM_WR_DATA: other = PERM_RD_REC|PERM_RD_DATA; break;
-                        case PERM_LIST: other = PERM_RD_REC; break;
-                        case PERM_LINK: other = PERM_RD_REC|PERM_LIST; break;
-                        case PERM_CREATE: other = PERM_RD_REC|PERM_LIST|PERM_LINK; break;
-                        case PERM_BAS_WRITE: other = PERM_RD_REC|PERM_RD_META|PERM_RD_DATA|PERM_LIST; break;
+                        case PERM_WR_META: other |= PERM_RD_META; break;
+                        case PERM_WR_DATA: other |= PERM_RD_DATA; break;
+                        case PERM_LINK: other |= PERM_LIST; break;
+                        case PERM_CREATE: other |= PERM_LIST|PERM_LINK; break;
+                        case PERM_BAS_WRITE: other |= PERM_RD_META|PERM_RD_DATA|PERM_LIST; break;
                     }
                     if ( data.node.data.inh ){
                         cur_rule.inhgrant |= perm;
@@ -138,12 +135,12 @@ function dlgSetACLs( item ){
                     }
                 }else{
                     switch( perm ){
-                        case PERM_RD_REC: other = PERM_BAS_WRITE|PERM_RD_META|PERM_RD_DATA|PERM_LIST; break;
+                        case PERM_RD_REC: other = PERM_BAS_WRITE|PERM_RD_META|PERM_RD_DATA|PERM_LIST|PERM_BAS_ADMIN; break;
                         case PERM_RD_META: other = PERM_WR_META; break;
                         case PERM_RD_DATA: other = PERM_WR_DATA; break;
                         case PERM_LIST: other = PERM_LINK|PERM_CREATE; break;
                         case PERM_LINK: other = PERM_CREATE; break;
-                        case PERM_BAS_READ: other = PERM_WR_REC|PERM_WR_META|PERM_WR_DATA|PERM_LINK|PERM_CREATE; break;
+                        case PERM_BAS_READ: other = PERM_WR_REC|PERM_WR_META|PERM_WR_DATA|PERM_LINK|PERM_CREATE|PERM_BAS_ADMIN; break;
                     }
                     if ( data.node.data.inh ){
                         cur_rule.inhgrant &= ~perm;
@@ -199,6 +196,9 @@ function dlgSetACLs( item ){
             value &= ~(PERM_CREATE|PERM_LINK|PERM_LIST);
 
         if ( cur_rule ){
+            if ( cur_rule.id != "default" ){
+                value |= PERM_RD_REC|(is_coll?PERM_LIST:0);
+            }
             cur_rule.grant = value;
             setPermsFromRule( cur_rule );
         }
