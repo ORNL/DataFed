@@ -702,26 +702,21 @@ app.get('/api/col/get_parents', ( a_req, a_resp ) => {
     });
 });
 
-// TODO - Link and unlink should be atomic with DB
-app.get('/api/link', ( a_req, a_resp ) => {
-    console.log("link items:",a_req.query.items,",coll:",a_req.query.coll,",unlink:",a_req.query.unlink);
-    var items =  JSON.parse(a_req.query.items)
-    sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: items }, a_req, a_resp, function( reply ) {
-        if ( a_req.query.unlink ) {
-            var unlink_items = [];
-            for ( var i in items ){
-                if ( items[i].charAt(0) == 'd' )
-                    unlink_items.push(items[i]);
-            }
-            sendMessage( "CollWriteRequest", { id: a_req.query.unlink, rem: unlink_items }, a_req, a_resp, function( reply2 ) {
-                a_resp.send(reply2);
-            });
-        } else
-            a_resp.send(reply);
+app.get('/api/col/move', ( a_req, a_resp ) => {
+    console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
+    sendMessage( "CollMoveRequest", { srcId: a_req.query.src_id, dstId: a_req.query.dst_id, item: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
     });
 });
 
-app.get('/api/unlink', ( a_req, a_resp ) => {
+app.get('/api/col/link', ( a_req, a_resp ) => {
+    console.log("link items:",a_req.query.items,",coll:",a_req.query.coll);
+    sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/col/unlink', ( a_req, a_resp ) => {
     console.log("unlink items:",a_req.query.items,"coll:",a_req.query.coll);
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);

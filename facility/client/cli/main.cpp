@@ -1563,6 +1563,7 @@ int move()
 
     item_id = resolveID( g_args[0] );
 
+/*
     if ( !src_fin )
     {
         spCollDataReply rep = g_client->collView( src_id );
@@ -1589,6 +1590,8 @@ int move()
         cerr << "ERROR Invalid parameter(s)\n";
         return 1;
     }
+*/
+    g_client->collMoveItem( src_id, dest_id, item_id );
 
     return 0;
 }

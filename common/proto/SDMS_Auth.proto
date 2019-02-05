@@ -324,6 +324,13 @@ message CollWriteRequest
     optional bool               rem_all     = 4;
 }
 
+message CollMoveRequest
+{
+    required string             src_id      = 1;
+    required string             dst_id      = 2;
+    repeated string             item        = 3;
+}
+
 message CollGetParentsRequest
 {
     required string             id          = 1;

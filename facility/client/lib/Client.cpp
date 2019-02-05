@@ -759,6 +759,21 @@ Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_ite
     delete rep;
 }
 
+void
+Client::collMoveItem( const std::string & a_src_id, const std::string & a_dst_id, const std::string & a_item_id )
+{
+    Auth::CollMoveRequest   req;
+    Anon::AckReply *        rep;
+
+    req.set_src_id( a_src_id );
+    req.set_dst_id( a_dst_id );
+    req.add_item( a_item_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
 spCollDataReply
 Client::collGetParents( const std::string & a_id, bool a_all )
 {

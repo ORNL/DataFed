@@ -1191,6 +1191,29 @@ DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::ListingRepl
 }
 
 void
+DatabaseClient::collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void) a_reply;
+
+    if ( a_request.item_size() == 0 )
+        return;
+
+    string items = "[";
+
+    for ( int i = 0; i < a_request.item_size(); i++ )
+    {
+        if ( i > 0 )
+            items += ",";
+
+        items += "\"" + a_request.item(i) + "\"";
+    }
+    items += "]";
+
+    rapidjson::Document result;
+    dbGet( "col/move", {{"source",a_request.src_id()},{"dest",a_request.dst_id()},{"items",items}}, result );
+}
+
+void
 DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply )
 {
     rapidjson::Document result;

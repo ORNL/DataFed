@@ -170,12 +170,7 @@ function viewProj( a_id, a_cb ){
 }
 
 function linkItems( a_items, a_coll, a_cb ) {
-    _asyncGet( "/api/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
-}
-
-function linkItemsUnlinkSource( a_items, a_coll, a_source, a_cb ) {
-    console.log("linkItemsUnlinkSource", a_items, a_coll, a_source );
-    _asyncGet( "/api/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll)+"&unlink="+encodeURIComponent(a_source), null, a_cb );
+    _asyncGet( "/api/col/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
 /*
@@ -185,7 +180,12 @@ function unlinkItem( a_item, a_coll, a_cb ) {
 
 function unlinkItems( a_items, a_coll, a_cb ) {
     console.log("unlinkItems()",a_items);
-    _asyncGet( "/api/unlink?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
+    _asyncGet( "/api/col/unlink?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
+}
+
+function colMoveItems( a_items, a_src_id, a_dst_id, a_cb ) {
+    console.log("colMoveItems", a_items, a_src_id, a_dst_id );
+    _asyncGet( "/api/col/move?items="+encodeURIComponent(JSON.stringify(a_items))+"&src_id="+encodeURIComponent(a_src_id)+"&dst_id="+encodeURIComponent(a_dst_id), null, a_cb );
 }
 
 function getParents( a_id, a_cb ) {

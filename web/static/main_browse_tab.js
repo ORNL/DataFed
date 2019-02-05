@@ -191,13 +191,15 @@ function makeBrowserTab(){
     }
 
     this.moveItems = function( items, dest_node, cb ){
-        //console.log("moveItems",items,dest_node,inst.pasteSource);
+        console.log("moveItems",items,dest_node,inst.pasteSource);
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
 
-        linkItemsUnlinkSource( item_keys, dest_node.key, inst.pasteSource.key, function( ok, msg ) {
+        colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
             if ( ok ){
+                console.log("move OK");
+
                 // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
                 var i, par = inst.pasteSource.getParentList(false,true);
                 //console.log("Source node parents:",par);
@@ -1287,7 +1289,7 @@ function makeBrowserTab(){
                 inst.dragging = false;
 
                 // data.otherNode = source, node = destination
-                console.log("drop stop in",dest_node.key);
+                console.log("drop stop in",dest_node.key,inst.pasteItems);
 
                 function pasteDone(){
                     inst.pasteItems = [];
