@@ -92,7 +92,11 @@ function makeBrowserTab(){
 
     this.newProj = function() {
         dlgProjNewEdit(null,function(data){
-            inst.addNode( data );
+            //inst.addNode( data );
+            setStatusText("Project "+data.id+" created");
+            var node = inst.data_tree.getNodeByKey( "proj_own" );
+            if ( node )
+                inst.reloadNode( node );
         });
     }
 
