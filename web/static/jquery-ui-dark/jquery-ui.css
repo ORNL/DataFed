@@ -7,15 +7,15 @@
 
 .my-fancytree-hover
 {
-    border: 1px dashed #808080!important;
+    border: 1px dashed rgb(78, 148, 78)!important;
 }
 
 .my-fancytree-active
 {
-    border: 1px solid #808080!important;
+    border: 1px solid rgb(83, 179, 83)!important;
 }
 
-.my-fancytree-selected
+.fancytree-selected
 {
     background: #104010!important;
 }

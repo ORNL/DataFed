@@ -11,10 +11,10 @@
 
 .my-fancytree-active
 {
-    border: 1px solid #212121!important;
+    border: 1px solid #21946e!important;
 }
 
-.my-fancytree-selected
+.fancytree-selected
 {
 	background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
 }

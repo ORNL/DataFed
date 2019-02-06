@@ -545,7 +545,7 @@ app.get('/api/dat/copy', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
-    sendMessage( "RecordDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+    sendMessage( "RecordDeleteRequest", { id: JSON.parse(a_req.query.ids) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

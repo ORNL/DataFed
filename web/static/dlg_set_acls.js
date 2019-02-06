@@ -80,7 +80,7 @@ function dlgSetACLs( item ){
         $(a_div_id,frame).fancytree({
             extensions: ["themeroller"],
             themeroller: {
-                activeClass: "my-fancytree-selected",
+                activeClass: "my-fancytree-active",
                 addClass: "",
                 focusClass: "",
                 hoverClass: "my-fancytree-hover",
@@ -565,7 +565,7 @@ function dlgSetACLs( item ){
                 $("#dlg_rule_tree",frame).fancytree({
                     extensions: ["themeroller"],
                     themeroller: {
-                        activeClass: "my-fancytree-selected",
+                        activeClass: "my-fancytree-active",
                         addClass: "",
                         focusClass: "",
                         hoverClass: "my-fancytree-hover",

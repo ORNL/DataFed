@@ -200,7 +200,7 @@ message RecordLockToggleRequest
 
 message RecordDeleteRequest
 {
-    required string             id          = 1;
+    repeated string             id          = 1;
 }
 
 message RecordSearchRequest

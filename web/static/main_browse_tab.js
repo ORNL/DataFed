@@ -29,7 +29,14 @@ function makeBrowserTab(){
     this.pasteItems = [];
 
     this.deleteSelected = function(){
-        var node = inst.data_tree.activeNode;
+        var sel = inst.data_tree.getSelectedNodes();
+
+        confirmChoice( "Confirm Deletion", "Delete selected items?", ["Delete","Cancel"], function( choice ){
+            if ( choice == 0 ){
+            }
+        });
+
+        /*
         checkPerms( node.key, PERM_DELETE, function( granted ){
             if ( !granted ){
                 alertPermDenied();
@@ -46,6 +53,7 @@ function makeBrowserTab(){
                         url = "/api/col/delete?id=" + encodeURIComponent(node.key);
                         _asyncGet( url, null, function( ok, data ){
                             if ( ok ) {
+                                // TODO Fix this - refresh source not delete node
                                 inst.deleteNode( node.key );
                                 inst.updateBtnState();
                             } else {
@@ -67,9 +75,10 @@ function makeBrowserTab(){
 
                 confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
                     if ( choice == 0 ){
-                        url += "/delete?id=" + encodeURIComponent(node.key);
+                        url += "/delete?ids=" + encodeURIComponent(node.key);
                         _asyncGet( url, null, function( ok, data ){
                             if ( ok ) {
+                                // TODO Fix this - refresh source not delete node
                                 inst.deleteNode( node.key );
                                 inst.updateBtnState();
                             } else {
@@ -80,6 +89,7 @@ function makeBrowserTab(){
                 });
             }
         });
+        */
     }
 
     this.newMenu = function(){
@@ -452,27 +462,50 @@ function makeBrowserTab(){
         }
     }
 
-    this.calcActionState = function( state, admin ){
-        var bits;
+    this.calcActionState = function( state, admin, sel ){
+        var bits,node;
 
-        switch ( state ){
-            case "c": bits = 0x72;  break;
-            case "d": bits = 0x00;  break;
-            case "r": bits = 0xF7;  break;
-            case "p": bits = 0xFa | (admin?0:5); break;
-            default:  bits = 0xFF;  break;
+        if ( sel.length > 1 ){
+            bits = 0x19;
+            for ( var i in sel ){
+                node = sel[i];
+                switch ( node.key[0] ){
+                    case "c": bits |= node.data.isroot?0xF7:0x72;  break;
+                    case "d": bits |= 0x00;  break;
+                    case "r": bits |= 0xF7;  break;
+                    case "p": bits |= 0xFa | (node.data.admin?0:5); break;
+                    default:  bits |= 0xFF;  break;
+                }
+            }
+
+            console.log("multi",bits);
+        }else if ( sel.length ){
+            node = sel[0];
+            switch ( node.key[0] ){
+                case "c": bits = node.data.isroot?0xF7:0x72;  break;
+                case "d": bits = 0x00;  break;
+                case "p": bits = 0xFa | (node.data.admin?0:5); break;
+                default:  bits = 0xFF;  break;
+            }
+            console.log("single",bits);
+        }else{
+            bits = 0xFF;
         }
+
         return bits;
     }
 
     this.updateBtnState = function( state, admin ){
-        var bits = calcActionState( state, admin );
+        //console.log("updateBtnState");
+
+        var sel = inst.data_tree.getSelectedNodes();
+        var bits = calcActionState( state, admin, sel );
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
         //$("#btn_dup",inst.frame).button("option","disabled",(bits & 2) != 0);
-        $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0);
-        $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0);
-        $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0);
+        $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0 );
+        $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0 );
+        $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0 );
         $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
@@ -554,7 +587,6 @@ function makeBrowserTab(){
                 inst.sel_id.text( "My Data" );
                 inst.sel_title.text( "" );
                 inst.sel_descr.text( "Location for creating and organizing personal data and collections." );
-                inst.updateBtnState("m");
                 inst.showSelectedMetadata();
 
                 userView( g_user.uid, true, function( ok, user ){
@@ -581,11 +613,6 @@ function makeBrowserTab(){
             }else if ( key[0] == "c" ) {
                 viewColl( key, function( item ){
                     if ( item ){
-                        if ( node.data.isroot )
-                            inst.updateBtnState( "r", node.data.admin );
-                        else
-                            inst.updateBtnState( "c", null );
-        
                         html = "Collection ID: " + key;
                         if ( item.alias )
                             html += ", Alias: " + item.alias;
@@ -621,8 +648,6 @@ function makeBrowserTab(){
             } else if ( key[0] == "d" ) {
                 viewData( key, function( item ){
                     if ( item ){
-                        inst.updateBtnState( "d", null );
-
                         html = "Data ID: " + key;
                         if ( item.alias )
                             html += ", Alias: " + item.alias;
@@ -665,8 +690,6 @@ function makeBrowserTab(){
             } else if ( key.startsWith("p/")) {
                 viewProj( key, function( item ){
                     if ( item ){
-                        inst.updateBtnState("p",node.data.admin);
-
                         inst.sel_id.text("Project ID: " + key);
                         inst.sel_title.text("\"" + item.title + "\"");
 
@@ -724,7 +747,6 @@ function makeBrowserTab(){
                     }
                 }); 
             } else if ( key == "shared_user" && node.data.scope ) {
-                inst.updateBtnState();
                 //console.log( "user", node.data.scope, node );
                 userView( node.data.scope, false, function( ok, item ){
                     if ( ok && item ){
@@ -764,7 +786,6 @@ function makeBrowserTab(){
     }
 
     this.noInfoAvail = function( message ){
-        inst.updateBtnState();
         inst.sel_id.text( message?message:"(no information)");
         inst.sel_title.text("");
         inst.sel_descr.text("(no information)");
@@ -1178,6 +1199,8 @@ function makeBrowserTab(){
     }
 
     this.pasteAllowed = function( dest_node, src_node ){
+        console.log("pasteAllowed:",dest_node, src_node);
+        console.log("pasteSource:",inst.pasteSource);
         if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
             if ( inst.pasteSource.key == dest_node.key )
                 return false;
@@ -1253,11 +1276,14 @@ function makeBrowserTab(){
                 scrollSensitivity: 30
             },
             dragStart: function(node, data) {
-                console.log( "drag start" );
+                console.log( "drag start", node.data.nodrag );
                 //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
-                if ( !inst.drag_enabled || node.data.nodrag )
+                if ( !inst.drag_enabled || node.data.nodrag ){
+                    console.log("abort drag start");
                     return false;
-
+                }
+                clearTimeout( inst.hoverTimer );
+                node.setActive(true);
                 if ( !node.isSelected() ){
                     inst.data_tree.selectAll(false);
                     inst.selectScope = data.node;
@@ -1311,8 +1337,12 @@ function makeBrowserTab(){
                 }
             },
             dragEnter: function(node, data) {
-                //console.log( "enter:", node, data );
-                return inst.pasteAllowed( node, data.otherNode );
+                if ( inst.dragging ){
+                    console.log( "drag enter:", node, data );
+                    return inst.pasteAllowed( node, data.otherNode );
+                }else{
+                    return false;
+                }
             }
         },
         themeroller: {
@@ -1320,7 +1350,7 @@ function makeBrowserTab(){
             addClass: "",
             focusClass: "",
             hoverClass: "my-fancytree-hover",
-            selectedClass: "my-fancytree-selected"
+            selectedClass: ""
         },
         source: tree_source,
         selectMode: 2,
@@ -1523,10 +1553,18 @@ function makeBrowserTab(){
             }
         },
         activate: function( event, data ) {
-            console.log("node activate",data.node);
-            if ( data.node.selected ){
-                data.node.addClass("my-fancytree-selected");
+            if ( event.button == undefined && !inst.hoverNav ){
+                console.log("key nav",event);
+
+                if ( !inst.keyNavMS ){
+                    inst.data_tree.selectAll(false);
+                    inst.selectScope = data.node;
+                    inst.treeSelectNode(data.node);
+                }
+            }else{
+                inst.hoverNav = false;
             }
+
             showSelectedInfo( data.node );
         },
         select: function( event, data ) {
@@ -1536,10 +1574,11 @@ function makeBrowserTab(){
                 console.log("node deselect",data.node);
             }*/
 
-
             //if ( inst.searchSelect && data.node.isSelected() ){
             if ( data.node.isSelected() ){
-                    data.node.visit( function( node ){
+                //showSelectedInfo( data.node );
+
+                data.node.visit( function( node ){
                     node.setSelected( false );
                 });
                 var parents = data.node.getParentList();
@@ -1547,14 +1586,35 @@ function makeBrowserTab(){
                     parents[i].setSelected( false );
                 }
             }
+
+            inst.updateBtnState();
+        },
+        keydown: function(ev, data) {
+            //console.log("keydown",event,data);
+            if ( ev.keyCode == 32 ){
+                if ( inst.data_tree.getSelectedNodes().length == 0 ){
+                    inst.selectScope = data.node;
+                }
+                inst.treeSelectNode(data.node,true);
+            }else if( ev.keyCode == 13 ){
+                if ( inst.keyNavMS ){
+                    inst.keyNavMS = false;
+                    setStatusText("Keyboard multi-select mode DISABLED");
+                }else{
+                    inst.keyNavMS = true;
+                    setStatusText("Keyboard multi-select mode ENABLED");
+                }
+            }
         },
         click: function(event, data) {
-            //console.log("node click,ev:",event,"which:",event.which);
+            console.log("node click,ev:",event,"which:",event.which);
             if ( inst.dragging ){ // Suppress click processing on aborted drag
                 inst.dragging = false;
             }else if ( !inst.searchSelect ){ // Selection "rules" differ for search-select mode
                 if ( event.which == null ){
-                    // Context menu (no mouse event info for some reason)
+                    // RIGHT-CLICK CONTEXT MENU
+                    console.log("click no which");
+
                     if ( !data.node.isSelected() ){
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
@@ -1563,6 +1623,7 @@ function makeBrowserTab(){
                     // Update contextmenu choices
                     var sel = inst.data_tree.getSelectedNodes();
 
+                    // Enable/disable actions
                     if ( !sel[0].parent.key.startsWith("c/") || sel[0].data.nodrag ){
                         inst.data_tree_div.contextmenu("enableEntry", "unlink", false );
                         inst.data_tree_div.contextmenu("enableEntry", "cut", false );
@@ -1593,7 +1654,8 @@ function makeBrowserTab(){
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "paste", false );
 
-                } else if ( data.targetType != "expander" && data.node.data.scope ){
+                } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
+                    console.log("has scope");
                     if ( inst.data_tree.getSelectedNodes().length == 0 )
                         inst.selectScope = data.node;
 
@@ -1610,18 +1672,30 @@ function makeBrowserTab(){
                         inst.selectScope = data.node;
                         inst.treeSelectNode(data.node);
                     }
+                }else{
+                    console.log("DEFAULT",data.node);
                 }
             }
             //}
-        } /*,
-        clickPaging: function(event, data) {
-            console.log("click paging node",data,data.node.parent,data.node.getParent());
-            //var url = "/api/col/read?offset="+ data.node.data.offset +"&count=10&id=" + encodeURIComponent( data.node.parent.key );
-            //console.log("new url:",url);
-            data.node.parent.data.offset = data.node.data.offset;
-            console.log("new offset:",data.node.parent.data.offset);
-            data.node.parent.load(true);
-        }*/
+        }
+    }).on("mouseenter", ".fancytree-node", function(event){
+        if ( event.ctrlKey ){
+            if ( inst.hoverTimer ){
+                clearTimeout(inst.hoverTimer);
+                inst.hoverNav = false;
+                inst.hoverTimer = null;
+            }
+            var node = $.ui.fancytree.getNode(event);
+            inst.hoverTimer = setTimeout(function(){
+                if ( !node.isActive() ){
+                    inst.hoverNav = true;
+                    node.setActive(true);
+                }
+                inst.hoverTimer = null;
+            },750);
+            //console.log("hover:",node.key);
+        }
+        //node.info(event.type);
     });
 
     inst.data_tree_div = $('#data_tree');
@@ -1748,7 +1822,7 @@ function makeBrowserTab(){
         heightStyle:"auto",
         collapsible: true,
         activate: function(ev,ui){
-            console.log("tab activate:",ui);
+            //console.log("tab activate:",ui);
             if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
                 inst.updateSearchSelectState( true );
             } else if ( ui.oldPanel.length && ui.oldPanel[0].id == "tab-search" ){

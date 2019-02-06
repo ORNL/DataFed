@@ -484,24 +484,22 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
 
-    DL_INFO( "Data REC-DELETE, uid: " << a_uid << ", id: " << request->id() );
-
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
-    //RecordDataLocationReply rep;
-    RecordDataLocation loc;
 
     m_db_client.setClient( a_uid );
-    m_db_client.recordDelete( request->id(), loc );
+    for ( int i = 0; i < request->id_size(); i++ )
+    {
+        DL_INFO( "Data REC-DELETE, uid: " << a_uid << ", rec: " << request->id(i));
 
-    // Ask FileManager to delete file(s)
-    //for ( int i = 0; i < reply.location_size(); i++ )
-    //{
-        //const RecordDataLocation & loc = rep.location(i);
+        RecordDataLocation loc;
+        m_db_client.recordDelete( request->id(i), loc );
+
+        // Ask FileManager to delete file(s)
         m_mgr.dataDelete( loc.repo_id(), loc.path() );
-    //}
+    }
 
     PROC_MSG_END
 }

@@ -629,9 +629,9 @@ void
 Client::recordDelete( const std::string & a_id )
 {
     Auth::RecordDeleteRequest   req;
-    Anon::AckReply *             rep;
+    Anon::AckReply *            rep;
 
-    req.set_id( a_id );
+    req.add_id( a_id );
 
     send<>( req, rep, m_ctx++ );
 
