@@ -53,7 +53,7 @@
                 <li><a href="#tab-xfer">Transfers</a></li>
                 <li><a href="#tab-settings">Settings</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
-                <button id='btn_alloc' class='btn small' style='float:right' title='View account allocation statistics'>Allocations</button>
+                <span style='float:right'><button id='btn_alloc' class='btn small' title='View account allocation statistics'>Allocations</button>&nbsp<button id='btn_settings' class='btn small' title='Update application and account settings'>Settings</button></span>
             </ul>
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
@@ -78,22 +78,23 @@
             <div id="tab-settings" class="content" style="padding:0">
                 <div class='row-flex tab-inner-div'>
                     <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:4em'>
+                        <fieldset style='padding:.5em;height:6.5em'>
                             <legend>Command-Line Interface</legend>
                             <table class='setting-table'>
                                 <tr><td>New password:</td><td><input type="password" id='cli_new_pw'></input></td><td rowspan="2"><button class='btn' id='btn_upd_pw'>Update</button></td></tr>
                                 <tr><td>Confirm:</td><td><input type="password" id='cli_confirm_pw'></input></td></tr>
                             </table>
+                            <button class='btn' style='margin:.5em 0 0 0' id='btn_revoke_cred'>Revoke Credentials</button>
                         </fieldset>
                     </div>
-                    <div style='flex:none'>
+                    <!-- div style='flex:none'>
                         <fieldset style='padding:.5em;height:4em'>
                             <legend>Credentials</legend>
                             <button class='btn' id='btn_revoke_cred'>Revoke All</button>
                         </fieldset>
-                    </div>
+                    </div -->
                     <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:4em'>
+                        <fieldset style='padding:.5em;height:5em'>
                             <legend>User Interface</legend>
                             <table>
                             <tr><td>Theme:</td><td><select id='theme-sel'>
@@ -110,7 +111,7 @@
                         </fieldset>
                     </div>
                     <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:4em'>
+                        <fieldset style='padding:.5em;height:5em'>
                             <legend>Transfers</legend>
                             <table>
                             <tr><td>History:</td><td><select id='xfr-poll-hours'>
@@ -124,7 +125,7 @@
                         </fieldset>
                     </div>
                     <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:4em'>
+                        <fieldset style='padding:.5em;height:5em'>
                             <legend>E-mail</legend>
                             <input id='new_email'></input>
                         </fieldset>

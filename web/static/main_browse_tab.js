@@ -1935,6 +1935,7 @@ function makeBrowserTab(){
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
+    $("#btn_settings",inst.frame).on('click', function(){ dlgSettings() });
 
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
