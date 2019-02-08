@@ -391,18 +391,20 @@ module.exports = ( function() {
             next = [];
             for ( c in cur ){
                 coll = cur[c];
-                items = obj.db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,links:links}", { coll: coll });
+                //items = obj.db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,links:links}", { coll: coll });
+                items = obj.db._query( "for v in 1..1 outbound @coll item return {_id:v._id,size:v.size}", { coll: coll });
 
                 while ( items.hasNext() ) {
                     item = items.next();
                     if ( item._id[0] == "d" ){
-                        if ( item.links == 1 ){
+                        obj.deleteData( item, a_allocs, a_locations );
+                        /*if ( item.links == 1 ){
                             // Save location and delete
                             obj.deleteData( item, a_allocs, a_locations );
                         }else{
                             // Unlink from current collection
                             obj.db.item.removeByExample({_from:coll,_to:item._id});
-                        }
+                        }*/
                     }else{
                         next.push(item._id);
                     }

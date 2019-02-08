@@ -186,8 +186,6 @@ router.get('/delete', function (req, res) {
                 write: ["c","d","a","owner","item","loc","acl","alias","alloc","t","top","p"]
             },
             action: function() {
-                var i,obj;
-
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
