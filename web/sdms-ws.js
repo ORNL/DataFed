@@ -390,7 +390,7 @@ app.get('/api/prj/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/prj/delete', ( a_req, a_resp ) => {
-    sendMessage( "ProjectDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+    sendMessage( "ProjectDeleteRequest", { id: JSON.parse(a_req.query.ids)}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -545,6 +545,7 @@ app.get('/api/dat/copy', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
+    console.log("/dat/delete",a_req.query.ids);
     sendMessage( "RecordDeleteRequest", { id: JSON.parse(a_req.query.ids) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -670,7 +671,7 @@ app.post('/api/col/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/delete', ( a_req, a_resp ) => {
-    sendMessage( "CollDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+    sendMessage( "CollDeleteRequest", { id: JSON.parse(a_req.query.ids)}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

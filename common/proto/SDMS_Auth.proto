@@ -292,7 +292,7 @@ message CollUpdateRequest
 
 message CollDeleteRequest
 {
-    required string             id          = 1;
+    repeated string             id          = 1;
 }
 
 message CollListRequest
@@ -444,7 +444,7 @@ message ProjectUpdateRequest
 
 message ProjectDeleteRequest
 {
-    required string             id          = 1;
+    repeated string             id          = 1;
 }
 
 message ProjectListRequest

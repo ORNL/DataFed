@@ -30,9 +30,89 @@ function makeBrowserTab(){
 
     this.deleteSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
+        if ( sel.length == 0 )
+            return;
 
-        confirmChoice( "Confirm Deletion", "Delete selected items?", ["Delete","Cancel"], function( choice ){
+        var data=[],coll=[],proj=[],start;
+        for ( var i in sel ){
+            switch ( sel[i].key[0] ){
+                case 'd': data.push( sel[i].key ); start=sel[i]; break;
+                case 'c': coll.push( sel[i].key ); start=sel[i]; break;
+                case 'p': proj.push( sel[i].key ); break;
+                default: break;
+            }
+        }
+
+        var msg = "Delete selected items?";
+        if ( coll.length || proj.length ){
+            msg += " Note that this action will delete all data records and collections contained within selected ";
+            if ( coll.length && proj.length )
+                msg += "collection(s) and project(s).";
+            else if ( coll.length )
+                msg += "collection(s).";
+            else
+                msg += "project(s).";
+        }
+
+        confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
             if ( choice == 0 ){
+                var done = 0;
+                if ( data.length )
+                    done++;
+                if ( coll.length )
+                    done++;
+
+                function refreshAfterDel(){
+                    var cat = inst.getRefreshNode(start);
+                    if ( !cat.key.startsWith("t/")){
+                        inst.reloadNode(cat);
+                        inst.reloadNode(inst.data_tree.getNodeByKey("topics"));
+                    }else{
+                        inst.reloadNode(inst.data_tree.getNodeByKey("topics"));
+                        var scope = start.data.scope;
+                        if ( scope ){
+                            console.log("scope:",scope);
+                            if ( scope == "u/"+g_user.uid ){
+                                inst.reloadNode(inst.data_tree.getNodeByKey("mydata"));
+                            }else if ( scope.startsWith("u/") ){
+                                inst.reloadNode(inst.data_tree.getNodeByKey("shared_user"));
+                            }else if ( scope.startsWith("p/") ){
+                                inst.reloadNode(inst.data_tree.getNodeByKey("proj_own"));
+                                inst.reloadNode(inst.data_tree.getNodeByKey("proj_adm"));
+                                inst.reloadNode(inst.data_tree.getNodeByKey("proj_mem"));
+                                inst.reloadNode(inst.data_tree.getNodeByKey("shared_proj"));
+                            }
+                        }
+                        //inst.reloadNode(inst.data_tree.rootNode);
+                    }
+                }
+
+                if ( data.length ){
+                    dataDelete( data, function( ok, data ){
+                        if ( ok ){
+                            if ( --done == 0 )
+                                refreshAfterDel();
+                        }else
+                            dlgAlert("Data Delete Error", data);
+                    });
+                }
+                if ( coll.length ){
+                    collDelete( coll, function( ok, data ){
+                        if ( ok ){
+                            if ( --done == 0 )
+                                refreshAfterDel();
+                        }else
+                            dlgAlert("Collection Delete Error", data);
+                    });
+                }
+                if ( proj.length ){
+                    projDelete( proj, function( ok, data ){
+                        if ( ok ){
+                            inst.reloadNode(inst.data_tree.getNodeByKey("proj_own"));
+                        }else
+                            dlgAlert("Project Delete Error", data);
+                    });
+                }
             }
         });
 
@@ -102,7 +182,6 @@ function makeBrowserTab(){
 
     this.newProj = function() {
         dlgProjNewEdit(null,function(data){
-            //inst.addNode( data );
             setStatusText("Project "+data.id+" created");
             var node = inst.data_tree.getNodeByKey( "proj_own" );
             if ( node )
@@ -173,6 +252,7 @@ function makeBrowserTab(){
     }
 
     this.toggleLock = function(){
+        // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
         if ( node ) {
             if ( node.key[0] == "d" ){
@@ -311,6 +391,7 @@ function makeBrowserTab(){
     }
 
     this.editSelected = function() {
+        // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
         if ( node ) {
             if ( node.data.isproj || node.key[0] == "c")
@@ -360,6 +441,7 @@ function makeBrowserTab(){
         }
     }
 
+    /*
     this.dupSelected = function(){
         var node = inst.data_tree.activeNode;
         if ( node && node.key[0] == "d" ) {
@@ -388,9 +470,10 @@ function makeBrowserTab(){
                 }); 
             });
         }
-    }
+    }*/
 
     this.shareSelected = function() {
+        // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
         if ( node ) {
             checkPerms( node.key, PERM_SHARE, function( granted ){
@@ -415,6 +498,7 @@ function makeBrowserTab(){
     }
 
     this.editAllocSelected = function(){
+        // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
         if ( node ) {
             dlgAllocations.show();
@@ -443,6 +527,7 @@ function makeBrowserTab(){
     }
 
     this.xfrSelected = function( a_mode ) {
+        // TODO - use selection, not active node
         var key = inst.data_tree.activeNode.key;
 
         if ( key[0] == "d" ) {
@@ -530,7 +615,7 @@ function makeBrowserTab(){
     }
 
     this.reloadNode = function( node ){
-        if ( node.isLazy() && !node.isLoaded() )
+        if ( !node || node.isLazy() && !node.isLoaded() )
             return;
 
         var save_exp = node.isExpanded();
@@ -564,9 +649,26 @@ function makeBrowserTab(){
     }
 
     this.reloadSelected = function(){
+        // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
         if ( node ){
             inst.reloadNode( node );
+        }
+    }
+
+    inst.getRefreshNode = function(a_node){
+        //console.log("getRefreshNode",a_node);
+        var node = a_node.parent,prev = a_node;
+        while(node){
+            if ( !node.key.startsWith("c/")){
+                return node;
+                /*if ( node.isLazy() )
+                    return node;
+                else
+                    return prev;*/
+            }
+            prev = node;
+            node = node.parent;
         }
     }
 
@@ -858,6 +960,7 @@ function makeBrowserTab(){
         }
     }
 
+    /*
     this.addNode = function( item ){
         console.log( "addnode", item );
 
@@ -905,7 +1008,7 @@ function makeBrowserTab(){
                 }
             });
         }
-    }
+    }*/
 
     this.execQuery = function( query ){
         setStatusText("Executing search query...");
@@ -1243,12 +1346,14 @@ function makeBrowserTab(){
         console.log("pageLast", coll);
     }*/
 
+    /*{title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[
+        {title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+        {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,nocoll:true,checkbox:false}
+    ]},*/
+
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-        {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[
-            {title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-            {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,nocoll:true,checkbox:false}
-        ]},
+        {title:"My Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:false,lazy:true},
         {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
@@ -1276,7 +1381,7 @@ function makeBrowserTab(){
                 scrollSensitivity: 30
             },
             dragStart: function(node, data) {
-                console.log( "drag start", node.data.nodrag );
+                console.log( "drag start" );
                 //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
                 if ( !inst.drag_enabled || node.data.nodrag ){
                     console.log("abort drag start");
@@ -1285,12 +1390,15 @@ function makeBrowserTab(){
                 clearTimeout( inst.hoverTimer );
                 node.setActive(true);
                 if ( !node.isSelected() ){
+                    console.log( "clear selection" );
                     inst.data_tree.selectAll(false);
                     inst.selectScope = data.node;
                     node.setSelected(true);
                 }
 
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
+                console.log( "drag start", inst.pasteItems );
+
                 inst.pasteSource = inst.pasteItems[0].parent;
                 inst.pasteCollections = [];
                 for ( var i in inst.pasteItems ){
@@ -1338,7 +1446,7 @@ function makeBrowserTab(){
             },
             dragEnter: function(node, data) {
                 if ( inst.dragging ){
-                    console.log( "drag enter:", node, data );
+                    //console.log( "drag enter:", node, data );
                     return inst.pasteAllowed( node, data.otherNode );
                 }else{
                     return false;
@@ -1355,8 +1463,13 @@ function makeBrowserTab(){
         source: tree_source,
         selectMode: 2,
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "proj_own" ){
-                data.result = {
+            if ( data.node.key == "mydata" ){
+                data.result = [
+                    {title:"Root Collection",folder:true,expanded:false,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,nocoll:true,checkbox:false}
+                ];
+            }else if ( data.node.key == "proj_own" ){
+                    data.result = {
                     url: "/api/prj/list?owner=true",
                     cache: false
                 };
@@ -1370,6 +1483,12 @@ function makeBrowserTab(){
                     url: "/api/prj/list?member=true",
                     cache: false
                 };
+            }else if ( data.node.key.startsWith("p/")){
+                var prj_id = data.node.key.substr(2);
+                data.result = [
+                    {title: "Root Collection",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
+                ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
                 if ( data.node.data.scope ){
                     data.result = {
@@ -1388,7 +1507,6 @@ function makeBrowserTab(){
                     cache: false
                 };
             } else if ( data.node.key.startsWith( "repo/" )) {
-                console.log("load repo (alloc) tree:", data.node.key );
                 data.result = {
                     url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.key) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
@@ -1437,21 +1555,24 @@ function makeBrowserTab(){
         },
         postProcess: function( event, data ) {
             //console.log( "pos proc:", data );
-            if ( data.node.key == "proj_own" || data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
-                data.result = [];
+            if ( data.node.key == "mydata" || data.node.key.startsWith("p/")){
+                //console.log("post mydata",data.response);
+            }else if ( data.node.key == "proj_own" || data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
+                    data.result = [];
                 if ( data.response.length ){
                     console.log( "pos proc project:", data.response );
                     var item;
                     var admin = (data.node.key=="proj_own"?true:false);
-                    var prj_id;
+                    //var prj_id;
 
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        prj_id = item.id.substr(2);
-                        data.result.push({ title: inst.generateTitle(item),icon:"ui-icon ui-icon-box",folder:true,key: item.id,isproj:true,admin:admin,nodrag:true,children:[
+                        //prj_id = item.id.substr(2);
+                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true,admin:admin,nodrag:true,lazy:true});
+                        /*children:[
                             {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:item.id,isroot:true,admin:admin,nodrag:true},
-                            {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:item.id,nodrag:true,checkbox:false}
-                        ]});
+                            {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:item.id,nodrag:true,checkbox:false}
+                        ]});*/
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
@@ -1480,7 +1601,6 @@ function makeBrowserTab(){
                 }
             } else if ( data.node.key == "allocs" ) {
                 data.result = [];
-                console.log("postProc allocs:", data.response);
                 if ( data.response.length ){
                     var alloc;
                     for ( var i in data.response ) {
@@ -1515,15 +1635,9 @@ function makeBrowserTab(){
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
             } else if ( data.node.parent ) {
-                //console.log("Coll read, off:",data.response.offset,"count:",data.response.count,"total:",data.response.total);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
-                //console.log(items);
-
-                /*if ( data.response.offset > 0 ){
-                    data.result.push({title:"(Prev)",statusNodeType:"paging",folder:false,icon:false,checkbox:false,offset:data.response.offset - data.response.count});
-                }*/
 
                 for ( var i in items ) {
                     item = items[i];
@@ -1535,11 +1649,6 @@ function makeBrowserTab(){
 
                     data.result.push( entry );
                 }
-
-                /*if ( data.response.total > (data.response.offset + data.response.count) ){
-                    data.result.push({title:"(Next)",statusNodeType:"paging",folder:false,icon:false,checkbox:false,offset:data.response.offset + data.response.count});
-                }*/
-//<i class='browse-reload ui-icon ui-icon-reload'></i>
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
                     var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
@@ -1553,17 +1662,18 @@ function makeBrowserTab(){
             }
         },
         activate: function( event, data ) {
-            if ( event.button == undefined && !inst.hoverNav ){
-                console.log("key nav",event);
+            console.log("activate, hn:");
+            //if ( event.button == undefined && !inst.hoverNav ){
 
-                if ( !inst.keyNavMS ){
+                if ( inst.keyNav && !inst.keyNavMS ){
                     inst.data_tree.selectAll(false);
                     inst.selectScope = data.node;
                     inst.treeSelectNode(data.node);
                 }
-            }else{
-                inst.hoverNav = false;
-            }
+                inst.keyNav = false;
+            //}else{
+            //    inst.hoverNav = false;
+            //}
 
             showSelectedInfo( data.node );
         },
@@ -1590,7 +1700,7 @@ function makeBrowserTab(){
             inst.updateBtnState();
         },
         keydown: function(ev, data) {
-            //console.log("keydown",event,data);
+            //console.log("keydown",ev.keyCode);
             if ( ev.keyCode == 32 ){
                 if ( inst.data_tree.getSelectedNodes().length == 0 ){
                     inst.selectScope = data.node;
@@ -1604,6 +1714,8 @@ function makeBrowserTab(){
                     inst.keyNavMS = true;
                     setStatusText("Keyboard multi-select mode ENABLED");
                 }
+            }else if( ev.keyCode == 38 || ev.keyCode == 40 ){
+                inst.keyNav = true;
             }
         },
         click: function(event, data) {
@@ -1616,6 +1728,7 @@ function makeBrowserTab(){
                     console.log("click no which");
 
                     if ( !data.node.isSelected() ){
+                        console.log("not selected");
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
                         inst.treeSelectNode(data.node);
@@ -1641,6 +1754,7 @@ function makeBrowserTab(){
                             break;
                         }
                     }
+
                     if ( sel[0].data.nodrag || coll_sel )
                         inst.data_tree_div.contextmenu("enableEntry", "copy", false );
                     else
@@ -1653,7 +1767,6 @@ function makeBrowserTab(){
                         inst.data_tree_div.contextmenu("enableEntry", "paste", true );
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "paste", false );
-
                 } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
                     console.log("has scope");
                     if ( inst.data_tree.getSelectedNodes().length == 0 )
@@ -1682,13 +1795,13 @@ function makeBrowserTab(){
         if ( event.ctrlKey ){
             if ( inst.hoverTimer ){
                 clearTimeout(inst.hoverTimer);
-                inst.hoverNav = false;
+                //inst.hoverNav = false;
                 inst.hoverTimer = null;
             }
             var node = $.ui.fancytree.getNode(event);
             inst.hoverTimer = setTimeout(function(){
                 if ( !node.isActive() ){
-                    inst.hoverNav = true;
+                    //inst.hoverNav = true;
                     node.setActive(true);
                 }
                 inst.hoverTimer = null;
@@ -1729,6 +1842,11 @@ function makeBrowserTab(){
         beforeOpen: function( ev, ui ){
             ev.stopPropagation();
             // Select the target before menu is shown
+            if ( inst.hoverTimer ){
+                clearTimeout(inst.hoverTimer);
+                inst.hoverTimer = null;
+            }
+            //inst.hoverNav = true;
             ui.target.click();
         }
     });
@@ -1974,9 +2092,12 @@ function makeBrowserTab(){
 
     //$("#left-panel").resizable({handles:"e"});
 
-    var node = inst.data_tree.getNodeByKey( inst.my_root_key );
-    node.load();
-    node.setExpanded();
+    var node = inst.data_tree.getNodeByKey( "mydata" );
+    node.setExpanded().done(function(){
+        node = inst.data_tree.getNodeByKey( inst.my_root_key );
+        node.setExpanded();
+    });
+
     inst.showSelectedInfo();
     this.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
 }

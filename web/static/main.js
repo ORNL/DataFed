@@ -125,6 +125,11 @@ function viewData( a_id, a_cb ) {
     });
 }
 
+function dataDelete(a_ids,a_cb){
+    console.log("dataDelete,",a_ids);
+    _asyncGet( "/api/dat/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb);
+}
+
 function copyData( a_src_id, a_dst_id, a_cb ){
     //console.log("copyData",a_src_id, a_dst_id);
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
@@ -155,6 +160,10 @@ function viewColl( a_id, a_cb ) {
     });
 }
 
+function collDelete(a_ids,a_cb){
+    _asyncGet( "/api/col/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
+}
+
 function viewProj( a_id, a_cb ){
     _asyncGet( "/api/prj/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
@@ -170,6 +179,10 @@ function viewProj( a_id, a_cb ){
             a_cb();
         }
     });
+}
+
+function projDelete( a_ids, a_cb ){
+    _asyncGet( "/api/prj/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
 function linkItems( a_items, a_coll, a_cb ) {

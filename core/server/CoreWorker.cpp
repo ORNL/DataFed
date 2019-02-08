@@ -509,21 +509,25 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( CollDeleteRequest, AckReply )
 
-    DL_INFO( "Collection DELETE, uid: " << a_uid << ", id: " << request->id() );
-
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.setClient( a_uid );
     vector<RecordDataLocation> locs;
-    m_db_client.collDelete( request->id(), locs );
 
-    // Ask FileManager to delete file
-    for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
+    for ( int i = 0; i < request->id_size(); i++ )
     {
-        //const RecordDataLocation & loc = reply.location(i);
-        m_mgr.dataDelete( l->repo_id(), l->path() );
+        DL_INFO( "Collection DELETE, uid: " << a_uid << ", coll: " << request->id(i) );
+        m_db_client.collDelete( request->id(i), locs );
+
+        // Ask FileManager to delete file
+        for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
+        {
+            m_mgr.dataDelete( l->repo_id(), l->path() );
+        }
+
+        locs.clear();
     }
 
     PROC_MSG_END
@@ -534,24 +538,29 @@ Worker::procProjectDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( ProjectDeleteRequest, AckReply )
 
-    DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id() );
-
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.setClient( a_uid );
     vector<RecordDataLocation> locs;
-    m_db_client.projDelete( request->id(), locs );
 
-    // Ask FileManager to delete file and/or repo project directories
-    for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
+    for ( int i = 0; i < request->id_size(); i++ )
     {
-        //const RecordDataLocation & loc = reply.location(i);
-        if ( l->path() == "all" )
-            m_mgr.repoPathDelete( l->repo_id(), request->id() );
-        else
-            m_mgr.dataDelete( l->repo_id(), l->path() );
+        DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id(i) );
+
+        m_db_client.projDelete( request->id(i), locs );
+
+        // Ask FileManager to delete file and/or repo project directories
+        for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
+        {
+            if ( l->path() == "all" )
+                m_mgr.repoPathDelete( l->repo_id(), request->id(i) );
+            else
+                m_mgr.dataDelete( l->repo_id(), l->path() );
+        }
+
+        locs.clear();
     }
 
     PROC_MSG_END
