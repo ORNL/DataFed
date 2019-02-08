@@ -251,21 +251,36 @@ function makeBrowserTab(){
         });
     }
 
-    this.toggleLock = function(){
-        // TODO - use selection, not active node
-        var node = inst.data_tree.activeNode;
-        if ( node ) {
-            if ( node.key[0] == "d" ){
-                toggleDataLock( node.key, function( ok, data ){
-                    if ( ok ){
-                        inst.updateNodeTitle( data.data[0] );
-                        inst.showSelectedInfo( node );
-                    }else{
-                        dlgAlert("Toggle Lock Failed",data);
+    this.setLockSelected = function( a_lock ){
+        console.log("setLock,lock:",a_lock);
+        var sel = inst.data_tree.getSelectedNodes();
+        if ( sel.length ) {
+            var ids=[];
+            for ( var i in sel )
+                ids.push(sel[i].key);
+
+            dataLock( ids, a_lock, function( ok, data ){
+                if ( ok ){
+                    console.log("lock reply:",data);
+                    for ( i in data.item ){
+                        inst.updateNodeTitle( data.item[i] );
                     }
-                });
-            }
+                    var node = inst.data_tree.activeNode;
+                    if ( node )
+                        inst.showSelectedInfo( node );
+                }else{
+                    dlgAlert("Lock Update Failed",data);
+                }
+            });
         }
+    }
+
+    this.lockSelected = function(){
+        inst.setLockSelected( true );
+    }
+
+    this.unlockSelected = function(){
+        inst.setLockSelected( false );
     }
 
     this.copyItems = function( items, dest_node, cb ){
@@ -514,6 +529,9 @@ function makeBrowserTab(){
         });
     }
 
+    inst.updateNodeLock = function( a_item, a_locked ){
+    }
+
     this.deleteNode = function( key ){
         var items = [];
         inst.data_tree.visit(function(node){
@@ -593,6 +611,7 @@ function makeBrowserTab(){
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0 );
         $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
+        $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
@@ -602,6 +621,7 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "put", (bits & 0x10) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x20) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "lock", (bits & 0x40) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "unlock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlink", (bits & 0x80) == 0 );
     }
 
@@ -1153,7 +1173,7 @@ function makeBrowserTab(){
         var title = "";
 
         if ( item.locked )
-            title += " <i class='ui-icon ui-icon-locked'></i> ";
+            title += "<i class='ui-icon ui-icon-locked'></i> ";
 
         if ( item.alias )
             title += escapeHTML("\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")");
@@ -1824,7 +1844,8 @@ function makeBrowserTab(){
                 //{title: "Duplicate", cmd: "dup" },
                 {title: "Delete", action: inst.deleteSelected, cmd: "del" },
                 {title: "Sharing", action: inst.shareSelected, cmd: "share" },
-                {title: "Lock", action: inst.toggleLock, cmd: "lock" },
+                {title: "Lock", action: inst.lockSelected, cmd: "lock" },
+                {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
                 {title: "Get", action: function(){ inst.xfrSelected(XFR_GET) }, cmd: "get" },
                 {title: "Put", action: function(){ inst.xfrSelected(XFR_PUT) }, cmd: "put" }
                 ]},
@@ -1898,7 +1919,8 @@ function makeBrowserTab(){
     //$("#btn_dup",inst.frame).on('click', inst.dupSelected );
     $("#btn_del",inst.frame).on('click', inst.deleteSelected );
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
-    $("#btn_lock",inst.frame).on('click', inst.toggleLock );
+    $("#btn_lock",inst.frame).on('click', inst.lockSelected );
+    $("#btn_unlock",inst.frame).on('click', inst.unlockSelected );
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(XFR_PUT) });
     $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(XFR_GET) });
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });

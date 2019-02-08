@@ -140,8 +140,9 @@ function dataFind( a_query, a_callback ) {
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
 
-function toggleDataLock( a_id, a_cb ){
-    _asyncGet( "/api/dat/lock/toggle?id=" + encodeURIComponent(a_id), null, a_cb );
+function dataLock( a_ids, a_lock, a_cb ){
+    console.log("dataLock, lock:",a_lock);
+    _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
 function viewColl( a_id, a_cb ) {

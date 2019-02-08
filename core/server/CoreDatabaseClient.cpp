@@ -917,13 +917,29 @@ DatabaseClient::recordDelete( const std::string & a_id, RecordDataLocation & a_l
 }
 
 void
-DatabaseClient::recordLockToggle( const Auth::RecordLockToggleRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
 {
     rapidjson::Document result;
+    string ids;
 
-    dbGet( "dat/lock/toggle", {{"id",a_request.id()}}, result );
+    if ( a_request.id_size() > 0 )
+    {
+        ids = "[";
+        for ( int i = 0; i < a_request.id_size(); i++ )
+        {
+            if ( i > 0 )
+                ids += ",";
 
-    setRecordData( a_reply, result );
+            ids += "\"" + a_request.id(i) + "\"";
+        }
+        ids += "]";
+    }
+    else
+        ids = "[]";
+
+    dbGet( "dat/lock", {{"ids",ids},{"lock",a_request.lock()?"true":"false"}}, result );
+
+    setListingData( a_reply, result );
 }
 
 void

@@ -56,7 +56,7 @@ public:
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordLockToggle( const Auth::RecordLockToggleRequest & a_request, Auth::RecordDataReply & a_reply );
+    void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
     void recordDelete( const std::string & a_id, RecordDataLocation & a_loc );
     void recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
