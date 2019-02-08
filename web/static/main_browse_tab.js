@@ -569,26 +569,32 @@ function makeBrowserTab(){
         var bits,node;
 
         if ( sel.length > 1 ){
-            bits = 0x19;
+            bits = 0x119;
             for ( var i in sel ){
                 node = sel[i];
                 switch ( node.key[0] ){
                     case "c": bits |= node.data.isroot?0xF7:0x72;  break;
                     case "d": bits |= 0x00;  break;
-                    case "r": bits |= 0xF7;  break;
-                    case "p": bits |= 0xFa | (node.data.admin?0:5); break;
-                    default:  bits |= 0xFF;  break;
+                    case "r": bits |= 0x1F7;  break;
+                    case "p": bits |= 0x1Fa | (node.data.admin?0:5); break;
+                    default:  bits |= 0x1FF;  break;
                 }
             }
 
             console.log("multi",bits);
         }else if ( sel.length ){
             node = sel[0];
+
             switch ( node.key[0] ){
                 case "c": bits = node.data.isroot?0xF7:0x72;  break;
-                case "d": bits = 0x00;  break;
-                case "p": bits = 0xFa | (node.data.admin?0:5); break;
-                default:  bits = 0xFF;  break;
+                case "d":
+                    if ( node.parent.key.startsWith("c/"))
+                        bits = 0x00;
+                    else
+                        bits = 0x100;
+                    break;
+                case "p": bits = 0x1Fa | (node.data.admin?0:5); break;
+                default:  bits = 0x1FF;  break;
             }
             console.log("single",bits);
         }else{
@@ -605,6 +611,7 @@ function makeBrowserTab(){
         var bits = calcActionState( state, admin, sel );
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
+        $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
         //$("#btn_dup",inst.frame).button("option","disabled",(bits & 2) != 0);
         $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0 );
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0 );
@@ -612,6 +619,8 @@ function makeBrowserTab(){
         $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
+        $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
+        $("#btn_new_coll",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
