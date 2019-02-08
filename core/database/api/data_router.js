@@ -376,6 +376,39 @@ router.get('/view', function (req, res) {
 .summary('Get data by ID or alias')
 .description('Get data by ID or alias');
 
+router.get('/lock', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","a","alias"],
+                write: ["d"]
+            },
+            action: function() {
+                var obj,i,result=[];
+                for ( i in req.queryParams.ids ) {
+                    obj = g_lib.getObject( req.queryParams.ids[i], client );
+
+                    if ( !g_lib.hasAdminPermObject( client, obj._id )) {
+                        if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_Lock ))
+                            throw g_lib.ERR_PERM_DENIED;
+                    }
+                    g_db._update( obj._id, {locked:req.queryParams.lock}, { returnNew: true });
+                    result.push({id:obj._id,alias:obj.alias,title:obj.title,owner:obj.owner,locked:req.queryParams.lock});
+                }
+                res.send(result);
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data IDs or aliases")
+.queryParam('lock',joi.bool().required(),"Lock (true) or unlock (false) flag")
+.summary('Toggle data record lock')
+.description('Toggle data record lock');
+
 router.get('/lock/toggle', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -412,7 +445,6 @@ router.get('/lock/toggle', function (req, res) {
 .queryParam('id', joi.string().required(), "Data ID or alias")
 .summary('Toggle data record lock')
 .description('Toggle data record lock');
-
 
 router.get('/loc', function (req, res) {
     try {
