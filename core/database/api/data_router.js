@@ -386,11 +386,11 @@ router.get('/lock', function (req, res) {
             },
             action: function() {
                 var obj,i,result=[];
-                for ( i in req.queryParams.ids ) {
+                for ( i in req.queryParams.ids ){
                     obj = g_lib.getObject( req.queryParams.ids[i], client );
 
                     if ( !g_lib.hasAdminPermObject( client, obj._id )) {
-                        if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_Lock ))
+                        if ( !g_lib.hasPermissions( client, obj, g_lib.PERM_LOCK ))
                             throw g_lib.ERR_PERM_DENIED;
                     }
                     g_db._update( obj._id, {locked:req.queryParams.lock}, { returnNew: true });
