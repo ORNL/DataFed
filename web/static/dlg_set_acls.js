@@ -63,7 +63,7 @@ function dlgSetACLs( item ){
         children = [{ title:"Write Rec.",inh:a_inh,key:PERM_WR_REC }];
         if ( a_mode & DATA_MODE ){
             children.push({ title:"Write Meta",inh:a_inh,key:PERM_WR_META });
-            children.push({title:"Write Data",inh:a_inh,key:PERM_WR_DATA });
+            children.push({ title:"Write Data",inh:a_inh,key:PERM_WR_DATA });
         }
         if ( a_mode & COLL_MODE ){
             children.push({ title:"Link",inh:a_inh,key:PERM_LINK });
@@ -100,12 +100,14 @@ function dlgSetACLs( item ){
             },
             beforeSelect: function( event, data ) {
                 if ( cur_rule && cur_rule.id != "default" ){
-                    if ( is_coll ){
-                        if (( parseInt( data.node.key ) & (PERM_RD_REC|PERM_LIST) ) && data.node.isSelected() )
-                            return false;
-                    }else{
-                        if (( parseInt( data.node.key ) & PERM_RD_REC ) && data.node.isSelected() )
-                            return false;
+                    if ( !data.node.data.inh ){
+                        if ( is_coll ){
+                            if (( parseInt( data.node.key ) & (PERM_RD_REC|PERM_LIST) ) && data.node.isSelected() )
+                                return false;
+                        }else{
+                            if (( parseInt( data.node.key ) & PERM_RD_REC ) && data.node.isSelected() )
+                                return false;
+                        }
                     }
                 }
             },

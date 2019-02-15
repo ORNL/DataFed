@@ -100,6 +100,13 @@ function dlgSettings( a_cb ){
                     console.log("update history",tmp);
                 }
 
+                tmp = $("#def-alloc",frame).val();
+                if ( tmp != g_opts.def_alloc ){
+                    g_opts.def_alloc = tmp;
+                    save = true;
+                    console.log("update def-alloc",tmp);
+                }
+
                 tmp = $("#theme-sel",frame).val();
                 if ( tmp != g_theme ){
                     console.log("update theme",tmp);
@@ -142,7 +149,7 @@ function dlgSettings( a_cb ){
             $("#page-size",frame).val(g_opts.page_sz).selectmenu({width:150});
             $("#theme-sel",frame).val(g_theme).selectmenu({width:150});
             $("#xfr-poll-hours",frame).val(g_opts.xfr_hist).selectmenu({width:150});
-            $("#def-alloc",frame).val('none').selectmenu({width:225});
+            $("#def-alloc",frame).val(g_opts.def_alloc).selectmenu({width:225});
             $("#new_email",frame).val( g_user.email );
         }
     };
@@ -152,7 +159,6 @@ function dlgSettings( a_cb ){
         var html = "<option value='none'>None</option>";
         if ( ok && data.length ){
             var alloc;
-            html = "";
             for ( var i in data ){
                 alloc = data[i];
                 html += "<option value='"+alloc.repo + "'";

@@ -66,7 +66,7 @@
         $("input").tooltip({ show: { effect: "slideDown", delay: 500 }});
 
         var g_theme = "<%- @theme %>";
-        var g_opts = { page_sz: 20, xfr_hist: 24 };
+        var g_opts = { page_sz: 20, xfr_hist: 24, def_alloc: 'none' };
         var tab_browser;
 
         userView( g_user.uid, true, function( ok, user ){

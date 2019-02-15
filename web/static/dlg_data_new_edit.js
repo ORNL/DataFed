@@ -65,15 +65,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         var coll_id = $("#coll",frame).val();
         //console.log("updateAllocSelect", coll_id );
         allocListByObject( coll_id, function( ok, data ){
-            //console.log( "updateAllocSelect", ok, data );
+            console.log( "updateAllocSelect", ok, data );
             var html;
             var have_cap = false;
             if ( ok ){
                 var alloc;
-                html = "<option value='default'>Default</option>";
+                html = "";
                 for ( var i in data ){
                     alloc = data[i];
-                    console.log( "alloc", alloc );
+                    //console.log( "alloc", alloc );
                     html += "<option value='"+alloc.repo + "'";
                     if ( parseInt( alloc.usage ) < parseInt( alloc.alloc ))
                         have_cap = true;
