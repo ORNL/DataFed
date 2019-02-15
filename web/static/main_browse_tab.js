@@ -1232,7 +1232,9 @@ function makeBrowserTab(){
         this.xfr_hist.html( html );
     }
 
-    this.xfrHistoryPoll = function() {
+    this.xfrHistoryPoll = function(){
+        console.log("xfrHistoryPoll",inst.pollSince);
+
         if ( !g_user )
             return;
 
@@ -1935,7 +1937,16 @@ function makeBrowserTab(){
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
-    $("#btn_settings",inst.frame).on('click', function(){ dlgSettings() });
+    $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){
+        if(reload){
+            inst.reloadDataTree();
+        }
+        clearTimeout(inst.xfrTimer);
+        this.xfr_hist.html( "(no recent transfers)" );
+        inst.xfrHist = [];
+        inst.pollSince = g_opts.xfr_hist * 3600;
+        inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
+    })});
 
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
@@ -1993,71 +2004,6 @@ function makeBrowserTab(){
         $("#sel_md").slideToggle();
     });
 
-    $("#btn_upd_pw").click( function(){
-        var pw1 = $('#cli_new_pw').val();
-        var pw2 = $('#cli_confirm_pw').val();
-        if ( pw1.length == 0 )
-            dlgAlert( "Update CLI Password", "Password cannot be empty" );
-        else if ( pw1 != pw2 )
-            dlgAlert( "Update CLI Password", "Passwords do not match" );
-        else{
-            $('#cli_new_pw').val("");
-            $('#cli_confirm_pw').val("");
-            _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&pw="+pw1, null, function( ok, data ){
-                if ( ok )
-                    dlgAlert( "Update CLI Password", "Password successfully updated." );
-                else
-                    dlgAlert( "Update CLI Password", "Password update failed: " + data );
-            });
-        }
-    });
-
-    $("#btn_revoke_cred").click( function(){
-        confirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Revoke","Cancel"], function(choice){
-            if ( choice == 0 ){
-                _asyncGet( "/api/usr/revoke_cred", null, function( ok, data ){
-                    if ( ok )
-                        dlgAlert( "Revoke CLI Credentials", "Credentials successfully revoked." );
-                    else
-                        dlgAlert( "Revoke CLI Credentials", "Credential revoke failed: " + data );
-                });
-            }
-        });
-    });
-
-    var emailTimer;
-    var emailFilter = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    var emailBad = false;
-
-    $("#new_email").val( g_user.email ).on('input', function(){
-        if ( emailTimer )
-            clearTimeout( emailTimer);
-
-        if ( emailBad ){
-            $("#new_email").removeClass('ui-state-error');
-            emailBad = false;
-        }
-
-        emailTimer = setTimeout( function(){
-            emailTimer = null;
-            var email = $("#new_email").val();
-
-            if (!emailFilter.test(String(email).toLowerCase())) {
-                setStatusText( 'Invalid e-mail entry' );
-                $("#new_email").addClass('ui-state-error');
-                emailBad = true;
-            }else{
-                _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&email="+email, null, function( ok, data ){
-                    if ( !ok )
-                        dlgAlert( "Update E-mail", "E-mail update failed: " + data );
-                    else
-                        setStatusText( 'E-mail updated' );
-                });
-            }
-
-        }, 1200 );
-    });;
-
     $(".scope",inst.frame).checkboxradio();
     $(".scope2",inst.frame).checkboxradio();
 
@@ -2071,39 +2017,7 @@ function makeBrowserTab(){
         inst.updateSearchSelectState( true );
     });
 
-    //$("#newmenu").menu();
-    $("#lockmenu").menu();
-
-    $("#theme-sel").val(g_theme).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
-        themeSet( ui.item.value );
-    });
-
-    $("#page-size").val(g_opts.page_sz).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
-        g_opts.page_sz = parseInt(ui.item.value);
-        inst.reloadDataTree();
-
-        _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&opts="+encodeURIComponent(JSON.stringify(g_opts)), null, function( ok, data ){
-            if ( !ok )
-                dlgAlert( "Update Options Error", data );
-            else
-                console.log("saved");
-        });
-    });
-
-    $("#xfr-poll-hours").val(g_opts.xfr_hist).selectmenu({width:"auto",position:{my:"left bottom",at:"left bottom",collision:"none"}}).on('selectmenuchange', function( ev, ui ) {
-        clearTimeout( inst.xfrTimer );
-        g_opts.xfr_hist = parseInt(ui.item.value);
-        inst.xfrHist = [];
-        inst.pollSince = g_opts.xfr_hist * 3600;
-        inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
-
-        _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&opts="+encodeURIComponent(JSON.stringify(g_opts)), null, function( ok, data ){
-            if ( !ok )
-                dlgAlert( "Update Options Error", data );
-            else
-                console.log("saved");
-        });
-    });
+    //$("#lockmenu").menu();
 
     this.menutimer = null;
     $("#newmenu").mouseout(function(){
@@ -2131,5 +2045,6 @@ function makeBrowserTab(){
     });
 
     inst.showSelectedInfo();
+    this.xfr_hist.html( "(no recent transfers)" );
     this.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
 }

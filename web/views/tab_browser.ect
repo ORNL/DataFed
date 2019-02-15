@@ -51,7 +51,6 @@
             <ul>
                 <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-xfer">Transfers</a></li>
-                <li><a href="#tab-settings">Settings</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <span style='float:right'><button id='btn_alloc' class='btn small' title='View account allocation statistics'>Allocations</button>&nbsp<button id='btn_settings' class='btn small' title='Update application and account settings'>Settings</button></span>
             </ul>
@@ -75,74 +74,11 @@
             <div id="tab-xfer" class="content" style="padding:0">
                 <div id="xfr_hist" class="text tab-inner-div"></div>
             </div>
-            <div id="tab-settings" class="content" style="padding:0">
-                <div class='row-flex tab-inner-div'>
-                    <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:6.5em'>
-                            <legend>Command-Line Interface</legend>
-                            <table class='setting-table'>
-                                <tr><td>New password:</td><td><input type="password" id='cli_new_pw'></input></td><td rowspan="2"><button class='btn' id='btn_upd_pw'>Update</button></td></tr>
-                                <tr><td>Confirm:</td><td><input type="password" id='cli_confirm_pw'></input></td></tr>
-                            </table>
-                            <button class='btn' style='margin:.5em 0 0 0' id='btn_revoke_cred'>Revoke Credentials</button>
-                        </fieldset>
-                    </div>
-                    <!-- div style='flex:none'>
-                        <fieldset style='padding:.5em;height:4em'>
-                            <legend>Credentials</legend>
-                            <button class='btn' id='btn_revoke_cred'>Revoke All</button>
-                        </fieldset>
-                    </div -->
-                    <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:5em'>
-                            <legend>User Interface</legend>
-                            <table>
-                            <tr><td>Theme:</td><td><select id='theme-sel'>
-                                <option value='light'>Light</option>
-                                <option value='dark'>Dark</option>
-                            </select></td></tr>
-                            <tr><td>Page Size:</td><td><select id='page-size'>
-                                <option value='10'>10</option>
-                                <option value='20'>20</option>
-                                <option value='50'>50</option>
-                                <option value='100'>100</option>
-                            </select></td></tr>
-                            </table>
-                        </fieldset>
-                    </div>
-                    <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:5em'>
-                            <legend>Transfers</legend>
-                            <table>
-                            <tr><td>History:</td><td><select id='xfr-poll-hours'>
-                                <option value='1'>1 Hour</option>
-                                <option value='12'>12 Hours</option>
-                                <option value='24'>1 Day</option>
-                                <option value='168'>1 Week</option>
-                                <option value='720'>1 Month</option>
-                            </select></td></tr>
-                            </table>
-                        </fieldset>
-                    </div>
-                    <div style='flex:none'>
-                        <fieldset style='padding:.5em;height:5em'>
-                            <legend>E-mail</legend>
-                            <input id='new_email'></input>
-                        </fieldset>
-                    </div>
-                </div>
-            </div>
             <div id="tab-repo" class="content" style="padding:0">
                 <div id="repo_list" class="text tab-inner-div"></div>
             </div>
         </div>
     </div>
 </div>
-<!-- ul id="newmenu" class="ui-state-hover" style="display:none;z-index:1000;width:10ch;padding:.25em">
-    <li><div id="btn_new_proj">Project</div></li>
-    <li><div id="btn_new_coll">Collection</div></li>
-    <li><div id="btn_new_data">Data</div></li>
-</ul -->
-
 <div id="ctxtmenu" style="display:none;z-index:1000">
 </div>
