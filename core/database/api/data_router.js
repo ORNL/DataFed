@@ -237,17 +237,24 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "alias", true, obj );
                 g_lib.procInputParam( req.body, "topic", true, obj );
 
-                console.log("New data title:", obj.title );
+                //console.log("topic, old:", data.topic ,",new:", obj.topic );
+                //console.log("new !== undefined", obj.topic !== undefined );
 
-                if ( obj.topic != undefined && obj.topic != data.topic ){
-                    if ( data.topic )
+                if ( obj.topic !== undefined && obj.topic != data.topic ){
+                    //console.log("update topic, old:", data.topic ,",new:", obj.topic );
+
+                    if ( data.topic ){
+                        //console.log("unlink old topic");
                         g_lib.topicUnlink( data._id );
+                    }
 
-                    if ( obj.topic.length )
+                    if ( obj.topic && obj.topic.length ){
+                        //console.log("link new topic");
                         g_lib.topicLink( obj.topic, data._id );
+                    }
                 }
 
-                if ( req.body.public != undefined )
+                if ( req.body.public !== undefined )
                     obj.public = req.body.public;
 
                 if ( req.body.md === "" )
@@ -258,7 +265,7 @@ router.post('/update', function (req, res) {
                         throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
                 }
 
-                if ( req.body.size != undefined ) {
+                if ( req.body.size !== undefined ) {
                     obj.size = req.body.size;
 
                     data = g_db.d.document( data_id );

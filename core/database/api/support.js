@@ -575,9 +575,11 @@ module.exports = ( function() {
     };
 
     obj.topicUnlink = function( a_data_id ){
+        //console.log("topicUnlink");
         var top = obj.db.top.firstExample({_from: a_data_id});
-        if ( !top )
+        if ( !top ){
             return;
+        }
 
         var parent = top._to;
         obj.db.top.remove(top);
