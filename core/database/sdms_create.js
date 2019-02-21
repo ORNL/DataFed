@@ -16,13 +16,14 @@ graph._addVertexCollection("c");    // Collection
 graph._addVertexCollection("t");    // Topic
 //graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
+graph._addVertexCollection("q");    // Saved queries
 //graph._addVertexCollection("l");    // Label
 graph._addVertexCollection("tr");   // Transfers
 graph._addVertexCollection("repo"); // Repository servers
 
 
 //var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u","p"]);
-var owner = graph_module._relation("owner", ["d","c","p","g","a"], ["u","p"]);
+var owner = graph_module._relation("owner", ["d","c","p","g","a","q"], ["u","p"]);
 graph._extendEdgeDefinitions(owner);
 
 var mem = graph_module._relation("member", ["g"], ["u"]);
