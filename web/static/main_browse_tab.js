@@ -1409,7 +1409,7 @@ function makeBrowserTab(){
         ]},
         {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
-        {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true }
+        {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
     ];
 
 
@@ -1509,8 +1509,10 @@ function makeBrowserTab(){
         source: tree_source,
         selectMode: 2,
         collapse: function( event, data ) {
-            if ( data.node.isLazy )
+            if ( data.node.isLazy() ){
+                console.log("collapse");
                 data.node.resetLazy();
+            }
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
@@ -2043,7 +2045,7 @@ function makeBrowserTab(){
 
     $("#scope_selected",inst.frame).on( "change",function(ev){
         if( $("#scope_selected",inst.frame).prop("checked")){
-            $(".scope",inst.frame).checkboxradio("disable");
+            $(".scope",inst.frame).prop("checked",false).checkboxradio("disable").checkboxradio("refresh");
         }else{
             $(".scope",inst.frame).checkboxradio("enable");
         }
