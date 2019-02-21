@@ -1327,6 +1327,130 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
 }
 
 void
+DatabaseClient::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    if ( a_request.has_offset() )
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count() )
+        params.push_back({"count",to_string(a_request.count())});
+
+    dbGet( "qry/list", params, result );
+
+    setListingData( a_reply, result );
+}
+
+void
+DatabaseClient::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+
+    params.push_back({"title",a_request.title()});
+    params.push_back({"query",a_request.query()});
+    params.push_back({"query_comp",a_request.query_comp()});
+    if ( a_request.has_use_owner() )
+        params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
+    if ( a_request.has_use_sh_usr() )
+        params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
+    if ( a_request.has_use_sh_prj() )
+        params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
+
+    dbGet( "qry/create", params, result );
+
+    setQueryData( a_reply, result );
+}
+
+void
+DatabaseClient::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_title() )
+        params.push_back({"title",a_request.title()});
+    if ( a_request.has_query() )
+        params.push_back({"query",a_request.query()});
+    if ( a_request.has_query_comp() )
+        params.push_back({"query_comp",a_request.query_comp()});
+    if ( a_request.has_use_owner() )
+        params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
+    if ( a_request.has_use_sh_usr() )
+        params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
+    if ( a_request.has_use_sh_prj() )
+        params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
+
+    dbGet( "qry/update", params, result );
+
+    setQueryData( a_reply, result );
+}
+
+void
+DatabaseClient::queryDelete( const std::string & a_id )
+{
+    rapidjson::Document result;
+
+    dbGet( "qry/delete", {{"id",a_id}}, result );
+}
+
+void
+DatabaseClient::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "qry/view", {{"id",a_request.id()}}, result );
+
+    setQueryData( a_reply, result );
+}
+
+void
+DatabaseClient::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "/qry/exec", {{"id",a_request.id()}}, result );
+
+    setListingData( a_reply, result );
+}
+
+void
+DatabaseClient::setQueryData( QueryDataReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    QueryData* qry;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        qry = a_reply.add_query();
+        qry->set_id( val["id"].GetString() );
+        qry->set_title( val["title"].GetString() );
+        qry->set_query( val["query"].GetString() );
+
+        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
+            qry->set_owner( imem->value.GetString() );
+        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
+            qry->set_ct( imem->value.GetUint() );
+        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
+            qry->set_ut( imem->value.GetUint() );
+        if (( imem = val.FindMember("use_owner")) != val.MemberEnd() && !imem->value.IsNull() )
+            qry->set_use_owner( imem->value.GetBool() );
+        if (( imem = val.FindMember("use_sh_usr")) != val.MemberEnd() && !imem->value.IsNull() )
+            qry->set_use_sh_usr( imem->value.GetBool() );
+        if (( imem = val.FindMember("use_sh_prj")) != val.MemberEnd() && !imem->value.IsNull() )
+            qry->set_use_sh_prj( imem->value.GetBool() );
+    }
+}
+
+void
 DatabaseClient::xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply )
 {
     rapidjson::Document result;

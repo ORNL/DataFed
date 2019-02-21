@@ -39,7 +39,7 @@ function dlgSettings( a_cb ){
     var emailFilter = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
     $("#btn_revoke_cred",frame).click( function(){
-        confirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Revoke","Cancel"], function(choice){
+        dlgConfirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Revoke","Cancel"], function(choice){
             if ( choice == 0 ){
                 _asyncGet( "/api/usr/revoke_cred", null, function( ok, data ){
                     if ( !ok )

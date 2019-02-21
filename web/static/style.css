@@ -212,15 +212,15 @@ ul.ui-effects-placeholder { width:10px !important; }
     padding: 0 1em;
 }
 
-.info_table_fixed tr:nth-child(even)
+/*.info_table_fixed tr:nth-child(even)
 {
     background-color: #eee;
 }
 
 .info_table_fixed tr:nth-child(odd)
 {
-    background-color: #fff;
-}
+    background-color: #808080;
+}*/
 
 .perm_table
 {

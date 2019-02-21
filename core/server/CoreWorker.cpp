@@ -85,8 +85,11 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
+        SET_MSG_HANDLER( proto_id, QueryCreateRequest, &Worker::procQueryCreateRequest );
+        SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &Worker::procQueryUpdateRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
         SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &Worker::procProjectDeleteRequest );
+        SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &Worker::procQueryDeleteRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &Worker::procRepoAllocationSetRequest );
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
 
@@ -121,6 +124,9 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, CollMoveRequest, AckReply, collMove );
         SET_MSG_HANDLER_DB( proto_id, CollGetParentsRequest, CollDataReply, collGetParents );
+        SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
+        SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
+        SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
         SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
         SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
@@ -567,6 +573,27 @@ Worker::procProjectDeleteRequest( const std::string & a_uid )
 }
 
 bool
+Worker::procQueryDeleteRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( QueryDeleteRequest, AckReply )
+
+    // TODO Acquire write lock here
+    // TODO Need better error handling (plus retry)
+
+    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    m_db_client.setClient( a_uid );
+
+    for ( int i = 0; i < request->id_size(); i++ )
+    {
+        //DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id(i) );
+
+        m_db_client.queryDelete( request->id(i) );
+    }
+
+    PROC_MSG_END
+}
+
+bool
 Worker::procRecordSearchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordSearchRequest, ListingReply )
@@ -584,6 +611,75 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     req2.set_use_shared_users( use_shared_users );
     req2.set_use_shared_projects( use_shared_projects );
     m_db_client.recordSearch( req2, reply );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procQueryCreateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( QueryCreateRequest, QueryDataReply )
+
+    m_db_client.setClient( a_uid );
+
+    QueryCreateRequest req2;
+    bool use_owner = false;
+    bool use_sh_usr = false;
+    bool use_sh_prj = false;
+
+    DL_INFO("about to parse query[" << request->query() << "]" );
+
+    string q = parseQuery( request->query(), use_owner, use_sh_usr, use_sh_prj );
+
+    DL_INFO("parsed query[" << q << "]" );
+
+    req2.set_title( request->title());
+    req2.set_query( request->query() );
+    req2.set_query_comp( q );
+    req2.set_use_owner( use_owner );
+    req2.set_use_sh_usr( use_sh_usr );
+    req2.set_use_sh_prj( use_sh_prj );
+
+    m_db_client.queryCreate( req2, reply );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procQueryUpdateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( QueryUpdateRequest, QueryDataReply )
+
+    m_db_client.setClient( a_uid );
+    if ( request->has_query() )
+    {
+        QueryUpdateRequest req2;
+        bool use_owner = false;
+        bool use_sh_usr = false;
+        bool use_sh_prj = false;
+
+        DL_INFO("about to parse query[" << request->query() << "]" );
+
+        string q = parseQuery( request->query(), use_owner, use_sh_usr, use_sh_prj );
+
+        DL_INFO("parsed query[" << q << "]" );
+
+        if ( request->has_title() )
+            req2.set_title( request->title());
+
+        req2.set_id( request->id() );
+        req2.set_query( request->query() );
+        req2.set_query_comp( q );
+        req2.set_use_owner( use_owner );
+        req2.set_use_sh_usr( use_sh_usr );
+        req2.set_use_sh_prj( use_sh_prj );
+
+        m_db_client.queryUpdate( req2, reply );
+    }
+    else
+    {
+        m_db_client.queryUpdate( *request, reply );
+    }
 
     PROC_MSG_END
 }

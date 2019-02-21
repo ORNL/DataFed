@@ -33,12 +33,13 @@ function makeBrowserTab(){
         if ( sel.length == 0 )
             return;
 
-        var data=[],coll=[],proj=[],start;
+        var data=[],coll=[],proj=[],qry=[],start;
         for ( var i in sel ){
             switch ( sel[i].key[0] ){
                 case 'd': data.push( sel[i].key ); start=sel[i]; break;
                 case 'c': coll.push( sel[i].key ); start=sel[i]; break;
                 case 'p': proj.push( sel[i].key ); break;
+                case 'q': qry.push( sel[i].key ); break;
                 default: break;
             }
         }
@@ -54,7 +55,7 @@ function makeBrowserTab(){
                 msg += "project(s).";
         }
 
-        confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
+        dlgConfirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
             if ( choice == 0 ){
                 var done = 0;
                 if ( data.length )
@@ -85,6 +86,7 @@ function makeBrowserTab(){
                         }
                         //inst.reloadNode(inst.data_tree.rootNode);
                     }
+                    inst.showSelectedInfo();
                 }
 
                 if ( data.length ){
@@ -109,67 +111,22 @@ function makeBrowserTab(){
                     projDelete( proj, function( ok, data ){
                         if ( ok ){
                             inst.reloadNode(inst.data_tree.getNodeByKey("proj_own"));
+                            inst.showSelectedInfo();
                         }else
                             dlgAlert("Project Delete Error", data);
                     });
                 }
-            }
-        });
-
-        /*
-        checkPerms( node.key, PERM_DELETE, function( granted ){
-            if ( !granted ){
-                alertPermDenied();
-                return;
-            }
-
-            var msg,msg = "<div>Are you sure you want to delete ";
-
-            if ( node.key[0] == "c" ) {
-                msg += "collection ID " + node.key + "?<p>Note that this action will delete all contained data records that are not linked to other collections.</p><div>";
-
-                confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
-                    if ( choice == 0 ){
-                        url = "/api/col/delete?id=" + encodeURIComponent(node.key);
-                        _asyncGet( url, null, function( ok, data ){
-                            if ( ok ) {
-                                // TODO Fix this - refresh source not delete node
-                                inst.deleteNode( node.key );
-                                inst.updateBtnState();
-                            } else {
-                                dlgAlert( "Collection Delete Error", data );
-                            }
-                        });
-                    }
-                });
-            }else{
-                var url = "/api/";
-
-                if ( node.data.isproj ){
-                    msg += "project ID " + node.key + "? This will delete <i>ALL</i> data and collections owned by the project.<div>";
-                    url += "prj";
-                } else {
-                    msg += "data ID " + node.key + "?<div>";
-                    url += "dat";
+                if ( qry.length ){
+                    sendQueryDelete( qry, function( ok, data ){
+                        if ( ok ){
+                            inst.reloadNode(inst.data_tree.getNodeByKey("queries"));
+                            inst.showSelectedInfo();
+                        }else
+                            dlgAlert("Query Delete Error", data);
+                    });
                 }
-
-                confirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
-                    if ( choice == 0 ){
-                        url += "/delete?ids=" + encodeURIComponent(node.key);
-                        _asyncGet( url, null, function( ok, data ){
-                            if ( ok ) {
-                                // TODO Fix this - refresh source not delete node
-                                inst.deleteNode( node.key );
-                                inst.updateBtnState();
-                            } else {
-                                dlgAlert( "Delete Failed", data );
-                            }
-                        });
-                    }
-                });
             }
         });
-        */
     }
 
     this.newMenu = function(){
@@ -409,11 +366,24 @@ function makeBrowserTab(){
         // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
         if ( node ) {
-            if ( node.data.isproj || node.key[0] == "c")
+            var req_perms = 0;
+            if ( node.data.isproj || node.key.charAt(0) == "c")
                 req_perms = PERM_WR_REC;
-            else if ( node.key[0] == "d" )
+            else if ( node.key.charAt(0) == "d" )
                 req_perms = PERM_WR_REC | PERM_WR_META;
-            else
+            else if ( node.key.charAt(0) == 'q' ){
+                sendQueryView( node.key, function( ok, old_qry ){
+                    if ( ok ){
+                        dlgQueryNewEdit( old_qry, function( new_qry ){
+                            node.setTitle(new_qry.title);
+                            inst.showSelectedInfo(node);
+                            inst.reloadNode(node);
+                        });
+                    }else
+                        dlgAlert("Query Edit Error",old_qry);
+                });
+                return;
+            }else
                 return;
 
             getPerms( node.key, req_perms, function( perms ){
@@ -565,7 +535,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.calcActionState = function( state, admin, sel ){
+    this.calcActionState = function( sel ){
         var bits,node;
 
         if ( sel.length > 1 ){
@@ -577,6 +547,7 @@ function makeBrowserTab(){
                     case "d": bits |= 0x00;  break;
                     case "r": bits |= 0x1F7;  break;
                     case "p": bits |= 0x1Fa | (node.data.admin?0:5); break;
+                    case "q": bits |= 0x1F9; break;
                     default:  bits |= 0x1FF;  break;
                 }
             }
@@ -594,6 +565,7 @@ function makeBrowserTab(){
                         bits = 0x100;
                     break;
                 case "p": bits = 0x1Fa | (node.data.admin?0:5); break;
+                case "q": bits = 0x1F8; break;
                 default:  bits = 0x1FF;  break;
             }
             console.log("single",bits);
@@ -604,13 +576,12 @@ function makeBrowserTab(){
         return bits;
     }
 
-    this.updateBtnState = function( state, admin ){
+    this.updateBtnState = function(){
         //console.log("updateBtnState");
 
         var sel = inst.data_tree.getSelectedNodes();
-        var bits = calcActionState( state, admin, sel );
+        var bits = calcActionState( sel );
 
-        $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
         //$("#btn_dup",inst.frame).button("option","disabled",(bits & 2) != 0);
         $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0 );
@@ -722,7 +693,7 @@ function makeBrowserTab(){
 
                 userView( g_user.uid, true, function( ok, user ){
                     if ( ok && user ){
-                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Allocation(s):</td><td>";
 
                         if ( user.alloc && user.alloc.length ){
@@ -757,7 +728,7 @@ function makeBrowserTab(){
                         else
                             inst.sel_descr.text("(none)");
 
-                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
                         if ( item.ct ){
@@ -790,7 +761,7 @@ function makeBrowserTab(){
                         else
                             inst.sel_descr.text("(none)");
 
-                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
                         html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
@@ -829,7 +800,7 @@ function makeBrowserTab(){
                         else
                             inst.sel_descr.text("(none)");
 
-                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
                         if ( item.ct ){
                             date.setTime(item.ct*1000);
@@ -877,6 +848,31 @@ function makeBrowserTab(){
                         inst.noInfoAvail("Insufficient permissions to view project.");
                     }
                 }); 
+            } else if ( key.startsWith("q/")) {
+                sendQueryView( key, function( ok, item ){
+                    if ( ok && item ){
+                        inst.sel_id.text("Query ID: " + item.id);
+                        inst.sel_title.text(item.title);
+                        var qry = JSON.parse( item.query );
+                        console.log("qry:",qry);
+                        inst.sel_descr.html("<table class='info_table'><col width='20%'><col width='80%'><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"(none)")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"(none)")+"</td></tr></table>");
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                        if ( item.ct ){
+                            date.setTime(item.ct*1000);
+                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        if ( item.ut ){
+                            date.setTime(item.ut*1000);
+                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        html += "</table>";
+                        inst.sel_details.html(html);
+                        inst.showSelectedMetadata();
+                    }else{
+                        inst.noInfoAvail();
+                    }
+                });
             } else if ( key == "shared_user" && node.data.scope ) {
                 //console.log( "user", node.data.scope, node );
                 userView( node.data.scope, false, function( ok, item ){
@@ -884,7 +880,7 @@ function makeBrowserTab(){
                         inst.sel_id.text("User ID: " + item.uid);
                         inst.sel_title.text(item.name);
                         inst.sel_descr.text("");
-                        html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
                         inst.sel_details.html(html);
                         inst.showSelectedMetadata();
@@ -901,7 +897,7 @@ function makeBrowserTab(){
                 inst.sel_id.text( "Allocation on " + key + ", user: " + node.data.scope );
                 inst.sel_title.text("");
                 inst.sel_descr.text("Browse data records by allocation.");
-                html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                html = "<table class='info_table'><col width='20%'><col width='80%'>";
                 // TODO deal with project sub-allocations
                 html += "<tr><td>Repo ID:</td><td>" + key + "</td></tr>";
                 html += "<tr><td>Capacity:</td><td>" + node.data.alloc_capacity + "</td></tr>";
@@ -1068,7 +1064,7 @@ function makeBrowserTab(){
         });
     }
 
-    this.searchDirect = function(){
+    this.parseQuickSearch = function(){
         var query = {};
         var tmp = $("#text_query").val();
         if ( tmp )
@@ -1130,10 +1126,29 @@ function makeBrowserTab(){
                 query.scopes.push({scope:SS_PUBLIC});
         }
 
-        //console.log("scopes:", query.scopes);
+        // TODO make sure at least one scope set and on term
+        return query;
+    }
+
+    this.searchDirect = function(){
+        var query = parseQuickSearch();
 
         if ( query.scopes.length && ( query.quick || query.meta ))
             inst.execQuery( query );
+    }
+
+    this.querySave = function(){
+        dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
+            if ( btn == 0 ){
+                var query = parseQuickSearch();
+                sendQueryCreate( val, query, function( ok, data ){
+                    if ( ok )
+                        inst.reloadNode(inst.data_tree.getNodeByKey("queries"));
+                    else
+                        dlgAlert( "Query Save Error", data );
+                });
+            }
+        });
     }
 
     this.searchWizard = function(){
@@ -1393,8 +1408,8 @@ function makeBrowserTab(){
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
         ]},
         {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
-        //{title:"Views <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"views"},
-        {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true },
+        {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
+        {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag: true}],key:"search", nodrag: true }
     ];
 
 
@@ -1493,6 +1508,10 @@ function makeBrowserTab(){
         },
         source: tree_source,
         selectMode: 2,
+        collapse: function( event, data ) {
+            if ( data.node.isLazy )
+                data.node.resetLazy();
+        },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = [
@@ -1554,6 +1573,11 @@ function makeBrowserTab(){
                         cache: false
                     };
                 }
+            } else if ( data.node.key == 'queries') {
+                data.result = {
+                    url: "/api/query/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    cache: false
+                };
             } else if ( data.node.key == "topics" ) {
                 data.result = {
                     url: "/api/top/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
@@ -1564,6 +1588,11 @@ function makeBrowserTab(){
             } else if ( data.node.key.startsWith("t/") ) {
                 data.result = {
                     url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    cache: false
+                };
+            } else if ( data.node.key.startsWith("q/") ) {
+                data.result = {
+                    url: "/api/query/exec?id=" + encodeURIComponent( data.node.key ),
                     cache: false
                 };
             } else {
@@ -1630,6 +1659,17 @@ function makeBrowserTab(){
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
+            } else if ( data.node.key == "queries" ) {
+                data.result = [];
+                if ( data.response.length ){
+                    var qry;
+                    for ( var i in data.response ) {
+                        qry = data.response[i];
+                        data.result.push({ title: qry.title+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-zoom",folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
+                    }
+                }else{
+                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
+                }
             } else if ( data.node.key == "allocs" ) {
                 data.result = [];
                 if ( data.response.length ){
@@ -1666,6 +1706,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
             } else if ( data.node.parent ) {
+                console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
@@ -1675,7 +1716,7 @@ function makeBrowserTab(){
                     if ( item.id[0]=="c" ){
                         entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id, offset: 0 };
                     }else{
-                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:scope,key:item.id };
+                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:item.owner,key:item.id };
                     }
 
                     data.result.push( entry );

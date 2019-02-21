@@ -252,7 +252,7 @@ function makeDlgRepoAdmin(){
         $("#del_alloc_btn",inst.frame).click( function(){
             var node = inst.alloc_tree.getActiveNode();
             if ( node ){
-                confirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Delete","Cancel"], function( choice ){
+                dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Delete","Cancel"], function( choice ){
                     if ( choice == 0 ){
                         console.log( "Delete allocation" );
                         allocSet( a_repo_id, node.key, 0, function( ok, data ){

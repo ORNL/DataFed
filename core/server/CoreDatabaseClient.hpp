@@ -74,6 +74,13 @@ public:
     void collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply );
     void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply );
 
+    void queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply );
+    void queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply );
+    void queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply );
+    void queryDelete( const std::string & a_id );
+    void queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply );
+    void queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply );
+
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply );
@@ -117,6 +124,7 @@ private:
     //void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
     void setRecordLocationData( RecordDataLocation & a_loc, rapidjson::Document & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
+    void setQueryData( Auth::QueryDataReply & a_reply, rapidjson::Document & a_result );
     void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );

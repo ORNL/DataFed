@@ -505,6 +505,64 @@ app.get('/api/dat/search', ( a_req, a_resp ) => {
 });
 */
 
+app.get('/api/query/list', ( a_req, a_resp ) => {
+    var par = {};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "QueryListRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.send(reply.item?reply.item:[]);
+    });
+});
+
+
+app.post('/api/query/create', ( a_req, a_resp ) => {
+    sendMessage( "QueryCreateRequest", {title:a_req.query.title,query:JSON.stringify( a_req.body )}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.post('/api/query/update', ( a_req, a_resp ) => {
+    var params = {id:a_req.query.id};
+    if ( a_req.query.title )
+        params.title = a_req.query.title;
+    if ( a_req.body )
+        params.query = JSON.stringify( a_req.body );
+
+    //console.log("'/api/query/update, params=[",params,"]");
+
+    sendMessage( "QueryUpdateRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/query/delete', ( a_req, a_resp ) => {
+    sendMessage( "QueryDeleteRequest", { id: JSON.parse(a_req.query.ids)}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/query/view', ( a_req, a_resp ) => {
+    sendMessage( "QueryViewRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        if ( reply.query && reply.query.length )
+            a_resp.send(reply.query[0]);
+        else
+            a_resp.send();
+
+    });
+});
+
+app.get('/api/query/exec', ( a_req, a_resp ) => {
+    //console.log("search:",a_req.body);
+    sendMessage( "QueryExecRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        //console.log("qry exec res:",reply);
+        a_resp.send(reply);
+    });
+});
+
+
 app.post('/api/dat/search', ( a_req, a_resp ) => {
     console.log("search:",a_req.body);
     sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
