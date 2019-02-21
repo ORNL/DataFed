@@ -552,7 +552,7 @@ function makeBrowserTab(){
                 }
             }
 
-            console.log("multi",bits);
+            //console.log("multi",bits);
         }else if ( sel.length ){
             node = sel[0];
 
@@ -568,7 +568,7 @@ function makeBrowserTab(){
                 case "q": bits = 0x1F8; break;
                 default:  bits = 0x1FF;  break;
             }
-            console.log("single",bits);
+            //console.log("single",bits);
         }else{
             bits = 0xFF;
         }
@@ -676,7 +676,7 @@ function makeBrowserTab(){
         if ( !node ){
             inst.noInfoAvail();
         }else{
-            console.log( "node key:", node.key );
+            //console.log( "node key:", node.key );
             var key,i,html;
             var date = new Date();
 
@@ -1248,7 +1248,7 @@ function makeBrowserTab(){
     }
 
     this.xfrHistoryPoll = function(){
-        console.log("xfrHistoryPoll",inst.pollSince);
+        //console.log("xfrHistoryPoll",inst.pollSince);
 
         if ( !g_user )
             return;
@@ -1706,17 +1706,16 @@ function makeBrowserTab(){
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
             } else if ( data.node.parent ) {
-                console.log("pos proc default",data.node.key,data.response);
+                //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
-
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
                         entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id, offset: 0 };
                     }else{
-                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:item.owner,key:item.id };
+                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id };
                     }
 
                     data.result.push( entry );
@@ -1734,18 +1733,12 @@ function makeBrowserTab(){
             }
         },
         activate: function( event, data ) {
-            console.log("activate, hn:");
-            //if ( event.button == undefined && !inst.hoverNav ){
-
-                if ( inst.keyNav && !inst.keyNavMS ){
-                    inst.data_tree.selectAll(false);
-                    inst.selectScope = data.node;
-                    inst.treeSelectNode(data.node);
-                }
-                inst.keyNav = false;
-            //}else{
-            //    inst.hoverNav = false;
-            //}
+            if ( inst.keyNav && !inst.keyNavMS ){
+                inst.data_tree.selectAll(false);
+                inst.selectScope = data.node;
+                inst.treeSelectNode(data.node);
+            }
+            inst.keyNav = false;
 
             showSelectedInfo( data.node );
         },
@@ -1791,16 +1784,16 @@ function makeBrowserTab(){
             }
         },
         click: function(event, data) {
-            console.log("node click,ev:",event,"which:",event.which);
+            //console.log("node click,ev:",event,"orig:",data.originalEvent);
             if ( inst.dragging ){ // Suppress click processing on aborted drag
                 inst.dragging = false;
             }else if ( !inst.searchSelect ){ // Selection "rules" differ for search-select mode
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
-                    console.log("click no which");
+                    //console.log("click no which");
 
                     if ( !data.node.isSelected() ){
-                        console.log("not selected");
+                        //console.log("not selected");
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
                         inst.treeSelectNode(data.node);
@@ -1840,13 +1833,13 @@ function makeBrowserTab(){
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "paste", false );
                 } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
-                    console.log("has scope");
+                    //console.log("has scope");
                     if ( inst.data_tree.getSelectedNodes().length == 0 )
                         inst.selectScope = data.node;
 
-                    if ( data.originalEvent.shiftKey && data.originalEvent.ctrlKey ) {
+                    if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
                         inst.treeSelectRange(data.node);
-                    }else if ( data.originalEvent.ctrlKey ) {
+                    }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
                         inst.treeSelectNode(data.node,true);
                     }else if ( data.originalEvent.shiftKey ) {
                         inst.data_tree.selectAll(false);
@@ -1858,7 +1851,7 @@ function makeBrowserTab(){
                         inst.treeSelectNode(data.node);
                     }
                 }else{
-                    console.log("DEFAULT",data.node);
+                    //console.log("DEFAULT",data.node);
                 }
             }
             //}
