@@ -1453,7 +1453,7 @@ function makeBrowserTab(){
                 }
                 inst.dragging = true;
 
-                if ( data.originalEvent.ctrlKey || !node.parent.key.startsWith("c/") ) {
+                if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey || !node.parent.key.startsWith("c/") ) {
                     inst.drag_mode = 0;
                 } else {
                     inst.drag_mode = 1;
@@ -1859,7 +1859,7 @@ function makeBrowserTab(){
             //}
         }
     }).on("mouseenter", ".fancytree-node", function(event){
-        if ( event.ctrlKey ){
+        if ( event.ctrlKey || event.metaKey ){
             if ( inst.hoverTimer ){
                 clearTimeout(inst.hoverTimer);
                 //inst.hoverNav = false;
