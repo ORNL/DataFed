@@ -369,10 +369,10 @@ module.exports = ( function() {
 
     obj.deleteCollection = function( a_coll_id, a_allocs, a_locations ){
         // Delete collection aliases, if present
-        var alias = obj.db._query( "for v in 1..1 outbound @coll alias return v._id", { coll: a_coll_id });
+        /*var alias = obj.db._query( "for v in 1..1 outbound @coll alias return v._id", { coll: a_coll_id });
         if ( alias.hasNext() ) {
             obj.graph.a.remove( alias.next() );
-        }
+        }*/
 
         // Recursively collect all linked items (data and collections) for deletion or unlinking
         // Since this could be a very large and/or deep collection hierarchy, we will use a breadth-first traversal
@@ -384,7 +384,7 @@ module.exports = ( function() {
         // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
         // at the final instance of this data (thie link count will be 1 then).
 
-        var item,items,coll,c,cur,next = [a_coll_id];
+        var alias,item,items,coll,c,cur,next = [a_coll_id];
 
         while ( next.length ){
             cur = next;
@@ -412,7 +412,7 @@ module.exports = ( function() {
 
                 alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: coll });
                 if ( alias.hasNext() ) {
-                    obj.graph.a.remove( alias );
+                    obj.graph.a.remove( alias.next() );
                 }
 
                 obj.graph.c.remove( coll );

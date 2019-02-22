@@ -44,6 +44,7 @@ router.get('/test', function (req, res) {
 .summary('Do perf test')
 .description('Do perf test');
 
+
 router.get('/check', function (req, res) {
     try {
         var result = {};
@@ -54,7 +55,7 @@ router.get('/check', function (req, res) {
                 write: []
             },
             action: function() {
-                var edges = ["owner","member","item","acl","ident","admin","alias","alloc","loc"];
+                var edges = ["owner","member","item","acl","ident","admin","alias","alloc","loc","top"];
                 var ecoll;
                 var subres;
                 var count = 0;
@@ -66,48 +67,101 @@ router.get('/check', function (req, res) {
                     count += subres.length;
                     result[ecoll] = subres;
                 }
-                result.ecount = count;
+
+                result.edge_bad_count = count;
 
                 // Check for correct structure per vertex type
                 count = 0;
 
                 subres = g_db._query("for i in d let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.d_own = subres;
+                result.data_no_owner = subres;
+
+                subres = g_db._query("for i in d let x = (for v in 1..1 outbound i._id owner return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.data_multi_owner = subres;
 
                 subres = g_db._query("for i in d let x = (for v in 1..1 outbound i._id loc return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.d_loc = subres;
+                result.data_no_loc = subres;
+
+                subres = g_db._query("for i in d let x = (for v in 1..1 outbound i._id loc return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.data_multi_loc = subres;
 
                 subres = g_db._query("for i in d let x = (for v in 1..1 inbound i._id item return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.d_item = subres;
+                result.data_no_parent = subres;
 
                 subres = g_db._query("for i in c let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.c = subres;
+                result.coll_no_owner = subres;
+
+                subres = g_db._query("for i in c let x = (for v in 1..1 outbound i._id owner return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.coll_multi_owner = subres;
 
                 subres = g_db._query("for i in c let x = (for v in 1..1 inbound i._id item return v) filter i.is_root != true and length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.c_item = subres;
+                result.coll_no_parent = subres;
+
+                subres = g_db._query("for i in c let x = (for v in 1..1 inbound i._id item return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.coll_multi_parent = subres;
 
                 subres = g_db._query("for i in g let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.g = subres;
+                result.group_no_owner = subres;
+
+                subres = g_db._query("for i in g let x = (for v in 1..1 outbound i._id owner return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.group_multi_owner = subres;
 
                 subres = g_db._query("for i in a let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.a_own = subres;
+                result.alias_no_owner = subres;
+
+                subres = g_db._query("for i in a let x = (for v in 1..1 outbound i._id owner return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.alias_multi_owner = subres;
 
                 subres = g_db._query("for i in a let x = (for v in 1..1 inbound i._id alias return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.a_alias = subres;
+                result.alias_no_alias = subres;
+
+                subres = g_db._query("for i in a let x = (for v in 1..1 inbound i._id alias return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.alias_multi_alias = subres;
 
                 subres = g_db._query("for i in p let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
-                result.p = subres;
+                result.proj_no_owner = subres;
 
-                result.vcount = count;
+                subres = g_db._query("for i in p let x = (for v in 1..1 outbound i._id owner return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.proj_multi_owner = subres;
+
+                subres = g_db._query("for i in q let x = (for v in 1..1 outbound i._id owner return v) filter length(x) == 0 return i._id").toArray();
+                count += subres.length;
+                result.query_no_owner = subres;
+
+                subres = g_db._query("for i in q let x = (for v in 1..1 outbound i._id owner return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.query_multi_owner = subres;
+
+                subres = g_db._query("for i in t let x = (for v in 1..1 outbound i._id top return v) filter i._id != 't/root' && length(x) == 0 return i._id").toArray();
+                count += subres.length;
+                result.topic_no_parent = subres;
+
+                subres = g_db._query("for i in t let x = (for v in 1..1 outbound i._id top return v) filter length(x) > 1 return i._id").toArray();
+                count += subres.length;
+                result.topic_multi_parent = subres;
+
+                subres = g_db._query("for i in repo let x = (for v in 1..1 outbound i._id admin return v) filter length(x) == 0 return i._id").toArray();
+                count += subres.length;
+                result.repo_no_admin = subres;
+
+                result.vertex_bad_count = count;
             }
         });
 
