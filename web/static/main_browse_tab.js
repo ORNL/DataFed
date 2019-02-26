@@ -784,6 +784,43 @@ function makeBrowserTab(){
                         html += "</table>";
 
                         inst.sel_details.html(html);
+                        if ( item.deps && item.deps.length ){
+                            var dep;
+                            html = "";
+                            for ( i in item.deps ){
+                                dep = item.deps[i];
+                                if ( dep.dir == "DEP_OUT" ){
+                                    switch(dep.type){
+                                        case "DEP_IS_DERIVED_FROM":
+                                            html += "This record is derived from " + dep.id + (dep.alias?" ("+dep.alias+")":"") + "<br>";
+                                            break;
+                                        case "DEP_IS_COMPONENT_OF":
+                                            html += "This record is a component of " + dep.id + (dep.alias?" ("+dep.alias+")":"") + "<br>";
+                                            break;
+                                        case "DEP_IS_NEW_VERSION_OF":
+                                            html += "This record is a newer version of " + dep.id + (dep.alias?" ("+dep.alias+")":"")+ "<br>";
+                                            break;
+                                    }
+                                }else{
+                                    switch(dep.type){
+                                        case "DEP_IS_DERIVED_FROM":
+                                            html += dep.id + (dep.alias?" ("+dep.alias+")":"") + " is a derived from this record<br>";
+                                            break;
+                                        case "DEP_IS_COMPONENT_OF":
+                                            html += dep.id + (dep.alias?" ("+dep.alias+")":"") + " is a component of this record<br>";
+                                            break;
+                                        case "DEP_IS_NEW_VERSION_OF":
+                                            html += dep.id + (dep.alias?" ("+dep.alias+")":"") +  " is a newer version of this record<br>";
+                                            break;
+                                    }
+                                }
+
+                                //html += dep.id + " " + dep.type + " " + dep.dir + "<BR>";
+                            }
+                            $("#sel_references").html(html);
+                        }else{
+                            $("#sel_references").html("(no references)");
+                        }
                         inst.showSelectedMetadata( item.metadata );
                     }else{
                         inst.noInfoAvail("Insufficient permissions to view data record.");
@@ -2033,6 +2070,9 @@ function makeBrowserTab(){
     $("#sel_descr_hdr").button().click( function(){
         $("#sel_descr").slideToggle();
     });
+    $("#sel_references_hdr").button().click( function(){
+        $("#sel_references").slideToggle();
+    });
     $("#sel_details_hdr").button().click( function(){
         $("#sel_details").slideToggle();
     });
@@ -2073,6 +2113,7 @@ function makeBrowserTab(){
     });
 
     //$("#left-panel").resizable({handles:"e"});
+    $("#sel_details").slideToggle();
 
     var node = inst.data_tree.getNodeByKey( "mydata" );
     node.setExpanded().done(function(){

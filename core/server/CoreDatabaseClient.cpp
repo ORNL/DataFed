@@ -861,6 +861,16 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
     if ( a_request.has_repo_id() )
         body += ",\"repo\":\"" + a_request.repo_id() + "\"";
+    if ( a_request.deps_size() )
+    {
+        body += ",\"deps\":[";
+
+        for ( int i = 0; i < a_request.deps_size(); i++ )
+        {
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps(i).id() + "\",\"type\":" + to_string(a_request.deps(i).type()) + "}";
+        }
+        body += "]";
+    }
     body += "}";
 
     dbPost( "dat/create", {}, &body, result );
@@ -899,7 +909,13 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_dt() )
         body += ",\"dt\":" + to_string(a_request.dt());
-    body += "}";
+
+    body += ",\"deps\":[";
+    for ( int i = 0; i < a_request.deps_size(); i++ )
+    {
+        body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps(i).id() + "\",\"type\":" + to_string(a_request.deps(i).type()) + "}";
+    }
+    body += "]}";
 
     dbPost( "dat/update", {}, &body, result );
 
@@ -983,7 +999,8 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
     }
 
     RecordData* rec;
-    rapidjson::Value::MemberIterator imem;
+    DependencyData *deps;
+    rapidjson::Value::MemberIterator imem,imem2;
 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
     {
@@ -1046,6 +1063,27 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("parent_id")) != val.MemberEnd() )
             rec->set_parent_id( imem->value.GetString() );
+
+        if (( imem = val.FindMember("deps")) != val.MemberEnd() )
+        {
+            if ( !imem->value.IsArray() )
+            {
+                EXCEPT( ID_INTERNAL_ERROR, "Deps not an array!" );
+            }
+
+            DL_DEBUG("got deps, size:" << imem->value.Size() );
+            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+            {
+                rapidjson::Value & val2 = imem->value[j];
+
+                deps = rec->add_deps();
+                deps->set_id(val2["id"].GetString());
+                deps->set_type((DependencyType)val2["type"].GetInt());
+                deps->set_dir((DependencyDir)val2["dir"].GetInt());
+                if (( imem2 = val2.FindMember("alias")) != val2.MemberEnd() && !imem2->value.IsNull() )
+                    deps->set_alias( imem2->value.GetString() );
+            }
+        }
     }
 }
 

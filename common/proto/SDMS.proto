@@ -62,6 +62,19 @@ enum SearchScope
     SS_VIEW                     = 13;
 }
 
+enum DependencyType
+{
+    DEP_IS_DERIVED_FROM         = 0;
+    DEP_IS_COMPONENT_OF         = 1;
+    DEP_IS_NEW_VERSION_OF       = 2;
+}
+
+enum DependencyDir
+{
+    DEP_IN                      = 0;
+    DEP_OUT                     = 1;
+}
+
 /*
 enum Permissions
 {
@@ -96,6 +109,14 @@ message AllocData
     optional string             id          = 5;
     optional string             name        = 6;
     optional AllocStatsData     stats       = 7;
+}
+
+message DependencyData
+{
+    required string             id          = 1;
+    optional string             alias       = 2;
+    required DependencyType     type        = 3;
+    required DependencyDir      dir         = 4;
 }
 
 message UserData
@@ -153,6 +174,7 @@ message RecordData
     optional string             owner       = 14;
     optional bool               locked      = 15;
     optional string             parent_id   = 16;
+    repeated DependencyData     deps        = 17;
 }
 
 message RecordDataLocation

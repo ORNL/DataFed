@@ -103,6 +103,7 @@ string          g_meta;
 string          g_meta_file;
 bool            g_meta_replace;
 string          g_repo;
+vector<string>  g_deps;
 string          g_name;
 string          g_email;
 string          g_globus_id;
@@ -448,6 +449,35 @@ void printData( spRecordDataReply a_rep )
                 }
                 else
                     cout << "n/a\n";
+
+                if ( rec.deps_size() )
+                {
+                    cout << "Refs     ";
+                    for ( int j = 0; j < rec.deps_size(); j++ )
+                    {
+                        const DependencyData & dep = rec.deps(j);
+
+                        if ( j > 0 )
+                            cout << "         ";
+
+                        switch( dep.type() )
+                        {
+                            case DEP_IS_DERIVED_FROM:
+                                cout << (dep.dir()== DEP_OUT?"Derived from ":"Source of ");
+                                break;
+                            case DEP_IS_COMPONENT_OF:
+                                cout << (dep.dir()==DEP_OUT?"Child of ":"Parent of ");
+                                break;
+                            case DEP_IS_NEW_VERSION_OF:
+                                cout << (dep.dir()==DEP_OUT?"New version of ":"Deprecated by ");
+                                break;
+                        }
+                        cout << dep.id();
+                        if ( dep.has_alias() )
+                            cout << " (" << dep.alias() << ")";
+                        cout << "\n";
+                    }
+                }
             }
             else
             {
@@ -738,11 +768,11 @@ spRecordDataReply createRecord()
 
         inf.close();
 
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0, g_deps );
     }
     else
     {
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0 );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0, g_deps );
     }
 }
 
@@ -1616,6 +1646,7 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
     g_meta.clear();
     g_meta_file.clear();
     g_meta_replace = false;
+    g_deps.clear();
     g_name.clear();
     g_email.clear();
     g_globus_id.clear();
@@ -1773,6 +1804,7 @@ int main( int a_argc, char ** a_argv )
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
+        ("dep,e",po::value<vector<string>>( &g_deps ),"Dependencies for new data (JSON array of {id,type})")
         ("repo,R",po::value<string>( &g_repo ),"Use specific storage allocation by repo ID for new data")
         ("text,T",po::bool_switch( &g_out_text ),"Output in TEXT format (default)")
         ("json,J",po::bool_switch( &g_out_json ),"Output in JSON format (default is TEXT)")

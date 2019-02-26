@@ -9,12 +9,17 @@ var DLG_DATA_BTN_LABEL = ["Create", "Update", "Duplicate"];
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
-        "<div class='col-flex' style='height:100%'>\
-            <div style='flex:none'>\
+        "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
+            <ul>\
+                <li><a href='#tab-dlg-gen'>General</a></li>\
+                <li><a href='#tab-dlg-ref'>References</a></li>\
+                <li><a href='#tab-dlg-meta'>Metadata</a></li>\
+            </ul>\
+            <div id='tab-dlg-gen' style='padding:1em'>\
                 <table class='form-table'>\
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='2'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
-                    <tr><td>Description:</td><td colspan='2'><textarea title='Description string (optional)' id='desc' rows=4 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td>Description:</td><td colspan='2'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Keywords:</td><td colspan='2'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
                     <tr><td>Topic:</td><td><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
@@ -22,24 +27,39 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     <tr id='dlg_put_row'><td>Raw data:</td><td><input title='Raw data remote source (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
                 </table>\
             </div>\
-            <div style='flex:none;padding:1em 2px 2px 2px'>Metadata: <span id='md_status'></span><span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span></div>\
-            <div class='ui-widget ui-widget-content' style='flex:1 1 100%;min-height:0;padding:0'>\
-                <div id='md' style='height:100%;width:100%'></div>\
+            <div id='tab-dlg-ref' style='padding:1em'>\
+                <div class='col-flex' style='height:100%'>\
+                    <div style='flex:1 1 auto;overflow:auto'>\
+                        <table id='ref-table'>\
+                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
+                        </table>\
+                    </div>\
+                    <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
+                </div>\
             </div>\
-            <div id='dlg_md_row2' style='flex:none;padding:.5em 2px 2px 2px'><span>Metadata update mode:</span>\
-                <input type='radio' id='md_merge' name='md_mode' value='merge'/>\
-                <label for='md_merge'>Merge</label>\
-                <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
-                <label for='md_set'>Replace</label>\
+            <div id='tab-dlg-meta' style='padding:1em'>\
+                <div class='col-flex' style='height:100%'>\
+                    <div style='flex:none'>\
+                        Enter metadata as JSON: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
+                    </div>\
+                    <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
+                        <div id='md' style='height:100%;width:100%'></div>\
+                    </div>\
+                    <div id='dlg_md_row2' style='flex:none;padding:.5em 2px 2px 2px'><span>Metadata update mode:</span>\
+                        <input type='radio' id='md_merge' name='md_mode' value='merge'/>\
+                        <label for='md_merge'>Merge</label>\
+                        <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
+                        <label for='md_set'>Replace</label>\
+                    </div>\
+                </div>\
             </div>\
-            <div class='note' style='flex:none;padding:1em 2px 2px 2px'>* Required fields</div>\
         </div>" );
 
     var dlg_title;
     if ( a_data && ( a_mode == DLG_DATA_EDIT || a_mode == DLG_DATA_DUP ))
-        dlg_title = DLG_DATA_LABEL[a_mode] + " Data " + a_data.id;
+        dlg_title = DLG_DATA_LABEL[a_mode] + " Data Record " + a_data.id;
     else if ( a_mode == DLG_DATA_NEW )
-        dlg_title = "New Data";
+        dlg_title = "New Data Record";
     else
         return;
 
@@ -47,6 +67,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     inputTheme( $('textarea',frame ));
 
     $(".btn",frame).button();
+
     $("#pick_topic",frame).on("click",function(){
         dlgPickTopic( function( topic ){
             $("#topic",frame).val( topic );
@@ -59,7 +80,57 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         });
     });
 
+    $(".add-ref",frame).on("click",function(){
+        addRef();
+    });
+
+    $(".rem-ref",frame).on("click",function(ev){
+        remRef(ev);
+    });
+
+    $(".find-ref",frame).on("click",function(ev){
+        findRef(ev);
+    });
+
     var jsoned;
+    var ref_rows = 1;
+
+    function addRef(){
+        var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
+
+        row.insertAfter("#ref-table tr:last",frame);
+        $("select",row).selectmenu({width:200});
+        $(".btn",row).button();
+        inputTheme( $('input:text',row ));
+        $(".rem-ref",row).on("click",function(ev){
+            remRef(ev);
+        });
+        $(".find-ref",row).on("click",function(ev){
+            remRef(ev);
+        });
+        ref_rows++;
+    }
+
+    function remRef(ev){
+        //console.log("remove ref",ev.currentTarget);
+        var tr = ev.currentTarget.closest("tr");
+        if ( ref_rows > 1 ){
+            if ( tr ){
+                tr.remove();
+            }
+            ref_rows--;
+        }else{
+            $("input",tr).val("");
+        }
+    }
+
+    function findRef(ev){
+        //console.log("remove ref",ev.currentTarget);
+        dlgPickData( function( data_id ){
+            var tr = ev.currentTarget.closest("tr");
+            $("input",tr).val(data_id);
+        });
+    }
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
@@ -136,8 +207,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         title: dlg_title,
         modal: true,
         width: 500,
-        height: 600,
+        height: 500,
         resizable: true,
+        resizeStop: function(ev,ui){
+            //console.log("resized");
+            $("#dlg-tabs",frame).tabs("refresh");
+        },
         closeOnEscape: false,
         buttons: [{
             id: "do_it",
@@ -152,6 +227,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     return;
                 }
 
+                var id,type,deps = [];
+                $(".ref-row",frame).each(function(idx,ele){
+                    id = $("input",ele).val();
+                    if ( id ){
+                        type = parseInt($("select",ele).val());
+                        deps.push({id:id,type:type,dir:DEP_OUT});
+                    }
+                });
+
                 if ( a_data && a_mode == DLG_DATA_EDIT ){
                     url += "update";
 
@@ -164,6 +248,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
                         obj.mdset = true;
+
+                    // TODO compare new and old deps for differences
+                    obj.deps = deps;
 
                     if ( Object.keys(obj).length === 0 ){
                         jsoned.destroy();
@@ -183,6 +270,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     var tmp = jsoned.getValue();
                     if ( tmp )
                         obj.metadata = tmp;
+
+                    if ( deps.length )
+                        obj.deps = deps;
                 }
 
                 if ( a_mode != DLG_DATA_EDIT ){
@@ -233,6 +323,17 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             jsoned.resize();
         },
         open: function(ev,ui){
+            $(this).css('padding', '0');
+
+            $("#dlg-tabs",frame).tabs({heightStyle:"fill"});
+                //.css({'overflow': 'auto'});
+
+            var widget = frame.dialog( "widget" );
+            $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
+
+
+            $("select",frame).selectmenu({width:200});
+
             jsoned = ace.edit("md", {
                 theme:(g_theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
@@ -256,6 +357,20 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 if ( a_data.metadata )
                     jsoned.setValue( a_data.metadata, -1 );
+
+                if ( a_data.deps && a_data.deps.length ){
+                    var i,dep;
+                    for ( i in a_data.deps ){
+                        dep = a_data.deps[i];
+                        console.log("dep",dep);
+                        if ( dep.dir == "DEP_OUT" ){
+                            row = $("#ref-table tr:last",frame);
+                            $("input",row).val(dep.alias?dep.alias:dep.id);
+                            $("select",row).val(DepTypeFromString[dep.type]);
+                            addRef();
+                        }
+                    }
+                }
 
                 if ( a_mode == DLG_DATA_EDIT ){
                     if (( a_upd_perms & PERM_WR_META ) == 0 ){

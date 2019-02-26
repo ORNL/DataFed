@@ -683,6 +683,24 @@ var XFR_GET         = 0;
 var XFR_PUT         = 1;
 var XFR_SELECT      = 2;
 
+var DEP_IN          = 0;
+var DEP_OUT         = 1;
+
+var DEP_IS_DERIVED_FROM    = 0;
+var DEP_IS_COMPONENT_OF    = 1;
+var DEP_IS_NEW_VERSION_OF  = 2;
+
+DepDirFromString = {
+    "DEP_IN":DEP_IN,
+    "DEP_OUT":DEP_OUT
+}
+
+DepTypeFromString = {
+    "DEP_IS_DERIVED_FROM":DEP_IS_DERIVED_FROM,
+    "DEP_IS_COMPONENT_OF":DEP_IS_COMPONENT_OF,
+    "DEP_IS_NEW_VERSION_OF":DEP_IS_NEW_VERSION_OF
+}
+
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgRepoAdmin = new makeDlgRepoAdmin();
