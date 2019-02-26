@@ -56,6 +56,9 @@ graph._extendEdgeDefinitions(alloc);
 var loc = graph_module._relation("loc", ["d"], ["repo"]);
 graph._extendEdgeDefinitions(loc);
 
+var dep = graph_module._relation("dep", ["d"], ["d"]);
+graph._extendEdgeDefinitions(dep);
+
 var v0 = db._createView("textview","arangosearch",{});
 
 v0 = db._view("textview");
@@ -86,6 +89,8 @@ db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "mode" ] });
 db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "status" ] });
 
 db.loc.ensureIndex({ type: "hash", unique: false, fields: [ "uid" ], sparse: true });
+
+db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: true });
 
 //db.d.ensureIndex({ type: "fulltext", fields: [ "title" ], minLength: 3 })
 //db.d.ensureIndex({ type: "fulltext", fields: [ "descr" ], minLength: 3 })

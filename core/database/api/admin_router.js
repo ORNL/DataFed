@@ -55,7 +55,7 @@ router.get('/check', function (req, res) {
                 write: []
             },
             action: function() {
-                var edges = ["owner","member","item","acl","ident","admin","alias","alloc","loc","top"];
+                var edges = ["owner","member","item","acl","ident","admin","alias","alloc","loc","top","dep"];
                 var ecoll;
                 var subres;
                 var count = 0;

@@ -28,7 +28,7 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","repo","alloc"],
-                write: ["d","a","loc","owner","alias","item","t","top"]
+                write: ["d","a","loc","owner","alias","item","t","top","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -164,6 +164,22 @@ router.post('/create', function (req, res) {
                     g_lib.topicLink( obj.topic, data._id );
                 }
 
+                if ( req.body.deps != undefined ){
+                    var dep,id,dep_data;
+                    data.new.deps = [];
+
+                    for ( var i in req.body.deps ) {
+                        dep = req.body.deps[i];
+                        id = g_lib.resolveID( dep.id, client );
+                        if ( !id.startsWith("d/"))
+                            throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+                        dep_data = g_db.d.document( id );
+
+                        g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
+                        data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+                    }
+                }
+
                 g_db.item.save({ _from: parent_id, _to: data.new._id });
 
                 data.new.id = data.new._id;
@@ -192,7 +208,10 @@ router.post('/create', function (req, res) {
     public: joi.boolean().optional(),
     parent: joi.string().allow('').optional(),
     repo: joi.string().allow('').optional(),
-    md: joi.any().optional()
+    md: joi.any().optional(),
+    deps: joi.array().items(joi.object({
+        id: joi.string().required(),
+        type: joi.number().integer().required()})).optional()
 }).required(), 'Record fields')
 .summary('Create a new data record')
 .description('Create a new data record from JSON body');
@@ -204,7 +223,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","t","top"]
+                write: ["d","a","p","owner","alias","alloc","t","top","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -315,6 +334,28 @@ router.post('/update', function (req, res) {
                     }
                 }
 
+                if ( req.body.deps != undefined ){
+                    console.log("upd deps");
+
+                    var dep,dep_data,id;
+                    g_db.dep.removeByExample({_from:data_id});
+                    data.deps = [];
+
+                    for ( var i in req.body.deps ) {
+                        dep = req.body.deps[i];
+                        id = g_lib.resolveID( dep.id, client );
+                        if ( !id.startsWith("d/"))
+                            throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+                        dep_data = g_db.d.document( id );
+
+                        g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
+
+                        data.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+                    }
+
+                    g_lib.checkDependencies(data_id);
+                }
+
                 delete data._rev;
                 delete data._key;
                 data.id = data._id;
@@ -341,7 +382,10 @@ router.post('/update', function (req, res) {
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     size: joi.number().optional(),
-    dt: joi.number().optional()
+    dt: joi.number().optional(),
+    deps: joi.array().items(joi.object({
+        id: joi.string().required(),
+        type: joi.number().integer().required()})).optional()
 }).required(), 'Record fields')
 .summary('Update an existing data record')
 .description('Update an existing data record from JSON body');
@@ -353,7 +397,7 @@ router.get('/view', function (req, res) {
 
         var data_id = g_lib.resolveID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
-        var rem_md = false;
+        var i,dep,rem_md = false;
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
             var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
@@ -361,6 +405,16 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
             if (( perms & g_lib.PERM_RD_META ) == 0 )
                 rem_md = true;
+        }
+
+        data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
+        for ( i in data.deps ){
+            dep = data.deps[i];
+            if ( dep.from == data_id )
+                dep.dir = g_lib.DEP_OUT;
+            else
+                dep.dir = g_lib.DEP_IN;
+            delete dep.from;
         }
 
         if ( rem_md && data.md )
@@ -382,6 +436,64 @@ router.get('/view', function (req, res) {
 .queryParam('id', joi.string().required(), "Data ID or alias")
 .summary('Get data by ID or alias')
 .description('Get data by ID or alias');
+
+router.get('/dep/get', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var result = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,title:v.title,alias:v.alias,type:e.type,from:e._from}",{data:data_id});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "Data ID or alias")
+.summary('Get data record dependencies')
+.description('Get data dependencies');
+
+router.get('/dep/set', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","a","alias"],
+                write: ["dep"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var i,dep,id,data_id = g_lib.resolveID( req.queryParams.id, client );
+
+                if ( !g_db._exists( data_id ))
+                    throw [g_lib.ERR_INVALID_PARAM,"Data record, "+data_id+", does not exist."];
+                if ( !data_id.startsWith("d/"))
+                    throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+
+                g_db.dep.removeByExample({_from:data_id});
+
+                for ( i in req.queryParams.deps ) {
+                    dep = req.queryParams.deps[i];
+                    id = g_lib.resolveID( dep.id, client );
+                    if ( !g_db._exists( id ))
+                        throw [g_lib.ERR_INVALID_PARAM,"Data record, "+id+", does not exist."];
+                    if ( !id.startsWith("d/"))
+                        throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+                    g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
+                }
+                //res.send( result );
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "Data ID or alias")
+.queryParam('deps', joi.array().items(joi.object({
+    id: joi.string().required(),
+    type: joi.number().integer().required()})).required(), "Array of data record dependencies")
+.summary('Set data record dependencies')
+.description('Set data record dependencies');
 
 router.get('/lock', function (req, res) {
     try {

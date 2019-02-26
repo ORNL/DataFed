@@ -49,6 +49,9 @@ module.exports = ( function() {
     obj.XM_PUT              = 1;
     obj.XM_COPY             = 2;
 
+    obj.DEP_IN              = 0;
+    obj.DEP_OUT             = 1;
+
     obj.PROJ_NO_ROLE        = 0;    // No permissions
     obj.PROJ_MEMBER         = 1;    // Data/collection Permissions derived from "members" group and other ACLs
     obj.PROJ_MANAGER        = 2;    // Adds permission to manage groups and grants ADMIN permission on all data/collections
@@ -909,6 +912,21 @@ module.exports = ( function() {
         return result;
     };
 
+    obj.checkDependencies = function(id,src,depth){
+        console.log("checkdep ",id,src,depth);
+
+        var dep,deps = obj.db._query("for v in 1..1 outbound @id dep return v._id",{id:id});
+        if ( !depth || depth < 50 ){
+            console.log("checkdep depth ok");
+            while( deps.hasNext() ){
+                console.log("has next");
+                dep = deps.next();
+                if ( dep == src )
+                    throw [obj.ERR_INVALID_PARAM,"Circular dependency detected in references, from "+id];
+                obj.checkDependencies( dep, src?src:id, depth + 1 );
+            }
+        }
+    };
 
     return obj;
 }() );
