@@ -174,7 +174,8 @@ router.post('/create', function (req, res) {
                         if ( !id.startsWith("d/"))
                             throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
                         dep_data = g_db.d.document( id );
-
+                        if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
+                            throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
                         g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
                         data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
                     }
@@ -334,26 +335,60 @@ router.post('/update', function (req, res) {
                     }
                 }
 
-                if ( req.body.deps != undefined ){
-                    console.log("upd deps");
+                if ( req.body.deps != undefined && ( req.body.deps_add != undefined || req.body.deps_rem != undefined ))
+                    throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-                    var dep,dep_data,id;
+                var i,dep,dep_data,id;
+
+                if ( req.body.deps_clear ){
                     g_db.dep.removeByExample({_from:data_id});
                     data.deps = [];
+                }
 
-                    for ( var i in req.body.deps ) {
-                        dep = req.body.deps[i];
+                var get_deps = false;
+                if ( req.body.deps_rem != undefined ){
+                    console.log("rem deps from ",data._id);
+                    for ( i in req.body.deps_rem ) {
+                        dep = req.body.deps_rem[i];
+                        id = g_lib.resolveID( dep.id, client );
+                        console.log("rem id:",id);
+                        if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
+                            throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
+                        console.log("done rem");
+                        g_db.dep.removeByExample({_from:data._id,_to:id});
+                    }
+                    get_deps = true;
+                }
+
+                if ( req.body.deps_add != undefined ){
+                    console.log("add deps");
+                    for ( i in req.body.deps_add ) {
+                        dep = req.body.deps_add[i];
                         id = g_lib.resolveID( dep.id, client );
                         if ( !id.startsWith("d/"))
                             throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
                         dep_data = g_db.d.document( id );
+                        if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
+                            throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
 
                         g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
-
-                        data.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
                     }
 
                     g_lib.checkDependencies(data_id);
+                    get_deps = true;
+                }
+
+                if ( get_deps ){
+                    console.log("get deps");
+                    data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
+                    for ( i in data.deps ){
+                        dep = data.deps[i];
+                        if ( dep.from == data_id )
+                            dep.dir = g_lib.DEP_OUT;
+                        else
+                            dep.dir = g_lib.DEP_IN;
+                        delete dep.from;
+                    }
                 }
 
                 delete data._rev;
@@ -383,7 +418,11 @@ router.post('/update', function (req, res) {
     mdset: joi.boolean().optional().default(false),
     size: joi.number().optional(),
     dt: joi.number().optional(),
-    deps: joi.array().items(joi.object({
+    deps_clear: joi.boolean().optional(),
+    deps_add: joi.array().items(joi.object({
+        id: joi.string().required(),
+        type: joi.number().integer().required()})).optional(),
+    deps_rem: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional()
 }).required(), 'Record fields')
