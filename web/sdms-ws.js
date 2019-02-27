@@ -159,7 +159,7 @@ app.get('/ui/logout', (request, response) => {
 
     response.clearCookie( 'sdms' );
     response.clearCookie( 'sdms-user', { path: "/ui" } );
-    response.redirect("/ui");
+    response.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://sdms.ornl.gov");
 });
 
 app.get('/ui/error', (request, response) => {
