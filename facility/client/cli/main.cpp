@@ -103,7 +103,9 @@ string          g_meta;
 string          g_meta_file;
 bool            g_meta_replace;
 string          g_repo;
-vector<string>  g_deps;
+vector<string>  g_dep_add;
+vector<string>  g_dep_rem;
+bool            g_dep_clear;
 string          g_name;
 string          g_email;
 string          g_globus_id;
@@ -471,6 +473,8 @@ void printData( spRecordDataReply a_rep )
                             case DEP_IS_NEW_VERSION_OF:
                                 cout << (dep.dir()==DEP_OUT?"New version of ":"Deprecated by ");
                                 break;
+                            default:
+                                break;
                         }
                         cout << dep.id();
                         if ( dep.has_alias() )
@@ -768,11 +772,11 @@ spRecordDataReply createRecord()
 
         inf.close();
 
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0, g_deps );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), par.c_str(), g_repo.size()?g_repo.c_str():0, &g_dep_add );
     }
     else
     {
-        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0, g_deps );
+        return g_client->recordCreate( g_title, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, par.c_str(), g_repo.size()?g_repo.c_str():0, &g_dep_add );
     }
 }
 
@@ -791,11 +795,11 @@ spRecordDataReply updateRecord( const string & a_id )
 
         inf.close();
 
-        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), !g_meta_replace );
+        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, metadata.c_str(), !g_meta_replace, &g_dep_add, &g_dep_rem, g_dep_clear );
     }
     else
     {
-        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, !g_meta_replace );
+        return g_client->recordUpdate( a_id, g_title.size()?g_title.c_str():0, g_desc.size()?g_desc.c_str():0, g_alias.size()>2?g_alias.c_str():0, g_keyw.size()?g_keyw.c_str():0, g_topic.size()?g_topic.c_str():0, g_meta.size()?g_meta.c_str():0, !g_meta_replace, &g_dep_add, &g_dep_rem, g_dep_clear );
     }
 }
 
@@ -1646,7 +1650,9 @@ OptionResult processArgs( int a_argc, const char ** a_argv, po::options_descript
     g_meta.clear();
     g_meta_file.clear();
     g_meta_replace = false;
-    g_deps.clear();
+    g_dep_add.clear();
+    g_dep_rem.clear();
+    g_dep_clear = false;
     g_name.clear();
     g_email.clear();
     g_globus_id.clear();
@@ -1804,15 +1810,17 @@ int main( int a_argc, char ** a_argv )
         ("md,m",po::value<string>( &g_meta ),"Specify metadata (JSON format) for create/update commands")
         ("md-file,f",po::value<string>( &g_meta_file ),"Specify filename to read metadata from (JSON format) for create/update commands")
         ("md-replace,r",po::bool_switch( &g_meta_replace ),"Replace existing metadata instead of merging with existing fields")
-        ("dep,e",po::value<vector<string>>( &g_deps ),"Dependencies for new data (JSON array of {id,type})")
-        ("repo,R",po::value<string>( &g_repo ),"Use specific storage allocation by repo ID for new data")
+        ("dep-add,A",po::value<vector<string>>( &g_dep_add ),"Add dependencies for data record")
+        ("dep-rem,R",po::value<vector<string>>( &g_dep_rem ),"Remove dependencies for data record (id,type)")
+        ("dep-clear,C",po::bool_switch( &g_dep_clear ),"Remove all dependencies from a data record")
+        ("repo",po::value<string>( &g_repo ),"Use specific storage allocation by repo ID for new data")
         ("text,T",po::bool_switch( &g_out_text ),"Output in TEXT format (default)")
         ("json,J",po::bool_switch( &g_out_json ),"Output in JSON format (default is TEXT)")
-        ("csv,C",po::bool_switch( &g_out_csv ),"Output in CSV format (default is TEXT)")
+        ("csv",po::bool_switch( &g_out_csv ),"Output in CSV format (default is TEXT)")
         //("name,n",po::value<string>( &g_name ),"Specify user name for update command")
         //("email,e",po::value<string>( &g_email ),"Specify user email for update command")
         //("globus_id,g",po::value<string>( &g_globus_id ),"Specify user globus_id for update command")
-        ("details,D",po::bool_switch( &g_details ),"Retrieve extra details for supported commands")
+        ("verbose,v",po::bool_switch( &g_details ),"Show extra details for supported commands")
         ("since",po::value<uint32_t>( &g_since ),"Specify time since 'now' in seconds")
         ("from",po::value<uint32_t>( &g_from ),"Specify absolute 'from' time")
         ("to",po::value<uint32_t>( &g_to ),"Specify absolute 'to' time")

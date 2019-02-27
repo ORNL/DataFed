@@ -18,7 +18,6 @@ function loadUser() {
 function logout() {
     console.log( "logout");
     g_user = null;
-    //Cookies.remove( 'sdms-user', { path: "/ui" });
     window.location = "/ui/logout";
 }
 

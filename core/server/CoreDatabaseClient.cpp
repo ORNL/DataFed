@@ -904,18 +904,36 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         }
     }
     if ( a_request.has_ispublic() )
-        body += ",\"public\":" + a_request.ispublic()?"true":"false";
+        body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
     if ( a_request.has_size() )
         body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_dt() )
         body += ",\"dt\":" + to_string(a_request.dt());
 
-    body += ",\"deps\":[";
-    for ( int i = 0; i < a_request.deps_size(); i++ )
+    if ( a_request.has_deps_clear() )
+        body += string(",\"deps_clear\":") + (a_request.deps_clear()?"true":"false");
+
+    if ( a_request.deps_add_size() )
     {
-        body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps(i).id() + "\",\"type\":" + to_string(a_request.deps(i).type()) + "}";
+        body += ",\"deps_add\":[";
+        for ( int i = 0; i < a_request.deps_add_size(); i++ )
+        {
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps_add(i).id() + "\",\"type\":" + to_string(a_request.deps_add(i).type()) + "}";
+        }
+        body += "]";
     }
-    body += "]}";
+
+    if ( a_request.deps_rem_size() )
+    {
+        body += ",\"deps_rem\":[";
+        for ( int i = 0; i < a_request.deps_rem_size(); i++ )
+        {
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps_rem(i).id() + "\",\"type\":" + to_string(a_request.deps_rem(i).type()) + "}";
+        }
+        body += "]";
+    }
+
+    body += "}";
 
     dbPost( "dat/update", {}, &body, result );
 

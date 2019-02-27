@@ -562,8 +562,22 @@ Client::recordView( const std::string & a_id )
     return spRecordDataReply( reply );
 }
 
+void 
+setDepData( DependencyData *dep, const string & val )
+{
+    size_t p = val.find_first_of(',');
+    if ( p == string::npos )
+        EXCEPT( 0, "Missing dependency type" );
+    dep->set_id(val.substr(0,p));
+    dep->set_dir( DEP_OUT );
+    size_t t = stoul( val.substr(p+1) );
+    if ( t >= DEP_TYPE_COUNT )
+        EXCEPT( 0, "Invalid dependency type" );
+    dep->set_type( (DependencyType)t );
+}
+
 spRecordDataReply
-Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, const char * a_coll_id, const char * a_repo_id )
+Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, const char * a_coll_id, const char * a_repo_id, const std::vector<std::string> * a_deps )
 {
     Auth::RecordCreateRequest req;
 
@@ -588,6 +602,17 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
             req.set_repo_id( a_repo_id );
     }
 
+    if ( a_deps )
+    {
+        DependencyData *dep;
+
+        for ( vector<string>::const_iterator d = a_deps->begin(); d != a_deps->end(); d++ )
+        {
+            dep = req.add_deps();
+            setDepData( dep, *d );
+        }
+    }
+
     Auth::RecordDataReply * reply;
 
     send<>( req, reply, m_ctx++ );
@@ -596,7 +621,7 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
 }
 
 spRecordDataReply
-Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, bool a_md_merge )
+Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, bool a_md_merge, const std::vector<std::string> * a_deps_add, const std::vector<std::string> * a_deps_rem, bool a_deps_clear )
 {
     Auth::RecordUpdateRequest req;
 
@@ -615,6 +640,34 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
     {
         req.set_metadata( a_metadata );
         req.set_mdset( !a_md_merge );
+    }
+
+    if ( a_deps_clear )
+        req.set_deps_clear( a_deps_clear );
+
+    DependencyData *dep;
+    vector<string>::const_iterator d;
+
+    if ( a_deps_add )
+    {
+        for ( d = a_deps_add->begin(); d != a_deps_add->end(); d++ )
+        {
+            //cout << "Add dep: " << (*d) << "\n";
+            dep = req.add_deps_add();
+            setDepData( dep, *d );
+        }
+    }
+
+    if ( a_deps_rem )
+    {
+        for ( d = a_deps_rem->begin(); d != a_deps_rem->end(); d++ )
+        {
+            //cout << "Rem dep: " << (*d) << "\n";
+            dep = req.add_deps_rem();
+            dep->set_id( *d );
+            dep->set_type( DEP_IS_DERIVED_FROM ); // Not used (currently)
+            dep->set_dir( DEP_OUT ); // Not used
+        }
     }
 
     Auth::RecordDataReply * reply;

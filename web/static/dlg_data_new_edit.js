@@ -250,7 +250,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         obj.mdset = true;
 
                     // TODO compare new and old deps for differences
-                    obj.deps = deps;
+                    obj.depsAdd = deps;
+                    obj.depsClear = true;
 
                     if ( Object.keys(obj).length === 0 ){
                         jsoned.destroy();

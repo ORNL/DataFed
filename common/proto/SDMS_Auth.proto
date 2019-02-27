@@ -187,7 +187,9 @@ message RecordUpdateRequest
     optional bool               mdset       = 9;
     optional uint64             size        = 10;
     optional uint32             dt          = 11;
-    repeated DependencyData     deps        = 12;
+    optional bool               deps_clear  = 12;
+    repeated DependencyData     deps_add    = 13;
+    repeated DependencyData     deps_rem    = 14;
 }
 
 message RecordLockRequest
