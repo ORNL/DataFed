@@ -22,12 +22,12 @@ public:
 
     AuthzWorker& operator=( const AuthzWorker & ) = delete;
 
-    int run(char * client_id, char * object, char * action);
+    int run(char * client_id, char * path, char * action);
 
 private:
     void loadKeys( const std::string & a_cred_dir );
 
-    void procStatusRequest();
+    //void procStatusRequest();
 
     typedef void (AuthzWorker::*msg_fun_t)();
 
@@ -35,13 +35,12 @@ private:
     std::string                     m_pub_key;
     std::string                     m_priv_key;
     std::string                     m_core_key;
-    
     std::string                     m_repo;
     std::string                     m_url;
-    
+    std::string                     m_test_path;
     uint32_t                        m_timeout;
 
-    std::map<uint16_t,msg_fun_t>    m_msg_handlers;
+    //std::map<uint16_t,msg_fun_t>    m_msg_handlers;
 };
 
 

@@ -16,7 +16,7 @@ using namespace SDMS::Auth;
 
 namespace SDMS {
 
-#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
+//#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
 AuthzWorker::AuthzWorker( const std::string & a_authz_file )
 {
@@ -26,30 +26,29 @@ AuthzWorker::AuthzWorker( const std::string & a_authz_file )
     m_timeout = 5000;
     
     ifstream configFile(a_authz_file);
-    if(configFile.is_open()) {
-        while(getline(configFile,line)) {
-            if (line.length() < 4 || line.at(0) == '#') continue;
-            else {
-                istringstream iss(line);
-                string token;
-                iss >> token;
-                if (token == "repo") {
-                    iss >> token;
-                    m_repo = token;
-                }
-                if (token == "url") {
-                    iss >> token;
-                    m_url = token;
-                }
-                if (token == "cred_dir") {
-                    iss >> token;
-                    cred_dir = token;
-                }
-                if (token == "timeout") {
-                    iss >> token;
-                    m_timeout = stoi(token);
-                }
-            }
+    string key,val;
+
+    if ( configFile.is_open() )
+    {
+        while( getline( configFile, line ))
+        {
+            if ( line.length() < 4 || line.at(0) == '#')
+                continue;
+
+            istringstream iss(line);
+
+            iss >> key >> val;
+
+            if (key == "repo")
+                m_repo = val;
+            else if (key == "url")
+                m_url = val;
+            else if (key == "cred_dir")
+                cred_dir = val;
+            else if (key == "timeout")
+                m_timeout = stoi(val);
+            else if (key == "test_path" )
+                m_test_path = val;
         }
         configFile.close();
     }
@@ -59,9 +58,9 @@ AuthzWorker::AuthzWorker( const std::string & a_authz_file )
 
     loadKeys( cred_dir );
 
-    uint8_t proto_id = REG_PROTO( SDMS::Anon );
+    REG_PROTO( SDMS::Anon );
 
-    SET_MSG_HANDLER( proto_id, StatusRequest, &AuthzWorker::procStatusRequest );
+    //SET_MSG_HANDLER( proto_id, StatusRequest, &AuthzWorker::procStatusRequest );
 
 }
 
@@ -70,8 +69,11 @@ AuthzWorker::~AuthzWorker()
 }
 
 int 
-AuthzWorker::run(char * client_id, char * object, char * action)
+AuthzWorker::run(char * client_id, char * path, char * action)
 {
+    if ( strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
+        return 0;
+
     int result = 1;
 
     MsgComm::SecurityContext sec_ctx;
@@ -89,7 +91,7 @@ AuthzWorker::run(char * client_id, char * object, char * action)
 
     auth_req.set_repo(m_repo);
     auth_req.set_client(client_id);
-    auth_req.set_file(object);
+    auth_req.set_file(path);
     auth_req.set_action(action);
     
     authzcomm.send(auth_req);
@@ -133,6 +135,7 @@ AuthzWorker::loadKeys( const std::string & a_cred_dir )
     inf.close();
 }
 
+#if 0
 
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
@@ -196,7 +199,6 @@ AuthzWorker::procStatusRequest()
 
     PROC_MSG_END
 }
-
-
+#endif
 
 }

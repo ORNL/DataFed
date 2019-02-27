@@ -25,8 +25,7 @@ int authzdb(char * client_id, char * object, char * action)
 
     try
     {
-        string authz_file = "/etc/grid-security/sdms-authz.conf";
-        AuthzWorker server( authz_file);
+        AuthzWorker server( "/etc/grid-security/sdms-authz.conf" );
         result = server.run(client_id, object, action);
     }
     catch( TraceException &e )
