@@ -490,6 +490,13 @@ function makeBrowserTab(){
         }
     }
 
+    this.depGraph = function(){
+        var sel = inst.data_tree.getSelectedNodes();
+        if ( sel.length == 1 ){
+            dlgDepGraph( inst, sel[0].key );
+        }
+    }
+
     this.updateNodeTitle = function( data ){
         var title = inst.generateTitle( data );
 
@@ -539,7 +546,7 @@ function makeBrowserTab(){
         var bits,node;
 
         if ( sel.length > 1 ){
-            bits = 0x119;
+            bits = 0x319;
             for ( var i in sel ){
                 node = sel[i];
                 switch ( node.key[0] ){
@@ -557,16 +564,16 @@ function makeBrowserTab(){
             node = sel[0];
 
             switch ( node.key[0] ){
-                case "c": bits = node.data.isroot?0xF7:0x72;  break;
+                case "c": bits = node.data.isroot?0x2F7:0x272;  break;
                 case "d":
                     if ( node.parent.key.startsWith("c/"))
                         bits = 0x00;
                     else
                         bits = 0x100;
                     break;
-                case "p": bits = 0x1Fa | (node.data.admin?0:5); break;
-                case "q": bits = 0x1F8; break;
-                default:  bits = 0x1FF;  break;
+                case "p": bits = 0x3Fa | (node.data.admin?0:5); break;
+                case "q": bits = 0x3F8; break;
+                default:  bits = 0x3FF;  break;
             }
             //console.log("single",bits);
         }else{
@@ -593,6 +600,7 @@ function makeBrowserTab(){
         $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         $("#btn_new_coll",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
+        $("#btn_dep_graph",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
         //inst.data_tree_div.contextmenu("enableEntry", "dup", (bits & 2) == 0 );
@@ -603,6 +611,9 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "lock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlink", (bits & 0x80) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "newd", (bits & 0x100) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "newc", (bits & 0x100) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
     }
 
     this.reloadDataTree = function(){
@@ -1931,7 +1942,8 @@ function makeBrowserTab(){
                 {title: "Lock", action: inst.lockSelected, cmd: "lock" },
                 {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
                 {title: "Get", action: function(){ inst.xfrSelected(XFR_GET) }, cmd: "get" },
-                {title: "Put", action: function(){ inst.xfrSelected(XFR_PUT) }, cmd: "put" }
+                {title: "Put", action: function(){ inst.xfrSelected(XFR_PUT) }, cmd: "put" },
+                {title: "Graph", action: inst.depGraph, cmd: "graph" }
                 ]},
             {title: "New", children: [
                 {title: "Data", action: inst.newData, cmd: "newd" },
@@ -2008,6 +2020,7 @@ function makeBrowserTab(){
     $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(XFR_PUT) });
     $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(XFR_GET) });
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
+    $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
     $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){

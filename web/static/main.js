@@ -124,6 +124,26 @@ function viewData( a_id, a_cb ) {
     });
 }
 
+function dataEdit( a_id, a_cb ){
+    var req_perms = PERM_WR_REC | PERM_WR_META;
+    getPerms( a_id, req_perms, function( perms ){
+
+        if (( perms & req_perms ) == 0 ){
+            dlgAlert( "Cannot Perform Action", "Permission Denied." );
+            return;
+        }
+
+        viewData( a_id, function( data ){
+            if ( data ){
+                dlgDataNewEdit(DLG_DATA_EDIT,data,null,perms,function(data){
+                    if ( a_cb )
+                        a_cb( data );
+                });
+            }
+        }); 
+    });
+}
+
 function dataDelete(a_ids,a_cb){
     console.log("dataDelete,",a_ids);
     _asyncGet( "/api/dat/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb);
