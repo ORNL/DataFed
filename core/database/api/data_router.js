@@ -480,7 +480,79 @@ router.get('/dep/get', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveID( req.queryParams.id, client );
-        var result = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,title:v.title,alias:v.alias,type:e.type,from:e._from}",{data:data_id});
+        /*
+        var rec = g_db.d.document( data_id );
+        var deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,alias:v.alias,type:e.type,dir:1}",{data:data_id}).toArray();
+
+        var dep,next = [],visited=[rec._id],result = [{id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,deps:deps}];
+        for ( var i in deps ){
+            dep = deps[i]; 
+            if ( dep.type < 2 && visited.indexOf(dep.id) < 0 ){
+                visited.push(dep.id);
+                next.push(dep.id);
+            }
+        }*/
+
+        var i, j, rec, deps, dep, node, visited = [data_id], cur = [data_id], next = [], skip = [], result = [];
+
+        // Get Ancestors
+        var gen = 0;
+
+        while ( cur.length ){
+            for ( i in cur ) {
+                rec = g_db.d.document( cur[i] );
+                deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:cur[i]}).toArray();
+
+                result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,gen:gen,deps:deps});
+            }
+
+            for ( i in deps ){
+                dep = deps[i]; 
+                if ( dep.type < 2 && visited.indexOf(dep.id) < 0 ){
+                    visited.push(dep.id);
+                    next.push(dep.id);
+                }else if ( skip.indexOf(dep.id) < 0 ){
+                    skip.push(dep.id);
+                }
+            }
+            cur = next;
+            next = [];
+            gen -= 1;
+        }
+
+        // Get Descendants
+
+        cur = [data_id];
+        next = [];
+        gen = 1;
+
+        while ( cur.length ){
+            for ( i in cur ) {
+                //rec = g_db.d.document( cur[i] );
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,type:e.type}",{data:cur[i]}).toArray();
+
+                for ( j in deps ){
+                    dep = deps[j]; 
+                    if ( visited.indexOf(dep.id) < 0 ){
+                        node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,deps:[{id:cur[i],type:dep.type,dir:0}]};
+                        if ( dep.type<2 )
+                            node.gen = gen;
+                        result.push(node);
+                        visited.push(dep.id);
+                        if ( dep.type < 2 )
+                            next.push(dep.id);
+                    }
+                }
+            }
+            gen += 1;
+            cur = next;
+            next = [];
+        }
+
+        for ( i in skip ){
+            if ( visited.indexOf( skip[i] ) < 0 )
+                result.push({id:skip[i],title:"n/a"});
+        }
 
         res.send( result );
     } catch( e ) {
@@ -489,50 +561,9 @@ router.get('/dep/get', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data ID or alias")
-.summary('Get data record dependencies')
-.description('Get data dependencies');
+.summary('Get data dependency graph')
+.description('Get data dependency graph');
 
-router.get('/dep/set', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","a","alias"],
-                write: ["dep"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var i,dep,id,data_id = g_lib.resolveID( req.queryParams.id, client );
-
-                if ( !g_db._exists( data_id ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Data record, "+data_id+", does not exist."];
-                if ( !data_id.startsWith("d/"))
-                    throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-
-                g_db.dep.removeByExample({_from:data_id});
-
-                for ( i in req.queryParams.deps ) {
-                    dep = req.queryParams.deps[i];
-                    id = g_lib.resolveID( dep.id, client );
-                    if ( !g_db._exists( id ))
-                        throw [g_lib.ERR_INVALID_PARAM,"Data record, "+id+", does not exist."];
-                    if ( !id.startsWith("d/"))
-                        throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-                    g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
-                }
-                //res.send( result );
-            }
-        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Data ID or alias")
-.queryParam('deps', joi.array().items(joi.object({
-    id: joi.string().required(),
-    type: joi.number().integer().required()})).required(), "Array of data record dependencies")
-.summary('Set data record dependencies')
-.description('Set data record dependencies');
 
 router.get('/lock', function (req, res) {
     try {

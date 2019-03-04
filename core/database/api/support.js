@@ -49,6 +49,10 @@ module.exports = ( function() {
     obj.XM_PUT              = 1;
     obj.XM_COPY             = 2;
 
+    obj.DEP_IS_DERIVED_FROM     = 0;
+    obj.DEP_IS_COMPONENT_OF     = 1;
+    obj.DEP_IS_NEW_VERSION_OF   = 2;
+
     obj.DEP_IN              = 0;
     obj.DEP_OUT             = 1;
 
