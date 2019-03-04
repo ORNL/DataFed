@@ -216,6 +216,13 @@ message RecordSearchRequest
     optional bool               use_shared_users  = 3;
     optional bool               use_shared_projects  = 4;
 }
+
+message RecordGetDependenciesRequest
+{
+    required string             id          = 1;
+}
+
+
 /*
 message RecordDataLocationReply
 {

@@ -1009,6 +1009,16 @@ DatabaseClient::setRecordLocationData( RecordDataLocation & a_loc, rapidjson::Do
 }
 
 void
+DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "dat/dep/get", {{"id",a_request.id()}}, result );
+
+    setListingData( a_reply, result );
+}
+
+void
 DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
@@ -1355,8 +1365,10 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
 
     ListingData* item;
     rapidjson::Value::MemberIterator imem;
+    rapidjson::SizeType i,j;
+    DependencyData *dep;
 
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    for ( i = 0; i < a_result.Size(); i++ )
     {
         rapidjson::Value & val = a_result[i];
 
@@ -1378,6 +1390,20 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
                 item->set_locked( imem->value.GetBool() );
             if (( imem = val.FindMember("owner")) != val.MemberEnd() && !imem->value.IsNull() )
                 item->set_owner( imem->value.GetString() );
+            if (( imem = val.FindMember("gen")) != val.MemberEnd() )
+                item->set_gen( imem->value.GetInt() );
+            if (( imem = val.FindMember("deps")) != val.MemberEnd() )
+            {
+                for ( j = 0; j < imem->value.Size(); j++ )
+                {
+                    rapidjson::Value & val2 = imem->value[j];
+
+                    dep = item->add_dep();
+                    dep->set_id( val2["id"].GetString());
+                    dep->set_type((DependencyType)val2["type"].GetInt());
+                    dep->set_dir((DependencyDir)val2["dir"].GetInt());
+                }
+            }
         }
     }
 }

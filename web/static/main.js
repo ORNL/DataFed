@@ -144,6 +144,20 @@ function dataEdit( a_id, a_cb ){
     });
 }
 
+function dataGetDeps( a_id, a_cb ) {
+    _asyncGet( "/api/dat/deps/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+        if ( ok ) {
+            //console.log("viewData ok, data:", data );
+            a_cb( data );
+        }
+        else {
+            //console.log("viewData failed:", data );
+            setStatusText("Get Data Deps Error: " + data);
+            a_cb();
+        }
+    });
+}
+
 function dataDelete(a_ids,a_cb){
     console.log("dataDelete,",a_ids);
     _asyncGet( "/api/dat/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb);

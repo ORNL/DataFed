@@ -653,6 +653,12 @@ app.get('/api/dat/put', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/deps/get', ( a_req, a_resp ) => {
+    sendMessage( "RecordGetDependenciesRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/perms/check', ( a_req, a_resp ) => {
     var params = { id: a_req.query.id };
     if ( a_req.query.perms != undefined )
