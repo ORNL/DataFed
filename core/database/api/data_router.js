@@ -446,14 +446,11 @@ router.get('/view', function (req, res) {
                 rem_md = true;
         }
 
-        data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
+        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
-            if ( dep.from == data_id )
-                dep.dir = g_lib.DEP_OUT;
-            else
-                dep.dir = g_lib.DEP_IN;
-            delete dep.from;
+            if ( dep.alias && client._id != dep.owner )
+                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
         }
 
         if ( rem_md && data.md )
