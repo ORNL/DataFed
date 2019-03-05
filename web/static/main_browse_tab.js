@@ -15,7 +15,7 @@ function makeBrowserTab(){
     this.data_tree = null;
     this.data_md_tree = null;
     this.data_md_empty = true;
-    this.data_md_empty_src = [{title:"(none)", icon:false}];
+    this.data_md_empty_src = [{title:"(n/a)", icon:false}];
     //this.data_md_cur = {};
     this.data_md_exp = {};
     this.xfrHist = [];
@@ -715,11 +715,11 @@ function makeBrowserTab(){
                                 html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
                             }
                         }else{
-                            html += "(none)";
+                            html += "(n/a)";
                         }
                         html += "</table>";
                         inst.sel_details.html(html);
-
+                        $("#sel_references").html("(n/a)");
                         inst.showSelectedMetadata();
                     }
                 });
@@ -737,7 +737,7 @@ function makeBrowserTab(){
                         if ( item.desc )
                             inst.sel_descr.text(item.desc);
                         else
-                            inst.sel_descr.text("(none)");
+                            inst.sel_descr.text("(n/a)");
 
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
@@ -752,6 +752,7 @@ function makeBrowserTab(){
                         }
                         html += "</table>";
                         inst.sel_details.html(html);
+                        $("#sel_references").html("(n/a)");
 
                         inst.showSelectedMetadata();
                     }else{
@@ -770,7 +771,7 @@ function makeBrowserTab(){
                         if ( item.desc )
                             inst.sel_descr.text( item.desc );
                         else
-                            inst.sel_descr.text("(none)");
+                            inst.sel_descr.text("(n/a)");
 
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
@@ -796,32 +797,34 @@ function makeBrowserTab(){
 
                         inst.sel_details.html(html);
                         if ( item.deps && item.deps.length ){
-                            var dep;
+                            var dep,id;
                             html = "";
                             for ( i in item.deps ){
                                 dep = item.deps[i];
+                                id = dep.id + (dep.alias?" ("+dep.alias+")":"");
+
                                 if ( dep.dir == "DEP_OUT" ){
                                     switch(dep.type){
                                         case "DEP_IS_DERIVED_FROM":
-                                            html += "This record is derived from " + dep.id + (dep.alias?" ("+dep.alias+")":"") + "<br>";
+                                            html += "Derived from " + id + "<br>";
                                             break;
                                         case "DEP_IS_COMPONENT_OF":
-                                            html += "This record is a component of " + dep.id + (dep.alias?" ("+dep.alias+")":"") + "<br>";
+                                            html += "Component of " + id + "<br>";
                                             break;
                                         case "DEP_IS_NEW_VERSION_OF":
-                                            html += "This record is a newer version of " + dep.id + (dep.alias?" ("+dep.alias+")":"")+ "<br>";
+                                            html += "New version of " + id + "<br>";
                                             break;
                                     }
                                 }else{
                                     switch(dep.type){
                                         case "DEP_IS_DERIVED_FROM":
-                                            html += dep.id + (dep.alias?" ("+dep.alias+")":"") + " is a derived from this record<br>";
+                                            html += "Precursor of " + id + "<br>";
                                             break;
                                         case "DEP_IS_COMPONENT_OF":
-                                            html += dep.id + (dep.alias?" ("+dep.alias+")":"") + " is a component of this record<br>";
+                                            html += "Container of " + id + "<br>";
                                             break;
                                         case "DEP_IS_NEW_VERSION_OF":
-                                            html += dep.id + (dep.alias?" ("+dep.alias+")":"") +  " is a newer version of this record<br>";
+                                            html += "Old version of " + id + "<br>";
                                             break;
                                     }
                                 }
@@ -830,7 +833,7 @@ function makeBrowserTab(){
                             }
                             $("#sel_references").html(html);
                         }else{
-                            $("#sel_references").html("(no references)");
+                            $("#sel_references").html("(n/a)");
                         }
                         inst.showSelectedMetadata( item.metadata );
                     }else{
@@ -846,7 +849,7 @@ function makeBrowserTab(){
                         if ( item.desc )
                             inst.sel_descr.text(item.desc);
                         else
-                            inst.sel_descr.text("(none)");
+                            inst.sel_descr.text("(n/a)");
 
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
@@ -863,7 +866,7 @@ function makeBrowserTab(){
                             for ( i in item.admin )
                             html += item.admin[i].substr(2) + " ";
                         }else{
-                            html += "(none)";
+                            html += "(n/a)";
                         }
                         html += "</td></tr>";
                         html += "<tr><td>Members:</td><td>";
@@ -871,7 +874,7 @@ function makeBrowserTab(){
                             for ( i in item.member )
                                 html += item.member[i].substr(2) + " ";
                         }else{
-                            html += "(none)";
+                            html += "(n/a)";
                         }
                         html += "<tr><td>Allocation(s):</td><td>";
                         if ( item.alloc && item.alloc.length ){
@@ -885,11 +888,12 @@ function makeBrowserTab(){
                             free = Math.max( Math.floor(10000*(item.subAlloc - item.subUsage)/item.subAlloc)/100, 0 );
                             html += item.subRepo + ": (sub-alloc) " + sizeToString( item.subAlloc ) + " total, " + sizeToString( item.subUsage ) + " used (" + free + " % free)";
                         }else{
-                            html += "(none)";
+                            html += "(n/a)";
                         }
 
                         html += "</td></tr></table>";
                         inst.sel_details.html(html);
+                        $("#sel_references").html("(n/a)");
 
                         inst.showSelectedMetadata();
                     }else{
@@ -903,7 +907,7 @@ function makeBrowserTab(){
                         inst.sel_title.text(item.title);
                         var qry = JSON.parse( item.query );
                         console.log("qry:",qry);
-                        inst.sel_descr.html("<table class='info_table'><col width='20%'><col width='80%'><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"(none)")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"(none)")+"</td></tr></table>");
+                        inst.sel_descr.html("<table class='info_table'><col width='20%'><col width='80%'><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"(n/a)")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"(n/a)")+"</td></tr></table>");
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
                         if ( item.ct ){
@@ -916,6 +920,7 @@ function makeBrowserTab(){
                         }
                         html += "</table>";
                         inst.sel_details.html(html);
+                        $("#sel_references").html("(n/a)");
                         inst.showSelectedMetadata();
                     }else{
                         inst.noInfoAvail();
@@ -927,10 +932,11 @@ function makeBrowserTab(){
                     if ( ok && item ){
                         inst.sel_id.text("User ID: " + item.uid);
                         inst.sel_title.text(item.name);
-                        inst.sel_descr.text("");
+                        inst.sel_descr.text("(n/a)");
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
                         inst.sel_details.html(html);
+                        $("#sel_references").html("(n/a)");
                         inst.showSelectedMetadata();
                     }else{
                         inst.noInfoAvail();
@@ -940,7 +946,8 @@ function makeBrowserTab(){
                 inst.sel_id.text( "My Allocations" );
                 inst.sel_title.text("");
                 inst.sel_descr.text("Browse all allocations and associated data records.");
-                inst.sel_details.html("");
+                inst.sel_details.html("(n/a)");
+                $("#sel_references").html("(n/a)");
             } else if ( key.startsWith( "repo/" )) {
                 inst.sel_id.text( "Allocation on " + key + ", user: " + node.data.scope );
                 inst.sel_title.text("");
@@ -951,6 +958,7 @@ function makeBrowserTab(){
                 html += "<tr><td>Capacity:</td><td>" + node.data.alloc_capacity + "</td></tr>";
                 html += "<tr><td>Usage:</td><td>" + node.data.alloc_usage + "</td></tr></table>";
                 inst.sel_details.html(html);
+                $("#sel_references").html("(n/a)");
 
             } else {
                 inst.noInfoAvail();
@@ -961,10 +969,11 @@ function makeBrowserTab(){
     }
 
     this.noInfoAvail = function( message ){
-        inst.sel_id.text( message?message:"(no information)");
+        inst.sel_id.text( message?message:"(n/a)");
         inst.sel_title.text("");
-        inst.sel_descr.text("(no information)");
-        inst.sel_details.text("(no information)");
+        inst.sel_descr.text("(n/a)");
+        inst.sel_details.text("(n/a)");
+        $("#sel_references").html("(n/a)");
         inst.showSelectedMetadata();
     }
 

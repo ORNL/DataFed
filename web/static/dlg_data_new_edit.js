@@ -31,7 +31,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:1 1 auto;overflow:auto'>\
                         <table id='ref-table'>\
-                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
+                            <tr class='ref-row'><td><select class='ref-type'><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
                         </table>\
                     </div>\
                     <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
@@ -367,7 +367,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         if ( dep.dir == "DEP_OUT" ){
                             row = $("#ref-table tr:last",frame);
                             $("input",row).val(dep.alias?dep.alias:dep.id);
-                            $("select",row).val(DepTypeFromString[dep.type]);
+                            $("select",row).val(DepTypeFromString[dep.type]).selectmenu("refresh");
                             addRef();
                         }
                     }
