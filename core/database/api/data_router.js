@@ -475,62 +475,70 @@ router.get('/view', function (req, res) {
 
 router.get('/dep/get', function (req, res) {
     try {
+        console.log("/dep/get");
+
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveID( req.queryParams.id, client );
-        /*
-        var rec = g_db.d.document( data_id );
-        var deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,alias:v.alias,type:e.type,dir:1}",{data:data_id}).toArray();
-
-        var dep,next = [],visited=[rec._id],result = [{id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,deps:deps}];
-        for ( var i in deps ){
-            dep = deps[i]; 
-            if ( dep.type < 2 && visited.indexOf(dep.id) < 0 ){
-                visited.push(dep.id);
-                next.push(dep.id);
-            }
-        }*/
-
         var i, j, rec, deps, dep, node, visited = [data_id], cur = [data_id], next = [], skip = [], result = [];
 
         // Get Ancestors
         var gen = 0;
 
+        console.log("get ancestors");
+
         while ( cur.length ){
+            console.log("gen",gen);
+
             for ( i in cur ) {
                 rec = g_db.d.document( cur[i] );
                 deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:cur[i]}).toArray();
 
                 result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,gen:gen,deps:deps});
-            }
 
-            for ( i in deps ){
-                dep = deps[i]; 
-                if ( dep.type < 2 && visited.indexOf(dep.id) < 0 ){
-                    visited.push(dep.id);
-                    next.push(dep.id);
-                }else if ( skip.indexOf(dep.id) < 0 ){
-                    skip.push(dep.id);
+                for ( j in deps ){
+                    dep = deps[j]; 
+                    console.log("dep:",dep.id,"ty:",dep.type);
+
+                    if ( dep.type < 2 && visited.indexOf(dep.id) < 0 ){
+                        console.log("follow");
+                        visited.push(dep.id);
+                        next.push(dep.id);
+                    }else if ( skip.indexOf(dep.id) < 0 ){
+                        console.log("skip");
+                        skip.push(dep.id);
+                    }
                 }
             }
+
             cur = next;
             next = [];
-            gen -= 1;
+            gen--;
         }
 
+        var gen_min = gen;
+
         // Get Descendants
+
+        console.log("get descendants");
 
         cur = [data_id];
         next = [];
         gen = 1;
 
         while ( cur.length ){
+            console.log("gen",gen);
+
             for ( i in cur ) {
                 //rec = g_db.d.document( cur[i] );
                 deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,type:e.type}",{data:cur[i]}).toArray();
 
                 for ( j in deps ){
                     dep = deps[j]; 
+
+                    console.log("dep:",dep.id,"ty:",dep.type);
+
                     if ( visited.indexOf(dep.id) < 0 ){
+                        console.log("follow");
                         node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,deps:[{id:cur[i],type:dep.type,dir:0}]};
                         if ( dep.type<2 )
                             node.gen = gen;
@@ -538,6 +546,8 @@ router.get('/dep/get', function (req, res) {
                         visited.push(dep.id);
                         if ( dep.type < 2 )
                             next.push(dep.id);
+                    }else{
+                        console.log("skip");
                     }
                 }
             }
@@ -546,9 +556,22 @@ router.get('/dep/get', function (req, res) {
             next = [];
         }
 
+        console.log("proc skips");
+
         for ( i in skip ){
             if ( visited.indexOf( skip[i] ) < 0 )
                 result.push({id:skip[i],title:"n/a"});
+        }
+
+        console.log("adjust gen:",gen_min);
+
+        // Adjust gen values to start at 0
+        if ( gen_min < 0 ){
+            for ( i in result ){
+                node = result[i];
+                if ( node.gen != undefined )
+                    node.gen -= gen_min;
+            }
         }
 
         res.send( result );
