@@ -755,6 +755,19 @@ function xfrStart( a_id, a_mode, a_path, a_cb ){
     });
 }
 
+function defineArrowMarker( svg, name ){
+    svg.append('defs').append('marker')
+        .attr('id','arrow-'+name)
+        .attr('refX',-3)
+        .attr('refY',2)
+        .attr('orient','auto')
+        .attr('markerWidth',6)
+        .attr('markerHeight',4)
+        .append('svg:path')
+            .attr('class','arrow-path ' + name)
+            .attr('d', 'M 6,0 L 0,2 L 6,4')
+}
+
 var status_timer;
 
 var PERM_RD_REC         = 0x0001; // Read record info (description, keywords, details)

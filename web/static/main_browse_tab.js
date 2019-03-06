@@ -27,6 +27,27 @@ function makeBrowserTab(){
     this.selectScope = null;
     this.dragging = false;
     this.pasteItems = [];
+    this.node_data = [];
+    this.link_data = [];
+    this.r = 10;
+    this.nodes_grp = null;
+    this.nodes = null;
+    this.links_grp = null;
+    this.links = null;
+    this.svg = null;
+    this.simulation = null;
+    this.sel_node = null;
+
+    this.windowResized = function(){
+        var h = $("#data-tabs-parent").height();
+        var tabs = $("#data-tabs");
+        var hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
+
+        //console.log("resized, h:",h,",hdr h:",hdr_h);
+
+        tabs.outerHeight(h);
+        $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
+    }
 
     this.deleteSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
@@ -491,7 +512,9 @@ function makeBrowserTab(){
     this.depGraph = function(){
         var sel = inst.data_tree.getSelectedNodes();
         if ( sel.length == 1 ){
-            dlgDepGraph( inst, sel[0].key, sel[0].data.scope );
+            //dlgDepGraph( inst, sel[0].key, sel[0].data.scope );
+            loadGraph( sel[0].key );
+            $( "#data-tabs" ).tabs({ active: 1 });
         }
     }
 
@@ -686,7 +709,9 @@ function makeBrowserTab(){
             var key,i,html;
             var date = new Date();
 
-            if ( node.key == "shared_proj" && node.data.scope )
+            if ( typeof node == 'string' )
+                key = node;
+            else if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
             else
                 key = node.key;
@@ -1350,6 +1375,272 @@ function makeBrowserTab(){
                 $(".repo_adm","#repo_list").click( function(ev){ dlgRepoAdmin.show($(this).attr("repo"),function(){ inst.setupRepoTab();}); });
             }
         });
+    }
+
+    this.loadGraph = function( a_id ){
+        inst.focus_node_id = a_id;
+
+        //console.log("owner:",a_owner);
+        dataGetDeps( a_id, function( a_data ){
+            //console.log("dep data:",a_data);
+            var item, i, j, dep, node;
+
+            inst.link_data = [];
+            var new_node_data = [];
+            var id_map = {};
+
+            for ( i in a_data.item ){
+                if ( a_data.item[i].id == a_id ){
+                    inst.graph_owner = a_data.item[i].owner;
+                    break;
+                }
+            }
+
+            for ( i in a_data.item ){
+                item = a_data.item[i];
+                console.log("node:",item);
+                node = {id:item.id,title:item.title}
+                if ( item.alias ){
+                    if ( item.owner && item.owner != inst.graph_owner )
+                        node.label = item.owner.charAt(0)+":"+item.owner.substr(2)+":"+item.alias;
+                    else
+                        node.label = item.alias;
+                }else
+                    node.label = item.id;
+
+                if ( item.gen != undefined ){
+                    node.row = item.gen;
+                    node.col = 0;
+                }
+
+                id_map[node.id] = new_node_data.length;
+                new_node_data.push(node);
+                for ( j in item.dep ){
+                    dep = item.dep[j];
+                    inst.link_data.push({source:item.id,target:dep.id,ty:DepTypeFromString[dep.type],id:item.id+"-"+dep.id});
+                }
+            }
+
+            // Copy any existing position data to new nodes
+            var node2;
+            for ( i in inst.node_data ){
+                node = inst.node_data[i];
+                if ( id_map[node.id] != undefined ){
+                    node2 = new_node_data[id_map[node.id]];
+                    node2.x = node.x;
+                    node2.y = node.y;
+                }
+            }
+
+            inst.node_data = new_node_data;
+
+            renderDepGraph();
+        });
+    }
+
+    this.renderDepGraph = function(){
+        var g;
+
+        inst.links = inst.links_grp.selectAll('line')
+            .data( inst.link_data, function(d) { return d.id; });
+
+            inst.links.enter()
+            .append("line")
+                .attr('marker-start',function(d){
+                    switch ( d.ty ){
+                        case 0: return 'url(#arrow-derivation)';
+                        case 1: return 'url(#arrow-component)';
+                        case 2: return 'url(#arrow-new-version)';
+                    }
+                })
+                .attr('class',function(d){
+                    switch ( d.ty ){
+                        case 0: return 'link derivation';
+                        case 1: return 'link component';
+                        case 2: return 'link new-version';
+                    }
+                });
+
+        inst.links.exit()
+            .remove();
+
+        inst.links = inst.links_grp.selectAll('line');
+
+        inst.nodes = inst.nodes_grp.selectAll('g')
+            .data( inst.node_data, function(d) { console.log("bind:",d); return d.id; });
+
+        // Update
+        inst.nodes.selectAll(".node > circle.obj")
+            .attr('class',function(d){
+                var res = 'obj ';
+
+                console.log("upd node", d );
+
+                if ( d.id == inst.focus_node_id )
+                    res += "main";
+                else if ( d.row != undefined )
+                    res += "prov";
+                else{
+                    console.log("upd other node", d );
+                    res += "other";
+                }
+
+                if ( d.id == inst.focus_node_id )
+                    res += " comp";
+                else
+                    res += " part";
+
+                return res;
+            });
+
+        inst.nodes.selectAll(".node > circle.select")
+            .attr("class", function(d){
+                if ( d.id == inst.focus_node_id ){
+                    inst.sel_node = d;
+                    return "select highlight";
+                }else
+                    return "select hidden";
+            });
+
+        g = inst.nodes.enter()
+            .append("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", inst.dragStarted)
+                    .on("drag", inst.dragged)
+                    .on("end", inst.dragEnded));
+
+        g.append("circle")
+            .attr("r", r)
+            .attr('class',function(d){
+                var res = 'obj ';
+                
+                if ( d.id == inst.focus_node_id )
+                    res += "main";
+                else if ( d.row != undefined )
+                    res += "prov";
+                else{
+                    res += "other";
+                    console.log("new other node", d );
+                }
+
+                if ( d.id == inst.focus_node_id )
+                    res += " comp";
+                else
+                    res += " part";
+
+                return res;
+            })
+            .on("click", function(d,i){
+                d3.select(".highlight")
+                    .attr("class","select hidden");
+                d3.select(this.parentNode).select(".select")
+                    .attr("class","select highlight");
+                inst.sel_node = d;
+                inst.showSelectedInfo( d.id );
+            });
+
+        g.append("circle")
+            .attr("r", r*1.5)
+            .attr("class", function(d){
+                if ( d.id == inst.focus_node_id ){
+                    inst.sel_node = d;
+                    return "select highlight";
+                }else
+                    return "select hidden";
+            });
+
+        g.append("text")
+            .text(function(d) {
+                return d.label;
+            })
+            .attr('x', r)
+            .attr('y', -r)
+            .attr("fill", "white");
+
+        inst.nodes.exit()
+            .remove();
+
+        inst.nodes = inst.nodes_grp.selectAll('g');
+
+        if ( inst.simulation ){
+            console.log("restart sim");
+            inst.simulation
+                .nodes(inst.node_data)
+                .force("link").links(inst.link_data);
+
+            inst.simulation.alpha(1).restart();
+        }else{
+            var linkForce = d3.forceLink(inst.link_data)
+                .strength(function(d){
+                    switch(d.ty){
+                        case 0: return .2;
+                        case 1: return .2;
+                        case 2: return .1;
+                    }
+                })
+                .id( function(d) { return d.id; })
+
+            inst.simulation = d3.forceSimulation()
+                .nodes(inst.node_data)
+                //.force('center', d3.forceCenter(200,200))
+                .force('charge', d3.forceManyBody()
+                    .strength(-200))
+                .force('row', d3.forceY( function(d,i){ return d.row != undefined ?(75 + d.row*75):0; })
+                    .strength( function(d){ return d.row != undefined ?.1:0; }))
+                .force('col', d3.forceX(function(d,i){ return d.col != undefined?200:0; })
+                    .strength( function(d){ return d.col != undefined ?.1:0; }))
+                .force("link", linkForce )
+                .on('tick', inst.simTick);
+
+        }
+    }
+
+    this.dragStarted = function(d) {
+        //console.log("drag start",d.id);
+        if (!d3.event.active) inst.simulation.alphaTarget(0.3).restart();
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
+    this.dragged = function(d) {
+        //console.log("drag",d3.event.x,d3.event.y);
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+        inst.simTick(); 
+    }
+
+    this.dragEnded = function(d){
+        //console.log("drag start",d.id);
+        if (!d3.event.active) inst.simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+    this.graphNodeExpand = function(){
+    }
+
+    this.graphNodeCollapse = function(){
+    }
+
+    this.graphNodeFocus = function(){
+        console.log("graph focus");
+        if ( inst.sel_node && inst.sel_node != inst.focus_node_id ){
+            loadGraph( inst.sel_node.id );
+        }
+    }
+
+    this.simTick = function() {
+        //console.log("tick");
+        inst.nodes
+            .attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")"; });
+
+        inst.links
+            .attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
     }
 
     this.treeSelectNode = function( a_node, a_toggle ){
@@ -2026,6 +2317,10 @@ function makeBrowserTab(){
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
     $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
 
+    $("#btn_exp_node",inst.frame).on('click', inst.graphNodeExpand );
+    $("#btn_col_node",inst.frame).on('click', inst.graphNodeCollapse );
+    $("#btn_foc_node",inst.frame).on('click', inst.graphNodeFocus );
+
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
     $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){
         if(reload){
@@ -2068,6 +2363,18 @@ function makeBrowserTab(){
         }
     });
 */
+    $("#data-tabs").tabs({
+        heightStyle:"fill",
+        /*activate: function(ev,ui){
+            if ( ui.newPanel.length && ui.newPanel[0].id == "tab-data-graph" ){
+                var node = inst.data_tree.activeNode;
+                if ( node && node.key != inst.focus_node_id ){
+                    inst.graph_owner = sel[0].data.scope;
+                    inst.loadGraph();
+                }
+            }
+        }*/
+    });
 
     $("#footer-tabs").tabs({
         heightStyle:"auto",
@@ -2110,6 +2417,25 @@ function makeBrowserTab(){
         inst.updateSearchSelectState( true );
     });
 
+    // Graph Init
+    var zoom = d3.zoom();
+
+    inst.svg = d3.select("svg")
+    .call(zoom.on("zoom", function () {
+        svg.attr("transform", d3.event.transform)
+    }))
+    .append("g")
+
+    defineArrowMarker(inst.svg, "derivation");
+    defineArrowMarker(inst.svg, "component");
+    defineArrowMarker(inst.svg, "new-version");
+
+    inst.links_grp = inst.svg.append("g")
+        .attr("class", "links");
+
+    inst.nodes_grp = inst.svg.append("g")
+        .attr("class", "nodes");
+
     //$("#lockmenu").menu();
 
     this.menutimer = null;
@@ -2141,4 +2467,6 @@ function makeBrowserTab(){
     inst.showSelectedInfo();
     this.xfr_hist.html( "(no recent transfers)" );
     this.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
+
+    return inst;
 }

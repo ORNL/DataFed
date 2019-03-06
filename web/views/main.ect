@@ -73,6 +73,17 @@
         var g_theme = "<%- @theme %>";
         var g_opts = { page_sz: 20, xfr_hist: 24, def_alloc: 'none' };
         var tab_browser;
+        var resizeTimer = null;
+
+        function resizeUI(){
+            console.log("tab broser:",tab_browser);
+            tab_browser.windowResized();
+        }
+
+        $(window).bind('resize', function() {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeUI, 100);
+        });
 
         userView( g_user.uid, true, function( ok, user ){
             if ( ok && user ){
@@ -85,6 +96,10 @@
                 }
 
                 tab_browser = makeBrowserTab();
+                console.log("tab broser 2:",tab_browser);
+
+                resizeUI();
+
                 setStatusText("DataFed Ready");
             }else{
                 dlgAlert("System Error","Unable to access user record");
