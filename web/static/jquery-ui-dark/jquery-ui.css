@@ -25,6 +25,80 @@
     background: #404040!important;
 }
 
+/* Dependency Graph Styles */
+
+.links{
+	stroke-width: 3px;
+}
+
+.links .derivation {
+	stroke: #06C;
+}
+
+.links .component {
+	stroke: #aaa;
+}
+
+.links .new-version {
+	stroke: #E00;
+}
+
+.arrow-path
+{
+	stroke: none;
+}
+
+.arrow-path.derivation {
+	fill: #06C;
+}
+
+.arrow-path.component {
+	fill: #aaa;
+}
+
+.arrow-path.new-version {
+	fill: #E00;
+}
+
+.nodes {
+	stroke-width:2.5px;
+}
+
+.nodes .main {
+	fill: #090;
+}
+
+.nodes .prov {
+	fill: #06C;
+}
+
+.nodes .other {
+	fill: #555;
+}
+
+.nodes .comp {
+	stroke: #fff;
+}
+
+.nodes .part {
+	stroke: #777;
+}
+
+.node .highlight{
+	stroke:#0f0!important;
+	stroke-width:2px!important;
+	fill:none!important;
+}
+
+.node .hidden{
+	display:none!important;
+}
+
+.node text{
+	font-size: 14px;
+	fill: #fff;
+}
+
 .note{
 	color: #12f50a;
 }

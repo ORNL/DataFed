@@ -129,7 +129,7 @@ function dataEdit( a_id, a_cb ){
     getPerms( a_id, req_perms, function( perms ){
 
         if (( perms & req_perms ) == 0 ){
-            dlgAlert( "Cannot Perform Action", "Permission Denied." );
+            alertPermDenied();
             return;
         }
 
@@ -139,6 +139,89 @@ function dataEdit( a_id, a_cb ){
                     if ( a_cb )
                         a_cb( data );
                 });
+            }
+        }); 
+    });
+}
+
+function dataShare( a_id ){
+    checkPerms( a_id, PERM_SHARE, function( granted ){
+        if ( !granted ){
+            alertPermDenied();
+            return;
+        }
+
+        viewData( a_id, function( data ){
+            if ( data )
+                dlgSetACLs( data );
+        });
+    });
+}
+
+function dataDelete( a_id, a_cb ) {
+    checkPerms( a_id, PERM_DELETE, function( granted ){
+        if ( !granted ){
+            alertPermDenied();
+            return;
+        }
+
+        dlgConfirmChoice( "Confirm Deletion", "Delete Data Record " + a_id + "?", ["Delete","Cancel"], function( choice ){
+            if ( choice == 0 ){
+                sendDataDelete( [a_id], function( ok, data ){
+                    if ( ok ){
+                        a_cb();
+                    }else
+                        dlgAlert("Data Delete Error", data);
+                });
+            }
+        });
+    });
+}
+
+function dataLock( a_id, a_lock, a_cb ){
+    checkPerms( a_id, PERM_LOCK, function( granted ){
+        if ( !granted ){
+            alertPermDenied();
+            return;
+        }
+        sendDataLock( [a_id], a_lock, function( ok, data ){
+            if ( ok ){
+                a_cb();
+            }else{
+                dlgAlert("Lock Update Failed",data);
+            }
+        });
+    });
+}
+
+function dataGet( a_id ){
+    checkPerms( a_id, PERM_RD_DATA, function( granted ){
+        if ( !granted ){
+            alertPermDenied();
+            return;
+        }
+
+        viewData( a_id, function( data ){
+            if ( data ){
+                if ( !data.size || parseInt(data.size) == 0 )
+                    dlgAlert("Data Get Error","Record contains no raw data");
+                else
+                    dlgStartTransfer( XFR_GET, data );
+            }
+        }); 
+    });
+}
+
+function dataPut( a_id ){
+    checkPerms( a_id, PERM_WR_DATA, function( granted ){
+        if ( !granted ){
+            alertPermDenied();
+            return;
+        }
+
+        viewData( a_id, function( data ){
+            if ( data ){
+                dlgStartTransfer( XFR_PUT, data );
             }
         }); 
     });
@@ -158,8 +241,7 @@ function dataGetDeps( a_id, a_cb ) {
     });
 }
 
-function dataDelete(a_ids,a_cb){
-    console.log("dataDelete,",a_ids);
+function sendDataDelete(a_ids,a_cb){
     _asyncGet( "/api/dat/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb);
 }
 
@@ -173,8 +255,7 @@ function dataFind( a_query, a_callback ) {
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
 
-function dataLock( a_ids, a_lock, a_cb ){
-    console.log("dataLock, lock:",a_lock);
+function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 

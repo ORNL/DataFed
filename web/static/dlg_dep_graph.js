@@ -1,47 +1,39 @@
-function dlgDepGraph( main, a_id ){
+function dlgDepGraph( main, a_id, a_owner ){
     var frame = $(document.createElement('div'));
+    /*
+    var dep_link_color = "#049";
+    var comp_link_color = "#999";
+    var ver_link_color = "#900";
+    var main_node_color = "#080";
+    var prov_node_color = "#049";
+    var other_node_color = "#555"
+    var comp_node_color = "#fff"
+    var part_node_color = "#888"
+    */
+
     var html = "<style>\
-        .links .derivation{\
-            stroke: #090;\
-            stroke-width: 2px;\
-        }\
-        .links .component{\
-            stroke: #999;\
-            stroke-width: 2px;\
-        }\
-        .links .new-version{\
-            stroke: #900;\
-            stroke-width: 2px;\
-        }\
-        .node circle {\
-            stroke: #fff;\
-            stroke-width: 1.5px;\
-        }\
-        .highlight{\
-            stroke:#0f0!important;\
-            stroke-width:2px!important;\
-            fill:none!important;\
-        }\
-        .hidden{\
-            display:none!important;\
-        }\
-        text {\
-            font-family: sans-serif;\
-            font-size: 14px;\
-        }\
         </style>\
         <div class='row-flex' style='flex:1 1 auto;height:100%'>\
-            <svg class='' style='flex:1 1 auto;background:#000'>\
+            <svg class='ui-widget-content' style='flex:1 1 55%'>\
             </svg>\
-            <div style='flex:none;height:100%'>\
+            <div style='flex:1 1 45%;height:100%'>\
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:none;padding:.25em' class='ui-widget-header'>Selection Information:</div>\
                     <div class='ui-widget-content' style='flex:1 1 auto;border-bottom:0;overflow:auto;padding:.25em'>\
-                        ID: <span id='dlg_sel_id'></span><br>\
-                        Alias: <br>\
-                        Title: <br>\
-                        Description<br>\
-                        Metadata:<br>\
+                        <div id='id'></div><br>\
+                        <div id='title'></div><br>\
+                        <div id='descr_hdr' class='sub-header'>Description</div>\
+                        <div style='padding:.25em;max-height:10em;overflow:auto' class='ui-widget-content'>\
+                            <div id='descr'></div>\
+                        </div><br>\
+                        <div id='details_hdr' class='sub-header'>Details</div>\
+                        <div style='padding:.25em' class='ui-widget-content'>\
+                            <div id='details'></div>\
+                        </div><br>\
+                        <div id='meta_hdr' class='sub-header'>Metadata</div>\
+                        <div style='padding:.25em' class='ui-widget-content'>\
+                            <div id='meta'><div id='data_md_tree' class='no-border'></div></div>\
+                        </div>\
                     </div>\
                 </div>\
             </div>\
@@ -49,14 +41,29 @@ function dlgDepGraph( main, a_id ){
 
     frame.html( html );
 
-    var data = [];
-    var hops = 1;
     var r = 10;
     var node_data, nodes_grp, nodes;
     var link_data, links_grp, links;
     var svg, simulation;
     var dlg_ready = false;
     var graph_loaded = false
+    var g_sel_node = null;
+    var data_md_tree = null;
+    var data_md_empty = true;
+    var data_md_empty_src = [{title:"(n/a)", icon:false}];
+    var data_md_exp = {};
+
+    $("#descr_hdr",frame).button().click( function(){
+        $("#descr",frame).slideToggle();
+    });
+
+    $("#details_hdr",frame).button().click( function(){
+        $("#details",frame).slideToggle();
+    });
+
+    $("#meta_hdr",frame).button().click( function(){
+        $("#meta",frame).slideToggle();
+    });
 
     loadGraph();
 
@@ -94,36 +101,137 @@ function dlgDepGraph( main, a_id ){
         d.fy = null;
     }
 
-    function defineArrowMarker( svg, name, color ){
+    function defineArrowMarker( svg, name ){
         svg.append('defs').append('marker')
-            .attr('id',name)
-            .attr('refX',13)
+            .attr('id','arrow-'+name)
+            .attr('refX',-3)
             .attr('refY',2)
             .attr('orient','auto')
-            .attr('markerWidth',20)
-            .attr('markerHeight',10)
+            .attr('markerWidth',6)
+            .attr('markerHeight',4)
             .append('svg:path')
-            .attr('d', 'M 0,0 L 6,2 L 0,4')
-            .attr('fill', color )
-            .style('stroke-width','1px')
-            .style('stroke',color);
+                .attr('class','arrow-path ' + name)
+                .attr('d', 'M 6,0 L 0,2 L 6,4')
     }
 
+    function buildObjSrcTree( obj, base ){
+        var src = [], k2;
+        Object.keys(obj).forEach(function(k) {
+            k2 = escapeHTML(k);
 
-    function showSelectedNode(d){
-        $("#dlg_sel_id",frame).html(d.id);
+            if ( obj[k] === null ){
+                src.push({title:k2 + " : null", icon: false })
+            }else if ( typeof obj[k] === 'object' ){
+                var fkey=base+"."+k2;
+                if ( data_md_exp[fkey] ){
+                    data_md_exp[fkey] = 10;
+                }
+                src.push({title:k2, icon: true, folder: true, expanded: data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey)})
+            }else if ( typeof obj[k] === 'string' ){
+                src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
+            }else{
+                src.push({title:k2 + " : " + obj[k], icon: false })
+            }
+        });
+
+        return src;
+    }
+
+    function showSelectedMetadata( md_str )
+    {
+        console.log("showSelectedMetadata",md_str);
+        if ( md_str ){
+            for ( var i in data_md_exp ){
+                if ( data_md_exp[i] == 1 )
+                    delete data_md_exp[i];
+                else
+                    data_md_exp[i]--;
+            }
+
+            var md = JSON.parse( md_str );
+            if ( data_md_exp["Metadata"] )
+                data_md_exp["Metadata"] = 10;
+
+            var src = [{title:"Metadata", icon: "ui-icon ui-icon-folder", folder: true, expanded: data_md_exp["Metadata"]?true:false, children: buildObjSrcTree(md,"Metadata")}];
+
+            data_md_tree.reload( src );
+            data_md_empty = false;
+        } else if ( !data_md_empty ) {
+            data_md_tree.reload(data_md_empty_src);
+            data_md_empty = true;
+        }
+    }
+
+    function showSelectedNodeInfo(){
+        if ( g_sel_node ){
+            viewData( g_sel_node.id, function( item ){
+                if ( item ){
+                    var date = new Date();
+                    var html = "Data ID: " + item.id;
+                    if ( item.alias )
+                        html += "<br>Alias: " + item.alias;
+                    $("#id",frame).html(html);
+                    $("#title",frame).text("\"" + item.title + "\"");
+
+                    if ( item.desc )
+                        $("#descr",frame).text( item.desc );
+                    else
+                        $("#descr",frame).text("(n/a)");
+
+                    html = "<table class='info_table'><col width='30%'><col width='70%'>";
+                    html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"n/a") + "</td></tr>";
+                    html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"n/a") + "</td></tr>";
+                    html += "<tr><td>Locked:</td><td>" + (item.locked?"yes":"no") + "</td></tr>";
+                    html += "<tr><td>Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
+                    html += "<tr><td>Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
+                    if ( item.ct ){
+                        date.setTime(item.ct*1000);
+                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    if ( item.ut ){
+                        date.setTime(item.ut*1000);
+                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    if ( item.dt ){
+                        date.setTime(item.dt*1000);
+                        html += "<tr><td>Uploaded:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
+                    }
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                    html += "</table>";
+
+                    $("#details",frame).html(html);
+                    showSelectedMetadata( item.metadata );
+                }else{
+                    $("#id",frame).html("Data ID: " + g_sel_node.id + (g_sel_node.id!=g_sel_node.label?"<br>Alias: "+g_sel_node.label:""));
+                    $("#title",frame).text(g_sel_node.title);
+                    $("#descr",frame).text("n/a");
+                    $("#details",frame).text("n/a");
+                    showSelectedMetadata();
+                }
+            });
+        }
     }
 
     function loadGraph(){
+        //console.log("owner:",a_owner);
         dataGetDeps( a_id, function( a_data ){
-            console.log("dep data:",a_data);
+            //console.log("dep data:",a_data);
             var item, i, j, dep, node;
             node_data = [];
             link_data = [];
 
             for ( i in a_data.item ){
                 item = a_data.item[i];
-                node = {id:item.id,label:item.alias?item.alias:item.id};
+                console.log("node:",item);
+                node = {id:item.id,title:item.title}
+                if ( item.alias ){
+                    if ( item.owner && item.owner != a_owner )
+                        node.label = item.owner.charAt(0)+":"+item.owner.substr(2)+":"+item.alias;
+                    else
+                        node.label = item.alias;
+                }else
+                    node.label = item.id;
+
                 if ( item.gen != undefined ){
                     node.row = item.gen;
                     node.col = 0;
@@ -139,22 +247,6 @@ function dlgDepGraph( main, a_id ){
             if ( dlg_ready )
                 refreshGraph();
         });
-/*
-        node_data = [
-            {"id": "A","row":0,"col":0},
-            {"id": "B","row":1,"col":0},
-            {"id": "C"},
-        ];
-
-        link_data = [
-            {source:"B", target:"A",ty:0,id:'B-A'},
-            {source: "C" , target:"B",ty:1,id:'C-B'},
-        ];
-
-        graph_loaded = true;
-        if ( dlg_ready )
-            refreshGraph();
-            */
     }
 
     function refreshGraph(){
@@ -165,21 +257,27 @@ function dlgDepGraph( main, a_id ){
 
         links.enter()
             .append("line")
-                .attr('marker-end',function(d){
+                .attr('marker-start',function(d){
                     switch ( d.ty ){
-                        case 0: return 'url(#arrow0)';
-                        case 1: return 'url(#arrow1)';
-                        case 2: return 'url(#arrow2)';
+                        case 0: return 'url(#arrow-derivation)';
+                        case 1: return 'url(#arrow-component)';
+                        case 2: return 'url(#arrow-new-version)';
                     }
                 })
                 .attr('class',function(d){
-                    console.log("new link",d.source,d.target,d.ty);
                     switch ( d.ty ){
                         case 0: return 'link derivation';
                         case 1: return 'link component';
                         case 2: return 'link new-version';
                     }
                 });
+                /*.attr('stroke',function(d){
+                    switch ( d.ty ){
+                        case 0: return dep_link_color;
+                        case 1: return comp_link_color;
+                        case 2: return ver_link_color;
+                    }
+                });*/
 
         links.exit()
             .remove();
@@ -199,19 +297,55 @@ function dlgDepGraph( main, a_id ){
 
         g.append("circle")
             .attr("r", r)
-            .attr("fill", "red")
+            /*.attr("fill", function(d){
+                if ( d.id == a_id )
+                    return main_node_color;
+                else if ( d.row != undefined )
+                    return prov_node_color;
+                else
+                    return other_node_color;
+            })
+            .style('stroke',function(d){
+                if ( d.id == a_id )
+                    return comp_node_color;
+                else
+                    return part_node_color;
+            })*/
+            .attr('class',function(d){
+                var res;
+
+                if ( d.id == a_id )
+                    res = "main";
+                else if ( d.row != undefined )
+                    res = "prov";
+                else
+                    res = "other";
+
+                if ( d.id == a_id )
+                    res += " comp";
+                else
+                    res += " part";
+
+                return res;
+            })
             .on("click", function(d,i){
-                console.log("click",d.id);
                 d3.select(".highlight")
                     .attr("class","select hidden");
                 d3.select(this.parentNode).select(".select")
                     .attr("class","select highlight");
-                showSelectedNode(d);
+                g_sel_node = d;
+                showSelectedNodeInfo();
             });
 
         g.append("circle")
             .attr("r", r*1.5)
-            .attr("class", "select hidden");
+            .attr("class", function(d){
+                if ( d.id == a_id ){
+                    g_sel_node = d;
+                    return "select highlight";
+                }else
+                    return "select hidden";
+            });
 
         g.append("text")
             .text(function(d) {
@@ -257,98 +391,70 @@ function dlgDepGraph( main, a_id ){
                 .on('tick', simTick);
 
         }
+
+        showSelectedNodeInfo();
     }
 
 
     var options = {
         title: "Dependency Graph for Data Record " + a_id,
         modal: true,
-        width: 650,
+        width: 750,
         height: 550,
         resizable: true,
         closeOnEscape: true,
         buttons:[{
-            text: "Edit (ADD)",
+            text: "Edit",
             click: function(){
-                console.log("alter graph");
-                node_data = [
-                    {"id": "A","row":0,"col":0},
-                    {"id": "B","row":1,"col":0},
-                    {"id": "C"},
-                    {"id": "D1"},
-                    {"id": "D2"},
-                    {"id": "X","row":2,"col":0},
-                    {"id": "D4"},
-                    {"id": "D5"},
-                    {"id": "E","row":3,"col":0},
-                    {"id": "F","row":3,"col":0},
-                    {"id": "P","row":0,"col":1},
-                    {"id": "Q","row":1,"col":1}
-                    ];
-
-                link_data = [
-                    {source:"B", target:"A",ty:0,id:'B-A'},
-                    {source: "C" , target:"B",ty:1,id:'C-B'},
-                    {source:"X", target:"B",ty:0,id:'X-B'},
-                    {source:"E", target:"X",ty:0,id:'E-X'},
-                    {source:"F", target:"X",ty:0,id:'F-X'},
-                    {source: "D1", target:"B",ty:1,id:'D1-B'},
-                    {source: "D2", target:"B",ty:1,id:'D2-B'},
-                    {source: "D4", target:"B",ty:1,id:'D4-B'},
-                    {source: "D5", target:"B",ty:1,id:'D5-B'},
-                    {source: "Q" , target:"P",ty:1,id:'Q-P'},
-                    {source: "Q" , target:"C",ty:1,id:'Q-C'},
-                    {source: "P", target: "A",ty:2,id:'P-A'},
-                    {source: "Q", target: "F",ty:2,id:'Q-F'}
-                ];
-
-                refreshGraph();
+                if ( g_sel_node ){
+                    dataEdit( g_sel_node.id, function( data ){
+                    });
+                }
             }
         },{
-            text: "Share (REM)",
+            text: "Delete",
             click: function(){
-                console.log("alter graph 2");
-                node_data = [
-                    {"id": "A","row":0,"col":0},
-                    {"id": "B","row":1,"col":0},
-                    {"id": "C"},
-                    {"id": "D1"},
-                    {"id": "D2"},
-                    {"id": "X","row":2,"col":0},
-                    {"id": "D4"},
-                    {"id": "D5"},
-                    {"id": "E","row":3,"col":0},
-                    {"id": "F","row":3,"col":0}
-                ];
-
-                link_data = [
-                    {source:"B", target:"A",ty:0,id:'B-A'},
-                    {source:"X", target:"B",ty:0,id:'X-B'},
-                    {source:"E", target:"X",ty:0,id:'E-X'},
-                    {source:"F", target:"X",ty:0,id:'F-X'},
-                    {source: "D1", target:"B",ty:1,id:'D1-B'},
-                    {source: "D2", target:"B",ty:1,id:'D2-B'},
-                    {source: "D4", target:"B",ty:1,id:'D4-B'},
-                    {source: "D5", target:"B",ty:1,id:'D5-B'},
-                    {source: "C", target:"B",ty:1,id:'C-B'}
-                ];
-                refreshGraph();
+                if ( g_sel_node ){
+                    dataDelete( g_sel_node.id,  function(){
+                    });
+                }
+            }
+        },{
+            text: "Share",
+            click: function(){
+                if ( g_sel_node ){
+                    dataShare( g_sel_node.id );
+                }
             }
         },{
             text: "Lock",
             click: function(){
+                if ( g_sel_node ){
+                    dataLock( g_sel_node.id, true, function(){
+                    });
+                }
             }
         },{
             text: "Unlock",
             click: function(){
+                if ( g_sel_node ){
+                    dataLock( g_sel_node.id, false, function(){
+                    });
+                }
             }
         },{
             text: "Get",
             click: function(){
+                if ( g_sel_node ){
+                    dataGet( g_sel_node.id );
+                }
             }
         },{
             text: "Put",
             click: function(){
+                if ( g_sel_node ){
+                    dataPut( g_sel_node.id );
+                }
             }
         },{
             text: "Close",
@@ -360,12 +466,38 @@ function dlgDepGraph( main, a_id ){
             $(this).css('padding', '0');
             $('.ui-dialog-buttonpane').css('margin','0');
 
-            //svg = d3.select("svg");
+            $("#data_md_tree",frame).fancytree({
+                extensions: ["themeroller"],
+                themeroller: {
+                    activeClass: "",
+                    addClass: "",
+                    focusClass: "",
+                    hoverClass: "fancytree-hover",
+                    selectedClass: ""
+                },
+                source: data_md_empty_src,
+                selectMode: 1,
+                beforeExpand: function(event,data){
+                    var path = data.node.title;
+                    var par = data.node.parent;
+                    while ( par ){
+                        if ( par.title == "root" && !par.parent )
+                            break;
+                        path = par.title + "." + path;
+                        par = par.parent;
+                    }
+        
+                    if ( data.node.isExpanded() ){
+                        delete data_md_exp[path];
+                    }else{
+                        data_md_exp[path] = 10;
+                    }
+                }
+            });
 
-            //var transform = d3.zoomIdentity.translate(200, 200);
-            var zoom = d3.zoom();//.on("zoom", function () {
-            //    svg.attr("transform", d3.event.transform)
-            //});
+            data_md_tree = $("#data_md_tree",frame).fancytree("getTree");
+
+            var zoom = d3.zoom();
 
             svg = d3.select("svg")
             .call(zoom.on("zoom", function () {
@@ -373,13 +505,9 @@ function dlgDepGraph( main, a_id ){
             }))
             .append("g")
 
-            //.attr("transform", transform );
-
-            //svg.call(zoom.transform, transform );
-
-            defineArrowMarker(svg, "arrow0","#090");
-            defineArrowMarker(svg, "arrow1","#999");
-            defineArrowMarker(svg, "arrow2","#900");
+            defineArrowMarker(svg, "derivation");
+            defineArrowMarker(svg, "component");
+            defineArrowMarker(svg, "new-version");
 
             links_grp = svg.append("g")
                 .attr("class", "links");
@@ -389,64 +517,7 @@ function dlgDepGraph( main, a_id ){
 
             dlg_ready = true;
             if ( graph_loaded )
-                refreshGraph( );
-
-            /*
-            setTimeout( function(){
-                console.log("alter graph");
-                node_data.push({"id": "D1"});
-                node_data.push({"id": "D2"});
-                node_data.push({"id": "X","row":2,"col":0});
-                node_data.push({"id": "D4"});
-                node_data.push({"id": "D5"});
-                node_data.push({"id": "E","row":3,"col":0});
-                node_data.push({"id": "F","row":3,"col":0});
-                node_data.push({"id": "P","row":0,"col":1});
-                node_data.push({"id": "Q","row":1,"col":1});
-
-                link_data.push({source:"X", target:"B",ty:0,id:'X-B'});
-                link_data.push({source:"E", target:"X",ty:0,id:'E-X'});
-                link_data.push({source:"F", target:"X",ty:0,id:'F-X'});
-                link_data.push({source: "D1", target:"B",ty:1,id:'D1-B'});
-                link_data.push({source: "D2", target:"B",ty:1,id:'D2-B'});
-                link_data.push({source: "D4", target:"B",ty:1,id:'D4-B'});
-                link_data.push({source: "D5", target:"B",ty:1,id:'D5-B'});
-                link_data.push({source: "Q" , target:"P",ty:1,id:'Q-P'});
-                link_data.push({source: "Q" , target:"C",ty:1,id:'Q-C'});
-                link_data.push({source: "P", target: "A",ty:2,id:'P-A'});
-                link_data.push({source: "Q", target: "F",ty:2,id:'Q-F'});
-
                 refreshGraph();
-            }, 1000 );
-
-            setTimeout( function(){
-                console.log("alter graph 2");
-                node_data = [
-                    {"id": "A","row":0,"col":0},
-                    {"id": "B","row":1,"col":0},
-                    {"id": "C"},
-                    {"id": "D1"},
-                    {"id": "D2"},
-                    {"id": "X","row":2,"col":0},
-                    {"id": "D4"},
-                    {"id": "D5"},
-                    {"id": "E","row":3,"col":0},
-                    {"id": "F","row":3,"col":0}
-                ];
-
-                link_data = [
-                    {source:"B", target:"A",ty:0,id:'B-A'},
-                    {source:"X", target:"B",ty:0,id:'X-B'},
-                    {source:"E", target:"X",ty:0,id:'E-X'},
-                    {source:"F", target:"X",ty:0,id:'F-X'},
-                    {source: "D1", target:"B",ty:1,id:'D1-B'},
-                    {source: "D2", target:"B",ty:1,id:'D2-B'},
-                    {source: "D4", target:"B",ty:1,id:'D4-B'},
-                    {source: "D5", target:"B",ty:1,id:'D5-B'},
-                    {source: "C", target:"B",ty:1,id:'C-B'}
-                ];
-                refreshGraph();
-            }, 2000 );*/
         }
     };
 

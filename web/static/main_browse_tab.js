@@ -90,7 +90,7 @@ function makeBrowserTab(){
                 }
 
                 if ( data.length ){
-                    dataDelete( data, function( ok, data ){
+                    sendDataDelete( data, function( ok, data ){
                         if ( ok ){
                             if ( --done == 0 )
                                 refreshAfterDel();
@@ -209,16 +209,14 @@ function makeBrowserTab(){
     }
 
     this.setLockSelected = function( a_lock ){
-        console.log("setLock,lock:",a_lock);
         var sel = inst.data_tree.getSelectedNodes();
         if ( sel.length ) {
             var ids=[];
             for ( var i in sel )
                 ids.push(sel[i].key);
 
-            dataLock( ids, a_lock, function( ok, data ){
+            sendDataLock( ids, a_lock, function( ok, data ){
                 if ( ok ){
-                    console.log("lock reply:",data);
                     for ( i in data.item ){
                         inst.updateNodeTitle( data.item[i] );
                     }
@@ -493,7 +491,7 @@ function makeBrowserTab(){
     this.depGraph = function(){
         var sel = inst.data_tree.getSelectedNodes();
         if ( sel.length == 1 ){
-            dlgDepGraph( inst, sel[0].key );
+            dlgDepGraph( inst, sel[0].key, sel[0].data.scope );
         }
     }
 
@@ -521,24 +519,21 @@ function makeBrowserTab(){
         }
     }
 
-    this.xfrSelected = function( a_mode ) {
+    this.actionDataGet = function() {
         // TODO - use selection, not active node
         var key = inst.data_tree.activeNode.key;
 
         if ( key[0] == "d" ) {
-            var perm = (a_mode==XFR_GET?PERM_RD_DATA:PERM_WR_DATA);
-            checkPerms( key, perm, function( granted ){
-                if ( !granted ){
-                    alertPermDenied();
-                    return;
-                }
+            dataGet( key );
+        }
+    }
 
-                viewData( key, function( data ){
-                    if ( data ){
-                        dlgStartTransfer( a_mode, data );
-                    }
-                }); 
-            });
+    this.actionDataPut = function() {
+        // TODO - use selection, not active node
+        var key = inst.data_tree.activeNode.key;
+
+        if ( key[0] == "d" ) {
+            dataPut( key );
         }
     }
 
@@ -1950,8 +1945,8 @@ function makeBrowserTab(){
                 {title: "Sharing", action: inst.shareSelected, cmd: "share" },
                 {title: "Lock", action: inst.lockSelected, cmd: "lock" },
                 {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
-                {title: "Get", action: function(){ inst.xfrSelected(XFR_GET) }, cmd: "get" },
-                {title: "Put", action: function(){ inst.xfrSelected(XFR_PUT) }, cmd: "put" },
+                {title: "Get", action: inst.actionDataGet, cmd: "get" },
+                {title: "Put", action: inst.actionDataPut, cmd: "put" },
                 {title: "Graph", action: inst.depGraph, cmd: "graph" }
                 ]},
             {title: "New", children: [
@@ -2026,8 +2021,8 @@ function makeBrowserTab(){
     $("#btn_share",inst.frame).on('click', inst.shareSelected );
     $("#btn_lock",inst.frame).on('click', inst.lockSelected );
     $("#btn_unlock",inst.frame).on('click', inst.unlockSelected );
-    $("#btn_upload",inst.frame).on('click', function(){ inst.xfrSelected(XFR_PUT) });
-    $("#btn_download",inst.frame).on('click', function(){ inst.xfrSelected(XFR_GET) });
+    $("#btn_upload",inst.frame).on('click', inst.actionDataPut );
+    $("#btn_download",inst.frame).on('click', inst.actionDataGet );
     //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
     $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
 
