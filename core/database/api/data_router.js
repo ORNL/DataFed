@@ -474,12 +474,36 @@ router.get('/view', function (req, res) {
 .description('Get data by ID or alias');
 
 router.get('/dep/get', function (req, res) {
+    const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+    var data_id = g_lib.resolveID( req.queryParams.id, client );
+    if ( !g_db._exists( data_id ))
+        throw [g_lib.ERR_INVALID_PARAM,"Data record "+data_id+", not found"];
+
+    var dep,result = {id:data_id,title:""};
+
+    result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
+
+    for ( var i in result.deps ){
+        dep = result.deps[i];
+        if ( dep.alias && client._id != dep.owner )
+            dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
+    }
+
+    res.send( [result] );
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "Data ID or alias")
+.summary('Get data dependencies')
+.description('Get data dependencies');
+
+router.get('/dep/graph/get', function (req, res) {
     try {
         console.log("/dep/get");
 
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveID( req.queryParams.id, client );
-        var i, j, rec, deps, dep, node, visited = [data_id], cur = [data_id], next = [], skip = [], result = [];
+        var i, j, entry, rec, deps, dep, node, visited = [data_id], cur = [[data_id,true]], next = [], result = [];
 
         // Get Ancestors
         var gen = 0;
@@ -487,26 +511,28 @@ router.get('/dep/get', function (req, res) {
         console.log("get ancestors");
 
         while ( cur.length ){
-            console.log("gen",gen);
-
+            //console.log("gen",gen);
             for ( i in cur ) {
-                rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:cur[i]}).toArray();
+                entry = cur[i];
+                rec = g_db.d.document( entry[0] );
+                if ( rec.alias && client._id != rec.owner )
+                    rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
 
-                result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,gen:gen,deps:deps});
+                if ( entry[1] ){
+                    deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
 
-                for ( j in deps ){
-                    dep = deps[j]; 
-                    console.log("dep:",dep.id,"ty:",dep.type);
+                    for ( j in deps ){
+                        dep = deps[j]; 
+                        //console.log("dep:",dep.id,"ty:",dep.type);
 
-                    if ( dep.type < 2 && visited.indexOf(dep.id) < 0 ){
-                        console.log("follow");
-                        visited.push(dep.id);
-                        next.push(dep.id);
-                    }else if ( skip.indexOf(dep.id) < 0 ){
-                        console.log("skip");
-                        skip.push(dep.id);
+                        if ( visited.indexOf(dep.id) < 0 ){
+                            visited.push(dep.id);
+                            next.push([dep.id,dep.type < 2]);
+                        }
                     }
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,locked:rec.locked,gen:gen,deps:deps});
+                }else{
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,locked:rec.locked});
                 }
             }
 
@@ -521,33 +547,37 @@ router.get('/dep/get', function (req, res) {
 
         console.log("get descendants");
 
-        cur = [data_id];
+        cur = [[data_id,true]];
         next = [];
         gen = 1;
 
         while ( cur.length ){
-            console.log("gen",gen);
+            //console.log("gen",gen);
 
             for ( i in cur ) {
+                entry = cur[i];
+
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,type:e.type}",{data:cur[i]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
-                for ( j in deps ){
-                    dep = deps[j]; 
+                if ( entry[1] ){
+                    for ( j in deps ){
+                        dep = deps[j]; 
 
-                    console.log("dep:",dep.id,"ty:",dep.type);
+                        //console.log("dep:",dep.id,"ty:",dep.type);
 
-                    if ( visited.indexOf(dep.id) < 0 ){
-                        console.log("follow");
-                        node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,deps:[{id:cur[i],type:dep.type,dir:0}]};
-                        if ( dep.type<2 )
-                            node.gen = gen;
-                        result.push(node);
-                        visited.push(dep.id);
-                        if ( dep.type < 2 )
-                            next.push(dep.id);
-                    }else{
-                        console.log("skip");
+                        if ( visited.indexOf(dep.id) < 0 ){
+                            //console.log("follow");
+                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
+                            if ( node.alias && client._id != node.owner )
+                                node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
+                            if ( dep.type<2 )
+                                node.gen = gen;
+                            result.push(node);
+                            visited.push(dep.id);
+                            if ( dep.type < 2 )
+                                next.push([dep.id,true]);
+                        }
                     }
                 }
             }
@@ -556,12 +586,6 @@ router.get('/dep/get', function (req, res) {
             next = [];
         }
 
-        console.log("proc skips");
-
-        for ( i in skip ){
-            if ( visited.indexOf( skip[i] ) < 0 )
-                result.push({id:skip[i],title:"n/a"});
-        }
 
         console.log("adjust gen:",gen_min);
 
