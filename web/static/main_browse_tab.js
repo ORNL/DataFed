@@ -1709,7 +1709,7 @@ function makeBrowserTab(){
     }
 
     this.dragStarted = function(d) {
-        console.log("drag start",d.id);
+        //console.log("drag start",d.id);
         if (!d3.event.active) inst.simulation.alphaTarget(0.3).restart();
         d.fx = d3.event.x;
         d.fy = d3.event.y;
@@ -1725,7 +1725,7 @@ function makeBrowserTab(){
     }
 
     this.dragEnded = function(d){
-        console.log("drag end",d.id);
+        //console.log("drag end",d.id);
         if (!d3.event.active) inst.simulation.alphaTarget(0);
         d.x = d.fx;
         d.y = d.fy;
@@ -1756,7 +1756,7 @@ function makeBrowserTab(){
         if ( inst.sel_node && !inst.sel_node.comp ){
             //var exp_node = graphNodeFind( inst.sel_node )
             dataGetDeps( inst.sel_node_id, function( data ){
-                console.log("expand node data:",data);
+                //console.log("expand node data:",data);
                 if ( data && data.item ){
                     var rec = data.item[0];
                     //console.log("node:",data);
@@ -1793,13 +1793,13 @@ function makeBrowserTab(){
 
                         node = inst.graphNodeFind(dep.id);
                         if ( !node ){
-                            console.log("adding node");
+                            //console.log("adding node");
                             inst.node_data.push({id:dep.id,label:dep.alias?dep.alias:dep.id,links:[link]});
                         }else{
                             node.links.push(link);
                         }
 
-                        console.log("adding link");
+                        //console.log("adding link");
 
                         inst.link_data.push(link);
                     }
@@ -1811,7 +1811,7 @@ function makeBrowserTab(){
     }
 
     this.graphNodeCollapse = function(){
-        console.log("collapse node");
+        //console.log("collapse node");
         if ( inst.sel_node ){
             var i, link, dest, loc_trim=[];
 
@@ -1819,7 +1819,7 @@ function makeBrowserTab(){
 
             for ( i = inst.sel_node.links.length - 1; i >= 0; i-- ){
                 link = inst.sel_node.links[i];
-                console.log("lev 0 link:",link);
+                //console.log("lev 0 link:",link);
                 dest = (link.source != inst.sel_node)?link.source:link.target;
                 inst.graphPruneCalc( dest, [inst.sel_node.id], inst.sel_node );
 
@@ -1830,16 +1830,16 @@ function makeBrowserTab(){
                 }
 
                 if ( dest.prune ){
-                    console.log("PRUNE ALL");
+                    //console.log("PRUNE ALL");
                     inst.graphPrune();
                 }else if ( dest.row == undefined ){
-                    console.log("PRUNE LOCAL EDGE ONLY");
+                    //console.log("PRUNE LOCAL EDGE ONLY");
                     inst.graphPruneReset();
                     loc_trim.push(link);
                     //link.prune = true;
                     //inst.graphPrune();
                 }else{
-                    console.log("PRUNE NONE");
+                    //console.log("PRUNE NONE");
                     inst.graphPruneReset();
                 }
             }
@@ -1857,13 +1857,52 @@ function makeBrowserTab(){
         }
     }
 
+    this.graphNodeHide = function(){
+        if ( inst.sel_node && inst.sel_node.id != inst.focus_node_id && inst.node_data.length > 1 ){
+            inst.sel_node.prune = true;
+            // Check for disconnection of the graph
+            var start = inst.sel_node.links[0].source == inst.sel_node?inst.sel_node.links[0].target:inst.sel_node.links[0].source;
+            if ( inst.graphCountConnected( start, [] ) == inst.node_data.length - 1 ){
+                for ( i in inst.sel_node.links ){
+                    inst.sel_node.links[i].prune = true;
+                }
+                inst.graphPrune();
+
+                inst.sel_node = inst.node_data[0];
+                inst.sel_node_id = inst.sel_node.id;
+                inst.renderDepGraph();
+            }else{
+                inst.sel_node.prune = false;
+            }
+        }
+    }
+
+    this.graphCountConnected = function(a_node,a_visited,a_from){
+        var count = 0;
+
+        if ( a_visited.indexOf( a_node.id ) < 0 && !a_node.prune ){
+            a_visited.push(a_node.id);
+            count++;
+            var link,dest;
+            for ( var i in a_node.links ){
+                link = a_node.links[i];
+                if ( link != a_from ){
+                    dest = (link.source == a_node?link.target:link.source);
+                    count += graphCountConnected(dest,a_visited,link);
+                }
+            }
+        }
+
+        return count;
+    }
+
     this.graphPrune = function(){
         var i,j,item;
 
         for ( i = inst.link_data.length - 1; i >= 0; i-- ){
             item = inst.link_data[i];
             if ( item.prune ){
-                console.log("pruning link:",item);
+                //console.log("pruning link:",item);
                 if ( !item.source.prune ){
                     item.source.comp = false;
                     j = item.source.links.indexOf( item );
@@ -1889,7 +1928,7 @@ function makeBrowserTab(){
         for ( i = inst.node_data.length - 1; i >= 0; i-- ){
             item = inst.node_data[i];
             if ( item.prune ){
-                console.log("pruning node:",item);
+                //console.log("pruning node:",item);
                 inst.node_data.splice(i,1)
             }
         }
@@ -1907,12 +1946,12 @@ function makeBrowserTab(){
 
     // Depth-first-search to required nodes, mark for pruning
     this.graphPruneCalc = function( a_node, a_visited, a_source ){
-        console.log("graphPrune",a_node.label);
+        //console.log("graphPrune",a_node.label);
         if ( a_visited.indexOf(a_node.id) < 0 ){
             a_visited.push(a_node.id);
 
             if ( a_node.row != undefined ){
-                console.log("required node");
+                //console.log("required node");
                 return false;
             }
 
@@ -1920,7 +1959,7 @@ function makeBrowserTab(){
 
             for ( i in a_node.links ){
                 link = a_node.links[i];
-                console.log("link:",link);
+                //console.log("link:",link);
                 dest = (link.source != a_node)?link.source:link.target;
                 if ( dest != a_source ){
                     prune = inst.graphPruneCalc( dest, a_visited, a_node );
@@ -1929,17 +1968,17 @@ function makeBrowserTab(){
             }
 
             if ( !keep ){
-                console.log("prune!");
+                //console.log("prune!");
                 a_node.prune = true;
                 for ( i in a_node.links )
                     a_node.links[i].prune=true;
 
-            }else{
+            }/*else{
                 console.log("NO prune!");
-            }
+            }*/
 
-        }else
-            console.log("already visited",a_visited);
+        }/*else
+            console.log("already visited",a_visited);*/
 
 
         return a_node.prune;
@@ -2630,6 +2669,7 @@ function makeBrowserTab(){
 
     $("#btn_exp_node",inst.frame).on('click', inst.graphNodeExpand );
     $("#btn_col_node",inst.frame).on('click', inst.graphNodeCollapse );
+    $("#btn_hide_node",inst.frame).on('click', inst.graphNodeHide );
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
     $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){

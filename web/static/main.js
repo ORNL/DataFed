@@ -28,7 +28,11 @@ function _asyncGet( a_url, a_raw_json_data, a_callback ) {
         type : 'GET',
         data: a_raw_json_data,
         dataType: 'json',
-        success : function( a_data ) {
+        context: {t0:Date.now()},
+        success : function( a_data, a_status, a_xhr ) {
+            var elapsed = Date.now() - this.t0;
+            if ( elapsed > 20 )
+                console.log( "ajax time:", elapsed, "ms" );
             if ( a_callback ){
                 a_callback( true, a_data );
             }
