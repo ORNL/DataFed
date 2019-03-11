@@ -97,7 +97,7 @@ function makeBrowserTab(){
         }
 
         if ( inst.focus_node_id ){
-            loadGraph( inst.focus_node_id );
+            loadGraph( inst.focus_node_id, inst.sel_node.id );
         }
 
         if ( inst.tree_mode ){
@@ -218,7 +218,7 @@ function makeBrowserTab(){
                 if ( node )
                     inst.reloadNode( node );
                 if ( inst.focus_node_id )
-                    inst.loadGraph( inst.focus_node_id );
+                    inst.loadGraph( inst.focus_node_id, inst.sel_node.id );
             });
         });
     }
@@ -610,9 +610,16 @@ function makeBrowserTab(){
 
     this.updateBtnState = function(){
         //console.log("updateBtnState");
-
-        var sel = inst.data_tree.getSelectedNodes();
-        var bits = calcActionState( sel );
+        var bits;
+        if ( inst.tree_mode ){
+            var sel = inst.data_tree.getSelectedNodes();
+            bits = calcActionState( sel );
+        }else{
+            if ( inst.focus_node_id )
+                bits = 0;
+            else
+                bits = 0xFF;
+        }
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
         //$("#btn_dup",inst.frame).button("option","disabled",(bits & 2) != 0);
@@ -1372,13 +1379,13 @@ function makeBrowserTab(){
         });
     }
 
-    this.loadGraph = function( a_id ){
+    this.loadGraph = function( a_id, a_sel_node_id ){
         inst.focus_node_id = a_id;
-        inst.sel_node_id = a_id;
+        inst.sel_node_id = a_sel_node_id?a_sel_node_id:a_id;
 
         //console.log("owner:",a_owner);
-        dataGetDeps( a_id, function( a_data ){
-            //console.log("dep data:",a_data);
+        dataGetDepGraph( a_id, function( a_data ){
+            console.log("dep data:",a_data);
             var item, i, j, dep, node;
 
             inst.link_data = [];
@@ -1399,8 +1406,8 @@ function makeBrowserTab(){
 
             for ( i in a_data.item ){
                 item = a_data.item[i];
-                console.log("node:",item);
-                node = {id:item.id,links:[]}
+                //console.log("node:",item);
+                node = {id:item.id,locked:item.locked,links:[]}
                 if ( item.alias ){
                     node.label = item.alias;
                 }else
@@ -1429,6 +1436,7 @@ function makeBrowserTab(){
 
             for ( i in inst.link_data ){
                 dep = inst.link_data[i];
+                //console.log("link",dep);
                 node = new_node_data[id_map[dep.source]];
                 node.links.push(dep);
                 node = new_node_data[id_map[dep.target]];
@@ -1465,7 +1473,7 @@ function makeBrowserTab(){
         inst.links.enter()
             .append("line")
                 .attr('marker-start',function(d){
-                    console.log("link enter 1");
+                    //console.log("link enter 1");
                     switch ( d.ty ){
                         case 0: return 'url(#arrow-derivation)';
                         case 1: return 'url(#arrow-component)';
@@ -1473,7 +1481,7 @@ function makeBrowserTab(){
                     }
                 })
                 .attr('class',function(d){
-                    console.log("link enter 2");
+                    //console.log("link enter 2");
                     switch ( d.ty ){
                         case 0: return 'link derivation';
                         case 1: return 'link component';
@@ -1494,14 +1502,14 @@ function makeBrowserTab(){
             .attr('class',function(d){
                 var res = 'obj ';
 
-                console.log("upd node", d );
+                //console.log("upd node", d );
 
                 if ( d.id == inst.focus_node_id )
                     res += "main";
                 else if ( d.row != undefined )
                     res += "prov";
                 else{
-                    console.log("upd other node", d );
+                    //console.log("upd other node", d );
                     res += "other";
                 }
 
@@ -1513,10 +1521,25 @@ function makeBrowserTab(){
                 return res;
             });
 
-        inst.nodes.select("text")
+        inst.nodes.select("text.label")
             .text(function(d) {
                 return d.label;
+            })
+            .attr('x', function(d){
+                if ( d.locked )
+                    return r + 12;
+                else
+                    return r;
             });
+
+        inst.nodes.select("text.locked")
+            .html(function(d) {
+                if (d.locked )
+                    return "&#xe6bb";
+                else
+                    return "";
+            });
+
 
         inst.nodes.selectAll(".node > circle.select")
             .attr("class", function(d){
@@ -1540,7 +1563,7 @@ function makeBrowserTab(){
             .attr("r", r)
             .attr('class',function(d){
                 var res = 'obj ';
-                console.log("node enter 1");
+                //console.log("node enter 1");
 
                 if ( d.id == inst.focus_node_id )
                     res += "main";
@@ -1548,7 +1571,7 @@ function makeBrowserTab(){
                     res += "prov";
                 else{
                     res += "other";
-                    console.log("new other node", d );
+                    //console.log("new other node", d );
                 }
 
                 if ( d.comp )
@@ -1559,7 +1582,7 @@ function makeBrowserTab(){
                 return res;
             })
             .on("mouseover",function(d){
-                console.log("mouse over");
+                //console.log("mouse over");
                 d3.select(this)
                     .transition()
                     .duration(150)
@@ -1572,13 +1595,7 @@ function makeBrowserTab(){
                     .attr('r',r);
             })
             .on("dblclick", function(d,i){
-                d3.select(".highlight")
-                    .attr("class","select hidden");
-                d3.select(this.parentNode).select(".select")
-                    .attr("class","select highlight");
-                inst.sel_node = d;
-                inst.sel_node_id = d.id;
-                inst.showSelectedInfo( d.id );
+                //console.log("dbl click");
                 if ( d.comp )
                     inst.graphNodeCollapse();
                 else
@@ -1586,21 +1603,23 @@ function makeBrowserTab(){
                 d3.event.stopPropagation();
             })
             .on("click", function(d,i){
-                console.log("click");
-                d3.select(".highlight")
-                    .attr("class","select hidden");
-                d3.select(this.parentNode).select(".select")
-                    .attr("class","select highlight");
-                inst.sel_node = d;
-                inst.sel_node_id = d.id;
-                inst.showSelectedInfo( d.id );
+                //console.log("click");
+                if ( inst.sel_node != d ){
+                    d3.select(".highlight")
+                        .attr("class","select hidden");
+                    d3.select(this.parentNode).select(".select")
+                        .attr("class","select highlight");
+                    inst.sel_node = d;
+                    inst.sel_node_id = d.id;
+                    inst.showSelectedInfo( d.id );
+                }
                 d3.event.stopPropagation();
             });
 
         g.append("circle")
             .attr("r", r *1.5)
             .attr("class", function(d){
-                console.log("node enter 3");
+                //console.log("node enter 3");
 
                 if ( d.id == inst.sel_node_id ){
                     inst.sel_node = d;
@@ -1610,14 +1629,28 @@ function makeBrowserTab(){
             });
 
         g.append("text")
+            .attr("class","label")
             .text(function(d) {
-                console.log("node enter 4");
-
                 return d.label;
             })
-            .attr('x', r)
+            .attr('x', function(d){
+                if ( d.locked )
+                    return r + 12;
+                else
+                    return r;
+            })
             .attr('y', -r)
-            .attr("fill", "white");
+
+        g.append("text")
+            .attr("class","locked")
+            .html(function(d) {
+                if (d.locked )
+                    return "&#xe6bb";
+                else
+                    return "";
+            })
+            .attr('x', r-3)
+            .attr('y', -r+1)
 
         inst.nodes.exit()
             .remove();
@@ -1625,7 +1658,7 @@ function makeBrowserTab(){
         inst.nodes = inst.nodes_grp.selectAll('g');
 
         if ( inst.simulation ){
-            console.log("restart sim");
+            //console.log("restart sim");
             inst.simulation
                 .nodes(inst.node_data)
                 .force("link").links(inst.link_data);
@@ -1637,7 +1670,7 @@ function makeBrowserTab(){
                     switch(d.ty){
                         case 0: return .2;
                         case 1: return .2;
-                        case 2: return .1;
+                        case 2: return .2;
                     }
                 })
                 .id( function(d) { return d.id; })
@@ -1648,9 +1681,9 @@ function makeBrowserTab(){
                 .force('charge', d3.forceManyBody()
                     .strength(-200))
                 .force('row', d3.forceY( function(d,i){ return d.row != undefined ?(75 + d.row*75):0; })
-                    .strength( function(d){ return d.row != undefined ?.1:0; }))
+                    .strength( function(d){ return d.row != undefined ?.05:0; }))
                 .force('col', d3.forceX(function(d,i){ return d.col != undefined?200:0; })
-                    .strength( function(d){ return d.col != undefined ?.1:0; }))
+                    .strength( function(d){ return d.col != undefined ?.05:0; }))
                 .force("link", linkForce )
                 .on('tick', inst.simTick);
 
@@ -1666,7 +1699,7 @@ function makeBrowserTab(){
     }
 
     this.dragged = function(d) {
-        console.log("drag",d3.event.x,d3.event.y);
+        //console.log("drag",d3.event.x,d3.event.y);
         d.fx = d3.event.x;
         d.fy = d3.event.y;
         inst.simTick(); 
@@ -1704,8 +1737,10 @@ function makeBrowserTab(){
 
         if ( inst.sel_node && !inst.sel_node.comp ){
             //var exp_node = graphNodeFind( inst.sel_node )
-            viewData( inst.sel_node_id, function( data ){
-                if ( data && data.deps ){
+            dataGetDeps( inst.sel_node_id, function( data ){
+                console.log("expand node data:",data);
+                if ( data && data.item ){
+                    var rec = data.item[0];
                     //console.log("node:",data);
 
                     inst.sel_node.comp = true;
@@ -1715,13 +1750,13 @@ function makeBrowserTab(){
                     //node = inst.graphNodeFind(inst.sel_node_id);
                     //node.comp = true;
 
-                    for ( i in data.deps ){
-                        dep = data.deps[i];
+                    for ( i in rec.dep ){
+                        dep = rec.dep[i];
 
                         if ( dep.dir == "DEP_IN" )
-                            id = dep.id+"-"+data.id;
+                            id = dep.id+"-"+rec.id;
                         else
-                            id = data.id+"-"+dep.id;
+                            id = rec.id+"-"+dep.id;
 
                         link = inst.graphLinkFind( id );
                         if ( link )
@@ -1730,9 +1765,9 @@ function makeBrowserTab(){
                         link = {id:id,ty:DepTypeFromString[dep.type]};
                         if ( dep.dir == "DEP_IN" ){
                             link.source = dep.id;
-                            link.target = data.id;
+                            link.target = rec.id;
                         }else{
-                            link.source = data.id;
+                            link.source = rec.id;
                             link.target = dep.id;
                         }
 
@@ -1760,15 +1795,21 @@ function makeBrowserTab(){
     this.graphNodeCollapse = function(){
         console.log("collapse node");
         if ( inst.sel_node ){
-            var i, link, dest;
+            var i, link, dest, loc_trim=[];
 
             inst.sel_node.comp = false;
 
-            for ( i in inst.sel_node.links ){
+            for ( i = inst.sel_node.links.length - 1; i >= 0; i-- ){
                 link = inst.sel_node.links[i];
                 console.log("lev 0 link:",link);
                 dest = (link.source != inst.sel_node)?link.source:link.target;
                 inst.graphPruneCalc( dest, [inst.sel_node.id], inst.sel_node );
+
+                if ( !dest.prune && dest.row == undefined ){
+                    inst.graphPruneReset(-1);
+                    link.prune += 1;
+                    //inst.graphPrune();
+                }
 
                 if ( dest.prune ){
                     console.log("PRUNE ALL");
@@ -1776,13 +1817,23 @@ function makeBrowserTab(){
                 }else if ( dest.row == undefined ){
                     console.log("PRUNE LOCAL EDGE ONLY");
                     inst.graphPruneReset();
-                    link.prune = true;
-                    inst.graphPrune();
+                    loc_trim.push(link);
+                    //link.prune = true;
+                    //inst.graphPrune();
                 }else{
                     console.log("PRUNE NONE");
                     inst.graphPruneReset();
                 }
             }
+
+            if ( loc_trim.length < inst.sel_node.links.length ){
+                for ( i in loc_trim ){
+                    loc_trim[i].prune = true;
+                }
+                inst.graphPrune();
+            }
+
+            //inst.graphPruneReset();
 
             inst.renderDepGraph();
         }
@@ -1796,6 +1847,7 @@ function makeBrowserTab(){
             if ( item.prune ){
                 console.log("pruning link:",item);
                 if ( !item.source.prune ){
+                    item.source.comp = false;
                     j = item.source.links.indexOf( item );
                     if ( j != -1 ){
                         item.source.links.splice(j,1);
@@ -1804,6 +1856,7 @@ function makeBrowserTab(){
                     }
                 }
                 if ( !item.target.prune ){
+                    item.target.comp = false;
                     j = item.target.links.indexOf( item );
                     if ( j != -1 ){
                         item.target.links.splice(j,1);
@@ -2613,6 +2666,7 @@ function makeBrowserTab(){
                 var node = inst.data_tree.activeNode;
                 inst.showSelectedInfo( node );
             }
+            inst.updateBtnState();
         }
     });
 

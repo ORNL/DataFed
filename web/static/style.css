@@ -92,6 +92,11 @@ ul.ui-effects-placeholder { width:10px !important; }
     overflow:auto;
 }
 
+svg text
+{
+    font-family: jquery-ui;
+ }
+
 /*
 .header
 {

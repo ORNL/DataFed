@@ -99,6 +99,11 @@
 	fill: #fff;
 }
 
+.node text.locked{
+	font-size: 14px;
+	fill: #FF6040;
+}
+
 .note{
 	color: #12f50a;
 }
@@ -196,7 +201,7 @@
 
 .ui-icon-locked
 {
-    color: #FF4040
+    color: #FF6040
 }
 
 .ui-draggable-handle {

@@ -1019,6 +1019,16 @@ DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest 
 }
 
 void
+DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "dat/dep/graph/get", {{"id",a_request.id()}}, result );
+
+    setListingData( a_reply, result );
+}
+
+void
 DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
@@ -1364,7 +1374,7 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
     }
 
     ListingData* item;
-    rapidjson::Value::MemberIterator imem;
+    rapidjson::Value::MemberIterator imem,imem2;
     rapidjson::SizeType i,j;
     DependencyData *dep;
 
@@ -1402,6 +1412,8 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
                     dep->set_id( val2["id"].GetString());
                     dep->set_type((DependencyType)val2["type"].GetInt());
                     dep->set_dir((DependencyDir)val2["dir"].GetInt());
+                    if (( imem2 = val2.FindMember("alias")) != val2.MemberEnd() && !imem2->value.IsNull() )
+                        dep->set_alias( imem2->value.GetString() );
                 }
             }
         }

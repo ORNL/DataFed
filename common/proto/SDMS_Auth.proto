@@ -222,6 +222,11 @@ message RecordGetDependenciesRequest
     required string             id          = 1;
 }
 
+message RecordGetDependencyGraphRequest
+{
+    required string             id          = 1;
+}
+
 
 /*
 message RecordDataLocationReply

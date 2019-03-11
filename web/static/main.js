@@ -228,14 +228,28 @@ function dataPut( a_id ){
 }
 
 function dataGetDeps( a_id, a_cb ) {
-    _asyncGet( "/api/dat/deps/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+    _asyncGet( "/api/dat/dep/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
             //console.log("viewData ok, data:", data );
             a_cb( data );
         }
         else {
             //console.log("viewData failed:", data );
-            setStatusText("Get Data Deps Error: " + data);
+            setStatusText("Get Dependencies Error: " + data);
+            a_cb();
+        }
+    });
+}
+
+function dataGetDepGraph( a_id, a_cb ) {
+    _asyncGet( "/api/dat/dep/graph/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+        if ( ok ) {
+            //console.log("viewData ok, data:", data );
+            a_cb( data );
+        }
+        else {
+            //console.log("viewData failed:", data );
+            setStatusText("Get Dependency Graph Error: " + data);
             a_cb();
         }
     });

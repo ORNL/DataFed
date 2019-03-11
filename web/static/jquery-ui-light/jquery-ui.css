@@ -98,6 +98,10 @@
 	fill: #000;
 }
 
+.node text.locked{
+	font-size: 14px;
+	fill: #FF0000;
+}
 
 .note{
     color: #803636;
