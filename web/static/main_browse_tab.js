@@ -30,6 +30,7 @@ function makeBrowserTab(){
     this.node_data = [];
     this.link_data = [];
     this.r = 10;
+    this.graph_center_x = 200;
     this.nodes_grp = null;
     this.nodes = null;
     this.links_grp = null;
@@ -40,11 +41,12 @@ function makeBrowserTab(){
     this.tree_mode = true;
 
     this.windowResized = function(){
+        console.log("browser panel resized");
+
         var h = $("#data-tabs-parent").height();
+        inst.graph_center_x = $("#data-tabs-parent").width()/2;
         var tabs = $("#data-tabs");
         var hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
-
-        //console.log("resized, h:",h,",hdr h:",hdr_h);
 
         tabs.outerHeight(h);
         $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
@@ -1382,6 +1384,7 @@ function makeBrowserTab(){
     this.loadGraph = function( a_id, a_sel_node_id ){
         inst.focus_node_id = a_id;
         inst.sel_node_id = a_sel_node_id?a_sel_node_id:a_id;
+        inst.sel_node = null;
 
         //console.log("owner:",a_owner);
         dataGetDepGraph( a_id, function( a_data ){
@@ -1422,6 +1425,10 @@ function makeBrowserTab(){
                     node.comp = true;
                 }
 
+                if ( item.id == inst.sel_node_id ){
+                    inst.sel_node = node;
+                }
+
                 //inst.graph_nodes[item.id] = {req:item.gen!=undefined,edges:[]};
 
                 id_map[node.id] = new_node_data.length;
@@ -1458,7 +1465,18 @@ function makeBrowserTab(){
 
             inst.node_data = new_node_data;
 
+            if ( !inst.sel_node ){
+                if ( inst.node_data.length ){
+                    inst.sel_node = inst.node_data[0];
+                    inst.sel_node_id = inst.sel_node.id;
+                }else{
+                    inst.sel_node_id = null;
+                }
+            }
+
             inst.renderDepGraph();
+            inst.showSelectedInfo( inst.sel_node_id );
+
             //console.log("graph nodes:",inst.graph_nodes);
             //console.log("graph edges:",inst.graph_edges);
         });
@@ -1544,7 +1562,7 @@ function makeBrowserTab(){
         inst.nodes.selectAll(".node > circle.select")
             .attr("class", function(d){
                 if ( d.id == inst.sel_node_id ){
-                    inst.sel_node = d;
+                    //inst.sel_node = d;
                     return "select highlight";
                 }else
                     return "select hidden";
@@ -1622,7 +1640,7 @@ function makeBrowserTab(){
                 //console.log("node enter 3");
 
                 if ( d.id == inst.sel_node_id ){
-                    inst.sel_node = d;
+                    //inst.sel_node = d;
                     return "select highlight";
                 }else
                     return "select hidden";
@@ -1679,10 +1697,10 @@ function makeBrowserTab(){
                 .nodes(inst.node_data)
                 //.force('center', d3.forceCenter(200,200))
                 .force('charge', d3.forceManyBody()
-                    .strength(-200))
+                    .strength(-300))
                 .force('row', d3.forceY( function(d,i){ return d.row != undefined ?(75 + d.row*75):0; })
                     .strength( function(d){ return d.row != undefined ?.05:0; }))
-                .force('col', d3.forceX(function(d,i){ return d.col != undefined?200:0; })
+                .force('col', d3.forceX(function(d,i){ return d.col != undefined?inst.graph_center_x:0; })
                     .strength( function(d){ return d.col != undefined ?.05:0; }))
                 .force("link", linkForce )
                 .on('tick', inst.simTick);
