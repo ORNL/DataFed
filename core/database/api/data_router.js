@@ -347,23 +347,24 @@ router.post('/update', function (req, res) {
 
                 var get_deps = false;
                 if ( req.body.deps_rem != undefined ){
-                    console.log("rem deps from ",data._id);
+                    //console.log("rem deps from ",data._id);
                     for ( i in req.body.deps_rem ) {
                         dep = req.body.deps_rem[i];
                         id = g_lib.resolveID( dep.id, client );
-                        console.log("rem id:",id);
+                        //console.log("rem id:",id);
                         if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
                             throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
-                        console.log("done rem");
+                        //console.log("done rem");
                         g_db.dep.removeByExample({_from:data._id,_to:id});
                     }
                     get_deps = true;
                 }
 
                 if ( req.body.deps_add != undefined ){
-                    console.log("add deps");
+                    //console.log("add deps");
                     for ( i in req.body.deps_add ) {
                         dep = req.body.deps_add[i];
+                        //console.log("dep id:",dep.id);
                         id = g_lib.resolveID( dep.id, client );
                         if ( !id.startsWith("d/"))
                             throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
@@ -379,7 +380,7 @@ router.post('/update', function (req, res) {
                 }
 
                 if ( get_deps ){
-                    console.log("get deps");
+                    //console.log("get deps");
                     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
                     for ( i in data.deps ){
                         dep = data.deps[i];
