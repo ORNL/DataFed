@@ -565,7 +565,10 @@ Client::recordView( const std::string & a_id )
 void 
 setDepData( DependencyData *dep, const string & val )
 {
-    size_t p = val.find_first_of(',');
+    size_t p = val.find_first_of(' ');
+    if ( p != string::npos )
+        EXCEPT_PARAM( 0, "Invalid dependency specifiec \"" << val << "\"" );
+    p = val.find_first_of(',');
     if ( p == string::npos )
         EXCEPT( 0, "Missing dependency type" );
     dep->set_id(val.substr(0,p));
