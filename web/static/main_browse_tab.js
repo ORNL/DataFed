@@ -99,7 +99,10 @@ function makeBrowserTab(){
         }
 
         if ( inst.focus_node_id ){
-            loadGraph( inst.focus_node_id, inst.sel_node.id );
+            if ( a_ids && a_data )
+                graphUpdate( a_ids, a_data );
+            else
+                graphLoad( inst.focus_node_id, inst.sel_node.id );
         }
 
         if ( inst.tree_mode ){
@@ -220,7 +223,7 @@ function makeBrowserTab(){
                 if ( node )
                     inst.reloadNode( node );
                 if ( inst.focus_node_id )
-                    inst.loadGraph( inst.focus_node_id, inst.sel_node.id );
+                    inst.graphLoad( inst.focus_node_id, inst.sel_node.id );
             });
         });
     }
@@ -530,7 +533,7 @@ function makeBrowserTab(){
         var id = ids[0];
 
         if ( id.charAt(0) == "d" ) {
-            loadGraph( id );
+            graphLoad( id );
             $( "#data-tabs" ).tabs({ active: 1 });
         }
     }
@@ -1381,7 +1384,7 @@ function makeBrowserTab(){
         });
     }
 
-    this.loadGraph = function( a_id, a_sel_node_id ){
+    this.graphLoad = function( a_id, a_sel_node_id ){
         inst.focus_node_id = a_id;
         inst.sel_node_id = a_sel_node_id?a_sel_node_id:a_id;
         inst.sel_node = null;
@@ -1480,6 +1483,31 @@ function makeBrowserTab(){
             //console.log("graph nodes:",inst.graph_nodes);
             //console.log("graph edges:",inst.graph_edges);
         });
+    }
+
+    this.graphUpdate = function( a_ids, a_data ){
+        // Only updates locked and alias of impacted nodes
+
+        var ids = Array.isArray(a_ids)?a_ids:[a_ids];
+        var data = Array.isArray(a_data)?a_data:[a_data];
+        var i, node, item, render = false;
+
+        for ( i = 0; i < ids.length; i++ ){
+            node = inst.graphNodeFind( ids[i] );
+            if ( node ){
+                render = true;
+                item = data[i];
+
+                node.locked = item.locked;
+                if ( item.alias ){
+                    node.label = item.alias;
+                }else
+                    node.label = item.id;
+            }
+        }
+
+        if ( render )
+            inst.renderDepGraph();
     }
 
     this.renderDepGraph = function(){
@@ -1873,6 +1901,7 @@ function makeBrowserTab(){
                 inst.renderDepGraph();
             }else{
                 inst.sel_node.prune = false;
+                setStatusText("Node cannot be hidden");
             }
         }
     }
