@@ -1523,7 +1523,14 @@ function makeBrowserTab(){
                     switch ( d.ty ){
                         case 0: return 'url(#arrow-derivation)';
                         case 1: return 'url(#arrow-component)';
+                        default: return '';
+                    }
+                })
+                .attr('marker-end',function(d){
+                    //console.log("link enter 1");
+                    switch ( d.ty ){
                         case 2: return 'url(#arrow-new-version)';
+                        default: return '';
                     }
                 })
                 .attr('class',function(d){
@@ -2804,9 +2811,9 @@ function makeBrowserTab(){
     }))
     .append("g")
 
-    defineArrowMarker(inst.svg, "derivation");
-    defineArrowMarker(inst.svg, "component");
-    defineArrowMarker(inst.svg, "new-version");
+    defineArrowMarkerDeriv(inst.svg);
+    defineArrowMarkerComp(inst.svg);
+    defineArrowMarkerNewVer(inst.svg);
 
     inst.links_grp = inst.svg.append("g")
         .attr("class", "links");
