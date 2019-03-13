@@ -42,6 +42,8 @@ var globus_auth;
 var g_ctx = new Array( MAX_CTX );
 var g_ctx_next = 0;
 var g_oauth_credentials;
+var g_client_id;
+var g_client_secret;
 const nullfr = Buffer.from([]);
 
 g_ctx.fill(null);
@@ -52,6 +54,8 @@ function defaultSettings(){
     g_server_key_file = '/etc/sdms/sdms_web_key';
     g_server_cert_file = '/etc/sdms/sdms_web_cert';
     g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
+    g_client_id = '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454';
+    g_client_secret = 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=';
 }
 
 function startServer(){
@@ -64,8 +68,8 @@ function startServer(){
     g_core_sock.connect( g_core_serv_addr );
 
     g_oauth_credentials = {
-        clientId: '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454',
-        clientSecret: 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=',
+        clientId: g_client_id,
+        clientSecret: g_client_secret,
         authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
         accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
         redirectUri: 'https://'+g_host+':'+g_port+'/ui/authn',
@@ -1207,6 +1211,10 @@ if ( process.argv.length > 2 ){
             g_port = config.server.port || g_port;
             g_server_key_file = config.server.key_file || g_server_key_file;
             g_server_cert_file = config.server.cert_file || g_server_cert_file;
+        }
+        if ( config.oauth ){
+            g_client_id = config.oauth.client_id || g_client_id;
+            g_client_secret = config.oauth.client_secret || g_client_secret;
         }
         if ( config.core ){
             g_core_serv_addr = config.core.server_address || g_core_serv_addr;
