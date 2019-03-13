@@ -1098,6 +1098,31 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
     });
 }
 
+function processProtoFile( msg ){
+    //var mlist = msg.parent.order;
+    var mlist = msg.parent.nested;
+    var pid = msg.values.ID;
+
+    //for ( var i = 0; i < mlist.length - 1; i++ ) {
+    var i = 0,skip=true;
+    for ( var k in mlist ){
+        if ( skip ){
+            skip = false;
+            continue;
+        }
+        //msg = mlist[i+1];
+        msg = mlist[k];
+
+        msg._pid = pid;
+        msg._mid = i;
+        msg._msg_type = (pid << 8) | i;
+        //console.log(msg.name,msg._msg_type);
+        g_msg_by_id[ msg._msg_type ] = msg;
+        g_msg_by_name[ msg.name ] = msg;
+        i++;
+    }
+}
+
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;
@@ -1107,20 +1132,8 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
     var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
     if ( !msg )
         throw "Missing Protocol enum in SDMS.Anon proto file";
-    
-    var mlist = msg.parent.order;
-    var pid = msg.values.ID;
 
-    for ( var i = 0; i < mlist.length - 1; i++ ) {
-        msg = mlist[i+1];
-
-        msg._pid = pid;
-        msg._mid = i;
-        msg._msg_type = (pid << 8) | i;
-
-        g_msg_by_id[ msg._msg_type ] = msg;
-        g_msg_by_name[ msg.name ] = msg;
-    }
+    processProtoFile( msg );
 });
 
 protobuf.load("SDMS_Auth.proto", function(err, root) {
@@ -1132,20 +1145,8 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
     var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
     if ( !msg )
         throw "Missing Protocol enum in SDMS.Auth proto file";
-    
-    var mlist = msg.parent.order;
-    var pid = msg.values.ID;
-    // Skip first entry which is Protocol enum
-    for ( var i = 0; i < mlist.length-1; i++ ) {
-        msg = mlist[i+1];
 
-        msg._pid = pid;
-        msg._mid = i;
-        msg._msg_type = (pid << 8) | i;
-
-        g_msg_by_id[ msg._msg_type ] = msg;
-        g_msg_by_name[ msg.name ] = msg;
-    }
+    processProtoFile( msg );
 });
 
 process.on('unhandledRejection', (reason, p) => {
