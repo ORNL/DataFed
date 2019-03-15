@@ -46,7 +46,7 @@ DatabaseClient::setClient( const std::string & a_client )
 }
 
 long
-DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, rapidjson::Document & a_result )
+DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, rapidjson::Document & a_result, bool a_log )
 {
     string  url;
     string  res_json;
@@ -74,7 +74,10 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         curl_free( esc_txt );
     }
 
-    DL_DEBUG( "get url: " << url );
+    if ( a_log )
+    {
+        DL_DEBUG( "get url: " << url );
+    }
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -90,7 +93,10 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            DL_DEBUG( "About to parse[" << res_json << "]" );
+            if ( a_log )
+            {
+                DL_DEBUG( "About to parse[" << res_json << "]" );
+            }
             a_result.Parse( res_json.c_str() );
         }
 
@@ -1570,7 +1576,7 @@ DatabaseClient::xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataRe
     if ( a_request.has_status() )
         params.push_back({"status",to_string((unsigned int)a_request.status())});
 
-    dbGet( "xfr/list", params, result );
+    dbGet( "xfr/list", params, result, false );
 
     setXfrData( a_reply, result );
 }
@@ -1897,26 +1903,34 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
 void
 DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
+cout  << "set list 1" << endl;
     rapidjson::Document result;
     vector<pair<string,string>> params;
-    if ( a_request.has_admin() )
-        params.push_back({"admin", a_request.admin()});
+    if ( a_request.has_all() )
+        params.push_back({"all", a_request.all()?"true":"false"});
     if ( a_request.has_details() )
         params.push_back({"details", a_request.details()?"true":"false"});
-
+try{
     dbGet( "repo/list", params, result );
-
+}catch(exception &e){
+    cout << "exception:" << e.what() << endl;
+}
+cout  << "set repo data" << endl;
     setRepoData( &a_reply, 0, result );
+cout  << "set repo data - done" << endl;
 }
 
 void
 DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
 {
+cout  << "set list 2" << endl;
     rapidjson::Document result;
 
-    dbGet( "repo/list", {{"details","true"}}, result );
+    dbGet( "repo/list", {{"all","true"},{"details","true"}}, result );
 
+cout  << "set repo data" << endl;
     setRepoData( 0, &a_repos, result );
+cout  << "set repo data - done" << endl;
 }
 
 void
@@ -1930,39 +1944,84 @@ DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDat
 }
 
 void
-DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseClient::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
-    (void) a_reply;
-
     rapidjson::Document result;
-    vector<pair<string,string>> params;
-    params.push_back({"id", a_request.id()});
-    if ( a_request.has_title() )
-        params.push_back({"title", a_request.title()});
+
+    string body = "{\"id\":\"" + a_request.id() + "\"";
+    body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    body += ",\"path\":\"" + escapeJSON( a_request.path() ) + "\"";
+    body += ",\"pub_key\":\"" + escapeJSON( a_request.pub_key() ) + "\"";
+    body += ",\"address\":\"" + a_request.address() + "\"";
+    body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
+    body += ",\"capacity\":\"" + to_string( a_request.capacity() )+ "\"";
+
     if ( a_request.has_desc() )
-        params.push_back({"desc", a_request.desc()});
-    if ( a_request.has_path() )
-        params.push_back({"path", a_request.path()});
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_domain() )
-        params.push_back({"domain", a_request.domain()});
+        body += ",\"domain\":\"" + a_request.domain() + "\"";
     if ( a_request.has_exp_path() )
-        params.push_back({"exp_path", a_request.exp_path()});
-    if ( a_request.has_capacity() )
-        params.push_back({"capacity", to_string( a_request.capacity() )});
+        body += ",\"exp_path\":\"" + escapeJSON( a_request.exp_path() ) + "\"";
+
     if ( a_request.admin_size() > 0 )
     {
-        string admins = "[";
+        body+=",\"admins\":[";
         for ( int i = 0; i < a_request.admin_size(); ++i )
         {
             if ( i > 0 )
-                admins += ",";
-            admins += "\"" + a_request.admin(i) + "\"";
+                body += ",";
+            body += "\"" + a_request.admin(i) + "\"";
         }
-        admins += "]";
-        params.push_back({"admins", admins });
+        body += "]";
     }
+    body += "}";
 
-    dbGet( "repo/update", params, result );
+    dbPost( "repo/create", {}, &body, result );
+
+    setRepoData( &a_reply, 0, result );
+}
+
+void
+DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    string body = "{\"id\":\"" + a_request.id() + "\"";
+    if ( a_request.has_title() )
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    if ( a_request.has_desc() )
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+    if ( a_request.has_path() )
+        body += ",\"path\":\"" + escapeJSON( a_request.path() ) + "\"";
+    if ( a_request.has_exp_path() )
+        body += ",\"exp_path\":\"" + escapeJSON( a_request.exp_path() ) + "\"";
+    if ( a_request.has_domain() )
+        body += ",\"domain\":\"" + a_request.domain() + "\"";
+    if ( a_request.has_pub_key() )
+        body += ",\"pub_key\":\"" + escapeJSON( a_request.pub_key() ) + "\"";
+    if ( a_request.has_address() )
+        body += ",\"address\":\"" + a_request.address() + "\"";
+    if ( a_request.has_endpoint() )
+        body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
+    if ( a_request.has_capacity() )
+        body += ",\"capacity\":\"" + to_string( a_request.capacity() )+ "\"";
+
+    if ( a_request.admin_size() > 0 )
+    {
+        body+=",\"admins\":[";
+        for ( int i = 0; i < a_request.admin_size(); ++i )
+        {
+            if ( i > 0 )
+                body += ",";
+            body += "\"" + a_request.admin(i) + "\"";
+        }
+        body += "]";
+    }
+    body += "}";
+
+    dbPost( "repo/update", {}, &body, result );
+
+    setRepoData( &a_reply, 0, result );
 }
 
 void
@@ -2001,7 +2060,7 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
             repo->set_pub_key( imem->value.GetString() );
         if (( imem = val.FindMember("path")) != val.MemberEnd() )
             repo->set_path( imem->value.GetString() );
-        if (( imem = val.FindMember("domain")) != val.MemberEnd() )
+        if (( imem = val.FindMember("domain")) != val.MemberEnd() && !imem->value.IsNull() )
             repo->set_domain( imem->value.GetString() );
         if (( imem = val.FindMember("exp_path")) != val.MemberEnd() )
             repo->set_exp_path( imem->value.GetString() );

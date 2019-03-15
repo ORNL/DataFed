@@ -91,6 +91,7 @@
                 <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-xfer">Transfers</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
+                <li style='display:none'><a href="#tab-admin">Administration</a></li>
                 <span style='float:right'><button id='btn_alloc' class='btn small' title='View account allocation statistics'>Allocations</button>&nbsp<button id='btn_settings' class='btn small' title='Update application and account settings'>Settings</button></span>
             </ul>
             <div id="tab-search" class="content" style="padding:0">
@@ -115,6 +116,12 @@
             </div>
             <div id="tab-repo" class="content" style="padding:0">
                 <div id="repo_list" class="text tab-inner-div"></div>
+            </div>
+            <div id="tab-admin" class="content" style="padding:.25em">
+                <button class="btn" id="btn_manage_users" title='Manage user accounts'>Manage Users</button>
+                <button class="btn" id="btn_manage_projs" title='Manage projects'>Manage Projects</button>
+                <button class="btn" id="btn_manage_repos" title='Manage system-wide data repositories'>Manage Data Repos</button>
+                <button class="btn" id="btn_view_stats" title='View system statistics'>View Statistics</button>
             </div>
         </div>
     </div>

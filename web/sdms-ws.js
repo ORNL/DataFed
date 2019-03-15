@@ -808,8 +808,8 @@ app.get('/api/col/unlink', ( a_req, a_resp ) => {
 
 app.get('/api/repo/list', ( a_req, a_resp ) => {
     var params = {};
-    if ( a_req.query.admin )
-        params.admin = a_req.query.admin;
+    if ( a_req.query.all )
+        params.all = a_req.query.all;
     if ( a_req.query.details )
         params.details = a_req.query.details;
     sendMessage( "RepoListRequest", params, a_req, a_resp, function( reply ) {

@@ -104,7 +104,8 @@ public:
     void repoList( std::vector<RepoData*> & a_repos );
     void repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply );
-    void repoUpdate( const Auth::RepoUpdateRequest & a_request, Anon::AckReply  & a_reply );
+    void repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply );
+    void repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
@@ -117,7 +118,7 @@ public:
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
 
 private:
-    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result );
+    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result, bool a_log = true );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, rapidjson::Document & a_result );
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );

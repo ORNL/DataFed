@@ -1360,7 +1360,9 @@ function makeBrowserTab(){
     }
 
     this.setupRepoTab = function(){
-        _asyncGet( "/api/repo/list?admin=u/"+g_user.uid+"&details=true", null, function(ok,data){
+        //_asyncGet( "/api/repo/list?details=true", null, function(ok,data){
+        repoList( true, false, function(ok,data){
+            console.log("repo list:",ok,data);
             if ( ok ){
                 var html;
 
@@ -1379,7 +1381,11 @@ function makeBrowserTab(){
 
                 $("#repo_list").html( html );
                 $(".btn","#repo_list").button();
-                $(".repo_adm","#repo_list").click( function(ev){ dlgRepoAdmin.show($(this).attr("repo"),function(){ inst.setupRepoTab();}); });
+                $(".repo_adm","#repo_list").click( function(ev){
+                    dlgRepoEdit($(this).attr("repo"),function(){
+                        inst.setupRepoTab();
+                    });
+                });
             }
         });
     }
@@ -2729,6 +2735,12 @@ function makeBrowserTab(){
     if ( g_user.isRepoAdmin ){
         setupRepoTab();
         $('[href="#tab-repo"]').closest('li').show();
+    }
+
+    if ( g_user.isAdmin ){
+        //setupRepoTab();
+        $('[href="#tab-admin"]').closest('li').show();
+        $("#btn_manage_repos",inst.frame).on('click', dlgRepoManage );
     }
 
     $(".btn-refresh").button({icon:"ui-icon-refresh"});

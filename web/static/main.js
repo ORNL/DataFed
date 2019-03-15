@@ -31,8 +31,9 @@ function _asyncGet( a_url, a_raw_json_data, a_callback ) {
         context: {t0:Date.now()},
         success : function( a_data, a_status, a_xhr ) {
             var elapsed = Date.now() - this.t0;
-            if ( elapsed > 20 )
-                console.log( "ajax time:", elapsed, "ms" );
+            if ( elapsed > 500 ){
+                console.log( "Slow AJAX response:",elapsed,"ms, url:",a_url );
+            }
             if ( a_callback ){
                 a_callback( true, a_data );
             }
@@ -376,6 +377,15 @@ function aclUpdate( a_id, a_rules, a_public, a_cb ) {
 function userView( a_id, a_details, a_cb ) {
     console.log("userView ",a_id);
     _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
+}
+
+function repoList( a_details, a_list_all, a_cb ){
+    var url = "/api/repo/list";
+    if ( a_details )
+        url += "?details=true";
+    if ( a_list_all )
+        url += (a_details?"&":"?") + "all=true";
+    _asyncGet( url, null, a_cb );
 }
 
 function repoView( a_repo, a_cb ){
@@ -874,7 +884,6 @@ DepTypeFromString = {
 
 var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
-var dlgRepoAdmin = new makeDlgRepoAdmin();
 var dlgAllocNewEdit = new makeDlAllocNewEdit();
 var g_ep_recent = [];
 var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false };

@@ -513,8 +513,8 @@ message RepoPathDeleteRequest
 
 message RepoListRequest
 {
-    optional string             admin       = 1;
-    optional bool               details     = 2;
+    optional bool               details     = 1;
+    optional bool               all         = 2;
 }
 
 message RepoViewRequest
@@ -522,16 +522,34 @@ message RepoViewRequest
     required string             id          = 1;
 }
 
+message RepoCreateRequest
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             desc        = 3;
+    optional string             domain      = 5;
+    required string             path        = 6;
+    optional string             exp_path    = 7;
+    required string             address     = 8;
+    required string             endpoint    = 9;
+    required string             pub_key     = 10;
+    required uint64             capacity    = 11;
+    repeated string             admin       = 12;
+}
+
 message RepoUpdateRequest
 {
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             path        = 4;
     optional string             domain      = 5;
-    optional string             exp_path    = 6;
-    optional uint64             capacity    = 7;
-    repeated string             admin       = 8;
+    optional string             path        = 6;
+    optional string             exp_path    = 7;
+    optional string             address     = 8;
+    optional string             endpoint    = 9;
+    optional string             pub_key     = 10;
+    optional uint64             capacity    = 11;
+    repeated string             admin       = 12;
 }
 
 message RepoDataReply
