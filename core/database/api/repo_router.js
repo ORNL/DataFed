@@ -19,37 +19,42 @@ module.exports = router;
 
 
 router.get('/list', function (req, res) {
-    var result;
+    var client;
+    if ( req.queryParams.client ){
+        client = g_lib.getUserFromClientID( req.queryParams.client );
 
-    if ( req.queryParams.admin ){
-        result = g_db._query( "for v in 1..1 inbound @admin admin filter is_same_collection('repo',v) return v",{admin:req.queryParams.admin}).toArray();
-    }else{
-        result = g_db._query( "for i in repo return i").toArray();
+        if ( req.queryParams.all && !client.is_admin ){
+            throw g_lib.ERR_PERM_DENIED;
+        }
     }
 
-    var repo;
-    for ( var i in result ){
-        repo = result[i];
+    var result;
 
-        repo.id = repo._id;
-        delete repo._id;
-        delete repo._key;
-        delete repo._rev;
-
-        if ( !req.queryParams.details ){
-            delete repo.capacity;
-            delete repo.pub_key;
-            delete repo.address;
-            delete repo.endpoint;
+    if ( !client || req.queryParams.all ){
+        result = g_db._query( "for v in repo return {id:v._id,title:v.title,domain:v.domain}");
+    }else{
+        if ( req.queryParams.details ){
+            result = g_db._query( "for v in 1..1 inbound @admin admin filter is_same_collection('repo',v) return v",{admin:client._id}).toArray();
+            var repo;
+            for ( var i in result ){
+                repo = result[i];
+                repo.id = repo._id;
+                delete repo._id;
+                delete repo._key;
+                delete repo._rev;
+            }
+        }else{
+            result = g_db._query( "for v in 1..1 inbound @admin admin filter is_same_collection('repo',v) return {id:v._id,title:v.title,domain:v.domain}",{admin:client._id});
         }
     }
 
     res.send( result );
 })
-.queryParam('admin', joi.string().optional(), "Admin UID of repo(s) to list")
+.queryParam('client', joi.string().allow('').optional(), "Client ID")
 .queryParam('details', joi.boolean().optional(), "Show additional record details")
-.summary('List repo servers')
-.description('List repo servers. Will list all if no admin UID is provided; otherwise, repos administered by UID.');
+.queryParam('all', joi.boolean().optional(), "List all repos (requires admin)")
+.summary('List repo servers administered by client')
+.description('List repo servers administered by client. If client is an admin and all flag is specified, will list all repos in system.');
 
 
 router.get('/view', function (req, res) {
@@ -75,7 +80,7 @@ router.get('/view', function (req, res) {
 .description('View repo server record');
 
 
-router.get('/create', function (req, res) {
+router.post('/create', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -83,40 +88,39 @@ router.get('/create', function (req, res) {
                 write: ["repo","admin"]
             },
             action: function() {
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                if ( !client.is_admin )
+                    throw obj.ERR_PERM_DENIED;
+
                 var obj = {
-                    _key: req.queryParams.id,
-                    capacity: req.queryParams.capacity,
-                    pub_key: req.queryParams.pub_key,
-                    address: req.queryParams.address,
-                    endpoint: req.queryParams.endpoint,
-                    path: req.queryParams.endpoint
+                    capacity: req.body.capacity,
+                    pub_key: req.body.pub_key,
+                    address: req.body.address,
+                    endpoint: req.body.endpoint,
+                    path: req.body.path
                 };
+
+                g_lib.procInputParam( req.body, "id", false, obj );
+                g_lib.procInputParam( req.body, "title", false, obj );
+                g_lib.procInputParam( req.body, "summary", false, obj );
+                g_lib.procInputParam( req.body, "domain", false, obj );
 
                 if ( !obj.path.endsWith("/"))
                     obj.path += "/";
 
-                if ( req.queryParams.title )
-                    obj.title = req.queryParams.title;
-
-                if ( req.queryParams.desc )
-                    obj.desc = req.queryParams.desc;
-
-                if ( req.queryParams.domain )
-                    obj.domain = req.queryParams.domain;
-
-                if ( req.queryParams.exp_path ){
-                    obj.exp_path = req.queryParams.exp_path;
+                if ( req.body.exp_path ){
+                    obj.exp_path = req.body.exp_path;
                     if ( !obj.exp_path.endsWith("/"))
-                        obj.exp_path += "/";
+                        obj.path += "/";
                 }
 
                 var repo = g_db.repo.save( obj, { returnNew: true });
 
-                for ( var i in req.queryParams.admins ) {
-                    if ( !g_db._exists( req.queryParams.admins[i] ))
-                        throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.admins[i]+", not found"];
+                for ( var i in req.body.admins ) {
+                    if ( !g_db._exists( req.body.admins[i] ))
+                        throw [g_lib.ERR_NOT_FOUND,"User, "+req.body.admins[i]+", not found"];
 
-                    g_db.admin.save({ _from: repo._id, _to: req.queryParams.admins[i] });
+                    g_db.admin.save({ _from: repo._id, _to: req.body.admins[i] });
                 }
 
                 repo.new.id = repo.new._id;
@@ -130,22 +134,26 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('id', joi.string().required(), "Repo server ID")
-.queryParam('title', joi.string().optional(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
-.queryParam('capacity', joi.number().required(), "Total storage capacity (in bytes)")
-.queryParam('pub_key', joi.string().required(), "Repo server public key")
-.queryParam('address', joi.string().required(), "Repo server address")
-.queryParam('endpoint', joi.string().required(), "Repo server endpoint")
-.queryParam('path', joi.string().required(), "Repo server data path")
-.queryParam('domain', joi.string().optional(), "Repo server domain (must be unique)")
-.queryParam('exp_path', joi.string().optional(), "Repo server export data path")
-.queryParam('admins', joi.array().items(joi.string()).required(), "Repo admin user IDs")
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    id: joi.string().required(),
+    title: joi.string().required(),
+    desc: joi.string().optional(),
+    domain: joi.string().optional(),
+    capacity: joi.number().required(),
+    pub_key: joi.string().required(),
+    address: joi.string().required(),
+    endpoint: joi.string().required(),
+    path: joi.string().required(),
+    exp_path: joi.string().optional(),
+    admins: joi.array().items(joi.string()).required()
+}).required(), 'Repo fields')
 .summary('Create a repo server record')
 .description('Create a repo server record.');
 // TODO Add base path to repo
 
-router.get('/update', function (req, res) {
+
+router.post('/update', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -154,37 +162,54 @@ router.get('/update', function (req, res) {
             },
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
-                g_lib.ensureAdminPermRepo( client, req.queryParams.id );
+                g_lib.ensureAdminPermRepo( client, req.body.id );
                 var obj = {};
 
-                if ( req.queryParams.title )
-                    obj.title = req.queryParams.title;
+                g_lib.procInputParam( req.body, "title", true, obj );
+                g_lib.procInputParam( req.body, "summary", true, obj );
+                g_lib.procInputParam( req.body, "domain", true, obj );
 
-                if ( req.queryParams.desc )
-                    obj.desc = req.queryParams.desc;
+                if ( req.body.path ){
+                    obj.path = req.body.path;
+                    if ( !obj.path.endsWith("/"))
+                        obj.path += "/";
+                }
 
-                if ( req.queryParams.domain )
-                    obj.domain = req.queryParams.domain;
-
-                if ( req.queryParams.exp_path ){
-                    obj.exp_path = req.queryParams.exp_path;
+                if ( req.body.exp_path ){
+                    obj.exp_path = req.body.exp_path;
                     if ( !obj.exp_path.endsWith("/"))
                         obj.exp_path += "/";
                 }
 
-                if ( req.queryParams.capacity )
-                    obj.capacity = req.queryParams.capacity;
+                if ( req.body.capacity )
+                    obj.capacity = req.body.capacity;
 
-                g_db._update( req.queryParams.id, obj );
+                if ( req.body.pub_key )
+                    obj.pub_key = req.body.pub_key;
 
-                if ( req.queryParams.admins ){
-                    g_db.admin.removeByExample({_from: req.queryParams.id});
-                    for ( var i in req.queryParams.admins ) {
-                        if ( !g_db._exists( req.queryParams.admins[i] ))
-                            throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.admins[i]+", not found"];
-                        g_db.admin.save({ _from: req.queryParams.id, _to: req.queryParams.admins[i] });
+                if ( req.body.address )
+                    obj.address = req.body.address;
+
+                if ( req.body.endpoint )
+                    obj.endpoint = req.body.endpoint;
+
+                var repo = g_db._update( req.body.id, obj, {returnNew: true});
+
+                if ( req.body.admins ){
+                    g_db.admin.removeByExample({_from: req.body.id});
+                    for ( var i in req.body.admins ) {
+                        if ( !g_db._exists( req.body.admins[i] ))
+                            throw [g_lib.ERR_NOT_FOUND,"User, "+req.body.admins[i]+", not found"];
+                        g_db.admin.save({ _from: req.body.id, _to: req.body.admins[i] });
                     }
                 }
+
+                repo.new.id = repo.new._id;
+                delete repo.new._id;
+                delete repo.new._key;
+                delete repo.new._rev;
+
+                res.send( repo.new );
             }
         });
     } catch( e ) {
@@ -192,13 +217,19 @@ router.get('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Repo server ID")
-.queryParam('title', joi.string().optional(), "Title")
-.queryParam('desc', joi.string().optional(), "Description")
-.queryParam('capacity', joi.number().optional(), "Total storage capacity (in bytes)")
-.queryParam('domain', joi.string().optional(), "Repo server domain (must be unique)")
-.queryParam('exp_path', joi.string().optional(), "Repo server export data path")
-.queryParam('admins', joi.array().items(joi.string()).optional(), "Repo admin user IDs")
+.body(joi.object({
+    id: joi.string().required(),
+    title: joi.string().optional(),
+    desc: joi.string().optional(),
+    domain: joi.string().optional(),
+    capacity: joi.number().optional(),
+    pub_key: joi.string().optional(),
+    address: joi.string().optional(),
+    endpoint: joi.string().optional(),
+    path: joi.string().optional(),
+    exp_path: joi.string().optional(),
+    admins: joi.array().items(joi.string()).optional()
+}).required(), 'Repo fields')
 .summary('Update a repo server record')
 .description('Update a repo server record');
 

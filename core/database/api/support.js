@@ -107,6 +107,7 @@ module.exports = ( function() {
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
         topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
+        domain: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'domain' },
         gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
         id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' }
     };
