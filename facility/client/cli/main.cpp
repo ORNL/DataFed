@@ -827,7 +827,11 @@ int query_text()
     if ( g_args.size() == 0 )
         return -1;
 
-    string query = "{\"quick\":\"" + escapeJSON( g_cmd_str.substr(5) ) + "\",\"scopes\":[{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}]}";
+    size_t p = g_cmd_str.find_first_of(' ');
+    if ( p == string::npos )
+        return -1;
+
+    string query = "{\"quick\":\"" + escapeJSON( g_cmd_str.substr(p+1) ) + "\",\"scopes\":[{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}]}";
 
     spListingReply rep = g_client->recordFind( query );
     updateIdIndex( rep );
@@ -843,7 +847,11 @@ int query_meta()
     if ( g_args.size() == 0 )
         return -1;
 
-    string query = "{\"meta\":\"" + g_cmd_str.substr(5) + "\",\"scopes\":[{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}]}";
+    size_t p = g_cmd_str.find_first_of(' ');
+    if ( p == string::npos )
+        return -1;
+
+    string query = "{\"meta\":\"" + escapeJSON( g_cmd_str.substr( p )) + "\",\"scopes\":[{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}]}";
 
     spListingReply rep = g_client->recordFind( query );
     updateIdIndex( rep );
