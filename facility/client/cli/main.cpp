@@ -1054,7 +1054,11 @@ int coll_update()
 
 int coll_delete()
 {
-    cout << "NOT IMPLEMENTED YET\n";
+    if ( g_args.size() != 1 )
+        return -1;
+
+    g_client->collDelete( resolveID( g_args[0] ));
+
     return 0;
 }
 
@@ -1730,7 +1734,7 @@ int main( int a_argc, char ** a_argv )
     addCommand( "cv", "coll-view", "View collection record", "<id>\n\nView fields of specified collection record. The <id> argument may be an identifier or an alias. This command does not list items linked to the collection; for this, see the \"ls\" command.", coll_view );
     addCommand( "cc", "coll-create", "Create collection record", "-t <title> [-a] [-d]\n\nCreates a new collection record using fields provided via options (see general help for option descriptions). The new collection is created as a child of the current working collection (root by default).", coll_create );
     addCommand( "cu", "coll-update", "Update collection record", "<id> [-t] [-a] [-d]\n\nUpdates an existing collection record using fields provided via options (see general help for option descriptions). The <id> argument may be an identifier or an alias.", coll_update );
-    addCommand( "", "coll-delete", "Delete collection record", "<id>\n\nCollection commands: (v)iew, (c)reate, (u)pdate, (d)elete", coll_delete );
+    addCommand( "", "coll-delete", "Delete collection record", "<id>\n\nDelete collection and all contained data.", coll_delete );
 
 
     // Transfer related commands

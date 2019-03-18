@@ -788,6 +788,19 @@ Client::collUpdate( const std::string & a_id, const char * a_title, const char *
 }
 
 void
+Client::collDelete( const std::string & a_id )
+{
+    Auth::CollDeleteRequest  req;
+    Anon::AckReply *         rep;
+
+    req.add_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+void
 Client::collAddItem( const std::string & a_coll_id, const std::string & a_item_id )
 {
     Auth::CollWriteRequest  req;

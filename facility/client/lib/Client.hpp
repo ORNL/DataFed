@@ -110,6 +110,7 @@ public:
     spCollDataReply     collList( const std::string & a_user = std::string(), bool a_details = false, uint32_t a_offset = 0, uint32_t a_count = 0 );
     spCollDataReply     collCreate( const std::string & a_title, const char * a_desc = 0, const char * a_alias = 0, const char * a_coll_id = 0 );
     spCollDataReply     collUpdate( const std::string & a_id, const char * a_title = 0, const char * a_desc = 0, const char * a_alias = 0 );
+    void                collDelete( const std::string & a_id );
     spCollDataReply     collView( const std::string & a_id );
     spListingReply      collRead( const std::string & a_coll_id, uint32_t a_offset = 0, uint32_t a_count = 0 );
     void                collAddItem( const std::string & a_coll_id, const std::string & a_item_id );
