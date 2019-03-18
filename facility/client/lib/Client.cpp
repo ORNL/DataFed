@@ -954,6 +954,42 @@ Client::dataDelete( const std::string & a_id )
     delete rep;
 }
 
+spListingReply
+Client::queryList()
+{
+    Auth::QueryListRequest  req;
+    Auth::ListingReply *    rep;
+
+    send<>( req, rep, m_ctx++ );
+
+    return spListingReply( rep );
+}
+
+spQueryDataReply
+Client::queryView( const std::string & a_id )
+{
+    Auth::QueryViewRequest      req;
+    Auth::QueryDataReply *    rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spQueryDataReply( rep );
+}
+
+spListingReply
+Client::queryExec( const std::string & a_id )
+{
+    Auth::QueryExecRequest  req;
+    Auth::ListingReply *    rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spListingReply( rep );
+}
 
 spXfrDataReply
 Client::xfrView( const std::string & a_xfr_id )

@@ -27,10 +27,12 @@ typedef std::shared_ptr<Auth::ListingReply> spListingReply;
 typedef std::shared_ptr<Auth::RecordDataReply> spRecordDataReply;
 typedef std::shared_ptr<Auth::DataPathReply> spDataPathReply;
 typedef std::shared_ptr<Auth::CollDataReply> spCollDataReply;
+typedef std::shared_ptr<Auth::QueryDataReply> spQueryDataReply;
 typedef std::shared_ptr<Auth::XfrDataReply> spXfrDataReply;
 typedef std::shared_ptr<Auth::ACLDataReply> spACLDataReply;
 typedef std::shared_ptr<Auth::GroupDataReply> spGroupDataReply;
 typedef std::shared_ptr<Auth::UserGetRecentEPReply> spUserGetRecentEPReply;
+
 
 enum DestFlags : uint16_t
 {
@@ -122,6 +124,10 @@ public:
     spXfrDataReply      dataGet( const std::string & a_data_id, const std::string & a_local_path );
     spXfrDataReply      dataPut( const std::string & a_data_id, const std::string & a_local_path );
     void                dataDelete( const std::string & a_id );
+
+    spListingReply      queryList();
+    spQueryDataReply    queryView( const std::string & a_id );
+    spListingReply      queryExec( const std::string & a_id );
 
     spXfrDataReply      xfrView( const std::string & a_transfer_id );
     spXfrDataReply      xfrList( uint32_t * a_since, uint32_t * a_from, uint32_t * a_to, XfrStatus * a_status );

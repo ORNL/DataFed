@@ -92,6 +92,7 @@ enum OutputFormat
     CSV
 };
 
+string          g_cmd_str;
 bool            g_wait = false;
 string          g_title;
 string          g_desc;
@@ -614,6 +615,23 @@ void printListing( spListingReply a_reply )
     }
 }
 
+void printQuery( spQueryDataReply a_reply )
+{
+    if ( g_out_form == JSON )
+    {
+        cout << g_client->messageToJSON( a_reply.get() ) << "\n";
+        return;
+    }
+
+    for ( int i = 0; i < a_reply->query_size(); i++ )
+    {
+        const QueryData & qry = a_reply->query(i);
+        cout << "ID     " << qry.id() << "\n";
+        cout << "Title  " << qry.title() << "\n";
+        cout << "Query  " << qry.query() << "\n";
+    }
+}
+
 #if 0
 void printACLs( spACLDataReply a_reply )
 {
@@ -804,29 +822,73 @@ spRecordDataReply updateRecord( const string & a_id )
 }
 
 
-int find_records()
+int query_text()
 {
     if ( g_args.size() == 0 )
         return -1;
 
-    string query;
-    query.reserve( 512 );
-
-    for ( vector<string>::iterator a = g_args.begin(); a != g_args.end(); a++ )
-    {
-        query.append( *a );
-        query.append( " " );
-    }
+    string query = "{\"quick\":\"" + escapeJSON( g_cmd_str.substr(5) ) + "\",\"scopes\":[{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}]}";
 
     spListingReply rep = g_client->recordFind( query );
     updateIdIndex( rep );
 
-    cout << rep->item_size() << " match(es) found:\n\n";
-    //printData( rep, true );
+    cout << rep->item_size() << " match(es) found:\n";
+    printListing( rep );
 
     return 0;
 }
 
+int query_meta()
+{
+    if ( g_args.size() == 0 )
+        return -1;
+
+    string query = "{\"meta\":\"" + g_cmd_str.substr(5) + "\",\"scopes\":[{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}]}";
+
+    spListingReply rep = g_client->recordFind( query );
+    updateIdIndex( rep );
+
+    cout << rep->item_size() << " match(es) found:\n";
+    printListing( rep );
+
+    return 0;
+}
+
+int query_list()
+{
+    if ( g_args.size() != 0 )
+        return -1;
+
+    spListingReply rep = g_client->queryList();
+    updateIdIndex( rep );
+    printListing( rep );
+
+    return 0;
+}
+
+int query_view()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    spQueryDataReply rep = g_client->queryView( resolveID( g_args[0] ));
+    printQuery( rep );
+
+    return 0;
+}
+
+int query_exec()
+{
+    if ( g_args.size() != 1 )
+        return -1;
+
+    spListingReply rep = g_client->queryExec( resolveID( g_args[0] ));
+    updateIdIndex( rep );
+    cout << rep->item_size() << " match(es) found:\n";
+    printListing( rep );
+
+    return 0;
+}
 
 
 int data_view()
@@ -1058,6 +1120,7 @@ int coll_delete()
         return -1;
 
     g_client->collDelete( resolveID( g_args[0] ));
+    printSuccess();
 
     return 0;
 }
@@ -1728,7 +1791,6 @@ int main( int a_argc, char ** a_argv )
     addCommand( "put", "data-put", "Put data into repository", "[id] <src> [-t title] [-d desc] [-a alias] [-m metadata |-f meta-file]\n\nTransfer raw data from the specified <src> path to the repository. If the 'id' parameter is provided, the record with the associated identifier (or alias) will receive the data; otherwise a new data record will be created (see help on data command for details). The source path may include a globus end-point prefix; however, if none is specified, the default local end-point will be used.", data_put );
     addCommand("","data-clear", "Clear raw data", "<id>\n\nDeletes raw data associated with an existing data record. The <id> argument may be an identifier or an alias.", data_clear );
     addCommand("","data-delete", "Delete data record", "<id>\n\nDeletes an existing data record, including raw data. The <id> argument may be an identifier or an alias.", data_delete );
-    addCommand( "find", "data-find", "Find data by metadata query", "<query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", find_records );
 
     // Collection commands
     addCommand( "cv", "coll-view", "View collection record", "<id>\n\nView fields of specified collection record. The <id> argument may be an identifier or an alias. This command does not list items linked to the collection; for this, see the \"ls\" command.", coll_view );
@@ -1736,6 +1798,12 @@ int main( int a_argc, char ** a_argv )
     addCommand( "cu", "coll-update", "Update collection record", "<id> [-t] [-a] [-d]\n\nUpdates an existing collection record using fields provided via options (see general help for option descriptions). The <id> argument may be an identifier or an alias.", coll_update );
     addCommand( "", "coll-delete", "Delete collection record", "<id>\n\nDelete collection and all contained data.", coll_delete );
 
+    // Query
+    addCommand( "qt", "query-text", "Find data by text query", "<query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", query_text );
+    addCommand( "qm", "query-meta", "Find data by metadata query", "<query>\n\nReturns a list of all data records that match specified query (see documentation for query language description).", query_meta );
+    addCommand( "ql", "query-list", "List saved queries", "\n\nReturns a list of saved queries.", query_list );
+    addCommand( "qv", "query-view", "View saved query", "<id>\n\nView details of saved query identified by <id>.", query_view );
+    addCommand( "qx", "query-exec", "Execute a saved query", "<id>\n\nExecute a saved query identified by <id>.", query_exec );
 
     // Transfer related commands
     addCommand( "xl", "xfr-list", "List data transfers", "[<id>] [--since] [--from] [--to] [--status]\n\nList details of specified transfer (using <id>) or data transfers that match specified options.", xfr_list );
@@ -1977,6 +2045,7 @@ int main( int a_argc, char ** a_argv )
 
                 tok.parse( cmd_str, len );
                 add_history( cmd_str );
+                g_cmd_str = cmd_str;
                 free( cmd_str );
 
                 try
