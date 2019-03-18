@@ -127,7 +127,7 @@ router.post('/create', function (req, res) {
                 delete repo.new._id;
                 delete repo.new._key;
                 delete repo.new._rev;
-                res.send( repo.new );
+                res.send([repo.new]);
             }
         });
     } catch( e ) {
@@ -208,8 +208,8 @@ router.post('/update', function (req, res) {
                 delete repo.new._id;
                 delete repo.new._key;
                 delete repo.new._rev;
-
-                res.send( repo.new );
+                console.log("repo:",repo.new);
+                res.send([repo.new]);
             }
         });
     } catch( e ) {
@@ -239,15 +239,21 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: [],
-                write: ["repo","alloc","loc"]
+                write: ["repo","admin"]
             },
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
-                g_lib.ensureAdminPermRepo( client, req.queryParams.id );
 
+                if ( !g_db._exists( req.queryParams.id ))
+                    throw [g_lib.ERR_NOT_FOUND,"Repo, "+req.queryParams.id+", not found"];
+
+                g_lib.ensureAdminPermRepo( client, req.queryParams.id );
                 const graph = require('@arangodb/general-graph')._graph('sdmsg');
 
-                // TODO There may be other tasks to perform prior to deleting server record
+                // Make sure there are no allocations present on repo
+                var alloc = g_db._query("for v in 1..1 inbound @repo alloc return {id:v._id}", { repo: req.queryParams.id } );
+                if ( alloc.hasNext() )
+                    throw [g_lib.ERR_IN_USE,"Cannot delete repo with associated allocations."];
                 graph.repo.remove( req.queryParams.id );
             }
         });
