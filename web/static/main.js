@@ -392,7 +392,22 @@ function repoView( a_repo, a_cb ){
     _asyncGet( "/api/repo/view?id="+a_repo, null, a_cb );
 }
 
-function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, a_admins, a_cb ){
+function repoCreate( a_repo_data, a_cb ){
+    //console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
+    _asyncPost("/api/repo/create",a_repo_data,a_cb);
+}
+
+function repoUpdate( a_repo_data, a_cb ){
+    //console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
+    _asyncPost("/api/repo/update",a_repo_data,a_cb);
+}
+
+function repoDelete( a_repo_id, a_cb ){
+    //console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
+    _asyncGet("/api/repo/delete?id="+a_repo_id,null,a_cb);
+}
+
+/*function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, a_admins, a_cb ){
     console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
     var url = "/api/repo/update?id="+a_repo;
     if ( a_title )
@@ -409,7 +424,7 @@ function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, 
         url += "&admins=" + JSON.stringify( a_admins );
     console.log( url );
     _asyncGet( url, null, a_cb );
-}
+}*/
 
 function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );

@@ -2025,13 +2025,22 @@ DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::Rep
 }
 
 void
+DatabaseClient::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void) a_reply;
+    rapidjson::Document result;
+
+    dbGet( "repo/delete", {{"id",a_request.id()}}, result );
+}
+
+void
 DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result )
 {
     if ( !a_reply && !a_repos )
         EXCEPT( ID_INTERNAL_ERROR, "Missing parameters" );
 
     if ( !a_result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service (not an array)" );
 
     RepoData* repo;
     rapidjson::Value::MemberIterator imem;

@@ -23,34 +23,24 @@ function dlgRepoManage(){
     function addRepo(){
         console.log("Add repo");
         dlgRepoEdit( null, function(){
+            setStatusText("Repo created");
+            refreshRepoList();
         });
-        /*
-        dlgGroupEdit.show( inst.uid, inst.excl, null, function( group ){
-            if ( group ){
-                var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
-                var node = tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
-                if ( inst.select )
-                    node.setSelected();
-            }
-        });*/
     }
 
     function remRepo(){
         console.log("Remove repo");
-        /*
-        var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
+        var tree = $("#dlg_repo_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Delete","Cancel"], function( choice ) {
-                console.log( choice );
-                if ( choice == 0 ) {
-                    groupDelete( inst.uid, node.key.substr(2), function() {
-                        node.remove();
-                        inst.selectNone();
-                    });
+            dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Delete","Cancel"],function(choice){
+                if ( choice == 0 ){
+                    repoDelete( node.key );
+                    setStatusText("Repo deleted");
+                    refreshRepoList();
                 }
             });
-        }*/
+        }
     }
 
     function editRepo(){
@@ -59,25 +49,28 @@ function dlgRepoManage(){
         var node = tree.getActiveNode();
         if ( node ){
             dlgRepoEdit( node.key, function(){
+                setStatusText("Repo updated");
+                refreshRepoList();
             });
         }
+    }
 
-        /*
-        var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
-        var node = tree.getActiveNode();
-        if ( node ){
-            console.log( "node", node );
-            groupView( inst.uid, node.key.substr(2), function( ok, group ){
-                if ( ok ){
-                    dlgGroupEdit.show( inst.uid, inst.excl, group, function( group_new ){
-                        if ( group_new ){
-                            node.setTitle( group_new.title + " (" +group_new.gid + ")");
-                            node.resetLazy();
-                        }
-                    });
-                }
-            });
-        }*/
+    function refreshRepoList(){
+        repoList(false,true,function( ok, data){
+            if ( !ok ){
+                dlgAlert("Repo List Error",data);
+                return;
+            }
+
+            //console.log( "repo list:", ok, data );
+            var src = [];
+            var repo;
+            for ( var i in data ){
+                repo = data[i];
+                src.push({title: repo.id + " (" + repo.domain + ")",folder:true,lazy:true,icon:false,key:repo.id });
+            }
+            $("#dlg_repo_tree",frame).fancytree("getTree").reload(src);
+        });
     }
 
     $("#dlg_add_repo",frame).click( addRepo );
@@ -145,7 +138,7 @@ function dlgRepoManage(){
                             //for ( var i in data.response.admin ) {
                             //    adm = data.response.admin[i];
                             //    data.result.push( { title: mem.substr(2), icon: false, checkbox: false,key:mem } );
-                           // }
+                            // }
                         }
                     },
                     activate: function( event, data ) {

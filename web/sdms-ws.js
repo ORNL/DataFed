@@ -823,22 +823,21 @@ app.get('/api/repo/view', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/repo/update', ( a_req, a_resp ) => {
-    var params = {id:a_req.query.id};
-    if ( a_req.query.title )
-        params.title = a_req.query.title;
-    if ( a_req.query.desc )
-        params.desc = a_req.query.desc;
-    if ( a_req.query.domain )
-        params.domain = a_req.query.domain;
-    if ( a_req.query.exp_path )
-        params.expPath = a_req.query.exp_path;
-    if ( a_req.query.capacity )
-        params.capacity = a_req.query.capacity;
-    if ( a_req.query.admins )
-        params.admin = JSON.parse( a_req.query.admins );
+app.post('/api/repo/create', ( a_req, a_resp ) => {
+    sendMessage( "RepoCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json({});
+    });
+});
 
-    sendMessage( "RepoUpdateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/repo/update', ( a_req, a_resp ) => {
+    sendMessage( "RepoUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json({});
+    });
+});
+
+app.get('/api/repo/delete', ( a_req, a_resp ) => {
+    console.log("repo del, id",a_req.query.id);
+    sendMessage( "RepoDeleteRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
 });

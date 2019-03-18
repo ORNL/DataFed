@@ -307,19 +307,19 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     //var pubKey = (changed & 8)?$("#pub_key",frame).val();
                     //var endpoint = (changed & 8)?$("#ep_id",frame).val();
 
-                    var obj = {};
+                    var obj = {id:repo.id};
                     getUpdatedValue( $("#title",frame).val(), repo, obj, "title" );
                     getUpdatedValue( $("#desc",frame).val(), repo, obj, "desc" );
-                    getUpdatedValue( $("#domain",frame).val(), repo, obj, "domain" );
-                    getUpdatedValue( $("#path",frame).val(), repo, obj, "path" );
-                    getUpdatedValue( $("#exp_path",frame).val(), repo, obj, "expPath" );
-                    getUpdatedValue( $("#pub_key",frame).val(), repo, obj, "pubKey" );
                     getUpdatedValue( $("#addr",frame).val(), repo, obj, "address" );
+                    getUpdatedValue( $("#pub_key",frame).val(), repo, obj, "pubKey" );
                     getUpdatedValue( $("#ep_id",frame).val(), repo, obj, "endpoint" );
+                    getUpdatedValue( $("#path",frame).val(), repo, obj, "path" );
+                    getUpdatedValue( $("#domain",frame).val(), repo, obj, "domain" );
+                    getUpdatedValue( $("#exp_path",frame).val(), repo, obj, "expPath" );
 
-                    var cap = parseInt( $("#capacity",frame).val() );
-                    if ( isNaN( cap )){
-                        dlgAlert("Data Entry Error","Invalid capacity value" );
+                    var cap = parseSize( $("#capacity",frame).val() );
+                    if ( cap == null ){
+                        dlgAlert("Data Entry Error","Invalid repo capacity value." );
                         return;
                     }
                     if ( cap != repo.capacity )
@@ -329,10 +329,26 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     admin_tree.visit( function(node){
                         admins.push( node.key );
                     });
-                    // TODO compare admin list for changes
+
+                    if ( admins.length == 0 ){
+                        dlgAlert("Data Entry Error","Must specify at least one repo admin." );
+                        return;
+                    }
+
+                    if ( admins.length != repo.admin.length )
+                        obj.admin = admins;
+                    else{
+                        for ( var i in admins ){
+                            if ( admins[i] != repo.admin[i] ){
+                                obj.admin = admins;
+                                break;
+                            }
+                        }
+                    }
+
                     console.log("repo update:",obj);
-                    /*
-                    repoUpdate( a_repo_id, title, desc, domain, exp_path, capacity, admins, function( ok, data ){
+
+                    repoUpdate( obj, function( ok, data ){
                         if ( ok ){
                             changed = 0;
                             $("#apply_btn").button("option", "disabled", true);
@@ -340,13 +356,59 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                             dlgAlert( "Repo Update Failed", data );
                         }
                     });
-                    */
+                }else{
+                    var obj = {
+                        id: $("#id",frame).val(),
+                        title: $("#title",frame).val(),
+                        address: $("#addr",frame).val(),
+                        pubKey: $("#pub_key",frame).val(),
+                        endpoint: $("#ep_id",frame).val(),
+                        path: $("#path",frame).val()
+                    };
+
+                    var tmp = $("#desc",frame).val().trim();
+                    if ( tmp )
+                        obj.desc = tmp;
+                    tmp = $("#domain",frame).val().trim();
+                    if ( tmp )
+                        obj.domain = tmp;
+                    tmp = $("#exp_path",frame).val().trim();
+                    if ( tmp )
+                        obj.exp_path = tmp;
+
+                    var cap = parseSize( $("#capacity",frame).val() );
+                    if ( cap == null ){
+                        dlgAlert("Data Entry Error","Invalid repo capacity value." );
+                        return;
+                    }
+                    obj.capacity = cap;
+
+                    obj.admin = [];
+                    admin_tree.visit( function(node){
+                        obj.admin.push( node.key );
+                    });
+
+                    if ( obj.admin.length == 0 ){
+                        dlgAlert("Data Entry Error","Must specify at least one repo admin." );
+                        return;
+                    }
+
+                    console.log("repo create:",obj);
+
+                    repoCreate( obj, function( ok, data ){
+                        if ( ok ){
+                            if (a_cb) a_cb();
+                            $(this).dialog('destroy').remove();
+                        }else{
+                            dlgAlert( "Repo Create Failed", data );
+                        }
+                    });
                 }
             }
         },{
             text: a_repo_id?"Close":"Cancel",
             click: function() {
-                if ( a_cb )
+                if ( a_repo_id && a_cb )
                     a_cb();
                 $(this).dialog('destroy').remove();
             }

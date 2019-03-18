@@ -552,6 +552,11 @@ message RepoUpdateRequest
     repeated string             admin       = 12;
 }
 
+message RepoDeleteRequest
+{
+    required string             id          = 1;
+}
+
 message RepoDataReply
 {
     repeated SDMS.RepoData      repo        = 1;
