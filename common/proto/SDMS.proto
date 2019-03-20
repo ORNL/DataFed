@@ -104,12 +104,13 @@ message AllocStatsData
 message AllocData
 {
     required string             repo        = 1;
-    required uint64             alloc       = 2;
-    required uint64             usage       = 3;
-    required string             path        = 4;
-    optional string             id          = 5;
-    optional string             name        = 6;
-    optional AllocStatsData     stats       = 7;
+    required uint64             max_size    = 2;
+    required uint64             tot_size    = 3;
+    required uint32             max_count   = 4;
+    required string             path        = 5;
+    optional string             id          = 6;
+    optional string             name        = 7;
+    optional AllocStatsData     stats       = 8;
 }
 
 message DependencyData

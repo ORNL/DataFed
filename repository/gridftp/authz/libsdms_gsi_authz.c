@@ -318,6 +318,8 @@ sdms_gsi_authz_authorize_async( va_list ap )
 
                         if ( client_id )
                         {
+                            syslog( LOG_DEBUG, "Client ID (decoded): %s", client_id );
+
                             if (authzdb(client_id, object, action) == 0 )
                                 result = GLOBUS_SUCCESS;
                             free( client_id );

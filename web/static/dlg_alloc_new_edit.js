@@ -8,8 +8,9 @@ function makeDlAllocNewEdit(){
                 <button class='btn small' id='set_user'>User</button>\
                 <button class='btn small' id='set_proj'>Project</button>\
             </td></tr>\
-        <tr><td style='vertical-align:middle'>Allocation:</td><td><input type='text' id='alloc' style='width:100%'></input></td></tr>\
-        <tr><td style='vertical-align:middle'>Usage:</td><td><input type='text' id='usage' style='width:100%' readonly></input></td></tr>\
+        <tr><td style='vertical-align:middle'>Max. Data Size:</td><td><input type='text' id='max_size' style='width:100%'></input></td></tr>\
+        <tr><td style='vertical-align:middle'>Total Data size:</td><td><input type='text' id='tot_size' style='width:100%' readonly></input></td></tr>\
+        <tr><td style='vertical-align:middle'>Max. Rec. Count:</td><td><input type='text' id='max_count' style='width:100%'></input></td></tr>\
         </table>\
         ";
 
@@ -27,13 +28,15 @@ function makeDlAllocNewEdit(){
                 $("#subj_label",inst.frame).html( "User&nbspID:" );
 
             inputDisable($("#subject",inst.frame)).val( a_alloc.id );
-            $("#alloc",inst.frame).val( a_alloc.alloc );
-            $("#usage",inst.frame).val( a_alloc.usage );
+            $("#max_size",inst.frame).val( a_alloc.maxSize );
+            $("#tot_size",inst.frame).val( a_alloc.totSize );
+            $("#max_count",inst.frame).val( a_alloc.maxCount );
         }else{
-            inst.alloc = {repo:a_repo,id:null,alloc:0,usage:0};
+            inst.alloc = {repo:a_repo,id:null,maxSize:0,totSize:0,maxCount:0};
             $("#subj_btn_row",inst.frame).show();
             $("#subject",inst.frame);
-            $("#usage",inst.frame).val( "0" );
+            $("#tot_size",inst.frame).val( "0" );
+            $("#max_count",inst.frame).val( 1000 );
             $(".btn",inst.frame).button();
 
             $("#set_user",inst.frame).click(function(){
@@ -48,7 +51,7 @@ function makeDlAllocNewEdit(){
             });
         }
 
-        inputDisable($("#usage",inst.frame));
+        inputDisable($("#tot_size",inst.frame));
 
         var options = {
             title: (a_alloc?"Edit":"Add") + " Allocation",
@@ -72,27 +75,33 @@ function makeDlAllocNewEdit(){
                         }
                     }
 
-                    var alloc = parseSize( $("#alloc",inst.frame).val() );
+                    var max_size = parseSize( $("#max_size",inst.frame).val() );
 
-                    if ( alloc == null ){
-                        dlgAlert("Data Entry Error","Invalid allocation value.");
+                    if ( max_size == null ){
+                        dlgAlert("Data Entry Error","Invalid max size value.");
                         return;
                     }
 
-                    if ( alloc == 0 ){
-                        dlgAlert("Data Entry Error","Allocation cannot be 0.");
+                    if ( max_size == 0 ){
+                        dlgAlert("Data Entry Error","Max size cannot be 0.");
                         return;
                     }
 
-                    /*if ( alloc < inst.alloc.usage ){
-                        dlgAlert("Data Entry Error","Allocation cannot be less than current usage.");
-                        return;
-                    }*/
+                    var max_count = parseInt( $("#max_count",inst.frame).val() );
 
-                    inst.alloc.alloc = alloc;
+                    if ( isNaN( max_count )){
+                        dlgAlert("Data Entry Error","Invalid max count value.");
+                        return;
+                    }
+
+                    if ( max_count == 0 ){
+                        dlgAlert("Data Entry Error","Max count cannot be 0.");
+                        return;
+                    }
+
+                    inst.alloc.maxSize = max_size;
                     var dlg_inst = $(this);
-                    allocSet( a_repo, inst.alloc.id, alloc, function( ok, data ){
-                        console.log( "allocSet resp:", ok, data );
+                    allocSet( a_repo, inst.alloc.id, max_size, max_count, function( ok, data ){
                         if ( ok ){
                             a_cb( inst.alloc );
                             dlg_inst.dialog('destroy').remove();

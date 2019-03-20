@@ -162,7 +162,7 @@ function dlgSettings( a_cb ){
             for ( var i in data ){
                 alloc = data[i];
                 html += "<option value='"+alloc.repo + "'";
-                html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>";
+                html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
             }
         }
 

@@ -88,6 +88,8 @@ Server::loadRepositoryConfig()
 
     for ( vector<RepoData*>::iterator r = repos.begin(); r != repos.end(); ++r )
     {
+        cout << "Loading repo "<< (*r)->id() <<" key ["<<(*r)->pub_key()<<"]\n";
+
         m_repos[(*r)->id()] = *r;
         m_auth_clients[(*r)->pub_key()] = (*r)->id();
     }
@@ -617,6 +619,7 @@ Server::zapHandler()
                     "\n\tmechanism: " << mechanism <<
                     "\n\tclient_key: " << client_key_text << "\n";
                 */
+                cout << "ZAP client key ["<< client_key_text << "]\n";
 
                 // Always accept - but only set UID if it's a known client (by key)
                 if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())

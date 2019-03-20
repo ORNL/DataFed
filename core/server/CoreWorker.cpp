@@ -695,8 +695,8 @@ Worker::procRepoAllocationSetRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
     m_db_client.repoAllocationSet( *request, reply );
-    DL_DEBUG( "procRepoAllocationSetRequest, alloc: " << request->alloc() );
-    if ( request->alloc() > 0 )
+
+    if ( request->max_size() > 0 )
     {
         DL_DEBUG( "Create/ensure path for " << request->subject() );
         m_mgr.repoPathCreate( request->repo(), request->subject() );
@@ -1274,7 +1274,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             use_client = true;
             break;
         case SDMS::SS_MANAGED_PROJECTS:
-            result += "for i,e,p in 2..2 inbound @client admin, owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
+            result += "for i,e,p in 2..2 inbound @client admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
             use_client = true;
             break;
         case SDMS::SS_MEMBER_PROJECTS:

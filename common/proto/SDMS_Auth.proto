@@ -599,7 +599,8 @@ message RepoAllocationSetRequest
 {
     required string             repo        = 1;
     required string             subject     = 2;
-    required uint64             alloc       = 3;
+    required uint64             max_size    = 3;
+    required uint32             max_count   = 4;
 }
 
 // Reply is ACK/NACK

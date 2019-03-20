@@ -587,8 +587,9 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
 
                     alloc = user->add_alloc();
                     alloc->set_repo(alloc_val["repo"].GetString());
-                    alloc->set_alloc(alloc_val["alloc"].GetUint64());
-                    alloc->set_usage(alloc_val["usage"].GetUint64());
+                    alloc->set_max_size(alloc_val["max_size"].GetUint64());
+                    alloc->set_tot_size(alloc_val["tot_size"].GetUint64());
+                    alloc->set_max_count(alloc_val["max_count"].GetUint());
                     alloc->set_path(alloc_val["path"].GetString());
                 }
             }
@@ -797,8 +798,9 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document 
 
                 alloc = proj->add_alloc();
                 alloc->set_repo(alloc_val["repo"].GetString());
-                alloc->set_alloc(alloc_val["alloc"].GetUint64());
-                alloc->set_usage(alloc_val["usage"].GetUint64());
+                alloc->set_max_size(alloc_val["max_size"].GetUint64());
+                alloc->set_tot_size(alloc_val["tot_size"].GetUint64());
+                alloc->set_max_count(alloc_val["max_count"].GetUint());
                 alloc->set_path(alloc_val["path"].GetString());
             }
         }
@@ -1903,34 +1905,26 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_
 void
 DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
-cout  << "set list 1" << endl;
     rapidjson::Document result;
     vector<pair<string,string>> params;
     if ( a_request.has_all() )
         params.push_back({"all", a_request.all()?"true":"false"});
     if ( a_request.has_details() )
         params.push_back({"details", a_request.details()?"true":"false"});
-try{
+
     dbGet( "repo/list", params, result );
-}catch(exception &e){
-    cout << "exception:" << e.what() << endl;
-}
-cout  << "set repo data" << endl;
+
     setRepoData( &a_reply, 0, result );
-cout  << "set repo data - done" << endl;
 }
 
 void
 DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
 {
-cout  << "set list 2" << endl;
     rapidjson::Document result;
 
     dbGet( "repo/list", {{"all","true"},{"details","true"}}, result );
 
-cout  << "set repo data" << endl;
     setRepoData( 0, &a_repos, result );
-cout  << "set repo data - done" << endl;
 }
 
 void
@@ -2141,8 +2135,9 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
 
         alloc = a_reply.add_alloc();
         alloc->set_repo(val["repo"].GetString());
-        alloc->set_alloc(val["alloc"].GetUint64());
-        alloc->set_usage(val["usage"].GetUint64());
+        alloc->set_max_size(val["max_size"].GetUint64());
+        alloc->set_tot_size(val["tot_size"].GetUint64());
+        alloc->set_max_count(val["max_count"].GetUint());
         alloc->set_path(val["path"].GetString());
         if (( imem = val.FindMember("id")) != val.MemberEnd() )
             alloc->set_id( imem->value.GetString() );
@@ -2196,7 +2191,7 @@ DatabaseClient::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_requ
     (void)a_reply;
     rapidjson::Document result;
 
-    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"alloc",to_string(a_request.alloc())}}, result );
+    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"max_size",to_string(a_request.max_size())},{"max_count",to_string(a_request.max_count())}}, result );
 }
 
 void

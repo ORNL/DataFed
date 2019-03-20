@@ -93,7 +93,7 @@ function dlgProjNewEdit(a_data,a_cb) {
 
                         for ( var i in alloc_list ){
                             if ( alloc_list[i].repo == subRepo ){
-                                if ( alloc_sz > alloc_list[i].alloc ){
+                                if ( alloc_sz > alloc_list[i].maxSize ){
                                     dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
                                     return;
                                 }
@@ -165,7 +165,7 @@ function dlgProjNewEdit(a_data,a_cb) {
                                 found = true;
                             }
                             console.log( "alloc", alloc );
-                            alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>"
+                            alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>"
                         }
 
                         if ( found )

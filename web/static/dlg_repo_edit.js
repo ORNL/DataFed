@@ -100,11 +100,11 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     }
 
     function addAllocNode( alloc ){
-        alloc_tree.rootNode.addNode({title:alloc.id.substr(2) + "  (" +sizeToString(alloc.usage) +"/"+sizeToString( alloc.alloc )+")",icon:alloc.id.startsWith("u/")?"ui-icon ui-icon-person":"ui-icon ui-icon-box",key:alloc.id,alloc:alloc});
+        alloc_tree.rootNode.addNode({title:alloc.id.substr(2) + "  (" +sizeToString(alloc.totSize) +"/"+sizeToString( alloc.maxSize )+")",icon:alloc.id.startsWith("u/")?"ui-icon ui-icon-person":"ui-icon ui-icon-box",key:alloc.id,alloc:alloc});
     }
 
     function updateAllocTitle( node ){
-        node.setTitle( node.key.substr(2) + "  (" +sizeToString(node.data.alloc.usage) +"/"+sizeToString( node.data.alloc.alloc )+")");
+        node.setTitle( node.key.substr(2) + "  (" +sizeToString(node.data.alloc.totSize) +"/"+sizeToString( node.data.alloc.maxSize )+")");
     }
 
     $(".btn",frame).button();

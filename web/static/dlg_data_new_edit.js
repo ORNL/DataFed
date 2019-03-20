@@ -146,11 +146,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     alloc = data[i];
                     //console.log( "alloc", alloc );
                     html += "<option value='"+alloc.repo + "'";
-                    if ( parseInt( alloc.usage ) < parseInt( alloc.alloc ))
+                    if ( parseInt( alloc.totSize ) < parseInt( alloc.maxSize ))
                         have_cap = true;
                     else
                         html += " disabled";
-                    html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.usage) + " / " + sizeToString(alloc.alloc) +")</option>";
+                    html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
                 }
 
                 if ( !have_cap || !data.length ){

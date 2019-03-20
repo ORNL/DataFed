@@ -33,11 +33,11 @@ function dlgAllocations(){
         console.log("refreshAllocTable",data);
         var html;
         if ( data.length ){
-            html = "<table class='info_table'><tr><th>Repo ID</th><th>Capacity</th><th>Used</th><th>Records</th><th>Files</th><th>Avg. Size</th></tr>";
+            html = "<table class='info_table'><tr><th>Repo ID</th><th>Max Size</th><th>Total Size</th><th>Max Count</th><th>Records</th><th>Files</th><th>Avg. Size</th></tr>";
             var alloc;
             for ( var i in data ){
                 alloc = data[i];
-                html += "<tr><td>"+alloc.repo+"</td><td>"+sizeToString(alloc.alloc)+"</td><td>"+sizeToString(alloc.usage)+"</td><td>"
+                html += "<tr><td>"+alloc.repo+"</td><td>"+sizeToString(alloc.maxSize)+"</td><td>"+sizeToString(alloc.totSize)+"</td><td>"+alloc.maxCount+"</td><td>"
                     + alloc.stats.records + "</td><td>" + alloc.stats.files + "</td><td>" + (alloc.stats.files?sizeToString( alloc.stats.totalSz/alloc.stats.files ):"n/a") + "</td></tr>";
             }
             html += "</table>";

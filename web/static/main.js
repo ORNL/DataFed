@@ -446,8 +446,8 @@ function allocStats( a_repo, a_subject, a_cb ){
     _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+(a_subject?"&subject="+encodeURIComponent(a_subject):""), null, a_cb );
 }
 
-function allocSet( a_repo, a_subject, a_alloc, a_cb ){
-    _asyncGet( "/api/repo/alloc/set?repo="+a_repo+"&subject="+encodeURIComponent(a_subject)+"&alloc="+a_alloc, null, a_cb );
+function allocSet( a_repo, a_subject, a_max_size, a_max_count, a_cb ){
+    _asyncGet( "/api/repo/alloc/set?repo="+a_repo+"&subject="+encodeURIComponent(a_subject)+"&max_size="+a_max_size+"&max_count="+a_max_count, null, a_cb );
 }
 
 function groupView( a_uid, a_gid, a_cb ) {

@@ -738,8 +738,8 @@ function makeBrowserTab(){
                             var alloc,free;
                             for ( i in user.alloc ){
                                 alloc = user.alloc[i]
-                                free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
-                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
+                                free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
+                                html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
                             }
                         }else{
                             html += "(n/a)";
@@ -908,8 +908,8 @@ function makeBrowserTab(){
                             var alloc,free;
                             for ( i in item.alloc ){
                                 alloc = item.alloc[i]
-                                free = Math.max( Math.floor(10000*(alloc.alloc - alloc.usage)/alloc.alloc)/100, 0 );
-                                html += alloc.repo + ": " + sizeToString( alloc.alloc ) + " total, " + sizeToString( alloc.usage ) + " used (" + free + " % free)<br>";
+                                free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
+                                html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
                             }
                         }else if( item.subRepo ){
                             free = Math.max( Math.floor(10000*(item.subAlloc - item.subUsage)/item.subAlloc)/100, 0 );
@@ -2417,7 +2417,7 @@ function makeBrowserTab(){
                     var alloc;
                     for ( var i in data.response ) {
                         alloc = data.response[i];
-                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo,scope:alloc.id,lazy:true,offset:0,alloc_capacity:alloc.alloc,alloc_usage:alloc.usage,nodrag:true,checkbox:false});
+                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo,scope:alloc.id,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,nodrag:true,checkbox:false});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
