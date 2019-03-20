@@ -47,7 +47,14 @@ router.get('/create', function (req, res) {
                 write: ["u","c","a","g","acl","owner","ident","uuid","alias","admin"]
             },
             action: function() {
-                var user_data = { _key: req.queryParams.uid, name: req.queryParams.name, is_admin: req.queryParams.is_admin };
+                var user_data = {
+                    _key: req.queryParams.uid,
+                    name: req.queryParams.name,
+                    is_admin: req.queryParams.is_admin,
+                    max_coll: g_lib.DEF_MAX_COLL,
+                    max_proj: g_lib.DEF_MAX_PROJ,
+                    max_sav_qry: g_lib.DEF_MAX_SAV_QRY
+                };
 
                 if ( req.queryParams.password )
                     user_data.password = req.queryParams.password;

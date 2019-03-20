@@ -112,6 +112,10 @@ module.exports = ( function() {
         id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' }
     };
 
+    obj.DEF_MAX_COLL    = 50;
+    obj.DEF_MAX_PROJ    = 10;
+    obj.DEF_MAX_SAV_QRY = 20;
+
     obj.procInputParam = function( a_in, a_field, a_update, a_out ){
         var val, spec = obj.field_reqs[a_field];
 
@@ -313,11 +317,14 @@ module.exports = ( function() {
 
     obj.assignRepo = function( a_user_id ){
         //var repos = obj.db._query( "for v, e in 1..1 outbound @user alloc return { repo: v, alloc: e }", { user: a_user_id }).toArray();
-        var repos = obj.db.alloc.byExample({ _from: a_user_id }).toArray();
+        var i,count,repos = obj.db.alloc.byExample({ _from: a_user_id }).toArray();
 
-        for ( var i in repos ){
-            if ( repos[i].usage < repos[i].alloc )
-                return repos[i];
+        for ( i in repos ){
+            if ( repos[i].tot_size < repos[i].max_size ){
+                count = obj.db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('d',i._from) RETURN 1)",{id:a_user_id}).next();
+                if ( count < repos[i].max_count )
+                    return repos[i];
+            }
         }
 
         return null;
@@ -326,9 +333,16 @@ module.exports = ( function() {
     obj.verifyRepo = function( a_user_id, a_repo_id ){
         var alloc = obj.db.alloc.firstExample({ _from: a_user_id, _to: a_repo_id });
         if ( !alloc )
-            throw obj.ERR_NO_ALLOCATION;
-        if ( alloc.usage >= alloc.alloc )
-            throw obj.ERR_ALLOCATION_EXCEEDED;
+            throw [obj.ERR_NO_ALLOCATION,"No allocation on repo " + a_repo_id];
+
+        if ( alloc.tot_size >= alloc.max_size )
+            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation size exceeded (max: "+alloc.max_size+")"];
+
+        var count = obj.db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('d',i._from) RETURN 1)",{id:a_user_id}).next();
+
+        if ( count >= alloc.max_count )
+            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation count exceeded (max: "+alloc.max_count+")"];
+
         return alloc;
     };
 
@@ -444,7 +458,7 @@ module.exports = ( function() {
                 console.log("normal alloc:",alloc);
             }
 
-            obj.db._update( alloc._id, { usage: alloc.usage - a_allocs[id] });
+            obj.db._update( alloc._id, { tot_size: alloc.tot_size - a_allocs[id] });
         }
     };
 

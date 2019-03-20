@@ -31,8 +31,24 @@ router.get('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+                // Must have at least one allocation to create collections
+                if ( !g_db.alloc.firstExample({_from: client._id }) )
+                    throw [g_lib.ERR_NO_ALLOCATION,"Allocation required to create projects"];
+
+                // Enforce project limit if set
+                if ( client.max_proj >= 0 ){
+                    var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('p',i._from) RETURN 1)",{id:client._id}).next();
+                    if ( count >= client.max_proj )
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Project limit reached ("+client.max_proj+"). Contact system administrator to increase limit."];
+                }
+
                 var time = Math.floor( Date.now()/1000 );
-                var proj_data = { ct: time, ut: time };
+                var proj_data = {
+                    max_coll: g_lib.DEF_MAX_COLL,
+                    ct: time,
+                    ut: time
+                };
 
                 g_lib.procInputParam( req.queryParams, "id", false, proj_data ); // Sets _key field
                 g_lib.procInputParam( req.queryParams, "title", false, proj_data );
@@ -44,8 +60,8 @@ router.get('/create', function (req, res) {
                     //if ( isNaN(alloc_sz) || alloc_sz <= 0 )
                     if (  req.queryParams.sub_alloc <= 0 )
                         throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
-                    if ( req.queryParams.sub_alloc > alloc.alloc ) // Ok to over-allocate across projects
-                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: " + alloc.alloc +")"];
+                    if ( req.queryParams.sub_alloc > alloc.tot_size ) // Ok to over-allocate across projects
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: " + alloc.tot_size +")"];
 
                     proj_data.sub_repo = req.queryParams.sub_repo;
                     proj_data.sub_alloc = req.queryParams.sub_alloc;
@@ -171,8 +187,8 @@ router.get('/update', function (req, res) {
                         var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
                         if (  req.queryParams.sub_alloc <= 0 )
                             throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
-                        if ( req.queryParams.sub_alloc > alloc.alloc )
-                            throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+alloc.alloc+")"];
+                        if ( req.queryParams.sub_alloc > alloc.tot_size )
+                            throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+alloc.tot_size+")"];
 
                         obj.sub_repo = req.queryParams.sub_repo;
                         obj.sub_alloc = req.queryParams.sub_alloc;
@@ -428,7 +444,7 @@ router.get('/delete', function (req, res) {
 
                     var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
                     obj = g_db.alloc.firstExample({_from: owner_id, _to: proj.sub_repo});
-                    g_db._update( obj._id, { usage: obj.usage - size });
+                    g_db._update( obj._id, { usage: obj.tot_size - size });
                 }else{
                     objects = g_db.alloc.byExample({ _from: proj_id });
                     while ( objects.hasNext() ) {

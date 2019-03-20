@@ -30,6 +30,14 @@ router.get('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+                if ( client.max_sav_qry >= 0 ){
+                    var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('q',i._from) RETURN 1)",{id:client._id}).next();
+
+                    if ( count >= client.max_sav_qry )
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Saved query limit reached ("+client.max_sav_qry+"). Contact system administrator to increase limit."];
+                }
+
                 var time = Math.floor( Date.now()/1000 );
 
                 var obj = { query: req.queryParams.query, query_comp: req.queryParams.query_comp, ct: time, ut: time, owner: client._id };

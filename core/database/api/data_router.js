@@ -92,10 +92,6 @@ router.post('/create', function (req, res) {
                                 // TODO Handle multiple project owners?
                                 var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
                                 repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
-                                // Make sure hard capacity hasn't been exceeded
-                                if ( repo_alloc.usage > repo_alloc.capacity )
-                                    throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+repo_alloc.capacity+")"];
-
                                 alloc_parent = repo_alloc._id;
                             }
                         }
@@ -305,8 +301,8 @@ router.post('/update', function (req, res) {
                             }
 
                             // Update primary/parent allocation
-                            usage = Math.max(0,alloc.usage - data.size + obj.size);
-                            g_db._update( alloc._id, {usage:usage});
+                            usage = Math.max(0,alloc.tot_size - data.size + obj.size);
+                            g_db._update( alloc._id, {tot_size:usage});
                         }
                     }
                 }

@@ -31,8 +31,7 @@ router.post('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var owner_id;
-                var parent_id;
+                var owner = client,parent_id;
 
                 if ( req.body.parent ) {
                     parent_id = g_lib.resolveID( req.body.parent, client );
@@ -43,7 +42,7 @@ router.post('/create', function (req, res) {
                     if ( !g_db._exists( parent_id ))
                         throw [g_lib.ERR_INVALID_PARAM,"Parent collection not found,"+req.body.parent];
 
-                    owner_id = g_db.owner.firstExample({_from:parent_id})._to;
+                    var owner_id = g_db.owner.firstExample({_from:parent_id})._to;
                     if ( owner_id != client._id ){
                         if ( !g_lib.hasManagerPermProj( client, owner_id )){
                             var parent_coll = g_db.c.document( parent_id );
@@ -51,30 +50,41 @@ router.post('/create', function (req, res) {
                             if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE ))
                                 throw g_lib.ERR_PERM_DENIED;
                         }
+                        owner = g_db.document( owner_id );
                     }
                 }else{
                     parent_id = g_lib.getRootID(client._id);
-                    owner_id = client._id;
+                }
+
+                // Must have at least one allocation to create collections
+                if ( !g_db.alloc.firstExample({_from: owner.id }) )
+                    throw [g_lib.ERR_NO_ALLOCATION,"Allocation required to create collections"];
+
+                // Enforce collection limit if set
+                if ( owner.max_coll >= 0 ){
+                    var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",{id:owner._id}).next();
+                    if ( count >= owner.max_coll )
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Collection limit reached ("+client.max_coll+"). Contact system administrator to increase limit."];
                 }
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { owner: owner_id, ct: time, ut: time };
+                var obj = { owner: owner._id, ct: time, ut: time };
 
                 g_lib.procInputParam( req.body, "title", false, obj );
                 g_lib.procInputParam( req.body, "desc", false, obj );
                 g_lib.procInputParam( req.body, "alias", false, obj );
 
                 var coll = g_db.c.save( obj, { returnNew: true });
-                g_db.owner.save({ _from: coll._id, _to: owner_id });
+                g_db.owner.save({ _from: coll._id, _to: owner._id });
 
                 g_graph.item.save({ _from: parent_id, _to: coll._id });
 
                 if ( obj.alias ) {
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
+                    var alias_key = owner._id[0] + ":" + owner._id.substr(2) + ":" + obj.alias;
 
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
+                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner._id });
                 }
 
                 coll = coll.new;

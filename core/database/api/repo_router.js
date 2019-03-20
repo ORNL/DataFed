@@ -28,15 +28,23 @@ router.get('/list', function (req, res) {
         }
     }
 
-    var result;
+    var result,repo,i;
 
-    if ( !client || req.queryParams.all ){
+    if ( !client ){
+        result = g_db._query( "for v in repo return v").toArray();
+        for ( i in result ){
+            repo = result[i];
+            repo.id = repo._id;
+            delete repo._id;
+            delete repo._key;
+            delete repo._rev;
+        }
+    }else if( req.queryParams.all ){
         result = g_db._query( "for v in repo return {id:v._id,title:v.title,domain:v.domain}");
     }else{
-        if ( req.queryParams.details ){
+            if ( req.queryParams.details ){
             result = g_db._query( "for v in 1..1 inbound @admin admin filter is_same_collection('repo',v) return v",{admin:client._id}).toArray();
-            var repo;
-            for ( var i in result ){
+            for ( i in result ){
                 repo = result[i];
                 repo.id = repo._id;
                 delete repo._id;
@@ -272,7 +280,7 @@ router.get('/alloc/list/by_repo', function (req, res) {
 
     g_lib.ensureAdminPermRepo( client, repo._id );
 
-    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return {id:v._id,name:v.name?v.name:v.title,repo:@repo,alloc:e.alloc,usage:e.usage,path:e.path}", { repo: repo._id } ).toArray();
+    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return {id:v._id,name:v.name?v.name:v.title,repo:@repo,max_size:e.max_size,tot_size:e.tot_size,max_count:e.max_count,path:e.path}", { repo: repo._id } ).toArray();
 
     res.send( result );
 })
@@ -411,27 +419,27 @@ router.get('/alloc/set', function (req, res) {
                 g_lib.ensureAdminPermRepo( client, repo._id );
                 var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
 
-                if ( req.queryParams.alloc == 0 && alloc ){
+                if ( req.queryParams.max_size == 0 && alloc ){
                     // Check if there are any records using this repo and fail if so
                     // Check for sub allocations
                     if ( g_db.loc.firstExample({ parent: alloc._id }))
                         throw [g_lib.ERR_IN_USE,"Cannot clear allocation - sub-allocation defined"];
                     // Check for direct use of allocation
-                    var records = g_db._query("for v,e,p in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return p.vertices[1]._id", { repo: repo._id, subj: subject_id }).toArray();
-                    if ( records.length )
+                    var count = g_db._query("return length(for v in 2..2 inbound @repo loc, outbound owner filter v._id == @subj return 1)", { repo: repo._id, subj: subject_id }).next();
+                    if ( count )
                         throw [g_lib.ERR_IN_USE,"Cannot clear allocation - records present"];
 
                     g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
                 } else {
                     if ( alloc ){
-                        g_db.alloc.update( alloc._id, { alloc: req.queryParams.alloc });
+                        g_db.alloc.update( alloc._id, { max_size: req.queryParams.max_size,max_count:req.queryParams.max_count });
                     } else {
                         var path;
                         if ( subject_id[0] == "p" )
                             path = repo.path + "project/";
                         else
                             path = repo.path + "user/";
-                        g_db.alloc.save({ _from: subject_id, _to: repo._id, alloc: req.queryParams.alloc, usage: 0, path: path + subject_id.substr(2) + "/" });
+                        g_db.alloc.save({ _from: subject_id, _to: repo._id, max_size: req.queryParams.max_size, max_count: req.queryParams.max_count, tot_size: 0, path: path + subject_id.substr(2) + "/" });
                     }
                 }
             }
@@ -443,6 +451,7 @@ router.get('/alloc/set', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
 .queryParam('repo', joi.string().required(), "Repo ID")
-.queryParam('alloc', joi.number().required(), "Allocation (GB)")
+.queryParam('max_size', joi.number().required(), "Max total data size (bytes)")
+.queryParam('max_count', joi.number().required(), "Max number of records (files)")
 .summary('Set user/project repo allocation')
 .description('Set user repo/project allocation. Only repo admin can set allocations.');
