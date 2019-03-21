@@ -982,8 +982,9 @@ function makeBrowserTab(){
                 html = "<table class='info_table'><col width='20%'><col width='80%'>";
                 // TODO deal with project sub-allocations
                 html += "<tr><td>Repo ID:</td><td>" + key + "</td></tr>";
-                html += "<tr><td>Capacity:</td><td>" + node.data.alloc_capacity + "</td></tr>";
-                html += "<tr><td>Usage:</td><td>" + node.data.alloc_usage + "</td></tr></table>";
+                html += "<tr><td>Capacity:</td><td>" + sizeToString( node.data.alloc_capacity ) + "</td></tr>";
+                html += "<tr><td>Usage:</td><td>" + sizeToString( node.data.alloc_usage ) + "</td></tr>";
+                html += "<tr><td>Max. Records:</td><td>" + node.data.alloc_max_count + "</td></tr></table>";
                 inst.sel_details.html(html);
                 $("#sel_references").html("(n/a)");
 
@@ -2417,7 +2418,7 @@ function makeBrowserTab(){
                     var alloc;
                     for ( var i in data.response ) {
                         alloc = data.response[i];
-                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo,scope:alloc.id,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,nodrag:true,checkbox:false});
+                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo,scope:alloc.id,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,nodrag:true,checkbox:false});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
