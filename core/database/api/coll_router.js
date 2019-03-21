@@ -50,15 +50,17 @@ router.post('/create', function (req, res) {
                             if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE ))
                                 throw g_lib.ERR_PERM_DENIED;
                         }
-                        owner = g_db.document( owner_id );
+                        owner = g_db._document( owner_id );
                     }
                 }else{
                     parent_id = g_lib.getRootID(client._id);
                 }
 
                 // Must have at least one allocation to create collections
-                if ( !g_db.alloc.firstExample({_from: owner.id }) )
-                    throw [g_lib.ERR_NO_ALLOCATION,"Allocation required to create collections"];
+                if ( !g_db.alloc.firstExample({_from: owner._id }) ){
+                    if ( owner._id[0] != 'p' || !owner.sub_repo )
+                        throw [g_lib.ERR_NO_ALLOCATION,"Allocation required to create collections"];
+                }
 
                 // Enforce collection limit if set
                 if ( owner.max_coll >= 0 ){
