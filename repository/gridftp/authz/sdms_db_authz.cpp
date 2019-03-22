@@ -25,7 +25,7 @@ int authzdb(char * client_id, char * object, char * action)
 
     try
     {
-        AuthzWorker server( "/etc/grid-security/sdms-authz.conf" );
+        AuthzWorker server( "/etc/datafed/datafed-authz.conf" );
         result = server.run(client_id, object, action);
     }
     catch( TraceException &e )
