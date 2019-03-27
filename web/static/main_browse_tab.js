@@ -38,7 +38,12 @@ function makeBrowserTab(){
     this.svg = null;
     this.simulation = null;
     this.sel_node = null;
-    this.tree_mode = true;
+
+    var SS_TREE = 0;
+    var SS_CAT = 1;
+    var SS_PROV = 2;
+    var SS_SEARCH = 3;
+    this.select_source = SS_TREE;
 
     this.windowResized = function(){
         console.log("browser panel resized");
@@ -54,16 +59,27 @@ function makeBrowserTab(){
 
     this.getSelectedIDs = function(){
         var ids = [];
-
-        if ( !inst.tree_mode ){
-            if ( inst.sel_node ){
-                ids.push( inst.sel_node.id );
-            }
-        }else{
-            var sel = inst.data_tree.getSelectedNodes();
-            for ( var i in sel ){
-                ids.push( sel[i].key );
-            }
+        console.log("getSelectedIDs, mode:",inst.select_source);
+        switch( inst.select_source ){
+            case SS_TREE:
+                var sel = inst.data_tree.getSelectedNodes();
+                for ( var i in sel ){
+                    ids.push( sel[i].key );
+                }
+                break;
+            case SS_SEARCH:
+                var sel = inst.results_tree.getSelectedNodes();
+                for ( var i in sel ){
+                    ids.push( sel[i].key );
+                }
+                break;
+            case SS_CAT:
+                break;
+            case SS_PROV:
+                if ( inst.sel_node ){
+                    ids.push( inst.sel_node.id );
+                }
+                break;
         }
 
         return ids;
@@ -100,16 +116,26 @@ function makeBrowserTab(){
 
         if ( inst.focus_node_id ){
             if ( a_ids && a_data )
-                graphUpdate( a_ids, a_data );
+                inst.graphUpdate( a_ids, a_data );
             else
-                graphLoad( inst.focus_node_id, inst.sel_node.id );
+                inst.graphLoad( inst.focus_node_id, inst.sel_node.id );
         }
 
-        if ( inst.tree_mode ){
-            var node = inst.data_tree.activeNode;
-            inst.showSelectedInfo( node );
-        }else{
-            inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
+        switch( inst.select_source ){
+            case SS_TREE:
+                var node = inst.data_tree.activeNode;
+                inst.showSelectedInfo( node );
+                break;
+            case SS_CAT:
+                inst.showSelectedInfo();
+                break;
+            case SS_PROV:
+                inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
+                break;
+            case SS_SEARCH:
+                var node = inst.results_tree.activeNode;
+                inst.showSelectedInfo( node );
+                break;
         }
     }
 
@@ -349,7 +375,13 @@ function makeBrowserTab(){
 
     this.copySelected = function(){
         console.log("Copy");
-        inst.pasteItems = inst.data_tree.getSelectedNodes();
+        if ( inst.select_source == SS_TREE )
+            inst.pasteItems = inst.data_tree.getSelectedNodes();
+        else if ( inst.select_source == SS_SEARCH )
+            inst.pasteItems = inst.results_tree.getSelectedNodes();
+        else
+            return;
+
         inst.pasteSource = pasteItems[0].parent;
         inst.pasteMode = "copy";
         inst.pasteCollections = [];
@@ -533,8 +565,9 @@ function makeBrowserTab(){
         var id = ids[0];
 
         if ( id.charAt(0) == "d" ) {
-            graphLoad( id );
-            $( "#data-tabs" ).tabs({ active: 1 });
+            inst.graphLoad( id );
+            $('[href="#tab-prov-graph"]').closest('li').show();
+            $( "#data-tabs" ).tabs({ active: 2 });
         }
     }
 
@@ -616,14 +649,24 @@ function makeBrowserTab(){
     this.updateBtnState = function(){
         //console.log("updateBtnState");
         var bits;
-        if ( inst.tree_mode ){
-            var sel = inst.data_tree.getSelectedNodes();
-            bits = calcActionState( sel );
-        }else{
-            if ( inst.focus_node_id )
-                bits = 0;
-            else
+        switch( inst.select_source ){
+            case SS_TREE:
+                var sel = inst.data_tree.getSelectedNodes();
+                bits = calcActionState( sel );
+                break;
+            case SS_CAT:
                 bits = 0xFF;
+                break;
+            case SS_PROV:
+                if ( inst.focus_node_id )
+                    bits = 0;
+                else
+                    bits = 0xFF;
+                break;
+            case SS_SEARCH:
+                var sel = inst.results_tree.getSelectedNodes();
+                bits = calcActionState( sel );
+                break;
         }
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
@@ -1125,7 +1168,7 @@ function makeBrowserTab(){
         dataFind( query, function( ok, items ){
             console.log( "qry res:", ok, items );
             if ( ok ){
-                var srch_node = inst.data_tree.getNodeByKey("search");
+                //var srch_node = inst.data_tree.getNodeByKey("search");
                 var results = [];
                 if ( items.length > 0 ){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
@@ -1137,9 +1180,13 @@ function makeBrowserTab(){
                     setStatusText("No results found");
                     results.push({title:"(no results)",icon:false,checkbox:false,nodrag:true,notarg:true});
                 }
-                srch_node.removeChildren();
-                srch_node.addChildren( results );
-                srch_node.setExpanded( true );
+                $()
+                //srch_node.removeChildren();
+                //srch_node.addChildren( results );
+                //srch_node.setExpanded( true );
+                $("#search_results_tree").fancytree("getTree").reload(results);
+                $('[href="#tab-search-results"]').closest('li').show();
+                $( "#data-tabs" ).tabs({ active: 3 });
 
                 if ( !inst.data_tree.activeNode )
                     inst.showSelectedInfo();
@@ -2057,13 +2104,13 @@ function makeBrowserTab(){
         }
     }
 
-    this.treeSelectRange = function( a_node ){
+    this.treeSelectRange = function( a_tree, a_node ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
             setStatusText("Cannot select across collections or categories");
             return;
         }
 
-        var act_node = inst.data_tree.activeNode;
+        var act_node = a_tree.activeNode;
         if ( act_node ){
             var parent = act_node.parent;
             if ( parent == a_node.parent ){
@@ -2149,7 +2196,7 @@ function makeBrowserTab(){
         ]},
         {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
-        {title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
+        //{title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
     ];
 
 
@@ -2580,13 +2627,13 @@ function makeBrowserTab(){
                         inst.selectScope = data.node;
 
                     if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
-                        inst.treeSelectRange(data.node);
+                        inst.treeSelectRange(inst.data_tree,data.node);
                     }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
                         inst.treeSelectNode(data.node,true);
                     }else if ( data.originalEvent.shiftKey ) {
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
-                        inst.treeSelectRange(data.node);
+                        inst.treeSelectRange(inst.data_tree,data.node);
                     }else{
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
@@ -2620,45 +2667,6 @@ function makeBrowserTab(){
 
     inst.data_tree_div = $('#data_tree');
     inst.data_tree = inst.data_tree_div.fancytree('getTree');
-
-    inst.data_tree_div.contextmenu({
-        delegate: "li",
-        show: false,
-        hide: false,
-        menu: [
-            {title: "Actions", children: [
-                {title: "Edit", action: inst.editSelected, cmd: "edit" },
-                //{title: "Duplicate", cmd: "dup" },
-                {title: "Delete", action: inst.deleteSelected, cmd: "del" },
-                {title: "Sharing", action: inst.shareSelected, cmd: "share" },
-                {title: "Lock", action: inst.lockSelected, cmd: "lock" },
-                {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
-                {title: "Get", action: inst.actionDataGet, cmd: "get" },
-                {title: "Put", action: inst.actionDataPut, cmd: "put" },
-                {title: "Graph", action: inst.depGraph, cmd: "graph" }
-                ]},
-            {title: "New", children: [
-                {title: "Data", action: inst.newData, cmd: "newd" },
-                {title: "Collection", action: inst.newColl, cmd: "newc" },
-                {title: "Project", action: newProj, cmd: "newp" }
-                ]},
-            {title: "----"},
-            {title: "Cut", action: inst.cutSelected, cmd: "cut" },
-            {title: "Copy", action: inst.copySelected, cmd: "copy" },
-            {title: "Paste", action: inst.pasteSelected, cmd: "paste" },
-            {title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" }
-            ],
-        beforeOpen: function( ev, ui ){
-            ev.stopPropagation();
-            // Select the target before menu is shown
-            if ( inst.hoverTimer ){
-                clearTimeout(inst.hoverTimer);
-                inst.hoverTimer = null;
-            }
-            //inst.hoverNav = true;
-            ui.target.click();
-        }
-    });
 
     $("#data_md_tree").fancytree({
         extensions: ["themeroller"],
@@ -2762,24 +2770,315 @@ function makeBrowserTab(){
         }
     });
 */
+    // TODO - DEMO Catalog tree
+    var cat_src = [
+        {title:"Astrophysics",folder:true,icon:"ui-icon ui-icon-structure",children:[
+        ]},
+        {title:"Climate",folder:true,icon:"ui-icon ui-icon-structure",children:[
+        ]},
+        {title:"Energy",folder:true,icon:"ui-icon ui-icon-structure",children:[
+            {title:"Fission",folder:true,icon:"ui-icon ui-icon-structure",children:[
+                {title:"LLNL",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                    ]},
+                    {title:"Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                    ]}
+                ]},
+                {title:"ORNL",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                    ]},
+                    {title:"Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                    ]}
+                ]},
+                {title:"PNNL",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                    ]},
+                ]},
+            ]},
+            {title:"Fusion",folder:true,icon:"ui-icon ui-icon-structure",children:[
+                {title:"LLNL - Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                ]},
+                {title:"LLNL - Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                ]},
+                {title:"ORNL - Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                ]},
+                {title:"ORNL - Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                ]},
+                {title:"PNNL - Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
+                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
+                ]},
+            ]},
+            {title:"Solar",folder:true,icon:"ui-icon ui-icon-structure",children:[
+                {title:"LLNL - Catalog A - Data 1",icon:"ui-icon ui-icon-file"},
+                {title:"LLNL - Catalog A - Data 2",icon:"ui-icon ui-icon-file"},
+                {title:"LLNL - Catalog A - Data 3",icon:"ui-icon ui-icon-file"},
+                {title:"LLNL - Catalog B - Data 1",icon:"ui-icon ui-icon-file"},
+                {title:"LLNL - Catalog B - Data 2",icon:"ui-icon ui-icon-file"},
+                {title:"LLNL - Catalog B - Data 3",icon:"ui-icon ui-icon-file"},
+                {title:"ORNL - Catalog A - Data 1",icon:"ui-icon ui-icon-file"},
+                {title:"ORNL - Catalog A - Data 2",icon:"ui-icon ui-icon-file"},
+                {title:"ORNL - Catalog A - Data 3",icon:"ui-icon ui-icon-file"},
+                {title:"ORNL - Catalog B - Data 1",icon:"ui-icon ui-icon-file"},
+                {title:"ORNL - Catalog B - Data 2",icon:"ui-icon ui-icon-file"},
+                {title:"ORNL - Catalog B - Data 3",icon:"ui-icon ui-icon-file"},
+                {title:"PNNL - Catalog A - Data 1",icon:"ui-icon ui-icon-file"},
+                {title:"PNNL - Catalog A - Data 2",icon:"ui-icon ui-icon-file"},
+                {title:"PNNL - Catalog A - Data 3",icon:"ui-icon ui-icon-file"}
+            ]},
+        ]},
+    ];
+
+    $("#catalog_tree").fancytree({
+        extensions: ["themeroller"],
+        themeroller: {
+            activeClass: "",
+            addClass: "",
+            focusClass: "",
+            hoverClass: "fancytree-hover",
+            selectedClass: ""
+        },
+        source: cat_src,
+        selectMode: 1,
+    });
+
+    $("#search_results_tree").fancytree({
+        extensions: ["themeroller"],
+        themeroller: {
+            activeClass: "my-fancytree-active",
+            addClass: "",
+            focusClass: "",
+            hoverClass: "my-fancytree-hover",
+            selectedClass: ""
+        },
+        source: [{title:"(no results)"}],
+        selectMode: 2,
+        activate: function( event, data ) {
+            if ( inst.keyNav && !inst.keyNavMS ){
+                inst.results_tree.selectAll(false);
+                inst.selectScope = data.node;
+                inst.treeSelectNode(data.node);
+            }
+            inst.keyNav = false;
+
+            inst.showSelectedInfo( data.node );
+        },
+        select: function( event, data ) {
+            if ( data.node.isSelected() ){
+                data.node.visit( function( node ){
+                    node.setSelected( false );
+                });
+                var parents = data.node.getParentList();
+                for ( i in parents ){
+                    parents[i].setSelected( false );
+                }
+            }
+            inst.updateBtnState();
+        },
+        keydown: function(ev, data) {
+            //console.log("keydown",ev.keyCode);
+            if ( ev.keyCode == 32 ){
+                if ( inst.data_tree.getSelectedNodes().length == 0 ){
+                    inst.selectScope = data.node;
+                }
+                inst.treeSelectNode(data.node,true);
+            }else if( ev.keyCode == 13 ){
+                if ( inst.keyNavMS ){
+                    inst.keyNavMS = false;
+                    setStatusText("Keyboard multi-select mode DISABLED");
+                }else{
+                    inst.keyNavMS = true;
+                    setStatusText("Keyboard multi-select mode ENABLED");
+                }
+            }else if( ev.keyCode == 38 || ev.keyCode == 40 ){
+                inst.keyNav = true;
+            }
+        },
+        click: function(event, data) {
+            if ( event.which == null ){
+                // RIGHT-CLICK CONTEXT MENU
+                //console.log("click no which");
+
+                if ( !data.node.isSelected() ){
+                    //console.log("not selected");
+                    inst.results_tree.selectAll(false);
+                    inst.selectScope = data.node;
+                    inst.treeSelectNode(data.node);
+                }
+
+                // Enable/disable actions
+                inst.results_tree_div.contextmenu("enableEntry", "unlink", false );
+                inst.results_tree_div.contextmenu("enableEntry", "cut", false );
+                inst.results_tree_div.contextmenu("enableEntry", "copy", true );
+                inst.results_tree_div.contextmenu("enableEntry", "paste", false );
+                inst.results_tree_div.contextmenu("enableEntry", "new", false );
+
+            } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
+                //console.log("has scope");
+                if ( inst.results_tree.getSelectedNodes().length == 0 )
+                    inst.selectScope = data.node;
+
+                if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
+                    inst.treeSelectRange(inst.results_tree,data.node);
+                }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
+                    inst.treeSelectNode(data.node,true);
+                }else if ( data.originalEvent.shiftKey ) {
+                    inst.results_tree.selectAll(false);
+                    inst.selectScope = data.node;
+                    inst.treeSelectRange(inst.results_tree,data.node);
+                }else{
+                    inst.results_tree.selectAll(false);
+                    inst.selectScope = data.node;
+                    inst.treeSelectNode(data.node);
+                }
+            }
+        }
+    }).on("mouseenter", ".fancytree-node", function(event){
+        if ( event.ctrlKey || event.metaKey ){
+            if ( inst.hoverTimer ){
+                clearTimeout(inst.hoverTimer);
+                //inst.hoverNav = false;
+                inst.hoverTimer = null;
+            }
+            var node = $.ui.fancytree.getNode(event);
+            inst.hoverTimer = setTimeout(function(){
+                if ( !node.isActive() ){
+                    //inst.hoverNav = true;
+                    node.setActive(true);
+                }
+                inst.hoverTimer = null;
+            },750);
+            //console.log("hover:",node.key);
+        }
+        //node.info(event.type);
+    });
+
+    inst.results_tree_div = $('#search_results_tree');
+    inst.results_tree = inst.results_tree_div.fancytree('getTree');
+
+
+    var ctxt_menu_opts = {
+        delegate: "li",
+        show: false,
+        hide: false,
+        menu: [
+            {title: "Actions", children: [
+                {title: "Edit", action: inst.editSelected, cmd: "edit" },
+                //{title: "Duplicate", cmd: "dup" },
+                {title: "Delete", action: inst.deleteSelected, cmd: "del" },
+                {title: "Sharing", action: inst.shareSelected, cmd: "share" },
+                {title: "Lock", action: inst.lockSelected, cmd: "lock" },
+                {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
+                {title: "Get", action: inst.actionDataGet, cmd: "get" },
+                {title: "Put", action: inst.actionDataPut, cmd: "put" },
+                {title: "Graph", action: inst.depGraph, cmd: "graph" }
+                ]},
+            {title: "New", cmd:"new",children: [
+                {title: "Data", action: inst.newData, cmd: "newd" },
+                {title: "Collection", action: inst.newColl, cmd: "newc" },
+                {title: "Project", action: newProj, cmd: "newp" }
+                ]},
+            {title: "----"},
+            {title: "Cut", action: inst.cutSelected, cmd: "cut" },
+            {title: "Copy", action: inst.copySelected, cmd: "copy" },
+            {title: "Paste", action: inst.pasteSelected, cmd: "paste" },
+            {title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" }
+            ],
+        beforeOpen: function( ev, ui ){
+            ev.stopPropagation();
+            // Select the target before menu is shown
+            if ( inst.hoverTimer ){
+                clearTimeout(inst.hoverTimer);
+                inst.hoverTimer = null;
+            }
+            //inst.hoverNav = true;
+            ui.target.click();
+        }
+    };
+
+    inst.data_tree_div.contextmenu(ctxt_menu_opts);
+    inst.results_tree_div.contextmenu(ctxt_menu_opts);
+
     $("#data-tabs").tabs({
         heightStyle:"fill",
+        active: 0,
         activate: function(ev,ui){
-            if ( ui.newPanel.length && ui.newPanel[0].id == "tab-data-graph" ){
-                inst.tree_mode = false;
-                inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
-            }else{
-                inst.tree_mode = true;
-                var node = inst.data_tree.activeNode;
-                inst.showSelectedInfo( node );
+            console.log("tabs activate");
+            if ( ui.newPanel.length ){
+                switch ( ui.newPanel[0].id ){
+                    case "tab-data-tree":
+                        console.log("tree tab");
+                        inst.select_source = SS_TREE;
+                        var node = inst.data_tree.activeNode;
+                        inst.showSelectedInfo( node );
+                        break;
+                    case "tab-catalogs":
+                        inst.select_source = SS_CAT;
+                        // TODO update sel info
+                        inst.showSelectedInfo();
+                        console.log("cat tab");
+                        break;
+                    case "tab-prov-graph":
+                        inst.select_source = SS_PROV;
+                        inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
+                        console.log("prov tab");
+                        break;
+                    case "tab-search-results":
+                        inst.select_source = SS_SEARCH;
+                        var node = inst.results_tree.activeNode;
+                        inst.showSelectedInfo( node );
+                        console.log("results tab");
+                        break;
+                }
             }
             inst.updateBtnState();
         }
     });
 
+    $(".prov-graph-close").click( function(){
+        inst.links_grp.selectAll("*").remove();
+        inst.nodes_grp.selectAll("*").remove();
+        inst.node_data = [];
+        inst.link_data = [];
+        $('[href="#tab-prov-graph"]').closest('li').hide();
+    });
+
+    $(".search-results-close").click( function(){
+        $("#search_results_tree").fancytree("getTree").clear();
+        $('[href="#tab-search-results"]').closest('li').hide();
+    });
+
     $("#footer-tabs").tabs({
         heightStyle:"auto",
-        collapsible: true,
+        //collapsible: true,
         activate: function(ev,ui){
             if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
                 inst.updateSearchSelectState( true );
@@ -2788,6 +3087,12 @@ function makeBrowserTab(){
             }
         }
     }).css({'overflow': 'auto'});
+
+    $("#toggle_footer").click( function(){
+        $("#footer-tabs").toggle(0,function(){
+            inst.windowResized();
+        });
+    });
 
     $("#sel_descr_hdr").button().click( function(){
         $("#sel_descr").slideToggle();
@@ -2834,27 +3139,8 @@ function makeBrowserTab(){
     inst.nodes_grp = inst.svg.append("g")
         .attr("class", "nodes");
 
-    //$("#lockmenu").menu();
 
-    this.menutimer = null;
-    $("#newmenu").mouseout(function(){
-        if ( !this.menutimer ){
-            this.menutimer = setTimeout( function(){
-                $("#newmenu").hide();
-                this.menutimer = null;
-            }, 1000 );
-        }
-    });
-
-    $("#newmenu").mouseover(function(){
-        if ( this.menutimer ){
-            clearTimeout(this.menutimer);
-            this.menutimer = null;
-        }
-    });
-
-    //$("#left-panel").resizable({handles:"e"});
-    $("#sel_details").slideToggle();
+    //$("#sel_details").slideToggle();
 
     var node = inst.data_tree.getNodeByKey( "mydata" );
     node.setExpanded().done(function(){

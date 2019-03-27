@@ -1,11 +1,12 @@
 <div class="col-flex" style="padding:0;height:100%;">
     <div style="height:100%;display:flex;flex:1">
-        <!--div id='' class="col-flex" style="height:100%;resize:horizontal;overflow:auto;padding:.25em .35em 0 .25em;min-width:0;min-height:0;width:40%" -->
-        <div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:.25em .35em 0 .25em;min-width:0;min-height:0;width:50%">
+        <div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:.25em .35em 0 .25em;min-width:0;min-height:0;width:40%">
             <div id="data-tabs" style="border:none;padding:0">
                 <ul>
-                    <li><a href="#tab-data-tree">Data Tree</a></li>
-                    <li><a href="#tab-data-graph">Provenance Graph</a></li>
+                    <li><a href="#tab-data-tree">My Data</a></li>
+                    <li><a href="#tab-catalogs">Catalogs</a></li>
+                    <li style="display:none"><a href="#tab-prov-graph">Provenance</a><span class='ui-icon ui-icon-circle-close prov-graph-close'></span></li>
+                    <li style="display:none"><a href="#tab-search-results">Search</a><span class='ui-icon ui-icon-circle-close search-results-close'></span></li>
                 </ul>
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="col-flex" style="height:100%">
@@ -19,7 +20,11 @@
                         </div>
                     </div>
                 </div>
-                <div id="tab-data-graph" class="ui-widget-content" style="padding:0;overflow:hidden">
+                <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
+                    <div id="catalog_tree" class="no-border">
+                    </div>
+                </div>
+                <div id="tab-prov-graph" class="ui-widget-content" style="padding:0;overflow:hidden">
                     <div class="col-flex" style="height:100%">
                         <div style="flex:1 1 100%;min-height:0;overflow:auto">
                             <svg id="data-graph" style='display:block;width:100%;height:100%'></svg>
@@ -31,6 +36,9 @@
                         </div>
                     </div>
                 </div>
+                <div id="tab-search-results" class="ui-widget-content" style="padding:0;overflow:hidden">
+                    <div id="search_results_tree" class="no-border"></div>
+                </div>
             </div>
 
             <!-- div style="flex:none;padding:.25em" class="ui-widget-header ui-corner-tr ui-corner-tl">Data Browser:</div>
@@ -39,8 +47,8 @@
             </div -->
 
         </div>
-        <div class="col-flex" style="flex:1 1 50%;padding:.25em .25em 0 0;min-width:0;min-height:0">
-            <div style="flex:none;padding:.25em" class="ui-widget-header ui-corner-tr ui-corner-tl">Selection Information:</div>
+        <div class="col-flex" style="flex:1 1 60%;padding:.25em .25em 0 0;min-width:0;min-height:0">
+            <div style="flex:none;padding:.5em 0.5em;font-weight:normal" class="ui-widget-header ui-corner-tr ui-corner-tl">Selection Information:</div>
             <div class="ui-widget-content" style="flex:1;min-height:0;overflow:auto;padding:.25em">
                 <div id="sel_id"></div><br>
                 <div id="sel_title"></div><br>
@@ -97,7 +105,7 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
                     <table style='width:100%'>
-                        <tr><td>Text:</td><td><input id="text_query" type='text' style="width:100%"></input></td><td><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
+                        <tr><td style='width:10ch'>Text:</td><td><input id="text_query" type='text' style="width:100%"></input></td><td style='width:12ch'><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
 
                         <tr><td>Metadata:</td><td><input id="meta_query" type='text' style="width:100%"></input></td><td><button class='btn small' onclick='querySave()' style='width:12ch' >Save Query</button></td></tr>
                         <tr><td>Scope:</td><td>

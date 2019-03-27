@@ -138,6 +138,11 @@ svg text
     border-radius:0px 4px 4px 0px!important;
 }
 
+.ui-icon-circle-close
+{
+    cursor:pointer;
+}
+
 .btn-refresh
 {
     margin: 0!important;

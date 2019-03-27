@@ -79,6 +79,8 @@ Server::loadKeys( const std::string & a_cred_dir )
 void
 Server::loadRepositoryConfig()
 {
+    DL_INFO("Loading repo configuration");
+
     DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
     //db_client.setClient( "sdms" );
 
@@ -88,9 +90,34 @@ Server::loadRepositoryConfig()
 
     for ( vector<RepoData*>::iterator r = repos.begin(); r != repos.end(); ++r )
     {
-        cout << "Loading repo "<< (*r)->id() <<" key ["<<(*r)->pub_key()<<"]\n";
+        // Validate repo settings (in case an admin manually edits repo config)
+        if ( (*r)->pub_key().size() != 40 ){
+            DL_ERROR("Ignoring " << (*r)->id() << " - invalid public key: " << (*r)->pub_key() );
+            continue;
+        }
 
+        if ( (*r)->address().compare(0,6,"tcp://") ){
+            DL_ERROR("Ignoring " << (*r)->id() << " - invalid server address: " << (*r)->address() );
+            continue;
+        }
+
+        if ( (*r)->endpoint().size() != 36 ){
+            DL_ERROR("Ignoring " << (*r)->id() << " - invalid endpoint UUID: " << (*r)->endpoint() );
+            continue;
+        }
+
+        if ( (*r)->path().size() == 0 || (*r)->path()[0] != '/' ){
+            DL_ERROR("Ignoring " << (*r)->id() << " - invalid path: " << (*r)->path() );
+            continue;
+        }
+
+        DL_DEBUG("Repo " << (*r)->id() << " OK");
+        DL_DEBUG("UUID: " << (*r)->endpoint() );
+
+        // Cache repo data for data handling
         m_repos[(*r)->id()] = *r;
+
+        // Cache pub key for ZAP handler
         m_auth_clients[(*r)->pub_key()] = (*r)->id();
     }
 }

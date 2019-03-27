@@ -222,6 +222,8 @@ GlobusTransferClient::getSubmissionID( std::string & a_token )
 void
 GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_id, const string & a_src_path, const string & a_dst_path, string & a_task_id )
 {
+    DL_DEBUG( "GlobusTransferClient::transfer, dst_path " << a_dst_path );
+
     rapidjson::Document body;
     string src_ep, src_path;
     string dst_ep, dst_path;

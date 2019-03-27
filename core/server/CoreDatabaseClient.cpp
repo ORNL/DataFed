@@ -1133,6 +1133,7 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
     }
 }
 
+
 void
 DatabaseClient::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply )
 {
