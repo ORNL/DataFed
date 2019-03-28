@@ -140,7 +140,8 @@ router.post('/create', function (req, res) {
                 g_db.owner.save({ _from: data.new._id, _to: owner_id });
 
                 //console.log("Save loc", repo_alloc );
-                var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key, uid: owner_id };
+                //var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key, uid: owner_id };
+                var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
                 if ( alloc_parent )
                     loc.parent = alloc_parent;
                 g_db.loc.save(loc);
@@ -681,11 +682,11 @@ router.get('/loc', function (req, res) {
         // This is a system call - no need to check permissions
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveID( req.queryParams.id, client );
-        var repo = g_db.loc.firstExample({ _from: data_id });
-        if ( !repo )
+        var loc = g_db.loc.firstExample({ _from: data_id });
+        if ( !loc )
             throw g_lib.ERR_NO_RAW_DATA;
 
-        res.send({ id: data_id, repo_id:repo._to, path:repo.path });
+        res.send({ id: data_id, repo_id:loc._to, path: g_lib.computeDataPath( loc ) });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -713,9 +714,11 @@ router.get('/path', function (req, res) {
 
         var repo = g_db.repo.document( loc._to );
         if ( repo.domain != req.queryParams.domain )
-            throw [g_lib.ERR_INVALID_PARAM,"Conflicting domain"];
+            throw [g_lib.ERR_INVALID_PARAM,"Can only access data from '" + repo.domain + "' domain"];
 
-        res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
+        var path =  g_lib.computeDataPath( loc, true );
+        res.send({ path: path });
+        //res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
     } catch( e ) {
         g_lib.handleException( e, res );
     }

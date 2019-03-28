@@ -59,9 +59,10 @@ graph._extendEdgeDefinitions(loc);
 var dep = graph_module._relation("dep", ["d"], ["d"]);
 graph._extendEdgeDefinitions(dep);
 
+//v0 = db._view("textview");
+
 var v0 = db._createView("textview","arangosearch",{});
 
-v0 = db._view("textview");
 v0.properties({
     links: {
       "d": {

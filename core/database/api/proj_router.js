@@ -438,7 +438,7 @@ router.get('/delete', function (req, res) {
                     while ( objects.hasNext() ) {
                         obj = objects.next();
                         // Save location
-                        locations.push({id:obj.id,repo_id:obj.loc.repo,path:obj.loc.path});
+                        locations.push({id:obj.id,repo_id:obj.loc.repo,path: g_lib.computeDataPath(obj.loc)});
                         size += obj.size;
                     }
 

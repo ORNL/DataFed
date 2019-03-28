@@ -148,7 +148,7 @@ router.post('/create', function (req, res) {
     title: joi.string().required(),
     desc: joi.string().optional(),
     domain: joi.string().optional(),
-    capacity: joi.number().required(),
+    capacity: joi.number().integer().min(0).max(10000000000).required(),
     pub_key: joi.string().required(),
     address: joi.string().required(),
     endpoint: joi.string().required(),

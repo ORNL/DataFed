@@ -350,6 +350,22 @@ module.exports = ( function() {
         return "c/"+owner_id[0]+"_"+owner_id.substr(2)+"_root";
     };
 
+    obj.computeDataPath = function( a_loc, a_export ){
+        var repo = obj.db._document( a_loc._to );
+        var repo_path = a_export?repo.export_path:repo.path;
+        
+        if ( a_loc.parent ){
+            var user = obj.db._document( a_loc.parent )._from;
+            return repo_path + "user" + user.substr(1) + a_loc._from.substr(1);
+        }else{
+            if ( a_loc.uid.charAt(0) == 'u' ){
+                return repo_path + "user" + a_loc.uid.substr(1) + a_loc._from.substr(1);
+            }else{
+                return repo_path + "project" + a_loc.uid.substr(1) + a_loc._from.substr(1);
+            }
+        }
+    };
+
     obj.getObject = function( a_obj_id, a_client ) {
         var id = obj.resolveID( a_obj_id, a_client );
 
@@ -372,7 +388,8 @@ module.exports = ( function() {
             obj.topicUnlink( a_data._id );
 
         var loc = obj.db.loc.firstExample({_from: a_data._id });
-        a_locations.push({ id: a_data._id, repo_id: loc._to, path: loc.path });
+        var path = obj.computeDataPath( loc );
+        a_locations.push({ id: a_data._id, repo_id: loc._to, path: path });
 
         // Adjust allocation for data size
         if ( a_data.size ){
