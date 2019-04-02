@@ -18,18 +18,19 @@ namespace SDMS {
 
 //#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
 
-AuthzWorker::AuthzWorker( const std::string & a_authz_file )
+AuthzWorker::AuthzWorker( const std::string & a_config_file )
 {
-    string line;
-    
     string cred_dir = "/home/cades/.sdms/";
     m_timeout = 5000;
-    
-    ifstream configFile(a_authz_file);
-    string key,val;
 
-    if ( configFile.is_open() )
+    if ( a_config_file.size() )
     {
+        ifstream configFile(a_config_file);
+        string line,key,val;
+
+        if ( !configFile.is_open() )
+            EXCEPT_PARAM(0,"Could not open config file: " << a_config_file );
+
         while( getline( configFile, line ))
         {
             if ( line.length() < 4 || line.at(0) == '#')
@@ -52,16 +53,10 @@ AuthzWorker::AuthzWorker( const std::string & a_authz_file )
         }
         configFile.close();
     }
-    else {
-        //cout << "Error opening file.\n";
-    }
 
     loadKeys( cred_dir );
 
     REG_PROTO( SDMS::Anon );
-
-    //SET_MSG_HANDLER( proto_id, StatusRequest, &AuthzWorker::procStatusRequest );
-
 }
 
 AuthzWorker::~AuthzWorker()
