@@ -18,13 +18,14 @@ using namespace SDMS;
 
 #define VERSION "0.1.0"
 
-#define DL_SET_LEVEL(x) { DynaLog::g_level = x; }
-#define DL_SET_CERR_ENABLED(x) { DynaLog::g_use_cerr = x; }
-#define DL_SET_SYSDL_ENABLED(x) { DynaLog::g_use_syslog = x; }
 
 int authzdb(char * client_id, char * object, char * action)
 {
     int result = -1;
+
+    DL_SET_LEVEL(DynaLog::DL_DEBUG_LEV);
+    DL_SET_CERR_ENABLED(false);
+    DL_SET_SYSDL_ENABLED(true);
 
     try
     {
