@@ -67,7 +67,7 @@ int
 AuthzWorker::run(char * client_id, char * path, char * action)
 {
     DL_INFO("Checking auth for " << client_id << " in " << path );
-    if ( strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
+    if ( m_test_path.size() > 0 && strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
     {
         DL_INFO("Auto-passing request for test-path");
         return 0;
