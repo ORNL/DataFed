@@ -18,10 +18,13 @@ using namespace SDMS;
 
 #define VERSION "0.1.0"
 
+#define DL_SET_LEVEL(x) { DynaLog::g_level = x; }
+#define DL_SET_CERR_ENABLED(x) { DynaLog::g_use_cerr = x; }
+#define DL_SET_SYSDL_ENABLED(x) { DynaLog::g_use_syslog = x; }
 
 int authzdb(char * client_id, char * object, char * action)
 {
-    int result = 1;
+    int result = -1;
 
     try
     {
@@ -30,10 +33,12 @@ int authzdb(char * client_id, char * object, char * action)
     }
     catch( TraceException &e )
     {
+        DL_ERROR( "AuthzWorker exception: " << e.toString() );
         //cout << "Exception 1" << e.toString() << endl;
     }
     catch( exception &e )
     {
+        DL_ERROR( "AuthzWorker exception: " << e.what() );
         //cout << "Exception 2" << e.what() << endl;
     }
     return result;

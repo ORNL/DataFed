@@ -289,7 +289,8 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     }
                     #endif
 
-                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=", 52 ) != 0 )
+                    //if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=", 52 ) != 0 )
+                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus", 36 ) != 0 )
                     {
                         syslog( LOG_ERR, "Invalid certificate subject prefix: %s", (char*)client_buf.value );
                     }
@@ -302,6 +303,8 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         // TODO Should check client uuid str len to make sure it won't overflow
                         if ( strncmp( (char*)client_buf.value + 52, "u_", 2 ) == 0 )
                         {
+                            syslog( LOG_INFO, "Globus user prefix detected, decode UUID" );
+
                             client_id = malloc( 40 );
 
                             if ( !decodeUUID( (char*)client_buf.value + 54, client_id ))
@@ -313,15 +316,29 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         }
                         else
                         {
-                            client_id = strdup( (char*)client_buf.value + 52 );
+                            syslog( LOG_INFO, "Using client CN for authz" );
+                            // Find "/CN=" in cert DN
+                            const char * cn = strstr( client_buf.value, "/CN=" );
+                            if ( !cn )
+                                syslog( LOG_ERR, "Common Name not found in client DN" );
+                            else
+                                client_id = strdup( (char*)cn + 4 );
                         }
 
                         if ( client_id )
                         {
-                            syslog( LOG_DEBUG, "Client ID (decoded): %s", client_id );
+                            syslog( LOG_DEBUG, "Client ID (CN/UUID): %s", client_id );
 
                             if (authzdb(client_id, object, action) == 0 )
+                            {
                                 result = GLOBUS_SUCCESS;
+                                syslog( LOG_INFO, "DataFed core authz PASSED" );
+                            }
+                            else
+                            {
+                                syslog( LOG_ERR, "DataFed core authz FAILED" );
+                            }
+
                             free( client_id );
                         }
                     }
@@ -356,10 +373,12 @@ sdms_gsi_authz_authorize_async( va_list ap )
         //globus_module_descriptor_t * base_source,
         //globus_object_t * base_cause);
 
+        syslog( LOG_INFO, "Authz final: PASSED" );
         result = globus_error_put( error );
     }
     else
     {
+        syslog( LOG_ERR, "Authz final: FAILED" );
         callback( callback_arg, handle, result );
     }
 
