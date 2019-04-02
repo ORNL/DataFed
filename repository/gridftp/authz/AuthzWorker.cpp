@@ -66,8 +66,12 @@ AuthzWorker::~AuthzWorker()
 int 
 AuthzWorker::run(char * client_id, char * path, char * action)
 {
+    DL_INFO("Checking auth for " << client_id << " in " << path );
     if ( strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
+    {
+        DL_INFO("Auto-passing request for test-path");
         return 0;
+    }
 
     int result = 1;
 
@@ -93,13 +97,22 @@ AuthzWorker::run(char * client_id, char * path, char * action)
 
     if ( !authzcomm.recv( reply, uid, frame, m_timeout ))
     {
-        //cout << "Core AuthzWorker did not respond\n";
+        EXCEPT(0,"Core service did no respond");
     }
     else
     {
+        DL_INFO("Got response, msg type: " << frame.getMsgType() );
         Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( reply );
         if ( !nack )
+        {
+            DL_INFO("Not a nack!");
             result = 0;
+        }
+        else
+        {
+            DL_INFO("NACK!");
+        }
+
         delete reply;
     }
     return result;
