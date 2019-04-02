@@ -290,7 +290,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                     #endif
 
                     //if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus Connect User/CN=", 52 ) != 0 )
-                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus", 36 ) != 0 )
+                    if ( strncmp( (char*)client_buf.value, "/C=US/O=Globus Consortium/OU=Globus", 35 ) != 0 )
                     {
                         syslog( LOG_ERR, "Invalid certificate subject prefix: %s", (char*)client_buf.value );
                     }
@@ -373,12 +373,12 @@ sdms_gsi_authz_authorize_async( va_list ap )
         //globus_module_descriptor_t * base_source,
         //globus_object_t * base_cause);
 
-        syslog( LOG_INFO, "Authz final: PASSED" );
+        syslog( LOG_INFO, "Authz final: FAILED" );
         result = globus_error_put( error );
     }
     else
     {
-        syslog( LOG_ERR, "Authz final: FAILED" );
+        syslog( LOG_ERR, "Authz final: PASSED" );
         callback( callback_arg, handle, result );
     }
 
