@@ -423,7 +423,29 @@ sdms_map_user( va_list Ap )
     buffer_length    = va_arg(Ap, unsigned int);
     //shared_user_cert = va_arg(Ap, char *);
 
-    (void) context;
+    //(void) context;
+    OM_uint32 min_stat;
+    gss_name_t client = GSS_C_NO_NAME;
+    gss_name_t target = GSS_C_NO_NAME;
+    OM_uint32 maj_stat = gss_inquire_context( &min_stat, context, &client, &target, 0, 0, 0, 0, 0 );
+    if ( maj_stat == GSS_S_COMPLETE )
+    {
+        gss_buffer_desc  client_buf = GSS_C_EMPTY_BUFFER;
+        gss_OID client_type;
+
+        maj_stat = gss_display_name( &min_stat, client, &client_buf, &client_type );
+        if ( maj_stat == GSS_S_COMPLETE )
+        {
+            gss_buffer_desc target_buf = GSS_C_EMPTY_BUFFER;
+            gss_OID target_type;
+
+            maj_stat = gss_display_name( &min_stat, target, &target_buf, &target_type );
+            if ( maj_stat == GSS_S_COMPLETE )
+            {
+                syslog( LOG_INFO, "client: %s", (char*)client_buf.value );
+            }
+        }
+    }
 
     syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s)", service, desired_identity );
     //syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity, shared_user_cert );
