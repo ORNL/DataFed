@@ -3069,11 +3069,13 @@ function makeBrowserTab(){
         inst.node_data = [];
         inst.link_data = [];
         $('[href="#tab-prov-graph"]').closest('li').hide();
+        $( "#data-tabs" ).tabs({ active: 0 });
     });
 
     $(".search-results-close").click( function(){
         $("#search_results_tree").fancytree("getTree").clear();
         $('[href="#tab-search-results"]').closest('li').hide();
+        $( "#data-tabs" ).tabs({ active: 0 });
     });
 
     $("#footer-tabs").tabs({
