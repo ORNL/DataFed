@@ -1,3 +1,5 @@
+import "Version.proto";
+
 package SDMS;
 
 // ============================ Enums

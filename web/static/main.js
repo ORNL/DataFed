@@ -149,6 +149,25 @@ function dataEdit( a_id, a_cb ){
     });
 }
 
+function dataMove( a_id, a_cb ){
+    var req_perms = PERM_DELETE;
+    getPerms( a_id, req_perms, function( perms ){
+        if (( perms & req_perms ) == 0 ){
+            alertPermDenied();
+            return;
+        }
+
+        viewData( a_id, function(cur_data){
+            if (cur_data){
+                dlgDataMove(cur_data,function(new_data){
+                    if (a_cb)
+                        a_cb(new_data);
+                });
+            }
+        }); 
+    });
+}
+
 function dataShare( a_id ){
     checkPerms( a_id, PERM_SHARE, function( granted ){
         if ( !granted ){

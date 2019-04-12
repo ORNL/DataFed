@@ -44,6 +44,8 @@ var g_ctx_next = 0;
 var g_oauth_credentials;
 var g_client_id;
 var g_client_secret;
+var g_version;
+
 const nullfr = Buffer.from([]);
 
 g_ctx.fill(null);
@@ -121,7 +123,7 @@ app.get('/ui', (request, response) => {
         response.redirect( '/ui/main' );
     else{
         var theme = request.cookies['sdms-theme']|| "light";
-        response.render('index',{theme:theme});
+        response.render('index',{theme:theme,version:g_version});
     }
 });
 
@@ -131,14 +133,14 @@ app.get('/ui/main', (request, response) => {
 
     if ( request.cookies['sdms'] ){
         var theme = request.cookies['sdms-theme'] || "light";
-        response.render( 'main',{theme:theme});
+        response.render( 'main',{theme:theme,version:g_version});
     }else
         response.redirect( '/ui' );
 });
 
 app.get('/ui/docs', (request, response) => {
     var theme = request.cookies['sdms-theme'] || "light";
-    response.render( 'docs',{theme:theme});
+    response.render( 'docs',{theme:theme,version:g_version});
 });
 
 app.get('/ui/register', (request, response) => {
@@ -148,7 +150,7 @@ app.get('/ui/register', (request, response) => {
 
     var theme = request.cookies['sdms-theme'] || "light";
 
-    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname, theme: theme });
+    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname,theme:theme,version:g_version });
 });
 
 app.get('/ui/login', (request, response) => {
@@ -169,7 +171,7 @@ app.get('/ui/logout', (request, response) => {
 app.get('/ui/error', (request, response) => {
     //console.log("get /ui/error");
     var theme = request.cookies['sdms-theme'] || "light";
-    response.render('error',{theme:theme});
+    response.render('error',{theme:theme,version:g_version});
 });
 
 app.get('/ui/authn', ( a_request, a_response ) => {
@@ -1123,6 +1125,34 @@ function processProtoFile( msg ){
         i++;
     }
 }
+
+protobuf.load("Version.proto", function(err, root) {
+    if ( err )
+        throw err;
+
+    console.log('Version.proto loaded');
+
+    var msg = root.lookupEnum( "VerMajor" );
+    if ( !msg )
+        throw "Missing Major Version enum in Version.Anon proto file";
+
+    g_version = msg.values.VER_MAJOR + ".";
+
+    msg = root.lookupEnum( "VerMinor" );
+    if ( !msg )
+        throw "Missing Minor Version enum in Version.Anon proto file";
+
+    g_version += msg.values.VER_MINOR + ".";
+
+    msg = root.lookupEnum( "VerBuild" );
+    if ( !msg )
+        throw "Missing Build Version enum in Version.Anon proto file";
+
+
+    g_version += msg.values.VER_BUILD;
+
+    console.log('Running Version',g_version);
+});
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )

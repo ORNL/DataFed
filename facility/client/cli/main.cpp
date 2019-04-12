@@ -28,7 +28,7 @@ using namespace SDMS;
 using namespace SDMS::Facility;
 namespace po = boost::program_options;
 
-#define VERSION "1.0.0"
+//#define VERSION "1.0.0"
 
 Client * g_client = 0;
 
@@ -1928,7 +1928,7 @@ int main( int a_argc, char ** a_argv )
 
         if ( res == OPTS_HELP )
         {
-            cout << "SDMS CLI Client, ver. " << VERSION << "\n";
+            cout << "SDMS CLI Client, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
             cout << "Usage: sdms [command [args]] [options]\n";
             cout << "      \"help [command]\" for command-specific help\n\n";
             cout << opts_startup << "\nAvailable commands:\n\n";
@@ -1945,12 +1945,12 @@ int main( int a_argc, char ** a_argv )
 
         if ( res == OPTS_VERSION )
         {
-            cout << VERSION << endl;
+            cout << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << endl;
             return 1;
         }
 
         if ( !non_interact )
-            cout << "SDMS CLI Client, ver. " << VERSION << "\n";
+            cout << "SDMS CLI Client, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
 
         if ( manual_auth && non_interact )
             EXCEPT( 0, "Manual authentication required" );

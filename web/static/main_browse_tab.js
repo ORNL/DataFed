@@ -605,6 +605,18 @@ function makeBrowserTab(){
         }
     }
 
+    this.actionDataMove = function() {
+        var ids = inst.getSelectedIDs();
+        if ( ids.length != 1 )
+            return;
+
+        var id = ids[0];
+
+        if ( id.charAt(0) == "d" ) {
+            dataMove( id );
+        }
+    }
+
     this.calcActionState = function( sel ){
         var bits,node;
 
@@ -674,7 +686,8 @@ function makeBrowserTab(){
         $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0 );
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0 );
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0 );
-        $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
+        $("#btn_download",inst.frame).button("option","disabled",(bits & 0x10) != 0);
+        $("#btn_move",inst.frame).button("option","disabled",(bits & 0x10) != 0);
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
@@ -687,7 +700,8 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "del", (bits & 4) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "share", (bits & 8) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "put", (bits & 0x10) == 0 );
-        inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x20) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x10) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "move", (bits & 0x10) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "lock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlink", (bits & 0x80) == 0 );
@@ -2135,10 +2149,19 @@ function makeBrowserTab(){
     }
 
     this.pasteAllowed = function( dest_node, src_node ){
-        console.log("pasteAllowed:",dest_node, src_node);
-        console.log("pasteSource:",inst.pasteSource);
-        if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
-            if ( inst.pasteSource.key == dest_node.key )
+        //console.log("pasteAllowed:",dest_node, src_node);
+        //console.log("pasteSource:",inst.pasteSource);
+        //if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
+        if ( !dest_node.data.notarg && dest_node.data.scope && (dest_node.data.scope.startsWith("u/") || dest_node.data.scope.startsWith("p/"))){
+            // TODO - Wrong: must check parent keys
+            //console.log("source par key:",inst.pasteSource.key,"dest:", dest_node.parent.key );
+            if ( dest_node.key.startsWith("c/") ){
+                if ( inst.pasteSource.key == dest_node.key )
+                    return false;
+            }else if (dest_node.key.startsWith("d/")){
+                if ( inst.pasteSource.key == dest_node.parent.key || !dest_node.parent.key.startsWith("c/"))
+                    return false;
+            }else
                 return false;
 
             if ( inst.pasteCollections.length ){
@@ -2253,6 +2276,16 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
+                if ( inst.pasteSource.data.scope != dest_node.data.scope ){
+                    var msg = "Data ownership will be transferred from " + (inst.pasteSource.data.scope.startsWith("u/")?"User ":"Project ") + "ID \"" + inst.pasteSource.data.scope.substr(2) + "\" to " + (dest_node.data.scope.startsWith("u/")?"User ":"Project ") + "ID \"" + dest_node.data.scope.substr(2) + "\". Continue?";
+                    dlgConfirmChoice( "Confirm Move Data", msg, ["Transfer","Cancel"], function(choice){
+                        if ( choice == 0 ){
+                            dataMove( inst.pasteItems, dest_node.data.scope, dest_node.data.key.startsWith("c/")?dest_node.data.key:dest_node.parent.data.key );
+                        }
+                    });
+                    return;
+                }
+
                 function pasteDone(){
                     inst.pasteItems = [];
                     inst.pasteSource = null;
@@ -2279,7 +2312,7 @@ function makeBrowserTab(){
             },
             dragEnter: function(node, data) {
                 if ( inst.dragging ){
-                    //console.log( "drag enter:", node, data );
+                    console.log( "drag enter:", node, data );
                     return inst.pasteAllowed( node, data.otherNode );
                 }else{
                     return false;
@@ -2715,7 +2748,7 @@ function makeBrowserTab(){
     $("#btn_unlock",inst.frame).on('click', inst.unlockSelected );
     $("#btn_upload",inst.frame).on('click', inst.actionDataPut );
     $("#btn_download",inst.frame).on('click', inst.actionDataGet );
-    //$("#btn_alloc",inst.frame).on('click', function(){ inst.editAllocSelected() });
+    $("#btn_move",inst.frame).on('click', inst.actionDataMove );
     $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
 
     $("#btn_exp_node",inst.frame).on('click', inst.graphNodeExpand );
@@ -2999,6 +3032,7 @@ function makeBrowserTab(){
                 {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
                 {title: "Get", action: inst.actionDataGet, cmd: "get" },
                 {title: "Put", action: inst.actionDataPut, cmd: "put" },
+                {title: "Move", action: inst.actionDataMove, cmd: "move" },
                 {title: "Graph", action: inst.depGraph, cmd: "graph" }
                 ]},
             {title: "New", cmd:"new",children: [
