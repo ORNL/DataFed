@@ -3,6 +3,10 @@ cmake_minimum_required (VERSION 3.0.0)
 file( GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto" )
 PROTOBUF_GENERATE_CPP( ProtoSources ProtoHeaders ${ProtoFiles} )
 
+foreach(file ${ProtoFiles})
+    configure_file(${file} ../../web/ COPYONLY )
+endforeach()
+
 file( GLOB Sources "source/*.cpp" )
 
 add_library( common STATIC ${Sources} ${ProtoSources} )

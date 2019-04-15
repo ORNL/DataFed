@@ -45,6 +45,7 @@ var g_oauth_credentials;
 var g_client_id;
 var g_client_secret;
 var g_version;
+var g_version_base;
 var ready_start = 4;
 
 const nullfr = Buffer.from([]);
@@ -73,7 +74,7 @@ function startServer(){
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
         if ( !reply ){
             console.log( "ERROR: No reply from core server" );
-        }else if ( reply.major + "." + reply.minor != g_version ){
+        }else if ( reply.major + "." + reply.minor != g_version_base ){
             console.log( "ERROR: Incompatible core server version (" + reply.major + "." + reply.minor + ")" );
         }else{
             g_oauth_credentials = {
@@ -1157,9 +1158,10 @@ protobuf.load("Version.proto", function(err, root) {
     if ( !msg )
         throw "Missing Build Version enum in Version.Anon proto file";
 
-    //g_version += msg.values.VER_BUILD;
+    g_version_base = g_version;
+    g_version += "."+msg.values.VER_BUILD;
 
-    console.log('Running Version',g_version+ "." + msg.values.VER_BUILD);
+    console.log('Running Version',g_version);
     if ( --ready_start == 0 )
         startServer();
 });
