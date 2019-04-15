@@ -39,6 +39,7 @@ Server::Server( const std::string & a_cred_dir, uint32_t a_port ) :
     uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
     SET_MSG_HANDLER( proto_id, StatusRequest, &Server::procStatusRequest );
+    SET_MSG_HANDLER( proto_id, StatusRequest, &Server::procVersionRequest );
 
     proto_id = REG_PROTO( SDMS::Auth );
 
@@ -268,6 +269,19 @@ Server::procStatusRequest()
     PROC_MSG_END
 }
 
+void
+Server::procVersionRequest()
+{
+    PROC_MSG_BEGIN( VersionRequest, VersionReply )
+
+    DL_DEBUG( "Version request" );
+
+    reply.set_major( VER_MAJOR );
+    reply.set_minor( VER_MINOR );
+    reply.set_build( VER_BUILD );
+
+    PROC_MSG_END
+}
 
 void
 Server::procDataDeleteRequest()

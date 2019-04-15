@@ -148,7 +148,7 @@ globus_result_t
 sdms_gsi_authz_init()
 {
     openlog( "sdms_gsi_authz", 0, LOG_AUTH );
-    syslog( LOG_INFO, "libsdms_gsi_authz_init\n" );
+    syslog( LOG_INFO, "libsdms_gsi_authz_init, ver %s\n", getVersion() );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
     return 0;

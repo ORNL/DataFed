@@ -7,12 +7,12 @@
 #include "TraceException.hpp"
 #include "Util.hpp"
 #include "RepoServer.hpp"
+#include "SDMS.pb.h"
 
 using namespace std;
 using namespace SDMS;
 namespace po = boost::program_options;
 
-#define VERSION "0.1.0"
 
 int main( int a_argc, char ** a_argv )
 {
@@ -23,7 +23,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "SDMS repo server starting" );
+        DL_INFO( "SDMS repo server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
 
         uint16_t    port = 9000;
         string      cfg_file;
@@ -49,7 +49,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "SDMS Repo Server, ver. " << VERSION << "\n";
+                cout << "SDMS Repo Server, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
                 cout << "Usage: sdms-repo [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -57,7 +57,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VERSION << endl;
+                cout << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << endl;
                 return 0;
             }
 

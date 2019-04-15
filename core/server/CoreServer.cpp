@@ -407,10 +407,13 @@ Server::backgroundMaintenance()
 
     try
     {
+        DL_INFO( "Confirming repository server connections" );
         for ( map<std::string,RepoData*>::iterator r = m_repos.begin(); r != m_repos.end(); r++ )
         {
             repo_map[r->first] = new MsgComm( r->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
         }
+
+        DL_INFO( "Starting repository control thread" );
 
         while( m_io_running )
         {

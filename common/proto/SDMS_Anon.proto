@@ -25,6 +25,17 @@ message NackReply
     optional string             err_msg     = 2;
 }
 
+message VersionRequest
+{
+}
+
+message VersionReply
+{
+    required uint32             major       = 1;
+    required uint32             minor       = 2;
+    required uint32             build       = 3;
+}
+
 
 message StatusRequest
 {

@@ -45,6 +45,7 @@ var g_oauth_credentials;
 var g_client_id;
 var g_client_secret;
 var g_version;
+var ready_start = 4;
 
 const nullfr = Buffer.from([]);
 
@@ -69,34 +70,42 @@ function startServer(){
 
     g_core_sock.connect( g_core_serv_addr );
 
-    g_oauth_credentials = {
-        clientId: g_client_id,
-        clientSecret: g_client_secret,
-        authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
-        accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-        redirectUri: 'https://'+g_host+':'+g_port+'/ui/authn',
-        scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
-    };
-
-    globus_auth = new ClientOAuth2( g_oauth_credentials );
-
-    //--- This is a HACK to gt around lack of host cert
-    /*
-    var agentOptions = {
-        host : g_host,
-        port : g_port,
-        path : '/',
-        rejectUnauthorized : false
-    };
-
-    var agent = new https.Agent(agentOptions);
-    */
-
-    var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
-    var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
-
-    var httpsServer = https.createServer( {key: privateKey, cert: certificate}, app );
-    httpsServer.listen( g_port );
+    sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
+        if ( !reply ){
+            console.log( "ERROR: No reply from core server" );
+        }else if ( reply.major + "." + reply.minor != g_version ){
+            console.log( "ERROR: Incompatible core server version (" + reply.major + "." + reply.minor + ")" );
+        }else{
+            g_oauth_credentials = {
+                clientId: g_client_id,
+                clientSecret: g_client_secret,
+                authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
+                accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
+                redirectUri: 'https://'+g_host+':'+g_port+'/ui/authn',
+                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
+            };
+        
+            globus_auth = new ClientOAuth2( g_oauth_credentials );
+        
+            //--- This is a HACK to gt around lack of host cert
+            /*
+            var agentOptions = {
+                host : g_host,
+                port : g_port,
+                path : '/',
+                rejectUnauthorized : false
+            };
+        
+            var agent = new https.Agent(agentOptions);
+            */
+        
+            var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
+            var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
+        
+            var httpsServer = https.createServer( {key: privateKey, cert: certificate}, app );
+            httpsServer.listen( g_port );
+        }
+    });
 }
 
 app.use( express.static( __dirname + '/static' ));
@@ -1142,16 +1151,17 @@ protobuf.load("Version.proto", function(err, root) {
     if ( !msg )
         throw "Missing Minor Version enum in Version.Anon proto file";
 
-    g_version += msg.values.VER_MINOR + ".";
+    g_version += msg.values.VER_MINOR;
 
     msg = root.lookupEnum( "VerBuild" );
     if ( !msg )
         throw "Missing Build Version enum in Version.Anon proto file";
 
+    //g_version += msg.values.VER_BUILD;
 
-    g_version += msg.values.VER_BUILD;
-
-    console.log('Running Version',g_version);
+    console.log('Running Version',g_version+ "." + msg.values.VER_BUILD);
+    if ( --ready_start == 0 )
+        startServer();
 });
 
 protobuf.load("SDMS_Anon.proto", function(err, root) {
@@ -1165,6 +1175,8 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
         throw "Missing Protocol enum in SDMS.Anon proto file";
 
     processProtoFile( msg );
+    if ( --ready_start == 0 )
+        startServer();
 });
 
 protobuf.load("SDMS_Auth.proto", function(err, root) {
@@ -1178,6 +1190,8 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
         throw "Missing Protocol enum in SDMS.Auth proto file";
 
     processProtoFile( msg );
+    if ( --ready_start == 0 )
+        startServer();
 });
 
 process.on('unhandledRejection', (reason, p) => {
@@ -1226,10 +1240,10 @@ g_core_sock.on('message', function( delim, frame, client, msg_buf ) {
     }
 });
 
+defaultSettings();
+
 if ( process.argv.length > 2 ){
     // Only argument supported is path to a configuration file
-    defaultSettings();
-
     console.log( "Reading configuration from file", process.argv[2] );
     try{
         var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
@@ -1250,9 +1264,9 @@ if ( process.argv.length > 2 ){
         console.log( "Could not open/parse configuration file", process.argv[2] );
         console.log( e.message );
     }
-
-    startServer();
+    if ( --ready_start == 0 )
+        startServer();
 }else{
-    defaultSettings();
-    startServer();
+    if ( --ready_start == 0 )
+        startServer();
 }

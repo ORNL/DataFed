@@ -33,6 +33,7 @@ private:
 
     std::string getDataPath( const std::string & a_data_id );
     void        procStatusRequest();
+    void        procVersionRequest();
     void        procDataDeleteRequest();
     void        procDataGetSizeRequest();
     void        procPathCreateRequest();

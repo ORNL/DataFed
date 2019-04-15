@@ -28,6 +28,7 @@ private:
     bool dbPassThrough( const std::string & a_uid );
     bool procGetAuthStatusRequest( const std::string & a_uid );
     bool procStatusRequest( const std::string & a_uid );
+    bool procVersionRequest( const std::string & a_uid );
     bool procAuthenticateRequest( const std::string & a_uid );
     bool procGenerateCredentialsRequest( const std::string & a_uid );
     bool procRevokeCredentialsRequest( const std::string & a_uid );

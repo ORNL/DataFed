@@ -71,6 +71,7 @@ Worker::setupMsgHandlers()
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Worker::procStatusRequest );
+        SET_MSG_HANDLER( proto_id, VersionRequest, &Worker::procVersionRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Worker::procAuthenticateRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &Worker::procGetAuthStatusRequest );
 
@@ -303,6 +304,20 @@ Worker::procStatusRequest( const std::string & a_uid )
     (void)a_uid;
 
     reply.set_status( SS_NORMAL );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procVersionRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( VersionRequest, VersionReply )
+    (void)a_uid;
+    DL_INFO( "Ver request" );
+
+    reply.set_major( VER_MAJOR );
+    reply.set_minor( VER_MINOR );
+    reply.set_build( VER_BUILD );
 
     PROC_MSG_END
 }

@@ -109,6 +109,24 @@ Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout,
         m_domain = domain;
 
     m_comm = new MsgComm( a_host, a_port, MsgComm::DEALER, false, &sec_ctx );
+
+    Anon::VersionRequest req;
+    Anon::VersionReply * reply = 0;
+
+    try
+    {
+        send<>( req, reply, m_ctx++ );
+
+        if ( reply->major() != VER_MAJOR || reply->minor() != VER_MINOR )
+            EXCEPT(0,"Incompatible server version (update client)");
+
+        delete reply;
+    }
+    catch(...)
+    {
+        delete m_comm;
+        throw;
+    }
 }
 
 Client::~Client()

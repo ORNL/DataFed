@@ -12,8 +12,6 @@ using namespace std;
 using namespace SDMS;
 namespace po = boost::program_options;
 
-#define VERSION "0.1.0"
-
 int main( int a_argc, char ** a_argv )
 {
     try
@@ -23,7 +21,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "SDMS core server starting" );
+        DL_INFO( "SDMS core server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
 
         uint16_t    port = 7512;
         int         timeout = 5;
@@ -62,7 +60,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "SDMS Core Server, ver. " << VERSION << "\n";
+                cout << "SDMS Core Server, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
                 cout << "Usage: sdms-core [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -70,7 +68,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VERSION << endl;
+                cout << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << endl;
                 return 0;
             }
 

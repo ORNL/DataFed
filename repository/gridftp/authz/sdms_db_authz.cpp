@@ -4,6 +4,7 @@ extern "C"
 }
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <ctime>
 #include "sdms_db_authz.h"
 #include <unistd.h>
@@ -12,12 +13,16 @@ extern "C"
 #include "TraceException.hpp"
 #include "Util.hpp"
 #include "AuthzWorker.hpp"
+#include "SDMS.pb.h"
 
 using namespace std;
 using namespace SDMS;
 
-#define VERSION "0.1.0"
-
+const char * getVersion()
+{
+    static std::string ver_str = std::to_string(VER_MAJOR) + "." + std::to_string(VER_MINOR) + "." + std::to_string(VER_BUILD);
+    return ver_str.c_str();
+}
 
 int authzdb(char * client_id, char * object, char * action)
 {
