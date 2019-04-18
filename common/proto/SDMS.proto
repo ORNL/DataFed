@@ -177,13 +177,14 @@ message RecordData
     optional uint64             size        = 10;
     optional string             source      = 11;
     optional string             ext         = 12;
-    optional uint32             ct          = 13;
-    optional uint32             ut          = 14;
-    optional uint32             dt          = 15;
-    optional string             owner       = 16;
-    optional bool               locked      = 17;
-    optional string             parent_id   = 18;
-    repeated DependencyData     deps        = 19;
+    optional bool               ext_auto    = 13;
+    optional uint32             ct          = 14;
+    optional uint32             ut          = 15;
+    optional uint32             dt          = 16;
+    optional string             owner       = 17;
+    optional bool               locked      = 18;
+    optional string             parent_id   = 19;
+    repeated DependencyData     deps        = 20;
 }
 
 message RecordDataLocation

@@ -867,6 +867,7 @@ function makeBrowserTab(){
                             html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
                         if ( item.ext )
                             html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
+                        html += "<tr><td>Auto Ext.:</td><td>" + (item.extAuto?"Yes":"No") + "</td></tr>";
                         if ( item.ct ){
                             date.setTime(item.ct*1000);
                             html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";

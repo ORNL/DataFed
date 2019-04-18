@@ -245,7 +245,7 @@ XfrMgr::xfrThreadFunc()
                                         upd_req.set_id( (*ixfr)->data_id );
                                         upd_req.set_size( file_size );
                                         upd_req.set_source( (*ixfr)->local_path );
-                                        pos = (*ixfr)->local_path.find_first_of("/");
+                                        /*pos = (*ixfr)->local_path.find_first_of("/");
                                         if ( pos != string::npos )
                                         {
                                             pos = (*ixfr)->local_path.find_first_of(".",pos);
@@ -253,7 +253,7 @@ XfrMgr::xfrThreadFunc()
                                             {
                                                 upd_req.set_ext( (*ixfr)->local_path.substr( pos + 1 ));
                                             }
-                                        }
+                                        }*/
                                         upd_req.set_dt( mod_time );
                                         reply.Clear();
 

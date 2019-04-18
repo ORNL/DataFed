@@ -17,14 +17,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             </ul>\
             <div id='tab-dlg-gen' style='padding:1em'>\
                 <table class='form-table'>\
-                    <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
-                    <tr><td>Alias:</td><td colspan='2'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
-                    <tr><td>Description:</td><td colspan='2'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
-                    <tr><td>Keywords:</td><td colspan='2'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
-                    <tr><td>Topic:</td><td><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
-                    <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
-                    <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='2'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                    <tr id='dlg_put_row'><td>Raw data:</td><td><input title='Raw data remote source (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
+                    <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
+                    <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
+                    <tr><td>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td>Keywords:</td><td colspan='3'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
+                    <tr><td>Topic:</td><td colspan='2'><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
+                    <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
+                    <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
+                    <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
+                    <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                 </table>\
             </div>\
             <div id='tab-dlg-ref' style='padding:1em'>\
@@ -77,6 +78,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     $("#pick_source",frame).on("click",function(){
         dlgStartTransfer( XFR_SELECT, null, function( path ){
             $("#source_file",frame).val( path );
+            if ( $("#ext_auto",frame).prop("checked") )
+                updateAutoExt();
         });
     });
 
@@ -203,11 +206,25 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         });
     }
 
+    function updateAutoExt(){
+        var src = $("#source_file",frame).val(),ext="";
+        if ( src ){
+            var p = src.indexOf("/");
+            if ( p != -1 ){
+                p = src.indexOf(".",p);
+                if ( p != -1 ){
+                    ext = src.substr(p) + " ";
+                }
+            }
+        }
+        $("#extension",frame).val( ext + '(auto)');
+    }
+
     var options = {
         title: dlg_title,
         modal: true,
         width: 500,
-        height: 500,
+        height: 525,
         resizable: true,
         resizeStop: function(ev,ui){
             //console.log("resized");
@@ -246,6 +263,16 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
                     getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
 
+                    if ( $("#ext_auto",frame).prop("checked") ){
+                        if ( !a_data.extAuto )
+                            obj.extAuto = true;
+                    }else{
+                        if ( a_data.extAuto )
+                            obj.extAuto = false;
+
+                        getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
+                    }
+
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
                         obj.mdset = true;
 
@@ -268,6 +295,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
                     getUpdatedValue( $("#topic",frame).val(), {}, obj, "topic" );
+
+                    if ( $("#ext_auto",frame).prop("checked") ){
+                        obj.extAuto = true;
+                    }else{
+                        getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
+                    }
+
                     var tmp = jsoned.getValue();
                     if ( tmp )
                         obj.metadata = tmp;
@@ -288,6 +322,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
 
                 var inst = $(this);
+
+                console.log("data upd, obj:",obj);
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
@@ -332,9 +368,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             var widget = frame.dialog( "widget" );
             $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
 
+            $("select",frame).selectmenu({width:250});
 
-            $("select",frame).selectmenu({width:200});
-
+    
             jsoned = ace.edit("md", {
                 theme:(g_theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
@@ -388,7 +424,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     $("#dlg_coll_row",frame).css("display","none");
                     $("#dlg_alloc_row",frame).css("display","none");
-                    $("#dlg_put_row",frame).css("display","none");
+                    //$("#dlg_put_row",frame).css("display","none");
+                    $("#source_file",frame).val(a_data.source); //.prop("disabled",true);
+                    //$("#pick_source",frame).button("disable");
+                    if ( a_data.extAuto ){
+                        $("#ext_auto",frame).prop("checked",true);
+                        $("#extension",frame).val(a_data.ext + " (auto)").prop("disabled",true);
+                    }else{
+                        $("#extension",frame).val(a_data.ext);
+                    }
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     parent = "root";
@@ -403,8 +447,27 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )
                     parent = a_parent;
+                $("#ext_auto",frame).prop("checked",true);
+                $("#extension",frame).val("(auto)").prop("disabled",true);
             }
 
+            var srcEditTimer;
+            $("#source_file",frame).on("input",function(ev){
+                if ( srcEditTimer )
+                    clearTimeout( srcEditTimer );
+
+                srcEditTimer = setTimeout( function(){ if ( $("#ext_auto",frame).prop("checked") ){ updateAutoExt() }}, 1000 );
+            });
+
+            $("#ext_auto",frame).checkboxradio().on( "change",function(ev){
+                var auto = $("#ext_auto",frame).prop("checked");
+                if ( auto ){
+                    updateAutoExt();
+                    $("#extension",frame).prop("disabled",true);
+                }else{
+                    $("#extension",frame).val('').prop("disabled",false);
+                }
+            });
 
             if ( parent ){
                 var changetimer;

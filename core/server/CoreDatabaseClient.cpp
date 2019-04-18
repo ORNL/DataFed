@@ -919,6 +919,8 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_ext() )
         body += ",\"ext\":\"" + a_request.ext() + "\"";
+    if ( a_request.has_ext_auto() )
+        body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
     if ( a_request.has_dt() )
         body += ",\"dt\":" + to_string(a_request.dt());
 
@@ -1104,6 +1106,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("ext")) != val.MemberEnd() )
             rec->set_ext( imem->value.GetString() );
+
+        if (( imem = val.FindMember("ext_auto")) != val.MemberEnd() )
+            rec->set_ext_auto( imem->value.GetBool() );
 
         if (( imem = val.FindMember("ct")) != val.MemberEnd() )
             rec->set_ct( imem->value.GetUint() );
