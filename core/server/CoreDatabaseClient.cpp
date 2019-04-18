@@ -915,6 +915,10 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
     if ( a_request.has_size() )
         body += ",\"size\":" + to_string(a_request.size());
+    if ( a_request.has_source() )
+        body += ",\"source\":\"" + a_request.source() + "\"";
+    if ( a_request.has_ext() )
+        body += ",\"ext\":\"" + a_request.ext() + "\"";
     if ( a_request.has_dt() )
         body += ",\"dt\":" + to_string(a_request.dt());
 
@@ -1094,6 +1098,12 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("size")) != val.MemberEnd() )
             rec->set_size( imem->value.GetUint64() );
+
+        if (( imem = val.FindMember("source")) != val.MemberEnd() )
+            rec->set_source( imem->value.GetString() );
+
+        if (( imem = val.FindMember("ext")) != val.MemberEnd() )
+            rec->set_ext( imem->value.GetString() );
 
         if (( imem = val.FindMember("ct")) != val.MemberEnd() )
             rec->set_ct( imem->value.GetUint() );

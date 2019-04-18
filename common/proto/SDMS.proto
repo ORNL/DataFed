@@ -175,13 +175,15 @@ message RecordData
     optional string             metadata    = 8;
     optional string             repo_id     = 9;
     optional uint64             size        = 10;
-    optional uint32             ct          = 11;
-    optional uint32             ut          = 12;
-    optional uint32             dt          = 13;
-    optional string             owner       = 14;
-    optional bool               locked      = 15;
-    optional string             parent_id   = 16;
-    repeated DependencyData     deps        = 17;
+    optional string             source      = 11;
+    optional string             ext         = 12;
+    optional uint32             ct          = 13;
+    optional uint32             ut          = 14;
+    optional uint32             dt          = 15;
+    optional string             owner       = 16;
+    optional bool               locked      = 17;
+    optional string             parent_id   = 18;
+    repeated DependencyData     deps        = 19;
 }
 
 message RecordDataLocation

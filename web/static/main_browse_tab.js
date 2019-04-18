@@ -860,10 +860,13 @@ function makeBrowserTab(){
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
                         html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
-                        html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
                         html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
                         html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
                         html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
+                        if ( item.source )
+                            html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
+                        if ( item.ext )
+                            html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
                         if ( item.ct ){
                             date.setTime(item.ct*1000);
                             html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
