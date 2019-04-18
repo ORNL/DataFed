@@ -103,11 +103,13 @@ module.exports = ( function() {
     obj.field_reqs = {
         title: { required: true, update: true, max_len: 80, label: 'title' },
         alias: { required: false, update: true, max_len: 60, lower: true, charset: obj.CHARSET_ALIAS, label: 'alias' },
-        desc: { required: false, update: true, max_len: 500, label: 'description' },
+        desc: { required: false, update: true, max_len: 2000, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
         topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
         domain: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'domain' },
+        source: { required: false, update: true, max_len: 300, lower: false, label: 'source' },
+        ext: { required: false, update: true, max_len: 40, lower: false, label: 'extension' },
         gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
         id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' }
     };

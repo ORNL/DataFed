@@ -253,6 +253,8 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "keyw", true, obj );
                 g_lib.procInputParam( req.body, "alias", true, obj );
                 g_lib.procInputParam( req.body, "topic", true, obj );
+                g_lib.procInputParam( req.body, "source", true, obj );
+                g_lib.procInputParam( req.body, "ext", true, obj );
 
                 //console.log("topic, old:", data.topic ,",new:", obj.topic );
                 //console.log("new !== undefined", obj.topic !== undefined );
@@ -415,6 +417,8 @@ router.post('/update', function (req, res) {
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     size: joi.number().optional(),
+    source: joi.string().allow('').optional(),
+    ext: joi.string().allow('').optional(),
     dt: joi.number().optional(),
     deps_clear: joi.boolean().optional(),
     deps_add: joi.array().items(joi.object({

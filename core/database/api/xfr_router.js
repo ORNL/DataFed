@@ -90,7 +90,7 @@ router.get('/init', function (req, res) {
                     var dest_path = req.queryParams.path;
                     if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
                         dest_path += "/";
-                    dest_path += data_id.substr( 2 );
+                    dest_path += data_id.substr( 2 ) + (data.ext?"." + data.ext:"");
 
                     // See if there is an existing transfer record either in INIT or ACTIVE state
                     xfr = g_db._query( "for i in tr filter i.data_id == @data_id and ( i.mode == 1 or i.local_path == @loc_path ) and i.status < 3 return i", { data_id: data_id, loc_path: dest_path }).toArray();
