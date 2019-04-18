@@ -274,6 +274,62 @@ router.get('/delete', function (req, res) {
 .summary('Delete repo server record')
 .description('Delete repo server record');
 
+router.get('/calc_size', function (req, res) {
+    var client = g_lib.getUserFromClientID( req.queryParams.client );
+
+    // TODO Check permissions
+    var i, repo_map = {};
+    for ( i in req.queryParams.items ){
+        calcSize( req.queryParams.items[i], req.queryParams.recurse, 0, {}, repo_map );
+    }
+
+    var result = [], stats;
+    for ( i in repo_map ){
+        stats = repo_map[i];
+        stats.repo = i;
+        result.push(stats);
+    }
+
+    res.send( result );
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('items', joi.array().items(joi.string()).required(), "Array of data and/or collection IDs")
+.queryParam('recurse', joi.boolean().required(), "Recursive flag")
+.summary('Calculate per-repo sizes for specified data records and collections.')
+.description('Calculate per-repo sizes for specified data records and collections.');
+
+function calcSize( a_item, a_recurse, a_depth, a_visited, a_result ){
+    var item, loc, res;
+    if ( a_item.charAt(0) == 'd' ){
+        if ( a_item in a_visited )
+            return;
+        item = g_db.d.document( a_item );
+        loc = g_db.loc.firstExample({ _from: a_item });
+        if ( !loc )
+            throw [g_lib.ERR_INTERNAL_FAULT,"Data record missing allocation link"];
+
+        if ( loc._to in a_result ){
+            (res = a_result[loc._to]).records++;
+            if ( item.size ){
+                res.files++;
+                res.total_sz += item.size;
+            }
+        }else{
+            a_result[loc._to] = {records:1,files:item.size?1:0,total_sz:item.size};
+        }
+        a_visited[a_item] = true;
+    }else if ( a_item.charAt(0) == 'c' ){
+        if ( a_recurse || a_depth == 0 ){
+            item = g_db.c.document( a_item );
+            var items = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:a_item});
+            while ( items.hasNext() ){
+                calcSize( items.next(), a_recurse, a_depth+1, a_visited, a_result );
+            }
+        }
+    }else
+        throw [g_lib.ERR_INVALID_PARAM,"Invalid item type for size calculation: " + a_item];
+}
+
 router.get('/alloc/list/by_repo', function (req, res) {
     var client = g_lib.getUserFromClientID( req.queryParams.client );
     var repo = g_db.repo.document( req.queryParams.repo );
@@ -376,7 +432,7 @@ function getAllocStats( a_repo, a_subject ){
             hist[i] = 100*hist[i]/file_count;
     }*/
 
-    return { records:count, files:file_count, total_sz:tot_sz, histogram:hist };
+    return { repo: a_repo, records:count, files:file_count, total_sz:tot_sz, histogram:hist };
 }
 
 router.get('/alloc/stats', function (req, res) {
