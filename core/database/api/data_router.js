@@ -133,6 +133,17 @@ router.post('/create', function (req, res) {
                     //console.log( "parsed:", obj.md );
                 }
 
+                if ( req.body.ext_auto !== undefined )
+                    obj.ext_auto = req.body.ext_auto;
+                else
+                    obj.ext_auto = true;
+
+                if ( !obj.ext_auto && req.body.ext ){
+                    obj.ext = req.body.ext;
+                    if ( obj.ext.length && obj.ext.charAt(0) != "." )
+                        obj.ext = "." + obj.ext;
+                }
+
                 //console.log("Save data");
 
                 var data = g_db.d.save( obj, { returnNew: true });
@@ -207,6 +218,8 @@ router.post('/create', function (req, res) {
     parent: joi.string().allow('').optional(),
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
+    ext: joi.string().allow('').optional(),
+    ext_auto: joi.boolean().optional(),
     deps: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional()
@@ -254,7 +267,6 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "alias", true, obj );
                 g_lib.procInputParam( req.body, "topic", true, obj );
                 g_lib.procInputParam( req.body, "source", true, obj );
-                g_lib.procInputParam( req.body, "ext", true, obj );
 
                 //console.log("topic, old:", data.topic ,",new:", obj.topic );
                 //console.log("new !== undefined", obj.topic !== undefined );
@@ -282,6 +294,31 @@ router.post('/update', function (req, res) {
                     obj.md = req.body.md;
                     if ( Array.isArray( obj.md ))
                         throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+                }
+
+                if ( req.body.ext_auto !== undefined ){
+                    obj.ext_auto = req.body.ext_auto;
+                }
+
+                if ( obj.ext_auto == true || obj.ext_auto == undefined && data.ext_auto == true ){
+                    if ( obj.source !== undefined || obj.ext_auto !== undefined ){
+                        // Changed - update auto extension
+                        var src = obj.source || data.source;
+                        if ( src ){
+                            // Skip possible "." in end-point name
+                            var pos = src.indexOf("/");
+                            if ( pos != -1 ){
+                                pos = src.indexOf(".",pos);
+                                if ( pos != -1 ){
+                                    obj.ext = src.substr( pos );
+                                }
+                            }
+                        }
+                    }
+                }else{
+                    g_lib.procInputParam( req.body, "ext", true, obj );
+                    if ( obj.ext && obj.ext.charAt(0) != "." )
+                        obj.ext = "." + obj.ext;
                 }
 
                 if ( req.body.size !== undefined ) {
@@ -419,6 +456,7 @@ router.post('/update', function (req, res) {
     size: joi.number().optional(),
     source: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
+    ext_auto: joi.boolean().optional(),
     dt: joi.number().optional(),
     deps_clear: joi.boolean().optional(),
     deps_add: joi.array().items(joi.object({
