@@ -97,10 +97,11 @@ enum Permissions
 
 message AllocStatsData
 {
-    required uint32             records     = 1;
-    required uint32             files       = 2;
-    required uint64             total_sz    = 3;
-    repeated uint32             histogram   = 4;
+    required string             repo        = 1;
+    required uint32             records     = 2;
+    required uint32             files       = 3;
+    required uint64             total_sz    = 4;
+    repeated uint32             histogram   = 5;
 }
 
 message AllocData

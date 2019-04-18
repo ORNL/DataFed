@@ -2161,16 +2161,19 @@ function makeBrowserTab(){
             }else if (dest_node.key.startsWith("d/")){
                 if ( inst.pasteSource.key == dest_node.parent.key || !dest_node.parent.key.startsWith("c/"))
                     return false;
+            }else if (dest_node.key.startsWith("repo/")){
+                if ( inst.pasteSource.data.scope != dest_node.data.scope )
+                    return false;
             }else
                 return false;
 
             if ( inst.pasteCollections.length ){
                 var i,j,coll,dest_par = dest_node.getParentList(false,true);
                 // Prevent collection drop in non-collection hierarchy
-                for ( j in dest_par ){
+                /*for ( j in dest_par ){
                     if ( dest_par[j].data.nocoll )
                         return false;
-                }
+                }*/
                 // Prevent collection reentrancy
                 // Fancytree handles this when one item selected, must check for multiple items
                 if ( inst.pasteCollections.length > 1 ){
@@ -2276,13 +2279,40 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
-                if ( inst.pasteSource.data.scope != dest_node.data.scope ){
-                    var msg = "Data ownership will be transferred from " + (inst.pasteSource.data.scope.startsWith("u/")?"User ":"Project ") + "ID \"" + inst.pasteSource.data.scope.substr(2) + "\" to " + (dest_node.data.scope.startsWith("u/")?"User ":"Project ") + "ID \"" + dest_node.data.scope.substr(2) + "\". Continue?";
-                    dlgConfirmChoice( "Confirm Move Data", msg, ["Transfer","Cancel"], function(choice){
-                        if ( choice == 0 ){
-                            dataMove( inst.pasteItems, dest_node.data.scope, dest_node.data.key.startsWith("c/")?dest_node.data.key:dest_node.parent.data.key );
-                        }
-                    });
+                var repo,j,dest_par = dest_node.getParentList(false,true);
+                for ( j in dest_par ){
+                    if ( dest_par[j].key.startsWith("repo/")){
+                        repo = dest_par[j].key;
+                        break;
+                    }
+                }
+
+                if ( inst.pasteSource.data.scope != dest_node.data.scope || repo ){
+                    /*var msg;
+                    if ( repo )
+                        msg = "This operation will cause raw data to be relocated to another repository.";
+                    else
+                        msg = "This operation will transfer ownership to another user/project and relocate raw data.";
+                    msg += " Specified data records will be unavailable during relocation. Continue?";
+
+                    dlgConfirmChoice( "Confirm Data Relocation", msg, ["Relocate","Cancel"], function(choice){
+                        if ( choice == 0 ){*/
+                            var keys = [];
+                            for( var i in inst.pasteItems ){
+                                keys.push( inst.pasteItems[i].key );
+                            }
+                            var dest;
+                            if ( dest_node.key.startsWith("repo/") || dest_node.key.startsWith("c/") )
+                                dest = dest_node.key;
+                            else
+                                dest = dest_node.parent.key;
+
+                            dlgDataRelocate( keys, dest, dest_node.data.scope, function(){
+
+                            //relocateItems( keys, dest, dest_node.data.scope, function(){
+                            });
+                        /*}
+                    });*/
                     return;
                 }
 
@@ -2292,22 +2322,10 @@ function makeBrowserTab(){
                     inst.pasteCollections = null;
                 }
 
-                var repo,j,dest_par = dest_node.getParentList(false,true);
-                for ( j in dest_par ){
-                    if ( dest_par[j].key.startsWith("repo/")){
-                        repo = dest_par[j].key;
-                        break;
-                    }
-                }
-
-                if ( repo ){
-                    dlgAlert("Move Data","Moving data between allocations is not currently supported.");
+                if ( inst.drag_mode ){
+                    inst.moveItems( inst.pasteItems, dest_node, /*data.otherNode,*/ pasteDone );
                 }else{
-                    if ( inst.drag_mode ){
-                        inst.moveItems( inst.pasteItems, dest_node, /*data.otherNode,*/ pasteDone );
-                    }else{
-                        inst.copyItems( inst.pasteItems, dest_node, pasteDone );
-                    }
+                    inst.copyItems( inst.pasteItems, dest_node, pasteDone );
                 }
             },
             dragEnter: function(node, data) {
@@ -2338,7 +2356,7 @@ function makeBrowserTab(){
             if ( data.node.key == "mydata" ){
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,nocoll:true,checkbox:false}
+                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
                     data.result = {

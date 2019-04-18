@@ -115,6 +115,40 @@ function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
         a_new_obj[a_field] = tmp;
 };
 
+/* Check permissions and available allocations/space, then show relocate dialog */
+/*
+function relocateItems( a_src_items, a_dest, a_owner, a_cb ){
+    console.log("relocate items", a_src_items, a_dest, a_owner );
+    var ok = true, count = a_src_items.length;
+    for ( var i in a_src_items ){
+        getPerms( a_src_items[i], PERM_DELETE, function( perms ){
+            if (( perms & PERM_DELETE ) == 0 ){
+                if ( ok ){
+                    ok = false;
+                    dlgAlert( "Cannot Perform Action", "Requires DELETE permission at source." );
+                    count--;
+                }
+            }else{
+                if ( --count == 0 && ok ){
+                    if ( a_dest.startsWith("c/") ){
+                        getPerms( a_dest, PERM_CREATE, function( perms ){
+                            if (( perms & PERM_CREATE ) == 0 ){
+                                dlgAlert( "Cannot Perform Action", "Requires CREATE permission at destination." );
+                            }else{
+                                console.log("Move to owner", a_owner,"collection",a_dest);
+                                dlgDataRelocate( a_src_items, a_dest, a_owner, 10, function(){
+                                });
+                            }
+                        });
+                    }else{
+                        console.log("Move to repo",a_dest);
+                    }
+                }
+            }
+        });
+    }
+}*/
+
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
@@ -149,24 +183,6 @@ function dataEdit( a_id, a_cb ){
     });
 }
 
-function dataMove( a_id, a_cb ){
-    var req_perms = PERM_DELETE;
-    getPerms( a_id, req_perms, function( perms ){
-        if (( perms & req_perms ) == 0 ){
-            alertPermDenied();
-            return;
-        }
-
-        viewData( a_id, function(cur_data){
-            if (cur_data){
-                dlgDataMove(cur_data,function(new_data){
-                    if (a_cb)
-                        a_cb(new_data);
-                });
-            }
-        }); 
-    });
-}
 
 function dataShare( a_id ){
     checkPerms( a_id, PERM_SHARE, function( granted ){
@@ -444,6 +460,13 @@ function repoDelete( a_repo_id, a_cb ){
     console.log( url );
     _asyncGet( url, null, a_cb );
 }*/
+
+function repoCalcSize( a_items, a_recursive, a_cb ){
+    console.log("calcSize, rec:",a_recursive,"items",a_items);
+    _asyncGet( "/api/repo/calc_size?recurse=" + a_recursive + "&items="+ encodeURIComponent(JSON.stringify(a_items)), null, function( ok, data ){
+        a_cb( ok, data );
+    });
+}
 
 function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );

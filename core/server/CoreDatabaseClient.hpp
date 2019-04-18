@@ -107,6 +107,7 @@ public:
     void repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply );
+    void repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply );
     void repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
     void repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply );
@@ -136,6 +137,7 @@ private:
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result );
+    void setAllocStatsData( rapidjson::Value & a_value, AllocStatsData & a_stats );
 
     CURL *      m_curl;
     char *      m_client;

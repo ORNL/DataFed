@@ -854,6 +854,12 @@ app.get('/api/repo/delete', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/calc_size', ( a_req, a_resp ) => {
+    sendMessage( "RepoCalcSizeRequest", {recurse:a_req.query.recurse=="true"?true:false,item:JSON.parse(a_req.query.items)}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/repo/alloc/list/by_repo', ( a_req, a_resp ) => {
     sendMessage( "RepoListAllocationsRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:[]);

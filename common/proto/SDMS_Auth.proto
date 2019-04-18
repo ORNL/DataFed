@@ -563,6 +563,17 @@ message RepoDataReply
     repeated SDMS.RepoData      repo        = 1;
 }
 
+message RepoCalcSizeRequest
+{
+    required bool               recurse     = 1;
+    repeated string             item        = 2;
+}
+
+message RepoCalcSizeReply
+{
+    repeated AllocStatsData     stats       = 1;
+}
+
 message RepoListAllocationsRequest
 {
     required string             id          = 1;

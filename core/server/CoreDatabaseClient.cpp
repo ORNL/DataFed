@@ -2029,6 +2029,35 @@ DatabaseClient::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::Ack
 }
 
 void
+DatabaseClient::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply )
+{
+    rapidjson::Document result;
+
+    string items = "[";
+    if ( a_request.item_size() > 0 )
+    {
+        for ( int i = 0; i < a_request.item_size(); ++i )
+        {
+            if ( i > 0 )
+                items += ",";
+            items += "\"" + a_request.item(i) + "\"";
+        }
+        items += "]";
+    }
+
+    dbGet( "repo/calc_size", {{"recurse",a_request.recurse()?"true":"false"},{"items",items}}, result );
+
+    AllocStatsData * stats;
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        rapidjson::Value & val = result[i];
+        stats = a_reply.add_stats();
+        setAllocStatsData( val, *stats );
+    }
+}
+
+void
 DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result )
 {
     if ( !a_reply && !a_repos )
@@ -2146,6 +2175,9 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
             alloc->set_name( imem->value.GetString() );
         if (( imem = val.FindMember("stats")) != val.MemberEnd() )
         {
+            setAllocStatsData( imem->value, *alloc->mutable_stats() );
+/*
+            alloc->mutable_stats()->set_repo(imem->value["repo"].GetString());
             alloc->mutable_stats()->set_records(imem->value["records"].GetUint());
             alloc->mutable_stats()->set_files(imem->value["files"].GetUint());
             alloc->mutable_stats()->set_total_sz(imem->value["total_sz"].GetUint64());
@@ -2153,6 +2185,7 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
             imem2 = imem->value.FindMember("histogram");
             for ( rapidjson::SizeType i = 0; i < imem2->value.Size(); i++ )
                 alloc->mutable_stats()->add_histogram(imem2->value[i].GetUint());
+*/
         }
     }
 }
@@ -2174,9 +2207,10 @@ DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_
 void
 DatabaseClient::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result )
 {
-    AllocStatsData * stats;
-
-    stats = a_reply.mutable_alloc();
+    AllocStatsData * stats = a_reply.mutable_alloc();
+    setAllocStatsData( a_result, *stats );
+    /*
+    stats->set_repo(a_result["repo"].GetString());
     stats->set_records(a_result["records"].GetUint());
     stats->set_files(a_result["files"].GetUint());
     stats->set_total_sz(a_result["total_sz"].GetUint64());
@@ -2184,6 +2218,23 @@ DatabaseClient::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rap
     rapidjson::Value::MemberIterator imem = a_result.FindMember("histogram");
     for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
         stats->add_histogram(imem->value[i].GetDouble());
+    */
+}
+
+void
+DatabaseClient::setAllocStatsData( rapidjson::Value & a_value, AllocStatsData & a_stats )
+{
+    a_stats.set_repo(a_value["repo"].GetString());
+    a_stats.set_records(a_value["records"].GetUint());
+    a_stats.set_files(a_value["files"].GetUint());
+    a_stats.set_total_sz(a_value["total_sz"].GetUint64());
+
+    rapidjson::Value::MemberIterator imem = a_value.FindMember("histogram");
+    if ( imem != a_value.MemberEnd() )
+    {
+        for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
+            a_stats.add_histogram(imem->value[i].GetDouble());
+    }
 }
 
 void
