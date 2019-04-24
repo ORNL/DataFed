@@ -7,6 +7,7 @@
 #include <TraceException.hpp>
 #include <DynaLog.hpp>
 #include <Util.hpp>
+#include <Version.pb.h>
 #include <SDMS.pb.h>
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>

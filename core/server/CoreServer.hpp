@@ -14,7 +14,7 @@
 #include "CoreXfrMgr.hpp"
 #include "CoreWorker.hpp"
 #include "CoreDatabaseClient.hpp"
-#include "SDMS.pb.h"
+#include "Version.pb.h"
 
 namespace SDMS {
 namespace Core {

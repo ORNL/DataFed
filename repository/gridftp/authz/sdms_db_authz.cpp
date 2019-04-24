@@ -13,7 +13,7 @@ extern "C"
 #include "TraceException.hpp"
 #include "Util.hpp"
 #include "AuthzWorker.hpp"
-#include "SDMS.pb.h"
+#include "Version.pb.h"
 
 using namespace std;
 using namespace SDMS;

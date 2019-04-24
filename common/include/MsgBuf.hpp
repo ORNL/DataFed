@@ -25,7 +25,8 @@ public:
     typedef ::google::protobuf::FileDescriptor              FileDescriptorType;
     typedef ::google::protobuf::MessageFactory              Factory;
     typedef ::google::protobuf::Message                     Message;
-    typedef std::map<uint8_t,const FileDescriptorType *>    DescriptorMap;
+    typedef std::map<uint8_t,const FileDescriptorType *>    FileDescriptorMap;
+    typedef std::map<uint16_t,const DescriptorType *>       DescriptorMap;
 
     enum ErrorCode
     {
@@ -202,21 +203,42 @@ public:
         if ( !val_desc )
             EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
-        uint8_t id = val_desc->number();
+        uint16_t id = val_desc->number();
+        getFileDescriptorMap()[id] = file;
 
+        int count = file->message_type_count();
+        const DescriptorType * desc;
+        std::map<std::string,const DescriptorType*> msg_types;
+        DescriptorMap & desc_map = getDescriptorMap();
+
+        for ( int i = 0; i < count; i++ )
+        {
+            desc = file->message_type(i);
+            msg_types[desc->name()] = desc;
+        }
+
+        uint16_t msg_type = id << 8;
+        for ( std::map<std::string,const DescriptorType*>::iterator m = msg_types.begin(); m != msg_types.end(); m++, msg_type++ )
+        {
+            std::cout << "MT: " << msg_type << " = " << m->second->name() << "\n";
+            desc_map[msg_type] = m->second;
+        }
+
+        
+/*
         DescriptorMap::iterator iProto = getDescriptorMap().find( id );
         if ( iProto == getDescriptorMap().end() )
             getDescriptorMap()[id] = file;
-
+*/
         return id;
     }
 
 
     static uint8_t findMessageType( uint8_t a_proto_id, const std::string & a_message_name )
     {
-        DescriptorMap::iterator iProto = getDescriptorMap().find( a_proto_id );
+        FileDescriptorMap::iterator iProto = getFileDescriptorMap().find( a_proto_id );
 
-        if ( iProto == getDescriptorMap().end() )
+        if ( iProto == getFileDescriptorMap().end() )
             EXCEPT_PARAM( EC_INVALID_PARAM, "Protocol ID " << a_proto_id << " has not been registered." );
 
         const DescriptorType *desc = iProto->second->FindMessageTypeByName( a_message_name );
@@ -238,15 +260,15 @@ public:
         //if ( !a_buffer )
         //    EXCEPT_PARAM( EC_UNSERIALIZE, "Attempt to unserialize empty/null buffer." );
 
-        DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
-
-        if ( iProto != getDescriptorMap().end() )
+        //DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
+        DescriptorMap::iterator iDesc = getDescriptorMap().find( a_frame.getMsgType() );
+        if ( iDesc != getDescriptorMap().end() )
         {
-            if ( a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
-            {
+            //if ( a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
+            //{
                 //cout << "proto " << a_msg_buffer.a_frame.proto_id << "found" << endl;
 
-                const DescriptorType * msg_descriptor = iProto->second->message_type( a_frame.msg_id );
+                const DescriptorType * msg_descriptor = iDesc->second; //iProto->second->message_type( a_frame.msg_id );
                 const Message * default_msg = getFactory().GetPrototype( msg_descriptor );
 
                 Message * msg = default_msg->New();
@@ -259,15 +281,15 @@ public:
                     else
                         delete msg;
                 }
-            }
-            else
-            {
-                EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: invalid message type " << (unsigned int)a_frame.msg_id );
-            }
+            //}
+            //else
+            //{
+            //    EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: invalid message type " << (unsigned int)a_frame.msg_id );
+            //}
         }
         else
         {
-            EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: message contains unknown protocol ID " << (unsigned int)a_frame.proto_id );
+            EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: unregistered message type " << a_frame.getMsgType());
         }
 
         return 0;
@@ -303,6 +325,13 @@ private:
         static Factory * _factory = Factory::generated_factory();
 
         return *_factory;
+    }
+
+    static FileDescriptorMap & getFileDescriptorMap()
+    {
+        static FileDescriptorMap _descriptor_map;
+        
+        return _descriptor_map;
     }
 
     static DescriptorMap & getDescriptorMap()

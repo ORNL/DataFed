@@ -7,7 +7,7 @@
 #include "TraceException.hpp"
 #include "Util.hpp"
 #include "RepoServer.hpp"
-#include "SDMS.pb.h"
+#include "Version.pb.h"
 
 using namespace std;
 using namespace SDMS;

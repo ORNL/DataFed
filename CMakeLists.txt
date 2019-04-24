@@ -73,6 +73,7 @@ set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory( common )
+add_subdirectory( python )
 add_subdirectory( facility )
 IF(NOT CLIENT_ONLY)
 	add_subdirectory( core )
