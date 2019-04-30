@@ -71,12 +71,6 @@ class Connection:
         message creation/parsing on receive
         """
         # Message descriptors are stored by name - must convert to an array in alphabetic order
-        
-        #msgs_by_start = {}
-        #for name, desc in a_msg_module.DESCRIPTOR.message_types_by_name.items():
-        #    msgs_by_start[desc._serialized_start] = desc
-
-        #msgs_unordered = copy( a_msg_module.DESCRIPTOR.message_types_by_name )
 
         # build descriptors by type look-up
         proto_id = a_msg_module._PROTOCOL.values[0].number << 8
@@ -84,18 +78,11 @@ class Connection:
         #print "registering protocol"
         for name,desc in sorted(a_msg_module.DESCRIPTOR.message_types_by_name.items()):
             msg_t = proto_id | idx
-            print msg_t, " = ", desc.name
+            #print msg_t, " = ", desc.name
             self._msg_desc_by_type[msg_t] = desc
             self._msg_type_by_desc[desc] = msg_t
             idx += 1
 
-        # build indexes
-        #idx = proto_id << 16
-        #for i,desc in sorted(msgs_by_start.items()):
-            #print idx, ' @ ', desc
-            #self._msg_desc_by_type[idx] = desc
-            #self._msg_type_by_desc[desc] = idx
-            #idx += 1
 
     # -------------------------------------------------------------------------
     def recv( self, a_timeout=1000 ):

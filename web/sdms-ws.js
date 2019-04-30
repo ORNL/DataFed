@@ -18,7 +18,7 @@ const express = require('express'); // For REST api
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
-const { constants } = require('crypto');
+const constants = require('crypto');
 var request = require('request');
 const fs = require('fs');
 const ini = require('ini');
@@ -88,19 +88,7 @@ function startServer(){
             };
         
             globus_auth = new ClientOAuth2( g_oauth_credentials );
-        
-            //--- This is a HACK to gt around lack of host cert
-            /*
-            var agentOptions = {
-                host : g_host,
-                port : g_port,
-                path : '/',
-                rejectUnauthorized : false
-            };
-        
-            var agent = new https.Agent(agentOptions);
-            */
-        
+
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
         
@@ -1090,7 +1078,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
 
         //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, client, msg_buf ]);
+            g_core_sock.send([ nullfr, frame, msg_buf, client ]);
         else
             g_core_sock.send([ nullfr, frame, client ]);
     });
@@ -1116,7 +1104,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         //console.log( "sendMsgDirect:", a_msg_name );
         if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, a_client, msg_buf ]);
+            g_core_sock.send([ nullfr, frame, msg_buf, a_client ]);
         else
             g_core_sock.send([ nullfr, frame, a_client ]);
     });
@@ -1124,26 +1112,23 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
 function processProtoFile( msg ){
     //var mlist = msg.parent.order;
-    var mlist = msg.parent.nested;
+    var i, msg_list = [];
+    for ( i in msg.parent.nested )
+        msg_list.push(msg.parent.nested[i]);
+    msg_list.sort();
+
     var pid = msg.values.ID;
 
-    //for ( var i = 0; i < mlist.length - 1; i++ ) {
-    var i = 0,skip=true;
-    for ( var k in mlist ){
-        if ( skip ){
-            skip = false;
-            continue;
-        }
-        //msg = mlist[i+1];
-        msg = mlist[k];
-
+    for ( i = 1; i < msg_list.length; i++ ){
+        msg = msg_list[i];
         msg._pid = pid;
-        msg._mid = i;
-        msg._msg_type = (pid << 8) | i;
-        //console.log(msg.name,msg._msg_type);
+        msg._mid = i-1;
+        msg._msg_type = (pid << 8) | (i-1);
+
+        console.log(msg.name,msg._msg_type);
+
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
-        i++;
     }
 }
 
@@ -1211,7 +1196,7 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 
-g_core_sock.on('message', function( delim, frame, client, msg_buf ) {
+g_core_sock.on('message', function( delim, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
     var mlen = frame.readUInt32LE( 0 );
