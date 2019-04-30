@@ -222,7 +222,7 @@ public:
         uint16_t msg_type = id << 8;
         for ( std::map<std::string,const DescriptorType*>::iterator m = msg_types.begin(); m != msg_types.end(); m++, msg_type++ )
         {
-            std::cout << "MT: " << msg_type << " = " << m->second->name() << "\n";
+            //std::cout << "MT: " << msg_type << " = " << m->second->name() << "\n";
             desc_map[msg_type] = m->second;
             mt_map[m->second] = msg_type;
         }
@@ -267,13 +267,13 @@ public:
     {
         //if ( !a_buffer )
         //    EXCEPT_PARAM( EC_UNSERIALIZE, "Attempt to unserialize empty/null buffer." );
-        std::cout << "unserialize msg type " << a_frame.getMsgType() << "\n";
+        //std::cout << "unserialize msg type " << a_frame.getMsgType() << "\n";
 
         //DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
         DescriptorMap::iterator iDesc = getDescriptorMap().find( a_frame.getMsgType() );
         if ( iDesc != getDescriptorMap().end() )
         {
-            std::cout << "msg class " << iDesc->second->name() << "\n";
+            //std::cout << "msg class " << iDesc->second->name() << "\n";
 
             //if ( a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
             //{
@@ -318,7 +318,7 @@ public:
         if ( i_mt == mt_map.end() )
             EXCEPT_PARAM( EC_SERIALIZE, "Attempt to serialize unregistered message type: " << desc->name() )
 
-        std::cout << "serialize msg type: " << i_mt->second << ", " << desc->name() << "\n";
+        //std::cout << "serialize msg type: " << i_mt->second << ", " << desc->name() << "\n";
 
         m_frame.proto_id = i_mt->second >> 8;
         m_frame.msg_id = i_mt->second & 0xFF;

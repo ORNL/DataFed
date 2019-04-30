@@ -169,7 +169,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
             return false;
     }
 
-    cerr << "rcv route\n";
+    //cout << "rcv route\n";
 
     uint8_t * route = a_msg_buf.getRouteBuffer();
     uint8_t * rptr = route + 1;
@@ -222,7 +222,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 
     zmq_msg_init( &msg );
 
-    cerr << "rcv frame\n";
+    //cout << "rcv frame\n";
 
     if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
         EXCEPT_PARAM( 1, "RCV zmq_msg_recv (frame) failed: " << zmq_strerror(errno) );
@@ -235,7 +235,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 
     a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
-    cerr << "RCV frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
+    //cout << "RCV frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
 
     zmq_msg_close( &msg );
 
@@ -265,7 +265,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
     {
         // If the UID metadata is set, use is; otherwise get the UID from the message
         const char * uid = zmq_msg_gets( &msg, "User-Id");
-        std::cout << "UID (meta): " << (uid?uid:"null") << "\n";
+        //std::cout << "UID (meta): " << (uid?uid:"null") << "\n";
         if ( uid )
             a_msg_buf.setUID( uid, strlen( uid ));
         else
@@ -277,7 +277,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 
             if ( zmq_msg_size( &msg ))
             {
-                std::cout << "UID (msg): " << (char*)zmq_msg_data( &msg ) << "\n";
+                //std::cout << "UID (msg): " << (char*)zmq_msg_data( &msg ) << "\n";
                 a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
             }
             else
@@ -336,7 +336,7 @@ MsgComm::proxy( MsgComm & a_backend )
 
                 if ( items[1].revents )
                 {
-                    cout << "OUT msg ready\n";
+                    //cout << "OUT msg ready\n";
 
                     while ( 1 )
                     {
@@ -353,7 +353,7 @@ MsgComm::proxy( MsgComm & a_backend )
                             break;
                         }
 
-                        cout << "  out send\n";
+                        //cout << "  out send\n";
 
                         // Stop when no more parts
                         if ( zmq_msg_more( &out_msg ) == 0 )
@@ -370,7 +370,7 @@ MsgComm::proxy( MsgComm & a_backend )
 
                 if ( items[0].revents )
                 {
-                    cout << "IN msg ready\n";
+                    //cout << "IN msg ready\n";
 
                     // Handle Route and Delimiter Parts
                     nparts = 0;
@@ -415,7 +415,7 @@ MsgComm::proxy( MsgComm & a_backend )
                     {
                         // Must get ZAP user-id from non-routing msg parts - last part (p_msg-1) is always safe
                         uid = zmq_msg_gets( p_msg-1, "User-Id");
-                        cout << "proxy uid [" << (uid?uid:"NULL") << "]\n";
+                        //cout << "proxy uid [" << (uid?uid:"NULL") << "]\n";
 
                         // Send all received message parts
                         for ( i = 0, p_msg = in_msg; i < nparts; i++, p_msg++ )
@@ -433,7 +433,7 @@ MsgComm::proxy( MsgComm & a_backend )
                         }
                         zmq_msg_send( &uid_msg, out_sock, 0 );
 
-                        std::cerr << "Sent " << nparts << " parts\n";
+                        //std::cerr << "Sent " << nparts << " parts\n";
                     }
 
 #if 0

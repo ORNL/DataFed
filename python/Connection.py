@@ -90,45 +90,45 @@ class Connection:
         Receive a protobuf message with timeout (may throw zeromq/protobuf exceptions)
         """
         # Wait for data to arrive
-        rval = []
+
         ready = self._socket.poll( a_timeout )
         if ready > 0:
             # rcv null frame
             nf = self._socket.recv( 0 )
-            print "null frame len: ", len( nf )
+            #print "null frame len: ", len( nf )
 
             # receive zermq frame header and unpack
             frame_data = self._socket.recv( 0 )
-            print "frame len: ", len( frame_data )
+            #print "frame len: ", len( frame_data )
             frame_values = struct.unpack( '<LBBH', frame_data )
             msg_type = (frame_values[1] << 8) | frame_values[2]
 
             # find message descriptor based on type (descriptor index)
+            if not (msg_type in self._msg_desc_by_type):
+                raise Exception( "received unregistered message type: {}".format( msg_type ))
+
             desc = self._msg_desc_by_type[msg_type]
 
             # receive message paylod into buffer
             #if frame_values[0] > 0:
             data = self._socket.recv( 0 )
-            print "data len: ", len( data )
+            #print "data len: ", len( data )
+
+            reply = google.protobuf.reflection.ParseMessage( desc, data )
 
             # make new instance of message subclass and parse from buffer
-            rval.append(frame_values)
-            rval.append(google.protobuf.reflection.ParseMessage( desc, data ))
 
-            return rval
+            return reply, desc.name, frame_values[3]
         else:
             return None
 
     # -------------------------------------------------------------------------
-    def send( self, a_message ):
+    def send( self, a_message, a_ctxt ):
         """
         Sends a protobuf message (may throw zeromq/protobuf exceptions)
         """
         # Find msg type by descriptor look-up
         msg_type = self._msg_type_by_desc[a_message.DESCRIPTOR]
-
-        # Reverse word order
-        #msg_type = (msg_type & 0xFFFF << 16) | (msg_type & 0xFFFF0000 >> 16)
 
         # Initial Null frame
         self._socket.send( b'', zmq.SNDMORE )
@@ -138,7 +138,7 @@ class Connection:
         data_sz = len( data )
 
         # Build the message frame, to match C-struct MessageFrame
-        frame = struct.pack( '<LBBH', data_sz, msg_type >> 8, msg_type & 0xFF, 0 )
+        frame = struct.pack( '<LBBH', data_sz, msg_type >> 8, msg_type & 0xFF, a_ctxt )
 
         # Send body
         if data_sz > 0:
@@ -160,7 +160,7 @@ class Connection:
         #     return self._msg_desc_by_type[a_msg_type].name
         # return ''
         if a_msg_type in self._msg_desc_by_type:
-            rval = self._msg_desc_by_type[a_msg_type].name
+            return self._msg_desc_by_type[a_msg_type].name
         else:
-            rval = ''
-        return rval
+            return None
+
