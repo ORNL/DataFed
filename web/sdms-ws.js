@@ -19,6 +19,7 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
 const constants = require('crypto');
+const helmet = require('helmet');
 var request = require('request');
 const fs = require('fs');
 const ini = require('ini');
@@ -105,6 +106,7 @@ function startServer(){
 app.use( express.static( __dirname + '/static' ));
 app.use( bodyParser.json({ type: 'application/json'}));
 app.use( cookieParser() );
+app.use( helmet({hsts:{maxAge:31536000}}) );
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 
