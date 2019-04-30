@@ -18,6 +18,7 @@ const express = require('express'); // For REST api
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
+const { constants } = require('crypto');
 var request = require('request');
 const fs = require('fs');
 const ini = require('ini');
@@ -103,7 +104,11 @@ function startServer(){
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
         
-            var httpsServer = https.createServer( {key: privateKey, cert: certificate}, app );
+            var httpsServer = https.createServer({
+                key: privateKey,
+                cert: certificate,
+                secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 
+            }, app );
             httpsServer.listen( g_port );
         }
     });

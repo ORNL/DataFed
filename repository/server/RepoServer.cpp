@@ -28,7 +28,7 @@ using namespace SDMS::Auth;
 namespace SDMS {
 namespace Repo {
 
-#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
+#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
 
 
 Server::Server( const std::string & a_cred_dir, uint32_t a_port ) :

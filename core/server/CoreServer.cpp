@@ -21,13 +21,12 @@ namespace SDMS {
 namespace Core {
 
 
-Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per ) :
+Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, uint32_t a_num_workers, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per ) :
     m_port( a_port ),
     m_timeout(a_timeout),
     m_io_secure_thread(0),
     m_io_insecure_thread(0),
     m_maint_thread(0),
-    m_num_threads(a_num_threads),
     m_io_running(false),
     m_db_url(a_db_url),
     m_db_user(a_db_user),
@@ -37,7 +36,7 @@ Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, 
     m_zap_thread(0),
     m_xfr_mgr( *this ),
     m_msg_router_thread(0),
-    m_num_workers(8)
+    m_num_workers(a_num_workers)
 {
     loadKeys( a_cred_dir );
 
@@ -131,6 +130,7 @@ Server::run( bool a_async )
         throw runtime_error( "Only one worker router instance allowed" );
 
     m_io_running = true;
+    DL_INFO( "Public/private MAPI starting on ports " << m_port << "/" << ( m_port + 1))
 
     if ( a_async )
     {
@@ -328,18 +328,11 @@ Server::msgRouter()
 void
 Server::ioSecure()
 {
-    /*
-    MsgComm::SecurityContext sec_ctx;
-    sec_ctx.is_server = true;
-    sec_ctx.public_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    sec_ctx.private_key = "k*m3JEK{Ga@+8yDZcJavA*=[<rEa7>x2I>3HD84U";
-    sec_ctx.server_key = "B8Bf9bleT89>9oR/EO#&j^6<F6g)JcXj0.<tMc9[";
-    */
-
     MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
     MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
-    frontend.proxy( backend, true );
+    // Must use custom proxy to inject ZAP User-Id into message frame
+    frontend.proxy( backend );
 }
 
 void
@@ -399,7 +392,7 @@ Server::backgroundMaintenance()
     Auth::RepoPathDeleteRequest path_delete_req;
     MsgBuf::Message *           reply;
     MsgBuf::Frame               frame;
-    string                      uid;
+    //string                      uid;
     map<string,pair<string,size_t>>::iterator itrans_client;
     map<string,MsgComm*>        repo_map;
     map<string,MsgComm*>::iterator repo;
@@ -453,7 +446,7 @@ Server::backgroundMaintenance()
 
                             req.set_path( iter->second );
                             repo->second->send( req );
-                            if ( !repo->second->recv( reply, uid, frame, 10000 ))
+                            if ( !repo->second->recv( reply, frame, 10000 ))
                             {
                                 DL_ERROR( "No response to data-delete req from " << repo->first << " for path: " << iter->second );
                                 break;
@@ -482,7 +475,7 @@ Server::backgroundMaintenance()
                             DL_DEBUG( "Sending path-create to repo " << repo->first << " for path: " << path );
                             path_create_req.set_path( path );
                             repo->second->send( path_create_req );
-                            if ( !repo->second->recv( reply, uid, frame, 5000 ))
+                            if ( !repo->second->recv( reply, frame, 5000 ))
                             {
                                 DL_ERROR( "No response to path-create req from " << repo->first << " for path: " << iter->second );
                                 break;
@@ -509,7 +502,7 @@ Server::backgroundMaintenance()
                             DL_DEBUG( "Sending path-delete to repo " << repo->first << " for path: " << path );
                             path_delete_req.set_path( path );
                             repo->second->send( path_delete_req );
-                            if ( !repo->second->recv( reply, uid, frame, 5000 ))
+                            if ( !repo->second->recv( reply, frame, 5000 ))
                             {
                                 DL_ERROR( "No response to path-delete req from " << repo->first << " for path: " << iter->second );
                                 break;

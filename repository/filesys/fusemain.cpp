@@ -137,7 +137,6 @@ private:
         MsgBuf::Message *               reply;
         //Anon::NackReply *               nack;
         MsgBuf::Frame                   frame;
-        string                          client;
 
         request.set_repo( m_repo_id ) ;
         request.set_action( "read" );
@@ -166,7 +165,7 @@ private:
 
             comm.send( request );
 
-            if ( !comm.recv( reply, client, frame, 10000 ))
+            if ( !comm.recv( reply, frame, 10000 ))
             {
                 DL_ERROR( "SDMS-FS Core Server Timeout" );
             }

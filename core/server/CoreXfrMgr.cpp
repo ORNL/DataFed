@@ -97,7 +97,7 @@ XfrMgr::xfrThreadFunc()
         Auth::RepoDataGetSizeRequest sz_req;
         Auth::RepoDataSizeReply *    sz_rep;
         MsgBuf::Frame                frame;
-        string                       uid;
+        //string                       uid;
         size_t                       pos;
         map<string,MsgComm*>    repo_comm;
         map<string,MsgComm*>::iterator comm;
@@ -226,7 +226,7 @@ XfrMgr::xfrThreadFunc()
                                         else
                                             sz_req.set_path( (*ixfr)->repo_path );
                                         comm->second->send( sz_req );
-                                        if ( !comm->second->recv( raw_msg, uid, frame, 10000 ))
+                                        if ( !comm->second->recv( raw_msg, frame, 10000 ))
                                         {
                                             DL_ERROR( "Timeout waiting for response from " << (*ixfr)->repo_id );
                                         }

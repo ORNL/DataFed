@@ -22,7 +22,7 @@ namespace Core {
 class Server : public IWorkerMgr
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per );
+    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_workers, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -63,7 +63,6 @@ private:
     std::thread *                   m_io_secure_thread;
     std::thread *                   m_io_insecure_thread;
     std::thread *                   m_maint_thread;
-    uint32_t                        m_num_threads;
     std::mutex                      m_api_mutex;
     std::mutex                      m_data_mutex;
     bool                            m_io_running;

@@ -176,14 +176,15 @@ bool Client::verifyCert( bool a_preverified, asio::ssl::verify_context & a_conte
 template<typename RQT,typename RPT>
 void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
 {
-    //cout << "send\n";
+    cout << "send\n";
     MsgBuf::Message * reply = 0;
-    string uid;
     MsgBuf::Frame frame;
 
-    m_comm->send( a_request, uid, a_context );
+    m_comm->send( a_request, a_context );
 
-    if ( m_comm->recv( reply, uid, frame, m_timeout ))
+    cout << "recv\n";
+
+    if ( m_comm->recv( reply, frame, m_timeout ))
     {
         a_reply = dynamic_cast<RPT*>( reply );
 

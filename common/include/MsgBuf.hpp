@@ -27,6 +27,7 @@ public:
     typedef ::google::protobuf::Message                     Message;
     typedef std::map<uint8_t,const FileDescriptorType *>    FileDescriptorMap;
     typedef std::map<uint16_t,const DescriptorType *>       DescriptorMap;
+    typedef std::map<const DescriptorType *,uint16_t>       MsgTypeMap;
 
     enum ErrorCode
     {
@@ -210,6 +211,7 @@ public:
         const DescriptorType * desc;
         std::map<std::string,const DescriptorType*> msg_types;
         DescriptorMap & desc_map = getDescriptorMap();
+        MsgTypeMap & mt_map = getMsgTypeMap();
 
         for ( int i = 0; i < count; i++ )
         {
@@ -222,6 +224,7 @@ public:
         {
             std::cout << "MT: " << msg_type << " = " << m->second->name() << "\n";
             desc_map[msg_type] = m->second;
+            mt_map[m->second] = msg_type;
         }
 
         
@@ -234,7 +237,7 @@ public:
     }
 
 
-    static uint8_t findMessageType( uint8_t a_proto_id, const std::string & a_message_name )
+    static uint16_t findMessageType( uint8_t a_proto_id, const std::string & a_message_name )
     {
         FileDescriptorMap::iterator iProto = getFileDescriptorMap().find( a_proto_id );
 
@@ -245,7 +248,12 @@ public:
         if ( !desc )
             EXCEPT_PARAM( EC_PROTO_INIT, "Could not find specified message: " << a_message_name << " for protocol: " << (unsigned int)a_proto_id );
 
-        return (uint8_t)desc->index();
+        MsgTypeMap & mt_map = getMsgTypeMap();
+        MsgTypeMap::iterator i_mt = mt_map.find( desc );
+        if ( i_mt == mt_map.end() )
+            EXCEPT_PARAM( EC_INVALID_PARAM, "Message name \"" << a_message_name << "\" is not registered with protocol " << a_proto_id );
+
+        return i_mt->second;
     }
 
 
@@ -259,11 +267,14 @@ public:
     {
         //if ( !a_buffer )
         //    EXCEPT_PARAM( EC_UNSERIALIZE, "Attempt to unserialize empty/null buffer." );
+        std::cout << "unserialize msg type " << a_frame.getMsgType() << "\n";
 
         //DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
         DescriptorMap::iterator iDesc = getDescriptorMap().find( a_frame.getMsgType() );
         if ( iDesc != getDescriptorMap().end() )
         {
+            std::cout << "msg class " << iDesc->second->name() << "\n";
+
             //if ( a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
             //{
                 //cout << "proto " << a_msg_buffer.a_frame.proto_id << "found" << endl;
@@ -302,10 +313,15 @@ public:
             EXCEPT( EC_SERIALIZE, "Message is missing required fields" );
 
         const DescriptorType * desc = a_msg.GetDescriptor();
-        const FileDescriptorType * file = desc->file();
+        MsgTypeMap & mt_map = getMsgTypeMap();
+        MsgTypeMap::iterator i_mt = mt_map.find( desc );
+        if ( i_mt == mt_map.end() )
+            EXCEPT_PARAM( EC_SERIALIZE, "Attempt to serialize unregistered message type: " << desc->name() )
 
-        m_frame.proto_id = file->enum_type(0)->value(0)->number();
-        m_frame.msg_id = desc->index();
+        std::cout << "serialize msg type: " << i_mt->second << ", " << desc->name() << "\n";
+
+        m_frame.proto_id = i_mt->second >> 8;
+        m_frame.msg_id = i_mt->second & 0xFF;
         m_frame.size = a_msg.ByteSize();
 
         // Only serialize if message type has content
@@ -339,6 +355,13 @@ private:
         static DescriptorMap _descriptor_map;
         
         return _descriptor_map;
+    }
+
+    static MsgTypeMap & getMsgTypeMap()
+    {
+        static MsgTypeMap _msg_type_map;
+        
+        return _msg_type_map;
     }
 
 

@@ -83,8 +83,8 @@ class Connection:
         idx = 0
         #print "registering protocol"
         for name,desc in sorted(a_msg_module.DESCRIPTOR.message_types_by_name.items()):
-            #print idx, ":", name, desc.name
             msg_t = proto_id | idx
+            print msg_t, " = ", desc.name
             self._msg_desc_by_type[msg_t] = desc
             self._msg_type_by_desc[desc] = msg_t
             idx += 1
@@ -106,27 +106,34 @@ class Connection:
         rval = []
         ready = self._socket.poll( a_timeout )
         if ready > 0:
+            # rcv null frame
+            nf = self._socket.recv( 0 )
+            print "null frame len: ", len( nf )
 
             # receive zermq frame header and unpack
-            frame_data = self._socket.recv( zmq.NOBLOCK )
-            frame_values = struct.unpack( '<HHL', frame_data )
-            msg_type = (frame_values[0] << 16) | frame_values[1]
-
-            # receive message paylod into buffer
-            data = self._socket.recv( zmq.NOBLOCK )
+            frame_data = self._socket.recv( 0 )
+            print "frame len: ", len( frame_data )
+            frame_values = struct.unpack( '<LBBH', frame_data )
+            msg_type = (frame_values[1] << 8) | frame_values[2]
 
             # find message descriptor based on type (descriptor index)
             desc = self._msg_desc_by_type[msg_type]
 
+            # receive message paylod into buffer
+            #if frame_values[0] > 0:
+            data = self._socket.recv( 0 )
+            print "data len: ", len( data )
+
             # make new instance of message subclass and parse from buffer
-            rval.append(msg_type)
+            rval.append(frame_values)
             rval.append(google.protobuf.reflection.ParseMessage( desc, data ))
+
             return rval
         else:
-            return 0, None
+            return None
 
     # -------------------------------------------------------------------------
-    def send( self, a_message, route=None ):
+    def send( self, a_message ):
         """
         Sends a protobuf message (may throw zeromq/protobuf exceptions)
         """
@@ -134,27 +141,27 @@ class Connection:
         msg_type = self._msg_type_by_desc[a_message.DESCRIPTOR]
 
         # Reverse word order
-        msg_type = (msg_type & 0xFFFF << 16) | (msg_type & 0xFFFF0000 >> 16)
+        #msg_type = (msg_type & 0xFFFF << 16) | (msg_type & 0xFFFF0000 >> 16)
+
+        # Initial Null frame
+        self._socket.send( b'', zmq.SNDMORE )
 
         # Serialize
         data = a_message.SerializeToString()
+        data_sz = len( data )
 
         # Build the message frame, to match C-struct MessageFrame
-        frame = struct.pack( '<HHL', msg_type >> 16, msg_type & 0xFFFF, len( data ))
+        frame = struct.pack( '<LBBH', data_sz, msg_type >> 8, msg_type & 0xFF, 0 )
 
-        # Send frame, then body
-        while True:
-            try:
-                self._socket.send( frame, zmq.NOBLOCK | zmq.SNDMORE )
-                break
-            except zmq.Again:
-                time.sleep(0.1)
-        while True:
-            try:
-                self._socket.send( data, zmq.NOBLOCK )
-                break
-            except zmq.Again:
-                time.sleep(0.1)
+        # Send body
+        if data_sz > 0:
+            # Send frame
+            self._socket.send( frame, zmq.SNDMORE )
+            # Send body
+            self._socket.send( data, 0 )
+        else:
+            # Send frame
+            self._socket.send( frame, 0 )
 
 
     # -------------------------------------------------------------------------

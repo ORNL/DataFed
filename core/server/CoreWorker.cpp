@@ -56,8 +56,8 @@ Worker::wait()
     }
 }
 
-#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[(proto_id << 8 ) | MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
+#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
 
 void
 Worker::setupMsgHandlers()
@@ -183,11 +183,11 @@ Worker::workerThread()
     {
         try
         {
-            if ( comm.recv( m_msg_buf, 1000 ))
+            if ( comm.recv( m_msg_buf, true, 1000 ))
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                DL_TRACE( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
@@ -237,7 +237,7 @@ if ( base_msg ) \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
-        DL_TRACE( "Rcvd: " << request->DebugString()); \
+        DL_INFO( "Rcvd [" << request->DebugString() << "]"); \
         replyclass reply; \
         try \
         {
@@ -350,10 +350,12 @@ Worker::procGetAuthStatusRequest( const std::string & a_uid )
 
     if ( strncmp( a_uid.c_str(), "anon_", 5 ) == 0 )
     {
+        DL_INFO(a_uid << " not authorized");
         reply.set_auth( false );
     }
     else
     {
+        DL_INFO(a_uid << " authorized");
         reply.set_auth( true );
         reply.set_uid( a_uid );
     }

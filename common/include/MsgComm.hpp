@@ -40,11 +40,13 @@ public:
     ~MsgComm();
 
     void            reset();
-    void            send( MsgBuf::Message & a_msg, const std::string & a_uid = "", uint16_t a_context = 0 );
-    void            send( MsgBuf & a_message );
-    bool            recv( MsgBuf::Message *& a_msg, std::string & a_uid, MsgBuf::Frame & a_frame, uint32_t a_timeout = 0 );
-    bool            recv( MsgBuf & a_message, uint32_t a_timeout = 0 );
-    void            proxy( MsgComm & a_backend, bool a_uid_from_wire = false );
+    void            send( MsgBuf::Message & a_msg, uint16_t a_context = 0 );
+    void            send( MsgBuf::Message & a_msg, const std::string & a_uid, uint16_t a_context = 0 );
+    void            send( MsgBuf & a_message, bool a_proc_uid = false );
+    bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_timeout = 0 );
+    bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout = 0 );
+    bool            recv( MsgBuf & a_message, bool a_proc_uid = false, uint32_t a_timeout = 0 );
+    void            proxy( MsgComm & a_backend );
     void *          getSocket() { return m_socket; }
     void            getPollInfo( zmq_pollitem_t  & a_poll_data );
     static void *   getContext();

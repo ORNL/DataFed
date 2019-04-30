@@ -84,7 +84,6 @@ AuthzWorker::run(char * client_id, char * path, char * action)
     Auth::RepoAuthzRequest  auth_req;
     MsgBuf::Message *       reply;
     MsgBuf::Frame           frame;
-    string                  uid;
 
     MsgComm authzcomm(m_url, MsgComm::DEALER, false, &sec_ctx );
 
@@ -95,7 +94,7 @@ AuthzWorker::run(char * client_id, char * path, char * action)
     
     authzcomm.send(auth_req);
 
-    if ( !authzcomm.recv( reply, uid, frame, m_timeout ))
+    if ( !authzcomm.recv( reply, frame, m_timeout ))
     {
         EXCEPT(0,"Core service did no respond");
     }
