@@ -92,10 +92,12 @@ function startServer(){
 
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
-        
+            var chain = fs.readFileSync( '/etc/sdms/DigiCertSHA2SecureServerCA.pem', 'utf8');
+
             var httpsServer = https.createServer({
                 key: privateKey,
                 cert: certificate,
+                ca: chain,
                 secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 
             }, app );
             httpsServer.listen( g_port );
