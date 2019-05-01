@@ -59,6 +59,7 @@ function defaultSettings(){
     g_port = 443;
     g_server_key_file = '/etc/sdms/sdms_web_key';
     g_server_cert_file = '/etc/sdms/sdms_web_cert';
+    g_server_chain_file = '/etc/sdms/DigiCertSHA2SecureServerCA.pem';
     g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
     g_client_id = '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454';
     g_client_secret = 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=';
@@ -69,6 +70,7 @@ function startServer(){
     console.log( "port:", g_port );
     console.log( "server key file:", g_server_key_file );
     console.log( "server cert file:", g_server_cert_file );
+    console.log( "server chain file:", g_server_chain_file );
     console.log( "core server addr:", g_core_serv_addr );
 
     g_core_sock.connect( g_core_serv_addr );
@@ -92,7 +94,7 @@ function startServer(){
 
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
-            var chain = fs.readFileSync( '/etc/sdms/DigiCertSHA2SecureServerCA.pem', 'utf8');
+            var chain = fs.readFileSync( g_server_chain_file, 'utf8');
 
             var httpsServer = https.createServer({
                 key: privateKey,
@@ -1254,6 +1256,7 @@ if ( process.argv.length > 2 ){
             g_port = config.server.port || g_port;
             g_server_key_file = config.server.key_file || g_server_key_file;
             g_server_cert_file = config.server.cert_file || g_server_cert_file;
+            g_server_chain_file = config.server.chain_file || g_server_chain_file;
         }
         if ( config.oauth ){
             g_client_id = config.oauth.client_id || g_client_id;
