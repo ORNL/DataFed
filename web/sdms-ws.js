@@ -36,6 +36,7 @@ var g_host;
 var g_port;
 var g_server_key_file;
 var g_server_cert_file;
+var g_server_chain_file;
 var g_msg_by_id = {};
 var g_msg_by_name = {};
 var g_core_sock = zmq.socket('dealer');
