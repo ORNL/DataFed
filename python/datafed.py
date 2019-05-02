@@ -1,16 +1,56 @@
 #!/usr/bin/env python
+import getpass
+import SDMS_Anon_pb2 as anon
+import SDMS_Auth_pb2 as auth
+import ClientLib
+import click
 
-import client
+print "DataFed CLI Ver.", ClientLib.version()
 
-print "DataFed CLI Ver.", client.version()
+#try:
+if True:
+    #mapi = ClientLib.MsgAPI("sdms.ornl.gov",7512,"3dV7&?{asLI?6<i(:IG32)-TJn9axTz1d2r6blDu","/home/cades/.sdms")
+    mapi = ClientLib.MsgAPI("sdms.ornl.gov",7512)
 
-try:
-    mapi = client.DataFed_MAPI("sdms.ornl.gov",7512,"/etc/sdms")
 
-    reply, mt = mapi.statusRequest()
-    print "Status:",reply.status,mt
+    authorized, uid = mapi.getAuthStatus()
+    if not authorized:
+        if not mapi.keysLoaded():
+            print "No local credentials loaded."
+        elif not mapi.keysValid():
+            print "Invalid local credentials."
 
-    reply, mt = mapi.userListAllRequest(1,3)
+        print "Manual authentication required."
+
+        i = 0
+        while i < 3:
+            i += 1
+            uid = raw_input("User ID: ")
+            password = getpass.getpass(prompt="Password: ")
+            try:
+                mapi.manualAuth( uid, password )
+                break
+            except Exception as e:
+                print e
+
+        if i == 3:
+            print "Aborting..."
+            exit(1)
+
+        mapi.installLocalCredentials()
+    else:
+        print "Authenticated as",uid
+
+
+    #reply, mt = mapi.sendRecv( anon.StatusRequest() )
+    #print "Status:",reply.status,mt
+
+    reply, mt = mapi.sendRecv( auth.UserListAllRequest() )
     print "users:",reply,mt
-except Exception as e:
-    print e
+
+
+
+#except Exception as e:
+#    print "Exception:",e
+
+print "Goodbye!"
