@@ -142,7 +142,6 @@ class MsgAPI:
 
         # Make client cred dir if not exists
         if not os.path.exists( self._client_cred_dir ):
-            print "mkdirs"
             os.makedirs( self._client_cred_dir )
 
         keyf = open( self._client_cred_dir + "datafed-user-key.pub", "w" )
