@@ -27,8 +27,11 @@ class MsgAPI:
         server_cred_dir = None,
         client_key_pub = None,
         client_key_priv = None,
-        client_cred_dir = None
+        client_cred_dir = None,
+        manual_auth = None
         ):
+
+        #print("man auth:",manual_auth)
 
         self._ctxt = 0
         self._auth = False
@@ -69,8 +72,11 @@ class MsgAPI:
         # Use, load, or generate client keys
         self._keys_loaded = False
         self._keys_valid = False
-    
-        if client_key_pub != None and client_key_priv != None:
+
+        if manual_auth:
+            #print("gen keys")
+            pub,priv = zmq.curve_keypair()
+        elif client_key_pub != None and client_key_priv != None:
             pub = client_key_pub
             priv = client_key_priv
         else:
@@ -89,12 +95,18 @@ class MsgAPI:
             except:
                 pub,priv = zmq.curve_keypair()
 
+        #print("make conn", server_host, server_port, serv_pub, pub, priv )
+
         self._conn = Connection.Connection( server_host, server_port, serv_pub, pub, priv )
+
+        #print("register")
 
         self._conn.registerProtocol(anon)
         self._conn.registerProtocol(auth)
 
-        reply, mt = self.sendRecv(anon.VersionRequest(),1000)
+        #print("check ver")
+
+        reply, mt = self.sendRecv(anon.VersionRequest(),5000)
         if reply == None:
             raise Exception( "Timeout waiting for server connection." )
 
@@ -102,6 +114,8 @@ class MsgAPI:
         #print "ver reply:",reply
         if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
             raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
+
+        #print("get auth")
 
         # Check if server authenticated based on keys
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
