@@ -137,6 +137,7 @@ def data_create(title,alias,description,key_words,data_file,metadata,metadata_fi
         print("Cannot specify both --metadata and --metadata-file options")
         return
     print("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
+    print("TODO: NOT IMPLEMENTED")
 
 @data.command(name='update',help="Update existing data record")
 @click.argument("id")
@@ -152,21 +153,23 @@ def data_update(id,title,alias,description,key_words,data_file,metadata,metadata
         print("Cannot specify both --metadata and --metadata-file options")
         return
     print("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
+    print("TODO: NOT IMPLEMENTED")
 
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("id")
 def data_delete(id):
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @data.command(name='get',help="Get (download) raw data from datafed")
 @click.argument("id")
 def data_get(id):
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @data.command(name='put',help="Put (upload) raw data to datafed")
 @click.argument("id")
 def data_put(id):
-    pass
+    print("TODO: NOT IMPLEMENTED")
+
 
 #------------------------------------------------------------------------------
 # Collection command group
@@ -249,54 +252,66 @@ def query_exec(id):
 
 @query.command(name='text',help="Query by words or phrases")
 def query_text():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @query.command(name='meta',help="Query by metadata expression")
 def query_meta():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @query.command(cls=AliasedGroup,help="Query scope subcommands")
 def scope():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='view',help="View categories and/or collections in query scope")
 def scope_view():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='add',help="Add category or collection to query scope")
 def scope_add():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='remove',help="Remove category or collection from query scope")
 def scope_rem():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='clear',help="Remove all categories and/or collections from query scope")
 def scope_clear():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='reset',help="Reset query scope to default")
 def scope_reset():
-    pass
+    print("TODO: NOT IMPLEMENTED")
 
 #------------------------------------------------------------------------------
 # User command group
-@cli.command(cls=AliasedGroup)
+
+@cli.command(cls=AliasedGroup,help="User commands")
 def user():
     pass
 
-@user.command(name='list',help="User commands")
+@user.command(name='collab',help="List all users associated with common projects")
 @click.option("-o","--offset",default=0,help="List offset")
 @click.option("-c","--count",default=20,help="List count")
-def user_list(offset,count):
+def user_collab(offset,count):
+    print("TODO: NOT IMPLEMENTED")
+
+@user.command(name='shared',help="List users with shared data")
+@click.option("-o","--offset",default=0,help="List offset")
+@click.option("-c","--count",default=20,help="List count")
+def user_shared(offset,count):
+    print("TODO: NOT IMPLEMENTED")
+
+@user.command(name='all',help="List all users")
+@click.option("-o","--offset",default=0,help="List offset")
+@click.option("-c","--count",default=20,help="List count")
+def user_all(offset,count):
     msg = auth.UserListAllRequest()
     msg.offset = offset
     msg.count = count
     reply, mt = mapi.sendRecv( msg )
-    #print("verbosity:",g_verbosity)
     printUserListing(reply)
 
-@user.command(name='view')
+@user.command(name='view',help="View information for user UID")
 @click.option("-d","--details",is_flag=True,help="Show detailed user information")
 @click.argument("uid")
 def user_view(uid,details):
@@ -306,6 +321,38 @@ def user_view(uid,details):
     reply, mt = mapi.sendRecv( msg )
     print(reply)
 
+#------------------------------------------------------------------------------
+# Project command group
+
+@cli.command(cls=AliasedGroup,help="Project commands")
+def project():
+    pass
+
+@project.command(name='shared',help="List projects with shared data")
+@click.option("-o","--offset",default=0,help="List offset")
+@click.option("-c","--count",default=20,help="List count")
+def project_shared(offset,count):
+    print("TODO: NOT IMPLEMENTED")
+
+#------------------------------------------------------------------------------
+# Transfer commands
+
+@cli.command(cls=AliasedGroup,help="Data transfer management commands")
+def xfr():
+    pass
+
+@xfr.command(name='list',help="List recent transfers")
+@click.option("-s","--since",help="List from specified time (use s,h,d suffix)")
+@click.option("-f","--from",help="List from specified absolute time (timestamp)")
+@click.option("-t","--to",help="List up to specified absolute time (timestamp)")
+@click.option("-st","--status",help="List transfers matching specified status")
+def xfr_list():
+    print("TODO: NOT IMPLEMENTED")
+
+@xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer id ID omitted")
+@click.argument("id",required=False)
+def xfr_stat(id):
+    print("TODO: NOT IMPLEMENTED")
 
 #------------------------------------------------------------------------------
 # End-point commands
