@@ -40,7 +40,9 @@ def info( level, *args ):
 def set_verbosity(ctx, param, value):
     #print("set verbosity:",value)
     global g_verbosity
-    g_verbosity = value
+    if value != None:
+        print("verb set to",value)
+        g_verbosity = value
 
 def set_interactive(ctx, param, value):
     #print("set interactive:",value)

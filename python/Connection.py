@@ -8,6 +8,7 @@ import zmq.utils.z85
 import struct
 import time
 import inspect
+import sys
 
 
 class Connection:
@@ -42,9 +43,14 @@ class Connection:
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_CNT, 20 )
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_IDLE, 540 )
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_INTVL, 5 )
-        self._socket.curve_secretkey = a_client_priv_key
-        self._socket.curve_publickey = a_client_pub_key
-        self._socket.curve_serverkey = a_server_pub_key
+        if sys.version_info.major == 3:
+            self._socket.setsockopt_string( zmq.CURVE_SECRETKEY, a_client_priv_key )
+            self._socket.setsockopt_string( zmq.CURVE_PUBLICKEY, a_client_pub_key )
+            self._socket.setsockopt_string( zmq.CURVE_SERVERKEY, a_server_pub_key )
+        else:
+            self._socket.curve_secretkey = a_client_priv_key
+            self._socket.curve_publickey = a_client_pub_key
+            self._socket.curve_serverkey = a_server_pub_key
 
         # TODO need a timeout
         self._socket.connect( self._address )
