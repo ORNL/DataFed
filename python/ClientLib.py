@@ -76,6 +76,8 @@ class MsgAPI:
         if manual_auth:
             #print("gen keys")
             pub,priv = zmq.curve_keypair()
+            pub = pub.decode("utf-8")
+            priv = priv.decode("utf-8")
         elif client_key_pub != None and client_key_priv != None:
             pub = client_key_pub
             priv = client_key_priv
@@ -94,6 +96,8 @@ class MsgAPI:
                 self._keys_loaded = True
             except:
                 pub,priv = zmq.curve_keypair()
+                pub = pub.decode("utf-8")
+                priv = priv.decode("utf-8")
 
         #print("make conn", server_host, server_port, serv_pub, pub, priv )
 

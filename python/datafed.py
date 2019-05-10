@@ -16,6 +16,7 @@ from prompt_toolkit.formatted_text import to_formatted_text
 
 if sys.version_info.major == 3:
     unicode = str
+    raw_input = input
 
 mapi = None
 g_uid = None
@@ -41,7 +42,6 @@ def set_verbosity(ctx, param, value):
     #print("set verbosity:",value)
     global g_verbosity
     if value != None:
-        print("verb set to",value)
         g_verbosity = value
 
 def set_interactive(ctx, param, value):
