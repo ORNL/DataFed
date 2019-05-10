@@ -57,6 +57,7 @@ AuthzWorker::AuthzWorker( const std::string & a_config_file )
     loadKeys( cred_dir );
 
     REG_PROTO( SDMS::Anon );
+    REG_PROTO( SDMS::Auth );
 }
 
 AuthzWorker::~AuthzWorker()
