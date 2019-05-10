@@ -18,12 +18,14 @@ if sys.version_info.major == 3:
     unicode = str
 
 mapi = None
+g_uid = None
 g_cur_sel = None
 g_cur_coll = "root"
 g_cur_alias_prefix = ""
 g_list_items = []
-g_non_interact = False
-g_really_exit = False
+g_interactive = False
+#g_non_interact = False
+#g_really_exit = False
 g_verbosity = 1
 g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 g_ep_default = os.environ.get("DATAFED_EP_DEFAULT")
@@ -34,6 +36,18 @@ def info( level, *args ):
     global g_verbosity
     if level <= g_verbosity:
         print( *args )
+
+def set_verbosity(ctx, param, value):
+    #print("set verbosity:",value)
+    global g_verbosity
+    g_verbosity = value
+
+def set_interactive(ctx, param, value):
+    #print("set interactive:",value)
+    global g_interactive
+    if value == True:
+        g_interactive = value
+
 
 # Allows command matching by unique suffix
 class AliasedGroup(click.Group):
@@ -54,22 +68,21 @@ class AliasedGroup(click.Group):
 @click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
 @click.option("-h","--host",type=str,default="sdms.ornl.gov",help="Server host")
 @click.option("-p","--port",type=int,default=7512,help="Server port")
+@click.option("-c","--client-cred-dir",type=str,help="Client credential directory")
+@click.option("-s","--server-cred-dir",type=str,help="Server credential directory")
 @click.option("-l","--log",is_flag=True,help="Force manual authentication")
-@click.option("-v","--verbosity",type=int,help="Verbosity level (0=quiet,1=normal,2=verbose)")
+@click.option("-v","--verbosity",type=int,is_eager=True,callback=set_verbosity,expose_value=False,help="Verbosity level (0=quiet,1=normal,2=verbose)")
+@click.option("-i","--interactive",is_flag=True,is_eager=True,callback=set_interactive,expose_value=False,help="Start an interactive session")
 @click.pass_context
-def cli(ctx,host,port,log,verbosity):
-    global g_non_interact
-    global g_verbosity
-    global g_really_exit
+def cli(ctx,host,port,client_cred_dir,server_cred_dir,log):
+    global g_interactive
 
-    if not verbosity is None:
-        g_verbosity = verbosity
+    if not g_interactive and ctx.invoked_subcommand is None:
+        print("No command specified.")
+        print(ctx.get_help())
+    elif mapi == None:
+        initialize(host,port,client_cred_dir,server_cred_dir,log)
 
-    if mapi == None:
-        initialize(host,port,log)
-
-    if g_non_interact and not ctx.invoked_subcommand is None:
-        g_really_exit = True
 
 #------------------------------------------------------------------------------
 # Collection listing/navigation commands
@@ -158,12 +171,44 @@ def data_update(id,title,alias,description,key_words,data_file,metadata,metadata
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("id")
 def data_delete(id):
-    print("TODO: NOT IMPLEMENTED")
+    id2 = resolveID(id)
 
-@data.command(name='get',help="Get (download) raw data from datafed")
+    if g_interactive:
+        if not confirm( "Delete record " + id2 + " (Y/n):"):
+            return
+
+    msg = auth.RecordDeleteRequest()
+    msg.id = id2
+    reply, mt = mapi.sendRecv( msg )
+
+@data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
 @click.argument("id")
-def data_get(id):
-    print("TODO: NOT IMPLEMENTED")
+@click.argument("path")
+@click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
+def data_get(id,path,wait):
+    msg = auth.DataGetRequest()
+    msg.id = resolveID(id)
+    #msg.local = applyPrefix( path )
+    msg.local = g_ep_cur + path
+    reply, mt = mapi.sendRecv( msg )
+    print("reply:",reply)
+
+    xfr = reply.xfr[0]
+    print("id:",xfr.id,"stat:",xfr.stat)
+    if wait:
+        print("waiting")
+        #while xfr.status < 3:
+        while True:
+            sleep(2)
+            msg = auth.XfrViewRequest()
+            msg.xfr_id = xfr.id
+            reply, mt = mapi.sendRecv( msg )
+            xfr = reply.xfr[0]
+            print("id:",xfr.id,"stat:",xfr.stat)
+
+        print("done. status:",xfr.stat)
+    else:
+        print("xfr id:",xfr.id)
 
 @data.command(name='put',help="Put (upload) raw data to datafed")
 @click.argument("id")
@@ -181,7 +226,7 @@ def coll():
 @click.argument("id")
 def coll_view(id):
     msg = auth.CollViewRequest()
-    msg.id = resolveID(id)
+    msg.id = resolveCollID(id)
     reply, mt = mapi.sendRecv( msg )
     print(reply)
 
@@ -206,7 +251,16 @@ def data_update(id,title,alias,description):
 @coll.command(name='delete',help="Delete existing collection")
 @click.argument("id")
 def coll_delete(id):
-    print("TODO: NOT IMPLEMENTED")
+    id2 = resolveCollID(id)
+
+    if g_interactive:
+        print("Warning: this will delete all data records and collections contained in the specified collection.")
+        if not confirm( "Delete collection " + id2 + " (Y/n):"):
+            return
+
+    msg = auth.CollDeleteRequest()
+    msg.id = id2
+    reply, mt = mapi.sendRecv( msg )
 
 @coll.command(name='add',help="Add data/collection ITEM_ID to collection COLL_ID")
 @click.argument("item_id")
@@ -295,11 +349,6 @@ def user():
 def user_collab(offset,count):
     print("TODO: NOT IMPLEMENTED")
 
-@user.command(name='shared',help="List users with shared data")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
-def user_shared(offset,count):
-    print("TODO: NOT IMPLEMENTED")
 
 @user.command(name='all',help="List all users")
 @click.option("-o","--offset",default=0,help="List offset")
@@ -328,11 +377,67 @@ def user_view(uid,details):
 def project():
     pass
 
-@project.command(name='shared',help="List projects with shared data")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
-def project_shared(offset,count):
-    print("TODO: NOT IMPLEMENTED")
+@project.command(name='list',help="List projects")
+@click.option("-o","--owner",is_flag=True,help="Include owned projects")
+@click.option("-a","--admin",is_flag=True,help="Include administered projects")
+@click.option("-m","--member",is_flag=True,help="Include membership projects")
+def project_list(owner,admin,member):
+    if not (owner or admin or member):
+        owner = True
+        admin = True
+        member = True
+
+    msg = auth.ProjectListRequest()
+    msg.by_owner = owner
+    msg.by_admin = admin
+    msg.by_member = member
+    reply, mt = mapi.sendRecv( msg )
+    printProjListing(reply)
+
+@project.command(name='view',help="View project specified by ID")
+@click.argument("id")
+def project_view(id):
+    msg = auth.ProjectViewRequest()
+    msg.id = resolveID(id)
+    reply, mt = mapi.sendRecv( msg )
+    # TODO Print project info
+    print(reply)
+
+#------------------------------------------------------------------------------
+# Shared data command group
+
+@cli.command(cls=AliasedGroup,help="Shared data commands")
+def shared():
+    pass
+
+@shared.command(name="users",help="List users with shared data")
+def shared_users():
+    msg = auth.ACLByUserRequest()
+    reply, mt = mapi.sendRecv( msg )
+    printUserListing(reply)
+
+@shared.command(name="projects",help="List projects with shared data")
+def shared_projects():
+    msg = auth.ACLByProjRequest()
+    reply, mt = mapi.sendRecv( msg )
+    printProjListing(reply)
+
+
+@shared.command(name="list",help="List data shared by user/project ID")
+@click.argument("id")
+def shared_list(id):
+    id2 = resolveID(id)
+
+    if id2.startswith("p/"):
+        msg = auth.ACLByProjListRequest()
+    else:
+        if not id2.startswith("u/"):
+            id2 = "u/" + id2
+        msg = auth.ACLByUserListRequest()
+
+    msg.owner = id2
+    reply, mt = mapi.sendRecv( msg )
+    printListing(reply)
 
 #------------------------------------------------------------------------------
 # Transfer commands
@@ -401,39 +506,44 @@ def ep_list():
 #------------------------------------------------------------------------------
 # Miscellaneous commands
 
-@cli.command(name='select',help="Show or set selected user or project")
+@cli.command(name='ident',help="Set current user or project identity to ID (omit for self)")
+@click.option("-s","--show",is_flag=True,help="Show current identity")
 @click.argument("id",required=False)
-def select(id):
+def ident(id,show):
     global g_cur_sel
     global g_cur_coll
     global g_cur_alias_prefix
 
-    if id:
-        if id[0:2] == "p/":
-            msg = auth.ProjectViewRequest()
-            msg.id = id
-            reply, mt = mapi.sendRecv( msg )
-
-            g_cur_sel = id
-            g_cur_coll = "c/p_" + g_cur_sel[2:] + "_root"
-            g_cur_alias_prefix = "p:" + g_cur_sel[2:] + ":"
-
-            info(1,"Switched to project " + g_cur_sel)
-        else:
-            if id[0:2] != "u/":
-                id = "u/" + id
-
-            msg = auth.UserViewRequest()
-            msg.uid = id
-            reply, mt = mapi.sendRecv( msg )
-
-            g_cur_sel = id
-            g_cur_coll = "c/u_" + g_cur_sel[2:] + "_root"
-            g_cur_alias_prefix = "u:" + g_cur_sel[2:] + ":"
-
-            info(1,"Switched to user " + g_cur_sel)
-    else:
+    if show:
         print(g_cur_sel)
+        return
+
+    if id == None:
+        id = g_uid
+
+    if id[0:2] == "p/":
+        msg = auth.ProjectViewRequest()
+        msg.id = id
+        reply, mt = mapi.sendRecv( msg )
+
+        g_cur_sel = id
+        g_cur_coll = "c/p_" + g_cur_sel[2:] + "_root"
+        g_cur_alias_prefix = "p:" + g_cur_sel[2:] + ":"
+
+        info(1,"Switched to project " + g_cur_sel)
+    else:
+        if id[0:2] != "u/":
+            id = "u/" + id
+
+        msg = auth.UserViewRequest()
+        msg.uid = id
+        reply, mt = mapi.sendRecv( msg )
+
+        g_cur_sel = id
+        g_cur_coll = "c/u_" + g_cur_sel[2:] + "_root"
+        g_cur_alias_prefix = "u:" + g_cur_sel[2:] + ":"
+
+        info(1,"Switched to user " + g_cur_sel)
 
 @cli.command(name='help',help="Show datafed client help")
 @click.pass_context
@@ -441,11 +551,10 @@ def help_cli(ctx):
     print(ctx.parent.get_help())
 
 
-@cli.command(name="exit",help="Exit datafed client")
+@cli.command(name="exit",help="Exit interactive session")
 def exit_cli():
-    #print("exit cmd")
-    global g_really_exit
-    g_really_exit = True
+    global g_interactive
+    g_interactive = True
     sys.exit(0)
 
 #------------------------------------------------------------------------------
@@ -524,6 +633,15 @@ def printUserListing( reply ):
         print("{:2}. {:24} {}".format(idx,i.uid,i.name))
         idx += 1
 
+def printProjListing(reply):
+    idx = 1
+    global g_list_items
+    g_list_items = []
+    for i in reply.proj:
+        g_list_items.append(i.id)
+        print("{:2}. {:24} {}".format(idx,i.id,i.title))
+        idx += 1
+
 def printEndpoints(reply):
     idx = 1
     global g_list_items
@@ -536,16 +654,30 @@ def printEndpoints(reply):
             print("{:2}. {}".format(idx,path))
             idx += 1
 
-def initialize(server,port,manual_auth):
+def confirm( msg ):
+    val = raw_input( msg )
+    if val == "Y":
+        return True
+    else:
+        return False
+
+def initialize(server,port,client_cred_dir,server_cred_dir,manual_auth):
     global mapi
-    global g_really_exit
+    global g_uid
+    global g_interactive
     global g_cur_sel
 
     try:
-        mapi = ClientLib.MsgAPI(server_host=server,server_port=port,manual_auth=manual_auth)
+        mapi = ClientLib.MsgAPI(
+            server_host=server,
+            server_port=port,
+            client_cred_dir=client_cred_dir,
+            server_cred_dir=server_cred_dir,
+            manual_auth=manual_auth
+            )
     except Exception as e:
         print(e)
-        g_really_exit = True
+        g_interactive = False
         sys.exit(1)
 
     authorized, uid = mapi.getAuthStatus()
@@ -572,13 +704,14 @@ def initialize(server,port,manual_auth):
 
         if i == 3:
             info(1,"Aborting...")
-            g_really_exit = True
+            g_interactive = True
             sys.exit(1)
 
         mapi.installLocalCredentials()
     else:
         info(1,"Authenticated as",uid)
 
+    g_uid = uid
     g_cur_sel = uid
 
 #------------------------------------------------------------------------------
@@ -586,29 +719,50 @@ def initialize(server,port,manual_auth):
 
 info(1,"DataFed CLI Ver.", ClientLib.version())
 
+'''
+print("CLI:",dir(cli))
+print("params:",dir(cli.params))
+for i in cli.params:
+    print(i.name, dir(i))
+sys.exit(1)
+'''
+
 try:
     session = PromptSession(unicode("> "),history=FileHistory(os.path.expanduser("~/.datafed-hist")))
 
+    #max_iter = 5
+
     while True:
+        #if max_iter == 0:
+        #    break
+        #max_iter -= 1
+
         try:
-            if mapi == None and len(sys.argv) > 1:
-                g_non_interact = True
-                cli()
+            #if mapi == None and len(sys.argv) > 1:
+            if g_interactive == False:
+                cli(standalone_mode=True)
+                if g_interactive == False:
+                    break
+                for i in cli.params:
+                    i.hidden = True
             else:
                 _args = shlex.split(session.prompt(auto_suggest=AutoSuggestFromHistory()))
-                cli(prog_name="datafed",args=_args)
-
+                cli(prog_name="datafed",args=_args,standalone_mode=False)
         except SystemExit as e:
-            if g_really_exit:
+            #print("Sys exit")
+            #if g_really_exit:
+            if g_interactive == False:
                 break
         except KeyboardInterrupt as e:
+            #print("key inter")
             break
         except Exception as e:
+            #print("gen except")
             print(e)
-
-        g_non_interact = False
+            if g_interactive == False:
+                break
 
 except Exception as e:
     print("Exception:",e)
 
-print("Goodbye!")
+info(1,"Goodbye!")
