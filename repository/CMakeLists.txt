@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.0.0)
 
-add_subdirectory( client )
-add_subdirectory( gridftp )
+include_directories(${CMAKE_BINARY_DIR}/common)
 
+add_subdirectory( server )
+add_subdirectory( gridftp )
+add_subdirectory( filesys )

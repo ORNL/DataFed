@@ -4,7 +4,7 @@ file( GLOB Sources "*.cpp" )
 
 add_library( fclient STATIC ${Sources} )
 add_dependencies( fclient common )
-target_link_libraries( fclient common -lzmq -lprotobuf -lglobus_common -lglobus_gss_assist -lglobus_gssapi_gsi -lpthread )
+target_link_libraries( fclient common -lprotobuf -lpthread -lzmq -lboost_system -lboost_filesystem )
 
 target_include_directories( fclient INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( fclient PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )

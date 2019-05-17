@@ -1,0 +1,14 @@
+enum VerMajor
+{
+    VER_MAJOR = 0;
+}
+
+enum VerMinor
+{
+    VER_MINOR = 2;
+}
+
+enum VerBuild
+{
+    VER_BUILD = 1;
+}

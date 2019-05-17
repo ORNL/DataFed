@@ -1,0 +1,701 @@
+import "SDMS.proto";
+
+package SDMS.Auth;
+
+enum Protocol
+{
+    ID = 2;
+}
+
+// ============================ Setup/Config Messages
+
+message GenerateCredentialsRequest
+{
+    optional string             domain      = 1;
+    optional uint32             uid         = 2;
+}
+
+message RevokeCredentialsRequest
+{
+}
+
+message GenerateCredentialsReply
+{
+    required string             pub_key     = 1;
+    required string             priv_key    = 2;
+}
+
+// ============================ Permissions Messages
+
+message CheckPermsRequest
+{
+    required string             id          = 1;
+    optional uint32             perms       = 2;
+}
+
+message CheckPermsReply
+{
+    required bool               granted     = 1;
+}
+
+message GetPermsRequest
+{
+    required string             id          = 1;
+    optional uint32             perms       = 2;
+}
+
+message GetPermsReply
+{
+    required uint32             granted     = 1;
+}
+
+// ============================ User Messages
+
+message UserSaveTokensRequest
+{
+    required string             access      = 1;
+    required string             refresh     = 2;
+}
+
+message UserCreateRequest
+{
+    required string             uid         = 1;
+    required string             password    = 2;
+    required string             name        = 3;
+    required string             email       = 4;
+    repeated string             uuid        = 5;
+    optional string             options     = 6;
+}
+
+message UserViewRequest
+{
+    required string             uid         = 1;
+    optional bool               details     = 2;
+}
+
+message UserFindByUUIDsRequest
+{
+    repeated string             uuid        = 1;
+}
+
+message UserUpdateRequest
+{
+    required string             uid         = 1;
+    optional string             email       = 2;
+    optional string             password    = 3;
+    optional string             options     = 4;
+}
+
+message UserListAllRequest
+{
+    optional uint32             offset      = 1;
+    optional uint32             count       = 2;
+}
+
+message UserListCollabRequest
+{
+    optional uint32             offset      = 1;
+    optional uint32             count       = 2;
+}
+
+// Returned for any command the returns one or more user records
+message UserDataReply
+{
+    repeated SDMS.UserData      user        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+message UserGetRecentEPRequest
+{
+}
+
+message UserGetRecentEPReply
+{
+    repeated string             ep          = 1;
+}
+
+message UserSetRecentEPRequest
+{
+    repeated string             ep          = 1;
+}
+
+// ============================ Data Record AND Collection Messages
+
+message ListingReply
+{
+    repeated ListingData        item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+// ============================ Data Record Messages
+
+message RecordListRequest
+{
+    optional string             subject     = 1;
+    optional bool               pub         = 2;
+}
+
+message RecordListByAllocRequest
+{
+    required string             repo        = 1;
+    optional string             subject     = 2;
+    optional uint32             offset      = 3;
+    optional uint32             count       = 4;
+}
+
+message RecordViewRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 2;
+}
+
+
+// Returned for any command the returns one or more user records
+message RecordDataReply
+{
+    repeated SDMS.RecordData    data        = 1;
+}
+
+message RecordCreateRequest
+{
+    optional string             title       = 1;
+    optional string             desc        = 2;
+    optional string             topic       = 3;
+    optional string             keyw        = 4;
+    optional string             alias       = 5;
+    optional bool               ispublic    = 6;
+    optional string             metadata    = 7;
+    optional string             parent_id   = 8;
+    optional string             repo_id     = 9;
+    optional string             ext         = 10;
+    optional bool               ext_auto    = 11;
+    repeated DependencyData     deps        = 12;
+}
+
+message RecordUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional string             keyw        = 4;
+    optional string             topic       = 5;
+    optional string             alias       = 6;
+    optional bool               ispublic    = 7;
+    optional string             metadata    = 8;
+    optional bool               mdset       = 9;
+    optional string             source      = 10;
+    optional string             ext         = 11;
+    optional bool               ext_auto    = 12;
+    optional uint64             size        = 13;
+    optional uint32             dt          = 14;
+    optional bool               deps_clear  = 15;
+    repeated DependencyData     deps_add    = 16;
+    repeated DependencyData     deps_rem    = 17;
+}
+
+message RecordLockRequest
+{
+    repeated string             id          = 1;
+    required bool               lock        = 2;
+}
+
+
+/*message RecordGetDataLocationRequest
+{
+    required string             id          = 1;
+}*/
+
+message RecordDeleteRequest
+{
+    repeated string             id          = 1;
+}
+
+message RecordSearchRequest
+{
+    required string             query       = 1;
+    optional bool               use_client  = 2;
+    optional bool               use_shared_users  = 3;
+    optional bool               use_shared_projects  = 4;
+}
+
+message RecordGetDependenciesRequest
+{
+    required string             id          = 1;
+}
+
+message RecordGetDependencyGraphRequest
+{
+    required string             id          = 1;
+}
+
+
+/*
+message RecordDataLocationReply
+{
+    repeated RecordDataLocation location    = 1;
+}*/
+
+// ============================ Raw Data Messages
+
+message XfrViewRequest
+{
+    required string             xfr_id      = 1;
+}
+
+message XfrListRequest
+{
+    optional uint32             from        = 1;
+    optional uint32             to          = 2;
+    optional uint32             since       = 3;
+    optional SDMS.XfrStatus     status      = 4;
+}
+
+message XfrDataReply
+{
+    repeated SDMS.XfrData       xfr         = 1;
+}
+
+message DataGetRequest
+{
+    required string             id          = 1;
+    required string             local       = 2;
+}
+
+message DataPutRequest
+{
+    required string             id          = 1;
+    required string             local       = 2;
+}
+
+message DataDeleteRequest
+{
+    required string             id          = 1;
+}
+
+message DataCopyRequest
+{
+    required string             source_id   = 1;
+    required string             dest_id     = 2;
+}
+
+
+message DataPathRequest
+{
+    required string             id          = 1;
+    required string             domain      = 2;
+}
+
+message DataPathReply
+{
+    required string             path        = 1;
+}
+
+// ============================ Collection Messages
+
+message CollCreateRequest
+{
+    optional string             title       = 1;
+    optional string             desc        = 2;
+    optional string             alias       = 3;
+    optional string             parent_id   = 4;
+    optional bool               ispublic    = 5;
+}
+
+message CollUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional string             alias       = 4;
+    optional bool               ispublic    = 5;
+}
+
+message CollDeleteRequest
+{
+    repeated string             id          = 1;
+}
+
+message CollListRequest
+{
+    optional string             user        = 1;
+    optional bool               details     = 2;
+    optional uint32             offset      = 3;
+    optional uint32             count       = 4;
+}
+
+message CollViewRequest
+{
+    required string             id          = 1;
+}
+
+message CollReadRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
+
+message CollWriteRequest
+{
+    required string             id          = 1;
+    repeated string             add         = 2;
+    repeated string             rem         = 3;
+    optional bool               rem_all     = 4;
+}
+
+message CollMoveRequest
+{
+    required string             src_id      = 1;
+    required string             dst_id      = 2;
+    repeated string             item        = 3;
+}
+
+message CollGetParentsRequest
+{
+    required string             id          = 1;
+    optional bool               all         = 2;
+}
+
+message CollDataReply
+{
+    repeated SDMS.CollData      coll        = 1;
+}
+
+// ============================ Group Messages
+
+message GroupCreateRequest
+{
+    required SDMS.GroupData     group       = 1;
+}
+
+message GroupUpdateRequest
+{
+    required string             uid         = 1;
+    required string             gid         = 2;
+    optional string             title       = 3;
+    optional string             desc        = 4;
+    repeated string             add_uid     = 5;
+    repeated string             rem_uid     = 6;
+}
+
+message GroupDataReply
+{
+    repeated SDMS.GroupData     group       = 1;
+}
+
+message GroupDeleteRequest
+{
+    required string             uid         = 1;
+    required string             gid         = 2;
+}
+
+message GroupListRequest
+{
+    required string             uid         = 1;
+}
+
+message GroupViewRequest
+{
+    required string             uid         = 1;
+    required string             gid         = 2;
+}
+
+// ============================ ACL Messages
+
+message ACLViewRequest
+{
+    required string             id          = 1;
+}
+
+message ACLUpdateRequest
+{
+    required string             id          = 1;
+    optional string             rules       = 2;
+    optional bool               ispublic    = 3;
+}
+
+message ACLByUserRequest
+{
+}
+
+message ACLByUserListRequest
+{
+    required string             owner       = 1;
+}
+
+message ACLByProjRequest
+{
+}
+
+message ACLByProjListRequest
+{
+    required string             owner       = 1;
+}
+
+message ACLDataReply
+{
+    repeated ACLRule            rule        = 1;
+}
+
+// ============================ Project Messages
+
+message ProjectCreateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional string             sub_repo    = 4;
+    optional uint64             sub_alloc   = 5;
+    repeated string             admin       = 6;
+    repeated string             member      = 7;
+}
+
+message ProjectUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional string             sub_repo    = 4;
+    optional uint64             sub_alloc   = 5;
+    repeated string             admin       = 6;
+    repeated string             member      = 7;
+}
+
+message ProjectDeleteRequest
+{
+    repeated string             id          = 1;
+}
+
+message ProjectListRequest
+{
+    optional bool               by_owner    = 1;
+    optional bool               by_admin    = 2;
+    optional bool               by_member   = 3;
+}
+
+message ProjectViewRequest
+{
+    required string             id          = 1;
+}
+
+message ProjectDataReply
+{
+    repeated ProjectData        proj        = 1;
+}
+
+// ============================ Repo Messages
+
+message RepoDataDeleteRequest
+{
+    required string             path        = 1;
+}
+
+message RepoDataGetSizeRequest
+{
+    required string             id          = 1;
+    required string             path        = 2;
+}
+
+message RepoDataSizeReply
+{
+    required string             id          = 1;
+    required uint64             size        = 2;
+}
+
+message RepoPathCreateRequest
+{
+    required string             path        = 1;
+}
+
+message RepoPathDeleteRequest
+{
+    required string             path        = 1;
+}
+
+message RepoListRequest
+{
+    optional bool               details     = 1;
+    optional bool               all         = 2;
+}
+
+message RepoViewRequest
+{
+    required string             id          = 1;
+}
+
+message RepoCreateRequest
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             desc        = 3;
+    optional string             domain      = 5;
+    required string             path        = 6;
+    optional string             exp_path    = 7;
+    required string             address     = 8;
+    required string             endpoint    = 9;
+    required string             pub_key     = 10;
+    required uint64             capacity    = 11;
+    repeated string             admin       = 12;
+}
+
+message RepoUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional string             domain      = 5;
+    optional string             path        = 6;
+    optional string             exp_path    = 7;
+    optional string             address     = 8;
+    optional string             endpoint    = 9;
+    optional string             pub_key     = 10;
+    optional uint64             capacity    = 11;
+    repeated string             admin       = 12;
+}
+
+message RepoDeleteRequest
+{
+    required string             id          = 1;
+}
+
+message RepoDataReply
+{
+    repeated SDMS.RepoData      repo        = 1;
+}
+
+message RepoCalcSizeRequest
+{
+    required bool               recurse     = 1;
+    repeated string             item        = 2;
+}
+
+message RepoCalcSizeReply
+{
+    repeated AllocStatsData     stats       = 1;
+}
+
+message RepoListAllocationsRequest
+{
+    required string             id          = 1;
+}
+
+message RepoListSubjectAllocationsRequest
+{
+    optional string             subject     = 1;
+    optional bool               stats       = 2;
+}
+
+message RepoListObjectAllocationsRequest
+{
+    required string             id          = 1;
+}
+
+message RepoAllocationsReply
+{
+    repeated AllocData          alloc       = 1;
+}
+
+message RepoAllocationStatsRequest
+{
+    required string             repo        = 1;
+    optional string             subject     = 2;
+}
+
+message RepoAllocationStatsReply
+{
+    required AllocStatsData     alloc       = 1;
+}
+
+// Reply is ACK/NACK
+message RepoAllocationSetRequest
+{
+    required string             repo        = 1;
+    required string             subject     = 2;
+    required uint64             max_size    = 3;
+    required uint32             max_count   = 4;
+}
+
+// Reply is ACK/NACK
+message RepoAuthzRequest
+{
+    required string             repo        = 1;
+    required string             client      = 2;
+    required string             file        = 3;
+    required string             action      = 4;
+}
+
+// ============================ Topic Messages
+
+message TopicListRequest
+{
+    optional string             topic_id    = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional bool               data        = 4 [default = true];
+}
+
+message TopicLinkRequest
+{
+    required string             topic       = 1;
+    required string             id          = 2;
+}
+
+message TopicUnlinkRequest
+{
+    required string             topic       = 1;
+    required string             id          = 2;
+}
+
+// ============================ Query Messages
+
+message QueryCreateRequest
+{
+    required string             title       = 1;
+    required string             query       = 2;
+    optional string             query_comp  = 3;
+    optional bool               use_owner   = 4;
+    optional bool               use_sh_usr  = 5;
+    optional bool               use_sh_prj  = 6;
+}
+
+message QueryUpdateRequest
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             query       = 3;
+    optional string             query_comp  = 4;
+    optional bool               use_owner   = 5;
+    optional bool               use_sh_usr  = 6;
+    optional bool               use_sh_prj  = 7;
+}
+
+message QueryDeleteRequest
+{
+    repeated string             id          = 1;
+}
+
+message QueryListRequest
+{
+    optional uint32             offset      = 1;
+    optional uint32             count       = 2;
+}
+
+message QueryViewRequest
+{
+    required string             id          = 1;
+}
+
+message QueryExecRequest
+{
+    required string             id          = 1;
+}
+
+message QueryDataReply
+{
+    repeated SDMS.QueryData     query       = 1;
+}

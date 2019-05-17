@@ -1,102 +1,108 @@
-#include <iostream>
-#include <algorithm>
-#include <stdexcept>
-
-#include "unistd.h"
-#include "sys/types.h"
-
-#include <zmq.h>
-
+#include <fstream>
+#include <time.h>
+#include "MsgBuf.hpp"
 #include "DynaLog.hpp"
 #include "FacilityServer.hpp"
-#include "GSSAPI_Utils.hpp"
+#include "Exec.hpp"
+
+
+#define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
+#define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
+#define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
+#define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
+
+#define MAINT_POLL_INTERVAL 5
+#define CLIENT_IDLE_TIMEOUT 300
+#define INIT_POLL_PERIOD 1
+#define MAX_BACKOFF 10
 
 using namespace std;
 
 namespace SDMS {
+
+//using namespace SDMS::Anon;
+//using namespace SDMS::Auth;
+
 namespace Facility {
 
-#define DEBUG_GSI
-#define MAINT_POLL_INTERVAL 5
-#define CLIENT_IDLE_TIMEOUT 30
-#define SET_MSG_HANDLER(proto_id,name,func)  m_msg_handlers[(proto_id << 8 ) | m_conn.findMessageType( proto_id, name )] = func;
 
-// Class ctor/dtor
-
-Server::Server( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout, uint32_t a_num_workers ) :
-    m_conn( a_server_host, a_server_port, Connection::Server ),
-    m_timeout(a_timeout * 1000),
-    m_router_thread(0),
+Server::Server( uint32_t a_port, const string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
+    m_port( a_port ),
+    m_timeout(a_timeout),
+    m_io_thread(0),
     m_maint_thread(0),
-    m_num_workers(a_num_workers),
-    m_router_running(false),
-    m_worker_running(false),
-    m_sec_cred(0)
-    
+    m_num_threads(a_num_threads),
+    m_io_running(false),
+    m_endpoint( asio::ip::tcp::v4(), m_port ),
+    m_acceptor( m_io_service, m_endpoint ),
+    m_context( asio::ssl::context::tlsv12 ),
+    m_country("US"),    // TODO Get from params
+    m_org("ORNL"),    // TODO Get from params
+    m_unit("ccs"),    // TODO Get from params
+    m_xfr_thread(0),
+    m_db_url(a_db_url),
+    m_db_user(a_db_user),
+    m_db_pass(a_db_pass),
+    m_db_client( m_db_url, m_db_user, m_db_pass )
 {
-    if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
-        throw runtime_error("failed to activate Globus GSI GSS assist module");
+    m_context.set_options(
+        asio::ssl::context::default_workarounds |
+        asio::ssl::context::no_sslv2 |
+        asio::ssl::context::no_sslv3 |
+        asio::ssl::context::no_tlsv1 |
+        asio::ssl::context::no_tlsv1_1 |
+        asio::ssl::context::single_dh_use );
 
-    OM_uint32 maj_stat, min_stat;
+    m_cert_file = a_cert_dir + "sdmsd-" + m_unit + "-cert.pem";
+    m_key_file = a_cert_dir + "sdmsd-" + m_unit + "-key.pem";
+    m_key_path = a_cert_dir + "ssh/";
 
-    maj_stat = gss_acquire_cred( &min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
-        GSS_C_INITIATE, &m_sec_cred, 0, 0 );
+    m_context.use_certificate_chain_file( m_cert_file.c_str() );
+    m_context.use_private_key_file( m_key_file.c_str(), asio::ssl::context::pem );
+    m_context.load_verify_file( m_cert_file.c_str() );
 
-    if ( maj_stat != GSS_S_COMPLETE )
-        throw runtime_error( "Unable to acquire valid credentials. Please (re)run grid-proxy-init." );
+    //m_context.load_verify_file("/home/d3s/olcf/SDMS/client_cert.pem");
+    //m_context.add_verify_path( m_verify_path.c_str() );
+    //m_context.use_tmp_dh_file( "dh512.pem" );
 
-    #ifdef DEBUG_GSI
-
-    gss_name_t cred_name = 0;
-
-    if ( gss_inquire_cred( &min_stat, m_sec_cred, &cred_name, 0, 0, 0 )!= GSS_S_COMPLETE )
-        throw runtime_error("failed to inquire credentials");
-
-    gssString   name_str( cred_name );
-    cout << "cred name: " << name_str << "\n";
-
-    #endif
-
-    uint8_t proto_id;
-    SET_MSG_HANDLER(1,"StatusRequest",&Worker::procMsgStatus);
-    SET_MSG_HANDLER(1,"PingRequest",&Worker::procMsgPing);
-
-    proto_id = REG_API(m_conn,Facility);
-    SET_MSG_HANDLER(proto_id,"InitSecurityRequest",&Worker::procMsgInitSec);
-    SET_MSG_HANDLER(proto_id,"TermSecurityRequest",&Worker::procMsgTermSec);
-    SET_MSG_HANDLER(proto_id,"UserListRequest",&Worker::procMsgUserListReq);
+    m_db_client.setClient( "sdms" );
 }
 
 
 Server::~Server()
 {
-    globus_module_deactivate( GLOBUS_GSI_GSSAPI_MODULE );
 }
 
 
 void
-Server::runWorkerRouter( bool a_async )
+Server::run( bool a_async )
 {
     unique_lock<mutex> lock(m_api_mutex);
 
-    if ( m_router_running )
+    if ( m_io_running )
         throw runtime_error( "Only one worker router instance allowed" );
 
-    m_router_running = true;
+    m_io_running = true;
 
     if ( a_async )
     {
-        m_router_thread = new thread( &Server::workerRouter, this );
+        m_io_thread = new thread( &Server::ioRun, this );
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
+        m_xfr_thread = new thread( &Server::xfrManagement, this );
     }
     else
     {
         lock.unlock();
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
-        workerRouter();
+        m_xfr_thread = new thread( &Server::xfrManagement, this );
+        ioRun();
         lock.lock();
-        m_router_running = false;
+        m_io_running = false;
         m_router_cvar.notify_all();
+
+        m_xfr_thread->join();
+        delete m_xfr_thread;
+        m_xfr_thread = 0;
 
         m_maint_thread->join();
         delete m_maint_thread;
@@ -106,67 +112,61 @@ Server::runWorkerRouter( bool a_async )
 
 
 void
-Server::stopWorkerRouter( bool a_async )
+Server::stop( bool a_wait )
 {
     unique_lock<mutex> lock(m_api_mutex);
 
-    if ( m_router_running )
+    if ( m_io_running )
     {
-        void *control = zmq_socket( m_conn.getContext(), ZMQ_PUB );
+        // Signal ioPump to stop
+        m_io_service.stop();
 
-        int linger = 100;
-        if ( zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int )) == -1 )
-            throw runtime_error("zmq_setsockopt linger failed");
-        if ( zmq_bind( control, "inproc://control" ) == -1 )
-            throw runtime_error("zmq_bind failed");
-        if ( zmq_send( control, "TERMINATE", 9, 0 ) == -1 )
-            throw runtime_error("zmq_seend failed");
-
-        if ( !a_async )
+        if ( a_wait )
         {
-            if ( m_router_thread )
+            if ( m_io_thread )
             {
-                m_router_thread->join();
-                delete m_router_thread;
+                m_io_thread->join();
+                delete m_io_thread;
 
-                m_router_thread = 0;
-                m_router_running = false;
+                m_io_thread = 0;
+                m_io_running = false;
             }
             else
             {
-                while( m_router_running )
+                while( m_io_running )
                     m_router_cvar.wait( lock );
             }
+
+            m_xfr_thread->join();
+            delete m_xfr_thread;
+            m_xfr_thread = 0;
 
             m_maint_thread->join();
             delete m_maint_thread;
             m_maint_thread = 0;
         }
-        else
-        {
-            // zmq provides no way to flush buffer, just have to wait a while
-            usleep( 50000 );
-        }
-
-        zmq_close( control );
     }
 }
 
 
 void
-Server::waitWorkerRouter()
+Server::wait()
 {
     unique_lock<mutex> lock(m_api_mutex);
 
-    if ( m_router_running )
+    if ( m_io_running )
     {
-        if ( m_router_thread )
+        if ( m_io_thread )
         {
-            m_router_thread->join();
-            delete m_router_thread;
+            m_io_thread->join();
+            delete m_io_thread;
 
-            m_router_thread = 0;
-            m_router_running = false;
+            m_io_thread = 0;
+            m_io_running = false;
+
+            m_xfr_thread->join();
+            delete m_xfr_thread;
+            m_xfr_thread = 0;
 
             m_maint_thread->join();
             delete m_maint_thread;
@@ -174,7 +174,7 @@ Server::waitWorkerRouter()
         }
         else
         {
-            while( m_router_running )
+            while( m_io_running )
                 m_router_cvar.wait( lock );
         }
     }
@@ -182,378 +182,428 @@ Server::waitWorkerRouter()
 
 
 void
-Server::workerRouter()
+Server::ioRun()
 {
-    if ( m_num_workers == 0 )
-        m_num_workers = max( 1u , std::thread::hardware_concurrency() - 1);
+    DL_INFO( "io thread started" );
 
-    void * context = m_conn.getContext();
+    if ( m_io_service.stopped() )
+        m_io_service.reset();
+    
+    if ( m_num_threads == 0 )
+        m_num_threads = max( 1u, std::thread::hardware_concurrency() - 1 );
 
-    //  Backend socket talks to workers over inproc
+    accept();
 
-    void *backend = zmq_socket( context, ZMQ_DEALER );
-    int linger = 100;
-    if( zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int )) == -1 )
-        throw runtime_error("zmq_setsockopt linger failed");
-    if ( zmq_bind( backend, "inproc://workers" ) == -1 )
-        throw runtime_error("zmq_bind failed");
+    vector<thread*> io_threads;
 
-    // Control socket allows router to be paused, resumed, and stopped
-    void *control = zmq_socket( context, ZMQ_SUB );
-    if ( zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int )) == -1 )
-        throw runtime_error("zmq_setsockopt linger failed");
-    if ( zmq_connect( control, "inproc://control" ) == -1 )
-        throw runtime_error("zmq_connect failed");
-    if ( zmq_setsockopt( control, ZMQ_SUBSCRIBE, "", 0 ) == -1 )
-        throw runtime_error("zmq_setsockopt subscribe failed");
-
-    m_worker_running = true;
-
-    // Ceate worker threads
-    for ( uint32_t t = 0; t < m_num_workers; ++t )
-        m_workers.push_back( new Worker( *this, context, t+1 ));
-
-    // Connect backend to frontend via a proxy
-    zmq_proxy_steerable( m_conn.getSocket(), backend, 0, control );
-
-    m_worker_running = false;
-
-    zmq_close( backend );
-    zmq_close( control );
-
-    // Clean-up workers
-
-    for ( vector<Worker*>::iterator iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
+    for ( uint32_t i = m_num_threads - 1; i > 0; i-- )
     {
-        (*iwrk)->join();
-        delete *iwrk;
+        io_threads.push_back( new thread( [this](){ m_io_service.run(); } ));
+        DL_DEBUG( "io extra thread started" );
     }
 
-    m_workers.clear();
+    m_io_service.run();
 
-    //m_router_running = false;
+    for ( vector<thread*>::iterator t = io_threads.begin(); t != io_threads.end(); ++t )
+    {
+        (*t)->join();
+        delete *t;
+        DL_DEBUG( "io extra thread stopped" );
+    }
+
+    DL_INFO( "io thread stopped" );
+}
+
+
+void
+Server::accept()
+{
+    spSession session = make_shared<Session>( m_io_service, m_context, *this, m_db_url, m_db_user, m_db_pass );
+
+    m_acceptor.async_accept( session->getSocket(),
+        [this, session]( error_code ec )
+            {
+                if ( !ec )
+                {
+                    DL_INFO( "New connection from " << session->remoteAddress() );
+
+                    unique_lock<mutex>  lock( m_data_mutex );
+                    m_sessions.insert( session );
+                    lock.unlock();
+
+                    session->start();
+                }
+
+                accept();
+            });
 }
 
 
 void
 Server::backgroundMaintenance()
 {
-    struct timespec t;
-    map<uint32_t,ClientInfo>::iterator ci;
+    DL_DEBUG( "Maint thread started" );
 
-    while( m_router_running )
+    struct timespec             _t;
+    double                      t;
+    set<spSession>::iterator    isess;
+    //vector<spSession>           dead_sessions;
+
+    //dead_sessions.reserve( 10 );
+
+    while( m_io_running )
     {
         sleep( MAINT_POLL_INTERVAL );
 
         lock_guard<mutex> lock( m_data_mutex );
 
-        clock_gettime( CLOCK_REALTIME, &t );
+        clock_gettime( CLOCK_REALTIME, &_t );
+        t = _t.tv_sec + (_t.tv_nsec*1e-9);
 
-        for ( ci = m_client_info.begin(); ci != m_client_info.end(); )
+        for ( isess = m_sessions.begin(); isess != m_sessions.end(); )
         {
-            if ( t.tv_sec - ci->second.last_act > CLIENT_IDLE_TIMEOUT )
+            if ( t - (*isess)->lastAccessTime() > CLIENT_IDLE_TIMEOUT )
             {
-                //cout << "clean-up client " << ci->first << "\n";
-
-                if ( ci->second.sec_ctx )
-                {
-                    OM_uint32  min_stat;
-                    
-                    gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
-                }
-
-                ci = m_client_info.erase( ci );
+                cout << "CLOSING IDLE SESSION\n";
+                (*isess)->close();
+                isess = m_sessions.erase( isess );
             }
             else
-                ++ci;
+                ++isess;
         }
+
+/*
+        for ( isess = dead_sessions.begin(); isess != dead_sessions.end(); ++isess )
+        {
+            DL_INFO( "Deleting inactive client " << *isess );
+            delete *isess;
+        }
+
+        dead_sessions.clear();
+*/
     }
-}
-
-
-Server::ClientInfo &
-Server::getClientInfo( MsgBuffer & a_msg_buffer, bool a_upd_last_act )
-{
-    lock_guard<mutex> lock(m_data_mutex);
-
-    if ( a_upd_last_act )
-    {
-        ClientInfo &ci = m_client_info[a_msg_buffer.cid()]; 
-
-        struct timespec t = {0,0};
-        clock_gettime( CLOCK_REALTIME, &t );
-        ci.last_act = t.tv_sec;
-
-        return ci;
-    }
-    else
-    {
-        return m_client_info[a_msg_buffer.cid()];
-    }
-}
-
-
-
-// ----- Worker Class Implementation -----------------------------------
-
-
-Server::Worker::Worker( Server &a_server, void *a_context, int a_id )
-    : m_server(a_server), m_context(a_context), m_worker_thread(0), m_id(a_id)
-{
-    m_worker_thread = new thread( &Server::Worker::workerThread, this );
-}
-
-Server::Worker::~Worker()
-{
-    delete m_worker_thread;
+    DL_DEBUG( "Maint thread stopped" );
 }
 
 
 void
-Server::Worker::workerThread()
+Server::xfrManagement()
 {
-    //cout << "W" << m_id << " starting" << endl;
+    DL_DEBUG( "Xfr thread started" );
 
-    m_conn = new Connection( "inproc://workers", Connection::Worker, m_context );
-    REG_API(*m_conn,Facility);
+    list<XfrDataInfo*>::iterator ixfr;
+    XfrDataInfo * xfr_entry;
+    string keyfile;
+    string cmd;
+    string result;
+    XfrStatus status;
+    size_t file_size;
+    time_t mod_time;
+    Auth::RecordUpdateRequest upd_req;
+    Auth::RecordDataReply  reply;
+    string error_msg;
 
-    MsgBuffer buffer;
-    map<uint16_t,msg_fun_t>::iterator handler;
-    uint16_t msg_type;
-
-    while ( m_server.m_worker_running )
+    while( m_io_running )
     {
-        try
+        sleep( 1 );
+
         {
-            while ( m_server.m_worker_running )
+            lock_guard<mutex> lock( m_xfr_mutex );
+            while ( m_xfr_pending.size() )
             {
-                if ( m_conn->recv( buffer, 1000 ))
-                {
-                    msg_type = ( ((uint32_t)buffer.frame.proto_id << 8 ) | buffer.frame.msg_id );
-
-                    handler = m_server.m_msg_handlers.find( msg_type );
-
-                    if ( handler != m_server.m_msg_handlers.end() )
-                        (this->*handler->second)(buffer);
-                    else
-                        cout << "Recv unregistered msg type: " << msg_type << "\n";
-                }
+                xfr_entry = m_xfr_all[m_xfr_pending.front()];
+                m_xfr_active.push_front(xfr_entry);
+                m_xfr_pending.pop_front();
             }
         }
-        catch( exception &e )
+
+        for ( ixfr = m_xfr_active.begin(); ixfr != m_xfr_active.end(); )
         {
-            cout << "Worker " << m_id << " excepiton: " << e.what() << "\n";
+            try
+            {
+                //cout << "poll: " << (*ixfr)->poll << "\n";
+
+                if ( (*ixfr)->stage == 0 )
+                {
+                    // Start xfr, get task ID, update DB
+                    // Use Legacy Globus CLI to start transfer
+                    cout << "start xfr\n";
+
+                    keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
+
+                    cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org transfer -- ";
+                    //cmd = "ssh globus transfer -- " + (*ixfr)->data_path + " " + (*ixfr)->dest_path;
+                    //cmd = "ssh globus transfer -- ";
+
+                    if ( (*ixfr)->mode == XM_PUT )
+                        cmd += (*ixfr)->local_path + " " + (*ixfr)->repo_path;
+                    else
+                        cmd += (*ixfr)->repo_path + " " + (*ixfr)->local_path;
+
+                    // HACK Need err msg if things go wrong
+                    cmd += " 2>&1";
+
+                    {
+                        lock_guard<mutex> lock( m_key_mutex );
+                        result = exec( cmd.c_str() );
+                    }
+
+                    if ( result.compare( 0, 9, "Task ID: " ) == 0 )
+                    {
+                        (*ixfr)->task_id = result.substr( 9 );
+                        (*ixfr)->task_id.erase(remove((*ixfr)->task_id.begin(), (*ixfr)->task_id.end(), '\n'), (*ixfr)->task_id.end());
+                        //cout << "New task[" << (*ixfr)->task_id << "]\n";
+
+                        cout << "Task " << (*ixfr)->task_id << " started\n";
+
+                        // Update DB entry
+                        m_db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                        (*ixfr)->stage = 1;
+                        (*ixfr)->poll = INIT_POLL_PERIOD;
+                        ixfr++;
+                    }
+                    else
+                    {
+                        //cout << "Globus CLI Error\nResult:[" << result << "]";
+                        for ( string::iterator c = result.begin(); c != result.end(); c++ )
+                        {
+                            if ( *c == '\n' )
+                                *c = '.';
+                        }
+
+                        status = XS_FAILED;
+                        m_db_client.xfrUpdate( (*ixfr)->id, &status, result );
+                        ixfr = m_xfr_active.erase( ixfr );
+                    }
+                }
+                else
+                {
+                    if ( --(*ixfr)->poll == 0 )
+                    {
+                        //cout << "poll (" << (*ixfr)->poll << ") xfr\n";
+
+                        // Get current status
+                        keyfile = m_key_path + (*ixfr)->uid + "-" + m_unit + "-key";
+
+                        //cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org status -f status " + (*ixfr)->task_id;
+                        cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org events " + (*ixfr)->task_id + " -f code -O kv";
+                        result = exec( cmd.c_str() );
+                        if ( parseGlobusEvents( result, status, error_msg ))
+                        {
+                            // Cancel the xfr task
+                            cmd = "ssh -i " + keyfile + " " + (*ixfr)->globus_id + "@cli.globusonline.org cancel " + (*ixfr)->task_id;
+                            result = exec( cmd.c_str() );
+                            cout << "Cancel result: " << result << "\n";
+                        }
+
+                        cout << "Task " << (*ixfr)->task_id << " status: " << status << "\n";
+
+                        if ( (*ixfr)->status != status )
+                        {
+                            (*ixfr)->status = status;
+
+                            // Update DB entry
+                            m_db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, error_msg );
+
+                            if ( (*ixfr)->mode == XM_PUT )
+                            {
+                                mod_time = time(0);
+
+                                if ( (*ixfr)->status == XS_SUCCEEDED )
+                                {
+                                    // TODO Path must not be assumed
+                                    if ( !m_store.dataGetSize( string("/data/") + (*ixfr)->data_id.substr(2), file_size ))
+                                    {
+                                        // TODO This should not happen. If it does something is very very wrong
+                                        DL_ERROR( "Transfer succeeded but destination file does not exist! Transfer ID: " << (*ixfr)->id );
+                                        file_size = 0;
+                                    }
+                                }
+                                else
+                                {
+                                    // TODO How to handle PUT errors?
+                                    file_size = 0;
+                                }
+
+                                // Update DB record with new file stats
+                                upd_req.set_id( (*ixfr)->data_id );
+                                upd_req.set_data_size( file_size );
+                                upd_req.set_data_time( mod_time );
+                                upd_req.set_subject( m_unit + "." + (*ixfr)->uid );
+                                reply.Clear();
+
+                                m_db_client.recordUpdate( upd_req, reply );
+                            }
+                        }
+
+                        // Remove from active list
+                        if ( (*ixfr)->status > XS_INACTIVE )
+                        {
+                            ixfr = m_xfr_active.erase( ixfr );
+                        }
+                        else
+                        {
+                            // Backoff increments each poll interval, but time waited only increments
+                            // every two poll intervals. This allows polling to better match size of
+                            // file being transferred.
+                            if ( (*ixfr)->backoff < MAX_BACKOFF )
+                                (*ixfr)->backoff++;
+
+                            (*ixfr)->poll = INIT_POLL_PERIOD*(1<<((*ixfr)->backoff >> 1));
+                            ++ixfr;
+                        }
+                    }
+                    else
+                        ++ixfr;
+                }
+            }
+            catch( TraceException & e )
+            {
+                cout << "XFR thread exception: " << e.toString() << "\n";
+                ixfr = m_xfr_active.erase( ixfr );
+            }
+            catch(...)
+            {
+                cout << "XFR thread exception!\n";
+                ixfr = m_xfr_active.erase( ixfr );
+            }
         }
     }
-
-    delete m_conn;
-
-    //cout << "W" << m_id << " exiting" << endl;
+    DL_DEBUG( "Xfr thread stopped" );
 }
 
-void
-Server::Worker::join()
+bool
+Server::parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg )
 {
-    m_worker_thread->join();
-}
+    status = XS_INACTIVE;
 
+    size_t p1 = 0;
+    size_t p2 = a_events.find_first_of( "=", 0 );
+    string tmp;
+    size_t fault_count = 0;
 
+    a_err_msg.clear();
 
-#define PROC_MSG_BEGIN( msgclass, replyclass ) \
-    msgclass *msg = 0; \
-    ::google::protobuf::Message *base_msg = m_conn->unserializeFromBuffer( a_msg_buffer ); \
-    if ( base_msg ) \
-    { \
-        msg = dynamic_cast<msgclass*>( base_msg ); \
-        if ( msg ) \
-        { \
-            DL_TRACE( "Rcvd: " << msg->DebugString()); \
-            ClientInfo & client = m_server.getClientInfo( a_msg_buffer, true ); \
-            (void)client;\
-            replyclass reply; \
-            try \
-            {
-
-#define PROC_MSG_END \
-            } \
-            catch( TraceException &e ) \
-            { \
-                DL_WARN( "worker "<<m_id<<": exception:" << e.toString() ); \
-                reply.mutable_header()->set_err_code( e.getErrorCode() ); \
-                reply.mutable_header()->set_err_msg( e.toString() ); \
-            } \
-            catch( exception &e ) \
-            { \
-                DL_WARN( "worker "<<m_id<<": " << e.what() ); \
-                reply.mutable_header()->set_err_code( EC_INTERNAL_ERROR ); \
-                reply.mutable_header()->set_err_msg( e.what() ); \
-            } \
-            catch(...) \
-            { \
-                DL_WARN( "worker "<<m_id<<": unkown exception while processing message!" ); \
-                reply.mutable_header()->set_err_code( EC_INTERNAL_ERROR ); \
-                reply.mutable_header()->set_err_msg( "Unknown exception type" ); \
-            } \
-            m_conn->serializeToBuffer( reply, a_msg_buffer ); \
-            m_conn->send( a_msg_buffer );\
-            DL_TRACE( "Sent: " << reply.DebugString()); \
-        } \
-        else { \
-            DL_ERROR( "worker "<<m_id<<": dynamic cast of msg buffer " << &a_msg_buffer << " failed!" );\
-        } \
-        delete base_msg; \
-    } \
-    else { \
-        DL_ERROR( "worker "<<m_id<<": buffer parse failed due to unregistered msg type." ); \
-    }
-
-
-void
-Server::Worker::procMsgStatus( MsgBuffer &a_msg_buffer )
-{
-    PROC_MSG_BEGIN( StatusRequest, StatusReply )
-
-    reply.set_status( NORMAL );
-
-    PROC_MSG_END
-}
-
-
-void
-Server::Worker::procMsgPing( MsgBuffer & a_msg_buffer )
-{
-    PROC_MSG_BEGIN( PingRequest, PingReply )
-
-    // Nothing to do
-
-    PROC_MSG_END
-}
-
-
-void
-Server::Worker::procMsgInitSec( MsgBuffer & a_msg_buffer )
-{
-    cout << "proc init sec\n";
-
-    PROC_MSG_BEGIN( InitSecurityRequest, AckReply )
-
-    if ( client.state == CS_AUTHN )
-        EXCEPT( ID_SECURITY_NOT_ALLOWED, "Security already initialized." );
-
-    OM_uint32           maj_stat, min_stat;
-    gss_buffer_desc     init_token;
-    gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
-
-    init_token.value = (void*)msg->token().c_str();
-    init_token.length = msg->token().size();
-
-    maj_stat = gss_accept_sec_context( &min_stat, &client.sec_ctx, m_server.m_sec_cred,
-        &init_token, GSS_C_NO_CHANNEL_BINDINGS, 0, 0,
-        &accept_token, 0, 0, 0 );
-
-    if ( GSS_ERROR( maj_stat ))
-        EXCEPT( ID_SECURITY_ERROR, "GSS security init failed." );
-
-    if (( maj_stat & GSS_S_CONTINUE_NEEDED ) && !accept_token.length )
-        EXCEPT( ID_SECURITY_ERROR, "Invalid client init token" );
-
-    if ( maj_stat & GSS_S_DUPLICATE_TOKEN )
-        EXCEPT( ID_SECURITY_ERROR, "Duplicate client init token" );
-
-    if ( maj_stat & GSS_S_OLD_TOKEN )
-        EXCEPT( ID_SECURITY_ERROR, "Reusing old client init token" );
-
-    if ( accept_token.length )
+    while ( p2 != string::npos )
     {
-        // Send token to client
+        tmp = a_events.substr( p1, p2 - p1 );
+        if ( tmp != "code" )
+            return XS_FAILED;
 
-        InitSecurityRequest reply2;
-        reply2.set_token((const char*)accept_token.value, accept_token.length );
+        p1 = p2 + 1;
+        p2 = a_events.find_first_of( "\n", p1 );
+        if ( p2 != string::npos )
+            tmp = a_events.substr( p1, p2 - p1 );
+        else
+            tmp = a_events.substr( p1 );
 
-        free( accept_token.value );
+        cout << "event: " << tmp << "\n";
 
-        m_conn->serializeToBuffer( reply2, a_msg_buffer );
-        m_conn->send( a_msg_buffer );
-        
-        return; // bypass ACK reply processing below
-    }
-    else
-    {
-        // Done, check client identity
-
-        gss_name_t src_name = 0;
-        maj_stat = gss_inquire_context( &min_stat, client.sec_ctx, &src_name, 0, 0, 0, 0, 0, 0 );
-
-        //cout << "src name: " << src_name << "\n";
-
-        if ( GSS_ERROR( maj_stat ))
-            EXCEPT( ID_SECURITY_ERROR, "Failed to identify security client" );
-
-        gssString   name_str( src_name );
-        client.name = name_str.to_string();
-        cout << "client name: " << client.name << "\n";
-
-        client.state = CS_AUTHN;
-    }
-
-    PROC_MSG_END
-}
-
-void
-Server::Worker::procMsgTermSec( MsgBuffer & a_msg_buffer )
-{
-    cout << "proc term sec\n";
-
-    PROC_MSG_BEGIN( TermSecurityRequest, AckReply )
-
-    lock_guard<mutex> lock(m_server.m_data_mutex);
-
-    map<uint32_t,ClientInfo>::iterator ci = m_server.m_client_info.find( a_msg_buffer.cid() );
-    if ( ci != m_server.m_client_info.end() )
-    {
-        if ( ci->second.sec_ctx )
+        if ( tmp == "STARTED" || tmp == "PROGRESS" )
+            status = XS_ACTIVE;
+        else if ( tmp == "SUCCEEDED" )
+            status = XS_SUCCEEDED;
+        else if ( tmp == "CANCELED" )
         {
-            OM_uint32  min_stat;
-            
-            gss_delete_sec_context( &min_stat, &ci->second.sec_ctx, GSS_C_NO_BUFFER );
+            status = XS_FAILED;
+            a_err_msg = tmp;
+        }
+        else if ( tmp == "CONNECTION_RESET" )
+        {
+            status = XS_INIT;
+            if ( ++fault_count > 10 )
+            {
+                status = XS_FAILED;
+                a_err_msg = "Could not connect";
+                return true;
+            }
         }
         else
-            EXCEPT( ID_SECURITY_REQUIRED, "Security has not been initialized." );
+        {
+            status = XS_FAILED;
+            a_err_msg = tmp;
+            return true;
+        }
 
-        m_server.m_client_info.erase( ci );
+        // TODO There may be non-fatal error codes that should be checked for
+
+        if ( p2 == string::npos )
+            break;
+
+        p1 = p2 + 1;
+        p2 = a_events.find_first_of( "=", p1 );
     }
 
-    PROC_MSG_END
+    return false;
 }
 
 void
-Server::Worker::procMsgUserListReq( MsgBuffer & a_msg_buffer )
+Server::sessionClosed( spSession a_session )
 {
-    cout << "proc user list\n";
+    lock_guard<mutex> lock( m_data_mutex );
+    set<spSession>::iterator isess = m_sessions.find( a_session );
+    if ( isess != m_sessions.end() )
+        m_sessions.erase( isess );
+}
 
-    PROC_MSG_BEGIN( UserListRequest, UserListReply )
 
-    if ( client.state != CS_AUTHN )
-        EXCEPT( ID_SECURITY_REQUIRED, "Method requires authentication" );
+void
+Server::generateKeys( const std::string & a_uid, std::string & a_key_data )
+{
+    string key_file = m_key_path + a_uid + "-" + m_unit + "-key";
 
-    UserData* user;
+    string cmd = "yes|ssh-keygen -q -t rsa -b 2048 -P '' -C \"SDMS SSH Key for " + a_uid + " (" + m_unit + ")\" -f " + key_file;
+    //cout << "cmd: " << cmd << "\n";
 
-    user = reply.add_user();
-    user->set_uid("jblow");
-    user->set_name_last("Blow");
-    user->set_name_first("Joe");
+    lock_guard<mutex> lock( m_key_mutex );
 
-    user = reply.add_user();
-    user->set_uid("jdoe");
-    user->set_name_last("Doe");
-    user->set_name_first("John");
+    if ( system( cmd.c_str() ))
+        EXCEPT( ID_SERVICE_ERROR, "SSH key generation failed." );
 
-    user = reply.add_user();
-    user->set_uid("bsmith");
-    user->set_name_last("Smith");
-    user->set_name_first("Bob");
+    ifstream inf( key_file + ".pub" );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT( ID_SERVICE_ERROR, "Could not open new ssh public key file" );
 
-    PROC_MSG_END
+    a_key_data.assign(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+
+    inf.close();
+}
+
+
+void
+Server::getPublicKey( const std::string & a_uid, std::string & a_key_data )
+{
+    string key_file = m_key_path + a_uid + "-" + m_unit + "-key";
+
+    lock_guard<mutex> lock( m_key_mutex );
+
+    ifstream inf( key_file + ".pub" );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT( ID_SERVICE_ERROR, "Could not open new ssh public key file" );
+
+    a_key_data.assign(( istreambuf_iterator<char>(inf)), istreambuf_iterator<char>());
+
+    inf.close();
+}
+
+
+void
+Server::handleNewXfr( const XfrData & a_xfr, const string & a_uid )
+{
+    lock_guard<mutex> lock(m_xfr_mutex);
+
+    if ( m_xfr_all.find( a_xfr.id() ) == m_xfr_all.end() )
+    {
+        XfrDataInfo * xfr_entry = new XfrDataInfo( a_xfr, a_uid );
+        m_xfr_all[a_xfr.id()] = xfr_entry;
+        m_xfr_pending.push_back( a_xfr.id() );
+    }
+}
+
+void
+Server::dataDelete( const std::string & a_data_id )
+{
+    m_store.dataDelete( a_data_id );
 }
 
 }}

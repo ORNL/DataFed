@@ -1,49 +1,268 @@
 package SDMS;
 
-enum Protocol
+// ============================ Enums
+
+enum ErrorCode
 {
-    ID = 1;
+    ID_BAD_REQUEST              = 1;
+    ID_INTERNAL_ERROR           = 2;
+    ID_CLIENT_ERROR             = 3;
+    ID_SERVICE_ERROR            = 4;
+    ID_AUTHN_REQUIRED           = 5;
+    ID_AUTHN_ERROR              = 6;
+    ID_DEST_PATH_ERROR          = 7;
+    ID_DEST_FILE_ERROR          = 8;
 }
 
-enum Status
+enum ServiceStatus
 {
-    NORMAL      = 0;
-    DEGRADED    = 1;
-    FAILED      = 2;
-    OFFLINE     = 3;
+    SS_NORMAL       = 0;
+    SS_DEGRADED     = 1;
+    SS_FAILED       = 2;
+    SS_OFFLINE      = 3;
 }
 
-message ReplyHeader
+enum XfrMode
 {
-    optional uint32         err_code    = 1;
-    optional string         err_msg     = 2;
+    XM_GET          = 0;
+    XM_PUT          = 1;
+    XM_COPY         = 2;
 }
 
-message AckReply
+enum XfrStatus
 {
-    optional ReplyHeader    header  = 1;
+    XS_INIT         = 0;
+    XS_ACTIVE       = 1;
+    XS_INACTIVE     = 2;
+    XS_SUCCEEDED    = 3;
+    XS_FAILED       = 4;
 }
 
-message StatusRequest
+
+enum CollDelMode
 {
+    CDM_ALL         = 0;
+    CDM_OWNED       = 1;
 }
 
-message StatusReply
+enum SearchScope
 {
-    optional ReplyHeader    header  = 1;
-    required Status         status  = 2;
+    SS_USER                     = 1;
+    SS_PROJECT                  = 2;
+    SS_OWNED_PROJECTS           = 3;
+    SS_MANAGED_PROJECTS         = 4;
+    SS_MEMBER_PROJECTS          = 5;
+    SS_COLLECTION               = 6;
+    SS_TOPIC                    = 7;
+    SS_SHARED_BY_USER           = 8;
+    SS_SHARED_BY_ANY_USER       = 9;
+    SS_SHARED_BY_PROJECT        = 10;
+    SS_SHARED_BY_ANY_PROJECT    = 11;
+    SS_PUBLIC                   = 12;
+    SS_VIEW                     = 13;
 }
 
-message StatusEvent
+enum DependencyType
 {
-    required Status         status  = 1;
+    DEP_IS_DERIVED_FROM         = 0;
+    DEP_IS_COMPONENT_OF         = 1;
+    DEP_IS_NEW_VERSION_OF       = 2;
+    DEP_TYPE_COUNT              = 3;
 }
 
-message PingRequest
+enum DependencyDir
 {
+    DEP_IN                      = 0;
+    DEP_OUT                     = 1;
 }
 
-message PingReply
+/*
+enum Permissions
 {
-    optional ReplyHeader    header  = 1;
+    PERM_NONE       = 0x00;
+    PERM_VIEW       = 0x01;   // Read public record fields (not collection items or raw data)
+    PERM_RD_META    = 0x02;   // Read raw data or list collection items
+    PERM_RD_DATA    = 0x04;   // Read raw data or list collection items
+    PERM_WR_META    = 0x08;   // Write raw data or add/remove collection items
+    PERM_WR_DATA    = 0x10;   // Write raw data or add/remove collection items
+    PERM_ADMIN      = 0x20;   // Read, write admin fields, delete record
+    //PERM_TAG        = 0x40;   // Add/remove tags on record
+    //PERM_NOTE       = 0x80;   // Add, remove, edit annotations on record
+    PERM_ALL        = 0x3F;
+}*/
+
+// ============================ Data Structures
+
+message AllocStatsData
+{
+    required string             repo        = 1;
+    required uint32             records     = 2;
+    required uint32             files       = 3;
+    required uint64             total_sz    = 4;
+    repeated uint32             histogram   = 5;
+}
+
+message AllocData
+{
+    required string             repo        = 1;
+    required uint64             max_size    = 2;
+    required uint64             tot_size    = 3;
+    required uint32             max_count   = 4;
+    required string             path        = 5;
+    optional string             id          = 6;
+    optional string             name        = 7;
+    optional AllocStatsData     stats       = 8;
+}
+
+message DependencyData
+{
+    required string             id          = 1;
+    optional string             alias       = 2;
+    required DependencyType     type        = 3;
+    required DependencyDir      dir         = 4;
+}
+
+message UserData
+{
+    required string             uid             = 1;
+    required string             name            = 2;
+    optional string             email           = 3;
+    optional string             options         = 4;
+    optional bool               is_admin        = 5;
+    optional bool               is_repo_admin   = 6;
+    repeated string             ident           = 7;
+    repeated AllocData          alloc           = 8;
+}
+
+message ProjectData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             desc        = 3;
+    optional string             sub_repo    = 4;
+    optional uint64             sub_alloc   = 5;
+    optional uint64             sub_usage   = 6;
+    optional string             owner       = 7;
+    optional uint32             ct          = 8;
+    optional uint32             ut          = 9;
+    repeated string             admin       = 10;
+    repeated string             member      = 11;
+    repeated AllocData          alloc       = 12;
+}
+
+message ListingData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional bool               locked      = 4;
+    optional string             owner       = 5;
+    optional int32              gen         = 6;
+    repeated DependencyData     dep         = 7;
+}
+
+message RecordData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional string             desc        = 4;
+    optional string             keyw        = 5;
+    optional string             topic       = 6;
+    optional bool               ispublic    = 7;
+    optional string             metadata    = 8;
+    optional string             repo_id     = 9;
+    optional uint64             size        = 10;
+    optional string             source      = 11;
+    optional string             ext         = 12;
+    optional bool               ext_auto    = 13;
+    optional uint32             ct          = 14;
+    optional uint32             ut          = 15;
+    optional uint32             dt          = 16;
+    optional string             owner       = 17;
+    optional bool               locked      = 18;
+    optional string             parent_id   = 19;
+    repeated DependencyData     deps        = 20;
+}
+
+message RecordDataLocation
+{
+    required string             id          = 1;
+    required string             repo_id     = 2;
+    required string             path        = 3;
+}
+
+message CollData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional string             desc        = 4;
+    optional bool               ispublic    = 5;
+    optional string             owner       = 6;
+    optional uint32             ct          = 7;
+    optional uint32             ut          = 8;
+    optional string             parent_id   = 9;
+}
+
+message XfrData
+{
+    required string             id          = 1;
+    required XfrMode            mode        = 2;
+    required XfrStatus          status      = 3;
+    required string             data_id     = 4; // With revision?
+    required string             repo_path   = 5;
+    required string             local_path  = 6;
+    required string             user_id     = 7;
+    required string             repo_id     = 8;
+    required uint32             started     = 9;
+    required uint32             updated     = 10;
+    optional string             task_id     = 11; // Only set if status > XFR_INIT
+    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
+}
+
+message GroupData
+{
+    required string             uid         = 1;
+    required string             gid         = 2;
+    optional string             title       = 3;
+    optional string             desc        = 4;
+    repeated string             member      = 5;
+}
+
+message ACLRule
+{
+    required string             id          = 1;
+    optional uint32             grant       = 2;
+    optional uint32             deny        = 3;
+    optional uint32             inhgrant    = 4;
+    optional uint32             inhdeny     = 5;
+}
+
+message RepoData
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional uint64             capacity    = 4;
+    optional string             pub_key     = 5;
+    optional string             address     = 6;
+    optional string             endpoint    = 7;
+    optional string             path        = 8;
+    optional string             domain      = 9;
+    optional string             exp_path    = 10;
+    repeated string             admin       = 11;
+}
+
+message QueryData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    required string             query       = 3;
+    optional string             owner       = 4;
+    optional bool               use_owner   = 5;
+    optional bool               use_sh_usr  = 6;
+    optional bool               use_sh_prj  = 7;
+    optional uint32             ct          = 8;
+    optional uint32             ut          = 9;
 }

@@ -1,98 +1,120 @@
-#ifndef SDMSCLIENT_HPP
-#define SDMSCLIENT_HPP
+#ifndef FACILITYSERVER_HPP
+#define FACILITYSERVER_HPP
 
+#include <string>
+#include <map>
+#include <set>
+#include <deque>
+#include <list>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <vector>
-
 #include <stdint.h>
-#include <time.h>
-#include <gssapi.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <asio.hpp>
+#include <asio/ssl.hpp>
 
-#include <Connection.hpp>
-#include "Facility.pb.h"
-#include "Repository.pb.h"
+#include "Session.hpp"
+#include "CentralDatabaseClient.hpp"
+#include "CentralStorage.hpp"
+#include "SDMS.pb.h"
 
 namespace SDMS {
 namespace Facility {
 
-class Server
+class Server : public ISessionMgr
 {
 public:
-    Server( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout = 30, uint32_t a_num_workers = 0 );
-    ~Server();
+    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_threads, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
+    virtual ~Server();
 
-    void    runWorkerRouter( bool a_async );
-    void    stopWorkerRouter( bool a_async );
-    void    waitWorkerRouter();
+    Server& operator=( const Server & ) = delete;
+
+    void    run( bool a_async );
+    void    stop( bool a_wait );
+    void    wait();
 
 private:
-    enum ClientState
+    struct XfrDataInfo
     {
-        CS_INIT,
-        CS_AUTHN_PROC,
-        CS_AUTHN
+        XfrDataInfo( const XfrData & a_xfr, const std::string & a_uid ) :
+            id(a_xfr.id()),mode(a_xfr.mode()),status(a_xfr.status()),data_id(a_xfr.data_id()),repo_path(a_xfr.repo_path()),
+            local_path(a_xfr.local_path()),globus_id(a_xfr.globus_id()),uid(a_uid),stage(0),poll(0),backoff(0)
+        {
+            if ( a_xfr.has_task_id() )
+                task_id = a_xfr.task_id();
+        }
+
+        std::string     id;
+        XfrMode         mode;
+        XfrStatus       status;
+        std::string     data_id;
+        std::string     repo_path;
+        std::string     local_path;
+        std::string     globus_id;
+        std::string     task_id;
+        std::string     uid;
+        int             stage; // (0=not started,1=started,2=active)
+        int             poll;
+        int             backoff;
     };
 
-    struct ClientInfo
-    {
-        ClientInfo() :
-            state(CS_INIT), last_act(0), sec_ctx(GSS_C_NO_CONTEXT)
-        {}
+    // ISessionMgr methods
+    void                sessionClosed( spSession );
+    const std::string & getCertFile() { return m_cert_file; }
+    const std::string & getKeyFile() { return m_key_file; }
+    void                generateKeys( const std::string & a_uid, std::string & a_key_data );
+    void                getPublicKey( const std::string & a_uid, std::string & a_key_data );
+    const std::string & getCountry() { return m_country; }
+    const std::string & getOrg() { return m_org; }
+    const std::string & getUnit() { return m_unit; }
+    void                handleNewXfr( const XfrData & a_xfr, const std::string & a_uid );
 
-        ClientState     state;
-        time_t          last_act;
-        gss_ctx_id_t    sec_ctx;
-        std::string     name;
-    };
+    // Should be in CentralServer
+    void                dataDelete( const std::string & a_data_id );
 
-    void            workerRouter();
-    void            backgroundMaintenance();
-    ClientInfo &    getClientInfo( MsgBuffer &a_msg_buffer, bool a_upd_last_act = false );
+    void ioRun();
+    void accept();
+    void backgroundMaintenance();
+    void xfrManagement();
+    bool parseGlobusEvents( const std::string & a_events, XfrStatus & status, std::string & a_err_msg );
 
-    class Worker
-    {
-    public:
-        Worker( Server &a_server, void *a_context, int a_id );
-        ~Worker();
-
-        void    workerThread();
-        void    join();
-        void    procMsgStatus( MsgBuffer &a_msg_buffer );
-        void    procMsgPing( MsgBuffer &a_msg_buffer );
-        void    procMsgInitSec( MsgBuffer &a_msg_buffer );
-        void    procMsgTermSec( MsgBuffer &a_msg_buffer );
-        void    procMsgUserListReq( MsgBuffer &a_msg_buffer );
-
-        Server  &           m_server;
-        void            *   m_context;
-        Connection      *   m_conn;
-        std::thread   *     m_worker_thread;
-        int                 m_id;
-        //static msg_fun_t    m_proc_funcs[_FMT_END];
-    };
-
-    //DataAdminClient                 m_data_admin;
-
-    typedef void (Server::Worker::*msg_fun_t)( MsgBuffer& );
-
-    Connection                      m_conn;
-    uint64_t                        m_timeout;
-    std::thread   *                 m_router_thread;
-    std::thread   *                 m_maint_thread;
-    uint32_t                        m_num_workers;
-    std::vector<Worker*>            m_workers;
+    std::string                     m_host;
+    uint32_t                        m_port;
+    uint32_t                        m_timeout;
+    std::thread *                   m_io_thread;
+    std::thread *                   m_maint_thread;
+    uint32_t                        m_num_threads;
     std::mutex                      m_api_mutex;
     std::mutex                      m_data_mutex;
-    bool                            m_router_running;
-    bool                            m_worker_running;
+    bool                            m_io_running;
     std::condition_variable         m_router_cvar;
-    std::map<uint32_t,ClientInfo>   m_client_info;
-    gss_cred_id_t                   m_sec_cred;
-    std::map<uint16_t,msg_fun_t>    m_msg_handlers;
-    
-    friend class Worker;
+    asio::io_service                m_io_service;
+    asio::ip::tcp::endpoint         m_endpoint;
+    asio::ip::tcp::acceptor         m_acceptor;
+    asio::ssl::context              m_context;
+    std::set<spSession>             m_sessions;
+    std::string                     m_country;
+    std::string                     m_org;
+    std::string                     m_unit;
+    std::string                     m_cert_file;
+    std::string                     m_key_file;
+    std::string                     m_key_path;
+    std::mutex                      m_key_mutex;
+    std::mutex                      m_xfr_mutex;
+    std::deque<std::string>         m_xfr_pending;
+    std::list<XfrDataInfo*>         m_xfr_active;
+    std::map<std::string,XfrDataInfo*>   m_xfr_all;
+    std::thread *                   m_xfr_thread;
+    // Should be in Central Server
+    std::string                     m_db_url;
+    std::string                     m_db_user;
+    std::string                     m_db_pass;
+    CentralDatabaseClient           m_db_client;
+    CentralStorage                  m_store;
+
+    friend class Session;
 };
 
 

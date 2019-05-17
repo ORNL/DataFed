@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <% include 'head.ect' %>
+        <title>DataFed Register</title>
+    </head>
+    <body>
+        <div class="col-flex ui-widget-content" style="height:100%;border:none">
+            <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
+                <div style="flex:1 1 100%;font-size:2em;">Scientific Data Management System</div>
+                <div style="flex:none">
+                    <button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp
+                    <button class="btn" onclick="location.href='/ui'">Home</button>
+                </div>
+            </div>
+            <div id="content" class="ui-widget-content" style="padding:5em;flex:1 1 100%;font-size:1.2em">
+                <p>Your DataFed user ID is "<%- @uid %>".</p>
+                <p>Please enter a password for your new DataFed account. This password is needed to authenticate via the DataFed command-line interface (CLI) prior to configuring local credentials. This password can be changed at any time in the future via the DataFed web application.</p>
+                <br>
+                <table style="margin:1em auto">
+                <tr><td>New Password:</td><td><input type="password" id="pw1"></td></tr>
+                <tr><td>Re-enter Password:</td><td><input type="password" id="pw2"></td></tr>
+                <tr><td>&nbsp</td><td> </td></tr>
+                <tr><td></td><td><button class="btn" onclick="register()" type="button">Register</button></td></tr>
+                </table>
+            </div>
+            <div class="ui-widget-header" style="flex:none;padding:.25em">
+                User: <%- @uname %>
+            </div>
+        </div>
+    </body>
+    <script>
+        $(".btn").button();
+        $('input').addClass("ui-widget ui-widget-content");
+
+        function register() {
+            var pw1 = document.getElementById('pw1').value;
+            var pw2 = document.getElementById('pw2').value;
+            if ( pw1.length == 0 )
+                alert( "Password cannot be empty" );
+            else if ( pw1 != pw2 )
+                alert( "Passwords do not match" );
+            else
+                window.location = "/ui/do_register?pw="+pw1+"&acc_tok=<%- @acc_tok %>&ref_tok=<%- @ref_tok %>";
+        }
+    </script>
+</html>

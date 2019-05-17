@@ -1,331 +1,1284 @@
+#include "Client.hpp"
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <boost/filesystem.hpp>
 
-#include "unistd.h"
-#include "sys/types.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
 
-#include <zmq.h>
-#include <gssapi.h>
+#include <time.h>
 
-#include "Client.hpp"
-#include "GSSAPI_Utils.hpp"
+#include "pbjson.hpp"
+
+#define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
+#define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
+#define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
+#define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
+
 
 using namespace std;
 
 namespace SDMS {
+
+using namespace SDMS::Anon;
+using namespace SDMS::Auth;
+
 namespace Facility {
 
-#define DEBUG_GSI
-
-#define HANDLE_REPLY_ERROR( reply ) \
-    if ( reply->has_header() && reply->header().has_err_code() ) \
-    { \
-        uint32_t ec = reply->header().has_err_code(); \
-        if ( reply->header().has_err_msg() ) \
-        { \
-            string em = reply->header().err_msg(); \
-            delete reply; \
-            EXCEPT( ec, em ); \
-        } \
-        else \
-        { \
-            delete reply; \
-            EXCEPT( ec, "Request failed." ); \
-        } \
-    }
-
-
-class Client::ClientImpl
+//typedef std::shared_ptr<Auth::ResolveXfrReply> spResolveXfrReply;
+string loadKeyFile( const string & a_fname )
 {
-public:
-    ClientImpl( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout = 30 ) :
-        m_connection( a_server_host, a_server_port, Connection::Client ),
-        m_timeout(a_timeout * 1000), m_sec_cred(0), m_sec_ctx(0), m_ctx(1)
-    {
-        REG_API( m_connection, Facility );
+    string key;
 
-        if ( ++m_initialized == 1 )
-        {
-            if ( globus_module_activate( GLOBUS_GSI_GSSAPI_MODULE ) != GLOBUS_SUCCESS )
-                throw runtime_error("failed to activate Globus GSI GSSAPI module");
-        }
+    ifstream inf( a_fname );
+    if ( !inf.is_open() || !inf.good() )
+        EXCEPT_PARAM( 0, "Could not open " << a_fname << " for read" );
 
-        OM_uint32 maj_stat, min_stat;
+    inf >> key;
+    inf.close();
 
-        maj_stat = gss_acquire_cred( &min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
-            GSS_C_INITIATE, &m_sec_cred, 0, 0 );
+    //cout << "loaded " << a_fname << ": [" << key << "]\n";
 
-        if ( maj_stat != GSS_S_COMPLETE )
-            throw runtime_error( "Unable to acquire valid credentials. Please (re)run grid-proxy-init." );
-
-        #ifdef DEBUG_GSI
-        
-        gss_name_t          cred_name;
-
-        if ( gss_inquire_cred( &min_stat, m_sec_cred, &cred_name, 0, 0, 0 )!= GSS_S_COMPLETE )
-            throw runtime_error("failed to inquire credentials");
-
-        gssString   name_str( cred_name );
-        cout << "cred name: " << name_str << "\n";
-
-        #endif
-    }
-
-    ~ClientImpl()
-    {
-        if ( --m_initialized == 0 )
-        {
-            globus_module_deactivate( GLOBUS_GSI_GSSAPI_MODULE );
-        }
-    }
-
-    void gssCheckError( OM_uint32 a_maj_stat, OM_uint32 a_min_stat )
-    {
-        if ( GSS_ERROR( a_maj_stat ))
-        {
-            string err_msg = globus_error_print_friendly( globus_error_peek( a_min_stat ));
-
-            gss_buffer_desc status_string;
-            OM_uint32 d_maj, d_min, msg_ctx;
-
-            do
-            {
-                d_maj = gss_display_status(
-                    &d_min,
-                    a_maj_stat,
-                    GSS_C_GSS_CODE,
-                    GSS_C_NO_OID,
-                    &msg_ctx,
-                    &status_string );
-
-                err_msg += string("\n") + (char *) status_string.value;
-                gss_release_buffer( &d_min, &status_string );
-            }
-            while ( d_maj & GSS_S_CONTINUE_NEEDED );
-
-            throw runtime_error( err_msg );
-        }
-    }
-
-    Status status()
-    {
-        StatusRequest req;
-        StatusReply * reply;
-
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
-
-        Status stat = reply->status();
-
-        delete reply;
-
-        return stat;
-    }
-
-    /**
-     * @brief Verify server is listening an in-synch
-     */
-    void ping()
-    {
-        PingRequest req;
-        PingReply * reply;
-
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
-
-        delete reply;
-    }
-
-    /**
-     * @brief Client-server handshake and certificate exchange
-     */
-    void initSecurity()
-    {
-        cout << "initSecurity\n";
-
-        if ( m_sec_ctx )
-            throw runtime_error( "Security context already established." );
-
-        OM_uint32           maj_stat, min_stat;
-        gss_buffer_desc     init_token = GSS_C_EMPTY_BUFFER;
-        gss_buffer_desc     accept_token = GSS_C_EMPTY_BUFFER;
-        bool                loop = true;
-        Message*            reply = 0;
-        InitSecurityRequest msg;
-
-
-        // Initialize securit conext. Must exchange tokens with server until GSS
-        // init/accept functions stop generating token data.
-
-        while( loop )
-        {
-            maj_stat = gss_init_sec_context( &min_stat, m_sec_cred, &m_sec_ctx,
-                GSS_C_NO_NAME, GSS_C_NO_OID, 0, 0, GSS_C_NO_CHANNEL_BINDINGS,
-                &accept_token, 0, &init_token, 0, 0 );
-
-            gssCheckError( maj_stat, min_stat );
-
-            if ( reply )
-                delete reply;
-
-            accept_token.value = NULL;
-            accept_token.length = 0;
-
-
-            if ( init_token.length != 0 )
-            {
-                cout << "init tok len: " << init_token.length << "\n";
-
-                // Send init token data to server
-                uint32_t loc_ctx = m_ctx++;
-
-                msg.set_token( (const char*) init_token.value, init_token.length );
-                m_connection.send( msg, loc_ctx );
-
-                // Wait for response from server
-                if ( !m_connection.recv( reply, 0, m_timeout ))
-                    throw runtime_error("Server did not respond.");
-                cout << "reply: " << reply << "\n";
-                // Process server reply
-                //reply_hdr = (Connection::MsgHeader*)reply.data();
-
-                if ( Check( r, reply, InitSecurityRequest ))
-                {
-                    cout << "data from server\n";
-                    accept_token.value = (void*)r->token().c_str();
-                    accept_token.length = r->token().size();
-                }
-                else if ( Check( r, reply, AckReply ))
-                {
-                    cout << "Ack\n";
-                    if ( r->header().err_code() )
-                    {
-                        cout << "error\n";
-                        string err = r->header().err_msg();
-                        delete reply;
-                        throw runtime_error( err );
-                    }
-
-                    delete reply;
-                    cout << "done\n";
-                    loop = false;
-                }
-                else
-                {
-                    delete reply;
-                    throw runtime_error("Server responded with invalid reply type.");
-                }
-            }
-        }
-    }
-
-    void termSecurity()
-    {
-        cout << "termSecurity\n";
-
-        TermSecurityRequest req;
-        AckReply * reply;
-
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
-
-        delete reply;
-    }
-
-    spUserListReply
-    userList( bool a_details, uint32_t a_offset, uint32_t a_count )
-    {
-        cout << "userList\n";
-
-        UserListRequest req;
-        if ( a_details )
-            req.set_details( a_details );
-        if ( a_offset )
-            req.set_offset( a_offset );
-        if ( a_count )
-            req.set_count( a_count );
-
-        UserListReply * reply;
-
-        m_connection.requestReply<>( req, reply, m_ctx++, m_timeout );
-
-        HANDLE_REPLY_ERROR( reply );
-
-        return spUserListReply( reply );
-    }
-
-    bool send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
-    {
-        (void)a_request;
-        (void)a_reply;
-        (void)a_timeout;
-        return false;
-    }
-
-private:
-    static size_t   m_initialized;  // TODO must be atomic int
-    Connection      m_connection;
-    uint64_t        m_timeout;
-    gss_cred_id_t   m_sec_cred;
-    gss_ctx_id_t    m_sec_ctx;
-    uint32_t        m_ctx;
-};
-
-
-size_t Client::ClientImpl::m_initialized = 0;
-
-
-
-
-// Class ctor/dtor
-
-Client::Client( const std::string & a_server_host, uint32_t a_server_port, uint32_t a_timeout )
-{
-    m_impl = new ClientImpl( a_server_host, a_server_port, a_timeout );
+    return key;
 }
 
+bool
+Client::verifyCredentials( const std::string & a_cred_path )
+{
+    try
+    {
+        string key = loadKeyFile( a_cred_path + "sdms-user-key.pub" );
+        key = loadKeyFile( a_cred_path + "sdms-user-key.priv" );
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+
+Client::Client( const std::string & a_host, uint32_t a_port, uint32_t a_timeout, const std::string & a_service_cred_dir, const std::string & a_client_cred_dir, bool a_load_certs ) :
+    m_host( a_host ),
+    m_port( a_port ),
+    m_cred_dir( a_client_cred_dir ),
+    m_timeout( a_timeout )
+{
+    REG_PROTO( SDMS::Anon );
+    REG_PROTO( SDMS::Auth );
+
+    char * uid = getlogin();
+    if ( uid == 0 )
+        EXCEPT( 0, "Could not determine login name" );
+
+    m_uid = uid;
+
+    if ( m_cred_dir.size() && *m_cred_dir.rbegin() != '/' )
+        m_cred_dir += "/";
+
+    MsgComm::SecurityContext sec_ctx;
+    sec_ctx.is_server = false;
+
+    if ( a_service_cred_dir.size() && *a_service_cred_dir.rbegin() != '/' )
+        sec_ctx.server_key = loadKeyFile( a_service_cred_dir + "/sdms-core-key.pub" );
+    else
+        sec_ctx.server_key = loadKeyFile( a_service_cred_dir + "sdms-core-key.pub" );
+
+    if ( a_load_certs )
+    {
+        sec_ctx.public_key = loadKeyFile( m_cred_dir + "sdms-user-key.pub" );
+        sec_ctx.private_key = loadKeyFile( m_cred_dir + "sdms-user-key.priv" );
+    }
+    else
+    {
+        //cout << "Gen temp keys\n";
+        char pub_key[41];
+        char priv_key[41];
+
+        if ( zmq_curve_keypair( pub_key, priv_key ) != 0 )
+            EXCEPT_PARAM( 1, "Key generation failed: " << zmq_strerror( errno ));
+
+        sec_ctx.public_key = pub_key;
+        sec_ctx.private_key = priv_key;
+    }
+
+    const char* domain = getenv("SDMS_CLIENT_DOMAIN");
+    if ( domain )
+        m_domain = domain;
+
+    m_comm = new MsgComm( a_host, a_port, MsgComm::DEALER, false, &sec_ctx );
+
+    Anon::VersionRequest req;
+    Anon::VersionReply * reply = 0;
+
+    try
+    {
+        send<>( req, reply, m_ctx++ );
+
+        if ( reply->major() != VER_MAJOR || reply->minor() != VER_MINOR )
+            EXCEPT(0,"Incompatible server version (update client)");
+
+        delete reply;
+    }
+    catch(...)
+    {
+        delete m_comm;
+        throw;
+    }
+}
 
 Client::~Client()
 {
-    delete m_impl;
+    stop();
+
+    delete m_comm;
 }
 
-// Methods (Forward to Impl)
-
-Status Client::status()
+std::string Client::start()
 {
-    return m_impl->status();
+    string uid;
+
+    Anon::GetAuthStatusRequest req;
+    Anon::GetAuthStatusReply * reply = 0;
+
+    send<>( req, reply, m_ctx++ );
+
+    if ( reply->auth() )
+        uid = reply->uid();
+
+    delete reply;
+
+    return uid;
 }
 
-/**
- * @brief Verify server is listening and in-synch
- */
-void Client::ping()
+void Client::stop()
 {
-    m_impl->ping();
 }
 
-/**
- * @brief Client-server handshake and certificate exchange
- */
-void Client::initSecurity()
+/*
+bool Client::verifyCert( bool a_preverified, asio::ssl::verify_context & a_context )
 {
-    m_impl->initSecurity();
+    // TODO What is the point of this funtions?
+
+    char subject_name[256];
+
+    X509* cert = X509_STORE_CTX_get_current_cert( a_context.native_handle() );
+    X509_NAME_oneline( X509_get_subject_name( cert ), subject_name, 256 );
+
+    cout << "verify " << subject_name << ", pre-ver: " << a_preverified << "\n";
+
+    return a_preverified;
+}*/
+
+
+template<typename RQT,typename RPT>
+void Client::send( RQT & a_request, RPT *& a_reply, uint16_t a_context )
+{
+    cout << "send\n";
+    MsgBuf::Message * reply = 0;
+    MsgBuf::Frame frame;
+
+    m_comm->send( a_request, a_context );
+
+    cout << "recv\n";
+
+    if ( m_comm->recv( reply, frame, m_timeout ))
+    {
+        a_reply = dynamic_cast<RPT*>( reply );
+
+        if ( !a_reply )
+        {
+            Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( reply );
+            string err_msg;
+            if ( nack )
+                err_msg = nack->err_msg();
+
+            delete reply;
+
+            if ( err_msg.size() )
+                EXCEPT( 0, err_msg );
+            else
+                EXCEPT_PARAM( 0, "Unexpected reply from server, msg_type: " << frame.getMsgType() );
+        }
+
+        return;
+    }
+
+    EXCEPT( 0, "TIMEOUT" );
 }
 
-void Client::termSecurity()
+
+void Client::setup()
 {
-    m_impl->termSecurity();
+    GenerateCredentialsRequest req;
+
+    if ( m_domain.size() )
+    {
+        req.set_domain( m_domain );
+        req.set_uid( getuid() );
+    }
+
+    GenerateCredentialsReply * reply = 0;
+
+    send<>( req, reply, m_ctx++ );
+
+    try
+    {
+        if ( !boost::filesystem::exists( m_cred_dir ))
+            boost::filesystem::create_directories(m_cred_dir);
+
+        //cout << "Saving " << m_key_file << "\n";
+        string fname = m_cred_dir + "sdms-user-key.pub";
+        if ( boost::filesystem::exists( fname ))
+            boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+
+        ofstream outf( fname );
+        if ( !outf.is_open() || !outf.good() )
+            EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
+
+        outf << reply->pub_key();
+        outf.close();
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read );
+
+        //cout << "Saving " << m_cert_file << "\n";
+        fname = m_cred_dir + "sdms-user-key.priv";
+        if ( boost::filesystem::exists( fname ))
+            boost::filesystem::permissions( fname, boost::filesystem::owner_read | boost::filesystem::owner_write );
+
+        outf.open( fname );
+        if ( !outf.is_open() || !outf.good() )
+            EXCEPT_PARAM( 0, "Could not open " << fname << " for write" );
+
+        outf << reply->priv_key();
+        outf.close();
+        boost::filesystem::permissions( fname, boost::filesystem::owner_read );
+
+        delete reply;
+    }
+    catch(...)
+    {
+        delete reply;
+        throw;
+    }
 }
 
-spUserListReply
-Client::userList( bool a_details, uint32_t a_offset, uint32_t a_count )
+void
+Client::setDefaultEndpoint( const std::string & a_def_ep )
 {
-    return m_impl->userList( a_details, a_offset, a_count );
+    m_def_ep = a_def_ep;
 }
 
-bool Client::send( Message & a_request, Message *& a_reply, uint32_t a_timeout )
+const std::string &
+Client::getDefaultEndpoint() const
 {
-    return m_impl->send( a_request, a_reply, a_timeout );
+    return m_def_ep;
 }
+
+spUserGetRecentEPReply
+Client::getRecentEndpoints()
+{
+    Auth::UserGetRecentEPRequest req;
+    Auth::UserGetRecentEPReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spUserGetRecentEPReply( reply );
+}
+
+bool Client::test( size_t a_iter )
+{
+    Anon::StatusReply     in;
+    Anon::StatusReply *   out = 0;
+    MsgBuf::Message *       raw;
+    MsgBuf          buf;
+
+    for ( size_t i = 0; i < a_iter; ++i )
+    {
+        in.set_status( SS_NORMAL );
+        buf.serialize( in );
+        raw = buf.unserialize();
+        if ( !raw )
+        {
+            cerr << "unserialize failed\n";
+            return false;
+        }
+        out = dynamic_cast<Anon::StatusReply *>(raw);
+        if ( !out )
+        {
+            cerr << "cast failed\n";
+            delete raw;
+            return false;
+        }
+        delete raw;
+    }
+    return true;
+}
+
+
+ServiceStatus Client::status()
+{
+    //cout << "status\n";
+
+    Anon::StatusRequest req;
+    Anon::StatusReply * reply = 0;
+
+    send<>( req, reply, m_ctx++ );
+
+    ServiceStatus stat = reply->status();
+
+    delete reply;
+
+    return stat;
+}
+
+void
+Client::authenticate( const std::string & a_uid, const string & a_password )
+{
+    AuthenticateRequest req;
+
+    req.set_uid( a_uid );
+    req.set_password( a_password );
+
+    AckReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    delete reply;
+
+    // On success, reconnect to server with same credentials
+    m_comm->reset();
+}
+
+spUserDataReply
+Client::userView( const string & a_uid, bool a_details )
+{
+    Auth::UserViewRequest req;
+    Auth::UserDataReply * reply;
+
+    req.set_uid( a_uid );
+    if ( a_details )
+        req.set_details( true );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spUserDataReply( reply );
+}
+
+spUserDataReply
+Client::userListCollaborators( uint32_t a_offset, uint32_t a_count )
+{
+    Auth::UserListCollabRequest req;
+    Auth::UserDataReply * reply;
+
+    if ( a_offset )
+        req.set_offset( a_offset );
+    if ( a_count )
+        req.set_count( a_count );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spUserDataReply( reply );
+}
+
+spUserDataReply
+Client::userListShared(uint32_t a_offset, uint32_t a_count )
+{
+    (void)a_offset;
+    (void)a_count;
+
+    Auth::ACLByUserRequest req;
+    Auth::UserDataReply * reply;
+
+/*
+    if ( a_details )
+        req.set_details( a_details );
+    if ( a_offset )
+        req.set_offset( a_offset );
+    if ( a_count )
+        req.set_count( a_count );
+*/
+    send<>( req, reply, m_ctx++ );
+
+    return spUserDataReply( reply );
+}
+
+spUserDataReply
+Client::userUpdate( const std::string & a_uid, const char * a_email )
+{
+    Auth::UserUpdateRequest req;
+    Auth::UserDataReply *   reply;
+
+    req.set_uid( a_uid );
+
+    if ( a_email )
+        req.set_email( a_email );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spUserDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectListMine()
+{
+    Auth::ProjectListRequest req;
+    Auth::ProjectDataReply * reply;
+
+    req.set_by_owner( true );
+    req.set_by_admin( true );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectListTeam()
+{
+    Auth::ProjectListRequest req;
+    Auth::ProjectDataReply * reply;
+
+    req.set_by_member( true );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectListShared()
+{
+    Auth::ACLByProjRequest req;
+    Auth::ProjectDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
+spProjectDataReply
+Client::projectView( const std::string & a_id )
+{
+    Auth::ProjectViewRequest req;
+    Auth::ProjectDataReply * reply;
+
+    req.set_id( a_id );
+
+    send<>( req, reply, m_ctx++ );
+
+    return spProjectDataReply( reply );
+}
+
+#if 0
+string
+Client::parseQuery( const string & a_query )
+{
+    static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?'};
+    static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
+
+    struct Var
+    {
+        Var() : start(0), len(0) {}
+        void reset() { start = 0; len = 0; }
+
+        size_t  start;
+        size_t  len;
+    };
+
+    int state = 0;
+    Var v;
+    string result;
+    string tmp;
+
+    for ( string::const_iterator c = a_query.begin(); c != a_query.end(); ++c )
+    {
+        switch( state )
+        {
+        case 0: // Not quoted
+            if ( spec.find( *c ) == spec.end() )
+            {
+                if ( nums.find( *c ) == nums.end() )
+                {
+                    if ( *c == '\'' )
+                        state = 1;
+                    else if ( *c == '\"' )
+                        state = 2;
+                    else
+                    {
+                        v.start = c - a_query.begin();
+                        //cout << "start: " << v.start << "\n";
+                        v.len = 1;
+                        state = 3;
+                    }
+                }
+            }
+            break;
+        case 1: // Single quote
+            if ( *c == '\'' )
+                state = 0;
+            break;
+        case 2: // Double quote
+            if ( *c == '\"' )
+                state = 0;
+            break;
+        case 3: // Identifier
+            if ( spec.find( *c ) != spec.end() )
+            {
+                //cout << "start: " << v.start << ", len: " << v.len << "\n";
+                tmp = a_query.substr( v.start, v.len );
+                if ( tmp != "true" && tmp != "false" )
+                {
+                    result.append( "i.md." );
+                }
+                result.append( tmp );
+                v.reset();
+                state = 0;
+            }
+            else
+                v.len++;
+            break;
+        }
+
+        if ( state == 0 && *c == '?' )
+            result += "LIKE";
+        else if ( state != 3 )
+            result += *c;
+    }
+
+    //cout << "[" << a_query << "]=>[" << result << "]\n";
+    return result;
+}
+#endif
+
+
+spListingReply
+Client::recordFind( const std::string & a_query )
+{
+    Auth::RecordSearchRequest req;
+
+    //req.set_query( parseQuery( a_query ));
+    req.set_query( a_query );
+
+    Auth::ListingReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spListingReply( reply );
+}
+
+spRecordDataReply
+Client::recordView( const std::string & a_id )
+{
+    Auth::RecordViewRequest req;
+    req.set_id( a_id );
+
+    Auth::RecordDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spRecordDataReply( reply );
+}
+
+void 
+setDepData( DependencyData *dep, const string & val )
+{
+    size_t p = val.find_first_of(' ');
+    if ( p != string::npos )
+        EXCEPT_PARAM( 0, "Invalid dependency specifiec \"" << val << "\"" );
+    p = val.find_first_of(',');
+    if ( p == string::npos )
+        EXCEPT( 0, "Missing dependency type" );
+    dep->set_id(val.substr(0,p));
+    dep->set_dir( DEP_OUT );
+    size_t t = stoul( val.substr(p+1) );
+    if ( t >= DEP_TYPE_COUNT )
+        EXCEPT( 0, "Invalid dependency type" );
+    dep->set_type( (DependencyType)t );
+}
+
+spRecordDataReply
+Client::recordCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, const char * a_coll_id, const char * a_repo_id, const std::vector<std::string> * a_deps )
+{
+    Auth::RecordCreateRequest req;
+
+    req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+    if ( a_alias )
+        req.set_alias( a_alias );
+    if ( a_keyw )
+        req.set_keyw( a_keyw );
+    if ( a_topic )
+        req.set_topic( a_topic );
+    if ( a_metadata )
+        req.set_metadata( a_metadata );
+    if ( a_coll_id )
+        req.set_parent_id( a_coll_id );
+    if ( a_repo_id )
+    {
+        if ( strncmp(a_repo_id,"repo/",5) != 0 )
+            req.set_repo_id( string("repo/")+a_repo_id );
+        else
+            req.set_repo_id( a_repo_id );
+    }
+
+    if ( a_deps )
+    {
+        DependencyData *dep;
+
+        for ( vector<string>::const_iterator d = a_deps->begin(); d != a_deps->end(); d++ )
+        {
+            dep = req.add_deps();
+            setDepData( dep, *d );
+        }
+    }
+
+    Auth::RecordDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spRecordDataReply( reply );
+}
+
+spRecordDataReply
+Client::recordUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias, const char * a_keyw, const char * a_topic, const char * a_metadata, bool a_md_merge, const std::vector<std::string> * a_deps_add, const std::vector<std::string> * a_deps_rem, bool a_deps_clear )
+{
+    Auth::RecordUpdateRequest req;
+
+    req.set_id( a_id );
+    if ( a_title )
+        req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+    if ( a_alias )
+        req.set_alias( a_alias );
+    if ( a_keyw )
+        req.set_keyw( a_keyw );
+    if ( a_topic )
+        req.set_topic( a_topic );
+    if ( a_metadata )
+    {
+        req.set_metadata( a_metadata );
+        req.set_mdset( !a_md_merge );
+    }
+
+    if ( a_deps_clear )
+        req.set_deps_clear( a_deps_clear );
+
+    DependencyData *dep;
+    vector<string>::const_iterator d;
+
+    if ( a_deps_add )
+    {
+        for ( d = a_deps_add->begin(); d != a_deps_add->end(); d++ )
+        {
+            //cout << "Add dep: " << (*d) << "\n";
+            dep = req.add_deps_add();
+            setDepData( dep, *d );
+        }
+    }
+
+    if ( a_deps_rem )
+    {
+        for ( d = a_deps_rem->begin(); d != a_deps_rem->end(); d++ )
+        {
+            //cout << "Rem dep: " << (*d) << "\n";
+            dep = req.add_deps_rem();
+            dep->set_id( *d );
+            dep->set_type( DEP_IS_DERIVED_FROM ); // Not used (currently)
+            dep->set_dir( DEP_OUT ); // Not used
+        }
+    }
+
+    Auth::RecordDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spRecordDataReply( reply );
+}
+
+
+void
+Client::recordDelete( const std::string & a_id )
+{
+    Auth::RecordDeleteRequest   req;
+    Anon::AckReply *            rep;
+
+    req.add_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+
+spCollDataReply
+Client::collList( const std::string & a_user, bool a_details, uint32_t a_offset, uint32_t a_count )
+{
+    Auth::CollListRequest req;
+
+    if ( a_user.size() )
+        req.set_user( a_user );
+    if ( a_details )
+        req.set_details( a_details );
+    if ( a_offset )
+        req.set_offset( a_offset );
+    if ( a_count )
+        req.set_count( a_count );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+spCollDataReply
+Client::collView( const std::string & a_id )
+{
+    Auth::CollViewRequest req;
+    req.set_id( a_id );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+spListingReply
+Client::collRead( const std::string & a_coll_id, uint32_t a_offset, uint32_t a_count )
+{
+    Auth::CollReadRequest req;
+
+    req.set_id( a_coll_id );
+    if ( a_offset )
+        req.set_offset( a_offset );
+    if ( a_count )
+        req.set_count( a_count );
+
+    Auth::ListingReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spListingReply( reply );
+}
+
+spCollDataReply
+Client::collCreate( const std::string & a_title, const char * a_desc, const char * a_alias, const char * a_coll_id )
+{
+    Auth::CollCreateRequest req;
+
+    req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+    if ( a_alias )
+        req.set_alias( a_alias );
+    if ( a_coll_id )
+        req.set_parent_id( a_coll_id );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+spCollDataReply
+Client::collUpdate( const std::string & a_id, const char * a_title, const char * a_desc, const char * a_alias )
+{
+    Auth::CollUpdateRequest req;
+
+    req.set_id( a_id );
+    if ( a_title )
+        req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+    if ( a_alias )
+        req.set_alias( a_alias );
+
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+void
+Client::collDelete( const std::string & a_id )
+{
+    Auth::CollDeleteRequest  req;
+    Anon::AckReply *         rep;
+
+    req.add_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+void
+Client::collAddItem( const std::string & a_coll_id, const std::string & a_item_id )
+{
+    Auth::CollWriteRequest  req;
+    Auth::ListingReply *    rep;
+
+    req.set_id( a_coll_id );
+    req.add_add( a_item_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+void
+Client::collRemoveItem( const std::string & a_coll_id, const std::string & a_item_id )
+{
+    Auth::CollWriteRequest  req;
+    Auth::ListingReply *    rep;
+
+    req.set_id( a_coll_id );
+    req.add_rem( a_item_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+void
+Client::collMoveItem( const std::string & a_src_id, const std::string & a_dst_id, const std::string & a_item_id )
+{
+    Auth::CollMoveRequest   req;
+    Anon::AckReply *        rep;
+
+    req.set_src_id( a_src_id );
+    req.set_dst_id( a_dst_id );
+    req.add_item( a_item_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+spCollDataReply
+Client::collGetParents( const std::string & a_id, bool a_all )
+{
+    Auth::CollGetParentsRequest req;
+    req.set_id( a_id );
+    req.set_all( a_all );
+    Auth::CollDataReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spCollDataReply( reply );
+}
+
+string
+Client::applyPrefix( const string & a_path )
+{
+    bool prefix = false;
+    string result;
+
+    if ( a_path[0] == '/' )
+    {
+        prefix = true;
+        result = a_path;
+    }
+    else if ( a_path.compare( 0, 2, "./" ) == 0 )
+    {
+        prefix = true;
+        char buf[1024];
+        result = string(getcwd( buf, 1024 )) + a_path.substr(1);
+    }
+    else if ( a_path.compare( 0, 2, "~/" ) == 0 )
+    {
+        prefix = true;
+        result = string("/") + a_path;
+    }
+
+    if ( prefix )
+    {
+        if ( !m_def_ep.size())
+        {
+            EXCEPT( 0, "No default end-point set." );
+        }
+
+        return m_def_ep + result;
+    }
+    else
+    {
+        return a_path;
+    }
+}
+
+spDataPathReply
+Client::dataGetPath( const std::string & a_data_id )
+{
+    if ( !m_domain.size() )
+        EXCEPT( 0, "Client must be running within an SDMS domain for direct data access." );
+
+    Auth::DataPathRequest    req;
+    Auth::DataPathReply *    rep;
+
+    req.set_id( a_data_id );
+    req.set_domain( m_domain );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spDataPathReply( rep );
+}
+
+spXfrDataReply
+Client::dataGet( const std::string & a_data_id, const std::string & a_local_path )
+{
+    Auth::DataGetRequest    req;
+    Auth::XfrDataReply *    rep;
+
+    req.set_id( a_data_id );
+    req.set_local( applyPrefix( a_local_path ));
+
+    send<>( req, rep, m_ctx++ );
+
+    return spXfrDataReply( rep );
+}
+
+
+spXfrDataReply
+Client::dataPut( const std::string & a_data_id, const std::string & a_local_path )
+{
+    Auth::DataPutRequest    req;
+    Auth::XfrDataReply *    rep;
+
+    req.set_id( a_data_id );
+    req.set_local( applyPrefix( a_local_path ));
+
+    send<>( req, rep, m_ctx++ );
+
+    return spXfrDataReply( rep );
+}
+
+
+void
+Client::dataDelete( const std::string & a_id )
+{
+    Auth::DataDeleteRequest req;
+    Anon::AckReply *        rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+spListingReply
+Client::queryList()
+{
+    Auth::QueryListRequest  req;
+    Auth::ListingReply *    rep;
+
+    send<>( req, rep, m_ctx++ );
+
+    return spListingReply( rep );
+}
+
+spQueryDataReply
+Client::queryView( const std::string & a_id )
+{
+    Auth::QueryViewRequest      req;
+    Auth::QueryDataReply *    rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spQueryDataReply( rep );
+}
+
+spListingReply
+Client::queryExec( const std::string & a_id )
+{
+    Auth::QueryExecRequest  req;
+    Auth::ListingReply *    rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spListingReply( rep );
+}
+
+spXfrDataReply
+Client::xfrView( const std::string & a_xfr_id )
+{
+    Auth::XfrViewRequest    req;
+    Auth::XfrDataReply *    rep;
+
+    req.set_xfr_id( a_xfr_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spXfrDataReply( rep );
+}
+
+
+spXfrDataReply
+Client::xfrList( uint32_t * a_since, uint32_t * a_from, uint32_t * a_to, XfrStatus * a_status )
+{
+    Auth::XfrListRequest    req;
+    Auth::XfrDataReply *    rep;
+
+    if ( a_since )
+        req.set_since( *a_since );
+    if ( a_from )
+        req.set_from( *a_from );
+    if ( a_to )
+        req.set_to( *a_to );
+    if ( a_status )
+        req.set_status( *a_status );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spXfrDataReply( rep );
+}
+
+
+spACLDataReply
+Client::aclView( const std::string & a_id )
+{
+    Auth::ACLViewRequest    req;
+    Auth::ACLDataReply *    rep;
+
+    req.set_id( a_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spACLDataReply( rep );
+}
+
+spACLDataReply
+Client::aclUpdate( const std::string & a_id, const std::string & a_rules )
+{
+    Auth::ACLUpdateRequest  req;
+    Auth::ACLDataReply *    rep;
+
+    req.set_id( a_id );
+    req.set_rules( a_rules );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spACLDataReply( rep );
+}
+
+// ===== GROUP METHODS =====
+
+spGroupDataReply
+Client::groupCreate( const std::string & a_group_id, const char * a_title, const char * a_desc )
+{
+    Auth::GroupCreateRequest  req;
+    Auth::GroupDataReply *  rep;
+
+    req.mutable_group()->set_gid( a_group_id );
+    if ( a_title )
+        req.mutable_group()->set_title( a_title );
+    if ( a_desc )
+        req.mutable_group()->set_desc( a_desc );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spGroupDataReply( rep );
+}
+
+spGroupDataReply
+Client::groupUpdate( const std::string & a_group_id, const char * a_title, const char * a_desc )
+{
+    Auth::GroupUpdateRequest  req;
+    Auth::GroupDataReply *  rep;
+
+    req.set_gid( a_group_id );
+    if ( a_title )
+        req.set_title( a_title );
+    if ( a_desc )
+        req.set_desc( a_desc );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spGroupDataReply( rep );
+}
+
+void Client::groupDelete( const std::string & a_group_id )
+{
+    Auth::GroupDeleteRequest  req;
+    Anon::AckReply *        rep;
+
+    req.set_gid( a_group_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    delete rep;
+}
+
+spGroupDataReply
+Client::groupList()
+{
+    Auth::GroupListRequest  req;
+    Auth::GroupDataReply *  rep;
+
+    send<>( req, rep, m_ctx++ );
+
+    return spGroupDataReply( rep );
+}
+
+spGroupDataReply
+Client::groupView( const std::string & a_group_id )
+{
+    Auth::GroupViewRequest  req;
+    Auth::GroupDataReply *  rep;
+
+    req.set_gid( a_group_id );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spGroupDataReply( rep );
+}
+
+spGroupDataReply
+Client::groupAdd( const std::string & a_group_id, const std::vector<std::string> & a_uids )
+{
+    Auth::GroupUpdateRequest  req;
+    Auth::GroupDataReply *  rep;
+
+    req.set_gid( a_group_id );
+    for ( vector<string>::const_iterator u = a_uids.begin(); u != a_uids.end(); ++u )
+        req.add_add_uid( *u );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spGroupDataReply( rep );
+}
+
+spGroupDataReply
+Client::groupRemove( const std::string & a_group_id, const std::vector<std::string> & a_uids )
+{
+    Auth::GroupUpdateRequest  req;
+    Auth::GroupDataReply *  rep;
+
+    req.set_gid( a_group_id );
+    for ( vector<string>::const_iterator u = a_uids.begin(); u != a_uids.end(); ++u )
+        req.add_rem_uid( *u );
+
+    send<>( req, rep, m_ctx++ );
+
+    return spGroupDataReply( rep );
+}
+
+string
+Client::messageToJSON( const ::google::protobuf::Message * a_msg )
+{
+    string result;
+
+    pbjson::pb2json( a_msg, result );
+
+    return result;
+}
+
+/*
+spResolveXfrReply resolveXfr( const string & a_id, uint32_t a_perms )
+{
+    Auth::ResolveXfrRequest req;
+
+    req.set_id( a_id );
+    req.set_perms( a_perms );
+
+    Auth::ResolveXfrReply * reply;
+
+    send<>( req, reply, m_ctx++ );
+
+    return spResolveXfrReply( reply );
+}
+*/
+
+#if 0
+void Client::checkPath( const string & a_dest_path, /*const string & a_file_name,*/ uint16_t a_flags )
+{
+    boost::filesystem::path dest_path( a_dest_path );
+    boost::system::error_code ec;
+
+    // Create or check dest path
+
+    if ( a_flags & CREATE_PATH )
+    {
+        if ( !create_directories( dest_path, ec ) && ec.value() != boost::system::errc::success )
+            EXCEPT_PARAM( ID_DEST_PATH_ERROR, "Could not create dest path: " << ec.message() );
+    }
+    else
+    {
+        if ( !exists( dest_path, ec ) )
+            EXCEPT_PARAM( ID_DEST_PATH_ERROR, "Destination path does not exist: " << a_dest_path );
+    }
+
+    // See if raw data file already exist
+    /*
+    boost::filesystem::path dest_file = dest_path;
+    dest_file /= boost::filesystem::path( a_file_name );
+
+    cout << dest_file << "\n";
+    if ( exists( dest_file, ec ) )
+    {
+        if ( a_flags & BACKUP )
+        {
+            boost::filesystem::path bak_file_base = dest_file;
+
+            uint32_t num = 1;
+            for ( ; num < 100; ++num )
+            {
+                boost::filesystem::path bak_file = bak_file_base;
+                bak_file += boost::filesystem::path( "." + to_string( num ));
+
+                if ( !exists( bak_file, ec ))
+                {
+                    boost::filesystem::rename( dest_file, bak_file, ec );
+                    if ( ec.value() != boost::system::errc::success )
+                        EXCEPT_PARAM( ID_DEST_FILE_ERROR, "Could not backup destination file: " << ec.message() );
+
+                    break;
+                }
+            }
+
+            if ( num == 100 )
+                EXCEPT( ID_DEST_FILE_ERROR, "Unable to backup destination file (too many existing backup files)" );
+        }
+        else if ( a_flags & OVERWRITE )
+        {
+            boost::filesystem::file_status s = boost::filesystem::status( dest_file );
+            if (( s.permissions() & 0200 ) != 0200 )
+                EXCEPT( ID_DEST_FILE_ERROR, "Can not overwrite destination file (no permission)" );
+        }
+        else  
+        {
+            EXCEPT( ID_DEST_FILE_ERROR, "Destination file already exists (no Overwrite/Backup)" );
+        }
+    }*/
+
+    // Test writing to dest path
+
+    boost::filesystem::path tmp = dest_path;
+    tmp /= boost::filesystem::unique_path();
+    ofstream tmpf( tmp.native().c_str() );
+
+    if ( tmpf.is_open() )
+    {
+        tmpf.close();
+        boost::filesystem::remove( tmp );
+    }
+    else
+    {
+        EXCEPT_PARAM( ID_DEST_PATH_ERROR, "Can not write to destination path: " << a_dest_path );
+    }
+}
+#endif
 
 }}
 

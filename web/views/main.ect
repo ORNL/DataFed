@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <% include 'head.ect' %>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+        <link href="/fancytree/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
+        <script src="/fancytree/jquery.fancytree-all.min.js"></script>
+        <script src="/jquery.ui-contextmenu.min.js"></script>
+
+        <script src="/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/ace/theme-light.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/ace/theme-dark.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/ace/mode-json.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script -->
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+
+        <script type="text/javascript" charset="utf-8" src="/dlg_search_wizard.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_pick_user.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_pick_topic.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_pick_data.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_set_acls.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_data_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_data_relocate.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_query_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_group_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_allocations.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_start_xfer.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_ep_browse.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_settings.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_dep_graph.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_repo_edit.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/dlg_repo_manage.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/main.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
+        <script type="text/javascript">
+            loadUser();
+            if ( !g_user || !g_user.active )
+                window.location.replace("/ui");
+        </script>
+        <title>DataFed Main</title>
+    </head>
+    <body>
+    <div class="col-flex" style="height:100%;width:100%">
+        <!-- div class="ui-widget-header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em" -->
+        <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
+            <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span> DataFed <span style="font-size:40%">V-<%- @version %></span></div>
+            <div style="flex:none"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="logout()">Log Out</button></div>
+        </div>
+        <div id="content" class="content" style="flex:1;min-height:0">
+            <% include 'tab_browser.ect' %>
+        </div>
+        <div class="ui-widget-header" style="flex:none;padding:.25em">
+            <div class="row-flex">
+                <div style="flex:none;padding:.2em 0 0 0" >User: <span id="uname"></span>&nbsp&nbsp</div>
+                <div id="status_text" class="ui-widget ui-widget-content no-border" style="height:1.5em;padding:.25em 0 0 0;flex:1 1 100%;text-align:center;font-size:.9em;font-style:normal"></div>
+                <div style="flex:none">&nbsp<button title="Toggle footer visibility" class="btn small" id="toggle_footer"><span class="ui-icon ui-icon-triangle-2-n-s"></span></button></div>
+            </div>
+        </div>
+    </div>
+    </body>
+    <script>
+        window.name = 'sdms_target';
+        document.getElementById("uname").innerHTML = g_user.name;
+
+        $(".btn").button();
+        //$( document ).tooltip({ show: false, hide: false});
+        $("button").tooltip({ show: { effect: "slideDown", delay: 500 }});
+        $("input").tooltip({ show: { effect: "slideDown", delay: 500 }});
+
+        var g_theme = "<%- @theme %>";
+        var g_opts = { page_sz: 20, xfr_hist: 24, def_alloc: 'none' };
+        var tab_browser;
+        var resizeTimer = null;
+
+        function resizeUI(){
+            tab_browser.windowResized();
+        }
+
+        $(window).bind('resize', function() {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeUI, 100);
+        });
+
+        userView( g_user.uid, true, function( ok, user ){
+            if ( ok && user ){
+                console.log("userView (init):",user);
+                g_user.isAdmin = user.isAdmin;
+                g_user.isRepoAdmin = user.isRepoAdmin;
+                if ( user.options ){
+                    console.log("user opts:",user.options);
+                    g_opts = JSON.parse( user.options );
+                }
+
+                tab_browser = makeBrowserTab();
+                console.log("tab broser 2:",tab_browser);
+
+                resizeUI();
+
+                setStatusText("DataFed Ready");
+            }else{
+                dlgAlert("System Error","Unable to access user record");
+            }
+        });
+
+    </script>
+</html>
