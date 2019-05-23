@@ -329,7 +329,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     if ( ok ) {
                         tmp = $("#source_file").val().trim();
                         if ( tmp && a_mode != DLG_DATA_EDIT ){
-                            xfrStart( data.data[0].id, XFR_PUT, tmp, function( ok2, data2 ){
+                            xfrStart( data.data[0].id, XFR_PUT, tmp, 0, function( ok2, data2 ){
                                 if ( ok2 ){
                                     dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
                                 }else{

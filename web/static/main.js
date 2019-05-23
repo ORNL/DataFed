@@ -806,7 +806,7 @@ function inputEnable( a_objs ){
     return a_objs;
 }
 
-function xfrStart( a_id, a_mode, a_path, a_cb ){
+function xfrStart( a_id, a_mode, a_path, a_ext, a_cb ){
     var url = "/api/dat/";
 
     if ( a_mode == XFR_GET )
@@ -817,7 +817,7 @@ function xfrStart( a_id, a_mode, a_path, a_cb ){
         return;
     }
 
-    url += "?id=" + a_id + "&path=" + encodeURIComponent(a_path);
+    url += "?id=" + a_id + "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){
         if ( ok ) {

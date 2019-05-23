@@ -9,8 +9,9 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
         <div style='padding:.25em 0'>\
         <button class='btn' id='refresh'>Refresh</button>&nbsp<button class='btn' id='activate' disabled>Activate</button>&nbsp<button class='btn' id='browse' style='margin:0' disabled>Browse</button></div><br>\
         Path:<br>\
-        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%'></textarea><br>\
-        </div>");
+        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%'></textarea><br>" +
+        (a_mode == XFR_PUT?"File extension override: <input id='ext' type='text'></input><br>":"") +
+        "</div>");
 
         //<input class='ui-widget-content' id='path' style='width:100%'></input><br>\
 
@@ -180,7 +181,7 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                 }
                 var inst = $(this);
                 if ( a_mode != XFR_SELECT ){
-                    xfrStart( a_data.id, a_mode, raw_path, function( ok, data ){
+                    xfrStart( a_data.id, a_mode, raw_path, $("#ext",frame).val().trim(), function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
