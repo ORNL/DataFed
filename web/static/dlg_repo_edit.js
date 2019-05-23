@@ -207,9 +207,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         if ( node ){
             dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Delete","Cancel"], function( choice ){
                 if ( choice == 0 ){
-                    console.log( "Delete allocation" );
-                    allocSet( a_repo_id, node.key, 0, function( ok, data ){
-                        console.log( ok, data );
+                    allocSet( a_repo_id, node.key, 0, 0, function( ok, data ){
                         if ( ok )
                             node.remove();
                         else

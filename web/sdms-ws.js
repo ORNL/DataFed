@@ -895,7 +895,7 @@ app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
 
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,maxSize:a_req.query.max_size,maxCount:a_req.query.max_count}, a_req, a_resp, function( reply ) {
-        a_resp.json({});
+        a_resp.send(reply);
     });
 });
 

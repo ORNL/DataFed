@@ -4,7 +4,7 @@ function loadUser() {
     console.log( "loadUser" );
 
     var user = Cookies.get( 'sdms-user' );
-    console.log( "user cookie: ", user );
+    //console.log( "user cookie: ", user );
 
     if ( user ) {
         g_user = JSON.parse( user );
@@ -12,11 +12,10 @@ function loadUser() {
         g_user = null;
     }
 
-    console.log( "user: ", g_user );
+    //console.log( "user: ", g_user );
 }
 
 function logout() {
-    console.log( "logout");
     g_user = null;
     window.location = "/ui/logout";
 }
@@ -39,6 +38,7 @@ function _asyncGet( a_url, a_raw_json_data, a_callback ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
+            //console.log("_asyncGet error handler")
             //console.log( 'asyncGet error: ', a_xhr );
             //console.log( 'asyncGet error: ', a_status );
             //console.log( 'asyncGet error: ', a_thrownError );
