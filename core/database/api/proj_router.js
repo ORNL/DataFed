@@ -158,6 +158,10 @@ router.get('/update', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
+
+                if ( !g_db.p.exists( proj_id ))
+                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
@@ -201,7 +205,6 @@ router.get('/update', function (req, res) {
                 }else if ( req.queryParams.sub_alloc ){
                     obj.sub_alloc = req.queryParams.sub_alloc;
                 }
-                console.log("pu 2");
 
                 var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
@@ -238,7 +241,6 @@ router.get('/update', function (req, res) {
                         proj.new.admins.push( admins[i]);
                     }
                 }
-                console.log("pu 3" );
 
                 if ( req.queryParams.members ) {
                     var mem_grp = g_db.g.firstExample({ uid: proj_id, gid: "members" });
@@ -259,9 +261,6 @@ router.get('/update', function (req, res) {
                     if ( members.length )
                         proj.new.members = members;
                 }
-                console.log("pu 4");
-                console.log("pu new",proj.new );
-                console.log("pu new id",proj.new._id );
 
                 proj.new.id = proj.new._id;
                 proj.new.owner = owner_id;
@@ -296,6 +295,10 @@ router.get('/view', function (req, res) {
         // TODO Enforce view permission
 
         var client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        if ( !g_db.p.exists( req.queryParams.id ))
+            throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'" ];
+
         var proj = g_db.p.document({ _id: req.queryParams.id });
         var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
         var admins = g_db._query("for v in 1..1 outbound @proj admin return v._id", { proj: proj._id } ).toArray();
@@ -425,6 +428,9 @@ router.get('/delete', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
+                if ( !g_db.p.exists( proj_id ))
+                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+    
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var proj = g_db.p.document( proj_id );
                 var size = 0;

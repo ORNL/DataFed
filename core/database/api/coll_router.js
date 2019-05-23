@@ -34,13 +34,7 @@ router.post('/create', function (req, res) {
                 var owner = client,parent_id;
 
                 if ( req.body.parent ) {
-                    parent_id = g_lib.resolveID( req.body.parent, client );
-
-                    if ( parent_id[0] != "c" )
-                        throw [g_lib.ERR_INVALID_PARAM,"Invalid parent ID,"+req.body.parent];
-
-                    if ( !g_db._exists( parent_id ))
-                        throw [g_lib.ERR_INVALID_PARAM,"Parent collection not found,"+req.body.parent];
+                    parent_id = g_lib.resolveCollID( req.body.parent, client );
 
                     var owner_id = g_db.owner.firstExample({_from:parent_id})._to;
                     if ( owner_id != client._id ){
@@ -127,8 +121,9 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var coll_id = g_lib.resolveID( req.body.id, client );
+                var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
+
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_WR_REC ))
                         throw g_lib.ERR_PERM_DENIED;
@@ -199,7 +194,7 @@ router.get('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var coll_id = g_lib.resolveID( req.queryParams.id, client );
+                var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
@@ -259,7 +254,7 @@ router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var coll_id = g_lib.resolveID( req.queryParams.id, client );
+        var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
@@ -287,7 +282,7 @@ router.get('/view', function (req, res) {
 router.get('/read', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var coll_id = g_lib.resolveID( req.queryParams.id, client );
+        var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
         var coll = g_db.c.document( coll_id );
 
         if ( !g_lib.hasAdminPermObject( client, coll_id )) {
@@ -334,7 +329,7 @@ router.get('/write', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                var coll_id = g_lib.resolveID( req.queryParams.id, client );
+                var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
                 var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
 
@@ -434,9 +429,9 @@ router.get('/write', function (req, res) {
 router.get('/move', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var src_id = g_lib.resolveID( req.queryParams.source, client );
+        var src_id = g_lib.resolveCollID( req.queryParams.source, client );
         var src = g_db.c.document( src_id );
-        var dst_id = g_lib.resolveID( req.queryParams.dest, client );
+        var dst_id = g_lib.resolveCollID( req.queryParams.dest, client );
         var dst = g_db.c.document( dst_id );
 
         if ( src.owner != dst.owner )

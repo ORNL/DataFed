@@ -39,15 +39,7 @@ router.post('/create', function (req, res) {
                 //console.log("Create new data");
 
                 if ( req.body.parent ) {
-                    parent_id = g_lib.resolveID( req.body.parent, client );
-                    //console.log("parent: ", parent_id);
-
-                    if ( parent_id[0] != "c" )
-                        throw [g_lib.ERR_INVALID_PARAM,"Invalid parent collection, " + parent_id];
-
-                    if ( !g_db._exists( parent_id ))
-                        throw [g_lib.ERR_INVALID_PARAM,"Parent collection, "+parent_id+", not found"];
-
+                    parent_id = g_lib.resolveCollID( req.body.parent, client );
                     owner_id = g_db.owner.firstExample({_from:parent_id})._to;
                     if ( owner_id != client._id ){
                         if ( !g_lib.hasManagerPermProj( client, owner_id )){
@@ -178,9 +170,7 @@ router.post('/create', function (req, res) {
 
                     for ( var i in req.body.deps ) {
                         dep = req.body.deps[i];
-                        id = g_lib.resolveID( dep.id, client );
-                        if ( !id.startsWith("d/"))
-                            throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+                        id = g_lib.resolveDataID( dep.id, client );
                         dep_data = g_db.d.document( id );
                         if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
                             throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
@@ -238,7 +228,7 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data_id = g_lib.resolveID( req.body.id, client );
+                var data_id = g_lib.resolveDataID( req.body.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
                 var data = g_db.d.document( data_id );
 
@@ -386,7 +376,7 @@ router.post('/update', function (req, res) {
                     //console.log("rem deps from ",data._id);
                     for ( i in req.body.deps_rem ) {
                         dep = req.body.deps_rem[i];
-                        id = g_lib.resolveID( dep.id, client );
+                        id = g_lib.resolveDataID( dep.id, client );
                         //console.log("rem id:",id);
                         if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
                             throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
@@ -401,7 +391,7 @@ router.post('/update', function (req, res) {
                     for ( i in req.body.deps_add ) {
                         dep = req.body.deps_add[i];
                         //console.log("dep id:",dep.id);
-                        id = g_lib.resolveID( dep.id, client );
+                        id = g_lib.resolveDataID( dep.id, client );
                         if ( !id.startsWith("d/"))
                             throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
                         dep_data = g_db.d.document( id );
@@ -473,8 +463,7 @@ router.post('/update', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
         var i,dep,rem_md = false;
 
@@ -515,11 +504,7 @@ router.get('/view', function (req, res) {
 
 router.get('/dep/get', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-    var data_id = g_lib.resolveID( req.queryParams.id, client );
-    if ( !g_db._exists( data_id ))
-        throw [g_lib.ERR_INVALID_PARAM,"Data record "+data_id+", not found"];
-
+    var data_id = g_lib.resolveDataID( req.queryParams.id, client );
     var dep,result = {id:data_id,title:""};
 
     result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
@@ -539,16 +524,14 @@ router.get('/dep/get', function (req, res) {
 
 router.get('/dep/graph/get', function (req, res) {
     try {
-        console.log("/dep/get");
-
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
         var i, j, entry, rec, deps, dep, node, visited = [data_id], cur = [[data_id,true]], next = [], result = [];
 
         // Get Ancestors
         var gen = 0;
 
-        console.log("get ancestors");
+        //console.log("get ancestors");
 
         while ( cur.length ){
             //console.log("gen",gen);
@@ -585,7 +568,7 @@ router.get('/dep/graph/get', function (req, res) {
 
         // Get Descendants
 
-        console.log("get descendants");
+        //console.log("get descendants");
 
         cur = [[data_id,true]];
         next = [];
@@ -627,7 +610,7 @@ router.get('/dep/graph/get', function (req, res) {
         }
 
 
-        console.log("adjust gen:",gen_min);
+        //console.log("adjust gen:",gen_min);
 
         // Adjust gen values to start at 0
         if ( gen_min < 0 ){
@@ -685,7 +668,7 @@ router.get('/lock', function (req, res) {
 router.get('/lock/toggle', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
             throw g_lib.ERR_PERM_DENIED;
@@ -723,8 +706,9 @@ router.get('/loc', function (req, res) {
     try {
         // This is a system call - no need to check permissions
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
         var loc = g_db.loc.firstExample({ _from: data_id });
+
         if ( !loc )
             throw g_lib.ERR_NO_RAW_DATA;
 
@@ -741,7 +725,7 @@ router.get('/loc', function (req, res) {
 router.get('/path', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveID( req.queryParams.id, client );
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
             var data = g_db.d.document( data_id );
@@ -855,8 +839,7 @@ router.get('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-                var data_id = g_lib.resolveID( req.queryParams.id, client );
+                var data_id = g_lib.resolveDataID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
 
                 if ( !g_lib.hasAdminPermObject( client, data_id )){

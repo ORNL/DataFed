@@ -30,7 +30,7 @@ router.get('/init', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                var data_id = g_lib.resolveID( req.queryParams.id, client );
+                var data_id = g_lib.resolveDataID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
                 //var data_loc = g_db.loc.firstExample({_from: data_id });
 
@@ -47,7 +47,8 @@ router.get('/init', function (req, res) {
                 var dest_id,dest_data;
 
                 if ( req.queryParams.mode == g_lib.XM_COPY ){
-                    dest_id = g_lib.resolveID( req.queryParams.path, client );
+                    // Overloaded path to mean destination ID
+                    dest_id = g_lib.resolveDataID( req.queryParams.path, client );
                     if ( !g_lib.hasAdminPermObject( client, dest_id )) {
                         dest_data = g_db.d.document( dest_id );
                         if ( !g_lib.hasPermissions( client, dest_data, g_lib.PERM_WR_DATA ))
