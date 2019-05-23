@@ -353,6 +353,10 @@ td
     border-bottom-right-radius: 0!important;
 }
 
+.ui-dialog, .ui-dialog-content {
+    box-sizing: content-box;
+}
+
 :focus { outline: none; }
 
 .ep-act
