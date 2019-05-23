@@ -1626,6 +1626,10 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_started( val["started"].GetUint() );
         xfr->set_updated( val["updated"].GetUint() );
 
+        imem = val.FindMember("ext");
+        if ( imem != val.MemberEnd() )
+            xfr->set_ext( imem->value.GetString() );
+
         imem = val.FindMember("task_id");
         if ( imem != val.MemberEnd() )
             xfr->set_task_id( imem->value.GetString() );
@@ -1637,11 +1641,17 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
 }
 
 void
-DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
+DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_id});
+    params.push_back({"path",a_data_path});
+    params.push_back({"mode",to_string(a_mode)});
+    if ( a_ext )
+        params.push_back({"ext",*a_ext});
 
-    dbGet( "xfr/init", {{"id",a_id},{"path",a_data_path},{"mode",to_string(a_mode)}}, result );
+    dbGet( "xfr/init", params, result );
 
     setXfrData( a_reply, result );
 }

@@ -213,12 +213,13 @@ message XfrData
     required string             data_id     = 4; // With revision?
     required string             repo_path   = 5;
     required string             local_path  = 6;
-    required string             user_id     = 7;
-    required string             repo_id     = 8;
-    required uint32             started     = 9;
-    required uint32             updated     = 10;
-    optional string             task_id     = 11; // Only set if status > XFR_INIT
-    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
+    optional string             ext         = 7;
+    required string             user_id     = 8;
+    required string             repo_id     = 9;
+    required uint32             started     = 10;
+    required uint32             updated     = 11;
+    optional string             task_id     = 12; // Only set if status > XFR_INIT
+    optional string             err_msg     = 13; // Only set if status == XFR_FAILED
 }
 
 message GroupData
