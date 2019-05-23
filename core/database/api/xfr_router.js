@@ -80,7 +80,8 @@ router.get('/init', function (req, res) {
                         user_id: client._id,
                         repo_id: repo_loc.repo._id,
                         started: now,
-                        updated: now
+                        updated: now,
+                        ext: req.queryParams.ext
                         }, { returnNew: true } );
 
                     result = [xfr.new];
@@ -160,6 +161,7 @@ router.get('/init', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data record ID or alias")
 .queryParam('path', joi.string().required(), "Data local path")
+.queryParam('ext', joi.string().optional(), "Extension override")
 .queryParam('mode', joi.number().required(), "Transfer mode (get read/write, put)")
 .summary('Performs pre-transfer authorization and initialization')
 .description('Performs pre-transfer authorization and initialization');
