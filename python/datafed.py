@@ -1,3 +1,7 @@
+"""
+DataFed CLI
+"""
+
 #!/usr/bin/env python
 from __future__ import division, print_function, absolute_import #, unicode_literals
 import getpass
@@ -13,6 +17,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.formatted_text import to_formatted_text
+import dfConfig as dfC
 
 if sys.version_info.major == 3:
     unicode = str
@@ -29,8 +34,15 @@ g_interactive = False
 #g_really_exit = False
 g_verbosity = 1
 g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
-g_ep_default = os.environ.get("DATAFED_EP_DEFAULT")
+g_ep_default = dfC.Config.get_config("DF_DEFAULT_ENDPOINT")
 g_ep_cur = g_ep_default
+
+'''
+def setup_env():
+    "Function that accesses and sets environment variables from the configuration file"
+    
+    #TODO: Initial setup function
+'''
 
 # Verbosity-aware print
 def info( level, *args ):
@@ -491,13 +503,38 @@ def ep_set(path):
 
     info(1,g_ep_cur)
 
-@ep.command(name='default',help="Get default end-point path")
-def ep_default():
+@ep.command(name='default',help="Get or set default end-point path")
+@click.argument("new_default_ep",required=False)
+def ep_default(new_default_ep):
     global g_ep_default
-    if g_ep_default:
-        print(g_ep_default)
+    if new_default_ep:
+ #       try:
+        dfC.Config.set_default_ep(new_default_ep)
+        g_ep_default = new_default_ep
+   #     except:
+        # TODO: add more functionality
+        # check if input is valid endpoint
     else:
-        print("Default end-point not configured")
+        if g_ep_default:
+            print(g_ep_default)
+        else:
+            print("Default end-point not configured")
+
+
+@ep.command(name='set',help="Set current end-point path (omit path for default)")
+@click.argument("path",required=False)
+def ep_set(path):
+    global g_ep_cur
+    if path:
+        g_ep_cur = resolveID(path)
+    else:
+        if g_ep_default:
+            g_ep_cur = g_ep_default
+        else:
+            info(1,"Default end-point not configured")
+            return
+
+    info(1,g_ep_cur)
 
 @ep.command(name='list',help="List recent end-point paths")
 def ep_list():
