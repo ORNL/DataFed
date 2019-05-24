@@ -629,15 +629,62 @@ function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
     });
 }
 
-function setStatusText( text ){
+function setStatusText( text, err ){
     if ( status_timer )
         clearTimeout( status_timer );
+    if ( status_int )
+        clearTimeout( status_int );
 
-    $("#status_text").html( text );
+    var bar = $("#status_text");
+    bar.html( text );
+
+    if ( err ){
+        var r;
+        r = 255;
+
+        bar.css("background", "rgb("+r+",0,0)" );
+    
+        status_timer = setTimeout( function(){
+            status_int = setInterval( function(){
+                r -= 5;
+                if ( r < 100 ){
+                    clearInterval(status_int);
+                    status_int = null;
+                    status_timer = setTimeout( function(){
+                        bar.css("background", "#000000" );
+                        status_timer = null;
+                        bar.html(" ");
+                    },4000);
+                }else{
+                    bar.css("background", "rgb("+r+",0,0)" );
+                }
+    
+            }, 100 );
+        },500);
+    }else{
+        status_timer = setTimeout( function(){
+            status_timer = null;
+            bar.html(" ");
+        },6000);
+    }
+
+
+/*
+    if ( err )
+        bar.addClass("error");
+    else
+        bar.addClass("info");
+
+    bar.html( text );
     status_timer = setTimeout( function(){
-        status_timer = null;
-        $("#status_text").html(" ");
-    }, 8000 );
+        bar.removeClass("error info");
+
+        status_timer = setTimeout( function(){
+            status_timer = null;
+            bar.html(" ");
+        }, 20000 );
+    }, 1000 );
+*/
 }
 
 function dlgConfirmChoice( title, msg, btns, cb ) {
@@ -880,6 +927,7 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
 }
 
 var status_timer;
+var status_int;
 
 var PERM_RD_REC         = 0x0001; // Read record info (description, keywords, details)
 var PERM_RD_META        = 0x0002; // Read structured metadata

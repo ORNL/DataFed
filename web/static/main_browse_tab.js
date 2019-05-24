@@ -184,7 +184,7 @@ function makeBrowserTab(){
                             if ( --done == 0 )
                                 refreshAfterDel();
                         }else
-                            dlgAlert("Data Delete Error", data);
+                            setStatusText( "Data Delete Error: " + data, 1 );
                     });
                 }
                 if ( coll.length ){
@@ -193,7 +193,7 @@ function makeBrowserTab(){
                             if ( --done == 0 )
                                 refreshAfterDel();
                         }else
-                            dlgAlert("Collection Delete Error", data);
+                            setStatusText("Collection Delete Error: " + data, 1 );
                     });
                 }
                 if ( proj.length ){
@@ -202,7 +202,7 @@ function makeBrowserTab(){
                             inst.reloadNode(inst.data_tree.getNodeByKey("proj_own"));
                             inst.showSelectedInfo();
                         }else
-                            dlgAlert("Project Delete Error", data);
+                            setStatusText("Project Delete Error: " + data, 1 );
                     });
                 }
                 if ( qry.length ){
@@ -211,7 +211,7 @@ function makeBrowserTab(){
                             inst.reloadNode(inst.data_tree.getNodeByKey("queries"));
                             inst.showSelectedInfo();
                         }else
-                            dlgAlert("Query Delete Error", data);
+                            setStatusText("Query Delete Error: " + data, 1 );
                     });
                 }
             }
@@ -290,7 +290,7 @@ function makeBrowserTab(){
             if ( ok ){
                 refreshUI( ids, data.item );
             }else{
-                dlgAlert("Lock Update Failed",data);
+                setStatusText("Lock Update Failed: " + data, 1 );
             }
         });
     }
@@ -313,7 +313,7 @@ function makeBrowserTab(){
                 if ( dest_node.isLoaded() )
                     inst.reloadNode(dest_node);
             }else
-                setStatusText( msg );
+                setStatusText( "Copy Error: " + msg, 1 );
             if ( cb )
                 cb();
         });
@@ -353,7 +353,7 @@ function makeBrowserTab(){
                     inst.reloadNode(dest_node);
                 inst.reloadNode(inst.pasteSource);
             }else
-                setStatusText( msg );
+                setStatusText( "Move Error: " + msg, 1 );
 
             if ( cb )
                 cb();
@@ -412,6 +412,7 @@ function makeBrowserTab(){
     this.unlinkSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
         if ( sel.length ){
+            var scope = sel[0].data.scope;
             var items = [];
             for ( var i in sel ){
                 items.push( sel[i].key );
@@ -420,13 +421,12 @@ function makeBrowserTab(){
             unlinkItems( items, sel[0].parent.key, function( ok, rooted ) {
                 if ( ok ){
                     if ( rooted.length ){
-                        //console.log("rooted:",rooted);
-                        inst.reloadNode( inst.data_tree.getNodeByKey( inst.my_root_key ));
+                        var loc_root = "c/" + scope.charAt(0) + "_" + scope.substr(2) + "_root";
+                        inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
                     }else{
                         inst.reloadNode( sel[0].parent );
                     }
-                }else
-                    setStatusText( rooted );
+                }
             });
         }
     }
@@ -451,7 +451,7 @@ function makeBrowserTab(){
                         refreshUI( id, data, true );
                     });
                 }else
-                    dlgAlert("Query Edit Error",old_qry);
+                    setStatusText("Query Edit Error: " + old_qry, 1);
             });
             return;
         }else
@@ -459,7 +459,7 @@ function makeBrowserTab(){
 
         getPerms( id, req_perms, function( perms ){
             if (( perms & req_perms ) == 0 ){
-                dlgAlert( "Cannot Perform Action", "Permission Denied." );
+                setStatusText( "Edit Error: Permission Denied.", 1 );
                 return;
             }
 
@@ -531,7 +531,8 @@ function makeBrowserTab(){
 
         checkPerms( id, PERM_SHARE, function( granted ){
             if ( !granted ){
-                alertPermDenied();
+                //alertPermDenied();
+                setStatusText("Sharing Error: Permission Denied.", 1);
                 return;
             }
 
@@ -769,7 +770,7 @@ function makeBrowserTab(){
         if ( !node ){
             inst.noInfoAvail();
         }else{
-            //console.log( "node key:", node.key );
+            console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
             var key,i,html;
             var date = new Date();
 
@@ -1295,7 +1296,7 @@ function makeBrowserTab(){
                     if ( ok )
                         inst.reloadNode(inst.data_tree.getNodeByKey("queries"));
                     else
-                        dlgAlert( "Query Save Error", data );
+                        setStatusText( "Query Save Error: " + data, 1 );
                 });
             }
         });
@@ -2107,7 +2108,7 @@ function makeBrowserTab(){
 
     this.treeSelectNode = function( a_node, a_toggle ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
-            setStatusText("Cannot select across collections or categories");
+            setStatusText("Cannot select across collections or categories",1);
             return;
         }
 
@@ -2124,7 +2125,7 @@ function makeBrowserTab(){
 
     this.treeSelectRange = function( a_tree, a_node ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
-            setStatusText("Cannot select across collections or categories");
+            setStatusText("Cannot select across collections or categories",1);
             return;
         }
 
@@ -2147,7 +2148,7 @@ function makeBrowserTab(){
                     }
                 }
             }else{
-                setStatusText("Range select only supported within a single collection.");
+                setStatusText("Range select only supported within a single collection.",1);
             }
         }
     }
