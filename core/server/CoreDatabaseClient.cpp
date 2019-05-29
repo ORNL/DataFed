@@ -721,18 +721,38 @@ DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::Proj
 }
 
 void
-DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
-    if ( a_request.has_by_owner() && a_request.by_owner() )
-        params.push_back({"by_owner","true"});
-    if ( a_request.has_by_admin() && a_request.by_admin() )
-        params.push_back({"by_admin","true"});
-    if ( a_request.has_by_member() && a_request.by_member() )
-        params.push_back({"by_member","true"});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+    if ( a_request.has_as_owner() && a_request.as_owner() )
+        params.push_back({"as_owner","true"});
+    if ( a_request.has_as_admin() && a_request.as_admin() )
+        params.push_back({"as_admin","true"});
+    if ( a_request.has_as_member() && a_request.as_member() )
+        params.push_back({"as_member","true"});
+    if ( a_request.has_sort())
+        params.push_back({"sort",to_string(a_request.sort())});
+    if ( a_request.has_sort_rev() && a_request.sort_rev() )
+        params.push_back({"sort_rev","true"});
+    if ( a_request.has_offset())
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count())
+        params.push_back({"count",to_string(a_request.count())});
 
     dbGet( "prj/list", params, result );
+
+    setListingData( a_reply, result );
+}
+
+void
+DatabaseClient::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "prj/search", {{"query",a_query}}, result );
 
     setProjectData( a_reply, result );
 }

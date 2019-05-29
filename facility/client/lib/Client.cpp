@@ -426,8 +426,8 @@ Client::projectListMine()
     Auth::ProjectListRequest req;
     Auth::ProjectDataReply * reply;
 
-    req.set_by_owner( true );
-    req.set_by_admin( true );
+    req.set_as_owner( true );
+    req.set_as_admin( true );
 
     send<>( req, reply, m_ctx++ );
 
@@ -440,7 +440,7 @@ Client::projectListTeam()
     Auth::ProjectListRequest req;
     Auth::ProjectDataReply * reply;
 
-    req.set_by_member( true );
+    req.set_as_member( true );
 
     send<>( req, reply, m_ctx++ );
 

@@ -423,20 +423,39 @@ app.get('/api/prj/view', ( a_req, a_resp ) => {
 app.get('/api/prj/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.owner != undefined )
-        params.byOwner = a_req.query.owner=="true"?true:false;
+        params.asOwner = a_req.query.owner=="true"?true:false;
     if ( a_req.query.admin != undefined )
-        params.byAdmin = a_req.query.admin=="true"?true:false;
+        params.asAdmin = a_req.query.admin=="true"?true:false;
     if ( a_req.query.member != undefined )
-        params.byMember = a_req.query.member=="true"?true:false;
-
+        params.asMember = a_req.query.member=="true"?true:false;
+    if ( a_req.query.sort != undefined )
+        params.sort = a_req.query.sort;
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        params.offset = a_req.query.offset;
+        params.count = a_req.query.count;
+    }
+    
+    console.log("proj list:",params);
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
+        a_resp.send(reply);
+        /*if ( reply.item ){
+            console.log("prj list:",reply.item);
+            a_resp.send(reply);
+        }else{
+            console.log("prj list:[]");
             a_resp.send([]);
+        }*/
     });
 });
 
+app.post('/api/prj/search', ( a_req, a_resp ) => {
+    console.log("search:",a_req.body);
+    sendMessage( "ProjectSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.send(reply.item?reply.item:[]);
+    });
+});
+
+/*
 app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
     sendMessage( "ProjectListByAdminRequest", {}, a_req, a_resp, function( reply ) {
         if ( reply.proj )
@@ -453,7 +472,7 @@ app.get('/api/prj/list/by_member', ( a_req, a_resp ) => {
         else
             a_resp.send([]);
     });
-});
+});*/
 
 app.get('/api/grp/create', ( a_req, a_resp ) => {
     var params  = {

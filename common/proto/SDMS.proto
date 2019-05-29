@@ -76,6 +76,14 @@ enum DependencyDir
     DEP_OUT                     = 1;
 }
 
+enum SortOption
+{
+    SORT_ID                     = 0;
+    SORT_TITLE                  = 1;
+    SORT_TIME_CREATE            = 2;
+    SORT_TIME_UPDATE            = 3;
+}
+
 /*
 enum Permissions
 {

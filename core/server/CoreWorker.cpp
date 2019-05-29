@@ -87,6 +87,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
+        SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &Worker::procProjectSearchRequest );
         SET_MSG_HANDLER( proto_id, QueryCreateRequest, &Worker::procQueryCreateRequest );
         SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &Worker::procQueryUpdateRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
@@ -111,7 +112,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
         SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
-        SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
+        SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
+        //SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
@@ -634,6 +636,23 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     req2.set_use_shared_users( use_shared_users );
     req2.set_use_shared_projects( use_shared_projects );
     m_db_client.recordSearch( req2, reply );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procProjectSearchRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
+
+    m_db_client.setClient( a_uid );
+    DL_INFO("about to parse query[" << request->text_query() << "]" );
+    vector<string> scope;
+    for ( int i = 0; i < request->scope_size(); i++ )
+        scope.push_back( request->scope(i) );
+    string q = parseProjectQuery( request->text_query(), scope );
+    DL_INFO("parsed query[" << q << "]" );
+    m_db_client.projSearch( q, reply );
 
     PROC_MSG_END
 }
@@ -1384,5 +1403,48 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     return result;
 }
 
+
+string
+Worker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
+{
+    string phrase = parseSearchQuickPhrase( a_text_query );
+
+    if ( phrase.size() == 0 )
+        EXCEPT(1,"Empty query string");
+
+    string result;
+
+    if ( a_scope.size() )
+    {
+        result += string("for i in intersection((for i in projview search analyzer(") + phrase + ",'text_en') return i),(";
+
+        if ( a_scope.size() > 1 )
+            result += "for i in union((";
+
+        for ( vector<string>::const_iterator c = a_scope.begin(); c != a_scope.end(); c++ )
+        {
+            if ( c != a_scope.begin() )
+                result += "),(";
+
+            // TODO Add support for organization, facility
+            //if ( c->compare( 0, 2, "u/" ) == 0 )
+            //{
+                result += string("for i in 1..1 inbound '") + ( c->compare( 0, 2, "u/" ) != 0 ? "u/" : "" ) + *c + "' owner, admin filter is_same_collection('p',i) return i";
+            //}
+        }
+
+        if ( a_scope.size() > 1 )
+            result += ")) return i";
+
+        result += "))";
+    }
+    else
+        result += string("for i in projview search analyzer(") + phrase + ",'text_en')";
+
+    // TODO Add sort order
+    result += " limit 100 return {id:i._id,title:i.title,owner:i.owner}";
+
+    return result;
+}
 
 }}
