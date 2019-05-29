@@ -123,8 +123,8 @@ class MsgAPI:
 
         #reply, mt = self._recv()
         #print "ver reply:",reply
-        if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
-            raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
+        #if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
+        #    raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
 
         #print("get auth")
 
