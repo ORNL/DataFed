@@ -13,6 +13,7 @@ import os
 import sys
 import click
 import prompt_toolkit
+import re
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -38,6 +39,14 @@ g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 g_ep_default = dfC.Config.get_config("DF_DEFAULT_ENDPOINT")
 g_ep_cur = g_ep_default
 
+cmd_aliases = {
+    "data_view": "dv",
+    "data_create": "dc",
+    "data_update": "du",
+    "data_get" : "get",
+    "data_put": "put"
+}
+
 '''
 def setup_env():
     "Function that accesses and sets environment variables from the configuration file"
@@ -49,7 +58,7 @@ def setup_env():
 def info( level, *args ):
     global g_verbosity
     if level <= g_verbosity:
-        print( *args )
+        click.echo( *args )
 
 def set_verbosity(ctx, param, value):
     #print("set verbosity:",value)
@@ -64,23 +73,51 @@ def set_interactive(ctx, param, value):
         g_interactive = value
 
 
-# Allows command matching by unique suffix
+class RecordID(click.ParamType):
+    """
+    Adding a parameter type for DataFed IDs, such that command inputs can either be type-checked, or automatically fixed.
+    """
+    name = 'rec-id'
+
+    def convert(self, value, param, ctx):
+        found=re.match(r'[cd][/][\d]{8,8}')
+
+        if not found:
+            self.fail(f'{value} is not a valid DataFed Record ID.', param, ctx,)
+
+        return value
+
+class UserID(click.ParamType):
+    """
+    A parameter type for DataFed User & Project IDS, so that command inputs can be type-checked.
+    """
+    name = 'u-id'
+
+    def convert(self, value, param, ctx):
+        found=re.match(r'[up][/][\d]{8,8}')
+
+        if not found:
+            self.fail(f'{value} is not a valid DataFed User/Project ID.', param, ctx,)
+
+        return value
+
 class AliasedGroup(click.Group):
+    """
+    Allows use of command aliases as defined in dictionary object: "cmd_aliases"
+    """
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
-        matches = [x for x in self.list_commands(ctx)
-            if x.startswith(cmd_name)]
-        if not matches:
+        elif cmd_name in cmd_aliases:
+            return click.Group.get_command(self, ctx, cmd_aliases[cmd_name])
+        elif rv is None:
             return None
-        elif len(matches) == 1:
-            return click.Group.get_command(self, ctx, matches[0])
-        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+        ctx.fail('No valid command specified.')
 
 #------------------------------------------------------------------------------
 # Top-level group with global options
-@click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
+@click.group(invoke_without_command=True,context_settings=g_ctxt_settings)
 @click.option("-h","--host",type=str,default="sdms.ornl.gov",help="Server host")
 @click.option("-p","--port",type=int,default=7512,help="Server port")
 @click.option("-c","--client-cred-dir",type=str,help="Client credential directory")
@@ -88,7 +125,7 @@ class AliasedGroup(click.Group):
 @click.option("-l","--log",is_flag=True,help="Force manual authentication")
 @click.option("-v","--verbosity",type=int,is_eager=True,callback=set_verbosity,expose_value=False,help="Verbosity level (0=quiet,1=normal,2=verbose)")
 @click.option("-i","--interactive",is_flag=True,is_eager=True,callback=set_interactive,expose_value=False,help="Start an interactive session")
-@click.pass_context
+#@click.pass_context
 def cli(ctx,host,port,client_cred_dir,server_cred_dir,log):
     global g_interactive
 

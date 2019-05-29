@@ -181,7 +181,11 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                 }
                 var inst = $(this);
                 if ( a_mode != XFR_SELECT ){
-                    xfrStart( a_data.id, a_mode, raw_path, $("#ext",frame).val().trim(), function( ok, data ){
+                    var ext = $("#ext",frame).val();
+                    if ( ext )
+                        ext.trim();
+
+                    xfrStart( a_data.id, a_mode, raw_path, ext, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
