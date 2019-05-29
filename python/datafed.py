@@ -1,3 +1,7 @@
+"""
+DataFed CLI
+"""
+
 #!/usr/bin/env python
 from __future__ import division, print_function, absolute_import #, unicode_literals
 import getpass
@@ -13,6 +17,8 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.formatted_text import to_formatted_text
+import dfConfig as dfC
+
 
 if sys.version_info.major == 3:
     unicode = str
@@ -29,8 +35,15 @@ g_interactive = False
 #g_really_exit = False
 g_verbosity = 1
 g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
-g_ep_default = os.environ.get("DATAFED_EP_DEFAULT")
+g_ep_default = dfC.Config.get_config("DF_DEFAULT_ENDPOINT")
 g_ep_cur = g_ep_default
+
+'''
+def setup_env():
+    "Function that accesses and sets environment variables from the configuration file"
+    
+    #TODO: Initial setup function
+'''
 
 # Verbosity-aware print
 def info( level, *args ):
@@ -80,8 +93,8 @@ def cli(ctx,host,port,client_cred_dir,server_cred_dir,log):
     global g_interactive
 
     if not g_interactive and ctx.invoked_subcommand is None:
-        print("No command specified.")
-        print(ctx.get_help())
+        click.echo("No command specified.")
+        click.echo(ctx.get_help())
     elif mapi == None:
         initialize(host,port,client_cred_dir,server_cred_dir,log)
 
@@ -116,7 +129,7 @@ def wc(id):
     if id != None:
         g_cur_coll = resolveCollID(id)
     else:
-        print(g_cur_coll)
+        click.echo(g_cur_coll)
 
 #------------------------------------------------------------------------------
 # Data command group
@@ -135,7 +148,7 @@ def data_view(id,details):
     else:
         msg.details = False
     reply, mt = mapi.sendRecv( msg )
-    print(reply)
+    click.echo(reply)
 
 @data.command(name='create',help="Create new data record")
 @click.argument("title")
@@ -149,10 +162,10 @@ def data_view(id,details):
 @click.option("-r","--repository",type=str,required=False,help="Repository ID")
 def data_create(title,alias,description,key_words,data_file,metadata,metadata_file,collection,repository):
     if metadata and metadata_file:
-        print("Cannot specify both --metadata and --metadata-file options")
+        click.echo("Cannot specify both --metadata and --metadata-file options")
         return
-    print("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @data.command(name='update',help="Update existing data record")
 @click.argument("id")
@@ -165,10 +178,10 @@ def data_create(title,alias,description,key_words,data_file,metadata,metadata_fi
 @click.option("-mf","--metadata-file",type=str,required=False,help="Metadata file (JSON)")
 def data_update(id,title,alias,description,key_words,data_file,metadata,metadata_file):
     if metadata and metadata_file:
-        print("Cannot specify both --metadata and --metadata-file options")
+        click.echo("Cannot specify both --metadata and --metadata-file options")
         return
-    print("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("id")
@@ -193,12 +206,12 @@ def data_get(id,path,wait):
     #msg.local = applyPrefix( path )
     msg.local = g_ep_cur + path
     reply, mt = mapi.sendRecv( msg )
-    print("reply:",reply)
+    click.echo("reply:",reply)
 
     xfr = reply.xfr[0]
-    print("id:",xfr.id,"stat:",xfr.stat)
+    click.echo("id:",xfr.id,"stat:",xfr.stat)
     if wait:
-        print("waiting")
+        click.echo("waiting")
         #while xfr.status < 3:
         while True:
             sleep(2)
@@ -206,16 +219,16 @@ def data_get(id,path,wait):
             msg.xfr_id = xfr.id
             reply, mt = mapi.sendRecv( msg )
             xfr = reply.xfr[0]
-            print("id:",xfr.id,"stat:",xfr.stat)
+            click.echo("id:",xfr.id,"stat:",xfr.stat)
 
-        print("done. status:",xfr.stat)
+        click.echo("done. status:",xfr.stat)
     else:
-        print("xfr id:",xfr.id)
+        click.echo("xfr id:",xfr.id)
 
 @data.command(name='put',help="Put (upload) raw data to datafed")
 @click.argument("id")
 def data_put(id):
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 
 #------------------------------------------------------------------------------
@@ -230,7 +243,7 @@ def coll_view(id):
     msg = auth.CollViewRequest()
     msg.id = resolveCollID(id)
     reply, mt = mapi.sendRecv( msg )
-    print(reply)
+    click.echo(reply)
 
 @coll.command(name='create',help="Create new collection")
 @click.option("-t","--title",type=str,required=False,help="Title")
@@ -238,8 +251,8 @@ def coll_view(id):
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-c","--collection",type=str,required=False,help="Parent collection ID/alias (default is current working collection)")
 def coll_create(title,alias,description,collection):
-    print("t:",title,"a:",alias,"d:",description,"c:",collection)
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("t:",title,"a:",alias,"d:",description,"c:",collection)
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @coll.command(name='update',help="Update existing collection")
 @click.argument("id")
@@ -247,8 +260,8 @@ def coll_create(title,alias,description,collection):
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
 def data_update(id,title,alias,description):
-    print("id:",id,"t:",title,"a:",alias,"d:",description)
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("id:",id,"t:",title,"a:",alias,"d:",description)
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @coll.command(name='delete',help="Delete existing collection")
 @click.argument("id")
@@ -256,7 +269,7 @@ def coll_delete(id):
     id2 = resolveCollID(id)
 
     if g_interactive:
-        print("Warning: this will delete all data records and collections contained in the specified collection.")
+        click.echo("Warning: this will delete all data records and collections contained in the specified collection.")
         if not confirm( "Delete collection " + id2 + " (Y/n):"):
             return
 
@@ -308,35 +321,35 @@ def query_exec(id):
 
 @query.command(name='text',help="Query by words or phrases")
 def query_text():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @query.command(name='meta',help="Query by metadata expression")
 def query_meta():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @query.command(cls=AliasedGroup,help="Query scope subcommands")
 def scope():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='view',help="View categories and/or collections in query scope")
 def scope_view():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='add',help="Add category or collection to query scope")
 def scope_add():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='remove',help="Remove category or collection from query scope")
 def scope_rem():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='clear',help="Remove all categories and/or collections from query scope")
 def scope_clear():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @scope.command(name='reset',help="Reset query scope to default")
 def scope_reset():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 #------------------------------------------------------------------------------
 # User command group
@@ -349,7 +362,7 @@ def user():
 @click.option("-o","--offset",default=0,help="List offset")
 @click.option("-c","--count",default=20,help="List count")
 def user_collab(offset,count):
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 
 @user.command(name='all',help="List all users")
@@ -370,7 +383,7 @@ def user_view(uid,details):
     msg.uid = resolveID(uid)
     msg.details = details
     reply, mt = mapi.sendRecv( msg )
-    print(reply)
+    click.echo(reply)
 
 #------------------------------------------------------------------------------
 # Project command group
@@ -403,7 +416,7 @@ def project_view(id):
     msg.id = resolveID(id)
     reply, mt = mapi.sendRecv( msg )
     # TODO Print project info
-    print(reply)
+    click.echo(reply)
 
 #------------------------------------------------------------------------------
 # Shared data command group
@@ -454,12 +467,12 @@ def xfr():
 @click.option("-t","--to",help="List up to specified absolute time (timestamp)")
 @click.option("-st","--status",help="List transfers matching specified status")
 def xfr_list():
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 @xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer id ID omitted")
 @click.argument("id",required=False)
 def xfr_stat(id):
-    print("TODO: NOT IMPLEMENTED")
+    click.echo("TODO: NOT IMPLEMENTED")
 
 #------------------------------------------------------------------------------
 # End-point commands
@@ -491,13 +504,38 @@ def ep_set(path):
 
     info(1,g_ep_cur)
 
-@ep.command(name='default',help="Get default end-point path")
-def ep_default():
+@ep.command(name='default',help="Get or set default end-point path")
+@click.argument("new_default_ep",required=False)
+def ep_default(new_default_ep):
     global g_ep_default
-    if g_ep_default:
-        print(g_ep_default)
+    if new_default_ep:
+ #       try:
+        dfC.Config.set_default_ep(new_default_ep)
+        g_ep_default = new_default_ep
+   #     except:
+        # TODO: add more functionality
+        # check if input is valid endpoint
     else:
-        print("Default end-point not configured")
+        if g_ep_default:
+            click.echo(g_ep_default)
+        else:
+            click.echo("Default end-point not configured")
+
+
+@ep.command(name='set',help="Set current end-point path (omit path for default)")
+@click.argument("path",required=False)
+def ep_set(path):
+    global g_ep_cur
+    if path:
+        g_ep_cur = resolveID(path)
+    else:
+        if g_ep_default:
+            g_ep_cur = g_ep_default
+        else:
+            info(1,"Default end-point not configured")
+            return
+
+    info(1,g_ep_cur)
 
 @ep.command(name='list',help="List recent end-point paths")
 def ep_list():
@@ -517,7 +555,7 @@ def ident(id,show):
     global g_cur_alias_prefix
 
     if show:
-        print(g_cur_sel)
+        click.echo(g_cur_sel)
         return
 
     if id == None:
@@ -550,7 +588,7 @@ def ident(id,show):
 @cli.command(name='help',help="Show datafed client help")
 @click.pass_context
 def help_cli(ctx):
-    print(ctx.parent.get_help())
+    click.echo(ctx.parent.get_help())
 
 
 @cli.command(name="exit",help="Exit interactive session")
@@ -621,9 +659,9 @@ def printListing( reply ):
     for i in reply.item:
         g_list_items.append(i.id)
         if i.alias:
-            print("{:2}. {:12} ({:20} {}".format(idx,i.id,i.alias+")",i.title))
+            click.echo("{:2}. {:12} ({:20} {}".format(idx,i.id,i.alias+")",i.title))
         else:
-            print("{:2}. {:34} {}".format(idx,i.id,i.title))
+            click.echo("{:2}. {:34} {}".format(idx,i.id,i.title))
         idx += 1
 
 def printUserListing( reply ):
@@ -632,7 +670,7 @@ def printUserListing( reply ):
     g_list_items = []
     for i in reply.user:
         g_list_items.append(i.uid)
-        print("{:2}. {:24} {}".format(idx,i.uid,i.name))
+        click.echo("{:2}. {:24} {}".format(idx,i.uid,i.name))
         idx += 1
 
 def printProjListing(reply):
@@ -641,7 +679,7 @@ def printProjListing(reply):
     g_list_items = []
     for i in reply.proj:
         g_list_items.append(i.id)
-        print("{:2}. {:24} {}".format(idx,i.id,i.title))
+        click.echo("{:2}. {:24} {}".format(idx,i.id,i.title))
         idx += 1
 
 def printEndpoints(reply):
@@ -653,11 +691,11 @@ def printEndpoints(reply):
         if p >= 0:
             path = i[0:p+1]
             g_list_items.append(path)
-            print("{:2}. {}".format(idx,path))
+            click.echo("{:2}. {}".format(idx,path))
             idx += 1
 
 def confirm( msg ):
-    val = raw_input( msg )
+    val = echo.prompt( msg )
     if val == "Y":
         return True
     else:
@@ -678,7 +716,7 @@ def initialize(server,port,client_cred_dir,server_cred_dir,manual_auth):
             manual_auth=manual_auth
             )
     except Exception as e:
-        print(e)
+        click.echo(e)
         g_interactive = False
         sys.exit(1)
 
@@ -696,13 +734,13 @@ def initialize(server,port,client_cred_dir,server_cred_dir,manual_auth):
         i = 0
         while i < 3:
             i += 1
-            uid = raw_input("User ID: ")
+            uid = click.prompt("User ID: ")
             password = getpass.getpass(prompt="Password: ")
             try:
                 mapi.manualAuth( uid, password )
                 break
             except Exception as e:
-                print(e)
+                click.echo(e)
 
         if i == 3:
             info(1,"Aborting...")
@@ -722,10 +760,10 @@ def initialize(server,port,client_cred_dir,server_cred_dir,manual_auth):
 info(1,"DataFed CLI Ver.", ClientLib.version())
 
 '''
-print("CLI:",dir(cli))
-print("params:",dir(cli.params))
+click.echo("CLI:",dir(cli))
+click.echo("params:",dir(cli.params))
 for i in cli.params:
-    print(i.name, dir(i))
+    click.echo(i.name, dir(i))
 sys.exit(1)
 '''
 
@@ -760,11 +798,11 @@ try:
             break
         except Exception as e:
             #print("gen except")
-            print(e)
+            click.echo(e)
             if g_interactive == False:
                 break
 
 except Exception as e:
-    print("Exception:",e)
+    click.echo("Exception:",e)
 
 info(1,"Goodbye!")
