@@ -2216,8 +2216,8 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
         alloc->set_path(val["path"].GetString());
         if (( imem = val.FindMember("id")) != val.MemberEnd() )
             alloc->set_id( imem->value.GetString() );
-        if (( imem = val.FindMember("name")) != val.MemberEnd() )
-            alloc->set_name( imem->value.GetString() );
+        if (( imem = val.FindMember("sub_alloc")) != val.MemberEnd() )
+            alloc->set_sub_alloc( imem->value.GetBool() );
         if (( imem = val.FindMember("stats")) != val.MemberEnd() )
         {
             setAllocStatsData( imem->value, *alloc->mutable_stats() );
