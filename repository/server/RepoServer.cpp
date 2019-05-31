@@ -179,7 +179,7 @@ Server::ioRun()
     {
         try
         {
-            if ( sysComm.recv( m_msg_buf, 2000 ))
+            if ( sysComm.recv( m_msg_buf, false, 2000 ))
             {
                 msg_type = m_msg_buf.getMsgType();
 
@@ -197,9 +197,17 @@ Server::ioRun()
                 }
             }
         }
+        catch( TraceException &e )
+        {
+            DL_ERROR( "Exception in ioRun: " << e.toString() );
+        }
+        catch( exception &e )
+        {
+            DL_ERROR( "Exception in ioRun: " << e.what() );
+        }
         catch( ... )
         {
-            DL_ERROR( "Unhandled exception in msg handler" );
+            DL_ERROR( "Unhandled exception in ioRun" );
         }
     }
 
