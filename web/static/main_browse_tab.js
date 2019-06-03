@@ -1038,15 +1038,23 @@ function makeBrowserTab(){
                 inst.sel_details.html("(n/a)");
                 $("#sel_references").html("(n/a)");
             } else if ( key.startsWith( "repo/" )) {
-                inst.sel_id.text( "Allocation on " + key + ", user: " + node.data.scope );
+                var is_user = node.data.scope.startsWith("u/");
+                inst.sel_id.text( (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + ", user: " + node.data.scope );
                 inst.sel_title.text("");
                 inst.sel_descr.text("Browse data records by allocation.");
                 html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                // TODO deal with project sub-allocations
-                html += "<tr><td>Repo ID:</td><td>" + key + "</td></tr>";
+                html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
+                if ( !is_user )
+                    html += "<tr><td>Sub-allocation:</td><td>" + (node.data.sub_alloc?"Yes":"No") + "</td></tr>";
                 html += "<tr><td>Capacity:</td><td>" + sizeToString( node.data.alloc_capacity ) + "</td></tr>";
-                html += "<tr><td>Usage:</td><td>" + sizeToString( node.data.alloc_usage ) + "</td></tr>";
+                html += "<tr><td>Usage:";
+                if ( is_user )
+                    html += " <span class='note'>*</span>";
+                var used = Math.max( Math.floor(10000*node.data.alloc_usage/node.data.alloc_capacity)/100, 0 );
+                html += "</td><td>" + sizeToString( node.data.alloc_usage ) + " (" + used + " %)</td></tr>";
                 html += "<tr><td>Max. Records:</td><td>" + node.data.alloc_max_count + "</td></tr></table>";
+                if ( is_user )
+                    html += "<br><span class='note'>* Includes any project sub-allocation usage</span>";
                 inst.sel_details.html(html);
                 $("#sel_references").html("(n/a)");
 
@@ -2197,12 +2205,13 @@ function makeBrowserTab(){
     }
 
     this.pageLoad = function( key, offset ){
-        console.log("pageLoad",key, offset);
+        //console.log("pageLoad",key, offset);
         var node = inst.data_tree.getNodeByKey( key );
         if ( node ){
             node.data.offset = offset;
-            //console.log("new offset:",node.data.offset);
-            node.load(true);
+            setTimeout(function(){
+                node.load(true);
+            },0);
         }
     }
 
@@ -2218,9 +2227,9 @@ function makeBrowserTab(){
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         {title:"My Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:false,lazy:true},
-        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own"},
-        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm"},
-        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem"},
+        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
+        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
+        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
@@ -2284,13 +2293,15 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
+                /*
                 var repo,j,dest_par = dest_node.getParentList(false,true);
                 for ( j in dest_par ){
                     if ( dest_par[j].key.startsWith("repo/")){
-                        repo = dest_par[j].key;
+                        repo = dest_par[j].key.substr(0,key.indexOf("/",5));
+                        console.log("repo:",repo);
                         break;
                     }
-                }
+                }*/
 
                 if ( inst.pasteSource.data.scope != dest_node.data.scope || repo ){
                     /*var msg;
@@ -2307,8 +2318,10 @@ function makeBrowserTab(){
                                 keys.push( inst.pasteItems[i].key );
                             }
                             var dest;
-                            if ( dest_node.key.startsWith("repo/") || dest_node.key.startsWith("c/") )
+                            if ( dest_node.key.startsWith("c/") )
                                 dest = dest_node.key;
+                            if ( dest_node.key.startsWith("repo/"))
+                                dest = dest_node.data.repo;
                             else
                                 dest = dest_node.parent.key;
 
@@ -2365,17 +2378,17 @@ function makeBrowserTab(){
                 ];
             }else if ( data.node.key == "proj_own" ){
                     data.result = {
-                    url: "/api/prj/list?owner=true",
+                    url: "/api/prj/list?owner=true&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key == "proj_adm" ){
                 data.result = {
-                    url: "/api/prj/list?admin=true",
+                    url: "/api/prj/list?admin=true&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key == "proj_mem" ){
                 data.result = {
-                    url: "/api/prj/list?member=true",
+                    url: "/api/prj/list?member=true&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
             }else if ( data.node.key.startsWith("p/")){
@@ -2403,7 +2416,7 @@ function makeBrowserTab(){
                 };
             } else if ( data.node.key.startsWith( "repo/" )) {
                 data.result = {
-                    url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.key) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.data.repo) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key.startsWith( "shared_proj" )) {
@@ -2464,14 +2477,14 @@ function makeBrowserTab(){
                 //console.log("post mydata",data.response);
             }else if ( data.node.key == "proj_own" || data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
                     data.result = [];
-                if ( data.response.length ){
+                if ( data.response.item && data.response.item.length ){
                     console.log( "pos proc project:", data.response );
                     var item;
                     var admin = (data.node.key=="proj_own"?true:false);
                     //var prj_id;
 
-                    for ( var i in data.response ) {
-                        item = data.response[i];
+                    for ( var i in data.response.item ) {
+                        item = data.response.item[i];
                         //prj_id = item.id.substr(2);
                         data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true,admin:admin,nodrag:true,lazy:true});
                         /*children:[
@@ -2481,6 +2494,10 @@ function makeBrowserTab(){
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
+                }
+                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
+                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
                 data.result = [];
@@ -2521,7 +2538,8 @@ function makeBrowserTab(){
                     var alloc;
                     for ( var i in data.response ) {
                         alloc = data.response[i];
-                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo,scope:alloc.id,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,nodrag:true,checkbox:false});
+                        console.log("alloc:",alloc,"scope:",alloc.id);
+                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
                 }else{
                     data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });

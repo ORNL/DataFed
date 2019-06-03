@@ -76,6 +76,14 @@ enum DependencyDir
     DEP_OUT                     = 1;
 }
 
+enum SortOption
+{
+    SORT_ID                     = 0;
+    SORT_TITLE                  = 1;
+    SORT_TIME_CREATE            = 2;
+    SORT_TIME_UPDATE            = 3;
+}
+
 /*
 enum Permissions
 {
@@ -110,7 +118,7 @@ message AllocData
     required uint32             max_count   = 4;
     required string             path        = 5;
     optional string             id          = 6;
-    optional string             name        = 7;
+    optional bool               sub_alloc   = 7;
     optional AllocStatsData     stats       = 8;
 }
 

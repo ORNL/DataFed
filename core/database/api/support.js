@@ -56,6 +56,11 @@ module.exports = ( function() {
     obj.DEP_IN              = 0;
     obj.DEP_OUT             = 1;
 
+    obj.SORT_ID             = 0;
+    obj.SORT_TITLE          = 1;
+    obj.SORT_TIME_CREATE    = 2;
+    obj.SORT_TIME_UPDATE    = 3;
+
     obj.PROJ_NO_ROLE        = 0;    // No permissions
     obj.PROJ_MEMBER         = 1;    // Data/collection Permissions derived from "members" group and other ACLs
     obj.PROJ_MANAGER        = 2;    // Adds permission to manage groups and grants ADMIN permission on all data/collections

@@ -1,6 +1,8 @@
 #ifndef COREWORKER_HPP
 #define COREWORKER_HPP
 
+#include <string>
+#include <vector>
 #include <thread>
 #include <algorithm>
 #include <zmq.h>
@@ -41,6 +43,7 @@ private:
     bool procProjectDeleteRequest( const std::string & a_uid );
     bool procQueryDeleteRequest( const std::string & a_uid );
     bool procRecordSearchRequest( const std::string & a_uid );
+    bool procProjectSearchRequest( const std::string & a_uid );
     bool procQueryCreateRequest( const std::string & a_uid );
     bool procQueryUpdateRequest( const std::string & a_uid );
     bool procRepoAllocationSetRequest( const std::string & a_uid );
@@ -56,6 +59,7 @@ private:
     std::string parseSearchQuickPhrase( const std::string & a_phrase );
     std::string parseSearchMetadata( const std::string & a_query );
     std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );
+    std::string parseProjectQuery( const std::string & a_text_query, const std::vector<std::string> & a_scope );
 
     typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
 

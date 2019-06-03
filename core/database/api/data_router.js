@@ -827,8 +827,8 @@ router.get('/search', function (req, res) {
 .queryParam('use_client', joi.bool().required(), "Query uses client param")
 .queryParam('use_shared_users', joi.bool().required(), "Query uses shared users param")
 .queryParam('use_shared_projects', joi.bool().required(), "Query uses shared projects param")
-.summary('Find all data records that match query in body')
-.description('Find all data records that match query in body');
+.summary('Find all data records that match query')
+.description('Find all data records that match query');
 
 router.get('/delete', function (req, res) {
     try {

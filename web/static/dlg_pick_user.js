@@ -9,8 +9,9 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         var node = tree.getNodeByKey( key );
         if ( node ){
             node.data.offset = offset;
-            //console.log("new offset:",node.data.offset);
-            node.load(true);
+            setTimeout(function(){
+                node.load(true);
+            },0);
         }
     }
 
@@ -25,10 +26,11 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         resizable: true,
         closeOnEscape: false,
         buttons: [{
+            id:"ok_btn",
             text: "Ok",
             click: function() {
                 users = [];
-                var tree = $("#dlg_user_tree",frame).fancytree("getTree");
+                //var tree = $("#dlg_user_tree",frame).fancytree("getTree");
                 var sel = tree.getSelectedNodes();
                 var key;
                 for ( var i in sel ){
@@ -46,6 +48,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             }
         }],
         open: function(event,ui){
+            $("#ok_btn").button("disable");
         }
     };
 
@@ -68,6 +71,13 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         },
         source: src,
         selectMode: a_single_sel?1:2,
+        select: function(){
+            if ( tree.getSelectedNodes().length ){
+                $("#ok_btn").button("enable");
+            }else{
+                $("#ok_btn").button("disable");
+            };
+        },
         checkbox: true,
         lazyLoad: function( event, data ) {
             if ( data.node.key == "collab" ) {
@@ -99,8 +109,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 var user;
                 for ( var i in data.response.user ) {
                     user = data.response.user[i];
-                    if ( a_excl.indexOf( user.uid ) == -1 )
-                        data.result.push({ title: user.name + " ("+user.uid.substr(2) +")",icon:"ui-icon ui-icon-person",key: user.uid });
+                    data.result.push({ title: user.name + " ("+user.uid.substr(2) +")",icon:"ui-icon ui-icon-person",key: user.uid,unselectable:(a_excl.indexOf( user.uid ) != -1) });
                 }
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){

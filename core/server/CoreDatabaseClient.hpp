@@ -51,7 +51,8 @@ public:
     void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply );
+    void projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply );
 
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
