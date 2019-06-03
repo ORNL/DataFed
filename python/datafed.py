@@ -14,6 +14,7 @@ import sys
 import click
 import prompt_toolkit
 import re
+import json
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -38,13 +39,14 @@ g_verbosity = 1
 g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 g_ep_default = dfC.Config.get_config("DF_DEFAULT_ENDPOINT")
 g_ep_cur = g_ep_default
+g_output_json = False
 
-cmd_aliases = {
-    "data_view": "dv",
-    "data_create": "dc",
-    "data_update": "du",
-    "data_get" : "get",
-    "data_put": "put"
+ALIASES = {
+     "dv" : "data(view)",
+     "dc": "data(create)",
+     "du": "update",
+     "get": "get",
+     "put": "put"
 }
 
 '''
@@ -58,7 +60,7 @@ def setup_env():
 def info( level, *args ):
     global g_verbosity
     if level <= g_verbosity:
-        click.echo( *args )
+        print( *args )
 
 def set_verbosity(ctx, param, value):
     #print("set verbosity:",value)
@@ -72,52 +74,80 @@ def set_interactive(ctx, param, value):
     if value == True:
         g_interactive = value
 
+def set_output_json(ctx, param, value):
+    #print("set interactive:",value)
+    global g_output_json
+    if value == True:
+        g_output_json = value
 
-class RecordID(click.ParamType):
-    """
-    Adding a parameter type for DataFed IDs, such that command inputs can either be type-checked, or automatically fixed.
-    """
-    name = 'rec-id'
+def set_output_txt(ctx, param, value):
+    #print("set interactive:",value)
+    global g_output_json
+    if value == True:
+        g_output_json = False
 
-    def convert(self, value, param, ctx):
-        found=re.match(r'[cd][/][\d]{8,8}')
 
-        if not found:
-            self.fail(f'{value} is not a valid DataFed Record ID.', param, ctx,)
+#changing parameter types to validation callbacks
+'''
+Not useful: the server should be the only one who can validate/decide what is valid and what is not
 
+def validate_data_id(ctx, param, value):
+    if len(value) == 10 and re.search(r'^d/[0-9]{8}', value):  # DataFed ID format: 'd/12345678'
         return value
-
-class UserID(click.ParamType):
-    """
-    A parameter type for DataFed User & Project IDS, so that command inputs can be type-checked.
-    """
-    name = 'u-id'
-
-    def convert(self, value, param, ctx):
-        found=re.match(r'[up][/][\d]{8,8}')
-
-        if not found:
-            self.fail(f'{value} is not a valid DataFed User/Project ID.', param, ctx,)
-
+    elif len(value) == 8 and re.search(r'[0-9]{8}', value):  # 8 digits assumed to be part of DataFed ID
+        value = f'd/{value}'  # Converted to DF ID format as above
         return value
+    elif len(value) < 60 and not bool(
+            re.search(r'[^-a-z0-9_.]', value)):  # Check that alias is below 60 characters & only contains alphanum or -, . , or _
+        return value
+    else:
+        raise click.BadParameter("Not a valid Data Record ID or alias. "
+                                         "ID should be given in the form or an 8-digit number or DataFed ID (d/12345678)."
+                                         "Aliases may be 60 characters long and contain only alphanumeric characters, .,  _, or -.")
+
+def validate_coll_id(ctx, param, value):
+    if len(value) == 10 and re.search(r'^c/[0-9]{8}', value):  # DataFed ID format: 'c/12345678'
+        return value
+    elif len(value) == 8 and re.search(r'[0-9]{8}', value):  # 8 digits assumed to be part of DataFed ID
+        value = f'c/{value}'  # Converted to DF ID format as above
+        return value
+    elif len(value) < 60 and not bool(
+            re.search(r'[^-a-z0-9_.]', value)):  # Check that alias is below 60 characters & only contains alphanum or -, . , or _
+        return value
+    else:
+        raise click.BadParameter("Not a valid Collection ID or alias. "
+                                         "ID should be given in the form or an 8-digit number or DataFed ID (c/12345678)."
+                                         "Aliases may be 60 characters long and contain only alphanumeric characters, .,  _, or -.")
+
+
+#TODO: Implement validation for project and user IDs
+'''
+
 
 class AliasedGroup(click.Group):
     """
     Allows use of command aliases as defined in dictionary object: "cmd_aliases"
     """
+    '''
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
         elif cmd_name in cmd_aliases:
-            return click.Group.get_command(self, ctx, cmd_aliases[cmd_name])
+            return click.Group.get_command(self, ctx, "cli." + cmd_aliases[cmd_name])
         elif rv is None:
             return None
         ctx.fail('No valid command specified.')
-
+        '''
+    def get_command(self, ctx, cmd_name):
+        try:
+            cmd_name = ALIASES[cmd_name] + ".name"
+        except KeyError:
+            pass
+        return super().get_command(ctx, cmd_name)
 #------------------------------------------------------------------------------
 # Top-level group with global options
-@click.group(invoke_without_command=True,context_settings=g_ctxt_settings)
+@click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
 @click.option("-h","--host",type=str,default="sdms.ornl.gov",help="Server host")
 @click.option("-p","--port",type=int,default=7512,help="Server port")
 @click.option("-c","--client-cred-dir",type=str,help="Client credential directory")
@@ -125,7 +155,9 @@ class AliasedGroup(click.Group):
 @click.option("-l","--log",is_flag=True,help="Force manual authentication")
 @click.option("-v","--verbosity",type=int,is_eager=True,callback=set_verbosity,expose_value=False,help="Verbosity level (0=quiet,1=normal,2=verbose)")
 @click.option("-i","--interactive",is_flag=True,is_eager=True,callback=set_interactive,expose_value=False,help="Start an interactive session")
-#@click.pass_context
+#@click.option("-j", "--json", is_flag=True,callback=set_output_json,expose_value=True,help="Set CLI output format to JSON, when applicable.")
+#@click.option("-txt","--text",is_flag=True,callback=set_output_txt, expose_value=True,help="Set CLI output format to human-friendly text")
+@click.pass_context
 def cli(ctx,host,port,client_cred_dir,server_cred_dir,log):
     global g_interactive
 
@@ -141,13 +173,13 @@ def cli(ctx,host,port,client_cred_dir,server_cred_dir,log):
 @cli.command(help="List current collection, or collection specified by ID")
 @click.option("-o","--offset",default=0,help="List offset")
 @click.option("-c","--count",default=20,help="List count")
-@click.argument("id",required=False)
-def ls(id,offset,count):
+@click.argument("df-id", required=False)
+def ls(df_id,offset,count):
     global g_verbosity
     global g_cur_coll
     msg = auth.CollReadRequest()
-    if id != None:
-        msg.id = resolveCollID(id)
+    if df_id is not None:
+        msg.id = resolveCollID(df_id)
     else:
         msg.id = g_cur_coll
     msg.count = count
@@ -160,11 +192,11 @@ def ls(id,offset,count):
     printListing(reply)
 
 @cli.command(help="Print or change current working collection")
-@click.argument("id",required=False)
-def wc(id):
+@click.argument("df-id",required=False)
+def wc(df_id):
     global g_cur_coll
-    if id != None:
-        g_cur_coll = resolveCollID(id)
+    if df_id is not None:
+        g_cur_coll = resolveCollID(df_id)
     else:
         click.echo(g_cur_coll)
 
@@ -176,10 +208,10 @@ def data():
 
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
-@click.argument("id")
-def data_view(id,details):
+@click.argument("df-id")
+def data_view(df_id,details):
     msg = auth.RecordViewRequest()
-    msg.id = resolveID(id)
+    msg.id = resolveID(df_id)
     if details:
         msg.details = True
     else:
@@ -187,38 +219,75 @@ def data_view(id,details):
     reply, mt = mapi.sendRecv( msg )
     click.echo(reply)
 
+#TODO: implement ext and auto-ext, turn metadata file into metadata string, dependencies?
+#TODO: how to handle binary json files?
 @data.command(name='create',help="Create new data record")
 @click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)")
-@click.option("-df","--data-file",type=str,required=False,help="Local raw data file")
+@click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)") # TODO: SORT OUT syntax
+@click.option("-df","--data-file",type=str,required=False,help="Local raw data file") #TODO: Put functionality
+@click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
-@click.option("-mf","--metadata-file",type=str,required=False,help="Metadata file (JSON)")
-@click.option("-c","--collection",type=str,required=False,help="Parent collection ID/alias (default is current working collection)")
-@click.option("-r","--repository",type=str,required=False,help="Repository ID")
-def data_create(title,alias,description,key_words,data_file,metadata,metadata_file,collection,repository):
+@click.option("-mf","--metadata-file",type=click.File('r'),required=False,help="Metadata file (.json with relative or absolute path)")
+@click.option("-c","--collection",type=str,required=False, default= g_cur_coll, help="Parent collection ID/alias (default is current working collection)")
+@click.option("-r","--repository",type=str,required=False,help="Repository ID") #Does this need to default??
+def data_create(title,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository): #cTODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
-    click.echo("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
-    click.echo("TODO: NOT IMPLEMENTED")
+    msg = auth.RecordCreateRequest()
+    msg.title = title
+    msg.desc = description if description is not None else ""
+    msg.topic = ""
+    msg.keyw = key_words if key_words is not None else "" #how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
+    msg.alias = alias if alias is not None else ""
+    msg.parent_id = resolveCollID(collection) if resolveCollID(collection) is not None else ""
+    msg.repo_id = repository if repository is not None else ""
+    msg.ext = ""
+    msg.ext_auto = True
+    if extension is not None:
+        msg.ext = extension
+        msg.ext_auto = False  # does cli have to do this, or does server already?
+    if metadata_file is not None:
+        metadata = str(json.load(metadata_file))
+    msg.metadata = metadata if metadata is not None else ""
+    click.echo(msg) #load metadata from JSON file, then convert to string) # TODO: implement dependencies
+    reply, mt = mapi.sendRecv(msg)
+#    click.echo("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
+    click.echo(reply)
 
 @data.command(name='update',help="Update existing data record")
-@click.argument("id")
+@click.argument("df_id")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)")
 @click.option("-df","--data-file",type=str,required=False,help="Local raw data file")
+@click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=str,required=False,help="Metadata file (JSON)")
-def data_update(id,title,alias,description,key_words,data_file,metadata,metadata_file):
+def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file): #TODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
-    click.echo("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
-    click.echo("TODO: NOT IMPLEMENTED")
+    msg = auth.RecordUpdateRequest()
+    msg.id = resolveID(df_id)
+    if title is not None: msg.title = title
+    if description is not None: msg.desc = description
+    #msg.topic = ""
+    if key_words is not None: msg.keyw = key_words # how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
+    if alias is not None: msg.alias = alias
+    if extension is not None:
+        msg.ext = extension
+        msg.ext_auto = False  # does cli have to do this, or does server already?
+    if metadata_file is not None:
+        metadata = str(json.load(metadata_file))
+    if metadata is not None: msg.metadata = metadata
+    click.echo(msg)  # load metadata from JSON file, then convert to string) #TODO: implement dependencies
+    reply, mt = mapi.sendRecv(msg)
+    #click.echo("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
+    #click.echo("TODO: NOT IMPLEMENTED")
 
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("id")
@@ -235,7 +304,7 @@ def data_delete(id):
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
 @click.argument("id")
-@click.argument("path")
+@click.argument("path", type=click.Path())
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
 def data_get(id,path,wait):
     msg = auth.DataGetRequest()
@@ -283,22 +352,38 @@ def coll_view(id):
     click.echo(reply)
 
 @coll.command(name='create',help="Create new collection")
-@click.option("-t","--title",type=str,required=False,help="Title")
+@click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-c","--collection",type=str,required=False,help="Parent collection ID/alias (default is current working collection)")
 def coll_create(title,alias,description,collection):
-    click.echo("t:",title,"a:",alias,"d:",description,"c:",collection)
-    click.echo("TODO: NOT IMPLEMENTED")
+    msg = auth.CollCreateRequest()
+    msg.title = title
+    if alias is not None: msg.alias = alias
+    if description is not None: msg.desc = description
+    if resolveCollID(collection) is not None: msg.parent_id = resolveCollID(collection)
+    click.echo(msg)
+    reply, mt = mapi.sendRecv(msg)
+    click.echo(reply)
+    click.echo("t: %s, a: %s, d: %s, c: %s" % (title, alias, description, collection))
+    #TODO : JSON output
 
 @coll.command(name='update',help="Update existing collection")
-@click.argument("id")
+@click.argument("df_id")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-def data_update(id,title,alias,description):
-    click.echo("id:",id,"t:",title,"a:",alias,"d:",description)
-    click.echo("TODO: NOT IMPLEMENTED")
+def data_update(df_id,title,alias,description):
+    msg = auth.CollUpdateRequest()
+    msg.id = resolveCollID(df_id)
+    if title is not None: msg.title = title
+    if alias is not None: msg.alias = alias
+    if description is not None: msg.desc = description
+    click.echo(msg)
+    reply, mt = mapi.sendRecv(msg)
+    click.echo(reply)
+    click.echo("t: %s, a: %s, d: %s" % (title, alias, description))
+#TODO: Fix-up
 
 @coll.command(name='delete',help="Delete existing collection")
 @click.argument("id")
