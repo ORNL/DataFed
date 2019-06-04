@@ -1,4 +1,4 @@
-function dlgStartTransfer( a_mode, a_data, a_cb ) {
+function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     var frame = $(document.createElement('div'));
     //frame.html( "<span id='prefix'>Source</span> Path:<input type='text' id='path' style='width:95%'></input>" );
 
@@ -18,6 +18,7 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
     var label = ["Get","Put","Select"];
     var dlg_title = label[a_mode] + " Data";
 
+    /*
     if ( a_data ){
         if ( a_data.alias ){
             var pos = a_data.alias.lastIndexOf(":");
@@ -26,6 +27,12 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
             dlg_title += " " + a_data.id;
 
         $("#title",frame).html( "\"" + escapeHTML( a_data.title ) + "\"" );
+    }*/
+
+    if ( a_ids.length > 1 ){
+        $("#title",frame).html( "Multiple records" );
+    }else{
+        $("#title",frame).html( a_ids[0] );
     }
 
     var matches = $("#matches",frame);
@@ -185,7 +192,7 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                     if ( ext )
                         ext.trim();
 
-                    xfrStart( a_data.id, a_mode, raw_path, ext, function( ok, data ){
+                    xfrStart( a_ids, a_mode, raw_path, ext, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();

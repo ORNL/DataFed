@@ -1677,6 +1677,29 @@ DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_pa
 }
 
 void
+DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    string ids = "[";
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i > 0 )
+            ids += ",";
+
+        ids += "\"" + a_request.id(i) + "\"";
+    }
+    ids += "]";
+    params.push_back({"id",ids});
+    params.push_back({"path",a_request.local()});
+    params.push_back({"mode",to_string(XM_GET)});
+
+    dbGet( "xfr/init", params, result );
+
+    setXfrData( a_reply, result );
+}
+
+void
 DatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const std::string & a_err_msg, const char * a_task_id )
 {
     rapidjson::Document result;

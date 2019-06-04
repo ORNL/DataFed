@@ -422,11 +422,21 @@ bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
-
-    DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->local() );
+    if ( request->id_size() > 1 )
+    {
+        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->local() );
+    }
+    else
+    {
+        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->local() );
+    }
 
     m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( request->id(), request->local(), 0, XM_GET, reply );
+    //vector<string> ids;
+    //for ( int i = 0; i < request->id_size(); i++ )
+    //    ids.push_back(request->id(i));
+
+    m_db_client.xfrInit( *request, reply );
 
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );

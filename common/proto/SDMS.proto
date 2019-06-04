@@ -230,6 +230,35 @@ message XfrData
     optional string             err_msg     = 13; // Only set if status == XFR_FAILED
 }
 
+message XfrFile
+{
+    required string             id          = 1;
+    required string             from        = 2;
+    required string             to          = 3;
+}
+
+message XfrFiles
+{
+    required string             repo_id     = 1;
+    required string             repo_ep     = 2;
+    repeated XfrFile            file        = 3;
+}
+
+message XfrGetData
+{
+    required string             id          = 1;
+    required XfrMode            mode        = 2;
+    required XfrStatus          status      = 3;
+    required XfrFiles           files       = 4;
+    required string             local_path  = 5;
+    required string             user_id     = 6;
+    required uint32             started     = 7;
+    required uint32             updated     = 8;
+    optional string             task_id     = 9; // Only set if status > XFR_INIT
+    optional string             err_msg     = 10; // Only set if status == XFR_FAILED
+}
+
+
 message GroupData
 {
     required string             uid         = 1;

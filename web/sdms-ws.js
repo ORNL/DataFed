@@ -677,7 +677,7 @@ app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/get', ( a_req, a_resp ) => {
-    sendMessage( "DataGetRequest", { id: a_req.query.id, local: a_req.query.path }, a_req, a_resp, function( reply ) {
+    sendMessage( "DataGetRequest", { ids: JSON.parse(a_req.query.ids), local: a_req.query.path }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

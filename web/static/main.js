@@ -234,22 +234,22 @@ function dataLock( a_id, a_lock, a_cb ){
     });
 }
 
-function dataGet( a_id ){
-    checkPerms( a_id, PERM_RD_DATA, function( granted ){
+function dataGet( a_ids ){
+    /*checkPerms( a_id, PERM_RD_DATA, function( granted ){
         if ( !granted ){
             alertPermDenied();
             return;
         }
 
-        viewData( a_id, function( data ){
+        viewData( a_ids, function( data ){
             if ( data ){
                 if ( !data.size || parseInt(data.size) == 0 )
                     dlgAlert("Data Get Error","Record contains no raw data");
-                else
-                    dlgStartTransfer( XFR_GET, data );
-            }
+                else*/
+                    dlgStartTransfer( XFR_GET, a_ids );
+            /*}
         }); 
-    });
+    });*/
 }
 
 function dataPut( a_id ){
@@ -853,7 +853,7 @@ function inputEnable( a_objs ){
     return a_objs;
 }
 
-function xfrStart( a_id, a_mode, a_path, a_ext, a_cb ){
+function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
     var url = "/api/dat/";
 
     if ( a_mode == XFR_GET )
@@ -864,7 +864,7 @@ function xfrStart( a_id, a_mode, a_path, a_ext, a_cb ){
         return;
     }
 
-    url += "?id=" + a_id + "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
+    url += "?ids=" + encodeURIComponent(JSON.stringify(a_ids)) + "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){
         if ( ok ) {
