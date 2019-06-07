@@ -41,12 +41,13 @@ g_ep_default = dfC.Config.get_config("DF_DEFAULT_ENDPOINT")
 g_ep_cur = g_ep_default
 g_output_json = False
 
+ #TODO: Make this work, please
 ALIASES = {
-     "dv" : "data(view)",
-     "dc": "data(create)",
-     "du": "update",
-     "get": "get",
-     "put": "put"
+     "dv" : "data_view",
+     "dc": "data_create",
+     "du": "data_update",
+     "get": "data_get",
+     "put": "data_put"
 }
 
 '''
@@ -139,12 +140,15 @@ class AliasedGroup(click.Group):
             return None
         ctx.fail('No valid command specified.')
         '''
+    '''
     def get_command(self, ctx, cmd_name):
         try:
-            cmd_name = ALIASES[cmd_name] + ".name"
+            actual = ALIASES.get(cmd_name)
+            click.echo(actual)
+            return click.Group.get_command(self, ctx, "cli." + ALIASES[cmd_name])
         except KeyError:
-            pass
-        return super().get_command(ctx, cmd_name)
+            return click.Group.get_command(self, ctx, "cli." + ALIASES[cmd_name])
+            '''
 #------------------------------------------------------------------------------
 # Top-level group with global options
 @click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
@@ -217,7 +221,7 @@ def data_view(df_id,details):
     else:
         msg.details = False
     reply, mt = mapi.sendRecv( msg )
-    click.echo(reply)
+    click.echo()
 
 #TODO: implement ext and auto-ext, turn metadata file into metadata string, dependencies?
 #TODO: how to handle binary json files?
@@ -232,26 +236,41 @@ def data_view(df_id,details):
 @click.option("-mf","--metadata-file",type=click.File('r'),required=False,help="Metadata file (.json with relative or absolute path)")
 @click.option("-c","--collection",type=str,required=False, default= g_cur_coll, help="Parent collection ID/alias (default is current working collection)")
 @click.option("-r","--repository",type=str,required=False,help="Repository ID") #Does this need to default??
-def data_create(title,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository): #cTODO: FIX
+@click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
+def data_create(title,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies): #cTODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
     msg = auth.RecordCreateRequest()
     msg.title = title
-    msg.desc = description if description is not None else ""
-    msg.topic = ""
-    msg.keyw = key_words if key_words is not None else "" #how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
-    msg.alias = alias if alias is not None else ""
-    msg.parent_id = resolveCollID(collection) if resolveCollID(collection) is not None else ""
-    msg.repo_id = repository if repository is not None else ""
-    msg.ext = ""
+    if description: msg.desc = description
+    #msg.topic = ""
+    if key_words: msg.keyw = key_words   #how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
+    if alias: msg.alias = alias
+    if resolveCollID(collection): msg.parent_id = resolveCollID(collection)
+    if repository: msg.repo_id = repository
+    #msg.ext = ""
     msg.ext_auto = True
     if extension is not None:
         msg.ext = extension
         msg.ext_auto = False  # does cli have to do this, or does server already?
     if metadata_file is not None:
         metadata = str(json.load(metadata_file))
-    msg.metadata = metadata if metadata is not None else ""
+    if metadata: msg.metadata = metadata
+    if dependencies:
+        deps = list(dependencies)
+        for i in range(len(deps)):
+            item = deps[i-1]
+            dep = msg.deps.add()
+            dep.dir = 0
+            if item[0] == "derived" or item[0] == "der": dep.type = 0
+            elif item[0] == "component" or item[0] == "comp": dep.type = 1
+            elif item[0] == "version" or item[0] == "ver":
+                dep.type = 2
+                dep.dir = 1
+            if re.search(r'^d/[0-9]{8}', item[1]):
+                dep.id = item[1]
+            else: dep.alias = item[1]
     click.echo(msg) #load metadata from JSON file, then convert to string) # TODO: implement dependencies
     reply, mt = mapi.sendRecv(msg)
 #    click.echo("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
@@ -267,6 +286,8 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=str,required=False,help="Metadata file (JSON)")
+@click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
+@click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str])help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
 def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file): #TODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
@@ -275,7 +296,6 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
     msg.id = resolveID(df_id)
     if title is not None: msg.title = title
     if description is not None: msg.desc = description
-    #msg.topic = ""
     if key_words is not None: msg.keyw = key_words # how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
     if alias is not None: msg.alias = alias
     if extension is not None:
@@ -284,31 +304,58 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
     if metadata_file is not None:
         metadata = str(json.load(metadata_file))
     if metadata is not None: msg.metadata = metadata
+    if dependencies_add:
+        deps = list(dependencies_add)
+        for i in range(len(deps)):
+            item = deps[i-1]
+            dep = msg.deps_add.add()
+            dep.dir = 0
+            if item[0] == "derived" or item[0] == "der": dep.type = 0
+            elif item[0] == "component" or item[0] == "comp": dep.type = 1
+            elif item[0] == "version" or item[0] == "ver":
+                dep.type = 2
+                dep.dir = 1
+            if re.search(r'^d/[0-9]{8}', item[1]):
+                dep.id = item[1]
+            else: dep.alias = item[1]
+    if dependencies_remove:
+        deps = list(dependencies_remove)
+        for i in range(len(deps)):
+            item = deps[i-1]
+            dep = msg.deps_rem.add()
+            dep.dir = 0
+            if item[0] == "derived" or item[0] == "der": dep.type = 0
+            elif item[0] == "component" or item[0] == "comp": dep.type = 1
+            elif item[0] == "version" or item[0] == "ver":
+                dep.type = 2
+                dep.dir = 1
+            if re.search(r'^d/[0-9]{8}', item[1]):
+                dep.id = item[1]
+            else: dep.alias = item[1]
     click.echo(msg)  # load metadata from JSON file, then convert to string) #TODO: implement dependencies
     reply, mt = mapi.sendRecv(msg)
+    click.echo("reply: ", reply)
     #click.echo("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
-    #click.echo("TODO: NOT IMPLEMENTED")
 
 @data.command(name='delete',help="Delete existing data record")
-@click.argument("id")
-def data_delete(id):
-    id2 = resolveID(id)
-
+@click.argument("df_id")
+def data_delete(df_id): #TODO: Fix me!
+    id2 = resolveID(df_id)
     if g_interactive:
         if not confirm( "Delete record " + id2 + " (Y/n):"):
             return
-
     msg = auth.RecordDeleteRequest()
     msg.id = id2
     reply, mt = mapi.sendRecv( msg )
+    click.echo(reply)
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
-@click.argument("id")
+@click.argument("df_id")
 @click.argument("path", type=click.Path())
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
-def data_get(id,path,wait):
+def data_get(df_id,path,wait):
     msg = auth.DataGetRequest()
-    msg.id = resolveID(id)
+    msg.id = resolveID(df_id)
     #msg.local = applyPrefix( path )
     msg.local = g_ep_cur + path
     reply, mt = mapi.sendRecv( msg )
@@ -332,8 +379,35 @@ def data_get(id,path,wait):
         click.echo("xfr id:",xfr.id)
 
 @data.command(name='put',help="Put (upload) raw data to datafed")
-@click.argument("id")
-def data_put(id):
+@click.argument("df_id")
+@click.option("-e","--endpoint",type=str,required=False,default=g_ep_cur,help="Globus endpoint, will default to current endpoint")
+@click.option("-fp","--filepath",type=click.Path(dir_okay=False),required=True,help="Absolute path to the file being uploaded")
+@click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
+def data_put(df_id,endpoint,filepath,wait):
+    msg = auth.DataPutRequest()
+    msg.id = resolveID(df_id)
+    msg.local = endpoint + filepath
+    msg.ext = filepath
+    click.echo(msg)
+    reply,mt = mapi.sendRecv(msg)
+    click.echo("reply:", reply) #TODO: returns 'write' only, not reply:write even
+
+    xfr = reply.xfr[0]
+    click.echo("id:", xfr.id, "stat:", xfr.stat)
+    if wait:
+        click.echo("waiting")
+        # while xfr.status < 3:
+        while True:
+            sleep(2)
+            msg = auth.XfrViewRequest()
+            msg.xfr_id = xfr.id
+            reply, mt = mapi.sendRecv(msg)
+            xfr = reply.xfr[0]
+            click.echo("id:", xfr.id, "stat:", xfr.stat)
+
+        click.echo("done. status:", xfr.stat)
+    else:
+        click.echo("xfr id:", xfr.id)
     click.echo("TODO: NOT IMPLEMENTED")
 
 
@@ -344,8 +418,8 @@ def coll():
     pass
 
 @coll.command(name='view',help="View collection")
-@click.argument("id")
-def coll_view(id):
+@click.argument("df_id")
+def coll_view(df_id):
     msg = auth.CollViewRequest()
     msg.id = resolveCollID(id)
     reply, mt = mapi.sendRecv( msg )
@@ -373,7 +447,7 @@ def coll_create(title,alias,description,collection):
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-def data_update(df_id,title,alias,description):
+def coll_update(df_id,title,alias,description):
     msg = auth.CollUpdateRequest()
     msg.id = resolveCollID(df_id)
     if title is not None: msg.title = title
@@ -386,9 +460,9 @@ def data_update(df_id,title,alias,description):
 #TODO: Fix-up
 
 @coll.command(name='delete',help="Delete existing collection")
-@click.argument("id")
-def coll_delete(id):
-    id2 = resolveCollID(id)
+@click.argument("df_id")
+def coll_delete(df_id):
+    id2 = resolveCollID(df_id)
 
     if g_interactive:
         click.echo("Warning: this will delete all data records and collections contained in the specified collection.")
@@ -434,10 +508,10 @@ def query_list(offset,count):
     printListing(reply)
 
 @query.command(name='exec',help="Execute a stored query by ID")
-@click.argument("id")
-def query_exec(id):
+@click.argument("df_id")
+def query_exec(df_id):
     msg = auth.QueryExecRequest()
-    msg.id = resolveID(id)
+    msg.id = resolveID(df_id)
     reply, mt = mapi.sendRecv( msg )
     printListing(reply)
 
@@ -484,7 +558,11 @@ def user():
 @click.option("-o","--offset",default=0,help="List offset")
 @click.option("-c","--count",default=20,help="List count")
 def user_collab(offset,count):
-    click.echo("TODO: NOT IMPLEMENTED")
+    msg = auth.UserListCollabRequest()
+    msg.offset = offset
+    msg.count = count
+    reply, mt = mapi.sendRecv(msg)
+    printUserListing(reply)
 
 
 @user.command(name='all',help="List all users")
@@ -532,10 +610,10 @@ def project_list(owner,admin,member):
     printProjListing(reply)
 
 @project.command(name='view',help="View project specified by ID")
-@click.argument("id")
-def project_view(id):
+@click.argument("df_id")
+def project_view(df_id):
     msg = auth.ProjectViewRequest()
-    msg.id = resolveID(id)
+    msg.id = resolveID(df_id)
     reply, mt = mapi.sendRecv( msg )
     # TODO Print project info
     click.echo(reply)
@@ -561,9 +639,9 @@ def shared_projects():
 
 
 @shared.command(name="list",help="List data shared by user/project ID")
-@click.argument("id")
-def shared_list(id):
-    id2 = resolveID(id)
+@click.argument("df_id")
+def shared_list(df_id):
+    id2 = resolveID(df_id)
 
     if id2.startswith("p/"):
         msg = auth.ACLByProjListRequest()
@@ -592,8 +670,8 @@ def xfr_list():
     click.echo("TODO: NOT IMPLEMENTED")
 
 @xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer id ID omitted")
-@click.argument("id",required=False)
-def xfr_stat(id):
+@click.argument("df_id",required=False,default="MOST RECENT XFR ID")
+def xfr_stat(df_id):
     click.echo("TODO: NOT IMPLEMENTED")
 
 #------------------------------------------------------------------------------
@@ -610,21 +688,6 @@ def ep_get():
         info(1,g_ep_cur)
     else:
         info(1,"Not set")
-
-@ep.command(name='set',help="Set current end-point path (omit path for default)")
-@click.argument("path",required=False)
-def ep_set(path):
-    global g_ep_cur
-    if path:
-        g_ep_cur = resolveID(path)
-    else:
-        if g_ep_default:
-            g_ep_cur = g_ep_default
-        else:
-            info(1,"Default end-point not configured")
-            return
-
-    info(1,g_ep_cur)
 
 @ep.command(name='default',help="Get or set default end-point path")
 @click.argument("new_default_ep",required=False)
@@ -670,8 +733,8 @@ def ep_list():
 
 @cli.command(name='ident',help="Set current user or project identity to ID (omit for self)")
 @click.option("-s","--show",is_flag=True,help="Show current identity")
-@click.argument("id",required=False)
-def ident(id,show):
+@click.argument("df_id",required=False)
+def ident(df_id,show):
     global g_cur_sel
     global g_cur_coll
     global g_cur_alias_prefix
@@ -680,28 +743,28 @@ def ident(id,show):
         click.echo(g_cur_sel)
         return
 
-    if id == None:
-        id = g_uid
+    if df_id == None:
+        df_id = g_uid
 
-    if id[0:2] == "p/":
+    if df_id[0:2] == "p/":
         msg = auth.ProjectViewRequest()
-        msg.id = id
+        msg.id = df_id
         reply, mt = mapi.sendRecv( msg )
 
-        g_cur_sel = id
+        g_cur_sel = df_id
         g_cur_coll = "c/p_" + g_cur_sel[2:] + "_root"
         g_cur_alias_prefix = "p:" + g_cur_sel[2:] + ":"
 
         info(1,"Switched to project " + g_cur_sel)
     else:
-        if id[0:2] != "u/":
-            id = "u/" + id
+        if df_id[0:2] != "u/":
+            id = "u/" + df_id
 
         msg = auth.UserViewRequest()
-        msg.uid = id
+        msg.uid = df_id
         reply, mt = mapi.sendRecv( msg )
 
-        g_cur_sel = id
+        g_cur_sel = df_id
         g_cur_coll = "c/u_" + g_cur_sel[2:] + "_root"
         g_cur_alias_prefix = "u:" + g_cur_sel[2:] + ":"
 
@@ -722,40 +785,40 @@ def exit_cli():
 #------------------------------------------------------------------------------
 # Print and Utility functions
 
-def resolveIndexVal( id ):
+def resolveIndexVal( df_id ):
     try:
-        if len(id) <= 3:
+        if len(df_id) <= 3:
             global g_list_items
-            if id.endswith("."):
-                idx = int(id[:-1])
+            if df_id.endswith("."):
+                df_idx = int(df_id[:-1])
             else:
-                idx = int(id)
-            if idx <= len(g_list_items):
+                df_idx = int(df_id)
+            if df_idx <= len(g_list_items):
                 #print("found")
-                return g_list_items[idx-1]
+                return g_list_items[df_idx-1]
     except ValueError:
         #print("not a number")
         pass
 
-    return id
+    return df_id
 
-def resolveID( id ):
-    id2 = resolveIndexVal( id )
+def resolveID( df_id ):
+    df_id2 = resolveIndexVal( df_id )
 
-    if ( len(id2) > 2 and id2[1] == "/" ) or (id2.find(":") > 0):
-        return id2
+    if ( len(df_id2) > 2 and df_id2[1] == "/" ) or (df_id2.find(":") > 0):
+        return df_id2
 
-    return g_cur_alias_prefix + id2
+    return g_cur_alias_prefix + df_id2
 
-def resolveCollID( id ):
-    if id == ".":
+def resolveCollID( df_id ):
+    if df_id == ".":
         return g_cur_coll
-    elif id == "/":
+    elif df_id == "/":
         if g_cur_sel[0] == "p":
             return "c/p_" + g_cur_sel[2:] + "_root"
         else:
             return "c/u_" + g_cur_sel[2:] + "_root"
-    elif id == "..":
+    elif df_id == "..":
         msg = auth.CollGetParentsRequest()
         msg.id = g_cur_coll
         msg.all = False
@@ -766,46 +829,46 @@ def resolveCollID( id ):
         else:
             raise Exception("Already at root")
 
-    id2 = resolveIndexVal( id )
-    #print("inter id:",id2)
-    if ( len(id2) > 2 and id2[1] == "/" ) or (id2.find(":") > 0):
-        return id2
+    df_id2 = resolveIndexVal( df_id )
+    #print("inter id:",df_id2)
+    if ( len(df_id2) > 2 and df_id2[1] == "/" ) or (df_id2.find(":") > 0):
+        return df_id2
 
-    return g_cur_alias_prefix + id2
+    return g_cur_alias_prefix + df_id2
 
 
 def printListing( reply ):
-    idx = 1
+    df_idx = 1
     global g_list_items
     g_list_items = []
     for i in reply.item:
-        g_list_items.append(i.id)
+        g_list_items.append(i.df_id)
         if i.alias:
-            click.echo("{:2}. {:12} ({:20} {}".format(idx,i.id,i.alias+")",i.title))
+            click.echo("{:2}. {:12} ({:20} {}".format(df_idx,i.df_id,i.alias+")",i.title))
         else:
-            click.echo("{:2}. {:34} {}".format(idx,i.id,i.title))
-        idx += 1
+            click.echo("{:2}. {:34} {}".format(df_idx,i.df_id,i.title))
+        df_idx += 1
 
 def printUserListing( reply ):
-    idx = 1
+    df_idx = 1
     global g_list_items
     g_list_items = []
     for i in reply.user:
         g_list_items.append(i.uid)
-        click.echo("{:2}. {:24} {}".format(idx,i.uid,i.name))
-        idx += 1
+        click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
+        df_idx += 1
 
 def printProjListing(reply):
-    idx = 1
+    df_idx = 1
     global g_list_items
     g_list_items = []
     for i in reply.proj:
-        g_list_items.append(i.id)
-        click.echo("{:2}. {:24} {}".format(idx,i.id,i.title))
-        idx += 1
+        g_list_items.append(i.df_id)
+        click.echo("{:2}. {:24} {}".format(df_idx,i.df_id,i.title))
+        df_idx += 1
 
 def printEndpoints(reply):
-    idx = 1
+    df_idx = 1
     global g_list_items
     g_list_items = []
     for i in reply.ep:
@@ -813,11 +876,11 @@ def printEndpoints(reply):
         if p >= 0:
             path = i[0:p+1]
             g_list_items.append(path)
-            click.echo("{:2}. {}".format(idx,path))
-            idx += 1
+            click.echo("{:2}. {}".format(df_idx,path))
+            df_idx += 1
 
 def confirm( msg ):
-    val = echo.prompt( msg )
+    val = click.prompt( msg )
     if val == "Y":
         return True
     else:
