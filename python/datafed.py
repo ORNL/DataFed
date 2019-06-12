@@ -15,11 +15,14 @@ import click
 import prompt_toolkit
 import re
 import json
+import time
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.formatted_text import to_formatted_text
 import dfConfig as dfC
+from google.protobuf.json_format import MessageToJson
+from google.protobuf.json_format import MessageToDict
 
 
 if sys.version_info.major == 3:
@@ -40,6 +43,8 @@ g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 g_ep_default = dfC.Config.get_config("DF_DEFAULT_ENDPOINT")
 g_ep_cur = g_ep_default
 g_output_json = False
+g_output_dict = False
+g_output_text = True
 
  #TODO: Make this work, please
 ALIASES = {
@@ -64,28 +69,55 @@ def info( level, *args ):
         print( *args )
 
 def set_verbosity(ctx, param, value):
-    #print("set verbosity:",value)
     global g_verbosity
-    if value != None:
+    if value:
         g_verbosity = value
+    elif value == 0:
+        g_verbosity = 0
 
 def set_interactive(ctx, param, value):
     #print("set interactive:",value)
     global g_interactive
-    if value == True:
+    if value is True:
         g_interactive = value
 
 def set_output_json(ctx, param, value):
     #print("set interactive:",value)
     global g_output_json
-    if value == True:
-        g_output_json = value
+    global g_output_dict
+    global g_output_text
+    if value:
+        g_output_json = True
+        g_output_dict = False
+        g_output_text = False
 
-def set_output_txt(ctx, param, value):
+def set_output_dict(ctx, param, value):
     #print("set interactive:",value)
     global g_output_json
-    if value == True:
+    global g_output_dict
+    global g_output_text
+    if value:
         g_output_json = False
+        g_output_dict = True
+        g_output_text = False
+
+def set_output_text(ctx, param, value):
+    #print("set interactive:",value)
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if value:
+        g_output_json = False
+        g_output_dict = False
+        g_output_text = True
+
+def output_json(reply):
+    json_output = MessageToJson(reply,preserving_proto_field_name=True)
+    return json_output
+
+def output_dict(reply):
+    dict_output = MessageToDict(reply,preserving_proto_field_name=True)
+    return dict_output
 
 
 #changing parameter types to validation callbacks
@@ -157,12 +189,13 @@ class AliasedGroup(click.Group):
 @click.option("-c","--client-cred-dir",type=str,help="Client credential directory")
 @click.option("-s","--server-cred-dir",type=str,help="Server credential directory")
 @click.option("-l","--log",is_flag=True,help="Force manual authentication")
-@click.option("-v","--verbosity",type=int,is_eager=True,callback=set_verbosity,expose_value=False,help="Verbosity level (0=quiet,1=normal,2=verbose)")
+@click.option("-v","--verbosity",type=int,callback=set_verbosity,expose_value=True,help="Verbosity level (0=quiet,1=normal,2=verbose) for text-format output. JSON and dictionary outputs are always fully verbose.")
 @click.option("-i","--interactive",is_flag=True,is_eager=True,callback=set_interactive,expose_value=False,help="Start an interactive session")
-#@click.option("-j", "--json", is_flag=True,callback=set_output_json,expose_value=True,help="Set CLI output format to JSON, when applicable.")
-#@click.option("-txt","--text",is_flag=True,callback=set_output_txt, expose_value=True,help="Set CLI output format to human-friendly text")
+@click.option("-j", "--json", is_flag=True,callback=set_output_json,expose_value=True,help="Set CLI output format to JSON, when applicable.")
+@click.option("-d", "--dict", is_flag=True,callback=set_output_dict,expose_value=True,help="Set CLI output format to stringified python dictionary, when applicable.")
+@click.option("-t","--text",is_flag=True,callback=set_output_text, expose_value=True,help="Set CLI output format to human-friendly text.")
 @click.pass_context
-def cli(ctx,host,port,client_cred_dir,server_cred_dir,log):
+def cli(ctx,host,port,client_cred_dir,server_cred_dir,log,verbosity,json,text,dict):
     global g_interactive
 
     if not g_interactive and ctx.invoked_subcommand is None:
@@ -218,10 +251,45 @@ def data_view(df_id,details):
     msg.id = resolveID(df_id)
     if details:
         msg.details = True
-    else:
+    elif not details:
         msg.details = False
     reply, mt = mapi.sendRecv( msg )
-    click.echo()
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        specs = dictionary['data'][0]
+        rep = specs.get
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('id', "None") + "\n" +
+                       "title: " + rep('title', "None") + "\n" +
+                       "alias: " + rep('alias', "None"))
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "keywords: " + rep('keyw', "None") + "\n" +
+                       "size: " + rep('size', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None"))))
+        if g_verbosity >= 2:
+            click.echo("topic: " + rep('topic', "None") + "\n" +
+                       "is public: " + str(rep('ispublic', "None")) + "\n" +
+                       "metadata: " + rep('metadata', "None") + "\n" +
+                       "data repository id: " + rep('repo_id', "None") + "\n" +
+                       "source: " + rep('source', "None") + "\n" +
+                       "extension: " + rep('ext', "None") + "\n" +
+                       "auto extension: " + str(rep('ext_auto', "None")) + "\n" +
+                       "owner: " + rep('owner', "None") + "\n" +
+                       "locked: " + str(rep('locked', "None")) + "\n" +
+                       "parent collection id: " + rep('parent_id', "None") + "\n" +
+                       "dependencies: " + str(rep('deps', "None")))
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
 
 #TODO: implement ext and auto-ext, turn metadata file into metadata string, dependencies?
 #TODO: how to handle binary json files?
@@ -229,18 +297,19 @@ def data_view(df_id,details):
 @click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)") # TODO: SORT OUT syntax
+@click.option("-kw","--key-words",type=str,required=False,help="Keywords, must be in the form of a comma separated list enclosed by double quotation marks") # TODO: SORT OUT syntax
 @click.option("-df","--data-file",type=str,required=False,help="Local raw data file") #TODO: Put functionality
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
-@click.option("-mf","--metadata-file",type=click.File('r'),required=False,help="Metadata file (.json with relative or absolute path)")
+@click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)")
 @click.option("-c","--collection",type=str,required=False, default= g_cur_coll, help="Parent collection ID/alias (default is current working collection)")
-@click.option("-r","--repository",type=str,required=False,help="Repository ID") #Does this need to default??
+@click.option("-r","--repository",type=str,required=False,help="Repository ID")
 @click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 def data_create(title,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies): #cTODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
+
     msg = auth.RecordCreateRequest()
     msg.title = title
     if description: msg.desc = description
@@ -249,13 +318,12 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
     if alias: msg.alias = alias
     if resolveCollID(collection): msg.parent_id = resolveCollID(collection)
     if repository: msg.repo_id = repository
-    #msg.ext = ""
     msg.ext_auto = True
     if extension is not None:
         msg.ext = extension
-        msg.ext_auto = False  # does cli have to do this, or does server already?
+        msg.ext_auto = False
     if metadata_file is not None:
-        metadata = str(json.load(metadata_file))
+        metadata = json.dumps(json.load(metadata_file))
     if metadata: msg.metadata = metadata
     if dependencies:
         deps = list(dependencies)
@@ -271,10 +339,45 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
             if re.search(r'^d/[0-9]{8}', item[1]):
                 dep.id = item[1]
             else: dep.alias = item[1]
-    click.echo(msg) #load metadata from JSON file, then convert to string) # TODO: implement dependencies
     reply, mt = mapi.sendRecv(msg)
 #    click.echo("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
-    click.echo(reply)
+
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        rep = dictionary[data][0]
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('title', "None")  + "\n" +
+                       "title: " + rep('title', "None") + "\n" +
+                       "alias: " + rep('alias', "None"))
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "keywords: " + rep('keyw', "None") + "\n" +
+                       "size: " + rep('size', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None")))
+                       )
+        if g_verbosity == 2:
+            click.echo("topic: " + rep('topic', "None") + "\n" +
+                       "is public: " + rep('ispublic', "None") + "\n" +
+                       "metadata: " + rep('metadata', "None") + "\n" +
+                       "data repository id: " + rep('repo_id', "None") + "\n" +
+                       "source: " + rep('source', "None") + "\n" +
+                       "extension: " + rep('ext', "None") + "\n" +
+                       "auto extension: " + rep('ext_auto', "None") + "\n" +
+                       "owner: " + rep('owner', "None") + "\n" +
+                       "locked: " + rep('locked', "None") + "\n" +
+                       "parent collection id: " + rep('parent_id', "None") + "\n" +
+                       "dependencies: " + rep('deps', "None"))
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
 
 @data.command(name='update',help="Update existing data record")
 @click.argument("df_id")
@@ -285,10 +388,10 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
 @click.option("-df","--data-file",type=str,required=False,help="Local raw data file")
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
-@click.option("-mf","--metadata-file",type=str,required=False,help="Metadata file (JSON)")
+@click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
 @click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
-@click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str])help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
-def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file): #TODO: FIX
+@click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
+def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove): #TODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
@@ -300,9 +403,9 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
     if alias is not None: msg.alias = alias
     if extension is not None:
         msg.ext = extension
-        msg.ext_auto = False  # does cli have to do this, or does server already?
+        msg.ext_auto = False
     if metadata_file is not None:
-        metadata = str(json.load(metadata_file))
+        metadata = json.dumps(json.load(metadata_file))
     if metadata is not None: msg.metadata = metadata
     if dependencies_add:
         deps = list(dependencies_add)
@@ -332,9 +435,45 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
             if re.search(r'^d/[0-9]{8}', item[1]):
                 dep.id = item[1]
             else: dep.alias = item[1]
-    click.echo(msg)  # load metadata from JSON file, then convert to string) #TODO: implement dependencies
     reply, mt = mapi.sendRecv(msg)
-    click.echo("reply: ", reply)
+#TODO : Tailor for data update
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        specs = dictionary['data'][0]
+        rep = specs.get
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('title', "None") + "\n" +
+                       "title: " + rep('title', "None") + "\n" +
+                       "alias: " + rep('alias', "None"))
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "keywords: " + rep('keyw', "None") + "\n" +
+                       "size: " + rep('size', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None")))
+                       )
+        if g_verbosity == 2:
+            click.echo("topic: " + rep('topic', "None") + "\n" +
+                       "is public: " + rep('ispublic', "None") + "\n" +
+                       "metadata: " + rep('metadata', "None") + "\n" +
+                       "data repository id: " + rep('repo_id', "None") + "\n" +
+                       "source: " + rep('source', "None") + "\n" +
+                       "extension: " + rep('ext', "None") + "\n" +
+                       "auto extension: " + rep('ext_auto', "None") + "\n" +
+                       "owner: " + rep('owner', "None") + "\n" +
+                       "locked: " + rep('locked', "None") + "\n" +
+                       "parent collection id: " + rep('parent_id', "None") + "\n" +
+                       "dependencies: " + rep('deps', "None"))
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
     #click.echo("id:",id,"t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file)
 
 @data.command(name='delete',help="Delete existing data record")
@@ -373,7 +512,7 @@ def data_get(df_id,path,wait):
             reply, mt = mapi.sendRecv( msg )
             xfr = reply.xfr[0]
             click.echo("id:",xfr.id,"stat:",xfr.stat)
-
+#TODO: Figure out verbosity replies
         click.echo("done. status:",xfr.stat)
     else:
         click.echo("xfr id:",xfr.id)
@@ -404,7 +543,7 @@ def data_put(df_id,endpoint,filepath,wait):
             reply, mt = mapi.sendRecv(msg)
             xfr = reply.xfr[0]
             click.echo("id:", xfr.id, "stat:", xfr.stat)
-
+#TODO: Figure out verbosity replies
         click.echo("done. status:", xfr.stat)
     else:
         click.echo("xfr id:", xfr.id)
@@ -423,7 +562,33 @@ def coll_view(df_id):
     msg = auth.CollViewRequest()
     msg.id = resolveCollID(id)
     reply, mt = mapi.sendRecv( msg )
-    click.echo(reply)
+    #TODO: Tailor verbosity-dependent replies to collections
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        specs = dictionary['coll'][0]
+        rep = specs.get
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('title', "None") + "\n" +
+                       "title: " + rep('title', "None") + "\n" +
+                       "alias: " + rep('alias', "None"))
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "owner: " + rep('owner', "None") + "\n" +
+                       "parent collection id: " + rep('parent_id', "None"))
+        if g_verbosity == 2:
+            click.echo("is public: " + rep('ispublic', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None"))))
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
 
 @coll.command(name='create',help="Create new collection")
 @click.argument("title")
@@ -438,8 +603,32 @@ def coll_create(title,alias,description,collection):
     if resolveCollID(collection) is not None: msg.parent_id = resolveCollID(collection)
     click.echo(msg)
     reply, mt = mapi.sendRecv(msg)
-    click.echo(reply)
-    click.echo("t: %s, a: %s, d: %s, c: %s" % (title, alias, description, collection))
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        specs = dictionary['coll'][0]
+        rep = specs.get
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('title', "None") + "\n" +
+                       "title: " + rep('title', "None") + "\n" +
+                       "alias: " + rep('alias', "None"))
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "owner: " + rep('owner', "None") + "\n" +
+                       "parent collection id: " + rep('parent_id', "None"))
+        if g_verbosity == 2:
+            click.echo("is public: " + rep('ispublic', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None"))))
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
     #TODO : JSON output
 
 @coll.command(name='update',help="Update existing collection")
@@ -453,10 +642,33 @@ def coll_update(df_id,title,alias,description):
     if title is not None: msg.title = title
     if alias is not None: msg.alias = alias
     if description is not None: msg.desc = description
-    click.echo(msg)
     reply, mt = mapi.sendRecv(msg)
-    click.echo(reply)
-    click.echo("t: %s, a: %s, d: %s" % (title, alias, description))
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        specs = dictionary['coll'][0]
+        rep = specs.get
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('title', "None") + "\n" +
+                       "title: " + rep('title', "None") + "\n" +
+                       "alias: " + rep('alias', "None"))
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "owner: " + rep('owner', "None") + "\n" +
+                       "parent collection id: " + rep('parent_id', "None"))
+        if g_verbosity == 2:
+            click.echo("is public: " + rep('ispublic', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None"))))
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
 #TODO: Fix-up
 
 @coll.command(name='delete',help="Delete existing collection")
@@ -481,6 +693,8 @@ def coll_add(item_id,coll_id):
     msg.id = resolveCollID(coll_id)
     msg.add.append(resolveID(item_id))
     reply, mt = mapi.sendRecv( msg )
+    #TODO: Figure out appropriate reply
+    click.echo(reply)
 
 @coll.command(name='remove',help="Remove data/collection ITEM_ID from collection COLL_ID")
 @click.argument("item_id")
@@ -489,7 +703,9 @@ def coll_rem(item_id,coll_id):
     msg = auth.CollWriteRequest()
     msg.id = resolveCollID(coll_id)
     msg.rem.append(resolveID(item_id))
+    #TODO: Figure out appropriate reply
     reply, mt = mapi.sendRecv( msg )
+    click.echo(reply)
 
 #------------------------------------------------------------------------------
 # Query command group
@@ -506,6 +722,7 @@ def query_list(offset,count):
     msg.count = count
     reply, mt = mapi.sendRecv( msg )
     printListing(reply)
+    #TODO: FIgure out verbosity-dependent replies
 
 @query.command(name='exec',help="Execute a stored query by ID")
 @click.argument("df_id")
@@ -583,6 +800,7 @@ def user_view(uid,details):
     msg.uid = resolveID(uid)
     msg.details = details
     reply, mt = mapi.sendRecv( msg )
+    #TODO: Figure out verbosity-dependent replies
     click.echo(reply)
 
 #------------------------------------------------------------------------------
@@ -606,7 +824,7 @@ def project_list(owner,admin,member):
     msg.by_owner = owner
     msg.by_admin = admin
     msg.by_member = member
-    reply, mt = mapi.sendRecv( msg )
+    reply, mt = mapi.sendRecv( msg ) #TODO: Figure out verbosity reply?
     printProjListing(reply)
 
 @project.command(name='view',help="View project specified by ID")
@@ -616,7 +834,34 @@ def project_view(df_id):
     msg.id = resolveID(df_id)
     reply, mt = mapi.sendRecv( msg )
     # TODO Print project info
-    click.echo(reply)
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        dictionary = output_dict(reply)
+        specs = dictionary['proj'][0]
+        rep = specs.get
+        if g_verbosity >= 0:
+            click.echo("id: " + rep('title', "None") + "\n" +
+                       "title: " + rep('title', "None") + "\n")
+        if g_verbosity >= 1:
+            click.echo("description: " + rep('desc', "None") + "\n" +
+                       "sub-repository: " + rep('sub_repo', "None") + "\n" +
+                       "sub-allocation: " + rep('sub_alloc', "None") + "\n" + #TODO: Figure out conversion to Gigs?
+                       "sub-allocation space used: " + rep('sub_usage', "None")) #TODO: Figure out conversion to Gigs?
+        if g_verbosity == 2:
+            click.echo("owner: " + rep('owner', "None") + "\n" +
+                       "admin(s): " + rep('admin', "None") + "\n" +
+                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
+                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None"))) + "\n" +
+                       "allocation data: " + rep('deps', "None")) #TODO: Figure out how to present this
+    elif g_output_json:
+        output = output_json(reply)
+        click.echo(output)
+    elif g_output_dict:
+        output = output_dict(reply)
+        click.echo(output)
 
 #------------------------------------------------------------------------------
 # Shared data command group
