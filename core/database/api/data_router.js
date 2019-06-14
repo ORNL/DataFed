@@ -865,3 +865,71 @@ router.get('/delete', function (req, res) {
 .queryParam('id', joi.string().required(), "Data ID or alias")
 .summary('Deletes an existing data record')
 .description('Deletes an existing data record');
+
+function dataGetPreproc( a_client, a_ids, a_res, a_vis ){
+    var id, obj, list, locked;
+
+    for ( var i in a_ids ){
+        id = a_ids[i];
+        //console.log("proc",id);
+
+        if ( id.charAt(0) == 'c' ){
+            if ( !g_lib.hasAdminPermObject( a_client, id )) {
+                obj = g_db.c.document( id );
+                if ( !g_lib.hasPermissions( a_client, obj, g_lib.PERM_LIST ))
+                    throw g_lib.ERR_PERM_DENIED;
+            }
+            //console.log("read coll");
+
+            list = g_db._query( "for v in 1..1 outbound @coll item return v._id", { coll: id }).toArray();
+            dataGetPreproc( a_client, list, a_res, a_vis );
+        }else{
+            if ( a_vis.indexOf(id) == -1 ){
+                //console.log("not visited");
+
+                obj = g_db.d.document( id );
+                if ( !g_lib.hasAdminPermObject( a_client, id )) {
+                    if ( !g_lib.hasPermissions( a_client, obj, g_lib.PERM_RD_DATA ))
+                        throw g_lib.ERR_PERM_DENIED;
+                    locked = obj.locked;
+                }else{
+                    locked = false;
+                }
+                //console.log("store res");
+                a_res.push({id:id,title:obj.title,locked:obj.locked,size:obj.size});
+                a_vis.push(id);
+            }
+        }
+    }
+}
+
+router.get('/get/preproc', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d","c","item"],
+            },
+            action: function() {
+                //console.log("/dat/get/preproc client", req.queryParams.client);
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var ids = [], result = [];
+                for ( var i in req.queryParams.ids ){
+                    //console.log("id ini: ",req.queryParams.ids[i]);
+                    var id = g_lib.resolveID( req.queryParams.ids[i], client );
+                    //console.log("id: ",id);
+                    ids.push( id );
+                }
+                dataGetPreproc( client, ids, result, [] );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data/collection IDs or aliases")
+.summary('Data get preprocessing')
+.description('Data get preprocessing (check permission, data size, lock, deduplicate)');
