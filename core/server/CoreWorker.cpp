@@ -122,6 +122,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
+        SET_MSG_HANDLER_DB( proto_id, DataGetPreprocRequest, ListingReply, dataGetPreproc );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
@@ -421,14 +422,14 @@ Worker::procRevokeCredentialsRequest( const std::string & a_uid )
 bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
+    PROC_MSG_BEGIN( DataGetRequest, XfrGetDataReply )
     if ( request->id_size() > 1 )
     {
-        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->local() );
+        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->path() );
     }
     else
     {
-        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->local() );
+        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->path() );
     }
 
     m_db_client.setClient( a_uid );
@@ -437,11 +438,11 @@ Worker::procDataGetRequest( const std::string & a_uid )
     //    ids.push_back(request->id(i));
 
     m_db_client.xfrInit( *request, reply );
-
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-    m_mgr.handleNewXfr( reply.xfr(0) );
+    //m_mgr.handleNewXfr( reply.xfr(0) );
+    m_mgr.handleNewXfr2( reply.xfr(0) );
 
     PROC_MSG_END
 }
@@ -451,10 +452,10 @@ Worker::procDataPutRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
 
-    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->local() );
+    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->path() );
 
     m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( request->id(), request->local(), request->has_ext()?&request->ext():0, XM_PUT, reply );
+    m_db_client.xfrInit( request->id(), request->path(), request->has_ext()?&request->ext():0, XM_PUT, reply );
 
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );

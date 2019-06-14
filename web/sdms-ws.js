@@ -676,8 +676,15 @@ app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/get/preproc', ( a_req, a_resp ) => {
+    sendMessage( "DataGetPreprocRequest", { id: JSON.parse(a_req.query.ids),  }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/dat/get', ( a_req, a_resp ) => {
-    sendMessage( "DataGetRequest", { ids: JSON.parse(a_req.query.ids), local: a_req.query.path }, a_req, a_resp, function( reply ) {
+    console.log("/api/dat/get, ids:",a_req.query.ids);
+    sendMessage( "DataGetRequest", { id: JSON.parse(a_req.query.ids), path: a_req.query.path }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -956,7 +963,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
-        console.log( body );
+        //console.log( body );
         a_resp.json(JSON.parse(body));
     });
 
@@ -974,7 +981,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
-        console.log( body );
+        //console.log( body );
         a_resp.json(JSON.parse(body));
     });
 
@@ -1009,8 +1016,8 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
             bearer: userinfo.acc_tok,
         }
     }, function( error, response, body ) {
-        console.log("ep ls err:",error);
-        console.log("ep ls body sz:",body.length );
+        //console.log("ep ls err:",error);
+        //console.log("ep ls body sz:",body.length );
         a_resp.json(JSON.parse(body));
     });
 
@@ -1154,7 +1161,7 @@ function processProtoFile( msg ){
         msg._mid = i-1;
         msg._msg_type = (pid << 8) | (i-1);
 
-        console.log(msg.name,msg._msg_type);
+        //console.log(msg.name,msg._msg_type);
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;

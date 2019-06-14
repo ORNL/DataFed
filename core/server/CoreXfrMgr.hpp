@@ -23,6 +23,7 @@ public:
     void start();
     void stop( bool a_wait );
     void newXfr( const XfrData & a_xfr );
+    void newXfr2( const XfrGetData & a_xfr );
 
 private:
     struct XfrDataInfo

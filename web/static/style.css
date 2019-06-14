@@ -367,3 +367,27 @@ td
 {
     color: #FF0000!important;
 }
+
+/* TODO Need to fix this - the xfr dialog match select menu */
+#matches-menu
+{
+    max-height: 200px;
+}
+
+#matches-button
+{
+    width:100% !important;
+    box-sizing: border-box !important;;
+}
+
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index:1000 !important;
+}
+
+textarea
+{
+    box-sizing: border-box !important;
+}

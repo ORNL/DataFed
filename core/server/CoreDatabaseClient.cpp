@@ -1179,6 +1179,26 @@ DatabaseClient::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPat
     a_reply.set_path( result["path"].GetString() );
 }
 
+void
+DatabaseClient::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    string ids = "[";
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i > 0 )
+            ids += ",";
+
+        ids += "\"" + a_request.id(i) + "\"";
+    }
+    ids += "]";
+    params.push_back({"ids",ids});
+
+    dbGet( "dat/get/preproc", params, result );
+
+    setListingData( a_reply, result );
+}
 
 void
 DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_reply )
@@ -1444,6 +1464,8 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
                 item->set_locked( imem->value.GetBool() );
             if (( imem = val.FindMember("owner")) != val.MemberEnd() && !imem->value.IsNull() )
                 item->set_owner( imem->value.GetString() );
+            if (( imem = val.FindMember("size")) != val.MemberEnd() )
+                item->set_size( imem->value.GetUint() );
             if (( imem = val.FindMember("gen")) != val.MemberEnd() )
                 item->set_gen( imem->value.GetInt() );
             if (( imem = val.FindMember("deps")) != val.MemberEnd() )
@@ -1677,7 +1699,7 @@ DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_pa
 }
 
 void
-DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply )
+DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrGetDataReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
@@ -1690,13 +1712,70 @@ DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataRe
         ids += "\"" + a_request.id(i) + "\"";
     }
     ids += "]";
-    params.push_back({"id",ids});
-    params.push_back({"path",a_request.local()});
+    params.push_back({"ids",ids});
+    params.push_back({"path",a_request.path()});
     params.push_back({"mode",to_string(XM_GET)});
 
-    dbGet( "xfr/init", params, result );
+    dbGet( "xfr/init_get", params, result );
 
-    setXfrData( a_reply, result );
+    DL_INFO("Back from init_get");
+
+    setXfrGetData( a_reply, result );
+}
+
+void
+DatabaseClient::setXfrGetData( XfrGetDataReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    XfrGetData* xfr;
+    XfrFiles*   files;
+    XfrFile*    file;
+    rapidjson::Value::MemberIterator imem, imem2;
+
+    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    {
+        rapidjson::Value & val = a_result[i];
+
+        xfr = a_reply.add_xfr();
+        xfr->set_id( val["_id"].GetString() );
+        xfr->set_mode( (XfrMode)val["mode"].GetInt() );
+        xfr->set_status( (XfrStatus)val["status"].GetInt() );
+        xfr->set_local_path( val["local_path"].GetString() );
+        xfr->set_user_id( val["user_id"].GetString() );
+        xfr->set_started( val["started"].GetUint() );
+        xfr->set_updated( val["updated"].GetUint() );
+
+        imem = val.FindMember("files");
+        if ( imem != val.MemberEnd() )
+        {
+            for ( rapidjson::Value::ConstMemberIterator imem2 = imem->value.MemberBegin(); imem2 != imem->value.MemberEnd(); ++imem2 )
+            {
+                files = xfr->add_files();
+                files->set_repo_id( imem2->name.GetString() );
+                files->set_repo_ep( imem2->value["repo_ep"].GetString() );
+                const rapidjson::Value & fval = imem2->value["files"];
+                for ( rapidjson::SizeType f = 0; f < fval.Size(); f++ )
+                {
+                    file = files->add_file();
+                    file->set_id( fval[f]["id"].GetString() );
+                    file->set_from( fval[f]["from"].GetString() );
+                    file->set_to( fval[f]["to"].GetString() );
+                }
+            }
+        }
+
+        imem = val.FindMember("task_id");
+        if ( imem != val.MemberEnd() )
+            xfr->set_task_id( imem->value.GetString() );
+
+        imem = val.FindMember("err_msg");
+        if ( imem != val.MemberEnd() )
+            xfr->set_err_msg( imem->value.GetString() );
+    }
 }
 
 void

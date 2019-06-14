@@ -1,6 +1,7 @@
 #ifndef CENTRALDBCLIENT_HPP
 #define CENTRALDBCLIENT_HPP
 
+
 #include <string>
 #include <vector>
 #include <rapidjson/document.h>
@@ -66,6 +67,7 @@ public:
     void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply );
 
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
+    void dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
@@ -87,7 +89,7 @@ public:
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
-    void xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply );
+    void xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrGetDataReply & a_reply );
     void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
@@ -135,6 +137,7 @@ private:
     void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
+    void setXfrGetData( Auth::XfrGetDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );

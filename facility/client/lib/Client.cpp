@@ -937,7 +937,7 @@ Client::dataGet( const std::string & a_data_id, const std::string & a_local_path
     Auth::XfrDataReply *    rep;
 
     req.add_id( a_data_id );
-    req.set_local( applyPrefix( a_local_path ));
+    req.set_path( applyPrefix( a_local_path ));
 
     send<>( req, rep, m_ctx++ );
 
@@ -952,7 +952,7 @@ Client::dataPut( const std::string & a_data_id, const std::string & a_local_path
     Auth::XfrDataReply *    rep;
 
     req.set_id( a_data_id );
-    req.set_local( applyPrefix( a_local_path ));
+    req.set_path( applyPrefix( a_local_path ));
 
     send<>( req, rep, m_ctx++ );
 

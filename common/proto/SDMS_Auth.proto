@@ -259,16 +259,26 @@ message XfrDataReply
     repeated SDMS.XfrData       xfr         = 1;
 }
 
+message XfrGetDataReply
+{
+    repeated SDMS.XfrGetData    xfr         = 1;
+}
+
+message DataGetPreprocRequest
+{
+    repeated string             id          = 1;
+}
+
 message DataGetRequest
 {
     repeated string             id          = 1;
-    required string             local       = 2;
+    required string             path        = 2;
 }
 
 message DataPutRequest
 {
     required string             id          = 1;
-    required string             local       = 2;
+    required string             path        = 2;
     optional string             ext         = 3;
 }
 

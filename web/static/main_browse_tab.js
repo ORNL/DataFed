@@ -584,14 +584,7 @@ function makeBrowserTab(){
 
     this.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
-        //if ( ids.length != 1 )
-        //    return;
-
-        //var id = ids[0];
-
-        //if ( id.charAt(0) == "d" ) {
-            dataGet( ids );
-        //}
+        dataGet( ids );
     }
 
     this.actionDataPut = function() {

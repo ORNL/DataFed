@@ -235,6 +235,24 @@ function dataLock( a_id, a_lock, a_cb ){
 }
 
 function dataGet( a_ids ){
+    dataGetPreprocess( a_ids, function( ok, data ){
+        if ( ok ){
+            console.log("proproc:",data);
+            ok = false;
+            for ( var i in data.item ){
+                if ( !data.item[i].locked && data.item[i].size > 0 ){
+                    ok = true;
+                    break;
+                }
+            }
+            if ( !ok ){
+                dlgAlert("Data Get Error","None of the selected data records can be downloaded (all are empty and/or locked).");
+            }else{
+                dlgStartTransfer( XFR_GET, data.item );
+            }
+        }else{
+            dlgAlert("Data Get Error",data);
+        }
     /*checkPerms( a_id, PERM_RD_DATA, function( granted ){
         if ( !granted ){
             alertPermDenied();
@@ -245,11 +263,11 @@ function dataGet( a_ids ){
             if ( data ){
                 if ( !data.size || parseInt(data.size) == 0 )
                     dlgAlert("Data Get Error","Record contains no raw data");
-                else*/
+                else
                     dlgStartTransfer( XFR_GET, a_ids );
-            /*}
-        }); 
-    });*/
+            }
+        }); */
+    });
 }
 
 function dataPut( a_id ){
@@ -261,7 +279,7 @@ function dataPut( a_id ){
 
         viewData( a_id, function( data ){
             if ( data ){
-                dlgStartTransfer( XFR_PUT, data );
+                dlgStartTransfer( XFR_PUT, [data] );
             }
         }); 
     });
@@ -853,6 +871,11 @@ function inputEnable( a_objs ){
     return a_objs;
 }
 
+function dataGetPreprocess( a_ids, a_cb ){
+    var url = "/api/dat/get/preproc?ids=" + encodeURIComponent(JSON.stringify(a_ids));
+    _asyncGet( url, null, a_cb );
+}
+
 function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
     var url = "/api/dat/";
 
@@ -886,6 +909,7 @@ function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
             a_cb( ok, data );
     });
 }
+
 
 function defineArrowMarkerDeriv( a_svg ){
     a_svg.append('defs').append('marker')

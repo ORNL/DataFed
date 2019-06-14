@@ -558,6 +558,12 @@ Server::handleNewXfr( const XfrData & a_xfr )
 }
 
 void
+Server::handleNewXfr2( const XfrGetData & a_xfr )
+{
+    m_xfr_mgr.newXfr2( a_xfr );
+}
+
+void
 Server::dataDelete( const std::string & a_repo_id, const std::string & a_data_path )
 {
     lock_guard<mutex> lock( m_data_mutex );

@@ -67,6 +67,11 @@ XfrMgr::newXfr( const XfrData & a_xfr )
 
 
 void
+XfrMgr::newXfr2( const XfrGetData & a_xfr )
+{
+}
+
+void
 XfrMgr::xfrThreadFunc()
 {
     DL_DEBUG( "Xfr thread started" );

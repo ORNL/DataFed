@@ -43,6 +43,7 @@ private:
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     void                handleNewXfr( const XfrData & a_xfr );
+    void                handleNewXfr2( const XfrGetData & a_xfr );
     size_t              getXfrPurgeAge() { return m_xfr_purge_age; }
     size_t              getXfrPurgePeriod() { return m_xfr_purge_per; }
     void                dataDelete( const std::string & a_repo_id, const std::string & a_data_path );
