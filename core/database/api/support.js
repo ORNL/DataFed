@@ -56,6 +56,11 @@ module.exports = ( function() {
     obj.DEP_IN              = 0;
     obj.DEP_OUT             = 1;
 
+    obj.SORT_ID             = 0;
+    obj.SORT_TITLE          = 1;
+    obj.SORT_TIME_CREATE    = 2;
+    obj.SORT_TIME_UPDATE    = 3;
+
     obj.PROJ_NO_ROLE        = 0;    // No permissions
     obj.PROJ_MEMBER         = 1;    // Data/collection Permissions derived from "members" group and other ACLs
     obj.PROJ_MANAGER        = 2;    // Adds permission to manage groups and grants ADMIN permission on all data/collections
@@ -252,6 +257,9 @@ module.exports = ( function() {
         var params;
 
         if ( a_client_id.startsWith("u/")){
+            if ( !obj.db.u.exists( a_client_id ))
+                throw [ obj.ERR_INVALID_PARAM, "No such user '" + a_client_id + "'" ];
+
             return obj.db._document({ _id: a_client_id });
         } else if ( obj.isDomainAccount( a_client_id )) {
             // Account
@@ -260,14 +268,16 @@ module.exports = ( function() {
             // UUID
             params = { 'id': 'uuid/' + a_client_id };
         } else {
+            if ( !obj.db.u.exists( "u/" + a_client_id ))
+                throw [ obj.ERR_INVALID_PARAM, "No such user 'u/" + a_client_id + "'" ];
             return obj.db._document({ _id: "u/" + a_client_id });
         }
 
         var result = obj.db._query( "for j in inbound @id ident return j", params, { cache: true } ).toArray();
 
         if ( result.length != 1 ){
-            console.log("Client", a_client_id, "not found, params:", params );
-            throw [obj.ERR_NOT_FOUND,"Client, "+a_client_id+", not found"];
+            //console.log("Client", a_client_id, "not found, params:", params );
+            throw [obj.ERR_NOT_FOUND,"Account/Identity '"+a_client_id+"' not found"];
         }
 
         return result[0];
@@ -295,7 +305,7 @@ module.exports = ( function() {
     obj.findUserFromPubKey = function( a_pub_key ) {
         var result = obj.db._query( "for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v) return u[0]", { key: a_pub_key }).toArray();
 
-        console.log( "key res:", result );
+        //console.log( "key res:", result );
         if ( result.length != 1 )
             throw [obj.ERR_NOT_FOUND,"No user matching authentication key found"];
 
@@ -371,11 +381,7 @@ module.exports = ( function() {
     obj.getObject = function( a_obj_id, a_client ) {
         var id = obj.resolveID( a_obj_id, a_client );
 
-        try {
-            return obj.db._document( id );
-        } catch( e ) {
-            throw [obj.ERR_NOT_FOUND,"Object, "+a_obj_id+", not found"];
-        }
+        return obj.db._document( id );
     };
 
     obj.deleteData = function( a_data, a_allocs, a_locations ){
@@ -572,9 +578,14 @@ module.exports = ( function() {
         }
     };
 
+    // Data or Collection ID or alias
     obj.resolveID = function( a_id, a_client ) {
-        if ( a_id[1] == '/' ) {
-            return a_id;
+        var id,i=a_id.indexOf('/');
+
+        if ( i != -1 ) {
+            if ( !a_id.startsWith('d/') && !a_id.startsWith('c/'))
+                throw [ obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'" ];
+            id = a_id;
         } else {
             var alias_id = "a/";
             if ( a_id.indexOf(":") == -1 )
@@ -584,10 +595,79 @@ module.exports = ( function() {
 
             var alias = obj.db.alias.firstExample({ _to: alias_id });
             if ( !alias )
-                throw [obj.ERR_NOT_FOUND,"Alias, "+a_id+", not found"];
+                throw [obj.ERR_NOT_FOUND,"Alias '" + a_id + "' does not exist"];
 
-            return alias._from;
+            id = alias._from;
         }
+
+        // This will only happen if graph integrity is lost
+        if ( !obj.db._exists( id ) ){
+            throw [ obj.ERR_INVALID_PARAM, (id.charAt(0)=='d'?"Data record '":"Collection '") + id + "' does not exist." ];
+        }
+
+        return id;
+    };
+
+    obj.resolveDataID = function( a_id, a_client ) {
+        var id,i=a_id.indexOf('/');
+
+        if ( i != -1 ) {
+            if ( !a_id.startsWith('d/'))
+                throw [ obj.ERR_INVALID_PARAM, "Invalid data record ID '" + a_id + "'" ];
+            id = a_id;
+        } else {
+            var alias_id = "a/";
+            if ( a_id.indexOf(":") == -1 )
+                alias_id += "u:"+a_client._key + ":" + a_id;
+            else
+                alias_id += a_id;
+
+            var alias = obj.db.alias.firstExample({ _to: alias_id });
+            if ( !alias )
+                throw [obj.ERR_NOT_FOUND,"Alias '" + a_id + "' does not exist"];
+
+            id = alias._from;
+
+            if ( !id.startsWith('d/'))
+                throw [ obj.ERR_INVALID_PARAM, "Alias '" + a_id + "' does not identify a data record" ];
+        }
+
+        if ( !obj.db.d.exists( id ) ){
+            throw [ obj.ERR_INVALID_PARAM, "Data record '" + id + "' does not exist." ];
+        }
+
+        return id;
+    };
+
+    obj.resolveCollID = function( a_id, a_client ) {
+        var id,i=a_id.indexOf('/');
+
+        if ( i != -1 ) {
+            if ( !a_id.startsWith('c/'))
+                throw [ obj.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'" ];
+            id = a_id;
+        } else {
+            var alias_id = "a/";
+            if ( a_id.indexOf(":") == -1 )
+                alias_id += "u:"+a_client._key + ":" + a_id;
+            else
+                alias_id += a_id;
+
+            var alias = obj.db.alias.firstExample({ _to: alias_id });
+            if ( !alias )
+                throw [obj.ERR_NOT_FOUND,"Alias '" + a_id + "' does not exist"];
+
+            id = alias._from;
+
+            if ( !id.startsWith('c/'))
+                throw [ obj.ERR_INVALID_PARAM, "Alias '" + a_id + "' does not identify a collection" ];
+        }
+
+        if ( !obj.db.c.exists( id ) ){
+            throw [ obj.ERR_INVALID_PARAM, "Collection '" + id + "' does not exist." ];
+        }
+
+        return id;
     };
 
 

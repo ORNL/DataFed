@@ -59,13 +59,25 @@ graph._extendEdgeDefinitions(loc);
 var dep = graph_module._relation("dep", ["d"], ["d"]);
 graph._extendEdgeDefinitions(dep);
 
-//v0 = db._view("textview");
 
-var v0 = db._createView("textview","arangosearch",{});
+var view = db._createView("textview","arangosearch",{});
 
-v0.properties({
+view.properties({
     links: {
       "d": {
+        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
+        includeAllFields: false
+      }
+    }ex
+  },
+  true
+);
+
+view = db._createView("projview","arangosearch",{});
+
+view.properties({
+    links: {
+      "p": {
         fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
         includeAllFields: false
       }
@@ -73,7 +85,6 @@ v0.properties({
   },
   true
 );
-
 
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
 

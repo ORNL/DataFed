@@ -347,21 +347,43 @@ router.get('/alloc/list/by_repo', function (req, res) {
 
 router.get('/alloc/list/by_owner', function (req, res) {
     var result = g_db.alloc.byExample({_from: req.queryParams.owner}).toArray();
-    var obj;
-    for ( var i in result ){
-        obj = result[i];
 
-        obj.id = req.queryParams.owner;
-        if ( req.queryParams.stats ){
-            obj.stats = getAllocStats( obj._to, req.queryParams.owner );
+    // Check for project sub-allocation
+    // No support for sub-allocation statistics
+    if ( result.length == 0 && req.queryParams.owner.startsWith("p/") ){
+        var proj = g_db.p.document(req.queryParams.owner);
+        if ( proj.sub_repo ){
+            var alloc = g_db.alloc.firstExample({_from: proj.owner, _to: proj.sub_repo });
+            if ( !alloc )
+                throw [g_lib.ERR_INTERNAL_FAULT,"Project sub-allocation references non-existent allocation."];
+
+            result = [{
+                id:req.queryParams.owner,
+                repo:proj.sub_repo,
+                max_size:proj.sub_alloc,
+                tot_size:proj.sub_usage,
+                max_count:alloc.max_count,
+                path:alloc.path,
+                sub_alloc:true
+            }];
         }
+    }else{
+        var obj;
+        for ( var i in result ){
+            obj = result[i];
 
-        delete obj._from;
-        obj.repo = obj._to;
-        delete obj._to;
-        delete obj._key;
-        delete obj._id;
-        delete obj._rev;
+            obj.id = req.queryParams.owner;
+            if ( req.queryParams.stats ){
+                obj.stats = getAllocStats( obj._to, req.queryParams.owner );
+            }
+
+            delete obj._from;
+            obj.repo = obj._to;
+            delete obj._to;
+            delete obj._key;
+            delete obj._id;
+            delete obj._rev;
+        }
     }
 
     res.send( result );
@@ -377,18 +399,39 @@ router.get('/alloc/list/by_object', function (req, res) {
     var owner_id = g_db.owner.firstExample({_from: obj_id})._to;
     var result = g_db.alloc.byExample({_from: owner_id}).toArray();
 
-    var obj;
-    for ( var i in result ){
-        obj = result[i];
-        obj.id = owner_id;
-        obj.repo = obj._to;
+    // Check for sub-allocation
+    if ( result.length == 0 && owner_id.startsWith("p/") ){
+        var proj = g_db.p.document( owner_id );
+        if ( proj.sub_repo ){
+            var alloc = g_db.alloc.firstExample({_from: proj.owner, _to: proj.sub_repo });
+            if ( !alloc )
+                throw [g_lib.ERR_INTERNAL_FAULT,"Project sub-allocation references non-existent allocation."];
 
-        delete obj._from;
-        delete obj._to;
-        delete obj._key;
-        delete obj._id;
-        delete obj._rev;
+            result = [{
+                id:owner_id,
+                repo:proj.sub_repo,
+                max_size:proj.sub_alloc,
+                tot_size:proj.sub_usage,
+                max_count:alloc.max_count,
+                path:alloc.path,
+                sub_alloc:true
+            }];
+        }
+    }else{
+        var obj;
+        for ( var i in result ){
+            obj = result[i];
+            obj.id = owner_id;
+            obj.repo = obj._to;
+
+            delete obj._from;
+            delete obj._to;
+            delete obj._key;
+            delete obj._id;
+            delete obj._rev;
+        }
     }
+
     res.send( result );
 })
 .queryParam('client', joi.string().required(), "Client ID")

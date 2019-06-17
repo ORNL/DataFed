@@ -51,7 +51,8 @@ public:
     void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply );
+    void projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply );
+    void projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply );
 
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
@@ -85,7 +86,7 @@ public:
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
-    void xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply );
+    void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
     void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );

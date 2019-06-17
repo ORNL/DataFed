@@ -4,9 +4,9 @@ function makeDlAllocNewEdit(){
     this.content =
         "<table width='100%'>\
         <tr><td style='vertical-align:middle' id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%'></input></td></tr>\
-        <tr id='subj_btn_row' style='display:none'><td style='vertical-align:middle'>Select:</td><td>\
-                <button class='btn small' id='set_user'>User</button>\
-                <button class='btn small' id='set_proj'>Project</button>\
+        <tr id='subj_btn_row' style='display:none'><td style='vertical-align:middle'></td><td style='text-align:right'>\
+                <button class='btn small' id='set_user'>Users</button>\
+                <button class='btn small' id='set_proj'>Projects</button>\
             </td></tr>\
         <tr><td style='vertical-align:middle'>Max. Data Size:</td><td><input type='text' id='max_size' style='width:100%'></input></td></tr>\
         <tr><td style='vertical-align:middle'>Total Data size:</td><td><input type='text' id='tot_size' style='width:100%' readonly></input></td></tr>\
@@ -47,7 +47,10 @@ function makeDlAllocNewEdit(){
             });
 
             $("#set_proj",inst.frame).click(function(){
-                dlgAlert("ERROR","Feature not implemented yet");
+                dlgPickProject( a_excl, true, function( projs ){
+                    inst.alloc.id = projs[0];
+                    $("#subject",inst.frame).val( inst.alloc.id );
+                });
             });
         }
 
@@ -61,7 +64,7 @@ function makeDlAllocNewEdit(){
             resizable: true,
             closeOnEscape: false,
             buttons: [{
-                text: "Ok",
+                text: (a_alloc?"Update":"Add"),
                 click: function() {
                     if ( !a_alloc ){
                         inst.alloc.id = $("#subject",inst.frame).val();

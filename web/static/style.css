@@ -87,8 +87,8 @@ ul.ui-effects-placeholder { width:10px !important; }
 
 .tab-inner-div
 {
-    padding:.5em;
-    height:6.5em;
+    padding:.5em .5em 0 .5em;
+    height:7.5em;
     overflow:auto;
 }
 
@@ -351,6 +351,10 @@ td
 .ui-tabs-nav{
     border-bottom-left-radius: 0!important;
     border-bottom-right-radius: 0!important;
+}
+
+.ui-dialog, .ui-dialog-content {
+    box-sizing: content-box;
 }
 
 :focus { outline: none; }

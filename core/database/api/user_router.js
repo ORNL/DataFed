@@ -131,6 +131,8 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.subject ) {
                     user_id = req.queryParams.subject;
+                    if ( !g_db.u.exists( user_id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'" ];
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -232,6 +234,8 @@ router.get('/keys/set', function (req, res) {
 
                 if ( req.queryParams.subject ) {
                     user_id = req.queryParams.subject;
+                    if ( !g_db.u.exists( user_id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'" ];
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -266,6 +270,8 @@ router.get('/keys/clear', function (req, res) {
 
                 if ( req.queryParams.subject ) {
                     user_id = req.queryParams.subject;
+                    if ( !g_db.u.exists( user_id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'" ];
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -290,11 +296,10 @@ router.get('/keys/get', function( req, res ) {
         var user;
 
         if ( req.queryParams.subject ) {
-            try {
-                user = g_db.u.document({ _id: req.queryParams.subject });
-            } catch ( e ) {
-                throw [g_lib.ERR_NOT_FOUND,"User, "+ req.queryParams.subject +", not found"];
-            }
+            if ( !g_db.u.exists( req.queryParams.subject ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
+
+            user = g_db.u.document({ _id: req.queryParams.subject });
         }else{
             user = g_lib.getUserFromClientID( req.queryParams.client );
         }
@@ -338,6 +343,8 @@ router.get('/token/set', function (req, res) {
 
                 if ( req.queryParams.subject ) {
                     user_id = req.queryParams.subject;
+                    if ( !g_db.u.exists( user_id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'" ];
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -364,20 +371,19 @@ router.get('/token/get', function( req, res ) {
         var user;
 
         if ( req.queryParams.subject ) {
-            try {
-                user = g_db.u.document({ _id: req.queryParams.subject });
-            } catch ( e ) {
-                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.subject+", not found"];
-            }
+            if ( !g_db.u.exists( req.queryParams.subject ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
+
+            user = g_db.u.document({ _id: req.queryParams.subject });
         } else {
             user = g_lib.getUserFromClientID( req.queryParams.client );
         }
 
         var result = {};
         if ( user.access )
-        result.access = user.access;
+            result.access = user.access;
         if ( user.refresh )
-        result.refresh = user.refresh;
+            result.refresh = user.refresh;
 
         res.send(result);
     } catch( e ) {
@@ -394,11 +400,9 @@ router.get('/token/get/access', function( req, res ) {
         var user;
 
         if ( req.queryParams.subject ) {
-            try {
-                user = g_db.u.document({ _id: req.queryParams.subject });
-            } catch ( e ) {
-                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.subject+", not found"];
-            }
+            if ( !g_db.u.exists( req.queryParams.subject ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
+            user = g_db.u.document({ _id: req.queryParams.subject });
         } else {
             user = g_lib.getUserFromClientID( req.queryParams.client );
         }
@@ -422,11 +426,9 @@ router.get('/view', function (req, res) {
         var user;
 
         if ( req.queryParams.subject ) {
-            try {
-                user = g_db.u.document({ _id: req.queryParams.subject });
-            } catch ( e ) {
-                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.subject+", not found"];
-            }
+            if ( !g_db.u.exists( req.queryParams.subject ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
+            user = g_db.u.document({ _id: req.queryParams.subject });
         } else {
             user = g_lib.getUserFromClientID( req.queryParams.client );
         }
@@ -546,6 +548,8 @@ router.get('/delete', function (req, res) {
 
                 if ( req.queryParams.subject ) {
                     user_id = req.queryParams.subject;
+                    if ( !g_db.u.exists( user_id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'" ];
                     g_lib.ensureAdminPermUser( client, user_id );
                 }
                 else {
@@ -603,6 +607,8 @@ router.get('/ident/list', function (req, res) {
     try {
         var client = g_lib.getUserFromClientID( req.queryParams.client );
         if ( req.queryParams.subject ) {
+            if ( !g_db.u.exists( req.queryParams.subject ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
             const subject = g_db.u.document( req.queryParams.subject );
             g_lib.ensureAdminPermUser( client, subject._id );
 
@@ -653,6 +659,9 @@ router.get('/ident/add', function (req, res) {
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid identity value: "+req.queryParams.ident];
 
                 if ( req.queryParams.subject ) {
+                    if ( !g_db.u.exists( req.queryParams.subject ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
+
                     const user = g_db.u.document( req.queryParams.subject );
                     g_lib.ensureAdminPermUser( client, user._id );
 

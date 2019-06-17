@@ -721,18 +721,38 @@ DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::Proj
 }
 
 void
-DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
-    if ( a_request.has_by_owner() && a_request.by_owner() )
-        params.push_back({"by_owner","true"});
-    if ( a_request.has_by_admin() && a_request.by_admin() )
-        params.push_back({"by_admin","true"});
-    if ( a_request.has_by_member() && a_request.by_member() )
-        params.push_back({"by_member","true"});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+    if ( a_request.has_as_owner() && a_request.as_owner() )
+        params.push_back({"as_owner","true"});
+    if ( a_request.has_as_admin() && a_request.as_admin() )
+        params.push_back({"as_admin","true"});
+    if ( a_request.has_as_member() && a_request.as_member() )
+        params.push_back({"as_member","true"});
+    if ( a_request.has_sort())
+        params.push_back({"sort",to_string(a_request.sort())});
+    if ( a_request.has_sort_rev() && a_request.sort_rev() )
+        params.push_back({"sort_rev","true"});
+    if ( a_request.has_offset())
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count())
+        params.push_back({"count",to_string(a_request.count())});
 
     dbGet( "prj/list", params, result );
+
+    setListingData( a_reply, result );
+}
+
+void
+DatabaseClient::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "prj/search", {{"query",a_query}}, result );
 
     setProjectData( a_reply, result );
 }
@@ -1626,6 +1646,10 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_started( val["started"].GetUint() );
         xfr->set_updated( val["updated"].GetUint() );
 
+        imem = val.FindMember("ext");
+        if ( imem != val.MemberEnd() )
+            xfr->set_ext( imem->value.GetString() );
+
         imem = val.FindMember("task_id");
         if ( imem != val.MemberEnd() )
             xfr->set_task_id( imem->value.GetString() );
@@ -1637,11 +1661,17 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
 }
 
 void
-DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, XfrMode a_mode, Auth::XfrDataReply & a_reply )
+DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_id});
+    params.push_back({"path",a_data_path});
+    params.push_back({"mode",to_string(a_mode)});
+    if ( a_ext )
+        params.push_back({"ext",*a_ext});
 
-    dbGet( "xfr/init", {{"id",a_id},{"path",a_data_path},{"mode",to_string(a_mode)}}, result );
+    dbGet( "xfr/init", params, result );
 
     setXfrData( a_reply, result );
 }
@@ -2186,8 +2216,8 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
         alloc->set_path(val["path"].GetString());
         if (( imem = val.FindMember("id")) != val.MemberEnd() )
             alloc->set_id( imem->value.GetString() );
-        if (( imem = val.FindMember("name")) != val.MemberEnd() )
-            alloc->set_name( imem->value.GetString() );
+        if (( imem = val.FindMember("sub_alloc")) != val.MemberEnd() )
+            alloc->set_sub_alloc( imem->value.GetBool() );
         if (( imem = val.FindMember("stats")) != val.MemberEnd() )
         {
             setAllocStatsData( imem->value, *alloc->mutable_stats() );

@@ -4,7 +4,7 @@ function loadUser() {
     console.log( "loadUser" );
 
     var user = Cookies.get( 'sdms-user' );
-    console.log( "user cookie: ", user );
+    //console.log( "user cookie: ", user );
 
     if ( user ) {
         g_user = JSON.parse( user );
@@ -12,11 +12,10 @@ function loadUser() {
         g_user = null;
     }
 
-    console.log( "user: ", g_user );
+    //console.log( "user: ", g_user );
 }
 
 function logout() {
-    console.log( "logout");
     g_user = null;
     window.location = "/ui/logout";
 }
@@ -39,6 +38,7 @@ function _asyncGet( a_url, a_raw_json_data, a_callback ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
+            //console.log("_asyncGet error handler")
             //console.log( 'asyncGet error: ', a_xhr );
             //console.log( 'asyncGet error: ', a_status );
             //console.log( 'asyncGet error: ', a_thrownError );
@@ -629,15 +629,62 @@ function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
     });
 }
 
-function setStatusText( text ){
+function setStatusText( text, err ){
     if ( status_timer )
         clearTimeout( status_timer );
+    if ( status_int )
+        clearTimeout( status_int );
 
-    $("#status_text").html( text );
+    var bar = $("#status_text");
+    bar.html( text );
+
+    if ( err ){
+        var r;
+        r = 255;
+
+        bar.css("background", "rgb("+r+",0,0)" );
+    
+        status_timer = setTimeout( function(){
+            status_int = setInterval( function(){
+                r -= 5;
+                if ( r < 100 ){
+                    clearInterval(status_int);
+                    status_int = null;
+                    status_timer = setTimeout( function(){
+                        bar.css("background", "#000000" );
+                        status_timer = null;
+                        bar.html(" ");
+                    },4000);
+                }else{
+                    bar.css("background", "rgb("+r+",0,0)" );
+                }
+    
+            }, 100 );
+        },500);
+    }else{
+        status_timer = setTimeout( function(){
+            status_timer = null;
+            bar.html(" ");
+        },6000);
+    }
+
+
+/*
+    if ( err )
+        bar.addClass("error");
+    else
+        bar.addClass("info");
+
+    bar.html( text );
     status_timer = setTimeout( function(){
-        status_timer = null;
-        $("#status_text").html(" ");
-    }, 8000 );
+        bar.removeClass("error info");
+
+        status_timer = setTimeout( function(){
+            status_timer = null;
+            bar.html(" ");
+        }, 20000 );
+    }, 1000 );
+*/
 }
 
 function dlgConfirmChoice( title, msg, btns, cb ) {
@@ -806,7 +853,7 @@ function inputEnable( a_objs ){
     return a_objs;
 }
 
-function xfrStart( a_id, a_mode, a_path, a_cb ){
+function xfrStart( a_id, a_mode, a_path, a_ext, a_cb ){
     var url = "/api/dat/";
 
     if ( a_mode == XFR_GET )
@@ -817,7 +864,7 @@ function xfrStart( a_id, a_mode, a_path, a_cb ){
         return;
     }
 
-    url += "?id=" + a_id + "&path=" + encodeURIComponent(a_path);
+    url += "?id=" + a_id + "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){
         if ( ok ) {
@@ -880,6 +927,7 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
 }
 
 var status_timer;
+var status_int;
 
 var PERM_RD_REC         = 0x0001; // Read record info (description, keywords, details)
 var PERM_RD_META        = 0x0002; // Read structured metadata

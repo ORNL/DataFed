@@ -45,6 +45,7 @@ router.get('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
                 var proj_data = {
+                    owner: client._id,
                     max_coll: g_lib.DEF_MAX_COLL,
                     ct: time,
                     ut: time
@@ -68,10 +69,8 @@ router.get('/create', function (req, res) {
                     proj_data.sub_usage = 0;
                 }
 
-
                 var proj = g_db.p.save( proj_data, { returnNew: true });
                 g_db.owner.save({ _from: proj._id, _to: client._id });
-
 
                 var root = g_db.c.save({ _key: "p_" + proj_data._key + "_root", is_root: true, owner: proj._id, title: "root", desc: "Root collection for project " + proj_data._key }, { returnNew: true });
 
@@ -91,7 +90,6 @@ router.get('/create', function (req, res) {
 
                 proj.new.admins = [];
                 proj.new.members = [];
-                proj.new.owner = client._id;
                 var uid;
 
                 if ( req.queryParams.admins ) {
@@ -158,6 +156,10 @@ router.get('/update', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
+
+                if ( !g_db.p.exists( proj_id ))
+                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
@@ -201,7 +203,6 @@ router.get('/update', function (req, res) {
                 }else if ( req.queryParams.sub_alloc ){
                     obj.sub_alloc = req.queryParams.sub_alloc;
                 }
-                console.log("pu 2");
 
                 var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
@@ -238,7 +239,6 @@ router.get('/update', function (req, res) {
                         proj.new.admins.push( admins[i]);
                     }
                 }
-                console.log("pu 3" );
 
                 if ( req.queryParams.members ) {
                     var mem_grp = g_db.g.firstExample({ uid: proj_id, gid: "members" });
@@ -259,12 +259,8 @@ router.get('/update', function (req, res) {
                     if ( members.length )
                         proj.new.members = members;
                 }
-                console.log("pu 4");
-                console.log("pu new",proj.new );
-                console.log("pu new id",proj.new._id );
 
                 proj.new.id = proj.new._id;
-                proj.new.owner = owner_id;
 
                 delete proj.new._id;
                 delete proj.new._key;
@@ -296,6 +292,10 @@ router.get('/view', function (req, res) {
         // TODO Enforce view permission
 
         var client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        if ( !g_db.p.exists( req.queryParams.id ))
+            throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'" ];
+
         var proj = g_db.p.document({ _id: req.queryParams.id });
         var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
         var admins = g_db._query("for v in 1..1 outbound @proj admin return v._id", { proj: proj._id } ).toArray();
@@ -330,7 +330,6 @@ router.get('/view', function (req, res) {
 
 
         proj.id = proj._id;
-        proj.owner = owner_id;
 
         delete proj._id;
         delete proj._key;
@@ -346,46 +345,87 @@ router.get('/view', function (req, res) {
 .summary('View project information')
 .description('View project information');
 
-router.get('/list/all', function (req, res) {
-    res.send( g_db._query( "for i in p return { id: i._id, name: i.name }" ));
-})
-.summary('List projects')
-.description('List projects');
 
 router.get('/list', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
-    var count = (req.queryParams.by_owner?1:0) + (req.queryParams.by_admin?1:0) + (req.queryParams.by_member?1:0);
-    var comma = false;
+    var qry, result, count = (req.queryParams.as_owner?1:0) + (req.queryParams.as_admin?1:0) + (req.queryParams.as_member?1:0);
 
-    var qry;
-    if ( count != 1 )
-        qry = "for x in union((";
-    else
-        qry = "";
+    if ( count ){
+        var comma = false;
 
-    if ( !count || req.queryParams.by_owner ){
-        qry += "for v in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',v) return { id: v._id, title: v.title }";
-        comma = (count != 1);
+        if ( count > 1 )
+            qry = "for i in union((";
+        else
+            qry = "";
+
+        if ( req.queryParams.as_owner ){
+            qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
+            if ( count > 1 )
+                qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+            comma = true;
+        }
+
+        if ( !count || req.queryParams.as_admin ){
+            qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
+            if ( count > 1 )
+                qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+            comma = true;
+        }
+
+        if ( req.queryParams.as_member ){
+            qry += (comma?"),(":"") + "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
+            if ( count > 1 )
+                qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+        }
+
+        if ( count > 1 )
+            qry += "))";
+    }else{
+        qry = "for i in p";
     }
 
-    if ( !count || req.queryParams.by_admin ){
-        qry += (comma?"),(":"") + "for v in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',v) return { id: v._id, title: v.title }";
-        comma = (count != 1);
+    qry += " sort i.";
+
+    switch ( req.queryParams.sort ){
+        case g_lib.SORT_ID: qry += "_id"; break;
+        case g_lib.SORT_TITLE: qry += "title"; break;
+        case g_lib.SORT_TIME_CREATE: qry += "ct"; break;
+        case g_lib.SORT_TIME_UPDATE: qry += "ut"; break;
+        default: qry += "_id"; break;
     }
 
-    if ( !count || req.queryParams.by_member )
-        qry += (comma?"),(":"") + "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { id: v._id, title: v.title }";
+    if ( req.queryParams.sort_rev )
+        qry += " desc";
 
-    if ( comma )
-        qry += ")) sort x.title return x";
+    var user_id = req.queryParams.subject || client._id;
 
-    res.send( g_db._query( qry, { user: client._id }));
+    if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+        qry += " return { id: i._id, title: i.title, owner: i.owner }";
+        //console.log("proj list qry:",qry);
+        result = g_db._query( qry, count?{ user: user_id }:{},{},{fullCount:true});
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+        result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+    }
+    else{
+        qry += " return { id: i._id, title: i.title, owner: i.owner }";
+        //console.log("proj list qry:",qry);
+        result = g_db._query( qry, count?{ user: user_id }:{});
+    }
 
+    //res.send( g_db._query( qry, { user: client._id }));
+    res.send( result );
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('by_owner', joi.bool().optional(), "List projects owned by client")
-.queryParam('by_admin', joi.bool().optional(), "List projects administered by client")
-.queryParam('by_member', joi.bool().optional(), "List projects where client is a member")
+.queryParam('subject', joi.string().optional(), "Subject (user) ID")
+.queryParam('as_owner', joi.bool().optional(), "List projects owned by client/subject")
+.queryParam('as_admin', joi.bool().optional(), "List projects administered by client/subject")
+.queryParam('as_member', joi.bool().optional(), "List projects where client is a member/subject")
+.queryParam('sort', joi.number().optional(), "Sort field (default = id)")
+.queryParam('sort_rev', joi.bool().optional(), "Sort in reverse order")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
 .summary('List projects')
 .description('List projects. If no options are provided, lists all projects associated with client.');
 
@@ -415,6 +455,20 @@ router.get('/list/by_member', function (req, res) {
 .description('List projects');
 */
 
+router.get('/search', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        
+        res.send( g_db._query( req.queryParams.query, {} ));
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('query', joi.string().required(), "Query")
+.summary('Find all projects that match query')
+.description('Find all projects that match query');
+
 router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -425,6 +479,9 @@ router.get('/delete', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var proj_id = req.queryParams.id;
+                if ( !g_db.p.exists( proj_id ))
+                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+    
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var proj = g_db.p.document( proj_id );
                 var size = 0;

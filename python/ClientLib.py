@@ -1,10 +1,16 @@
+"""
+DataFed API client library for creating, sending and receiving protobuf messages. Allows direct communication with DataFed's core service.
+
+
+"""
+
 import Version_pb2
 import SDMS_Anon_pb2 as anon
 import SDMS_Auth_pb2 as auth
 import os
-import os.path
 import zmq
 import Connection
+import dfConfig as dfC
 
 def version():
     return "{}.{}.{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MINOR,Version_pb2.VER_BUILD)
@@ -39,30 +45,31 @@ class MsgAPI:
         # Process server cred dir
         self._server_cred_dir = server_cred_dir
         if self._server_cred_dir == None:
-            self._server_cred_dir = os.environ.get("DATAFED_SERVER_CRED_DIR")
-            if self._server_cred_dir == None:
-                self._server_cred_dir = "/etc/datafed/"
-
-        if self._server_cred_dir[-1] != "/":
-            self._server_cred_dir += "/"
+            self._server_cred_dir = dfC.Config.get_config("DF_SERVER_CRED_DIR")
+            #SHOULD NO LONGER BE NECESSARY
+    #        if self._server_cred_dir == None:
+    #        self._server_cred_dir = "/etc/datafed/"
+            #SHOULD NO LONGER BE NECESSARY
+    #    if self._server_cred_dir[-1] != "/":
+    #        self._server_cred_dir += "/"
 
         # Use or load server public key
         if server_key_pub != None:
             serv_pub = server_key_pub
         else:
             try:
-                keyf = open( self._server_cred_dir + "datafed-core-key.pub", "r" )
+                keyf = open(os.path.join(str(self._server_cred_dir), "datafed-core-key.pub"), "r" )
                 serv_pub = keyf.read()
                 keyf.close()
             except:
-                raise Exception( "Could not open server public key file: " + self._server_cred_dir + "datafed-core-key.pub" )
+                raise Exception( "Could not open server public key file: " + os.path.join(str(self._server_cred_dir), "datafed-core-key.pub") )
 
         # Process client cred dir
         self._client_cred_dir = client_cred_dir
         if self._client_cred_dir == None:
-            self._client_cred_dir = os.environ.get("DATAFED_CLIENT_CRED_DIR")
-            if self._client_cred_dir == None:
-                self._client_cred_dir = "~/.datafed/"
+            self._client_cred_dir = dfC.Config.get_config("DF_CLIENT_CRED_DIR")
+     #       if self._client_cred_dir == None:
+     #           self._client_cred_dir = "~/.datafed/"
 
         if self._client_cred_dir[-1] != "/":
             self._client_cred_dir += "/"
@@ -83,10 +90,10 @@ class MsgAPI:
             priv = client_key_priv
         else:
             try:
-                keyf = open( self._client_cred_dir + "datafed-user-key.pub", "r" )
+                keyf = open(os.path.join(str(self._client_cred_dir), "datafed-user-key.pub"), "r" )
                 pub = keyf.read()
                 keyf.close()
-                keyf = open( self._client_cred_dir + "datafed-user-key.priv", "r" )
+                keyf = open(os.path.join(str(self._client_cred_dir), "datafed-user-key.priv"), "r" )
                 priv = keyf.read()
                 keyf.close()
                 if len(pub) != 40 or len(priv) != 40:
@@ -116,8 +123,8 @@ class MsgAPI:
 
         #reply, mt = self._recv()
         #print "ver reply:",reply
-        if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
-            raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
+        #if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
+        #    raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
 
         #print("get auth")
 
@@ -151,6 +158,7 @@ class MsgAPI:
         self._auth = True
         self._uid = reply.uid
 
+# TODO: MAKE THIS AN OPTIONAL CMD -- NOT DEFAULT
     def installLocalCredentials(self):
         if not self._auth:
             raise Exception("Authentication required")
@@ -159,16 +167,19 @@ class MsgAPI:
         reply, mt = self.sendRecv( msg )
 
         # Make client cred dir if not exists
-        if not os.path.exists( self._client_cred_dir ):
-            os.makedirs( self._client_cred_dir )
+        if not os.path.exists(self._client_cred_dir):
+            os.makedirs(self._client_cred_dir)
+        else:
+            pass
 
-        keyf = open( self._client_cred_dir + "datafed-user-key.pub", "w" )
-        keyf.write(reply.pub_key)
-        keyf.close()
+        #Make public key file
+        with open(os.path.join(str(self._client_cred_dir), "datafed-user-key.pub"), "w" ) as keyf:
+            keyf.write(reply.pub_key)
 
-        keyf = open( self._client_cred_dir + "datafed-user-key.priv", "w" )
-        keyf.write(reply.priv_key)
-        keyf.close()
+        #Make private key file
+        with open(os.path.join(str(self._client_cred_dir), "datafed-user-key.priv"), "w" ) as keyf:
+            keyf.write(reply.priv_key)
+
         self._keys_loaded = True
 
     '''

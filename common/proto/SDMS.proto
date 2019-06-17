@@ -76,6 +76,14 @@ enum DependencyDir
     DEP_OUT                     = 1;
 }
 
+enum SortOption
+{
+    SORT_ID                     = 0;
+    SORT_TITLE                  = 1;
+    SORT_TIME_CREATE            = 2;
+    SORT_TIME_UPDATE            = 3;
+}
+
 /*
 enum Permissions
 {
@@ -110,7 +118,7 @@ message AllocData
     required uint32             max_count   = 4;
     required string             path        = 5;
     optional string             id          = 6;
-    optional string             name        = 7;
+    optional bool               sub_alloc   = 7;
     optional AllocStatsData     stats       = 8;
 }
 
@@ -213,12 +221,13 @@ message XfrData
     required string             data_id     = 4; // With revision?
     required string             repo_path   = 5;
     required string             local_path  = 6;
-    required string             user_id     = 7;
-    required string             repo_id     = 8;
-    required uint32             started     = 9;
-    required uint32             updated     = 10;
-    optional string             task_id     = 11; // Only set if status > XFR_INIT
-    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
+    optional string             ext         = 7;
+    required string             user_id     = 8;
+    required string             repo_id     = 9;
+    required uint32             started     = 10;
+    required uint32             updated     = 11;
+    optional string             task_id     = 12; // Only set if status > XFR_INIT
+    optional string             err_msg     = 13; // Only set if status == XFR_FAILED
 }
 
 message GroupData

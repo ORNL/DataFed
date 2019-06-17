@@ -245,6 +245,12 @@ XfrMgr::xfrThreadFunc()
                                         upd_req.set_id( (*ixfr)->data_id );
                                         upd_req.set_size( file_size );
                                         upd_req.set_source( (*ixfr)->local_path );
+                                        if ( (*ixfr)->ext.size() )
+                                        {
+                                            upd_req.set_ext( (*ixfr)->ext );
+                                            upd_req.set_ext_auto( false );
+                                        }
+
                                         /*pos = (*ixfr)->local_path.find_first_of("/");
                                         if ( pos != string::npos )
                                         {

@@ -30,7 +30,7 @@ router.get('/init', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                var data_id = g_lib.resolveID( req.queryParams.id, client );
+                var data_id = g_lib.resolveDataID( req.queryParams.id, client );
                 var data = g_db.d.document( data_id );
                 //var data_loc = g_db.loc.firstExample({_from: data_id });
 
@@ -47,7 +47,8 @@ router.get('/init', function (req, res) {
                 var dest_id,dest_data;
 
                 if ( req.queryParams.mode == g_lib.XM_COPY ){
-                    dest_id = g_lib.resolveID( req.queryParams.path, client );
+                    // Overloaded path to mean destination ID
+                    dest_id = g_lib.resolveDataID( req.queryParams.path, client );
                     if ( !g_lib.hasAdminPermObject( client, dest_id )) {
                         dest_data = g_db.d.document( dest_id );
                         if ( !g_lib.hasPermissions( client, dest_data, g_lib.PERM_WR_DATA ))
@@ -79,7 +80,8 @@ router.get('/init', function (req, res) {
                         user_id: client._id,
                         repo_id: repo_loc.repo._id,
                         started: now,
-                        updated: now
+                        updated: now,
+                        ext: req.queryParams.ext
                         }, { returnNew: true } );
 
                     result = [xfr.new];
@@ -159,7 +161,91 @@ router.get('/init', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Data record ID or alias")
 .queryParam('path', joi.string().required(), "Data local path")
+.queryParam('ext', joi.string().optional(), "Extension override")
 .queryParam('mode', joi.number().required(), "Transfer mode (get read/write, put)")
+.summary('Performs pre-transfer authorization and initialization')
+.description('Performs pre-transfer authorization and initialization');
+
+
+router.get('/init_get', function (req, res) {
+    try {
+        var result = [];
+        console.log("init_get");
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","g","d","c","a","repo","loc","uuid","accn","alias","acl","admin"],
+                write: ["tr"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var file,files={},id,data,repo_loc;
+
+                var dest_path = req.queryParams.path;
+                if ( dest_path.charAt( dest_path.length - 1 ) != "/" )
+                    dest_path += "/";
+
+                for ( var i in req.queryParams.ids ){
+                    id = g_lib.resolveDataID( req.queryParams.ids[i], client );
+                    console.log("id:",id);
+
+                    data = g_db.d.document( id );
+
+                    if ( !data.size )
+                        throw [g_lib.ERR_NO_RAW_DATA,"Data record, "+req.queryParams.ids[i]+", has no raw data"];
+
+                    if ( !g_lib.hasAdminPermObject( client, id )) {
+                        if ( !g_lib.hasPermissions( client, data, g_lib.PERM_RD_DATA ))
+                            throw g_lib.ERR_PERM_DENIED;
+                    }
+
+                    // Get data storage location
+                    repo_loc = g_db._query("for v,e in 1..1 outbound @data loc return { repo: v, loc: e }", { data: id } ).toArray();
+                    if ( repo_loc.length != 1 )
+                        throw [g_lib.ERR_INTERNAL_FAULT,"No storage location for data record, " + id];
+
+                    repo_loc = repo_loc[0];
+
+                    console.log("repo:",repo_loc.repo._key);
+
+                    file = {
+                        id: id,
+                        from: g_lib.computeDataPath(repo_loc.loc),
+                        to: id.substr( 2 ) + (data.ext?data.ext:"")
+                    };
+
+                    if ( repo_loc.repo._key in files ){
+                        files[repo_loc.repo._key].files.push(file);
+                    }else{
+                        files[repo_loc.repo._key] = {repo_ep:repo_loc.repo.endpoint,files:[file]};
+                    }
+                }
+
+                if ( !req.queryParams.validate ){
+                    var now = ((Date.now()/1000)|0);
+
+                    result.push( g_db.tr.save({
+                        mode: g_lib.XM_GET,
+                        status: g_lib.XS_INIT,
+                        files: files,
+                        local_path: dest_path,
+                        user_id: client._id,
+                        started: now, 
+                        updated: now
+                    }, { returnNew: true } ).new );
+                }
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data record IDs or aliases")
+.queryParam('path', joi.string().required(), "Data local path")
+.queryParam('validate', joi.bool().optional(), "Perform validation only")
 .summary('Performs pre-transfer authorization and initialization')
 .description('Performs pre-transfer authorization and initialization');
 

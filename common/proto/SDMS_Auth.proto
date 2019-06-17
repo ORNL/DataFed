@@ -269,6 +269,7 @@ message DataPutRequest
 {
     required string             id          = 1;
     required string             local       = 2;
+    optional string             ext         = 3;
 }
 
 message DataDeleteRequest
@@ -473,9 +474,20 @@ message ProjectDeleteRequest
 
 message ProjectListRequest
 {
-    optional bool               by_owner    = 1;
-    optional bool               by_admin    = 2;
-    optional bool               by_member   = 3;
+    optional string             subject     = 1;
+    optional bool               as_owner    = 2;
+    optional bool               as_admin    = 3;
+    optional bool               as_member   = 4;
+    optional SortOption         sort        = 5;
+    optional bool               sort_rev    = 6;
+    optional uint32             offset      = 7;
+    optional uint32             count       = 8;
+}
+
+message ProjectSearchRequest
+{
+    required string             text_query  = 1;
+    repeated string             scope       = 2;
 }
 
 message ProjectViewRequest

@@ -9,15 +9,27 @@
 #include <google/protobuf/descriptor.h>
 #include "TraceException.hpp"
 
-// TODO Need to add host-network conversions for buffer frame fields
 
-
-// typically 5 bytes per router (internal), or larger for external
+/// Max zeromq routing address length
 #define MAX_ROUTE_LEN   50
-// Able to store a UUID string
+
+/// Max UID length
 #define MAX_UID_LEN     100
+
+/// Macro to make protocol registration easier
 #define REG_PROTO(ns) MsgBuf::registerProtocol( ns::Protocol_descriptor() )
 
+/**
+ * @brief The MsgBuf class encapsulates a protobuf message with framing
+ * 
+ * The MsgBuf class is used in conjunction with the MsgComm class to send and
+ * receive protobuf messages over zeromq. The MsgBuf class provides automatic
+ * serialization and unserialization by utilizing a message registry built
+ * from user-specified protobuf (.proto) files. When a message is serialized,
+ * message framing information is created automatically, and, similarly, when
+ * a message is received, the framing is used to automatically unserialize the
+ * message.
+ */
 class MsgBuf
 {
 public:
@@ -29,6 +41,7 @@ public:
     typedef std::map<uint16_t,const DescriptorType *>       DescriptorMap;
     typedef std::map<const DescriptorType *,uint16_t>       MsgTypeMap;
 
+    /// Error codes used in TraceExceptions
     enum ErrorCode
     {
         EC_OK = 0,
@@ -39,6 +52,7 @@ public:
         EC_UNSERIALIZE
     };
 
+    /// Framing structure that wraps a serialized message
     struct Frame
     {
         Frame() : size(0), proto_id(0), msg_id(0), context(0) {}
@@ -51,18 +65,23 @@ public:
             context = 0;
         }
 
+        /// Message type is 16 bits with protocol ID as the upper 8 bits and message ID as the lower 8 bits
         inline uint16_t getMsgType() const
         {
             return ( ((uint16_t)proto_id) << 8 ) | msg_id;
         }
 
-        uint32_t    size;       // Size of buffer
-        uint8_t     proto_id;
-        uint8_t     msg_id;
-        uint16_t    context;
+        uint32_t    size;       ///< Size of buffer in bytes
+        uint8_t     proto_id;   ///< Protocol ID (defined by Protocol enum in proto file)
+        uint8_t     msg_id;     ///< Message ID (defined by alphabetical order of message names in proto file)
+        uint16_t    context;    ///< Optional context value
     };
 
-
+    /**
+     * @brief Construct a new MsgBuf object with optional capacity
+     * 
+     * @param a_capacity - Buffer capacity in bytes
+     */
     MsgBuf( uint32_t a_capacity = 0 ) : m_buffer(0), m_capacity(0)
     {
         m_route[0] = 0;
@@ -71,6 +90,16 @@ public:
             ensureCapacity( a_capacity );
     }
 
+    /**
+     * @brief Construct a new MsgBuf object with UID, context, and capacity
+     * 
+     * @param a_uid - User ID
+     * @param a_context - Context value
+     * @param a_capacity - Buffer capacity in bytes
+     *
+     * This constructor version is used by trusted agents that need to send/
+     * recv messages on behalf of a user specified by UID.
+     */
     MsgBuf( const std::string & a_uid, uint16_t a_context = 0, uint32_t a_capacity = 0 ) : m_buffer(0), m_capacity(0), m_uid(a_uid)
     {
         m_frame.context = a_context;
@@ -80,13 +109,18 @@ public:
             ensureCapacity( a_capacity );
     }
 
+    /**
+     * @brief Destroys the MsgBuf object
+     */
     ~MsgBuf()
     {
         if ( m_buffer )
             delete[] m_buffer;
     }
 
-
+    /**
+     * @brief Frees memory used by MsgBuf
+     */
     void clear()
     {
         m_route[0] = 0;
@@ -101,52 +135,93 @@ public:
         }
     }
 
-
+    /**
+     * @brief Get a modifiable Frame reference from the MsgBuf instance
+     * 
+     * @return Frame&
+     */
     inline Frame & getFrame()
     {
         return m_frame;
     }
 
+    /**
+     * @brief Get a const Frame reference from the MsgBuf instance
+     * 
+     * @return Frame&
+     */
     inline const Frame & getFrame() const
     {
         return m_frame;
     }
 
+    /**
+     * @brief Get the Message Type of a message in the MsgBuf instance
+     * 
+     * @return uint16_t 
+     */
     inline uint16_t getMsgType() const
     {
         return ( ((uint16_t)m_frame.proto_id) << 8 ) | m_frame.msg_id;
     }
 
+    /**
+     * @brief Get the Buffer pointer of the MsgBuf instance
+     * 
+     * @return char*
+     */
     inline char * getBuffer()
     {
         return m_buffer;
     }
 
+    /**
+     * @brief Get a const Buffer pointer of the MsgBuf instance
+     * 
+     * @return char*
+     */
     inline const char * getBuffer() const
     {
         return m_buffer;
     }
 
+    /**
+     * @brief Get a const Route Buffer of the MsgBuf instance
+     * 
+     * @return const uint8_t* 
+     */
     inline const uint8_t * getRouteBuffer() const
     {
         return m_route;
     }
 
+    /**
+     * @brief Get the Route Buffer of the MsgBuf instance
+     * 
+     * @return const uint8_t* 
+     */
     inline uint8_t * getRouteBuffer()
     {
         return m_route;
     }
 
+    /**
+     * @brief Get the maximum length for route addresses
+     * 
+     * @return uint8_t 
+     */
     inline uint8_t getRouteMaxLen() const
     {
         return MAX_ROUTE_LEN;
     }
 
+    /// Get UID as string
     inline const std::string & getUID() const
     {
         return m_uid;
     }
 
+    /// Set UID from char buffer
     inline void setUID( const char * a_uid, size_t a_len = 0 )
     {
         if ( a_len )
@@ -155,16 +230,19 @@ public:
             m_uid = a_uid; // Null-term str
     }
 
+    /// Set UID from string
     inline void setUID( const std::string & a_uid )
     {
         m_uid = a_uid;
     }
 
+    /// Clear the UID
     inline void clearUID()
     {
         m_uid.clear();
     }
 
+    /// Acquire (take ownership of) contained buffer
     char * acquireBuffer()
     {
         if ( !m_buffer )
@@ -179,6 +257,7 @@ public:
         return buffer;
     }
 
+    /// Ensure buffer is at least given size, in bytes
     void ensureCapacity( uint32_t a_size )
     {
         if ( a_size > m_capacity )
@@ -191,6 +270,12 @@ public:
         }
     }
 
+    /**
+     * @brief Registers a protobuf file with MsgBuf class for auto serialize/unserialize
+     * 
+     * @param a_enum_desc - Protobuf protocol enum descriptor (from namespace::Protocol_descriptor() in generated code)
+     * @return uint8_t - Protocol ID from Protocol enum in proto file
+     */
     static uint8_t registerProtocol( const ::google::protobuf::EnumDescriptor * a_enum_desc )
     {
         if ( a_enum_desc->name() != "Protocol" )
@@ -227,16 +312,16 @@ public:
             mt_map[m->second] = msg_type;
         }
 
-        
-/*
-        DescriptorMap::iterator iProto = getDescriptorMap().find( id );
-        if ( iProto == getDescriptorMap().end() )
-            getDescriptorMap()[id] = file;
-*/
         return id;
     }
 
-
+    /**
+     * @brief Find message type of given message name and protocol ID
+     * 
+     * @param a_proto_id - Protocol ID (from Protocol enum in proto file)
+     * @param a_message_name - Name of message
+     * @return uint16_t - Message ID
+     */
     static uint16_t findMessageType( uint8_t a_proto_id, const std::string & a_message_name )
     {
         FileDescriptorMap::iterator iProto = getFileDescriptorMap().find( a_proto_id );
@@ -256,47 +341,41 @@ public:
         return i_mt->second;
     }
 
-
+    /**
+     * @brief Unserialize and return a contained message
+     * 
+     * @return Message* - message from buffer (receiver must free)
+     */
     inline Message* unserialize() const
     {
         return unserialize( m_frame, m_buffer );
     }
 
-
+    /**
+     * @brief Unserialize and return a message contained  in specified buffer
+     * 
+     * @param a_frame - Framing information
+     * @param a_buffer - MsgBuf instance to unserialize
+     * @return Message* - message from buffer (receiver must free)
+     */
     static Message* unserialize( const Frame & a_frame, const char * a_buffer )
     {
-        //if ( !a_buffer )
-        //    EXCEPT_PARAM( EC_UNSERIALIZE, "Attempt to unserialize empty/null buffer." );
-        //std::cout << "unserialize msg type " << a_frame.getMsgType() << "\n";
-
-        //DescriptorMap::iterator iProto = getDescriptorMap().find( a_frame.proto_id );
         DescriptorMap::iterator iDesc = getDescriptorMap().find( a_frame.getMsgType() );
         if ( iDesc != getDescriptorMap().end() )
         {
-            //std::cout << "msg class " << iDesc->second->name() << "\n";
+            const DescriptorType * msg_descriptor = iDesc->second;
+            const Message * default_msg = getFactory().GetPrototype( msg_descriptor );
 
-            //if ( a_frame.msg_id < (uint8_t)iProto->second->message_type_count())
-            //{
-                //cout << "proto " << a_msg_buffer.a_frame.proto_id << "found" << endl;
+            Message * msg = default_msg->New();
 
-                const DescriptorType * msg_descriptor = iDesc->second; //iProto->second->message_type( a_frame.msg_id );
-                const Message * default_msg = getFactory().GetPrototype( msg_descriptor );
-
-                Message * msg = default_msg->New();
-
-                if ( msg )
-                {
-                    // Some message types do not have any content and will not need to be parsed (and buffer may be null/empty)
-                    if ( msg->ParseFromArray( a_buffer, a_frame.size ))
-                        return msg;
-                    else
-                        delete msg;
-                }
-            //}
-            //else
-            //{
-            //    EXCEPT_PARAM( EC_PROTO_INIT, "Unserialize failed: invalid message type " << (unsigned int)a_frame.msg_id );
-            //}
+            if ( msg )
+            {
+                // Some message types do not have any content and will not need to be parsed (and buffer may be null/empty)
+                if ( msg->ParseFromArray( a_buffer, a_frame.size ))
+                    return msg;
+                else
+                    delete msg;
+            }
         }
         else
         {
@@ -306,7 +385,13 @@ public:
         return 0;
     }
 
-
+    /**
+     * @brief Serialize a message into the MsgBuf
+     * 
+     * @param a_msg - Message instance to serialize
+     *
+     * Framing information is initialized from Message
+     */
     void serialize( Message & a_msg )
     {
         if ( !a_msg.IsInitialized() )

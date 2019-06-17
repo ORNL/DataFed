@@ -137,69 +137,79 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
-        //console.log("updateAllocSelect", coll_id );
+        console.log("updateAllocSelect", coll_id );
         allocListByObject( coll_id, function( ok, data ){
             console.log( "updateAllocSelect", ok, data );
             var html;
             var have_cap = false;
             if ( ok ){
-                var alloc;
-                html = "";
-                for ( var i in data ){
-                    alloc = data[i];
-                    //console.log( "alloc", alloc );
-                    html += "<option value='"+alloc.repo + "'";
-                    if ( parseInt( alloc.totSize ) < parseInt( alloc.maxSize ))
-                        have_cap = true;
-                    else
-                        html += " disabled";
-                    html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
-                }
+                if ( data.length == 0 ){
+                    html="<option value='bad'>(no allocation)</option>";
+                }else{
+                    var alloc;
+                    html = "";
+                    for ( var i in data ){
+                        alloc = data[i];
+                        //console.log( "alloc", alloc );
+                        if ( alloc.subAlloc ){
+                            html += "<option value='default'";
+                        }else{
+                            html += "<option value='"+alloc.repo + "'";
+                        }
 
-                if ( !have_cap || !data.length ){
-                    if ( data.length && !have_cap ){
-                        dlgAlert("Data Allocation Error","All available storage allocations are full.");
-                        frame.dialog('destroy').remove();
-                        return;
-                    }else{
-                        viewColl( coll_id, function( data2 ){
-                            console.log(data2);
-                            if ( data2 ){
-                                if ( data2.owner.startsWith( "u/" )){
-                                    dlgAlert("Data Allocation Error","No available storage allocations.");
-                                    frame.dialog('destroy').remove();
-                                    return;
-                                }else{
-                                    viewProj( data2.owner, function( proj ){
-                                        if ( proj ){
-                                            if ( !proj.subRepo ){
-                                                dlgAlert("Data Allocation Error","No available storage allocations.");
-                                                frame.dialog('destroy').remove();
-                                                return;
-                                            }else if ( parseInt( proj.subUsage ) >= parseInt( proj.subAlloc )){
-                                                dlgAlert("Data Allocation Error","Project sub-allocation is full.");
-                                                frame.dialog('destroy').remove();
-                                                return;
+                        if ( parseInt( alloc.totSize ) < parseInt( alloc.maxSize ))
+                            have_cap = true;
+                        else
+                            html += " disabled";
+
+                        html += ">"+(alloc.subAlloc?"Default":alloc.repo.substr(5))+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
+                    }
+
+                    if ( !have_cap || !data.length ){
+                        if ( data.length && !have_cap ){
+                            dlgAlert("Data Allocation Error","All available storage allocations are full.");
+                            frame.dialog('destroy').remove();
+                            return;
+                        }else{
+                            viewColl( coll_id, function( data2 ){
+                                console.log(data2);
+                                if ( data2 ){
+                                    if ( data2.owner.startsWith( "u/" )){
+                                        dlgAlert("Data Allocation Error","No available storage allocations.");
+                                        frame.dialog('destroy').remove();
+                                        return;
+                                    }else{
+                                        viewProj( data2.owner, function( proj ){
+                                            if ( proj ){
+                                                if ( !proj.subRepo ){
+                                                    dlgAlert("Data Allocation Error","No available storage allocations.");
+                                                    frame.dialog('destroy').remove();
+                                                    return;
+                                                }else if ( parseInt( proj.subUsage ) >= parseInt( proj.subAlloc )){
+                                                    dlgAlert("Data Allocation Error","Project sub-allocation is full.");
+                                                    frame.dialog('destroy').remove();
+                                                    return;
+                                                }else{
+                                                    $("#do_it").button("enable");
+                                                }
                                             }else{
                                                 $("#do_it").button("enable");
                                             }
-                                        }else{
-                                            $("#do_it").button("enable");
-                                        }
-                                    });
+                                        });
+                                    }
+                                }else{
+                                    // Something went wrong - collection changed, no view permission?
+                                    // Just go ahead and let user try to create since we can't confirm default is valid here
+                                    $("#do_it").button("enable");
                                 }
-                            }else{
-                                // Something went wrong - collection changed, no view permission?
-                                // Just go ahead and let user try to create since we can't confirm default is valid here
-                                $("#do_it").button("enable");
-                            }
-                        });
+                            });
+                        }
+                    }else{
+                        $("#do_it").button("enable");
                     }
-                }else{
-                    $("#do_it").button("enable");
                 }
             }else{
-                html="<option value='bad'>----</option>";
+                html="<option value='bad'>(invalid parent)</option>";
             }
             $("#alloc",frame).html(html);
             $("#alloc",frame).selectmenu("refresh");
@@ -224,7 +234,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         title: dlg_title,
         modal: true,
         width: 500,
-        height: 525,
+        height: 530,
         resizable: true,
         resizeStop: function(ev,ui){
             //console.log("resized");
@@ -329,7 +339,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     if ( ok ) {
                         tmp = $("#source_file").val().trim();
                         if ( tmp && a_mode != DLG_DATA_EDIT ){
-                            xfrStart( data.data[0].id, XFR_PUT, tmp, function( ok2, data2 ){
+                            xfrStart( data.data[0].id, XFR_PUT, tmp, 0, function( ok2, data2 ){
                                 if ( ok2 ){
                                     dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
                                 }else{
@@ -469,21 +479,24 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
             });
 
-            if ( parent ){
-                var changetimer;
-                $("#do_it").button("disable");
-                $("#coll",frame).val( parent ).on( "input", function(){
-                    if ( changetimer )
-                        clearTimeout( changetimer );
-                    else{
-                        $("#do_it").button("disable");
-                    }
+            var changetimer;
+            $("#do_it").button("disable");
+            $("#coll",frame).val( parent ).on( "input", function(){
+                if ( changetimer )
+                    clearTimeout( changetimer );
+                else{
+                    $("#do_it").button("disable");
+                }
 
-                    changetimer = setTimeout( updateAllocSelect, 1000 );
-                });
-                $("#alloc",frame).selectmenu();
-                updateAllocSelect();
-            }
+                changetimer = setTimeout( function(){
+                    changetimer = null;
+                    updateAllocSelect();
+                }, 1000 );
+            });
+
+            $("#alloc",frame).selectmenu();
+            updateAllocSelect();
+
             jsoned.resize();
         }
     };
