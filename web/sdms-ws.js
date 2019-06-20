@@ -37,6 +37,7 @@ var g_port;
 var g_server_key_file;
 var g_server_cert_file;
 var g_server_chain_file;
+var g_test;
 var g_msg_by_id = {};
 var g_msg_by_name = {};
 var g_core_sock = zmq.socket('dealer');
@@ -64,6 +65,7 @@ function defaultSettings(){
     g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
     g_client_id = '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454';
     g_client_secret = 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=';
+    g_test = false;
 }
 
 function startServer(){
@@ -73,6 +75,7 @@ function startServer(){
     console.log( "server cert file:", g_server_cert_file );
     console.log( "server chain file:", g_server_chain_file );
     console.log( "core server addr:", g_core_serv_addr );
+    console.log( "tes mode:", g_test );
 
     g_core_sock.connect( g_core_serv_addr );
 
@@ -133,7 +136,7 @@ app.get('/ui', (request, response) => {
         response.redirect( '/ui/main' );
     else{
         var theme = request.cookies['sdms-theme']|| "light";
-        response.render('index',{theme:theme,version:g_version});
+        response.render('index',{theme:theme,version:g_version,test_mode:g_test});
     }
 });
 
@@ -143,14 +146,14 @@ app.get('/ui/main', (request, response) => {
 
     if ( request.cookies['sdms'] ){
         var theme = request.cookies['sdms-theme'] || "light";
-        response.render( 'main',{theme:theme,version:g_version});
+        response.render( 'main',{theme:theme,version:g_version,test_mode:g_test});
     }else
         response.redirect( '/ui' );
 });
 
 app.get('/ui/docs', (request, response) => {
     var theme = request.cookies['sdms-theme'] || "light";
-    response.render( 'docs',{theme:theme,version:g_version});
+    response.render( 'docs',{theme:theme,version:g_version,test_mode:g_test});
 });
 
 app.get('/ui/register', (request, response) => {
@@ -160,7 +163,7 @@ app.get('/ui/register', (request, response) => {
 
     var theme = request.cookies['sdms-theme'] || "light";
 
-    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname,theme:theme,version:g_version });
+    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname,theme:theme,version:g_version,test_mode:g_test });
 });
 
 app.get('/ui/login', (request, response) => {
@@ -181,7 +184,7 @@ app.get('/ui/logout', (request, response) => {
 app.get('/ui/error', (request, response) => {
     //console.log("get /ui/error");
     var theme = request.cookies['sdms-theme'] || "light";
-    response.render('error',{theme:theme,version:g_version});
+    response.render('error',{theme:theme,version:g_version,test_mode:g_test});
 });
 
 app.get('/ui/authn', ( a_request, a_response ) => {
@@ -1287,6 +1290,7 @@ if ( process.argv.length > 2 ){
             g_server_key_file = config.server.key_file || g_server_key_file;
             g_server_cert_file = config.server.cert_file || g_server_cert_file;
             g_server_chain_file = config.server.chain_file || g_server_chain_file;
+            g_test = config.server.test || g_test;
         }
         if ( config.oauth ){
             g_client_id = config.oauth.client_id || g_client_id;

@@ -680,8 +680,9 @@ void printXfrData( spXfrDataReply a_reply )
             const XfrData & xfr = a_reply->xfr(i);
             if ( g_out_form == TEXT )
             {
+                // TODO FIX THIS FOR NEW XFR DATA
                 cout << "TransID   " << xfr.id() << "\n";
-                cout << "DataID    " << xfr.data_id() << "\n";
+                //cout << "DataID    " << xfr.data_id() << "\n";
                 cout << "Mode      " << (xfr.mode()==XM_GET?"GET":"PUT") << "\n";
                 cout << "Status    " << StatusText[xfr.status()] << "\n";
                 if ( xfr.has_err_msg() )
@@ -695,7 +696,7 @@ void printXfrData( spXfrDataReply a_reply )
             else
             {
                 cout << "\"" << xfr.id() << "\",";
-                cout << "\"" << xfr.data_id() << "\",";
+                //cout << "\"" << xfr.data_id() << "\",";
                 cout << "\"" << (xfr.mode()==XM_GET?"GET":"PUT") << "\",";
                 cout << "\"" << StatusText[xfr.status()] << "\",";
                 cout << "\"" << (xfr.has_err_msg()?xfr.err_msg():"") << "\",";

@@ -966,7 +966,7 @@ Client::dataDelete( const std::string & a_id )
     Auth::DataDeleteRequest req;
     Anon::AckReply *        rep;
 
-    req.set_id( a_id );
+    req.add_id( a_id );
 
     send<>( req, rep, m_ctx++ );
 

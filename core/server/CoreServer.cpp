@@ -386,13 +386,14 @@ Server::backgroundMaintenance()
 
     struct timespec             _t;
     double                      t;
-    vector<pair<string,string>>::iterator    iter;
-    Auth::RepoDataDeleteRequest req;
-    Auth::RepoPathCreateRequest path_create_req;
-    Auth::RepoPathDeleteRequest path_delete_req;
+    map<string,vector<pair<string,string>>>::iterator    del_iter;
+    vector<pair<string,string>>::iterator    path_iter;
+    Auth::RepoDataDeleteRequest       del_req;
+    RecordDataLocation *        loc;
+    Auth::RepoPathCreateRequest       path_create_req;
+    Auth::RepoPathDeleteRequest       path_delete_req;
     MsgBuf::Message *           reply;
     MsgBuf::Frame               frame;
-    //string                      uid;
     map<string,pair<string,size_t>>::iterator itrans_client;
     map<string,MsgComm*>        repo_map;
     map<string,MsgComm*>::iterator repo;
@@ -400,6 +401,7 @@ Server::backgroundMaintenance()
 
     try
     {
+        // TODO Should not create connections to all repos, create on-demand, then close after a period of inactivity
         DL_INFO( "Confirming repository server connections" );
         for ( map<std::string,RepoData*>::iterator r = m_repos.begin(); r != m_repos.end(); r++ )
         {
@@ -437,18 +439,29 @@ Server::backgroundMaintenance()
                 // TODO Deletes also need to be serialized so they aren't lost in the event of a restart
                 if ( m_data_delete.size() )
                 {
-                    for ( iter = m_data_delete.begin(); iter !=  m_data_delete.end(); ++iter )
+                    cout << "server::backgroundMaintenance - data to delete!" << endl;
+
+                    for ( del_iter = m_data_delete.begin(); del_iter != m_data_delete.end(); ++del_iter )
                     {
-                        repo = repo_map.find( iter->first );
+                        repo = repo_map.find( del_iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            DL_DEBUG( "Sending data-delete req to " << repo->first << ", path: " << iter->second );
+                            for ( path_iter = del_iter->second.begin(); path_iter != del_iter->second.end(); path_iter++ )
+                            {
+                                cout << "  del " << path_iter->first << endl;
 
-                            req.set_path( iter->second );
-                            repo->second->send( req );
+                                loc = del_req.add_loc();
+                                loc->set_id(path_iter->first);
+                                loc->set_path(path_iter->second);
+                            }
+
+                            cout << "  send msg" << endl;
+
+                            repo->second->send( del_req );
                             if ( !repo->second->recv( reply, frame, 10000 ))
                             {
-                                DL_ERROR( "No response to data-delete req from " << repo->first << " for path: " << iter->second );
+                                cout << "  no response!" << endl;
+                                DL_ERROR( "No response to data-delete req from " << repo->first );
                                 break;
                             }
                             else
@@ -456,7 +469,9 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            DL_ERROR( "Bad repo in delete list: " << iter->first << ", for path " << iter->second );
+                            cout << "  bad repo " << del_iter->first << endl;
+
+                            DL_ERROR( "Bad repo in delete list: " << del_iter->first );
                         }
                     }
                     m_data_delete.clear();
@@ -466,18 +481,18 @@ Server::backgroundMaintenance()
 
                 if ( m_path_create.size() )
                 {
-                    for ( iter = m_path_create.begin(); iter != m_path_create.end(); ++iter )
+                    for ( path_iter = m_path_create.begin(); path_iter != m_path_create.end(); ++path_iter )
                     {
-                        repo = repo_map.find( iter->first );
+                        repo = repo_map.find( path_iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            path = m_repos[iter->first]->path() + ( iter->second[0]=='u'?"user/":"project/" )+ iter->second.substr(2);
+                            path = m_repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
                             DL_DEBUG( "Sending path-create to repo " << repo->first << " for path: " << path );
                             path_create_req.set_path( path );
                             repo->second->send( path_create_req );
                             if ( !repo->second->recv( reply, frame, 5000 ))
                             {
-                                DL_ERROR( "No response to path-create req from " << repo->first << " for path: " << iter->second );
+                                DL_ERROR( "No response to path-create req from " << repo->first << " for path: " << path_iter->second );
                                 break;
                             }
                             else
@@ -485,7 +500,7 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            DL_ERROR( "Bad repo in path create list: " << iter->first << ", for path " << iter->second );
+                            DL_ERROR( "Bad repo in path create list: " << path_iter->first << ", for path " << path_iter->second );
                         }
                     }
                     m_path_create.clear();
@@ -493,18 +508,18 @@ Server::backgroundMaintenance()
 
                 if ( m_path_delete.size() )
                 {
-                    for ( iter = m_path_delete.begin(); iter != m_path_delete.end(); ++iter )
+                    for ( path_iter = m_path_delete.begin(); path_iter != m_path_delete.end(); ++path_iter )
                     {
-                        repo = repo_map.find( iter->first );
+                        repo = repo_map.find( path_iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            path = m_repos[iter->first]->path() + ( iter->second[0]=='u'?"user/":"project/" )+ iter->second.substr(2);
+                            path = m_repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
                             DL_DEBUG( "Sending path-delete to repo " << repo->first << " for path: " << path );
                             path_delete_req.set_path( path );
                             repo->second->send( path_delete_req );
                             if ( !repo->second->recv( reply, frame, 5000 ))
                             {
-                                DL_ERROR( "No response to path-delete req from " << repo->first << " for path: " << iter->second );
+                                DL_ERROR( "No response to path-delete req from " << repo->first << " for path: " << path_iter->second );
                                 break;
                             }
                             else
@@ -512,7 +527,7 @@ Server::backgroundMaintenance()
                         }
                         else
                         {
-                            DL_ERROR( "Bad repo in path delete list: " << iter->first << ", for path " << iter->second );
+                            DL_ERROR( "Bad repo in path delete list: " << path_iter->first << ", for path " << path_iter->second );
                         }
                     }
                     m_path_delete.clear();
@@ -558,16 +573,23 @@ Server::handleNewXfr( const XfrData & a_xfr )
 }
 
 void
-Server::handleNewXfr2( const XfrGetData & a_xfr )
+Server::dataDelete( const vector<RepoRecordDataLocations> & a_locs )
 {
-    m_xfr_mgr.newXfr2( a_xfr );
-}
+    cout << "server::dataDelete" << endl;
+    int i;
 
-void
-Server::dataDelete( const std::string & a_repo_id, const std::string & a_data_path )
-{
     lock_guard<mutex> lock( m_data_mutex );
-    m_data_delete.push_back( make_pair( a_repo_id, a_data_path ));
+
+    for ( vector<RepoRecordDataLocations>::const_iterator r = a_locs.begin(); r != a_locs.end(); r++ )
+    {
+        if ( r->loc_size() > 0 )
+        {
+            cout << "  del " << r->loc_size() << " file(s)" << endl;
+            vector<pair<string,string>> & locs = m_data_delete[r->repo_id()];
+            for ( i = 0; i < r->loc_size(); i++ )
+                locs.push_back( make_pair( r->loc(i).id(), r->loc(i).path() ));
+        }
+    }
 }
 
 

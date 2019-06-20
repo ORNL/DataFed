@@ -2297,7 +2297,7 @@ function makeBrowserTab(){
                     }
                 }*/
 
-                if ( inst.pasteSource.data.scope != dest_node.data.scope || repo ){
+                if ( inst.pasteSource.data.scope != dest_node.data.scope /*|| repo*/ ){
                     /*var msg;
                     if ( repo )
                         msg = "This operation will cause raw data to be relocated to another repository.";

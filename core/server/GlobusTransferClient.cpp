@@ -180,10 +180,10 @@ GlobusTransferClient::post( const char * a_url_path, const char * a_token, const
 }
 
 std::string
-GlobusTransferClient::getSubmissionID( std::string & a_token )
+GlobusTransferClient::getSubmissionID( const std::string & a_acc_token )
 {
     string raw_result;
-    long code = get( "submission_id", a_token.c_str(), {}, raw_result );
+    long code = get( "submission_id", a_acc_token.c_str(), {}, raw_result );
 
     if ( code < 200 || code > 202 )
     {
@@ -219,6 +219,13 @@ GlobusTransferClient::getSubmissionID( std::string & a_token )
     return imem->value.GetString();
 }
 
+void
+GlobusTransferClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
+{
+    a_xfr.set_task_id( getSubmissionID( a_acc_token ));
+}
+
+#if 0
 void
 GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_id, const string & a_src_path, const string & a_dst_path, string & a_task_id )
 {
@@ -340,6 +347,7 @@ GlobusTransferClient::transfer( const string & a_acc_tok, const string & a_sub_i
         a_task_id = imem->value.GetString();
     }
 }
+#endif
 
 bool
 GlobusTransferClient::checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, XfrStatus & a_status, std::string & a_err_msg )

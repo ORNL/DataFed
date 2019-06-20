@@ -259,22 +259,20 @@ message XfrDataReply
     repeated SDMS.XfrData       xfr         = 1;
 }
 
-message XfrGetDataReply
-{
-    repeated SDMS.XfrGetData    xfr         = 1;
-}
-
+// Perform pre-download verification/processing
 message DataGetPreprocRequest
 {
     repeated string             id          = 1;
 }
 
+// Download raw data for one or more records
 message DataGetRequest
 {
     repeated string             id          = 1;
     required string             path        = 2;
 }
 
+// Upload raw data for one record
 message DataPutRequest
 {
     required string             id          = 1;
@@ -282,18 +280,13 @@ message DataPutRequest
     optional string             ext         = 3;
 }
 
+// Delete raw data only (not record)
 message DataDeleteRequest
 {
-    required string             id          = 1;
+    repeated string             id          = 1;
 }
 
-message DataCopyRequest
-{
-    required string             source_id   = 1;
-    required string             dest_id     = 2;
-}
-
-
+// Get domain-local path to raw data of a record (for direct access)
 message DataPathRequest
 {
     required string             id          = 1;
@@ -514,19 +507,17 @@ message ProjectDataReply
 
 message RepoDataDeleteRequest
 {
-    required string             path        = 1;
+    repeated RecordDataLocation loc         = 1;
 }
 
 message RepoDataGetSizeRequest
 {
-    required string             id          = 1;
-    required string             path        = 2;
+    repeated RecordDataLocation loc         = 1;
 }
 
 message RepoDataSizeReply
 {
-    required string             id          = 1;
-    required uint64             size        = 2;
+    repeated RecordDataSize     size        = 1;
 }
 
 message RepoPathCreateRequest

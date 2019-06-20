@@ -43,10 +43,10 @@ private:
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     void                handleNewXfr( const XfrData & a_xfr );
-    void                handleNewXfr2( const XfrGetData & a_xfr );
+    //void                handleNewXfr2( const XfrGetData & a_xfr );
     size_t              getXfrPurgeAge() { return m_xfr_purge_age; }
     size_t              getXfrPurgePeriod() { return m_xfr_purge_per; }
-    void                dataDelete( const std::string & a_repo_id, const std::string & a_data_path );
+    void                dataDelete( const std::vector<RepoRecordDataLocations> & a_locs );
 
     void loadKeys( const std::string & a_cred_dir );
     void loadRepositoryConfig();
@@ -81,7 +81,8 @@ private:
     std::thread *                   m_zap_thread;
     std::map<std::string,std::string>   m_auth_clients;
     std::map<std::string,std::pair<std::string,size_t>>   m_trans_auth_clients;
-    std::vector<std::pair<std::string,std::string>> m_data_delete;
+    //std::vector<std::pair<std::string,std::string>> m_data_delete;
+    std::map<std::string,std::vector<std::pair<std::string,std::string>>> m_data_delete; // repo_id -> list of record id,path
     std::vector<std::pair<std::string,std::string>> m_path_create;
     std::vector<std::pair<std::string,std::string>> m_path_delete;
     XfrMgr                          m_xfr_mgr;

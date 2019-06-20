@@ -1,6 +1,7 @@
 #include <cctype>
 #include <algorithm>
 #include <zmq.h>
+#include <unistd.h>
 #include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
@@ -584,7 +585,6 @@ DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_re
                 for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
                 {
                     rapidjson::Value & alloc_val = imem->value[j];
-
                     alloc = user->add_alloc();
                     alloc->set_repo(alloc_val["repo"].GetString());
                     alloc->set_max_size(alloc_val["max_size"].GetUint64());
@@ -692,23 +692,24 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
 }
 
 void
-DatabaseClient::projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs )
+DatabaseClient::projDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs, bool & a_suballoc )
 {
     rapidjson::Document result;
 
     dbGet( "prj/delete", {{"id",a_id}}, result );
 
-    a_locs.resize(result.Size());
+    if ( !result.IsObject() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
 
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
-    {
-        rapidjson::Value & val = result[i];
-        RecordDataLocation & loc = a_locs[i];
+    rapidjson::Value::MemberIterator imem;
 
-        loc.set_id( val["id"].GetString() );
-        loc.set_repo_id( val["repo_id"].GetString() );
-        loc.set_path( val["path"].GetString() );
-    }
+    if (( imem = result.FindMember("suballoc")) != result.MemberEnd() )
+        a_suballoc = imem->value.GetBool();
+    else
+        a_suballoc = false;
+
+    if (( imem = result.FindMember("locs")) != result.MemberEnd() )
+        setRepoRecordDataLocations( a_locs, imem->value );
 }
 
 void
@@ -761,9 +762,7 @@ void
 DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
-    {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
 
     ProjectData* proj;
     AllocData* alloc;
@@ -975,13 +974,24 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
-DatabaseClient::recordDelete( const std::string & a_id, RecordDataLocation & a_loc )
+//DatabaseClient::recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc )
+DatabaseClient::recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
 {
     rapidjson::Document result;
+    string ids = "[";
 
-    dbGet( "dat/delete", {{"id",a_id}}, result );
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            ids += ",";
 
-    setRecordLocationData( a_loc, result );
+        ids += "\"" + *i + "\"";
+    }
+    ids += "]";
+
+    dbGet( "dat/delete", {{"ids",ids}}, result );
+
+    setRepoRecordDataLocations( a_locs, result );
 }
 
 void
@@ -1011,35 +1021,57 @@ DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::Lis
 }
 
 void
-DatabaseClient::recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc )
+//DatabaseClient::recordGetDataLocation( const std::string & a_id, RepoRecordDataLocations & a_loc )
+DatabaseClient::recordGetDataLocation( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
 {
     rapidjson::Document result;
+    string ids = "[";
 
-    dbGet( "dat/loc", {{"id",a_id}}, result );
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            ids += ",";
 
-    setRecordLocationData( a_loc, result );
+        ids += "\"" + *i + "\"";
+    }
+    ids += "]";
+
+    dbGet( "dat/loc", {{"ids",ids}}, result );
+
+    setRepoRecordDataLocations( a_locs, result );
 }
 
 void
-DatabaseClient::setRecordLocationData( RecordDataLocation & a_loc, rapidjson::Document & a_result )
+DatabaseClient::setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, rapidjson::Value & a_result )
 {
-/*    if ( !a_result.IsArray() )
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-*/
-/*
-    RecordDataLocation* loc;
+    if ( !a_result.IsObject() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB (repo data not an object)" );
 
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    rapidjson::Value::ConstMemberIterator   imem;
+    RecordDataLocation *                    loc;
+    rapidjson::SizeType                     i;
+
+    a_locs.clear();
+    a_locs.reserve( a_result.MemberCount() );
+
+    for ( rapidjson::Value::ConstMemberIterator iter = a_result.MemberBegin(); iter != a_result.MemberEnd(); ++iter )
     {
-        rapidjson::Value & val = a_result[i];
-*/
-        //loc = a_reply.add_location();
-        a_loc.set_id( a_result["id"].GetString() );
-        a_loc.set_repo_id( a_result["repo_id"].GetString() );
-        a_loc.set_path( a_result["path"].GetString() );
-  //  }
+        if ( !iter->value.IsArray() )
+            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB (repo field not an array)" );
+
+        RepoRecordDataLocations repo_locs;
+
+        repo_locs.set_repo_id( iter->name.GetString() );
+
+        for ( i = 0; i < iter->value.Size(); i++ )
+        {
+            loc = repo_locs.add_loc();
+            loc->set_id( iter->value[i]["id"].GetString() );
+            loc->set_path( iter->value[i]["path"].GetString() );
+        }
+
+        a_locs.push_back( repo_locs );
+    }
 }
 
 void
@@ -1066,9 +1098,7 @@ void
 DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
-    {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
 
     RecordData* rec;
     DependencyData *deps;
@@ -1255,27 +1285,15 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
     setCollData( a_reply, result );
 }
 
+// TODO collDelete should take list of coll IDs
 void
-//DatabaseClient::collDelete( const Auth::CollDeleteRequest & a_request, Auth::RecordDataLocationReply & a_reply )
-DatabaseClient::collDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs )
+DatabaseClient::collDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs )
 {
     rapidjson::Document result;
 
     dbGet( "col/delete", {{"id",a_id}}, result );
 
-    a_locs.resize(result.Size());
-
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
-    {
-        rapidjson::Value & val = result[i];
-        RecordDataLocation & loc = a_locs[i];
-
-        loc.set_id( val["id"].GetString() );
-        loc.set_repo_id( val["repo_id"].GetString() );
-        loc.set_path( val["path"].GetString() );
-
-        //setRecordLocationData( a_locs[i], val );
-    }
+    setRepoRecordDataLocations( a_locs, result );
 }
 
 void
@@ -1641,6 +1659,7 @@ DatabaseClient::xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataRe
     setXfrData( a_reply, result );
 }
 
+/*
 void
 DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_result )
 {
@@ -1680,7 +1699,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         if ( imem != val.MemberEnd() )
             xfr->set_err_msg( imem->value.GetString() );
     }
-}
+}*/
 
 void
 DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
@@ -1699,7 +1718,7 @@ DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_pa
 }
 
 void
-DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrGetDataReply & a_reply )
+DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
@@ -1720,18 +1739,18 @@ DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrGetDat
 
     DL_INFO("Back from init_get");
 
-    setXfrGetData( a_reply, result );
+    setXfrData( a_reply, result );
 }
 
 void
-DatabaseClient::setXfrGetData( XfrGetDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 
-    XfrGetData* xfr;
+    XfrData*    xfr;
     XfrFiles*   files;
     XfrFile*    file;
     rapidjson::Value::MemberIterator imem, imem2;
@@ -1748,6 +1767,10 @@ DatabaseClient::setXfrGetData( XfrGetDataReply & a_reply, rapidjson::Document & 
         xfr->set_user_id( val["user_id"].GetString() );
         xfr->set_started( val["started"].GetUint() );
         xfr->set_updated( val["updated"].GetUint() );
+
+        imem = val.FindMember("ext");
+        if ( imem != val.MemberEnd() )
+            xfr->set_ext( val["ext"].GetString() );
 
         imem = val.FindMember("files");
         if ( imem != val.MemberEnd() )

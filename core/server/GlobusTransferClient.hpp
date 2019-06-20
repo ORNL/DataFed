@@ -16,8 +16,9 @@ public:
     GlobusTransferClient();
     ~GlobusTransferClient();
 
-    std::string getSubmissionID( std::string & a_token );
-    void        transfer( const std::string & a_acc_tok, const std::string & a_sub_id, const std::string & a_src_path, const std::string & a_dest_path, std::string & a_task_id );
+    std::string getSubmissionID( const std::string & a_acc_token );
+    //void        transfer( const std::string & a_acc_tok, const std::string & a_sub_id, const std::string & a_src_path, const std::string & a_dest_path, std::string & a_task_id );
+    void        transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token );
     bool        checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, SDMS::XfrStatus & a_status, std::string & a_err_msg );
     void        cancelTask( const std::string & a_acc_tok, const std::string & a_task_id );
 
