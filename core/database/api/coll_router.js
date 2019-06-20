@@ -202,14 +202,12 @@ router.get('/delete', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var owner_id = g_db.owner.firstExample({ _from: coll_id })._to;
-
                 if ( coll.is_root )
                     throw [g_lib.ERR_INVALID_PARAM,"Cannot delete root collection"];
 
-                var locations=[], allocs={};
-                g_lib.deleteCollection( coll._id, allocs, locations );
-                g_lib.updateAllocations( allocs, owner_id );
+                var locations={}, alloc_sz={};
+                g_lib.deleteCollection( coll._id, alloc_sz, locations );
+                g_lib.updateAllocations( alloc_sz );
 
                 res.send( locations );
             }

@@ -706,19 +706,23 @@ router.get('/loc', function (req, res) {
     try {
         // This is a system call - no need to check permissions
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-        var loc = g_db.loc.firstExample({ _from: data_id });
+        var data_id,loc,result={};
+        for ( var i in req.queryParams.ids ){
+            data_id = g_lib.resolveDataID( req.queryParams.ids[i], client );
+            loc = g_db.loc.firstExample({ _from: data_id });
+            if ( result[loc._to] )
+                result[loc._to].push({ id: data_id, path: g_lib.computeDataPath( loc )});
+            else
+                result[loc._to] = [{ id: data_id, path: g_lib.computeDataPath( loc )}];
+        }
 
-        if ( !loc )
-            throw g_lib.ERR_NO_RAW_DATA;
-
-        res.send({ id: data_id, repo_id:loc._to, path: g_lib.computeDataPath( loc ) });
+        res.send(result);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('client', joi.string().optional(), "Client ID")
-.queryParam('id', joi.string().required(), "Data ID (not alias)")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data IDs and/or aliases")
 .summary('Get raw data repo location')
 .description('Get raw data repo location');
 
@@ -839,21 +843,25 @@ router.get('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-                var data = g_db.d.document( data_id );
+                var data,data_id; //,owner_id;
+                var alloc_sz = {}, locations = {};
 
-                if ( !g_lib.hasAdminPermObject( client, data_id )){
-                    if ( data.locked || !g_lib.hasPermissions( client, data, g_lib.PERM_DELETE ))
-                        throw g_lib.ERR_PERM_DENIED;
+                for ( var i in req.queryParams.ids ){
+                    data_id = g_lib.resolveDataID( req.queryParams.ids[i], client );
+                    data = g_db.d.document( data_id );
+
+                    if ( !g_lib.hasAdminPermObject( client, data_id )){
+                        if ( data.locked || !g_lib.hasPermissions( client, data, g_lib.PERM_DELETE ))
+                            throw g_lib.ERR_PERM_DENIED;
+                    }
+
+                    //owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+
+                    g_lib.deleteData( data, alloc_sz, locations );
                 }
 
-                var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-                var allocs = {}, locations = [];
-
-                g_lib.deleteData( data, allocs, locations );
-                g_lib.updateAllocations( allocs, owner_id );
-
-                res.send( locations[0] );
+                g_lib.updateAllocations( alloc_sz );
+                res.send( locations );
             }
         });
 
@@ -862,7 +870,7 @@ router.get('/delete', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Data ID or alias")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data IDs or aliases")
 .summary('Deletes an existing data record')
 .description('Deletes an existing data record');
 
