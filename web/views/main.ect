@@ -49,7 +49,7 @@
     <div class="col-flex" style="height:100%;width:100%">
         <!-- div class="ui-widget-header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em" -->
         <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
-            <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span> DataFed <span style="font-size:40%">V-<%- @version %></span> <span id='mode_label'></span></div>
+            <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span> DataFed <span style="font-size:40%">V-<%- @version %></span> <span id='mode_label' class='ui-state-error'></span></div>
             <div style="flex:none"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="logout()">Log Out</button></div>
         </div>
         <div id="content" class="content" style="flex:1;min-height:0">
@@ -90,7 +90,7 @@
         });
 
         if ( g_test_mode ){
-            $("#mode_label").html("<b>TEST ONLY!!!</b>");
+            $("#mode_label").html("<b>DEV/TEST MODE</b>");
         }
 
         userView( g_user.uid, true, function( ok, user ){
