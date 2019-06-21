@@ -95,9 +95,10 @@ XfrMgr::xfrThreadFunc()
         MsgBuf::Message *            raw_msg;
         Auth::RepoDataGetSizeRequest sz_req;
         Auth::RepoDataSizeReply *    sz_rep;
+        RecordDataLocation *            loc;
         MsgBuf::Frame                frame;
         //string                       uid;
-        size_t                       pos;
+        //size_t                       pos;
         map<string,MsgComm*>        repo_comm;
         map<string,MsgComm*>::iterator comm;
         size_t                      purge_timer = 10;
@@ -205,70 +206,64 @@ XfrMgr::xfrThreadFunc()
 
                                     if (( (*ixfr)->xfr.mode() == XM_PUT || (*ixfr)->xfr.mode() == XM_COPY ) && (*ixfr)->xfr.status() == XS_SUCCEEDED )
                                     {
+                                        // TODO This should be done in another thread so xfr mon isn't blocked
                                         mod_time = time(0);
-                                        #if 0
                                         file_size = 0;
 
-                                        // TODO This should be done in another thread so xfr mon isn't blocked
+                                        // PUTs can only have one repo and one file
+                                        const XfrRepo & repo = (*ixfr)->xfr.repo(0);
 
-                                        comm = repo_comm.find( (*ixfr)->repo_id );
+                                        // Get or make connection to repo server
+                                        comm = repo_comm.find( repo.repo_id() );
                                         if ( comm == repo_comm.end())
                                         {
-                                            const string * addr = m_mgr.getRepoAddress( (*ixfr)->repo_id );
+                                            const string * addr = m_mgr.getRepoAddress( repo.repo_id() );
                                             // This could happen if a repo server is decommissioned while transfers are active
                                             if ( !addr )
-                                                EXCEPT_PARAM( 1, "Xfr refers to non-existent repo server: " << (*ixfr)->repo_id );
+                                                EXCEPT_PARAM( 1, "Xfr refers to non-existent repo server: " << repo.repo_id() );
 
-                                            repo_comm[(*ixfr)->repo_id] = new MsgComm( *addr, MsgComm::DEALER, false, & m_mgr.getSecurityContext() );
-                                            comm = repo_comm.find( (*ixfr)->repo_id );
+                                            repo_comm[repo.repo_id()] = new MsgComm( *addr, MsgComm::DEALER, false, & m_mgr.getSecurityContext() );
+                                            comm = repo_comm.find( repo.repo_id() );
                                         }
+                                        // Add record ID to size req
+                                        const XfrFile & file = repo.file(0);
 
-                                        sz_req.set_id( (*ixfr)->data_id );
-                                        pos = (*ixfr)->repo_path.find_first_of("/");
-                                        if ( pos != string::npos )
-                                            sz_req.set_path( (*ixfr)->repo_path.substr( pos ));
-                                        else
-                                            sz_req.set_path( (*ixfr)->repo_path );
+                                        sz_req.Clear();
+                                        loc = sz_req.add_loc();
+                                        loc->set_id( file.id() );
+                                        loc->set_path( file.to() );
                                         comm->second->send( sz_req );
                                         if ( !comm->second->recv( raw_msg, frame, 10000 ))
                                         {
-                                            DL_ERROR( "Timeout waiting for response from " << (*ixfr)->repo_id );
+                                            DL_ERROR( "Timeout waiting for response from " << repo.repo_id() );
                                         }
                                         else
                                         {
                                             if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
                                             {
-                                                file_size = sz_rep->size();
+                                                if ( sz_rep->size_size() == 1 )
+                                                    file_size = sz_rep->size(0).size();
                                             }
-                                            delete sz_rep;
+
+                                            delete raw_msg;
                                         }
 
-                                        DL_DEBUG( "Xfr updating record " << (*ixfr)->data_id << ",  size: " << file_size );
+                                        DL_DEBUG( "Xfr updating record " << file.id() << ",  size: " << file_size );
 
                                         // Update DB record with new file stats
-                                        upd_req.set_id( (*ixfr)->data_id );
+                                        upd_req.set_id( file.id() );
                                         upd_req.set_size( file_size );
-                                        upd_req.set_source( (*ixfr)->local_path );
-                                        if ( (*ixfr)->ext.size() )
+                                        upd_req.set_source( file.from() );
+                                        if ( (*ixfr)->xfr.has_ext() )
                                         {
-                                            upd_req.set_ext( (*ixfr)->ext );
+                                            upd_req.set_ext( (*ixfr)->xfr.ext() );
                                             upd_req.set_ext_auto( false );
                                         }
 
-                                        /*pos = (*ixfr)->local_path.find_first_of("/");
-                                        if ( pos != string::npos )
-                                        {
-                                            pos = (*ixfr)->local_path.find_first_of(".",pos);
-                                            if ( pos != string::npos )
-                                            {
-                                                upd_req.set_ext( (*ixfr)->local_path.substr( pos + 1 ));
-                                            }
-                                        }*/
                                         upd_req.set_dt( mod_time );
                                         reply.Clear();
-
                                         db_client.recordUpdate( upd_req, reply );
-                                        #endif
+
                                     }
                                 }
 

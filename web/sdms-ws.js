@@ -693,9 +693,10 @@ app.get('/api/dat/get', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/put', ( a_req, a_resp ) => {
-    var par = { id: a_req.query.id, local: a_req.query.path };
+    var par = { id: a_req.query.id, path: a_req.query.path };
     if ( a_req.query.ext )
         par.ext = a_req.query.ext;
+    console.log("dat put:",par);
     sendMessage( "DataPutRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });

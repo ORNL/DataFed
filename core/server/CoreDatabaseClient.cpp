@@ -1701,6 +1701,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
     }
 }*/
 
+/*
 void
 DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {
@@ -1715,29 +1716,29 @@ DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_pa
     dbGet( "xfr/init", params, result );
 
     setXfrData( a_reply, result );
-}
+}*/
 
 void
-DatabaseClient::xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply )
+DatabaseClient::xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
     string ids = "[";
-    for ( int i = 0; i < a_request.id_size(); i++ )
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
     {
-        if ( i > 0 )
+        if ( i != a_ids.begin() )
             ids += ",";
 
-        ids += "\"" + a_request.id(i) + "\"";
+        ids += "\"" + *i + "\"";
     }
     ids += "]";
     params.push_back({"ids",ids});
-    params.push_back({"path",a_request.path()});
-    params.push_back({"mode",to_string(XM_GET)});
+    params.push_back({"path",a_path});
+    params.push_back({"mode",to_string(a_mode)});
+    if ( a_ext )
+        params.push_back({"ext",*a_ext});
 
-    dbGet( "xfr/init_get", params, result );
-
-    DL_INFO("Back from init_get");
+    dbGet( "xfr/init2", params, result );
 
     setXfrData( a_reply, result );
 }
@@ -1751,7 +1752,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
     }
 
     XfrData*    xfr;
-    XfrFiles*   files;
+    XfrRepo*    repo;
     XfrFile*    file;
     rapidjson::Value::MemberIterator imem, imem2;
 
@@ -1763,7 +1764,8 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_id( val["_id"].GetString() );
         xfr->set_mode( (XfrMode)val["mode"].GetInt() );
         xfr->set_status( (XfrStatus)val["status"].GetInt() );
-        xfr->set_local_path( val["local_path"].GetString() );
+        xfr->set_rem_ep( val["rem_ep"].GetString() );
+        xfr->set_rem_path( val["rem_path"].GetString() );
         xfr->set_user_id( val["user_id"].GetString() );
         xfr->set_started( val["started"].GetUint() );
         xfr->set_updated( val["updated"].GetUint() );
@@ -1772,18 +1774,18 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         if ( imem != val.MemberEnd() )
             xfr->set_ext( val["ext"].GetString() );
 
-        imem = val.FindMember("files");
+        imem = val.FindMember("repos");
         if ( imem != val.MemberEnd() )
         {
             for ( rapidjson::Value::ConstMemberIterator imem2 = imem->value.MemberBegin(); imem2 != imem->value.MemberEnd(); ++imem2 )
             {
-                files = xfr->add_files();
-                files->set_repo_id( imem2->name.GetString() );
-                files->set_repo_ep( imem2->value["repo_ep"].GetString() );
+                repo = xfr->add_repo();
+                repo->set_repo_id( imem2->name.GetString() );
+                repo->set_repo_ep( imem2->value["repo_ep"].GetString() );
                 const rapidjson::Value & fval = imem2->value["files"];
                 for ( rapidjson::SizeType f = 0; f < fval.Size(); f++ )
                 {
-                    file = files->add_file();
+                    file = repo->add_file();
                     file->set_id( fval[f]["id"].GetString() );
                     file->set_from( fval[f]["from"].GetString() );
                     file->set_to( fval[f]["to"].GetString() );

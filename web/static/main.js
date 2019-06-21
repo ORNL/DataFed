@@ -880,14 +880,14 @@ function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
     var url = "/api/dat/";
 
     if ( a_mode == XFR_GET )
-        url += "get";
+        url += "get" + "?ids=" + encodeURIComponent(JSON.stringify(a_ids)) ;
     else if ( a_mode == XFR_PUT )
-        url += "put";
+        url += "put" + "?id=" + encodeURIComponent(a_ids[0]) ;
     else{
         return;
     }
 
-    url += "?ids=" + encodeURIComponent(JSON.stringify(a_ids)) + "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
+    url += "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){
         if ( ok ) {

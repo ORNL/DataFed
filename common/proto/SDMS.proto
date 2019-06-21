@@ -253,7 +253,7 @@ message XfrFile
     required string             to          = 3;
 }
 
-message XfrFiles
+message XfrRepo
 {
     required string             repo_id     = 1;
     required string             repo_ep     = 2;
@@ -265,14 +265,15 @@ message XfrData
     required string             id          = 1;
     required XfrMode            mode        = 2;
     required XfrStatus          status      = 3;
-    repeated XfrFiles           files       = 4;
-    required string             local_path  = 5;
-    optional string             ext         = 6; // Puts only
-    required string             user_id     = 7;
-    required uint32             started     = 8;
-    required uint32             updated     = 9;
-    optional string             task_id     = 10; // Only set if status > XFR_INIT
-    optional string             err_msg     = 11; // Only set if status == XFR_FAILED
+    repeated XfrRepo            repo        = 4;
+    required string             rem_ep      = 5;
+    required string             rem_path    = 6;
+    optional string             ext         = 7; // Puts only
+    required string             user_id     = 8;
+    required uint32             started     = 9;
+    required uint32             updated     = 10;
+    optional string             task_id     = 11; // Only set if status > XFR_INIT
+    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
 }
 
 

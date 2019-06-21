@@ -432,7 +432,15 @@ Worker::procDataGetRequest( const std::string & a_uid )
     }
 
     m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( *request, reply );
+    vector<string> ids;
+    int i;
+
+    ids.reserve( request->id_size() );
+    for ( i = 0; i < request->id_size(); i++ )
+        ids.push_back( request->id(i) );
+
+    m_db_client.xfrInit( ids, request->path(), 0, XM_GET, reply );
+
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
@@ -449,7 +457,9 @@ Worker::procDataPutRequest( const std::string & a_uid )
     DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->path() );
 
     m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( request->id(), request->path(), request->has_ext()?&request->ext():0, XM_PUT, reply );
+    //vector<string> ids = { request->id() };
+
+    m_db_client.xfrInit( { request->id() }, request->path(), request->has_ext()?&request->ext():0, XM_PUT, reply );
 
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );

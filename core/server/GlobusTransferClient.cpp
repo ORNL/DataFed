@@ -222,8 +222,148 @@ GlobusTransferClient::getSubmissionID( const std::string & a_acc_token )
 void
 GlobusTransferClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
 {
-    a_xfr.set_task_id( getSubmissionID( a_acc_token ));
+    DL_DEBUG( "GlobusTransferClient::transfer, ID: " << a_xfr.id() << ", mode,  " << a_xfr.mode() << ", rem path: " << a_xfr.rem_path() );
+
+    string sub_id = getSubmissionID( a_acc_token );
+
+    DL_DEBUG( "  xfr ID: " << a_xfr.id() << ", sub ID: " << sub_id  );
+
+    if ( a_xfr.repo_size() > 1 )
+        EXCEPT( 1, "Transfers involving multiple repositories not supported." );
+
+    rapidjson::Document body;
+    rapidjson::Document::AllocatorType& allocator = body.GetAllocator();
+
+    string src_ep;
+    string dst_ep;
+
+    if ( a_xfr.mode() == XM_GET )
+        dst_ep = a_xfr.rem_ep();
+    else
+        src_ep = a_xfr.rem_ep();
+
+    for ( int r = 0; r < a_xfr.repo_size(); r++ )
+    {
+        const XfrRepo & repo = a_xfr.repo(r);
+
+        if ( a_xfr.mode() == XM_GET )
+            src_ep = repo.repo_ep();
+        else
+            dst_ep = repo.repo_ep();
+
+        DL_DEBUG( "  xfr from EP " << src_ep << " to " << dst_ep );
+
+        body.SetObject();
+        body.AddMember( "DATA_TYPE", "transfer", allocator );
+        body.AddMember( "submission_id", rapidjson::StringRef( sub_id.c_str() ), allocator );
+        body.AddMember( "source_endpoint", rapidjson::StringRef( src_ep.c_str() ), allocator );
+        body.AddMember( "destination_endpoint", rapidjson::StringRef( dst_ep.c_str() ), allocator );
+        body.AddMember( "verify_checksum", true, allocator );
+
+        rapidjson::Value xfr_list;
+        xfr_list.SetArray();
+
+        for ( int f = 0; f < repo.file_size(); f++ )
+        {
+            const XfrFile & file = repo.file(f);
+            DL_DEBUG( "  xfr from " << file.from() << " to " << file.to() );
+
+            rapidjson::Value xfr_item;
+            xfr_item.SetObject();
+            xfr_item.AddMember( "DATA_TYPE", "transfer_item", allocator );
+            if ( a_xfr.mode() == XM_GET )
+            {
+                xfr_item.AddMember( "source_path", rapidjson::StringRef( file.from().c_str() ), allocator );
+                xfr_item.AddMember( "destination_path", rapidjson::Value( (a_xfr.rem_path() + file.to()).c_str(), allocator ), allocator );
+            }
+            else
+            {
+                xfr_item.AddMember( "source_path", rapidjson::Value( ( a_xfr.rem_path() + file.from()).c_str(), allocator ), allocator );
+                xfr_item.AddMember( "destination_path", rapidjson::StringRef( file.to().c_str() ), allocator );
+            }
+            xfr_item.AddMember( "recursive", false, allocator );
+            xfr_list.PushBack( xfr_item, allocator );
+        }
+
+        body.AddMember( "DATA", xfr_list, allocator );
+    }
+
+    string raw_result;
+    long code = post( "transfer", a_acc_token.c_str(), {}, &body, raw_result );
+
+    // Try to decode result as JSON - even if call failed
+
+    rapidjson::Document result;
+
+    if ( raw_result.size() )
+    {
+        result.Parse( raw_result.c_str() );
+
+        if ( result.HasParseError() )
+        {
+            DL_ERROR( "Globus xfr call failed, returned invalid JSON." );
+            EXCEPT( 1, "Globus API call failed." );
+        }
+    }
+
+    rapidjson::Value::MemberIterator imem;
+
+    if ( code < 200 || code > 202 )
+    {
+        imem = result.FindMember("message");
+        if ( imem == result.MemberEnd() )
+        {
+            DL_ERROR( "Globus xfr call failed, code: " << code );
+            EXCEPT( 1, "Globus API call failed." );
+        }
+        else
+        {
+            DL_ERROR( "Globus xfr call failed, code: " << code << ", reason: " << imem->value.GetString() );
+            EXCEPT_PARAM( 1, "Globus xfr req failed: "  << imem->value.GetString() );
+        }
+    }
+    else
+    {
+        imem = result.FindMember("DATA_TYPE");
+        if ( imem == result.MemberEnd() )
+        {
+            DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
+            EXCEPT( 1, "Globus API call failed." );
+        }
+
+        imem = result.FindMember("code");
+        if ( imem == result.MemberEnd() )
+        {
+            DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
+            EXCEPT( 1, "Invalid response from Globus" );
+        }
+
+        if ( strcmp( imem->value.GetString(), "Accepted" ) != 0 )
+        {
+            imem = result.FindMember("message");
+            if ( imem == result.MemberEnd() )
+            {
+                DL_ERROR( "Globus xfr req not accepted (no reason)." );
+                EXCEPT( 1, "Globus API call failed." );
+            }
+            else
+            {
+                DL_ERROR( "Globus xfr req not accepted: " << imem->value.GetString() );
+                EXCEPT_PARAM( 1, "Globus xfr req failed: "  << imem->value.GetString() );
+            }
+        }
+
+        imem = result.FindMember("task_id");
+        if ( imem == result.MemberEnd() )
+        {
+            DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
+            EXCEPT( 1, "Globus API call failed." );
+        }
+
+        a_xfr.set_task_id( imem->value.GetString() );
+    }
 }
+
 
 #if 0
 void
