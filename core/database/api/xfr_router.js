@@ -167,6 +167,122 @@ router.get('/init', function (req, res) {
 .description('Performs pre-transfer authorization and initialization');
 
 
+router.get('/init2', function (req, res) {
+    try {
+        var result = [];
+        console.log("init2");
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","g","d","c","a","repo","loc","uuid","accn","alias","acl","admin"],
+                write: ["tr"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var file,repos={},id,data,repo_loc;
+
+                var idx = req.queryParams.path.indexOf("/");
+                if ( idx == -1 )
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid remote path (must include endpoint)"];
+
+                var rem_path = req.queryParams.path.substr(idx);
+                var rem_src;
+
+                if ( req.queryParams.mode == g_lib.XM_GET ){
+                    if ( rem_path.charAt( rem_path.length - 1 ) != "/" )
+                        rem_path += "/";
+                }else{
+                    if ( req.queryParams.ids.length > 1 )
+                        throw [g_lib.ERR_INVALID_PARAM,"Only one destination record allowed for data PUT."];
+
+                    idx = rem_path.lastIndexOf("/");
+                    if ( idx > 0 ){
+                        rem_src = rem_path.substr(idx+1);
+                        rem_path = rem_path.substr(0,idx+1);
+                    }else{
+                        rem_src = rem_path.substr(1);
+                        rem_path = "/";
+                    }
+                }
+                var rem_ep = req.queryParams.path.substr(0,idx);
+
+                for ( var i in req.queryParams.ids ){
+                    id = g_lib.resolveDataID( req.queryParams.ids[i], client );
+                    console.log("id:",id);
+
+                    data = g_db.d.document( id );
+
+                    if ( req.queryParams.mode == g_lib.XM_GET && !data.size )
+                        throw [g_lib.ERR_NO_RAW_DATA,"Data record, "+req.queryParams.ids[i]+", has no raw data"];
+
+                    if ( !g_lib.hasAdminPermObject( client, id )) {
+                        if ( !g_lib.hasPermissions( client, data, g_lib.PERM_RD_DATA ))
+                            throw g_lib.ERR_PERM_DENIED;
+                    }
+
+                    // Get data storage location
+                    repo_loc = g_db._query("for v,e in 1..1 outbound @data loc return { repo: v, loc: e }", { data: id } ).toArray();
+                    if ( repo_loc.length != 1 )
+                        throw [g_lib.ERR_INTERNAL_FAULT,"No storage location for data record, " + id];
+
+                    repo_loc = repo_loc[0];
+
+                    console.log("repo:",repo_loc.repo._key);
+
+                    file = { id: id };
+
+                    if ( req.queryParams.mode == g_lib.XM_PUT ){
+                        file.from = rem_src;
+                        file.to = g_lib.computeDataPath(repo_loc.loc);
+                    }else{
+                        file.from = g_lib.computeDataPath(repo_loc.loc);
+                        file.to = id.substr( 2 ) + (data.ext?data.ext:"");
+                    }
+
+                    if ( repo_loc.repo._key in repos ){
+                        repos[repo_loc.repo._key].files.push(file);
+                    }else{
+                        repos[repo_loc.repo._key] = {repo_ep:repo_loc.repo.endpoint,files:[file]};
+                    }
+                }
+
+                if ( !req.queryParams.validate ){
+                    var now = ((Date.now()/1000)|0);
+                    var tr_obj = {
+                        mode: req.queryParams.mode,
+                        status: g_lib.XS_INIT,
+                        repos: repos,
+                        rem_ep: rem_ep,
+                        rem_path: rem_path,
+                        user_id: client._id,
+                        started: now, 
+                        updated: now
+                    };
+
+                    if ( req.queryParams.mode == g_lib.XM_PUT && req.queryParams.ext ) {
+                        tr_obj.ext = req.queryParams.ext;
+                    }
+
+                    result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
+                }
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data record IDs or aliases")
+.queryParam('path', joi.string().required(), "Remote path")
+.queryParam('mode', joi.number().required(), "Transfer mode (get, put)")
+.queryParam('ext', joi.string().optional(), "Extension override (put only)")
+.queryParam('validate', joi.bool().optional(), "Perform validation only")
+.summary('Performs pre-transfer authorization and initialization')
+.description('Performs pre-transfer authorization and initialization');
+
+
 router.get('/update', function (req, res) {
     try {
         var result;

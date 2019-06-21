@@ -485,28 +485,33 @@ router.get('/delete', function (req, res) {
                 g_lib.ensureAdminPermProj( client, proj_id );
                 var proj = g_db.p.document( proj_id );
                 var size = 0;
-                var objects,obj;
-                var locations=[];
+                var objects,obj,result={};
 
                 if ( proj.sub_repo ){
                     // Collect data locations, size
                     objects = g_db._query( "for v in 1..1 inbound @proj owner filter is_same_collection('d',v) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.size,loc:loc[0]}", { proj: proj_id });
-
+                    var locs = [];
+                    var path_prefix = g_lib.computeDataPathPrefix( proj.sub_repo, proj.owner );
                     while ( objects.hasNext() ) {
                         obj = objects.next();
-                        // Save location
-                        locations.push({id:obj.id,repo_id:obj.loc.repo,path: g_lib.computeDataPath(obj.loc)});
+                        locs.push({ id: obj.id, path: path_prefix + obj.id.substr(2) });
                         size += obj.size;
                     }
+
+                    result.suballoc = true;
+                    result.locs = {};
+                    result.locs[proj.sub_repo] = locs;
 
                     var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
                     obj = g_db.alloc.firstExample({_from: owner_id, _to: proj.sub_repo});
                     g_db._update( obj._id, { usage: obj.tot_size - size });
                 }else{
+                    result.suballoc = false;
+                    result.locs = {};
                     objects = g_db.alloc.byExample({ _from: proj_id });
                     while ( objects.hasNext() ) {
                         obj = objects.next();
-                        locations.push({id:proj_id,repo_id:obj._to,path:"all"});
+                        result.locs[obj._to] = [];
                     }
                 }
 
@@ -526,7 +531,7 @@ router.get('/delete', function (req, res) {
 
                 g_graph.p.remove( proj_id );
 
-                res.send( locations );
+                res.send( result );
             }
         });
     } catch( e ) {
