@@ -265,7 +265,7 @@ message XfrData
     required string             id          = 1;
     required XfrMode            mode        = 2;
     required XfrStatus          status      = 3;
-    repeated XfrRepo            repo        = 4;
+    required XfrRepo            repo        = 4;
     required string             rem_ep      = 5;
     required string             rem_path    = 6;
     optional string             ext         = 7; // Puts only

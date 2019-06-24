@@ -441,10 +441,13 @@ Worker::procDataGetRequest( const std::string & a_uid )
 
     m_db_client.xfrInit( ids, request->path(), 0, XM_GET, reply );
 
-    if ( reply.xfr_size() != 1 )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+    //if ( reply.xfr_size() != 1 )
+    //    EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
-    m_mgr.handleNewXfr( reply.xfr(0) );
+    for ( int i = 0; i < reply.xfr_size(); i++ )
+    {
+        m_mgr.handleNewXfr( reply.xfr(i) );
+    }
 
     PROC_MSG_END
 }

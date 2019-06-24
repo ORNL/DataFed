@@ -1366,25 +1366,33 @@ function makeBrowserTab(){
         if ( len == 0 ){
             html = "(no recent transfers)";
         }else{
-            html = "<table class='info_table'><tr><th>Xfr ID</th><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
+            html = "<table class='info_table'><tr><th>Trans. ID</th><th>Mode</th><th>Data ID</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
             var stat;
             var start = new Date(0);
             var update = new Date(0);
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
-                html += "<tr><td>" + stat.id + "</td><td>" + stat.dataId + "</td><td>";
-
+                console.log("repo stat:",stat);
+                html += "<tr><td>" + stat.id + "</td><td>";
                 switch(stat.mode){
                     case "XM_GET": html += "Get"; break;
                     case "XM_PUT": html += "Put"; break;
                     case "XM_COPY": html += "Copy"; break;
                 }
+
                 html += "</td><td>";
+                if ( stat.repo.file.length == 1 )
+                    html += stat.repo.file[0].id;
+                else
+                    html += "(multiple)";
+
+                html += "</td><td>";
+
                 if ( stat.mode == "XM_COPY" )
                     html += "d/" + stat.localPath.substr( stat.localPath.lastIndexOf("/") + 1);
                 else
-                    html += stat.localPath;
+                    html += stat.remEp + stat.remPath;
                 html += "</td>";
                 start.setTime( stat.started*1000 );
                 update.setTime( stat.updated*1000 );

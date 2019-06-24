@@ -480,7 +480,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             });
 
             var changetimer;
-            $("#do_it").button("disable");
+            if ( a_mode == DLG_DATA_NEW )
+                $("#do_it").button("disable");
+
             $("#coll",frame).val( parent ).on( "input", function(){
                 if ( changetimer )
                     clearTimeout( changetimer );

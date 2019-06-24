@@ -228,8 +228,8 @@ GlobusTransferClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc
 
     DL_DEBUG( "  xfr ID: " << a_xfr.id() << ", sub ID: " << sub_id  );
 
-    if ( a_xfr.repo_size() > 1 )
-        EXCEPT( 1, "Transfers involving multiple repositories not supported." );
+    //if ( a_xfr.repo_size() > 1 )
+    //    EXCEPT( 1, "Transfers involving multiple repositories not supported." );
 
     rapidjson::Document body;
     rapidjson::Document::AllocatorType& allocator = body.GetAllocator();
@@ -242,51 +242,56 @@ GlobusTransferClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc
     else
         src_ep = a_xfr.rem_ep();
 
-    for ( int r = 0; r < a_xfr.repo_size(); r++ )
+    const XfrRepo & repo = a_xfr.repo();
+
+    if ( a_xfr.mode() == XM_GET )
+        src_ep = repo.repo_ep();
+    else
+        dst_ep = repo.repo_ep();
+
+    DL_DEBUG( "  xfr from EP " << src_ep << " to " << dst_ep );
+
+    body.SetObject();
+    body.AddMember( "DATA_TYPE", "transfer", allocator );
+    body.AddMember( "submission_id", rapidjson::StringRef( sub_id.c_str() ), allocator );
+    body.AddMember( "source_endpoint", rapidjson::StringRef( src_ep.c_str() ), allocator );
+    body.AddMember( "destination_endpoint", rapidjson::StringRef( dst_ep.c_str() ), allocator );
+    body.AddMember( "verify_checksum", true, allocator );
+
+    rapidjson::Value xfr_list;
+    xfr_list.SetArray();
+
+    for ( int f = 0; f < repo.file_size(); f++ )
     {
-        const XfrRepo & repo = a_xfr.repo(r);
+        const XfrFile & file = repo.file(f);
+        DL_DEBUG( "  xfr from " << file.from() << " to " << file.to() );
 
+        rapidjson::Value xfr_item;
+        xfr_item.SetObject();
+        xfr_item.AddMember( "DATA_TYPE", "transfer_item", allocator );
         if ( a_xfr.mode() == XM_GET )
-            src_ep = repo.repo_ep();
-        else
-            dst_ep = repo.repo_ep();
-
-        DL_DEBUG( "  xfr from EP " << src_ep << " to " << dst_ep );
-
-        body.SetObject();
-        body.AddMember( "DATA_TYPE", "transfer", allocator );
-        body.AddMember( "submission_id", rapidjson::StringRef( sub_id.c_str() ), allocator );
-        body.AddMember( "source_endpoint", rapidjson::StringRef( src_ep.c_str() ), allocator );
-        body.AddMember( "destination_endpoint", rapidjson::StringRef( dst_ep.c_str() ), allocator );
-        body.AddMember( "verify_checksum", true, allocator );
-
-        rapidjson::Value xfr_list;
-        xfr_list.SetArray();
-
-        for ( int f = 0; f < repo.file_size(); f++ )
         {
-            const XfrFile & file = repo.file(f);
-            DL_DEBUG( "  xfr from " << file.from() << " to " << file.to() );
-
-            rapidjson::Value xfr_item;
-            xfr_item.SetObject();
-            xfr_item.AddMember( "DATA_TYPE", "transfer_item", allocator );
-            if ( a_xfr.mode() == XM_GET )
-            {
-                xfr_item.AddMember( "source_path", rapidjson::StringRef( file.from().c_str() ), allocator );
-                xfr_item.AddMember( "destination_path", rapidjson::Value( (a_xfr.rem_path() + file.to()).c_str(), allocator ), allocator );
-            }
-            else
-            {
-                xfr_item.AddMember( "source_path", rapidjson::Value( ( a_xfr.rem_path() + file.from()).c_str(), allocator ), allocator );
-                xfr_item.AddMember( "destination_path", rapidjson::StringRef( file.to().c_str() ), allocator );
-            }
-            xfr_item.AddMember( "recursive", false, allocator );
-            xfr_list.PushBack( xfr_item, allocator );
+            xfr_item.AddMember( "source_path", rapidjson::StringRef( file.from().c_str() ), allocator );
+            xfr_item.AddMember( "destination_path", rapidjson::Value( (a_xfr.rem_path() + file.to()).c_str(), allocator ), allocator );
         }
-
-        body.AddMember( "DATA", xfr_list, allocator );
+        else
+        {
+            xfr_item.AddMember( "source_path", rapidjson::Value( ( a_xfr.rem_path() + file.from()).c_str(), allocator ), allocator );
+            xfr_item.AddMember( "destination_path", rapidjson::StringRef( file.to().c_str() ), allocator );
+        }
+        xfr_item.AddMember( "recursive", false, allocator );
+        xfr_list.PushBack( xfr_item, allocator );
     }
+
+    body.AddMember( "DATA", xfr_list, allocator );
+
+    cout << "XFR REQUEST BODY:\n";
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    body.Accept(writer);
+
+    // Output {"project":"rapidjson","stars":11}
+    cout << buffer.GetString() << endl;
 
     string raw_result;
     long code = post( "transfer", a_acc_token.c_str(), {}, &body, raw_result );

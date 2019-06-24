@@ -144,19 +144,9 @@ XfrMgr::xfrThreadFunc()
                         {
                             // TODO - This code currently treats ALL errors as permanent, need to handle transient errors differently
 
-                            //if ( !db_client.userGetAccessToken( (*ixfr)->token ))
-                            //    EXCEPT_PARAM( 1, "No access token. Re-login required." );
+                            if ( !db_client.userGetAccessToken( (*ixfr)->token ))
+                                EXCEPT_PARAM( 1, "No access token. Re-login required." );
 
-                            // Get new submission ID, if this fails, an exception will be thrown
-                            //string sub_id = glob.getSubmissionID( (*ixfr)->token );
-
-                            // True = ok, false = temp failure, exception = perm failure
-                            #if 0
-                            if ( (*ixfr)->xfr.mode == XM_GET )
-                                glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->repo_path, (*ixfr)->local_path, (*ixfr)->task_id );
-                            else
-                                glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
-                            #endif
                             glob.transfer( (*ixfr)->xfr, (*ixfr)->token );
                             DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );
 
@@ -210,14 +200,13 @@ XfrMgr::xfrThreadFunc()
                                         mod_time = time(0);
                                         file_size = 0;
 
-                                        // PUTs can only have one repo and one file
-                                        const XfrRepo & repo = (*ixfr)->xfr.repo(0);
+                                        const XfrRepo & repo = (*ixfr)->xfr.repo();
 
                                         // Get or make connection to repo server
                                         comm = repo_comm.find( repo.repo_id() );
                                         if ( comm == repo_comm.end())
                                         {
-                                            const string * addr = m_mgr.getRepoAddress( repo.repo_id() );
+                                            const string * addr = m_mgr.getRepoAddress( string("repo/") + repo.repo_id() );
                                             // This could happen if a repo server is decommissioned while transfers are active
                                             if ( !addr )
                                                 EXCEPT_PARAM( 1, "Xfr refers to non-existent repo server: " << repo.repo_id() );

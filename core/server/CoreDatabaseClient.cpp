@@ -1774,22 +1774,20 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         if ( imem != val.MemberEnd() )
             xfr->set_ext( val["ext"].GetString() );
 
-        imem = val.FindMember("repos");
+        imem = val.FindMember("repo");
         if ( imem != val.MemberEnd() )
         {
-            for ( rapidjson::Value::ConstMemberIterator imem2 = imem->value.MemberBegin(); imem2 != imem->value.MemberEnd(); ++imem2 )
+            repo = xfr->mutable_repo();
+            //repo->set_repo_id( imem2->name.GetString() );
+            repo->set_repo_id( imem->value["repo_id"].GetString() );
+            repo->set_repo_ep( imem->value["repo_ep"].GetString() );
+            const rapidjson::Value & fval = imem->value["files"];
+            for ( rapidjson::SizeType f = 0; f < fval.Size(); f++ )
             {
-                repo = xfr->add_repo();
-                repo->set_repo_id( imem2->name.GetString() );
-                repo->set_repo_ep( imem2->value["repo_ep"].GetString() );
-                const rapidjson::Value & fval = imem2->value["files"];
-                for ( rapidjson::SizeType f = 0; f < fval.Size(); f++ )
-                {
-                    file = repo->add_file();
-                    file->set_id( fval[f]["id"].GetString() );
-                    file->set_from( fval[f]["from"].GetString() );
-                    file->set_to( fval[f]["to"].GetString() );
-                }
+                file = repo->add_file();
+                file->set_id( fval[f]["id"].GetString() );
+                file->set_from( fval[f]["from"].GetString() );
+                file->set_to( fval[f]["to"].GetString() );
             }
         }
 
