@@ -179,14 +179,18 @@ router.get('/init2', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var file,repos={},id,data,repo_loc;
+                var i,file,repos={},id,data,repo_loc;
 
+                console.log("input path:",req.queryParams.path);
                 var idx = req.queryParams.path.indexOf("/");
                 if ( idx == -1 )
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid remote path (must include endpoint)"];
 
                 var rem_path = req.queryParams.path.substr(idx);
                 var rem_src;
+                console.log("rem path:",rem_path);
+                var rem_ep = req.queryParams.path.substr(0,idx);
+                console.log("rem_ep:",rem_ep,",idx:",idx);
 
                 if ( req.queryParams.mode == g_lib.XM_GET ){
                     if ( rem_path.charAt( rem_path.length - 1 ) != "/" )
@@ -203,10 +207,11 @@ router.get('/init2', function (req, res) {
                         rem_src = rem_path.substr(1);
                         rem_path = "/";
                     }
+                    console.log("rem src:",rem_src);
+                    console.log("rem path(2):",rem_path);
                 }
-                var rem_ep = req.queryParams.path.substr(0,idx);
 
-                for ( var i in req.queryParams.ids ){
+                for ( i in req.queryParams.ids ){
                     id = g_lib.resolveDataID( req.queryParams.ids[i], client );
                     console.log("id:",id);
 
@@ -242,13 +247,27 @@ router.get('/init2', function (req, res) {
                     if ( repo_loc.repo._key in repos ){
                         repos[repo_loc.repo._key].files.push(file);
                     }else{
-                        repos[repo_loc.repo._key] = {repo_ep:repo_loc.repo.endpoint,files:[file]};
+                        repos[repo_loc.repo._key] = {repo_id:repo_loc.repo._key,repo_ep:repo_loc.repo.endpoint,files:[file]};
                     }
                 }
 
                 if ( !req.queryParams.validate ){
                     var now = ((Date.now()/1000)|0);
                     var tr_obj = {
+                        mode: req.queryParams.mode,
+                        status: g_lib.XS_INIT,
+                        rem_ep: rem_ep,
+                        rem_path: rem_path,
+                        user_id: client._id,
+                        started: now, 
+                        updated: now
+                    };
+
+                    for ( i in repos ){
+                        tr_obj.repo = repos[i];
+                        result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
+                    }
+                    /*var tr_obj = {
                         mode: req.queryParams.mode,
                         status: g_lib.XS_INIT,
                         repos: repos,
@@ -264,6 +283,7 @@ router.get('/init2', function (req, res) {
                     }
 
                     result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
+                    */
                 }
             }
         });
