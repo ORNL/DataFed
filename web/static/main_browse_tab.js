@@ -584,14 +584,7 @@ function makeBrowserTab(){
 
     this.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
-        if ( ids.length != 1 )
-            return;
-
-        var id = ids[0];
-
-        if ( id.charAt(0) == "d" ) {
-            dataGet( id );
-        }
+        dataGet( ids );
     }
 
     this.actionDataPut = function() {
@@ -622,11 +615,11 @@ function makeBrowserTab(){
         var bits,node;
 
         if ( sel.length > 1 ){
-            bits = 0x319;
+            bits = 0x319; //0x319;
             for ( var i in sel ){
                 node = sel[i];
                 switch ( node.key[0] ){
-                    case "c": bits |= node.data.isroot?0xF7:0x72;  break;
+                    case "c": bits |= node.data.isroot?0xD7:0x52;  break;
                     case "d": bits |= 0x00;  break;
                     case "r": bits |= 0x1F7;  break;
                     case "p": bits |= 0x1Fa | (node.data.admin?0:5); break;
@@ -640,7 +633,8 @@ function makeBrowserTab(){
             node = sel[0];
 
             switch ( node.key[0] ){
-                case "c": bits = node.data.isroot?0x2F7:0x272;  break;
+                //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
+                case "c": bits = node.data.isroot?0x2D7:0x252;  break;
                 case "d":
                     if ( node.parent.key.startsWith("c/"))
                         bits = 0x00;
@@ -687,8 +681,8 @@ function makeBrowserTab(){
         $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0 );
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0 );
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0 );
-        $("#btn_download",inst.frame).button("option","disabled",(bits & 0x10) != 0);
-        $("#btn_move",inst.frame).button("option","disabled",(bits & 0x10) != 0);
+        $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
+        $("#btn_move",inst.frame).button("option","disabled",(bits & 0x20) != 0);
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
@@ -701,8 +695,8 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "del", (bits & 4) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "share", (bits & 8) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "put", (bits & 0x10) == 0 );
-        inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x10) == 0 );
-        inst.data_tree_div.contextmenu("enableEntry", "move", (bits & 0x10) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "get", (bits & 0x20) == 0 );
+        inst.data_tree_div.contextmenu("enableEntry", "move", (bits & 0x20) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "lock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlock", (bits & 0x40) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "unlink", (bits & 0x80) == 0 );
@@ -1372,25 +1366,33 @@ function makeBrowserTab(){
         if ( len == 0 ){
             html = "(no recent transfers)";
         }else{
-            html = "<table class='info_table'><tr><th>Xfr ID</th><th>Data ID</th><th>Mode</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
+            html = "<table class='info_table'><tr><th>Trans. ID</th><th>Mode</th><th>Data ID</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
             var stat;
             var start = new Date(0);
             var update = new Date(0);
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
-                html += "<tr><td>" + stat.id + "</td><td>" + stat.dataId + "</td><td>";
-
+                console.log("repo stat:",stat);
+                html += "<tr><td>" + stat.id + "</td><td>";
                 switch(stat.mode){
                     case "XM_GET": html += "Get"; break;
                     case "XM_PUT": html += "Put"; break;
                     case "XM_COPY": html += "Copy"; break;
                 }
+
                 html += "</td><td>";
+                if ( stat.repo.file.length == 1 )
+                    html += stat.repo.file[0].id;
+                else
+                    html += "(multiple)";
+
+                html += "</td><td>";
+
                 if ( stat.mode == "XM_COPY" )
                     html += "d/" + stat.localPath.substr( stat.localPath.lastIndexOf("/") + 1);
                 else
-                    html += stat.localPath;
+                    html += stat.remEp + stat.remPath;
                 html += "</td>";
                 start.setTime( stat.started*1000 );
                 update.setTime( stat.updated*1000 );
@@ -2303,7 +2305,7 @@ function makeBrowserTab(){
                     }
                 }*/
 
-                if ( inst.pasteSource.data.scope != dest_node.data.scope || repo ){
+                if ( inst.pasteSource.data.scope != dest_node.data.scope /*|| repo*/ ){
                     /*var msg;
                     if ( repo )
                         msg = "This operation will cause raw data to be relocated to another repository.";

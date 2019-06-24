@@ -83,7 +83,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &Worker::procRevokeCredentialsRequest );
         SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
-        SET_MSG_HANDLER( proto_id, DataCopyRequest, &Worker::procDataCopyRequest );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
@@ -122,6 +121,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
+        SET_MSG_HANDLER_DB( proto_id, DataGetPreprocRequest, ListingReply, dataGetPreproc );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
@@ -422,16 +422,32 @@ bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
-
-    DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->local() );
+    if ( request->id_size() > 1 )
+    {
+        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->path() );
+    }
+    else
+    {
+        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->path() );
+    }
 
     m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( request->id(), request->local(), 0, XM_GET, reply );
+    vector<string> ids;
+    int i;
 
-    if ( reply.xfr_size() != 1 )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+    ids.reserve( request->id_size() );
+    for ( i = 0; i < request->id_size(); i++ )
+        ids.push_back( request->id(i) );
 
-    m_mgr.handleNewXfr( reply.xfr(0) );
+    m_db_client.xfrInit( ids, request->path(), 0, XM_GET, reply );
+
+    //if ( reply.xfr_size() != 1 )
+    //    EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+
+    for ( int i = 0; i < reply.xfr_size(); i++ )
+    {
+        m_mgr.handleNewXfr( reply.xfr(i) );
+    }
 
     PROC_MSG_END
 }
@@ -441,10 +457,12 @@ Worker::procDataPutRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
 
-    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->local() );
+    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->path() );
 
     m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( request->id(), request->local(), request->has_ext()?&request->ext():0, XM_PUT, reply );
+    //vector<string> ids = { request->id() };
+
+    m_db_client.xfrInit( { request->id() }, request->path(), request->has_ext()?&request->ext():0, XM_PUT, reply );
 
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
@@ -454,57 +472,44 @@ Worker::procDataPutRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-Worker::procDataCopyRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( DataCopyRequest, XfrDataReply )
-
-    DL_INFO( "Data COPY, uid: " << a_uid << ", src: " << request->source_id() << ", dest: " << request->dest_id() );
-
-    m_db_client.setClient( a_uid );
-    m_db_client.xfrInit( request->source_id(), request->dest_id(), 0, XM_COPY, reply );
-
-    if ( reply.xfr_size() != 1 )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
-
-    m_mgr.handleNewXfr( reply.xfr(0) );
-
-    PROC_MSG_END
-}
 
 bool
 Worker::procDataDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
 
-    DL_INFO( "Data RAW-DELETE, uid: " << a_uid << ", id: " << request->id() );
+    DL_INFO( "Data RAW-DELETE, uid: " << a_uid );
 
     // Get data path and delete raw data first, then update data record
 
-    //Auth::RecordGetDataLocationRequest loc_req;
-    //Auth::RecordDataLocationReply loc_reply;
-    //loc_req.set_id( request->id() );
+    vector<string> ids;
+    int i;
 
-    //m_db_client.recordGetDataLocation( loc_req, loc_reply );
-    RecordDataLocation loc;
-    m_db_client.recordGetDataLocation( request->id(), loc );
-    //DL_DEBUG("location res size: " << loc_reply.location_size() );
+    ids.reserve( request->id_size() );
+    for ( i = 0; i < request->id_size(); i++ )
+        ids.push_back( request->id(i) );
 
-    //if ( loc_reply.location_size() == 1 )
-    //{
-        // Ask manager to delete file
-        //const RecordDataLocation & loc = loc_reply.location(0);
-        m_mgr.dataDelete( loc.repo_id(), loc.path() );
+    vector<RepoRecordDataLocations> loc;
+    m_db_client.recordGetDataLocation( ids, loc );
 
-        Auth::RecordUpdateRequest upd_req;
-        Auth::RecordDataReply upd_reply;
+    // TODO This must be durable, mgr should initiate record updates AFTER data is deleted
+    m_mgr.dataDelete( loc );
 
-        upd_req.set_id( request->id() );
-        upd_req.set_size( 0 );
+    m_db_client.setClient( a_uid );
 
-        m_db_client.setClient( a_uid );
-        m_db_client.recordUpdate( upd_req, upd_reply );
-    //}
+    RecordUpdateRequest upd_req;
+    RecordDataReply upd_reply;
+
+    for ( vector<RepoRecordDataLocations>::iterator r = loc.begin(); r != loc.end(); r++ )
+    {
+        for ( i = 0; i < r->loc_size(); i++ )
+        {
+            upd_req.set_id( r->loc(i).id() );
+            upd_req.set_size( 0 );
+
+            m_db_client.recordUpdate( upd_req, upd_reply );
+        }
+    }
 
     PROC_MSG_END
 }
@@ -519,21 +524,23 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    vector<string> ids;
+    int i;
+
+    ids.reserve( request->id_size() );
+    for ( i = 0; i < request->id_size(); i++ )
+        ids.push_back( request->id(i) );
+
+    vector<RepoRecordDataLocations> loc;
 
     m_db_client.setClient( a_uid );
-    for ( int i = 0; i < request->id_size(); i++ )
-    {
-        DL_INFO( "Data REC-DELETE, uid: " << a_uid << ", rec: " << request->id(i));
+    m_db_client.recordDelete( ids, loc );
 
-        RecordDataLocation loc;
-        m_db_client.recordDelete( request->id(i), loc );
-
-        // Ask FileManager to delete file(s)
-        m_mgr.dataDelete( loc.repo_id(), loc.path() );
-    }
+    m_mgr.dataDelete( loc );
 
     PROC_MSG_END
 }
+
 
 bool
 Worker::procCollectionDeleteRequest( const std::string & a_uid )
@@ -545,18 +552,17 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.setClient( a_uid );
-    vector<RecordDataLocation> locs;
+    vector<RepoRecordDataLocations> locs;
 
     for ( int i = 0; i < request->id_size(); i++ )
     {
         DL_INFO( "Collection DELETE, uid: " << a_uid << ", coll: " << request->id(i) );
         m_db_client.collDelete( request->id(i), locs );
 
-        // Ask FileManager to delete file
-        for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
-        {
-            m_mgr.dataDelete( l->repo_id(), l->path() );
-        }
+        // TODO A crash after DB delete will leave orphaned raw data files behind, need to make durable
+
+        // Ask FileManager to delete files
+        m_mgr.dataDelete( locs );
 
         locs.clear();
     }
@@ -574,21 +580,25 @@ Worker::procProjectDeleteRequest( const std::string & a_uid )
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.setClient( a_uid );
-    vector<RecordDataLocation> locs;
+    vector<RepoRecordDataLocations> locs;
+    bool suballoc;
 
     for ( int i = 0; i < request->id_size(); i++ )
     {
         DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id(i) );
 
-        m_db_client.projDelete( request->id(i), locs );
+        m_db_client.projDelete( request->id(i), locs, suballoc );
 
-        // Ask FileManager to delete file and/or repo project directories
-        for ( vector<RecordDataLocation>::iterator l = locs.begin(); l != locs.end(); ++l )
+        if ( suballoc )
         {
-            if ( l->path() == "all" )
+            m_mgr.dataDelete( locs );
+        }
+        else
+        {
+            for ( vector<RepoRecordDataLocations>::iterator l = locs.begin(); l != locs.end(); ++l )
+            {
                 m_mgr.repoPathDelete( l->repo_id(), request->id(i) );
-            else
-                m_mgr.dataDelete( l->repo_id(), l->path() );
+            }
         }
 
         locs.clear();

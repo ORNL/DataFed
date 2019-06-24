@@ -1,31 +1,99 @@
-function dlgStartTransfer( a_mode, a_data, a_cb ) {
+function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     var frame = $(document.createElement('div'));
-    //frame.html( "<span id='prefix'>Source</span> Path:<input type='text' id='path' style='width:95%'></input>" );
+    var ep_lab = a_mode == XFR_GET?"Destination":"Source";
+    var rec_lab = a_mode == XFR_GET?"Source":"Destination";
+    var rec_tree;
 
-    frame.html( "<div class='ui-widget'>\
-        <span id='title'></span><br><br>\
-        Endpoint:<br>\
+    frame.html( "<div class='ui-widget' style='height:95%'>" +
+        rec_lab + ": <span id='title'></span><br>\
+        <div class='col-flex' style='height:100%'>\
+        <div id='records' class='ui-widget ui-widget-content' style='flex: 1 1 auto;display:none;height:6em;overflow:auto'></div>\
+        <div style='flex:none'><br>" + ep_lab + " Endpoint:<br>\
         <select id='matches' disabled><option disabled selected>No Matches</option></select><br>\
-        <div style='padding:.25em 0'>\
-        <button class='btn' id='refresh'>Refresh</button>&nbsp<button class='btn' id='activate' disabled>Activate</button>&nbsp<button class='btn' id='browse' style='margin:0' disabled>Browse</button></div><br>\
-        Path:<br>\
-        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%'></textarea><br>" +
+        <div style='padding:.25em 2em'>\
+        <button class='btn small' id='refresh'>Refresh</button>&nbsp<button class='btn small' id='activate' disabled>(re)Activate</button>&nbsp<button class='btn small' id='browse' style='margin:0' disabled>Browse</button></div><br>" +
+        ep_lab + " Path:<br>\
+        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%;resize:none'></textarea><br>" +
         (a_mode == XFR_PUT?"File extension override: <input id='ext' type='text'></input><br>":"") +
-        "</div>");
+        "</div></div></div>");
 
-        //<input class='ui-widget-content' id='path' style='width:100%'></input><br>\
-
-    var label = ["Get","Put","Select"];
+    var label = ["Get (Download)","Put (Upload)","Select"];
     var dlg_title = label[a_mode] + " Data";
+    var selection_ok = true;
+    var endpoint_ok = false;
 
-    if ( a_data ){
-        if ( a_data.alias ){
-            var pos = a_data.alias.lastIndexOf(":");
-            dlg_title += " \"" + a_data.alias.substr(pos+1) + "\" [" + a_data.id + "]";
-        }else
-            dlg_title += " " + a_data.id;
+    //console.log("records:",a_ids);
 
-        $("#title",frame).html( "\"" + escapeHTML( a_data.title ) + "\"" );
+    function updateGoBtn(){
+        if ( selection_ok && endpoint_ok )
+            $("#go_btn").button("enable");
+        else
+            $("#go_btn").button("disable");
+    }
+
+    if ( !a_ids ){
+        $("#title",frame).html( "(new record)" );
+    }else if ( a_ids.length > 1 ){
+        var item, skip = 0, tot_sz = 0;
+        var info, sel, src = [];
+        for ( var i in a_ids ){
+            item = a_ids[i];
+            if ( item.size == 0 ){
+                info = "(empty)";
+                sel = false;
+            }else if ( item.locked ){
+                info == "(locked)"
+                sel = false;
+            }else{
+                tot_sz += parseInt( item.size );
+                info = sizeToString( item.size );
+                sel = true;
+            }
+
+            if ( sel ){
+                src.push({ title: item.id + "&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>" + info + "</span>&nbsp" + item.title, selected: true, key: item.id });
+            }else{
+                skip += 1;
+                src.push({ title: "<span style='color:#808080'>" + item.id + "&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>" + info + "</span>&nbsp" + item.title + "</span>", unselectable: true, key: item.id });
+            }
+        }
+        $("#title",frame).text( "" + a_ids.length + " records, " + skip + " skipped, total size: " + sizeToString( tot_sz ));
+
+        $($("#records",frame),frame).fancytree({
+            extensions: ["themeroller"],
+            themeroller: {
+                activeClass: "my-fancytree-active",
+                addClass: "",
+                focusClass: "",
+                hoverClass: "my-fancytree-hover",
+                selectedClass: ""
+            },
+            source: src,
+            checkbox: true,
+            selectMode: 3,
+            icon:false,
+            select:function( ev, data ){
+                var sel = rec_tree.getSelectedNodes();
+                if ( sel.length ){
+                    if ( !selection_ok ){
+                        selection_ok = true;
+                        updateGoBtn();
+                    }
+                }else{
+                    if ( selection_ok ){
+                        selection_ok = false;
+                        updateGoBtn();
+                    }
+                }
+            }
+        });
+
+        $("#records",frame).show();
+        rec_tree = $("#records",frame).fancytree("getTree");
+    }else{
+        item = a_ids[0];
+        html = item.id + "&nbsp&nbsp" + sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
+        $("#title",frame).html( html );
     }
 
     var matches = $("#matches",frame);
@@ -34,16 +102,22 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
     var cur_ep = null;
 
     inputTheme(path_in);
+    inputTheme($("#ext",frame));
 
     matches.on('selectmenuchange', function( ev, ui ) {
         if ( ep_list && ui.item ){
             cur_ep = ep_list[ui.item.index-1];
 
             path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
-            if ( cur_ep.activated || cur_ep.expires_in == -1 )
+            if ( cur_ep.activated || cur_ep.expires_in == -1 ){
                 $("#browse",frame).button("enable");
-            else
+                endpoint_ok = true;
+                updateGoBtn();
+            }else{
                 $("#browse",frame).button("disable");
+                endpoint_ok = false;
+                updateGoBtn();
+            }
 
             if ( cur_ep.expires_in == -1 )
                 $("#activate",frame).button("disable");
@@ -63,37 +137,47 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
     });
 
     $("#browse",frame).on('click',function(){
-        console.log("browse ep:",path_in.val());
+        //console.log("browse ep:",path_in.val());
         var path = path_in.val();
         var delim = path.indexOf("/");
-        if ( delim != -1 )
+        if ( delim != -1 ){
             path = path.substr(delim);
-        else
+            if ( path.charAt( path.length -1 ) != "/" ){
+                delim = path.lastIndexOf("/");
+                if ( delim > 0 )
+                    path = path.substr(0,delim+1);
+                else
+                    path += "/";
+            }
+        }else
             path = cur_ep.default_directory?cur_ep.default_directory:"/";
-        console.log("path:",path);
+        //console.log("path:",path);
         dlgEpBrowse( cur_ep, path, (a_mode == XFR_GET)?"dir":"file", function( sel ){
             path_in.val( cur_ep.name + sel );
         });
     });
 
     $("#activate",frame).on('click',function(){
-        console.log("activate ep:",path_in.val());
-        window.open('https://www.globus.org/app/endpoints/'+ encodeURIComponent(cur_ep.id) +'/activate','');
+        //console.log("activate ep:",path_in.val());
+        //https://app.globus.org/file-manager?origin_id=57805a92-43f9-11e8-8e06-0a6d4e044368
+        //window.open('https://www.globus.org/app/endpoints/'+ encodeURIComponent(cur_ep.id) +'/activate','');
+        window.open('https://app.globus.org/file-manager?origin_id='+ encodeURIComponent(cur_ep.id),'');
     });
 
     var in_timer;
     function inTimerExpired(){
         var ep = path_in.val();
+        if ( ep.length == 0 )
+            return;
         var delim = ep.indexOf("/");
         if ( delim != -1 )
             ep = ep.substr(0,delim);
-        console.log("cur_ep", cur_ep, "ep", ep );
+        //console.log("cur_ep", cur_ep, "ep", ep );
         if ( !cur_ep || ep != cur_ep.name ){
-            //cur_ep = ep;
             $("#browse",frame).button("disable");
             $("#activate",frame).button("disable");
 
-            console.log("ep changed:",ep);
+            //console.log("ep changed:",ep);
 
             epView( ep, function( ok, data ){
                 if ( ok && !data.code ){
@@ -116,15 +200,19 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                     matches.selectmenu("refresh");
                     matches.selectmenu("enable");
 
-                    if ( cur_ep.activated || cur_ep.expires_in == -1 )
+                    if ( cur_ep.activated || cur_ep.expires_in == -1 ){
                         $("#browse",frame).button("enable");
+                        endpoint_ok = true;
+                        updateGoBtn();
+                    }
 
                     if ( cur_ep.expires_in != -1 )
                         $("#activate",frame).button("enable");
+
                 }else{
                     cur_ep = null;
                     epAutocomplete( ep, function( ok, data ){
-                        console.log("ep matches:", ok, data );
+                        //console.log("ep matches:", ok, data );
                         if ( ok ){
                             if ( data.DATA && data.DATA.length ){
                                 ep_list = data.DATA;
@@ -138,12 +226,7 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                                         html += "active)</option>";
                                     else
                                         html += (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
-
-                                    //html += "<option class='" + (ep.activated?"ep-act":"ep-inact") + "'>" + (ep.display_name || ep.canonical_name || ep.id) + " (" + (ep.activated?Math.floor( ep.expires_in/3600 ) + " hrs":"inactive") + ")</option>";
-
-                                    //console.log( ep.display_name || ep.canonical_name || ep.id, ep.description, ep.organization );
                                 }
-                                console.log( html );
                                 matches.html( html );
                                 matches.selectmenu("refresh");
                                 matches.selectmenu("enable");
@@ -167,11 +250,12 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
     var options = {
         title: dlg_title,
         modal: true,
-        width: 'auto',
+        width: '600',
         height: 'auto',
         resizable: true,
         closeOnEscape: false,
         buttons: [{
+            id: "go_btn",
             text: label[a_mode],
             click: function() {
                 var raw_path = $("#path",frame).val().trim();
@@ -185,7 +269,17 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                     if ( ext )
                         ext.trim();
 
-                    xfrStart( a_data.id, a_mode, raw_path, ext, function( ok, data ){
+                    var ids = [];
+                    if ( a_ids.length == 1 )
+                        ids = [a_ids[0].id];
+                    else{
+                        var sel = rec_tree.getSelectedNodes();
+                        for ( var i in sel ){
+                            ids.push( sel[i].key );
+                        }
+                    }
+                    console.log("ids:", ids );
+                    xfrStart( ids, a_mode, raw_path, ext, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
@@ -199,47 +293,6 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
                     clearTimeout( in_timer );
                     $(this).dialog('destroy').remove();
                 }
-/*
-                var url = "/api/dat/";
-
-                if ( a_mode == XFR_GET )
-                    url += "get";
-                else if ( a_mode == XFR_PUT )
-                    url += "put";
-                else{
-                    a_cb( raw_path );
-                    clearTimeout( in_timer );
-                    $(this).dialog('destroy').remove();
-                    return;
-                }
-
-                var path = encodeURIComponent(raw_path);
-
-                url += "?id=" + a_data.id + "&path=" + path;
-
-                var inst = $(this);
-                _asyncGet( url, null, function( ok, data ){
-                    if ( ok ) {
-                        var p = g_ep_recent.indexOf(raw_path);
-                        if ( p < 0 ){
-                            g_ep_recent.unshift(raw_path);
-                            if ( g_ep_recent.length > 20 )
-                                g_ep_recent.length = 20;
-                            epRecentSave();
-                        }else if ( p > 0 ) {
-                            g_ep_recent.unshift( g_ep_recent[p] );
-                            g_ep_recent.splice( p+1, 1 );
-                            epRecentSave();
-                        }
-
-                        clearTimeout( in_timer );
-                        inst.dialog('destroy').remove();
-                        dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
-                    } else {
-                        dlgAlert( "Transfer Error", data );
-                    }
-                });
-*/
             }
         },{
             text: "Cancel",
@@ -249,6 +302,8 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
             }
         }],
         open: function(){
+            updateGoBtn();
+
             if ( g_ep_recent.length ){
                 path_in.val( g_ep_recent[0] );
                 path_in.select();
@@ -265,7 +320,11 @@ function dlgStartTransfer( a_mode, a_data, a_cb ) {
             matches.selectmenu({width: 400});
 
             path_in.on('input', function(){
-                console.log("input changed");
+                if ( cur_ep && !path_in.val().startsWith( cur_ep.name )){
+                    endpoint_ok = false;
+                    updateGoBtn();
+                }
+
                 clearTimeout( in_timer );
                 in_timer = setTimeout( inTimerExpired, 750 );
             });

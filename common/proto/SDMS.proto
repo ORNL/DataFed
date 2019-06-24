@@ -166,7 +166,8 @@ message ListingData
     optional bool               locked      = 4;
     optional string             owner       = 5;
     optional int32              gen         = 6;
-    repeated DependencyData     dep         = 7;
+    optional uint64             size        = 7;
+    repeated DependencyData     dep         = 8;
 }
 
 message RecordData
@@ -193,11 +194,25 @@ message RecordData
     repeated DependencyData     deps        = 20;
 }
 
+// Fields required for a data repo to locate raw data
+// TODO Path will be removed and replaced with owner ID
 message RecordDataLocation
 {
     required string             id          = 1;
-    required string             repo_id     = 2;
-    required string             path        = 3;
+    required string             path        = 2;
+}
+
+// A list of data locations associated with a specific repo
+message RepoRecordDataLocations
+{
+    required string             repo_id     = 1;
+    repeated RecordDataLocation loc         = 2;
+}
+
+message RecordDataSize
+{
+    required string             id          = 1;
+    required uint64             size        = 2;
 }
 
 message CollData
@@ -213,12 +228,13 @@ message CollData
     optional string             parent_id   = 9;
 }
 
+/*
 message XfrData
 {
     required string             id          = 1;
     required XfrMode            mode        = 2;
     required XfrStatus          status      = 3;
-    required string             data_id     = 4; // With revision?
+    required string             data_id     = 4;
     required string             repo_path   = 5;
     required string             local_path  = 6;
     optional string             ext         = 7;
@@ -226,9 +242,40 @@ message XfrData
     required string             repo_id     = 9;
     required uint32             started     = 10;
     required uint32             updated     = 11;
-    optional string             task_id     = 12; // Only set if status > XFR_INIT
-    optional string             err_msg     = 13; // Only set if status == XFR_FAILED
+    optional string             task_id     = 12;
+    optional string             err_msg     = 13;
+}*/
+
+message XfrFile
+{
+    required string             id          = 1;
+    required string             from        = 2;
+    required string             to          = 3;
 }
+
+message XfrRepo
+{
+    required string             repo_id     = 1;
+    required string             repo_ep     = 2;
+    repeated XfrFile            file        = 3;
+}
+
+message XfrData
+{
+    required string             id          = 1;
+    required XfrMode            mode        = 2;
+    required XfrStatus          status      = 3;
+    required XfrRepo            repo        = 4;
+    required string             rem_ep      = 5;
+    required string             rem_path    = 6;
+    optional string             ext         = 7; // Puts only
+    required string             user_id     = 8;
+    required uint32             started     = 9;
+    required uint32             updated     = 10;
+    optional string             task_id     = 11; // Only set if status > XFR_INIT
+    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
+}
+
 
 message GroupData
 {

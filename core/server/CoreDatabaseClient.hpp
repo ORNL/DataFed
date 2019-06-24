@@ -1,6 +1,7 @@
 #ifndef CENTRALDBCLIENT_HPP
 #define CENTRALDBCLIENT_HPP
 
+
 #include <string>
 #include <vector>
 #include <rapidjson/document.h>
@@ -49,7 +50,7 @@ public:
 
     void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
+    void projDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs, bool & a_suballoc );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply );
     void projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply );
@@ -58,19 +59,22 @@ public:
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
-    void recordDelete( const std::string & a_id, RecordDataLocation & a_loc );
-    void recordGetDataLocation( const std::string & a_id, RecordDataLocation & a_loc );
+    //void recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc );
+    void recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs );
+    //void recordGetDataLocation( const std::string & a_id, RepoRecordDataLocations & a_loc );
+    void recordGetDataLocation( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply );
     void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply );
     void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply );
 
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
+    void dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
-    void collDelete( const std::string & a_id, std::vector<RecordDataLocation> & a_locs );
+    void collDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
@@ -86,7 +90,9 @@ public:
 
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
-    void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
+    //void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
+    //void xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply );
+    void xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
     void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
@@ -128,12 +134,13 @@ private:
     void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
     //void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
-    void setRecordLocationData( RecordDataLocation & a_loc, rapidjson::Document & a_result );
+    void setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, rapidjson::Value & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
     void setQueryData( Auth::QueryDataReply & a_reply, rapidjson::Document & a_result );
     void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
     void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
+    //void setXfrGetData( Auth::XfrGetDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );

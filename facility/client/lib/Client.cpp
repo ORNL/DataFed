@@ -936,8 +936,8 @@ Client::dataGet( const std::string & a_data_id, const std::string & a_local_path
     Auth::DataGetRequest    req;
     Auth::XfrDataReply *    rep;
 
-    req.set_id( a_data_id );
-    req.set_local( applyPrefix( a_local_path ));
+    req.add_id( a_data_id );
+    req.set_path( applyPrefix( a_local_path ));
 
     send<>( req, rep, m_ctx++ );
 
@@ -952,7 +952,7 @@ Client::dataPut( const std::string & a_data_id, const std::string & a_local_path
     Auth::XfrDataReply *    rep;
 
     req.set_id( a_data_id );
-    req.set_local( applyPrefix( a_local_path ));
+    req.set_path( applyPrefix( a_local_path ));
 
     send<>( req, rep, m_ctx++ );
 
@@ -966,7 +966,7 @@ Client::dataDelete( const std::string & a_id )
     Auth::DataDeleteRequest req;
     Anon::AckReply *        rep;
 
-    req.set_id( a_id );
+    req.add_id( a_id );
 
     send<>( req, rep, m_ctx++ );
 

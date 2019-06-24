@@ -7,18 +7,23 @@
     <body>
         <div class="col-flex ui-widget-content" style="height:100%;border:none">
             <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
-                <div style="flex:1 1 100%;font-size:2em;">DataFed - Welcome!</div>
+                <div style="flex:1 1 100%;font-size:2em;">DataFed - Welcome! <span id='mode_label' class='ui-state-error'></span></div>
                 <div style="flex:none"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="location.href='/ui/login'">Log In / Register</button></div>
             </div>
-
-            <div id="content" class="" style="padding:3em 10em;font-size:120%;flex:1 1 50%">
-                <h1>About</h1>
-                <p>DataFed is a distributed data management, transfer, and collaboration tool for scientific research efforts spanning multiple (geographically dispersed) experimental, compute, and analytic facilities. The key features of DataFed are support for efficient storage and transfer of Big-Data, full-life-cycle data management, fine-grained access control, metadata-driven data discovery, and subscription-based data dissemination.</p>
-                <h2>Globus Requirements</h2>
-                <p>A Globus Online account with a linked Globus ID identity is required to access DataFed. If you do not have a Globus Online account, or have not yet linked a Globus ID identity, please sign-up (for free) at <a href="https://www.globusid.org/">GlobusID.org</a> then return to this page to register for DataFed access.</p>
-                <p>DataFed utilizes Globus for automated file transfers on behalf of DataFed users (i.e. from jobs scipts, worklows, or applications). During registration, new users wil be redirected to a Globus authorization page where appropriate permissions must be granted to the DataFed application in order for automated file transfers to function. Please refer to the online DataFed documentation for additional information and requirements associated with data transfers.</p>
-                <h2>Web Browser Compatibility</h2>
-                <p>The DataFed web application requires an HTML5 compliant web browser, and internal testing has shown that <i>Chrome, Safari, Opera,</i> and <i>Vivaldi</i> are acceptable for use with DataFed. <i>Microsoft Edge</i> and <i>FireFox</i> do not fully support specific layout features needed by the DataFed web app, and are, therefore, <i>not recommended</i>.</p>
+            <div class="" style="padding:3rem 8rem 0;font-size:120%;flex:auto;overflow:auto">
+                <p style='font-size:150%'>A <span style='font-size:120%'><b><i>Data Fed</i></b></span>eration for Science</p>
+                <p style='font-size:120%'><i>Providing powerful data management and collaboration capabilities for data-oriented, cross-facility research.</i></p>
+                <br>
+                <p>DataFed brings together geographically distributed scientific data repositories,  experimental/compute facilities, and powerful data management services to form the <i>DataFed Network</i>. Scientists can uniformly access, organize, and share big data from anywhere within the DataFed Network.<br><br>
+                Simple, Efficient, and Secure - DataFed boosts scientific productivity and enhances scientific reproducibility.</p>
+                <p><center><a href='/ui/docs'>Learn More</a></center></p>
+                <div style="margin:1rem 1rem;padding:1em;font-size:90%;">
+                    <h3>Registration</h3>
+                    <p>DataFed registration is free; however, a Globus Online account with a linked GlobusID identity is required to access DataFed. If you don't have a Globus Online account, or haven't linked a GlobusID identity, please sign-up (for free) at <a href="https://www.globusid.org/">GlobusID.org</a> then return to this page to register for DataFed access.</p>
+                    <p>DataFed utilizes Globus Online for automatic (managed) data transfers on behalf of DataFed users. During registration, new users will be asked to grant specific Globus permissions to the DataFed application to enable this functionality. Please refer to the online DataFed documentation for additional information related to authorization and data transfers.</p>
+                    <h3>Web Browser Compatibility</h3>
+                    <p>The DataFed web application requires an HTML5 compliant web browser, and internal testing has shown that <i>Chrome, Safari, Opera,</i> and <i>Vivaldi</i> are acceptable for use with DataFed. <i>Microsoft Edge</i> and <i>FireFox</i> do not fully support specific layout features needed by the DataFed web app, and are, therefore, <i>not recommended</i>.</p>
+                </div>
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">
                 User: Not Logged In
@@ -28,5 +33,11 @@
     <script>
         window.name = 'sdms_target';
         $(".btn").button();
+
+        var g_test_mode = "<%- @test_mode %>";
+        if ( g_test_mode ){
+            $("#mode_label").html("<b>DEV/TEST MODE</b>");
+        }
+
     </script>
 </html>

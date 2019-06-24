@@ -65,7 +65,6 @@ XfrMgr::newXfr( const XfrData & a_xfr )
     }
 }
 
-
 void
 XfrMgr::xfrThreadFunc()
 {
@@ -96,10 +95,11 @@ XfrMgr::xfrThreadFunc()
         MsgBuf::Message *            raw_msg;
         Auth::RepoDataGetSizeRequest sz_req;
         Auth::RepoDataSizeReply *    sz_rep;
+        RecordDataLocation *            loc;
         MsgBuf::Frame                frame;
         //string                       uid;
-        size_t                       pos;
-        map<string,MsgComm*>    repo_comm;
+        //size_t                       pos;
+        map<string,MsgComm*>        repo_comm;
         map<string,MsgComm*>::iterator comm;
         size_t                      purge_timer = 10;
 
@@ -135,10 +135,10 @@ XfrMgr::xfrThreadFunc()
                     if ( (*ixfr)->stage == 0 )
                     {
                         // Start xfr, get task ID, update DB
-                        DL_DEBUG( "Configure new xfr: " << (*ixfr)->id );
+                        DL_DEBUG( "Configure new xfr: " << (*ixfr)->xfr.id() );
 
                         // Get user's access token
-                        db_client.setClient( (*ixfr)->user_id );
+                        db_client.setClient( (*ixfr)->xfr.user_id() );
 
                         try
                         {
@@ -147,19 +147,11 @@ XfrMgr::xfrThreadFunc()
                             if ( !db_client.userGetAccessToken( (*ixfr)->token ))
                                 EXCEPT_PARAM( 1, "No access token. Re-login required." );
 
-                            // Get new submission ID, if this fails, an exception will be thrown
-                            string sub_id = glob.getSubmissionID( (*ixfr)->token );
-
-                            // True = ok, false = temp failure, exception = perm failure
-                            if ( (*ixfr)->mode == XM_GET )
-                                glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->repo_path, (*ixfr)->local_path, (*ixfr)->task_id );
-                            else
-                                glob.transfer( (*ixfr)->token, sub_id, (*ixfr)->local_path, (*ixfr)->repo_path, (*ixfr)->task_id );
-
-                            DL_DEBUG( "Started xfr with task id: " << (*ixfr)->task_id );
+                            glob.transfer( (*ixfr)->xfr, (*ixfr)->token );
+                            DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );
 
                             // Update DB entry
-                            db_client.xfrUpdate( (*ixfr)->id, 0, "", (*ixfr)->task_id.c_str() );
+                            db_client.xfrUpdate( (*ixfr)->xfr.id(), 0, "", (*ixfr)->xfr.task_id().c_str() );
                             (*ixfr)->stage = 1;
                             (*ixfr)->poll = INIT_POLL_PERIOD;
 
@@ -168,15 +160,17 @@ XfrMgr::xfrThreadFunc()
                         catch( TraceException & e )
                         {
                             // Permanent failure, e.what()
-                            (*ixfr)->status = XS_FAILED;
-                            db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, e.toString() );
+                            (*ixfr)->xfr.set_status( XS_FAILED );
+                            status = (*ixfr)->xfr.status();
+                            db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, e.toString() );
                             ixfr = m_xfr_active.erase( ixfr );
                         }
                         catch( ... )
                         {
                             // Permanent failure, e.what()
-                            (*ixfr)->status = XS_FAILED;
-                            db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, "Unknown exception" );
+                            (*ixfr)->xfr.set_status( XS_FAILED );
+                            status = (*ixfr)->xfr.status();
+                            db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, "Unknown exception" );
                             ixfr = m_xfr_active.erase( ixfr );
                         }
                     }
@@ -186,89 +180,84 @@ XfrMgr::xfrThreadFunc()
                         {
                             try
                             {
-                                if ( glob.checkTransferStatus( (*ixfr)->token, (*ixfr)->task_id, status, error_msg ))
+                                if ( glob.checkTransferStatus( (*ixfr)->token, (*ixfr)->xfr.task_id(), status, error_msg ))
                                 {
-                                    DL_INFO( "Globus xfr failed. Cancelling task " << (*ixfr)->task_id );
-                                    glob.cancelTask( (*ixfr)->token, (*ixfr)->task_id );
+                                    DL_INFO( "Globus xfr failed. Cancelling task " << (*ixfr)->xfr.task_id() );
+                                    glob.cancelTask( (*ixfr)->token, (*ixfr)->xfr.task_id() );
                                 }
 
-                                DL_DEBUG( "Xfr task " << (*ixfr)->task_id << " status: " << status );
+                                DL_DEBUG( "Xfr task " << (*ixfr)->xfr.task_id() << " status: " << status );
 
-                                if ( (*ixfr)->status != status )
+                                if ( (*ixfr)->xfr.status() != status )
                                 {
                                     // Update DB entry
-                                    db_client.xfrUpdate( (*ixfr)->id, &status, error_msg );
-                                    (*ixfr)->status = status;
+                                    db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, error_msg );
+                                    (*ixfr)->xfr.set_status( status );
 
-                                    if (( (*ixfr)->mode == XM_PUT || (*ixfr)->mode == XM_COPY ) && (*ixfr)->status == XS_SUCCEEDED )
+                                    if (( (*ixfr)->xfr.mode() == XM_PUT || (*ixfr)->xfr.mode() == XM_COPY ) && (*ixfr)->xfr.status() == XS_SUCCEEDED )
                                     {
+                                        // TODO This should be done in another thread so xfr mon isn't blocked
                                         mod_time = time(0);
                                         file_size = 0;
 
-                                        // TODO This should be done in another thread so xfr mon isn't blocked
+                                        const XfrRepo & repo = (*ixfr)->xfr.repo();
 
-                                        comm = repo_comm.find( (*ixfr)->repo_id );
+                                        // Get or make connection to repo server
+                                        comm = repo_comm.find( repo.repo_id() );
                                         if ( comm == repo_comm.end())
                                         {
-                                            const string * addr = m_mgr.getRepoAddress( (*ixfr)->repo_id );
+                                            const string * addr = m_mgr.getRepoAddress( string("repo/") + repo.repo_id() );
                                             // This could happen if a repo server is decommissioned while transfers are active
                                             if ( !addr )
-                                                EXCEPT_PARAM( 1, "Xfr refers to non-existent repo server: " << (*ixfr)->repo_id );
+                                                EXCEPT_PARAM( 1, "Xfr refers to non-existent repo server: " << repo.repo_id() );
 
-                                            repo_comm[(*ixfr)->repo_id] = new MsgComm( *addr, MsgComm::DEALER, false, & m_mgr.getSecurityContext() );
-                                            comm = repo_comm.find( (*ixfr)->repo_id );
+                                            repo_comm[repo.repo_id()] = new MsgComm( *addr, MsgComm::DEALER, false, & m_mgr.getSecurityContext() );
+                                            comm = repo_comm.find( repo.repo_id() );
                                         }
+                                        // Add record ID to size req
+                                        const XfrFile & file = repo.file(0);
 
-                                        sz_req.set_id( (*ixfr)->data_id );
-                                        pos = (*ixfr)->repo_path.find_first_of("/");
-                                        if ( pos != string::npos )
-                                            sz_req.set_path( (*ixfr)->repo_path.substr( pos ));
-                                        else
-                                            sz_req.set_path( (*ixfr)->repo_path );
+                                        sz_req.Clear();
+                                        loc = sz_req.add_loc();
+                                        loc->set_id( file.id() );
+                                        loc->set_path( file.to() );
                                         comm->second->send( sz_req );
                                         if ( !comm->second->recv( raw_msg, frame, 10000 ))
                                         {
-                                            DL_ERROR( "Timeout waiting for response from " << (*ixfr)->repo_id );
+                                            DL_ERROR( "Timeout waiting for response from " << repo.repo_id() );
                                         }
                                         else
                                         {
                                             if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
                                             {
-                                                file_size = sz_rep->size();
+                                                if ( sz_rep->size_size() == 1 )
+                                                    file_size = sz_rep->size(0).size();
                                             }
-                                            delete sz_rep;
+
+                                            delete raw_msg;
                                         }
 
-                                        DL_DEBUG( "Xfr updating record " << (*ixfr)->data_id << ",  size: " << file_size );
+                                        DL_DEBUG( "Xfr updating record " << file.id() << ",  size: " << file_size );
 
                                         // Update DB record with new file stats
-                                        upd_req.set_id( (*ixfr)->data_id );
+                                        upd_req.set_id( file.id() );
                                         upd_req.set_size( file_size );
-                                        upd_req.set_source( (*ixfr)->local_path );
-                                        if ( (*ixfr)->ext.size() )
+                                        upd_req.set_source( file.from() );
+                                        if ( (*ixfr)->xfr.has_ext() )
                                         {
-                                            upd_req.set_ext( (*ixfr)->ext );
+                                            upd_req.set_ext( (*ixfr)->xfr.ext() );
                                             upd_req.set_ext_auto( false );
                                         }
 
-                                        /*pos = (*ixfr)->local_path.find_first_of("/");
-                                        if ( pos != string::npos )
-                                        {
-                                            pos = (*ixfr)->local_path.find_first_of(".",pos);
-                                            if ( pos != string::npos )
-                                            {
-                                                upd_req.set_ext( (*ixfr)->local_path.substr( pos + 1 ));
-                                            }
-                                        }*/
                                         upd_req.set_dt( mod_time );
                                         reply.Clear();
-
                                         db_client.recordUpdate( upd_req, reply );
+
                                     }
                                 }
 
                                 // Remove from active list
-                                if ( (*ixfr)->status > XS_INACTIVE )
+                                if ( (*ixfr)->xfr.status() > XS_INACTIVE )
                                     ixfr = m_xfr_active.erase( ixfr );
                                 else
                                     xfrBackOffPolling( ixfr++ );
@@ -276,15 +265,17 @@ XfrMgr::xfrThreadFunc()
                             catch( TraceException & e )
                             {
                                 // Permanent failure, e.what()
-                                (*ixfr)->status = XS_FAILED;
-                                db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, e.toString() );
+                                (*ixfr)->xfr.set_status( XS_FAILED );
+                                status = (*ixfr)->xfr.status();
+                                db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, e.toString() );
                                 ixfr = m_xfr_active.erase( ixfr );
                             }
                             catch( ... )
                             {
                                 // Permanent failure, e.what()
-                                (*ixfr)->status = XS_FAILED;
-                                db_client.xfrUpdate( (*ixfr)->id, &(*ixfr)->status, "Unknown exception" );
+                                (*ixfr)->xfr.set_status( XS_FAILED );
+                                status = (*ixfr)->xfr.status();
+                                db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, "Unknown exception" );
                                 ixfr = m_xfr_active.erase( ixfr );
                             }
                         }
@@ -294,12 +285,12 @@ XfrMgr::xfrThreadFunc()
                 }
                 catch( TraceException & e )
                 {
-                    DL_ERROR( "XFR loop exception: " << e.toString() << ", entry " << (*ixfr)->id );
+                    DL_ERROR( "XFR loop exception: " << e.toString() << ", entry " << (*ixfr)->xfr.id() );
                     xfrBackOffPolling( ixfr++ );
                 }
                 catch(...)
                 {
-                    DL_ERROR( "XFR loop unknown exception, entry " << (*ixfr)->id );
+                    DL_ERROR( "XFR loop unknown exception, entry " << (*ixfr)->xfr.id() );
                     xfrBackOffPolling( ixfr++ );
                 }
             }

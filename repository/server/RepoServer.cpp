@@ -297,11 +297,12 @@ Server::procDataDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
 
-    DL_DEBUG( "Data delete request for " << request->path() );
-
-    boost::filesystem::path data_path( request->path() );
-
-    boost::filesystem::remove( data_path );
+    for ( int i = 0; i < request->loc_size(); i++ )
+    {
+        boost::filesystem::path data_path( request->loc(i).path() );
+        DL_DEBUG( "Data delete for " << data_path );
+        boost::filesystem::remove( data_path );
+    }
 
     PROC_MSG_END
 }
@@ -312,21 +313,27 @@ Server::procDataGetSizeRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply )
 
-    DL_DEBUG( "Data get size request for " << request->path() );
+    DL_DEBUG( "Data get size" );
 
-    boost::filesystem::path data_path( request->path() );
+    RecordDataSize * data_sz;
 
-    reply.set_id( request->id() );
-
-    if ( boost::filesystem::exists( data_path ))
+    for ( int i = 0; i < request->loc_size(); i++ )
     {
-        reply.set_size( boost::filesystem::file_size( data_path ));
-        DL_DEBUG( "size: " << reply.size() );
-    }
-    else
-    {
-        reply.set_size( 0 );
-        DL_ERROR( "DataGetSizeReq - path does not exist: "  << request->path() );
+        const RecordDataLocation & item = request->loc(i);
+        boost::filesystem::path data_path( item.path() );
+
+        data_sz = reply.add_size();
+        data_sz->set_id( item.id() );
+
+        if ( boost::filesystem::exists( data_path ))
+        {
+            data_sz->set_size( boost::filesystem::file_size( data_path ));
+        }
+        else
+        {
+            data_sz->set_size( 0 );
+            DL_ERROR( "DataGetSizeReq - path does not exist: "  << item.path() );
+        }
     }
 
     PROC_MSG_END
