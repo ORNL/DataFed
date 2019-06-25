@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <% include 'head.ect' %>
+        <title>DataFed CLI Help</title>
+    </head>
+
+<body class='' style='height:100%'>
+    <div class="col-flex" style="height:100%;width:100%">
+        <div class="ui-widget-header" style="flex:none;padding:.25em .5em">
+            <div style="font-size:2em;">DataFed - Command-Line-Interface Help &amp Installation </div>
+        </div>
+
+        <div class='row-flex' style="flex:auto;min-height:0px">
+            <div class="ui-widget-content content" style="flex:none;overflow:auto;padding:.25em">
+                <h2>Contents</h2>
+                <a href='#s1'>1. Introduction</a><br>
+                <a href='#s2'>2. Installation</a><br>
+                &nbsp&nbsp<a href='#s21'>2.1 Configuration Options</a><br>
+                &nbsp&nbsp<a href='#s22'>2.2 Server Public Key</a><br>
+                &nbsp&nbsp<a href='#s22'>2.3 Automatic Authentication</a><br>
+            </div>
+            <div class='ui-widget-content' style='flex:auto;height:auto;overflow:auto;padding: 0em 2em 0em 2em'>
+
+<h2 id='s1'>1. Introduction</h2>
+
+<p>The DataFed command-line-interface (CLI) provides access to basic DataFed features for both interactive use and scripting. The DataFed CLI is provided via a Python3 package, called "datafed", available on PyPi and installable using the Python pip tool. The "datafed" package also contains a Python API that can be used to build custom Python applications that directly interface with DataFed. (A C++ client library is also available from the DataFed code repository.)</p>
+
+<h2 id='s2'>2. Installation</h2>
+
+<p>The DataFed CLI is typically pre-installed within the supported compute and data environments of DataFed Network member facilities. Please refer to the DataFed Network Directory to see a listing of member facilities along with site-specific access information. If you need to use the DataFed CLI from a non-supported facility or environment, then you will need to install and configure the CLI manually.</p>
+
+<p>The DataFed Python CLI is installed using Python's built-in package installer tool, "pip", using the following command:<p>
+
+<pre style='margin:0 5em'>pip install datafed</pre>
+
+<h3 id='s21'>2.1 Configuration Options</h3>
+
+<h3 id='s22'>2.2 Server Public Key</h3>
+
+<p>A current DataFed server public key must be downloaded and installed for the DataFed CLI to authenticate and communicate securely with the central DataFed services. The latest public key is available for download from the following link:</p>
+
+<a href='/datafed-core-key.pub' style='margin:0 5em'>Download DataFed Server Public Key</a>
+
+<p>The server public key must be installed locally such that it is readable by the DataFed CLI. By default, the CLI looks for the server public key under the "~/DataFed/" directory; however, any path may be used so long as the CLI is configured to look in the proper location (see Configuration Options, above).</p>
+
+<h3 id='s22'>2.3 Automatic Authentication</h3>
+
+<p>Once the CLI is properly installed, automatic authentication can be enabled for the CLI by installing local client credentials. This is done by running the following command from the environment to configure for automatic authentication:</p>
+
+<pre style='margin:0 5em'>datafed setup</pre>
+
+<p>This command will first require manual authentication, then it will install credentials for the authenticated user in the configured client credentials directory (see Configuration Options, above). Subsequent use of the datefed CLI will authenticate using the installed local credentials and will not require manual authentication.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
