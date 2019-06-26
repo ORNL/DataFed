@@ -8,6 +8,7 @@ import getpass
 import shlex
 import SDMS_Anon_pb2 as anon
 import SDMS_Auth_pb2 as auth
+import dfConfig as dfC
 import ClientLib
 import os
 import sys
@@ -16,11 +17,11 @@ import prompt_toolkit
 import re
 import json
 import time
+import pathlib
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.formatted_text import to_formatted_text
-import dfConfig as dfC
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
 
@@ -43,15 +44,6 @@ g_ep_cur = g_ep_default
 g_output_json = False
 g_output_dict = False
 g_output_text = True
-
- #TODO: Make this work, please
-ALIASES = {
-     "dv" : "data_view",
-     "dc": "data_create",
-     "du": "data_update",
-     "get": "data_get",
-     "put": "data_put"
-}
 
 '''
 def setup_env():
@@ -145,30 +137,20 @@ def validate_coll_id(ctx, param, value):
 '''
 
 
+# Allows command matching by unique suffix
 class AliasedGroup(click.Group):
-    """
-    Allows use of command aliases as defined in dictionary object: "cmd_aliases"
-    """
-    '''
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
-        elif cmd_name in cmd_aliases:
-            return click.Group.get_command(self, ctx, "cli." + cmd_aliases[cmd_name])
-        elif rv is None:
+        matches = [x for x in self.list_commands(ctx)
+            if x.startswith(cmd_name)]
+        if not matches:
             return None
-        ctx.fail('No valid command specified.')
-        '''
-    '''
-    def get_command(self, ctx, cmd_name):
-        try:
-            actual = ALIASES.get(cmd_name)
-            click.echo(actual)
-            return click.Group.get_command(self, ctx, "cli." + ALIASES[cmd_name])
-        except KeyError:
-            return click.Group.get_command(self, ctx, "cli." + ALIASES[cmd_name])
-            '''
+        elif len(matches) == 1:
+            return click.Group.get_command(self, ctx, matches[0])
+        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+
 #------------------------------------------------------------------------------
 # Top-level group with global options
 @click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
@@ -298,12 +280,12 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
         #convert to UNIX-style path?
             #What does server do? What does Globus do?
         msg.source = data_file
+    #TODO: Need to be able to data-put using the created DF id, esp bc alias is not required.
     create_reply, mt = mapi.sendRecv(msg)
-#    click.echo("t:",title,"a:",alias,"d:",description,"k:",key_words,"df:",data_file,"m:",metadata,"mf:",metadata_file,"c:",collection,"r:",repository)
-    dictionary = output_dict(create_reply)
-    rep = dictionary[data][0]
-    if data_file: #data put. recreate command functionality, or callback? #recreate, which could mess up maintainability, but would also be more modular?
-        put_msg = auth.DataPutRequest()
+    #dictionary = output_dict(create_reply)
+    #rep = dictionary[data][0]
+    #if data_file: #data put. recreate command functionality, or callback? #recreate, which could mess up maintainability, but would also be more modular?
+    #    put_msg = auth.DataPutRequest()
         #put function in order to factor code
         #
 
@@ -371,16 +353,21 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
     print_data(reply)
 
 @data.command(name='delete',help="Delete existing data record")
-@click.argument("df_id")
+@click.argument("df_id", nargs=-1)
 def data_delete(df_id): #TODO: Fix me!
-    id2 = resolve_id(df_id)
+    dels = list(df_id)
+    resolved_list = []
+    for ids in dels:
+        id2 = resolve_id(ids)
+        resolved_list.append(id2)
     if g_interactive:
-        if not confirm( "Delete record " + id2 + " (Y/n):"):
+        if not click.confirm("Do you want to delete record/s {}".format(resolved_list)):
             return
     msg = auth.RecordDeleteRequest()
-    msg.id = id2
-    reply, mt = mapi.sendRecv( msg )
-    click.echo(reply)
+    msg.id.extend(resolved_list)
+    reply, mt = mapi.sendRecv(msg)
+    if mt == "AckReply":
+        click.echo("Delete succeeded")
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
 @click.argument("df_id")
@@ -776,7 +763,7 @@ def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT upda
         g_ep_default = new_default_ep
    #     except:
         # TODO: add more functionality
-        # check if input is valid endpoint
+        # check if input is valid endpoint?
     else:
         if g_ep_default:
             click.echo(g_ep_default)
@@ -984,9 +971,13 @@ def print_data(message):
                        "{:<25} {:<50}".format('Auto Extension: ', str(rep('title', "None"))) + '\n' +
                        "{:<25} {:<50}".format('Owner: ', rep('owner', "None")) + '\n' +
                        "{:<25} {:<50}".format('Locked: ', str(rep('locked', "None"))) + '\n' +
-                       "{:<25} {:<50}".format('Parent Colleciton ID: ', rep('parent_id', "None")) + '\n' +
-                       "{:<25}".format('Dependencies: '))
-            print_deps(rep('deps', 'None'))
+                       "{:<25} {:<50}".format('Parent Collection ID: ', rep('parent_id', "None")) + '\n' +
+                       "{:<25} {:<50}".format('Metadata: ', (json.dumps(json.loads(rep('metadata', "None")), indent=4))))
+            if rep('deps') is None:
+                click.echo("{:<25}".format('Dependencies: None'))
+            else:
+                click.echo("{:<25}".format('Dependencies:'))
+                print_deps(rep('deps'))
     elif g_output_json:
         json_output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(json_output)
@@ -1023,11 +1014,12 @@ def print_coll(message):
         click.echo(output)
 
 def print_deps(dependencies):
-    deps = list(dependencies)
-    click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", 'Direction','Type','ID', 'Alias'))
-    for item in deps:
-        rep = item.get
-        click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
+    if dependencies is not None or dependencies != "None":
+        deps = list(dependencies)
+        click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", 'Direction','Type','ID', 'Alias'))
+        for item in deps:
+            rep = item.get
+            click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
 
 def print_metadata(message): #how to pretty print json?
     pass
