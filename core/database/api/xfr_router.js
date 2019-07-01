@@ -263,27 +263,14 @@ router.get('/init2', function (req, res) {
                         updated: now
                     };
 
-                    for ( i in repos ){
-                        tr_obj.repo = repos[i];
-                        result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
-                    }
-                    /*var tr_obj = {
-                        mode: req.queryParams.mode,
-                        status: g_lib.XS_INIT,
-                        repos: repos,
-                        rem_ep: rem_ep,
-                        rem_path: rem_path,
-                        user_id: client._id,
-                        started: now, 
-                        updated: now
-                    };
-
                     if ( req.queryParams.mode == g_lib.XM_PUT && req.queryParams.ext ) {
                         tr_obj.ext = req.queryParams.ext;
                     }
 
-                    result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
-                    */
+                    for ( i in repos ){
+                        tr_obj.repo = repos[i];
+                        result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
+                    }
                 }
             }
         });

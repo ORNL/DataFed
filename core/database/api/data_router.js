@@ -287,21 +287,26 @@ router.post('/update', function (req, res) {
                 }
 
                 if ( req.body.ext_auto !== undefined ){
+                    //console.log("auto ext set:",req.body.ext_auto);
                     obj.ext_auto = req.body.ext_auto;
                 }
 
-                if ( obj.ext_auto == true || obj.ext_auto == undefined && data.ext_auto == true ){
-                    if ( obj.source !== undefined || obj.ext_auto !== undefined ){
+                if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
+                    //console.log("auto ext ON, calc ext");
+                    if ( obj.source !== undefined || data.source !== undefined ){
                         // Changed - update auto extension
                         var src = obj.source || data.source;
                         if ( src ){
+                            //console.log("src defined");
                             // Skip possible "." in end-point name
-                            var pos = src.indexOf("/");
+                            var pos = src.lastIndexOf("/");
+                            pos = src.indexOf(".",pos>0?pos:0);
                             if ( pos != -1 ){
-                                pos = src.indexOf(".",pos);
-                                if ( pos != -1 ){
-                                    obj.ext = src.substr( pos );
-                                }
+                                obj.ext = src.substr( pos );
+                                //console.log("new auto ext",obj.ext);
+                            }else{
+                                obj.ext = null;
+                                //console.log("new auto ext = NONE");
                             }
                         }
                     }
@@ -339,7 +344,7 @@ router.post('/update', function (req, res) {
 
                 if ( req.body.dt != undefined )
                     obj.dt = req.body.dt;
-
+                //console.log("new ext:",obj.ext,",auto:",obj.ext_auto);
                 data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
                 data = data.new;
 
