@@ -173,7 +173,7 @@ message RecordCreateRequest
     optional string             repo_id     = 9;
     optional string             ext         = 10;
     optional bool               ext_auto    = 11;
-    repeated DependencyData     deps        = 12;
+    repeated DependencySpecData deps        = 12;
 }
 
 message RecordUpdateRequest
@@ -193,8 +193,8 @@ message RecordUpdateRequest
     optional uint64             size        = 13;
     optional uint32             dt          = 14;
     optional bool               deps_clear  = 15;
-    repeated DependencyData     deps_add    = 16;
-    repeated DependencyData     deps_rem    = 17;
+    repeated DependencySpecData deps_add    = 16;
+    repeated DependencySpecData deps_rem    = 17;
 }
 
 message RecordLockRequest
