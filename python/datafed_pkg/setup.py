@@ -2,7 +2,8 @@ import setuptools
 
 setuptools.setup(
     name="datafed-dvstans",
-    version="0.5.1",
+    version="0.5.5",
+    scripts = ['scripts/datafed'],
     author="Dale Stansberry",
     author_email="stansberrydv@ornl.gov",
     description="DataFed CLI and API",
