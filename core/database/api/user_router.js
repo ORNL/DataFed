@@ -75,10 +75,8 @@ router.get('/create', function (req, res) {
                 g_db.alias.save({ _from: root._id, _to: alias._id });
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
-                var i;
-                var mem_grp;
+                var i,uuid;
 
-                var uuid;
                 for ( i in req.queryParams.uuids ) {
                     uuid = "uuid/" + req.queryParams.uuids[i];
                     if ( g_db._exists({ _id: uuid }))

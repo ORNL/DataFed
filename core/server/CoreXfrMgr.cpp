@@ -242,7 +242,7 @@ XfrMgr::xfrThreadFunc()
                                         // Update DB record with new file stats
                                         upd_req.set_id( file.id() );
                                         upd_req.set_size( file_size );
-                                        upd_req.set_source( file.from() );
+                                        upd_req.set_source( (*ixfr)->xfr.rem_ep() + (*ixfr)->xfr.rem_path() + file.from() );
                                         if ( (*ixfr)->xfr.has_ext() )
                                         {
                                             upd_req.set_ext( (*ixfr)->xfr.ext() );

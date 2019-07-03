@@ -582,7 +582,7 @@ Client::recordView( const std::string & a_id )
 }
 
 void 
-setDepData( DependencyData *dep, const string & val )
+setDepData( DependencySpecData *dep, const string & val )
 {
     size_t p = val.find_first_of(' ');
     if ( p != string::npos )
@@ -591,7 +591,7 @@ setDepData( DependencyData *dep, const string & val )
     if ( p == string::npos )
         EXCEPT( 0, "Missing dependency type" );
     dep->set_id(val.substr(0,p));
-    dep->set_dir( DEP_OUT );
+    //dep->set_dir( DEP_OUT );
     size_t t = stoul( val.substr(p+1) );
     if ( t >= DEP_TYPE_COUNT )
         EXCEPT( 0, "Invalid dependency type" );
@@ -626,7 +626,7 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
 
     if ( a_deps )
     {
-        DependencyData *dep;
+        DependencySpecData *dep;
 
         for ( vector<string>::const_iterator d = a_deps->begin(); d != a_deps->end(); d++ )
         {
@@ -667,7 +667,7 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
     if ( a_deps_clear )
         req.set_deps_clear( a_deps_clear );
 
-    DependencyData *dep;
+    DependencySpecData *dep;
     vector<string>::const_iterator d;
 
     if ( a_deps_add )
@@ -688,7 +688,6 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
             dep = req.add_deps_rem();
             dep->set_id( *d );
             dep->set_type( DEP_IS_DERIVED_FROM ); // Not used (currently)
-            dep->set_dir( DEP_OUT ); // Not used
         }
     }
 

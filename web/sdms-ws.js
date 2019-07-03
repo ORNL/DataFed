@@ -156,6 +156,11 @@ app.get('/ui/docs', (request, response) => {
     response.render( 'docs',{theme:theme,version:g_version,test_mode:g_test});
 });
 
+app.get('/ui/docs/cli', (request, response) => {
+    var theme = request.cookies['sdms-theme'] || "light";
+    response.render( 'docs-cli',{theme:theme,version:g_version,test_mode:g_test});
+});
+
 app.get('/ui/register', (request, response) => {
     //console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
     if ( !request.cookies['sdms-user'] )

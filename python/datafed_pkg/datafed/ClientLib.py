@@ -4,13 +4,14 @@ DataFed API client library for creating, sending and receiving protobuf messages
 
 """
 
-import Version_pb2
-import SDMS_Anon_pb2 as anon
-import SDMS_Auth_pb2 as auth
 import os
 import zmq
-import Connection
-import dfConfig as dfC
+
+from . import Version_pb2
+from . import SDMS_Anon_pb2 as anon
+from . import SDMS_Auth_pb2 as auth
+from . import Connection
+from . import dfConfig as dfC
 
 def version():
     return "{}.{}.{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MINOR,Version_pb2.VER_BUILD)

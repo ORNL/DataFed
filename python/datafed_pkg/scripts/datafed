@@ -1,15 +1,13 @@
+#!/usr/bin/env python3
+
 """
 DataFed CLI
 """
 
-#!/usr/bin/env python
 from __future__ import division, print_function, absolute_import #, unicode_literals
 import getpass
 import shlex
-import SDMS_Anon_pb2 as anon
-import SDMS_Auth_pb2 as auth
-import dfConfig as dfC
-import ClientLib
+
 import os
 import sys
 import click
@@ -25,6 +23,11 @@ from prompt_toolkit.formatted_text import to_formatted_text
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
 
+
+import datafed.SDMS_Anon_pb2 as anon
+import datafed.SDMS_Auth_pb2 as auth
+import datafed.ClientLib as ClientLib
+import datafed.dfConfig as dfC
 
 if sys.version_info.major == 3:
     unicode = str

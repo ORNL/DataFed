@@ -122,12 +122,20 @@ message AllocData
     optional AllocStatsData     stats       = 8;
 }
 
+// For viewing dependencies
 message DependencyData
 {
     required string             id          = 1;
     optional string             alias       = 2;
     required DependencyType     type        = 3;
     required DependencyDir      dir         = 4;
+}
+
+// For specifying dependencies
+message DependencySpecData
+{
+    required string             id          = 1;
+    required DependencyType     type        = 3;
 }
 
 message UserData

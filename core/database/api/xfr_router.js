@@ -170,27 +170,27 @@ router.get('/init', function (req, res) {
 router.get('/init2', function (req, res) {
     try {
         var result = [];
-        console.log("init2");
+        //console.log("init2");
 
         g_db._executeTransaction({
             collections: {
                 read: ["u","g","d","c","a","repo","loc","uuid","accn","alias","acl","admin"],
-                write: ["tr"]
+                write: ["tr","u"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var i,file,repos={},id,data,repo_loc;
 
-                console.log("input path:",req.queryParams.path);
+                //console.log("input path:",req.queryParams.path);
                 var idx = req.queryParams.path.indexOf("/");
                 if ( idx == -1 )
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid remote path (must include endpoint)"];
 
                 var rem_path = req.queryParams.path.substr(idx);
                 var rem_src;
-                console.log("rem path:",rem_path);
+                //console.log("rem path:",rem_path);
                 var rem_ep = req.queryParams.path.substr(0,idx);
-                console.log("rem_ep:",rem_ep,",idx:",idx);
+                //console.log("rem_ep:",rem_ep,",idx:",idx);
 
                 if ( req.queryParams.mode == g_lib.XM_GET ){
                     if ( rem_path.charAt( rem_path.length - 1 ) != "/" )
@@ -207,13 +207,13 @@ router.get('/init2', function (req, res) {
                         rem_src = rem_path.substr(1);
                         rem_path = "/";
                     }
-                    console.log("rem src:",rem_src);
-                    console.log("rem path(2):",rem_path);
+                    //console.log("rem src:",rem_src);
+                    //console.log("rem path(2):",rem_path);
                 }
 
                 for ( i in req.queryParams.ids ){
                     id = g_lib.resolveDataID( req.queryParams.ids[i], client );
-                    console.log("id:",id);
+                    //console.log("id:",id);
 
                     data = g_db.d.document( id );
 
@@ -232,7 +232,7 @@ router.get('/init2', function (req, res) {
 
                     repo_loc = repo_loc[0];
 
-                    console.log("repo:",repo_loc.repo._key);
+                    //console.log("repo:",repo_loc.repo._key);
 
                     file = { id: id };
 
@@ -263,27 +263,31 @@ router.get('/init2', function (req, res) {
                         updated: now
                     };
 
-                    for ( i in repos ){
-                        tr_obj.repo = repos[i];
-                        result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
-                    }
-                    /*var tr_obj = {
-                        mode: req.queryParams.mode,
-                        status: g_lib.XS_INIT,
-                        repos: repos,
-                        rem_ep: rem_ep,
-                        rem_path: rem_path,
-                        user_id: client._id,
-                        started: now, 
-                        updated: now
-                    };
-
                     if ( req.queryParams.mode == g_lib.XM_PUT && req.queryParams.ext ) {
                         tr_obj.ext = req.queryParams.ext;
                     }
 
-                    result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
-                    */
+                    for ( i in repos ){
+                        tr_obj.repo = repos[i];
+                        result.push( g_db.tr.save( tr_obj, { returnNew: true } ).new );
+                    }
+                    // Save remote ep + path to recent ep list
+                    var new_ep = rem_ep + rem_path;
+                    if ( client.eps && client.eps.length ){
+                        idx = client.eps.indexOf( new_ep );
+                        if ( idx == -1 ){
+                            if ( client.eps.unshift(new_ep) > 20 ){
+                                client.eps.length = 20;
+                            }
+                        }else{
+                            client.eps.splice( idx, 1 );
+                            client.eps.unshift(new_ep);
+                        }
+                    }else{
+                        client.eps = [new_ep];
+                    }
+
+                    g_db._update( client._id, {eps:client.eps}, { keepNull: false });
                 }
             }
         });

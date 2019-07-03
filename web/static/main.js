@@ -625,6 +625,7 @@ function epRecentLoad( a_cb ){
     });
 }
 
+/*
 function epRecentSave( a_cb ){
     console.log("epRecentSave",g_ep_recent);
     _asyncPost( "/ui/ep/recent/save",{ep:g_ep_recent}, function( ok, data ){
@@ -632,6 +633,7 @@ function epRecentSave( a_cb ){
             a_cb();
     });
 }
+*/
 
 function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
     console.log("epDirList",a_ep,a_path);
@@ -890,23 +892,15 @@ function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
     url += "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){
-        if ( ok ) {
-            // TODO - Move recent path update to database service
-            var p = g_ep_recent.indexOf(a_path);
-            if ( p < 0 ){
-                g_ep_recent.unshift(a_path);
-                if ( g_ep_recent.length > 20 )
-                    g_ep_recent.length = 20;
-                epRecentSave();
-            }else if ( p > 0 ) {
-                g_ep_recent.unshift( g_ep_recent[p] );
-                g_ep_recent.splice( p+1, 1 );
-                epRecentSave();
-            }
+        if ( ok ){
+            epRecentLoad( function(){
+                if ( a_cb )
+                    a_cb( ok, data );
+            });
+        }else{
+            if ( a_cb )
+                a_cb( ok, data );
         }
-
-        if ( a_cb )
-            a_cb( ok, data );
     });
 }
 
