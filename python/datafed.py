@@ -181,7 +181,7 @@ def cli(ctx,host,port,client_cred_dir,server_cred_dir,log,verbosity,json,text,di
 @click.option("-o","--offset",default=0,help="List offset")
 @click.option("-c","--count",default=20,help="List count")
 @click.argument("df-id", required=False)
-def ls(df_id,offset,count):
+def ls(df_id,offset,count): #TODO: FIX print_listing function
     global g_verbosity
     global g_cur_coll
     msg = auth.CollReadRequest()
@@ -355,11 +355,9 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("df_id", nargs=-1)
 def data_delete(df_id): #TODO: Fix me!
-    dels = list(df_id)
     resolved_list = []
-    for ids in dels:
-        id2 = resolve_id(ids)
-        resolved_list.append(id2)
+    for ids in df_id:
+        resolved_list.append(resolve_id(ids))
     if g_interactive:
         if not click.confirm("Do you want to delete record/s {}".format(resolved_list)):
             return
@@ -370,17 +368,39 @@ def data_delete(df_id): #TODO: Fix me!
         click.echo("Delete succeeded")
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
-@click.argument("df_id")
+@click.argument("df_id", nargs=-1)
 @click.argument("path", type=click.Path())
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
 def data_get(df_id,path,wait):
+    resolved_list = []
+    for ids in df_id:
+        resolved_list.append(resolve_id(ids))
     msg = auth.DataGetRequest()
-    msg.id = resolve_id(df_id)
-    #msg.local = applyPrefix( path )
-    msg.path = g_ep_cur + path
+    msg.id.extend(resolved_list)
+    click.echo(resolved_list)
+    global g_ep_default
+    if path[0] in ["/", "//", "\\", ".", "~"]:
+        fp = os.path.abspath(path) #handles ~ very weirdly -- /home/cades/jbreet/DataFed/build/~/blareugsvaaa
+        click.echo(fp)
+        #fp = fp.replace("\\", "/") ####TODO: Use Pathlib Paths to convert to UNIX-style
+        if g_ep_cur:
+            if fp[0] == "/":
+                fp = g_ep_cur + fp
+                click.echo("starts with /")
+                click.echo(fp)
+            #else:    ##### Should never happen because of abspath method
+             #   fp = g_ep_cur + "/" + fp
+              #  click.echo("starts with something else")
+               # click.echo(fp)
+        else:
+            click.echo("No endpoint given in path nor default endpoint configured.")
+            return
+    else:
+        fp = path
+    msg.path = fp ### important
+    click.echo(msg)
     reply, mt = mapi.sendRecv( msg )
-    click.echo("reply:",reply)
-
+    click.echo("reply:",reply) #this is where it cuts off -- prints "write" and nothing else)
     xfr = reply.xfr[0]
     click.echo("id:",xfr.id,"stat:",xfr.stat)
     if wait:
@@ -400,30 +420,43 @@ def data_get(df_id,path,wait):
 
 @data.command(name='put',help="Put (upload) raw data to DataFed")
 @click.argument("df_id")
-@click.option("-fp","--filepath",type=click.Path(dir_okay=False),required=True,help="Relative or absolute path to the file being uploaded. If the path does not begin with a globus endpoint, start the given path with a forward slash ('/') and the current session endpoint will be used.")
-@click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
+@click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes.")
+@click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
+@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-ext", "--extension",type=str,required=False,help="Specify an extension for the raw data file. This will override any previously specified extension or auto-extension behavior.")
-def data_put(df_id,endpoint,filepath,wait,extension):
-    global g_ep_cur
+def data_put(df_id,filepath,wait,endpoint,extension):
+    fp = resolve_filepath_for_xfr(filepath)
+    if endpoint: gp = resolve_globus_path(fp, endpoint)
+    elif not endpoint: gp = resolve_globus_path(fp, "None")
+    if gp:
+        put_data(df_id,gp,wait,extension)
+    elif gp is None:
+        click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
+
+
+@data.command(name='test')
+@click.argument("filepath",type=str)
+@click.option("-ep","--endpoint",type=str,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
+def data_test(filepath, endpoint):
+    fp = resolve_filepath_for_xfr(str(filepath))
+    if endpoint: fp = resolve_globus_path(fp, endpoint)
+    else: fp = resolve_globus_path(fp, "None")
+    click.echo("Data test reply:")
+    click.echo(fp)
+    if fp is None: click.echo("Yikes")
+
+def put_data(df_id,gp,wait,extension):
     msg = auth.DataPutRequest()
     msg.id = resolve_id(df_id)
-
-    if filepath[0] in ["/", "//", "\\", ".", "~"]:
-        fp =  os.path.abspath(filepath)
-        fp = fp.replace("\\", "/")
-        if fp[0] == "/":
-            fp = g_ep_cur + fp
-        else:
-            fp = g_ep_cur + "/" + fp
-    else: fp = filepath
-
-    msg.path = endpoint + filepath
-    msg.ext = extension
-    click.echo(msg)
-    reply,mt = mapi.sendRecv(msg)
-    click.echo("reply:", reply) #TODO: returns 'write' only, not reply:write even
-
-    xfr = reply.xfr[0]
+    msg.path = gp
+    if extension: msg.ext = extension
+    reply, mt = mapi.sendRecv(msg)
+    #click.echo(reply) #works
+    print_xfr_stat(reply, 1)
+ #   xfr = reply.xfr[0] #xfr succeeds
+ #   click.echo(xfr)
+#  click.echo(xfr.id)
+    '''
     click.echo("id:", xfr.id, "stat:", xfr.stat)
     if wait:
         click.echo("waiting")
@@ -435,12 +468,54 @@ def data_put(df_id,endpoint,filepath,wait,extension):
             reply, mt = mapi.sendRecv(msg)
             xfr = reply.xfr[0]
             click.echo("id:", xfr.id, "stat:", xfr.stat)
-#TODO: Figure out verbosity replies
+        # TODO: Figure out verbosity replies
         click.echo("done. status:", xfr.stat)
     else:
         click.echo("xfr id:", xfr.id)
-    click.echo("TODO: NOT IMPLEMENTED")
+    '''
 
+def resolve_filepath_for_xfr(filepath):
+    if filepath[0] == '/':  # absolute full path, must be in globus format
+        filepath = filepath[1:]
+
+    elif filepath[0] != "/":  # relative path to be resolved
+        filepath = pathlib.Path.cwd() / filepath
+        filepath = filepath.resolve()  # now absolute path
+
+    fp = pathlib.PurePath(filepath)
+
+    if isinstance(fp, pathlib.PureWindowsPath):  # If Windows flavour
+        if fp.drive:  # turning drive letter into globus-suitable format
+            drive_name = fp.drive.replace(':', '')
+            click.echo(drive_name)
+            parts = fp.parts[1:]
+            click.echo(parts)
+            fp = pathlib.PurePosixPath('/' + drive_name)
+            click.echo(fp)
+            for item in parts:
+                fp = fp / str(item)  # adds each part
+                click.echo(fp)
+
+    return str(fp)
+    #              return filepath #globus-ready path
+
+def resolve_globus_path(fp, endpoint):
+    global g_ep_cur
+    global g_ep_default
+    if fp[0] != '/':
+        fp = "/" + fp
+    if endpoint != "None":
+        fp = endpoint + fp
+    elif endpoint == "None":
+        if g_ep_cur:
+            fp = g_ep_cur + fp
+        elif g_ep_cur is None:
+            if g_ep_default:
+                fp = g_ep_default + fp
+            elif g_ep_default is None:
+                fp = None
+
+    return fp #endpoint and path
 
 #------------------------------------------------------------------------------
 # Collection command group
@@ -904,7 +979,7 @@ def resolve_coll_id(df_id):
 def print_listing( reply ):
     df_idx = 1
     global g_list_items
-    g_list_items = []
+    g_list_items = [] #need to do the whole dictionary get thing; as with print_data and print_deps bc reply appears to be a list of dictionaries
     for i in reply.item:
         g_list_items.append(i.df_id)
         if i.alias:
@@ -1020,6 +1095,39 @@ def print_deps(dependencies):
         for item in deps:
             rep = item.get
             click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
+
+def print_xfr_stat(message, number):
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    click.echo("got to the print function")
+    if g_output_text:
+        click.echo("got to text fn!")
+        for i in range(number):
+            click.echo("inside range!")
+            xfr = message.xfr[i]
+            click.echo("Data Record ID: %s" % (xfr.id)) #THIS WORKS but format is better
+            click.echo("Data Record ID: {}".format(xfr.id)) #also works. is verbosity the problem??
+            click.echo(xfr.repo.file[0].id)
+            if g_verbosity >= 0:
+                click.echo("{:<25} {:<50}".format('Xfr ID: ', str(xfr.id)) +'\n' +
+                           "{:<25} {:<50}".format('Mode: ', str(xfr.mode)) + '\n' +
+                           "{:<25} {:<50}".format('Status: ', str(xfr.stat)))
+            if g_verbosity >= 1:
+                click.echo("{:<25} {:<50}".format('Data Record ID: ', xfr.repo.file[0].id) + '\n' +
+                           "{:<25} {:<50}".format('Date Started: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))) + '\n' +
+                           "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))))
+  #          if g_verbosity == 2: ###what here?
+  #              click.echo("{:<25} {:<50}".format('Is Public: ', str(rep('title', "None"))) + '\n' +
+  #                         "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(rep('ct', "None")))) + '\n' +
+  #                         "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(rep('ut', "None")))))
+    elif g_output_json:
+        output = MessageToJson(message,preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_dict:
+        output = MessageToDict(message,preserving_proto_field_name=True)
+        click.echo(output)
 
 def print_metadata(message): #how to pretty print json?
     pass
