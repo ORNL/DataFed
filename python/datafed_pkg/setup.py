@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="datafed-dvstans",
-    version="0.5.5",
+    version="0.5.6",
     scripts = ['scripts/datafed'],
     author="Dale Stansberry",
     author_email="stansberrydv@ornl.gov",
