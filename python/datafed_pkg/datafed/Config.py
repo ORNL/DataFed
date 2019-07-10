@@ -33,7 +33,7 @@ opt_info = [
     ["server-cfg-dir","server","config_dir","DATAFED_SERVER_CFG_DIR",0,["--server-cfg-dir"],"Server configuration directory"],
     ["server-cfg-file","server","config_file","DATAFED_SERVER_CFG_FILE",OPT_NO_CF,["--server-cfg-file"],"Server configuration file"],
     ["server-pub-key-file","server","public_key_file","DATAFED_SERVER_PUB_KEY_FILE",0,["--server-pub-key-file"],"Server public key file"],
-    ["server-host","server","host","DATAFED_SERVER_HOST",0,["--server-host","-H"],"Sever host name or IP address"],
+    ["server-host","server","host","DATAFED_SERVER_HOST",0,["--server-host","-H"],"Server host name or IP address"],
     ["server-port","server","port","DATAFED_SERVER_PORT",OPT_INT,["--server-port","-P"],"Server port number"],
     ["client-cfg-dir","client","config_dir","DATAFED_CLIENT_CFG_DIR",0,["--client-cfg-dir"],"Client configuration directory"],
     ["client-cfg-file","client","config_file","DATAFED_CLIENT_CFG_FILE",OPT_NO_CF,["--client-cfg-file"],"Client configuration file"],
