@@ -76,10 +76,13 @@ class API:
         # Load server config file, if specified/available
 
         if "server-cfg-file" in self.opts:
-            cfg_file = self.opts["server-cfg-file"].val
+            cfg_file = self.opts["server-cfg-file"]["val"]
         elif 'server-cfg-dir' in self.opts:
-            cfg_file = os.path.expanduser( os.path.join( self.opts['server-cfg-dir'].val, "server.ini" ))
-        else:
+            tmp = os.path.expanduser( os.path.join( self.opts['server-cfg-dir']["val"], "server.ini" ))
+            if os.path.exists( tmp ):
+                cfg_file = tmp
+
+        if not cfg_file:
             tmp = os.path.expanduser("~/.datafed/server.ini")
             if os.path.exists( tmp ):
                 cfg_file = tmp
@@ -92,10 +95,13 @@ class API:
         cfg_file = None
 
         if "client-cfg-file" in self.opts:
-            cfg_file = self.opts["client-cfg-file"].val
+            cfg_file = self.opts["client-cfg-file"]["val"]
         elif 'client-cfg-dir' in self.opts:
-            cfg_file = os.path.expanduser( os.path.join( self.opts['client-cfg-dir'].val, "client.ini" ))
-        else:
+            tmp = os.path.expanduser( os.path.join( self.opts['client-cfg-dir']["val"], "client.ini" ))
+            if os.path.exists( tmp ):
+                cfg_file = tmp
+
+        if not cfg_file:
             tmp = os.path.expanduser("~/.datafed/client.ini")
             if os.path.exists( tmp ):
                 cfg_file = tmp
@@ -106,11 +112,11 @@ class API:
     def _loadEnvironVars( self ):
         for oi in opt_info:
             if (not oi[0] in self.opts) and ((oi[4] & OPT_NO_ENV) == 0) and (oi[3] in os.environ):
-                self.opts[oi[0]] = {val: os.environ[oi[3]], pri: 4}
+                self.opts[oi[0]] = {"val": os.environ[oi[3]], "pri": 4}
                 if oi[4] & OPT_INT:
-                    self.opts[oi[0]] = {val: int(os.environ[oi[3]]), pri: 4}
+                    self.opts[oi[0]] = {"val": int(os.environ[oi[3]]), "pri": 4}
                 else:
-                    self.opts[oi[0]] = {val: os.environ[oi[3]], pri: 4}
+                    self.opts[oi[0]] = {"val": os.environ[oi[3]], "pri": 4}
 
     def _loadConfigFile( self, cfg_file, priority ):
         try:
@@ -119,19 +125,19 @@ class API:
                 config.read_file(f)
 
                 for oi in opt_info:
-                    if ((not oi[0] in self.opts) or self.opts[oi[0]].pri >= priority) and (oi[4] & OPT_NO_CF) == 0:
-                        tmp = config.get(oi[1],oi[2])
-                        if tmp:
+                    if ((not oi[0] in self.opts) or self.opts[oi[0]]["pri"] >= priority) and (oi[4] & OPT_NO_CF) == 0:
+                        if config.has_option(oi[1],oi[2]):
+                            tmp = config.get(oi[1],oi[2])
                             if oi[4] & OPT_INT:
                                 tmp = int(tmp)
 
-                            self.opts[oi[0]] = {val: tmp, pri: priority}
+                            self.opts[oi[0]] = {"val": tmp, "pri": priority}
         except IOError:
-            raise "Error reading from server config file: " + cfg_file
+            raise Exception("Error reading from server config file: " + cfg_file)
 
     def get(self,key):
         if key in self.opts:
-            return self.opts[key].val
+            return self.opts[key]["val"]
         else:
             return None
 
