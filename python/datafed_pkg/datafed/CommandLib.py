@@ -114,6 +114,9 @@ def info( level, *args ):
     if level <= g_verbosity:
         print( *args )
 
+# -----------------------------------------------------------------------------------------------------------------
+# Switch functions
+
 def set_verbosity(ctx, param, value):
     global g_verbosity
     if value:
@@ -121,10 +124,12 @@ def set_verbosity(ctx, param, value):
     elif value == 0:
         g_verbosity = 0
 
+
 def set_interactive(ctx, param, value):
     global g_interactive
     if value is True:
         g_interactive = value
+
 
 def set_output_json(ctx, param, value):
     global g_output_json
@@ -135,6 +140,7 @@ def set_output_json(ctx, param, value):
         g_output_dict = False
         g_output_text = False
 
+
 def set_output_dict(ctx, param, value):
     global g_output_json
     global g_output_dict
@@ -143,6 +149,7 @@ def set_output_dict(ctx, param, value):
         g_output_json = False
         g_output_dict = True
         g_output_text = False
+
 
 def set_output_text(ctx, param, value):
     global g_output_json
@@ -260,8 +267,7 @@ def cli(ctx,*args,**kwargs):
 #for i in cli.params:
 #    print( i.name )
 
-
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Collection listing/navigation commands
 @cli.command(help="List current collection, or collection specified by ID")
 @click.option("-o","--offset",default=0,help="List offset")
@@ -284,6 +290,7 @@ def ls(df_id,offset,count): #TODO: FIX print_listing function
     reply, mt = mapi.sendRecv( msg )
     print_listing(reply)
 
+
 @cli.command(help="Print or change current working collection")
 @click.argument("df-id",required=False)
 def wc(df_id):
@@ -293,11 +300,12 @@ def wc(df_id):
     else:
         click.echo(g_cur_coll)
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Data command group
 @cli.command(cls=AliasedGroup,help="Data subcommands")
 def data():
     pass
+
 
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
@@ -312,8 +320,7 @@ def data_view(df_id,details):
     reply, mt = mapi.sendRecv( msg )
     print_data(reply)
 
-#TODO: implement ext and auto-ext, turn metadata file into metadata string, dependencies?
-#TODO: how to handle binary json files?
+
 @data.command(name='create',help="Create new data record")
 @click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
@@ -334,8 +341,8 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
     msg = auth.RecordCreateRequest()
     msg.title = title
     if description: msg.desc = description
-    #msg.topic = ""
-    if key_words: msg.keyw = key_words   #how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
+ #  msg.topic = "" # TODO: Not yet implemented
+    if key_words: msg.keyw = key_words   # TODO: Determine input format for keywords -- list? quotation marks? commas?
     if alias: msg.alias = alias
     if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
     if repository: msg.repo_id = repository
@@ -360,20 +367,13 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
             if re.search(r'^d/[0-9]{8}', item[1]):
                 dep.id = item[1]
             else: dep.alias = item[1]
+    if not data_file:
+        reply, mt = mapi.sendRecv(msg)
+        print_data(reply)
     if data_file:
-        #figure out if file path or endpoint
-        #if not endpoint, add current working ep
-        #convert to UNIX-style path?
-            #What does server do? What does Globus do?
-        msg.source = data_file
-    #TODO: Need to be able to data-put using the created DF id, esp bc alias is not required.
-    create_reply, mt = mapi.sendRecv(msg)
-    #dictionary = output_dict(create_reply)
-    #rep = dictionary[data][0]
-    #if data_file: #data put. recreate command functionality, or callback? #recreate, which could mess up maintainability, but would also be more modular?
-    #    put_msg = auth.DataPutRequest()
-        #put function in order to factor code
-        #
+        create_reply, mt = mapi.sendRecv(msg)
+        click.echo("Data Record update successful. Initiating raw data transfer.")
+        put_data(df_id=create_reply.data[0].id,gp=data_file,wait=False,extension=None)
 
 
     print_data(create_reply)
@@ -435,12 +435,18 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
             if re.search(r'^d/[0-9]{8}', item[1]):
                 dep.id = item[1]
             else: dep.alias = item[1]
-    reply, mt = mapi.sendRecv(msg)
-    print_data(reply)
+    if not data_file:
+        reply, mt = mapi.sendRecv(msg)
+        print_data(reply)
+    if data_file:
+        update_reply, mt = mapi.sendRecv(msg)
+        click.echo("Data Record update successful. Initiating raw data transfer.")
+        put_data(df_id=update_reply.data[0].id,gp=data_file,wait=False,extension=None)
+
 
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("df_id", nargs=-1)
-def data_delete(df_id): #TODO: Fix me!
+def data_delete(df_id):
     resolved_list = []
     for ids in df_id:
         resolved_list.append(resolve_id(ids))
@@ -453,60 +459,51 @@ def data_delete(df_id): #TODO: Fix me!
     if mt == "AckReply":
         click.echo("Delete succeeded")
 
+
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
 @click.argument("df_id", nargs=-1)
-@click.argument("path", type=click.Path())
+@click.option("-fp","--filepath",type=str,required=True,help="Destination to which file is to be downloaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
+@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint to which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
-def data_get(df_id,path,wait):
-    resolved_list = []
-    for ids in df_id:
-        resolved_list.append(resolve_id(ids))
-    msg = auth.DataGetRequest()
-    msg.id.extend(resolved_list)
-    click.echo(resolved_list)
-    global g_ep_default
-    if path[0] in ["/", "//", "\\", ".", "~"]:
-        fp = os.path.abspath(path) #handles ~ very weirdly -- /home/cades/jbreet/DataFed/build/~/blareugsvaaa
-        click.echo(fp)
-        #fp = fp.replace("\\", "/") ####TODO: Use Pathlib Paths to convert to UNIX-style
-        if g_ep_cur:
-            if fp[0] == "/":
-                fp = g_ep_cur + fp
-                click.echo("starts with /")
-                click.echo(fp)
-            #else:    ##### Should never happen because of abspath method
-             #   fp = g_ep_cur + "/" + fp
-              #  click.echo("starts with something else")
-               # click.echo(fp)
+def data_get(df_id,filepath,endpoint,wait):
+    fp = resolve_filepath_for_xfr(filepath)
+    if endpoint: gp = resolve_globus_path(fp, endpoint)
+    elif not endpoint: gp = resolve_globus_path(fp, "None")
+    if gp is None:
+        click.echo(
+            "No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
+        return
+    elif gp:
+        msg = auth.DataGetRequest()
+        resolved_list = []
+        for ids in df_id:
+            resolved_list.append(resolve_id(ids))
+        msg.id.extend(resolved_list)
+        msg.path = gp
+        reply, mt = mapi.sendRecv(msg)
+        xfr_id = reply.xfr[0].id
+        click.echo("Transfer ID: {}".format(xfr_id))
+        if wait:
+            if g_verbosity >= 1: click.echo("Waiting")  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+            while wait is True:
+                time.sleep(2)
+                update_msg = auth.XfrViewRequest()
+                update_msg.xfr_id = xfr_id
+                reply, mt = mapi.sendRecv(update_msg)
+                check = reply.xfr[0]
+                if check.status == 3 or check.status == 4: break
+                statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
+                xfr_status = statuses.get(check.status, "None")
+                if g_verbosity >= 1: click.echo(
+                    "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status))
+            print_xfr_stat(reply)
         else:
-            click.echo("No endpoint given in path nor default endpoint configured.")
-            return
-    else:
-        fp = path
-    msg.path = fp ### important
-    click.echo(msg)
-    reply, mt = mapi.sendRecv( msg )
-    click.echo("reply:",reply) #this is where it cuts off -- prints "write" and nothing else)
-    xfr = reply.xfr[0]
-    click.echo("id:",xfr.id,"stat:",xfr.stat)
-    if wait:
-        click.echo("waiting")
-        #while xfr.status < 3:
-        while True:
-            sleep(2)
-            msg = auth.XfrViewRequest()
-            msg.xfr_id = xfr.id
-            reply, mt = mapi.sendRecv( msg )
-            xfr = reply.xfr[0]
-            click.echo("id:",xfr.id,"stat:",xfr.stat)
-#TODO: Figure out verbosity replies
-        click.echo("done. status:",xfr.stat)
-    else:
-        click.echo("xfr id:",xfr.id)
+            print_xfr_stat(reply)
+
 
 @data.command(name='put',help="Put (upload) raw data to DataFed")
 @click.argument("df_id")
-@click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes.")
+@click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 @click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-ext", "--extension",type=str,required=False,help="Specify an extension for the raw data file. This will override any previously specified extension or auto-extension behavior.")
@@ -520,94 +517,12 @@ def data_put(df_id,filepath,wait,endpoint,extension):
         click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
 
 
-@data.command(name='test')
-@click.argument("filepath",type=str)
-@click.option("-ep","--endpoint",type=str,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
-def data_test(filepath, endpoint):
-    fp = resolve_filepath_for_xfr(str(filepath))
-    if endpoint: fp = resolve_globus_path(fp, endpoint)
-    else: fp = resolve_globus_path(fp, "None")
-    click.echo("Data test reply:")
-    click.echo(fp)
-    if fp is None: click.echo("Yikes")
-
-def put_data(df_id,gp,wait,extension):
-    msg = auth.DataPutRequest()
-    msg.id = resolve_id(df_id)
-    msg.path = gp
-    if extension: msg.ext = extension
-    reply, mt = mapi.sendRecv(msg)
-    #click.echo(reply) #works
-    print_xfr_stat(reply, 1)
- #   xfr = reply.xfr[0] #xfr succeeds
- #   click.echo(xfr)
-#  click.echo(xfr.id)
-    '''
-    click.echo("id:", xfr.id, "stat:", xfr.stat)
-    if wait:
-        click.echo("waiting")
-        # while xfr.status < 3:
-        while True:
-            sleep(2)
-            msg = auth.XfrViewRequest()
-            msg.xfr_id = xfr.id
-            reply, mt = mapi.sendRecv(msg)
-            xfr = reply.xfr[0]
-            click.echo("id:", xfr.id, "stat:", xfr.stat)
-        # TODO: Figure out verbosity replies
-        click.echo("done. status:", xfr.stat)
-    else:
-        click.echo("xfr id:", xfr.id)
-    '''
-
-def resolve_filepath_for_xfr(filepath):
-    if filepath[0] == '/':  # absolute full path, must be in globus format
-        filepath = filepath[1:]
-
-    elif filepath[0] != "/":  # relative path to be resolved
-        filepath = pathlib.Path.cwd() / filepath
-        filepath = filepath.resolve()  # now absolute path
-
-    fp = pathlib.PurePath(filepath)
-
-    if isinstance(fp, pathlib.PureWindowsPath):  # If Windows flavour
-        if fp.drive:  # turning drive letter into globus-suitable format
-            drive_name = fp.drive.replace(':', '')
-            click.echo(drive_name)
-            parts = fp.parts[1:]
-            click.echo(parts)
-            fp = pathlib.PurePosixPath('/' + drive_name)
-            click.echo(fp)
-            for item in parts:
-                fp = fp / str(item)  # adds each part
-                click.echo(fp)
-
-    return str(fp)
-    #              return filepath #globus-ready path
-
-def resolve_globus_path(fp, endpoint):
-    global g_ep_cur
-    global g_ep_default
-    if fp[0] != '/':
-        fp = "/" + fp
-    if endpoint != "None":
-        fp = endpoint + fp
-    elif endpoint == "None":
-        if g_ep_cur:
-            fp = g_ep_cur + fp
-        elif g_ep_cur is None:
-            if g_ep_default:
-                fp = g_ep_default + fp
-            elif g_ep_default is None:
-                fp = None
-
-    return fp #endpoint and path
-
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Collection command group
 @cli.command(cls=AliasedGroup,help="Collection subcommands")
 def coll():
     pass
+
 
 @coll.command(name='view',help="View collection")
 @click.argument("df_id")
@@ -616,6 +531,7 @@ def coll_view(df_id):
     msg.id = resolve_coll_id(df_id)
     reply, mt = mapi.sendRecv( msg )
     print_coll(reply)
+
 
 @coll.command(name='create',help="Create new collection")
 @click.argument("title")
@@ -632,6 +548,7 @@ def coll_create(title,alias,description,collection):
     reply, mt = mapi.sendRecv(msg)
     print_coll(reply)
 
+
 @coll.command(name='update',help="Update existing collection")
 @click.argument("df_id")
 @click.option("-t","--title",type=str,required=False,help="Title")
@@ -646,6 +563,7 @@ def coll_update(df_id,title,alias,description):
     reply, mt = mapi.sendRecv(msg)
     print_coll(reply)
 
+
 @coll.command(name='delete',help="Delete existing collection")
 @click.argument("df_id")
 def coll_delete(df_id):
@@ -659,34 +577,42 @@ def coll_delete(df_id):
     msg = auth.CollDeleteRequest()
     msg.id = id2
     reply, mt = mapi.sendRecv( msg )
+    if mt == "AckReply": click.echo("Success: collection deleted.")
+
 
 @coll.command(name='add',help="Add data/collection ITEM_ID to collection COLL_ID")
 @click.argument("item_id")
 @click.argument("coll_id")
 def coll_add(item_id,coll_id):
+    global g_verbosity
     msg = auth.CollWriteRequest()
     msg.id = resolve_coll_id(coll_id)
     msg.add.append(resolve_id(item_id))
-    reply, mt = mapi.sendRecv( msg )
-    #TODO: Figure out appropriate reply
-    click.echo(reply)
+    reply, mt = mapi.sendRecv(msg)
+    if g_verbosity >= 1:
+        if mt == "ListingReply": # TODO: Should be AckReply
+            click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
+
 
 @coll.command(name='remove',help="Remove data/collection ITEM_ID from collection COLL_ID")
 @click.argument("item_id")
 @click.argument("coll_id")
 def coll_rem(item_id,coll_id):
+    global g_verbosity
     msg = auth.CollWriteRequest()
     msg.id = resolve_coll_id(coll_id)
     msg.rem.append(resolve_id(item_id))
-    #TODO: Figure out appropriate reply
-    reply, mt = mapi.sendRecv( msg )
-    click.echo(reply)
+    reply, mt = mapi.sendRecv(msg)
+    if g_verbosity >= 1:
+        if mt == "ListingReply": # TODO: Should be AckReply
+            click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
 
 #------------------------------------------------------------------------------
 # Query command group
 @cli.command(cls=AliasedGroup,help="Query subcommands")
 def query():
     pass
+
 
 @query.command(name='list',help="List saved queries")
 @click.option("-o","--offset",default=0,help="List offset")
@@ -697,7 +623,8 @@ def query_list(offset,count):
     msg.count = count
     reply, mt = mapi.sendRecv( msg )
     print_listing(reply)
-    #TODO: FIgure out verbosity-dependent replies
+    #TODO: Figure out verbosity-dependent replies
+
 
 @query.command(name='exec',help="Execute a stored query by ID")
 @click.argument("df_id")
@@ -707,44 +634,54 @@ def query_exec(df_id):
     reply, mt = mapi.sendRecv( msg )
     print_listing(reply)
 
+
 @query.command(name='text',help="Query by words or phrases")
 def query_text():
     click.echo("TODO: NOT IMPLEMENTED")
+
 
 @query.command(name='meta',help="Query by metadata expression")
 def query_meta():
     click.echo("TODO: NOT IMPLEMENTED")
 
+
 @query.command(cls=AliasedGroup,help="Query scope subcommands")
 def scope():
     click.echo("TODO: NOT IMPLEMENTED")
+
 
 @scope.command(name='view',help="View categories and/or collections in query scope")
 def scope_view():
     click.echo("TODO: NOT IMPLEMENTED")
 
+
 @scope.command(name='add',help="Add category or collection to query scope")
 def scope_add():
     click.echo("TODO: NOT IMPLEMENTED")
+
 
 @scope.command(name='remove',help="Remove category or collection from query scope")
 def scope_rem():
     click.echo("TODO: NOT IMPLEMENTED")
 
+
 @scope.command(name='clear',help="Remove all categories and/or collections from query scope")
 def scope_clear():
     click.echo("TODO: NOT IMPLEMENTED")
+
 
 @scope.command(name='reset',help="Reset query scope to default")
 def scope_reset():
     click.echo("TODO: NOT IMPLEMENTED")
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # User command group
 
 @cli.command(cls=AliasedGroup,help="User commands")
 def user():
     pass
+
 
 @user.command(name='collab',help="List all users associated with common projects")
 @click.option("-o","--offset",default=0,help="List offset")
@@ -767,23 +704,23 @@ def user_all(offset,count):
     reply, mt = mapi.sendRecv( msg )
     print_user_listing(reply)
 
+
 @user.command(name='view',help="View information for user UID")
-@click.option("-d","--details",is_flag=True,help="Show detailed user information")
 @click.argument("uid")
-def user_view(uid,details):
+def user_view(uid):
     msg = auth.UserViewRequest()
     msg.uid = resolve_id(uid)
-    msg.details = details
-    reply, mt = mapi.sendRecv( msg )
-    #TODO: Figure out verbosity-dependent replies
-    click.echo(reply)
+    reply, mt = mapi.sendRecv(msg)
+    print_user(reply)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Project command group
 
 @cli.command(cls=AliasedGroup,help="Project commands")
 def project():
     pass
+
 
 @project.command(name='list',help="List projects")
 @click.option("-o","--owner",is_flag=True,help="Include owned projects")
@@ -802,54 +739,30 @@ def project_list(owner,admin,member):
     reply, mt = mapi.sendRecv( msg ) #TODO: Figure out verbosity reply?
     print_proj_listing(reply)
 
+
 @project.command(name='view',help="View project specified by ID")
 @click.argument("df_id")
 def project_view(df_id):
     msg = auth.ProjectViewRequest()
     msg.id = resolve_id(df_id)
-    reply, mt = mapi.sendRecv( msg )
-    # TODO Print project info
-    global g_verbosity
-    global g_output_json
-    global g_output_dict
-    global g_output_text
-    if g_output_text:
-        dictionary = output_dict(reply)
-        specs = dictionary['proj'][0]
-        rep = specs.get
-        if g_verbosity >= 0:
-            click.echo("id: " + rep('id', "None") + "\n" +
-                       "title: " + rep('title', "None") + "\n")
-        if g_verbosity >= 1:
-            click.echo("description: " + rep('desc', "None") + "\n" +
-                       "sub-repository: " + rep('sub_repo', "None") + "\n" +
-                       "sub-allocation: " + rep('sub_alloc', "None") + "\n" + #TODO: Figure out conversion to Gigs?
-                       "sub-allocation space used: " + rep('sub_usage', "None")) #TODO: Figure out conversion to Gigs?
-        if g_verbosity == 2:
-            click.echo("owner: " + rep('owner', "None") + "\n" +
-                       "admin(s): " + rep('admin', "None") + "\n" +
-                       "date created:" + time.strftime("%D %H:%M", time.gmtime(rep('ct', "None"))) + "\n" +
-                       "data updated:" + time.strftime("%D %H:%M", time.gmtime(rep('ut', "None"))) + "\n" +
-                       "allocation data: " + rep('deps', "None")) #TODO: Figure out how to present this
-    elif g_output_json:
-        output = output_json(reply)
-        click.echo(output)
-    elif g_output_dict:
-        output = output_dict(reply)
-        click.echo(output)
+    reply, mt = mapi.sendRecv(msg)
+    print_proj(reply)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Shared data command group
 
 @cli.command(cls=AliasedGroup,help="Shared data commands")
 def shared():
     pass
 
+
 @shared.command(name="users",help="List users with shared data")
 def shared_users():
     msg = auth.ACLByUserRequest()
     reply, mt = mapi.sendRecv( msg )
     print_user_listing(reply)
+
 
 @shared.command(name="projects",help="List projects with shared data")
 def shared_projects():
@@ -874,38 +787,63 @@ def shared_list(df_id):
     reply, mt = mapi.sendRecv( msg )
     print_listing(reply)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Transfer commands
 
 @cli.command(cls=AliasedGroup,help="Data transfer management commands")
 def xfr():
     pass
 
+
 @xfr.command(name='list',help="List recent transfers")
 @click.option("-s","--since",help="List from specified time (use s,h,d suffix)")
-@click.option("-f","--from",help="List from specified absolute time (timestamp)")
+@click.option("-f","--from","time_from",help="List from specified absolute time (timestamp)")
 @click.option("-t","--to",help="List up to specified absolute time (timestamp)")
-@click.option("-st","--status",help="List transfers matching specified status")
-def xfr_list():
+@click.option("-st","--status",type=click.Choice(["0","1","2","3","4","init","initiated","active","inactive","succeeded","failed"]),help="List transfers matching specified status")
+def xfr_list(time_from,to,since,status): # TODO: Absolute time is not user friendly
     click.echo("TODO: NOT IMPLEMENTED")
+    msg = auth.XfrListRequest()
+   #msg.(from) = time_from # TODO: 'From' is a magic keyword and shouldn't be used in python
+    msg.to = to
+    msg.since = since
+    if status in ["0","1","2","3","4"]: msg.status = int(status)
+    elif status == "init" or status == "initiated": msg.status = 0
+    elif status == "active": msg.status = 1
+    elif status == "inactive": msg.status = 2
+    elif status == "succeeded": msg.status = 3
+    elif status == "failed": msg.status = 4
+    reply, mt = mapi.sendRecv(msg)
+    print_listing(reply)
+
 
 @xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer id ID omitted")
-@click.argument("df_id",required=False,default="MOST RECENT XFR ID")
+@click.argument("df_id",required=False,default="MOST RECENT XFR ID") # Does this have to be a dynamic global variable?
 def xfr_stat(df_id):
-    click.echo("TODO: NOT IMPLEMENTED")
+    if df_id:
+        msg = auth.XfrViewRequest()
+        msg.xfr_id = resolve_id(df_id)
+        reply, mt = mapi.sendRecv(msg)
+        print_xfr_stat(reply)
+    elif not df_id:
+        msg = auth.XfrListRequest() # TODO: How to isolate most recent Xfr
+        reply, mt = mapi.sendRecv(msg)
+        print_listing(reply)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # End-point commands
 
 @cli.command(cls=AliasedGroup,help="Endpoint commands")
 def ep():
     pass
 
+
 @ep.command(name='get',help="Get Globus endpoint for the current session. At the start of the session, this will be the previously configured default endpoint.")
 def ep_get():
     global g_ep_cur
     if g_ep_cur:
-        info(1,g_ep_cur) ## why info function???
+        info(1,g_ep_cur) # why info function???
     else:
         global g_ep_default
         if g_ep_default:
@@ -914,13 +852,14 @@ def ep_get():
         else:
             info(1,"No endpoint specified for the current session, and default end-point has not been configured.")
 
+
 @ep.command(name='default',help="Get or set the default Globus endpoint. If no endpoint is given, the previously configured default endpoint will be returned. If an argument is given, the new endpoint will be set as the default.")
 @click.argument("new_default_ep",required=False)
 def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT update the current session's endpoint automatically --- MUST FOLLOW WITH EP SET
     global g_ep_default
     if new_default_ep:
         new_default_ep = resolve_index_val(new_default_ep)
-        Config.set_default_ep(new_default_ep)
+        dfC.Config.set_default_ep(new_default_ep)
         g_ep_default = new_default_ep
    #     except:
         # TODO: add more functionality
@@ -929,7 +868,7 @@ def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT upda
         if g_ep_default:
             click.echo(g_ep_default)
         else:
-            click.echo("Default endpoint has not been configured.") ###
+            click.echo("Default endpoint has not been configured.")
 
 
 @ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the previously configured default endpoint will be used.")
@@ -947,13 +886,15 @@ def ep_set(path):
 
     info(1,g_ep_cur)
 
+
 @ep.command(name='list',help="List recent endpoints.")
 def ep_list():
     msg = auth.UserGetRecentEPRequest()
     reply, mt = mapi.sendRecv( msg )
     print_endpoints(reply)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Miscellaneous commands
 
 @cli.command(name='ident',help="Set current user or project identity to ID (omit for self)")
@@ -995,6 +936,7 @@ def ident(df_id,show):
 
         info(1,"Switched to user " + g_cur_sel)
 
+
 @cli.command(name='help',help="Show datafed client help")
 @click.pass_context
 def help_cli(ctx):
@@ -1007,10 +949,11 @@ def exit_cli():
     g_interactive = True
     sys.exit(0)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Print and Utility functions
 
-def resolve_index_val( df_id ):
+def resolve_index_val(df_id):
     try:
         if len(df_id) <= 3:
             global g_list_items
@@ -1027,13 +970,15 @@ def resolve_index_val( df_id ):
 
     return df_id
 
-def resolve_id( df_id ):
-    df_id2 = resolve_index_val( df_id )
+
+def resolve_id(df_id):
+    df_id2 = resolve_index_val(df_id)
 
     if (len(df_id2) > 2 and df_id2[1] == "/") or (df_id2.find(":") > 0):
         return df_id2
 
     return g_cur_alias_prefix + df_id2
+
 
 def resolve_coll_id(df_id):
     if df_id == ".":
@@ -1047,8 +992,7 @@ def resolve_coll_id(df_id):
         msg = auth.CollGetParentsRequest()
         msg.id = g_cur_coll
         msg.all = False
-        reply, mt = mapi.sendRecv( msg )
-        #print(reply)
+        reply, mt = mapi.sendRecv(msg)
         if len(reply.coll):
             return reply.coll[0].id
         else:
@@ -1062,17 +1006,89 @@ def resolve_coll_id(df_id):
     return g_cur_alias_prefix + df_id2
 
 
-def print_listing( reply ):
+def put_data(df_id,gp,wait,extension):
+    global g_verbosity
+    msg = auth.DataPutRequest()
+    msg.id = resolve_id(df_id)
+    msg.path = gp
+    if extension: msg.ext = extension
+    reply, mt = mapi.sendRecv(msg)
+    xfr_id = reply.xfr[0].id
+    click.echo("Transfer ID: {}".format(xfr_id))
+    if wait:
+        if g_verbosity >= 1: click.echo("Waiting")  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+        while wait is True:
+            time.sleep(2)
+            update_msg = auth.XfrViewRequest()
+            update_msg.xfr_id = xfr_id
+            reply, mt = mapi.sendRecv(update_msg)
+            check = reply.xfr[0]
+            if check.status == 3 or check.status == 4: break
+            statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
+            xfr_status = statuses.get(check.status, "None")
+            if g_verbosity >= 1: click.echo("{:15} {:15} {:15} {:15}".format("Transfer ID:",check.id,"Status:",xfr_status))
+        print_xfr_stat(reply)
+    else:
+        print_xfr_stat(reply)
+
+
+def resolve_filepath_for_xfr(filepath):
+    if filepath[0] == '/':  # absolute full path, must be in globus format
+        filepath = filepath[1:]
+
+    elif filepath[0] != "/":  # relative path to be resolved
+        filepath = pathlib.Path.cwd() / filepath
+        filepath = filepath.resolve()  # now absolute path
+
+    fp = pathlib.PurePath(filepath)
+
+    if isinstance(fp, pathlib.PureWindowsPath):  # If Windows flavour
+        if fp.drive:  # turning drive letter into globus-suitable format
+            drive_name = fp.drive.replace(':', '')
+            click.echo(drive_name)
+            parts = fp.parts[1:]
+            click.echo(parts)
+            fp = pathlib.PurePosixPath('/' + drive_name)
+            click.echo(fp)
+            for item in parts:
+                fp = fp / str(item)  # adds each part
+                click.echo(fp)
+
+    return str(fp)
+
+
+def resolve_globus_path(fp, endpoint):
+    global g_ep_cur
+    global g_ep_default
+    if fp[0] != '/':
+        fp = "/" + fp
+    if endpoint != "None":
+        fp = endpoint + fp
+    elif endpoint == "None":
+        if g_ep_cur:
+            fp = g_ep_cur + fp
+        elif g_ep_cur is None:
+            if g_ep_default:
+                fp = g_ep_default + fp
+            elif g_ep_default is None:
+                fp = None
+
+    return fp #endpoint and path
+
+
+def print_listing(reply):
     df_idx = 1
     global g_list_items
-    g_list_items = [] #need to do the whole dictionary get thing; as with print_data and print_deps bc reply appears to be a list of dictionaries
+    g_list_items = []
+    click.echo("{:3} {:12} ({:20} {}".format("","DataFed ID","Alias)","Title"))
     for i in reply.item:
-        g_list_items.append(i.df_id)
+        g_list_items.append(i.id)
         if i.alias:
-            click.echo("{:2}. {:12} ({:20} {}".format(df_idx,i.df_id,i.alias+")",i.title))
+            click.echo("{:2}. {:12} ({:20} {}".format(df_idx,i.id,i.alias+')',i.title))
         else:
-            click.echo("{:2}. {:34} {}".format(df_idx,i.df_id,i.title))
+            click.echo("{:2}. {:34} {}".format(df_idx,i.id,i.title))
         df_idx += 1
+
 
 def print_user_listing( reply ):
     df_idx = 1
@@ -1083,14 +1099,16 @@ def print_user_listing( reply ):
         click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
         df_idx += 1
 
+
 def print_proj_listing(reply):
     df_idx = 1
     global g_list_items
     g_list_items = []
     for i in reply.proj:
-        g_list_items.append(i.df_id)
-        click.echo("{:2}. {:24} {}".format(df_idx,i.df_id,i.title))
+        g_list_items.append(i.id)
+        click.echo("{:2}. {:24} {}".format(df_idx,i.id,i.title))
         df_idx += 1
+
 
 def print_endpoints(reply):
     df_idx = 1
@@ -1103,42 +1121,44 @@ def print_endpoints(reply):
             g_list_items.append(path)
             click.echo("{:2}. {}".format(df_idx,path))
             df_idx += 1
-            
+
+
 def print_data(message):
     global g_verbosity
     global g_output_json
     global g_output_dict
     global g_output_text
     if g_output_text:
-        dictionary = MessageToDict(message,preserving_proto_field_name=True)
-        specs = dictionary['data'][0]
-        rep = specs.get
+        dr = message.data[0]
         if g_verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('ID: ', rep('id', "None")) +'\n' +
-                       "{:<25} {:<50}".format('Title: ', rep('title', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Alias: ', rep('alias', "None")))
+            click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
+                       "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
+                       "{:<25} {:<50}".format('Alias: ', dr.alias))
         if g_verbosity >= 1:
-            click.echo("{:<25} {:<50}".format('Description: ', rep('desc', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Keywords: ', rep('keyw', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Size: ', rep('size', "None")) + '\n' + ## convert to gigs?
-                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(rep('ct', "None")))) + '\n' +
-                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(rep('ut', "None")))))
+            click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
+                       "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
+                       "{:<25} {:<50}".format('Size: ', dr.size) + '\n' + ## convert to gigs?
+                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
         if g_verbosity >= 2:
-            click.echo("{:<25} {:<50}".format('Topic: ', rep('topic', "None")) +'\n' +
-                       "{:<25} {:<50}".format('Is Public: ', str(rep('title', "None"))) + '\n' +
-                       "{:<25} {:<50}".format('Data Repo ID: ', rep('repo_id', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Source: ', rep('source', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Extension: ', rep('ext', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Auto Extension: ', str(rep('title', "None"))) + '\n' +
-                       "{:<25} {:<50}".format('Owner: ', rep('owner', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Locked: ', str(rep('locked', "None"))) + '\n' +
-                       "{:<25} {:<50}".format('Parent Collection ID: ', rep('parent_id', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Metadata: ', (json.dumps(json.loads(rep('metadata', "None")), indent=4))))
-            if rep('deps') is None:
-                click.echo("{:<25}".format('Dependencies: None'))
-            else:
+            click.echo("{:<25} {:<50}".format('Topic: ', dr.topic) + '\n' +
+                       "{:<25} {:<50}".format('Is Public: ', str(dr.ispublic)) + '\n' +
+                       "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
+                       "{:<25} {:<50}".format('Source: ', dr.source) + '\n' +
+                       "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
+                       "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
+                       "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
+                       "{:<25} {:<50}".format('Locked: ', str(dr.locked)) + '\n' +
+                       "{:<25} {:<50}".format('Parent Collection ID: ', dr.parent_id))
+            if dr.metadata:
+                click.echo("{:<25} {:<50}".format('Metadata: ', (json.dumps(json.loads(dr.metadata, indent=4)))))
+            elif not dr.metadata:
+                click.echo("{:<25} {:<50}".format('Metadata: ', "None"))
+            if not dr.deps:
+                click.echo("{:<25} {:<50}".format('Dependencies: ', 'None'))
+            elif dr.deps:
                 click.echo("{:<25}".format('Dependencies:'))
-                print_deps(rep('deps'))
+                print_deps(message)
     elif g_output_json:
         json_output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(json_output)
@@ -1146,27 +1166,26 @@ def print_data(message):
         dict_output = MessageToDict(message,preserving_proto_field_name=True)
         click.echo(dict_output)
 
+
 def print_coll(message):
     global g_verbosity
     global g_output_json
     global g_output_dict
     global g_output_text
     if g_output_text:
-        dictionary = MessageToDict(message,preserving_proto_field_name=True)
-        specs = dictionary['coll'][0]
-        rep = specs.get
+        coll = message.coll[0]
         if g_verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('ID: ', rep('id', "None")) +'\n' +
-                       "{:<25} {:<50}".format('Title: ', rep('title', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Alias: ', rep('alias', "None")))
+            click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
+                       "{:<25} {:<50}".format('Title: ', coll.title) + '\n' +
+                       "{:<25} {:<50}".format('Alias: ', coll.alias))
         if g_verbosity >= 1:
-            click.echo("{:<25} {:<50}".format('Description: ', rep('desc', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Owner: ', rep('owner', "None")) + '\n' +
-                       "{:<25} {:<50}".format('Parent Colleciton ID: ', rep('parent_id', "None")))
+            click.echo("{:<25} {:<50}".format('Description: ',coll.desc) + '\n' +
+                       "{:<25} {:<50}".format('Owner: ', coll.owner) + '\n' +
+                       "{:<25} {:<50}".format('Parent Collection ID: ', coll.parent_id))
         if g_verbosity == 2:
-            click.echo("{:<25} {:<50}".format('Is Public: ', str(rep('title', "None"))) + '\n' +
-                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(rep('ct', "None")))) + '\n' +
-                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(rep('ut', "None")))))
+            click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
+                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
     elif g_output_json:
         output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(output)
@@ -1182,44 +1201,125 @@ def print_deps(dependencies):
             rep = item.get
             click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
 
-def print_xfr_stat(message, number):
+def print_deps(message):
+    types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
+    dr = message.data[0]
+    dep = message.data[0].deps
+    for i in dep:
+        if i.dir == 0: # incoming -- DR is old, precursor, or container -- DEP is relative of DR
+            click.echo("{:2} {:12} ({:<15} {:20} {:12} ({:<15}".format(
+                "",i.id,i.alias+')',types[i.type],dr.id,dr.alias+')'))
+        elif i.dir == 1: # outgoing -- DR is new, derivation, or component -- DR is relative of DEP
+            click.echo("{:2} {:12} ({:<15} {:20} {:12} ({:<15}".format(
+                "",dr.id,dr.alias+')',types[i.type],i.id,i.alias+')'))
+
+
+def print_xfr_stat(message):
     global g_verbosity
     global g_output_json
     global g_output_dict
     global g_output_text
-    click.echo("got to the print function")
-    if g_output_text:
-        click.echo("got to text fn!")
-        for i in range(number):
-            click.echo("inside range!")
-            xfr = message.xfr[i]
-            click.echo("Data Record ID: %s" % (xfr.id)) #THIS WORKS but format is better
-            click.echo("Data Record ID: {}".format(xfr.id)) #also works. is verbosity the problem??
-            click.echo(xfr.repo.file[0].id)
-            if g_verbosity >= 0:
-                click.echo("{:<25} {:<50}".format('Xfr ID: ', str(xfr.id)) +'\n' +
-                           "{:<25} {:<50}".format('Mode: ', str(xfr.mode)) + '\n' +
-                           "{:<25} {:<50}".format('Status: ', str(xfr.stat)))
-            if g_verbosity >= 1:
-                click.echo("{:<25} {:<50}".format('Data Record ID: ', xfr.repo.file[0].id) + '\n' +
-                           "{:<25} {:<50}".format('Date Started: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))) + '\n' +
-                           "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))))
-  #          if g_verbosity == 2: ###what here?
-  #              click.echo("{:<25} {:<50}".format('Is Public: ', str(rep('title', "None"))) + '\n' +
-  #                         "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(rep('ct', "None")))) + '\n' +
-  #                         "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(rep('ut', "None")))))
-    elif g_output_json:
+    if g_output_json:
         output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(output)
     elif g_output_dict:
         output = MessageToDict(message,preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_text:
+        for xfr in message.xfr:
+            modes = { 0: "Get", 1: "Put", 2: "Copy"}
+            xfr_mode = modes.get(xfr.mode, "None")
+            statuses = { 0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
+            xfr_status = statuses.get(xfr.status, "None")
+            df_ids = []
+            for files in xfr.repo.file: df_ids.append(files.id)
+            if g_verbosity >= 0:
+                click.echo("{:<25} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
+                           "{:<25} {:<50}".format('Mode: ', xfr_mode) + '\n' +
+                           "{:<25} {:<50}".format('Status: ', str(xfr_status)))
+            if g_verbosity >= 1:
+                click.echo("{:<25} {:<50}".format('Data Record ID/s: ', str(df_ids)) + '\n' +
+                           "{:<25} {:<50}".format('Date Started: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))) + '\n' +
+                           "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))))
+            if g_verbosity == 2:
+                click.echo("{:<25} {:<50}".format('Remote Endpoint:', xfr.rem_ep) + '\n' 
+                           "{:<25} {:<50}".format('Remote Path: ', xfr.rem_path))
+
+
+def print_user(message):
+    global g_verbosity
+    global g_output_dict
+    global g_output_json
+    global g_output_text
+    if g_output_text:
+        usr = message.user[0]
+        if g_verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
+                       "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
+                       "{:<25} {:<50}".format('Email: ', usr.email))
+    elif g_output_json:
+        output = MessageToJson(message, preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_dict:
+        output = MessageToDict(message, preserving_proto_field_name=True)
         click.echo(output)
 
 def print_metadata(message): #how to pretty print json?
     pass
 
 def print_proj(message):
-    pass
+    global g_verbosity
+    global g_output_json
+    global g_output_dict
+    global g_output_text
+    if g_output_text:
+        proj = message.proj[0]
+        admins = []
+        members = []
+        for i in proj.admin: admins.append(i)
+        for i in proj.member: members.append(i)
+        if g_verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
+                       "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
+                       "{:<25} {:<50}".format('Description: ', proj.desc))
+        if g_verbosity >= 1:
+            click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
+                       "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
+                       "{:<25} {:<50}".format('Members: ', str(members)))
+        if g_verbosity == 2:
+            click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
+                       "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
+                       "{:<25} {:<50}".format('Sub Allocation: ', GetHumanReadable(proj.sub_alloc) + '\n' +
+                       "{:<25} {:<50}".format('Sub Usage: ', GetHumanReadable(proj.sub_usage))))
+            for i in proj.alloc:
+                print_allocation_data(i)
+    elif g_output_json:
+        output = MessageToJson(message, preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_dict:
+        output = MessageToDict(message, preserving_proto_field_name=True)
+        click.echo(output)
+
+
+def print_allocation_data(alloc):
+    click.echo("{:<25} {:<50}".format('Repo: ', alloc.repo) + '\n' +
+               "{:<25} {:<50}".format('Max Size: ', GetHumanReadable(alloc.max_size)) + '\n' +
+               "{:<25} {:<50}".format('Total Size: ', GetHumanReadable(alloc.tot_size)) + '\n' +
+               "{:<25} {:<50}".format('Max Record Count: ', alloc.max_count) + '\n' +
+               "{:<25} {:<50}".format('Path: ', alloc.path) + '\n' +
+               "{:<25} {:<50}".format('ID: ', alloc.id) + '\n' +
+               "{:<25} {:<50}".format('Sub Allocation: ', str(alloc.sub_alloc)))
+
+
+def GetHumanReadable(size,precision=2):
+    suffixes=['B','KB','MB','GB','TB']
+    suffixIndex = 0
+    while size > 1024 and suffixIndex < 4:
+        suffixIndex += 1 #increment the index of the suffix
+        size = size/1024.0 #apply the division
+    return "%.*f%s" % (precision,size,suffixes[suffixIndex])
+
 
 def confirm( msg ):
     val = click.prompt( msg )
