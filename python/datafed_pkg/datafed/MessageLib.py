@@ -26,6 +26,7 @@ class API:
         ):
 
         print("server_cfg_dir",server_cfg_dir)
+        print("client_cfg_dir",client_cfg_dir)
 
         self._ctxt = 0
         self._auth = False

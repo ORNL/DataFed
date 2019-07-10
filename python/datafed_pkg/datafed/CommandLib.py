@@ -117,19 +117,14 @@ def info( level, *args ):
 # -----------------------------------------------------------------------------------------------------------------
 # Switch functions
 
-def set_verbosity(ctx, param, value):
-    global g_verbosity
-    if value:
-        g_verbosity = value
-    elif value == 0:
-        g_verbosity = 0
 
 
+'''
 def set_interactive(ctx, param, value):
     global g_interactive
     if value is True:
         g_interactive = value
-
+'''
 
 def set_output_json(ctx, param, value):
     global g_output_json
@@ -162,44 +157,6 @@ def set_output_text(ctx, param, value):
 
 ##############################################################################
 
-
-#changing parameter types to validation callbacks
-'''
-Not useful: the server should be the only one who can validate/decide what is valid and what is not
-
-def validate_data_id(ctx, param, value):
-    if len(value) == 10 and re.search(r'^d/[0-9]{8}', value):  # DataFed ID format: 'd/12345678'
-        return value
-    elif len(value) == 8 and re.search(r'[0-9]{8}', value):  # 8 digits assumed to be part of DataFed ID
-        value = f'd/{value}'  # Converted to DF ID format as above
-        return value
-    elif len(value) < 60 and not bool(
-            re.search(r'[^-a-z0-9_.]', value)):  # Check that alias is below 60 characters & only contains alphanum or -, . , or _
-        return value
-    else:
-        raise click.BadParameter("Not a valid Data Record ID or alias. "
-                                         "ID should be given in the form or an 8-digit number or DataFed ID (d/12345678)."
-                                         "Aliases may be 60 characters long and contain only alphanumeric characters, .,  _, or -.")
-
-def validate_coll_id(ctx, param, value):
-    if len(value) == 10 and re.search(r'^c/[0-9]{8}', value):  # DataFed ID format: 'c/12345678'
-        return value
-    elif len(value) == 8 and re.search(r'[0-9]{8}', value):  # 8 digits assumed to be part of DataFed ID
-        value = f'c/{value}'  # Converted to DF ID format as above
-        return value
-    elif len(value) < 60 and not bool(
-            re.search(r'[^-a-z0-9_.]', value)):  # Check that alias is below 60 characters & only contains alphanum or -, . , or _
-        return value
-    else:
-        raise click.BadParameter("Not a valid Collection ID or alias. "
-                                         "ID should be given in the form or an 8-digit number or DataFed ID (c/12345678)."
-                                         "Aliases may be 60 characters long and contain only alphanumeric characters, .,  _, or -.")
-
-
-#TODO: Implement validation for project and user IDs
-'''
-
-
 # Allows command matching by unique suffix
 class AliasedGroup(click.Group):
     def get_command(self, ctx, cmd_name):
@@ -228,41 +185,43 @@ def config_options( cfg ):
         for oi in Config.opt_info:
             #OPT_NO_CL
             if oi[4] & Config.OPT_INT:
-                my_param_memo(f, click.Option(oi[5],type=int,help=oi[6]))
+                my_param_memo(f,click.Option(oi[5],type=int,default=cfg.get(oi[0]),help=oi[6]))
+            elif oi[4] & Config.OPT_BOOL:
+                my_param_memo(f,click.Option(oi[5],is_flag=True,default=cfg.get(oi[0]),help=oi[6]))
             else:
-                my_param_memo(f, click.Option(oi[5],type=str,help=oi[6]))
+                my_param_memo(f,click.Option(oi[5],type=str,default=cfg.get(oi[0]),help=oi[6]))
 
-        #my_param_memo(f, click.Option(["-X","--xxx"],type=str,help="Dynamic option"))
         return f
     return wrapper
 
-'''
-@click.option("-h","--host",type=str,default=cfg.get("server-host"),help="Server host")
-@click.option("-p","--port",type=int,default=cfg.get("server-port"),help="Server port")
-@click.option("-c","--client-cred-dir",type=str,help="Client credential directory")
-@click.option("-s","--server-cred-dir",type=str,help="Server credential directory")
-'''
+#@click.option("-v","--verbosity",type=int,callback=set_verbosity,help="Verbosity level (0=quiet,1=normal,2=verbose) for text-format output. JSON and dictionary outputs are always fully verbose.")
 
 #------------------------------------------------------------------------------
 # Top-level group with global options
 @click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
 @click.option("-l","--log",is_flag=True,help="Force manual authentication")
-@click.option("-v","--verbosity",type=int,callback=set_verbosity,expose_value=True,help="Verbosity level (0=quiet,1=normal,2=verbose) for text-format output. JSON and dictionary outputs are always fully verbose.")
-@click.option("-i","--interactive",is_flag=True,is_eager=True,callback=set_interactive,expose_value=False,help="Start an interactive session")
-@click.option("-j", "--json", is_flag=True,callback=set_output_json,expose_value=True,help="Set CLI output format to JSON, when applicable.")
-@click.option("-d", "--dict", is_flag=True,callback=set_output_dict,expose_value=True,help="Set CLI output format to stringified python dictionary, when applicable.")
-@click.option("-t","--text",is_flag=True,callback=set_output_text, expose_value=True,help="Set CLI output format to human-friendly text.")
+#@click.option("-i","--interactive",is_flag=True,is_eager=True,expose_value=False,help="Start an interactive session")
+@click.option("-j", "--json", is_flag=True,callback=set_output_json,help="Set CLI output format to JSON, when applicable.")
+@click.option("-d", "--dict", is_flag=True,callback=set_output_dict,help="Set CLI output format to stringified python dictionary, when applicable.")
+@click.option("-t","--text",is_flag=True,callback=set_output_text,help="Set CLI output format to human-friendly text.")
 @config_options( cfg )
 @click.pass_context
 def cli(ctx,*args,**kwargs):
     global g_interactive
+    global g_verbosity
+
+    print("ctx params",ctx.params)
+    if ctx.params["verbosity"] != None:
+        g_verbosity = ctx.params["verbosity"]
+
+    if not g_interactive and ctx.params["i"]:
+        g_interactive = True
 
     if not g_interactive and ctx.invoked_subcommand is None:
         click.echo("No command specified.")
         click.echo(ctx.get_help())
     elif mapi == None:
         initialize(ctx.params)
-        #initialize(host,port,client_cred_dir,server_cred_dir,log)
 
 #for i in cli.params:
 #    print( i.name )
@@ -273,7 +232,8 @@ def cli(ctx,*args,**kwargs):
 @click.option("-o","--offset",default=0,help="List offset")
 @click.option("-c","--count",default=20,help="List count")
 @click.argument("df-id", required=False)
-def ls(df_id,offset,count): #TODO: FIX print_listing function
+@click.pass_context
+def ls(ctx,df_id,offset,count): #TODO: FIX print_listing function
     global g_verbosity
     global g_cur_coll
     msg = auth.CollReadRequest()
@@ -283,6 +243,7 @@ def ls(df_id,offset,count): #TODO: FIX print_listing function
         msg.id = g_cur_coll
     msg.count = count
     msg.offset = offset
+
     if g_verbosity > 1:
         msg.details = True
     else:
@@ -1328,25 +1289,16 @@ def confirm( msg ):
     else:
         return False
 
-#def initialize(server,port,client_cred_dir,server_cred_dir,manual_auth):
 def initialize( opts ):
     global mapi
     global g_uid
     global g_interactive
     global g_cur_sel
 
-    print("opts:",opts)
+    #print("opts:",opts)
 
     try:
         mapi = MessageLib.API( **opts )
-        '''
-            server_host=opts["server_host"],
-            server_port=opts["server_port",
-            client_cred_dir=client_cred_dir,
-            server_cred_dir=server_cred_dir,
-            manual_auth=manual_auth
-            )
-        '''
     except Exception as e:
         click.echo(e)
         g_interactive = False
