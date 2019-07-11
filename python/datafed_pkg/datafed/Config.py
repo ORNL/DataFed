@@ -32,16 +32,16 @@ OPT_NO_CL   = 0x20
 
 opt_info = [
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
-    ["server-cfg-dir","server","config_dir","DATAFED_SERVER_CFG_DIR",OPT_PATH,["--server-cfg-dir"],"Server configuration directory"],
-    ["server-cfg-file","server","config_file","DATAFED_SERVER_CFG_FILE",OPT_PATH|OPT_NO_CF,["--server-cfg-file"],"Server configuration file"],
-    ["server-pub-key-file","server","public_key_file","DATAFED_SERVER_PUB_KEY_FILE",OPT_PATH,["--server-pub-key-file"],"Server public key file"],
-    ["server-host","server","host","DATAFED_SERVER_HOST",0,["--server-host","-H"],"Sever host name or IP address"],
-    ["server-port","server","port","DATAFED_SERVER_PORT",OPT_INT,["--server-port","-P"],"Server port number"],
-    ["client-cfg-dir","client","config_dir","DATAFED_CLIENT_CFG_DIR",OPT_PATH,["--client-cfg-dir"],"Client configuration directory"],
-    ["client-cfg-file","client","config_file","DATAFED_CLIENT_CFG_FILE",OPT_PATH|OPT_NO_CF,["--client-cfg-file"],"Client configuration file"],
-    ["client-pub-key-file","client","public_key_file","DATAFED_CLIENT_PUB_KEY_FILE",OPT_PATH,["--client-pub-key-file"],"Client public key file"],
-    ["client-priv-key-file","client","private_key_file","DATAFED_CLIENT_PRIV_KEY_FILE",OPT_PATH,["--server-priv-key-file"],"Client private key file"],
-    ["default-ep","general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
+    ["server_cfg_dir","server","config_dir","DATAFED_SERVER_CFG_DIR",OPT_PATH,["--server-cfg-dir"],"Server configuration directory"],
+    ["server_cfg_file","server","config_file","DATAFED_SERVER_CFG_FILE",OPT_PATH|OPT_NO_CF,["--server-cfg-file"],"Server configuration file"],
+    ["server_pub_key_file","server","public_key_file","DATAFED_SERVER_PUB_KEY_FILE",OPT_PATH,["--server-pub-key-file"],"Server public key file"],
+    ["server_host","server","host","DATAFED_SERVER_HOST",0,["--server-host","-H"],"Sever host name or IP address"],
+    ["server_port","server","port","DATAFED_SERVER_PORT",OPT_INT,["--server-port","-P"],"Server port number"],
+    ["client_cfg_dir","client","config_dir","DATAFED_CLIENT_CFG_DIR",OPT_PATH,["--client-cfg-dir"],"Client configuration directory"],
+    ["client_cfg_file","client","config_file","DATAFED_CLIENT_CFG_FILE",OPT_PATH|OPT_NO_CF,["--client-cfg-file"],"Client configuration file"],
+    ["client_pub_key-file","client","public_key_file","DATAFED_CLIENT_PUB_KEY_FILE",OPT_PATH,["--client-pub-key-file"],"Client public key file"],
+    ["client_priv_key-file","client","private_key_file","DATAFED_CLIENT_PRIV_KEY_FILE",OPT_PATH,["--server-priv-key-file"],"Client private key file"],
+    ["default_ep","general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
     ["verbosity","general","verbosity","DATAFED_DEFAULT_VERBOSITY",OPT_INT,["--verbosity","-v"],"Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."],
     ["interactive","general","interactive","DATAFED_DEFAULT_INTERACT",OPT_BOOL,["-i/-n"],"Start an interactive session"]
 ]
@@ -79,10 +79,10 @@ class API:
 
         # Load server config file, if specified/available
 
-        if "server-cfg-file" in self.opts:
-            cfg_file = self.opts["server-cfg-file"]["val"]
-        elif 'server-cfg-dir' in self.opts:
-            tmp = os.path.expanduser( os.path.join( self.opts['server-cfg-dir']["val"], "server.ini" ))
+        if "server_cfg_file" in self.opts:
+            cfg_file = self.opts["server_cfg_file"]["val"]
+        elif 'server_cfg_dir' in self.opts:
+            tmp = os.path.expanduser( os.path.join( self.opts['server_cfg_dir']["val"], "server.ini" ))
             if os.path.exists( tmp ):
                 cfg_file = tmp
 
@@ -98,10 +98,10 @@ class API:
 
         cfg_file = None
 
-        if "client-cfg-file" in self.opts:
-            cfg_file = self.opts["client-cfg-file"]["val"]
-        elif 'client-cfg-dir' in self.opts:
-            tmp = os.path.expanduser( os.path.join( self.opts['client-cfg-dir']["val"], "client.ini" ))
+        if "client_cfg_file" in self.opts:
+            cfg_file = self.opts["client_cfg_file"]["val"]
+        elif 'client_cfg_dir' in self.opts:
+            tmp = os.path.expanduser( os.path.join( self.opts['client_cfg_dir']["val"], "client.ini" ))
             if os.path.exists( tmp ):
                 cfg_file = tmp
 
