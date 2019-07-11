@@ -15,6 +15,7 @@ import time
 import pathlib
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
+import pdb
 
 #import prompt_toolkit
 from prompt_toolkit import PromptSession
@@ -100,9 +101,9 @@ def exec( command ):
     try:
         _args = shlex.split( command )
         cli(prog_name="datafed",args=_args,standalone_mode=False)
-    # click wants to exit after every command 
     except SystemExit as e:
-        console.log("SystemExit exception")
+        print("SystemExit exception",e)
+        pdb.pm()
 
     return g_return_val
 
@@ -880,6 +881,25 @@ def ident(df_id,show):
 
         info(1,"Switched to user " + g_cur_sel)
 
+@cli.command(name='setup',help="Setup local credentials")
+@click.pass_context
+def setup(ctx):
+    cfg_dir = cfg.get("client-cfg-dir")
+    if cfg_dir == None:
+        raise Exception("Client configuration directory is not configured")
+    msg = auth.GenerateCredentialsRequest()
+    reply, mt = mapi.sendRecv( msg )
+
+    keyf = open(os.path.join(cfg_dir, "datafed-user-key.pub"), "w" )
+    keyf.write( reply.pub_key )
+    keyf.close()
+
+    keyf = open(os.path.join(cfg_dir, "datafed-user-key.priv"), "w" )
+    keyf.write( reply.priv_key )
+    keyf.close()
+
+    print("Ok")
+
 
 @cli.command(name='help',help="Show datafed client help")
 @click.pass_context
@@ -1294,17 +1314,24 @@ def initialize( opts ):
         g_interactive = False
         sys.exit(1)
 
+    # Ignore 'log' option if set in exec mode
+    if opts["log"] and g_output_mode == OM_RETN:
+        opts["log"] = False
+
     authorized, uid = mapi.getAuthStatus()
 
     if opts["log"] or not authorized:
         if not opts["log"]:
             if not mapi.keysLoaded():
+                if g_output_mode == OM_RETN:
+                    raise Exception("Not authorized: no local credentials loaded.")
                 info(1,"No local credentials loaded.")
             elif not mapi.keysValid():
+                if g_output_mode == OM_RETN:
+                    raise Exception("Not authorized: invalid local credentials.")
                 info(1,"Invalid local credentials.")
 
             info(0,"Manual authentication required.")
-
         i = 0
         while i < 3:
             i += 1

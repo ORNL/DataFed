@@ -25,9 +25,6 @@ class API:
         **kwargs
         ):
 
-        print("server_cfg_dir",server_cfg_dir)
-        print("client_cfg_dir",client_cfg_dir)
-
         self._ctxt = 0
         self._auth = False
 
@@ -74,6 +71,8 @@ class API:
                 keyf.close()
                 if len(pub) != 40 or len(priv) != 40:
                     pub,priv = zmq.curve_keypair()
+                    pub = pub.decode("utf-8")
+                    priv = priv.decode("utf-8")
                 else:
                     self._keys_valid = True
                 self._keys_loaded = True

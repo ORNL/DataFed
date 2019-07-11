@@ -44,9 +44,18 @@ class Connection:
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_IDLE, 540 )
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_INTVL, 5 )
         if sys.version_info.major == 3:
-            self._socket.setsockopt_string( zmq.CURVE_SECRETKEY, a_client_priv_key )
-            self._socket.setsockopt_string( zmq.CURVE_PUBLICKEY, a_client_pub_key )
-            self._socket.setsockopt_string( zmq.CURVE_SERVERKEY, a_server_pub_key )
+            try:
+                self._socket.setsockopt_string( zmq.CURVE_SECRETKEY, a_client_priv_key )
+            except:
+                raise Exception("Invalid client private key")
+            try:
+                self._socket.setsockopt_string( zmq.CURVE_PUBLICKEY, a_client_pub_key )
+            except:
+                raise Exception("Invalid client public key")
+            try:
+                self._socket.setsockopt_string( zmq.CURVE_SERVERKEY, a_server_pub_key )
+            except:
+                raise Exception("Invalid server public key")
         else:
             self._socket.curve_secretkey = a_client_priv_key
             self._socket.curve_publickey = a_client_pub_key
