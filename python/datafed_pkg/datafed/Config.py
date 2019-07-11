@@ -55,8 +55,8 @@ class API:
         #self._initOptions( opts )
         self._processOptions( opts )
 
-        for k, v in self.opts.items():
-            print( k, " = ", v )
+        #for k, v in self.opts.items():
+        #    print( k, " = ", v )
 
     def _processOptions( self, opts ):
         if not isinstance( opts, dict ):

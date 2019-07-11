@@ -45,9 +45,12 @@ g_verbosity = 1
 g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 g_ep_default = cfg.get("default-ep")
 g_ep_cur = g_ep_default
-g_output_json = False
-g_output_dict = False
-g_output_text = True
+
+OM_TEXT = 0
+OM_JSON = 1
+OM_RETN = 2
+
+g_output_mode = OM_TEXT
 
 def run():
     info(1,"DataFed CLI Ver.", version )
@@ -89,7 +92,10 @@ def run():
 
 def exec( command ):
     global g_return_val
+    global g_output_mode
+
     g_return_val = None
+    g_output_mode = OM_RETN
 
     try:
         _args = shlex.split( command )
@@ -99,14 +105,6 @@ def exec( command ):
         console.log("SystemExit exception")
 
     return g_return_val
-
-
-'''
-def setup_env():
-    "Function that accesses and sets environment variables from the configuration file"
-    
-    #TODO: Initial setup function
-'''
 
 # Verbosity-aware print
 def info( level, *args ):
@@ -118,42 +116,15 @@ def info( level, *args ):
 # Switch functions
 
 
-
-'''
-def set_interactive(ctx, param, value):
-    global g_interactive
-    if value is True:
-        g_interactive = value
-'''
-
 def set_output_json(ctx, param, value):
-    global g_output_json
-    global g_output_dict
-    global g_output_text
+    global g_output_mode
     if value:
-        g_output_json = True
-        g_output_dict = False
-        g_output_text = False
-
-
-def set_output_dict(ctx, param, value):
-    global g_output_json
-    global g_output_dict
-    global g_output_text
-    if value:
-        g_output_json = False
-        g_output_dict = True
-        g_output_text = False
-
+        g_output_mode = OM_JSON
 
 def set_output_text(ctx, param, value):
-    global g_output_json
-    global g_output_dict
-    global g_output_text
+    global g_output_mode
     if value:
-        g_output_json = False
-        g_output_dict = False
-        g_output_text = True
+        g_output_mode = OM_TEXT
 
 ##############################################################################
 
@@ -194,15 +165,12 @@ def config_options( cfg ):
         return f
     return wrapper
 
-#@click.option("-v","--verbosity",type=int,callback=set_verbosity,help="Verbosity level (0=quiet,1=normal,2=verbose) for text-format output. JSON and dictionary outputs are always fully verbose.")
 
 #------------------------------------------------------------------------------
 # Top-level group with global options
 @click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
 @click.option("-l","--log",is_flag=True,help="Force manual authentication")
-#@click.option("-i","--interactive",is_flag=True,is_eager=True,expose_value=False,help="Start an interactive session")
 @click.option("-j", "--json", is_flag=True,callback=set_output_json,help="Set CLI output format to JSON, when applicable.")
-@click.option("-d", "--dict", is_flag=True,callback=set_output_dict,help="Set CLI output format to stringified python dictionary, when applicable.")
 @click.option("-t","--text",is_flag=True,callback=set_output_text,help="Set CLI output format to human-friendly text.")
 @config_options( cfg )
 @click.pass_context
@@ -210,7 +178,8 @@ def cli(ctx,*args,**kwargs):
     global g_interactive
     global g_verbosity
 
-    print("ctx params",ctx.params)
+    #print("ctx params",ctx.params)
+
     if ctx.params["verbosity"] != None:
         g_verbosity = ctx.params["verbosity"]
 
@@ -248,8 +217,9 @@ def ls(ctx,df_id,offset,count): #TODO: FIX print_listing function
         msg.details = True
     else:
         msg.details = False
-    reply, mt = mapi.sendRecv( msg )
-    print_listing(reply)
+
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_listing )
 
 
 @cli.command(help="Print or change current working collection")
@@ -270,7 +240,7 @@ def data():
 
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
-@click.argument("df-id")
+@click.argument("id")
 def data_view(df_id,details):
     msg = auth.RecordViewRequest()
     msg.id = resolve_id(df_id)
@@ -278,8 +248,9 @@ def data_view(df_id,details):
         msg.details = True
     elif not details:
         msg.details = False
-    reply, mt = mapi.sendRecv( msg )
-    print_data(reply)
+
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_data )
 
 
 @data.command(name='create',help="Create new data record")
@@ -331,11 +302,13 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
     if not data_file:
         reply, mt = mapi.sendRecv(msg)
         print_data(reply)
+
     if data_file:
         create_reply, mt = mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
         put_data(df_id=create_reply.data[0].id,gp=data_file,wait=False,extension=None)
 
+#TODO Handle return value in OM_RETV
 
     print_data(create_reply)
     #put function
@@ -404,6 +377,8 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
         click.echo("Data Record update successful. Initiating raw data transfer.")
         put_data(df_id=update_reply.data[0].id,gp=data_file,wait=False,extension=None)
 
+    #TODO Handle return value in OM_RETV
+
 
 @data.command(name='delete',help="Delete existing data record")
 @click.argument("df_id", nargs=-1)
@@ -417,6 +392,9 @@ def data_delete(df_id):
     msg = auth.RecordDeleteRequest()
     msg.id.extend(resolved_list)
     reply, mt = mapi.sendRecv(msg)
+
+    #TODO Handle return value in OM_RETV
+
     if mt == "AckReply":
         click.echo("Delete succeeded")
 
@@ -460,6 +438,7 @@ def data_get(df_id,filepath,endpoint,wait):
             print_xfr_stat(reply)
         else:
             print_xfr_stat(reply)
+        #TODO Handle return value in OM_RETV
 
 
 @data.command(name='put',help="Put (upload) raw data to DataFed")
@@ -476,6 +455,7 @@ def data_put(df_id,filepath,wait,endpoint,extension):
         put_data(df_id,gp,wait,extension)
     elif gp is None:
         click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
+    #TODO Handle return value in OM_RETV
 
 
 # ------------------------------------------------------------------------------
@@ -490,8 +470,8 @@ def coll():
 def coll_view(df_id):
     msg = auth.CollViewRequest()
     msg.id = resolve_coll_id(df_id)
-    reply, mt = mapi.sendRecv( msg )
-    print_coll(reply)
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_coll )
 
 
 @coll.command(name='create',help="Create new collection")
@@ -506,8 +486,8 @@ def coll_create(title,alias,description,collection):
     if description is not None: msg.desc = description
     if resolve_coll_id(collection) is not None: msg.parent_id = resolve_coll_id(collection)
     click.echo(msg)
-    reply, mt = mapi.sendRecv(msg)
-    print_coll(reply)
+    reply = mapi.sendRecv(msg)
+    genericReplyHandler( print_coll, reply)
 
 
 @coll.command(name='update',help="Update existing collection")
@@ -521,8 +501,8 @@ def coll_update(df_id,title,alias,description):
     if title is not None: msg.title = title
     if alias is not None: msg.alias = alias
     if description is not None: msg.desc = description
-    reply, mt = mapi.sendRecv(msg)
-    print_coll(reply)
+    reply = mapi.sendRecv(msg)
+    genericReplyHandler( reply, print_coll )
 
 
 @coll.command(name='delete',help="Delete existing collection")
@@ -582,8 +562,8 @@ def query_list(offset,count):
     msg = auth.QueryListRequest()
     msg.offset = offset
     msg.count = count
-    reply, mt = mapi.sendRecv( msg )
-    print_listing(reply)
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_listing )
     #TODO: Figure out verbosity-dependent replies
 
 
@@ -592,8 +572,8 @@ def query_list(offset,count):
 def query_exec(df_id):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
-    reply, mt = mapi.sendRecv( msg )
-    print_listing(reply)
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_listing )
 
 
 @query.command(name='text',help="Query by words or phrases")
@@ -651,8 +631,9 @@ def user_collab(offset,count):
     msg = auth.UserListCollabRequest()
     msg.offset = offset
     msg.count = count
-    reply, mt = mapi.sendRecv(msg)
-    print_user_listing(reply)
+    reply = mapi.sendRecv(msg)
+
+    genericReplyHandler( reply, print_user_listing )
 
 
 @user.command(name='all',help="List all users")
@@ -662,8 +643,9 @@ def user_all(offset,count):
     msg = auth.UserListAllRequest()
     msg.offset = offset
     msg.count = count
-    reply, mt = mapi.sendRecv( msg )
-    print_user_listing(reply)
+    reply = mapi.sendRecv( msg )
+
+    genericReplyHandler( reply, print_user_listing )
 
 
 @user.command(name='view',help="View information for user UID")
@@ -671,8 +653,9 @@ def user_all(offset,count):
 def user_view(uid):
     msg = auth.UserViewRequest()
     msg.uid = resolve_id(uid)
-    reply, mt = mapi.sendRecv(msg)
-    print_user(reply)
+    reply = mapi.sendRecv(msg)
+
+    genericReplyHandler( reply, print_user )
 
 
 # ------------------------------------------------------------------------------
@@ -697,8 +680,8 @@ def project_list(owner,admin,member):
     msg.by_owner = owner
     msg.by_admin = admin
     msg.by_member = member
-    reply, mt = mapi.sendRecv( msg ) #TODO: Figure out verbosity reply?
-    print_proj_listing(reply)
+    reply = mapi.sendRecv( msg ) #TODO: Figure out verbosity reply?
+    genericReplyHandler( reply, print_proj_listing )
 
 
 @project.command(name='view',help="View project specified by ID")
@@ -706,8 +689,8 @@ def project_list(owner,admin,member):
 def project_view(df_id):
     msg = auth.ProjectViewRequest()
     msg.id = resolve_id(df_id)
-    reply, mt = mapi.sendRecv(msg)
-    print_proj(reply)
+    reply = mapi.sendRecv(msg)
+    genericReplyHandler( reply, print_proj )
 
 
 # ------------------------------------------------------------------------------
@@ -722,14 +705,14 @@ def shared():
 def shared_users():
     msg = auth.ACLByUserRequest()
     reply, mt = mapi.sendRecv( msg )
-    print_user_listing(reply)
+    genericReplyHandler( reply, print_user_listing )
 
 
 @shared.command(name="projects",help="List projects with shared data")
 def shared_projects():
     msg = auth.ACLByProjRequest()
-    reply, mt = mapi.sendRecv( msg )
-    print_proj_listing(reply)
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_proj_listing )
 
 
 @shared.command(name="list",help="List data shared by user/project ID")
@@ -745,8 +728,8 @@ def shared_list(df_id):
         msg = auth.ACLByUserListRequest()
 
     msg.owner = id2
-    reply, mt = mapi.sendRecv( msg )
-    print_listing(reply)
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_listing )
 
 
 # ------------------------------------------------------------------------------
@@ -774,8 +757,8 @@ def xfr_list(time_from,to,since,status): # TODO: Absolute time is not user frien
     elif status == "inactive": msg.status = 2
     elif status == "succeeded": msg.status = 3
     elif status == "failed": msg.status = 4
-    reply, mt = mapi.sendRecv(msg)
-    print_listing(reply)
+    reply = mapi.sendRecv(msg)
+    genericReplyHandler( reply, print_listing )
 
 
 @xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer id ID omitted")
@@ -784,12 +767,12 @@ def xfr_stat(df_id):
     if df_id:
         msg = auth.XfrViewRequest()
         msg.xfr_id = resolve_id(df_id)
-        reply, mt = mapi.sendRecv(msg)
-        print_xfr_stat(reply)
+        reply = mapi.sendRecv(msg)
+        genericReplyHandler( reply, print_xfr_stat )
     elif not df_id:
         msg = auth.XfrListRequest() # TODO: How to isolate most recent Xfr
-        reply, mt = mapi.sendRecv(msg)
-        print_listing(reply)
+        reply = mapi.sendRecv(msg)
+        genericReplyHandler( reply, print_listing )
 
 
 # ------------------------------------------------------------------------------
@@ -851,8 +834,8 @@ def ep_set(path):
 @ep.command(name='list',help="List recent endpoints.")
 def ep_list():
     msg = auth.UserGetRecentEPRequest()
-    reply, mt = mapi.sendRecv( msg )
-    print_endpoints(reply)
+    reply = mapi.sendRecv( msg )
+    genericReplyHandler( reply, print_endpoints )
 
 
 # ------------------------------------------------------------------------------
@@ -1036,7 +1019,16 @@ def resolve_globus_path(fp, endpoint):
 
     return fp #endpoint and path
 
+def genericReplyHandler( reply, printFunc ):
+    global g_output_mode
 
+    if g_output_mode == OM_RETN:
+        global g_return_val
+        g_return_val = reply
+    else:
+        printFunc( reply[0] )
+
+#TODO Need JSON Support
 def print_listing(reply):
     df_idx = 1
     global g_list_items
@@ -1050,7 +1042,7 @@ def print_listing(reply):
             click.echo("{:2}. {:34} {}".format(df_idx,i.id,i.title))
         df_idx += 1
 
-
+#TODO Need JSON Support
 def print_user_listing( reply ):
     df_idx = 1
     global g_list_items
@@ -1060,7 +1052,7 @@ def print_user_listing( reply ):
         click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
         df_idx += 1
 
-
+#TODO Need JSON Support
 def print_proj_listing(reply):
     df_idx = 1
     global g_list_items
@@ -1070,7 +1062,7 @@ def print_proj_listing(reply):
         click.echo("{:2}. {:24} {}".format(df_idx,i.id,i.title))
         df_idx += 1
 
-
+#TODO Need JSON Support
 def print_endpoints(reply):
     df_idx = 1
     global g_list_items
@@ -1086,10 +1078,9 @@ def print_endpoints(reply):
 
 def print_data(message):
     global g_verbosity
-    global g_output_json
-    global g_output_dict
-    global g_output_text
-    if g_output_text:
+    global g_output_mode
+
+    if g_output_mode == OM_TEXT:
         dr = message.data[0]
         if g_verbosity >= 0:
             click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
@@ -1120,20 +1111,19 @@ def print_data(message):
             elif dr.deps:
                 click.echo("{:<25}".format('Dependencies:'))
                 print_deps(message)
-    elif g_output_json:
+    elif g_output_mode == OM_JSON:
         json_output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(json_output)
-    elif g_output_dict:
-        dict_output = MessageToDict(message,preserving_proto_field_name=True)
-        click.echo(dict_output)
+    #elif g_output_dict:
+    #    dict_output = MessageToDict(message,preserving_proto_field_name=True)
+    #    click.echo(dict_output)
 
 
 def print_coll(message):
     global g_verbosity
-    global g_output_json
-    global g_output_dict
-    global g_output_text
-    if g_output_text:
+    global g_output_mode
+
+    if g_output_mode == OM_TEXT:
         coll = message.coll[0]
         if g_verbosity >= 0:
             click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
@@ -1147,13 +1137,14 @@ def print_coll(message):
             click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
                        "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
                        "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
-    elif g_output_json:
+    elif g_output_mode == OM_JSON:
         output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(output)
-    elif g_output_dict:
-        output = MessageToDict(message,preserving_proto_field_name=True)
-        click.echo(output)
+    #elif g_output_dict:
+    #    output = MessageToDict(message,preserving_proto_field_name=True)
+    #    click.echo(output)
 
+#TODO Need JSON Support
 def print_deps(dependencies):
     if dependencies is not None or dependencies != "None":
         deps = list(dependencies)
@@ -1162,6 +1153,7 @@ def print_deps(dependencies):
             rep = item.get
             click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
 
+#TODO Need JSON Support
 def print_deps(message):
     types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
     dr = message.data[0]
@@ -1177,16 +1169,15 @@ def print_deps(message):
 
 def print_xfr_stat(message):
     global g_verbosity
-    global g_output_json
-    global g_output_dict
-    global g_output_text
-    if g_output_json:
+    global g_output_mode
+
+    if g_output_mode == OM_JSON:
         output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(output)
-    elif g_output_dict:
-        output = MessageToDict(message,preserving_proto_field_name=True)
-        click.echo(output)
-    elif g_output_text:
+    #elif g_output_dict:
+    #    output = MessageToDict(message,preserving_proto_field_name=True)
+    #    click.echo(output)
+    elif g_output_mode == OM_TEXT:
         for xfr in message.xfr:
             modes = { 0: "Get", 1: "Put", 2: "Copy"}
             xfr_mode = modes.get(xfr.mode, "None")
@@ -1209,31 +1200,29 @@ def print_xfr_stat(message):
 
 def print_user(message):
     global g_verbosity
-    global g_output_dict
-    global g_output_json
-    global g_output_text
-    if g_output_text:
+    global g_output_mode
+
+    if g_output_mode == OM_TEXT:
         usr = message.user[0]
         if g_verbosity >= 0:
             click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
                        "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
                        "{:<25} {:<50}".format('Email: ', usr.email))
-    elif g_output_json:
+    elif g_output_mode == OM_JSON:
         output = MessageToJson(message, preserving_proto_field_name=True)
         click.echo(output)
-    elif g_output_dict:
-        output = MessageToDict(message, preserving_proto_field_name=True)
-        click.echo(output)
+    #elif g_output_dict:
+    #    output = MessageToDict(message, preserving_proto_field_name=True)
+    #    click.echo(output)
 
 def print_metadata(message): #how to pretty print json?
     pass
 
 def print_proj(message):
     global g_verbosity
-    global g_output_json
-    global g_output_dict
-    global g_output_text
-    if g_output_text:
+    global g_output_mode
+
+    if g_output_mode == OM_TEXT:
         proj = message.proj[0]
         admins = []
         members = []
@@ -1255,14 +1244,15 @@ def print_proj(message):
                        "{:<25} {:<50}".format('Sub Usage: ', GetHumanReadable(proj.sub_usage))))
             for i in proj.alloc:
                 print_allocation_data(i)
-    elif g_output_json:
+    elif g_output_mode == OM_JSON:
         output = MessageToJson(message, preserving_proto_field_name=True)
         click.echo(output)
-    elif g_output_dict:
-        output = MessageToDict(message, preserving_proto_field_name=True)
-        click.echo(output)
+    #elif g_output_dict:
+    #    output = MessageToDict(message, preserving_proto_field_name=True)
+    #   click.echo(output)
 
 
+#TODO Need JSON Support
 def print_allocation_data(alloc):
     click.echo("{:<25} {:<50}".format('Repo: ', alloc.repo) + '\n' +
                "{:<25} {:<50}".format('Max Size: ', GetHumanReadable(alloc.max_size)) + '\n' +
