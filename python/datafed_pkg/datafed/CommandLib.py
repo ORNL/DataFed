@@ -15,6 +15,7 @@ import time
 import pathlib
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
+import pdb
 
 #import prompt_toolkit
 from prompt_toolkit import PromptSession
@@ -43,7 +44,7 @@ g_list_items = []
 g_interactive = False
 g_verbosity = 1
 g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
-g_ep_default = cfg.get("default-ep")
+g_ep_default = cfg.get("default_ep")
 g_ep_cur = g_ep_default
 
 OM_TEXT = 0
@@ -90,7 +91,49 @@ def run():
 
     info(1,"Goodbye!")
 
+def init():
+    global mapi
+    global g_uid
+    global g_cur_sel
+
+    if mapi:
+        raise Exception("init function can only be called once.")
+
+    # Get config options
+    opts = {}
+    for oi in Config.opt_info:
+        opts[oi[0]] = cfg.get(oi[0])
+
+    #print( "opts:", opts )
+
+    mapi = MessageLib.API( **opts )
+    auth, uid = mapi.getAuthStatus()
+    if auth:
+        g_uid = uid
+        g_cur_sel = uid
+
+    return auth
+
+
+def login( uid, password ):
+    global g_uid
+    global g_cur_sel
+
+    if not mapi:
+        raise Exception("login called before init.")
+
+    if g_uid:
+        raise Exception("login can only be called once.")
+
+    mapi.manualAuth( uid, password )
+
+    g_uid = uid
+    g_cur_sel = uid
+
 def exec( command ):
+    if not mapi:
+        raise Exception("exec called before init.")
+
     global g_return_val
     global g_output_mode
 
@@ -100,9 +143,9 @@ def exec( command ):
     try:
         _args = shlex.split( command )
         cli(prog_name="datafed",args=_args,standalone_mode=False)
-    # click wants to exit after every command 
     except SystemExit as e:
-        console.log("SystemExit exception")
+        print("SystemExit exception",e)
+        pdb.pm()
 
     return g_return_val
 
@@ -190,7 +233,7 @@ def cli(ctx,*args,**kwargs):
         click.echo("No command specified.")
         click.echo(ctx.get_help())
     elif mapi == None:
-        initialize(ctx.params)
+        _initialize(ctx.params)
 
 #for i in cli.params:
 #    print( i.name )
@@ -878,6 +921,25 @@ def ident(df_id,show):
 
         info(1,"Switched to user " + g_cur_sel)
 
+@cli.command(name='setup',help="Setup local credentials")
+@click.pass_context
+def setup(ctx):
+    cfg_dir = cfg.get("client_cfg_dir")
+    if cfg_dir == None:
+        raise Exception("Client configuration directory is not configured")
+    msg = auth.GenerateCredentialsRequest()
+    reply, mt = mapi.sendRecv( msg )
+
+    keyf = open(os.path.join(cfg_dir, "datafed-user-key.pub"), "w" )
+    keyf.write( reply.pub_key )
+    keyf.close()
+
+    keyf = open(os.path.join(cfg_dir, "datafed-user-key.priv"), "w" )
+    keyf.write( reply.priv_key )
+    keyf.close()
+
+    print("Ok")
+
 
 @cli.command(name='help',help="Show datafed client help")
 @click.pass_context
@@ -1267,7 +1329,7 @@ def confirm( msg ):
     else:
         return False
 
-def initialize( opts ):
+def _initialize( opts ):
     global mapi
     global g_uid
     global g_interactive
@@ -1282,17 +1344,24 @@ def initialize( opts ):
         g_interactive = False
         sys.exit(1)
 
-    authorized, uid = mapi.getAuthStatus()
+    # Ignore 'log' option if set in exec mode
+    if opts["log"] and g_output_mode == OM_RETN:
+        opts["log"] = False
 
-    if opts["log"] or not authorized:
+    auth, uid = mapi.getAuthStatus()
+
+    if opts["log"] or not auth:
         if not opts["log"]:
             if not mapi.keysLoaded():
+                if g_output_mode == OM_RETN:
+                    raise Exception("Not authenticated: no local credentials loaded.")
                 info(1,"No local credentials loaded.")
             elif not mapi.keysValid():
+                if g_output_mode == OM_RETN:
+                    raise Exception("Not authenticated: invalid local credentials.")
                 info(1,"Invalid local credentials.")
 
             info(0,"Manual authentication required.")
-
         i = 0
         while i < 3:
             i += 1

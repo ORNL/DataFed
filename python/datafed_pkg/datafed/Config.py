@@ -80,10 +80,10 @@ class API:
 
         # Load server config file, if specified/available
 
-        if "server-cfg-file" in self.opts:
-            cfg_file = self.opts["server-cfg-file"]["val"]
-        elif 'server-cfg-dir' in self.opts:
-            tmp = os.path.expanduser( os.path.join( self.opts['server-cfg-dir']["val"], "server.ini" ))
+        if "server_cfg_file" in self.opts:
+            cfg_file = self.opts["server_cfg_file"]["val"]
+        elif 'server_cfg_dir' in self.opts:
+            tmp = os.path.expanduser( os.path.join( self.opts['server_cfg_dir']["val"], "server.ini" ))
             if os.path.exists( tmp ):
                 cfg_file = tmp
 
@@ -99,10 +99,10 @@ class API:
 
         cfg_file = None
 
-        if "client-cfg-file" in self.opts:
-            cfg_file = self.opts["client-cfg-file"]["val"]
-        elif 'client-cfg-dir' in self.opts:
-            tmp = os.path.expanduser( os.path.join( self.opts['client-cfg-dir']["val"], "client.ini" ))
+        if "client_cfg_file" in self.opts:
+            cfg_file = self.opts["client_cfg_file"]["val"]
+        elif 'client_cfg_dir' in self.opts:
+            tmp = os.path.expanduser( os.path.join( self.opts['client_cfg_dir']["val"], "client.ini" ))
             if os.path.exists( tmp ):
                 cfg_file = tmp
 
