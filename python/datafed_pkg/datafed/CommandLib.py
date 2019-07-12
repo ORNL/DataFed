@@ -15,9 +15,7 @@ import time
 import pathlib
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
-import pdb
 
-#import prompt_toolkit
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -30,7 +28,6 @@ from . import version
 
 if sys.version_info.major == 3:
     unicode = str
-    #raw_input = input
 
 mapi = None
 cfg = Config.API()
@@ -59,7 +56,6 @@ def run():
     session = None
 
     try:
-
         while True:
             try:
                 if g_interactive == False:
@@ -72,7 +68,7 @@ def run():
                     if session == None:
                         session = PromptSession(unicode("> "),history=FileHistory(os.path.expanduser("~/.datafed-hist")))
                     _args = shlex.split(session.prompt(auto_suggest=AutoSuggestFromHistory()))
-                    cli(prog_name="datafed",args=_args,standalone_mode=False)
+                    cli(prog_name="datafed",args=_args,standalone_mode=True)
             except SystemExit as e:
                 #print("Sys exit")
                 if g_interactive == False:
@@ -81,7 +77,6 @@ def run():
                 #print("key inter")
                 break
             except Exception as e:
-                #print("gen except")
                 click.echo(e)
                 if g_interactive == False:
                     break
@@ -107,6 +102,8 @@ def init():
     #print( "opts:", opts )
 
     mapi = MessageLib.API( **opts )
+    mapi.setNackException( False )
+
     auth, uid = mapi.getAuthStatus()
     if auth:
         g_uid = uid
@@ -144,8 +141,9 @@ def exec( command ):
         _args = shlex.split( command )
         cli(prog_name="datafed",args=_args,standalone_mode=False)
     except SystemExit as e:
-        print("SystemExit exception",e)
-        pdb.pm()
+        pass
+    except click.ClickException as e:
+        raise Exception(e.format_message())
 
     return g_return_val
 

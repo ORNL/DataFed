@@ -1,22 +1,17 @@
 """
-Functions for creating, reading, and writing to the DataFed configuration files.
-There are four major environment variables:
-The directory paths for server and client credentials, the default Globus endpoint, and the local globus endpoint.
-"""
+The Config.API class provides an interface for loading, accessing, and altering
+DataFed client configuration settings. Settings can be set from environment
+variables, server and client configuration files, and directly via CLI options.
+The available settings are listed in the "opt_info" list, which defines the
+key, config file section and name, environment variable name, CLI options, and
+help text for each configuration setting. 
 
-"""
-CLI Configuration Priority:
-1. set on command-line (temporary)
-2. set in config file
-3. set by environment variable
-
-CLI Settings/Inputs:
-- Server public key file
-- Server config directory (for server config and public key)
-- Client public & private key files
-- Client config directory (for client config file and keys)
-- DataFed "core" server address & port
-- Configuration file (containing any/all of above)
+Configuration source priority:
+1. set programatically
+2. set on command-line
+3. set in client config file
+4. set in server config file
+5. set by environment variable
 """
 
 import os
@@ -101,26 +96,36 @@ class API:
 
         if "client_cfg_file" in self.opts:
             cfg_file = self.opts["client_cfg_file"]["val"]
+            if os.path.exists( cfg_file ):
+                self._loadConfigFile( cfg_file, 2 )
+            else:
+                open( cfg_file, "a" ).close()
         elif 'client_cfg_dir' in self.opts:
-            tmp = os.path.expanduser( os.path.join( self.opts['client_cfg_dir']["val"], "client.ini" ))
-            if os.path.exists( tmp ):
-                cfg_file = tmp
+            cfg_file = os.path.expanduser( os.path.join( self.opts['client_cfg_dir']["val"], "client.ini" ))
+            self.opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
+            if os.path.exists( cfg_file ):
+                self._loadConfigFile( cfg_file, 2 )
+            else:
+                open( cfg_file, "a" ).close()
+        else:
+            cfg_file = os.path.expanduser("~/.datafed/client.ini")
+            if os.path.exists( cfg_file ):
+                self.opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
+                self._loadConfigFile( cfg_file, 2 )
+            else:
+                tmp = os.path.expanduser( "~/.datafed" )
+                if not os.path.exists( tmp ):
+                    try:
+                        os.mkdir( tmp )
+                        cfg_file = os.path.join( tmp, "client.ini" )
+                        open( cfg_file, "a" ).close()
+                    except:
+                        pass
 
-        if not cfg_file:
-            tmp = os.path.expanduser("~/.datafed/client.ini")
-            if os.path.exists( tmp ):
-                cfg_file = tmp
-
-        if cfg_file:
-            print("load client cfg file:",cfg_file)
-            self._loadConfigFile( cfg_file, 2 )
-            # If client config file was found, but not set, remember it so it can be updated
-            if not "client_cfg_file" in self.opts:
-                self.opts["client_cfg_file"] = {"val": cfg_file, "pri":5}
 
     def _loadEnvironVars( self ):
         for oi in opt_info:
-            if (not oi[0] in self.opts) and ((oi[4] & OPT_NO_ENV) == 0) and (oi[3] in os.environ):
+            if (not oi[0] in self.opts) and ((oi[4] & OPT_NO_ENV) == 0) and (oi[3] in os.environ) and os.environ[oi[3]]:
                 self.opts[oi[0]] = {"val": os.environ[oi[3]], "pri": 4}
                 tmp = os.environ[oi[3]]
                 if oi[4] & OPT_INT:
@@ -137,7 +142,7 @@ class API:
             with open( cfg_file, 'r') as f:
                 config = configparser.ConfigParser()
                 config.read_file(f)
-                print("cfg:",config)
+                #print("cfg:",config)
                 for oi in opt_info:
                     if ((not oi[0] in self.opts) or self.opts[oi[0]]["pri"] >= priority) and (oi[4] & OPT_NO_CF) == 0:
                         if config.has_option(oi[1],oi[2]):
@@ -178,6 +183,8 @@ class API:
             with open( self.opts["client_cfg_file"]["val"], 'r+') as f:
                 config = configparser.ConfigParser()
                 config.read_file( f )
+                if not config.has_section( opt[1] ):
+                    config.add_section( opt[1] )
                 config.set( opt[1], opt[2], value )
                 f.seek(0)
                 config.write( f )

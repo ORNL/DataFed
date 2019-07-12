@@ -1,4 +1,5 @@
 import datafed.CommandLib as cmd
+import click
 
 auth = cmd.init()
 
@@ -13,5 +14,14 @@ print( reply )
 
 reply = cmd.exec("user view stansberrydv")
 print( reply )
+
+reply = cmd.exec("user view xcxcc")
+print( reply )
+
+try:
+    reply = cmd.exec("user view")
+    print( "cmd should have failed" )
+except Exception as e:
+    print("expected exception:",str(e))
 
 print( "test done." )

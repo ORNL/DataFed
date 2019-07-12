@@ -27,6 +27,7 @@ class API:
 
         self._ctxt = 0
         self._auth = False
+        self._nack_except = True
 
         # Process server cred dir
         self._server_cred_dir = server_cfg_dir
@@ -98,8 +99,9 @@ class API:
 
         #reply, mt = self._recv()
         #print "ver reply:",reply
-        #if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
-        #    raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
+
+        if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
+            raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
 
         #print("get auth")
 
@@ -133,48 +135,15 @@ class API:
         self._auth = True
         self._uid = reply.uid
 
-# TODO: MAKE THIS AN OPTIONAL CMD -- NOT DEFAULT
-    def installLocalCredentials(self):
-        if not self._auth:
-            raise Exception("Authentication required")
+    def getNackException( self ):
+        return self._nack_except
 
-        msg = auth.GenerateCredentialsRequest()
-        reply, mt = self.sendRecv( msg )
-
-        # Make client cred dir if not exists
-        if not os.path.exists(self._client_cred_dir):
-            os.makedirs(self._client_cred_dir)
+    def setNackException( self, enabled ):
+        if enabled:
+            self._nack_except = True
         else:
-            pass
+            self._nack_except = False
 
-        #Make public key file
-        with open(os.path.join(str(self._client_cred_dir), "datafed-user-key.pub"), "w" ) as keyf:
-            keyf.write(reply.pub_key)
-
-        #Make private key file
-        with open(os.path.join(str(self._client_cred_dir), "datafed-user-key.priv"), "w" ) as keyf:
-            keyf.write(reply.priv_key)
-
-        self._keys_loaded = True
-
-    '''
-    def sendRecv2( self, msg_name, params, timeout = 5000 ):
-        msg = self._conn.makeMessage(msg_name)
-        for k,v in params.iteritems():
-            setattr(msg, k, v)
-        self._send(msg)
-        return self._recv( timeout )
-
-    def sendAsync2( self, msg_name, params ):
-        msg = self._conn.makeMessage(msg_name)
-        for k,v in params.iteritems():
-            setattr(msg, k, v)
-        self._ctxt += 1
-        self._conn.send( msg, self._ctxt )
-        return self._ctxt
-    '''
-
-    # Not thread safe
     def sendRecv( self, msg, timeout = 5000 ):
         self.send( msg )
         reply, mt, ctxt = self.recv( timeout )
@@ -183,7 +152,6 @@ class API:
         if ctxt != self._ctxt:
             raise Exception("Mismatched reply")
         return reply, mt
-
 
     def send( self, msg ):
         self._ctxt += 1
@@ -195,7 +163,7 @@ class API:
         if reply == None:
             return None, None, None
 
-        if msg_type == "NackReply":
+        if msg_type == "NackReply" and self._nack_except:
             if reply.err_msg:
                 raise Exception(reply.err_msg)
             else:
