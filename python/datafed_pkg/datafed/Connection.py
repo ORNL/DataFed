@@ -1,7 +1,18 @@
 """
-Connection is a Python class for sending and receiving messages via
-protobuf.
+The DataFed Connection class enables sending and receiving Google protobuf
+messages over ZeroMQ. Protobuf messages are automatically serialized and
+unserialized, and custom framing is generated to efficiently convey message
+type, size, and a re-association context value.
+
+The Google protobuf library does not provide a mechanism for identifying
+message types numerically (only by string), so a method is implemented that
+uses message name alphabetic order to assign a numeric message type. This
+means that if two end-points have significantly different protobuf file
+versions, they may not be able to communicate. A version number check is
+implemented in the MessageLib module to detect this condition and halt
+automatically.
 """
+
 import google.protobuf.reflection
 import zmq
 import zmq.utils.z85

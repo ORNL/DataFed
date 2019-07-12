@@ -1,5 +1,21 @@
 """
-DataFed high-level API
+The DataFed CommandLib module provides a high-level, text-based client
+interface for sending commands to, and receiving replies from, a DateFed
+server. Comands are structured hierarchically, with sub-commands taking
+specific options and arguments.
+
+The CommandLib module is meant to be embedded in a Python script or
+application, and can be used in two ways: 1) interactively via the run()
+function, or 2) programmatically via the exec() function.
+
+For interactive applications, the run() function will prompt the user for
+input, then print a response. Optionally, the run() method can loop until
+the user chooses to exit. The DataFed CLI is a very thin wrapper around
+the CommandLib run() function.
+
+The programmatic interface consists of the init(), login(), and command()
+functions. The command() function executes a single command and returns
+a reply in the form of a Google protobuf message.
 """
 
 from __future__ import division, print_function, absolute_import #, unicode_literals
@@ -127,7 +143,7 @@ def login( uid, password ):
     g_uid = uid
     g_cur_sel = uid
 
-def exec( command ):
+def command( command ):
     if not mapi:
         raise Exception("exec called before init.")
 
