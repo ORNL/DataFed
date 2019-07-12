@@ -1192,15 +1192,15 @@ def print_user(message):
     global g_verbosity
     global g_output_mode
 
-    if g_output_mode == OM_TEXT:
+    if g_output_mode == OM_JSON:
+        output = MessageToJson(message,preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_mode == OM_TEXT:
         usr = message.user[0]
         if g_verbosity >= 0:
             click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
                        "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
                        "{:<25} {:<50}".format('Email: ', usr.email))
-    elif g_output_mode == OM_JSON:
-        output = MessageToJson(message, preserving_proto_field_name=True)
-        click.echo(output)
 
 
 def print_metadata(message): #how to pretty print json?
@@ -1210,7 +1210,10 @@ def print_proj(message):
     global g_verbosity
     global g_output_mode
 
-    if g_output_mode == OM_TEXT:
+    if g_output_mode == OM_JSON:
+        output = MessageToJson(message,preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_mode == OM_TEXT:
         proj = message.proj[0]
         admins = []
         members = []
@@ -1232,9 +1235,7 @@ def print_proj(message):
                        "{:<25} {:<50}".format('Sub Usage: ', GetHumanReadable(proj.sub_usage))))
             for i in proj.alloc:
                 print_allocation_data(i)
-    elif g_output_mode == OM_JSON:
-        output = MessageToJson(message, preserving_proto_field_name=True)
-        click.echo(output)
+
 
 
 # TODO Need JSON Support
