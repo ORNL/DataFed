@@ -409,8 +409,8 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
                 dep.id = item[1]
             else: dep.alias = item[1]
     if not data_file:
-        reply, mt = mapi.sendRecv(msg)
-        print_data(reply)
+        reply = mapi.sendRecv(msg)
+        genericReplyHandler(reply, print_data)
     if data_file:
         update_reply, mt = mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
@@ -874,7 +874,7 @@ def ep_set(path):
     info(1,g_ep_cur)
 
 
-@ep.command(name='list',help="List recent endpoints.")
+@ep.command(name='list',help="List recent endpoints.") # TODO: Process returned paths to isolate and list indexed endpoints only. With index
 def ep_list():
     msg = auth.UserGetRecentEPRequest()
     reply = mapi.sendRecv( msg )
@@ -884,7 +884,7 @@ def ep_list():
 # ------------------------------------------------------------------------------
 # Miscellaneous commands
 
-@cli.command(name='ident',help="Set current user or project identity to ID (omit for self)")
+@cli.command(name='ident',help="Set current user or project identity to ID (omit for self)") # Does this actually switch the identity??
 @click.option("-s","--show",is_flag=True,help="Show current identity")
 @click.argument("df_id",required=False)
 def ident(df_id,show):
@@ -1093,7 +1093,7 @@ def resolve_globus_path(fp, endpoint):
 
 def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing (reply msg, msg type)
     global g_output_mode
-
+    #click.echo(reply[1])
     if g_output_mode == OM_RETN:
         global g_return_val
         g_return_val = reply
