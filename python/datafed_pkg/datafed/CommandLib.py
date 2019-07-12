@@ -245,7 +245,7 @@ def cli(ctx,*args,**kwargs):
 @click.option("-c","--count",default=20,help="List count")
 @click.argument("df-id", required=False)
 @click.pass_context
-def ls(ctx,df_id,offset,count): #TODO: FIX print_listing function
+def ls(ctx,df_id,offset,count):
     global g_verbosity
     global g_cur_coll
     msg = auth.CollReadRequest()
@@ -300,8 +300,8 @@ def data_view(id,details):
 @click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-kw","--key-words",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks") # TODO: SORT OUT syntax
-@click.option("-df","--data-file",type=str,required=False,help="Specify the path to local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.") #TODO: Put functionality
+@click.option("-kw","--key-words",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks")
+@click.option("-df","--data-file",type=str,required=False,help="Specify the path to local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.")
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
@@ -366,7 +366,7 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
 @click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 @click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
-def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove): #TODO: FIX
+def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove):
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
@@ -426,15 +426,14 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
 def data_delete(df_id):
     resolved_list = []
     for ids in df_id:
-        resolved_list.append(resolve_id(ids)) # TODO: Accommodate numerals-only input (automatically add "d/")
+        resolved_list.append(resolve_id(ids))
     if g_interactive:
-        if not click.confirm("Do you want to delete record/s {}".format(resolved_list)):
+        if not click.confirm("Do you want to delete record/s {} ?".format(resolved_list)):
             return
     msg = auth.RecordDeleteRequest()
     msg.id.extend(resolved_list)
     reply = mapi.sendRecv(msg)
-
-    genericReplyHandler(reply,print_ack_reply)
+    print_ack_reply()
 
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
@@ -442,7 +441,7 @@ def data_delete(df_id):
 @click.option("-fp","--filepath",type=str,required=True,help="Destination to which file is to be downloaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-ep","--endpoint",type=str,required=False,help="The endpoint to which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
-def data_get(df_id,filepath,endpoint,wait):
+def data_get(df_id,filepath,endpoint,wait): #Multi-get will initiate one transfer per repo (multiple recors in one transfer, as long as they're in the same repo)
     fp = resolve_filepath_for_xfr(filepath)
     if endpoint: gp = resolve_globus_path(fp, endpoint)
     elif not endpoint: gp = resolve_globus_path(fp, "None")
@@ -457,26 +456,36 @@ def data_get(df_id,filepath,endpoint,wait):
             resolved_list.append(resolve_id(ids))
         msg.id.extend(resolved_list)
         msg.path = gp
-        reply, mt = mapi.sendRecv(msg)
-        xfr_id = reply.xfr[0].id
-        click.echo("Transfer ID: {}".format(xfr_id))
+        reply = mapi.sendRecv(msg)
+        xfr_ids = []
+        replies = []
+        for xfrs in reply[0].xfr:
+            if g_output_mode == OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
+            elif g_output_mode == OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
+            xfr_ids.append(xfrs.id)
         if wait:
-            if g_verbosity >= 1: click.echo("Waiting")  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+            if g_verbosity >= 1 and g_output_mode == OM_TEXT: click.echo("Waiting")
+            elif g_output_mode == OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
             while wait is True:
-                time.sleep(2)
-                update_msg = auth.XfrViewRequest()
-                update_msg.xfr_id = xfr_id
-                reply, mt = mapi.sendRecv(update_msg)
-                check = reply.xfr[0]
-                if check.status == 3 or check.status == 4: break
-                statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
-                xfr_status = statuses.get(check.status, "None")
-                if g_verbosity >= 1: click.echo(
-                    "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status))
-            print_xfr_stat(reply)
+                time.sleep(3)
+                for xfrs in xfr_ids:
+                    update_msg = auth.XfrViewRequest()
+                    update_msg.xfr_id = xfrs
+                    reply = mapi.sendRecv(update_msg)
+                    check = reply[0].xfr[0]
+                    if check.status >=3:
+                        replies.append(reply)
+                        wait = False
+                    statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
+                    xfr_status = statuses.get(check.status, "None")
+                    if g_output_mode == OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
+                    elif g_verbosity >= 1 and g_output_mode == OM_TEXT: click.echo(
+                        "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
+            for xfrs in replies:
+                genericReplyHandler(xfrs, print_xfr_stat)
         else:
-            print_xfr_stat(reply)
-        #TODO Handle return value in OM_RETV
+            for xfrs in replies:
+                genericReplyHandler(xfrs, print_xfr_stat)
 
 
 @data.command(name='put',help="Put (upload) raw data to DataFed")
@@ -525,7 +534,7 @@ def coll_create(title,alias,description,collection):
     if resolve_coll_id(collection) is not None: msg.parent_id = resolve_coll_id(collection)
     click.echo(msg)
     reply = mapi.sendRecv(msg)
-    genericReplyHandler( print_coll, reply)
+    genericReplyHandler(reply, print_coll)
 
 
 @coll.command(name='update',help="Update existing collection")
@@ -544,19 +553,19 @@ def coll_update(df_id,title,alias,description):
 
 
 @coll.command(name='delete',help="Delete existing collection")
-@click.argument("df_id")
+@click.argument("df_id", nargs=-1)
 def coll_delete(df_id):
-    id2 = resolve_coll_id(df_id)
-
+    resolved_list = []
+    for ids in df_id:
+        resolved_list.append(resolve_coll_id(ids))
     if g_interactive:
-        click.echo("Warning: this will delete all data records and collections contained in the specified collection.")
-        if not confirm( "Delete collection " + id2 + " (Y/n):"):
+        click.echo("Warning: this will delete all data records and collections contained in the specified collection(s).")
+        if not click.confirm("Do you want to delete collection(s) {} ?".format(resolved_list)):
             return
-
     msg = auth.CollDeleteRequest()
-    msg.id = id2
-    reply, mt = mapi.sendRecv( msg )
-    if mt == "AckReply": click.echo("Success: collection deleted.")
+    msg.id.extend(resolved_list)
+    reply = mapi.sendRecv(msg)
+    print_ack_reply()
 
 
 @coll.command(name='add',help="Add data/collection ITEM_ID to collection COLL_ID")
@@ -718,7 +727,7 @@ def project_list(owner,admin,member):
     msg.by_owner = owner
     msg.by_admin = admin
     msg.by_member = member
-    reply = mapi.sendRecv( msg ) #TODO: Figure out verbosity reply?
+    reply = mapi.sendRecv( msg )
     genericReplyHandler( reply, print_proj_listing )
 
 
@@ -728,7 +737,6 @@ def project_view(df_id):
     msg = auth.ProjectViewRequest()
     msg.id = resolve_id(df_id)
     reply = mapi.sendRecv(msg)
-    click.echo(reply)
     genericReplyHandler( reply, print_proj )
 
 
@@ -1014,9 +1022,15 @@ def put_data(df_id,gp,wait,extension):
     if extension: msg.ext = extension
     reply = mapi.sendRecv(msg)
     xfr_id = reply[0].xfr[0].id
-    click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
+    if g_output_mode == OM_JSON:
+        click.echo('{{ "Transfer ID": "{}" }}'.format(xfr_id))
+    elif g_output_mode == OM_TEXT:
+        click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
-        if g_verbosity >= 1: click.echo("Waiting")  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+        if g_verbosity >= 1 and g_output_mode == OM_TEXT:
+            click.echo("Waiting")
+        elif g_output_mode == OM_JSON:
+            click.echo('{ "Status": "Waiting" }')  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
         while wait is True:
             time.sleep(2)
             update_msg = auth.XfrViewRequest()
@@ -1026,7 +1040,10 @@ def put_data(df_id,gp,wait,extension):
             if check.status == 3 or check.status == 4: break
             statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
             xfr_status = statuses.get(check.status, "None")
-            if g_verbosity >= 1: click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
+            if g_output_mode == OM_JSON:
+                click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status))
+            elif g_verbosity >= 1 and g_output_mode == OM_TEXT:
+                click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
         genericReplyHandler(reply,print_xfr_stat)
     else:
         genericReplyHandler(reply,print_xfr_stat)
@@ -1082,11 +1099,12 @@ def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing
     if g_output_mode == OM_RETN:
         global g_return_val
         g_return_val = reply
+    elif g_output_mode == OM_JSON:
+        click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
     else:
         printFunc( reply[0] )
 
 
-#TODO Need JSON Support
 def print_listing(reply):
     df_idx = 1
     global g_list_items
@@ -1101,7 +1119,6 @@ def print_listing(reply):
         df_idx += 1
 
 
-#TODO Need JSON Support
 def print_user_listing( reply ):
     df_idx = 1
     global g_list_items
@@ -1111,7 +1128,7 @@ def print_user_listing( reply ):
         click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
         df_idx += 1
 
-#TODO Need JSON Support
+
 def print_proj_listing(reply):
     df_idx = 1
     global g_list_items
@@ -1121,7 +1138,7 @@ def print_proj_listing(reply):
         click.echo("{:2}. {:24} {}".format(df_idx,i.id,i.title))
         df_idx += 1
 
-#TODO Need JSON Support
+
 def print_endpoints(reply):
     df_idx = 1
     global g_list_items
@@ -1135,7 +1152,7 @@ def print_endpoints(reply):
             df_idx += 1
 
 
-def print_ack_reply(reply):
+def print_ack_reply():
     #global g_verbosity # TODO: Should it print nothing when verbosity is zero?
     global g_output_mode
 
@@ -1147,70 +1164,57 @@ def print_ack_reply(reply):
 
 def print_data(message):
     global g_verbosity
-    global g_output_mode
 
-    if g_output_mode == OM_JSON:
-        json_output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(json_output)
-    elif g_output_mode == OM_TEXT:
-        dr = message.data[0]
-        if g_verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
-                       "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
-                       "{:<25} {:<50}".format('Alias: ', dr.alias))
-        if g_verbosity >= 1:
-            click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
-                       "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
-                       "{:<25} {:<50}".format('Size: ', human_readable_bytes(dr.size)) + '\n' + ## convert to gigs?
-                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
-                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
-        if g_verbosity >= 2:
-            click.echo("{:<25} {:<50}".format('Topic: ', dr.topic) + '\n' +
-                       "{:<25} {:<50}".format('Is Public: ', str(dr.ispublic)) + '\n' +
-                       "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
-                       "{:<25} {:<50}".format('Source: ', dr.source) + '\n' +
-                       "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
-                       "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
-                       "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
-                       "{:<25} {:<50}".format('Locked: ', str(dr.locked)) + '\n' +
-                       "{:<25} {:<50}".format('Parent Collection ID: ', dr.parent_id))
-            if dr.metadata:
-                click.echo("{:<25} {:<50}".format('Metadata: ', (json.dumps(json.loads(dr.metadata, indent=4)))))
-            elif not dr.metadata:
-                click.echo("{:<25} {:<50}".format('Metadata: ', "None"))
-            if not dr.deps:
-                click.echo("{:<25} {:<50}".format('Dependencies: ', 'None'))
-            elif dr.deps:
-                click.echo("{:<25}".format('Dependencies:'))
-                print_deps(message)
-
+    dr = message.data[0]
+    if g_verbosity >= 0:
+        click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
+                   "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
+                   "{:<25} {:<50}".format('Alias: ', dr.alias))
+    if g_verbosity >= 1:
+        click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
+                   "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
+                   "{:<25} {:<50}".format('Size: ', human_readable_bytes(dr.size)) + '\n' + ## convert to gigs?
+                   "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
+                   "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
+    if g_verbosity >= 2:
+        click.echo("{:<25} {:<50}".format('Topic: ', dr.topic) + '\n' +
+                   "{:<25} {:<50}".format('Is Public: ', str(dr.ispublic)) + '\n' +
+                   "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
+                   "{:<25} {:<50}".format('Source: ', dr.source) + '\n' +
+                   "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
+                   "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
+                   "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
+                   "{:<25} {:<50}".format('Locked: ', str(dr.locked)) + '\n' +
+                   "{:<25} {:<50}".format('Parent Collection ID: ', dr.parent_id))
+        if dr.metadata:
+            click.echo("{:<25} {:<50}".format('Metadata: ', (json.dumps(json.loads(dr.metadata, indent=4)))))
+        elif not dr.metadata:
+            click.echo("{:<25} {:<50}".format('Metadata: ', "None"))
+        if not dr.deps:
+            click.echo("{:<25} {:<50}".format('Dependencies: ', 'None'))
+        elif dr.deps:
+            click.echo("{:<25}".format('Dependencies:'))
+            print_deps(message)
 
 
 def print_coll(message):
     global g_verbosity
-    global g_output_mode
 
-    if g_output_mode == OM_JSON:
-        output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(output)
-    elif g_output_mode == OM_TEXT:
-        coll = message.coll[0]
-        if g_verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
-                       "{:<25} {:<50}".format('Title: ', coll.title) + '\n' +
-                       "{:<25} {:<50}".format('Alias: ', coll.alias))
-        if g_verbosity >= 1:
-            click.echo("{:<25} {:<50}".format('Description: ',coll.desc) + '\n' +
-                       "{:<25} {:<50}".format('Owner: ', coll.owner) + '\n' +
-                       "{:<25} {:<50}".format('Parent Collection ID: ', coll.parent_id))
-        if g_verbosity == 2:
-            click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
-                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
-                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
+    coll = message.coll[0]
+    if g_verbosity >= 0:
+        click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
+                   "{:<25} {:<50}".format('Title: ', coll.title) + '\n' +
+                   "{:<25} {:<50}".format('Alias: ', coll.alias))
+    if g_verbosity >= 1:
+        click.echo("{:<25} {:<50}".format('Description: ',coll.desc) + '\n' +
+                   "{:<25} {:<50}".format('Owner: ', coll.owner) + '\n' +
+                   "{:<25} {:<50}".format('Parent Collection ID: ', coll.parent_id))
+    if g_verbosity == 2:
+        click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
+                   "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
+                   "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
 
 
-
-#TODO Need JSON Support
 def print_deps(dependencies):
     if dependencies is not None or dependencies != "None":
         deps = list(dependencies)
@@ -1219,9 +1223,7 @@ def print_deps(dependencies):
             rep = item.get
             click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
 
-# TODO Need JSON Support
-# Currently this only forms part of a larger print function -- so the check for output mode is already made
-# Unless there are admin commands for viewing/updating Dependencies, this doesn't really need JSON support on its own
+
 def print_deps(message):
     types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
     dr = message.data[0]
@@ -1237,84 +1239,67 @@ def print_deps(message):
 
 def print_xfr_stat(message):
     global g_verbosity
-    global g_output_mode
 
-    if g_output_mode == OM_JSON:
-        output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(output)
-    elif g_output_mode == OM_TEXT:
-        for xfr in message.xfr:
-            modes = { 0: "Get", 1: "Put", 2: "Copy"}
-            xfr_mode = modes.get(xfr.mode, "None")
-            statuses = { 0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
-            xfr_status = statuses.get(xfr.status, "None")
-            df_ids = []
-            for files in xfr.repo.file: df_ids.append(files.id)
-            if g_verbosity >= 0:
-                click.echo("{:<25} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
-                           "{:<25} {:<50}".format('Mode: ', xfr_mode) + '\n' +
-                           "{:<25} {:<50}".format('Status: ', str(xfr_status)))
-            if g_verbosity >= 1:
-                click.echo("{:<25} {:<50}".format('Data Record ID/s: ', str(df_ids)) + '\n' +
-                           "{:<25} {:<50}".format('Date Started: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))) + '\n' +
-                           "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))))
-            if g_verbosity == 2:
-                click.echo("{:<25} {:<50}".format('Remote Endpoint:', xfr.rem_ep) + '\n' 
-                           "{:<25} {:<50}".format('Remote Path: ', xfr.rem_path))
+    for xfr in message.xfr:
+        modes = { 0: "Get", 1: "Put", 2: "Copy"}
+        xfr_mode = modes.get(xfr.mode, "None")
+        statuses = { 0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
+        xfr_status = statuses.get(xfr.status, "None")
+        df_ids = []
+        for files in xfr.repo.file: df_ids.append(files.id)
+        if g_verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
+                       "{:<25} {:<50}".format('Mode: ', xfr_mode) + '\n' +
+                       "{:<25} {:<50}".format('Status: ', str(xfr_status)))
+        if g_verbosity >= 1:
+            click.echo("{:<25} {:<50}".format('Data Record ID/s: ', str(df_ids)) + '\n' +
+                       "{:<25} {:<50}".format('Date Started: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))))
+        if g_verbosity == 2:
+            click.echo("{:<25} {:<50}".format('Remote Endpoint:', xfr.rem_ep) + '\n' 
+                       "{:<25} {:<50}".format('Remote Path: ', xfr.rem_path))
 
 
 def print_user(message):
     global g_verbosity
-    global g_output_mode
 
-    if g_output_mode == OM_JSON:
-        output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(output)
-    elif g_output_mode == OM_TEXT:
-        usr = message.user[0]
-        if g_verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
-                       "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
-                       "{:<25} {:<50}".format('Email: ', usr.email))
+    usr = message.user[0]
+    if g_verbosity >= 0:
+        click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
+                   "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
+                   "{:<25} {:<50}".format('Email: ', usr.email))
 
 
-def print_metadata(message): #how to pretty print json?
+def print_metadata(message):
     pass
+
 
 def print_proj(message):
     global g_verbosity
-    global g_output_mode
 
-    if g_output_mode == OM_JSON:
-        output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(output)
-    elif g_output_mode == OM_TEXT:
-        proj = message.proj[0]
-        admins = []
-        members = []
-        for i in proj.admin: admins.append(i)
-        for i in proj.member: members.append(i)
-        if g_verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
-                       "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
-                       "{:<25} {:<50}".format('Description: ', proj.desc))
-        if g_verbosity >= 1:
-            click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
-                       "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
-                       "{:<25} {:<50}".format('Members: ', str(members)))
-        if g_verbosity == 2:
-            click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
-                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
-                       "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
-                       "{:<25} {:<50}".format('Sub Allocation: ', human_readable_bytes(proj.sub_alloc) + '\n' +
-                       "{:<25} {:<50}".format('Sub Usage: ', human_readable_bytes(proj.sub_usage))))
-            for i in proj.alloc:
-                print_allocation_data(i)
+    proj = message.proj[0]
+    admins = []
+    members = []
+    for i in proj.admin: admins.append(i)
+    for i in proj.member: members.append(i)
+    if g_verbosity >= 0:
+        click.echo("{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
+                   "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
+                   "{:<25} {:<50}".format('Description: ', proj.desc))
+    if g_verbosity >= 1:
+        click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
+                   "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
+                   "{:<25} {:<50}".format('Members: ', str(members)))
+    if g_verbosity == 2:
+        click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
+                   "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
+                   "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
+                   "{:<25} {:<50}".format('Sub Allocation: ', human_readable_bytes(proj.sub_alloc) + '\n' +
+                   "{:<25} {:<50}".format('Sub Usage: ', human_readable_bytes(proj.sub_usage))))
+        for i in proj.alloc:
+            print_allocation_data(i)
 
 
-# TODO Need JSON Support
-# Currently this only forms part of a larger print function -- so the check for output mode is already made
-# Unless there are admin commands for viewing/updating Allocations, this doesn't really need JSON support on its own
 def print_allocation_data(alloc): #
     click.echo("{:<25} {:<50}".format('Repo: ', alloc.repo) + '\n' +
                "{:<25} {:<50}".format('Max Size: ', human_readable_bytes(alloc.max_size)) + '\n' +
@@ -1332,14 +1317,6 @@ def human_readable_bytes(size,precision=2):
         suffixIndex += 1 #increment the index of the suffix
         size = size/1024.0 #apply the division
     return "%.*f%s" % (precision,size,suffixes[suffixIndex])
-
-
-def confirm( msg ):
-    val = click.prompt( msg )
-    if val == "Y":
-        return True
-    else:
-        return False
 
 
 def _initialize( opts ):
