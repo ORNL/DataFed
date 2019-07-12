@@ -830,7 +830,7 @@ def ep():
 def ep_get():
     global g_ep_cur
     if g_ep_cur:
-        info(1,g_ep_cur) # why info function???
+        click.echo(g_ep_cur)
     else:
         global g_ep_default
         if g_ep_default:
@@ -846,7 +846,7 @@ def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT upda
     global g_ep_default
     if new_default_ep:
         new_default_ep = resolve_index_val(new_default_ep)
-        dfC.Config.set_default_ep(new_default_ep)
+        cfg.set("default_ep",new_default_ep,True)
         g_ep_default = new_default_ep
    #     except:
         # TODO: add more functionality

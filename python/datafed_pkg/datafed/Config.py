@@ -111,7 +111,11 @@ class API:
                 cfg_file = tmp
 
         if cfg_file:
+            print("load client cfg file:",cfg_file)
             self._loadConfigFile( cfg_file, 2 )
+            # If client config file was found, but not set, remember it so it can be updated
+            if not "client_cfg_file" in self.opts:
+                self.opts["client_cfg_file"] = {"val": cfg_file, "pri":5}
 
     def _loadEnvironVars( self ):
         for oi in opt_info:
@@ -132,7 +136,7 @@ class API:
             with open( cfg_file, 'r') as f:
                 config = configparser.ConfigParser()
                 config.read_file(f)
-
+                print("cfg:",config)
                 for oi in opt_info:
                     if ((not oi[0] in self.opts) or self.opts[oi[0]]["pri"] >= priority) and (oi[4] & OPT_NO_CF) == 0:
                         if config.has_option(oi[1],oi[2]):
@@ -148,19 +152,33 @@ class API:
         except IOError:
             raise Exception("Error reading from server config file: " + cfg_file)
 
-    def get(self,key):
+    def get( self, key ):
         if key in self.opts:
             return self.opts[key]["val"]
         else:
             return None
 
-def set_default_ep( default_ep ):
-    pass
+    def set( self, key, value, save = False ):
+        opt = None
+        for oi in opt_info:
+            if oi[0] == key:
+                opt = oi
+                break
 
-def set_local_ep( local_ep ):
-    pass
+        if not opt:
+            raise Exception("Undefined configuration key")
 
+        if key in self.opts:
+            self.opts[key]["val"] = value
+        else:
+            self.opts[key] = { "val" : value, "pri" : 0 }
 
-
+        if save and "client_cfg_file" in self.opts:
+            with open( self.opts["client_cfg_file"]["val"], 'r+') as f:
+                config = configparser.ConfigParser()
+                config.read_file( f )
+                config.set( opt[1], opt[2], value )
+                f.seek(0)
+                config.write( f )
 
 
