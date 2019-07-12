@@ -343,18 +343,16 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
                 dep.id = item[1]
             else: dep.alias = item[1]
     if not data_file:
-        reply, mt = mapi.sendRecv(msg)
-        print_data(reply)
+        reply = mapi.sendRecv(msg)
+        genericReplyHandler(reply,print_data)
 
     if data_file:
-        create_reply, mt = mapi.sendRecv(msg)
+        create_reply = mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
-        put_data(df_id=create_reply.data[0].id,gp=data_file,wait=False,extension=None)
+        put_data(df_id=create_reply[0].data[0].id,gp=data_file,wait=False,extension=None)
 
 #TODO Handle return value in OM_RETV
 
-    print_data(create_reply)
-    #put function
 
 @data.command(name='update',help="Update existing data record")
 @click.argument("df_id")
@@ -428,18 +426,15 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
 def data_delete(df_id):
     resolved_list = []
     for ids in df_id:
-        resolved_list.append(resolve_id(ids))
+        resolved_list.append(resolve_id(ids)) # TODO: Accommodate numerals-only input (automatically add "d/")
     if g_interactive:
         if not click.confirm("Do you want to delete record/s {}".format(resolved_list)):
             return
     msg = auth.RecordDeleteRequest()
     msg.id.extend(resolved_list)
-    reply, mt = mapi.sendRecv(msg)
+    reply = mapi.sendRecv(msg)
 
-    #TODO Handle return value in OM_RETV
-
-    if mt == "AckReply":
-        click.echo("Delete succeeded")
+    genericReplyHandler(reply,print_ack_reply)
 
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
@@ -733,6 +728,7 @@ def project_view(df_id):
     msg = auth.ProjectViewRequest()
     msg.id = resolve_id(df_id)
     reply = mapi.sendRecv(msg)
+    click.echo(reply)
     genericReplyHandler( reply, print_proj )
 
 
@@ -846,7 +842,7 @@ def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT upda
     global g_ep_default
     if new_default_ep:
         new_default_ep = resolve_index_val(new_default_ep)
-        dfC.Config.set_default_ep(new_default_ep)
+        Config.set_default_ep(new_default_ep)
         g_ep_default = new_default_ep
 
     else:
@@ -1016,24 +1012,24 @@ def put_data(df_id,gp,wait,extension):
     msg.id = resolve_id(df_id)
     msg.path = gp
     if extension: msg.ext = extension
-    reply, mt = mapi.sendRecv(msg)
-    xfr_id = reply.xfr[0].id
-    click.echo("Transfer ID: {}".format(xfr_id))
+    reply = mapi.sendRecv(msg)
+    xfr_id = reply[0].xfr[0].id
+    click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
         if g_verbosity >= 1: click.echo("Waiting")  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
         while wait is True:
             time.sleep(2)
             update_msg = auth.XfrViewRequest()
             update_msg.xfr_id = xfr_id
-            reply, mt = mapi.sendRecv(update_msg)
-            check = reply.xfr[0]
+            reply = mapi.sendRecv(update_msg)
+            check = reply[0].xfr[0]
             if check.status == 3 or check.status == 4: break
             statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
             xfr_status = statuses.get(check.status, "None")
-            if g_verbosity >= 1: click.echo("{:15} {:15} {:15} {:15}".format("Transfer ID:",check.id,"Status:",xfr_status))
-        print_xfr_stat(reply)
+            if g_verbosity >= 1: click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
+        genericReplyHandler(reply,print_xfr_stat)
     else:
-        print_xfr_stat(reply)
+        genericReplyHandler(reply,print_xfr_stat)
 
 
 def resolve_filepath_for_xfr(filepath):
@@ -1079,7 +1075,8 @@ def resolve_globus_path(fp, endpoint):
 
     return fp #endpoint and path
 
-def genericReplyHandler( reply, printFunc ):
+
+def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing (reply msg, msg type)
     global g_output_mode
 
     if g_output_mode == OM_RETN:
@@ -1087,6 +1084,7 @@ def genericReplyHandler( reply, printFunc ):
         g_return_val = reply
     else:
         printFunc( reply[0] )
+
 
 #TODO Need JSON Support
 def print_listing(reply):
@@ -1101,6 +1099,7 @@ def print_listing(reply):
         else:
             click.echo("{:2}. {:34} {}".format(df_idx,i.id,i.title))
         df_idx += 1
+
 
 #TODO Need JSON Support
 def print_user_listing( reply ):
@@ -1136,11 +1135,24 @@ def print_endpoints(reply):
             df_idx += 1
 
 
+def print_ack_reply(reply):
+    #global g_verbosity # TODO: Should it print nothing when verbosity is zero?
+    global g_output_mode
+
+    if g_output_mode == OM_JSON:
+        click.echo('{ "Status":"OK" }')
+    elif g_output_mode == OM_TEXT:
+        click.echo("OK")
+
+
 def print_data(message):
     global g_verbosity
     global g_output_mode
 
-    if g_output_mode == OM_TEXT:
+    if g_output_mode == OM_JSON:
+        json_output = MessageToJson(message,preserving_proto_field_name=True)
+        click.echo(json_output)
+    elif g_output_mode == OM_TEXT:
         dr = message.data[0]
         if g_verbosity >= 0:
             click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
@@ -1149,7 +1161,7 @@ def print_data(message):
         if g_verbosity >= 1:
             click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
                        "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
-                       "{:<25} {:<50}".format('Size: ', GetHumanReadable(dr.size)) + '\n' + ## convert to gigs?
+                       "{:<25} {:<50}".format('Size: ', human_readable_bytes(dr.size)) + '\n' + ## convert to gigs?
                        "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
                        "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
         if g_verbosity >= 2:
@@ -1171,16 +1183,17 @@ def print_data(message):
             elif dr.deps:
                 click.echo("{:<25}".format('Dependencies:'))
                 print_deps(message)
-    elif g_output_mode == OM_JSON:
-        json_output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(json_output)
+
 
 
 def print_coll(message):
     global g_verbosity
     global g_output_mode
 
-    if g_output_mode == OM_TEXT:
+    if g_output_mode == OM_JSON:
+        output = MessageToJson(message,preserving_proto_field_name=True)
+        click.echo(output)
+    elif g_output_mode == OM_TEXT:
         coll = message.coll[0]
         if g_verbosity >= 0:
             click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
@@ -1194,9 +1207,7 @@ def print_coll(message):
             click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
                        "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
                        "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
-    elif g_output_mode == OM_JSON:
-        output = MessageToJson(message,preserving_proto_field_name=True)
-        click.echo(output)
+
 
 
 #TODO Need JSON Support
@@ -1208,7 +1219,9 @@ def print_deps(dependencies):
             rep = item.get
             click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
 
-#TODO Need JSON Support
+# TODO Need JSON Support
+# Currently this only forms part of a larger print function -- so the check for output mode is already made
+# Unless there are admin commands for viewing/updating Dependencies, this doesn't really need JSON support on its own
 def print_deps(message):
     types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
     dr = message.data[0]
@@ -1293,11 +1306,10 @@ def print_proj(message):
             click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
                        "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
                        "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
-                       "{:<25} {:<50}".format('Sub Allocation: ', GetHumanReadable(proj.sub_alloc) + '\n' +
-                       "{:<25} {:<50}".format('Sub Usage: ', GetHumanReadable(proj.sub_usage))))
+                       "{:<25} {:<50}".format('Sub Allocation: ', human_readable_bytes(proj.sub_alloc) + '\n' +
+                       "{:<25} {:<50}".format('Sub Usage: ', human_readable_bytes(proj.sub_usage))))
             for i in proj.alloc:
                 print_allocation_data(i)
-
 
 
 # TODO Need JSON Support
@@ -1305,15 +1317,15 @@ def print_proj(message):
 # Unless there are admin commands for viewing/updating Allocations, this doesn't really need JSON support on its own
 def print_allocation_data(alloc): #
     click.echo("{:<25} {:<50}".format('Repo: ', alloc.repo) + '\n' +
-               "{:<25} {:<50}".format('Max Size: ', GetHumanReadable(alloc.max_size)) + '\n' +
-               "{:<25} {:<50}".format('Total Size: ', GetHumanReadable(alloc.tot_size)) + '\n' +
+               "{:<25} {:<50}".format('Max Size: ', human_readable_bytes(alloc.max_size)) + '\n' +
+               "{:<25} {:<50}".format('Total Size: ', human_readable_bytes(alloc.tot_size)) + '\n' +
                "{:<25} {:<50}".format('Max Record Count: ', alloc.max_count) + '\n' +
                "{:<25} {:<50}".format('Path: ', alloc.path) + '\n' +
                "{:<25} {:<50}".format('ID: ', alloc.id) + '\n' +
                "{:<25} {:<50}".format('Sub Allocation: ', str(alloc.sub_alloc)))
 
 
-def GetHumanReadable(size,precision=2):
+def human_readable_bytes(size,precision=2):
     suffixes=['B','KB','MB','GB','TB']
     suffixIndex = 0
     while size > 1024 and suffixIndex < 4:
@@ -1328,6 +1340,7 @@ def confirm( msg ):
         return True
     else:
         return False
+
 
 def _initialize( opts ):
     global mapi
