@@ -241,9 +241,9 @@ def data():
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
 @click.argument("id")
-def data_view(df_id,details):
+def data_view(id,details):
     msg = auth.RecordViewRequest()
-    msg.id = resolve_id(df_id)
+    msg.id = resolve_id(id)
     if details:
         msg.details = True
     elif not details:
@@ -805,9 +805,7 @@ def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT upda
         new_default_ep = resolve_index_val(new_default_ep)
         dfC.Config.set_default_ep(new_default_ep)
         g_ep_default = new_default_ep
-   #     except:
-        # TODO: add more functionality
-        # check if input is valid endpoint?
+
     else:
         if g_ep_default:
             click.echo(g_ep_default)
@@ -1089,7 +1087,7 @@ def print_data(message):
         if g_verbosity >= 1:
             click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
                        "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
-                       "{:<25} {:<50}".format('Size: ', dr.size) + '\n' + ## convert to gigs?
+                       "{:<25} {:<50}".format('Size: ', GetHumanReadable(dr.size)) + '\n' + ## convert to gigs?
                        "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
                        "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
         if g_verbosity >= 2:
@@ -1114,9 +1112,6 @@ def print_data(message):
     elif g_output_mode == OM_JSON:
         json_output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(json_output)
-    #elif g_output_dict:
-    #    dict_output = MessageToDict(message,preserving_proto_field_name=True)
-    #    click.echo(dict_output)
 
 
 def print_coll(message):
@@ -1140,9 +1135,7 @@ def print_coll(message):
     elif g_output_mode == OM_JSON:
         output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(output)
-    #elif g_output_dict:
-    #    output = MessageToDict(message,preserving_proto_field_name=True)
-    #    click.echo(output)
+
 
 #TODO Need JSON Support
 def print_deps(dependencies):
@@ -1174,9 +1167,6 @@ def print_xfr_stat(message):
     if g_output_mode == OM_JSON:
         output = MessageToJson(message,preserving_proto_field_name=True)
         click.echo(output)
-    #elif g_output_dict:
-    #    output = MessageToDict(message,preserving_proto_field_name=True)
-    #    click.echo(output)
     elif g_output_mode == OM_TEXT:
         for xfr in message.xfr:
             modes = { 0: "Get", 1: "Put", 2: "Copy"}
@@ -1211,9 +1201,7 @@ def print_user(message):
     elif g_output_mode == OM_JSON:
         output = MessageToJson(message, preserving_proto_field_name=True)
         click.echo(output)
-    #elif g_output_dict:
-    #    output = MessageToDict(message, preserving_proto_field_name=True)
-    #    click.echo(output)
+
 
 def print_metadata(message): #how to pretty print json?
     pass
@@ -1247,13 +1235,12 @@ def print_proj(message):
     elif g_output_mode == OM_JSON:
         output = MessageToJson(message, preserving_proto_field_name=True)
         click.echo(output)
-    #elif g_output_dict:
-    #    output = MessageToDict(message, preserving_proto_field_name=True)
-    #   click.echo(output)
 
 
-#TODO Need JSON Support
-def print_allocation_data(alloc):
+# TODO Need JSON Support
+# Currently this only forms part of a larger print function -- so the check for output mode is already made
+# Unless there are admin commands for viewing/updating Allocations, this doesn't really need JSON support on its own
+def print_allocation_data(alloc): #
     click.echo("{:<25} {:<50}".format('Repo: ', alloc.repo) + '\n' +
                "{:<25} {:<50}".format('Max Size: ', GetHumanReadable(alloc.max_size)) + '\n' +
                "{:<25} {:<50}".format('Total Size: ', GetHumanReadable(alloc.tot_size)) + '\n' +
