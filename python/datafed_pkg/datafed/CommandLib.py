@@ -111,7 +111,8 @@ def init():
         raise Exception("init function can only be called once.")
 
     # Get config options
-    opts = Config.getOpts()
+    config = Config.API()
+    opts = config.getOpts()
 
     #print( "opts:", opts )
 
