@@ -1031,6 +1031,7 @@ function makeBrowserTab(){
                 inst.sel_descr.text("Browse all allocations and associated data records.");
                 inst.sel_details.html("(n/a)");
                 $("#sel_references").html("(n/a)");
+                inst.showSelectedMetadata();
             } else if ( key.startsWith( "repo/" )) {
                 var is_user = node.data.scope.startsWith("u/");
                 inst.sel_id.text( (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + ", user: " + node.data.scope );

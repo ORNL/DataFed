@@ -111,14 +111,12 @@ def init():
         raise Exception("init function can only be called once.")
 
     # Get config options
-    opts = {}
-    for oi in Config.opt_info:
-        opts[oi[0]] = cfg.get(oi[0])
+    opts = Config.getOpts()
 
     #print( "opts:", opts )
 
     mapi = MessageLib.API( **opts )
-    mapi.setNackException( False )
+    mapi.setNackExceptionEnabled( False )
 
     auth, uid = mapi.getAuthStatus()
     if auth:
@@ -210,14 +208,14 @@ def my_param_memo(f, param):
 
 def config_options( cfg ):
     def wrapper(f):
-        for oi in Config.opt_info:
+        for k, v in Config.opt_info.items():
             #OPT_NO_CL
-            if oi[4] & Config.OPT_INT:
-                my_param_memo(f,click.Option(oi[5],type=int,default=cfg.get(oi[0]),help=oi[6]))
-            elif oi[4] & Config.OPT_BOOL:
-                my_param_memo(f,click.Option(oi[5],is_flag=True,default=cfg.get(oi[0]),help=oi[6]))
+            if v[3] & Config.OPT_INT:
+                my_param_memo(f,click.Option(v[4],type=int,default=cfg.get(k),help=v[5]))
+            elif v[3] & Config.OPT_BOOL:
+                my_param_memo(f,click.Option(v[4],is_flag=True,default=cfg.get(k),help=v[5]))
             else:
-                my_param_memo(f,click.Option(oi[5],type=str,default=cfg.get(oi[0]),help=oi[6]))
+                my_param_memo(f,click.Option(v[4],type=str,default=cfg.get(k),help=v[5]))
 
         return f
     return wrapper
@@ -226,7 +224,7 @@ def config_options( cfg ):
 #------------------------------------------------------------------------------
 # Top-level group with global options
 @click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
-@click.option("-l","--log",is_flag=True,help="Force manual authentication")
+@click.option("-m","--manual-auth",is_flag=True,help="Force manual authentication")
 @click.option("-j", "--json", is_flag=True,callback=set_output_json,help="Set CLI output format to JSON, when applicable.")
 @click.option("-t","--text",is_flag=True,callback=set_output_text,help="Set CLI output format to human-friendly text.")
 @config_options( cfg )
@@ -1370,14 +1368,14 @@ def _initialize( opts ):
         g_interactive = False
         sys.exit(1)
 
-    # Ignore 'log' option if set in exec mode
-    if opts["log"] and g_output_mode == OM_RETN:
-        opts["log"] = False
+    # Ignore 'manual_auth' option if set in exec mode
+    if opts["manual_auth"] and g_output_mode == OM_RETN:
+        opts["manual_auth"] = False
 
     auth, uid = mapi.getAuthStatus()
 
-    if opts["log"] or not auth:
-        if not opts["log"]:
+    if opts["manual_auth"] or not auth:
+        if not opts["manual_auth"]:
             if not mapi.keysLoaded():
                 if g_output_mode == OM_RETN:
                     raise Exception("Not authenticated: no local credentials loaded.")
