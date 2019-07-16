@@ -111,14 +111,12 @@ def init():
         raise Exception("init function can only be called once.")
 
     # Get config options
-    config = Config.API()
-    opts = config.getOpts()
+    opts = cfg.getOpts()
 
     #print( "opts:", opts )
 
     mapi = MessageLib.API( **opts )
     mapi.setNackExceptionEnabled( False )
-
     auth, uid = mapi.getAuthStatus()
     if auth:
         g_uid = uid
@@ -1112,7 +1110,7 @@ def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing
     if g_output_mode == OM_RETN:
         global g_return_val
         g_return_val = reply
-    if str(reply[0]) == "":
+    elif str(reply[0]) == "":
         click.echo("None")
     elif g_output_mode == OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))

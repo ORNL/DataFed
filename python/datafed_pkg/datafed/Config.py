@@ -65,13 +65,10 @@ class API:
         gathered from various sources (see class description for
         details).
 
-        Args:
-            opts: An optional dictionary of settings. Values set by
-                this parameter take priority over other setting
-                sources.
+        :param opts :dict An optional dictionary of settings. Values set
+            by this parameter take priority over other setting sources.
 
-        Raises:
-            Exception: if opts parameter is not a dictionary.
+        :raise: Exception: if opts parameter is not a dictionary.
         """
         self._processOptions( opts )
 
