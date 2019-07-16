@@ -1,22 +1,18 @@
 """
-The Config.API class provides an interface for loading, accessing, and altering
-DataFed client configuration settings. Settings can be set from environment
-variables, server and client configuration files, and directly via CLI options.
-The available settings are listed in the "opt_info" list, which defines the
-key, config file section and name, environment variable name, CLI options, and
-help text for each configuration setting. 
+The DataFed Config module contains a single API class that provides
+a client application-level configuration abstraction. This class is
+optional, but very useful for gathering and presenting all of the
+settings required to enable a client to communicate with a DataFed
+core server.
 
-Configuration source priority:
-1. set programatically
-2. set on command-line
-3. set in client config file
-4. set in server config file
-5. set by environment variable
+The Config.API class is used by the DataFed CommandLib module, which
+integrates command-line options into the settings defined by this
+module. For custom applications, the Config module can also be used
+to easily initialize the low-level MessageLib.API class.
 """
 
 import os
 import configparser
-
 
 OPT_INT     = 0x01
 OPT_BOOL    = 0x02
@@ -25,9 +21,8 @@ OPT_NO_ENV  = 0x08
 OPT_NO_CF   = 0x10
 OPT_NO_CL   = 0x20
 
-opt_info = [
+opt_info = {
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
-
     ["server-cfg-dir","server","config_dir","DATAFED_SERVER_CFG_DIR",0,["--server-cfg-dir"],"Server configuration directory"],
     ["server-cfg-file","server","config_file","DATAFED_SERVER_CFG_FILE",OPT_NO_CF,["--server-cfg-file"],"Server configuration file"],
     ["server-pub-key-file","server","public_key_file","DATAFED_SERVER_PUB_KEY_FILE",0,["--server-pub-key-file"],"Server public key file"],
@@ -40,18 +35,45 @@ opt_info = [
     ["default-ep","general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
     ["verbosity","general","verbosity","DATAFED_DEFAULT_VERBOSITY",OPT_INT,["--verbosity","-v"],"Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."],
     ["interactive","general","interactive","DATAFED_DEFAULT_INTERACT",OPT_BOOL,["-i/-n"],"Start an interactive session"]
-]
+}
 
 class API:
-    "Interact with configuration variables"
+    """"
+    DataFed client configuration class.
+
+    The Config.API class provides an interface for loading, accessing,
+    and altering DataFed client configuration settings. Settings can be
+    set from environment variables, server and client configuration
+    files - or overloaded via CLI options. The available settings are
+    listed in the Config module's "opt_info" attribute, which defines
+    the key, config file section and name, environment variable name,
+    CLI option names, and help text for each configuration setting. 
+
+    Configuration source priority:
+    1. set programatically
+    2. set on command-line
+    3. set in client config file
+    4. set in server config file
+    5. set by environment variable
+    """
 
     def __init__( self, opts = {} ):
-        #self.parser = configparser.ConfigParser()
-        #self._initOptions( opts )
-        self._processOptions( opts )
+        """
+        Config.API class initialization method.
 
-        #for k, v in self.opts.items():
-        #    print( k, " = ", v )
+        Creating a Config.API instance will cause settings to be
+        gathered from various sources (see class description for
+        details).
+
+        Args:
+            opts: An optional dictionary of settings. Values set by
+                this parameter take priority over other setting
+                sources.
+
+        Raises:
+            Exception: if opts parameter is not a dictionary.
+        """
+        self._processOptions( opts )
 
     def _processOptions( self, opts ):
         if not isinstance( opts, dict ):
@@ -62,6 +84,7 @@ class API:
         # 2. Client config file values
         # 3. Server config file values
         # 4. Environment variables
+        # 5. Default (or guessed) values
 
         self.opts = {}
 
@@ -69,8 +92,8 @@ class API:
             self.opts[k] = {val: v, pri: 1}
 
         cfg_file = None
-        #cfg_dir = None
 
+        # Start with any defined environment variables
         self._loadEnvironVars()
 
         # Load server config file, if specified/available
@@ -124,54 +147,92 @@ class API:
 
 
     def _loadEnvironVars( self ):
-        for oi in opt_info:
-            if (not oi[0] in self.opts) and ((oi[4] & OPT_NO_ENV) == 0) and (oi[3] in os.environ) and os.environ[oi[3]]:
-                self.opts[oi[0]] = {"val": os.environ[oi[3]], "pri": 4}
-                tmp = os.environ[oi[3]]
-                if oi[4] & OPT_INT:
+        # Check each defined option for a set and non-empty environment variable
+        # Priority is next to lowest (4)
+        # Values are automatically converted to expected type
+        # Options with OPT_NO_ENV are ignored
+        for k, v in opt_info.items():
+            if (not k in self.opts) and ((v[3] & OPT_NO_ENV) == 0) and (v[2] in os.environ) and os.environ[v[2]]:
+                tmp = os.environ[v[2]]
+                if v[3] & OPT_INT:
                     tmp = int(tmp)
-                elif oi[4] & OPT_BOOL:
+                elif v[3] & OPT_BOOL:
                     tmp = bool(int(tmp))
-                elif oi[4] & OPT_PATH:
+                elif v[3] & OPT_PATH:
                     tmp = os.path.expanduser(tmp)
 
-                self.opts[oi[0]] = {"val": tmp, "pri": 4}
+                self.opts[k] = {"val": tmp, "pri": 4}
 
     def _loadConfigFile( self, cfg_file, priority ):
+        # Read config file and check each defined option for a contained value using section and name
+        # Priority is set by parameter (3 or 4)
+        # Values are automatically converted to expected type
+        # Options with OPT_NO_CF are ignored
         try:
             with open( cfg_file, 'r') as f:
                 config = configparser.ConfigParser()
                 config.read_file(f)
-                #print("cfg:",config)
-                for oi in opt_info:
-                    if ((not oi[0] in self.opts) or self.opts[oi[0]]["pri"] >= priority) and (oi[4] & OPT_NO_CF) == 0:
-                        if config.has_option(oi[1],oi[2]):
-                            tmp = config.get(oi[1],oi[2])
-                            if oi[4] & OPT_INT:
+
+                for k, v in opt_info.items():
+                    if ((not k in self.opts) or self.opts[k]["pri"] >= priority) and (v[3] & OPT_NO_CF) == 0:
+                        if config.has_option(v[0],v[1]):
+                            tmp = config.get(v[0],v[1])
+                            if v[3] & OPT_INT:
                                 tmp = int(tmp)
-                            elif oi[4] & OPT_BOOL:
+                            elif v[3] & OPT_BOOL:
                                 tmp = bool(int(tmp))
-                            elif oi[4] & OPT_PATH:
+                            elif v[3] & OPT_PATH:
                                 tmp = os.path.expanduser(tmp)
 
-                            self.opts[oi[0]] = {"val": tmp, "pri": priority}
+                            self.opts[k] = {"val": tmp, "pri": priority}
         except IOError:
             raise Exception("Error reading from server config file: " + cfg_file)
 
+    def getOpts(self):
+        """
+        Get dictionary of all set configuration options.
+
+        Returns:
+            A dict of set options with values.
+        """
+        opts = {}
+        for k, v in self.opts.items():
+            opts[k] = v["val"]
+
     def get( self, key ):
+        """
+        Get the value of a configuration option.
+
+        Args:
+            key: Configuration option key (see opt_info)
+
+        Returns:
+            Value of option, if set; None otherwise
+        
+        Raises:
+            Exception: If unknown key is provided.
+        """
+        if not key in opt_info:
+            raise Exception("Undefined configuration key")
+
         if key in self.opts:
             return self.opts[key]["val"]
         else:
             return None
 
     def set( self, key, value, save = False ):
-        opt = None
-        for oi in opt_info:
-            if oi[0] == key:
-                opt = oi
-                break
+        """
+        Set the value of an configuration option.
 
-        if not opt:
+        Args:
+            key: Configuration option key (see opt_info)
+            value: New value for option
+            save: If True, save new value to client configuration file.
+
+        Raises:
+            Exception: If unknown key is provided.
+        """
+        if not key in opt_info:
             raise Exception("Undefined configuration key")
 
         if key in self.opts:
@@ -183,9 +244,10 @@ class API:
             with open( self.opts["client_cfg_file"]["val"], 'r+') as f:
                 config = configparser.ConfigParser()
                 config.read_file( f )
-                if not config.has_section( opt[1] ):
-                    config.add_section( opt[1] )
-                config.set( opt[1], opt[2], value )
+                opt = opt_info[key]
+                if not config.has_section( opt[0] ):
+                    config.add_section( opt[0] )
+                config.set( opt[0], opt[1], value )
                 f.seek(0)
                 config.write( f )
 
