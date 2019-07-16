@@ -1,5 +1,14 @@
 """
-DataFed MessageLib provides an API class for creating, sending and receiving protobuf messages. Allows direct communication with DataFed's core service.
+The DataFed MessageLib.API class provides a low-level interface for creating,
+sending and receiving messages to/from a DataFed server. The DataFed message
+interface uses Google's protobuf package, and the messages (requests, replies,
+and data structures) are defined in the *.proto files included in the DataFed
+client package.
+
+The MessageLib.API class provides basic connectivity, authentication, and both
+synchronous ans asynchronous message send/recv methods. Note that, by default,
+received NackReply responses from the server are converted to exceptions;
+however, this can be disabled using the setNackException() method.
 """
 
 import os
@@ -8,8 +17,6 @@ from . import Version_pb2
 from . import SDMS_Anon_pb2 as anon
 from . import SDMS_Auth_pb2 as auth
 from . import Connection
-from . import dfConfig as dfC
-
 
 
 class API:
@@ -82,28 +89,18 @@ class API:
                 pub = pub.decode("utf-8")
                 priv = priv.decode("utf-8")
 
-        #print("make conn", server_host, server_port, serv_pub, pub, priv )
-
         self._conn = Connection.Connection( server_host, server_port, serv_pub, pub, priv )
-
-        #print("register")
 
         self._conn.registerProtocol(anon)
         self._conn.registerProtocol(auth)
 
-        #print("check ver")
-
+        # Check for compatible protocol versions
         reply, mt = self.sendRecv(anon.VersionRequest(),5000)
         if reply == None:
             raise Exception( "Timeout waiting for server connection." )
 
-        #reply, mt = self._recv()
-        #print "ver reply:",reply
-
         if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
             raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
-
-        #print("get auth")
 
         # Check if server authenticated based on keys
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )

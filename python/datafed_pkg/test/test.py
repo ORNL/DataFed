@@ -6,20 +6,20 @@ auth = cmd.init()
 if not auth:
     cmd.login("stansberrydv","badpass")
 
-reply = cmd.exec("user all -o 0 -c 1")
+reply = cmd.command("user all -o 0 -c 1")
 print( reply )
 
-reply = cmd.exec("user collab -o 0 -c 1")
+reply = cmd.command("user collab -o 0 -c 1")
 print( reply )
 
-reply = cmd.exec("user view stansberrydv")
+reply = cmd.command("user view stansberrydv")
 print( reply )
 
-reply = cmd.exec("user view xcxcc")
+reply = cmd.command("user view xcxcc")
 print( reply )
 
 try:
-    reply = cmd.exec("user view")
+    reply = cmd.command("user view")
     print( "cmd should have failed" )
 except Exception as e:
     print("expected exception:",str(e))

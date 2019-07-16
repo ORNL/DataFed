@@ -61,8 +61,8 @@ router.get('/create', function (req, res) {
                     //if ( isNaN(alloc_sz) || alloc_sz <= 0 )
                     if (  req.queryParams.sub_alloc <= 0 )
                         throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
-                    if ( req.queryParams.sub_alloc > alloc.tot_size ) // Ok to over-allocate across projects
-                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: " + alloc.tot_size +")"];
+                    if ( req.queryParams.sub_alloc > alloc.max_size ) // Ok to over-allocate across projects
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: " + alloc.max_size +")"];
 
                     proj_data.sub_repo = req.queryParams.sub_repo;
                     proj_data.sub_alloc = req.queryParams.sub_alloc;
@@ -189,8 +189,8 @@ router.get('/update', function (req, res) {
                         var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
                         if (  req.queryParams.sub_alloc <= 0 )
                             throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
-                        if ( req.queryParams.sub_alloc > alloc.tot_size )
-                            throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+alloc.tot_size+")"];
+                        if ( req.queryParams.sub_alloc > alloc.max_size )
+                            throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+alloc.max_size+")"];
 
                         obj.sub_repo = req.queryParams.sub_repo;
                         obj.sub_alloc = req.queryParams.sub_alloc;

@@ -618,7 +618,7 @@ module.exports = ( function() {
         var id,i=a_id.indexOf('/');
 
         if ( i != -1 ) {
-            if ( !a_id.startsWith('d/') && !a_id.startsWith('c/'))
+            if ( !a_id.startsWith('d/') && !a_id.startsWith('c/') && !a_id.startsWith('p/'))
                 throw [ obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'" ];
             id = a_id;
         } else {
