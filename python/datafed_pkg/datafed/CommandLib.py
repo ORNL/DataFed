@@ -281,10 +281,10 @@ def data():
 
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
-@click.argument("id")
-def data_view(id,details):
+@click.argument("df_id", metavar="id")
+def data_view(df_id,details):
     msg = auth.RecordViewRequest()
-    msg.id = resolve_id(id)
+    msg.id = resolve_id(df_id)
     if details:
         msg.details = True
     elif not details:
@@ -353,7 +353,7 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
 
 
 @data.command(name='update',help="Update existing data record")
-@click.argument("df_id")
+@click.argument("df_id", metavar="id")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -420,7 +420,7 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
 
 
 @data.command(name='delete',help="Delete existing data record")
-@click.argument("df_id", nargs=-1)
+@click.argument("df_id", metavar="id", nargs=-1)
 def data_delete(df_id):
     resolved_list = []
     for ids in df_id:
@@ -435,7 +435,7 @@ def data_delete(df_id):
 
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
-@click.argument("df_id", nargs=-1)
+@click.argument("df_id", metavar="id", nargs=-1)
 @click.option("-fp","--filepath",type=str,required=True,help="Destination to which file is to be downloaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-ep","--endpoint",type=str,required=False,help="The endpoint to which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
@@ -487,7 +487,7 @@ def data_get(df_id,filepath,endpoint,wait): #Multi-get will initiate one transfe
 
 
 @data.command(name='put',help="Put (upload) raw data to DataFed")
-@click.argument("df_id")
+@click.argument("df_id", metavar="id")
 @click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 @click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
@@ -511,7 +511,7 @@ def coll():
 
 
 @coll.command(name='view',help="View collection")
-@click.argument("df_id")
+@click.argument("df_id", metavar="id")
 def coll_view(df_id):
     msg = auth.CollViewRequest()
     msg.id = resolve_coll_id(df_id)
@@ -536,7 +536,7 @@ def coll_create(title,alias,description,collection):
 
 
 @coll.command(name='update',help="Update existing collection")
-@click.argument("df_id")
+@click.argument("df_id", metavar="id")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -551,7 +551,7 @@ def coll_update(df_id,title,alias,description):
 
 
 @coll.command(name='delete',help="Delete existing collection")
-@click.argument("df_id", nargs=-1)
+@click.argument("df_id", metavar="id", nargs=-1)
 def coll_delete(df_id):
     resolved_list = []
     for ids in df_id:
@@ -613,7 +613,7 @@ def query_list(offset,count):
 
 
 @query.command(name='exec',help="Execute a stored query by ID")
-@click.argument("df_id")
+@click.argument("df_id", metavar="id")
 def query_exec(df_id):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
@@ -722,15 +722,15 @@ def project_list(owner,admin,member):
         member = True
 
     msg = auth.ProjectListRequest()
-    msg.by_owner = owner
-    msg.by_admin = admin
-    msg.by_member = member
+    msg.as_owner = owner
+    msg.as_admin = admin
+    msg.as_member = member
     reply = mapi.sendRecv( msg )
-    genericReplyHandler( reply, print_proj_listing )
+    genericReplyHandler( reply, print_listing ) #print listing prints "Alias" despite proj not having any
 
 
 @project.command(name='view',help="View project specified by ID")
-@click.argument("df_id")
+@click.argument("df_id", metavar="id")
 def project_view(df_id):
     msg = auth.ProjectViewRequest()
     msg.id = resolve_id(df_id)
@@ -749,7 +749,7 @@ def shared():
 @shared.command(name="users",help="List users with shared data")
 def shared_users():
     msg = auth.ACLByUserRequest()
-    reply, mt = mapi.sendRecv( msg )
+    reply = mapi.sendRecv( msg )
     genericReplyHandler( reply, print_user_listing )
 
 
@@ -757,11 +757,11 @@ def shared_users():
 def shared_projects():
     msg = auth.ACLByProjRequest()
     reply = mapi.sendRecv( msg )
-    genericReplyHandler( reply, print_proj_listing )
+    genericReplyHandler( reply, print_proj_listing ) #Haven't tested
 
 
 @shared.command(name="list",help="List data shared by user/project ID")
-@click.argument("df_id")
+@click.argument("df_id", metavar = "id")
 def shared_list(df_id):
     id2 = resolve_id(df_id)
 
@@ -807,7 +807,7 @@ def xfr_list(time_from,to,since,status): # TODO: Absolute time is not user frien
 
 
 @xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer id ID omitted")
-@click.argument("df_id",required=False,default="MOST RECENT XFR ID") # Does this have to be a dynamic global variable?
+@click.argument("df_id", metavar="id",required=False,default="MOST RECENT XFR ID") # Does this have to be a dynamic global variable?
 def xfr_stat(df_id):
     if df_id:
         msg = auth.XfrViewRequest()
@@ -886,7 +886,7 @@ def ep_list():
 
 @cli.command(name='ident',help="Set current user or project identity to ID (omit for self)") # Does this actually switch the identity??
 @click.option("-s","--show",is_flag=True,help="Show current identity")
-@click.argument("df_id",required=False)
+@click.argument("df_id", metavar="id",required=False)
 def ident(df_id,show):
     global g_cur_sel
     global g_cur_coll
@@ -1097,6 +1097,8 @@ def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing
     if g_output_mode == OM_RETN:
         global g_return_val
         g_return_val = reply
+    if str(reply[0]) == "":
+        click.echo("None")
     elif g_output_mode == OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
     else:
@@ -1107,7 +1109,7 @@ def print_listing(reply):
     df_idx = 1
     global g_list_items
     g_list_items = []
-    click.echo("{:3} {:12} ({:20} {}".format("","DataFed ID","Alias)","Title"))
+    #click.echo("{:3} {:12} ({:20} {}".format("","DataFed ID","Alias)","Title")) #because projects don't have aliases
     for i in reply.item:
         g_list_items.append(i.id)
         if i.alias:
@@ -1127,7 +1129,7 @@ def print_user_listing( reply ):
         df_idx += 1
 
 
-def print_proj_listing(reply):
+def print_proj_listing(reply): #reply is a ListingReply message
     df_idx = 1
     global g_list_items
     g_list_items = []
