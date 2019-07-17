@@ -313,6 +313,7 @@ def data_view(df_id,details):
 @click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
+@click.option("-p", "--topic", type=str, required=False, help="Data Record topic, using period ('.') as delimiter")
 @click.option("-kw","--key-words",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks")
 @click.option("-df","--data-file",type=str,required=False,help="Specify the path to local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.")
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
@@ -321,15 +322,14 @@ def data_view(df_id,details):
 @click.option("-c","--collection",type=str,required=False, default= g_cur_coll, help="Parent collection ID/alias (default is current working collection)")
 @click.option("-r","--repository",type=str,required=False,help="Repository ID")
 @click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
-def data_create(title,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies): #cTODO: FIX
+def data_create(title,alias,description,topic,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies): #cTODO: FIX
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
-
     msg = auth.RecordCreateRequest()
     msg.title = title
     if description: msg.desc = description
- #  msg.topic = "" # TODO: Not yet implemented
+    if topic: msg.topic = topic #
     if key_words: msg.keyw = key_words   # TODO: Determine input format for keywords -- list? quotation marks? commas?
     if alias: msg.alias = alias
     if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
@@ -372,6 +372,7 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
+@click.option("-p", "--topic", type=str, required=False, help="Data Record topic, using period ('.') as delimiter")
 @click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)")
 @click.option("-df","--data-file",type=str,required=False,help="Local raw data file")
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
@@ -379,7 +380,7 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
 @click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 @click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
-def data_update(df_id,title,alias,description,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove):
+def data_update(df_id,title,alias,description,topic,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove):
     if metadata and metadata_file:
         click.echo("Cannot specify both --metadata and --metadata-file options")
         return
@@ -387,6 +388,7 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
     msg.id = resolve_id(df_id)
     if title is not None: msg.title = title
     if description is not None: msg.desc = description
+    if topic: msg.topic = topic
     if key_words is not None: msg.keyw = key_words # how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
     if alias is not None: msg.alias = alias
     if extension is not None:
@@ -1112,7 +1114,7 @@ def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing
     if g_output_mode == OM_RETN:
         global g_return_val
         g_return_val = reply
-    if str(reply[0]) == "":
+    elif str(reply[0]) == "":
         click.echo("None")
     elif g_output_mode == OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
