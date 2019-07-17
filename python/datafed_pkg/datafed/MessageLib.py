@@ -3,7 +3,7 @@ The DataFed MessageLib module contains a single API class that provides
 a low-level client interface for creating, sending, and receiving
 messages over a connection with a DataFed server. The DataFed message
 interface uses Google's protobuf package, and the messages (requests,
-replies, and data structures) are defined in the *.proto files included
+replies, and data structures) are defined in the \*.proto files included
 in the DataFed client package. This module relies on the DataFed
 Connection module which sends and receives encoded messages over a
 secure ZeroMQ link.
@@ -25,7 +25,7 @@ class API:
     for creating, sending, and receiving messages to/from a DataFed
     server. The DataFed message interface uses Google's protobuf
     package, and the messages (requests, replies, and data structures)
-    are defined in the *.proto files included in the DataFed client
+    are defined in the \*.proto files included in the DataFed client
     package. Basic functionality includes connectivity, authentication,
     and both synchronous ans asynchronous message send/recv methods.
     """
@@ -53,24 +53,24 @@ class API:
         getAuthStatus() methods may be used to assess status. Also
         checks client and server protocol versions for compatibility.
 
-        Args:
-            server_host: (str) The DataFed core server hostname or IP
-                address.
-            server_port: (int) DataFed core server port number.
-            server_pub_key_file: (str) DataFed core server public key
-                file (full path).
-            server_cfg_dir: (str) DataFed core server configuration
-                directory.
-            client_pub_key_file: (str) Client public key file (full
-                path).
-            client_priv_key_file: (str) Client private key file (full
-                path).
-            client_cfg_dir: (str) Client configuration directory.
-            manual_auth: (bool) Client intends to manually
-                authenticate if True. Bypasses client key loading.
+        :param server_host: The DataFed core server hostname or IP address.
+        :type: str
+        :param server_port: DataFed core server port number.
+        :type: int
+        :param server_pub_key_file: DataFed core server public key file (full path).
+        :type: str
+        :param server_cfg_dir: DataFed core server configuration directory.
+        :type: str
+        :param client_pub_key_file: Client public key file (full path).
+        :type: str
+        :param client_priv_key_file: Client private key file (full path).
+        :type: str
+        :param client_cfg_dir: Client configuration directory.
+        :type: str
+        :param manual_auth: Client intends to manually authenticate if True. Bypasses client key loading.
+        :type: bool
 
-        Raises:
-            Exception: On server key load error, timeout, or
+        :raises Exception: On server key load error, timeout, or
                 incompatible protocols.
         """
 
@@ -153,8 +153,9 @@ class API:
         """
         Determines if client security keys were loaded.
 
-        Returns:
-            True if keys were loaded; false otherwise.
+        :return: True if keys were loaded; false otherwise.
+
+        :rtype: bool
         """
         return self._keys_loaded
 
@@ -165,8 +166,9 @@ class API:
         Note that keys with valid format but invalid value will cause
         a connection failure (exception or timeout).
 
-        Returns:
-            True if client key formats were valid; false otherwise.
+        :return: True if client key formats were valid; false otherwise.
+
+        :rtype: bool
         """
         return self._keys_valid
 
@@ -177,6 +179,8 @@ class API:
         :return: A tuple of (bool,string) - The bool is True if client
             is authenticated; False otherwise. IF authenticated, the
             string part is the DataFed user ID of the client.
+
+        :rtype: (bool,str)
         """
         return self._auth, self._uid
 
@@ -185,8 +189,10 @@ class API:
         Perform manual client authentication with DataFed user ID and
         password.
 
-        :param uid :str Client's DataFed user ID.
-        :param  password :str Client's DataFed password.
+        :param uid: Client's DataFed user ID.
+        :type: str
+        :param  password: Client's DataFed password.
+        :type: str
 
         :raises Exception: On communication timeout or authentication failure.
         """
@@ -210,6 +216,8 @@ class API:
         Get NackReply exception enable state.
 
         :return: True if Nack exceptions are enabled; False otherwise.
+
+        :rtype: bool
         """
         return self._nack_except
 
@@ -222,7 +230,8 @@ class API:
         containing the error message from the NackReply. When disabled,
         NackReply messages are returned like any other reply.
 
-        :param enabled :bool Sets exceptions to enabled (True) or disabled (False)
+        :param enabled: Sets exceptions to enabled (True) or disabled (False)
+        :type: bool
         """
         if enabled:
             self._nack_except = True
@@ -234,17 +243,18 @@ class API:
         Synchronously send a message then receive a reply to/from
         DataFed server.
 
-        :param msg : Protobuf message to send to the server
+        :param msg: Protobuf message to send to the server
             timeout: Timeout in milliseconds
+        :type: object
 
-        Returns:
-            A tuple consisting of (reply, type), where reply is the
-            received protobuf message reply and type is the
+        :return: A tuple consisting of (reply, type), where reply is
+            the received protobuf message reply and type is the
             corresponding message type/name (string) of the reply.
             On timeout, returns (None,None)
 
-        Raises:
-            Exception: On message context mismatch (out of sync)
+        :rtype: (obj,str)
+
+        :raises Exception: On message context mismatch (out of sync)
         """
         self.send( msg )
         reply, mt, ctxt = self.recv( timeout )
@@ -258,12 +268,13 @@ class API:
         """
         Asynchronously send a protobuf message to DataFed server.
 
-        Args:
-            msg: Protobuf message to send to the server
+        :param msg: Protobuf message to send to the server
+        :type: object
 
-        Returns:
-            Auto-generated message re-association context int value
-            (match to context in subsequent reply). 
+        :return: Auto-generated message re-association context int
+            value (match to context in subsequent reply).
+
+        :rtype: int
         """
         self._ctxt += 1
         self._conn.send( msg, self._ctxt )
@@ -273,19 +284,19 @@ class API:
         """
         Receive a protobuf message (reply) from DataFed server.
 
-        Args:
-            timeout: Timeout in milliseconds (0 = don't wait, -1 =
+        :param timeout: Timeout in milliseconds (0 = don't wait, -1 =
                 wait forever).
+        :type: int
 
-        Returns:
-            Tuple of (reply, type, context) where reply is the
+        :raises Exception: On NackReply (if Nack exceptions enabled).
+
+        :return: Tuple of (reply, type, context) where reply is the
             received protobuf message, type is the corresponding
             message type/name (string) of the reply, and context
             is the reassociation value (int). On timeout, returns
             (None,None,None).
 
-        Raises:
-            Exception: On NackReply (if Nack exceptions enabled).
+        :rtype: (obj,str,int)
         """
         reply, msg_type, ctxt = self._conn.recv( timeout )
         if reply == None:

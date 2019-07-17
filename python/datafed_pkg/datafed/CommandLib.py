@@ -111,14 +111,12 @@ def init():
         raise Exception("init function can only be called once.")
 
     # Get config options
-    config = Config.API()
-    opts = config.getOpts()
+    opts = cfg.getOpts()
 
     #print( "opts:", opts )
 
     mapi = MessageLib.API( **opts )
     mapi.setNackExceptionEnabled( False )
-
     auth, uid = mapi.getAuthStatus()
     if auth:
         g_uid = uid
