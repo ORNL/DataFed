@@ -446,7 +446,7 @@ def data_delete(df_id):
     msg = auth.RecordDeleteRequest()
     msg.id.extend(resolved_list)
     reply = mapi.sendRecv(msg)
-    print_ack_reply()
+    genericReplyHandler(reply, print_ack_reply())
 
 
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
@@ -578,7 +578,7 @@ def coll_delete(df_id):
     msg = auth.CollDeleteRequest()
     msg.id.extend(resolved_list)
     reply = mapi.sendRecv(msg)
-    print_ack_reply()
+    genericReplyHandler(reply, print_ack_reply())
 
 
 @coll.command(name='add',help="Add data/collection ITEM_ID to collection COLL_ID")

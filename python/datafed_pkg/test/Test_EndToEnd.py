@@ -148,6 +148,7 @@ def string_generator(min_char=1, max_char=501, special_characters=True, \
 
     """
     all_char = string.ascii_letters + string.digits + string.punctuation
+    all_char = all_char.replace('"', "")
     #For full text details -- title and desc
     spec_char = string.ascii_letters + string.digits + "_" + "-" + "."
     #Restricted selection matching SDMS requirements for alias and keywords
@@ -586,11 +587,10 @@ class TestDataBasic(ut.TestCase):
         datafed.CommandLib.init()
         self.dr = DataRecord.generate(True)
         create_reply = cmd.command(self.dr.as_py_input()) #Returns tuple object (protobuf msg, msg type)
-        print(create_reply)
-        self.assertIs(self.dr.alias, create_reply[0].data[0].alias, msg = "Alias of intial data record create does not match.")
+        self.assertEqual(self.dr.alias, create_reply[0].data[0].alias, msg = "Alias of intial data record create does not match.")
         try:
-            del_reply = cmd.command('data delete {}'.format(create_reply[0].data[0].id)) #delete using id returned
-            self.assertIs(del_reply[1], "AckReply", msg = "Delete of initial data record failed.")
+            del_reply = cmd.command('data delete {}'.format(create_reply[0].data[0].id))
+            self.assertEqual(del_reply[1], 'AckReply', msg = "Delete of initial data record failed.")
         except AssertionError:
             print("Manual delete required")
 
