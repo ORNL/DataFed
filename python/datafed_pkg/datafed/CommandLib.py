@@ -1,22 +1,23 @@
-"""
-The DataFed CommandLib module provides a high-level, text-based client
-interface for sending commands to, and receiving replies from, a DateFed
-server. Comands are structured hierarchically, with sub-commands taking
-specific options and arguments.
-
-The CommandLib module is meant to be embedded in a Python script or
-application, and can be used in two ways: 1) interactively via the run()
-function, or 2) programmatically via the exec() function.
-
-For interactive applications, the run() function will prompt the user for
-input, then print a response. Optionally, the run() method can loop until
-the user chooses to exit. The DataFed CLI is a very thin wrapper around
-the CommandLib run() function.
-
-The programmatic interface consists of the init(), login(), and command()
-functions. The command() function executes a single command and returns
-a reply in the form of a Google protobuf message.
-"""
+## @package CommandLib
+# @brief Provides a high-level client interface to the DataFed server
+# 
+# The DataFed CommandLib module provides a high-level, text-based client
+# interface for sending commands to, and receiving replies from, a DateFed
+# server. Comands are structured hierarchically, with sub-commands taking
+# specific options and arguments.
+#
+# The CommandLib module is meant to be embedded in a Python script or
+# application, and can be used in two ways: 1) interactively via the run()
+# function, or 2) programmatically via the exec() function.
+#
+# For interactive applications, the run() function will prompt the user for
+# input, then print a response. Optionally, the run() method can loop until
+# the user chooses to exit. The DataFed CLI is a very thin wrapper around
+# the CommandLib run() function.
+#
+# The programmatic interface consists of the init(), login(), and command()
+# functions. The command() function executes a single command and returns
+# a reply in the form of a Google protobuf message.
 
 from __future__ import division, print_function, absolute_import #, unicode_literals
 import shlex
@@ -45,26 +46,25 @@ from . import version
 if sys.version_info.major == 3:
     unicode = str
 
-mapi = None
-cfg = Config.API()
+_mapi = None
+_cfg = Config.API()
+_return_val = None
+_uid = None
+_cur_sel = None
+_cur_coll = "root"
+_cur_alias_prefix = ""
+_list_items = []
+_interactive = False
+_verbosity = 1
+_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
+_ep_default = _cfg.get("default_ep")
+_ep_cur = _ep_default
 
-g_return_val = None
-g_uid = None
-g_cur_sel = None
-g_cur_coll = "root"
-g_cur_alias_prefix = ""
-g_list_items = []
-g_interactive = False
-g_verbosity = 1
-g_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
-g_ep_default = cfg.get("default_ep")
-g_ep_cur = g_ep_default
+_OM_TEXT = 0
+_OM_JSON = 1
+_OM_RETN = 2
 
-OM_TEXT = 0
-OM_JSON = 1
-OM_RETN = 2
-
-g_output_mode = OM_TEXT
+g_output_mode = _OM_TEXT
 
 def run():
     info(1,"DataFed CLI Ver.", version )
@@ -74,9 +74,9 @@ def run():
     try:
         while True:
             try:
-                if g_interactive == False:
+                if _interactive == False:
                     cli(standalone_mode=True)
-                    if g_interactive == False:
+                    if _interactive == False:
                         break
                     for i in cli.params:
                         i.hidden = True
@@ -87,14 +87,14 @@ def run():
                     cli(prog_name="datafed",args=_args,standalone_mode=True)
             except SystemExit as e:
                 #print("Sys exit")
-                if g_interactive == False:
+                if _interactive == False:
                     break
             except KeyboardInterrupt as e:
                 #print("key inter")
                 break
             except Exception as e:
                 click.echo(e)
-                if g_interactive == False:
+                if _interactive == False:
                     break
 
     except Exception as e:
@@ -102,53 +102,62 @@ def run():
 
     info(1,"Goodbye!")
 
+##
+# @brief Initialize Commandlib for programmatic access
+#
 def init():
-    global mapi
-    global g_uid
-    global g_cur_sel
+    global _mapi
+    global _uid
+    global _cur_sel
 
-    if mapi:
+    if _mapi:
         raise Exception("init function can only be called once.")
 
     # Get config options
-    opts = cfg.getOpts()
+    opts = _cfg.getOpts()
 
     #print( "opts:", opts )
 
-    mapi = MessageLib.API( **opts )
-    mapi.setNackExceptionEnabled( False )
-    auth, uid = mapi.getAuthStatus()
+    _mapi = MessageLib.API( **opts )
+    _mapi.setNackExceptionEnabled( False )
+    auth, uid = _mapi.getAuthStatus()
     if auth:
-        g_uid = uid
-        g_cur_sel = uid
+        _uid = uid
+        _cur_sel = uid
 
     return auth
 
 
+##
+# @brief Manually authenticate client
+#
 def login( uid, password ):
-    global g_uid
-    global g_cur_sel
+    global _uid
+    global _cur_sel
 
-    if not mapi:
+    if not _mapi:
         raise Exception("login called before init.")
 
-    if g_uid:
+    if _uid:
         raise Exception("login can only be called once.")
 
-    mapi.manualAuth( uid, password )
+    _mapi.manualAuth( uid, password )
 
-    g_uid = uid
-    g_cur_sel = uid
+    _uid = uid
+    _cur_sel = uid
 
+##
+# @brief Execute a client command
+#
 def command( command ):
-    if not mapi:
+    if not _mapi:
         raise Exception("exec called before init.")
 
-    global g_return_val
+    global _return_val
     global g_output_mode
 
-    g_return_val = None
-    g_output_mode = OM_RETN
+    _return_val = None
+    g_output_mode = _OM_RETN
 
     try:
         _args = shlex.split( command )
@@ -158,12 +167,12 @@ def command( command ):
     except click.ClickException as e:
         raise Exception(e.format_message())
 
-    return g_return_val
+    return _return_val
 
 # Verbosity-aware print
 def info( level, *args ):
-    global g_verbosity
-    if level <= g_verbosity:
+    global _verbosity
+    if level <= _verbosity:
         print( *args )
 
 # -----------------------------------------------------------------------------------------------------------------
@@ -173,17 +182,17 @@ def info( level, *args ):
 def set_output_json(ctx, param, value):
     global g_output_mode
     if value:
-        g_output_mode = OM_JSON
+        g_output_mode = _OM_JSON
 
 def set_output_text(ctx, param, value):
     global g_output_mode
     if value:
-        g_output_mode = OM_TEXT
+        g_output_mode = _OM_TEXT
 
 ##############################################################################
 
-# Allows command matching by unique suffix
 class AliasedGroup(click.Group):
+    # Allows command matching by unique suffix
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
@@ -207,11 +216,11 @@ def my_param_memo(f, param):
 
 def config_options( cfg ):
     def wrapper(f):
-        for k, v in Config.opt_info.items():
+        for k, v in Config._opt_info.items():
             #OPT_NO_CL
-            if v[3] & Config.OPT_INT:
+            if v[3] & Config._OPT_INT:
                 my_param_memo(f,click.Option(v[4],type=int,default=cfg.get(k),help=v[5]))
-            elif v[3] & Config.OPT_BOOL:
+            elif v[3] & Config._OPT_BOOL:
                 my_param_memo(f,click.Option(v[4],is_flag=True,default=cfg.get(k),help=v[5]))
             else:
                 my_param_memo(f,click.Option(v[4],type=str,default=cfg.get(k),help=v[5]))
@@ -222,28 +231,28 @@ def config_options( cfg ):
 
 #------------------------------------------------------------------------------
 # Top-level group with global options
-@click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=g_ctxt_settings)
+@click.group(cls=AliasedGroup,invoke_without_command=True,context_settings=_ctxt_settings)
 @click.option("-m","--manual-auth",is_flag=True,help="Force manual authentication")
 @click.option("-j", "--json", is_flag=True,callback=set_output_json,help="Set CLI output format to JSON, when applicable.")
 @click.option("-t","--text",is_flag=True,callback=set_output_text,help="Set CLI output format to human-friendly text.")
-@config_options( cfg )
+@config_options( _cfg )
 @click.pass_context
 def cli(ctx,*args,**kwargs):
-    global g_interactive
-    global g_verbosity
+    global _interactive
+    global _verbosity
 
     #print("ctx params",ctx.params)
 
     if ctx.params["verbosity"] != None:
-        g_verbosity = ctx.params["verbosity"]
+        _verbosity = ctx.params["verbosity"]
 
-    if not g_interactive and ctx.params["i"]:
-        g_interactive = True
+    if not _interactive and ctx.params["i"]:
+        _interactive = True
 
-    if not g_interactive and ctx.invoked_subcommand is None:
+    if not _interactive and ctx.invoked_subcommand is None:
         click.echo("No command specified.")
         click.echo(ctx.get_help())
-    elif mapi == None:
+    elif _mapi == None:
         _initialize(ctx.params)
 
 #for i in cli.params:
@@ -257,33 +266,33 @@ def cli(ctx,*args,**kwargs):
 @click.argument("df-id", required=False)
 @click.pass_context
 def ls(ctx,df_id,offset,count):
-    global g_verbosity
-    global g_cur_coll
+    global _verbosity
+    global _cur_coll
     msg = auth.CollReadRequest()
     if df_id is not None:
         msg.id = resolve_coll_id(df_id)
     else:
-        msg.id = g_cur_coll
+        msg.id = _cur_coll
     msg.count = count
     msg.offset = offset
 
-    if g_verbosity > 1:
+    if _verbosity > 1:
         msg.details = True
     else:
         msg.details = False
 
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_listing )
 
 
 @cli.command(help="Print or change current working collection")
 @click.argument("df-id",required=False)
 def wc(df_id):
-    global g_cur_coll
+    global _cur_coll
     if df_id is not None:
-        g_cur_coll = resolve_coll_id(df_id)
+        _cur_coll = resolve_coll_id(df_id)
     else:
-        click.echo(g_cur_coll)
+        click.echo(_cur_coll)
 
 # ------------------------------------------------------------------------------
 # Data command group
@@ -303,7 +312,7 @@ def data_view(df_id,details):
     elif not details:
         msg.details = False
 
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_data )
 
 
@@ -316,7 +325,7 @@ def data_view(df_id,details):
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
-@click.option("-c","--collection",type=str,required=False, default= g_cur_coll, help="Parent collection ID/alias (default is current working collection)")
+@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias (default is current working collection)")
 @click.option("-r","--repository",type=str,required=False,help="Repository ID")
 @click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 def data_create(title,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies): #cTODO: FIX
@@ -354,15 +363,15 @@ def data_create(title,alias,description,key_words,data_file,extension,metadata,m
                 dep.id = item[1]
             else: dep.alias = item[1]
     if not data_file:
-        reply = mapi.sendRecv(msg)
+        reply = _mapi.sendRecv(msg)
         genericReplyHandler(reply,print_data)
 
     if data_file:
-        create_reply = mapi.sendRecv(msg)
+        create_reply = _mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
         put_data(df_id=create_reply[0].data[0].id,gp=data_file,wait=False,extension=None)
 
-#TODO Handle return value in OM_RETV
+#TODO Handle return value in _OM_RETV
 
 
 @data.command(name='update',help="Update existing data record")
@@ -422,14 +431,14 @@ def data_update(df_id,title,alias,description,key_words,data_file,extension,meta
                 dep.id = item[1]
             else: dep.alias = item[1]
     if not data_file:
-        reply = mapi.sendRecv(msg)
+        reply = _mapi.sendRecv(msg)
         genericReplyHandler(reply, print_data)
     if data_file:
-        update_reply, mt = mapi.sendRecv(msg)
+        update_reply, mt = _mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
         put_data(df_id=update_reply.data[0].id,gp=data_file,wait=False,extension=None)
 
-    #TODO Handle return value in OM_RETV
+    #TODO Handle return value in _OM_RETV
 
 
 @data.command(name='delete',help="Delete existing data record")
@@ -438,12 +447,12 @@ def data_delete(df_id):
     resolved_list = []
     for ids in df_id:
         resolved_list.append(resolve_id(ids))
-    if g_interactive:
+    if _interactive:
         if not click.confirm("Do you want to delete record/s {} ?".format(resolved_list)):
             return
     msg = auth.RecordDeleteRequest()
     msg.id.extend(resolved_list)
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     print_ack_reply()
 
 
@@ -467,30 +476,30 @@ def data_get(df_id,filepath,endpoint,wait): #Multi-get will initiate one transfe
             resolved_list.append(resolve_id(ids))
         msg.id.extend(resolved_list)
         msg.path = gp
-        reply = mapi.sendRecv(msg)
+        reply = _mapi.sendRecv(msg)
         xfr_ids = []
         replies = []
         for xfrs in reply[0].xfr:
-            if g_output_mode == OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
-            elif g_output_mode == OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
+            if g_output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
+            elif g_output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
             xfr_ids.append(xfrs.id)
         if wait:
-            if g_verbosity >= 1 and g_output_mode == OM_TEXT: click.echo("Waiting")
-            elif g_output_mode == OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+            if _verbosity >= 1 and g_output_mode == _OM_TEXT: click.echo("Waiting")
+            elif g_output_mode == _OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
             while wait is True:
                 time.sleep(3)
                 for xfrs in xfr_ids:
                     update_msg = auth.XfrViewRequest()
                     update_msg.xfr_id = xfrs
-                    reply = mapi.sendRecv(update_msg)
+                    reply = _mapi.sendRecv(update_msg)
                     check = reply[0].xfr[0]
                     if check.status >=3:
                         replies.append(reply)
                         wait = False
                     statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
                     xfr_status = statuses.get(check.status, "None")
-                    if g_output_mode == OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
-                    elif g_verbosity >= 1 and g_output_mode == OM_TEXT: click.echo(
+                    if g_output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
+                    elif _verbosity >= 1 and g_output_mode == _OM_TEXT: click.echo(
                         "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
             for xfrs in replies:
                 genericReplyHandler(xfrs, print_xfr_stat)
@@ -513,7 +522,7 @@ def data_put(df_id,filepath,wait,endpoint,extension):
         put_data(df_id,gp,wait,extension)
     elif gp is None:
         click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
-    #TODO Handle return value in OM_RETV
+    #TODO Handle return value in _OM_RETV
 
 
 # ------------------------------------------------------------------------------
@@ -528,7 +537,7 @@ def coll():
 def coll_view(df_id):
     msg = auth.CollViewRequest()
     msg.id = resolve_coll_id(df_id)
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_coll )
 
 
@@ -544,7 +553,7 @@ def coll_create(title,alias,description,collection):
     if description is not None: msg.desc = description
     if resolve_coll_id(collection) is not None: msg.parent_id = resolve_coll_id(collection)
     click.echo(msg)
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     genericReplyHandler(reply, print_coll)
 
 
@@ -559,7 +568,7 @@ def coll_update(df_id,title,alias,description):
     if title is not None: msg.title = title
     if alias is not None: msg.alias = alias
     if description is not None: msg.desc = description
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     genericReplyHandler( reply, print_coll )
 
 
@@ -569,13 +578,13 @@ def coll_delete(df_id):
     resolved_list = []
     for ids in df_id:
         resolved_list.append(resolve_coll_id(ids))
-    if g_interactive:
+    if _interactive:
         click.echo("Warning: this will delete all data records and collections contained in the specified collection(s).")
         if not click.confirm("Do you want to delete collection(s) {} ?".format(resolved_list)):
             return
     msg = auth.CollDeleteRequest()
     msg.id.extend(resolved_list)
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     print_ack_reply()
 
 
@@ -583,12 +592,12 @@ def coll_delete(df_id):
 @click.argument("item_id")
 @click.argument("coll_id")
 def coll_add(item_id,coll_id):
-    global g_verbosity
+    global _verbosity
     msg = auth.CollWriteRequest()
     msg.id = resolve_coll_id(coll_id)
     msg.add.append(resolve_id(item_id))
-    reply, mt = mapi.sendRecv(msg)
-    if g_verbosity >= 1:
+    reply, mt = _mapi.sendRecv(msg)
+    if _verbosity >= 1:
         if mt == "ListingReply": # TODO: Should be AckReply
             click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
 
@@ -597,12 +606,12 @@ def coll_add(item_id,coll_id):
 @click.argument("item_id")
 @click.argument("coll_id")
 def coll_rem(item_id,coll_id):
-    global g_verbosity
+    global _verbosity
     msg = auth.CollWriteRequest()
     msg.id = resolve_coll_id(coll_id)
     msg.rem.append(resolve_id(item_id))
-    reply, mt = mapi.sendRecv(msg)
-    if g_verbosity >= 1:
+    reply, mt = _mapi.sendRecv(msg)
+    if _verbosity >= 1:
         if mt == "ListingReply": # TODO: Should be AckReply
             click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
 
@@ -620,7 +629,7 @@ def query_list(offset,count):
     msg = auth.QueryListRequest()
     msg.offset = offset
     msg.count = count
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_listing )
     #TODO: Figure out verbosity-dependent replies
 
@@ -630,7 +639,7 @@ def query_list(offset,count):
 def query_exec(df_id):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_listing )
 
 
@@ -689,7 +698,7 @@ def user_collab(offset,count):
     msg = auth.UserListCollabRequest()
     msg.offset = offset
     msg.count = count
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
 
     genericReplyHandler( reply, print_user_listing )
 
@@ -701,7 +710,7 @@ def user_all(offset,count):
     msg = auth.UserListAllRequest()
     msg.offset = offset
     msg.count = count
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
 
     genericReplyHandler( reply, print_user_listing )
 
@@ -711,7 +720,7 @@ def user_all(offset,count):
 def user_view(uid):
     msg = auth.UserViewRequest()
     msg.uid = resolve_id(uid)
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
 
     genericReplyHandler( reply, print_user )
 
@@ -738,7 +747,7 @@ def project_list(owner,admin,member):
     msg.as_owner = owner
     msg.as_admin = admin
     msg.as_member = member
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_listing ) #print listing prints "Alias" despite proj not having any
 
 
@@ -747,7 +756,7 @@ def project_list(owner,admin,member):
 def project_view(df_id):
     msg = auth.ProjectViewRequest()
     msg.id = resolve_id(df_id)
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     genericReplyHandler( reply, print_proj )
 
 
@@ -762,14 +771,14 @@ def shared():
 @shared.command(name="users",help="List users with shared data")
 def shared_users():
     msg = auth.ACLByUserRequest()
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_user_listing )
 
 
 @shared.command(name="projects",help="List projects with shared data")
 def shared_projects():
     msg = auth.ACLByProjRequest()
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_proj_listing ) #Haven't tested
 
 
@@ -786,7 +795,7 @@ def shared_list(df_id):
         msg = auth.ACLByUserListRequest()
 
     msg.owner = id2
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_listing )
 
 
@@ -815,7 +824,7 @@ def xfr_list(time_from,to,since,status): # TODO: Absolute time is not user frien
     elif status == "inactive": msg.status = 2
     elif status == "succeeded": msg.status = 3
     elif status == "failed": msg.status = 4
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     genericReplyHandler( reply, print_listing )
 
 
@@ -825,11 +834,11 @@ def xfr_stat(df_id):
     if df_id:
         msg = auth.XfrViewRequest()
         msg.xfr_id = resolve_id(df_id)
-        reply = mapi.sendRecv(msg)
+        reply = _mapi.sendRecv(msg)
         genericReplyHandler( reply, print_xfr_stat )
     elif not df_id:
         msg = auth.XfrListRequest() # TODO: How to isolate most recent Xfr
-        reply = mapi.sendRecv(msg)
+        reply = _mapi.sendRecv(msg)
         genericReplyHandler( reply, print_listing )
 
 
@@ -843,14 +852,14 @@ def ep():
 
 @ep.command(name='get',help="Get Globus endpoint for the current session. At the start of the session, this will be the previously configured default endpoint.")
 def ep_get():
-    global g_ep_cur
-    if g_ep_cur:
-        click.echo(g_ep_cur)
+    global _ep_cur
+    if _ep_cur:
+        click.echo(_ep_cur)
     else:
-        global g_ep_default
-        if g_ep_default:
-            g_ep_cur = g_ep_default
-            info(1, g_ep_cur)
+        global _ep_default
+        if _ep_default:
+            _ep_cur = _ep_default
+            info(1, _ep_cur)
         else:
             info(1,"No endpoint specified for the current session, and default end-point has not been configured.")
 
@@ -858,15 +867,15 @@ def ep_get():
 @ep.command(name='default',help="Get or set the default Globus endpoint. If no endpoint is given, the previously configured default endpoint will be returned. If an argument is given, the new endpoint will be set as the default.")
 @click.argument("new_default_ep",required=False)
 def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT update the current session's endpoint automatically --- MUST FOLLOW WITH EP SET
-    global g_ep_default
+    global _ep_default
     if new_default_ep:
         new_default_ep = resolve_index_val(new_default_ep)
-        cfg.set("default_ep",new_default_ep,True)
-        g_ep_default = new_default_ep
+        _cfg.set("default_ep",new_default_ep,True)
+        _ep_default = new_default_ep
 
     else:
-        if g_ep_default:
-            click.echo(g_ep_default)
+        if _ep_default:
+            click.echo(_ep_default)
         else:
             click.echo("Default endpoint has not been configured.")
 
@@ -874,23 +883,23 @@ def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT upda
 @ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the previously configured default endpoint will be used.")
 @click.argument("path",required=False)
 def ep_set(path):
-    global g_ep_cur
+    global _ep_cur
     if path:
-        g_ep_cur = resolve_index_val(path)
+        _ep_cur = resolve_index_val(path)
     else:
-        if g_ep_default:
-            g_ep_cur = g_ep_default
+        if _ep_default:
+            _ep_cur = _ep_default
         else:
             info(1,"Default endpoint has not been configured.")
             return
 
-    info(1,g_ep_cur)
+    info(1,_ep_cur)
 
 
 @ep.command(name='list',help="List recent endpoints.") # TODO: Process returned paths to isolate and list indexed endpoints only. With index
 def ep_list():
     msg = auth.UserGetRecentEPRequest()
-    reply = mapi.sendRecv( msg )
+    reply = _mapi.sendRecv( msg )
     genericReplyHandler( reply, print_endpoints )
 
 
@@ -901,49 +910,49 @@ def ep_list():
 @click.option("-s","--show",is_flag=True,help="Show current identity")
 @click.argument("df_id", metavar="id",required=False)
 def ident(df_id,show):
-    global g_cur_sel
-    global g_cur_coll
-    global g_cur_alias_prefix
+    global _cur_sel
+    global _cur_coll
+    global _cur_alias_prefix
 
     if show:
-        click.echo(g_cur_sel)
+        click.echo(_cur_sel)
         return
 
     if df_id == None:
-        df_id = g_uid
+        df_id = _uid
 
     if df_id[0:2] == "p/":
         msg = auth.ProjectViewRequest()
         msg.id = df_id
-        reply, mt = mapi.sendRecv( msg )
+        reply, mt = _mapi.sendRecv( msg )
 
-        g_cur_sel = df_id
-        g_cur_coll = "c/p_" + g_cur_sel[2:] + "_root"
-        g_cur_alias_prefix = "p:" + g_cur_sel[2:] + ":"
+        _cur_sel = df_id
+        _cur_coll = "c/p_" + _cur_sel[2:] + "_root"
+        _cur_alias_prefix = "p:" + _cur_sel[2:] + ":"
 
-        info(1,"Switched to project " + g_cur_sel)
+        info(1,"Switched to project " + _cur_sel)
     else:
         if df_id[0:2] != "u/":
             id = "u/" + df_id
 
         msg = auth.UserViewRequest()
         msg.uid = df_id
-        reply, mt = mapi.sendRecv( msg )
+        reply, mt = _mapi.sendRecv( msg )
 
-        g_cur_sel = df_id
-        g_cur_coll = "c/u_" + g_cur_sel[2:] + "_root"
-        g_cur_alias_prefix = "u:" + g_cur_sel[2:] + ":"
+        _cur_sel = df_id
+        _cur_coll = "c/u_" + _cur_sel[2:] + "_root"
+        _cur_alias_prefix = "u:" + _cur_sel[2:] + ":"
 
-        info(1,"Switched to user " + g_cur_sel)
+        info(1,"Switched to user " + _cur_sel)
 
 @cli.command(name='setup',help="Setup local credentials")
 @click.pass_context
 def setup(ctx):
-    cfg_dir = cfg.get("client_cfg_dir")
+    cfg_dir = _cfg.get("client_cfg_dir")
     if cfg_dir == None:
         raise Exception("Client configuration directory is not configured")
     msg = auth.GenerateCredentialsRequest()
-    reply, mt = mapi.sendRecv( msg )
+    reply, mt = _mapi.sendRecv( msg )
 
     keyf = open(os.path.join(cfg_dir, "datafed-user-key.pub"), "w" )
     keyf.write( reply.pub_key )
@@ -964,8 +973,8 @@ def help_cli(ctx):
 
 @cli.command(name="exit",help="Exit interactive session")
 def exit_cli():
-    global g_interactive
-    g_interactive = True
+    global _interactive
+    _interactive = True
     sys.exit(0)
 
 
@@ -975,14 +984,14 @@ def exit_cli():
 def resolve_index_val(df_id):
     try:
         if len(df_id) <= 3:
-            global g_list_items
+            global _list_items
             if df_id.endswith("."):
                 df_idx = int(df_id[:-1])
             else:
                 df_idx = int(df_id)
-            if df_idx <= len(g_list_items):
+            if df_idx <= len(_list_items):
                 #print("found")
-                return g_list_items[df_idx-1]
+                return _list_items[df_idx-1]
     except ValueError:
         #print("not a number")
         pass
@@ -996,22 +1005,22 @@ def resolve_id(df_id):
     if (len(df_id2) > 2 and df_id2[1] == "/") or (df_id2.find(":") > 0):
         return df_id2
 
-    return g_cur_alias_prefix + df_id2
+    return _cur_alias_prefix + df_id2
 
 
 def resolve_coll_id(df_id):
     if df_id == ".":
-        return g_cur_coll
+        return _cur_coll
     elif df_id == "/":
-        if g_cur_sel[0] == "p":
-            return "c/p_" + g_cur_sel[2:] + "_root"
+        if _cur_sel[0] == "p":
+            return "c/p_" + _cur_sel[2:] + "_root"
         else:
-            return "c/u_" + g_cur_sel[2:] + "_root"
+            return "c/u_" + _cur_sel[2:] + "_root"
     elif df_id == "..":
         msg = auth.CollGetParentsRequest()
-        msg.id = g_cur_coll
+        msg.id = _cur_coll
         msg.all = False
-        reply, mt = mapi.sendRecv(msg)
+        reply, mt = _mapi.sendRecv(msg)
         if len(reply.coll):
             return reply.coll[0].id
         else:
@@ -1022,38 +1031,38 @@ def resolve_coll_id(df_id):
     if (len(df_id2) > 2 and df_id2[1] == "/" ) or (df_id2.find(":") > 0):
         return df_id2
 
-    return g_cur_alias_prefix + df_id2
+    return _cur_alias_prefix + df_id2
 
 
 def put_data(df_id,gp,wait,extension):
-    global g_verbosity
+    global _verbosity
     msg = auth.DataPutRequest()
     msg.id = resolve_id(df_id)
     msg.path = gp
     if extension: msg.ext = extension
-    reply = mapi.sendRecv(msg)
+    reply = _mapi.sendRecv(msg)
     xfr_id = reply[0].xfr[0].id
-    if g_output_mode == OM_JSON:
+    if g_output_mode == _OM_JSON:
         click.echo('{{ "Transfer ID": "{}" }}'.format(xfr_id))
-    elif g_output_mode == OM_TEXT:
+    elif g_output_mode == _OM_TEXT:
         click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
-        if g_verbosity >= 1 and g_output_mode == OM_TEXT:
+        if _verbosity >= 1 and g_output_mode == _OM_TEXT:
             click.echo("Waiting")
-        elif g_output_mode == OM_JSON:
+        elif g_output_mode == _OM_JSON:
             click.echo('{ "Status": "Waiting" }')  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
         while wait is True:
             time.sleep(2)
             update_msg = auth.XfrViewRequest()
             update_msg.xfr_id = xfr_id
-            reply = mapi.sendRecv(update_msg)
+            reply = _mapi.sendRecv(update_msg)
             check = reply[0].xfr[0]
             if check.status == 3 or check.status == 4: break
             statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
             xfr_status = statuses.get(check.status, "None")
-            if g_output_mode == OM_JSON:
+            if g_output_mode == _OM_JSON:
                 click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status))
-            elif g_verbosity >= 1 and g_output_mode == OM_TEXT:
+            elif _verbosity >= 1 and g_output_mode == _OM_TEXT:
                 click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
         genericReplyHandler(reply,print_xfr_stat)
     else:
@@ -1086,19 +1095,19 @@ def resolve_filepath_for_xfr(filepath):
 
 
 def resolve_globus_path(fp, endpoint):
-    global g_ep_cur
-    global g_ep_default
+    global _ep_cur
+    global _ep_default
     if fp[0] != '/':
         fp = "/" + fp
     if endpoint != "None":
         fp = endpoint + fp
     elif endpoint == "None":
-        if g_ep_cur:
-            fp = g_ep_cur + fp
-        elif g_ep_cur is None:
-            if g_ep_default:
-                fp = g_ep_default + fp
-            elif g_ep_default is None:
+        if _ep_cur:
+            fp = _ep_cur + fp
+        elif _ep_cur is None:
+            if _ep_default:
+                fp = _ep_default + fp
+            elif _ep_default is None:
                 fp = None
 
     return fp #endpoint and path
@@ -1107,12 +1116,12 @@ def resolve_globus_path(fp, endpoint):
 def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing (reply msg, msg type)
     global g_output_mode
     #click.echo(reply[1])
-    if g_output_mode == OM_RETN:
-        global g_return_val
-        g_return_val = reply
+    if g_output_mode == _OM_RETN:
+        global _return_val
+        _return_val = reply
     elif str(reply[0]) == "":
         click.echo("None")
-    elif g_output_mode == OM_JSON:
+    elif g_output_mode == _OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
     else:
         printFunc( reply[0] )
@@ -1120,11 +1129,11 @@ def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing
 
 def print_listing(reply):
     df_idx = 1
-    global g_list_items
-    g_list_items = []
+    global _list_items
+    _list_items = []
     #click.echo("{:3} {:12} ({:20} {}".format("","DataFed ID","Alias)","Title")) #because projects don't have aliases
     for i in reply.item:
-        g_list_items.append(i.id)
+        _list_items.append(i.id)
         if i.alias:
             click.echo("{:2}. {:12} ({:20} {}".format(df_idx,i.id,i.alias+')',i.title))
         else:
@@ -1134,62 +1143,62 @@ def print_listing(reply):
 
 def print_user_listing( reply ):
     df_idx = 1
-    global g_list_items
-    g_list_items = []
+    global _list_items
+    _list_items = []
     for i in reply.user:
-        g_list_items.append(i.uid)
+        _list_items.append(i.uid)
         click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
         df_idx += 1
 
 
 def print_proj_listing(reply): #reply is a ListingReply message
     df_idx = 1
-    global g_list_items
-    g_list_items = []
+    global _list_items
+    _list_items = []
     for i in reply.proj:
-        g_list_items.append(i.id)
+        _list_items.append(i.id)
         click.echo("{:2}. {:24} {}".format(df_idx,i.id,i.title))
         df_idx += 1
 
 
 def print_endpoints(reply):
     df_idx = 1
-    global g_list_items
-    g_list_items = []
+    global _list_items
+    _list_items = []
     for i in reply.ep:
         p = i.rfind("/")
         if p >= 0:
             path = i[0:p+1]
-            g_list_items.append(path)
+            _list_items.append(path)
             click.echo("{:2}. {}".format(df_idx,path))
             df_idx += 1
 
 
 def print_ack_reply():
-    #global g_verbosity # TODO: Should it print nothing when verbosity is zero?
+    #global _verbosity # TODO: Should it print nothing when verbosity is zero?
     global g_output_mode
 
-    if g_output_mode == OM_JSON:
+    if g_output_mode == _OM_JSON:
         click.echo('{ "Status":"OK" }')
-    elif g_output_mode == OM_TEXT:
+    elif g_output_mode == _OM_TEXT:
         click.echo("OK")
 
 
 def print_data(message):
-    global g_verbosity
+    global _verbosity
 
     dr = message.data[0]
-    if g_verbosity >= 0:
+    if _verbosity >= 0:
         click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
                    "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
                    "{:<25} {:<50}".format('Alias: ', dr.alias))
-    if g_verbosity >= 1:
+    if _verbosity >= 1:
         click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
                    "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
                    "{:<25} {:<50}".format('Size: ', human_readable_bytes(dr.size)) + '\n' + ## convert to gigs?
                    "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
                    "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
-    if g_verbosity >= 2:
+    if _verbosity >= 2:
         click.echo("{:<25} {:<50}".format('Topic: ', dr.topic) + '\n' +
                    "{:<25} {:<50}".format('Is Public: ', str(dr.ispublic)) + '\n' +
                    "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
@@ -1211,18 +1220,18 @@ def print_data(message):
 
 
 def print_coll(message):
-    global g_verbosity
+    global _verbosity
 
     coll = message.coll[0]
-    if g_verbosity >= 0:
+    if _verbosity >= 0:
         click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
                    "{:<25} {:<50}".format('Title: ', coll.title) + '\n' +
                    "{:<25} {:<50}".format('Alias: ', coll.alias))
-    if g_verbosity >= 1:
+    if _verbosity >= 1:
         click.echo("{:<25} {:<50}".format('Description: ',coll.desc) + '\n' +
                    "{:<25} {:<50}".format('Owner: ', coll.owner) + '\n' +
                    "{:<25} {:<50}".format('Parent Collection ID: ', coll.parent_id))
-    if g_verbosity == 2:
+    if _verbosity == 2:
         click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
                    "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
                    "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
@@ -1251,7 +1260,7 @@ def print_deps(message):
 
 
 def print_xfr_stat(message):
-    global g_verbosity
+    global _verbosity
 
     for xfr in message.xfr:
         modes = { 0: "Get", 1: "Put", 2: "Copy"}
@@ -1260,24 +1269,24 @@ def print_xfr_stat(message):
         xfr_status = statuses.get(xfr.status, "None")
         df_ids = []
         for files in xfr.repo.file: df_ids.append(files.id)
-        if g_verbosity >= 0:
+        if _verbosity >= 0:
             click.echo("{:<25} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
                        "{:<25} {:<50}".format('Mode: ', xfr_mode) + '\n' +
                        "{:<25} {:<50}".format('Status: ', str(xfr_status)))
-        if g_verbosity >= 1:
+        if _verbosity >= 1:
             click.echo("{:<25} {:<50}".format('Data Record ID/s: ', str(df_ids)) + '\n' +
                        "{:<25} {:<50}".format('Date Started: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))) + '\n' +
                        "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(xfr.started))))
-        if g_verbosity == 2:
+        if _verbosity == 2:
             click.echo("{:<25} {:<50}".format('Remote Endpoint:', xfr.rem_ep) + '\n' 
                        "{:<25} {:<50}".format('Remote Path: ', xfr.rem_path))
 
 
 def print_user(message):
-    global g_verbosity
+    global _verbosity
 
     usr = message.user[0]
-    if g_verbosity >= 0:
+    if _verbosity >= 0:
         click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
                    "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
                    "{:<25} {:<50}".format('Email: ', usr.email))
@@ -1288,22 +1297,22 @@ def print_metadata(message):
 
 
 def print_proj(message):
-    global g_verbosity
+    global _verbosity
 
     proj = message.proj[0]
     admins = []
     members = []
     for i in proj.admin: admins.append(i)
     for i in proj.member: members.append(i)
-    if g_verbosity >= 0:
+    if _verbosity >= 0:
         click.echo("{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
                    "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
                    "{:<25} {:<50}".format('Description: ', proj.desc))
-    if g_verbosity >= 1:
+    if _verbosity >= 1:
         click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
                    "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
                    "{:<25} {:<50}".format('Members: ', str(members)))
-    if g_verbosity == 2:
+    if _verbosity == 2:
         click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
                    "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
                    "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
@@ -1333,34 +1342,34 @@ def human_readable_bytes(size,precision=2):
 
 
 def _initialize( opts ):
-    global mapi
-    global g_uid
-    global g_interactive
-    global g_cur_sel
+    global _mapi
+    global _uid
+    global _interactive
+    global _cur_sel
 
     #print("opts:",opts)
 
     try:
-        mapi = MessageLib.API( **opts )
+        _mapi = MessageLib.API( **opts )
     except Exception as e:
         click.echo(e)
-        g_interactive = False
+        _interactive = False
         sys.exit(1)
 
     # Ignore 'manual_auth' option if set in exec mode
-    if opts["manual_auth"] and g_output_mode == OM_RETN:
+    if opts["manual_auth"] and g_output_mode == _OM_RETN:
         opts["manual_auth"] = False
 
-    auth, uid = mapi.getAuthStatus()
+    auth, uid = _mapi.getAuthStatus()
 
     if opts["manual_auth"] or not auth:
         if not opts["manual_auth"]:
-            if not mapi.keysLoaded():
-                if g_output_mode == OM_RETN:
+            if not _mapi.keysLoaded():
+                if g_output_mode == _OM_RETN:
                     raise Exception("Not authenticated: no local credentials loaded.")
                 info(1,"No local credentials loaded.")
-            elif not mapi.keysValid():
-                if g_output_mode == OM_RETN:
+            elif not _mapi.keysValid():
+                if g_output_mode == _OM_RETN:
                     raise Exception("Not authenticated: invalid local credentials.")
                 info(1,"Invalid local credentials.")
 
@@ -1371,20 +1380,20 @@ def _initialize( opts ):
             uid = click.prompt("User ID: ")
             password = getpass.getpass(prompt="Password: ")
             try:
-                mapi.manualAuth( uid, password )
+                _mapi.manualAuth( uid, password )
                 break
             except Exception as e:
                 click.echo(e)
 
         if i == 3:
             info(1,"Aborting...")
-            g_interactive = True
+            _interactive = True
             sys.exit(1)
 
-        mapi.installLocalCredentials()
+        _mapi.installLocalCredentials()
     else:
         info(1,"Authenticated as",uid)
 
-    g_uid = uid
-    g_cur_sel = uid
+    _uid = uid
+    _cur_sel = uid
 
