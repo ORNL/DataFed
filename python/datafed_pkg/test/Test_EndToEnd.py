@@ -89,6 +89,7 @@ import datafed.Config
 warnings.simplefilter("always") #warnings will be raised every time a
 # non-compliant data record detail is generated
 
+
 def escape(string):
     """Escapes a string so that it is suitable for BASH input.
 
@@ -106,6 +107,7 @@ def escape(string):
         '`', '\\`').replace('$', '\\$').replace("'", "\\'").replace("!", "\\!")
     return str(escaped_string)
 
+
 def unescape_for_JSON(string):
     """Ensures that string characters of JSON outputs (from SDMS/Shell)
     are unescaped such that they equal the python objects used as inputs.
@@ -121,6 +123,7 @@ def unescape_for_JSON(string):
     """
     unescaped_string = string.replace("\'", "'") .replace('\!', '!')
     return str(unescaped_string)
+
 
 def string_generator(min_char=1, max_char=501, special_characters=True, \
         shift_to_lowercase=True, making_topic=False):
@@ -183,6 +186,7 @@ def string_generator(min_char=1, max_char=501, special_characters=True, \
 
     return str(randostring)
 
+
 def make_alias(fits_requirements = True):
     """Generates a random string for use as a record alias in the SDMS.
 
@@ -220,6 +224,7 @@ def make_alias(fits_requirements = True):
 
     return alias
 
+
 def make_title(fits_requirements = True):
     """Generates a random string for use as a record title in the SDMS.
 
@@ -255,6 +260,7 @@ def make_title(fits_requirements = True):
 
     return title
 
+
 def make_desc(fits_requirements = True):
     """Generates a random string for use as a record description in the SDMS.
 
@@ -284,6 +290,7 @@ def make_desc(fits_requirements = True):
     return desc
 
 ################################ DATA RECORDS ################################
+
 
 class DataRecord(object):
     """A class used to represent a data record within the SDMS.
@@ -423,13 +430,12 @@ class DataRecord(object):
             dr.random_detail = random_detail(False)
             pass
         return dr
-    '''
-    def as_input_str(self):#returns string suitable for input # TODO: Change command
-        string = f'sdms dc -a {escape(self.alias)} -t "{escape(self.title)}" \
-            -d "{escape(self.desc)}" --top "{escape(self.topic)}" \
-            -k "{escape(self.keywords)}"'
-        return string
-    '''
+
+    def as_text_input(self):
+        text = 'data create "{}" -a "{}" -d "{}" -p "{}" -kw "{}"'.format(escape(self.title), escape(self.alias), escape(self.desc), escape(self.topic), escape(self.keywords))
+
+        return text
+
 
     def as_py_input(self):
         command = 'data create "{}" -a "{}" -d "{}" -p "{}" -kw "{}"'.format(self.title, self.alias, self.desc, self.topic, self.keywords) # TODO: add keywords and topic
@@ -579,7 +585,9 @@ testdata = '/data/unittesting/testfiles/SampleData.txt'
 #       then delete record.
 
 #Setting up a class for testing Data Records
-class TestDataBasic(ut.TestCase):
+
+
+class TestDataBasicReturn(ut.TestCase):
 
     # TODO: using object return, generate, check, then delete data record
     def test_dr_create_and_delete(self):
@@ -597,10 +605,45 @@ class TestDataBasic(ut.TestCase):
     # TODO: same with collection
 
     #if this fails, do not continue
+class TestDataBasicText(ut.TestCase):
+
+    # TODO: using object return, generate, check, then delete data record
+    def test_dr_create_and_delete(self):
+        config = datafed.Config.API()
+        datafed.CommandLib.init()
+        self.dr = DataRecord.generate(True)
+        details = [str(self.dr.alias) + "\"", str(self.dr.title) + "\"",
+                   str(self.dr.desc) + "\""]
+        with open('datarecordsinput.txt', 'a+') as ipfile:
+            ipfile.write(self.dr.as_text_input())
+        with open("outputfile.txt", 'a+') as opfile:
+            subprocess.run(self.dr.as_text_input(), stdout=opfile, \
+                               stderr=subprocess.STDOUT, shell=True)
+        with open("outputfile.txt", 'r') as opfile:
+            outs = opfile.read().split(" ")
+        self.assertIs(all(elem in outs for elem in details), True, \
+                          msg="Data-create command unexpected failure")
+        try:
+            with open("outputfile.txt", "w+") as opfile:
+                subprocess.run('datafed data delete {}'.format(self.dr.alias),
+                               stdout=opfile, stderr=subprocess.STDOUT, shell=True)
+            with open('outputfile.txt', 'r') as opfile:
+                outs = opfile.read()
+            self.assertIs("OK" in outs, True, msg="Data-delete of single \
+                record failed")
+        except AssertionError:
+            print("Manual delete required")
+
+'''
+class TestDRText(ut.TestCase):
+    def setUp(self):
+        self.drcorr0 = DataRecord.generate(True)
+        self.drcorr1 = DataRecord.generate(True)
+        subprocess.run(
 
 
 
-"""
+
 class TestDataRecords(ut.TestCase):
 
     def setUp(self): #happens before EVERY method in testcase
@@ -960,8 +1003,9 @@ class TestDataRecords(ut.TestCase):
             msg="Clear dependencies failed")
         subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
         subprocess.run(f'sdms data-delete {drcorr3.alias}', shell=True)
+'''
 
-
+'''
 class TestCollections(ut.TestCase):
 
     def setUp(self):
@@ -1101,7 +1145,7 @@ class TestCollections(ut.TestCase):
             
             
             
-"""
+'''
 
 ##########################
 if __name__ == '__main__':
