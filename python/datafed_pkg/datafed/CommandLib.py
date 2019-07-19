@@ -1,4 +1,4 @@
-## @package CommandLib
+## @namespace datafed.CommandLib
 # @brief Provides a high-level client interface to the DataFed server
 # 
 # The DataFed CommandLib module provides a high-level, text-based client
@@ -47,7 +47,7 @@ if sys.version_info.major == 3:
     unicode = str
 
 _mapi = None
-_cfg = Config.API()
+_cfg = None
 _return_val = None
 _uid = None
 _cur_sel = None
@@ -57,47 +57,55 @@ _list_items = []
 _interactive = False
 _verbosity = 1
 _ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
-_ep_default = _cfg.get("default_ep")
-_ep_cur = _ep_default
+_ep_default = None
+_ep_cur = None
 
 _OM_TEXT = 0
 _OM_JSON = 1
 _OM_RETN = 2
 
-g_output_mode = _OM_TEXT
+_output_mode = _OM_TEXT
 
-def run():
-    info(1,"DataFed CLI Ver.", version )
+# Used by CLI script to run interactively
+def _run():
+
+    #info(1,"DataFed CLI Ver.", version )
+
+    _addConfigOptions()
 
     session = None
+    _first = True
 
     try:
         while True:
             try:
                 if _interactive == False:
                     cli(standalone_mode=True)
-                    if _interactive == False:
-                        break
-                    for i in cli.params:
-                        i.hidden = True
+                    # cli always raises an exception
                 else:
                     if session == None:
                         session = PromptSession(unicode("> "),history=FileHistory(os.path.expanduser("~/.datafed-hist")))
                     _args = shlex.split(session.prompt(auto_suggest=AutoSuggestFromHistory()))
                     cli(prog_name="datafed",args=_args,standalone_mode=True)
             except SystemExit as e:
-                #print("Sys exit")
+                #print( "except - sys exit" )
                 if _interactive == False:
                     break
+                elif _first:
+                    _first = False
+                    for i in cli.params:
+                        i.hidden = True
             except KeyboardInterrupt as e:
                 #print("key inter")
                 break
             except Exception as e:
+                #print( "except: ", e )
                 click.echo(e)
                 if _interactive == False:
                     break
 
     except Exception as e:
+        #print( "except - outer" )
         click.echo("Exception:",e)
 
     info(1,"Goodbye!")
@@ -105,10 +113,25 @@ def run():
 ##
 # @brief Initialize Commandlib for programmatic access
 #
-def init():
+# This function must be called before any other CommandLib functions.
+# The Config class is used to load configuration settings, but settings
+# (all or some) may also be supplied as an argument to init(). This
+# function establishes a secure connection to the configured DataFed
+# core server.
+#
+# @param opts - Configuration options (optional)
+# @return Tuple of authentication status and DataFed user ID
+# @retval (bool,str)
+# @exception Exception: if init() called more than once
+#
+def init( opts = {} ):
     global _mapi
     global _uid
     global _cur_sel
+    global _cfg
+
+    _cfg = Config.API( opts )
+    _addConfigOptions()
 
     if _mapi:
         raise Exception("init function can only be called once.")
@@ -125,11 +148,18 @@ def init():
         _uid = uid
         _cur_sel = uid
 
-    return auth
+    return auth, uid
 
 
 ##
 # @brief Manually authenticate client
+#
+# If not authenticated, this method attempts manual authentication
+# using the supplied DataFed user ID and password.
+#
+# @param uid - DataFed user ID
+# @param password - DataFed password
+# @exception Exception: if called prior to init(), or multiple login() calls.
 #
 def login( uid, password ):
     global _uid
@@ -147,24 +177,37 @@ def login( uid, password ):
     _cur_sel = uid
 
 ##
-# @brief Execute a client command
+# @brief Execute a client CLI-style command
+#
+# This functions executes a text-based DataFed command in the same format as
+# used by the DataFed CLI. Instead of printing output, this function returns
+# the received DataFed server reply directly to the caller as a Python
+# protobuf message instance. Refer to the *.proto files for details on
+# the message interface.
+#
+# @param command - String containg CLI-style DataFed command
+# @exception Exception: if called prior to init(), or if command parsing fails.
+# @return DataFed reply message
+# @retval Protobuf message object
 #
 def command( command ):
     if not _mapi:
         raise Exception("exec called before init.")
 
     global _return_val
-    global g_output_mode
+    global _output_mode
 
     _return_val = None
-    g_output_mode = _OM_RETN
+    _output_mode = _OM_RETN
 
     try:
         _args = shlex.split( command )
         cli(prog_name="datafed",args=_args,standalone_mode=False)
     except SystemExit as e:
+        #print( "except - sys exit" )
         pass
     except click.ClickException as e:
+        #print( "except - click error" )
         raise Exception(e.format_message())
 
     return _return_val
@@ -180,14 +223,14 @@ def info( level, *args ):
 
 
 def set_output_json(ctx, param, value):
-    global g_output_mode
+    global _output_mode
     if value:
-        g_output_mode = _OM_JSON
+        _output_mode = _OM_JSON
 
 def set_output_text(ctx, param, value):
-    global g_output_mode
+    global _output_mode
     if value:
-        g_output_mode = _OM_TEXT
+        _output_mode = _OM_TEXT
 
 ##############################################################################
 
@@ -205,29 +248,17 @@ class AliasedGroup(click.Group):
             return click.Group.get_command(self, ctx, matches[0])
         ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
 
+def _addConfigOptions():
+    global _cfg
 
-def my_param_memo(f, param):
-    if isinstance(f, click.Command):
-        f.params.append(param)
-    else:
-        if not hasattr(f, '__click_params__'):
-            f.__click_params__ = []
-        f.__click_params__.append(param)
-
-def config_options( cfg ):
-    def wrapper(f):
-        for k, v in Config._opt_info.items():
-            #OPT_NO_CL
+    for k, v in Config._opt_info.items():
+        if not v[3] & Config._OPT_NO_CL:
             if v[3] & Config._OPT_INT:
-                my_param_memo(f,click.Option(v[4],type=int,default=cfg.get(k),help=v[5]))
+                cli.params.append( click.Option(v[4],type=int,help=v[5]))
             elif v[3] & Config._OPT_BOOL:
-                my_param_memo(f,click.Option(v[4],is_flag=True,default=cfg.get(k),help=v[5]))
+                cli.params.append( click.Option(v[4],is_flag=True,default=None,help=v[5]))
             else:
-                my_param_memo(f,click.Option(v[4],type=str,default=cfg.get(k),help=v[5]))
-
-        return f
-    return wrapper
-
+                cli.params.append( click.Option(v[4],type=str,help=v[5]))
 
 #------------------------------------------------------------------------------
 # Top-level group with global options
@@ -235,28 +266,14 @@ def config_options( cfg ):
 @click.option("-m","--manual-auth",is_flag=True,help="Force manual authentication")
 @click.option("-j", "--json", is_flag=True,callback=set_output_json,help="Set CLI output format to JSON, when applicable.")
 @click.option("-t","--text",is_flag=True,callback=set_output_text,help="Set CLI output format to human-friendly text.")
-@config_options( _cfg )
 @click.pass_context
 def cli(ctx,*args,**kwargs):
-    global _interactive
-    global _verbosity
-
-    #print("ctx params",ctx.params)
-
-    if ctx.params["verbosity"] != None:
-        _verbosity = ctx.params["verbosity"]
-
-    if not _interactive and ctx.params["i"]:
-        _interactive = True
+    if _mapi == None:
+        _initialize(ctx.params)
 
     if not _interactive and ctx.invoked_subcommand is None:
         click.echo("No command specified.")
         click.echo(ctx.get_help())
-    elif _mapi == None:
-        _initialize(ctx.params)
-
-#for i in cli.params:
-#    print( i.name )
 
 # ------------------------------------------------------------------------------
 # Collection listing/navigation commands
@@ -480,12 +497,12 @@ def data_get(df_id,filepath,endpoint,wait): #Multi-get will initiate one transfe
         xfr_ids = []
         replies = []
         for xfrs in reply[0].xfr:
-            if g_output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
-            elif g_output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
+            if _output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
+            elif _output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
             xfr_ids.append(xfrs.id)
         if wait:
-            if _verbosity >= 1 and g_output_mode == _OM_TEXT: click.echo("Waiting")
-            elif g_output_mode == _OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+            if _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo("Waiting")
+            elif _output_mode == _OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
             while wait is True:
                 time.sleep(3)
                 for xfrs in xfr_ids:
@@ -498,8 +515,8 @@ def data_get(df_id,filepath,endpoint,wait): #Multi-get will initiate one transfe
                         wait = False
                     statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
                     xfr_status = statuses.get(check.status, "None")
-                    if g_output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
-                    elif _verbosity >= 1 and g_output_mode == _OM_TEXT: click.echo(
+                    if _output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
+                    elif _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo(
                         "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
             for xfrs in replies:
                 genericReplyHandler(xfrs, print_xfr_stat)
@@ -1042,14 +1059,14 @@ def put_data(df_id,gp,wait,extension):
     if extension: msg.ext = extension
     reply = _mapi.sendRecv(msg)
     xfr_id = reply[0].xfr[0].id
-    if g_output_mode == _OM_JSON:
+    if _output_mode == _OM_JSON:
         click.echo('{{ "Transfer ID": "{}" }}'.format(xfr_id))
-    elif g_output_mode == _OM_TEXT:
+    elif _output_mode == _OM_TEXT:
         click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
-        if _verbosity >= 1 and g_output_mode == _OM_TEXT:
+        if _verbosity >= 1 and _output_mode == _OM_TEXT:
             click.echo("Waiting")
-        elif g_output_mode == _OM_JSON:
+        elif _output_mode == _OM_JSON:
             click.echo('{ "Status": "Waiting" }')  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
         while wait is True:
             time.sleep(2)
@@ -1060,9 +1077,9 @@ def put_data(df_id,gp,wait,extension):
             if check.status == 3 or check.status == 4: break
             statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
             xfr_status = statuses.get(check.status, "None")
-            if g_output_mode == _OM_JSON:
+            if _output_mode == _OM_JSON:
                 click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status))
-            elif _verbosity >= 1 and g_output_mode == _OM_TEXT:
+            elif _verbosity >= 1 and _output_mode == _OM_TEXT:
                 click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
         genericReplyHandler(reply,print_xfr_stat)
     else:
@@ -1114,14 +1131,14 @@ def resolve_globus_path(fp, endpoint):
 
 
 def genericReplyHandler( reply, printFunc ): # NOTE: Reply is a tuple containing (reply msg, msg type)
-    global g_output_mode
+    global _output_mode
     #click.echo(reply[1])
-    if g_output_mode == _OM_RETN:
+    if _output_mode == _OM_RETN:
         global _return_val
         _return_val = reply
     elif str(reply[0]) == "":
         click.echo("None")
-    elif g_output_mode == _OM_JSON:
+    elif _output_mode == _OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
     else:
         printFunc( reply[0] )
@@ -1176,11 +1193,11 @@ def print_endpoints(reply):
 
 def print_ack_reply():
     #global _verbosity # TODO: Should it print nothing when verbosity is zero?
-    global g_output_mode
+    global _output_mode
 
-    if g_output_mode == _OM_JSON:
+    if _output_mode == _OM_JSON:
         click.echo('{ "Status":"OK" }')
-    elif g_output_mode == _OM_TEXT:
+    elif _output_mode == _OM_TEXT:
         click.echo("OK")
 
 
@@ -1344,8 +1361,31 @@ def human_readable_bytes(size,precision=2):
 def _initialize( opts ):
     global _mapi
     global _uid
+    global _verbosity
     global _interactive
     global _cur_sel
+    global _cfg
+    global _ep_default
+    global _ep_cur
+
+    _cfg = Config.API( opts )
+    opts = _cfg.getOpts()
+
+    _ep_default = _cfg.get("default_ep")
+    _ep_cur = _ep_default
+
+    tmp = _cfg.get("verbosity")
+    if tmp != None:
+        _verbosity = tmp
+
+    tmp = _cfg.get("interactive")
+    if tmp != None:
+        _interactive = tmp
+
+    info( 1, "Welcome to DataFed CLI, version", version )
+    if _verbosity > 1:
+        print( "Settings details:" )
+        _cfg.printSettingInfo()
 
     #print("opts:",opts)
 
@@ -1357,7 +1397,7 @@ def _initialize( opts ):
         sys.exit(1)
 
     # Ignore 'manual_auth' option if set in exec mode
-    if opts["manual_auth"] and g_output_mode == _OM_RETN:
+    if opts["manual_auth"] and _output_mode == _OM_RETN:
         opts["manual_auth"] = False
 
     auth, uid = _mapi.getAuthStatus()
@@ -1365,11 +1405,11 @@ def _initialize( opts ):
     if opts["manual_auth"] or not auth:
         if not opts["manual_auth"]:
             if not _mapi.keysLoaded():
-                if g_output_mode == _OM_RETN:
+                if _output_mode == _OM_RETN:
                     raise Exception("Not authenticated: no local credentials loaded.")
                 info(1,"No local credentials loaded.")
             elif not _mapi.keysValid():
-                if g_output_mode == _OM_RETN:
+                if _output_mode == _OM_RETN:
                     raise Exception("Not authenticated: invalid local credentials.")
                 info(1,"Invalid local credentials.")
 
