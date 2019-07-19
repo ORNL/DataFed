@@ -1,4 +1,4 @@
-## @package Connection
+## @package datafed.Connection
 # Low-level message-oriented communications module
 # 
 # The DataFed Connection class enables sending and receiving Google protobuf
@@ -73,6 +73,7 @@ class Connection:
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_CNT, 20 )
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_IDLE, 540 )
         self._socket.setsockopt( zmq.TCP_KEEPALIVE_INTVL, 5 )
+
         if sys.version_info.major == 3:
             try:
                 self._socket.setsockopt_string( zmq.CURVE_SECRETKEY, client_priv_key )

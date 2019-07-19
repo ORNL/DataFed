@@ -1,4 +1,4 @@
-## @package MessageLib
+## @package datafed.MessageLib
 # Provides a low-level client interface to the DataFed server
 # 
 # The DataFed MessageLib module contains a single API class that provides
@@ -121,6 +121,21 @@ class API:
                 pub,priv = zmq.curve_keypair()
                 pub = pub.decode("utf-8")
                 priv = priv.decode("utf-8")
+
+        if not server_host:
+            raise Exception("Server host is not defined")
+
+        if server_port == None:
+            raise Exception("Server port is not defined")
+
+        if not serv_pub:
+            raise Exception("Server public key is not defined")
+
+        if not pub:
+            raise Exception("Client public key is not defined")
+
+        if not priv:
+            raise Exception("Client private key is not defined")
 
         self._conn = Connection.Connection( server_host, server_port, serv_pub, pub, priv )
 

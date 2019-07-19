@@ -1,7 +1,7 @@
 import datafed.CommandLib as cmd
 import click
 
-auth = cmd.init()
+auth, uid = cmd.init()
 
 if not auth:
     cmd.login("stansberrydv","badpass")

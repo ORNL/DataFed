@@ -1,5 +1,5 @@
 ##
-# @package Config
+# @package datafed.Config
 # Provides client configuration utility
 # 
 # The DataFed Config module contains a single API class that provides
@@ -37,7 +37,7 @@ _opt_info = {
     "client_priv_key_file":["client","private_key_file","DATAFED_CLIENT_PRIV_KEY_FILE",_OPT_PATH,["--client-priv-key-file"],"Client private key file"],
     "default_ep":["general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
     "verbosity":["general","verbosity","DATAFED_DEFAULT_VERBOSITY",_OPT_INT,["--verbosity","-v"],"Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."],
-    "interactive":["general","interactive","DATAFED_DEFAULT_INTERACT",_OPT_BOOL,["--interact/--no-interact","-i/-n"],"Start an interactive session"]
+    "interactive":["general","interactive","DATAFED_DEFAULT_INTERACT",_OPT_BOOL,["--interactive/--no-interactive","-i/-n"],"Start an interactive session"]
 }
 
 ##
@@ -106,7 +106,10 @@ class API:
         self._opts = {}
 
         for k, v in opts.items():
-            self._opts[k] = {val: v, pri: 1}
+            if v != None:
+                self._opts[k] = {"val": v, "pri": 1}
+
+        #print( "cfg self opts:", self._opts )
 
         cfg_file = None
 
@@ -121,11 +124,13 @@ class API:
             tmp = os.path.expanduser( os.path.join( self._opts['server_cfg_dir']["val"], "server.ini" ))
             if os.path.exists( tmp ):
                 cfg_file = tmp
+                self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5 }
 
         if not cfg_file:
             tmp = os.path.expanduser("~/.datafed/server.ini")
             if os.path.exists( tmp ):
                 cfg_file = tmp
+                self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5 }
 
         if cfg_file:
             self._loadConfigFile( cfg_file, 3 )
@@ -162,7 +167,6 @@ class API:
                     except:
                         pass
 
-
     def _loadEnvironVars( self ):
         # Check each defined option for a set and non-empty environment variable
         # Priority is next to lowest (4)
@@ -197,13 +201,39 @@ class API:
                             if v[3] & _OPT_INT:
                                 tmp = int(tmp)
                             elif v[3] & _OPT_BOOL:
-                                tmp = bool(int(tmp))
+                                tmp = tmp.lower()
+                                if tmp in ("true","yes","1"):
+                                    tmp = True
+                                elif tmp in ("false","no","0"):
+                                    tmp = False
+                                else:
+                                    raise Exception("Invalid value for {} : {} in {}".format(k,tmp,cfg_file))
                             elif v[3] & _OPT_PATH:
                                 tmp = os.path.expanduser(tmp)
 
                             self._opts[k] = {"val": tmp, "pri": priority}
         except IOError:
             raise Exception("Error reading from server config file: " + cfg_file)
+
+    ##
+    # @brief Print details of current settings
+    #
+    # Prints all set settings with key, value, and source information
+    #
+    def printSettingInfo(self):
+        p = 0
+        for k, v in self._opts.items():
+            p = v["pri"]
+            if p == 5:
+                print("  {} = \"{}\" (assumed)".format(k,v["val"]))
+            elif p == 4:
+                print("  {} = \"{}\" from {}".format(k,v["val"],_opt_info[k][2]))
+            elif p == 3:
+                print("  {} = \"{}\" from server config file".format(k,v["val"]))
+            elif p == 2:
+                print("  {} = \"{}\" from client config file".format(k,v["val"]))
+            elif p == 1:
+                print("  {} = \"{}\" from CLI option".format(k,v["val"]))
 
     ##
     # @brief Get dictionary of all set configuration options.
