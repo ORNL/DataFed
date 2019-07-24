@@ -92,6 +92,40 @@ function _asyncPost( a_url, a_raw_json_data, a_callback ) {
     });
 }
 
+function _asyncPostText( a_url, a_text_data, a_callback ) {
+    console.log("post",a_text_data);
+    $.ajax({
+        url : a_url,
+        //global : false,
+        type : 'POST',
+        data: a_text_data,
+        dataType: 'json',
+        contentType: "text/plain",
+        success : function( a_data ) {
+            if ( a_callback ){
+                a_callback( true, a_data );
+            }
+        },
+        error : function( a_xhr, a_status, a_thrownError ) {
+            //console.log( 'asyncGet error: ', a_xhr );
+            //console.log( 'asyncGet error: ', a_status );
+            //console.log( 'asyncGet error: ', a_thrownError );
+            //console.log( 'asyncGet error: ', a_xhr.responseText );
+            if ( a_callback ) {
+                if ( a_xhr.responseText )
+                    a_callback( false, a_xhr.responseText );
+                else if ( a_thrownError )
+                    a_callback( false, a_thrownError );
+                else if ( a_status )
+                    a_callback( false, a_status );
+                else
+                    a_callback( false, "Unknown error" );
+            }
+        },
+        timeout: 5000
+    });
+}
+
 const escapeMap = {
     '&': '&amp;',
     '<': '&lt;',
@@ -310,6 +344,14 @@ function dataGetDepGraph( a_id, a_cb ) {
             setStatusText("Get Dependency Graph Error: " + data);
             a_cb();
         }
+    });
+}
+
+function dataImport( a_records, a_cb ){
+    console.log("dataImport, type:", typeof a_records );
+    _asyncPostText( "/api/dat/import", a_records, function( ok, data ){
+        if ( a_cb )
+            a_cb( ok, data );
     });
 }
 
@@ -968,6 +1010,9 @@ var PERM_BAS_READ       = PERM_RD_REC | PERM_RD_META | PERM_RD_DATA | PERM_LIST;
 var PERM_BAS_WRITE      = PERM_WR_REC | PERM_WR_META | PERM_WR_DATA | PERM_LINK | PERM_CREATE;
 var PERM_BAS_ADMIN      = PERM_DELETE | PERM_SHARE | PERM_LOCK;
 var PERM_ALL            = 0x0FFF;
+
+var MD_MAX_SIZE                 = 102400; // Max metadata size = 100 Kb
+var PAYLOAD_MAX_SIZE            = 1048576; // Max server payload size = 10 MB
 
 var SS_USER                     = 1;
 var SS_PROJECT                  = 2;

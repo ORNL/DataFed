@@ -96,7 +96,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
 
         // Requests that can be handled by DB client directly
-        
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
         SET_MSG_HANDLER_DB( proto_id, UserSaveTokensRequest, AckReply, userSaveTokens );
@@ -115,6 +114,7 @@ Worker::setupMsgHandlers()
         //SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
+        SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );

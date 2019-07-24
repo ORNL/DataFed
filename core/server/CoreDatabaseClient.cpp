@@ -884,6 +884,10 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
         body += ",\"md\":" + a_request.metadata();
+    if ( a_request.has_doi() )
+        body += string(",\"doi\":\"") + a_request.doi() + "\"";
+    if ( a_request.has_data_url() )
+        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
     if ( a_request.has_repo_id() )
@@ -901,6 +905,16 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
     body += "}";
 
     dbPost( "dat/create", {}, &body, result );
+
+    setRecordData( a_reply, result );
+}
+
+void
+DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbPost( "dat/create/batch", {}, &a_request.records(), result );
 
     setRecordData( a_reply, result );
 }
@@ -932,6 +946,10 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
     }
     if ( a_request.has_ispublic() )
         body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
+    if ( a_request.has_doi() )
+        body += string(",\"doi\":\"") + a_request.doi() + "\"";
+    if ( a_request.has_data_url() )
+        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
     if ( a_request.has_size() )
         body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_source() )
@@ -1132,6 +1150,12 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 
         if (( imem = val.FindMember("public")) != val.MemberEnd() )
             rec->set_ispublic( imem->value.GetBool() );
+
+        if (( imem = val.FindMember("doi")) != val.MemberEnd() )
+            rec->set_doi( imem->value.GetString() );
+
+        if (( imem = val.FindMember("data_url")) != val.MemberEnd() )
+            rec->set_data_url( imem->value.GetString() );
 
         if (( imem = val.FindMember("md")) != val.MemberEnd() )
         {
