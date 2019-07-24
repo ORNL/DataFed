@@ -19,6 +19,167 @@ module.exports = router;
 
 //==================== DATA API FUNCTIONS
 
+function recordCreate( client, record, results ){
+    var owner_id;
+    var parent_id;
+    var repo_alloc;
+
+    //console.log("Create new data");
+
+    if ( record.parent ) {
+        parent_id = g_lib.resolveCollID( record.parent, client );
+        owner_id = g_db.owner.firstExample({_from:parent_id})._to;
+        if ( owner_id != client._id ){
+            if ( !g_lib.hasManagerPermProj( client, owner_id )){
+                var parent_coll = g_db.c.document( parent_id );
+
+                //console.log("check admin perm on parent coll: ",parent_id);
+                if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE )){
+                    //console.log("NO admin perm on parent coll: ",parent_id);
+                    throw g_lib.ERR_PERM_DENIED;
+                }
+            }
+        }
+    }else{
+        //console.log("no body?");
+        parent_id = g_lib.getRootID(client._id);
+        owner_id = client._id;
+    }
+
+    var alloc_parent = null;
+
+    if ( owner_id != client._id ){
+        //console.log( "not owner" );
+        if ( record.repo ) {
+            // If a repo is specified, must be a real allocation - verify it as usual
+            //console.log( "repo specified" );
+            //repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: record.repo });
+            repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
+        } else {
+            // If a repo is not specified, must check for project sub-allocation
+            //console.log( "repo not specified" );
+
+            if ( owner_id[0] == 'p' ){
+                // For projects, use sub-allocation if defined, otherwise auto-assign from project owner
+                //console.log( "owner is a project" );
+                var proj = g_db.p.document( owner_id );
+                if ( proj.sub_repo ){
+                    //console.log( "project has sub allocation" );
+                    // Make sure soft capacity hasn't been exceeded
+                    if ( proj.sub_usage > proj.sub_alloc )
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+proj.sub_alloc+")"];
+
+                    // TODO Handle multiple project owners?
+                    var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
+                    repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
+                    alloc_parent = repo_alloc._id;
+                }
+            }
+
+            if ( !repo_alloc ){
+                // Try to auto-assign an available allocation
+                repo_alloc = g_lib.assignRepo( owner_id );
+            }
+        }
+    }else{
+        // Storage location uses client allocation(s)
+        if ( record.repo ) {
+            repo_alloc = g_lib.verifyRepo( client._id, record.repo );
+        } else {
+            repo_alloc = g_lib.assignRepo( client._id );
+        }
+    }
+
+    if ( !repo_alloc )
+        throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
+
+    var time = Math.floor( Date.now()/1000 );
+    var obj = { size: 0, ct: time, ut: time, owner: owner_id };
+
+    g_lib.procInputParam( record, "title", false, obj );
+    g_lib.procInputParam( record, "desc", false, obj );
+    g_lib.procInputParam( record, "keyw", false, obj );
+    g_lib.procInputParam( record, "alias", false, obj );
+    g_lib.procInputParam( record, "topic", false, obj );
+    g_lib.procInputParam( record, "doi", false, obj );
+    g_lib.procInputParam( record, "data_url", false, obj );
+
+    if ( record.public )
+        obj.public = record.public;
+
+    if ( record.md ){
+        obj.md = record.md; //JSON.parse( record.md );
+        if ( Array.isArray( obj.md ))
+            throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
+
+        //console.log( "parsed:", obj.md );
+    }
+
+    if ( record.ext_auto !== undefined )
+        obj.ext_auto = record.ext_auto;
+    else
+        obj.ext_auto = true;
+
+    if ( !obj.ext_auto && record.ext ){
+        obj.ext = record.ext;
+        if ( obj.ext.length && obj.ext.charAt(0) != "." )
+            obj.ext = "." + obj.ext;
+    }
+
+    //console.log("Save data");
+
+    var data = g_db.d.save( obj, { returnNew: true });
+    //console.log("Save owner");
+    g_db.owner.save({ _from: data.new._id, _to: owner_id });
+
+    //console.log("Save loc", repo_alloc );
+    //var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key, uid: owner_id };
+    var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
+    if ( alloc_parent )
+        loc.parent = alloc_parent;
+    g_db.loc.save(loc);
+
+    if ( obj.alias ) {
+        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
+
+        if ( g_db.a.exists({ _key: alias_key }))
+            throw [g_lib.ERR_INVALID_PARAM,"Alias, "+obj.alias+", already in use"];
+
+        g_db.a.save({ _key: alias_key });
+        g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
+        g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
+    }
+
+    if ( obj.topic ){
+        g_lib.topicLink( obj.topic, data._id );
+    }
+
+    if ( record.deps != undefined ){
+        var dep,id,dep_data;
+        data.new.deps = [];
+
+        for ( var i in record.deps ) {
+            dep = record.deps[i];
+            id = g_lib.resolveDataID( dep.id, client );
+            dep_data = g_db.d.document( id );
+            if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
+                throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
+            g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
+            data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+        }
+    }
+
+    g_db.item.save({ _from: parent_id, _to: data.new._id });
+
+    data.new.id = data.new._id;
+    data.new.parent_id = parent_id;
+
+    delete data.new._id;
+    delete data.new._key;
+    delete data.new._rev;
+
+    results.push( data.new );
+}
 
 router.post('/create', function (req, res) {
     try {
@@ -113,6 +274,8 @@ router.post('/create', function (req, res) {
                 g_lib.procInputParam( req.body, "keyw", false, obj );
                 g_lib.procInputParam( req.body, "alias", false, obj );
                 g_lib.procInputParam( req.body, "topic", false, obj );
+                g_lib.procInputParam( req.body, "doi", false, obj );
+                g_lib.procInputParam( req.body, "data_url", false, obj );
 
                 if ( req.body.public )
                     obj.public = req.body.public;
@@ -205,6 +368,8 @@ router.post('/create', function (req, res) {
     topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
+    doi: joi.string().allow('').optional(),
+    data_url: joi.string().allow('').optional(),
     parent: joi.string().allow('').optional(),
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
@@ -216,6 +381,55 @@ router.post('/create', function (req, res) {
 }).required(), 'Record fields')
 .summary('Create a new data record')
 .description('Create a new data record from JSON body');
+
+
+router.post('/create/batch', function (req, res) {
+    try {
+        var result = [];
+        console.log( "create data" );
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","repo","alloc"],
+                write: ["d","a","loc","owner","alias","item","t","top","dep"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                for ( var i in req.body ){
+                    recordCreate( client, req.body[i], result );
+                }
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.array().items(
+    joi.object({
+        title: joi.string().allow('').optional(),
+        desc: joi.string().allow('').optional(),
+        keyw: joi.string().allow('').optional(),
+        topic: joi.string().allow('').optional(),
+        alias: joi.string().allow('').optional(),
+        public: joi.boolean().optional(),
+        doi: joi.string().allow('').optional(),
+        data_url: joi.string().allow('').optional(),
+        parent: joi.string().allow('').optional(),
+        repo: joi.string().allow('').optional(),
+        md: joi.any().optional(),
+        ext: joi.string().allow('').optional(),
+        ext_auto: joi.boolean().optional(),
+        deps: joi.array().items(joi.object({
+            id: joi.string().required(),
+            type: joi.number().integer().required()})).optional()
+    })
+).required(), 'Array of record with attributes')
+.summary('Create a batch of new data records')
+.description('Create a batch of new data records from JSON body');
+
 
 router.post('/update', function (req, res) {
     try {
@@ -257,6 +471,8 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "alias", true, obj );
                 g_lib.procInputParam( req.body, "topic", true, obj );
                 g_lib.procInputParam( req.body, "source", true, obj );
+                g_lib.procInputParam( req.body, "doi", true, obj );
+                g_lib.procInputParam( req.body, "data_url", true, obj );
 
                 //console.log("topic, old:", data.topic ,",new:", obj.topic );
                 //console.log("new !== undefined", obj.topic !== undefined );
@@ -446,6 +662,8 @@ router.post('/update', function (req, res) {
     topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
+    doi: joi.string().allow('').optional(),
+    data_url: joi.string().allow('').optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     size: joi.number().optional(),
