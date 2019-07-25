@@ -59,6 +59,7 @@ public:
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
+    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
     //void recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc );
     void recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs );

@@ -86,7 +86,7 @@ function makeBrowserTab(){
     }
 
     this.refreshUI = function( a_ids, a_data, a_reload ){
-        console.log("refreshUI",a_ids,a_data);
+        //console.log("refreshUI",a_ids,a_data);
 
         if ( !a_ids || !a_data ){
             // If no IDs or unknown action, refresh everything
@@ -287,18 +287,31 @@ function makeBrowserTab(){
                 if ( obj instanceof Array ){
                     throw "Not an object"
                 }
-                obj.parent = coll_id;
+                if ( !inst.update_files )
+                    obj.parent = coll_id;
                 payload.push( obj );
                 count++;
                 if ( count == files.length ){
                     console.log("Done reading all files", payload );
-                    dataImport( JSON.stringify( payload ), function( ok, data ){
-                        if ( ok ){
-                            dlgAlert( "TO DO","Refresh UI" );
-                        }else{
-                            dlgAlert( "Import Error", data );
-                        }
-                    });
+                    if ( inst.update_files ){
+                        dataUpdateBatch( JSON.stringify( payload ), function( ok, data ){
+                            if ( ok ){
+                                inst.refreshUI();
+                            }else{
+                                dlgAlert( "Update Error", data );
+                            }
+                        });
+                    }else{
+                        dataCreateBatch( JSON.stringify( payload ), function( ok, data ){
+                            if ( ok ){
+                                var node = inst.data_tree.getNodeByKey( coll_id );
+                                if ( node )
+                                    inst.reloadNode( node );
+                            }else{
+                                dlgAlert( "Import Error", data );
+                            }
+                        });
+                    }
                 }else{
                     reader.readAsText(files[count],'UTF-8');
                 }
@@ -2856,8 +2869,14 @@ function makeBrowserTab(){
     $("#btn_new_data",inst.frame).on('click', inst.newData );
     $("#btn_new_coll",inst.frame).on('click', inst.newColl );
     $("#btn_import_data",inst.frame).on('click', function(){
-        $('#import_files',inst.frame).val("");
-        $('#import_files',inst.frame).trigger('click');
+        inst.update_files = false
+        $('#input_files',inst.frame).val("");
+        $('#input_files',inst.frame).trigger('click');
+    });
+    $("#btn_update_data",inst.frame).on('click', function(){
+        inst.update_files = true
+        $('#input_files',inst.frame).val("");
+        $('#input_files',inst.frame).trigger('click');
     });
 
     $("#btn_edit",inst.frame).on('click', inst.editSelected );
@@ -3276,7 +3295,7 @@ function makeBrowserTab(){
         inst.updateSearchSelectState( true );
     });
 
-    $('#import_files',inst.frame).on("change",function(ev){
+    $('#input_files',inst.frame).on("change",function(ev){
         if ( ev.target.files && ev.target.files.length ){
             var node = inst.data_tree.activeNode;
             if ( node ){

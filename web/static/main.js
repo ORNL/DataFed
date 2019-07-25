@@ -347,9 +347,17 @@ function dataGetDepGraph( a_id, a_cb ) {
     });
 }
 
-function dataImport( a_records, a_cb ){
-    console.log("dataImport, type:", typeof a_records );
-    _asyncPostText( "/api/dat/import", a_records, function( ok, data ){
+function dataCreateBatch( a_records, a_cb ){
+    console.log("dataCreateBatch");
+    _asyncPostText( "/api/dat/create/batch", a_records, function( ok, data ){
+        if ( a_cb )
+            a_cb( ok, data );
+    });
+}
+
+function dataUpdateBatch( a_records, a_cb ){
+    console.log("dataUpdateBatch");
+    _asyncPostText( "/api/dat/update/batch", a_records, function( ok, data ){
         if ( a_cb )
             a_cb( ok, data );
     });

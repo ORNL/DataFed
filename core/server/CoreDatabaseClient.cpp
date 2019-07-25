@@ -992,6 +992,16 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
+DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbPost( "dat/update/batch", {}, &a_request.records(), result );
+
+    setRecordData( a_reply, result );
+}
+
+void
 //DatabaseClient::recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc )
 DatabaseClient::recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
 {

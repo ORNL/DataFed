@@ -206,6 +206,11 @@ message RecordUpdateRequest
     repeated DependencySpecData deps_rem    = 19;
 }
 
+message RecordUpdateBatchRequest
+{
+    required string             records     = 1; // JSON array containing records following DB record update schema
+}
+
 message RecordLockRequest
 {
     repeated string             id          = 1;
