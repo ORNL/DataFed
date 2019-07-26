@@ -1094,7 +1094,7 @@ function makeBrowserTab(){
                         inst.noInfoAvail();
                     }
                 });
-            } else if ( key == "shared_user" && node.data.scope ) {
+            } else if ( key.startsWith( "shared_user_" ) && node.data.scope ) {
                 //console.log( "user", node.data.scope, node );
                 userView( node.data.scope, false, function( ok, item ){
                     if ( ok && item ){
@@ -1108,6 +1108,43 @@ function makeBrowserTab(){
                         inst.showSelectedMetadata();
                     }else{
                         inst.noInfoAvail();
+                    }
+                });
+            } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
+                viewProj( node.data.scope, function( item ){
+                    if ( item ){
+                        inst.sel_id.text("Project ID: " + key);
+                        inst.sel_title.text("\"" + item.title + "\"");
+
+                        if ( item.desc )
+                            inst.sel_descr.text(item.desc);
+                        else
+                            inst.sel_descr.text("(n/a)");
+
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                        if ( item.ct ){
+                            date.setTime(item.ct*1000);
+                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        if ( item.ut ){
+                            date.setTime(item.ut*1000);
+                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        html += "<tr><td>Admins:</td><td>";
+                        if ( item.admin && item.admin.length ){
+                            for ( i in item.admin )
+                            html += item.admin[i].substr(2) + " ";
+                        }else{
+                            html += "(n/a)";
+                        }
+                        html += "</td></tr></table>";
+                        inst.sel_details.html(html);
+                        $("#sel_references").html("(n/a)");
+
+                        inst.showSelectedMetadata();
+                    }else{
+                        inst.noInfoAvail("Insufficient permissions to view project.");
                     }
                 });
             } else if ( key == "allocs" ) {
