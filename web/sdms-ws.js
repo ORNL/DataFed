@@ -112,7 +112,9 @@ function startServer(){
 }
 
 app.use( express.static( __dirname + '/static' ));
-app.use( bodyParser.json({ type: 'application/json'}));
+// body size limit = 100*max metadata size, which is 100 Kb
+app.use( bodyParser.json({ type: 'application/json', limit: '1048576'}));
+app.use( bodyParser.text({ type: 'text/plain', limit: '1048576'}));
 app.use( cookieParser() );
 app.use( helmet({hsts:{maxAge:31536000}}) );
 app.set( 'view engine', 'ect' );
@@ -628,9 +630,22 @@ app.post('/api/dat/update', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/dat/lock', ( a_req, a_resp ) => {
-    console.log("/dat/lock, lock:",a_req.query.lock);
+app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
+    console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
+    sendMessage( "RecordCreateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
 
+app.post('/api/dat/update/batch', ( a_req, a_resp ) => {
+    console.log( "dat update batch", a_req.headers['content-type'], typeof a_req.body );
+    sendMessage( "RecordUpdateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/lock', ( a_req, a_resp ) => {
+    //console.log("/dat/lock, lock:",a_req.query.lock);
     sendMessage( "RecordLockRequest", { id: JSON.parse(a_req.query.ids), lock: a_req.query.lock=="true"?true:false}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });

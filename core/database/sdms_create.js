@@ -87,6 +87,7 @@ view.properties({
 );
 
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
+db.d.ensureIndex({ type: "hash", unique: false, fields: [ "doi" ], sparse: true });
 
 //db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });

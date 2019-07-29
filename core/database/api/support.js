@@ -102,8 +102,9 @@ module.exports = ( function() {
     obj.CHARSET_ID      = 0;
     obj.CHARSET_ALIAS   = 1;
     obj.CHARSET_TOPIC   = 2;
+    obj.CHARSET_URL     = 3;
 
-    obj.extra_chars = ["_-.","_-.","_-."];
+    obj.extra_chars = ["_-.","_-.","_-.","-._~:/?#[]@!$&'()*+,;="];
 
     obj.field_reqs = {
         title: { required: true, update: true, max_len: 80, label: 'title' },
@@ -116,7 +117,9 @@ module.exports = ( function() {
         source: { required: false, update: true, max_len: 300, lower: false, label: 'source' },
         ext: { required: false, update: true, max_len: 40, lower: false, label: 'extension' },
         gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
-        id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' }
+        id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' },
+        doi: { required: false, update: true, max_len: 40, lower: true, label: 'doi' },
+        data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' },
     };
 
     obj.DEF_MAX_COLL    = 50;
@@ -129,7 +132,7 @@ module.exports = ( function() {
         //console.log("procInput",a_field,",update:",a_update);
 
         if ( !spec ){
-            throw [obj.ERR_INTERNAL_FAULT,"Input specification for '" + a_field + "' not found. Please context system administrator."];
+            throw [obj.ERR_INTERNAL_FAULT,"Input specification for '" + a_field + "' not found. Please contact system administrator."];
         }
 
         if ( spec.in_field )

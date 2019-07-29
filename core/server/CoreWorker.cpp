@@ -96,7 +96,6 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
 
         // Requests that can be handled by DB client directly
-        
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
         SET_MSG_HANDLER_DB( proto_id, UserSaveTokensRequest, AckReply, userSaveTokens );
@@ -115,7 +114,9 @@ Worker::setupMsgHandlers()
         //SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
+        SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
+        SET_MSG_HANDLER_DB( proto_id, RecordUpdateBatchRequest, RecordDataReply, recordUpdateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
@@ -1045,7 +1046,7 @@ Worker::parseSearchMetadata( const string & a_query )
     //static set<char> id_spec = {'.','_','-'};
     //static set<char> spec = {'(',')',' ','\t','\\','+','-','/','*','<','>','=','!','~','&','|','?',']','['};
     //static set<char> nums = {'0','1','2','3','4','5','6','7','8','9','.'};
-    static set<string> terms = {"title","desc","alias","topic","owner","keyw","ct","ut","size"};
+    static set<string> terms = {"title","desc","alias","topic","doi","data_url","owner","keyw","ct","ut","size","source","ext"};
     static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
         "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample",

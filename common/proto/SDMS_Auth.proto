@@ -168,12 +168,19 @@ message RecordCreateRequest
     optional string             keyw        = 4;
     optional string             alias       = 5;
     optional bool               ispublic    = 6;
-    optional string             metadata    = 7;
-    optional string             parent_id   = 8;
-    optional string             repo_id     = 9;
-    optional string             ext         = 10;
-    optional bool               ext_auto    = 11;
-    repeated DependencySpecData deps        = 12;
+    optional string             doi         = 7;
+    optional string             data_url    = 8;
+    optional string             metadata    = 9;
+    optional string             parent_id   = 10;
+    optional string             repo_id     = 11;
+    optional string             ext         = 12;
+    optional bool               ext_auto    = 13;
+    repeated DependencySpecData deps        = 14;
+}
+
+message RecordCreateBatchRequest
+{
+    required string             records     = 1; // JSON array containing records following DB record create schema
 }
 
 message RecordUpdateRequest
@@ -185,16 +192,23 @@ message RecordUpdateRequest
     optional string             topic       = 5;
     optional string             alias       = 6;
     optional bool               ispublic    = 7;
-    optional string             metadata    = 8;
-    optional bool               mdset       = 9;
-    optional string             source      = 10;
-    optional string             ext         = 11;
-    optional bool               ext_auto    = 12;
-    optional uint64             size        = 13;
-    optional uint32             dt          = 14;
-    optional bool               deps_clear  = 15;
-    repeated DependencySpecData deps_add    = 16;
-    repeated DependencySpecData deps_rem    = 17;
+    optional string             doi         = 8;
+    optional string             data_url    = 9;
+    optional string             metadata    = 10;
+    optional bool               mdset       = 11;
+    optional string             source      = 12;
+    optional string             ext         = 13;
+    optional bool               ext_auto    = 14;
+    optional uint64             size        = 15;
+    optional uint32             dt          = 16;
+    optional bool               deps_clear  = 17;
+    repeated DependencySpecData deps_add    = 18;
+    repeated DependencySpecData deps_rem    = 19;
+}
+
+message RecordUpdateBatchRequest
+{
+    required string             records     = 1; // JSON array containing records following DB record update schema
 }
 
 message RecordLockRequest

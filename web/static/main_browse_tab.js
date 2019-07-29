@@ -86,7 +86,7 @@ function makeBrowserTab(){
     }
 
     this.refreshUI = function( a_ids, a_data, a_reload ){
-        console.log("refreshUI",a_ids,a_data);
+        //console.log("refreshUI",a_ids,a_data);
 
         if ( !a_ids || !a_data ){
             // If no IDs or unknown action, refresh everything
@@ -252,6 +252,84 @@ function makeBrowserTab(){
                     inst.graphLoad( inst.focus_node_id, inst.sel_node.id );
             });
         });
+    }
+
+    this.importData = function( coll_id, files ){
+        // Read file contents into a single payload for atomic validation and processing
+        var file, tot_size = 0;
+
+        for ( i = 0; i < files.length; i++ ){
+            file = files[i];
+            console.log("size:",file.size,typeof file.size);
+            if ( file.size == 0 ){
+                dlgAlert("Import Error","File " + file.name + " is empty." );
+                return;
+            }
+            if ( file.size > MD_MAX_SIZE ){
+                dlgAlert("Import Error","File " + file.name + " size (" + sizeToString( file.size ) + ") exceeds metadata size limit of " + sizeToString(MD_MAX_SIZE) + "." );
+                return;
+            }
+            tot_size += file.size;
+        }
+
+        if ( tot_size > PAYLOAD_MAX_SIZE ){
+            dlgAlert("Import Error","Total import size (" + sizeToString( tot_size ) + ") exceeds server limit of " + sizeToString(PAYLOAD_MAX_SIZE) + "." );
+            return;
+        }
+
+        // Read file content and verify JSON format (must be {...})
+        var count = 0, payload = [];
+        var reader = new FileReader();
+
+        reader.onload = function( e ){
+            try{
+                var obj = JSON.parse( e.target.result )
+                if ( obj instanceof Array ){
+                    throw "Not an object"
+                }
+                if ( !inst.update_files )
+                    obj.parent = coll_id;
+                payload.push( obj );
+                count++;
+                if ( count == files.length ){
+                    console.log("Done reading all files", payload );
+                    if ( inst.update_files ){
+                        dataUpdateBatch( JSON.stringify( payload ), function( ok, data ){
+                            if ( ok ){
+                                inst.refreshUI();
+                            }else{
+                                dlgAlert( "Update Error", data );
+                            }
+                        });
+                    }else{
+                        dataCreateBatch( JSON.stringify( payload ), function( ok, data ){
+                            if ( ok ){
+                                var node = inst.data_tree.getNodeByKey( coll_id );
+                                if ( node )
+                                    inst.reloadNode( node );
+                            }else{
+                                dlgAlert( "Import Error", data );
+                            }
+                        });
+                    }
+                }else{
+                    reader.readAsText(files[count],'UTF-8');
+                }
+            }catch(e){
+                dlgAlert("Import Error","Invalid JSON in file " + files[count].name );
+                return;
+            }
+        }
+
+        reader.onerror = function( e ){
+            dlgAlert("Import Error", "Error reading file: " + files[count].name )
+        }
+
+        reader.onabort = function( e ){
+            dlgAlert("Import Error", "Import aborted" )
+        }
+
+        reader.readAsText(files[count],'UTF-8');
     }
 
     this.newColl = function() {
@@ -686,6 +764,7 @@ function makeBrowserTab(){
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
+        $("#btn_import_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         $("#btn_new_coll",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
         $("#btn_dep_graph",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
@@ -854,15 +933,21 @@ function makeBrowserTab(){
 
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
+                        if ( item.doi )
+                            html += "<tr><td>DOI:</td><td>" + item.doi + "</td></tr>";
                         html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
-                        html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
-                        html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
-                        if ( item.source )
-                            html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
-                        if ( item.ext )
-                            html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
-                        html += "<tr><td>Auto Ext.:</td><td>" + (item.extAuto?"Yes":"No") + "</td></tr>";
+                        if ( item.dataUrl ){
+                            html += "<tr><td>Data URL:</td><td>" + item.dataUrl + "</td></tr>";
+                        }else{
+                            html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
+                            html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
+                            if ( item.source )
+                                html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
+                            if ( item.ext )
+                                html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
+                            html += "<tr><td>Auto Ext.:</td><td>" + (item.extAuto?"Yes":"No") + "</td></tr>";
+                        }
                         if ( item.ct ){
                             date.setTime(item.ct*1000);
                             html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
@@ -1009,7 +1094,7 @@ function makeBrowserTab(){
                         inst.noInfoAvail();
                     }
                 });
-            } else if ( key == "shared_user" && node.data.scope ) {
+            } else if ( key.startsWith( "shared_user_" ) && node.data.scope ) {
                 //console.log( "user", node.data.scope, node );
                 userView( node.data.scope, false, function( ok, item ){
                     if ( ok && item ){
@@ -1023,6 +1108,43 @@ function makeBrowserTab(){
                         inst.showSelectedMetadata();
                     }else{
                         inst.noInfoAvail();
+                    }
+                });
+            } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
+                viewProj( node.data.scope, function( item ){
+                    if ( item ){
+                        inst.sel_id.text("Project ID: " + key);
+                        inst.sel_title.text("\"" + item.title + "\"");
+
+                        if ( item.desc )
+                            inst.sel_descr.text(item.desc);
+                        else
+                            inst.sel_descr.text("(n/a)");
+
+                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                        if ( item.ct ){
+                            date.setTime(item.ct*1000);
+                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        if ( item.ut ){
+                            date.setTime(item.ut*1000);
+                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                        }
+                        html += "<tr><td>Admins:</td><td>";
+                        if ( item.admin && item.admin.length ){
+                            for ( i in item.admin )
+                            html += item.admin[i].substr(2) + " ";
+                        }else{
+                            html += "(n/a)";
+                        }
+                        html += "</td></tr></table>";
+                        inst.sel_details.html(html);
+                        $("#sel_references").html("(n/a)");
+
+                        inst.showSelectedMetadata();
+                    }else{
+                        inst.noInfoAvail("Insufficient permissions to view project.");
                     }
                 });
             } else if ( key == "allocs" ) {
@@ -2783,6 +2905,16 @@ function makeBrowserTab(){
     $("#btn_new_proj",inst.frame).on('click', inst.newProj );
     $("#btn_new_data",inst.frame).on('click', inst.newData );
     $("#btn_new_coll",inst.frame).on('click', inst.newColl );
+    $("#btn_import_data",inst.frame).on('click', function(){
+        inst.update_files = false
+        $('#input_files',inst.frame).val("");
+        $('#input_files',inst.frame).trigger('click');
+    });
+    $("#btn_update_data",inst.frame).on('click', function(){
+        inst.update_files = true
+        $('#input_files',inst.frame).val("");
+        $('#input_files',inst.frame).trigger('click');
+    });
 
     $("#btn_edit",inst.frame).on('click', inst.editSelected );
     //$("#btn_dup",inst.frame).on('click', inst.dupSelected );
@@ -3198,6 +3330,25 @@ function makeBrowserTab(){
         }
 
         inst.updateSearchSelectState( true );
+    });
+
+    $('#input_files',inst.frame).on("change",function(ev){
+        if ( ev.target.files && ev.target.files.length ){
+            var node = inst.data_tree.activeNode;
+            if ( node ){
+                var parent;
+                if ( node.key.startsWith("d/")) {
+                    parent = node.parent.key;
+                }else if (node.key.startsWith("c/")){
+                    parent = node.key;
+                }else if (node.key.startsWith("p/")){
+                    parent = "c/p_"+node.key.substr(2)+"_root";
+                }else
+                    return;
+                inst.importData( parent, ev.target.files )
+            }
+
+        }
     });
 
     // Graph Init
