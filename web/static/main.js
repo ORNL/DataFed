@@ -272,35 +272,41 @@ function dataGet( a_ids ){
     dataGetPreprocess( a_ids, function( ok, data ){
         if ( ok ){
             console.log("proproc:",data);
-            ok = false;
+            var internal = false, external = false;
+
             for ( var i in data.item ){
-                if ( !data.item[i].locked && data.item[i].size > 0 ){
-                    ok = true;
-                    break;
+                if ( data.item[i].locked ){
+                    dlgAlert("Data Get Error","One or more data records are currently locked.");
+                    return;
+                }
+                if ( data.item[i].url ){
+                    external = true;
+                }else if ( data.item[i].size <= 0 ){
+                    dlgAlert("Data Get Error","One or more data records have no raw data.");
+                    return;
+                }else{
+                    internal = true;
                 }
             }
-            if ( !ok ){
-                dlgAlert("Data Get Error","None of the selected data records can be downloaded (all are empty and/or locked).");
-            }else{
+            if ( internal && external ){
+                dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
+                return;
+            } else if ( internal ){
                 dlgStartTransfer( XFR_GET, data.item );
+            }else{
+                for ( var i in data.item ){
+                    console.log("download ", data.item[i].url )
+                    var link = document.createElement("a");
+                    link.download = "newfile-" + i;
+                    link.href = data.item[i].url;
+                    link.target = "_blank";
+                    link.click();
+                }
+                //dlgStartDownload( data.item );
             }
         }else{
             dlgAlert("Data Get Error",data);
         }
-    /*checkPerms( a_id, PERM_RD_DATA, function( granted ){
-        if ( !granted ){
-            alertPermDenied();
-            return;
-        }
-
-        viewData( a_ids, function( data ){
-            if ( data ){
-                if ( !data.size || parseInt(data.size) == 0 )
-                    dlgAlert("Data Get Error","Record contains no raw data");
-                else
-                    dlgStartTransfer( XFR_GET, a_ids );
-            }
-        }); */
     });
 }
 

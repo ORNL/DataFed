@@ -37,6 +37,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 </div>\
             </div>\
             <div id='tab-dlg-data' style='padding:1em'>\
+                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input><br><br>\
                 Working Data:<hr style='margin-top:4px'>\
                 <table class='form-table'>\
                     <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
@@ -482,6 +483,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     clearTimeout( srcEditTimer );
 
                 srcEditTimer = setTimeout( function(){ if ( $("#ext_auto",frame).prop("checked") ){ updateAutoExt() }}, 1000 );
+            });
+
+            $("#published",frame).checkboxradio().on( "change",function(ev){
+                var pub = $("#published",frame).prop("checked");
+                if ( pub ){
+                    console.log("published");
+                }else{
+                    console.log("NOT published");
+                }
             });
 
             $("#ext_auto",frame).checkboxradio().on( "change",function(ev){
