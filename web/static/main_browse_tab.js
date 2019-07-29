@@ -938,7 +938,7 @@ function makeBrowserTab(){
                         html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
                         if ( item.dataUrl ){
-                            html += "<tr><td>Data URL:</td><td>" + item.dataUrl + "</td></tr>";
+                            html += "<tr><td>Data URL:</td><td><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></td></tr>";
                         }else{
                             html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
                             html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
