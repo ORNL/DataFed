@@ -1318,7 +1318,7 @@ function makeBrowserTab(){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                     for ( var i in items ){
                         var item = items[i];
-                        results.push({title:inst.generateTitle( item ),icon:"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner});
+                        results.push({title:inst.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner});
                     }
                 } else {
                     setStatusText("No results found");
@@ -1479,6 +1479,9 @@ function makeBrowserTab(){
             title += escapeHTML("\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")");
         else
             title += escapeHTML("\"" + item.title + "\" [" + item.id.substr(2) + "]");
+
+        if ( item.doi )
+            title += " doi:" + escapeHTML(item.doi);
 
         return  title;
     }
@@ -2681,7 +2684,7 @@ function makeBrowserTab(){
                     if ( item.id[0]=="t" ){
                         entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
                     }else{
-                        entry = { title: inst.generateTitle(item),scope:item.owner,key:item.id,icon:"ui-icon ui-icon-file",checkbox:false };
+                        entry = { title: inst.generateTitle(item),scope:item.owner,key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false };
                     }
 
                     data.result.push( entry );
@@ -2703,7 +2706,7 @@ function makeBrowserTab(){
                     if ( item.id[0]=="c" ){
                         entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id, offset: 0 };
                     }else{
-                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id };
+                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id };
                     }
 
                     data.result.push( entry );

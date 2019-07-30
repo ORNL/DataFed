@@ -203,6 +203,10 @@
     color: #df6000
 }
 
+.ui-icon-linkext
+{
+    color: #00B0B0
+}
 
 .ui-draggable-handle {
 	-ms-touch-action: none;

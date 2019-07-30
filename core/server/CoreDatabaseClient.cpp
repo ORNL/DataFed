@@ -1529,6 +1529,8 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
                 item->set_size( imem->value.GetUint() );
             if (( imem = val.FindMember("gen")) != val.MemberEnd() )
                 item->set_gen( imem->value.GetInt() );
+            if (( imem = val.FindMember("doi")) != val.MemberEnd() && !imem->value.IsNull() )
+                item->set_doi( imem->value.GetString() );
             if (( imem = val.FindMember("url")) != val.MemberEnd() && !imem->value.IsNull() )
                 item->set_url( imem->value.GetString() );
             if (( imem = val.FindMember("deps")) != val.MemberEnd() )
