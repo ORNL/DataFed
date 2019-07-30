@@ -293,14 +293,14 @@ router.get('/read', function (req, res) {
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, locked: v.locked }";
             result = g_db._query( qry, { coll: coll_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, locked: v.locked }";
             result = g_db._query( qry, { coll: coll_id });
         }
 

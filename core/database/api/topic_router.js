@@ -32,14 +32,14 @@ router.get('/list', function (req, res) {
         }
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
-            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}";
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,doi:v.doi,alias:v.alias}";
             result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}";
+            qry += " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias,doi:v.doi}";
             result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" });
         }
 
