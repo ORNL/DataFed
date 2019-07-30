@@ -114,16 +114,20 @@ function recordCreate( client, record, results ){
 
         //console.log( "parsed:", obj.md );
     }
+    if ( obj.doi || obj.data_url ){
+        if ( !obj.doi || !obj.data_url )
+            throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
+    }else{
+        if ( record.ext_auto !== undefined )
+            obj.ext_auto = record.ext_auto;
+        else
+            obj.ext_auto = true;
 
-    if ( record.ext_auto !== undefined )
-        obj.ext_auto = record.ext_auto;
-    else
-        obj.ext_auto = true;
-
-    if ( !obj.ext_auto && record.ext ){
-        obj.ext = record.ext;
-        if ( obj.ext.length && obj.ext.charAt(0) != "." )
-            obj.ext = "." + obj.ext;
+        if ( !obj.ext_auto && record.ext ){
+            obj.ext = record.ext;
+            if ( obj.ext.length && obj.ext.charAt(0) != "." )
+                obj.ext = "." + obj.ext;
+        }
     }
 
     //console.log("Save data");
@@ -193,6 +197,9 @@ router.post('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+                recordCreate( client, req.body, result );
+
+                /*
                 var owner_id;
                 var parent_id;
                 var repo_alloc;
@@ -288,15 +295,20 @@ router.post('/create', function (req, res) {
                     //console.log( "parsed:", obj.md );
                 }
 
-                if ( req.body.ext_auto !== undefined )
-                    obj.ext_auto = req.body.ext_auto;
-                else
-                    obj.ext_auto = true;
+                if ( obj.doi || obj.data_url ){
+                    if ( !obj.doi || !obj.data_url )
+                        throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
+                }else{
+                    if ( req.body.ext_auto !== undefined )
+                        obj.ext_auto = req.body.ext_auto;
+                    else
+                        obj.ext_auto = true;
 
-                if ( !obj.ext_auto && req.body.ext ){
-                    obj.ext = req.body.ext;
-                    if ( obj.ext.length && obj.ext.charAt(0) != "." )
-                        obj.ext = "." + obj.ext;
+                    if ( !obj.ext_auto && req.body.ext ){
+                        obj.ext = req.body.ext;
+                        if ( obj.ext.length && obj.ext.charAt(0) != "." )
+                            obj.ext = "." + obj.ext;
+                    }
                 }
 
                 //console.log("Save data");
@@ -352,6 +364,7 @@ router.post('/create', function (req, res) {
                 delete data.new._rev;
 
                 result.push( data.new );
+            */
             }
         });
 
@@ -430,7 +443,7 @@ router.post('/create/batch', function (req, res) {
 .summary('Create a batch of new data records')
 .description('Create a batch of new data records from JSON body');
 
-function recordUpdate( client, record, results ){
+function recordUpdate( client, record, results, alloc_sz, locations ){
     var data_id = g_lib.resolveDataID( record.id, client );
     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
     var data = g_db.d.document( data_id );
@@ -491,58 +504,87 @@ function recordUpdate( client, record, results ){
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
     }
 
-    if ( record.ext_auto !== undefined ){
-        //console.log("auto ext set:",record.ext_auto);
-        obj.ext_auto = record.ext_auto;
+    var has_data = true;
+
+    if ( data.doi ){
+        // Data was previously published, check for invalid updates
+        if ( obj.doi === null || obj.data_url === null ){
+            if ( obj.doi || obj.data_url )
+                throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must both be set or cleared together."];
+        }else{
+            has_data = false;
+        }
+    }else if ( obj.doi || obj.data_url ){
+        has_data = false;
+
+        if ( !obj.doi || !obj.data_url )
+            throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
+
+        if ( data.size ){
+            // Data is being published, delete existing managed raw data
+            g_lib.deleteRawData( data, alloc_sz, locations );
+            obj.size = 0;
+        }
+        obj.source = null;
+        obj.ext = null;
     }
 
-    if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-        //console.log("auto ext ON, calc ext");
-        if ( obj.source !== undefined || data.source !== undefined ){
-            // Changed - update auto extension
-            var src = obj.source || data.source;
-            if ( src ){
-                //console.log("src defined");
-                // Skip possible "." in end-point name
-                var pos = src.lastIndexOf("/");
-                pos = src.indexOf(".",pos>0?pos:0);
-                if ( pos != -1 ){
-                    obj.ext = src.substr( pos );
-                    //console.log("new auto ext",obj.ext);
-                }else{
-                    obj.ext = null;
-                    //console.log("new auto ext = NONE");
+    if ( has_data ){
+        if ( record.ext_auto !== undefined ){
+            //console.log("auto ext set:",record.ext_auto);
+            obj.ext_auto = record.ext_auto;
+        }
+
+        if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
+            //console.log("auto ext ON, calc ext");
+            if ( obj.source !== undefined || data.source !== undefined ){
+                // Changed - update auto extension
+                var src = obj.source || data.source;
+                if ( src ){
+                    //console.log("src defined");
+                    // Skip possible "." in end-point name
+                    var pos = src.lastIndexOf("/");
+                    pos = src.indexOf(".",pos>0?pos:0);
+                    if ( pos != -1 ){
+                        obj.ext = src.substr( pos );
+                        //console.log("new auto ext",obj.ext);
+                    }else{
+                        obj.ext = null;
+                        //console.log("new auto ext = NONE");
+                    }
                 }
             }
+        }else{
+            g_lib.procInputParam( record, "ext", true, obj );
+            if ( obj.ext && obj.ext.charAt(0) != "." )
+                obj.ext = "." + obj.ext;
         }
-    }else{
-        g_lib.procInputParam( record, "ext", true, obj );
-        if ( obj.ext && obj.ext.charAt(0) != "." )
-            obj.ext = "." + obj.ext;
-    }
 
-    if ( record.size !== undefined ) {
-        obj.size = record.size;
+        if ( record.size !== undefined ) {
+            console.log("new data syze:",record.size,typeof record.size);
 
-        data = g_db.d.document( data_id );
-        if ( obj.size != data.size ){
-            var loc = g_db.loc.firstExample({ _from: data_id });
-            if ( loc ){
-                //console.log("owner:",owner_id,"repo:",loc._to);
-                var alloc, usage;
-                if ( loc.parent ){
-                    alloc = g_db.alloc.document( loc.parent );
-                    // Update project sub allocation
-                    var proj = g_db.p.document( owner_id );
-                    usage = Math.max(0,proj.sub_usage - data.size + obj.size);
-                    g_db._update( proj._id, {sub_usage:usage});
-                }else{
-                    alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+            obj.size = record.size;
+
+            data = g_db.d.document( data_id );
+            if ( obj.size != data.size ){
+                var loc = g_db.loc.firstExample({ _from: data_id });
+                if ( loc ){
+                    //console.log("owner:",owner_id,"repo:",loc._to);
+                    var alloc, usage;
+                    if ( loc.parent ){
+                        alloc = g_db.alloc.document( loc.parent );
+                        // Update project sub allocation
+                        var proj = g_db.p.document( owner_id );
+                        usage = Math.max(0,proj.sub_usage - data.size + obj.size);
+                        g_db._update( proj._id, {sub_usage:usage});
+                    }else{
+                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                    }
+
+                    // Update primary/parent allocation
+                    usage = Math.max(0,alloc.tot_size - data.size + obj.size);
+                    g_db._update( alloc._id, {tot_size:usage});
                 }
-
-                // Update primary/parent allocation
-                usage = Math.max(0,alloc.tot_size - data.size + obj.size);
-                g_db._update( alloc._id, {tot_size:usage});
             }
         }
     }
@@ -574,7 +616,7 @@ function recordUpdate( client, record, results ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,dep_data,id;
+    var i,dep,id; //dep_data;
 
     if ( record.deps_clear ){
         g_db.dep.removeByExample({_from:data_id});
@@ -604,7 +646,7 @@ function recordUpdate( client, record, results ){
             id = g_lib.resolveDataID( dep.id, client );
             if ( !id.startsWith("d/"))
                 throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-            dep_data = g_db.d.document( id );
+            //dep_data = g_db.d.document( id );
             if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
 
@@ -647,209 +689,12 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data_id = g_lib.resolveDataID( req.body.id, client );
-                var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-                var data = g_db.d.document( data_id );
+                var alloc_sz = {}, locations = {};
 
-                if ( !g_lib.hasAdminPermObject( client, data_id )) {
-                    // Required permissions depend on which fields are being modified:
-                    // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
-                    var perms = 0;
-                    if ( req.body.md )
-                        perms |= g_lib.PERM_WR_META;
-
-                    if ( req.body.size || req.body.dt )
-                        perms |= g_lib.PERM_WR_DATA;
-
-                    if ( req.body.title || req.body.alias  || req.body.desc || req.body.public )
-                        perms |= g_lib.PERM_WR_REC;
-
-                    if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
-                        throw g_lib.ERR_PERM_DENIED;
-                }
-
-                var obj = { ut: Math.floor( Date.now()/1000 ) };
-
-                g_lib.procInputParam( req.body, "title", true, obj );
-                g_lib.procInputParam( req.body, "desc", true, obj );
-                g_lib.procInputParam( req.body, "keyw", true, obj );
-                g_lib.procInputParam( req.body, "alias", true, obj );
-                g_lib.procInputParam( req.body, "topic", true, obj );
-                g_lib.procInputParam( req.body, "source", true, obj );
-                g_lib.procInputParam( req.body, "doi", true, obj );
-                g_lib.procInputParam( req.body, "data_url", true, obj );
-
-                //console.log("topic, old:", data.topic ,",new:", obj.topic );
-                //console.log("new !== undefined", obj.topic !== undefined );
-
-                if ( obj.topic !== undefined && obj.topic != data.topic ){
-                    //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-
-                    if ( data.topic ){
-                        //console.log("unlink old topic");
-                        g_lib.topicUnlink( data._id );
-                    }
-
-                    if ( obj.topic && obj.topic.length ){
-                        //console.log("link new topic");
-                        g_lib.topicLink( obj.topic, data._id );
-                    }
-                }
-
-                if ( req.body.public !== undefined )
-                    obj.public = req.body.public;
-
-                if ( req.body.md === "" )
-                    obj.md = null;
-                else if ( req.body.md ){
-                    obj.md = req.body.md;
-                    if ( Array.isArray( obj.md ))
-                        throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
-                }
-
-                if ( req.body.ext_auto !== undefined ){
-                    //console.log("auto ext set:",req.body.ext_auto);
-                    obj.ext_auto = req.body.ext_auto;
-                }
-
-                if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-                    //console.log("auto ext ON, calc ext");
-                    if ( obj.source !== undefined || data.source !== undefined ){
-                        // Changed - update auto extension
-                        var src = obj.source || data.source;
-                        if ( src ){
-                            //console.log("src defined");
-                            // Skip possible "." in end-point name
-                            var pos = src.lastIndexOf("/");
-                            pos = src.indexOf(".",pos>0?pos:0);
-                            if ( pos != -1 ){
-                                obj.ext = src.substr( pos );
-                                //console.log("new auto ext",obj.ext);
-                            }else{
-                                obj.ext = null;
-                                //console.log("new auto ext = NONE");
-                            }
-                        }
-                    }
-                }else{
-                    g_lib.procInputParam( req.body, "ext", true, obj );
-                    if ( obj.ext && obj.ext.charAt(0) != "." )
-                        obj.ext = "." + obj.ext;
-                }
-
-                if ( req.body.size !== undefined ) {
-                    obj.size = req.body.size;
-
-                    data = g_db.d.document( data_id );
-                    if ( obj.size != data.size ){
-                        var loc = g_db.loc.firstExample({ _from: data_id });
-                        if ( loc ){
-                            //console.log("owner:",owner_id,"repo:",loc._to);
-                            var alloc, usage;
-                            if ( loc.parent ){
-                                alloc = g_db.alloc.document( loc.parent );
-                                // Update project sub allocation
-                                var proj = g_db.p.document( owner_id );
-                                usage = Math.max(0,proj.sub_usage - data.size + obj.size);
-                                g_db._update( proj._id, {sub_usage:usage});
-                            }else{
-                                alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                            }
-
-                            // Update primary/parent allocation
-                            usage = Math.max(0,alloc.tot_size - data.size + obj.size);
-                            g_db._update( alloc._id, {tot_size:usage});
-                        }
-                    }
-                }
-
-                if ( req.body.dt != undefined )
-                    obj.dt = req.body.dt;
-                //console.log("new ext:",obj.ext,",auto:",obj.ext_auto);
-                data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: req.body.mdset?false:true });
-                data = data.new;
-
-                if ( obj.alias != undefined ) {
-                    var old_alias = g_db.alias.firstExample({ _from: data_id });
-                    if ( old_alias ) {
-                        const graph = require('@arangodb/general-graph')._graph('sdmsg');
-                        graph.a.remove( old_alias._to );
-                    }
-
-                    if ( obj.alias ){
-                        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
-                        if ( g_db.a.exists({ _key: alias_key }))
-                            throw [g_lib.ERR_INVALID_PARAM,"Alias, "+obj.alias+", already in use"];
-
-                        g_db.a.save({ _key: alias_key });
-                        g_db.alias.save({ _from: data_id, _to: "a/" + alias_key });
-                        g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                    }
-                }
-
-                if ( req.body.deps != undefined && ( req.body.deps_add != undefined || req.body.deps_rem != undefined ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
-
-                var i,dep,dep_data,id;
-
-                if ( req.body.deps_clear ){
-                    g_db.dep.removeByExample({_from:data_id});
-                    data.deps = [];
-                }
-
-                var get_deps = false;
-                if ( req.body.deps_rem != undefined ){
-                    //console.log("rem deps from ",data._id);
-                    for ( i in req.body.deps_rem ) {
-                        dep = req.body.deps_rem[i];
-                        id = g_lib.resolveDataID( dep.id, client );
-                        //console.log("rem id:",id);
-                        if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
-                            throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
-                        //console.log("done rem");
-                        g_db.dep.removeByExample({_from:data._id,_to:id});
-                    }
-                    get_deps = true;
-                }
-
-                if ( req.body.deps_add != undefined ){
-                    //console.log("add deps");
-                    for ( i in req.body.deps_add ) {
-                        dep = req.body.deps_add[i];
-                        //console.log("dep id:",dep.id);
-                        id = g_lib.resolveDataID( dep.id, client );
-                        if ( !id.startsWith("d/"))
-                            throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-                        dep_data = g_db.d.document( id );
-                        if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
-                            throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
-
-                        g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
-                    }
-
-                    g_lib.checkDependencies(data_id);
-                    get_deps = true;
-                }
-
-                if ( get_deps ){
-                    //console.log("get deps");
-                    data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
-                    for ( i in data.deps ){
-                        dep = data.deps[i];
-                        if ( dep.from == data_id )
-                            dep.dir = g_lib.DEP_OUT;
-                        else
-                            dep.dir = g_lib.DEP_IN;
-                        delete dep.from;
-                    }
-                }
-
-                delete data._rev;
-                delete data._key;
-                data.id = data._id;
-                delete data._id;
-
-                result.push( data );
+                recordUpdate( client, req.body, result, alloc_sz, locations );
+                console.log("update allocs:",alloc_sz);
+                g_lib.updateAllocations( alloc_sz );
+                result.push({"deletions":locations});
             }
         });
 
@@ -898,9 +743,14 @@ router.post('/update/batch', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var alloc_sz = {}, locations = {};
+
                 for ( var i in req.body ){
-                    recordUpdate( client, req.body[i], result );
+                    recordUpdate( client, req.body[i], result, alloc_sz, locations );
                 }
+
+                g_lib.updateAllocations( alloc_sz );
+                result.push({"deletions":locations});
             }
         });
 
@@ -1385,7 +1235,7 @@ function dataGetPreproc( a_client, a_ids, a_res, a_vis ){
                     locked = false;
                 }
                 //console.log("store res");
-                a_res.push({id:id,title:obj.title,locked:obj.locked,size:obj.size});
+                a_res.push({id:id,title:obj.title,locked:obj.locked,size:obj.size,url:obj.data_url});
                 a_vis.push(id);
             }
         }
