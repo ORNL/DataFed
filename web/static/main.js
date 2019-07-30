@@ -297,7 +297,8 @@ function dataGet( a_ids ){
                 for ( var i in data.item ){
                     console.log("download ", data.item[i].url )
                     var link = document.createElement("a");
-                    link.download = "newfile-" + i;
+                    var idx = data.item[i].url.lastIndexOf("/");
+                    link.download = data.item[i].url.substr(idx);
                     link.href = data.item[i].url;
                     link.target = "_blank";
                     link.click();
@@ -319,7 +320,11 @@ function dataPut( a_id ){
 
         viewData( a_id, function( data ){
             if ( data ){
-                dlgStartTransfer( XFR_PUT, [data] );
+                if ( data.doi ){
+                    dlgAlert("Data Put Error","Record has read-only, externally managed data.");
+                }else{
+                    dlgStartTransfer( XFR_PUT, [data] );
+                }
             }
         }); 
     });

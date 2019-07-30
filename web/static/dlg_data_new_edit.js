@@ -37,18 +37,26 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 </div>\
             </div>\
             <div id='tab-dlg-data' style='padding:1em'>\
-                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input><br><br>\
-                Working Data:<hr style='margin-top:4px'>\
-                <table class='form-table'>\
-                    <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                    <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
-                    <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
-                </table>\
-                <br>Published Data:<hr style='margin-top:4px'>\
-                <table class='form-table'>\
-                    <tr><td>DOI:</td><td colspan='3'><input title='DOI number (optional)' type='text' id='doi' style='width:100%'></input></td></tr>\
-                    <tr><td>Data&nbspURL:</td><td colspan='3'><input title='Data URL (optional)' type='text' id='data_url' style='width:100%'></input></td></tr>\
-                </table>\
+                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input><span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br>\
+                <div id='working_data'>\
+                    <table class='form-table'>\
+                        <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
+                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
+                        <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
+                    </table>\
+                </div>\
+                <div id='published_data' style='display:none'>\
+                    <table class='form-table'>\
+                        <tr><td>DOI:</td><td colspan='3'><input title='DOI number (optional)' type='text' id='doi' style='width:100%'></input></td></tr>\
+                        <tr><td>Data&nbspURL:</td><td colspan='3'><input title='Data URL (optional)' type='text' id='data_url' style='width:100%'></input></td></tr>\
+                    </table>\
+                </div><br><br>\
+                <div id='pub_del_warn' style='display:none;width:100%' class='note'>\
+                    ** Setting record to published will delete associated DataFed-managed raw data.\
+                </div>\
+                <div id='pub_upd_warn' style='display:none' class='note'>\
+                    Note: Editing data source information of published records is not recommended due to potential impact on data subscribers. If exiting data is being deprecated, consider creating a new data record with a deprecation dependency on this record.\
+                </div>\
             </div>\
             <div id='tab-dlg-meta' style='padding:1em'>\
                 <div class='col-flex' style='height:100%'>\
@@ -275,6 +283,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
                 });
 
+                var is_published = false;
+
+                if ( $("#published",frame).prop("checked") )
+                    is_published = true;
+
                 if ( a_data && a_mode == DLG_DATA_EDIT ){
                     url += "update";
 
@@ -283,18 +296,29 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
                     getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
-                    getUpdatedValue( $("#doi",frame).val(), a_data, obj, "doi" );
-                    getUpdatedValue( $("#data_url",frame).val(), a_data, obj, "dataUrl" );
                     getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
 
-                    if ( $("#ext_auto",frame).prop("checked") ){
-                        if ( !a_data.extAuto )
-                            obj.extAuto = true;
+                    if ( is_published ){
+                        var doi = $("#doi",frame).val();
+                        var data_url = $("#data_url",frame).val();
+                        if ( !doi || !data_url ){
+                            dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
+                            return;
+                        }
+                        getUpdatedValue( doi, a_data, obj, "doi" );
+                        getUpdatedValue( data_url, a_data, obj, "dataUrl" );
                     }else{
-                        if ( a_data.extAuto )
-                            obj.extAuto = false;
+                        obj.doi="";
+                        obj.dataUrl="";
+                        if ( $("#ext_auto",frame).prop("checked") ){
+                            if ( !a_data.extAuto )
+                                obj.extAuto = true;
+                        }else{
+                            if ( a_data.extAuto )
+                                obj.extAuto = false;
 
-                        getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
+                            getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
+                        }
                     }
 
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
@@ -319,13 +343,20 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
                     getUpdatedValue( $("#topic",frame).val(), {}, obj, "topic" );
-                    getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
-                    getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
 
-                    if ( $("#ext_auto",frame).prop("checked") ){
-                        obj.extAuto = true;
+                    if ( is_published ){
+                        getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
+                        getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
+                        if ( !obj.doi || !obj.dataUrl ){
+                            dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
+                            return;
+                        }
                     }else{
-                        getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
+                        if ( $("#ext_auto",frame).prop("checked") ){
+                            obj.extAuto = true;
+                        }else{
+                            getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
+                        }
                     }
 
                     var tmp = jsoned.getValue();
@@ -353,9 +384,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
+                        console.log("new data:",data);
                         tmp = $("#source_file").val().trim();
-                        if ( tmp && a_mode != DLG_DATA_EDIT ){
-                            xfrStart( data.data[0].id, XFR_PUT, tmp, 0, function( ok2, data2 ){
+                        //if ( !is_published && tmp && a_mode != DLG_DATA_EDIT ){
+                        if ( !is_published && tmp ){
+                            xfrStart( [data.data[0].id], XFR_PUT, tmp, 0, function( ok2, data2 ){
                                 if ( ok2 ){
                                     dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
                                 }else{
@@ -453,12 +486,20 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     $("#source_file",frame).val(a_data.source);
                     if ( a_data.extAuto ){
                         $("#ext_auto",frame).prop("checked",true);
-                        $("#extension",frame).val(a_data.ext + " (auto)").prop("disabled",true);
+                        $("#extension",frame).val(a_data.ext?a_data.ext + " (auto)":"(auto)").prop("disabled",true);
                     }else{
-                        $("#extension",frame).val(a_data.ext);
+                        $("#extension",frame).val(a_data.ext?a_data.ext:"");
                     }
                     $("#doi",frame).val(a_data.doi);
                     $("#data_url",frame).val(a_data.dataUrl);
+                    if ( a_data.dataUrl ){
+                        $("#published",frame).prop("checked",true);
+                        $("#working_data",frame).hide();
+                        $("#published_data",frame).show();
+                        $("#pub_upd_warn",frame).show();
+                    }else if ( a_data.size > 0 ){
+                        $("#pub_del_warn,#pub_del_warn_ast",frame).show();
+                    }
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     parent = "root";
@@ -489,8 +530,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 var pub = $("#published",frame).prop("checked");
                 if ( pub ){
                     console.log("published");
+                    $("#working_data",frame).hide();
+                    $("#published_data",frame).show();
                 }else{
                     console.log("NOT published");
+                    $("#working_data",frame).show();
+                    $("#published_data",frame).hide();
                 }
             });
 
@@ -521,8 +566,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }, 1000 );
             });
 
-            $("#alloc",frame).selectmenu();
-            updateAllocSelect();
+            // Alloc cannot be changed on edit currently
+            if ( parent ){
+                $("#alloc",frame).selectmenu();
+                updateAllocSelect();
+            }
 
             jsoned.resize();
         }

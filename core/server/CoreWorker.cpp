@@ -84,6 +84,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &Worker::procRecordUpdateRequest );
+        SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &Worker::procRecordUpdateBatchRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &Worker::procProjectSearchRequest );
@@ -115,8 +117,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
-        SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
-        SET_MSG_HANDLER_DB( proto_id, RecordUpdateBatchRequest, RecordDataReply, recordUpdateBatch );
+        //SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
+        //SET_MSG_HANDLER_DB( proto_id, RecordUpdateBatchRequest, RecordDataReply, recordUpdateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
@@ -508,9 +510,51 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
             upd_req.set_id( r->loc(i).id() );
             upd_req.set_size( 0 );
 
-            m_db_client.recordUpdate( upd_req, upd_reply );
+            m_db_client.recordUpdate( upd_req, upd_reply, loc );
         }
     }
+
+    PROC_MSG_END
+}
+
+
+bool
+Worker::procRecordUpdateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
+
+    vector<RepoRecordDataLocations> locs;
+
+    // TODO Acquire write lock here
+
+    m_db_client.setClient( a_uid );
+    m_db_client.recordUpdate( *request, reply, locs );
+
+    // TODO Must be durable (use DB to track delete progress)
+
+    if ( locs.size() )
+        m_mgr.dataDelete( locs );
+
+    PROC_MSG_END
+}
+
+
+bool
+Worker::procRecordUpdateBatchRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply )
+
+    vector<RepoRecordDataLocations> locs;
+
+    // TODO Acquire write lock here
+
+    m_db_client.setClient( a_uid );
+    m_db_client.recordUpdateBatch( *request, reply, locs );
+
+    // TODO Must be durable (use DB to track delete progress)
+
+    if ( locs.size() )
+        m_mgr.dataDelete( locs );
 
     PROC_MSG_END
 }
@@ -536,6 +580,8 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
     m_db_client.recordDelete( ids, loc );
+
+    // TODO Must be durable (use DB to track delete progress)
 
     m_mgr.dataDelete( loc );
 

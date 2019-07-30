@@ -446,6 +446,7 @@ Server::backgroundMaintenance()
                         repo = repo_map.find( del_iter->first );
                         if ( repo != repo_map.end() )
                         {
+                            del_req.clear_loc();
                             for ( path_iter = del_iter->second.begin(); path_iter != del_iter->second.end(); path_iter++ )
                             {
                                 cout << "  del " << path_iter->first << endl;

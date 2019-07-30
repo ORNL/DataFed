@@ -418,6 +418,8 @@ DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::Use
 void
 DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
+    cout << "UserViewRequest" << endl;
+
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
     if ( a_request.has_details() && a_request.details() )
@@ -920,7 +922,7 @@ DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_requ
 }
 
 void
-DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs )
 {
     rapidjson::Document result;
 
@@ -988,17 +990,17 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 
     dbPost( "dat/update", {}, &body, result );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, &a_locs );
 }
 
 void
-DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs )
 {
     rapidjson::Document result;
 
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, &a_locs );
 }
 
 void
@@ -1123,7 +1125,7 @@ DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRe
 }
 
 void
-DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result, std::vector<RepoRecordDataLocations> * a_locs )
 {
     if ( !a_result.IsArray() )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
@@ -1135,6 +1137,13 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
     for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
     {
         rapidjson::Value & val = a_result[i];
+
+        if (( imem = val.FindMember("deletions")) != val.MemberEnd() )
+        {
+            if ( a_locs )
+                setRepoRecordDataLocations( *a_locs, imem->value );
+            continue;
+        }
 
         rec = a_reply.add_data();
         rec->set_id( val["id"].GetString() );

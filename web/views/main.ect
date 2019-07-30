@@ -97,7 +97,9 @@
             $("#mode_label").html("<b>DEV/TEST MODE</b>");
         }
 
+        console.log("user view...");
         userView( g_user.uid, true, function( ok, user ){
+            console.log("user view, ok:",ok,"user:",user);
             if ( ok && user ){
                 console.log("userView (init):",user);
                 g_user.isAdmin = user.isAdmin;

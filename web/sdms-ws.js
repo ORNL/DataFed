@@ -309,6 +309,7 @@ app.get('/api/usr/find', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
+    console.log("/usr/view:",a_req.query.id);
     sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
     });
