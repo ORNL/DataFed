@@ -868,7 +868,7 @@ app.get('/api/col/link', ( a_req, a_resp ) => {
 app.get('/api/col/unlink', ( a_req, a_resp ) => {
     console.log("unlink items:",a_req.query.items,"coll:",a_req.query.coll);
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.item?reply.item:[]);
+        a_resp.send(reply);
     });
 });
 

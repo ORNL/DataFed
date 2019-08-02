@@ -42,8 +42,13 @@
                     </div>
                 </div>
                 <div id="tab-search-results" class="ui-widget-content" style="padding:0;overflow:hidden">
-                    <div class="ui-widget-content" style="height:100%;overflow:auto">
-                        <div id="search_results_tree" class="no-border"></div>
+                    <div class="col-flex" style="height:100%">
+                        <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
+                            <div id="search_results_tree" class="no-border" ></div>
+                        </div>
+                        <div class='content' style="flex:none;padding:.25em 0 0 0">
+                            <button class="btn" id="btn_show_par_coll" title='Show containing collection of record in \'My Data\'.' disabled>Collection</button>
+                        </div>
                     </div>
                 </div>
             </div>
