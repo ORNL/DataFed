@@ -393,8 +393,11 @@ function makeBrowserTab(){
             if ( ok ){
                 if ( dest_node.isLoaded() )
                     inst.reloadNode(dest_node);
-            }else
-                setStatusText( "Copy Error: " + msg, 1 );
+            }else{
+                dlgAlert( "Copy Error", msg );
+                //setStatusText( "Copy Error: " + msg, 1 );
+            }
+
             if ( cb )
                 cb();
         });
@@ -433,8 +436,10 @@ function makeBrowserTab(){
                 if ( dest_node.isLoaded() )
                     inst.reloadNode(dest_node);
                 inst.reloadNode(inst.pasteSource);
-            }else
-                setStatusText( "Move Error: " + msg, 1 );
+            }else{
+                dlgAlert( "Move Error", msg );
+                //setStatusText( "Move Error: " + msg, 1 );
+            }
 
             if ( cb )
                 cb();
@@ -499,14 +504,16 @@ function makeBrowserTab(){
                 items.push( sel[i].key );
             }
             //console.log("items:",items);
-            unlinkItems( items, sel[0].parent.key, function( ok, rooted ) {
+            unlinkItems( items, sel[0].parent.key, function( ok, data ) {
                 if ( ok ){
-                    if ( rooted.length ){
+                    if ( data.item.length ){
                         var loc_root = "c/" + scope.charAt(0) + "_" + scope.substr(2) + "_root";
                         inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
                     }else{
                         inst.reloadNode( sel[0].parent );
                     }
+                }else{
+                    dlgAlert( "Unlink Error", data );
                 }
             });
         }
@@ -3141,15 +3148,6 @@ function makeBrowserTab(){
             inst.showSelectedInfo( data.node );
         },
         select: function( event, data ) {
-            if ( data.node.isSelected() ){
-                data.node.visit( function( node ){
-                    node.setSelected( false );
-                });
-                var parents = data.node.getParentList();
-                for ( i in parents ){
-                    parents[i].setSelected( false );
-                }
-            }
             inst.updateBtnState();
         },
         keydown: function(ev, data) {
