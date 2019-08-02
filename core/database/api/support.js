@@ -38,6 +38,7 @@ module.exports = ( function() {
     obj.PERM_MANAGER        = 0x0407; // Project record perms
     obj.PERM_PUBLIC         = 0x000F;
 
+    obj.MAX_COLL_ITEMS      = 1000;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;

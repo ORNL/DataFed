@@ -339,7 +339,7 @@ router.get('/write', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var i, obj,idx;
+                var i,obj,idx,cres;
                 var loose = [];
 
                 // Enforce following link/unlink rules:
@@ -367,7 +367,16 @@ router.get('/write', function (req, res) {
                 }
 
                 if ( req.queryParams.add ) {
+                    // Limit number of items in collection
+                    cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:coll_id});
+                    console.log("coll item count:",cres.count());
+                    if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
+                        throw [g_lib.ERR_INPUT_TOO_LONG,"Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
+
+                    cres.dispose();
+
                     for ( i in req.queryParams.add ) {
+
                         obj = g_lib.getObject( req.queryParams.add[i], client );
 
                         // Check if item is already in this collection
@@ -406,6 +415,13 @@ router.get('/write', function (req, res) {
                 // 7. Re-link loose items to root
                 if ( loose.length ){
                     var root_id = g_lib.getRootID(owner_id);
+                    cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
+                    console.log("root item count:",cres.count());
+                    if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
+                        throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
+
+                    cres.dispose();
+
                     for ( i in loose )
                         g_db.item.save({ _from: root_id, _to: loose[i].id });
                 }
@@ -426,51 +442,66 @@ router.get('/write', function (req, res) {
 
 router.get('/move', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var src_id = g_lib.resolveCollID( req.queryParams.source, client );
-        var src = g_db.c.document( src_id );
-        var dst_id = g_lib.resolveCollID( req.queryParams.dest, client );
-        var dst = g_db.c.document( dst_id );
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","d","c","uuid","accn"],
+                write: ["item"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var src_id = g_lib.resolveCollID( req.queryParams.source, client );
+                var src = g_db.c.document( src_id );
+                var dst_id = g_lib.resolveCollID( req.queryParams.dest, client );
+                var dst = g_db.c.document( dst_id );
 
-        if ( src.owner != dst.owner )
-            throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
+                if ( src.owner != dst.owner )
+                    throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
 
-        if ( !g_lib.hasAdminPermObject( client, src_id )) {
-            if ( !g_lib.hasPermissions( client, src, g_lib.PERM_LINK | g_lib.PERM_SHARE ))
-                throw g_lib.ERR_PERM_DENIED;
-        }
+                if ( !g_lib.hasAdminPermObject( client, src_id )) {
+                    if ( !g_lib.hasPermissions( client, src, g_lib.PERM_LINK | g_lib.PERM_SHARE ))
+                        throw g_lib.ERR_PERM_DENIED;
+                }
 
-        if ( !g_lib.hasAdminPermObject( client, dst_id )) {
-            if ( !g_lib.hasPermissions( client, dst, g_lib.PERM_LINK ))
-                throw g_lib.ERR_PERM_DENIED;
-        }
+                if ( !g_lib.hasAdminPermObject( client, dst_id )) {
+                    if ( !g_lib.hasPermissions( client, dst, g_lib.PERM_LINK ))
+                        throw g_lib.ERR_PERM_DENIED;
+                }
 
-        var i,item;
+                var i,item;
 
-        for ( i in req.queryParams.items ) {
-            // TODO - should aliases be resolved with client or owner ID?
-            item = g_lib.getObject( req.queryParams.items[i], client );
+                for ( i in req.queryParams.items ) {
+                    // TODO - should aliases be resolved with client or owner ID?
+                    item = g_lib.getObject( req.queryParams.items[i], client );
 
-            if ( item.is_root )
-                throw [g_lib.ERR_LINK,"Cannot link root collection"];
+                    if ( item.is_root )
+                        throw [g_lib.ERR_LINK,"Cannot link root collection"];
 
-            if ( !g_db.item.firstExample({ _from: src_id, _to: item._id }))
-                throw [g_lib.ERR_UNLINK,item._id+" is not in collection " + src_id];
+                    if ( !g_db.item.firstExample({ _from: src_id, _to: item._id }))
+                        throw [g_lib.ERR_UNLINK,item._id+" is not in collection " + src_id];
 
-            if ( g_db.item.firstExample({ _from: dst_id, _to: item._id }))
-                throw [g_lib.ERR_LINK,item._id+" is already in collection " + dst_id];
+                    if ( g_db.item.firstExample({ _from: dst_id, _to: item._id }))
+                        throw [g_lib.ERR_LINK,item._id+" is already in collection " + dst_id];
 
-            if ( item._id[0] == "c" ){
-                // Check for circular dependency
-                if ( item._id == dst_id || g_lib.isSrcParentOfDest( item._id, dst_id ))
-                    throw [g_lib.ERR_LINK,"Cannot link ancestor, "+item._id+", to descendant, "+dst_id];
+                    if ( item._id[0] == "c" ){
+                        // Check for circular dependency
+                        if ( item._id == dst_id || g_lib.isSrcParentOfDest( item._id, dst_id ))
+                            throw [g_lib.ERR_LINK,"Cannot link ancestor, "+item._id+", to descendant, "+dst_id];
+                    }
+
+                    g_db.item.removeByExample({ _from: src_id, _to: item._id });
+                    g_db.item.save({ _from: dst_id, _to: item._id });
+                }
+
+                var cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:dst_id});
+                console.log("coll item count:",cres.count());
+                if ( cres.count() > g_lib.MAX_COLL_ITEMS )
+                    throw [g_lib.ERR_INPUT_TOO_LONG,"Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
+
+                cres.dispose();
+
+                res.send({});
             }
-
-            g_db.item.removeByExample({ _from: src_id, _to: item._id });
-            g_db.item.save({ _from: dst_id, _to: item._id });
-        }
-
-        res.send({});
+        });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
