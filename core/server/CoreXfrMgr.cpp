@@ -102,6 +102,7 @@ XfrMgr::xfrThreadFunc()
         map<string,MsgComm*>        repo_comm;
         map<string,MsgComm*>::iterator comm;
         size_t                      purge_timer = 10;
+        vector<RepoRecordDataLocations> locs;
 
         while( m_run )
         {
@@ -251,8 +252,7 @@ XfrMgr::xfrThreadFunc()
 
                                         upd_req.set_dt( mod_time );
                                         reply.Clear();
-                                        db_client.recordUpdate( upd_req, reply );
-
+                                        db_client.recordUpdate( upd_req, reply, locs );
                                     }
                                 }
 

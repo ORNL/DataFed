@@ -404,6 +404,36 @@ module.exports = ( function() {
         return obj.db._document( id );
     };
 
+    obj.deleteRawData = function( a_data, a_alloc_size, a_locations ){
+        var loc = obj.db.loc.firstExample({_from: a_data._id });
+        var path = obj.computeDataPath( loc );
+
+        if ( a_locations[loc._to] )
+            a_locations[loc._to].push({ id: a_data._id, path: path });
+        else
+            a_locations[loc._to] = [{ id: a_data._id, path: path }];
+
+        var alloc_id;
+
+        // Adjust allocation for data size
+        if ( a_data.size ){
+            if ( loc.parent ){
+                if ( a_alloc_size[a_data.owner] )
+                    a_alloc_size[a_data.owner] += a_data.size;
+                else
+                    a_alloc_size[a_data.owner] = a_data.size;
+                alloc_id = loc.parent;
+            }else{
+                alloc_id = obj.db.alloc.firstExample({_from:a_data.owner,_to:loc._to})._id;
+            }
+
+            if ( a_alloc_size[alloc_id] )
+                a_alloc_size[alloc_id] += a_data.size;
+            else
+                a_alloc_size[alloc_id] = a_data.size;
+        }
+    };
+
     obj.deleteData = function( a_data, a_alloc_size, a_locations ){
         console.log("deleteData:",a_data._id);
         // Delete attached alias

@@ -182,7 +182,7 @@ router.get('/by_user/list2', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
 
-        var result = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id });
+        var result = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,doi:v.doi,locked:v.locked}", { client: client._id, owner: owner_id });
  
         res.send( result );
     } catch( e ) {
@@ -321,7 +321,7 @@ router.get('/by_user/list', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
 
-        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
+        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
 
         if ( shares.length < 2 ){
             res.send(shares);
@@ -354,7 +354,7 @@ router.get('/by_proj/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
-        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
+        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
 
         if ( shares.length < 2 ){
             res.send(shares);

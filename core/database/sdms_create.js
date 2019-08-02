@@ -68,7 +68,7 @@ view.properties({
         fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
         includeAllFields: false
       }
-    }ex
+    }
   },
   true
 );

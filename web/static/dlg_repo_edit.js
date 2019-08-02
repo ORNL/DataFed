@@ -185,7 +185,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     "<table class='info_table'>\
                     <tr><td>No. of Records:</td><td>" + data.records + "</td></tr>\
                     <tr><td>No. of Files:</td><td>" + data.files + "</td></tr>\
-                    <tr><td>Total size:</td><td>" + sizeToString( data.totalSz ) + "</td></tr>\
+                    <tr><td>Total size:</td><td>" + data.totalSz + "<br>(" + sizeToString( data.totalSz ) + ")</td></tr>\
                     <tr><td>Average size:</td><td>" + sizeToString( data.files>0?data.totalSz/data.files:0 ) + "</td></tr>\
                     </table><br>Histogram:<br><br><table class='info_table'>\
                     <tr><th></th><th>1's</th><th>10's</th><th>100's</th></tr>\

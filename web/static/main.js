@@ -297,12 +297,12 @@ function dataGet( a_ids ){
                 for ( var i in data.item ){
                     console.log("download ", data.item[i].url )
                     var link = document.createElement("a");
-                    link.download = "newfile-" + i;
+                    var idx = data.item[i].url.lastIndexOf("/");
+                    link.download = data.item[i].url.substr(idx);
                     link.href = data.item[i].url;
                     link.target = "_blank";
                     link.click();
                 }
-                //dlgStartDownload( data.item );
             }
         }else{
             dlgAlert("Data Get Error",data);
@@ -319,7 +319,11 @@ function dataPut( a_id ){
 
         viewData( a_id, function( data ){
             if ( data ){
-                dlgStartTransfer( XFR_PUT, [data] );
+                if ( data.doi ){
+                    dlgAlert("Data Put Error","Record has read-only, externally managed data.");
+                }else{
+                    dlgStartTransfer( XFR_PUT, [data] );
+                }
             }
         }); 
     });
@@ -912,6 +916,14 @@ function themeSet( theme ){
     g_theme = theme;
     $("#jq-theme-css").attr({href : "/jquery-ui-"+g_theme+"/jquery-ui.css" });
     _asyncGet( "/ui/theme/save?theme="+theme, null, null );
+}
+
+function tooltipTheme( a_objs ){
+    a_objs.tooltip({
+        show: { effect: "fade", delay: 1000 },
+        classes:{ "ui-tooltip": "note ui-corner-all tooltip-style" },
+        position: {my: "left+15 top+15", at: "left bottom", collision: "flipfit" }
+    });
 }
 
 function inputTheme( a_objs ){

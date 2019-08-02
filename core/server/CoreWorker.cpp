@@ -84,6 +84,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
         SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &Worker::procRecordUpdateRequest );
+        SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &Worker::procRecordUpdateBatchRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &Worker::procProjectSearchRequest );
@@ -115,8 +117,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
-        SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
-        SET_MSG_HANDLER_DB( proto_id, RecordUpdateBatchRequest, RecordDataReply, recordUpdateBatch );
+        //SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
+        //SET_MSG_HANDLER_DB( proto_id, RecordUpdateBatchRequest, RecordDataReply, recordUpdateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
@@ -508,9 +510,51 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
             upd_req.set_id( r->loc(i).id() );
             upd_req.set_size( 0 );
 
-            m_db_client.recordUpdate( upd_req, upd_reply );
+            m_db_client.recordUpdate( upd_req, upd_reply, loc );
         }
     }
+
+    PROC_MSG_END
+}
+
+
+bool
+Worker::procRecordUpdateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
+
+    vector<RepoRecordDataLocations> locs;
+
+    // TODO Acquire write lock here
+
+    m_db_client.setClient( a_uid );
+    m_db_client.recordUpdate( *request, reply, locs );
+
+    // TODO Must be durable (use DB to track delete progress)
+
+    if ( locs.size() )
+        m_mgr.dataDelete( locs );
+
+    PROC_MSG_END
+}
+
+
+bool
+Worker::procRecordUpdateBatchRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply )
+
+    vector<RepoRecordDataLocations> locs;
+
+    // TODO Acquire write lock here
+
+    m_db_client.setClient( a_uid );
+    m_db_client.recordUpdateBatch( *request, reply, locs );
+
+    // TODO Must be durable (use DB to track delete progress)
+
+    if ( locs.size() )
+        m_mgr.dataDelete( locs );
 
     PROC_MSG_END
 }
@@ -536,6 +580,8 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
     m_db_client.recordDelete( ids, loc );
+
+    // TODO Must be durable (use DB to track delete progress)
 
     m_mgr.dataDelete( loc );
 
@@ -1037,6 +1083,64 @@ Worker::parseSearchQuickPhrase( const string & a_phrase )
     return result;
 }
 
+string
+Worker::parseSearchIdAlias( const string & a_query )
+{
+    string val;
+    val.resize(a_query.size());
+    std::transform(a_query.begin(), a_query.end(), val.begin(), ::tolower);
+
+    bool id_ok = true;
+    bool alias_ok = true;
+    size_t p;
+
+    if (( p = val.find_first_of("/") ) != string::npos ) // Aliases cannot contain "/"
+    {
+        if ( p == 0 || ( p == 1 && val[0] == 'd' ))
+        {
+            // Minimum len of key (numbers) is 2
+            if ( val.size() < p + 3 )
+                return "";
+
+            for ( string::const_iterator c = val.begin()+p+1; c != val.end(); c++ )
+            {
+                if ( !isdigit( *c ) )
+                {
+                    id_ok = false;
+                    break;
+                }
+            }
+            if ( id_ok )
+                return string("i._id like \"d/") + val.substr(p+1) + "%\"";
+        }
+
+        return "";
+    }
+
+    for ( string::const_iterator c = val.begin(); c != val.end(); c++ )
+    {
+        // ids (keys) are only digits
+        // alias are alphanum plus "_-."
+        if ( !isdigit( *c ))
+        {
+            id_ok = false;
+            if ( !isalpha( *c ) && *c != '_' && *c != '-' && *c != '.' )
+            {
+                alias_ok = false;
+                break;
+            }
+        }
+    }
+
+    if ( id_ok && alias_ok )
+        return string("i._id like \"%") + val + "%\" || i.alias like \"%" + val + "%\"";
+    else if ( id_ok )
+        return string("i._id like \"%") + val + "%\"";
+    else if ( alias_ok )
+        return string("i.alias like \"%") + val + "%\"";
+    else
+        return "";
+}
 
 string
 Worker::parseSearchMetadata( const string & a_query )
@@ -1269,11 +1373,30 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
         }
     }
 
+    string id;
+    imem = query.FindMember("id");
+    if ( imem != query.MemberEnd() )
+    {
+        id = parseSearchIdAlias( imem->value.GetString() );
+        DL_INFO("ID search: " << id );
+        if ( !id.size() )
+            EXCEPT(1,"Invalid ID/Alias query value.");
+    }
+
     string meta;
     imem = query.FindMember("meta");
     if ( imem != query.MemberEnd() )
     {
         meta = parseSearchMetadata( imem->value.GetString() );
+    }
+
+    if ( meta.size() && id.size() )
+    {
+        meta = string("(") + id + ") && (" + meta + ")";
+    }
+    else if ( id.size() )
+    {
+        meta = id;
     }
 
     string result;
@@ -1408,7 +1531,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " limit 100 return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner}";
+    result += " limit 100 return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,doi:i.doi}";
 
 
     return result;

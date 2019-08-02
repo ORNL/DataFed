@@ -15,8 +15,8 @@
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
                             <button class="btn" id="btn_new_data" title='Create new data record' disabled>+Data</button>
-                            <button class="btn" id="btn_new_coll" title='Create new collection' disabled>+Collection</button>
-                            <button class="btn" id="btn_new_proj" title='Create new project'>+Project</button>
+                            <button class="btn" id="btn_new_coll" title='Create new collection' disabled>+Coll</button>
+                            <button class="btn" id="btn_new_proj" title='Create new project'>+Proj</button>
                             <button class="btn" id="btn_import_data" title='Import data record(s) into collection from JSON file(s)' disabled>Import</button>
                             <button class="btn" id="btn_update_data" title='Update data record(s) from JSON file(s)'>Update</button>
                             <input type="file" id="input_files" name="files[]" multiple style='display:none'/>
@@ -113,10 +113,10 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
                     <table style='width:100%'>
-                        <tr><td style='width:10ch'>Text:</td><td><input id="text_query" type='text' style="width:100%"></input></td><td style='width:12ch'><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
+                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
 
-                        <tr><td>Metadata: <span class='note'>*</span></td><td><input id="meta_query" type='text' style="width:100%"></input></td><td><button class='btn small' onclick='querySave()' style='width:12ch' >Save Query</button></td></tr>
-                        <tr><td>Scope:</td><td>
+                        <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button class='btn small' onclick='querySave()' style='width:12ch' >Save Query</button></td></tr>
+                        <tr><td>Scope:</td><td colspan="3">
                             <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbspMy Data</span>
                             <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbspMy Projects</span>
                             <span class='my-check'><label for='scope_otherproj'></label><input class='scope' type='checkbox' name='scope_otherproj' id='scope_otherproj'>&nbspOther Projects</span>

@@ -217,6 +217,9 @@ router.get('/init2', function (req, res) {
 
                     data = g_db.d.document( id );
 
+                    if ( data.data_url )
+                        throw [g_lib.ERR_NO_RAW_DATA,"Data record, "+req.queryParams.ids[i]+", has external data"];
+
                     if ( req.queryParams.mode == g_lib.XM_GET && !data.size )
                         throw [g_lib.ERR_NO_RAW_DATA,"Data record, "+req.queryParams.ids[i]+", has no raw data"];
 

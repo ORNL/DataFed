@@ -58,8 +58,8 @@ public:
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply );
+    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs );
+    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs );
     void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
     //void recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc );
     void recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs );
@@ -134,7 +134,7 @@ private:
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, rapidjson::Document & a_result );
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
     void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
-    void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result );
+    void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result, std::vector<RepoRecordDataLocations> * a_locs = 0 );
     //void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
     void setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, rapidjson::Value & a_result );
     void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );

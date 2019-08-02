@@ -175,8 +175,9 @@ message ListingData
     optional string             owner       = 5;
     optional int32              gen         = 6;
     optional uint64             size        = 7;
-    optional string             url         = 8;
-    repeated DependencyData     dep         = 9;
+    optional string             doi         = 8;
+    optional string             url         = 9;
+    repeated DependencyData     dep         = 10;
 }
 
 message RecordData

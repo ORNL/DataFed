@@ -38,6 +38,8 @@ private:
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataCopyRequest( const std::string & a_uid );
     bool procDataDeleteRequest( const std::string & a_uid );
+    bool procRecordUpdateRequest( const std::string & a_uid );
+    bool procRecordUpdateBatchRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );
     bool procProjectDeleteRequest( const std::string & a_uid );
@@ -57,6 +59,7 @@ private:
     std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms );
     std::string parseSearchPhrase( const char * key, const std::string & a_phrase );
     std::string parseSearchQuickPhrase( const std::string & a_phrase );
+    std::string parseSearchIdAlias( const std::string & a_query );
     std::string parseSearchMetadata( const std::string & a_query );
     std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );
     std::string parseProjectQuery( const std::string & a_text_query, const std::vector<std::string> & a_scope );
