@@ -469,7 +469,7 @@ def data_create(title,alias,description,topic,key_words,data_file,extension,meta
     elif data_file: # TODO: Incorporate global output options for put-on-create
         create_reply = _mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
-        put_data(df_id=create_reply[0].data[0].id,gp=resolve_filepath_for_xfr(data_file),wait=False,extension=None)
+        put_data(df_id=create_reply[0].data[0].id,gp=resolve_filepath_for_xfr(data_file),wait=False,extension=None, __output_mode, __verbosity)
 
 #TODO Handle return value in _OM_RETV
 
@@ -555,7 +555,7 @@ def data_update(df_id,title,alias,description,topic,key_words,data_file,extensio
     elif data_file: # TODO: Incorporate global output options for put-on-update
         update_reply, mt = _mapi.sendRecv(msg)
         click.echo("Data Record update successful. Initiating raw data transfer.")
-        put_data(df_id=update_reply.data[0].id,gp=resolve_filepath_for_xfr(data_file),wait=False,extension=None)
+        put_data(df_id=update_reply.data[0].id,gp=resolve_filepath_for_xfr(data_file),wait=False,extension=None,__output_mode, __verbosity)
 
     #TODO Handle return value in _OM_RETV
 
@@ -593,9 +593,23 @@ def data_delete(df_id, verbosity, json, text):
 @data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
 @click.argument("df_id", metavar="id", nargs=-1)
 @click.option("-fp","--filepath",type=str,required=True,help="Destination to which file is to be downloaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
-#@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint to which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-w","--wait",is_flag=True,help="Block until transfer is complete")
-def data_get(df_id,filepath,wait): #Multi-get will initiate one transfer per repo (multiple records in one transfer, as long as they're in the same repo)
+@_global_output_options
+def data_get(df_id,filepath,wait, verbosity, json, text): #Multi-get will initiate one transfer per repo (multiple records in one transfer, as long as they're in the same repo)
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
+
     check = auth.DataGetPreprocRequest()
     resolved_list = []
     for ids in df_id:
@@ -606,7 +620,7 @@ def data_get(df_id,filepath,wait): #Multi-get will initiate one transfer per rep
     url_list = []
     for i in check_reply.item:
         if i.url:
-            url_list.append((i.id))
+            url_list.append((i.url, i.id))
         else:
             checked_list.append(i.id)
 
@@ -614,10 +628,10 @@ def data_get(df_id,filepath,wait): #Multi-get will initiate one transfer per rep
         click.echo("Cannot get data records via Globus and http transfers in the same command")
 
     elif url_list:
-        click.echo("TODO: Data get via http transfer not yet implemented") # TODO: Implement http transfers
-        destination_directory = resolve_filepath_for_xfr(filepath)
+        destination_directory = pathlib.Path(filepath).resolve()
         for url in url_list:
-            raw_data_record = wget.download(url, out=destination_directory)
+            raw_data_record = wget.download(url[0], out=str(destination_directory)) # TODO: Will rewrite any file copy (1).file    # TODO: Use new module for this -- ability to multithread download
+            click.echo("\nRaw data for record {} downloaded to {}".format(url[1], raw_data_record)) # TODO: output mode-dependent replies
         return
     elif checked_list: #Globus transfers
         gp = resolve_filepath_for_xfr(filepath)
@@ -633,13 +647,14 @@ def data_get(df_id,filepath,wait): #Multi-get will initiate one transfer per rep
         reply = _mapi.sendRecv(msg)
         xfr_ids = []
         replies = []
+
         for xfrs in reply[0].xfr:
-            if _output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
-            elif _output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
+            if __output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
+            elif __output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
             xfr_ids.append(xfrs.id)
         if wait:
-            if _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo("Waiting")
-            elif _output_mode == _OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
+            if __verbosity >= 1 and __output_mode == _OM_TEXT: click.echo("Waiting")
+            elif __output_mode == _OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
             while wait is True:
                 time.sleep(3)
                 for xfrs in xfr_ids:
@@ -652,14 +667,14 @@ def data_get(df_id,filepath,wait): #Multi-get will initiate one transfer per rep
                         wait = False
                     statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
                     xfr_status = statuses.get(check.status, "None")
-                    if _output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
-                    elif _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo(
+                    if __output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
+                    elif __verbosity >= 1 and __output_mode == _OM_TEXT: click.echo(
                         "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
             for xfrs in replies:
-                generic_reply_handler(xfrs, print_xfr_stat)
+                generic_reply_handler(xfrs, print_xfr_stat, __output_mode, __verbosity)
         else:
             for xfrs in replies:
-                generic_reply_handler(xfrs, print_xfr_stat)
+                generic_reply_handler(xfrs, print_xfr_stat, __output_mode, __verbosity)
 
 
 
@@ -669,12 +684,26 @@ def data_get(df_id,filepath,wait): #Multi-get will initiate one transfer per rep
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 #@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-ext", "--extension",type=str,required=False,help="Specify an extension for the raw data file. This will override any previously specified extension or auto-extension behavior.")
-def data_put(df_id,filepath,wait,extension):
+@_global_output_options
+def data_put(df_id, filepath, wait, extension, verbosity, json, text):
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
     # gp = resolve_filepath_for_xfr(filepath)
     # if endpoint: gp = resolve_globus_path(fp, endpoint)
     # elif not endpoint: gp = resolve_globus_path(fp, "None")
     # if gp:
-    put_data(df_id,resolve_filepath_for_xfr(filepath),wait,extension)
+    put_data(df_id, resolve_filepath_for_xfr(filepath), wait, extension, __output_mode, __verbosity)
     # elif gp is None:
     #    click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
     # TODO Handle return value in _OM_RETV
@@ -1445,22 +1474,30 @@ def resolve_coll_id(df_id):
     return _cur_alias_prefix + df_id2
 
 
-def put_data(df_id,gp,wait,extension):
-    global _verbosity
+def put_data(df_id,gp,wait,extension,output_mode,verbosity):
     msg = auth.DataPutRequest()
     msg.id = resolve_id(df_id)
     msg.path = gp
     if extension: msg.ext = extension
     reply = _mapi.sendRecv(msg)
     xfr_id = reply[0].xfr[0].id
-    if _output_mode == _OM_JSON:
+    if output_mode:
+        __output_mode = output_mode
+    elif not output_mode:
+        global _output_mode
+        __output_mode = _output_mode
+    if verbosity: __verbosity = verbosity
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+    if __output_mode == _OM_JSON:
         click.echo('{{ "Transfer ID": "{}" }}'.format(xfr_id))
-    elif _output_mode == _OM_TEXT:
+    elif __output_mode == _OM_TEXT:
         click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
-        if _verbosity >= 1 and _output_mode == _OM_TEXT:
+        if __verbosity >= 1 and __output_mode == _OM_TEXT:
             click.echo("Waiting")
-        elif _output_mode == _OM_JSON:
+        elif __output_mode == _OM_JSON:
             click.echo('{ "Status": "Waiting" }')  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
         while wait is True:
             time.sleep(2)
@@ -1471,13 +1508,13 @@ def put_data(df_id,gp,wait,extension):
             if check.status == 3 or check.status == 4: break
             statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
             xfr_status = statuses.get(check.status, "None")
-            if _output_mode == _OM_JSON:
+            if __output_mode == _OM_JSON:
                 click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status))
-            elif _verbosity >= 1 and _output_mode == _OM_TEXT:
+            elif __verbosity >= 1 and __output_mode == _OM_TEXT:
                 click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
-        generic_reply_handler(reply,print_xfr_stat)
+        generic_reply_handler(reply,print_xfr_stat, __output_mode, __verbosity)
     else:
-        generic_reply_handler(reply,print_xfr_stat)
+        generic_reply_handler(reply,print_xfr_stat, __output_mode, __verbosity)
 
 
 def resolve_filepath_for_xfr(path):
@@ -1670,8 +1707,7 @@ def print_data(message, verbosity):
                    "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
                    "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
                    "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
-                   "{:<25} {:<50}".format('Locked: ', str(dr.locked)) + '\n' +
-                   "{:<25} {:<50}".format('Parent Collection ID: ', dr.parent_id))
+                   "{:<25} {:<50}".format('Locked: ', str(dr.locked)))
         if dr.metadata:
             click.echo("{:<25} {:<50}".format('Metadata: ', (jsonlib.dumps(jsonlib.loads(dr.metadata), indent=4)))) # TODO: Paging function
         elif not dr.metadata:
