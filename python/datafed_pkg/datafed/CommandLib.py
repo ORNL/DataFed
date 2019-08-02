@@ -635,12 +635,6 @@ def data_get(df_id,filepath,wait, verbosity, json, text): #Multi-get will initia
         return
     elif checked_list: #Globus transfers
         gp = resolve_filepath_for_xfr(filepath)
-       # if endpoint: gp = resolve_globus_path(fp, endpoint)
-        # elif not endpoint: gp = resolve_globus_path(fp, "None")
-        #if gp is None:
-        #   click.echo(
-         #       "No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
-         #   return
         msg = auth.DataGetRequest()
         msg.id.extend(checked_list)
         msg.path = gp
