@@ -108,6 +108,7 @@ function makeBrowserTab(){
                 idx = ids.indexOf( node.key );
                 if ( idx != -1 ){
                     node.setTitle( inst.generateTitle( data[idx] ));
+                    node.tooltip = inst.generateTooltip( data[idx] );
                     if ( a_reload )
                         inst.reloadNode( node );
                 }
@@ -297,6 +298,7 @@ function makeBrowserTab(){
                         dataUpdateBatch( JSON.stringify( payload ), function( ok, data ){
                             if ( ok ){
                                 inst.refreshUI();
+                                setStatusText("Updated " + files.length + " record" + (files.length>1?"s":""));
                             }else{
                                 dlgAlert( "Update Error", data );
                             }
@@ -304,6 +306,7 @@ function makeBrowserTab(){
                     }else{
                         dataCreateBatch( JSON.stringify( payload ), function( ok, data ){
                             if ( ok ){
+                                setStatusText("Imported " + files.length + " record" + (files.length>1?"s":""));
                                 var node = inst.data_tree.getNodeByKey( coll_id );
                                 if ( node )
                                     inst.reloadNode( node );
@@ -718,6 +721,8 @@ function makeBrowserTab(){
                         bits = 0x00;
                     else
                         bits = 0x100;
+                    if ( node.data.doi )
+                        bits |= 0x10;
                     break;
                 case "p": bits = 0x3Fa | (node.data.admin?0:5); break;
                 case "q": bits = 0x3F8; break;
@@ -1075,7 +1080,7 @@ function makeBrowserTab(){
                         inst.sel_title.text(item.title);
                         var qry = JSON.parse( item.query );
                         console.log("qry:",qry);
-                        inst.sel_descr.html("<table class='info_table'><col width='20%'><col width='80%'><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"(n/a)")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"(n/a)")+"</td></tr></table>");
+                        inst.sel_descr.html("<table class='info_table'><col width='20%'><col width='80%'><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"(n/a)")+"</td></tr><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"(n/a)")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"(n/a)")+"</td></tr></table>");
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
                         if ( item.ct ){
@@ -1242,7 +1247,7 @@ function makeBrowserTab(){
             if ( inst.data_md_exp["Metadata"] )
                 inst.data_md_exp["Metadata"] = 10;
 
-            var src = [{title:"Metadata", icon: "ui-icon ui-icon-folder", folder: true, expanded: inst.data_md_exp["Metadata"]?true:false, children: inst.buildObjSrcTree(md,"Metadata")}];
+            var src = [{title:"Metadata",folder:true,expanded:inst.data_md_exp["Metadata"]?true:false,children:inst.buildObjSrcTree(md,"Metadata")}];
 
             //console.log("md:",md);
             //console.log("keys:",Object.keys(md));
@@ -1318,7 +1323,7 @@ function makeBrowserTab(){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                     for ( var i in items ){
                         var item = items[i];
-                        results.push({title:inst.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner});
+                        results.push({title:inst.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,tooltip:inst.generateTooltip(item)});
                     }
                 } else {
                     setStatusText("No results found");
@@ -1345,6 +1350,10 @@ function makeBrowserTab(){
         var tmp = $("#text_query").val();
         if ( tmp )
             query.quick = tmp;
+
+        tmp = $("#id_query").val();
+        if ( tmp )
+            query.id = tmp;
 
         tmp = $("#meta_query").val();
         if ( tmp )
@@ -1409,7 +1418,7 @@ function makeBrowserTab(){
     this.searchDirect = function(){
         var query = parseQuickSearch();
 
-        if ( query.scopes.length && ( query.quick || query.meta ))
+        if ( query.scopes.length && ( query.quick || query.meta || query.id ))
             inst.execQuery( query );
     }
 
@@ -1475,15 +1484,41 @@ function makeBrowserTab(){
         if ( item.locked )
             title += "<i class='ui-icon ui-icon-locked'></i> ";
 
+        //title += "\"" + escapeHTML(item.title) + "\"";
+        //style='display:inline-block;max-width:5em;overflow:hidden;text-overflow: ellipsis'
+
+        title += "\"<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>\"";
+
+        //if ( item.doi )
+        //    title += " doi:" + escapeHTML(item.doi);
+
+        title += "&nbsp&nbsp<span class='";
+
+        if ( item.alias )
+            title += "data-tree-alias'>("+ item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")";
+        else
+            title += "data-tree-id'>[" + item.id + "]";
+
+        title += "</span>";
+
+        /*
         if ( item.alias )
             title += escapeHTML("\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")");
         else
-            title += escapeHTML("\"" + item.title + "\" [" + item.id.substr(2) + "]");
+            title += escapeHTML("\"" + item.title + "\" [" + item.id + "]");
 
-        if ( item.doi )
-            title += " doi:" + escapeHTML(item.doi);
+            //title += escapeHTML("\"" + item.title + "\" [" + item.id.substr(2) + "]");
+        */
 
-        return  title;
+
+        return title;
+    }
+
+    this.generateTooltip = function( item ) {
+        return escapeHTML("\"" + item.title + "\"") +
+            ", id: " + item.id +
+            (item.alias?", alias: "+item.alias:"") +
+            (item.doi?", doi: "+item.doi:"");
     }
 
     this.xfrUpdateHistory = function( xfr_list ){
@@ -2359,14 +2394,15 @@ function makeBrowserTab(){
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
-            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_user"},
-            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"shared_proj"}
+            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
         ]},
         {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
         //{title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
     ];
 
+    
 
     $("#data_tree").fancytree({
         extensions: ["dnd","themeroller"],
@@ -2498,10 +2534,13 @@ function makeBrowserTab(){
                 data.node.resetLazy();
             }
         },
+        //tooltip: function( ev, data ){
+        //    return "tooltip";
+        //},
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = [
-                    {title:"Root Collection",folder:true,expanded:false,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+                    {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -2522,7 +2561,7 @@ function makeBrowserTab(){
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
-                    {title: "Root Collection",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
@@ -2609,20 +2648,13 @@ function makeBrowserTab(){
                     console.log( "pos proc project:", data.response );
                     var item;
                     var admin = (data.node.key=="proj_own"?true:false);
-                    //var prj_id;
 
                     for ( var i in data.response.item ) {
                         item = data.response.item[i];
-                        //prj_id = item.id.substr(2);
-                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true,admin:admin,nodrag:true,lazy:true});
-                        /*children:[
-                            {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:item.id,isroot:true,admin:admin,nodrag:true},
-                            {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:item.id,nodrag:true,checkbox:false}
-                        ]});*/
+                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:item.id,isproj:true,admin:admin,nodrag:true,lazy:true});
                     }
-                }else{
-                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
+
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
                     var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
                     data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
@@ -2635,8 +2667,6 @@ function makeBrowserTab(){
                         item = data.response[i];
                         data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user_"+item.uid,scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
-                }else{
-                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
                 data.result = [];
@@ -2644,10 +2674,8 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: inst.generateTitle(item) + " <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: inst.generateTitle(item) + " <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
-                }else{
-                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
             } else if ( data.node.key == "queries" ) {
                 data.result = [];
@@ -2657,8 +2685,6 @@ function makeBrowserTab(){
                         qry = data.response[i];
                         data.result.push({ title: qry.title+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-zoom",folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
                     }
-                }else{
-                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
             } else if ( data.node.key == "allocs" ) {
                 data.result = [];
@@ -2669,11 +2695,7 @@ function makeBrowserTab(){
                         console.log("alloc:",alloc,"scope:",alloc.id);
                         data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
-                }else{
-                    data.result.push({ title: "(none)", icon: false, checkbox:false, nodrag:true });
                 }
-            //} else if ( data.node.key.startsWith( "repo/" )) {
-            //    console.log("post-proc repo (alloc) tree:", data.node.key );
             } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
                 data.result = [];
                 var item,entry;
@@ -2684,7 +2706,7 @@ function makeBrowserTab(){
                     if ( item.id[0]=="t" ){
                         entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
                     }else{
-                        entry = { title: inst.generateTitle(item),scope:item.owner,key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false };
+                        entry = { title:inst.generateTitle(item),tooltip:inst.generateTooltip(item),scope:item.owner,key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi };
                     }
 
                     data.result.push( entry );
@@ -2704,9 +2726,9 @@ function makeBrowserTab(){
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
-                        entry = { title: inst.generateTitle( item ),folder:true,lazy:true,icon:"ui-icon ui-icon-folder",scope:scope,key:item.id, offset: 0 };
+                        entry = { title: inst.generateTitle(item),tooltip:inst.generateTooltip(item),folder:true,lazy:true,scope:scope,key:item.id, offset: 0 };
                     }else{
-                        entry = { title: inst.generateTitle( item ),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id };
+                        entry = { title: inst.generateTitle(item),tooltip:inst.generateTooltip(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
                     }
 
                     data.result.push( entry );
@@ -2716,6 +2738,9 @@ function makeBrowserTab(){
                     var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
                     data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
+            }
+            if ( data.result && data.result.length == 0 ){
+                data.result.push({title:"(empty)",icon:false,checkbox:false,nodrag:true});
             }
         },
         renderNode: function(ev,data){
@@ -2775,7 +2800,12 @@ function makeBrowserTab(){
             }
         },
         click: function(event, data) {
-            //console.log("node click,ev:",event,"orig:",data.originalEvent);
+            //console.log("node click,target:",data.targetType);
+
+            if ( data.targetType == "icon" && data.node.isFolder() ){
+                data.node.toggleExpanded();
+            }
+
             if ( inst.dragging ){ // Suppress click processing on aborted drag
                 inst.dragging = false;
             }else if ( !inst.searchSelect ){ // Selection "rules" differ for search-select mode
@@ -2870,6 +2900,8 @@ function makeBrowserTab(){
     inst.data_tree_div = $('#data_tree');
     inst.data_tree = inst.data_tree_div.fancytree('getTree');
 
+    tooltipTheme( inst.data_tree_div );
+
     $("#data_md_tree").fancytree({
         extensions: ["themeroller"],
         themeroller: {
@@ -2899,6 +2931,11 @@ function makeBrowserTab(){
                 inst.data_md_exp[path] = 10;
             }
             //console.log( "exp st", inst.data_md_exp );
+        },
+        click: function( ev, data ){
+            if ( data.targetType == "icon" && data.node.isFolder() ){
+                data.node.toggleExpanded();
+            }
         }
     });
 
@@ -2948,7 +2985,7 @@ function makeBrowserTab(){
 
     $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
 
-    $("#text_query,#meta_query").on('keyup', function (e) {
+    $("#id_query,#text_query,#meta_query").on('keyup', function (e) {
         if (e.keyCode == 13)
             inst.searchDirect();
     });
@@ -2990,32 +3027,32 @@ function makeBrowserTab(){
         ]},
         {title:"Energy",folder:true,icon:"ui-icon ui-icon-structure",children:[
             {title:"Fission",folder:true,icon:"ui-icon ui-icon-structure",children:[
-                {title:"LLNL",folder:true,icon:"ui-icon ui-icon-folder",children:[
-                    {title:"Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"LLNL",folder:true,children:[
+                    {title:"Catalog A",folder:true,children:[
                         {title:"Data 1",icon:"ui-icon ui-icon-file"},
                         {title:"Data 2",icon:"ui-icon ui-icon-file"},
                         {title:"Data 3",icon:"ui-icon ui-icon-file"}
                     ]},
-                    {title:"Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Catalog B",folder:true,children:[
                         {title:"Data 1",icon:"ui-icon ui-icon-file"},
                         {title:"Data 2",icon:"ui-icon ui-icon-file"},
                         {title:"Data 3",icon:"ui-icon ui-icon-file"}
                     ]}
                 ]},
-                {title:"ORNL",folder:true,icon:"ui-icon ui-icon-folder",children:[
-                    {title:"Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"ORNL",folder:true,children:[
+                    {title:"Catalog A",folder:true,children:[
                         {title:"Data 1",icon:"ui-icon ui-icon-file"},
                         {title:"Data 2",icon:"ui-icon ui-icon-file"},
                         {title:"Data 3",icon:"ui-icon ui-icon-file"}
                     ]},
-                    {title:"Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                    {title:"Catalog B",folder:true,children:[
                         {title:"Data 1",icon:"ui-icon ui-icon-file"},
                         {title:"Data 2",icon:"ui-icon ui-icon-file"},
                         {title:"Data 3",icon:"ui-icon ui-icon-file"}
                     ]}
                 ]},
-                {title:"PNNL",folder:true,icon:"ui-icon ui-icon-folder",children:[
-                    {title:"Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"PNNL",folder:true,children:[
+                    {title:"Catalog A",folder:true,children:[
                         {title:"Data 1",icon:"ui-icon ui-icon-file"},
                         {title:"Data 2",icon:"ui-icon ui-icon-file"},
                         {title:"Data 3",icon:"ui-icon ui-icon-file"}
@@ -3023,27 +3060,27 @@ function makeBrowserTab(){
                 ]},
             ]},
             {title:"Fusion",folder:true,icon:"ui-icon ui-icon-structure",children:[
-                {title:"LLNL - Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"LLNL - Catalog A",folder:true,children:[
                     {title:"Data 1",icon:"ui-icon ui-icon-file"},
                     {title:"Data 2",icon:"ui-icon ui-icon-file"},
                     {title:"Data 3",icon:"ui-icon ui-icon-file"}
                 ]},
-                {title:"LLNL - Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"LLNL - Catalog B",folder:true,children:[
                     {title:"Data 1",icon:"ui-icon ui-icon-file"},
                     {title:"Data 2",icon:"ui-icon ui-icon-file"},
                     {title:"Data 3",icon:"ui-icon ui-icon-file"}
                 ]},
-                {title:"ORNL - Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"ORNL - Catalog A",folder:true,children:[
                     {title:"Data 1",icon:"ui-icon ui-icon-file"},
                     {title:"Data 2",icon:"ui-icon ui-icon-file"},
                     {title:"Data 3",icon:"ui-icon ui-icon-file"}
                 ]},
-                {title:"ORNL - Catalog B",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"ORNL - Catalog B",folder:true,children:[
                     {title:"Data 1",icon:"ui-icon ui-icon-file"},
                     {title:"Data 2",icon:"ui-icon ui-icon-file"},
                     {title:"Data 3",icon:"ui-icon ui-icon-file"}
                 ]},
-                {title:"PNNL - Catalog A",folder:true,icon:"ui-icon ui-icon-folder",children:[
+                {title:"PNNL - Catalog A",folder:true,children:[
                     {title:"Data 1",icon:"ui-icon ui-icon-file"},
                     {title:"Data 2",icon:"ui-icon ui-icon-file"},
                     {title:"Data 3",icon:"ui-icon ui-icon-file"}
@@ -3196,6 +3233,7 @@ function makeBrowserTab(){
     inst.results_tree_div = $('#search_results_tree');
     inst.results_tree = inst.results_tree_div.fancytree('getTree');
 
+    tooltipTheme( inst.results_tree_div );
 
     var ctxt_menu_opts = {
         delegate: "li",

@@ -74,8 +74,8 @@
 
         $(".btn").button();
         //$( document ).tooltip({ show: false, hide: false});
-        $("button").tooltip({ show: { effect: "slideDown", delay: 500 }});
-        $("input").tooltip({ show: { effect: "slideDown", delay: 500 }});
+        tooltipTheme( $("button,input") ); //.tooltip({ show: { effect: "slideDown", delay: 500 }});
+        //tooltipTheme( $("input").tooltip({ show: { effect: "slideDown", delay: 500 }});
 
         var g_theme = "<%- @theme %>";
         var g_test_mode = "<%- @test_mode %>";

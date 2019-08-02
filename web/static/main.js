@@ -303,7 +303,6 @@ function dataGet( a_ids ){
                     link.target = "_blank";
                     link.click();
                 }
-                //dlgStartDownload( data.item );
             }
         }else{
             dlgAlert("Data Get Error",data);
@@ -917,6 +916,14 @@ function themeSet( theme ){
     g_theme = theme;
     $("#jq-theme-css").attr({href : "/jquery-ui-"+g_theme+"/jquery-ui.css" });
     _asyncGet( "/ui/theme/save?theme="+theme, null, null );
+}
+
+function tooltipTheme( a_objs ){
+    a_objs.tooltip({
+        show: { effect: "fade", delay: 1000 },
+        classes:{ "ui-tooltip": "note ui-corner-all tooltip-style" },
+        position: {my: "left+15 top+15", at: "left bottom", collision: "flipfit" }
+    });
 }
 
 function inputTheme( a_objs ){

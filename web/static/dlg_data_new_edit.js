@@ -386,22 +386,24 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     if ( ok ) {
                         console.log("new data:",data);
                         tmp = $("#source_file").val().trim();
-                        //if ( !is_published && tmp && a_mode != DLG_DATA_EDIT ){
-                        if ( !is_published && tmp ){
+                        if ( !is_published && tmp && (!a_data || tmp != a_data.source)){
                             xfrStart( [data.data[0].id], XFR_PUT, tmp, 0, function( ok2, data2 ){
                                 if ( ok2 ){
                                     dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                                    jsoned.destroy();
+                                    inst.dialog('destroy').remove();
+                                    if ( a_cb )
+                                        a_cb(data.data[0],obj.parentId);
                                 }else{
                                     dlgAlert( "Transfer Error", data2 );
                                 }
                             });
+                        }else{
+                            jsoned.destroy();
+                            inst.dialog('destroy').remove();
+                            if ( a_cb )
+                                a_cb(data.data[0],obj.parentId);
                         }
-
-                        jsoned.destroy();
-                        inst.dialog('destroy').remove();
-                        //console.log( "data:",data);
-                        if ( a_cb )
-                            a_cb(data.data[0],obj.parentId);
 
                     } else {
                         dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );

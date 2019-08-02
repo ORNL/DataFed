@@ -1083,6 +1083,64 @@ Worker::parseSearchQuickPhrase( const string & a_phrase )
     return result;
 }
 
+string
+Worker::parseSearchIdAlias( const string & a_query )
+{
+    string val;
+    val.resize(a_query.size());
+    std::transform(a_query.begin(), a_query.end(), val.begin(), ::tolower);
+
+    bool id_ok = true;
+    bool alias_ok = true;
+    size_t p;
+
+    if (( p = val.find_first_of("/") ) != string::npos ) // Aliases cannot contain "/"
+    {
+        if ( p == 0 || ( p == 1 && val[0] == 'd' ))
+        {
+            // Minimum len of key (numbers) is 2
+            if ( val.size() < p + 3 )
+                return "";
+
+            for ( string::const_iterator c = val.begin()+p+1; c != val.end(); c++ )
+            {
+                if ( !isdigit( *c ) )
+                {
+                    id_ok = false;
+                    break;
+                }
+            }
+            if ( id_ok )
+                return string("i._id like \"d/") + val.substr(p+1) + "%\"";
+        }
+
+        return "";
+    }
+
+    for ( string::const_iterator c = val.begin(); c != val.end(); c++ )
+    {
+        // ids (keys) are only digits
+        // alias are alphanum plus "_-."
+        if ( !isdigit( *c ))
+        {
+            id_ok = false;
+            if ( !isalpha( *c ) && *c != '_' && *c != '-' && *c != '.' )
+            {
+                alias_ok = false;
+                break;
+            }
+        }
+    }
+
+    if ( id_ok && alias_ok )
+        return string("i._id like \"%") + val + "%\" || i.alias like \"%" + val + "%\"";
+    else if ( id_ok )
+        return string("i._id like \"%") + val + "%\"";
+    else if ( alias_ok )
+        return string("i.alias like \"%") + val + "%\"";
+    else
+        return "";
+}
 
 string
 Worker::parseSearchMetadata( const string & a_query )
@@ -1315,11 +1373,30 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
         }
     }
 
+    string id;
+    imem = query.FindMember("id");
+    if ( imem != query.MemberEnd() )
+    {
+        id = parseSearchIdAlias( imem->value.GetString() );
+        DL_INFO("ID search: " << id );
+        if ( !id.size() )
+            EXCEPT(1,"Invalid ID/Alias query value.");
+    }
+
     string meta;
     imem = query.FindMember("meta");
     if ( imem != query.MemberEnd() )
     {
         meta = parseSearchMetadata( imem->value.GetString() );
+    }
+
+    if ( meta.size() && id.size() )
+    {
+        meta = string("(") + id + ") && (" + meta + ")";
+    }
+    else if ( id.size() )
+    {
+        meta = id;
     }
 
     string result;
@@ -1454,7 +1531,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " limit 100 return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner}";
+    result += " limit 100 return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,doi:i.doi}";
 
 
     return result;

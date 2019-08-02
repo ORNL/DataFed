@@ -105,7 +105,7 @@
 }
 
 .note{
-	color: #12f50a;
+	color: #12f50a!important;
 }
 
 .ui-icon-person
@@ -190,7 +190,7 @@
 
 .ui-icon-linkext
 {
-    color: #00A0A0
+    color: #ff8000
 }
 
 /*.ui-icon-minusthick*/
@@ -214,6 +214,33 @@
 	-ms-touch-action: none;
 	touch-action: none;
 }
+
+span.fancytree-node.fancytree-folder > span.fancytree-custom-icon:hover {
+	cursor: pointer;
+}
+
+span.fancytree-node.fancytree-folder > span.fancytree-icon:hover:after {
+	cursor: pointer;
+}
+
+span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
+    color: #dFbF40;
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
+    color: #dFbF40;
+}
+
+.data-tree-id
+{
+	color:#8090FF;
+}
+
+.data-tree-alias
+{
+	color:#40A040;
+}
+
 /* Layout helpers
 ----------------------------------*/
 .ui-helper-hidden {

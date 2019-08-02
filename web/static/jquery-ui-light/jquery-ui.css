@@ -104,7 +104,7 @@
 }
 
 .note{
-    color: #803636;
+    color: #803636!important;
 }
 
 .ui-icon-person
@@ -205,7 +205,25 @@
 
 .ui-icon-linkext
 {
-    color: #00B0B0
+    color: #ff8000
+}
+
+span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
+    color: #dFbF40;
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
+    color: #dFbF40;
+}
+
+.data-tree-id
+{
+	color:#6070eF;
+}
+
+.data-tree-alias
+{
+	color:#309030;
 }
 
 .ui-draggable-handle {

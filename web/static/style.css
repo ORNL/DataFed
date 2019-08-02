@@ -21,6 +21,29 @@ div
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
+span.fancytree-custom-icon {
+    margin-left:0!important;
+}
+
+span.fancytree-node.fancytree-folder > span.fancytree-icon {
+    margin-left:0!important;
+    background-image:none;
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon {
+    margin-left:0!important;
+    background-image:none;
+}
+
+span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
+    font-family:"jquery-ui";
+    content: "\e69a";
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
+    font-family:"jquery-ui";
+    content: "\e69b";
+}
 
 /*.text
 {
@@ -131,6 +154,22 @@ svg text
     margin: 0!important;
     padding: 1px .25rem!important;
     vertical-align: baseline!important;
+}
+
+.data-tree-title
+{
+    display:inline-block;
+    max-width:15em;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    margin:0!important;
+    padding:0!important;
+}
+
+.tooltip-style
+{
+    font-size:85%!important;
+    padding:.25em!important;
 }
 
 .drop
