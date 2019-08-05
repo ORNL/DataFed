@@ -376,7 +376,11 @@ message CollMoveRequest
 message CollGetParentsRequest
 {
     required string             id          = 1;
-    optional bool               all         = 2;
+}
+
+message CollPathReply
+{
+    repeated SDMS.PathData      path        = 1;
 }
 
 message CollDataReply

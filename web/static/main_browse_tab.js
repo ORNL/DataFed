@@ -335,7 +335,7 @@ function makeBrowserTab(){
         reader.readAsText(files[count],'UTF-8');
     }
 
-    this.newColl = function() {
+    this.newColl = function(){
         var node = inst.data_tree.activeNode;
         var parent = "root";
         if ( node ){
@@ -359,6 +359,20 @@ function makeBrowserTab(){
                 if ( node )
                     inst.reloadNode( node );
             });
+        });
+    }
+
+    this.firstParent = function(){
+        var ids = inst.getSelectedIDs();
+        if ( ids.length != 1 )
+            return;
+
+        getParents( ids[0], function( ok, data ){
+            console.log("par:",ok,data);
+            if ( ok ){
+            }else{
+                dlgAlert("Get Collections Error",data);
+            }
         });
     }
 
@@ -2973,6 +2987,7 @@ function makeBrowserTab(){
     $("#btn_download",inst.frame).on('click', inst.actionDataGet );
     $("#btn_move",inst.frame).on('click', inst.actionDataMove );
     $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
+    $("#btn_first_par_coll",inst.frame).on('click', inst.firstParent );
 
     $("#btn_exp_node",inst.frame).on('click', inst.graphNodeExpand );
     $("#btn_col_node",inst.frame).on('click', inst.graphNodeCollapse );
