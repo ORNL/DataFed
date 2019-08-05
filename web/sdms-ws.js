@@ -851,6 +851,12 @@ app.get('/api/col/get_parents', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/col/get_offset', ( a_req, a_resp ) => {
+    sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/col/move', ( a_req, a_resp ) => {
     console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
     sendMessage( "CollMoveRequest", { srcId: a_req.query.src_id, dstId: a_req.query.dst_id, item: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {

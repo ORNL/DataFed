@@ -366,12 +366,26 @@ function makeBrowserTab(){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
-
-        getParents( ids[0], function( ok, data ){
+        var item_id = ids[0];
+        getParents( item_id, function( ok, data ){
             console.log("par:",ok,data);
             if ( ok ){
+                if ( data.path.length ){
+                    var path = data.path[0];
+                    for ( var i = 0; i < path.length; i++ ){
+                        path[i] = {id:path[i].id,off:null};
+                        getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
+                            if ( ok ){
+                                console.log(data2.id,data2.item,data2.offset,idx);
+                            }else{
+                                setStatusText("Get Collections Error: " + data2, 1 );
+                                break;
+                            }
+                        });
+                    }
+                }
             }else{
-                dlgAlert("Get Collections Error",data);
+                setStatusText("Get Collections Error: " + data, 1 );
             }
         });
     }

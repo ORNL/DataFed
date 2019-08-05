@@ -82,6 +82,7 @@ public:
     void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
     void collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply );
     void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply );
+    void collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply );
 
     void queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply );
     void queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply );

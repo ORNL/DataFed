@@ -1441,6 +1441,18 @@ DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, A
 }
 
 void
+DatabaseClient::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "col/get_offset", {{"id",a_request.id()},{"item",a_request.item()},{"page_sz",to_string(a_request.page_sz())}}, result );
+
+    a_reply.set_id( a_request.id() );
+    a_reply.set_item( a_request.item() );
+    a_reply.set_offset( result["offset"].GetUint() );
+}
+
+void
 DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_result )
 {
     if ( !a_result.IsArray() )

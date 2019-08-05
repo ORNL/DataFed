@@ -383,6 +383,20 @@ message CollPathReply
     repeated SDMS.PathData      path        = 1;
 }
 
+message CollGetOffsetRequest
+{
+    required string             id          = 1;
+    required string             item        = 2;
+    required uint32             page_sz     = 3;
+}
+
+message CollGetOffsetReply
+{
+    required string             id          = 1;
+    required string             item        = 2;
+    required uint32             offset      = 3;
+}
+
 message CollDataReply
 {
     repeated SDMS.CollData      coll        = 1;

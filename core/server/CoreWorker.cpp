@@ -133,6 +133,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, CollMoveRequest, AckReply, collMove );
         SET_MSG_HANDLER_DB( proto_id, CollGetParentsRequest, CollPathReply, collGetParents );
+        SET_MSG_HANDLER_DB( proto_id, CollGetOffsetRequest, CollGetOffsetReply, collGetOffset );
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );

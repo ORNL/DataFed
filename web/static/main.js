@@ -455,6 +455,12 @@ function getParents( a_id, a_cb ) {
     _asyncGet( "/api/col/get_parents?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
+function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
+    _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"page_sz="+page_sz, null, function(ok,data){
+        cb( ok, data, idx )
+    });
+}
+
 function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
