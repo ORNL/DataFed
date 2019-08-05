@@ -516,24 +516,17 @@ router.get('/move', function (req, res) {
 router.get('/get_parents', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var items, item_id = g_lib.resolveID( req.queryParams.id, client );
+        var item_id = g_lib.resolveID( req.queryParams.id, client );
 
         // TODO Check non-owner permission for this?
 
-        if ( req.queryParams.all ){
-            items = g_db._query( "for v in 1..20 inbound @item item return { id: v._id, title: v.title, alias: v.alias }", { item: item_id }).toArray();
-        }else{
-            items = g_db._query( "for v in 1..1 inbound @item item return { id: v._id, title: v.title, alias: v.alias }", { item: item_id }).toArray();
-        }
-
-        res.send( items );
+        res.send( g_lib.getParents( item_id ) );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of child item")
-.queryParam('all', joi.boolean().optional(), "Get all parents (true), or just immediate (false, default)" )
 .summary('Get parent collection(s) of item')
 .description('Get parent collection(s) of item');
 

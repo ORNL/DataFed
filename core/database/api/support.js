@@ -786,6 +786,22 @@ module.exports = ( function() {
         }
     };
 
+    obj.getParents = function( item_id ){
+        var i, parents,results=[];
+
+        parents = obj.db._query( "for v in 1..1 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : item_id }).toArray();
+        for ( i in parents ){
+            results.push([parents[i]]);
+        }
+
+        for ( i in results ){
+            var res = obj.db._query( "for v in 1..50 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : results[i][0].id }).toArray();
+            //console.log("par:",res);
+            results[i] = results[i].concat( res );
+        }
+
+        return results;
+    };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
      * ownership or admin privilege - the hasAdminPermObject function performs these checks and should be
