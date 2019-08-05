@@ -346,11 +346,7 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     elif __verbosity == 0:
         msg.details = False
 
-    click.echo("In-function output mode: {}".format(__output_mode))
-    click.echo("In-function verbosity level: {}".format(__verbosity))
-    click.echo(msg)
     reply = _mapi.sendRecv( msg )
-    click.echo(reply)
     generic_reply_handler( reply, print_listing , __output_mode, __verbosity )
 
 
@@ -468,8 +464,9 @@ def data_create(title,alias,description,topic,key_words,data_file,extension,meta
 
     elif data_file: # TODO: Incorporate global output options for put-on-create
         create_reply = _mapi.sendRecv(msg)
-        click.echo("Data Record update successful. Initiating raw data transfer.")
-        put_data(df_id=create_reply[0].data[0].id,gp=resolve_filepath_for_xfr(data_file),wait=False,extension=None, __output_mode, __verbosity)
+        if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
+        elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
+        put_data(create_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
 
 #TODO Handle return value in _OM_RETV
 
@@ -553,9 +550,10 @@ def data_update(df_id,title,alias,description,topic,key_words,data_file,extensio
         generic_reply_handler(reply, print_data, __output_mode, __verbosity)
 
     elif data_file: # TODO: Incorporate global output options for put-on-update
-        update_reply, mt = _mapi.sendRecv(msg)
-        click.echo("Data Record update successful. Initiating raw data transfer.")
-        put_data(df_id=update_reply.data[0].id,gp=resolve_filepath_for_xfr(data_file),wait=False,extension=None,__output_mode, __verbosity)
+        update_reply = _mapi.sendRecv(msg)
+        if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
+        elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
+        put_data(update_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
 
     #TODO Handle return value in _OM_RETV
 
@@ -848,10 +846,14 @@ def coll_add(item_id,coll_id, verbosity, json, text):
     elif not json and not text:
         global _output_mode
         __output_mode = _output_mode
-    reply, mt = _mapi.sendRecv(msg)
-    if __verbosity >= 1:
-        if mt == "ListingReply": # TODO: Should be AckReply?
+
+    reply = _mapi.sendRecv(msg)
+    if __verbosity <= 1:
+        if reply[1] == "ListingReply": # TODO: Returns empty listing reply -- should it be AckReply?
             click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
+ #   elif __verbosity == 2:
+  #      click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
+   #     generic_reply_handler(reply, print_listing, __output_mode, __verbosity)
 
 
 @coll.command(name='remove',help="Remove data/collection ITEM_ID from collection COLL_ID")
@@ -875,10 +877,15 @@ def coll_rem(item_id,coll_id, verbosity, json, text):
     elif not json and not text:
         global _output_mode
         __output_mode = _output_mode
-    reply, mt = _mapi.sendRecv(msg)
-    if __verbosity >= 1:
-        if mt == "ListingReply": # TODO: Should be AckReply?
+
+    reply = _mapi.sendRecv(msg)
+    if __verbosity <= 1:
+        if reply[1] == "ListingReply": # TODO: Returns empty listing reply -- should it be AckReply?
             click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
+ #   elif __verbosity == 2:
+  #      click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
+   #     generic_reply_handler(reply, print_listing, __output_mode, __verbosity)
+
 
 #------------------------------------------------------------------------------
 # Query command group
@@ -1221,7 +1228,7 @@ def xfr():
 def xfr_list(time_from,to,since,status, verbosity, json, text): # TODO: Absolute time is not user friendly
     click.echo("TODO: NOT IMPLEMENTED")
     msg = auth.XfrListRequest()
-   #msg.(from) = time_from # TODO: 'From' is a magic keyword and shouldn't be used in python
+    # msg.from = 2 # TODO: 'From' is a magic keyword and shouldn't be used in python
     msg.to = to
     msg.since = since
     if status in ["0","1","2","3","4"]: msg.status = int(status)
@@ -1284,49 +1291,106 @@ def ep():
 
 
 @ep.command(name='get',help="Get Globus endpoint for the current session. At the start of the session, this will be the previously configured default endpoint.")
-def ep_get():
+@_global_output_options
+def ep_get(verbosity, json, text):
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
+
     global _ep_cur
-    if _ep_cur:
-        click.echo(_ep_cur)
+    global _ep_default
+    _ep_cur = _ep_cur if _ep_cur else _ep_default
+    if not _ep_cur:
+        if __output_mode == _OM_TEXT:
+            click.echo("No endpoint specified for the current session, and default end-point has not been configured.")
+        elif __output_mode == _OM_JSON:
+            click.echo('{ "Current working endpoint": "None" }')
     else:
-        global _ep_default
-        if _ep_default:
-            _ep_cur = _ep_default
-            info(1, _ep_cur)
-        else:
-            info(1,"No endpoint specified for the current session, and default end-point has not been configured.")
+        if __output_mode == _OM_TEXT and __verbosity >= 1: click.echo("Current working endpoint: {}".format(_ep_cur))
+        elif __output_mode == _OM_TEXT and __verbosity == 0: click.echo("{}".format(_ep_cur))
+        elif __output_mode == _OM_JSON: click.echo('{{ "Current working endpoint": "{}" }}'.format(_ep_cur))
 
 
 @ep.command(name='default',help="Get or set the default Globus endpoint. If no endpoint is given, the previously configured default endpoint will be returned. If an argument is given, the new endpoint will be set as the default.")
 @click.argument("new_default_ep",required=False)
-def ep_default(new_default_ep): ### CAUTION: Setting a new default will NOT update the current session's endpoint automatically --- MUST FOLLOW WITH EP SET
+@_global_output_options
+def ep_default(new_default_ep, verbosity, json, text): ### CAUTION: Setting a new default will NOT update the current session's endpoint automatically --- MUST FOLLOW WITH EP SET
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
+
     global _ep_default
     if new_default_ep:
         new_default_ep = resolve_index_val(new_default_ep)
         _cfg.set("default_ep",new_default_ep,True)
         _ep_default = new_default_ep
 
+    if _ep_default:
+        if __output_mode == _OM_TEXT and __verbosity >= 1: click.echo("Default endpoint: {}".format(_ep_default))
+        elif __output_mode == _OM_TEXT and __verbosity == 0: click.echo("{}".format(_ep_default))
+        elif __output_mode == _OM_JSON: click.echo('{{ "Default endpoint": "{}" }}'.format(_ep_default))
     else:
-        if _ep_default:
-            click.echo(_ep_default)
-        else:
-            click.echo("Default endpoint has not been configured.")
-
+        if __output_mode == _OM_TEXT:click.echo("Default endpoint has not been configured.")
+        elif __output_mode == _OM_JSON:
+            click.echo('{ "Default endpoint": "None" }')
 
 @ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the previously configured default endpoint will be used.")
-@click.argument("path",required=False)
-def ep_set(path):
-    global _ep_cur
-    if path:
-        _ep_cur = resolve_index_val(path)
-    else:
-        if _ep_default:
-            _ep_cur = _ep_default
-        else:
-            info(1,"Default endpoint has not been configured.")
-            return
+@click.argument("current_endpoint",required=False)
+@_global_output_options
+def ep_set(current_endpoint, verbosity, json, text):
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
 
-    info(1,_ep_cur)
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
+
+    global _ep_cur
+    global _ep_default
+    if current_endpoint:
+        _ep_cur = resolve_index_val(current_endpoint)
+    elif _ep_default: _ep_cur = _ep_default
+    elif not _ep_cur and not _ep_default:
+        if __output_mode == _OM_TEXT:
+            click.echo(
+                "No endpoint specified for the current session, and default end-point has not been configured.")
+        elif __output_mode == _OM_JSON:
+            click.echo('{ "Current working endpoint": "None" }')
+    if _ep_cur:
+        if __output_mode == _OM_TEXT and __verbosity >= 1:
+            click.echo("Current working endpoint: {}".format(_ep_cur))
+        elif __output_mode == _OM_TEXT and __verbosity == 0:
+            click.echo("{}".format(_ep_cur))
+        elif __output_mode == _OM_JSON:
+            click.echo('{{ "Current working endpoint": "{}" }}'.format(_ep_cur))
+
 
 
 @ep.command(name='list',help="List recent endpoints.") # TODO: Process returned paths to isolate and list indexed endpoints only. With index
@@ -1334,7 +1398,20 @@ def ep_set(path):
 def ep_list(verbosity, json, text):
     msg = auth.UserGetRecentEPRequest()
     reply = _mapi.sendRecv( msg )
-    generic_reply_handler( reply, print_endpoints )
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
+    generic_reply_handler( reply, print_endpoints, __output_mode, __verbosity)
 
 
 # ------------------------------------------------------------------------------
