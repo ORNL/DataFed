@@ -866,7 +866,6 @@ Client::collGetParents( const std::string & a_id, bool a_all )
 {
     Auth::CollGetParentsRequest req;
     req.set_id( a_id );
-    req.set_all( a_all );
     Auth::CollDataReply * reply;
 
     send<>( req, reply, m_ctx++ );

@@ -1431,17 +1431,13 @@ DatabaseClient::collMove( const Auth::CollMoveRequest & a_request, Anon::AckRepl
 }
 
 void
-DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
 {
     rapidjson::Document result;
-    vector<pair<string,string>> params;
-    params.push_back({"id",a_request.id()});
-    if ( a_request.has_all() )
-        params.push_back({"all",a_request.all()?"true":"false"});
 
-    dbGet( "col/get_parents", params, result );
+    dbGet( "col/get_parents", {{"id",a_request.id()}}, result );
 
-    setCollData( a_reply, result );
+    setCollPathData( a_reply, result );
 }
 
 void
@@ -1487,6 +1483,40 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             coll->set_owner( imem->value.GetString() );
+    }
+}
+
+void
+DatabaseClient::setCollPathData( CollPathReply & a_reply, rapidjson::Document & a_result )
+{
+    if ( !a_result.IsArray() )
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+
+    PathData* path;
+    ListingData* item;
+    rapidjson::Value::MemberIterator imem;
+
+    for ( rapidjson::SizeType p = 0; p < a_result.Size(); p++ )
+    {
+        rapidjson::Value & path_val = a_result[p];
+        path = a_reply.add_path();
+
+        for ( rapidjson::SizeType i = 0; i < path_val.Size(); i++ )
+        {
+            rapidjson::Value & val = path_val[i];
+
+            item = path->add_item();
+            item->set_id( val["id"].GetString() );
+            item->set_title( val["title"].GetString() );
+
+            if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
+                item->set_alias( imem->value.GetString() );
+
+            if (( imem = val.FindMember("owner")) != val.MemberEnd() )
+                item->set_owner( imem->value.GetString() );
+        }
     }
 }
 

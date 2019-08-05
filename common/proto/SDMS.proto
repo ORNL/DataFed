@@ -180,6 +180,11 @@ message ListingData
     repeated DependencyData     dep         = 10;
 }
 
+message PathData
+{
+    repeated ListingData        item        = 1;
+}
+
 message RecordData
 {
     required string             id          = 1;
