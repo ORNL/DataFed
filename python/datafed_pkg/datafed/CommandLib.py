@@ -400,7 +400,8 @@ def data_view(df_id,details,verbosity,json,text):
 
 
 @data.command(name='create',help="Create new data record")
-@click.argument("title")
+@click.argument("title", required=False)
+@click.option("-b", "--batch", type=str, required=False, help="JSON file containing array of record data to be imported directly for creation.")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-p", "--topic", type=str, required=False, help="Data Record topic, using period ('.') as delimiter")
@@ -413,40 +414,7 @@ def data_view(df_id,details,verbosity,json,text):
 @click.option("-r","--repository",type=str,required=False,help="Repository ID")
 @click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 @_global_output_options
-def data_create(title,alias,description,topic,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies,verbosity,json,text): #cTODO: FIX
-    if metadata and metadata_file:
-        click.echo("Cannot specify both --metadata and --metadata-file options")
-        return
-    msg = auth.RecordCreateRequest()
-    msg.title = title
-    if description: msg.desc = description
-    if topic: msg.topic = topic #
-    if key_words: msg.keyw = key_words   # TODO: Determine input format for keywords -- list? quotation marks? commas?
-    if alias: msg.alias = alias
-    if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
-    if repository: msg.repo_id = repository
-    msg.ext_auto = True
-    if extension is not None:
-        msg.ext = extension
-        msg.ext_auto = False
-    if metadata_file is not None:
-        metadata = metadata_file.read()
-    if metadata: msg.metadata = metadata
-    if dependencies:
-        deps = list(dependencies)
-        for i in range(len(deps)):
-            item = deps[i-1]
-            dep = msg.deps.add()
-            dep.dir = 0
-            if item[0] == "derived" or item[0] == "der": dep.type = 0
-            elif item[0] == "component" or item[0] == "comp": dep.type = 1
-            elif item[0] == "version" or item[0] == "ver":
-                dep.type = 2
-                dep.dir = 1
-            if re.search(r'^d/[0-9]{8}', item[1]):
-                dep.id = item[1]
-            else: dep.alias = item[1]
-
+def data_create(title,batch,alias,description,topic,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies,verbosity,json,text): #cTODO: FIX
     if verbosity:
         __verbosity = int(verbosity)
     elif not verbosity:
@@ -460,61 +428,78 @@ def data_create(title,alias,description,topic,key_words,data_file,extension,meta
     elif not json and not text:
         global _output_mode
         __output_mode = _output_mode
-
-    if not data_file:
+    if metadata and metadata_file:
+        if __output_mode == _OM_TEXT: click.echo("Cannot specify both --metadata and --metadata-file options")
+        elif __output_mode == _OM_JSON:
+                click.echo('{{ "Data create":"Failed", "Error": "Cannot specifiy metadata and also import directly from metadata file." }}')
+        return
+    if batch:
+        fp = pathlib.Path(batch)
+        if not fp.is_file():
+            if __output_mode == _OM_TEXT:
+                click.echo(
+                    "Batch create file not found. Check the input is correct, and please refer to documentation if further errors occur.")
+            elif __output_mode == _OM_JSON:
+                click.echo('{{ "Batch create":"Failed", "Error": "File not found." }}')
+            return
+        if fp.stat().st_size > _max_import_file_size:
+            if __output_mode == _OM_TEXT:
+                click.echo(
+                    "Batch create file exceeds maximum size. Check that the input is correct, or refer to documentation.")
+            elif __output_mode == _OM_JSON:
+                click.echo('{{ "Batch create":"Failed", "Error": "File size exceeded limit." }}')
+            return
+        msg = auth.RecordCreateBatchRequest()
+        with fp.open() as f:
+            msg.records = f.read()
         reply = _mapi.sendRecv(msg)
         generic_reply_handler(reply, print_data, __output_mode, __verbosity)
-
-    elif data_file: # TODO: Incorporate global output options for put-on-create
-        create_reply = _mapi.sendRecv(msg)
-        if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
-        elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
-        put_data(create_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
-
-#TODO Handle return value in _OM_RETV
-
-
-@data.command(name='import', help="Create a new data record directly from a JSON metadata file")
-@click.argument("file")
-@_global_output_options
-def data_import(file,verbosity,json,text):
-    if verbosity:
-        __verbosity = int(verbosity)
-    elif not verbosity:
-        global _verbosity
-        __verbosity = _verbosity
-
-    if json:
-        __output_mode = _OM_JSON
-    elif text:
-        __output_mode = _OM_TEXT
-    elif not json and not text:
-        global _output_mode
-        __output_mode = _output_mode
-
-    fp = pathlib.Path(file)
-    if not fp.is_file():
-        if __output_mode == _OM_TEXT:
-            click.echo("Import file not found. Check the input is correct, and please refer to documentation if further errors occur.")
-        elif __output_mode == _OM_JSON:
-            click.echo('{{ "Import":"Failed", "Error": "File not found." }}')
         return
-    if fp.stat().st_size > _max_import_file_size:
-        if __output_mode == _OM_TEXT:
-            click.echo("Import file exceeds maximum size. Check that the input is correct, or refer to documentation.")
-        elif __output_mode == _OM_JSON:
-            click.echo('{{ "Import":"Failed", "Error": "File size exceeded limit." }}')
-        return
-    msg = auth.RecordCreateBatchRequest()
-    with fp.open() as f:
-        msg.records = f.read()
-    reply = _mapi.sendRecv(msg)
-    generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+    else:
+        msg = auth.RecordCreateRequest()
+        msg.title = title
+        if description: msg.desc = description
+        if topic: msg.topic = topic #
+        if key_words: msg.keyw = key_words   # TODO: Determine input format for keywords -- list? quotation marks? commas?
+        if alias: msg.alias = alias
+        if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
+        if repository: msg.repo_id = repository
+        msg.ext_auto = True
+        if extension:
+            msg.ext = extension
+            msg.ext_auto = False
+        if metadata_filee:
+            metadata = metadata_file.read()
+        if metadata: msg.metadata = metadata
+        if dependencies:
+            deps = list(dependencies)
+            for i in range(len(deps)):
+                item = deps[i-1]
+                dep = msg.deps.add()
+                dep.dir = 0
+                if item[0] == "derived" or item[0] == "der": dep.type = 0
+                elif item[0] == "component" or item[0] == "comp": dep.type = 1
+                elif item[0] == "version" or item[0] == "ver":
+                    dep.type = 2
+                    dep.dir = 1
+                if re.search(r'^d/[0-9]{8}', item[1]):
+                    dep.id = item[1]
+                else: dep.alias = item[1]
 
+        if not data_file:
+            reply = _mapi.sendRecv(msg)
+            generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+
+        elif data_file: # TODO: Incorporate global output options for put-on-create
+            create_reply = _mapi.sendRecv(msg)
+            if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
+            elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
+            put_data(create_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
 
 
 @data.command(name='update',help="Update existing data record")
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="id", required=False)
+@click.option("-b", "--batch", type=str, required=False, help="JSON file containing array of record data to be imported directly for update.")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -527,52 +512,7 @@ def data_import(file,verbosity,json,text):
 @click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 @click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
 @_global_output_options
-def data_update(df_id,title,alias,description,topic,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove,verbosity,json,text):
-    if metadata and metadata_file:
-        click.echo("Cannot specify both --metadata and --metadata-file options")
-        return
-    msg = auth.RecordUpdateRequest()
-    msg.id = resolve_id(df_id)
-    if title is not None: msg.title = title
-    if description is not None: msg.desc = description
-    if topic: msg.topic = topic
-    if key_words is not None: msg.keyw = key_words # how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
-    if alias is not None: msg.alias = alias
-    if extension is not None:
-        msg.ext = extension
-        msg.ext_auto = False
-    if metadata_file is not None:
-        metadata = metadata_file.read()
-    if metadata is not None: msg.metadata = metadata
-    if dependencies_add:
-        deps = list(dependencies_add)
-        for i in range(len(deps)):
-            item = deps[i-1]
-            dep = msg.deps_add.add()
-            dep.dir = 0
-            if item[0] == "derived" or item[0] == "der": dep.type = 0
-            elif item[0] == "component" or item[0] == "comp": dep.type = 1
-            elif item[0] == "version" or item[0] == "ver":
-                dep.type = 2
-                dep.dir = 1
-            if re.search(r'^d/[0-9]{8}', item[1]):
-                dep.id = item[1]
-            else: dep.alias = item[1]
-    if dependencies_remove:
-        deps = list(dependencies_remove)
-        for i in range(len(deps)):
-            item = deps[i-1]
-            dep = msg.deps_rem.add()
-            dep.dir = 0
-            if item[0] == "derived" or item[0] == "der": dep.type = 0
-            elif item[0] == "component" or item[0] == "comp": dep.type = 1
-            elif item[0] == "version" or item[0] == "ver":
-                dep.type = 2
-                dep.dir = 1
-            if re.search(r'^d/[0-9]{8}', item[1]):
-                dep.id = item[1]
-            else: dep.alias = item[1]
-
+def data_update(df_id,batch,title,alias,description,topic,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove,verbosity,json,text):
     if verbosity:
         __verbosity = int(verbosity)
     elif not verbosity:
@@ -587,17 +527,85 @@ def data_update(df_id,title,alias,description,topic,key_words,data_file,extensio
         global _output_mode
         __output_mode = _output_mode
 
-    if not data_file:
+    if metadata and metadata_file:
+        if __output_mode == _OM_TEXT: click.echo("Cannot specify both --metadata and --metadata-file options")
+        elif __output_mode == _OM_JSON:
+                click.echo('{{ "Data update":"Failed", "Error": "Cannot specifiy metadata and also import directly from metadata file." }}')
+        return
+    if batch:
+        fp = pathlib.Path(batch)
+        if not fp.is_file():
+            if __output_mode == _OM_TEXT:
+                click.echo(
+                    "Batch update file not found. Check the input is correct, and please refer to documentation if further errors occur.")
+            elif __output_mode == _OM_JSON:
+                click.echo('{{ "Batch update":"Failed", "Error": "File not found." }}')
+            return
+        if fp.stat().st_size > _max_import_file_size:
+            if __output_mode == _OM_TEXT:
+                click.echo(
+                    "Batch update file exceeds maximum size. Check that the input is correct, or refer to documentation.")
+            elif __output_mode == _OM_JSON:
+                click.echo('{{ "Batch update":"Failed", "Error": "File size exceeded limit." }}')
+            return
+        msg = auth.RecordUpdateBatchRequest()
+        with fp.open() as f:
+            msg.records = f.read()
         reply = _mapi.sendRecv(msg)
         generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+        return
+    else:
+        msg = auth.RecordUpdateRequest()
+        msg.id = resolve_id(df_id)
+        if title: msg.title = title
+        if description: msg.desc = description
+        if topic: msg.topic = topic
+        if key_words: msg.keyw = key_words # how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
+        if alias: msg.alias = alias
+        if extension:
+            msg.ext = extension
+            msg.ext_auto = False
+        if metadata_file:
+            metadata = metadata_file.read()
+        if metadata: msg.metadata = metadata
+        if dependencies_add:
+            deps = list(dependencies_add)
+            for i in range(len(deps)):
+                item = deps[i-1]
+                dep = msg.deps_add.add()
+                dep.dir = 0
+                if item[0] == "derived" or item[0] == "der": dep.type = 0
+                elif item[0] == "component" or item[0] == "comp": dep.type = 1
+                elif item[0] == "version" or item[0] == "ver":
+                    dep.type = 2
+                    dep.dir = 1
+                if re.search(r'^d/[0-9]{8}', item[1]):
+                    dep.id = item[1]
+                else: dep.alias = item[1]
+        if dependencies_remove:
+            deps = list(dependencies_remove)
+            for i in range(len(deps)):
+                item = deps[i-1]
+                dep = msg.deps_rem.add()
+                dep.dir = 0
+                if item[0] == "derived" or item[0] == "der": dep.type = 0
+                elif item[0] == "component" or item[0] == "comp": dep.type = 1
+                elif item[0] == "version" or item[0] == "ver":
+                    dep.type = 2
+                    dep.dir = 1
+                if re.search(r'^d/[0-9]{8}', item[1]):
+                    dep.id = item[1]
+                else: dep.alias = item[1]
 
-    elif data_file: # TODO: Incorporate global output options for put-on-update
-        update_reply = _mapi.sendRecv(msg)
-        if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
-        elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
-        put_data(update_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
+        if not data_file:
+            reply = _mapi.sendRecv(msg)
+            generic_reply_handler(reply, print_data, __output_mode, __verbosity)
 
-    #TODO Handle return value in _OM_RETV
+        elif data_file: # TODO: Incorporate global output options for put-on-update
+            update_reply = _mapi.sendRecv(msg)
+            if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
+            elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
+            put_data(update_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
 
 
 @data.command(name='delete',help="Delete existing data record")
@@ -780,9 +788,9 @@ def coll_view(df_id, verbosity, json, text):
 def coll_create(title,alias,description,collection, verbosity, json, text):
     msg = auth.CollCreateRequest()
     msg.title = title
-    if alias is not None: msg.alias = alias
-    if description is not None: msg.desc = description
-    if resolve_coll_id(collection) is not None: msg.parent_id = resolve_coll_id(collection)
+    if alias: msg.alias = alias
+    if description: msg.desc = description
+    if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
 
     if verbosity:
         __verbosity = int(verbosity)
@@ -811,9 +819,9 @@ def coll_create(title,alias,description,collection, verbosity, json, text):
 def coll_update(df_id,title,alias,description, verbosity, json, text):
     msg = auth.CollUpdateRequest()
     msg.id = resolve_coll_id(df_id)
-    if title is not None: msg.title = title
-    if alias is not None: msg.alias = alias
-    if description is not None: msg.desc = description
+    if title: msg.title = title
+    if alias: msg.alias = alias
+    if description: msg.desc = description
     if verbosity:
         __verbosity = int(verbosity)
     elif not verbosity:
