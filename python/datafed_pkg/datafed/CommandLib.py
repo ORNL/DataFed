@@ -31,6 +31,8 @@ import json as jsonlib
 import time
 import pathlib
 import wget
+import tempfile
+import itertools as IT
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
 
@@ -60,6 +62,7 @@ _verbosity = 1
 _ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 _ep_default = None
 _ep_cur = None
+_max_import_file_size = 1e6 # 1 MB
 
 
 _OM_TEXT = 0
@@ -427,7 +430,7 @@ def data_create(title,alias,description,topic,key_words,data_file,extension,meta
         msg.ext = extension
         msg.ext_auto = False
     if metadata_file is not None:
-        metadata = jsonlib.dumps(jsonlib.load(metadata_file))
+        metadata = metadata_file.read()
     if metadata: msg.metadata = metadata
     if dependencies:
         deps = list(dependencies)
@@ -471,6 +474,45 @@ def data_create(title,alias,description,topic,key_words,data_file,extension,meta
 #TODO Handle return value in _OM_RETV
 
 
+@data.command(name='import', help="Create a new data record directly from a JSON metadata file")
+@click.argument("file")
+@_global_output_options
+def data_import(file,verbosity,json,text):
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
+
+    fp = pathlib.Path(file)
+    if not fp.is_file():
+        if __output_mode == _OM_TEXT:
+            click.echo("Import file not found. Check the input is correct, and please refer to documentation if further errors occur.")
+        elif __output_mode == _OM_JSON:
+            click.echo('{{ "Import":"Failed", "Error": "File not found." }}')
+        return
+    if fp.stat().st_size > _max_import_file_size:
+        if __output_mode == _OM_TEXT:
+            click.echo("Import file exceeds maximum size. Check that the input is correct, or refer to documentation.")
+        elif __output_mode == _OM_JSON:
+            click.echo('{{ "Import":"Failed", "Error": "File size exceeded limit." }}')
+        return
+    msg = auth.RecordCreateBatchRequest()
+    with fp.open() as f:
+        msg.records = f.read()
+    reply = _mapi.sendRecv(msg)
+    generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+
+
+
 @data.command(name='update',help="Update existing data record")
 @click.argument("df_id", metavar="id")
 @click.option("-t","--title",type=str,required=False,help="Title")
@@ -500,7 +542,7 @@ def data_update(df_id,title,alias,description,topic,key_words,data_file,extensio
         msg.ext = extension
         msg.ext_auto = False
     if metadata_file is not None:
-        metadata = jsonlib.dumps(jsonlib.load(metadata_file))
+        metadata = metadata_file.read()
     if metadata is not None: msg.metadata = metadata
     if dependencies_add:
         deps = list(dependencies_add)
@@ -625,11 +667,10 @@ def data_get(df_id,filepath,wait, verbosity, json, text): #Multi-get will initia
     if checked_list and url_list:
         click.echo("Cannot get data records via Globus and http transfers in the same command")
 
-    elif url_list:
+    elif url_list: #HTTP transfers
         destination_directory = pathlib.Path(filepath).resolve()
         for url in url_list:
-            raw_data_record = wget.download(url[0], out=str(destination_directory)) # TODO: Will rewrite any file copy (1).file    # TODO: Use new module for this -- ability to multithread download
-            click.echo("\nRaw data for record {} downloaded to {}".format(url[1], raw_data_record)) # TODO: output mode-dependent replies
+            http_download(url,str(destination_directory),__output_mode,__verbosity)
         return
     elif checked_list: #Globus transfers
         gp = resolve_filepath_for_xfr(filepath)
@@ -641,12 +682,10 @@ def data_get(df_id,filepath,wait, verbosity, json, text): #Multi-get will initia
         replies = []
 
         for xfrs in reply[0].xfr:
-            if __output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" }}'.format(xfrs.id))
-            elif __output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
+            if __output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
             xfr_ids.append(xfrs.id)
         if wait:
             if __verbosity >= 1 and __output_mode == _OM_TEXT: click.echo("Waiting")
-            elif __output_mode == _OM_JSON: click.echo('{ "Status": "Waiting" }') # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
             while wait is True:
                 time.sleep(3)
                 for xfrs in xfr_ids:
@@ -659,8 +698,7 @@ def data_get(df_id,filepath,wait, verbosity, json, text): #Multi-get will initia
                         wait = False
                     statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
                     xfr_status = statuses.get(check.status, "None")
-                    if __output_mode == _OM_JSON: click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status)) #Text status, or numeric code for JSON?
-                    elif __verbosity >= 1 and __output_mode == _OM_TEXT: click.echo(
+                    if __verbosity >= 1 and __output_mode == _OM_TEXT: click.echo(
                         "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
             for xfrs in replies:
                 generic_reply_handler(xfrs, print_xfr_stat, __output_mode, __verbosity)
@@ -1545,6 +1583,21 @@ def resolve_coll_id(df_id):
     return _cur_alias_prefix + df_id2
 
 
+def http_download(url,destination,output_mode,verbosity): # First argument is tuple (url, datafed record ID)
+    filename = os.path.join(destination, wget.filename_from_url(url[0]))
+    new_filename = uniquify(filename) # wget has a buggy filename uniquifier, appended integer will not increase after 1
+    if output_mode == _OM_TEXT and verbosity >=1:
+        raw_data_record = wget.download(url[0], out=str(new_filename), bar=bar_adaptive_human_readable) # TODO: Will rewrite any file copy (1).file    # TODO: Use new module for this -- ability to multithread download
+        click.echo("\nRaw data for record {} downloaded to {}".format(url[1], raw_data_record))
+    else:
+        raw_data_record = wget.download(url[0], out=str(new_filename), bar=None)
+        if output_mode == _OM_JSON:
+            click.echo('{{ "Download": "Succeeded", "Data Record ID": "{}", "File": "{}" }}'.format(url[1],raw_data_record))
+        elif output_mode == _OM_TEXT and verbosity == 0:
+            click.echo("Raw data for record {} downloaded to {}".format(url[1],
+                                                                          raw_data_record))  # TODO: _OM_RETURN
+
+
 def put_data(df_id,gp,wait,extension,output_mode,verbosity):
     msg = auth.DataPutRequest()
     msg.id = resolve_id(df_id)
@@ -1561,15 +1614,13 @@ def put_data(df_id,gp,wait,extension,output_mode,verbosity):
     elif not verbosity:
         global _verbosity
         __verbosity = _verbosity
-    if __output_mode == _OM_JSON:
-        click.echo('{{ "Transfer ID": "{}" }}'.format(xfr_id))
+    #if __output_mode == _OM_JSON:
+    #    click.echo('{{ "Transfer ID": "{}" }}'.format(xfr_id))
     elif __output_mode == _OM_TEXT:
         click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
         if __verbosity >= 1 and __output_mode == _OM_TEXT:
             click.echo("Waiting")
-        elif __output_mode == _OM_JSON:
-            click.echo('{ "Status": "Waiting" }')  # TODO: Figure out verbosity replies (1 or 2 for updates loop?)
         while wait is True:
             time.sleep(2)
             update_msg = auth.XfrViewRequest()
@@ -1579,9 +1630,7 @@ def put_data(df_id,gp,wait,extension,output_mode,verbosity):
             if check.status == 3 or check.status == 4: break
             statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
             xfr_status = statuses.get(check.status, "None")
-            if __output_mode == _OM_JSON:
-                click.echo('{{ "Transfer ID": "{}" , "Status": "{}" }}'.format(check.id, xfr_status))
-            elif __verbosity >= 1 and __output_mode == _OM_TEXT:
+            if __verbosity >= 1 and __output_mode == _OM_TEXT:
                 click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
         generic_reply_handler(reply,print_xfr_stat, __output_mode, __verbosity)
     else:
@@ -1643,52 +1692,8 @@ def resolve_filepath_for_xfr(path):
 
     return str(fp)
 
-'''
-def resolve_filepath_for_xfr(filepath):
-    if filepath[0] == '/':  # absolute full path, must be in globus format
-        filepath = filepath[1:]
 
-    elif filepath[0] != "/":  # relative path to be resolved
-        filepath = phathlib.Path.cwd() / filepat
-        filepath = filepath.resolve()  # now absolute path
-
-    fp = pathlib.PurePath(filepath)
-
-    if isinstance(fp, pathlib.PureWindowsPath):  # If Windows flavour
-        if fp.drive:  # turning drive letter into globus-suitable format
-            drive_name = fp.drive.replace(':', '')
-            click.echo(drive_name)
-            parts = fp.parts[1:]
-            click.echo(parts)
-            fp = pathlib.PurePosixPath('/' + drive_name)
-            click.echo(fp)
-            for item in parts:
-                fp = fp / str(item)  # adds each part
-                click.echo(fp)
-
-    return str(fp)
-
-
-def resolve_globus_path(fp, endpoint):
-    global _ep_cur
-    global _ep_default
-    if fp[0] != '/':
-        fp = "/" + fp
-    if endpoint != "None":
-        fp = endpoint + fp
-    elif endpoint == "None":
-        if _ep_cur:
-            fp = _ep_cur + fp
-        elif _ep_cur is None:
-            if _ep_default:
-                fp = _ep_default + fp
-            elif _ep_default is None:
-                fp = None
-
-    return fp #endpoint and path
-'''
-
-def generic_reply_handler( reply, printFunc , output_mode, verbosity ): # NOTE: Reply is a tuple containing (reply msg, msg type)
+def generic_reply_handler(reply, printFunc , output_mode, verbosity ): # NOTE: Reply is a tuple containing (reply msg, msg type)
     if output_mode == _OM_RETN:
         global _return_val
         _return_val = reply
@@ -1710,12 +1715,12 @@ def print_ack_reply(output_mode, verbosity):
         click.echo("OK")
 
 
-def print_listing(reply, verbosity):
+def print_listing(message, verbosity):
     df_idx = 1
     global _list_items
     _list_items = []
     #click.echo("{:3} {:12} ({:20} {}".format("","DataFed ID","Alias)","Title")) #because projects don't have aliases
-    for i in reply.item:
+    for i in message.item:
         _list_items.append(i.id)
         if i.alias:
             click.echo("{:2}. {:12} ({:20} {}".format(df_idx,i.id,i.alias+')',i.title))
@@ -1724,31 +1729,31 @@ def print_listing(reply, verbosity):
         df_idx += 1
 
 
-def print_user_listing( reply, verbosity ):
+def print_user_listing( message, verbosity ):
     df_idx = 1
     global _list_items
     _list_items = []
-    for i in reply.user:
+    for i in message.user:
         _list_items.append(i.uid)
         click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
         df_idx += 1
 
 
-def print_proj_listing(reply, verbosity): #reply is a ListingReply message
+def print_proj_listing(message, verbosity): #reply is a ListingReply message
     df_idx = 1
     global _list_items
     _list_items = []
-    for i in reply.proj:
+    for i in message.proj:
         _list_items.append(i.id)
         click.echo("{:2}. {:24} {}".format(df_idx,i.id,i.title))
         df_idx += 1
 
 
-def print_endpoints(reply, verbosity):
+def print_endpoints(message, verbosity):
     df_idx = 1
     global _list_items
     _list_items = []
-    for i in reply.ep:
+    for i in message.ep:
         p = i.rfind("/")
         if p >= 0:
             path = i[0:p+1]
@@ -1759,68 +1764,57 @@ def print_endpoints(reply, verbosity):
 
 def print_data(message, verbosity):
 
-    dr = message.data[0]
-    if verbosity >= 0:
-        click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
-                   "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
-                   "{:<25} {:<50}".format('Alias: ', dr.alias))
-    if verbosity >= 1:
-        click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
-                   "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
-                   "{:<25} {:<50}".format('Size: ', human_readable_bytes(dr.size)) + '\n' + ## convert to gigs?
-                   "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
-                   "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
-    if verbosity >= 2:
-        click.echo("{:<25} {:<50}".format('Topic: ', dr.topic) + '\n' +
-                   "{:<25} {:<50}".format('Is Public: ', str(dr.ispublic)) + '\n' +
-                   "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
-                   "{:<25} {:<50}".format('Source: ', dr.source) + '\n' +
-                   "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
-                   "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
-                   "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
-                   "{:<25} {:<50}".format('Locked: ', str(dr.locked)))
-        if dr.metadata:
-            click.echo("{:<25} {:<50}".format('Metadata: ', (jsonlib.dumps(jsonlib.loads(dr.metadata), indent=4)))) # TODO: Paging function
-        elif not dr.metadata:
-            click.echo("{:<25} {:<50}".format('Metadata: ', "None"))
-        if not dr.deps:
-            click.echo("{:<25} {:<50}".format('Dependencies: ', 'None'))
-        elif dr.deps:
-            click.echo("{:<25}".format('Dependencies:'))
-            print_deps(message)
+    for dr in message.data:
+        if verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
+                       "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
+                       "{:<25} {:<50}".format('Alias: ', dr.alias))
+        if verbosity >= 1:
+            click.echo("{:<25} {:<50}".format('Description: ', dr.desc) + '\n' +
+                       "{:<25} {:<50}".format('Keywords: ', dr.keyw) + '\n' +
+                       "{:<25} {:<50}".format('Size: ', human_readable_bytes(dr.size)) + '\n' + ## convert to gigs?
+                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(dr.ct))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(dr.ut))))
+        if verbosity >= 2:
+            click.echo("{:<25} {:<50}".format('Topic: ', dr.topic) + '\n' +
+                       "{:<25} {:<50}".format('Is Public: ', str(dr.ispublic)) + '\n' +
+                       "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
+                       "{:<25} {:<50}".format('Source: ', dr.source) + '\n' +
+                       "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
+                       "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
+                       "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
+                       "{:<25} {:<50}".format('Locked: ', str(dr.locked)))
+            if dr.metadata:
+                click.echo("{:<25} {:<50}".format('Metadata: ', (jsonlib.dumps(jsonlib.loads(dr.metadata), indent=4)))) # TODO: Paging function
+            elif not dr.metadata:
+                click.echo("{:<25} {:<50}".format('Metadata: ', "None"))
+            if not dr.deps:
+                click.echo("{:<25} {:<50}".format('Dependencies: ', 'None'))
+            elif dr.deps:
+                click.echo("{:<25}".format('Dependencies:'))
+                print_deps(dr)
 
 
 def print_coll(message, verbosity):
 
-    coll = message.coll[0]
-    if verbosity >= 0:
-        click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
-                   "{:<25} {:<50}".format('Title: ', coll.title) + '\n' +
-                   "{:<25} {:<50}".format('Alias: ', coll.alias))
-    if verbosity >= 1:
-        click.echo("{:<25} {:<50}".format('Description: ',coll.desc) + '\n' +
-                   "{:<25} {:<50}".format('Owner: ', coll.owner) + '\n' +
-                   "{:<25} {:<50}".format('Parent Collection ID: ', coll.parent_id))
-    if verbosity == 2:
-        click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
-                   "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
-                   "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
+    for coll in message.coll:
+        if verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('ID: ', coll.id) + '\n' +
+                       "{:<25} {:<50}".format('Title: ', coll.title) + '\n' +
+                       "{:<25} {:<50}".format('Alias: ', coll.alias))
+        if verbosity >= 1:
+            click.echo("{:<25} {:<50}".format('Description: ',coll.desc) + '\n' +
+                       "{:<25} {:<50}".format('Owner: ', coll.owner) + '\n' +
+                       "{:<25} {:<50}".format('Parent Collection ID: ', coll.parent_id))
+        if verbosity == 2:
+            click.echo("{:<25} {:<50}".format('Is Public: ', str(coll.ispublic)) + '\n' +
+                       "{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(coll.ct))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(coll.ut))))
 
-'''
-def print_deps(dependencies):
-    if dependencies is not None or dependencies != "None":
-        deps = list(dependencies)
-        click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", 'Direction','Type','ID', 'Alias'))
-        for item in deps:
-            rep = item.get
-            click.echo("{:<5} {:<10} {:<25} {:<15} {:<25}".format("", rep('dir', 'None'),rep('type', 'None'),rep('id', 'None'), rep('alias', 'None')))
-'''
 
-def print_deps(message):
+def print_deps(dr):
     types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
-    dr = message.data[0]
-    dep = message.data[0].deps
-    for i in dep:
+    for i in dr.deps:
         if i.dir == 0: # incoming -- DR is old, precursor, or container -- DEP is relative of DR
             click.echo("{:2} {:12} ({:<15} {:20} {:12} ({:<15}".format(
                 "",i.id,i.alias+')',types[i.type],dr.id,dr.alias+')'))
@@ -1853,11 +1847,11 @@ def print_xfr_stat(message, verbosity):
 
 def print_user(message, verbosity):
 
-    usr = message.user[0]
-    if verbosity >= 0:
-        click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
-                   "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
-                   "{:<25} {:<50}".format('Email: ', usr.email))
+    for usr in message.user:
+        if verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
+                       "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
+                       "{:<25} {:<50}".format('Email: ', usr.email))
 
 
 def print_metadata(message):
@@ -1866,27 +1860,27 @@ def print_metadata(message):
 
 def print_proj(message, verbosity):
 
-    proj = message.proj[0]
-    admins = []
-    members = []
-    for i in proj.admin: admins.append(i)
-    for i in proj.member: members.append(i)
-    if verbosity >= 0:
-        click.echo("{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
-                   "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
-                   "{:<25} {:<50}".format('Description: ', proj.desc))
-    if verbosity >= 1:
-        click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
-                   "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
-                   "{:<25} {:<50}".format('Members: ', str(members)))
-    if verbosity == 2:
-        click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
-                   "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
-                   "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
-                   "{:<25} {:<50}".format('Sub Allocation: ', human_readable_bytes(proj.sub_alloc) + '\n' +
-                   "{:<25} {:<50}".format('Sub Usage: ', human_readable_bytes(proj.sub_usage))))
-        for i in proj.alloc:
-            print_allocation_data(i)
+    for proj in message.proj:
+        admins = []
+        members = []
+        for i in proj.admin: admins.append(i)
+        for i in proj.member: members.append(i)
+        if verbosity >= 0:
+            click.echo("{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
+                       "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
+                       "{:<25} {:<50}".format('Description: ', proj.desc))
+        if verbosity >= 1:
+            click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
+                       "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
+                       "{:<25} {:<50}".format('Members: ', str(members)))
+        if verbosity == 2:
+            click.echo("{:<25} {:<50}".format('Date Created: ', time.strftime("%D %H:%M", time.gmtime(proj.ct))) + '\n' +
+                       "{:<25} {:<50}".format('Date Updated: ', time.strftime("%D %H:%M", time.gmtime(proj.ut))) + '\n' +
+                       "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
+                       "{:<25} {:<50}".format('Sub Allocation: ', human_readable_bytes(proj.sub_alloc) + '\n' +
+                       "{:<25} {:<50}".format('Sub Usage: ', human_readable_bytes(proj.sub_usage))))
+            for i in proj.alloc:
+                print_allocation_data(i)
 
 
 def print_allocation_data(alloc): #
@@ -1900,12 +1894,120 @@ def print_allocation_data(alloc): #
 
 
 def human_readable_bytes(size,precision=2):
-    suffixes=['B','KB','MB','GB','TB']
+    suffixes=['B','KB','MB','GB','TB', 'PB']
     suffixIndex = 0
-    while size > 1024 and suffixIndex < 4:
+    while size > 1000 and suffixIndex < 5:
         suffixIndex += 1 #increment the index of the suffix
-        size = size/1024.0 #apply the division
-    return "%.*f%s" % (precision,size,suffixes[suffixIndex])
+        size = size/1000.0 #apply the division
+    return "{:.{}f}{}".format(size,precision,suffixes[suffixIndex])
+
+
+def uniquify(path):
+    filepath = pathlib.Path(path)
+    while filepath.exists():
+        stem = filepath.stem #string
+        suffixes = filepath.suffixes #list
+        stem_parts = stem.split("__", 1) #list
+        if stem_parts[-1].isdigit(): #nth copy
+            index_value = int(stem_parts[-1])
+            index_value += 1
+            stem_parts[-1] = str(index_value)
+            new_stem = "__".join(stem_parts)
+            new_name = [new_stem]
+            for suffix in suffixes: new_name.append(suffix)
+            new_name = "".join(new_name)
+            filepath = filepath.with_name(new_name)
+        else: #first copy
+            new_stem = stem + "__1"
+            new_name = [new_stem]
+            for suffix in suffixes: new_name.append(suffix)
+            new_name = "".join(new_name)
+            filepath = filepath.with_name(new_name)
+    return str(filepath)
+
+def bar_custom_text(current, total, width=80):
+    click.echo("Downloading: {:.2f}% [{} / {}]".format(current / total * 100, human_readable_bytes(current), human_readable_bytes(total)))
+
+
+def bar_adaptive_human_readable(current, total, width=80):
+    """Return progress bar string for given values in one of three
+    styles depending on available width:
+
+        [..  ] downloaded / total
+        downloaded / total
+        [.. ]
+
+    if total value is unknown or <= 0, show bytes counter using two
+    adaptive styles:
+
+        %s / unknown
+        %s
+
+    if there is not enough space on the screen, do not display anything
+
+    returned string doesn't include control characters like \r used to
+    place cursor at the beginning of the line to erase previous content.
+
+    this function leaves one free character at the end of string to
+    avoid automatic linefeed on Windows.
+    """
+
+
+    # process special case when total size is unknown and return immediately
+    if not total or total < 0:
+        msg = "%s / unknown" % human_readable_bytes(current)
+        if len(msg) < width:  # leaves one character to avoid linefeed
+            return msg
+        if len("%s" % current) < width:
+            return "%s" % human_readable_bytes(current)
+
+    # --- adaptive layout algorithm ---
+    #
+    # [x] describe the format of the progress bar
+    # [x] describe min width for each data field
+    # [x] set priorities for each element
+    # [x] select elements to be shown
+    #   [x] choose top priority element min_width < avail_width
+    #   [x] lessen avail_width by value if min_width
+    #   [x] exclude element from priority list and repeat
+
+    #  10% [.. ]  10/100
+    # pppp bbbbb sssssss
+
+    min_width = {
+        'percent': 4,  # 100%
+        'bar': 3,  # [.]
+        'size': len("%s" % total) * 2 + 3,  # 'xxxx / yyyy'
+    }
+    priority = ['percent', 'bar', 'size']
+
+    # select elements to show
+    selected = []
+    avail = width
+    for field in priority:
+        if min_width[field] < avail:
+            selected.append(field)
+            avail -= min_width[field] + 1  # +1 is for separator or for reserved space at
+            # the end of line to avoid linefeed on Windows
+    # render
+    output = ''
+    for field in selected:
+
+        if field == 'percent':
+            # fixed size width for percentage
+            output += ('%s%%' % (100 * current // total)).rjust(min_width['percent'])
+        elif field == 'bar':  # [. ]
+            # bar takes its min width + all available space
+            output += wget.bar_thermometer(current, total, min_width['bar'] + avail)
+        elif field == 'size':
+            # size field has a constant width (min == max)
+            output += ("%s / %s" % (human_readable_bytes(current), human_readable_bytes(total))).rjust(min_width['size'])
+
+        selected = selected[1:]
+        if selected:
+            output += ' '  # add field separator
+
+    return output
 
 
 def _initialize( opts ):
