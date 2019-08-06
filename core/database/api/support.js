@@ -1112,7 +1112,7 @@ module.exports = ( function() {
             result = obj.db._query("for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return {id:v._id,title:v.title})) return i",{user:client_id});
         }
         //console.log("projectsWithACLs:",result);
-        return result;
+        return result.toArray();
     };
 
     obj.checkDependencies = function(id,src,depth){

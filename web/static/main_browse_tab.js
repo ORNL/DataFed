@@ -362,6 +362,148 @@ function makeBrowserTab(){
         });
     }
 
+    this.displayPath = function( path, item ){
+        console.log("displayPath");
+
+        var node;
+
+        function reloadPathNode( idx ){
+            console.log("reload",idx);
+            node = inst.data_tree.getNodeByKey( path[idx].id );
+            if ( node ){
+                $( "#data-tabs" ).tabs({ active: 0 });
+                console.log("reload node",node.key,",offset",path[idx].off);
+                node.data.offset = path[idx].off;
+                node.load(true).done( function(){
+                    node.setExpanded(true);
+                    if ( idx == 0 ){
+                        node = inst.data_tree.getNodeByKey( item );
+                        if ( node ){
+                            node.setActive();
+                            inst.data_tree.selectAll(false);
+                            inst.selectScope = node;
+                            inst.treeSelectNode(node);
+                        }else{
+                            console.log("ITEM NOT FOUND!",item);
+                        }
+                    }else{
+                        reloadPathNode( idx - 1 );
+                    }
+                });
+            }else
+                console.log("NODE NOT FOUND!");
+        }
+
+        // Must examine and process paths that lead to projects, or shared data
+
+        if ( path[path.length - 1].id.startsWith('c/p_') ){
+            var proj_id = "p/"+path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
+            viewProj( proj_id, function( proj ){
+                if ( proj ){
+                    console.log("proj:",proj,g_user.uid);
+                    var uid = "u/"+g_user.uid;
+                    path.push({id:proj_id,off:0});
+                    if ( proj.owner == uid )
+                        path.push({id:"proj_own",off:0});
+                    else if ( proj.admin && proj.admin.indexOf( uid ) != -1 )
+                        path.push({id:"proj_adm",off:0});
+                    else if ( proj.member && proj.member.indexOf( uid ) != -1 )
+                        path.push({id:"proj_mem",off:0});
+                    else{
+                        console.log("NOT FOUND - shared project folder?" );
+                        aclByProject( function( ok, projs ){
+                            if ( ok ){
+                                console.log("projs:",projs);
+                                var idx = projs.findIndex(function(p){
+                                    return p.id == proj_id;
+                                });
+                                if ( idx != -1 ){
+                                    //console.log("list user shares");
+                                    aclByProjectList( proj_id, function( ok, items ){
+                                        if ( ok ){
+                                            console.log("shared items:",items);
+                                            var item_id;
+                                            for ( var i in items.item ){
+                                                item_id = items.item[i].id;
+                                                idx = path.findIndex(function(coll){
+                                                    return coll.id == item_id;
+                                                });
+                                                if ( idx != -1 ){
+                                                    //console.log("orig path:",path);
+                                                    path = path.slice( 0, idx + 1 );
+                                                    path.push({id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0});
+                                                    //console.log("path:",path);
+                                                    reloadPathNode( path.length - 1 );
+                                                    return;
+                                                }
+                                            }
+                                            // Didn't find path, assume it's in shared_user
+                                            path = [{id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0}];
+                                            reloadPathNode( path.length - 1 );
+                                        }else{
+                                            setStatusText("Error: unable to access path information!",1);
+                                        }
+                                    });
+                                }else{
+                                    setStatusText("Error: path to record not found!",1);
+                                }
+                            }
+                        });
+                        return
+                    }
+                    console.log("path:",path);
+                    reloadPathNode( path.length - 1 );
+                }
+            });
+        }else if ( path[path.length - 1].id.startsWith('c/u_') ){
+            var uid = path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
+            if ( uid == g_user.uid ){
+                reloadPathNode( path.length - 1 );
+            }else{
+                aclByUser( function( ok, users ){
+                    if ( ok ){
+                        //console.log("users:",users);
+                        var idx = users.findIndex(function(user){
+                            return user.uid == uid;
+                        });
+                        if ( idx != -1 ){
+                            //console.log("list user shares");
+                            aclByUserList( "u/"+uid, function( ok, items ){
+                                if ( ok ){
+                                    //console.log("shared items:",items);
+                                    var item_id;
+                                    for ( var i in items.item ){
+                                        item_id = items.item[i].id;
+                                        idx = path.findIndex(function(coll){
+                                            return coll.id == item_id;
+                                        });
+                                        if ( idx != -1 ){
+                                            //console.log("orig path:",path);
+                                            path = path.slice( 0, idx + 1 );
+                                            path.push({id:"shared_user_"+uid,off:0},{id:"shared_user",off:0});
+                                            //console.log("path:",path);
+                                            reloadPathNode( path.length - 1 );
+                                            return;
+                                        }
+                                    }
+                                    // Didn't find path, assume it's in shared_user
+                                    path = [{id:"shared_user_"+uid,off:0},{id:"shared_user",off:0}];
+                                    reloadPathNode( path.length - 1 );
+                                }else{
+                                    setStatusText("Error: unable to access path information!",1);
+                                }
+                            });
+                        }else{
+                            setStatusText("Error: path to record not found!",1);
+                        }
+                    }
+                });
+            }
+        }else{
+            reloadPathNode( path.length - 1 );
+        }
+    }
+
     this.firstParent = function(){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
@@ -370,16 +512,25 @@ function makeBrowserTab(){
         getParents( item_id, function( ok, data ){
             console.log("par:",ok,data);
             if ( ok ){
+                console.log("ok, len:",ok,data.path.length);
                 if ( data.path.length ){
-                    var path = data.path[0];
+                    var path = data.path[0].item;
+                    var done = 0;
+                    console.log("path", path,"len:",path.length);
                     for ( var i = 0; i < path.length; i++ ){
                         path[i] = {id:path[i].id,off:null};
+                        console.log("get offset", path[i].id, i>0?path[i-1].id:item_id);
                         getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
                             if ( ok ){
+                                path[idx].off = data2.offset;
                                 console.log(data2.id,data2.item,data2.offset,idx);
+                                done++;
+                                if ( done == path.length ){
+                                    console.log("open tree");
+                                    inst.displayPath( path, item_id );
+                                }
                             }else{
                                 setStatusText("Get Collections Error: " + data2, 1 );
-                                break;
                             }
                         });
                     }

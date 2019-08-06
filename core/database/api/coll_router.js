@@ -530,3 +530,45 @@ router.get('/get_parents', function (req, res) {
 .summary('Get parent collection(s) of item')
 .description('Get parent collection(s) of item');
 
+router.get('/get_offset', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var coll_id = g_lib.resolveID( req.queryParams.id, client );
+        var item_id = g_lib.resolveID( req.queryParams.item, client );
+
+        if ( coll_id.charAt(0) != 'c' )
+            throw [ g_lib.ERR_INVALID_PARAM, "ID is not a collection." ];
+
+        /*if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+            var coll = g_db.c.document( coll_id );
+            if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
+                throw g_lib.ERR_PERM_DENIED;
+        }*/
+
+        var qry = "for v in 1..1 outbound @coll item ";
+        if ( item_id.charAt(0) == 'c' )
+            qry += "filter is_same_collection('c',v) sort v.title return v._id";
+        else
+            qry += "sort is_same_collection('c',v) DESC, v.title return v._id";
+
+        var ids = g_db._query( qry, { coll: coll_id }).toArray();
+        if ( ids.length < req.queryParams.page_sz )
+            res.send({ offset: 0 });
+        else{
+            var idx = ids.indexOf( item_id );
+            if ( idx < 0 )
+                throw [ g_lib.ERR_NOT_FOUND, "Item " + req.queryParams.item + " was not found in collection " + req.queryParams.id ];
+
+            res.send({ offset: req.queryParams.page_sz*Math.floor( idx/req.queryParams.page_sz )});
+        }
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "ID or alias of collection")
+.queryParam('item', joi.string().required(), "ID or alias of child item")
+.queryParam('page_sz', joi.number().required(), "Page size")
+.summary('Get offset to item in collection')
+.description('Get offset to item in collection. Offset will be aligned to specified page size.');
+

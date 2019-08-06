@@ -1112,7 +1112,7 @@ Worker::parseSearchIdAlias( const string & a_query )
                 }
             }
             if ( id_ok )
-                return string("i._id like \"d/") + val.substr(p+1) + "%\"";
+                return string("i._id like \'d/") + val.substr(p+1) + "%\'";
         }
 
         return "";
@@ -1474,7 +1474,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             use_client = true;
             result += string("for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + imem2->value.GetString() + "' return v),"
-                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
                 "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + imem2->value.GetString() + "' return v)"
                 ")";
             break;
@@ -1484,7 +1484,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             use_shared_users = true;
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @users return v),"
-                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @users return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @users return v),"
                 "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @users return v)"
                 ")";
             break;
@@ -1495,7 +1495,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             use_client = true;
             result += string("for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + imem2->value.GetString() + "' return v),"
-                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
                 "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + imem2->value.GetString() + "' return v)"
                 ")";
             break;
@@ -1503,7 +1503,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             use_shared_projects = true;
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @projs return v),"
-                "(for v,e in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @projs return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @projs return v),"
                 "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @projs return v)"
                 ")";
             break;

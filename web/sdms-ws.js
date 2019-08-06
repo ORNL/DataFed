@@ -852,7 +852,7 @@ app.get('/api/col/get_parents', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/get_offset', ( a_req, a_resp ) => {
-    sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
+    sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.item_id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

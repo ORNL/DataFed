@@ -456,13 +456,33 @@ function getParents( a_id, a_cb ) {
 }
 
 function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
-    _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"page_sz="+page_sz, null, function(ok,data){
+    _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"&page_sz="+page_sz, null, function(ok,data){
         cb( ok, data, idx )
     });
 }
 
 function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+encodeURIComponent(a_id), null, a_cb );
+}
+
+function aclUpdate( a_id, a_rules, a_public, a_cb ) {
+    _asyncGet( "/api/acl/update?id="+encodeURIComponent(a_id)+"&rules="+encodeURIComponent(JSON.stringify(a_rules))+"&pub="+a_public, null, a_cb );
+}
+
+function aclByUser( a_cb ) {
+    _asyncGet( "/api/acl/by_user", null, a_cb );
+}
+
+function aclByUserList( a_user_id, a_cb ) {
+    _asyncGet( "/api/acl/by_user/list?owner="+encodeURIComponent(a_user_id), null, a_cb );
+}
+
+function aclByProject( a_cb ) {
+    _asyncGet( "/api/acl/by_proj", null, a_cb );
+}
+
+function aclByProjectList( a_proj_id, a_cb ) {
+    _asyncGet( "/api/acl/by_proj/list?owner="+encodeURIComponent(a_proj_id), null, a_cb );
 }
 
 function checkPerms( a_id, a_perms, a_cb ){
@@ -489,9 +509,6 @@ function alertPermDenied(){
     dlgAlert( "Cannot Perform Action", "Permission Denied." );
 }
 
-function aclUpdate( a_id, a_rules, a_public, a_cb ) {
-    _asyncGet( "/api/acl/update?id="+encodeURIComponent(a_id)+"&rules="+encodeURIComponent(JSON.stringify(a_rules))+"&pub="+a_public, null, a_cb );
-}
 
 function userView( a_id, a_details, a_cb ) {
     console.log("userView ",a_id);
