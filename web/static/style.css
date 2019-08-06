@@ -156,6 +156,10 @@ svg text
     vertical-align: baseline!important;
 }
 
+.narrow {
+    padding: .25rem .15rem!important;
+}
+
 .data-tree-title
 {
     display:inline-block;

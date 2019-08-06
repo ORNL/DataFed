@@ -456,7 +456,9 @@ function getParents( a_id, a_cb ) {
 }
 
 function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
+    console.log("getCollOffset",coll_id,item_id,page_sz,idx);
     _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"&page_sz="+page_sz, null, function(ok,data){
+        console.log("getCollOffset - cb",coll_id,item_id,page_sz,idx);
         cb( ok, data, idx )
     });
 }

@@ -363,16 +363,16 @@ function makeBrowserTab(){
     }
 
     this.displayPath = function( path, item ){
-        console.log("displayPath");
+        //console.log("displayPath");
 
         var node;
 
         function reloadPathNode( idx ){
-            console.log("reload",idx);
+            //console.log("reload",idx);
             node = inst.data_tree.getNodeByKey( path[idx].id );
             if ( node ){
                 $( "#data-tabs" ).tabs({ active: 0 });
-                console.log("reload node",node.key,",offset",path[idx].off);
+                //console.log("reload node",node.key,",offset",path[idx].off);
                 node.data.offset = path[idx].off;
                 node.load(true).done( function(){
                     node.setExpanded(true);
@@ -400,7 +400,7 @@ function makeBrowserTab(){
             var proj_id = "p/"+path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
             viewProj( proj_id, function( proj ){
                 if ( proj ){
-                    console.log("proj:",proj,g_user.uid);
+                    //console.log("proj:",proj,g_user.uid);
                     var uid = "u/"+g_user.uid;
                     path.push({id:proj_id,off:0});
                     if ( proj.owner == uid )
@@ -413,7 +413,7 @@ function makeBrowserTab(){
                         console.log("NOT FOUND - shared project folder?" );
                         aclByProject( function( ok, projs ){
                             if ( ok ){
-                                console.log("projs:",projs);
+                                //console.log("projs:",projs);
                                 var idx = projs.findIndex(function(p){
                                     return p.id == proj_id;
                                 });
@@ -451,7 +451,7 @@ function makeBrowserTab(){
                         });
                         return
                     }
-                    console.log("path:",path);
+                    //console.log("path:",path);
                     reloadPathNode( path.length - 1 );
                 }
             });
@@ -505,28 +505,30 @@ function makeBrowserTab(){
     }
 
     this.firstParent = function(){
+        inst.showParent(0);
+
+        /*
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
         var item_id = ids[0];
         getParents( item_id, function( ok, data ){
-            console.log("par:",ok,data);
+            //console.log("par:",ok,data);
             if ( ok ){
-                console.log("ok, len:",ok,data.path.length);
+                //console.log("ok, len:",ok,data.path.length);
                 if ( data.path.length ){
                     var path = data.path[0].item;
                     var done = 0;
-                    console.log("path", path,"len:",path.length);
+                    //console.log("path", path,"len:",path.length);
                     for ( var i = 0; i < path.length; i++ ){
                         path[i] = {id:path[i].id,off:null};
-                        console.log("get offset", path[i].id, i>0?path[i-1].id:item_id);
+                        //console.log("get offset", path[i].id, i>0?path[i-1].id:item_id);
                         getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
                             if ( ok ){
                                 path[idx].off = data2.offset;
-                                console.log(data2.id,data2.item,data2.offset,idx);
+                                //console.log(data2.id,data2.item,data2.offset,idx);
                                 done++;
                                 if ( done == path.length ){
-                                    console.log("open tree");
                                     inst.displayPath( path, item_id );
                                 }
                             }else{
@@ -538,8 +540,76 @@ function makeBrowserTab(){
             }else{
                 setStatusText("Get Collections Error: " + data, 1 );
             }
+        });*/
+    }
+
+    this.prevParent = function(){
+        inst.showParent(1);
+    }
+
+    this.nextParent = function(){
+        inst.showParent(2);
+    }
+
+    this.showParent = function( which ){
+        var ids = inst.getSelectedIDs();
+        if ( ids.length != 1 )
+            return;
+        var item_id = ids[0];
+        getParents( item_id, function( ok, data ){
+            if ( ok ){
+                if ( data.path.length ){
+                    var i,path;
+                    var done = 0;
+
+                    if ( which == 0 )
+                        path = data.path[0].item;
+                    else{
+                        // Figure out which parent path matches current location
+                        if ( data.path.length == 1 )
+                            return;
+                        var node = inst.data_tree.getActiveNode();
+                        if ( !node || !node.parent )
+                            return;
+                        for ( i in data.path ){
+                            path = data.path[i].item;
+                            console.log("path:",path);
+                            if ( path.findIndex(function(p){
+                                return p.id == node.parent.key;
+                            }) != -1 ){
+                                if ( which == 1 )
+                                    i>0?i--:i=data.path.length-1;
+                                else
+                                    i<data.path.length-1?i++:i=0;
+                                path = data.path[i].item;
+                                break;
+                            }
+                        }
+                    }
+
+                    for ( i = 0; i < path.length; i++ ){
+                        path[i] = {id:path[i].id,off:null};
+                        //console.log("getCollOffset",path[i].id );
+                        getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
+                            if ( ok ){
+                                path[idx].off = data2.offset;
+                                done++;
+                                if ( done == path.length ){
+                                    inst.displayPath( path, item_id );
+                                }
+                            }else{
+                                setStatusText("Get Collections Error: " + data2 + "(idx:"+idx+")", 1 );
+                            }
+                        });
+                    }
+                }
+            }else{
+                setStatusText("Get Collections Error: " + data, 1 );
+            }
         });
     }
+
+
 
     this.setLockSelected = function( a_lock ){
         var ids = inst.getSelectedIDs();
@@ -916,7 +986,7 @@ function makeBrowserTab(){
             }
             //console.log("single",bits);
         }else{
-            bits = 0xFF;
+            bits = 0x2FF;
         }
 
         return bits;
@@ -959,6 +1029,9 @@ function makeBrowserTab(){
         $("#btn_new_coll",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
         $("#btn_dep_graph",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
+        $("#btn_prev_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
+        $("#btn_next_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
+        $("#btn_first_par_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
         //inst.data_tree_div.contextmenu("enableEntry", "dup", (bits & 2) == 0 );
@@ -3152,6 +3225,8 @@ function makeBrowserTab(){
     $("#btn_download",inst.frame).on('click', inst.actionDataGet );
     $("#btn_move",inst.frame).on('click', inst.actionDataMove );
     $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
+    $("#btn_prev_coll",inst.frame).on('click', inst.prevParent );
+    $("#btn_next_coll",inst.frame).on('click', inst.nextParent );
     $("#btn_first_par_coll",inst.frame).on('click', inst.firstParent );
 
     $("#btn_exp_node",inst.frame).on('click', inst.graphNodeExpand );

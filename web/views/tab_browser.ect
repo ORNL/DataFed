@@ -19,6 +19,8 @@
                             <button class="btn" id="btn_new_proj" title='Create new project'>+Proj</button>
                             <button class="btn" id="btn_import_data" title='Import data record(s) into collection from JSON file(s)' disabled>Import</button>
                             <button class="btn" id="btn_update_data" title='Update data record(s) from JSON file(s)'>Update</button>
+                            <button class="btn narrow" id="btn_prev_coll" title='Go to previous containing collection' disabled><span class="ui-icon ui-icon-triangle-1-w"></span></button>
+                            <button class="btn narrow" id="btn_next_coll" title='Go to next containing collection' disabled><span class="ui-icon ui-icon-triangle-1-e"></span></button>
                             <input type="file" id="input_files" name="files[]" multiple style='display:none'/>
                             <output id="import_list"></output>
                         </div>
@@ -47,7 +49,7 @@
                             <div id="search_results_tree" class="no-border" ></div>
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
-                            <button class="btn" id="btn_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.'>Go To Collection(s)</button>
+                            <button class="btn" id="btn_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled>Go To</button>
                         </div>
                     </div>
                 </div>
