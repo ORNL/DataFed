@@ -1151,8 +1151,13 @@ router.get('/search', function (req, res) {
         if ( req.queryParams.use_shared_projects ){
             params.projs = g_lib.projectsWithClientACLs( client._id, true );
         }
-        
-        res.send( g_db._query( req.queryParams.query, params ));
+        console.log("params:",params);
+
+        var results = g_db._query( req.queryParams.query, params ).toArray();
+
+        console.log("results:",results.length);
+
+        res.send( results );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

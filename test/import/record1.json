@@ -1,0 +1,19 @@
+{
+    "title":"Import Record #1",
+    "desc":"Nominal JSON file for testing record import.",
+    "keyw":"import,nominal,test",
+    "alias":"import-rec-1",
+    "topic":"test.import.record",
+    "doi":"imp/rec1",
+    "data_url":"https://import/record?id=1",
+    "deps":[
+        {"id":"foo1","type":0},
+        {"id":"foo2","type":1}
+    ],
+    "md":{
+        "rec":1,
+        "x":1,
+        "y":2,
+        "z":3
+    }
+}
