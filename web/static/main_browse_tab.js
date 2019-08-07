@@ -321,15 +321,9 @@ function makeBrowserTab(){
                     var i,path;
                     var done = 0, err = false;
 
-                    if ( which == 0 )
+                    if ( which == 0 || data.path.length == 1 )
                         path = data.path[0].item;
                     else{
-                        if ( data.path.length == 1 ){
-                            setStatusText("Record linked to only one collection.");
-                            asyncEnd();
-                            return;
-                        }
-
                         // Figure out which parent path matches current location
 
                         for ( i in data.path ){
