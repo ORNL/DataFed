@@ -452,6 +452,7 @@ function colMoveItems( a_items, a_src_id, a_dst_id, a_cb ) {
 }
 
 function getParents( a_id, a_cb ) {
+    console.log("getParents",a_id);
     _asyncGet( "/api/col/get_parents?id="+encodeURIComponent(a_id), null, a_cb );
 }
 

@@ -59,7 +59,7 @@ function makeBrowserTab(){
 
     this.getSelectedIDs = function(){
         var ids = [];
-        console.log("getSelectedIDs, mode:",inst.select_source);
+        //console.log("getSelectedIDs, mode:",inst.select_source);
         switch( inst.select_source ){
             case SS_TREE:
                 var sel = inst.data_tree.getSelectedNodes();
@@ -140,7 +140,327 @@ function makeBrowserTab(){
         }
     }
 
-    this.deleteSelected = function(){
+
+    this.displayPath = function( path, item ){
+        //console.log("displayPath");
+
+        var node;
+
+        function reloadPathNode( idx ){
+            //console.log("reload",idx);
+            node = inst.data_tree.getNodeByKey( path[idx].id );
+            if ( node ){
+                $( "#data-tabs" ).tabs({ active: 0 });
+                //console.log("reload node",node.key,",offset",path[idx].off);
+                node.data.offset = path[idx].off;
+                node.load(true).done( function(){
+                    node.setExpanded(true);
+                    if ( idx == 0 ){
+                        node = inst.data_tree.getNodeByKey( item );
+                        if ( node ){
+                            node.setActive();
+                            inst.data_tree.selectAll(false);
+                            inst.selectScope = node;
+                            inst.treeSelectNode(node);
+                        }else{
+                            setStatusText("Error: item not found.");
+                            console.log("ITEM NOT FOUND!",item);
+                        }
+                        asyncEnd();
+                    }else{
+                        reloadPathNode( idx - 1 );
+                    }
+                });
+            }else{
+                asyncEnd();
+                setStatusText("Error: path not found.");
+            }
+        }
+
+        // Must examine and process paths that lead to projects, or shared data
+
+        if ( path[path.length - 1].id.startsWith('c/p_') ){
+            var proj_id = "p/"+path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
+            viewProj( proj_id, function( proj ){
+                if ( proj ){
+                    //console.log("proj:",proj,g_user.uid);
+                    var uid = "u/"+g_user.uid;
+                    path.push({id:proj_id,off:0});
+                    if ( proj.owner == uid )
+                        path.push({id:"proj_own",off:0});
+                    else if ( proj.admin && proj.admin.indexOf( uid ) != -1 )
+                        path.push({id:"proj_adm",off:0});
+                    else if ( proj.member && proj.member.indexOf( uid ) != -1 )
+                        path.push({id:"proj_mem",off:0});
+                    else{
+                        console.log("NOT FOUND - shared project folder?" );
+                        aclByProject( function( ok, projs ){
+                            if ( ok ){
+                                //console.log("projs:",projs);
+                                var idx = projs.findIndex(function(p){
+                                    return p.id == proj_id;
+                                });
+                                if ( idx != -1 ){
+                                    //console.log("list user shares");
+                                    aclByProjectList( proj_id, function( ok, items ){
+                                        if ( ok ){
+                                            console.log("shared items:",items);
+                                            var item_id;
+                                            for ( var i in items.item ){
+                                                item_id = items.item[i].id;
+                                                idx = path.findIndex(function(coll){
+                                                    return coll.id == item_id;
+                                                });
+                                                if ( idx != -1 ){
+                                                    //console.log("orig path:",path);
+                                                    path = path.slice( 0, idx + 1 );
+                                                    path.push({id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0});
+                                                    //console.log("path:",path);
+                                                    reloadPathNode( path.length - 1 );
+                                                    return;
+                                                }
+                                            }
+                                            // Didn't find path, assume it's in shared_user
+                                            path = [{id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0}];
+                                            reloadPathNode( path.length - 1 );
+                                        }else{
+                                            setStatusText("Error: unable to access path information!",1);
+                                            asyncEnd();
+                                        }
+                                    });
+                                }else{
+                                    setStatusText("Error: path to record not found!",1);
+                                    asyncEnd();
+                                }
+                            }else{
+                                setStatusText("Error: " + projs,1);
+                                asyncEnd();
+                            }
+                        });
+                        return
+                    }
+                    //console.log("path:",path);
+                    reloadPathNode( path.length - 1 );
+                }
+            });
+        }else if ( path[path.length - 1].id.startsWith('c/u_') ){
+            var uid = path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
+            if ( uid == g_user.uid ){
+                reloadPathNode( path.length - 1 );
+            }else{
+                aclByUser( function( ok, users ){
+                    if ( ok ){
+                        //console.log("users:",users);
+                        var idx = users.findIndex(function(user){
+                            return user.uid == uid;
+                        });
+                        if ( idx != -1 ){
+                            //console.log("list user shares");
+                            aclByUserList( "u/"+uid, function( ok, items ){
+                                if ( ok ){
+                                    //console.log("shared items:",items);
+                                    var item_id;
+                                    for ( var i in items.item ){
+                                        item_id = items.item[i].id;
+                                        idx = path.findIndex(function(coll){
+                                            return coll.id == item_id;
+                                        });
+                                        if ( idx != -1 ){
+                                            //console.log("orig path:",path);
+                                            path = path.slice( 0, idx + 1 );
+                                            path.push({id:"shared_user_"+uid,off:0},{id:"shared_user",off:0});
+                                            //console.log("path:",path);
+                                            reloadPathNode( path.length - 1 );
+                                            return;
+                                        }
+                                    }
+                                    // Didn't find path, assume it's in shared_user
+                                    path = [{id:"shared_user_"+uid,off:0},{id:"shared_user",off:0}];
+                                    reloadPathNode( path.length - 1 );
+                                }else{
+                                    setStatusText("Error: unable to access path information!",1);
+                                    asyncEnd();
+                                }
+                            });
+                        }else{
+                            setStatusText("Error: path to record not found!",1);
+                            asyncEnd();
+                        }
+                    }else{
+                        setStatusText("Error:" + users,1);
+                        asyncEnd();
+                    }
+                });
+            }
+        }else{
+            reloadPathNode( path.length - 1 );
+        }
+    }
+
+    this.showParent = function( which ){
+        var ids = inst.getSelectedIDs();
+        if ( ids.length != 1 ){
+            asyncEnd();
+            return;
+        }
+
+        var node, item_id = ids[0];
+
+        if ( which != 0 ){
+            node  = inst.data_tree.getActiveNode();
+            if ( !node || !node.parent ){
+                asyncEnd();
+                return;
+            }
+        }
+
+        //console.log("----- showParent -----",item_id);
+        getParents( item_id, function( ok, data ){
+            if ( ok ){
+                if ( data.path.length ){
+                    var i,path;
+                    var done = 0, err = false;
+
+                    if ( which == 0 )
+                        path = data.path[0].item;
+                    else{
+                        if ( data.path.length == 1 ){
+                            setStatusText("Record linked to only one collection.");
+                            asyncEnd();
+                            return;
+                        }
+
+                        // Figure out which parent path matches current location
+
+                        for ( i in data.path ){
+                            path = data.path[i].item;
+                            //console.log("path:",path);
+                            if ( path.findIndex(function(p){
+                                return p.id == node.parent.key;
+                            }) != -1 ){
+                                if ( which == 1 )
+                                    i>0?i--:i=data.path.length-1;
+                                else
+                                    i<data.path.length-1?i++:i=0;
+                                path = data.path[i].item;
+                                break;
+                            }
+                        }
+                    }
+
+                    for ( i = 0; i < path.length; i++ ){
+                        path[i] = {id:path[i].id,off:null};
+                        //console.log("getCollOffset",path[i].id );
+                        getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
+                            done++;
+
+                            if ( ok ){
+                                path[idx].off = data2.offset;
+                                if ( done == path.length && !err ){
+                                    inst.displayPath( path, item_id );
+                                }
+                            }else if (!err){
+                                setStatusText("Get Collections Error: " + data2, 1 );
+                                err = true;
+                            }
+
+                            if ( done == path.length && err ){
+                                asyncEnd();
+                            }
+                        });
+                    }
+                }
+            }else{
+                asyncEnd();
+                setStatusText("Get Collections Error: " + data, 1 );
+            }
+        });
+    }
+
+
+
+    this.setLockSelected = function( a_lock ){
+        var ids = inst.getSelectedIDs();
+        if ( ids.length == 0 )
+            return;
+
+        sendDataLock( ids, a_lock, function( ok, data ){
+            if ( ok ){
+                refreshUI( ids, data.item );
+            }else{
+                setStatusText("Lock Update Failed: " + data, 1 );
+            }
+        });
+    }
+
+
+    this.copyItems = function( items, dest_node, cb ){
+        var item_keys = [];
+        for( var i in items )
+            item_keys.push( items[i].key );
+
+        linkItems( item_keys, dest_node.key, function( ok, msg ) {
+            if ( ok ){
+                if ( dest_node.isLoaded() )
+                    inst.reloadNode(dest_node);
+            }else{
+                dlgAlert( "Copy Error", msg );
+                //setStatusText( "Copy Error: " + msg, 1 );
+            }
+
+            if ( cb )
+                cb();
+        });
+    }
+
+    this.moveItems = function( items, dest_node, cb ){
+        console.log("moveItems",items,dest_node,inst.pasteSource);
+        var item_keys = [];
+        for( var i in items )
+            item_keys.push( items[i].key );
+
+        colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
+            if ( ok ){
+                console.log("move OK");
+
+                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
+                var i, par = inst.pasteSource.getParentList(false,true);
+                //console.log("Source node parents:",par);
+                for ( i in par ){
+                    if ( par[i].key == dest_node.key ){
+                        //console.log("Reload dest node ONLY");
+                        inst.reloadNode(dest_node);
+                        return;
+                    }
+                }
+                par = dest_node.getParentList(false,true);
+                //console.log("Dest node parents:",par);
+                for ( i in par ){
+                    if ( par[i].key == inst.pasteSource.key ){
+                        //console.log("Reload source node ONLY");
+                        inst.reloadNode(inst.pasteSource);
+                        return;
+                    }
+                }
+                //console.log("Reload BOTH nodes");
+                if ( dest_node.isLoaded() )
+                    inst.reloadNode(dest_node);
+                inst.reloadNode(inst.pasteSource);
+            }else{
+                dlgAlert( "Move Error", msg );
+                //setStatusText( "Move Error: " + msg, 1 );
+            }
+
+            if ( cb )
+                cb();
+
+        });
+    }
+
+    //-------------------------------------------------------------------------
+    // ACTION FUNCTIONS (UI event handlers)
+
+    this.actionDeleteSelected = function(){
         var ids = inst.getSelectedIDs();
         if ( ids.length == 0 )
             return;
@@ -219,14 +539,14 @@ function makeBrowserTab(){
         });
     }
 
-    this.newProj = function() {
+    this.actionNewProj = function() {
         dlgProjNewEdit(null,function(data){
             setStatusText("Project "+data.id+" created");
             inst.reloadNode( inst.data_tree.getNodeByKey( "proj_own" ));
         });
     }
 
-    this.newData = function() {
+    this.actionNewData = function() {
         var parent = "root";
         var node = inst.data_tree.activeNode;
         if ( node ){
@@ -255,7 +575,53 @@ function makeBrowserTab(){
         });
     }
 
-    this.importData = function( coll_id, files ){
+
+    this.actionNewColl = function(){
+        var node = inst.data_tree.activeNode;
+        var parent = "root";
+        if ( node ){
+            if ( node.key.startsWith("d/")) {
+                parent = node.parent.key;
+            }else if (node.key.startsWith("c/")){
+                parent = node.key;
+            }else if (node.key.startsWith("p/")){
+                parent = "c/p_"+node.key.substr(2)+"_root";
+            }
+        }
+
+        checkPerms( parent, PERM_CREATE, function( granted ){
+            if ( !granted ){
+                alertPermDenied();
+                return;
+            }
+
+            dlgCollNewEdit(null,parent,function(data){
+                var node = inst.data_tree.getNodeByKey( data.parentId );
+                if ( node )
+                    inst.reloadNode( node );
+            });
+        });
+    }
+
+    this.actionImportData = asyncFunc( function( files ){
+        var node = inst.data_tree.activeNode;
+
+        if ( !node ){
+            asyncEnd();
+            return;
+        }
+
+        if ( node.key.startsWith("d/")) {
+            coll_id = node.parent.key;
+        }else if (node.key.startsWith("c/")){
+            coll_id = node.key;
+        }else if (node.key.startsWith("p/")){
+            coll_id = "c/p_"+node.key.substr(2)+"_root";
+        }else{
+            asyncEnd();
+            return;
+        }
+
         // Read file contents into a single payload for atomic validation and processing
         var file, tot_size = 0;
 
@@ -264,10 +630,12 @@ function makeBrowserTab(){
             console.log("size:",file.size,typeof file.size);
             if ( file.size == 0 ){
                 dlgAlert("Import Error","File " + file.name + " is empty." );
+                asyncEnd();
                 return;
             }
             if ( file.size > MD_MAX_SIZE ){
                 dlgAlert("Import Error","File " + file.name + " size (" + sizeToString( file.size ) + ") exceeds metadata size limit of " + sizeToString(MD_MAX_SIZE) + "." );
+                asyncEnd();
                 return;
             }
             tot_size += file.size;
@@ -275,6 +643,7 @@ function makeBrowserTab(){
 
         if ( tot_size > PAYLOAD_MAX_SIZE ){
             dlgAlert("Import Error","Total import size (" + sizeToString( tot_size ) + ") exceeds server limit of " + sizeToString(PAYLOAD_MAX_SIZE) + "." );
+            asyncEnd();
             return;
         }
 
@@ -319,6 +688,7 @@ function makeBrowserTab(){
                     reader.readAsText(files[count],'UTF-8');
                 }
             }catch(e){
+                asyncEnd();
                 dlgAlert("Import Error","Invalid JSON in file " + files[count].name );
                 return;
             }
@@ -333,370 +703,29 @@ function makeBrowserTab(){
         }
 
         reader.readAsText(files[count],'UTF-8');
-    }
+    });
 
-    this.newColl = function(){
-        var node = inst.data_tree.activeNode;
-        var parent = "root";
-        if ( node ){
-            if ( node.key.startsWith("d/")) {
-                parent = node.parent.key;
-            }else if (node.key.startsWith("c/")){
-                parent = node.key;
-            }else if (node.key.startsWith("p/")){
-                parent = "c/p_"+node.key.substr(2)+"_root";
-            }
-        }
-
-        checkPerms( parent, PERM_CREATE, function( granted ){
-            if ( !granted ){
-                alertPermDenied();
-                return;
-            }
-
-            dlgCollNewEdit(null,parent,function(data){
-                var node = inst.data_tree.getNodeByKey( data.parentId );
-                if ( node )
-                    inst.reloadNode( node );
-            });
-        });
-    }
-
-    this.displayPath = function( path, item ){
-        //console.log("displayPath");
-
-        var node;
-
-        function reloadPathNode( idx ){
-            //console.log("reload",idx);
-            node = inst.data_tree.getNodeByKey( path[idx].id );
-            if ( node ){
-                $( "#data-tabs" ).tabs({ active: 0 });
-                //console.log("reload node",node.key,",offset",path[idx].off);
-                node.data.offset = path[idx].off;
-                node.load(true).done( function(){
-                    node.setExpanded(true);
-                    if ( idx == 0 ){
-                        node = inst.data_tree.getNodeByKey( item );
-                        if ( node ){
-                            node.setActive();
-                            inst.data_tree.selectAll(false);
-                            inst.selectScope = node;
-                            inst.treeSelectNode(node);
-                        }else{
-                            console.log("ITEM NOT FOUND!",item);
-                        }
-                    }else{
-                        reloadPathNode( idx - 1 );
-                    }
-                });
-            }else
-                console.log("NODE NOT FOUND!");
-        }
-
-        // Must examine and process paths that lead to projects, or shared data
-
-        if ( path[path.length - 1].id.startsWith('c/p_') ){
-            var proj_id = "p/"+path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
-            viewProj( proj_id, function( proj ){
-                if ( proj ){
-                    //console.log("proj:",proj,g_user.uid);
-                    var uid = "u/"+g_user.uid;
-                    path.push({id:proj_id,off:0});
-                    if ( proj.owner == uid )
-                        path.push({id:"proj_own",off:0});
-                    else if ( proj.admin && proj.admin.indexOf( uid ) != -1 )
-                        path.push({id:"proj_adm",off:0});
-                    else if ( proj.member && proj.member.indexOf( uid ) != -1 )
-                        path.push({id:"proj_mem",off:0});
-                    else{
-                        console.log("NOT FOUND - shared project folder?" );
-                        aclByProject( function( ok, projs ){
-                            if ( ok ){
-                                //console.log("projs:",projs);
-                                var idx = projs.findIndex(function(p){
-                                    return p.id == proj_id;
-                                });
-                                if ( idx != -1 ){
-                                    //console.log("list user shares");
-                                    aclByProjectList( proj_id, function( ok, items ){
-                                        if ( ok ){
-                                            console.log("shared items:",items);
-                                            var item_id;
-                                            for ( var i in items.item ){
-                                                item_id = items.item[i].id;
-                                                idx = path.findIndex(function(coll){
-                                                    return coll.id == item_id;
-                                                });
-                                                if ( idx != -1 ){
-                                                    //console.log("orig path:",path);
-                                                    path = path.slice( 0, idx + 1 );
-                                                    path.push({id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0});
-                                                    //console.log("path:",path);
-                                                    reloadPathNode( path.length - 1 );
-                                                    return;
-                                                }
-                                            }
-                                            // Didn't find path, assume it's in shared_user
-                                            path = [{id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0}];
-                                            reloadPathNode( path.length - 1 );
-                                        }else{
-                                            setStatusText("Error: unable to access path information!",1);
-                                        }
-                                    });
-                                }else{
-                                    setStatusText("Error: path to record not found!",1);
-                                }
-                            }
-                        });
-                        return
-                    }
-                    //console.log("path:",path);
-                    reloadPathNode( path.length - 1 );
-                }
-            });
-        }else if ( path[path.length - 1].id.startsWith('c/u_') ){
-            var uid = path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
-            if ( uid == g_user.uid ){
-                reloadPathNode( path.length - 1 );
-            }else{
-                aclByUser( function( ok, users ){
-                    if ( ok ){
-                        //console.log("users:",users);
-                        var idx = users.findIndex(function(user){
-                            return user.uid == uid;
-                        });
-                        if ( idx != -1 ){
-                            //console.log("list user shares");
-                            aclByUserList( "u/"+uid, function( ok, items ){
-                                if ( ok ){
-                                    //console.log("shared items:",items);
-                                    var item_id;
-                                    for ( var i in items.item ){
-                                        item_id = items.item[i].id;
-                                        idx = path.findIndex(function(coll){
-                                            return coll.id == item_id;
-                                        });
-                                        if ( idx != -1 ){
-                                            //console.log("orig path:",path);
-                                            path = path.slice( 0, idx + 1 );
-                                            path.push({id:"shared_user_"+uid,off:0},{id:"shared_user",off:0});
-                                            //console.log("path:",path);
-                                            reloadPathNode( path.length - 1 );
-                                            return;
-                                        }
-                                    }
-                                    // Didn't find path, assume it's in shared_user
-                                    path = [{id:"shared_user_"+uid,off:0},{id:"shared_user",off:0}];
-                                    reloadPathNode( path.length - 1 );
-                                }else{
-                                    setStatusText("Error: unable to access path information!",1);
-                                }
-                            });
-                        }else{
-                            setStatusText("Error: path to record not found!",1);
-                        }
-                    }
-                });
-            }
-        }else{
-            reloadPathNode( path.length - 1 );
-        }
-    }
-
-    this.firstParent = function(){
+    this.actionFirstParent = asyncFunc( function(){
         inst.showParent(0);
+    });
 
-        /*
-        var ids = inst.getSelectedIDs();
-        if ( ids.length != 1 )
-            return;
-        var item_id = ids[0];
-        getParents( item_id, function( ok, data ){
-            //console.log("par:",ok,data);
-            if ( ok ){
-                //console.log("ok, len:",ok,data.path.length);
-                if ( data.path.length ){
-                    var path = data.path[0].item;
-                    var done = 0;
-                    //console.log("path", path,"len:",path.length);
-                    for ( var i = 0; i < path.length; i++ ){
-                        path[i] = {id:path[i].id,off:null};
-                        //console.log("get offset", path[i].id, i>0?path[i-1].id:item_id);
-                        getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
-                            if ( ok ){
-                                path[idx].off = data2.offset;
-                                //console.log(data2.id,data2.item,data2.offset,idx);
-                                done++;
-                                if ( done == path.length ){
-                                    inst.displayPath( path, item_id );
-                                }
-                            }else{
-                                setStatusText("Get Collections Error: " + data2, 1 );
-                            }
-                        });
-                    }
-                }
-            }else{
-                setStatusText("Get Collections Error: " + data, 1 );
-            }
-        });*/
-    }
-
-    this.prevParent = function(){
+    this.actionPrevParent = asyncFunc( function(){
         inst.showParent(1);
-    }
+    });
 
-    this.nextParent = function(){
+    this.actionNextParent = asyncFunc( function(){
         inst.showParent(2);
-    }
+    });
 
-    this.showParent = function( which ){
-        var ids = inst.getSelectedIDs();
-        if ( ids.length != 1 )
-            return;
-        var item_id = ids[0];
-        getParents( item_id, function( ok, data ){
-            if ( ok ){
-                if ( data.path.length ){
-                    var i,path;
-                    var done = 0;
-
-                    if ( which == 0 )
-                        path = data.path[0].item;
-                    else{
-                        // Figure out which parent path matches current location
-                        if ( data.path.length == 1 )
-                            return;
-                        var node = inst.data_tree.getActiveNode();
-                        if ( !node || !node.parent )
-                            return;
-                        for ( i in data.path ){
-                            path = data.path[i].item;
-                            console.log("path:",path);
-                            if ( path.findIndex(function(p){
-                                return p.id == node.parent.key;
-                            }) != -1 ){
-                                if ( which == 1 )
-                                    i>0?i--:i=data.path.length-1;
-                                else
-                                    i<data.path.length-1?i++:i=0;
-                                path = data.path[i].item;
-                                break;
-                            }
-                        }
-                    }
-
-                    for ( i = 0; i < path.length; i++ ){
-                        path[i] = {id:path[i].id,off:null};
-                        //console.log("getCollOffset",path[i].id );
-                        getCollOffset( path[i].id, i>0?path[i-1].id:item_id, g_opts.page_sz, i, function( ok, data2, idx ){
-                            if ( ok ){
-                                path[idx].off = data2.offset;
-                                done++;
-                                if ( done == path.length ){
-                                    inst.displayPath( path, item_id );
-                                }
-                            }else{
-                                setStatusText("Get Collections Error: " + data2 + "(idx:"+idx+")", 1 );
-                            }
-                        });
-                    }
-                }
-            }else{
-                setStatusText("Get Collections Error: " + data, 1 );
-            }
-        });
-    }
-
-
-
-    this.setLockSelected = function( a_lock ){
-        var ids = inst.getSelectedIDs();
-        if ( ids.length == 0 )
-            return;
-
-        sendDataLock( ids, a_lock, function( ok, data ){
-            if ( ok ){
-                refreshUI( ids, data.item );
-            }else{
-                setStatusText("Lock Update Failed: " + data, 1 );
-            }
-        });
-    }
-
-    this.lockSelected = function(){
+    this.actionLockSelected = function(){
         inst.setLockSelected( true );
     }
 
-    this.unlockSelected = function(){
+    this.actionUnlockSelected = function(){
         inst.setLockSelected( false );
     }
 
-    this.copyItems = function( items, dest_node, cb ){
-        var item_keys = [];
-        for( var i in items )
-            item_keys.push( items[i].key );
-
-        linkItems( item_keys, dest_node.key, function( ok, msg ) {
-            if ( ok ){
-                if ( dest_node.isLoaded() )
-                    inst.reloadNode(dest_node);
-            }else{
-                dlgAlert( "Copy Error", msg );
-                //setStatusText( "Copy Error: " + msg, 1 );
-            }
-
-            if ( cb )
-                cb();
-        });
-    }
-
-    this.moveItems = function( items, dest_node, cb ){
-        console.log("moveItems",items,dest_node,inst.pasteSource);
-        var item_keys = [];
-        for( var i in items )
-            item_keys.push( items[i].key );
-
-        colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
-            if ( ok ){
-                console.log("move OK");
-
-                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
-                var i, par = inst.pasteSource.getParentList(false,true);
-                //console.log("Source node parents:",par);
-                for ( i in par ){
-                    if ( par[i].key == dest_node.key ){
-                        //console.log("Reload dest node ONLY");
-                        inst.reloadNode(dest_node);
-                        return;
-                    }
-                }
-                par = dest_node.getParentList(false,true);
-                //console.log("Dest node parents:",par);
-                for ( i in par ){
-                    if ( par[i].key == inst.pasteSource.key ){
-                        //console.log("Reload source node ONLY");
-                        inst.reloadNode(inst.pasteSource);
-                        return;
-                    }
-                }
-                //console.log("Reload BOTH nodes");
-                if ( dest_node.isLoaded() )
-                    inst.reloadNode(dest_node);
-                inst.reloadNode(inst.pasteSource);
-            }else{
-                dlgAlert( "Move Error", msg );
-                //setStatusText( "Move Error: " + msg, 1 );
-            }
-
-            if ( cb )
-                cb();
-
-        });
-    }
-
-    this.cutSelected = function(){
+    this.actionCutSelected = function(){
         inst.pasteItems = inst.data_tree.getSelectedNodes();
         inst.pasteSource = pasteItems[0].parent;
         inst.pasteMode = "cut";
@@ -708,7 +737,7 @@ function makeBrowserTab(){
         //console.log("cutSelected",inst.pasteItems,inst.pasteSource);
     }
 
-    this.copySelected = function(){
+    this.actionCopySelected = function(){
         console.log("Copy");
         if ( inst.select_source == SS_TREE )
             inst.pasteItems = inst.data_tree.getSelectedNodes();
@@ -726,7 +755,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.pasteSelected = function(){
+    this.actionPasteSelected = function(){
         var node = inst.data_tree.activeNode;
         if ( node && inst.pasteItems.length ){
             function pasteDone(){
@@ -744,7 +773,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.unlinkSelected = function(){
+    this.actionUnlinkSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
         if ( sel.length ){
             var scope = sel[0].data.scope;
@@ -755,7 +784,7 @@ function makeBrowserTab(){
             //console.log("items:",items);
             unlinkItems( items, sel[0].parent.key, function( ok, data ) {
                 if ( ok ){
-                    if ( data.item.length ){
+                    if ( data.item && data.item.length ){
                         var loc_root = "c/" + scope.charAt(0) + "_" + scope.substr(2) + "_root";
                         inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
                     }else{
@@ -768,7 +797,10 @@ function makeBrowserTab(){
         }
     }
 
-    this.editSelected = function() {
+    this.actionEditSelected = function() {
+        if ( async_guard )
+            return;
+
         var ids = inst.getSelectedIDs();
 
         if ( ids.length != 1 )
@@ -859,7 +891,7 @@ function makeBrowserTab(){
         }
     }*/
 
-    this.shareSelected = function() {
+    this.actionShareSelected = function() {
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
@@ -887,6 +919,7 @@ function makeBrowserTab(){
         });
     }
 
+    /* Doesn't seem to be in use
     this.editAllocSelected = function(){
         // TODO - use selection, not active node
         var node = inst.data_tree.activeNode;
@@ -894,8 +927,9 @@ function makeBrowserTab(){
             dlgAllocations.show();
         }
     }
+    */
 
-    this.depGraph = function(){
+    this.actionDepGraph = function(){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
@@ -947,6 +981,13 @@ function makeBrowserTab(){
             dataMove( id );
         }
     }
+
+    this.actionReloadSelected = function(){
+        var node = inst.data_tree.activeNode;
+        if ( node ){
+            inst.reloadNode( node );
+        }
+    };
 
     this.calcActionState = function( sel ){
         var bits,node;
@@ -1082,13 +1123,6 @@ function makeBrowserTab(){
         });
     }
 
-    this.reloadSelected = function(){
-        // Triggered from refresh button on node
-        var node = inst.data_tree.activeNode;
-        if ( node ){
-            inst.reloadNode( node );
-        }
-    }
 
     /*
     inst.getRefreshNode = function(a_node){
@@ -2153,9 +2187,9 @@ function makeBrowserTab(){
             .on("dblclick", function(d,i){
                 //console.log("dbl click");
                 if ( d.comp )
-                    inst.graphNodeCollapse();
+                    inst.actionGraphNodeCollapse();
                 else
-                    inst.graphNodeExpand();
+                    inst.actionGraphNodeExpand();
                 d3.event.stopPropagation();
             })
             .on("click", function(d,i){
@@ -2287,7 +2321,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.graphNodeExpand = function(){
+    this.actionGraphNodeExpand = function(){
         console.log("expand node");
         //inst.sel_node_id = "d/51724878";
 
@@ -2348,7 +2382,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.graphNodeCollapse = function(){
+    this.actionGraphNodeCollapse = function(){
         //console.log("collapse node");
         if ( inst.sel_node ){
             var i, link, dest, loc_trim=[];
@@ -2395,7 +2429,7 @@ function makeBrowserTab(){
         }
     }
 
-    this.graphNodeHide = function(){
+    this.actionGraphNodeHide = function(){
         if ( inst.sel_node && inst.sel_node.id != inst.focus_node_id && inst.node_data.length > 1 ){
             inst.sel_node.prune = true;
             // Check for disconnection of the graph
@@ -3201,9 +3235,9 @@ function makeBrowserTab(){
     this.data_md_tree = $("#data_md_tree").fancytree("getTree");
 
     // Connect event/click handlers
-    $("#btn_new_proj",inst.frame).on('click', inst.newProj );
-    $("#btn_new_data",inst.frame).on('click', inst.newData );
-    $("#btn_new_coll",inst.frame).on('click', inst.newColl );
+    $("#btn_new_proj",inst.frame).on('click', inst.actionNewProj );
+    $("#btn_new_data",inst.frame).on('click', inst.actionNewData );
+    $("#btn_new_coll",inst.frame).on('click', inst.actionNewColl );
     $("#btn_import_data",inst.frame).on('click', function(){
         inst.update_files = false
         $('#input_files',inst.frame).val("");
@@ -3215,23 +3249,48 @@ function makeBrowserTab(){
         $('#input_files',inst.frame).trigger('click');
     });
 
-    $("#btn_edit",inst.frame).on('click', inst.editSelected );
+    var async_guard = false;
+
+    function asyncFunc( fn ){
+        return function(){
+            if ( !async_guard ){
+                console.log(">>> asyncBegin");
+                async_guard = true;
+                //$("body").css("cursor", "progress");
+                return fn.apply(this,arguments);
+            }else{
+                console.log(">>> asyncBegin blocked");
+            }
+        }
+    }
+
+    function asyncEnd(){
+        if ( async_guard ){
+            console.log("<<< asyncEnd");
+            //$("body").css("cursor", "default");
+            async_guard = false;
+        }else{
+            console.log("<<< asyncEnd INVALID!!!!");
+        }
+    }
+
+    $("#btn_edit",inst.frame).on('click', inst.actionEditSelected );
     //$("#btn_dup",inst.frame).on('click', inst.dupSelected );
-    $("#btn_del",inst.frame).on('click', inst.deleteSelected );
-    $("#btn_share",inst.frame).on('click', inst.shareSelected );
-    $("#btn_lock",inst.frame).on('click', inst.lockSelected );
-    $("#btn_unlock",inst.frame).on('click', inst.unlockSelected );
+    $("#btn_del",inst.frame).on('click', inst.actionDeleteSelected );
+    $("#btn_share",inst.frame).on('click', inst.actionShareSelected );
+    $("#btn_lock",inst.frame).on('click', inst.actionLockSelected );
+    $("#btn_unlock",inst.frame).on('click', inst.actionUnlockSelected );
     $("#btn_upload",inst.frame).on('click', inst.actionDataPut );
     $("#btn_download",inst.frame).on('click', inst.actionDataGet );
     $("#btn_move",inst.frame).on('click', inst.actionDataMove );
-    $("#btn_dep_graph",inst.frame).on('click', inst.depGraph );
-    $("#btn_prev_coll",inst.frame).on('click', inst.prevParent );
-    $("#btn_next_coll",inst.frame).on('click', inst.nextParent );
-    $("#btn_first_par_coll",inst.frame).on('click', inst.firstParent );
+    $("#btn_dep_graph",inst.frame).on('click', inst.actionDepGraph );
+    $("#btn_prev_coll",inst.frame).on('click', inst.actionPrevParent );
+    $("#btn_next_coll",inst.frame).on('click', inst.actionNextParent );
+    $("#btn_first_par_coll",inst.frame).on('click', inst.actionFirstParent );
 
-    $("#btn_exp_node",inst.frame).on('click', inst.graphNodeExpand );
-    $("#btn_col_node",inst.frame).on('click', inst.graphNodeCollapse );
-    $("#btn_hide_node",inst.frame).on('click', inst.graphNodeHide );
+    $("#btn_exp_node",inst.frame).on('click', inst.actionGraphNodeExpand );
+    $("#btn_col_node",inst.frame).on('click', inst.actionGraphNodeCollapse );
+    $("#btn_hide_node",inst.frame).on('click', inst.actionGraphNodeHide );
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
     $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){
@@ -3245,7 +3304,7 @@ function makeBrowserTab(){
         inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
     })});
 
-    $(document.body).on('click', '.browse-reload' , inst.reloadSelected );
+    $(document.body).on('click', '.browse-reload' , inst.actionReloadSelected );
 
     $("#id_query,#text_query,#meta_query").on('keyup', function (e) {
         if (e.keyCode == 13)
@@ -3494,27 +3553,27 @@ function makeBrowserTab(){
         hide: false,
         menu: [
             {title: "Actions", children: [
-                {title: "Edit", action: inst.editSelected, cmd: "edit" },
+                {title: "Edit", action: inst.actionEditSelected, cmd: "edit" },
                 //{title: "Duplicate", cmd: "dup" },
-                {title: "Delete", action: inst.deleteSelected, cmd: "del" },
-                {title: "Sharing", action: inst.shareSelected, cmd: "share" },
-                {title: "Lock", action: inst.lockSelected, cmd: "lock" },
-                {title: "Unlock", action: inst.unlockSelected, cmd: "unlock" },
+                {title: "Delete", action: inst.actionDeleteSelected, cmd: "del" },
+                {title: "Sharing", action: inst.actionShareSelected, cmd: "share" },
+                {title: "Lock", action: inst.actionLockSelected, cmd: "lock" },
+                {title: "Unlock", action: inst.actionUnlockSelected, cmd: "unlock" },
                 {title: "Get", action: inst.actionDataGet, cmd: "get" },
                 {title: "Put", action: inst.actionDataPut, cmd: "put" },
                 {title: "Move", action: inst.actionDataMove, cmd: "move" },
-                {title: "Graph", action: inst.depGraph, cmd: "graph" }
+                {title: "Graph", action: inst.actionDepGraph, cmd: "graph" }
                 ]},
             {title: "New", cmd:"new",children: [
-                {title: "Data", action: inst.newData, cmd: "newd" },
-                {title: "Collection", action: inst.newColl, cmd: "newc" },
-                {title: "Project", action: newProj, cmd: "newp" }
+                {title: "Data", action: inst.actionNewData, cmd: "newd" },
+                {title: "Collection", action: inst.actionNewColl, cmd: "newc" },
+                {title: "Project", action: inst.actionNewProj, cmd: "newp" }
                 ]},
             {title: "----"},
-            {title: "Cut", action: inst.cutSelected, cmd: "cut" },
-            {title: "Copy", action: inst.copySelected, cmd: "copy" },
-            {title: "Paste", action: inst.pasteSelected, cmd: "paste" },
-            {title: "Unlink", action: inst.unlinkSelected, cmd: "unlink" }
+            {title: "Cut", action: inst.actionCutSelected, cmd: "cut" },
+            {title: "Copy", action: inst.actionCopySelected, cmd: "copy" },
+            {title: "Paste", action: inst.actionPasteSelected, cmd: "paste" },
+            {title: "Unlink", action: inst.actionUnlinkSelected, cmd: "unlink" }
             ],
         beforeOpen: function( ev, ui ){
             ev.stopPropagation();
@@ -3628,20 +3687,7 @@ function makeBrowserTab(){
 
     $('#input_files',inst.frame).on("change",function(ev){
         if ( ev.target.files && ev.target.files.length ){
-            var node = inst.data_tree.activeNode;
-            if ( node ){
-                var parent;
-                if ( node.key.startsWith("d/")) {
-                    parent = node.parent.key;
-                }else if (node.key.startsWith("c/")){
-                    parent = node.key;
-                }else if (node.key.startsWith("p/")){
-                    parent = "c/p_"+node.key.substr(2)+"_root";
-                }else
-                    return;
-                inst.importData( parent, ev.target.files )
-            }
-
+            inst.actionImportData( ev.target.files );
         }
     });
 

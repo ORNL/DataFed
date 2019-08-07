@@ -846,7 +846,9 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/get_parents', ( a_req, a_resp ) => {
+    console.log("get_parents",a_req.query.id);
     sendMessage( "CollGetParentsRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        console.log("get_parents - cb",a_req.query.id);
         a_resp.send(reply);
     });
 });
@@ -1076,21 +1078,27 @@ function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
 
 function allocRequestContext( a_response, a_callback ) {
     var ctx = g_ctx_next;
+
+    // At max ctx, must search for first free slot
     if ( ctx == MAX_CTX ) {
         ctx = g_ctx.indexOf( null );
         if ( ctx == -1 ) {
+            console.log("out of contexts");
             if ( a_response ) {
+                console.log("SEND FAIL");
                 a_response.status( 503 );
                 a_response.send( "Server too busy" );
             }
-        } else {
-            a_callback( ctx );
         }
-    } else if ( ++g_ctx_next < MAX_CTX ) {
+    }
+
+    // Set next ctx value, or flag for search
+    if ( ++g_ctx_next < MAX_CTX ) {
         if ( g_ctx[g_ctx_next] )
             g_ctx_next = MAX_CTX;
-        a_callback( ctx );
     }
+
+    a_callback( ctx );
 }
 
 
@@ -1105,7 +1113,11 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
     }
 
     //console.log("sendMsg parms:",a_msg_data);
+    //if ( a_msg_name == "CollGetOffsetRequest" )
+    //    console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
+        //if ( a_msg_name == "CollGetOffsetRequest" )
+        //    console.log("sendMsg got ctx", a_msg_name );
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
