@@ -191,7 +191,7 @@ function viewData( a_id, a_cb ) {
         }
         else {
             //console.log("viewData failed:", data );
-            setStatusText("View Data Error: " + data);
+            setStatusText("View Data Error: " + data, 1 );
             a_cb();
         }
     });
@@ -742,8 +742,15 @@ function setStatusText( text, err ){
         clearTimeout( status_int );
 
     var bar = $("#status_text");
-    bar.html( text );
 
+    bar.html( (err?"<span class='ui-icon ui-icon-alert' style='color:red;font-size:115%'></span> ":"") + text );
+
+    status_timer = setTimeout( function(){
+        status_timer = null;
+        bar.html(" ");
+    },6000);
+
+/*
     if ( err ){
         var r;
         r = 255;
@@ -773,24 +780,7 @@ function setStatusText( text, err ){
             bar.html(" ");
         },6000);
     }
-
-
-/*
-    if ( err )
-        bar.addClass("error");
-    else
-        bar.addClass("info");
-
-    bar.html( text );
-    status_timer = setTimeout( function(){
-        bar.removeClass("error info");
-
-        status_timer = setTimeout( function(){
-            status_timer = null;
-            bar.html(" ");
-        }, 20000 );
-    }, 1000 );
-*/
+    */
 }
 
 function dlgConfirmChoice( title, msg, btns, cb ) {

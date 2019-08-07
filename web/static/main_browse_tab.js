@@ -74,6 +74,10 @@ function makeBrowserTab(){
                 }
                 break;
             case SS_CAT:
+                var sel = inst.cat_tree.getSelectedNodes();
+                for ( var i in sel ){
+                    ids.push( sel[i].key );
+                }
                 break;
             case SS_PROV:
                 if ( inst.sel_node ){
@@ -1045,14 +1049,16 @@ function makeBrowserTab(){
 
     this.updateBtnState = function(){
         //console.log("updateBtnState");
-        var bits;
+        var bits,sel;
         switch( inst.select_source ){
             case SS_TREE:
-                var sel = inst.data_tree.getSelectedNodes();
+                 sel = inst.data_tree.getSelectedNodes();
                 bits = calcActionState( sel );
                 break;
             case SS_CAT:
-                bits = 0xFF;
+                //bits = 0xFF;
+                sel = inst.cat_tree.getSelectedNodes();
+                bits = calcActionState( sel );
                 break;
             case SS_PROV:
                 if ( inst.focus_node_id )
@@ -1061,7 +1067,7 @@ function makeBrowserTab(){
                     bits = 0xFF;
                 break;
             case SS_SEARCH:
-                var sel = inst.results_tree.getSelectedNodes();
+                sel = inst.results_tree.getSelectedNodes();
                 bits = calcActionState( sel );
                 break;
         }
@@ -2700,7 +2706,7 @@ function makeBrowserTab(){
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
         ]},
-        {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
+        {title:"My Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
         //{title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
     ];
@@ -3062,12 +3068,6 @@ function makeBrowserTab(){
             showSelectedInfo( data.node );
         },
         select: function( event, data ) {
-            /*if ( data.node.isSelected() ){
-                console.log("node select",data.node);
-            }else{
-                console.log("node deselect",data.node);
-            }*/
-
             //if ( inst.searchSelect && data.node.isSelected() ){
             if ( data.node.isSelected() ){
                 //showSelectedInfo( data.node );
@@ -3350,105 +3350,15 @@ function makeBrowserTab(){
         }
     });
 */
-    // TODO - DEMO Catalog tree
-    var cat_src = [
-        {title:"Astrophysics",folder:true,icon:"ui-icon ui-icon-structure",children:[
-        ]},
-        {title:"Climate",folder:true,icon:"ui-icon ui-icon-structure",children:[
-        ]},
-        {title:"Energy",folder:true,icon:"ui-icon ui-icon-structure",children:[
-            {title:"Fission",folder:true,icon:"ui-icon ui-icon-structure",children:[
-                {title:"LLNL",folder:true,children:[
-                    {title:"Catalog A",folder:true,children:[
-                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                    ]},
-                    {title:"Catalog B",folder:true,children:[
-                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                    ]}
-                ]},
-                {title:"ORNL",folder:true,children:[
-                    {title:"Catalog A",folder:true,children:[
-                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                    ]},
-                    {title:"Catalog B",folder:true,children:[
-                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                    ]}
-                ]},
-                {title:"PNNL",folder:true,children:[
-                    {title:"Catalog A",folder:true,children:[
-                        {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                        {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                    ]},
-                ]},
-            ]},
-            {title:"Fusion",folder:true,icon:"ui-icon ui-icon-structure",children:[
-                {title:"LLNL - Catalog A",folder:true,children:[
-                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                ]},
-                {title:"LLNL - Catalog B",folder:true,children:[
-                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                ]},
-                {title:"ORNL - Catalog A",folder:true,children:[
-                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                ]},
-                {title:"ORNL - Catalog B",folder:true,children:[
-                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                ]},
-                {title:"PNNL - Catalog A",folder:true,children:[
-                    {title:"Data 1",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 2",icon:"ui-icon ui-icon-file"},
-                    {title:"Data 3",icon:"ui-icon ui-icon-file"}
-                ]},
-            ]},
-            {title:"Solar",folder:true,icon:"ui-icon ui-icon-structure",children:[
-                {title:"LLNL - Catalog A - Data 1",icon:"ui-icon ui-icon-file"},
-                {title:"LLNL - Catalog A - Data 2",icon:"ui-icon ui-icon-file"},
-                {title:"LLNL - Catalog A - Data 3",icon:"ui-icon ui-icon-file"},
-                {title:"LLNL - Catalog B - Data 1",icon:"ui-icon ui-icon-file"},
-                {title:"LLNL - Catalog B - Data 2",icon:"ui-icon ui-icon-file"},
-                {title:"LLNL - Catalog B - Data 3",icon:"ui-icon ui-icon-file"},
-                {title:"ORNL - Catalog A - Data 1",icon:"ui-icon ui-icon-file"},
-                {title:"ORNL - Catalog A - Data 2",icon:"ui-icon ui-icon-file"},
-                {title:"ORNL - Catalog A - Data 3",icon:"ui-icon ui-icon-file"},
-                {title:"ORNL - Catalog B - Data 1",icon:"ui-icon ui-icon-file"},
-                {title:"ORNL - Catalog B - Data 2",icon:"ui-icon ui-icon-file"},
-                {title:"ORNL - Catalog B - Data 3",icon:"ui-icon ui-icon-file"},
-                {title:"PNNL - Catalog A - Data 1",icon:"ui-icon ui-icon-file"},
-                {title:"PNNL - Catalog A - Data 2",icon:"ui-icon ui-icon-file"},
-                {title:"PNNL - Catalog A - Data 3",icon:"ui-icon ui-icon-file"}
-            ]},
-        ]},
-    ];
+    //-------------------------------------------------------------------------
+    // CATALOG TREE
 
-    $("#catalog_tree").fancytree({
-        extensions: ["themeroller"],
-        themeroller: {
-            activeClass: "",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "fancytree-hover",
-            selectedClass: ""
-        },
-        source: cat_src,
-        selectMode: 1,
-    });
+    var cat_subtab = new CatalogSubTab( inst, $("#tab-catalogs"));
+    inst.cat_tree_div = $('#catalog_tree',$("#tab-catalogs"));
+    inst.cat_tree = inst.cat_tree_div.fancytree('getTree');
+
+    //inst.cat_tree_div = $('#catalog_tree');
+    //inst.cat_tree = inst.cat_tree_div.fancytree('getTree');
 
     $("#search_results_tree").fancytree({
         extensions: ["themeroller"],
