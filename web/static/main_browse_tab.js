@@ -604,22 +604,26 @@ function makeBrowserTab(){
     }
 
     this.actionImportData = asyncFunc( function( files ){
-        var node = inst.data_tree.activeNode;
+        var coll_id;
 
-        if ( !node ){
-            asyncEnd();
-            return;
-        }
+        if ( !inst.update_files ){
+            var node = inst.data_tree.activeNode;
 
-        if ( node.key.startsWith("d/")) {
-            coll_id = node.parent.key;
-        }else if (node.key.startsWith("c/")){
-            coll_id = node.key;
-        }else if (node.key.startsWith("p/")){
-            coll_id = "c/p_"+node.key.substr(2)+"_root";
-        }else{
-            asyncEnd();
-            return;
+            if ( !node ){
+                asyncEnd();
+                return;
+            }
+
+            if ( node.key.startsWith("d/")) {
+                coll_id = node.parent.key;
+            }else if (node.key.startsWith("c/")){
+                coll_id = node.key;
+            }else if (node.key.startsWith("p/")){
+                coll_id = "c/p_"+node.key.substr(2)+"_root";
+            }else{
+                asyncEnd();
+                return;
+            }
         }
 
         // Read file contents into a single payload for atomic validation and processing
@@ -654,34 +658,46 @@ function makeBrowserTab(){
         reader.onload = function( e ){
             try{
                 var obj = JSON.parse( e.target.result )
+                var rec_count = 0;
+
                 if ( obj instanceof Array ){
-                    throw "Not an object"
+                    for ( i in obj ){
+                        if ( !inst.update_files )
+                            obj[i].parent = coll_id;
+                        payload.push( obj[i] );
+                    }
+                    rec_count += obj.length;
+                }else{
+                    if ( !inst.update_files )
+                        obj.parent = coll_id;
+                    payload.push( obj );
+                    rec_count++;
                 }
-                if ( !inst.update_files )
-                    obj.parent = coll_id;
-                payload.push( obj );
+
                 count++;
                 if ( count == files.length ){
-                    console.log("Done reading all files", payload );
+                    //console.log("Done reading all files", payload );
                     if ( inst.update_files ){
                         dataUpdateBatch( JSON.stringify( payload ), function( ok, data ){
                             if ( ok ){
                                 inst.refreshUI();
-                                setStatusText("Updated " + files.length + " record" + (files.length>1?"s":""));
+                                setStatusText("Updated " + rec_count + " record" + (rec_count>1?"s":""));
                             }else{
                                 dlgAlert( "Update Error", data );
                             }
+                            asyncEnd();
                         });
                     }else{
                         dataCreateBatch( JSON.stringify( payload ), function( ok, data ){
                             if ( ok ){
-                                setStatusText("Imported " + files.length + " record" + (files.length>1?"s":""));
+                                setStatusText("Imported " + rec_count + " record" + (rec_count>1?"s":""));
                                 var node = inst.data_tree.getNodeByKey( coll_id );
                                 if ( node )
                                     inst.reloadNode( node );
                             }else{
                                 dlgAlert( "Import Error", data );
                             }
+                            asyncEnd();
                         });
                     }
                 }else{
