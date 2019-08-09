@@ -26,7 +26,7 @@ function CatalogSubTab( browser, frame ){
             selectedClass: ""
         },
         source:[
-            {title:"Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
+            {title:"By Topic <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
         ],
         selectMode: 1,
         activate: function( event, data ) {
@@ -67,10 +67,15 @@ function CatalogSubTab( browser, frame ){
                     url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
+            } else if ( data.node.key.startsWith( "c/" )){
+                data.result = {
+                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+g_opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
+                    cache: false
+                };
             }
         },
         postProcess: function( event, data ) {
-            if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
+            if ( data.node.key == "topics" || data.node.key.startsWith("t/") || data.node.key.startsWith("c/" )) {
                 data.result = [];
                 var item,entry;
                 var items = data.response.item;
@@ -78,14 +83,22 @@ function CatalogSubTab( browser, frame ){
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="t" ){
-                        entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
-                    }else{
-                        entry = { title:browser.generateTitle(item),tooltip:browser.generateTooltip(item),scope:item.owner,key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi };
+                        if ( item.title.startsWith("u/") ){
+                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-person",nodrag:true,offset:0};
+                        }else if ( item.title.startsWith("p/") ){
+                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-box",nodrag:true,offset:0 };
+                        }else{
+                            entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
+                        }
+                    }else if ( item.id[0]=="c" ){
+                        entry = { title: browser.generateTitle(item),tooltip:browser.generateTooltip(item),folder:true,lazy:true,key:item.id, offset: 0 };
+                    }else{ // data records
+                        entry = { title:browser.generateTitle(item),tooltip:browser.generateTooltip(item),key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi };
                     }
-    
+
                     data.result.push( entry );
                 }
-    
+
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
                     var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
                     data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});

@@ -997,10 +997,20 @@ function makeBrowserTab(){
     }
 
     this.actionReloadSelected = function(){
-        var node = inst.data_tree.activeNode;
-        if ( node ){
-            inst.reloadNode( node );
+        var node;
+
+        if ( inst.select_source == SS_TREE ){
+            node = inst.data_tree.activeNode;
+            if ( node ){
+                inst.reloadNode( node );
+            }
+        } else if ( inst.select_source == SS_CAT ){
+            node = inst.cat_tree.activeNode;
+            if ( node ){
+                inst.reloadNode( node, inst.cat_tree );
+            }
         }
+
     };
 
     this.calcActionState = function( sel ){
@@ -1105,10 +1115,10 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
     }
 
-    this.reloadNode = function( node ){
+    this.reloadNode = function( node, tree ){
         if ( !node || node.isLazy() && !node.isLoaded() )
             return;
-
+        var tr = tree || inst.data_tree;
         var save_exp = node.isExpanded();
         if ( save_exp ){
             var exp = [];
@@ -1123,7 +1133,7 @@ function makeBrowserTab(){
             if ( save_exp ){
                 function expNode( idx ){
                     if ( idx < exp.length ){
-                        var n = inst.data_tree.getNodeByKey( exp[idx] );
+                        var n = tr.getNodeByKey( exp[idx] );
                         if ( n ){
                             n.setExpanded(true).always(function(){
                                 expNode( idx + 1 );
@@ -1165,8 +1175,12 @@ function makeBrowserTab(){
                 key = node;
             else if ( node.key == "shared_proj" && node.data.scope )
                 key = node.data.scope;
-            else
+            else if ( node.key.startsWith( "t/" ) && node.data.scope ){
+                key = node.data.scope;
+            }else
                 key = node.key;
+
+
 
             if ( key == "mydata" ) {
                 inst.sel_id.text( "My Data" );
@@ -1212,7 +1226,8 @@ function makeBrowserTab(){
                             inst.sel_descr.text("(n/a)");
 
                         html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>Public Access:</td><td>" + (item.ispublic?"Enabled":"Disabled") + "</td></tr>";
+                        if ( item.ispublic && item.topic )
+                            html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
                         if ( item.ct ){
                             date.setTime(item.ct*1000);
@@ -1249,7 +1264,6 @@ function makeBrowserTab(){
                         html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
                         if ( item.doi )
                             html += "<tr><td>DOI:</td><td>" + item.doi + "</td></tr>";
-                        html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
                         html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
                         if ( item.dataUrl ){
                             html += "<tr><td>Data URL:</td><td><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></td></tr>";
@@ -1408,7 +1422,7 @@ function makeBrowserTab(){
                         inst.noInfoAvail();
                     }
                 });
-            } else if ( key.startsWith( "shared_user_" ) && node.data.scope ) {
+            } else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ) {
                 //console.log( "user", node.data.scope, node );
                 userView( node.data.scope, false, function( ok, item ){
                     if ( ok && item ){
@@ -1655,6 +1669,7 @@ function makeBrowserTab(){
     }
 
     this.parseQuickSearch = function(){
+        //console.log("parse query");
         var query = {};
         var tmp = $("#text_query").val();
         if ( tmp )
@@ -1671,8 +1686,9 @@ function makeBrowserTab(){
         query.scopes = [];
 
         if ( $("#scope_selected",inst.frame).prop("checked")){
-            var key, nodes = inst.data_tree.getSelectedNodes();
-            for ( var i in nodes ){
+            //console.log("select mode");
+            var i, key, nodes = inst.data_tree.getSelectedNodes();
+            for ( i in nodes ){
                 key = nodes[i].key;
                 if ( key == "mydata" ){
                     query.scopes.push({scope:SS_USER});
@@ -1699,9 +1715,15 @@ function makeBrowserTab(){
                     query.scopes.push({scope:SS_COLLECTION,id:key,recurse:true});
                 else if ( key.startsWith("p/") )
                     query.scopes.push({scope:SS_PROJECT,id:key});
-                else if ( key.startsWith("t/") ){
-                    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
-                }
+                //else if ( key.startsWith("t/") ){
+                //    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
+                //}
+            }
+            nodes = inst.cat_tree.getSelectedNodes();
+            //console.log("cat tree nodes:",nodes.length);
+            for ( i in nodes ){
+                key = nodes[i].key;
+                query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
             }
         }else{
             if ( $("#scope_mydat",inst.frame).prop("checked"))
@@ -1719,6 +1741,8 @@ function makeBrowserTab(){
             if ( $("#scope_public",inst.frame).prop("checked"))
                 query.scopes.push({scope:SS_PUBLIC});
         }
+
+        //console.log("query:", query);
 
         // TODO make sure at least one scope set and on term
         return query;
@@ -1771,20 +1795,22 @@ function makeBrowserTab(){
     this.updateSearchSelectState = function( enabled ){
         if( enabled && $("#scope_selected",inst.frame).prop("checked")){
             $(inst.data_tree_div).fancytree("option","checkbox",true);
-            //$(inst.data_tree_div).fancytree("option","selectMode",2);
+            $(inst.cat_tree_div).fancytree("option","checkbox",true);
             $("#btn_srch_clear_select",inst.frame).button("option","disabled",false);
             inst.searchSelect = true;
         }else{
             $(inst.data_tree_div).fancytree("option","checkbox",false);
-            //$(inst.data_tree_div).fancytree("option","selectMode",1);
+            $(inst.cat_tree_div).fancytree("option","checkbox",false);
             $("#btn_srch_clear_select",inst.frame).button("option","disabled",true);
             inst.searchSelect = false;
         }
         inst.data_tree.selectAll(false);
+        inst.cat_tree.selectAll(false);
     }
 
     this.searchClearSelection = function(){
         inst.data_tree.selectAll(false);
+        inst.cat_tree.selectAll(false);
     }
 
     this.generateTitle = function( item ) {
@@ -2706,7 +2732,7 @@ function makeBrowserTab(){
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
         ]},
-        {title:"My Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
+        //{title:"My Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
         //{title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
     ];
@@ -2850,6 +2876,7 @@ function makeBrowserTab(){
             if ( data.node.key == "mydata" ){
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published",offset:0,scope:"u/"+g_user.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -2871,6 +2898,7 @@ function makeBrowserTab(){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published",offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
@@ -2912,12 +2940,17 @@ function makeBrowserTab(){
                     url: "/api/query/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
-            } else if ( data.node.key == "topics" ) {
+            } else if ( data.node.key == "published" ) {
+                data.result = {
+                    url: "/api/col/published/list?subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    cache: false
+                };
+            }/* else if ( data.node.key == "topics" ) {
                 data.result = {
                     url: "/api/top/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
-            } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
+            }*/ else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
             } else if ( data.node.key.startsWith("t/") ) {
                 data.result = {
@@ -3005,7 +3038,7 @@ function makeBrowserTab(){
                         data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
                 }
-            } else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
+            /*} else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
                 data.result = [];
                 var item,entry;
                 var items = data.response.item;
@@ -3027,7 +3060,8 @@ function makeBrowserTab(){
                 }
             } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 // Not implemented yet
-            } else if ( data.node.parent ) {
+             */
+            } else if ( data.node.parent || data.node.key == "published" ) {
                 //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;

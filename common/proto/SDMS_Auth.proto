@@ -399,6 +399,13 @@ message CollGetOffsetReply
     required uint32             offset      = 3;
 }
 
+message CollListPublishedRequest
+{
+    optional string             subject     = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
 message CollDataReply
 {
     repeated SDMS.CollData      coll        = 1;

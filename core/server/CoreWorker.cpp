@@ -126,6 +126,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
         SET_MSG_HANDLER_DB( proto_id, DataGetPreprocRequest, ListingReply, dataGetPreproc );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
+        SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
@@ -1464,7 +1465,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             imem2 = val.FindMember("id");
             if ( imem2 == val.MemberEnd() )
                 EXCEPT(1,"Missing scope 'id' for topic");
-            result += string("for i in 1..10 inbound '") + imem2->value.GetString() + "' top filter is_same_collection('d',i)";
+            result += string("for i in 1..10 inbound '") + imem2->value.GetString() + "' top, outbound item filter is_same_collection('d',i)";
             break;
         case SDMS::SS_SHARED_BY_USER:
             imem2 = val.FindMember("id");

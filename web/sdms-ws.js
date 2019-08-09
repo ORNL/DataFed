@@ -847,7 +847,6 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/get_parents', ( a_req, a_resp ) => {
-    console.log("get_parents",a_req.query.id);
     sendMessage( "CollGetParentsRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         console.log("get_parents - cb",a_req.query.id);
         a_resp.send(reply);
@@ -855,7 +854,6 @@ app.get('/api/col/get_parents', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/get_offset', ( a_req, a_resp ) => {
-    console.log("get_offset",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
     sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.item_id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
         console.log("get_offset - cb",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
         a_resp.send(reply);
@@ -870,15 +868,25 @@ app.get('/api/col/move', ( a_req, a_resp ) => {
 });
 
 app.get('/api/col/link', ( a_req, a_resp ) => {
-    console.log("link items:",a_req.query.items,",coll:",a_req.query.coll);
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, add: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/unlink', ( a_req, a_resp ) => {
-    console.log("unlink items:",a_req.query.items,"coll:",a_req.query.coll);
     sendMessage( "CollWriteRequest", { id: a_req.query.coll, rem: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/col/published/list', ( a_req, a_resp ) => {
+    var par = { subject: a_req.query.subject };
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "CollListPublishedRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
