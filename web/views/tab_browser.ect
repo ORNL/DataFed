@@ -64,27 +64,39 @@
         <div class="col-flex" style="flex:1 1 60%;padding:.25em .25em 0 0;min-width:0;min-height:0">
             <div style="flex:none;padding:.5em 0.5em;font-weight:normal" class="ui-widget-header ui-corner-tr ui-corner-tl">Selection Information:</div>
             <div class="ui-widget-content" style="flex:1;min-height:0;overflow:auto;padding:.25em">
-                <div id="sel_id"></div><br>
-                <div id="sel_title"></div><br>
-                <div id="sel_descr_hdr" style="" class="sub-header">Description</div>
-                <div style="padding:.25em" class="ui-widget-content" >
-                        <div id="sel_descr" style="white-space:pre-wrap"></div>
+                <div id="sel_id"></div>
+                <div id="sel_title_div">
+                    <br>
+                    <div id="sel_title"></div>
                 </div>
-                <br>
-                <div id="sel_references_hdr" class="sub-header">Dependencies</div>
-                <div style="padding:.25em" class="ui-widget-content" >
-                    <div id="sel_references"></div>
+                <div id="sel_descr_div">
+                    <br>
+                    <div id="sel_descr_hdr" style="" class="sub-header">Description</div>
+                    <div style="padding:0" class="ui-widget-content" >
+                            <div id="sel_descr" style="padding:.25em;white-space:pre-wrap"></div>
+                    </div>
                 </div>
-                <br>
-                <div id="sel_details_hdr" class="sub-header">Details</div>
-                <div style="padding:.25em" class="ui-widget-content" >
-                    <div id="sel_details"></div>
+                <div id="sel_links_div">
+                    <br>
+                    <div id="sel_links_hdr" class="sub-header">Provenance</div>
+                    <div class="ui-widget-content" >
+                        <div id="sel_links" style="padding:.25em"></div>
+                    </div>
                 </div>
-                <br>
-                <div id="sel_md_hdr" class="sub-header">Metadata</div>
-                <div style="padding:.25em" class="ui-widget-content" >
-                    <div id="sel_md">
-                        <div id="data_md_tree" class="no-border"></div>
+                <div id="sel_details_div">
+                    <br>
+                    <div id="sel_details_hdr" class="sub-header">Details</div>
+                    <div class="ui-widget-content" >
+                        <div id="sel_details" style="padding:.25em"></div>
+                    </div>
+                </div>
+                <div id="sel_md_div">
+                    <br>
+                    <div id="sel_md_hdr" class="sub-header">Metadata</div>
+                    <div class="ui-widget-content" >
+                        <div id="sel_md" style="padding:.25em">
+                            <div id="data_md_tree" class="no-border"></div>
+                        </div>
                     </div>
                 </div>
             </div>

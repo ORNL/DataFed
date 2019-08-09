@@ -7,9 +7,15 @@ function makeBrowserTab(){
     //inst.frame = $("#tab-browse");
     //inst.data_ident = $("#data_ident",inst.frame);
     inst.sel_id = $("#sel_id",inst.frame);
+    inst.sel_title_div = $("#sel_title_div",inst.frame);
     inst.sel_title = $("#sel_title",inst.frame);
+    inst.sel_details_div = $("#sel_details_div",inst.frame);
     inst.sel_details = $("#sel_details",inst.frame);
+    inst.sel_descr_div = $("#sel_descr_div",inst.frame);
     inst.sel_descr = $("#sel_descr",inst.frame);
+    inst.sel_links_div = $("#sel_links_div",inst.frame);
+    inst.sel_links = $("#sel_links",inst.frame);
+    inst.sel_md_div = $("#sel_md_div",inst.frame);
     this.xfr_hist = $("#xfr_hist",inst.frame);
     this.alloc_stat = $("#alloc_stat",inst.frame);
     this.data_tree = null;
@@ -1163,363 +1169,389 @@ function makeBrowserTab(){
         }
     }*/
 
-    this.showSelectedInfo = function( node ){
-        if ( !node ){
-            inst.noInfoAvail();
+    this.updateSelectionField = function( fields ){
+        if ( fields.id )
+            inst.sel_id.text( fields.id );
+        else
+            inst.sel_id.text("(no information)");
+
+        if ( fields.title ){
+            inst.sel_title.text( fields.title );
+            inst.sel_title_div.show();
+        }else
+            inst.sel_title_div.hide();
+
+        if ( fields.descr ){
+            inst.sel_descr.text(fields.descr);
+            inst.sel_descr_div.show();
+        }else if ( fields.descr_html ){
+            inst.sel_descr.html(fields.descr_html);
+            inst.sel_descr_div.show();
         }else{
-            console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
-            var key,i,html;
-            var date = new Date();
-
-            if ( typeof node == 'string' )
-                key = node;
-            else if ( node.key == "shared_proj" && node.data.scope )
-                key = node.data.scope;
-            else if ( node.key.startsWith( "t/" ) && node.data.scope ){
-                key = node.data.scope;
-            }else
-                key = node.key;
-
-
-
-            if ( key == "mydata" ) {
-                inst.sel_id.text( "My Data" );
-                inst.sel_title.text( "" );
-                inst.sel_descr.text( "Location for creating and organizing personal data and collections." );
-                inst.showSelectedMetadata();
-
-                userView( g_user.uid, true, function( ok, user ){
-                    if ( ok && user ){
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>Allocation(s):</td><td>";
-
-                        if ( user.alloc && user.alloc.length ){
-                            var alloc,free;
-                            for ( i in user.alloc ){
-                                alloc = user.alloc[i]
-                                free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
-                                html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
-                            }
-                        }else{
-                            html += "(n/a)";
-                        }
-                        html += "</table>";
-                        inst.sel_details.html(html);
-                        $("#sel_references").html("(n/a)");
-                        inst.showSelectedMetadata();
-                    }
-                });
-            }else if ( key[0] == "c" ) {
-                viewColl( key, function( item ){
-                    if ( item ){
-                        html = "Collection ID: " + key;
-                        if ( item.alias )
-                            html += ", Alias: " + item.alias;
-                        inst.sel_id.text(html);
-
-                        html = "\"" + item.title + "\"";
-                        inst.sel_title.text(html);
-
-                        if ( item.desc )
-                            inst.sel_descr.text(item.desc);
-                        else
-                            inst.sel_descr.text("(n/a)");
-
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        if ( item.ispublic && item.topic )
-                            html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
-                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
-                        if ( item.ct ){
-                            date.setTime(item.ct*1000);
-                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        if ( item.ut ){
-                            date.setTime(item.ut*1000);
-                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        html += "</table>";
-                        inst.sel_details.html(html);
-                        $("#sel_references").html("(n/a)");
-
-                        inst.showSelectedMetadata();
-                    }else{
-                        inst.noInfoAvail("Insufficient permissions to view collection.");
-                    }
-                }); 
-            } else if ( key[0] == "d" ) {
-                viewData( key, function( item ){
-                    if ( item ){
-                        html = "Data ID: " + key;
-                        if ( item.alias )
-                            html += ", Alias: " + item.alias;
-                        inst.sel_id.text(html);
-                        inst.sel_title.text("\"" + item.title + "\"");
-
-                        if ( item.desc )
-                            inst.sel_descr.text( item.desc );
-                        else
-                            inst.sel_descr.text("(n/a)");
-
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
-                        if ( item.doi )
-                            html += "<tr><td>DOI:</td><td>" + item.doi + "</td></tr>";
-                        html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
-                        if ( item.dataUrl ){
-                            html += "<tr><td>Data URL:</td><td><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></td></tr>";
-                        }else{
-                            html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
-                            html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
-                            if ( item.source )
-                                html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
-                            if ( item.ext )
-                                html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
-                            html += "<tr><td>Auto Ext.:</td><td>" + (item.extAuto?"Yes":"No") + "</td></tr>";
-                        }
-                        if ( item.ct ){
-                            date.setTime(item.ct*1000);
-                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        if ( item.ut ){
-                            date.setTime(item.ut*1000);
-                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        if ( item.dt ){
-                            date.setTime(item.dt*1000);
-                            html += "<tr><td>Uploaded:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
-                        }
-                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
-                        html += "</table>";
-
-                        inst.sel_details.html(html);
-                        if ( item.deps && item.deps.length ){
-                            var dep,id;
-                            html = "";
-                            for ( i in item.deps ){
-                                dep = item.deps[i];
-                                id = dep.id + (dep.alias?" ("+dep.alias+")":"");
-
-                                if ( dep.dir == "DEP_OUT" ){
-                                    switch(dep.type){
-                                        case "DEP_IS_DERIVED_FROM":
-                                            html += "Derived from " + id + "<br>";
-                                            break;
-                                        case "DEP_IS_COMPONENT_OF":
-                                            html += "Component of " + id + "<br>";
-                                            break;
-                                        case "DEP_IS_NEW_VERSION_OF":
-                                            html += "New version of " + id + "<br>";
-                                            break;
-                                    }
-                                }else{
-                                    switch(dep.type){
-                                        case "DEP_IS_DERIVED_FROM":
-                                            html += "Precursor of " + id + "<br>";
-                                            break;
-                                        case "DEP_IS_COMPONENT_OF":
-                                            html += "Container of " + id + "<br>";
-                                            break;
-                                        case "DEP_IS_NEW_VERSION_OF":
-                                            html += "Old version of " + id + "<br>";
-                                            break;
-                                    }
-                                }
-
-                                //html += dep.id + " " + dep.type + " " + dep.dir + "<BR>";
-                            }
-                            $("#sel_references").html(html);
-                        }else{
-                            $("#sel_references").html("(n/a)");
-                        }
-                        inst.showSelectedMetadata( item.metadata );
-                    }else{
-                        inst.noInfoAvail("Insufficient permissions to view data record.");
-                    }
-                }); 
-            } else if ( key.startsWith("p/")) {
-                viewProj( key, function( item ){
-                    if ( item ){
-                        inst.sel_id.text("Project ID: " + key);
-                        inst.sel_title.text("\"" + item.title + "\"");
-
-                        if ( item.desc )
-                            inst.sel_descr.text(item.desc);
-                        else
-                            inst.sel_descr.text("(n/a)");
-
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                        if ( item.ct ){
-                            date.setTime(item.ct*1000);
-                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        if ( item.ut ){
-                            date.setTime(item.ut*1000);
-                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        html += "<tr><td>Admins:</td><td>";
-                        if ( item.admin && item.admin.length ){
-                            for ( i in item.admin )
-                            html += item.admin[i].substr(2) + " ";
-                        }else{
-                            html += "(n/a)";
-                        }
-                        html += "</td></tr>";
-                        html += "<tr><td>Members:</td><td>";
-                        if ( item.member && item.member.length ){
-                            for ( i in item.member )
-                                html += item.member[i].substr(2) + " ";
-                        }else{
-                            html += "(n/a)";
-                        }
-                        html += "<tr><td>Allocation(s):</td><td>";
-                        if ( item.alloc && item.alloc.length ){
-                            var alloc,free;
-                            for ( i in item.alloc ){
-                                alloc = item.alloc[i]
-                                free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
-                                html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
-                            }
-                        }else if( item.subRepo ){
-                            free = Math.max( Math.floor(10000*(item.subAlloc - item.subUsage)/item.subAlloc)/100, 0 );
-                            html += item.subRepo + ": (sub-alloc) " + sizeToString( item.subAlloc ) + " total, " + sizeToString( item.subUsage ) + " used (" + free + " % free)";
-                        }else{
-                            html += "(n/a)";
-                        }
-
-                        html += "</td></tr></table>";
-                        inst.sel_details.html(html);
-                        $("#sel_references").html("(n/a)");
-
-                        inst.showSelectedMetadata();
-                    }else{
-                        inst.noInfoAvail("Insufficient permissions to view project.");
-                    }
-                }); 
-            } else if ( key.startsWith("q/")) {
-                sendQueryView( key, function( ok, item ){
-                    if ( ok && item ){
-                        inst.sel_id.text("Query ID: " + item.id);
-                        inst.sel_title.text(item.title);
-                        var qry = JSON.parse( item.query );
-                        console.log("qry:",qry);
-                        inst.sel_descr.html("<table class='info_table'><col width='20%'><col width='80%'><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"(n/a)")+"</td></tr><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"(n/a)")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"(n/a)")+"</td></tr></table>");
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                        if ( item.ct ){
-                            date.setTime(item.ct*1000);
-                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        if ( item.ut ){
-                            date.setTime(item.ut*1000);
-                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        html += "</table>";
-                        inst.sel_details.html(html);
-                        $("#sel_references").html("(n/a)");
-                        inst.showSelectedMetadata();
-                    }else{
-                        inst.noInfoAvail();
-                    }
-                });
-            } else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ) {
-                //console.log( "user", node.data.scope, node );
-                userView( node.data.scope, false, function( ok, item ){
-                    if ( ok && item ){
-                        inst.sel_id.text("User ID: " + item.uid);
-                        inst.sel_title.text(item.name);
-                        inst.sel_descr.text("(n/a)");
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
-                        inst.sel_details.html(html);
-                        $("#sel_references").html("(n/a)");
-                        inst.showSelectedMetadata();
-                    }else{
-                        inst.noInfoAvail();
-                    }
-                });
-            } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
-                viewProj( node.data.scope, function( item ){
-                    if ( item ){
-                        inst.sel_id.text("Project ID: " + key);
-                        inst.sel_title.text("\"" + item.title + "\"");
-
-                        if ( item.desc )
-                            inst.sel_descr.text(item.desc);
-                        else
-                            inst.sel_descr.text("(n/a)");
-
-                        html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                        html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                        if ( item.ct ){
-                            date.setTime(item.ct*1000);
-                            html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        if ( item.ut ){
-                            date.setTime(item.ut*1000);
-                            html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                        }
-                        html += "<tr><td>Admins:</td><td>";
-                        if ( item.admin && item.admin.length ){
-                            for ( i in item.admin )
-                            html += item.admin[i].substr(2) + " ";
-                        }else{
-                            html += "(n/a)";
-                        }
-                        html += "</td></tr></table>";
-                        inst.sel_details.html(html);
-                        $("#sel_references").html("(n/a)");
-
-                        inst.showSelectedMetadata();
-                    }else{
-                        inst.noInfoAvail("Insufficient permissions to view project.");
-                    }
-                });
-            } else if ( key == "allocs" ) {
-                inst.sel_id.text( "My Allocations" );
-                inst.sel_title.text("");
-                inst.sel_descr.text("Browse all allocations and associated data records.");
-                inst.sel_details.html("(n/a)");
-                $("#sel_references").html("(n/a)");
-                inst.showSelectedMetadata();
-            } else if ( key.startsWith( "repo/" )) {
-                var is_user = node.data.scope.startsWith("u/");
-                inst.sel_id.text( (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + ", user: " + node.data.scope );
-                inst.sel_title.text("");
-                inst.sel_descr.text("Browse data records by allocation.");
-                html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
-                if ( !is_user )
-                    html += "<tr><td>Sub-allocation:</td><td>" + (node.data.sub_alloc?"Yes":"No") + "</td></tr>";
-                html += "<tr><td>Capacity:</td><td>" + sizeToString( node.data.alloc_capacity ) + "</td></tr>";
-                html += "<tr><td>Usage:";
-                if ( is_user )
-                    html += " <span class='note'>*</span>";
-                var used = Math.max( Math.floor(10000*node.data.alloc_usage/node.data.alloc_capacity)/100, 0 );
-                html += "</td><td>" + sizeToString( node.data.alloc_usage ) + " (" + used + " %)</td></tr>";
-                html += "<tr><td>Max. Records:</td><td>" + node.data.alloc_max_count + "</td></tr></table>";
-                if ( is_user )
-                    html += "<br><span class='note'>* Includes any project sub-allocation usage</span>";
-                inst.sel_details.html(html);
-                $("#sel_references").html("(n/a)");
-
-            } else {
-                inst.noInfoAvail();
-                //inst.data_ident.html( "" );
-            }
+            inst.sel_descr_div.hide();
         }
 
+
+        if ( fields.details ){
+            inst.sel_details.html(fields.details);
+            inst.sel_details_div.show();
+        }else{
+            inst.sel_details_div.hide();
+        }
+
+        if ( fields.links ){
+            inst.sel_links.html(fields.links);
+            inst.sel_links_div.show();
+        }else{
+            inst.sel_links_div.hide();
+        }
+
+        if ( fields.md ){
+            inst.showSelectedMetadata( fields.md );
+            inst.sel_md_div.show();
+        }else{
+            inst.showSelectedMetadata();
+            inst.sel_md_div.hide();
+        }
     }
 
-    this.noInfoAvail = function( message ){
-        inst.sel_id.text( message?message:"(n/a)");
-        inst.sel_title.text("");
-        inst.sel_descr.text("(n/a)");
-        inst.sel_details.text("(n/a)");
-        $("#sel_references").html("(n/a)");
-        inst.showSelectedMetadata();
+    this.showSelectedDataInfo = function( key ){
+        viewData( key, function( item ){
+            fields = {};
+
+            if ( item ){
+                var date = new Date();
+
+                fields.id = "Data ID: " + key;
+                if ( item.alias )
+                    fields.id += ", Alias: " + item.alias;
+
+                fields.title = "\"" + item.title + "\"";
+
+                if ( item.desc )
+                    fields.descr = item.desc;
+
+                var html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
+                if ( item.doi )
+                    html += "<tr><td>DOI:</td><td>" + item.doi + "</td></tr>";
+                html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
+                if ( item.dataUrl ){
+                    html += "<tr><td>Data URL:</td><td><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></td></tr>";
+                }else{
+                    html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
+                    html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
+                    if ( item.source )
+                        html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
+                    if ( item.ext )
+                        html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
+                    html += "<tr><td>Auto Ext.:</td><td>" + (item.extAuto?"Yes":"No") + "</td></tr>";
+                }
+                if ( item.ct ){
+                    date.setTime(item.ct*1000);
+                    html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                }
+                if ( item.ut ){
+                    date.setTime(item.ut*1000);
+                    html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                }
+                if ( item.dt ){
+                    date.setTime(item.dt*1000);
+                    html += "<tr><td>Uploaded:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
+                }
+                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                html += "</table>";
+
+                fields.details = html;
+
+                if ( item.deps && item.deps.length ){
+                    var dep,id;
+                    html = "";
+                    for ( i in item.deps ){
+                        dep = item.deps[i];
+                        id = dep.id + (dep.alias?" ("+dep.alias+")":"");
+
+                        if ( dep.dir == "DEP_OUT" ){
+                            switch(dep.type){
+                                case "DEP_IS_DERIVED_FROM":
+                                    html += "Derived from " + id + "<br>";
+                                    break;
+                                case "DEP_IS_COMPONENT_OF":
+                                    html += "Component of " + id + "<br>";
+                                    break;
+                                case "DEP_IS_NEW_VERSION_OF":
+                                    html += "New version of " + id + "<br>";
+                                    break;
+                            }
+                        }else{
+                            switch(dep.type){
+                                case "DEP_IS_DERIVED_FROM":
+                                    html += "Precursor of " + id + "<br>";
+                                    break;
+                                case "DEP_IS_COMPONENT_OF":
+                                    html += "Container of " + id + "<br>";
+                                    break;
+                                case "DEP_IS_NEW_VERSION_OF":
+                                    html += "Old version of " + id + "<br>";
+                                    break;
+                            }
+                        }
+
+                        //html += dep.id + " " + dep.type + " " + dep.dir + "<BR>";
+                    }
+
+                    fields.links = html;
+                }else{
+                    fields.links = "No relationships.";
+                }
+
+                fields.md = item.metadata;
+            }else{
+                fields.id = "Insufficient permissions to view data record.";
+            }
+            inst.updateSelectionField( fields );
+        }); 
     }
 
+    this.showSelectedInfo = function( node ){
+        var fields = {};
+
+        if ( !node ){
+            inst.updateSelectionField(fields);
+            return;
+        }
+
+        console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+        var key,i,html;
+        var date = new Date();
+
+        if ( typeof node == 'string' )
+            key = node;
+        else if ( node.key == "shared_proj" && node.data.scope )
+            key = node.data.scope;
+        else if ( node.key.startsWith( "t/" ) && node.data.scope ){
+            key = node.data.scope;
+        }else
+            key = node.key;
+
+        if ( key == "mydata" ) {
+            fields.id = "My Data";
+            fields.descr = "Location for creating and organizing personal data and collections.";
+
+            userView( g_user.uid, true, function( ok, user ){
+                if ( ok && user ){
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    html += "<tr><td>Allocation(s):</td><td>";
+
+                    if ( user.alloc && user.alloc.length ){
+                        var alloc,free;
+                        for ( i in user.alloc ){
+                            alloc = user.alloc[i]
+                            free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
+                            html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
+                        }
+                    }else{
+                        html += "(n/a)";
+                    }
+                    html += "</table>";
+                    fields.details = html;
+                }
+
+                inst.updateSelectionField( fields );
+            });
+        }else if ( key[0] == "c" ) {
+            viewColl( key, function( item ){
+                if ( item ){
+                    fields.id = "Collection ID: " + key;
+                    if ( item.alias )
+                        fields.id += ", Alias: " + item.alias;
+
+                    fields.title = "\"" + item.title + "\"";
+
+                    if ( item.desc )
+                        fields.descr = item.desc;
+
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    if ( item.ispublic && item.topic )
+                        html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                    if ( item.ct ){
+                        date.setTime(item.ct*1000);
+                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    if ( item.ut ){
+                        date.setTime(item.ut*1000);
+                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    html += "</table>";
+
+                    fields.details = html;
+                }else{
+                    fields.id = "Insufficient permissions to view collection.";
+                }
+                inst.updateSelectionField( fields );
+            }); 
+        } else if ( key[0] == "d" ) {
+            inst.showSelectedDataInfo( key );
+        } else if ( key.startsWith("p/")) {
+            viewProj( key, function( item ){
+                if ( item ){
+                    fields.id = "Project ID: " + key;
+                    fields.title = "\"" + item.title + "\"";
+
+                    if ( item.desc )
+                        fields.descr = item.desc;
+
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                    if ( item.ct ){
+                        date.setTime(item.ct*1000);
+                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    if ( item.ut ){
+                        date.setTime(item.ut*1000);
+                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    html += "<tr><td>Admins:</td><td>";
+                    if ( item.admin && item.admin.length ){
+                        for ( i in item.admin )
+                        html += item.admin[i].substr(2) + " ";
+                    }else{
+                        html += "(n/a)";
+                    }
+                    html += "</td></tr>";
+                    html += "<tr><td>Members:</td><td>";
+                    if ( item.member && item.member.length ){
+                        for ( i in item.member )
+                            html += item.member[i].substr(2) + " ";
+                    }else{
+                        html += "(n/a)";
+                    }
+                    html += "<tr><td>Allocation(s):</td><td>";
+                    if ( item.alloc && item.alloc.length ){
+                        var alloc,free;
+                        for ( i in item.alloc ){
+                            alloc = item.alloc[i]
+                            free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
+                            html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
+                        }
+                    }else if( item.subRepo ){
+                        free = Math.max( Math.floor(10000*(item.subAlloc - item.subUsage)/item.subAlloc)/100, 0 );
+                        html += item.subRepo + ": (sub-alloc) " + sizeToString( item.subAlloc ) + " total, " + sizeToString( item.subUsage ) + " used (" + free + " % free)";
+                    }else{
+                        html += "(n/a)";
+                    }
+
+                    html += "</td></tr></table>";
+                    fields.details = html;
+                }else{
+                    fields.id = "Insufficient permissions to view project.";
+                }
+                inst.updateSelectionField( fields );
+            }); 
+        } else if ( key.startsWith("q/")) {
+            sendQueryView( key, function( ok, item ){
+                if ( ok && item ){
+                    fields.id = "Query ID: " + item.id;
+                    fields.title = item.title;
+
+                    var qry = JSON.parse( item.query );
+                    fields.descr_html = "<table class='info_table'><col width='20%'><col width='80%'><tr><td><u>Query Field</u></td><td><u>Value</u></td></tr><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"---")+"</td></tr><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"---")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"---")+"</td></tr></table>";
+
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                    if ( item.ct ){
+                        date.setTime(item.ct*1000);
+                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    if ( item.ut ){
+                        date.setTime(item.ut*1000);
+                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    html += "</table>";
+                    fields.details = html;
+                }
+
+                inst.updateSelectionField( fields );
+            });
+        } else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ) {
+            userView( node.data.scope, false, function( ok, item ){
+                if ( ok && item ){
+                    fields.id = "User ID: " + item.uid;
+                    fields.title = item.name;
+
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
+                    fields.details = html;
+                }
+
+                inst.updateSelectionField( fields );
+            });
+        } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
+            viewProj( node.data.scope, function( item ){
+                if ( item ){
+                    fields.id = "Project ID: " + key;
+                    fields.title = "\"" + item.title + "\"";
+
+                    if ( item.desc )
+                        fields.descr = item.desc;
+
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
+                    if ( item.ct ){
+                        date.setTime(item.ct*1000);
+                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    if ( item.ut ){
+                        date.setTime(item.ut*1000);
+                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    }
+                    html += "<tr><td>Admins:</td><td>";
+                    if ( item.admin && item.admin.length ){
+                        for ( i in item.admin )
+                        html += item.admin[i].substr(2) + " ";
+                    }else{
+                        html += "(n/a)";
+                    }
+                    html += "</td></tr></table>";
+                    fields.details = html;
+                }else{
+                    fields.id = "Insufficient permissions to view project.";
+                }
+                inst.updateSelectionField( fields );
+            });
+        } else if ( key == "allocs" ) {
+            fields.id = "My Allocations";
+            fields.descr = "Lists allocations and associated data records.";
+            inst.updateSelectionField( fields );
+        } else if ( key == "published" ) {
+            fields.id = "Published Collections";
+            fields.descr = "Lists collections published to DataFed catalogs.";
+            inst.updateSelectionField( fields );
+        } else if ( key.startsWith( "repo/" )) {
+            var is_user = node.data.scope.startsWith("u/");
+            fields.id = (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + ", user: " + node.data.scope;
+            fields.descr = "Browse data records by allocation.";
+
+            html = "<table class='info_table'><col width='20%'><col width='80%'>";
+            html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
+            if ( !is_user )
+                html += "<tr><td>Sub-allocation:</td><td>" + (node.data.sub_alloc?"Yes":"No") + "</td></tr>";
+            html += "<tr><td>Capacity:</td><td>" + sizeToString( node.data.alloc_capacity ) + "</td></tr>";
+            html += "<tr><td>Usage:";
+            if ( is_user )
+                html += " <span class='note'>*</span>";
+            var used = Math.max( Math.floor(10000*node.data.alloc_usage/node.data.alloc_capacity)/100, 0 );
+            html += "</td><td>" + sizeToString( node.data.alloc_usage ) + " (" + used + " %)</td></tr>";
+            html += "<tr><td>Max. Records:</td><td>" + node.data.alloc_max_count + "</td></tr></table>";
+            if ( is_user )
+                html += "<br><span class='note'>* Includes any project sub-allocation usage</span>";
+            fields.details = html;
+            inst.updateSelectionField( fields );
+        } else {
+            inst.updateSelectionField( fields );
+        }
+    }
 
     this.buildObjSrcTree = function( obj, base ){
         //console.log("build tree", obj, base);
@@ -3038,29 +3070,6 @@ function makeBrowserTab(){
                         data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
                 }
-            /*} else if ( data.node.key == "topics" || data.node.key.startsWith("t/") ) {
-                data.result = [];
-                var item,entry;
-                var items = data.response.item;
-                console.log("topic resp:",data.response);
-                for ( var i in items ) {
-                    item = items[i];
-                    if ( item.id[0]=="t" ){
-                        entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,scope:"topics",key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
-                    }else{
-                        entry = { title:inst.generateTitle(item),tooltip:inst.generateTooltip(item),scope:item.owner,key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi };
-                    }
-
-                    data.result.push( entry );
-                }
-
-                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
-                }
-            } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
-                // Not implemented yet
-             */
             } else if ( data.node.parent || data.node.key == "published" ) {
                 //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
@@ -3616,8 +3625,8 @@ function makeBrowserTab(){
     $("#sel_descr_hdr").button().click( function(){
         $("#sel_descr").slideToggle();
     });
-    $("#sel_references_hdr").button().click( function(){
-        $("#sel_references").slideToggle();
+    $("#sel_links_hdr").button().click( function(){
+        $("#sel_links").slideToggle();
     });
     $("#sel_details_hdr").button().click( function(){
         $("#sel_details").slideToggle();
