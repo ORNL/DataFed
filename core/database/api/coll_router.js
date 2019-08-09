@@ -89,7 +89,7 @@ router.post('/create', function (req, res) {
                 }
 
                 if ( obj.topic ){
-                    g_lib.topicLink( obj.topic, coll._id );
+                    g_lib.topicLink( obj.topic, coll._id, owner._id );
                 }
 
                 coll = coll.new;
@@ -167,7 +167,7 @@ router.post('/update', function (req, res) {
 
                     if ( obj.topic && obj.topic.length ){
                         //console.log("link new topic");
-                        g_lib.topicLink( obj.topic, coll._id );
+                        g_lib.topicLink( obj.topic, coll._id, coll.owner );
                     }
                 }
 
@@ -607,4 +607,43 @@ router.get('/get_offset', function (req, res) {
 .queryParam('page_sz', joi.number().required(), "Page size")
 .summary('Get offset to item in collection')
 .description('Get offset to item in collection. Offset will be aligned to specified page size.');
+
+router.get('/published/list', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var owner_id;
+
+        if ( req.queryParams.subject ) {
+            owner_id = req.queryParams.subject;
+        } else {
+            owner_id = client._id;
+        }
+
+        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
+        var result;
+
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+            qry += " return { id: v._id, title: v.title, alias: v.alias }";
+            result = g_db._query( qry, { user: owner_id },{},{fullCount:true});
+            var tot = result.getExtra().stats.fullCount;
+            result = result.toArray();
+            result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+        }
+        else{
+            qry += " return { id: v._id, title: v.title, alias: v.alias }";
+            result = g_db._query( qry, { user: owner_id });
+        }
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
+.summary('Get list of clients published collections.')
+.description('Get list of clients published collections.');
 

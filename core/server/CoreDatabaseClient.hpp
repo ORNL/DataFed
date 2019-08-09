@@ -74,6 +74,7 @@ public:
     void dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
+    void collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
     void collDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs );

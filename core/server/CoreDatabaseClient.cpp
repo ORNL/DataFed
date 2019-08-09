@@ -1280,6 +1280,19 @@ DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_r
 }
 
 void
+DatabaseClient::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
+{
+    rapidjson::Document result;
+
+    if ( a_request.has_subject() )
+        dbGet( "col/published/list", {{"subject",a_request.subject()}}, result );
+    else
+        dbGet( "col/published/list", {}, result );
+
+    setListingData( a_reply, result );
+}
+
+void
 DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     rapidjson::Document result;
