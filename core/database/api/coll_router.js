@@ -27,7 +27,7 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","alias","owner","item"]
+                write: ["c","a","alias","owner","item","t","top"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -70,6 +70,11 @@ router.post('/create', function (req, res) {
                 g_lib.procInputParam( req.body, "desc", false, obj );
                 g_lib.procInputParam( req.body, "alias", false, obj );
 
+                if ( req.body.public ){
+                    obj.public = req.body.public;
+                    g_lib.procInputParam( req.body, "topic", false, obj );
+                }
+
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner._id });
 
@@ -81,6 +86,10 @@ router.post('/create', function (req, res) {
                     g_db.a.save({ _key: alias_key });
                     g_db.alias.save({ _from: coll._id, _to: "a/" + alias_key });
                     g_db.owner.save({ _from: "a/" + alias_key, _to: owner._id });
+                }
+
+                if ( obj.topic ){
+                    g_lib.topicLink( obj.topic, coll._id );
                 }
 
                 coll = coll.new;
@@ -105,6 +114,7 @@ router.post('/create', function (req, res) {
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
+    topic: joi.string().allow('').optional(),
     parent: joi.string().allow('').optional()
 }).required(), 'Collection fields')
 .summary('Create a new data collection')
@@ -117,7 +127,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","owner","alias"]
+                write: ["c","a","owner","alias","t","top"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -135,6 +145,31 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "title", true, obj );
                 g_lib.procInputParam( req.body, "desc", true, obj );
                 g_lib.procInputParam( req.body, "alias", true, obj );
+
+                if ( req.body.public !== undefined ){
+                    obj.public = req.body.public;
+                    if ( obj.public ){
+                        g_lib.procInputParam( req.body, "topic", true, obj );
+                    }else{
+                        obj.topic = null;
+                    }
+                } else if ( coll.public ){
+                    g_lib.procInputParam( req.body, "topic", true, obj );
+                }
+
+                if ( obj.topic !== undefined && obj.topic != coll.topic ){
+                    //console.log("update topic, old:", data.topic ,",new:", obj.topic );
+            
+                    if ( coll.topic ){
+                        //console.log("unlink old topic");
+                        g_lib.topicUnlink( coll._id );
+                    }
+
+                    if ( obj.topic && obj.topic.length ){
+                        //console.log("link new topic");
+                        g_lib.topicLink( obj.topic, coll._id );
+                    }
+                }
 
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
@@ -180,7 +215,8 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    public: joi.boolean().optional()
+    public: joi.boolean().optional(),
+    topic: joi.string().allow('').optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
 .description('Update an existing collection from JSON body');

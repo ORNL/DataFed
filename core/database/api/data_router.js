@@ -100,7 +100,6 @@ function recordCreate( client, record, results ){
     g_lib.procInputParam( record, "desc", false, obj );
     g_lib.procInputParam( record, "keyw", false, obj );
     g_lib.procInputParam( record, "alias", false, obj );
-    g_lib.procInputParam( record, "topic", false, obj );
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
 
@@ -154,10 +153,6 @@ function recordCreate( client, record, results ){
         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
 
-    if ( obj.topic ){
-        g_lib.topicLink( obj.topic, data._id );
-    }
-
     if ( record.deps != undefined ){
         var dep,id,dep_data;
         data.new.deps = [];
@@ -193,178 +188,11 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","repo","alloc"],
-                write: ["d","a","loc","owner","alias","item","t","top","dep"]
+                write: ["d","a","loc","owner","alias","item","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 recordCreate( client, req.body, result );
-
-                /*
-                var owner_id;
-                var parent_id;
-                var repo_alloc;
-
-                //console.log("Create new data");
-
-                if ( req.body.parent ) {
-                    parent_id = g_lib.resolveCollID( req.body.parent, client );
-                    owner_id = g_db.owner.firstExample({_from:parent_id})._to;
-                    if ( owner_id != client._id ){
-                        if ( !g_lib.hasManagerPermProj( client, owner_id )){
-                            var parent_coll = g_db.c.document( parent_id );
-
-                            //console.log("check admin perm on parent coll: ",parent_id);
-                            if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE )){
-                                //console.log("NO admin perm on parent coll: ",parent_id);
-                                throw g_lib.ERR_PERM_DENIED;
-                            }
-                        }
-                    }
-                }else{
-                    //console.log("no body?");
-                    parent_id = g_lib.getRootID(client._id);
-                    owner_id = client._id;
-                }
-
-                var alloc_parent = null;
-
-                if ( owner_id != client._id ){
-                    //console.log( "not owner" );
-                    if ( req.body.repo ) {
-                        // If a repo is specified, must be a real allocation - verify it as usual
-                        //console.log( "repo specified" );
-                        //repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: req.body.repo });
-                        repo_alloc = g_lib.verifyRepo( owner_id, req.body.repo );
-                    } else {
-                        // If a repo is not specified, must check for project sub-allocation
-                        //console.log( "repo not specified" );
-
-                        if ( owner_id[0] == 'p' ){
-                            // For projects, use sub-allocation if defined, otherwise auto-assign from project owner
-                            //console.log( "owner is a project" );
-                            var proj = g_db.p.document( owner_id );
-                            if ( proj.sub_repo ){
-                                //console.log( "project has sub allocation" );
-                                // Make sure soft capacity hasn't been exceeded
-                                if ( proj.sub_usage > proj.sub_alloc )
-                                    throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+proj.sub_alloc+")"];
-
-                                // TODO Handle multiple project owners?
-                                var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
-                                repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
-                                alloc_parent = repo_alloc._id;
-                            }
-                        }
-
-                        if ( !repo_alloc ){
-                            // Try to auto-assign an available allocation
-                            repo_alloc = g_lib.assignRepo( owner_id );
-                        }
-                    }
-                }else{
-                    // Storage location uses client allocation(s)
-                    if ( req.body.repo ) {
-                        repo_alloc = g_lib.verifyRepo( client._id, req.body.repo );
-                    } else {
-                        repo_alloc = g_lib.assignRepo( client._id );
-                    }
-                }
-
-                if ( !repo_alloc )
-                    throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
-
-                var time = Math.floor( Date.now()/1000 );
-                var obj = { size: 0, ct: time, ut: time, owner: owner_id };
-
-                g_lib.procInputParam( req.body, "title", false, obj );
-                g_lib.procInputParam( req.body, "desc", false, obj );
-                g_lib.procInputParam( req.body, "keyw", false, obj );
-                g_lib.procInputParam( req.body, "alias", false, obj );
-                g_lib.procInputParam( req.body, "topic", false, obj );
-                g_lib.procInputParam( req.body, "doi", false, obj );
-                g_lib.procInputParam( req.body, "data_url", false, obj );
-
-                if ( req.body.public )
-                    obj.public = req.body.public;
-
-                if ( req.body.md ){
-                    obj.md = req.body.md; //JSON.parse( req.body.md );
-                    if ( Array.isArray( obj.md ))
-                        throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
-
-                    //console.log( "parsed:", obj.md );
-                }
-
-                if ( obj.doi || obj.data_url ){
-                    if ( !obj.doi || !obj.data_url )
-                        throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
-                }else{
-                    if ( req.body.ext_auto !== undefined )
-                        obj.ext_auto = req.body.ext_auto;
-                    else
-                        obj.ext_auto = true;
-
-                    if ( !obj.ext_auto && req.body.ext ){
-                        obj.ext = req.body.ext;
-                        if ( obj.ext.length && obj.ext.charAt(0) != "." )
-                            obj.ext = "." + obj.ext;
-                    }
-                }
-
-                //console.log("Save data");
-
-                var data = g_db.d.save( obj, { returnNew: true });
-                //console.log("Save owner");
-                g_db.owner.save({ _from: data.new._id, _to: owner_id });
-
-                //console.log("Save loc", repo_alloc );
-                //var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key, uid: owner_id };
-                var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
-                if ( alloc_parent )
-                    loc.parent = alloc_parent;
-                g_db.loc.save(loc);
-
-                if ( obj.alias ) {
-                    var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
-
-                    if ( g_db.a.exists({ _key: alias_key }))
-                        throw [g_lib.ERR_INVALID_PARAM,"Alias, "+obj.alias+", already in use"];
-
-                    g_db.a.save({ _key: alias_key });
-                    g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
-                    g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-                }
-
-                if ( obj.topic ){
-                    g_lib.topicLink( obj.topic, data._id );
-                }
-
-                if ( req.body.deps != undefined ){
-                    var dep,id,dep_data;
-                    data.new.deps = [];
-
-                    for ( var i in req.body.deps ) {
-                        dep = req.body.deps[i];
-                        id = g_lib.resolveDataID( dep.id, client );
-                        dep_data = g_db.d.document( id );
-                        if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
-                            throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
-                        g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
-                        data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
-                    }
-                }
-
-                g_db.item.save({ _from: parent_id, _to: data.new._id });
-
-                data.new.id = data.new._id;
-                data.new.parent_id = parent_id;
-
-                delete data.new._id;
-                delete data.new._key;
-                delete data.new._rev;
-
-                result.push( data.new );
-            */
             }
         });
 
@@ -378,7 +206,6 @@ router.post('/create', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     keyw: joi.string().allow('').optional(),
-    topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
     doi: joi.string().allow('').optional(),
@@ -404,7 +231,7 @@ router.post('/create/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","repo","alloc"],
-                write: ["d","a","loc","owner","alias","item","t","top","dep"]
+                write: ["d","a","loc","owner","alias","item","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -425,7 +252,6 @@ router.post('/create/batch', function (req, res) {
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
         keyw: joi.string().allow('').optional(),
-        topic: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
         public: joi.boolean().optional(),
         doi: joi.string().allow('').optional(),
@@ -471,27 +297,9 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
     g_lib.procInputParam( record, "desc", true, obj );
     g_lib.procInputParam( record, "keyw", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
-    g_lib.procInputParam( record, "topic", true, obj );
     g_lib.procInputParam( record, "source", true, obj );
     g_lib.procInputParam( record, "doi", true, obj );
     g_lib.procInputParam( record, "data_url", true, obj );
-
-    //console.log("topic, old:", data.topic ,",new:", obj.topic );
-    //console.log("new !== undefined", obj.topic !== undefined );
-
-    if ( obj.topic !== undefined && obj.topic != data.topic ){
-        //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-
-        if ( data.topic ){
-            //console.log("unlink old topic");
-            g_lib.topicUnlink( data._id );
-        }
-
-        if ( obj.topic && obj.topic.length ){
-            //console.log("link new topic");
-            g_lib.topicLink( obj.topic, data._id );
-        }
-    }
 
     if ( record.public !== undefined )
         obj.public = record.public;
@@ -685,7 +493,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","t","top","dep"]
+                write: ["d","a","p","owner","alias","alloc","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -709,7 +517,6 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     keyw: joi.string().allow('').optional(),
-    topic: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     public: joi.boolean().optional(),
     doi: joi.string().allow('').optional(),
@@ -739,7 +546,7 @@ router.post('/update/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","t","top","dep"]
+                write: ["d","a","p","owner","alias","alloc","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -766,7 +573,6 @@ router.post('/update/batch', function (req, res) {
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
         keyw: joi.string().allow('').optional(),
-        topic: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
         public: joi.boolean().optional(),
         doi: joi.string().allow('').optional(),
