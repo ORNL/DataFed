@@ -36,7 +36,7 @@ module.exports = ( function() {
     obj.PERM_ALL            = 0x7FFF;
     obj.PERM_MEMBER         = 0x0007; // Project record perms
     obj.PERM_MANAGER        = 0x0407; // Project record perms
-    obj.PERM_PUBLIC         = 0x000F;
+    obj.PERM_PUBLIC         = 0x0047;
 
     obj.MAX_COLL_ITEMS      = 1000;
 
@@ -443,11 +443,13 @@ module.exports = ( function() {
             obj.graph.a.remove( alias.next() );
         }
 
+        /*
         console.log("  unlink topic");
 
         var top = obj.db.top.firstExample({_from: a_data._id});
         if ( top )
             obj.topicUnlink( a_data._id );
+        */
 
         var loc = obj.db.loc.firstExample({_from: a_data._id });
         console.log("  compute path");
@@ -502,6 +504,10 @@ module.exports = ( function() {
         // at the final instance of this data (thie link count will be 1 then).
 
         var alias,item,items,coll,c,cur,next = [a_coll_id];
+
+        var top = obj.db.top.firstExample({_from: a_coll_id});
+        if ( top )
+            obj.topicUnlink( a_coll_id );
 
         while ( next.length ){
             cur = next;
@@ -740,10 +746,12 @@ module.exports = ( function() {
     };
 
 
-    obj.topicLink = function( a_topic, a_data_id ){
+    obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
         //var top_ar = obj.parseTopic( a_topic );
         var top_ar = a_topic.split(".");
         var i,topic,parent = "t/root";
+
+        top_ar.push(a_owner_id);
 
         for ( i = 0; i < top_ar.length; i++ ){
             topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});
@@ -759,14 +767,14 @@ module.exports = ( function() {
             }
         }
 
-        if ( !obj.db.top.firstExample({_from:a_data_id,_to:parent})){
-            obj.db.top.save({_from:a_data_id,_to:parent});
+        if ( !obj.db.top.firstExample({_from:a_coll_id,_to:parent})){
+            obj.db.top.save({_from:a_coll_id,_to:parent});
         }
     };
 
-    obj.topicUnlink = function( a_data_id ){
+    obj.topicUnlink = function( a_coll_id ){
         //console.log("topicUnlink");
-        var top = obj.db.top.firstExample({_from: a_data_id});
+        var top = obj.db.top.firstExample({_from: a_coll_id});
         if ( !top ){
             return;
         }
