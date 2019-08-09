@@ -813,6 +813,7 @@ app.post('/api/col/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/col/update', ( a_req, a_resp ) => {
+    console.log("col update:",a_req.body);
     sendMessage( "CollUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });

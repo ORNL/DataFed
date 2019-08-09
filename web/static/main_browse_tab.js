@@ -593,7 +593,7 @@ function makeBrowserTab(){
                 return;
             }
 
-            dlgCollNewEdit(null,parent,function(data){
+            dlgCollNewEdit(null,parent,0,function(data){
                 var node = inst.data_tree.getNodeByKey( data.parentId );
                 if ( node )
                     inst.reloadNode( node );
@@ -857,7 +857,7 @@ function makeBrowserTab(){
             }else if ( id.charAt(0) == "c" ) {
                 viewColl( id, function( data ){
                     if ( data ){
-                        dlgCollNewEdit(data,null,function(data){
+                        dlgCollNewEdit(data,null,perms,function(data){
                             refreshUI( id, data );
                         });
                     }

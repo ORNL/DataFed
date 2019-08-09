@@ -610,8 +610,6 @@ Client::recordCreate( const std::string & a_title, const char * a_desc, const ch
         req.set_alias( a_alias );
     if ( a_keyw )
         req.set_keyw( a_keyw );
-    if ( a_topic )
-        req.set_topic( a_topic );
     if ( a_metadata )
         req.set_metadata( a_metadata );
     if ( a_coll_id )
@@ -656,8 +654,6 @@ Client::recordUpdate( const std::string & a_id, const char * a_title, const char
         req.set_alias( a_alias );
     if ( a_keyw )
         req.set_keyw( a_keyw );
-    if ( a_topic )
-        req.set_topic( a_topic );
     if ( a_metadata )
     {
         req.set_metadata( a_metadata );

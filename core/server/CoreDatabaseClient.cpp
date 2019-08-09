@@ -880,8 +880,6 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_keyw() )
         body += ",\"keyw\":\"" + escapeJSON( a_request.keyw() ) + "\"";
-    if ( a_request.has_topic() )
-        body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
@@ -933,8 +931,6 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_keyw() )
         body += ",\"keyw\":\"" + escapeJSON( a_request.keyw() ) + "\"";
-    if ( a_request.has_topic() )
-        body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_metadata() )
@@ -1164,9 +1160,6 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
         if (( imem = val.FindMember("keyw")) != val.MemberEnd() )
             rec->set_keyw( imem->value.GetString() );
 
-        if (( imem = val.FindMember("topic")) != val.MemberEnd() )
-            rec->set_topic( imem->value.GetString() );
-
         if (( imem = val.FindMember("public")) != val.MemberEnd() )
             rec->set_ispublic( imem->value.GetBool() );
 
@@ -1299,7 +1292,9 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
     if ( a_request.has_ispublic() )
-        body += ",\"public\":" + a_request.ispublic()?"true":"false";
+        body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
+    if ( a_request.has_topic() )
+        body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     body += "}";
 
     dbPost( "col/create", {}, &body, result );
@@ -1320,7 +1315,9 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_ispublic() )
-        body += ",\"public\":" + a_request.ispublic()?"true":"false";
+        body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
+    if ( a_request.has_topic() )
+        body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     body += "}";
 
     dbPost( "col/update", {}, &body, result );
@@ -1475,6 +1472,8 @@ DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_re
             coll->set_desc( imem->value.GetString() );
         if (( imem = val.FindMember("public")) != val.MemberEnd() )
             coll->set_ispublic( imem->value.GetBool() );
+        if (( imem = val.FindMember("topic")) != val.MemberEnd() )
+            coll->set_topic( imem->value.GetString() );
 
         if (( imem = val.FindMember("alias")) != val.MemberEnd() )
         {

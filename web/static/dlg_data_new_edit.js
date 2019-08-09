@@ -22,7 +22,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
                     <tr><td>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Keywords:</td><td colspan='3'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
-                    <tr><td>Topic:</td><td colspan='2'><input title='Topic string (optional)' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                 </table>\
             </div>\
@@ -88,12 +87,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     inputTheme( $('textarea',frame ));
 
     $(".btn",frame).button();
-
-    $("#pick_topic",frame).on("click",function(){
-        dlgPickTopic( function( topic ){
-            $("#topic",frame).val( topic );
-        });
-    });
 
     $("#pick_source",frame).on("click",function(){
         dlgStartTransfer( XFR_SELECT, null, function( path ){
@@ -262,6 +255,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         },
         closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                jsoned.destroy();
+                $(this).dialog('destroy').remove();
+            }
+        },{
             id: "do_it",
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
@@ -295,7 +294,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
-                    getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
                     getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
 
                     if ( is_published ){
@@ -342,7 +340,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
-                    getUpdatedValue( $("#topic",frame).val(), {}, obj, "topic" );
 
                     if ( is_published ){
                         getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
@@ -410,12 +407,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
                 });
             }
-        },{
-            text: "Cancel",
-            click: function() {
-                jsoned.destroy();
-                $(this).dialog('destroy').remove();
-            }
         }],
         resize: function(){
             jsoned.resize();
@@ -451,7 +442,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 $("#desc",frame).val(a_data.desc);
                 $("#keyw",frame).val(a_data.keyw);
-                $("#topic",frame).val(a_data.topic);
 
                 if ( a_data.metadata )
                     jsoned.setValue( a_data.metadata, -1 );
@@ -479,8 +469,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         $("#md_set",frame).attr('disabled',true);
                     }
                     if (( a_upd_perms & PERM_WR_REC ) == 0 ){
-                        inputDisable( $("#title,#desc,#alias,#topic,#keyw", frame ));
-                        $("#pick_topic",frame).button("disable");
+                        inputDisable( $("#title,#desc,#alias,#keyw", frame ));
                     }
 
                     $("#dlg_coll_row",frame).css("display","none");
@@ -511,7 +500,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
                 $("#keyw",frame).val("");
-                $("#topic",frame).val("");
                 //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )

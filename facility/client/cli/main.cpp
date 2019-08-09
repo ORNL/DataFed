@@ -414,7 +414,6 @@ void printData( spRecordDataReply a_rep )
                 else
                     cout << "n/a\n";
 
-                cout << "Topic    " << (rec.has_topic()?rec.topic():"n/a") << "\n";
                 cout << "Keywords " << (rec.has_keyw()?rec.keyw():"n/a") << "\n";
                 cout << "Owner    " << (rec.has_owner()?rec.owner():"n/a") << "\n";
                 cout << "Locked   " << ((rec.has_locked() && rec.locked())?"Yes":"No") << "\n";
@@ -490,7 +489,6 @@ void printData( spRecordDataReply a_rep )
                     << ",\"" << ( rec.has_alias()?rec.alias():"" ) << "\""
                     << ",\"" << escapeCSV( rec.title() ) << "\""
                     << ",\"" << ( rec.has_desc()?escapeCSV( rec.desc() ):"" ) << "\""
-                    << ",\"" << ( rec.has_topic()?rec.topic():"" ) << "\""
                     << ",\"" << ( rec.has_keyw()?rec.keyw():"" ) << "\""
                     << ",\"" << ( rec.has_owner()?rec.owner():"" ) << "\""
                     << "," << ((rec.has_locked() && rec.locked())?"1":"0")
