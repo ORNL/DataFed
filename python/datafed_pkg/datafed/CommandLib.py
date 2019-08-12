@@ -1569,7 +1569,19 @@ def print_allocation_data(alloc): #
 
 def output_checks(verbosity=None,json=None,text=None):
 
-    __output_mode, __verbosity = output_checks(verbosity,json,text)
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
 
     return __output_mode,__verbosity
 
