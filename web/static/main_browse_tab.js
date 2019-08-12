@@ -787,7 +787,7 @@ function makeBrowserTab(){
                 inst.pasteCollections = null;
             }
 
-            if ( node.key.startsWith( "d/" ))
+            if ( node.key == "empty" || node.key.startsWith( "d/" ))
                 node = node.parent;
             if ( inst.pasteMode == "cut" )
                 inst.moveItems( inst.pasteItems, node, pasteDone );
@@ -2694,8 +2694,8 @@ function makeBrowserTab(){
     }
 
     this.pasteAllowed = function( dest_node, src_node ){
-        //console.log("pasteAllowed:",dest_node, src_node);
-        //console.log("pasteSource:",inst.pasteSource);
+        console.log("pasteAllowed:",dest_node, src_node);
+        console.log("pasteSource:",inst.pasteSource);
         //if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
         if ( !dest_node.data.notarg && dest_node.data.scope && (dest_node.data.scope.startsWith("u/") || dest_node.data.scope.startsWith("p/"))){
             // TODO - Wrong: must check parent keys
@@ -2709,7 +2709,7 @@ function makeBrowserTab(){
             }else if (dest_node.key.startsWith("repo/")){
                 if ( inst.pasteSource.data.scope != dest_node.data.scope )
                     return false;
-            }else
+            }else if ( dest_node.key != "empty" )
                 return false;
 
             if ( inst.pasteCollections.length ){
@@ -2851,12 +2851,13 @@ function makeBrowserTab(){
                                 keys.push( inst.pasteItems[i].key );
                             }
                             var dest;
-                            if ( dest_node.key.startsWith("c/") )
+                            if ( dest_node.key.startsWith("c/") ){
                                 dest = dest_node.key;
-                            if ( dest_node.key.startsWith("repo/"))
+                            }else if ( dest_node.key.startsWith("repo/")){
                                 dest = dest_node.data.repo;
-                            else
+                            }else{
                                 dest = dest_node.parent.key;
+                            }
 
                             dlgDataRelocate( keys, dest, dest_node.data.scope, function(){
 
@@ -2865,6 +2866,8 @@ function makeBrowserTab(){
                         /*}
                     });*/
                     return;
+                }else if ( dest_node.key == "empty" ) {
+                    dest_node = dest_node.parent;
                 }
 
                 function pasteDone(){
@@ -3093,7 +3096,11 @@ function makeBrowserTab(){
                     var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
                     data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
+                if (( !items || !items.length ) && data.node.parent.key.startsWith("c/") ){
+                    data.result.push({title:"(empty)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
+                }
             }
+
             if ( data.result && data.result.length == 0 ){
                 data.result.push({title:"(empty)",icon:false,checkbox:false,nodrag:true});
             }
