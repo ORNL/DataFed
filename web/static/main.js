@@ -588,6 +588,10 @@ function allocListByObject( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_object?id="+a_id, null, a_cb );
 }
 
+function allocView( a_repo, a_subject, a_cb ){
+    _asyncGet( "/api/repo/alloc/view?repo="+a_repo+(a_subject?"&subject="+encodeURIComponent(a_subject):""), null, a_cb );
+}
+
 function allocStats( a_repo, a_subject, a_cb ){
     _asyncGet( "/api/repo/alloc/stats?repo="+a_repo+(a_subject?"&subject="+encodeURIComponent(a_subject):""), null, a_cb );
 }

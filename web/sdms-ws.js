@@ -957,6 +957,12 @@ app.get('/api/repo/alloc/list/by_object', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/alloc/view', ( a_req, a_resp ) => {
+    sendMessage( "RepoViewAllocationRequest", {repo:a_req.query.repo,subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
     sendMessage( "RepoAllocationStatsRequest", {repo:a_req.query.repo,subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:{});

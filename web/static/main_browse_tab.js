@@ -1532,25 +1532,33 @@ function makeBrowserTab(){
             fields.descr = "Lists collections published to DataFed catalogs.";
             inst.updateSelectionField( fields );
         } else if ( key.startsWith( "repo/" )) {
-            var is_user = node.data.scope.startsWith("u/");
-            fields.id = (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + ", user: " + node.data.scope;
-            fields.descr = "Browse data records by allocation.";
+            allocView( node.data.repo, node.data.scope, function( ok, data ){
+                console.log("allocView:",ok,data);
+                if ( ok ){
+                    var alloc = data.alloc[0];
+                    var is_user = node.data.scope.startsWith("u/");
+                    fields.id = (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + (is_user?", user: ":", project: ") + node.data.scope;
+                    fields.descr = "Browse data records by allocation.";
 
-            html = "<table class='info_table'><col width='20%'><col width='80%'>";
-            html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
-            if ( !is_user )
-                html += "<tr><td>Sub-allocation:</td><td>" + (node.data.sub_alloc?"Yes":"No") + "</td></tr>";
-            html += "<tr><td>Capacity:</td><td>" + sizeToString( node.data.alloc_capacity ) + "</td></tr>";
-            html += "<tr><td>Usage:";
-            if ( is_user )
-                html += " <span class='note'>*</span>";
-            var used = Math.max( Math.floor(10000*node.data.alloc_usage/node.data.alloc_capacity)/100, 0 );
-            html += "</td><td>" + sizeToString( node.data.alloc_usage ) + " (" + used + " %)</td></tr>";
-            html += "<tr><td>Max. Records:</td><td>" + node.data.alloc_max_count + "</td></tr></table>";
-            if ( is_user )
-                html += "<br><span class='note'>* Includes any project sub-allocation usage</span>";
-            fields.details = html;
-            inst.updateSelectionField( fields );
+                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
+                    html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
+                    if ( !is_user )
+                        html += "<tr><td>Sub-allocation:</td><td>" + (node.data.sub_alloc?"Yes":"No") + "</td></tr>";
+                    html += "<tr><td>Capacity:</td><td>" + sizeToString( alloc.maxSize ) + "</td></tr>";
+                    html += "<tr><td>Usage:";
+                    if ( is_user )
+                        html += " <span class='note'>*</span>";
+                    var used = Math.max( Math.floor(10000*alloc.totSize/alloc.maxSize)/100, 0 );
+                    html += "</td><td>" + sizeToString( alloc.totSize ) + " (" + used + " %)</td></tr>";
+                    html += "<tr><td>Max. Records:</td><td>" + alloc.maxCount + "</td></tr></table>";
+                    if ( is_user )
+                        html += "<br><span class='note'>* Includes any project sub-allocation usage</span>";
+                    fields.details = html;
+                }else{
+                    setStatusText( "Allocation View Error: " + data );
+                }
+                inst.updateSelectionField( fields );
+            });
         } else {
             inst.updateSelectionField( fields );
         }
@@ -3060,8 +3068,9 @@ function makeBrowserTab(){
                     var alloc;
                     for ( var i in data.response ) {
                         alloc = data.response[i];
-                        console.log("alloc:",alloc,"scope:",alloc.id);
-                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
+                        //console.log("alloc:",alloc,"scope:",alloc.id);
+                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false,sub_alloc:alloc.subAlloc});
+                        //data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
                 }
             } else if ( data.node.parent || data.node.key == "published" ) {

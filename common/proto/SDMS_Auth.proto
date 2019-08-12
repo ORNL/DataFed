@@ -649,6 +649,12 @@ message RepoListObjectAllocationsRequest
     required string             id          = 1;
 }
 
+message RepoViewAllocationRequest
+{
+    required string             repo        = 1;
+    required string             subject     = 2;
+}
+
 message RepoAllocationsReply
 {
     repeated AllocData          alloc       = 1;

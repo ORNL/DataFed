@@ -2462,6 +2462,20 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::D
 }
 
 void
+DatabaseClient::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )
+{
+    rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"repo",a_request.repo()});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+
+    dbGet( "repo/alloc/view", params, result );
+
+    setAllocData( a_reply, result );
+}
+
+void
 DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
 {
     rapidjson::Document result;
