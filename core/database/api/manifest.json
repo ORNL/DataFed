@@ -3,7 +3,7 @@
     "arangodb": "^3.0.0"
   },
   "main": "index.js",
-  "name": "SDMS",
-  "description": "Scientific Data Management System DB Service",
-  "version": "0.9.3"
+  "name": "DataFed",
+  "description": "DataFed ArangoDB Microservices",
+  "version": "0.9.5"
 }
