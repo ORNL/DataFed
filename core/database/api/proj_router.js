@@ -504,7 +504,7 @@ router.get('/delete', function (req, res) {
 
                     var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
                     obj = g_db.alloc.firstExample({_from: owner_id, _to: proj.sub_repo});
-                    g_db._update( obj._id, { usage: obj.tot_size - size });
+                    g_db._update( obj._id, { tot_size: obj.tot_size - size });
                 }else{
                     result.suballoc = false;
                     result.locs = {};
@@ -520,7 +520,7 @@ router.get('/delete', function (req, res) {
 
                 while ( objects.hasNext() ) {
                     obj = objects.next();
-                    if ( obj[0] == "d" ){
+                    if ( obj[0] == "c" ){
                         top = g_db.top.firstExample({_from: obj});
                         if ( top )
                             g_lib.topicUnlink( obj );

@@ -439,6 +439,67 @@ router.get('/alloc/list/by_object', function (req, res) {
 .summary('List object repo allocations')
 .description('List object repo allocations');
 
+router.get('/alloc/view', function (req, res) {
+    try {
+        var owner_id, client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        if ( req.queryParams.subject ){
+            owner_id = req.queryParams.subject;
+            // Check permissions
+            if (( owner_id != client._id ) && !g_lib.hasAdminPermProj( client, owner_id ) ){
+                throw g_lib.ERR_PERM_DENIED;
+            }
+        }else{
+            owner_id = client._id;
+        }
+
+        var result = g_db.alloc.byExample({_from: owner_id, _to: req.queryParams.repo }).toArray();
+
+        // Check for project sub-allocation
+
+        if ( result.length == 0 && owner_id.startsWith("p/") ){
+            var proj = g_db.p.document(owner_id);
+            if ( proj.sub_repo ){
+                var alloc = g_db.alloc.firstExample({_from: proj.owner, _to: proj.sub_repo });
+                if ( !alloc )
+                    throw [g_lib.ERR_INTERNAL_FAULT,"Project sub-allocation references non-existent allocation."];
+
+                result = [{
+                    id:owner_id,
+                    repo:proj.sub_repo,
+                    max_size:proj.sub_alloc,
+                    tot_size:proj.sub_usage,
+                    max_count:alloc.max_count,
+                    path:alloc.path,
+                    sub_alloc:true
+                }];
+            }
+        }else{
+            var obj;
+            for ( var i in result ){
+                obj = result[i];
+                obj.id = owner_id;
+
+                delete obj._from;
+                obj.repo = obj._to;
+                delete obj._to;
+                delete obj._key;
+                delete obj._id;
+                delete obj._rev;
+            }
+        }
+    
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('repo', joi.string().required(), "Repo ID")
+.queryParam('subject', joi.string().optional(), "User/project ID of allocation")
+.summary('View allocation details')
+.description('View allocation details');
+
 function getAllocStats( a_repo, a_subject ){
     var sizes;
 
