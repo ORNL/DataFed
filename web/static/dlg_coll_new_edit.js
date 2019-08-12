@@ -6,11 +6,10 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
             <tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
             <tr><td >Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%'></textarea></td></tr>\
             <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
-            <tr><td>Publish: <span class='note'>**</span></td><td colspan='2'><label for='public' title='Publish collection to internal DataFed catalogs'></label><input type='checkbox' name='public' id='public'></td></tr>\
-            <tr><td>Topic:</td><td><input title='Topic for publication' type='text' id='topic' style='width:100%' disabled></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em' disabled><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
+            <tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-structure' style='font-size:.9em'></span></button></td></tr>\
             <tr><td>&nbsp</td></tr>\
             <tr><td colspan='3'><span class='note'>*&nbsp Required fields</span></td></tr>\
-            <tr><td colspan='3'><span class='note'>** Enables anonymous read-only access to all contained records</span></td></tr>\
+            <tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span></td></tr>\
             </table>" );
 
             
@@ -24,19 +23,6 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
     inputTheme($('input',frame));
     inputTheme($('textarea',frame));
     $(".btn",frame).button();
-
-    var public_cb = $("#public",frame);
-    public_cb.checkboxradio();
-    //tooltipTheme(public_cb);
-    public_cb.on( "change",function(ev){
-        if( public_cb.prop("checked")){
-            $("#topic",frame).prop("disabled",false);
-            $("#pick_topic",frame).button("option","disabled",false);
-        }else{
-            $("#topic",frame).val("").prop("disabled",true);
-            $("#pick_topic",frame).button("option","disabled",true);
-        }
-    });
 
     $("#pick_topic",frame).on("click",function(){
         dlgPickTopic( function( topic ){
@@ -70,7 +56,11 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                     getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
 
-                    obj.ispublic = public_cb.prop("checked");
+                    if ( obj.topic ){
+                        obj.ispublic = true;
+                    }else if ( obj.topic !== undefined ){
+                        obj.ispublic = false;
+                    }
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('destroy').remove();
@@ -86,7 +76,8 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                     getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
 
-                    obj.ispublic = public_cb.prop("checked");
+                    if ( obj.topic )
+                        obj.ispublic = true;
 
                     url += "create"
                 }
@@ -117,11 +108,10 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 }
                 $("#desc",frame).val(a_data.desc);
                 $("#parent_row",frame).css("display","none");
-                public_cb.prop("checked",a_data.ispublic).checkboxradio("refresh");
                 $("#topic",frame).val(a_data.topic);
 
                 if (( a_upd_perms & PERM_WR_REC ) == 0 ){
-                    inputDisable( $("#title,#desc,#alias,#public,#topic,#pick_topic", frame ));
+                    inputDisable( $("#title,#desc,#alias,#topic,#pick_topic", frame ));
                 }
 
             } else {
