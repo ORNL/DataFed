@@ -117,8 +117,11 @@ function makeBrowserTab(){
             inst.data_tree.visit( function(node){
                 idx = ids.indexOf( node.key );
                 if ( idx != -1 ){
-                    node.setTitle( inst.generateTitle( data[idx] ));
+                    //node.setTitle( inst.generateTitle( data[idx] ));
+                    node.title = inst.generateTitle( data[idx] );
+                    inst.updateIcon( node, data[idx] );
                     node.tooltip = inst.generateTooltip( data[idx] );
+                    node.renderTitle();
                     if ( a_reload )
                         inst.reloadNode( node );
                 }
@@ -1851,15 +1854,7 @@ function makeBrowserTab(){
         if ( item.locked )
             title += "<i class='ui-icon ui-icon-locked'></i> ";
 
-        //title += "\"" + escapeHTML(item.title) + "\"";
-        //style='display:inline-block;max-width:5em;overflow:hidden;text-overflow: ellipsis'
-
-        title += "\"<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>\"";
-
-        //if ( item.doi )
-        //    title += " doi:" + escapeHTML(item.doi);
-
-        title += "&nbsp&nbsp<span class='";
+        title += "\"<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>\"&nbsp&nbsp<span class='";
 
         if ( item.alias )
             title += "data-tree-alias'>("+ item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")";
@@ -1868,17 +1863,16 @@ function makeBrowserTab(){
 
         title += "</span>";
 
-        /*
-        if ( item.alias )
-            title += escapeHTML("\"" + item.title + "\" (" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")");
-        else
-            title += escapeHTML("\"" + item.title + "\" [" + item.id + "]");
-
-            //title += escapeHTML("\"" + item.title + "\" [" + item.id.substr(2) + "]");
-        */
-
-
         return title;
+    }
+
+    this.updateIcon = function( node, data ) {
+        if ( data.id.startsWith( "d/" )){
+            if ( data.doi )
+                node.icon = "ui-icon ui-icon-linkext";
+            else
+                node.icon = "ui-icon ui-icon-file";
+        }
     }
 
     this.generateTooltip = function( item ) {
