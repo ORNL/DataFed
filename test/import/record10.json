@@ -3,7 +3,6 @@
     "desc":"Maximum size JSON file for testing record import.",
     "keyw":"import,large,test",
     "alias":"import-rec-10",
-    "topic":"test.import.record",
     "doi":"imp/rec10",
     "data_url":"https://import/record?id=10",
     "md":{

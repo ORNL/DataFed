@@ -3,7 +3,6 @@
     "title":"Import Record #2 (updated)",
     "desc":"Nominal JSON file for testing record import. (updated)",
     "keyw":"import,nominal,test,updated",
-    "topic":"test.import.record.update",
     "md":{
         "update":true
     },

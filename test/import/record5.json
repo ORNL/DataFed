@@ -3,9 +3,9 @@
     "desc":"Maximum size JSON file for testing record import.",
     "keyw":"import,large,test",
     "alias":"import-rec-5",
-    "topic":"test.import.record",
     "doi":"imp/rec5",
     "data_url":"https://import/record?id=5",
+    "parent":"p:dtest:import-coll",
     "md":{
         "rec":5,
         "x":51,

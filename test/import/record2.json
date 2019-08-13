@@ -3,7 +3,6 @@
     "desc":"Nominal JSON file for testing record import.",
     "keyw":"import,nominal,test",
     "alias":"import-rec-2",
-    "topic":"test.import.record",
     "doi":"imp/rec2",
     "data_url":"https://import/record?id=2",
     "md":{
@@ -11,5 +10,6 @@
         "x":21,
         "y":22,
         "z":23
-    }
+    },
+    "parent":"import-coll"
 }
