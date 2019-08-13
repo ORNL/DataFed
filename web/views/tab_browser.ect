@@ -14,11 +14,11 @@
                             <div id="data_tree" class="no-border"></div>
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
-                            <button class="btn" id="btn_new_data" title='Create new data record' disabled>+Data</button>
-                            <button class="btn" id="btn_new_coll" title='Create new collection' disabled>+Coll</button>
-                            <button class="btn" id="btn_new_proj" title='Create new project'>+Proj</button>
-                            <button class="btn" id="btn_import_data" title='Import data record(s) into collection from JSON file(s)' disabled>Import</button>
-                            <button class="btn" id="btn_update_data" title='Update data record(s) from JSON file(s)'>Update</button>
+                            <button class="btn" id="btn_new_data" title='Create new data record' disabled><span class="ui-icon ui-icon-file"></span></button>
+                            <button class="btn" id="btn_new_coll" title='Create new collection' disabled><span class="ui-icon ui-icon-folder"></span></button>
+                            <button class="btn" id="btn_new_proj" title='Create new project'><span class="ui-icon ui-icon-box"></span></button>
+                            <button class="btn" id="btn_file_menu" title='Batch import/update menu'><span class="ui-icon ui-icon-disk"></span></button>
+
                             <button class="btn narrow" id="btn_prev_coll" title='Go to previous containing collection' disabled><span class="ui-icon ui-icon-triangle-1-w"></span></button>
                             <button class="btn narrow" id="btn_next_coll" title='Go to next containing collection' disabled><span class="ui-icon ui-icon-triangle-1-e"></span></button>
                             <input type="file" id="input_files" name="files[]" multiple style='display:none'/>
@@ -27,8 +27,13 @@
                     </div>
                 </div>
                 <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
-                    <div class="ui-widget-content" style="overflow:auto;height:100%">
-                        <div id="catalog_tree" class="no-border"></div>
+                    <div class="col-flex" style="height:100%">
+                        <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
+                            <div id="catalog_tree" class="no-border"></div>
+                        </div>
+                        <div class='content' style="flex:none;padding:.25em 0 0 0">
+                            <button class="btn" id="btn_cat_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
+                        </div>
                     </div>
                 </div>
                 <div id="tab-prov-graph" class="ui-widget-content" style="padding:0;overflow:hidden">
@@ -49,7 +54,7 @@
                             <div id="search_results_tree" class="no-border" ></div>
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
-                            <button class="btn" id="btn_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled>Go To</button>
+                            <button class="btn" id="btn_srch_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
                         </div>
                     </div>
                 </div>
@@ -162,6 +167,11 @@
         </div>
     </div>
 </div>
+<ul id="filemenu" class="ui-state-hover" style="display:none;z-index:1000;width:22ch;padding:.25em">
+    <li class="ui-state-disabled"><div id="btn_import_data">Import (to collection)</div></li>
+    <li><div id="btn_import_direct_data">Import (direct)</div></li>
+    <li><div id="btn_update_data">Update</div></li>
+</ul>
 <div id="ctxtmenu" style="display:none;z-index:1000">
 </div>
 <a id="download_link" style="display:hidden"></a>

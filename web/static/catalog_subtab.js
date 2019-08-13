@@ -52,9 +52,32 @@ function CatalogSubTab( browser, frame ){
             }
         },
         click: function(event, data) {
-            if ( data.targetType == "icon" && data.node.isFolder() ){
+            if ( event.which == null ){
+                // RIGHT-CLICK CONTEXT MENU
+
+                // Enable/disable actions
+                inst.cat_tree_div.contextmenu("enableEntry", "unlink", false );
+                inst.cat_tree_div.contextmenu("enableEntry", "cut", false );
+                inst.cat_tree_div.contextmenu("enableEntry", "paste", false );
+                inst.cat_tree_div.contextmenu("enableEntry", "new", false );
+
+                if ( data.node.key.charAt(0) == 'd' ){
+                    inst.cat_tree_div.contextmenu("enableEntry", "actions", true );
+                    inst.cat_tree_div.contextmenu("enableEntry", "copy", true );
+                }else if ( data.node.key.charAt(0) == 'c' ){
+                    inst.cat_tree_div.contextmenu("enableEntry", "actions", true );
+                    inst.cat_tree_div.contextmenu("enableEntry", "graph", false );
+                    inst.cat_tree_div.contextmenu("enableEntry", "put", false );
+                    inst.cat_tree_div.contextmenu("enableEntry", "copy", false );
+                    inst.cat_tree_div.contextmenu("enableEntry", "move", false );
+                }else{
+                    inst.cat_tree_div.contextmenu("enableEntry", "actions", false );
+                    inst.cat_tree_div.contextmenu("enableEntry", "copy", false );
+                }
+            }else if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
             }
+
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "topics" ) {

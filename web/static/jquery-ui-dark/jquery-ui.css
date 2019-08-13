@@ -118,7 +118,7 @@
     color: #8040FF
 }
 
-.ui-icon-folder
+.fancytree-node .ui-icon-folder
 {
     color: #dFbF40
 }
@@ -128,7 +128,7 @@
     color: #008F00
 }
 
-.ui-icon-box
+.fancytree-node .ui-icon-box
 {
     color: #4070FF
 }
@@ -143,7 +143,7 @@
     color: #8040FF
 }
 
-.ui-icon-file
+.fancytree-node .ui-icon-file
 {
     color: #008F00
 }

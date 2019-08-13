@@ -546,6 +546,14 @@ function makeBrowserTab(){
         });
     }
 
+    this.fileMenu = function(){
+        $("#filemenu").toggle().position({
+            my: "left bottom",
+            at: "left bottom",
+            of: this
+        }); //"fade"); //.focus(); //slideToggle({direction: "up"});
+    }
+
     this.actionNewProj = function() {
         dlgProjNewEdit(null,function(data){
             setStatusText("Project "+data.id+" created");
@@ -613,7 +621,7 @@ function makeBrowserTab(){
     this.actionImportData = asyncFunc( function( files ){
         var coll_id;
 
-        if ( !inst.update_files ){
+        if ( !inst.update_files && !inst.import_direct ){
             var node = inst.data_tree.activeNode;
 
             if ( !node ){
@@ -663,19 +671,20 @@ function makeBrowserTab(){
         var reader = new FileReader();
 
         reader.onload = function( e ){
+            //console.log("files onload");
             try{
                 var obj = JSON.parse( e.target.result )
                 var rec_count = 0;
 
                 if ( obj instanceof Array ){
                     for ( i in obj ){
-                        if ( !inst.update_files )
+                        if ( !inst.update_files && !inst.import_direct )
                             obj[i].parent = coll_id;
                         payload.push( obj[i] );
                     }
                     rec_count += obj.length;
                 }else{
-                    if ( !inst.update_files )
+                    if ( !inst.update_files && !inst.import_direct )
                         obj.parent = coll_id;
                     payload.push( obj );
                     rec_count++;
@@ -698,9 +707,13 @@ function makeBrowserTab(){
                         dataCreateBatch( JSON.stringify( payload ), function( ok, data ){
                             if ( ok ){
                                 setStatusText("Imported " + rec_count + " record" + (rec_count>1?"s":""));
-                                var node = inst.data_tree.getNodeByKey( coll_id );
-                                if ( node )
-                                    inst.reloadNode( node );
+                                if ( inst.import_direct ){
+                                    inst.refreshUI();
+                                }else{
+                                    var node = inst.data_tree.getNodeByKey( coll_id );
+                                    if ( node )
+                                        inst.reloadNode( node );
+                                }
                             }else{
                                 dlgAlert( "Import Error", data );
                             }
@@ -1101,13 +1114,19 @@ function makeBrowserTab(){
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
-        $("#btn_import_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
+        //$("#btn_import_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         $("#btn_new_coll",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
         //$("#btn_unlink",inst.frame).button("option","disabled",(bits & 0x80) != 0);
         $("#btn_dep_graph",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
         $("#btn_prev_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
         $("#btn_next_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
-        $("#btn_first_par_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
+        $("#btn_srch_first_par_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
+        $("#btn_cat_first_par_coll",inst.frame).button("option","disabled",(bits & 0x200) != 0 );
+
+        if ( bits & 0x100 )
+            $("#filemenu li:nth-child(1)").addClass("ui-state-disabled");
+        else
+            $("#filemenu li:nth-child(1)").removeClass("ui-state-disabled");
 
         inst.data_tree_div.contextmenu("enableEntry", "edit", (bits & 1) == 0 );
         //inst.data_tree_div.contextmenu("enableEntry", "dup", (bits & 2) == 0 );
@@ -3298,15 +3317,26 @@ function makeBrowserTab(){
     this.data_md_tree = $("#data_md_tree").fancytree("getTree");
 
     // Connect event/click handlers
+    $("#btn_file_menu",inst.frame).on('click', inst.fileMenu );
     $("#btn_new_proj",inst.frame).on('click', inst.actionNewProj );
     $("#btn_new_data",inst.frame).on('click', inst.actionNewData );
     $("#btn_new_coll",inst.frame).on('click', inst.actionNewColl );
     $("#btn_import_data",inst.frame).on('click', function(){
-        inst.update_files = false
+        $("#filemenu").hide();
+        inst.update_files = false;
+        inst.import_direct = false;
+        $('#input_files',inst.frame).val("");
+        $('#input_files',inst.frame).trigger('click');
+    });
+    $("#btn_import_direct_data",inst.frame).on('click', function(){
+        $("#filemenu").hide();
+        inst.update_files = false;
+        inst.import_direct = true;
         $('#input_files',inst.frame).val("");
         $('#input_files',inst.frame).trigger('click');
     });
     $("#btn_update_data",inst.frame).on('click', function(){
+        $("#filemenu").hide();
         inst.update_files = true
         $('#input_files',inst.frame).val("");
         $('#input_files',inst.frame).trigger('click');
@@ -3349,7 +3379,8 @@ function makeBrowserTab(){
     $("#btn_dep_graph",inst.frame).on('click', inst.actionDepGraph );
     $("#btn_prev_coll",inst.frame).on('click', inst.actionPrevParent );
     $("#btn_next_coll",inst.frame).on('click', inst.actionNextParent );
-    $("#btn_first_par_coll",inst.frame).on('click', inst.actionFirstParent );
+    $("#btn_srch_first_par_coll",inst.frame).on('click', inst.actionFirstParent );
+    $("#btn_cat_first_par_coll",inst.frame).on('click', inst.actionFirstParent );
 
     $("#btn_exp_node",inst.frame).on('click', inst.actionGraphNodeExpand );
     $("#btn_col_node",inst.frame).on('click', inst.actionGraphNodeCollapse );
@@ -3525,7 +3556,7 @@ function makeBrowserTab(){
         show: false,
         hide: false,
         menu: [
-            {title: "Actions", children: [
+            {title: "Actions", cmd: "actions", children: [
                 {title: "Edit", action: inst.actionEditSelected, cmd: "edit" },
                 //{title: "Duplicate", cmd: "dup" },
                 {title: "Delete", action: inst.actionDeleteSelected, cmd: "del" },
@@ -3561,6 +3592,7 @@ function makeBrowserTab(){
     };
 
     inst.data_tree_div.contextmenu(ctxt_menu_opts);
+    inst.cat_tree_div.contextmenu(ctxt_menu_opts);
     inst.results_tree_div.contextmenu(ctxt_menu_opts);
 
     $("#data-tabs").tabs({
@@ -3663,6 +3695,26 @@ function makeBrowserTab(){
             inst.actionImportData( ev.target.files );
         }
     });
+
+    $("#filemenu").menu().removeClass("ui-widget-content").addClass("ui-corner-all");
+
+    this.filemenutimer = null;
+    $("#filemenu").mouseout(function(){
+        if ( !this.filemenutimer ){
+            this.filemenutimer = setTimeout( function(){
+                $("#filemenu").hide();
+                this.filemenutimer = null;
+            }, 1000 );
+        }
+    });
+
+    $("#filemenu").mouseover(function(){
+        if ( this.filemenutimer ){
+            clearTimeout(this.filemenutimer);
+            this.filemenutimer = null;
+        }
+    });
+
 
     // Graph Init
     var zoom = d3.zoom();

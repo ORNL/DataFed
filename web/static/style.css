@@ -170,6 +170,17 @@ svg text
     padding:0!important;
 }
 
+.panel-sunk
+{
+    display:inline-block;
+    box-shadow: 2px 2px 5px black inset;
+    padding:2px;
+    /*background-color:#444;*/
+    border-radius:6px;
+    color: #aaa;
+    vertical-align:middle!important;
+}
+
 .tooltip-style
 {
     font-size:85%!important;
