@@ -24,6 +24,22 @@
     background: #F0F0F0!important;
 }
 
+input.ui-state-disabled
+{
+	box-sizing: border-box;
+	background-color: #e0e0e0;
+	border: 1px solid #808080;
+	color: #000000;
+}
+
+textarea.ui-state-disabled
+{
+	box-sizing: border-box;
+	background-color: #e0e0e0;
+	border: 1px solid #808080;
+	color: #000000;
+}
+
 /* Dependency Graph Styles */
 
 .links{

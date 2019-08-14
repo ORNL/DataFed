@@ -1,11 +1,11 @@
-function dlgProjNewEdit(a_data,a_cb) {
+function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     var frame = $(document.createElement('div'));
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\
             <table class='form-table'>\
                 <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
-                <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+                <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
                 <tr><td>Sub&#8209;allocation:</td><td><select id='suballoc'><option value='1'>None</option></select></td></tr>\
                 <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%'></input></td></tr>\
@@ -52,6 +52,11 @@ function dlgProjNewEdit(a_data,a_cb) {
         resizable: true,
         closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('destroy').remove();
+            }
+        },{
             text: a_data?"Update":"Create",
             click: function() {
                 var obj = {};
@@ -136,11 +141,6 @@ function dlgProjNewEdit(a_data,a_cb) {
                         dlgAlert( "Project " + (a_data?"Update":"Create") + " Error", data );
                     }
                 });
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
             }
         }],
         open: function(event,ui){

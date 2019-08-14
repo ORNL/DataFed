@@ -833,6 +833,16 @@ function makeBrowserTab(){
         }
     }
 
+    this.permGateAny = function( item_id, req_perms, cb ){
+        getPerms( item_id, req_perms, function( perms ){
+            if (( perms & req_perms ) == 0 ){
+                setStatusText( "Permission Denied.", 1 );
+            }else{
+                cb( perms );
+            }
+        });
+    }
+
     this.actionEditSelected = function() {
         if ( async_guard )
             return;
@@ -843,57 +853,54 @@ function makeBrowserTab(){
             return;
 
         var id = ids[0];
-        var req_perms = 0;
 
-        if ( id.charAt(0) == "p" || id.charAt(0) == "c")
-            req_perms = PERM_WR_REC;
-        else if ( id.charAt(0) == "d" )
-            req_perms = PERM_WR_REC | PERM_WR_META;
-        else if ( id.charAt(0) == 'q' ){
-            sendQueryView( id, function( ok, old_qry ){
-                if ( ok ){
-                    dlgQueryNewEdit( old_qry, function( data ){
-                        refreshUI( id, data, true );
+        switch( id.charAt(0) ){
+            case "p":
+                permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
+                    viewProj( id, function( data ){
+                        if ( data ){
+                            dlgProjNewEdit( data, perms, function( data ){
+                                refreshUI( id, data );
+                            });
+                        }
                     });
-                }else
-                    setStatusText("Query Edit Error: " + old_qry, 1);
-            });
-            return;
-        }else
-            return;
-
-        getPerms( id, req_perms, function( perms ){
-            if (( perms & req_perms ) == 0 ){
-                setStatusText( "Edit Error: Permission Denied.", 1 );
-                return;
-            }
-
-            if ( id.charAt(0) == 'p' ){
-                viewProj( id, function( data ){
-                    if ( data ){
-                        dlgProjNewEdit(data,function(data){
-                            refreshUI( id, data );
-                        });
-                    }
                 });
-            }else if ( id.charAt(0) == "c" ) {
-                viewColl( id, function( data ){
-                    if ( data ){
-                        dlgCollNewEdit(data,null,perms,function(data){
-                            refreshUI( id, data );
-                        });
-                    }
+                break;
+            case "c":
+                permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
+                    viewColl( id, function( data ){
+                        if ( data ){
+                            dlgCollNewEdit( data, null, perms, function( data ){
+                                refreshUI( id, data );
+                            });
+                        }
+                    });
                 });
-            } else if ( id.charAt(0) == "d" ) {
-                viewData( id, function( data ){
-                    if ( data ){
-                        dlgDataNewEdit(DLG_DATA_EDIT,data,null,perms,function(data){
-                            refreshUI( id, data );
-                        });
-                    }
+                break;
+            case "d":
+                permGateAny( id, PERM_WR_REC | PERM_WR_META | PERM_WR_DATA, function( perms ){
+                    viewData( id, function( data ){
+                        if ( data ){
+                            dlgDataNewEdit( DLG_DATA_EDIT, data, null, perms, function( data ){
+                                refreshUI( id, data );
+                            });
+                        }
+                    }); 
                 }); 
-            }
-        });
+                break;
+            case 'q':
+                sendQueryView( id, function( ok, old_qry ){
+                    if ( ok ){
+                        dlgQueryNewEdit( old_qry, function( data ){
+                            refreshUI( id, data, true );
+                        });
+                    }else
+                        setStatusText("Query Edit Error: " + old_qry, 1);
+                });
+                return;
+            default:
+                return;
+        }
     }
 
     /*

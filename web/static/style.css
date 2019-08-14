@@ -210,6 +210,17 @@ svg text
     padding: 0px 0px 0px 0px!important;
 }
 
+.btn.btn-icon
+{
+    height:1.35em;
+    padding:0 0.1em!important;
+}
+
+.btn.btn-icon span
+{
+    font-size:.9em;
+}
+
 .setting-table
 {
     width:100%;
@@ -233,17 +244,28 @@ svg text
 .form-table
 {
     width:100%;
+    /*vertical-align:baseline;*/
+}
+
+.form-table tr
+{
+    vertical-align:middle;
 }
 
 /*.form-table td:last-child{*/
-.form-table td:nth-child(2){
-        width:100%;
+.form-table td:nth-child(1){
+    /*vertical-align:top;*/
 }
 
-.form-table td
-{
-    vertical-align:top;
+.form-table td:nth-child(2){
+    width:100%;
 }
+
+
+/*.form-table td
+{
+    vertical-align:baseline;
+}*/
 
 .info_table
 {
