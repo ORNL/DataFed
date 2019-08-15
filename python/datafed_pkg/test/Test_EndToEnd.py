@@ -121,7 +121,7 @@ def unescape_for_JSON(string):
         backslashes.
 
     """
-    unescaped_string = string.replace("\'", "'") .replace('\!', '!')
+    unescaped_string = string.replace("\\'", "'") .replace('\\!', '!')
     return str(unescaped_string)
 
 
@@ -249,7 +249,7 @@ def make_title(fits_requirements = True):
         pass
     else:
         empty_title = " "
-        too_long_title = string_generator(82, 120, False, False)
+        too_long_title = string_generator(182, 200, False, False)
         non_compliant_functions = [empty_title, too_long_title]
         title = r.choice(non_compliant_functions)
         if title is empty_title:
@@ -413,32 +413,31 @@ class DataRecord(object):
 
     @classmethod
     def generate(cls, fits_requirements = True):
+
         if fits_requirements:
-            dr = DataRecord("d/data_id", make_alias(True), \
-                make_title(True), make_desc(True), DataRecord.make_topic(True)\
-                ,"Keywords","u/breetju","Locked","5665","repo/test","Uploaded"\
-                ,"Created","Updated","{\n    \"whatever\": \"x = 579975\",\n \
+            dr = DataRecord("d/data_id", make_alias(True), make_title(True), make_desc(True), DataRecord.make_topic(True),"Keywords","u/breetju","Locked","5665","repo/test","Uploaded"                ,"Created","Updated","{\n    \"whatever\": \"x = 579975\",\n \
                 \"blue\": \"is a colour\"\n}", "[]")
-            pass
+
         else:
             dr = DataRecord("d/data_id", make_alias(True), make_title(True),
                 make_desc(True), DataRecord.make_topic(True),"Keywords",
                 "u/breetju","Locked","5665","repo/test","Uploaded","Created",
                 "Updated","{\n    \"whatever\": \"x = 579975\",\n    \"blue\":is a colour\"\n}", "[]")
-            random_detail = r.choice([make_alias, make_title, make_desc, \
-                DataRecord.make_topic])
-            dr.random_detail = random_detail(False)
-            pass
+            if r.choice([0,1]) == 0:
+                dr.alias = make_alias(False)
+            else:
+                dr.title = make_title(False)
+
         return dr
 
     def as_text_input(self):
-        text = 'data create "{}" -a "{}" -d "{}" -p "{}" -kw "{}"'.format(escape(self.title), escape(self.alias), escape(self.desc), escape(self.topic), escape(self.keywords))
+        text = './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'.format(escape(self.title), escape(self.alias), escape(self.desc), escape(self.keywords))
 
         return text
 
 
     def as_py_input(self):
-        command = 'data create "{}" -a "{}" -d "{}" -p "{}" -kw "{}"'.format(self.title, self.alias, self.desc, self.topic, self.keywords) # TODO: add keywords and topic
+        command = 'data create "{}" -a "{}" -d "{}" -kw "{}"'.format(self.title, self.alias, self.desc, self.keywords) # TODO: add keywords and topic
         return command
 
     def type_change(self, form='as_dict'):  #### fix this to use magic method __str__
@@ -586,6 +585,15 @@ testdata = '/data/unittesting/testfiles/SampleData.txt'
 
 #Setting up a class for testing Data Records
 
+test_commands = {
+    'text_create' : './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'
+}
+
+def delete_testing_files():
+    os.remove("~/jbreet/DataFed/python/datafed_pkg/test/datarecordsinput.txt")
+    os.remove("~/jbreet/DataFed/python/datafed_pkg/test/outputfile.txt")
+'''
+
 
 class TestDataBasicReturn(ut.TestCase):
 
@@ -610,86 +618,66 @@ class TestDataBasicText(ut.TestCase):
     # TODO: using object return, generate, check, then delete data record
     def test_dr_create_and_delete(self):
         config = datafed.Config.API()
-        datafed.CommandLib.init()
+        #datafed.CommandLib.init()
         self.dr = DataRecord.generate(True)
-        details = [str(self.dr.alias) + "\"", str(self.dr.title) + "\"",
-                   str(self.dr.desc) + "\""]
+        details = [str(self.dr.alias), str(self.dr.title),
+                   str(self.dr.desc)]
+        print(details)
         with open('datarecordsinput.txt', 'a+') as ipfile:
             ipfile.write(self.dr.as_text_input())
+            print(ipfile.read())
         with open("outputfile.txt", 'a+') as opfile:
             subprocess.run(self.dr.as_text_input(), stdout=opfile, \
                                stderr=subprocess.STDOUT, shell=True)
         with open("outputfile.txt", 'r') as opfile:
-            outs = opfile.read().split(" ")
-        self.assertIs(all(elem in outs for elem in details), True, \
-                          msg="Data-create command unexpected failure")
-        try:
-            with open("outputfile.txt", "w+") as opfile:
-                subprocess.run('datafed data delete {}'.format(self.dr.alias),
-                               stdout=opfile, stderr=subprocess.STDOUT, shell=True)
-            with open('outputfile.txt', 'r') as opfile:
-                outs = opfile.read()
-            self.assertIs("OK" in outs, True, msg="Data-delete of single \
-                record failed")
-        except AssertionError:
-            print("Manual delete required")
-
+            outs = opfile.read().split("\n")
+            print(outs)
+            words = [i.split("              ") for i in outs]
+            flat_list = []
+            for sublist in words:
+                for item in sublist:
+                    flat_list.append(unescape_for_JSON(item.strip()))
+            print(flat_list)
+        with self.subTest("Create"):
+            self.assertIs(all(elem in flat_list for elem in details), True, \
+                              msg="Data-create command unexpected failure")
+        with self.subTest("Delete"):
+            try:
+                with open("outputfile.txt", "w+") as opfile:
+                    subprocess.run('./scripts/datafed data delete {}'.format(self.dr.alias),
+                                   stdout=opfile, stderr=subprocess.STDOUT, shell=True)
+                with open('outputfile.txt', 'r') as opfile:
+                    outs = opfile.read()
+                self.assertIs("OK" in outs, True, msg="Data-delete of single \
+                    record failed")
+            except AssertionError:
+                print("Manual delete required")
 '''
-class TestDRText(ut.TestCase):
-    def setUp(self):
-        self.drcorr0 = DataRecord.generate(True)
-        self.drcorr1 = DataRecord.generate(True)
-        subprocess.run(
 
-
-
-
-class TestDataRecords(ut.TestCase):
-
+class TestDataRecords_Text(ut.TestCase):
+    '''
     def setUp(self): #happens before EVERY method in testcase
         self.drcorr0 = DataRecord.generate(True)
         self.drcorr1 = DataRecord.generate(True)
-        subprocess.run(f'{self.drcorr1.as_input_str()}', shell=True)
+        subprocess.run(self.drcorr1.as_text_input(), shell=True)
     # MAKE THESE DR AS PART OF SETUP, NOT TEST??? NO WAY TO GURANTEE DR-CREATE TEST WILL PASS? BUT NOT PASSING IS FINE EITHER WAY BECAUSE NOTHIN TO DELETE I GUESS
          #Needs to be generated in setUp
 
 
 
     def tearDown(self): #Happens after EVERY method in test method
-        subprocess.run(f'sdms data-delete {self.drcorr1.alias}', shell=True)
+        subprocess.run('./scripts/datafed data delete {}'.format(self.drcorr1.alias), shell=True)
         files = ["jsonoutput.json", "drinput.txt", "outputfile.txt"]
         for item in files:
             if os.path.exists(item):
                 os.remove(item)
             else:
                 pass
-
+    '''
 
 
     ############################# NEED SETUP
-
-    def test_dr_delete_single(self):
-        with open("outputfile.txt", "w+") as opfile:
-            subprocess.run(f'sdms data-delete {self.drcorr1.alias}',
-                stdout=opfile, stderr=subprocess.STDOUT, shell=True)
-        with open('outputfile.txt', 'r') as opfile:
-            outs = opfile.read()
-        self.assertIs("SUCCESS" in outs, True, msg="Data-delete of single \
-            record failed")
-
-    def test_dr_create(self): #Take randostring, put into commands, pass to sdms, and write output to file
-        details = [str(self.drcorr0.alias)+"\"", str(self.drcorr0.title)+"\"",
-            str(self.drcorr0.desc)+"\""]
-        with open('datarecordsinput.txt', 'a+') as ipfile:
-            ipfile.write(self.drcorr0.type_change("as_str"))
-        with open("outputfile.txt", 'a+') as opfile:
-            subprocess.run(f'{self.drcorr0.as_input_str()}', stdout=opfile,\
-                stderr=subprocess.STDOUT, shell=True)
-        with open("outputfile.txt", 'r') as opfile:
-            outs = opfile.read().split(" ")
-        self.assertIs(all(elem in outs for elem in details), True,\
-            msg="Data-create command unexpected failure")
-
+    '''
     def test_dr_create_JSON(self): #Take randostring, put into commands, pass to sdms, and write output to file
         with open('drinput.txt', 'a+') as ipfile:
             ipfile.write(self.drcorr0.as_input_str()) #writes a stringified copy of the DataRecord object as dictionary
@@ -707,8 +695,22 @@ class TestDataRecords(ut.TestCase):
         with self.subTest("Confirming desc"):
             self.assertEqual(unescape_for_JSON(op["data"][0]["desc"])),
                 self.drcorr0.desc, msg="Returned desc does not match")
-
+    '''
     def test_dr_create_incorrect(self):
+        drerr = DataRecord.generate(fits_requirements=False)
+        drerrinput = drerr.as_text_input()
+        with open('datarecordsinput.txt', 'w+') as ipfile:
+            ipfile.write(drerrinput)
+        with open("outputfile.txt", 'w+') as opfile:
+            subprocess.run(drerrinput,stdout=opfile,stderr=subprocess.STDOUT,shell=True)
+        with open('outputfile.txt', 'r') as opfile:
+            outs = opfile.read()
+            print(outs)
+        self.assertIs("ID:" not in outs, True, msg="Data-create of \
+            incorrect data record unexpected pass. Manual delete required")
+
+    '''
+    def test_dr_create_incorrect_json(self):
         drerr = DataRecord.generate(False)
         drerrinput = drerr.as_input_str()
         with open('drinput.txt', 'a+') as ipfile:
@@ -720,20 +722,20 @@ class TestDataRecords(ut.TestCase):
             op = json.load(jsonopfile)
         self.assertEqual(op["status"], "ERROR", msg="Data-create of \
             incorrect data record unexpected pass")
-
+    '''
+'''
     def test_dr_update(self):
         new_title = "New Title"
         with open("jsonoutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms du {self.drcorr1.alias} -t "{new_title}"\
-                -J', stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
+            subprocess.run(f'./scripts/datafed du {self.drcorr1.alias} -t "{new_title}" -J', stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("jsonoutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
-        self.assertEqual(op["data"][0]["title"], new_title,
-            msg="Update of Data Record title unsuccessful")
-
+        self.assertEqual(op["data"][0]["title"], new_title, msg="Update of Data Record title unsuccessful")
+'''
+'''
     def test_dr_put(self):
         with open("jsonoutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms put "{self.drcorr1.alias}" "{testdata}"\
+            subprocess.run(f'./scripts/datafed put "{self.drcorr1.alias}" "{testdata}"\
                 --wait -J', stdout=jsonopfile, stderr=subprocess.STDOUT,
                 shell=True)
         with open("jsonoutput.json", 'r') as jsonopfile:
@@ -743,7 +745,7 @@ class TestDataRecords(ut.TestCase):
 
     def test_dr_view(self):
         with open("jsonoutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms dv "{self.drcorr1.alias}" -D -J',
+            subprocess.run(f'./scripts/datafed dv "{self.drcorr1.alias}" -D -J',
                 stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("jsonoutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
@@ -758,7 +760,7 @@ class TestDataRecords(ut.TestCase):
         drcorr2 = DataRecord.generate(True)
         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -A \
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A \
                 "{drcorr2.alias},0" -J', stdout=jsonopfile,
                 stderr=subprocess.STDOUT, shell=True)
         with self.subTest("Confirming dependency created from owner \
@@ -779,7 +781,7 @@ class TestDataRecords(ut.TestCase):
                     according to owner does not match")
         with self.subTest("Confirming dependency from relative's perspective"):
             with open("jsonoutput.json", "w+") as jsonopfile:
-                subprocess.run(f'sdms dv "{drcorr2.alias}" -J',
+                subprocess.run(f'./scripts/datafed dv "{drcorr2.alias}" -J',
                     stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
             with open("jsonoutput.json", "r") as jsonopfile:
                 deps = json.load(jsonopfile)
@@ -795,13 +797,13 @@ class TestDataRecords(ut.TestCase):
                 self.assertEqual(unescape_for_JSON(str(deps["data"][0]["deps"][
                     0]["dir"])), 0, msg="Add dependency type 0 ERROR: \
                     dir according to relative does not match")
-        subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
 
     def test_deps_add_1(self):
         drcorr2 = DataRecord.generate(True)
         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -A "\
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A "\
                 {drcorr2.alias},1" -J', stdout=jsonopfile,
                 stderr=subprocess.STDOUT, shell=True)
         with self.subTest("Confirming dependency created from \
@@ -822,7 +824,7 @@ class TestDataRecords(ut.TestCase):
                     according to owner does not match")
         with self.subTest("Confirming dependency from relative's perspective"):
             with open("jsonoutput.json", "w+") as jsonopfile:
-                subprocess.run(f'sdms dv "{drcorr2.alias}" -J',
+                subprocess.run(f'./scripts/datafed dv "{drcorr2.alias}" -J',
                     stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
             with open("jsonoutput.json", "r") as jsonopfile:
                 deps = json.load(jsonopfile)
@@ -838,13 +840,13 @@ class TestDataRecords(ut.TestCase):
                 self.assertEqual(unescape_for_JSON(str(deps["data"][0]["deps"][
                     0]["dir"])), 0, msg="Add dependency type 1 ERROR: dir \
                     according to relative does not match")
-            subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
+            subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
 
     def test_deps_add_2(self):
         drcorr2 = DataRecord.generate(True)
         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -A \
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A \
                 "{self.drcorr1.alias},2" -J', stdout=jsonopfile,
                 stderr=subprocess.STDOUT, shell=True)
         with self.subTest("Confirming dependency created from owner\
@@ -865,7 +867,7 @@ class TestDataRecords(ut.TestCase):
                     according to owner does not match")
         with self.subTest("Confirming dependency from relative's perspective"):
             with open("jsonoutput.json", "w+") as jsonopfile:
-                subprocess.run(f'sdms dv "{drcorr2.alias}" -J',
+                subprocess.run(f'./scripts/datafed dv "{drcorr2.alias}" -J',
                     stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
             with open("jsonoutput.json", "r") as jsonopfile:
                 deps = json.load(jsonopfile)
@@ -881,32 +883,32 @@ class TestDataRecords(ut.TestCase):
                 self.assertEqual(unescape_for_JSON(str(deps["data"][0]["deps"][
                     0]["dir"])), 0, msg="Add dep type 2 ERROR: dir according \
                     to relative does not match")
-        subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
 
     def test_deps_remove(self):
         drcorr2 = DataRecord.generate(True)
         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
-        subprocess.run(f'sdms du "{self.drcorr1.alias}" -A "{drcorr2.alias},0"\
+        subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A "{drcorr2.alias},0"\
             -J', shell=True)#1
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -R \
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -R \
                 "{drcorr2.alias}" -J', stdout=jsonopfile,
                 stderr=subprocess.STDOUT, shell=True)
         with open("jsonoutput.json", "r") as jsonopfile:
             deps = json.load(jsonopfile)
         self.assertEqual(deps["data"][0]["deps"][0], '[]',
             msg="Remove dependency type 0 failed")
-        subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
 
     def test_deps_replace_single(self):
         drcorr2 = DataRecord.generate(True)
         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
         drcorr3 = DataRecord.generate(True)
         subprocess.run(f'{drcorr3.as_input_str()}', shell=True)
-        subprocess.run(f'sdms du "{self.drcorr1.alias}" -A "{drcorr2.alias},0"\
+        subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A "{drcorr2.alias},0"\
             -J', shell=True)  #remove and add simultaneously #2
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -R \
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -R \
                 "{drcorr2.alias}" -A "{drcorr3.alias},2" -J', stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("jsonoutput.json", "r") as jsonopfile:
             deps = json.load(jsonopfile)
@@ -922,8 +924,8 @@ class TestDataRecords(ut.TestCase):
             self.assertEqual(unescape_for_JSON(str(deps["data"][0]["deps"][
                 0]["dir"])), 1, msg="Replace depERROR: dir according to \
                 owner does not match")
-        subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
-        subprocess.run(f'sdms data-delete {drcorr3.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr3.alias}', shell=True)
 
     def test_deps_replace_multi(self):
         drcorr2 = DataRecord.generate(True)
@@ -936,10 +938,10 @@ class TestDataRecords(ut.TestCase):
         subprocess.run(f'{drcorr5.as_input_str()}', shell=True)
         drcorr6 = DataRecord.generate(True)
         subprocess.run(f'{drcorr6.as_input_str()}', shell=True)
-        subprocess.run(f'sdms du "{self.drcorr1.alias}" -A "{drcorr2.alias},0" \
+        subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A "{drcorr2.alias},0" \
             -A "{drcorr3.alias},1" -J', shell=True)#3
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -C -A \
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -C -A \
                 "{drcorr4.alias},0" -A "{drcorr5.alias},1" -A \
                 "{drcorr6.alias},2" -J', stdout=jsonopfile,
                 stderr=subprocess.STDOUT, shell=True)
@@ -981,28 +983,28 @@ class TestDataRecords(ut.TestCase):
             self.assertEqual(unescape_for_JSON(str(deps["data"][0]["deps"][
                 2]["dir"])), 1, msg="Replace dependency add type 2 \
                 ERROR: dir according to owner does not match")
-        subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
-        subprocess.run(f'sdms data-delete {drcorr3.alias}', shell=True)
-        subprocess.run(f'sdms data-delete {drcorr4.alias}', shell=True)
-        subprocess.run(f'sdms data-delete {drcorr5.alias}', shell=True)
-        subprocess.run(f'sdms data-delete {drcorr6.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr3.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr4.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr5.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr6.alias}', shell=True)
 
     def test_deps_clear(self): #multiple delete
         drcorr2 = DataRecord.generate(True)
         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
         drcorr3 = DataRecord.generate(True)
         subprocess.run(f'{drcorr3.as_input_str()}', shell=True)
-        subprocess.run(f'sdms du "{self.drcorr1.alias}" -A "{drcorr2.alias},0"\
+        subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -A "{drcorr2.alias},0"\
             -A "{drcorr3.alias},1" -J', shell=True)
         with open("jsonoutput.json", "w+") as jsonopfile:
-            subprocess.run(f'sdms du "{self.drcorr1.alias}" -C -J',
+            subprocess.run(f'./scripts/datafed du "{self.drcorr1.alias}" -C -J',
                 stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("jsonoutput.json", "r") as jsonopfile:
             deps = json.load(jsonopfile)
         self.assertEqual(deps["data"][0]["deps"][0], '[]',
             msg="Clear dependencies failed")
-        subprocess.run(f'sdms data-delete {drcorr2.alias}', shell=True)
-        subprocess.run(f'sdms data-delete {drcorr3.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed data-delete {drcorr3.alias}', shell=True)
 '''
 
 '''
@@ -1014,7 +1016,7 @@ class TestCollections(ut.TestCase):
         subprocess.run(f'{self.collcorr1.as_input_str()}', shell=True)
 
     def tearDown(self):
-        subprocess.run(f'sdms coll-delete {self.collcorr1.alias}', shell=True)
+        subprocess.run(f'./scripts/datafed coll-delete {self.collcorr1.alias}', shell=True)
         files = ["colloutput.json", "collinput.txt", "outputfile.txt"]
         for item in files:
             if os.path.exists(item):
@@ -1024,7 +1026,7 @@ class TestCollections(ut.TestCase):
 
     def test_coll_delete(self):
         with open("outputfile.txt", "w+") as opfile:
-            subprocess.run(f'sdms coll-delete {self.collcorr1.alias}',
+            subprocess.run(f'./scripts/datafed coll-delete {self.collcorr1.alias}',
                 stdout=opfile, stderr=subprocess.STDOUT, shell=True)
         with open('outputfile.txt', 'r') as opfile:
             outs = opfile.read()
@@ -1065,7 +1067,7 @@ class TestCollections(ut.TestCase):
 
     def test_coll_update(self):
         with open("colloutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms cu "{self.collcorr1.alias}" -t "New Title" \
+            subprocess.run(f'./scripts/datafed cu "{self.collcorr1.alias}" -t "New Title" \
                 -J', stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("colloutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
@@ -1074,7 +1076,7 @@ class TestCollections(ut.TestCase):
 
     def test_coll_view(self):
         with open("colloutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms cv {self.collcorr1.alias} -J',
+            subprocess.run(f'./scripts/datafed cv {self.collcorr1.alias} -J',
                 stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("colloutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
@@ -1089,9 +1091,9 @@ class TestCollections(ut.TestCase):
         collcorr2 = Collection.generate(True)
         subprocess.run(f'{collcorr2.as_input_str()}', shell=True)
         with open("colloutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms link "{collcorr2.alias}" \
+            subprocess.run(f'./scripts/datafed link "{collcorr2.alias}" \
                 "{self.collcorr1.alias}" -J', shell=True)
-            subprocess.run(f'sdms ls "{self.collcorr1.alias}" -J',
+            subprocess.run(f'./scripts/datafed ls "{self.collcorr1.alias}" -J',
                 stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("colloutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
@@ -1104,13 +1106,13 @@ class TestCollections(ut.TestCase):
         subprocess.run(f'{collcorr2.as_input_str()}', shell=True)
         collcorr3 = Collection.generate(True)
         subprocess.run(f'{collcorr3.as_input_str()}', shell=True)
-        subprocess.run(f'sdms link "{collcorr2.alias}" "{self.collcorr1.alias}"\
+        subprocess.run(f'./scripts/datafed link "{collcorr2.alias}" "{self.collcorr1.alias}"\
             -J', shell=True)
-        subprocess.run(f'sdms move "{collcorr2.alias}" "{collcorr3.alias}" -J',\
+        subprocess.run(f'./scripts/datafed move "{collcorr2.alias}" "{collcorr3.alias}" -J',\
             shell=True)
         with self.subTest("Confirming unlink from previous parent"):
             with open("colloutput.json", 'w+') as jsonopfile:
-                subprocess.run(f'sdms ls "{self.collcorr1.alias}" -J',
+                subprocess.run(f'./scripts/datafed ls "{self.collcorr1.alias}" -J',
                     stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
             with open("colloutput.json", 'r') as jsonopfile:
                 op = json.load(jsonopfile)
@@ -1119,7 +1121,7 @@ class TestCollections(ut.TestCase):
                 move command failed")
         with self.subTest("Confirming link to new parent"):
             with open("colloutput.json", 'w+') as jsonopfile:
-                subprocess.run(f'sdms ls "{collcorr3.alias}" -J',
+                subprocess.run(f'./scripts/datafed ls "{collcorr3.alias}" -J',
                     stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
             with open("colloutput.json", 'r') as jsonopfile:
                 op = json.load(jsonopfile)
@@ -1130,12 +1132,12 @@ class TestCollections(ut.TestCase):
     def test_coll_unlink(self):
         collcorr2 = Collection.generate(True)
         subprocess.run(f'{collcorr2.as_input_str()}', shell=True)
-        subprocess.run(f'sdms link "{collcorr2.alias}" "{self.collcorr1.alias}"\
+        subprocess.run(f'./scripts/datafed link "{collcorr2.alias}" "{self.collcorr1.alias}"\
             -J', shell=True)
         with open("colloutput.json", 'w+') as jsonopfile:
-            subprocess.run(f'sdms unlink "{collcorr2.alias}" \
+            subprocess.run(f'./scripts/datafed unlink "{collcorr2.alias}" \
                 "{self.collcorr1.alias}" -J', shell=True)
-            subprocess.run(f'sdms ls "{self.collcorr1.alias}" -J',
+            subprocess.run(f'./scripts/datafed ls "{self.collcorr1.alias}" -J',
                 stdout=jsonopfile, stderr=subprocess.STDOUT, shell=True)
         with open("colloutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
@@ -1150,3 +1152,4 @@ class TestCollections(ut.TestCase):
 ##########################
 if __name__ == '__main__':
     ut.main()
+    delete_testing_files()

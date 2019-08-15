@@ -63,6 +63,8 @@ _ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 _ep_default = None
 _ep_cur = None
 _max_import_file_size = 1e6 # 1 MB
+_most_recent_list_request = None
+_most_recent_list_count = None
 
 
 _OM_TEXT = 0
@@ -70,6 +72,12 @@ _OM_JSON = 1
 _OM_RETN = 2
 
 _output_mode = _OM_TEXT
+
+#_listing_replies = {
+ #   'ListingReply': 'print_listing', # or print_proj_listing
+  #  'UserDataReply': 'print_user_listing',
+   # ''
+#}
 
 # Used by CLI script to run interactively
 def _run():
@@ -242,8 +250,7 @@ def _set_verbosity(ctx, param, value):
     if value:
         _verbosity = int(value)
 
-# TODO: Keep output options global variables so that they can be sticky and return output mode still works
-# TODO: how to make sticky but transient per command -- change from callbacks to command-specific parsing
+
 __global_output_options = [
     click.option('-v', '--verbosity', required=False,type=click.Choice(['0', '1', '2']), help='Verbosity of reply'),
     click.option("-j", "--json", is_flag=True,
@@ -304,13 +311,15 @@ def cli(ctx,*args,**kwargs):
         click.echo(ctx.get_help())
 
 
-
+'''
+#For Testing single-command-only output mode changes
 @cli.command(help="print global output mode variables")
 def globe():
     global _verbosity
     global _output_mode
     click.echo("Global verbosity level: {}".format(_verbosity))
     click.echo("Global output mode: {}".format(_output_mode))
+'''
 
 # ------------------------------------------------------------------------------
 # Collection listing/navigation commands
@@ -322,10 +331,12 @@ def globe():
 @click.pass_context
 def ls(ctx,df_id,offset,count,verbosity,json,text):
     global _cur_coll
+    global _most_recent_list_request
+    global _most_recent_list_count
     msg = auth.CollReadRequest()
     if df_id is not None:
         msg.id = resolve_coll_id(df_id)
-    else:
+    elif not df_id:
         msg.id = _cur_coll
     msg.count = count
     msg.offset = offset
@@ -337,8 +348,12 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     elif __verbosity == 0:
         msg.details = False
 
-    reply = _mapi.sendRecv( msg )
-    generic_reply_handler( reply, print_listing , __output_mode, __verbosity )
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
+
+    reply = _mapi.sendRecv(msg)
+
+    generic_reply_handler(reply, print_listing , __output_mode, __verbosity)
 
 
 @cli.command(help="Print or change current working collection")
@@ -349,6 +364,25 @@ def wc(df_id):
         _cur_coll = resolve_coll_id(df_id)
     else:
         click.echo(_cur_coll)
+
+
+@cli.command(help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
+@click.argument("count",type=int,required=False)
+@_global_output_options
+def more(count,verbosity,json,text):
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request.offset += _most_recent_list_count
+    if count:
+       _most_recent_list_request.count = count
+       _most_recent_list_count = count
+    elif not count:
+        _most_recent_list_request.count = _most_recent_list_count
+    __output_mode, __verbosity = output_checks(verbosity, json, text)
+    reply = _mapi.sendRecv(_most_recent_list_request)
+    for key in _listing_requests:
+        if isinstance(_most_recent_list_request, key):
+            generic_reply_handler(reply, _listing_requests[key] , __output_mode, __verbosity)
 
 # ------------------------------------------------------------------------------
 # Data command group
@@ -433,7 +467,7 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
         if extension:
             msg.ext = extension
             msg.ext_auto = False
-        if metadata_filee:
+        if metadata_file:
             metadata = metadata_file.read()
         if metadata: msg.metadata = metadata
         if dependencies:
@@ -474,7 +508,7 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (json)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
 @click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
-@click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies.") #Make type optional -- if no type given, then deletes all relationships with that record
+@click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver', 'clear']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies. To remove all existing dependencies, specify the argument as 'clear all'.") #Make type optional -- if no type given, then deletes all relationships with that record
 @_global_output_options
 def data_update(df_id,batch,title,alias,description,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove,verbosity,json,text):
     __output_mode, __verbosity = output_checks(verbosity,json,text)
@@ -524,29 +558,24 @@ def data_update(df_id,batch,title,alias,description,key_words,data_file,extensio
             for i in range(len(deps)):
                 item = deps[i-1]
                 dep = msg.deps_add.add()
-                dep.dir = 0
                 if item[0] == "derived" or item[0] == "der": dep.type = 0
                 elif item[0] == "component" or item[0] == "comp": dep.type = 1
-                elif item[0] == "version" or item[0] == "ver":
-                    dep.type = 2
-                    dep.dir = 1
-                if re.search(r'^d/[0-9]{8}', item[1]):
-                    dep.id = item[1]
-                else: dep.alias = item[1]
+                elif item[0] == "version" or item[0] == "ver": dep.type = 2
+                dep.id = item[1]
         if dependencies_remove:
             deps = list(dependencies_remove)
-            for i in range(len(deps)):
-                item = deps[i-1]
-                dep = msg.deps_rem.add()
-                dep.dir = 0
-                if item[0] == "derived" or item[0] == "der": dep.type = 0
-                elif item[0] == "component" or item[0] == "comp": dep.type = 1
-                elif item[0] == "version" or item[0] == "ver":
-                    dep.type = 2
-                    dep.dir = 1
-                if re.search(r'^d/[0-9]{8}', item[1]):
-                    dep.id = item[1]
-                else: dep.alias = item[1]
+            if ("clear", "all") in deps:
+                msg.deps_clear = True
+            elif ("clear", str) in deps:
+                click.echo("To remove all existing dependencies, specify the command option '-dr clear all'.")
+                return
+            else:
+                for i in range(len(deps)):
+                    item = deps[i-1]
+                    dep = msg.deps_rem.add()
+                    if item[0] == "derived" or item[0] == "der": dep.type = 0
+                    elif item[0] == "component" or item[0] == "comp": dep.type = 1
+                    elif item[0] == "version" or item[0] == "ver": dep.type = 2
 
         if not data_file:
             reply = _mapi.sendRecv(msg)
@@ -808,6 +837,10 @@ def query_list(offset,count, verbosity, json, text):
     msg.offset = offset
     msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
     #TODO: Figure out verbosity-dependent replies
@@ -820,6 +853,10 @@ def query_exec(df_id, verbosity, json, text):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
 
@@ -881,8 +918,11 @@ def user_collab(offset,count, verbosity, json, text):
     msg.offset = offset
     msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
-
     generic_reply_handler( reply, print_user_listing, __output_mode, __verbosity)
 
 
@@ -895,8 +935,12 @@ def user_all(offset,count, verbosity, json, text):
     msg.offset = offset
     msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
-    reply = _mapi.sendRecv(msg)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
 
+    reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_user_listing, __output_mode, __verbosity)
 
 
@@ -924,8 +968,10 @@ def project():
 @click.option("-o","--owner",is_flag=True,help="Include owned projects")
 @click.option("-a","--admin",is_flag=True,help="Include administered projects")
 @click.option("-m","--member",is_flag=True,help="Include membership projects")
+@click.option("-o","--offset",default=0,help="List offset")
+@click.option("-c","--count",default=20,help="List count")
 @_global_output_options
-def project_list(owner,admin,member, verbosity, json, text):
+def project_list(owner,admin,member,offset,count, verbosity, json, text):
     if not (owner or admin or member):
         owner = True
         admin = True
@@ -934,8 +980,13 @@ def project_list(owner,admin,member, verbosity, json, text):
     msg.as_owner = owner
     msg.as_admin = admin
     msg.as_member = member
+    msg.offset = offset
+    msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
-
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv( msg )
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity) #print listing prints "Alias" despite proj not having any
 
@@ -1378,7 +1429,7 @@ def generic_reply_handler(reply, printFunc , output_mode, verbosity ): # NOTE: R
     #    click.echo("None")
     elif output_mode == _OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
-    else:
+    elif output_mode == _OM_TEXT:
         printFunc( reply[0] , verbosity)
 
 
@@ -1565,6 +1616,20 @@ def print_allocation_data(alloc): #
                "{:<25} {:<50}".format('Path: ', alloc.path) + '\n' +
                "{:<25} {:<50}".format('ID: ', alloc.id) + '\n' +
                "{:<25} {:<50}".format('Sub Allocation: ', str(alloc.sub_alloc)))
+
+
+_listing_requests = {
+    auth.UserListAllRequest: print_user_listing,
+    auth.UserListCollabRequest: print_user_listing,
+    auth.QueryListRequest: print_listing,
+    auth.QueryExecRequest: print_listing,
+    auth.TopicListRequest: '',
+    auth.ProjectListRequest: print_proj_listing,
+    auth.CollListPublishedRequest: '',
+    auth.CollListRequest: '',
+    auth.RecordListByAllocRequest: '',
+    auth.CollReadRequest: print_listing,
+                     }
 
 
 def output_checks(verbosity=None,json=None,text=None):
