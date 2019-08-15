@@ -853,12 +853,11 @@ def query_exec(df_id, verbosity, json, text):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
     __output_mode, __verbosity = output_checks(verbosity,json,text)
-    global _most_recent_list_request
-    global _most_recent_list_count
-    _most_recent_list_request = msg
-    _most_recent_list_count = int(msg.count)
+    #global _most_recent_list_request
+    #global _most_recent_list_count
+    #_most_recent_list_request = msg
     reply = _mapi.sendRecv(msg)
-    generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
+    generic_reply_handler( reply, print_listing, __output_mode, __verbosity) #QueryData does not match lisitng reply for print function
 
 
 @query.command(name='text',help="Query by words or phrases")
@@ -1315,13 +1314,16 @@ def http_download(url,destination,output_mode,verbosity): # First argument is tu
     if output_mode == _OM_TEXT and verbosity >=1:
         raw_data_record = wget.download(url[0], out=str(new_filename), bar=bar_adaptive_human_readable) # TODO: Will rewrite any file copy (1).file    # TODO: Use new module for this -- ability to multithread download
         click.echo("\nRaw data for record {} downloaded to {}".format(url[1], raw_data_record))
-    else:
+    else: ## TODO: Re-work to use generic_reply_handler
         raw_data_record = wget.download(url[0], out=str(new_filename), bar=None)
         if output_mode == _OM_JSON:
             click.echo('{{ "Download": "Succeeded", "Data Record ID": "{}", "File": "{}" }}'.format(url[1],raw_data_record))
         elif output_mode == _OM_TEXT and verbosity == 0:
-            click.echo("Raw data for record {} downloaded to {}".format(url[1],
-                                                                          raw_data_record))  # TODO: _OM_RETURN
+            click.echo("Raw data for record {} downloaded to {}".format(url[1], raw_data_record))
+        elif output_mode == _OM_RETN:
+            global _return_val
+            _return_val = '{{ "Download": "Succeeded", "Data Record ID": "{}", "File": "{}" }}'.format(url[1],raw_data_record)
+            return
 
 
 def put_data(df_id,gp,wait,extension,output_mode,verbosity):
@@ -1622,9 +1624,9 @@ _listing_requests = {
     auth.UserListAllRequest: print_user_listing,
     auth.UserListCollabRequest: print_user_listing,
     auth.QueryListRequest: print_listing,
-    auth.QueryExecRequest: print_listing,
+    #auth.QueryExecRequest: print_listing, #does not allow for paging on server side
     auth.TopicListRequest: '',
-    auth.ProjectListRequest: print_proj_listing,
+    auth.ProjectListRequest: print_listing,
     auth.CollListPublishedRequest: '',
     auth.CollListRequest: '',
     auth.RecordListByAllocRequest: '',

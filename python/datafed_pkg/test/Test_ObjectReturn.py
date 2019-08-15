@@ -4,10 +4,12 @@ import datafed.Config
 
 def main():
     config = datafed.Config.API() #generate default configs
-    print(config.getOpts())
     datafed.CommandLib.init() #Config module will try to find things and send to MessageLib init
-    returned = datafed.CommandLib.command('data create "Testing the Object Return" -a testobj -d "This is to test the object return of the exec function"')
-    print(returned)
+    for i in range(10):
+        returned = datafed.CommandLib.command('data get y4 -fp ../../../URL_gets')
+        #returned1 = datafed.CommandLib.command('more 2')
+        print(returned)
+        #print(returned1)
 
 if __name__ == "__main__":
     main()
