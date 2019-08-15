@@ -555,7 +555,7 @@ function makeBrowserTab(){
     }
 
     this.actionNewProj = function() {
-        dlgProjNewEdit(null,function(data){
+        dlgProjNewEdit(null,0,function( data ){
             setStatusText("Project "+data.id+" created");
             inst.reloadNode( inst.data_tree.getNodeByKey( "proj_own" ));
         });
