@@ -134,32 +134,38 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
 
-                if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-                    if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_WR_REC ))
-                        throw g_lib.ERR_PERM_DENIED;
-                }
-
                 var time = Math.floor( Date.now()/1000 );
                 var obj = {ut:time};
 
                 g_lib.procInputParam( req.body, "title", true, obj );
                 g_lib.procInputParam( req.body, "desc", true, obj );
                 g_lib.procInputParam( req.body, "alias", true, obj );
+                g_lib.procInputParam( req.body, "topic", true, obj );
 
-                if ( req.body.public !== undefined ){
-                    obj.public = req.body.public;
-                    if ( obj.public ){
-                        g_lib.procInputParam( req.body, "topic", true, obj );
-                    }else{
-                        obj.topic = null;
-                    }
-                } else if ( coll.public ){
-                    g_lib.procInputParam( req.body, "topic", true, obj );
+                if ( obj.topic ){
+                    obj.public = true;
+                }else if ( obj.topic === null && coll.topic ) {
+                    obj.public = false;
+                }
+
+                console.log("coll obj:",obj);
+
+                if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+                    var perms = 0;
+
+                    if ( obj.title !== undefined || obj.alias !== undefined || obj.desc !== undefined )
+                        perms |= g_lib.PERM_WR_REC;
+
+                    if ( obj.topic !== undefined )
+                        perms |= g_lib.PERM_SHARE;
+
+                    if ( !g_lib.hasPermissions( client, coll, perms ))
+                        throw g_lib.ERR_PERM_DENIED;
                 }
 
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-            
+
                     if ( coll.topic ){
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
@@ -191,9 +197,7 @@ router.post('/update', function (req, res) {
                     }
                 }
 
-                if ( obj.public != undefined ){
-                    // Public flag has changed - process all contained items recursively
-                }
+                // TODO Need to recursively process public flag if changed?
 
                 delete coll._rev;
                 delete coll._key;
@@ -215,7 +219,7 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    public: joi.boolean().optional(),
+    //public: joi.boolean().optional(),
     topic: joi.string().allow('').optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
