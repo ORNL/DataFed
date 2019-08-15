@@ -555,7 +555,7 @@ function makeBrowserTab(){
     }
 
     this.actionNewProj = function() {
-        dlgProjNewEdit(null,function(data){
+        dlgProjNewEdit(null,0,function( data ){
             setStatusText("Project "+data.id+" created");
             inst.reloadNode( inst.data_tree.getNodeByKey( "proj_own" ));
         });
@@ -833,6 +833,17 @@ function makeBrowserTab(){
         }
     }
 
+    this.permGateAny = function( item_id, req_perms, cb ){
+        getPerms( item_id, req_perms, function( perms ){
+            if (( perms & req_perms ) == 0 ){
+                setStatusText( "Permission Denied.", 1 );
+            }else{
+                console.log("have perms:",perms);
+                cb( perms );
+            }
+        });
+    }
+
     this.actionEditSelected = function() {
         if ( async_guard )
             return;
@@ -843,57 +854,54 @@ function makeBrowserTab(){
             return;
 
         var id = ids[0];
-        var req_perms = 0;
 
-        if ( id.charAt(0) == "p" || id.charAt(0) == "c")
-            req_perms = PERM_WR_REC;
-        else if ( id.charAt(0) == "d" )
-            req_perms = PERM_WR_REC | PERM_WR_META;
-        else if ( id.charAt(0) == 'q' ){
-            sendQueryView( id, function( ok, old_qry ){
-                if ( ok ){
-                    dlgQueryNewEdit( old_qry, function( data ){
-                        refreshUI( id, data, true );
+        switch( id.charAt(0) ){
+            case "p":
+                permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
+                    viewProj( id, function( data ){
+                        if ( data ){
+                            dlgProjNewEdit( data, perms, function( data ){
+                                refreshUI( id, data );
+                            });
+                        }
                     });
-                }else
-                    setStatusText("Query Edit Error: " + old_qry, 1);
-            });
-            return;
-        }else
-            return;
-
-        getPerms( id, req_perms, function( perms ){
-            if (( perms & req_perms ) == 0 ){
-                setStatusText( "Edit Error: Permission Denied.", 1 );
-                return;
-            }
-
-            if ( id.charAt(0) == 'p' ){
-                viewProj( id, function( data ){
-                    if ( data ){
-                        dlgProjNewEdit(data,function(data){
-                            refreshUI( id, data );
-                        });
-                    }
                 });
-            }else if ( id.charAt(0) == "c" ) {
-                viewColl( id, function( data ){
-                    if ( data ){
-                        dlgCollNewEdit(data,null,perms,function(data){
-                            refreshUI( id, data );
-                        });
-                    }
+                break;
+            case "c":
+                permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
+                    viewColl( id, function( data ){
+                        if ( data ){
+                            dlgCollNewEdit( data, null, perms, function( data ){
+                                refreshUI( id, data );
+                            });
+                        }
+                    });
                 });
-            } else if ( id.charAt(0) == "d" ) {
-                viewData( id, function( data ){
-                    if ( data ){
-                        dlgDataNewEdit(DLG_DATA_EDIT,data,null,perms,function(data){
-                            refreshUI( id, data );
-                        });
-                    }
+                break;
+            case "d":
+                permGateAny( id, PERM_WR_REC | PERM_WR_META | PERM_WR_DATA, function( perms ){
+                    viewData( id, function( data ){
+                        if ( data ){
+                            dlgDataNewEdit( DLG_DATA_EDIT, data, null, perms, function( data ){
+                                refreshUI( id, data );
+                            });
+                        }
+                    }); 
                 }); 
-            }
-        });
+                break;
+            case 'q':
+                sendQueryView( id, function( ok, old_qry ){
+                    if ( ok ){
+                        dlgQueryNewEdit( old_qry, function( data ){
+                            refreshUI( id, data, true );
+                        });
+                    }else
+                        setStatusText("Query Edit Error: " + old_qry, 1);
+                });
+                return;
+            default:
+                return;
+        }
     }
 
     /*
@@ -1046,7 +1054,13 @@ function makeBrowserTab(){
                     case "c": bits |= node.data.isroot?0xD7:0x52;  break;
                     case "d": bits |= 0x00;  break;
                     case "r": bits |= 0x1F7;  break;
-                    case "p": bits |= 0x1Fa | (node.data.admin?0:5); break;
+                    case "p":
+                        bits |= 0x1Fa;
+                        if ( node.data.mgr )
+                            bits |= 4;
+                        else if ( !node.data.admin )
+                            bits |= 5;
+                        break;
                     case "q": bits |= 0x1F9; break;
                     default:  bits |= 0x1FF;  break;
                 }
@@ -1067,7 +1081,13 @@ function makeBrowserTab(){
                     if ( node.data.doi )
                         bits |= 0x10;
                     break;
-                case "p": bits = 0x3Fa | (node.data.admin?0:5); break;
+                case "p":
+                    bits = 0x3Fa;
+                    if ( node.data.mgr )
+                        bits |= 4;
+                    else if ( !node.data.admin )
+                        bits |= 5;
+                    break;
                 case "q": bits = 0x3F8; break;
                 default:  bits = 0x3FF;  break;
             }
@@ -3046,10 +3066,11 @@ function makeBrowserTab(){
                     console.log( "pos proc project:", data.response );
                     var item;
                     var admin = (data.node.key=="proj_own"?true:false);
+                    var mgr = (data.node.key=="proj_adm"?true:false);
 
                     for ( var i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:item.id,isproj:true,admin:admin,nodrag:true,lazy:true});
+                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:item.id,isproj:true,admin:admin,mgr:mgr,nodrag:true,lazy:true});
                     }
                 }
 

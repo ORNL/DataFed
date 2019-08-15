@@ -143,9 +143,11 @@ function escapeHTML(string) {
     });
 }
 
+// Examines input value to determine if an update has been made
+// and if so, set the value in the updated object (only works for strings)
 function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
     var tmp = a_new_val.trim(), old = a_old_obj[a_field];
-    if (( old == undefined && tmp.length ) || ( old != undefined && tmp != old ))
+    if (( old === undefined && tmp.length ) || ( old !== undefined && tmp != old ))
         a_new_obj[a_field] = tmp;
 };
 

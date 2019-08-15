@@ -20,7 +20,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 <table class='form-table'>\
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
-                    <tr><td>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Keywords:</td><td colspan='3'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                 </table>\
@@ -36,11 +36,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 </div>\
             </div>\
             <div id='tab-dlg-data' style='padding:1em'>\
-                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input><span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br>\
+                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input> <span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br>\
                 <div id='working_data'>\
                     <table class='form-table'>\
-                        <tr id='dlg_alloc_row'><td style='vertical-align:middle'>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-file' style='font-size:.9em'></span></button></tr>\
+                        <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
+                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon'><span class='ui-icon ui-icon-file'></span></button></tr>\
                         <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                     </table>\
                 </div>\
@@ -306,8 +306,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         getUpdatedValue( doi, a_data, obj, "doi" );
                         getUpdatedValue( data_url, a_data, obj, "dataUrl" );
                     }else{
-                        obj.doi="";
-                        obj.dataUrl="";
+                        if ( a_data.doi ){
+                            obj.doi="";
+                            obj.dataUrl="";
+                        }
+
                         if ( $("#ext_auto",frame).prop("checked") ){
                             if ( !a_data.extAuto )
                                 obj.extAuto = true;
@@ -322,9 +325,23 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
                         obj.mdset = true;
 
-                    // TODO compare new and old deps for differences
-                    obj.depsAdd = deps;
-                    obj.depsClear = true;
+                    var deps_diff = false;
+
+                    if (( !a_data.deps && deps.length ) || ( a_data.deps && ( a_data.deps.length != deps.length ))){
+                        deps_diff = true;
+                    }else if ( deps.length ){
+                        for ( var i in a_data.deps ){
+                            if ( a_data.deps[i] == deps[i] ){
+                                deps_diff = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ( deps_diff ){
+                        obj.depsAdd = deps;
+                        obj.depsClear = true;
+                    }
 
                     if ( Object.keys(obj).length === 0 ){
                         jsoned.destroy();
@@ -333,6 +350,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     obj.id = a_data.id;
+
+                    console.log("sending:",obj );
                 }else{
                     url += "create";
 
@@ -450,7 +469,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     var i,dep;
                     for ( i in a_data.deps ){
                         dep = a_data.deps[i];
-                        console.log("dep",dep);
                         if ( dep.dir == "DEP_OUT" ){
                             row = $("#ref-table tr:last",frame);
                             $("input",row).val(dep.alias?dep.alias:dep.id);
@@ -463,6 +481,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 if ( a_mode == DLG_DATA_EDIT ){
                     if (( a_upd_perms & PERM_WR_META ) == 0 ){
                         jsoned.setReadOnly(true);
+                        jsoned.container.style.opacity=0.45;
                         $("#md_status").text("(read only)");
                         $("#md_mode",frame).prop('disabled',true);
                         $("#md_merge",frame).attr('disabled',true);
@@ -470,6 +489,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
                     if (( a_upd_perms & PERM_WR_REC ) == 0 ){
                         inputDisable( $("#title,#desc,#alias,#keyw", frame ));
+                        inputDisable( $(".add-ref,.rem-ref,.find-ref,.ref-row input", frame ));
+                        $(".ref-row select", frame ).selectmenu("disable");
+                    }
+
+                    if (( a_upd_perms & PERM_WR_DATA ) == 0 ){
+                        inputDisable( $("#source_file,#extension,#doi,data_url,#pick_source", frame ));
+                        $("#ext_auto,#published",frame).prop("disabled",true);
                     }
 
                     $("#dlg_coll_row",frame).css("display","none");

@@ -403,10 +403,14 @@ app.get('/api/prj/update', ( a_req, a_resp ) => {
         params.subRepo = a_req.query.sub_repo;
     if ( a_req.query.sub_alloc != undefined )
         params.subAlloc = a_req.query.sub_alloc;
-    if ( a_req.query.members != undefined )
+    if ( a_req.query.members != undefined ){
         params.member = JSON.parse( a_req.query.members );
-    if ( a_req.query.admins )
+        params.memberSet = true;
+    }
+    if ( a_req.query.admins ){
         params.admin = JSON.parse( a_req.query.admins );
+        params.adminSet = true;
+    }
 
     sendMessage( "ProjectUpdateRequest", params, a_req, a_resp, function( reply ) {
         if ( reply.proj )

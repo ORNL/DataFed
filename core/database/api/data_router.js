@@ -274,23 +274,6 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
     var data = g_db.d.document( data_id );
 
-    if ( !g_lib.hasAdminPermObject( client, data_id )) {
-        // Required permissions depend on which fields are being modified:
-        // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
-        var perms = 0;
-        if ( record.md )
-            perms |= g_lib.PERM_WR_META;
-
-        if ( record.size || record.dt )
-            perms |= g_lib.PERM_WR_DATA;
-
-        if ( record.title || record.alias  || record.desc || record.public )
-            perms |= g_lib.PERM_WR_REC;
-
-        if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
-            throw g_lib.ERR_PERM_DENIED;
-    }
-
     var obj = { ut: Math.floor( Date.now()/1000 ) };
 
     g_lib.procInputParam( record, "title", true, obj );
@@ -301,15 +284,35 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
     g_lib.procInputParam( record, "doi", true, obj );
     g_lib.procInputParam( record, "data_url", true, obj );
 
-    if ( record.public !== undefined )
-        obj.public = record.public;
-
     if ( record.md === "" )
         obj.md = null;
     else if ( record.md ){
         obj.md = record.md;
         if ( Array.isArray( obj.md ))
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+    }
+
+    if ( record.public !== undefined )
+        obj.public = record.public;
+
+    if ( !g_lib.hasAdminPermObject( client, data_id )) {
+        // Required permissions depend on which fields are being modified:
+        // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
+        var perms = 0;
+        if ( obj.md !== undefined )
+            perms |= g_lib.PERM_WR_META;
+
+        if ( obj.title !== undefined || obj.alias !== undefined || obj.desc !== undefined || obj.keyw !== undefined )
+            perms |= g_lib.PERM_WR_REC;
+
+        if ( obj.size !== undefined || obj.dt !== undefined || obj.data_url !== undefined || obj.doi !== undefined || obj.source !== undefined )
+            perms |= g_lib.PERM_WR_DATA;
+
+        if ( obj.public !== undefined )
+            perms |= g_lib.PERM_SHARE;
+
+        if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
+            throw g_lib.ERR_PERM_DENIED;
     }
 
     var has_data = true;

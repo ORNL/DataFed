@@ -507,8 +507,10 @@ message ProjectUpdateRequest
     optional string             desc        = 3;
     optional string             sub_repo    = 4;
     optional uint64             sub_alloc   = 5;
-    repeated string             admin       = 6;
-    repeated string             member      = 7;
+    optional bool               admin_set   = 6 [default = false];
+    repeated string             admin       = 7;
+    optional bool               member_set  = 8 [default = false];
+    repeated string             member      = 9;
 }
 
 message ProjectDeleteRequest

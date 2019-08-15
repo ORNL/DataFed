@@ -160,7 +160,16 @@ router.get('/update', function (req, res) {
                 if ( !g_db.p.exists( proj_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
 
-                g_lib.ensureAdminPermProj( client, proj_id );
+                var is_admin = true;
+
+                if ( !g_lib.hasAdminPermProj( client, proj_id )){
+                    if ( !g_lib.hasManagerPermProj( client, proj_id )){
+                        console.log("perm denied: not mgr");
+                        throw g_lib.ERR_PERM_DENIED;
+                    }
+                    is_admin = false;
+                }
+
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
 
                 //console.log("proj update" );
@@ -202,6 +211,14 @@ router.get('/update', function (req, res) {
                     }
                 }else if ( req.queryParams.sub_alloc ){
                     obj.sub_alloc = req.queryParams.sub_alloc;
+                }
+
+                // Managers can only update members
+                if ( !is_admin ){
+                    if ( obj.title !== undefined || obj.desc != undefined || obj.sub_repo != undefined || obj.sub_alloc != undefined || req.queryParams.admins != undefined ){
+                        console.log("perm denied:",obj,req.queryParams.admins);
+                        throw g_lib.ERR_PERM_DENIED;
+                    }
                 }
 
                 var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });

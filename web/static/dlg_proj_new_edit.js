@@ -1,11 +1,11 @@
-function dlgProjNewEdit(a_data,a_cb) {
+function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     var frame = $(document.createElement('div'));
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\
             <table class='form-table'>\
                 <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
-                <tr><td>Description:</td><td><textarea id='desc' rows=3 style='width:100%'></textarea></td></tr>\
+                <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
                 <tr><td>Sub&#8209;allocation:</td><td><select id='suballoc'><option value='1'>None</option></select></td></tr>\
                 <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%'></input></td></tr>\
@@ -52,6 +52,11 @@ function dlgProjNewEdit(a_data,a_cb) {
         resizable: true,
         closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('destroy').remove();
+            }
+        },{
             text: a_data?"Update":"Create",
             click: function() {
                 var obj = {};
@@ -59,16 +64,12 @@ function dlgProjNewEdit(a_data,a_cb) {
                 var subRepo = $("#suballoc",frame).val();
                 var subAlloc = $("#suballoc_size",frame).val();
 
-                var url = "/api/prj/";
+                var url = "";
 
                 if ( a_data ){
-                    url += "update?id=" + encodeURIComponent( a_data.id );
-
                     getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                 }else{
-                    url += "create?id=" + encodeURIComponent( $("#id",frame).val().trim() );
-
                     obj.title = $("#title",frame).val().trim();
                     obj.desc = $("#desc",frame).val().trim();
                 }
@@ -80,12 +81,12 @@ function dlgProjNewEdit(a_data,a_cb) {
                     url += "&desc="+ encodeURIComponent(obj.desc);
 
                 if ( subRepo != "ignore" && (( !a_data && subRepo != "none" ) || (a_data && (subRepo != a_data.subRepo || subAlloc != a_data.subAlloc )))){
-                    console.log("repo:",subRepo );
+                    //console.log("repo:",subRepo );
                     if ( subRepo == "none" ){
                         url += "&sub_repo=none";
                     }else{
                         var alloc_sz = parseSize( subAlloc );
-                        console.log( "alloc_sz", alloc_sz );
+                        //console.log( "alloc_sz", alloc_sz );
                         if ( alloc_sz == null || alloc_sz < 0 ){
                             dlgAlert("Input Error","Invalid sub-allocation size.");
                             return;
@@ -116,31 +117,81 @@ function dlgProjNewEdit(a_data,a_cb) {
                 adm_tree.visit( function(node){
                     admins.push( node.key );
                 });
-                url += "&admins=" + JSON.stringify( admins );
 
                 var members = [];
                 mem_tree.visit( function(node){
                     members.push( node.key );
                 });
-                url += "&members=" + JSON.stringify( members );
-                console.log( "URL", url );
 
-                var inst = $(this);
-                _asyncGet( url, null, function( ok, data ){
-                    if ( ok ) {
-                        inst.dialog('destroy').remove();
-                        console.log( "data:",data);
-                        if ( a_cb )
-                            a_cb(data[0]);
-                    } else {
-                        dlgAlert( "Project " + (a_data?"Update":"Create") + " Error", data );
+                if ( a_data ){
+                    var i,diff;
+                    console.log("ex admins:",a_data.admin,",new:",admins);
+                    if ( a_data.admin && a_data.admin.length ){
+                        diff = true;
+                        if ( a_data.admin.length == admins.length ){
+                            diff = false;
+                            for ( i = 0; i < admins.length; i++ ){
+                                if ( a_data.admin[i] != admins[i] ){
+                                    diff = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if ( diff ){
+                            url += "&admins=" + JSON.stringify( admins );
+                        }
+                    }else if ( admins.length ){
+                        url += "&admins=" + JSON.stringify( admins );
                     }
-                });
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
+
+                    if ( a_data.member && a_data.member.length ){
+                        diff = true;
+                        if ( a_data.member.length == members.length ){
+                            diff = false;
+                            for ( i = 0; i < members.length; i++ ){
+                                if ( a_data.member[i] != members[i] ){
+                                    diff = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if ( diff ){
+                            url += "&members=" + JSON.stringify( members );
+                        }
+                    }else if ( members.length ){
+                        url += "&members=" + JSON.stringify( members );
+                    }
+
+                }else{
+                    if ( members.length )
+                        url += "&members=" + JSON.stringify( members );
+
+                    if ( admins.length )
+                        url += "&admins=" + JSON.stringify( admins );
+                }
+
+                if ( url ){
+                    if ( a_data )
+                        url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
+                    else
+                        url = "/api/prj/create?id=" + encodeURIComponent( $("#id",frame).val().trim() ) + url;
+
+                    console.log( "URL", url );
+
+                    var inst = $(this);
+                    _asyncGet( url, null, function( ok, data ){
+                        if ( ok ) {
+                            inst.dialog('destroy').remove();
+                            console.log( "data:",data);
+                            if ( a_cb )
+                                a_cb(data[0]);
+                        } else {
+                            dlgAlert( "Project " + (a_data?"Update":"Create") + " Error", data );
+                        }
+                    });
+                }else{
+                    $(this).dialog('destroy').remove();
+                }
             }
         }],
         open: function(event,ui){
@@ -168,15 +219,17 @@ function dlgProjNewEdit(a_data,a_cb) {
                             alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>"
                         }
 
-                        if ( found )
-                            inputEnable($("#suballoc_size",frame))
-                        else{
+                        if ( found ){
+                            if (( a_upd_perms & PERM_WR_REC ) != 0 ){
+                                inputEnable($("#suballoc_size",frame))
+                            }
+                        }else{
                             // Unlikely
                             inputDisable($("#suballoc_size",frame))
                         }
                     }
 
-                    $("#suballoc",frame).html(alloc_opt).selectmenu({width:"auto"}).on('selectmenuchange', function( ev, ui ) {
+                    $("#suballoc",frame).html(alloc_opt).selectmenu({width:"auto",disabled:!(a_upd_perms&PERM_WR_REC)}).on('selectmenuchange', function( ev, ui ) {
                         console.log("alloc changed",ui.item.value,$("#suballoc",frame).val());
 
                         if ( ui.item.value == "none" ){
@@ -197,6 +250,10 @@ function dlgProjNewEdit(a_data,a_cb) {
                 $("#owner_id",frame).val(a_data.owner);
                 if ( a_data.subRepo )
                     $("#suballoc_size",frame).val(a_data.subAlloc);
+
+                if (( a_upd_perms & PERM_WR_REC ) == 0 ){
+                    inputDisable($("#title,#desc,#suballoc_size,#add_adm_btn,#rem_adm_btn",frame));
+                }
 
                 for ( var i in a_data.member )
                     mem_src.push({title: a_data.member[i].substr(2),icon:false,key: a_data.member[i] });
@@ -238,7 +295,9 @@ function dlgProjNewEdit(a_data,a_cb) {
                 selectMode: 1,
                 checkbox: false,
                 activate: function( event, data ) {
-                    $("#rem_adm_btn",frame).button("option", "disabled", false);
+                    if (( a_upd_perms & PERM_WR_REC ) != 0 ){
+                        $("#rem_adm_btn",frame).button("option", "disabled", false);
+                    }
                 }
             });
 
