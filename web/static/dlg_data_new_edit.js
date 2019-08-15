@@ -327,7 +327,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     var deps_diff = false;
 
-                    if (( !a_data.deps && deps.length ) || ( a_data.deps.length != deps.length )){
+                    if (( !a_data.deps && deps.length ) || ( a_data.deps && ( a_data.deps.length != deps.length ))){
                         deps_diff = true;
                     }else if ( deps.length ){
                         for ( var i in a_data.deps ){

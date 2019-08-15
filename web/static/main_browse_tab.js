@@ -838,6 +838,7 @@ function makeBrowserTab(){
             if (( perms & req_perms ) == 0 ){
                 setStatusText( "Permission Denied.", 1 );
             }else{
+                console.log("have perms:",perms);
                 cb( perms );
             }
         });
@@ -1053,7 +1054,13 @@ function makeBrowserTab(){
                     case "c": bits |= node.data.isroot?0xD7:0x52;  break;
                     case "d": bits |= 0x00;  break;
                     case "r": bits |= 0x1F7;  break;
-                    case "p": bits |= 0x1Fa | (node.data.admin?0:5); break;
+                    case "p":
+                        bits |= 0x1Fa;
+                        if ( node.data.mgr )
+                            bits |= 4;
+                        else if ( !node.data.admin )
+                            bits |= 5;
+                        break;
                     case "q": bits |= 0x1F9; break;
                     default:  bits |= 0x1FF;  break;
                 }
@@ -1074,7 +1081,13 @@ function makeBrowserTab(){
                     if ( node.data.doi )
                         bits |= 0x10;
                     break;
-                case "p": bits = 0x3Fa | (node.data.admin?0:5); break;
+                case "p":
+                    bits = 0x3Fa;
+                    if ( node.data.mgr )
+                        bits |= 4;
+                    else if ( !node.data.admin )
+                        bits |= 5;
+                    break;
                 case "q": bits = 0x3F8; break;
                 default:  bits = 0x3FF;  break;
             }
@@ -3053,10 +3066,11 @@ function makeBrowserTab(){
                     console.log( "pos proc project:", data.response );
                     var item;
                     var admin = (data.node.key=="proj_own"?true:false);
+                    var mgr = (data.node.key=="proj_adm"?true:false);
 
                     for ( var i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:item.id,isproj:true,admin:admin,nodrag:true,lazy:true});
+                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:item.id,isproj:true,admin:admin,mgr:mgr,nodrag:true,lazy:true});
                     }
                 }
 

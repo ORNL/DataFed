@@ -668,25 +668,31 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
     if ( a_request.has_sub_alloc() )
         params.push_back({"sub_alloc",to_string(a_request.sub_alloc())});
 
-    string members = "[";
-    for ( int i = 0; i < a_request.admin_size(); ++i )
+    if ( a_request.admin_set() )
     {
-        if ( i > 0 )
-            members += ",";
-        members += "\"" + a_request.admin(i) + "\"";
+        string admins = "[";
+        for ( int i = 0; i < a_request.admin_size(); ++i )
+        {
+            if ( i > 0 )
+                admins += ",";
+            admins += "\"" + a_request.admin(i) + "\"";
+        }
+        admins += "]";
+        params.push_back({ "admins", admins });
     }
-    members += "]";
-    params.push_back({"admins", members });
 
-    members = "[";
-    for ( int i = 0; i < a_request.member_size(); ++i )
+    if ( a_request.member_set() )
     {
-        if ( i > 0 )
-            members += ",";
-        members += "\"" + a_request.member(i) + "\"";
+        string members = "[";
+        for ( int i = 0; i < a_request.member_size(); ++i )
+        {
+            if ( i > 0 )
+                members += ",";
+            members += "\"" + a_request.member(i) + "\"";
+        }
+        members += "]";
+        params.push_back({ "members", members });
     }
-    members += "]";
-    params.push_back({"members", members });
 
     dbGet( "prj/update", params, result );
 
