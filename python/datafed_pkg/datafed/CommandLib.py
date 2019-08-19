@@ -422,7 +422,7 @@ def data_view(df_id,details,verbosity,json,text):
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
-@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias (default is current working collection)")
+@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias. Defaults to current working collection. For batch imports: if a collection is specified using this option, the parent collection will be set for all records in the import file. If not specified by the user, the current working collection will be used UNLESS a parent collection has already been included for the record object within the import file (pre-specified parent collection fields will be unchanged). ")
 @click.option("-r","--repository",type=str,required=False,help="Repository ID")
 @click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 @_global_output_options
@@ -450,23 +450,25 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
                 click.echo('{{ "Batch create":"Failed", "Error": "File size exceeded limit." }}')
             return
         msg = auth.RecordCreateBatchRequest()
-        if collection: #collection is __cur_coll by default, meaning option is always present. Should this change, or should __cur_coll be used by default, or should it only be used when not __cur_coll?
-            with fp.open('r+') as f:
-                records = jsonlib.load(f) #will always be an array
+        global _cur_sel
+        with fp.open('r+') as f:
+            records = jsonlib.load(f) #will always be an array
+            if collection != _cur_coll:
                 for item in records:
                     item["parent"] = resolve_coll_id(collection)
-                if not isinstance(records, list):
-                    if __output_mode == _OM_TEXT:
-                        click.echo(
-                            "The batch record file must be a json array of data record objects.")
-                    elif __output_mode == _OM_JSON:
-                        click.echo('{{ "Batch create":"Failed", "Error": "File must contain an array of data objects." }}')
-                    return
-                record = str(records).replace("\'", '"')
-                msg.records = record
-        elif not collection:
-            with fp.open() as f:
-                msg.records = f.read()
+            elif collection == _cur_coll:
+                for item in records:
+                    if "parent" not in item:
+                        item["parent"] = resolve_coll_id(collection)
+            if not isinstance(records, list):
+                if __output_mode == _OM_TEXT:
+                    click.echo(
+                        "The batch record file must be a json array of data record objects.")
+                elif __output_mode == _OM_JSON:
+                    click.echo('{{ "Batch create":"Failed", "Error": "File must contain an array of data objects." }}')
+                return
+            record = str(records).replace("\'", '"')
+            msg.records = record
         reply = _mapi.sendRecv(msg) #gives error parsing message
         generic_reply_handler(reply, print_batch, __output_mode, __verbosity)
         return
