@@ -1302,6 +1302,9 @@ function makeBrowserTab(){
                     html += "<tr><td>Uploaded:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
                 }
                 html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                if ( item.creator ){
+                    html += "<tr><td>Creator:</td><td>" + item.creator.substr(2) + "</td></tr>";
+                }
                 html += "</table>";
 
                 fields.details = html;

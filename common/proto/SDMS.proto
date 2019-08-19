@@ -206,9 +206,10 @@ message RecordData
     optional uint32             ut          = 16;
     optional uint32             dt          = 17;
     optional string             owner       = 18;
-    optional bool               locked      = 19;
-    optional string             parent_id   = 20;
-    repeated DependencyData     deps        = 21;
+    optional string             creator     = 19;
+    optional bool               locked      = 20;
+    optional string             parent_id   = 21;
+    repeated DependencyData     deps        = 22;
 }
 
 // Fields required for a data repo to locate raw data
