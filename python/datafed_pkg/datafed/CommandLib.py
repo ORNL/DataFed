@@ -468,8 +468,7 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
             with fp.open() as f:
                 msg.records = f.read()
         reply = _mapi.sendRecv(msg) #gives error parsing message
-        click.echo(reply)
-        generic_reply_handler(reply, print_ack_reply __output_mode, __verbosity)
+        generic_reply_handler(reply, print_batch, __output_mode, __verbosity)
         return
     else:
         msg = auth.RecordCreateRequest()
@@ -554,7 +553,7 @@ def data_update(df_id,batch,title,alias,description,key_words,data_file,extensio
         with fp.open() as f:
             msg.records = f.read()
         reply = _mapi.sendRecv(msg)
-        generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+        generic_reply_handler(reply, print_batch, __output_mode, __verbosity)
         return
     else:
         msg = auth.RecordUpdateRequest()
@@ -1526,6 +1525,7 @@ def print_data(message, verbosity):
                        "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
                        "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
                        "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
+                       "{:<25} {:<50}".format('Creator: ', dr.creator) + '\n' +
                        "{:<25} {:<50}".format('Locked: ', str(dr.locked)))
             if dr.metadata:
                 click.echo("{:<25} {:<50}".format('Metadata: ', (jsonlib.dumps(jsonlib.loads(dr.metadata), indent=4)))) # TODO: Paging function
@@ -1537,6 +1537,21 @@ def print_data(message, verbosity):
                 click.echo("{:<25}".format('Dependencies:'))
                 print_deps(dr)
 
+
+def print_batch(message,verbosity):
+    if verbosity >= 0:
+        click.echo("Successfully imported {} records.".format(len(message.data)))
+    if verbosity == 2:
+        if click.confirm("Do you want to view a listing of {} imported records?".format(len(message.data))):
+            df_idx = 1
+            global _list_items
+            _list_items = []
+            for i in message.data:
+                _list_items.append(i.id)
+                click.echo("{:2}. {:12} ({:20} {}".format(df_idx, i.id, i.alias + ')', i.title))
+                df_idx += 1
+        else:
+            return
 
 def print_coll(message, verbosity):
     for coll in message.coll:
