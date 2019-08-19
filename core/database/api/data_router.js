@@ -94,7 +94,7 @@ function recordCreate( client, record, results ){
         throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
 
     var time = Math.floor( Date.now()/1000 );
-    var obj = { size: 0, ct: time, ut: time, owner: owner_id };
+    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id };
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );

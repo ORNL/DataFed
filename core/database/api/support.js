@@ -604,6 +604,15 @@ module.exports = ( function() {
                 return true;
         }
 
+        if ( a_object_id[0] == 'd' ){
+            var data = obj.db._query("for i in d filter i._id == @id return i.creator",{id:a_object_id});
+            if ( !data.hasNext() ){
+                throw [obj.ERR_NOT_FOUND,"Data record " + a_object_id + " not found." ];
+            }
+            data = data.next();
+            if ( a_client._id == data )
+                return true;
+        }
         return false;
     };
 
@@ -809,6 +818,73 @@ module.exports = ( function() {
         }
 
         return results;
+    };
+
+    obj.getCollDefaultACL = function( coll_id ){
+        var res = obj.db._query("for i in c filter i._id == @id return {grant:i.grant,inhgrant:i.inhgrant}",{id:coll_id});
+        if ( !res.hasNext() ){
+            throw [obj.ERR_NOT_FOUND,"Collection " + coll_id + " not found."];
+        }
+        return res.next();
+    };
+
+    obj.hasCommonAccessScope = function( src_coll, dst_coll ){
+        console.log("hasCommonAccessScope",src_coll._id, dst_coll._id);
+        var p1 = [src_coll._id], p2 = [dst_coll._id];
+        var parent, child = src_coll._id;
+
+        while ( 1 ){
+            parent = obj.db.item.firstExample({_to: child});
+            if ( !parent )
+                break;
+            p1.unshift( parent._from );
+            child = parent._from;
+        }
+
+        child = dst_coll._id;
+
+        while ( 1 ){
+            parent = obj.db.item.firstExample({_to: child});
+            if ( !parent )
+                break;
+            p2.unshift( parent._from );
+            child = parent._from;
+        }
+
+        var i, len = Math.min(p1.length,p2.length);
+
+        for ( i = 0; i < len; i++ ){
+            if ( p1[i] != p2[i] )
+                break;
+        }
+        console.log("hasCommonAccessScope",p1, p2,i);
+
+        if ( i == 0 ){
+            return false;
+        }
+
+        // If ANY ACLs or default permissions are set from here down, they differ in scope
+        var j, def;
+
+        for ( j = i; j < p1.length; j++ ){
+            if ( obj.db.acl.firstExample({ _from: p1[j] })){
+                return false;
+            }
+            def = obj.getCollDefaultACL( p1[j] );
+            if ( def.grant !== null || def.inhgrant !== null )
+                return false;
+        }
+
+        for ( j = i; j < p2.length; j++ ){
+            if ( obj.db.acl.firstExample({ _from: p2[j] })){
+                return false;
+            }
+            def = obj.getCollDefaultACL( p2[j] );
+            if ( def.grant !== null || def.inhgrant !== null )
+                return false;
+        }
+
+        return true;
     };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
