@@ -450,10 +450,26 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
                 click.echo('{{ "Batch create":"Failed", "Error": "File size exceeded limit." }}')
             return
         msg = auth.RecordCreateBatchRequest()
-        with fp.open() as f:
-            msg.records = f.read()
-        reply = _mapi.sendRecv(msg)
-        generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+        if collection: #collection is __cur_coll by default, meaning option is always present. Should this change, or should __cur_coll be used by default, or should it only be used when not __cur_coll?
+            with fp.open('r+') as f:
+                records = jsonlib.load(f) #will always be an array
+                for item in records:
+                    item["parent"] = resolve_coll_id(collection)
+                if not isinstance(records, list):
+                    if __output_mode == _OM_TEXT:
+                        click.echo(
+                            "The batch record file must be a json array of data record objects.")
+                    elif __output_mode == _OM_JSON:
+                        click.echo('{{ "Batch create":"Failed", "Error": "File must contain an array of data objects." }}')
+                    return
+                record = str(records).replace("\'", '"')
+                msg.records = record
+        elif not collection:
+            with fp.open() as f:
+                msg.records = f.read()
+        reply = _mapi.sendRecv(msg) #gives error parsing message
+        click.echo(reply)
+        generic_reply_handler(reply, print_ack_reply __output_mode, __verbosity)
         return
     else:
         msg = auth.RecordCreateRequest()
