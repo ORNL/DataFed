@@ -540,6 +540,11 @@ function dlgSetACLs( item ){
             resizable: true,
             closeOnEscape: false,
             buttons: [{
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog('destroy').remove();
+                }
+            },{
                 text: "Ok",
                 click: function() {
                     var x = $(this);
@@ -553,11 +558,6 @@ function dlgSetACLs( item ){
                         else
                             x.dialog('destroy').remove();
                     });
-                }
-            },{
-                text: "Cancel",
-                click: function() {
-                    $(this).dialog('destroy').remove();
                 }
             }],
             open: function(event,ui){

@@ -48,21 +48,29 @@ router.get('/update', function (req, res) {
                 if ( !is_coll && object._id[0] != "d" )
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid object type, "+object._id];
 
+                var is_admin = true;
+
                 if ( !g_lib.hasAdminPermObject( client, object._id )){
+                    is_admin = false;
                     if ( !g_lib.hasPermissions( client, object, g_lib.PERM_SHARE ))
                         throw g_lib.ERR_PERM_DENIED;
+                }
+
+                var client_perm,cur_rules;
+
+                if ( !is_admin ){
+                    client_perm = g_lib.getPermissions( client, object, g_lib.PERM_ALL );
+                    cur_rules = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", { object: object._id }).toArray();
                 }
 
                 var acl_mode = 0;
                 var new_obj = {};
 
                 if ( req.queryParams.rules ){
-
                     // Delete existing ACL rules for this object
                     g_db.acl.removeByExample({ _from: object._id });
 
-                    var rule;
-                    var obj;
+                    var rule, obj, old_rule, chg;
 
                     for ( var i in req.queryParams.rules ) {
                         rule = req.queryParams.rules[i];
@@ -71,6 +79,27 @@ router.get('/update', function (req, res) {
                             throw [g_lib.ERR_INVALID_PARAM,"Inherited permissions cannot be applied to data records"];
 
                         if ( rule.id == "default" || rule.id == "def" ) {
+                            // Make sure authority is not exceeded
+                            if ( !is_admin ){
+                                old_rule = cur_rules.findIndex( function( r ){
+                                    return r.id == "default";
+                                });
+                                if ( old_rule >= 0 ){
+                                    if ( old_rule.grant != rule.grant ){
+                                        chg = old_rule.grant ^ rule.grant;
+                                        if (( chg & client_perm ) != ( chg & ~g_lib.PERM_SHARE )){
+                                            console.log("bad alter", rule.id, old_rule, rule, client_perm );
+                                            throw [g_lib.ERR_PERM_DENIED,"Attempt to alter protected permissions on " + rule.id + " ACL."];
+                                        }
+                                    }
+                                }else{
+                                    if (( rule.grant & g_lib.PERM_SHARE ) || ( rule.grant & client_perm ) != rule.grant ){
+                                        console.log("exceeding", rule.id, old_rule.grant, rule.grant, client_perm );
+                                        throw [g_lib.ERR_PERM_DENIED,"Attempt to exceed controlled permissions on " + rule.id + " ACL."];
+                                    }
+                                }
+                            }
+
                             new_obj.grant = rule.grant;
 
                             if ( new_obj.grant == 0 )
@@ -90,11 +119,32 @@ router.get('/update', function (req, res) {
                                     throw [g_lib.ERR_NOT_FOUND,"Group "+rule.id+" not found"];
 
                                 rule.id = group._id;
-
                             } else {
                                 acl_mode |= 1;
                                 if ( !g_db._exists( rule.id ))
                                     throw [g_lib.ERR_NOT_FOUND,"User "+rule.id+" not found"];
+                            }
+
+                            if ( !is_admin ){
+                                old_rule = cur_rules.findIndex( function( r ){
+                                    return r.id == rule.id;
+                                });
+
+                                if ( old_rule >= 0 ){
+                                    old_rule = cur_rules[old_rule];
+                                    if ( old_rule.grant != rule.grant ){
+                                        chg = old_rule.grant ^ rule.grant;
+                                        if (( chg & client_perm ) != ( chg & ~g_lib.PERM_SHARE )){
+                                            console.log("bad alter", rule.id, old_rule, rule, client_perm );
+                                            throw [g_lib.ERR_PERM_DENIED,"Attempt to alter protected permissions on " + rule.id + " ACL."];
+                                        }
+                                    }
+                                }else{
+                                    if (( rule.grant & g_lib.PERM_SHARE ) || ( rule.grant & client_perm ) != rule.grant ){
+                                        console.log("exceeding", rule.id, old_rule.grant, rule.grant, client_perm );
+                                        throw [g_lib.ERR_PERM_DENIED,"Attempt to exceed controlled permissions on " + rule.id + " ACL."];
+                                    }
+                                }
                             }
 
                             obj = { _from : object._id, _to:rule.id };

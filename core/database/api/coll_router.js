@@ -375,8 +375,8 @@ router.get('/write', function (req, res) {
                     var req_perm = g_lib.PERM_LINK;
                     if ( req.queryParams.remove && req.queryParams.remove.length )
                         req_perm |= g_lib.PERM_SHARE;
-                    if ( !g_lib.hasPermissions( client, coll, req_perm ))
-                        throw g_lib.ERR_PERM_DENIED;
+                    if ( !g_lib.hasPermissions( client, coll, req_perm, true ))
+                        throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK/SHARE on collection."];
                 }
 
                 var i,obj,idx,cres;
@@ -498,13 +498,15 @@ router.get('/move', function (req, res) {
                     throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
-                    if ( !g_lib.hasPermissions( client, src, g_lib.PERM_LINK | g_lib.PERM_SHARE ))
-                        throw g_lib.ERR_PERM_DENIED;
+                    console.log("src perms:", g_lib.getPermissions( client, src, g_lib.PERM_ALL ));
+
+                    if ( !g_lib.hasPermissions( client, src, g_lib.PERM_LINK | g_lib.PERM_SHARE, true ))
+                        throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK and SHARE on source collection."];
                 }
 
                 if ( !g_lib.hasAdminPermObject( client, dst_id )) {
-                    if ( !g_lib.hasPermissions( client, dst, g_lib.PERM_LINK ))
-                        throw g_lib.ERR_PERM_DENIED;
+                    if ( !g_lib.hasPermissions( client, dst, g_lib.PERM_LINK, true ))
+                        throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK on destination collection."];
                 }
 
                 var i,item;

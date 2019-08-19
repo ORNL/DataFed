@@ -817,7 +817,7 @@ module.exports = ( function() {
      * known not to be owned by the client (and that the client is not an admin). In this case, those checks
      * would add performance cost for no benefit.
      */
-    obj.hasPermissions = function( a_client, a_object, a_req_perm, any ) {
+    obj.hasPermissions = function( a_client, a_object, a_req_perm, a_inherited = false, any = false ) {
         //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
         //console.log("grant:", a_object.grant );
 
@@ -832,6 +832,9 @@ module.exports = ( function() {
         if ( a_object.grant )
             perm_found |= a_object.grant;
 
+        if ( a_inherited && a_object.inhgrant )
+            perm_found |= a_object.inhgrant;
+
         result = obj.evalPermissions( a_req_perm, perm_found, any );
         if ( result != null )
             return result;
@@ -845,6 +848,8 @@ module.exports = ( function() {
                     acl = acls[i];
                     //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
+                    if ( a_inherited && acl.inhgrant )
+                        perm_found |= acl.inhgrant;
                 }
 
                 result = obj.evalPermissions( a_req_perm, perm_found, any );
@@ -861,6 +866,8 @@ module.exports = ( function() {
                     acl = acls[i];
                     //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
+                    if ( a_inherited && acl.inhgrant )
+                        perm_found |= acl.inhgrant;
                 }
 
                 result = obj.evalPermissions( a_req_perm, perm_found, any );
@@ -953,7 +960,7 @@ module.exports = ( function() {
         }
     };
 
-    obj.getPermissions = function( a_client, a_object, a_req_perm ) {
+    obj.getPermissions = function( a_client, a_object, a_req_perm, a_inherited = false ) {
         //console.log("get perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
         //console.log("grant:", a_object.grant );
 
@@ -968,6 +975,9 @@ module.exports = ( function() {
         if ( a_object.grant )
             perm_found |= a_object.grant;
 
+        if ( a_inherited && a_object.inhgrant )
+            perm_found |= a_object.inhgrant;
+
         if (( a_req_perm & perm_found ) == a_req_perm )
             return a_req_perm;
 
@@ -981,6 +991,8 @@ module.exports = ( function() {
                     acl = acls[i];
                     //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
+                    if ( a_inherited && acl.inhgrant )
+                        perm_found |= acl.inhgrant;
                 }
 
                 if (( a_req_perm & perm_found ) == a_req_perm )
@@ -998,6 +1010,8 @@ module.exports = ( function() {
                     acl = acls[i];
                     //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
+                    if ( a_inherited && acl.inhgrant )
+                        perm_found |= acl.inhgrant;
                 }
 
                 if (( a_req_perm & perm_found ) == a_req_perm )

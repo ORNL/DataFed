@@ -1160,6 +1160,9 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
         if (( imem = val.FindMember("owner")) != val.MemberEnd() )
             rec->set_owner( imem->value.GetString() );
 
+        if (( imem = val.FindMember("creator")) != val.MemberEnd() )
+            rec->set_creator( imem->value.GetString() );
+
         if (( imem = val.FindMember("desc")) != val.MemberEnd() )
             rec->set_desc( imem->value.GetString() );
 
