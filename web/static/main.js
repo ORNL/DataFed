@@ -749,44 +749,19 @@ function setStatusText( text, err ){
 
     var bar = $("#status_text");
 
-    bar.html( (err?"<span class='ui-icon ui-icon-alert' style='color:red;font-size:115%'></span> ":"") + text );
+    if ( err ){
+        bar.addClass("blink-background");
+        bar.html( "<span class='ui-icon ui-icon-alert' style='color:yellow;font-size:115%'></span>&nbsp" + text );
+    }else{
+        bar.removeClass("blink-background");
+        bar.html( text);
+    }
 
     status_timer = setTimeout( function(){
         status_timer = null;
         bar.html(" ");
-    },6000);
-
-/*
-    if ( err ){
-        var r;
-        r = 255;
-
-        bar.css("background", "rgb("+r+",0,0)" );
-    
-        status_timer = setTimeout( function(){
-            status_int = setInterval( function(){
-                r -= 5;
-                if ( r < 100 ){
-                    clearInterval(status_int);
-                    status_int = null;
-                    status_timer = setTimeout( function(){
-                        bar.css("background", "#000000" );
-                        status_timer = null;
-                        bar.html(" ");
-                    },4000);
-                }else{
-                    bar.css("background", "rgb("+r+",0,0)" );
-                }
-    
-            }, 100 );
-        },500);
-    }else{
-        status_timer = setTimeout( function(){
-            status_timer = null;
-            bar.html(" ");
-        },6000);
-    }
-    */
+        bar.removeClass("blink-background");
+    },9000);
 }
 
 function dlgConfirmChoice( title, msg, btns, cb ) {

@@ -467,3 +467,39 @@ textarea
 {
     box-sizing: border-box !important;
 }
+
+.blink-background {
+    animation:3s blinker linear infinite;
+    -webkit-animation:3s blinker linear infinite;
+    -moz-animation:3s blinker linear infinite;
+    
+}
+
+@-moz-keyframes blinker{
+    0% { background-color:#000000; }
+    20% { background-color:#9f0000; }
+    80% { background-color:#000000; }
+    100% { background-color:#000000; }
+    /*
+    0% { opacity: 1.0; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1.0; }
+    */
+}
+
+@-webkit-keyframes blinker{
+    0% { background-color:#000000; }
+    20% { background-color:#9f0000; }
+    80% { background-color:#000000; }
+    100% { background-color:#000000; }
+}
+
+@keyframes blinker{
+    0% { background-color:#000000; }
+    20% { background-color:#9f0000; }
+    80% { background-color:#000000; }
+    100% { background-color:#000000; }
+    /*0% { opacity: 1.0; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1.0; }*/
+}
