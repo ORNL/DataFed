@@ -110,6 +110,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     var jsoned;
     var ref_rows = 1;
+    var orig_deps = [];
 
     function addRef(){
         var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
@@ -327,11 +328,14 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     var deps_diff = false;
 
-                    if (( !a_data.deps && deps.length ) || ( a_data.deps && ( a_data.deps.length != deps.length ))){
+                    if (  orig_deps.length != deps.length ){
                         deps_diff = true;
+                        console.log("diff lengths",orig_deps,deps);
                     }else if ( deps.length ){
-                        for ( var i in a_data.deps ){
-                            if ( a_data.deps[i] == deps[i] ){
+                        for ( var i in orig_deps ){
+                            console.log("deps?",orig_deps[i], deps[i]);
+                            if ( orig_deps[i].id != deps[i].id || orig_deps[i].type != deps[i].type ){
+                                console.log("diff deps at",orig_deps[i], deps[i]);
                                 deps_diff = true;
                                 break;
                             }
@@ -339,8 +343,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     if ( deps_diff ){
+                        console.log("deps are different");
                         obj.depsAdd = deps;
                         obj.depsClear = true;
+                    }else{
+                        console.log("deps are same");
                     }
 
                     if ( Object.keys(obj).length === 0 ){
@@ -470,6 +477,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     for ( i in a_data.deps ){
                         dep = a_data.deps[i];
                         if ( dep.dir == "DEP_OUT" ){
+                            orig_deps.push({id:dep.alias?dep.alias:dep.id,type:DepTypeFromString[dep.type],dir:DEP_OUT});
                             row = $("#ref-table tr:last",frame);
                             $("input",row).val(dep.alias?dep.alias:dep.id);
                             $("select",row).val(DepTypeFromString[dep.type]).selectmenu("refresh");
