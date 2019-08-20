@@ -434,7 +434,6 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
         data.deps = [];
     }
 
-    var get_deps = false;
     if ( record.deps_rem != undefined ){
         //console.log("rem deps from ",data._id);
         for ( i in record.deps_rem ) {
@@ -446,7 +445,6 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
             //console.log("done rem");
             g_db.dep.removeByExample({_from:data._id,_to:id});
         }
-        get_deps = true;
     }
 
     if ( record.deps_add != undefined ){
@@ -465,20 +463,16 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
         }
 
         g_lib.checkDependencies(data_id);
-        get_deps = true;
     }
 
-    if ( get_deps ){
-        //console.log("get deps");
-        data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
-        for ( i in data.deps ){
-            dep = data.deps[i];
-            if ( dep.from == data_id )
-                dep.dir = g_lib.DEP_OUT;
-            else
-                dep.dir = g_lib.DEP_IN;
-            delete dep.from;
-        }
+    data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
+    for ( i in data.deps ){
+        dep = data.deps[i];
+        if ( dep.from == data_id )
+            dep.dir = g_lib.DEP_OUT;
+        else
+            dep.dir = g_lib.DEP_IN;
+        delete dep.from;
     }
 
     delete data._rev;
