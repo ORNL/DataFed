@@ -398,12 +398,15 @@ router.get('/write', function (req, res) {
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
 
-                        if ( chk_perm && obj.creator != client._id ){
-                            throw [g_lib.ERR_PERM_DENIED,"Cannot unlink items owned by other users."];
-                        }
-
                         if ( !g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
                             throw [g_lib.ERR_UNLINK,obj._id+" is not in collection " + coll_id];
+
+                        if ( chk_perm && obj.creator != client._id ){
+                            // Check if another instance exists in same scope, if not deny permission
+                            if ( !g_lib.hasAnyCommonAccessScope( obj._id, coll_id )){
+                                throw [g_lib.ERR_PERM_DENIED,"Cannot unlink items owned by other users."];
+                            }
+                        }
 
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
 
@@ -426,10 +429,6 @@ router.get('/write', function (req, res) {
 
                         obj = g_lib.getObject( req.queryParams.add[i], client );
 
-                        if ( chk_perm && obj.creator != client._id ){
-                            throw [g_lib.ERR_PERM_DENIED,"Cannot link items owned by other users."];
-                        }
-
                         // Check if item is already in this collection
                         if ( g_db.item.firstExample({ _from: coll_id, _to: obj._id }))
                             throw [g_lib.ERR_LINK,obj._id+" already linked to "+coll_id];
@@ -442,6 +441,13 @@ router.get('/write', function (req, res) {
                         if ( g_db.owner.firstExample({ _from: obj._id })._to != owner_id )
                             throw [g_lib.ERR_LINK,obj._id+" and "+coll_id+" have different owners"];
 
+                        if ( chk_perm && obj.creator != client._id ){
+                            // TODO check if another instance exists in same scope, if not deny
+                            if ( !g_lib.hasAnyCommonAccessScope( obj._id, coll_id )){
+                                throw [g_lib.ERR_PERM_DENIED,"Cannot link items from other access-control scopes."];
+                            }
+                        }
+    
                         if ( obj._id[0] == "c" ){
                             // Check for circular dependency
                             if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
@@ -512,27 +518,27 @@ router.get('/move', function (req, res) {
                 var src_perms = 0, dst_perms = 0, has_share = false;
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
-                    src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK | g_lib.PERM_SHARE, true );
+                    src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/, true );
                     if (( src_perms & g_lib.PERM_LINK ) == 0 )
                         throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK on source collection."];
 
                     chk_perm = true;
-                }else{
+                }/*else{
                     src_perms = g_lib.PERM_ALL;
-                }
+                }*/
 
                 if ( !g_lib.hasAdminPermObject( client, dst_id )) {
-                    dst_perms = g_lib.getPermissions( client, dst, g_lib.PERM_LINK | g_lib.PERM_SHARE, true );
+                    dst_perms = g_lib.getPermissions( client, dst, g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/, true );
                     if (( dst_perms & g_lib.PERM_LINK ) == 0 )
                         throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK on destination collection."];
 
                     chk_perm = true;
-                }else{
+                }/*else{
                     dst_perms = g_lib.PERM_ALL;
-                }
+                }*/
 
-                if (( src_perms & g_lib.PERM_SHARE ) && ( dst_perms & g_lib.PERM_SHARE ))
-                    has_share = true;
+                //if (( src_perms & g_lib.PERM_SHARE ) && ( dst_perms & g_lib.PERM_SHARE ))
+                //    has_share = true;
 
                 var i,item;
 
@@ -543,12 +549,12 @@ router.get('/move', function (req, res) {
                     if ( item.is_root )
                         throw [g_lib.ERR_LINK,"Cannot link root collection"];
 
-                    if ( chk_perm && item.creator != client._id && !has_share ){
-                        if ( !g_lib.hasCommonAccessScope( src, dst )){
+                    if ( chk_perm && item.creator != client._id /*&& !has_share*/ ){
+                        if ( !g_lib.hasCommonAccessScope( src_id, dst_id )){
                             throw [g_lib.ERR_PERM_DENIED,"Cannot move items across access-control scopes."];
-                        }else{
+                        } /*else{
                             has_share = true;
-                        }
+                        }*/
                     }
 
                     if ( !g_db.item.firstExample({ _from: src_id, _to: item._id }))

@@ -828,10 +828,32 @@ module.exports = ( function() {
         return res.next();
     };
 
-    obj.hasCommonAccessScope = function( src_coll, dst_coll ){
-        console.log("hasCommonAccessScope",src_coll._id, dst_coll._id);
-        var p1 = [src_coll._id], p2 = [dst_coll._id];
-        var parent, child = src_coll._id;
+    obj.hasAnyCommonAccessScope = function( src_item_id, dst_coll_id ){
+        console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
+
+        if ( src_item_id[0] == 'c' ){
+            // Collections can only be linked in one place, can use hasCommonAccessScope on parent
+            var parent = obj.db.item.firstExample({ _to: src_item_id });
+            if ( !parent )
+                return false;
+            else{
+                return obj.hasCommonAccessScope( parent._from, dst_coll_id );
+            }
+        }else{
+            var parents = obj.db.item.byExample({ _to: src_item_id });
+            while ( parents.hasNext() ){
+                if ( obj.hasCommonAccessScope( parents.next()._from, dst_coll_id ))
+                    return true;
+            }
+        }
+
+        return false;
+    };
+
+    obj.hasCommonAccessScope = function( src_coll_id, dst_coll_id ){
+        console.log("hasCommonAccessScope",src_coll_id, dst_coll_id);
+        var p1 = [src_coll_id], p2 = [dst_coll_id];
+        var parent, child = src_coll_id;
 
         while ( 1 ){
             parent = obj.db.item.firstExample({_to: child});
@@ -841,7 +863,7 @@ module.exports = ( function() {
             child = parent._from;
         }
 
-        child = dst_coll._id;
+        child = dst_coll_id;
 
         while ( 1 ){
             parent = obj.db.item.firstExample({_to: child});
