@@ -422,7 +422,7 @@ def data_view(df_id,details,verbosity,json,text):
 @click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
-@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias (default is current working collection)")
+@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias. Defaults to current working collection. For batch imports: if a collection is specified using this option, the parent collection will be set for all records in the import file. If not specified by the user, the current working collection will be used UNLESS a parent collection has already been included for the record object within the import file (pre-specified parent collection fields will be unchanged). ")
 @click.option("-r","--repository",type=str,required=False,help="Repository ID")
 @click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
 @_global_output_options
@@ -450,10 +450,27 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
                 click.echo('{{ "Batch create":"Failed", "Error": "File size exceeded limit." }}')
             return
         msg = auth.RecordCreateBatchRequest()
-        with fp.open() as f:
-            msg.records = f.read()
-        reply = _mapi.sendRecv(msg)
-        generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+        global _cur_sel
+        with fp.open('r+') as f:
+            records = jsonlib.load(f) #will always be an array
+            if collection != _cur_coll:
+                for item in records:
+                    item["parent"] = resolve_coll_id(collection)
+            elif collection == _cur_coll:
+                for item in records:
+                    if "parent" not in item:
+                        item["parent"] = resolve_coll_id(collection)
+            if not isinstance(records, list):
+                if __output_mode == _OM_TEXT:
+                    click.echo(
+                        "The batch record file must be a json array of data record objects.")
+                elif __output_mode == _OM_JSON:
+                    click.echo('{{ "Batch create":"Failed", "Error": "File must contain an array of data objects." }}')
+                return
+            record = str(records).replace("\'", '"')
+            msg.records = record
+        reply = _mapi.sendRecv(msg) #gives error parsing message
+        generic_reply_handler(reply, print_batch, __output_mode, __verbosity)
         return
     else:
         msg = auth.RecordCreateRequest()
@@ -538,7 +555,7 @@ def data_update(df_id,batch,title,alias,description,key_words,data_file,extensio
         with fp.open() as f:
             msg.records = f.read()
         reply = _mapi.sendRecv(msg)
-        generic_reply_handler(reply, print_data, __output_mode, __verbosity)
+        generic_reply_handler(reply, print_batch, __output_mode, __verbosity)
         return
     else:
         msg = auth.RecordUpdateRequest()
@@ -853,12 +870,11 @@ def query_exec(df_id, verbosity, json, text):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
     __output_mode, __verbosity = output_checks(verbosity,json,text)
-    global _most_recent_list_request
-    global _most_recent_list_count
-    _most_recent_list_request = msg
-    _most_recent_list_count = int(msg.count)
+    #global _most_recent_list_request
+    #global _most_recent_list_count
+    #_most_recent_list_request = msg
     reply = _mapi.sendRecv(msg)
-    generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
+    generic_reply_handler( reply, print_listing, __output_mode, __verbosity) #QueryData does not match lisitng reply for print function
 
 
 @query.command(name='text',help="Query by words or phrases")
@@ -1315,13 +1331,16 @@ def http_download(url,destination,output_mode,verbosity): # First argument is tu
     if output_mode == _OM_TEXT and verbosity >=1:
         raw_data_record = wget.download(url[0], out=str(new_filename), bar=bar_adaptive_human_readable) # TODO: Will rewrite any file copy (1).file    # TODO: Use new module for this -- ability to multithread download
         click.echo("\nRaw data for record {} downloaded to {}".format(url[1], raw_data_record))
-    else:
+    else: ## TODO: Re-work to use generic_reply_handler
         raw_data_record = wget.download(url[0], out=str(new_filename), bar=None)
         if output_mode == _OM_JSON:
             click.echo('{{ "Download": "Succeeded", "Data Record ID": "{}", "File": "{}" }}'.format(url[1],raw_data_record))
         elif output_mode == _OM_TEXT and verbosity == 0:
-            click.echo("Raw data for record {} downloaded to {}".format(url[1],
-                                                                          raw_data_record))  # TODO: _OM_RETURN
+            click.echo("Raw data for record {} downloaded to {}".format(url[1], raw_data_record))
+        elif output_mode == _OM_RETN:
+            global _return_val
+            _return_val = '{{ "Download": "Succeeded", "Data Record ID": "{}", "File": "{}" }}'.format(url[1],raw_data_record)
+            return
 
 
 def put_data(df_id,gp,wait,extension,output_mode,verbosity):
@@ -1508,6 +1527,7 @@ def print_data(message, verbosity):
                        "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
                        "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
                        "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
+                       "{:<25} {:<50}".format('Creator: ', dr.creator) + '\n' +
                        "{:<25} {:<50}".format('Locked: ', str(dr.locked)))
             if dr.metadata:
                 click.echo("{:<25} {:<50}".format('Metadata: ', (jsonlib.dumps(jsonlib.loads(dr.metadata), indent=4)))) # TODO: Paging function
@@ -1519,6 +1539,21 @@ def print_data(message, verbosity):
                 click.echo("{:<25}".format('Dependencies:'))
                 print_deps(dr)
 
+
+def print_batch(message,verbosity):
+    if verbosity >= 0:
+        click.echo("Successfully imported {} records.".format(len(message.data)))
+    if verbosity == 2:
+        if click.confirm("Do you want to view a listing of {} imported records?".format(len(message.data))):
+            df_idx = 1
+            global _list_items
+            _list_items = []
+            for i in message.data:
+                _list_items.append(i.id)
+                click.echo("{:2}. {:12} ({:20} {}".format(df_idx, i.id, i.alias + ')', i.title))
+                df_idx += 1
+        else:
+            return
 
 def print_coll(message, verbosity):
     for coll in message.coll:
@@ -1622,9 +1657,9 @@ _listing_requests = {
     auth.UserListAllRequest: print_user_listing,
     auth.UserListCollabRequest: print_user_listing,
     auth.QueryListRequest: print_listing,
-    auth.QueryExecRequest: print_listing,
+    #auth.QueryExecRequest: print_listing, #does not allow for paging on server side
     auth.TopicListRequest: '',
-    auth.ProjectListRequest: print_proj_listing,
+    auth.ProjectListRequest: print_listing,
     auth.CollListPublishedRequest: '',
     auth.CollListRequest: '',
     auth.RecordListByAllocRequest: '',
