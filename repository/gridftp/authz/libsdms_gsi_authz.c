@@ -7,7 +7,9 @@
 #include <globus_error_hierarchy.h>
 #include <gssapi.h>
 #include "libsdms_gsi_authz.h"
-#include "sdms_db_authz.h"
+
+//#include "sdms_db_authz.h"
+#include "AuthzWorker.hpp"
 
 // TODO This value must be pulled from server config (max concurrency)
 #define MAX_ACTIVE_CTX 25

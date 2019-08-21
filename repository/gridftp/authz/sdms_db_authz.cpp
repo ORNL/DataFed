@@ -1,3 +1,4 @@
+#if 0
 extern "C"
 {
 	#include "libsdms_gsi_authz.h"
@@ -49,4 +50,4 @@ int authzdb(char * client_id, char * object, char * action)
     }
     return result;
 }
-
+#endif
