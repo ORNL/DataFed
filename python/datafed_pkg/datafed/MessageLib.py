@@ -194,8 +194,8 @@ class API:
     # @param password Client's DataFed password.
     # @exception Exception: On communication timeout or authentication failure.
     #
-    def manualAuth( self, uid, password ):
-        msg = anon.AuthenticateRequest()
+    def manualAuthByPassword( self, uid, password ):
+        msg = anon.AuthenticateByPasswordRequest()
         msg.uid = uid
         msg.password = password
         self.sendRecv( msg )
@@ -206,10 +206,27 @@ class API:
         # Test auth status
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
         if not reply.auth:
-            raise Exception("Internal authentication error")
+            raise Exception("Authentication failed")
+
         self._auth = True
         self._uid = reply.uid
 
+    def manualAuthByToken( self, token ):
+        msg = anon.AuthenticateByTokenRequest()
+        msg.token = token
+        self.sendRecv( msg )
+
+        # Reset connection so server can re-authenticate
+        self._conn.reset()
+
+        # Test auth status
+        reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
+
+        if not reply.auth:
+            raise Exception("Authentication failed")
+
+        self._auth = True
+        self._uid = reply.uid
 
     ## @brief Get NackReply exception enable state.
     #

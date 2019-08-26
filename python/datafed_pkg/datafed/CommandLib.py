@@ -121,7 +121,8 @@ def _run():
         #print( "except - outer" )
         click.echo("Exception:",e)
 
-    info(1,"Goodbye!")
+    if _interactive:
+        info(1,"Goodbye!")
 
 ##
 # @brief Initialize Commandlib for programmatic access
@@ -174,7 +175,7 @@ def init( opts = {} ):
 # @param password - DataFed password
 # @exception Exception: if called prior to init(), or multiple login() calls.
 #
-def login( uid, password ):
+def loginByPassword( uid, password ):
     global _uid
     global _cur_sel
 
@@ -184,10 +185,25 @@ def login( uid, password ):
     if _uid:
         raise Exception("login can only be called once.")
 
-    _mapi.manualAuth( uid, password )
+    _mapi.manualAuthByPassword( uid, password )
 
     _uid = uid
     _cur_sel = uid
+
+def loginByToken( token ):
+    global _uid
+    global _cur_sel
+
+    if not _mapi:
+        raise Exception("login called before init.")
+
+    if _uid:
+        raise Exception("login can only be called once.")
+
+    _mapi.manualAuthByToken( token )
+
+    _uid = _mapi._uid
+    _cur_sel = _mapi._uid
 
 ##
 # @brief Execute a client CLI-style command
@@ -284,12 +300,17 @@ def _addConfigOptions():
 
     for k, v in Config._opt_info.items():
         if not v[3] & Config._OPT_NO_CL:
-            if v[3] & Config._OPT_INT:
-                cli.params.append( click.Option(v[4],type=int,help=v[5]))
-            elif v[3] & Config._OPT_BOOL:
-                cli.params.append( click.Option(v[4],is_flag=True,default=None,help=v[5]))
+            if v[3] & Config._OPT_HIDE:
+                hide = True
             else:
-                cli.params.append( click.Option(v[4],type=str,help=v[5]))
+                hide = False
+
+            if v[3] & Config._OPT_INT:
+                cli.params.append( click.Option(v[4],type=int,help=v[5],hidden=hide))
+            elif v[3] & Config._OPT_BOOL:
+                cli.params.append( click.Option(v[4],is_flag=True,default=None,help=v[5],hidden=hide))
+            else:
+                cli.params.append( click.Option(v[4],type=str,help=v[5],hidden=hide))
 
 #------------------------------------------------------------------------------
 # Top-level group with global options
@@ -1829,8 +1850,10 @@ def _initialize( opts ):
     if tmp != None:
         _interactive = tmp
 
-    info( 1, "Welcome to DataFed CLI, version", version )
-    if _verbosity > 1:
+    if _interactive:
+        info( 1, "Welcome to DataFed CLI, version", version )
+
+    if _verbosity > 1 and _interactive:
         print( "Settings details:" )
         _cfg.printSettingInfo()
 
@@ -1849,7 +1872,12 @@ def _initialize( opts ):
 
     auth, uid = _mapi.getAuthStatus()
 
-    if opts["manual_auth"] or not auth:
+    tmp = _cfg.get("client_token")
+    if tmp != None:
+        _mapi.manualAuthByToken( tmp )
+        if _interactive:
+            info(1,"Authenticated via token as",_mapi._uid)
+    elif opts["manual_auth"] or not auth:
         if not opts["manual_auth"]:
             if not _mapi.keysLoaded():
                 if _output_mode == _OM_RETN:
@@ -1867,7 +1895,7 @@ def _initialize( opts ):
             uid = click.prompt("User ID: ")
             password = getpass.getpass(prompt="Password: ")
             try:
-                _mapi.manualAuth( uid, password )
+                _mapi.manualAuthByPassword( uid, password )
                 break
             except Exception as e:
                 click.echo(e)
@@ -1876,10 +1904,9 @@ def _initialize( opts ):
             info(1,"Aborting...")
             _interactive = True
             sys.exit(1)
-
-        _mapi.installLocalCredentials()
     else:
-        info(1,"Authenticated as",uid)
+        if _interactive:
+            info(1,"Authenticated via keys as",uid)
 
     _uid = uid
     _cur_sel = uid

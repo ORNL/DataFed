@@ -23,6 +23,7 @@ _OPT_PATH    = 0x04
 _OPT_NO_ENV  = 0x08
 _OPT_NO_CF   = 0x10
 _OPT_NO_CL   = 0x20
+_OPT_HIDE    = 0x40
 
 _opt_info = {
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
@@ -35,6 +36,7 @@ _opt_info = {
     "client_cfg_file":["client","config_file","DATAFED_CLIENT_CFG_FILE",_OPT_PATH|_OPT_NO_CF,["--client-cfg-file"],"Client configuration file"],
     "client_pub_key_file":["client","public_key_file","DATAFED_CLIENT_PUB_KEY_FILE",_OPT_PATH,["--client-pub-key-file"],"Client public key file"],
     "client_priv_key_file":["client","private_key_file","DATAFED_CLIENT_PRIV_KEY_FILE",_OPT_PATH,["--client-priv-key-file"],"Client private key file"],
+    "client_token":["client","token","DATAFED_CLIENT_TOKEN",_OPT_HIDE,["--client-token"],"Client access token"],
     "default_ep":["general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
     "verbosity":["general","verbosity","DATAFED_DEFAULT_VERBOSITY",_OPT_INT,["--verbosity","-v"],"Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."],
     "interactive":["general","interactive","DATAFED_DEFAULT_INTERACT",_OPT_BOOL,["--interactive/--no-interactive","-i/-n"],"Start an interactive session"]
