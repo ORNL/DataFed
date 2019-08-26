@@ -19,14 +19,14 @@ module.exports = router;
 
 //==================== USER API FUNCTIONS
 
-router.get('/authn', function (req, res) {
+router.get('/authn/password', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         if ( client.password != req.queryParams.pw )
             throw g_lib.ERR_AUTHN_FAILED;
 
-        res.send({ "authorized": 1 });
+        res.send({ "uid": client._id, "authorized": 1 });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -34,8 +34,22 @@ router.get('/authn', function (req, res) {
 .queryParam('client', joi.string().required(), "Client SDMS UID")
 .queryParam('pw', joi.string().required(), "SDMS account password")
 .summary('Authenticate user')
-.description('Authenticate user using SDMS password');
+.description('Authenticate user using password');
 
+router.get('/authn/token', function (req, res) {
+    try {
+        var user = g_db._query("for i in u filter i.access == @tok return i", { tok: req.queryParams.token });
+        if ( !user.hasNext())
+            throw g_lib.ERR_AUTHN_FAILED;
+
+        res.send({ "uid": user.next()._id, "authorized": 1 });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('token', joi.string().required(), "Client access token")
+.summary('Authenticate user')
+.description('Authenticate user using access token');
 
 router.get('/create', function (req, res) {
     try {
