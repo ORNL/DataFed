@@ -1296,7 +1296,7 @@ def help_cli(ctx):
 @cli.command(name="exit",help="Exit interactive session")
 def exit_cli():
     global _interactive
-    _interactive = True
+    _interactive = False
     sys.exit(0)
 
 
