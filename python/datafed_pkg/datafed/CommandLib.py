@@ -1303,9 +1303,16 @@ def json_cli(ctx):
 
 @cli.command(name='text',help="Set output mode to TEXT")
 @click.pass_context
-def json_cli(ctx):
+def text_cli(ctx):
     global _output_mode_sticky
     _output_mode_sticky = _OM_TEXT
+
+@cli.command(name='verbosity',help="Set verbosity level")
+@click.argument("level", required=True)
+@click.pass_context
+def verbosity_cli(ctx,level):
+    global _verbosity_sticky
+    _verbosity_sticky = int(level)
 
 @cli.command(name='help',help="Show datafed client help")
 @click.pass_context
@@ -1555,7 +1562,7 @@ def print_data( message ):
     for dr in message.data:
         click.echo( "{:<25} {:<50}".format('ID: ', dr.id) + '\n' +
                     "{:<25} {:<50}".format('Title: ', dr.title) + '\n' +
-                    "{:<25} {:<50}".format('Alias: ', dr.alias) +
+                    "{:<25} {:<50}".format('Alias: ', dr.alias) + '\n' +
                     "{:<25} {:<50}".format('Owner: ', dr.owner) + '\n' +
                     "{:<25} {:<50}".format('Creator: ', dr.creator) + '\n' +
                     "{:<25} {:<50}".format('Locked: ', str(dr.locked)))
@@ -1572,7 +1579,7 @@ def print_data( message ):
                        "{:<25} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
                        "{:<25} {:<50}".format('Source: ', dr.source) + '\n' +
                        "{:<25} {:<50}".format('Extension: ', dr.ext) + '\n' +
-                       "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n' +
+                       "{:<25} {:<50}".format('Auto Extension: ', str(dr.ext_auto)) + '\n'
                        )
             if dr.metadata:
                 click.echo("{:<25} {:<50}".format('Metadata: ', (jsonlib.dumps(jsonlib.loads(dr.metadata), indent=4)))) # TODO: Paging function
