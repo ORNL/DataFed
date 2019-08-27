@@ -148,7 +148,7 @@ class API:
             raise Exception( "Timeout waiting for server connection." )
 
         if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
-            raise Exception( "Incompatible server version {}.{}.{}".format(ver_reply.major,ver_reply.minor,ver_reply.build))
+            raise Exception( "Incompatible server version {}.{}.{}".format(reply.major,reply.minor,reply.build))
 
         # Check if server authenticated based on keys
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest(), 10000 )

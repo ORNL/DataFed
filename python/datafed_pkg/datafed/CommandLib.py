@@ -1261,16 +1261,26 @@ def ident(df_id,show):
 @click.pass_context
 def setup(ctx):
     cfg_dir = _cfg.get("client_cfg_dir")
-    if cfg_dir == None:
-        raise Exception("Client configuration directory is not configured")
+    pub_file = _cfg.get("client_pub_key_file")
+    priv_file = _cfg.get("client_priv_key_file")
+
+    if cfg_dir == None and (pub_file == None or priv_file == None):
+        raise Exception("Client configuration directory and/or client key files not configured")
+
     msg = auth.GenerateCredentialsRequest()
     reply, mt = _mapi.sendRecv( msg )
 
-    keyf = open(os.path.join(cfg_dir, "datafed-user-key.pub"), "w" )
+    if pub_file == None:
+        pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
+
+    keyf = open( pub_file, "w" )
     keyf.write( reply.pub_key )
     keyf.close()
 
-    keyf = open(os.path.join(cfg_dir, "datafed-user-key.priv"), "w" )
+    if priv_file == None:
+        priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
+
+    keyf = open( priv_file, "w" )
     keyf.write( reply.priv_key )
     keyf.close()
 
