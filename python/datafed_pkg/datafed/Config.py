@@ -123,13 +123,13 @@ class API:
         if "server_cfg_file" in self._opts:
             cfg_file = self._opts["server_cfg_file"]["val"]
         elif 'server_cfg_dir' in self._opts:
-            tmp = os.path.expanduser( os.path.join( self._opts['server_cfg_dir']["val"], "server.ini" ))
+            tmp = os.path.expanduser( os.path.join( self._opts['server_cfg_dir']["val"], "datafed-server.ini" ))
             if os.path.exists( tmp ):
                 cfg_file = tmp
                 self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5 }
 
         if not cfg_file:
-            tmp = os.path.expanduser("~/.datafed/server.ini")
+            tmp = os.path.expanduser("~/.datafed/datafed-server.ini")
             if os.path.exists( tmp ):
                 cfg_file = tmp
                 self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5 }
@@ -148,14 +148,14 @@ class API:
             else:
                 open( cfg_file, "a" ).close()
         elif 'client_cfg_dir' in self._opts:
-            cfg_file = os.path.expanduser( os.path.join( self._opts['client_cfg_dir']["val"], "client.ini" ))
+            cfg_file = os.path.expanduser( os.path.join( self._opts['client_cfg_dir']["val"], "datafed-client.ini" ))
             self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
             if os.path.exists( cfg_file ):
                 self._loadConfigFile( cfg_file, 2 )
             else:
                 open( cfg_file, "a" ).close()
         else:
-            cfg_file = os.path.expanduser("~/.datafed/client.ini")
+            cfg_file = os.path.expanduser("~/.datafed/datafed-client.ini")
             if os.path.exists( cfg_file ):
                 self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
                 self._loadConfigFile( cfg_file, 2 )
@@ -164,7 +164,7 @@ class API:
                 if not os.path.exists( tmp ):
                     try:
                         os.mkdir( tmp )
-                        cfg_file = os.path.join( tmp, "client.ini" )
+                        cfg_file = os.path.join( tmp, "datafed-client.ini" )
                         open( cfg_file, "a" ).close()
                     except:
                         pass
