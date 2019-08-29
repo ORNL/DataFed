@@ -288,10 +288,13 @@ class API:
                 config = configparser.ConfigParser()
                 config.read_file( f )
                 opt = _opt_info[key]
+                print("check for section:",opt[0])
                 if not config.has_section( opt[0] ):
+                    print("adding section:",opt[0])
                     config.add_section( opt[0] )
                 config.set( opt[0], opt[1], value )
                 f.seek(0)
+                f.truncate()
                 config.write( f )
 
 

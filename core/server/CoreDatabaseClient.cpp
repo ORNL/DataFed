@@ -1780,6 +1780,8 @@ DatabaseClient::xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataRe
         params.push_back({"to",to_string(a_request.to())});
     if ( a_request.has_status() )
         params.push_back({"status",to_string((unsigned int)a_request.status())});
+    if ( a_request.has_limit() )
+        params.push_back({"limit",to_string(a_request.limit())});
 
     dbGet( "xfr/list", params, result, false );
 
