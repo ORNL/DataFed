@@ -395,18 +395,24 @@ router.get('/list', function (req, res) {
             filter += "i.status == " + req.queryParams.status;
         }
 
+        var qry_tail = " sort i.updated desc";
+        if ( req.queryParams.limit != undefined ){
+            qry_tail += " limit " + req.queryParams.limit;
+        }
+        qry_tail += " return i";
+
         if ( req.queryParams.client != undefined ) {
             const client = g_lib.getUserFromClientID( req.queryParams.client );
 
             if ( filter.length )
-                result = g_db._query( "for i in tr filter i.user_id == @uid and " + filter + " sort i.updated desc return i", { uid: client._id } ).toArray();
+                result = g_db._query( "for i in tr filter i.user_id == @uid and " + filter + qry_tail, { uid: client._id } ).toArray();
             else
-                result = g_db._query( "for i in tr filter i.user_id == @uid sort i.updated desc return i", { uid: client._id } ).toArray();
+                result = g_db._query( "for i in tr filter i.user_id == @uid" + qry_tail, { uid: client._id } ).toArray();
         } else {
             if ( filter.length )
-                result = g_db._query( "for i in tr filter " + filter + " sort i.updated desc return i" ).toArray();
+                result = g_db._query( "for i in tr filter " + filter + qry_tail ).toArray();
             else
-                result = g_db._query( "for i in tr sort i.updated desc return i" ).toArray();
+                result = g_db._query( "for i in tr" + qry_tail ).toArray();
         }
 
         res.send( result );
@@ -419,8 +425,9 @@ router.get('/list', function (req, res) {
 .queryParam('to', joi.number().optional(), "Return result on or before absolute 'to' time.")
 .queryParam('since', joi.number().optional(), "Return results between now and 'since' seconds ago.")
 .queryParam('status', joi.number().optional(), "Return results matching 'status'.")
+.queryParam('limit', joi.number().optional(), "Limit to 'N' most recent transfers.")
 .summary('List transfer record')
-.description('View transfer record');
+.description('List transfer records by time, status, or count');
 
 router.get('/purge', function (req, res) {
     var age = (Date.now()/1000) - req.queryParams.age;
