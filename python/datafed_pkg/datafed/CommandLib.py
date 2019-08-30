@@ -1496,7 +1496,7 @@ def put_data(df_id, gp, wait, extension ):
     xfr_id = reply[0].xfr[0].id
 
     if _output_mode == _OM_TEXT:
-        click.echo("{:<25} {:<50}".format("Transfer ID:",xfr_id))
+        click.echo("{:<20} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
         if _verbosity >= 1 and _output_mode == _OM_TEXT:
             click.echo("Waiting")
@@ -1510,7 +1510,7 @@ def put_data(df_id, gp, wait, extension ):
             if check.status == 3 or check.status == 4: break
             xfr_status = _xfr_statuses.get(check.status, "None")
             if _verbosity >= 1 and _output_mode == _OM_TEXT:
-                click.echo("{:<25} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
+                click.echo("{:<20} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
 
         generic_reply_handler(reply,print_xfr_stat )
     else:
@@ -1692,7 +1692,10 @@ def print_data( message ):
         if _verbosity == 2:
             if dr.metadata:
                 print( "Metadata:\n" )
-                print( jsonlib.dumps( jsonlib.loads( dr.metadata ), indent=4 ))
+                #print( jsonlib.dumps( jsonlib.loads( dr.metadata ), indent=4 ))
+                json = jsonlib.loads( dr.metadata )
+                #_printJSON( json, 0, indent )
+                printJSON( json, 2, 2 )
                 print( "" )
                 # TODO: Paging function?
             elif not dr.metadata:
@@ -1768,13 +1771,13 @@ def print_xfr_stat( message ):
         xfr_mode = _xfr_modes.get(xfr.mode, "None")
         xfr_status = _xfr_statuses.get(xfr.status, "None")
 
-        click.echo("{:<25} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
-                    "{:<25} {:<50}".format('Mode: ', xfr_mode) + '\n' +
-                    "{:<25} {:<50}".format('Status: ', xfr_status) + '\n' +
-                    "{:<25} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
-                    "{:<25} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
-                    "{:<25} {:<50}".format('Started: ', timestampToStr(xfr.started)) + '\n' +
-                    "{:<25} {:<50}".format('Updated: ', timestampToStr(xfr.started)))
+        click.echo("{:<20} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
+                    "{:<20} {:<50}".format('Mode: ', xfr_mode) + '\n' +
+                    "{:<20} {:<50}".format('Status: ', xfr_status) + '\n' +
+                    "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
+                    "{:<20} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
+                    "{:<20} {:<50}".format('Started: ', timestampToStr(xfr.started)) + '\n' +
+                    "{:<20} {:<50}".format('Updated: ', timestampToStr(xfr.started)))
 
         if _verbosity == 2:
             n = len( xfr.repo.file )
@@ -1788,7 +1791,7 @@ def print_xfr_stat( message ):
                 df_ids += ", "
             df_ids += xfr.repo.file[f].id
 
-        click.echo("{:<25} {:<50}".format('Data Record(s): ', df_ids ))
+        click.echo("{:<20} {:<50}".format('Data Record(s): ', df_ids ))
 
 
 def print_user( message ):
@@ -1957,6 +1960,85 @@ def arrayToCSV( items, skip ):
         else:
             text += i
     return text
+
+
+def printJSON( json, cur_indent, indent ):
+    pref = " "*cur_indent
+    last = 0
+
+    for k, v in json.items():
+        print( "" if last == 0 else ",\n", pref, end='', sep='' )
+        last = 1
+        if type( v ) is dict:
+            if v:
+                print( k, ": {" )
+                printJSON( v, cur_indent + indent, indent )
+                print( "\n", pref, "}", sep='', end='' )
+            else:
+                print( k, ": {}", end='' )
+        elif type( v ) is list:
+            # Test array for dict or list values
+            cplx = False
+            for a in v:
+                if type(a) is dict or type(a) is list:
+                    cplx = True
+                    break
+            if cplx:
+                print( k, ": [" )
+                printJSON_List( v, cur_indent + indent, indent )
+                print( "\n", pref, "]", sep='', end='' )
+            else:
+                print( k, " : ", str( v ), sep = '', end='')
+        elif type( v ) is str:
+            print( k, " : \"", v, "\"", sep='', end='' )
+        else:
+            print( k, " : ", v,  sep = '', end='' )
+
+def printJSON_List( json, cur_indent, indent ):
+    pref = " "*cur_indent
+    last = 0
+    for v in json:
+        if type( v ) is dict:
+            if v:
+                if last == 0:
+                    print( pref, "{", sep='' )
+                elif last == 1:
+                    print( ",{", sep='' )
+                else:
+                    print( ",\n",pref,"{", sep='' )
+
+                printJSON( v, cur_indent + indent, indent )
+                print( "\n", pref, "}", sep='', end='' )
+                last = 1
+            else:
+                if last == 0:
+                    print( pref, "{}", sep='', end='' )
+                elif last == 1:
+                    print( ",\n{}", sep='', end='' )
+                else:
+                    print( ",\n",pref,"{}", sep='', end='' )
+                last = 2
+        else:
+            print( ",\n" if last != 0 else "", pref, end='', sep ='' )
+            last = 2
+
+            if type( v ) is list:
+                # Test array for dict or list values
+                cplx = False
+                for a in v:
+                    if type(a) is dict or type(a) is list:
+                        cplx = True
+                        break
+                if cplx:
+                    print( "[" )
+                    printJSON_List( v, cur_indent + indent, indent )
+                    print( pref, "]", sep='', end='' )
+                else:
+                    print( str( v ), end = '' )
+            elif type( v ) is str:
+                print( "\"", v, "\"", end='', sep='' )
+            else:
+                print( v, end='' )
 
 def bar_custom_text(current, total, width=80):
     click.echo("Downloading: {:.2f}% [{} / {}]".format(current / total * 100, human_readable_bytes(current), human_readable_bytes(total)))
