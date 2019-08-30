@@ -119,7 +119,7 @@ def _run():
         except KeyboardInterrupt as e:
             # Ctrl-C exits
             break
-        '''
+
         except Exception as e:
             # Format error message based on output mode
             if _output_mode == _OM_TEXT:
@@ -131,7 +131,6 @@ def _run():
 
             if _interactive == False:
                 break
-        '''
 
     if _interactive:
         info(1,"Goodbye!")
@@ -1668,8 +1667,8 @@ def print_data( message ):
             else:
                 click.echo( "{:<20} {:<50}".format('Extension: ', dr.ext if dr.ext else '(not set)' ))
 
-        click.echo( "{:<20} {:<50}".format('Owner: ', dr.owner) + '\n' +
-                    "{:<20} {:<50}".format('Creator: ', dr.creator) + '\n' +
+        click.echo( "{:<20} {:<50}".format('Owner: ', dr.owner[2:]) + '\n' +
+                    "{:<20} {:<50}".format('Creator: ', dr.creator[2:]) + '\n' +
                     "{:<20} {:<50}".format('Created: ', timestampToStr(dr.ct)) + '\n' +
                     "{:<20} {:<50}".format('Updated: ', timestampToStr(dr.ut)))
 
@@ -1719,7 +1718,7 @@ def print_coll( message ):
                     "{:<20} {:<50}".format('Title: ', coll.title) + '\n' +
                     "{:<20} {:<50}".format('Alias: ', coll.alias) + '\n' +
                     "{:<20} {:<50}".format('Topic: ', coll.topic if coll.topic else '(not published)') + '\n' +
-                    "{:<20} {:<50}".format('Owner: ', coll.owner) + '\n' +
+                    "{:<20} {:<50}".format('Owner: ', coll.owner[2:]) + '\n' +
                     "{:<20} {:<50}".format('Created: ', timestampToStr(coll.ct)) + '\n' +
                     "{:<20} {:<50}".format('Updated: ', timestampToStr(coll.ut)))
 
@@ -1764,7 +1763,7 @@ def print_xfr_stat( message ):
 
         click.echo("{:<25} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
                     "{:<25} {:<50}".format('Mode: ', xfr_mode) + '\n' +
-                    "{:<25} {:<50}".format('Status: ', str(xfr_status)) + '\n' +
+                    "{:<25} {:<50}".format('Status: ', xfr_status) + '\n' +
                     "{:<25} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
                     "{:<25} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
                     "{:<25} {:<50}".format('Started: ', timestampToStr(xfr.started)) + '\n' +
@@ -1788,9 +1787,9 @@ def print_xfr_stat( message ):
 def print_user( message ):
     for usr in message.user:
         if _verbosity >= 0:
-            click.echo("{:<25} {:<50}".format('User ID: ', usr.uid) + '\n' +
-                       "{:<25} {:<50}".format('Name: ', usr.name) + '\n' +
-                       "{:<25} {:<50}".format('Email: ', usr.email))
+            click.echo("{:<20} {:<50}".format('User ID: ', usr.uid) + '\n' +
+                       "{:<20} {:<50}".format('Name: ', usr.name) + '\n' +
+                       "{:<20} {:<50}".format('Email: ', usr.email))
 
 
 def print_metadata( message ):
@@ -1800,37 +1799,47 @@ def print_metadata( message ):
 def print_proj( message ):
 
     for proj in message.proj:
-        admins = []
-        members = []
-        for i in proj.admin: admins.append(i)
-        for i in proj.member: members.append(i)
+        #for i in proj.member: members.append(i)
 
-        click.echo( "{:<25} {:<50}".format('ID: ', proj.id) + '\n' +
-                    "{:<25} {:<50}".format('Title: ', proj.title) + '\n' +
-                    "{:<25} {:<50}".format('Description: ', proj.desc))
+        w,h = shutil.get_terminal_size((80, 20))
 
-        if _verbosity >= 1:
-            click.echo("{:<25} {:<50}".format('Owner: ', proj.owner) + '\n' +
-                       "{:<25} {:<50}".format('Admin(s): ', str(admins)) + '\n' +
-                       "{:<25} {:<50}".format('Members: ', str(members)))
+        click.echo( "{:<20} {:<50}".format('ID: ', proj.id) + '\n' +
+                    "{:<20} {:<50}".format('Title: ', proj.title) + '\n' +
+                    "{:<20} {:<50}".format('Owner: ', proj.owner[2:]) + '\n' +
+                    "{:<20} {:<50}".format('Created: ', timestampToStr(proj.ct)) + '\n' +
+                    "{:<20} {:<50}".format('Updated: ', timestampToStr(proj.ut)))
+
         if _verbosity == 2:
-            click.echo("{:<25} {:<50}".format('Date Created: ', timestampToStr(proj.ct)) + '\n' +
-                       "{:<25} {:<50}".format('Date Updated: ', timestampToStr(proj.ut)) + '\n' +
-                       "{:<25} {:<50}".format('Sub Repo: ', proj.sub_repo) + '\n' +
-                       "{:<25} {:<50}".format('Sub Allocation: ', human_readable_bytes(proj.sub_alloc) + '\n' +
-                       "{:<25} {:<50}".format('Sub Usage: ', human_readable_bytes(proj.sub_usage))))
-            for i in proj.alloc:
-                print_allocation_data(i)
+            if len(proj.admin):
+                text = arrayToCSV(proj.admin,2)
+                wrapper = textwrap.TextWrapper(subsequent_indent=' '*21,width=w-21)
+                print( "Admins:              " + wrapper.fill( text ))
+            else:
+                click.echo("{:<20} (none)".format('Admin(s): '))
 
+            if len(proj.member):
+                text = arrayToCSV(proj.member,2)
+                wrapper = textwrap.TextWrapper(subsequent_indent=' '*21,width=w-21)
+                print( "Members:             " + wrapper.fill( text ))
+            else:
+                click.echo("{:<20} (none)".format('Admin(s): '))
 
-def print_allocation_data( alloc ): #
-    click.echo("{:<25} {:<50}".format('Repo: ', alloc.repo) + '\n' +
-               "{:<25} {:<50}".format('Max Size: ', human_readable_bytes(alloc.max_size)) + '\n' +
-               "{:<25} {:<50}".format('Total Size: ', human_readable_bytes(alloc.tot_size)) + '\n' +
-               "{:<25} {:<50}".format('Max Record Count: ', alloc.max_count) + '\n' +
-               "{:<25} {:<50}".format('Path: ', alloc.path) + '\n' +
-               "{:<25} {:<50}".format('ID: ', alloc.id) + '\n' +
-               "{:<25} {:<50}".format('Sub Allocation: ', str(alloc.sub_alloc)))
+            if proj.sub_repo:
+                click.echo("{:<20} {} (sub-alloc), {} total, {} used".format("Allocation:",proj.sub_repo, human_readable_bytes(proj.sub_alloc),human_readable_bytes(proj.sub_usage)))
+            elif len(proj.alloc) > 0:
+                for alloc in proj.alloc:
+                    click.echo("{:<20} {}, {} total, {} used".format("Allocation:",alloc.repo, human_readable_bytes(alloc.max_size),human_readable_bytes(alloc.tot_size)))
+            else:
+                click.echo("{:<20} (none)".format("Allocation:"))
+
+        wrapper = textwrap.TextWrapper(initial_indent='  ',subsequent_indent='  ',width=w)
+
+        if len(proj.desc) > 200 and _verbosity < 2:
+            print( "Description:\n\n" + wrapper.fill( proj.desc[:200] + '... (more)' ) + '\n' )
+        elif len(proj.desc) > 0:
+            print( "Description:\n\n" + wrapper.fill( proj.desc ) + '\n')
+        else:
+            click.echo( "{:<20} {:<50}".format('Description: ', '(none)'))
 
 def printError( msg ):
     if _output_mode == _OM_TEXT:
@@ -1930,6 +1939,17 @@ def strToTimestamp( time_str ):
         pass
 
     return None
+
+def arrayToCSV( items, skip ):
+    text = ""
+    for i in items:
+        if len(text):
+            text += ", "
+        if skip:
+            text += i[skip:]
+        else:
+            text += i
+    return text
 
 def bar_custom_text(current, total, width=80):
     click.echo("Downloading: {:.2f}% [{} / {}]".format(current / total * 100, human_readable_bytes(current), human_readable_bytes(total)))
