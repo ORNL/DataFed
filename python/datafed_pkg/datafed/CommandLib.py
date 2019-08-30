@@ -395,7 +395,12 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
 def wc(df_id):
     global _cur_coll
     if df_id is not None:
-        _cur_coll = resolve_coll_id(df_id)
+        tmp = resolve_coll_id(df_id)
+        # Verify collection is valid
+        msg = auth.CollViewRequest()
+        msg.id = tmp
+        reply = _mapi.sendRecv( msg )
+        _cur_coll = tmp
     else:
         click.echo(_cur_coll)
 
@@ -503,7 +508,7 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
         if description: msg.desc = description
         if key_words: msg.keyw = key_words   # TODO: Determine input format for keywords -- list? quotation marks? commas?
         if alias: msg.alias = alias
-        if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
+        msg.parent_id = resolve_coll_id(collection)
         if repository: msg.repo_id = repository
         msg.ext_auto = True
         if extension:
@@ -764,7 +769,10 @@ def coll_create(title,alias,description,topic,collection,verbosity,json,text):
     if topic:
         msg.ispublic = True
         msg.topic = topic
-    if resolve_coll_id(collection): msg.parent_id = resolve_coll_id(collection)
+    if collection:
+        msg.parent_id = resolve_coll_id(collection)
+    else:
+        msg.parent_id = _cur_coll
 
     output_checks( verbosity, json, text )
 
@@ -1443,16 +1451,15 @@ def resolve_coll_id(df_id):
     elif df_id == "..":
         msg = auth.CollGetParentsRequest()
         msg.id = _cur_coll
-        msg.all = False
         reply, mt = _mapi.sendRecv(msg)
-        if len(reply.coll):
-            return reply.coll[0].id
+        if len(reply.path) and len(reply.path[0].item):
+            return reply.path[0].item[0].id
         else:
             raise Exception("Already at root")
 
     df_id2 = resolve_index_val(df_id)
-    #print("inter id:",df_id2)
-    if (len(df_id2) > 2 and df_id2[1] == "/" ) or (df_id2.find(":") > 0):
+
+    if df_id2.find("/") > 0 or df_id2.find(":") > 0:
         return df_id2
 
     return _cur_alias_prefix + df_id2
@@ -1651,8 +1658,8 @@ def print_data( message ):
     for dr in message.data:
         click.echo( "{:<20} {:<50}".format('ID: ', dr.id) + '\n' +
                     "{:<20} {:<50}".format('Title: ', dr.title) + '\n' +
-                    "{:<20} {:<50}".format('Alias: ', dr.alias) + '\n' +
-                    "{:<20} {:<50}".format('Keywords: ', dr.keyw ) + '\n' +
+                    "{:<20} {:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ) + '\n' +
+                    "{:<20} {:<50}".format('Keywords: ', dr.keyw if dr.keyw else "(none)" ) + '\n' +
                     "{:<20} {:<50}".format('Locked: ', str(dr.locked)))
 
         if dr.data_url:
@@ -1716,7 +1723,7 @@ def print_coll( message ):
     for coll in message.coll:
         click.echo( "{:<20} {:<50}".format('ID: ', coll.id) + '\n' +
                     "{:<20} {:<50}".format('Title: ', coll.title) + '\n' +
-                    "{:<20} {:<50}".format('Alias: ', coll.alias) + '\n' +
+                    "{:<20} {:<50}".format('Alias: ', coll.alias if coll.alias else "(none)") + '\n' +
                     "{:<20} {:<50}".format('Topic: ', coll.topic if coll.topic else '(not published)') + '\n' +
                     "{:<20} {:<50}".format('Owner: ', coll.owner[2:]) + '\n' +
                     "{:<20} {:<50}".format('Created: ', timestampToStr(coll.ct)) + '\n' +
