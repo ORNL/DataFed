@@ -34,8 +34,8 @@ import json as jsonlib
 import time
 import pathlib
 import wget
-import tempfile
-import itertools as IT
+#import tempfile
+#import itertools as IT
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
 
