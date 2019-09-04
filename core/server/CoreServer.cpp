@@ -328,30 +328,34 @@ Server::msgRouter()
 void
 Server::ioSecure()
 {
-    MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
-    MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
+    try
+    {
+        MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
+        MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
-    // Must use custom proxy to inject ZAP User-Id into message frame
-    frontend.proxy( backend );
+        // Must use custom proxy to inject ZAP User-Id into message frame
+        frontend.proxy( backend );
+    }
+    catch( exception & e)
+    {
+        DL_ERROR( "Exception in secure interface: " << e.what() )
+    }
 }
 
 void
 Server::ioInsecure()
 {
-    MsgComm frontend( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
-    MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
+    try
+    {
+        MsgComm frontend( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
+        MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
-    /*
-    int linger = 100;
-    void * ctx = MsgComm::getContext();
-    void *backend = zmq_socket( ctx, ZMQ_DEALER );
-    zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int ));
-    zmq_connect( backend, "inproc://msg_proc" );
-
-    zmq_proxy( comm.getSocket(), backend, 0 );
-    */
-
-    zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
+        zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
+    }
+    catch( exception & e)
+    {
+        DL_ERROR( "Exception in insecure interface: " << e.what() )
+    }
 }
 
 /*
