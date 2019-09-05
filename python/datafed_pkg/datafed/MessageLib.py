@@ -46,22 +46,21 @@ class API:
     # @exception Exception: On server key load error, timeout, or incompatible protocols.
     #
     # Attempts to create a secure connection with a specified DatFed
-    # server. If key files are not specified, looks for default key
-    # files in config directory, in specified, or, falls back to
-    # "~/.datafed" directory. A server key must be found, but if
-    # client keys cannot be found or loaded, an anonymous connection
-    # is established. The keysLoaded(), keysValid(), and
-    # getAuthStatus() methods may be used to assess status. Also
-    #  checks client and server protocol versions for compatibility.
+    # server. A server key or key file must be found, but if client
+    # keys are not provided, an anonymous connection is established.
+    # The keysLoaded(), keysValid(), and getAuthStatus() methods may
+    # be used to assess status. Also checks client and server protocol
+    # versions for compatibility.
     #
     def __init__( self,
         server_host = None,
         server_port = None,
         server_pub_key_file = None,
-        server_cfg_dir = None,
+        server_pub_key = None,
         client_pub_key_file = None,
+        client_pub_key = None,
         client_priv_key_file = None,
-        client_cfg_dir = None,
+        client_priv_key = None,
         manual_auth = None,
         **kwargs
         ):
@@ -69,67 +68,75 @@ class API:
         self._auth = False
         self._nack_except = True
 
-        # Use or load server public key
-        if server_pub_key_file != None:
-            serv_pub = server_pub_key_file
-        elif server_cfg_dir:
-            serv_pub = os.path.join(str(server_cfg_dir), "datafed-core-key.pub")
-        else:
-            serv_pub = os.path.expanduser("~/.datafed/datafed-core-key.pub")
-
-        try:
-            keyf = open( serv_pub, "r" )
-            serv_pub = keyf.read()
-            keyf.close()
-        except:
-            raise Exception( "Could not open server public key file: " + serv_pub )
-
-        # Process client cred dir
-        self._client_cred_dir = client_cfg_dir
-
-        # Use, load, or generate client keys
-        self._keys_loaded = False
-        self._keys_valid = False
-
-        if manual_auth:
-            pub,priv = zmq.curve_keypair()
-            pub = pub.decode("utf-8")
-            priv = priv.decode("utf-8")
-        else:
-            try:
-                if client_pub_key_file:
-                    keyf = open(client_pub_key_file, "r" )
-                else:
-                    keyf = open(os.path.join(str(self._client_cred_dir), "datafed-user-key.pub"), "r" )
-                pub = keyf.read()
-                keyf.close()
-
-                if client_priv_key_file:
-                    keyf = open(client_priv_key_file, "r" )
-                else:
-                    keyf = open(os.path.join(str(self._client_cred_dir), "datafed-user-key.priv"), "r" )
-                priv = keyf.read()
-                keyf.close()
-                if len(pub) != 40 or len(priv) != 40:
-                    pub,priv = zmq.curve_keypair()
-                    pub = pub.decode("utf-8")
-                    priv = priv.decode("utf-8")
-                else:
-                    self._keys_valid = True
-                self._keys_loaded = True
-            except:
-                pub,priv = zmq.curve_keypair()
-                pub = pub.decode("utf-8")
-                priv = priv.decode("utf-8")
-
         if not server_host:
             raise Exception("Server host is not defined")
 
         if server_port == None:
             raise Exception("Server port is not defined")
 
-        if not serv_pub:
-            raise Exception("Server public key is not defined")
+        if not server_pub_key and not server_pub_key_file:
+            raise Exception("Server public key or key file is not defined")
+
+        if server_pub_key and server_pub_key_file:
+            raise Exception("Cannot specify both server public key and key file")
+
+        if client_pub_key and client_pub_key_file:
+            raise Exception("Cannot specify both client public key and key file")
+
+        if client_priv_key and client_priv_key_file:
+            raise Exception("Cannot specify both client private key and key file")
+
+        _server_pub_key = None
+        _client_pub_key = None
+        _client_priv_key = None
+
+        # Use or load server public key
+        if server_pub_key_file != None:
+            try:
+                keyf = open( server_pub_key_file, "r" )
+                _server_pub_key = keyf.read()
+                keyf.close()
+            except:
+                raise Exception( "Could not open server public key file: " + server_pub_key_file )
+        else:
+            _server_pub_key = server_pub_key
+
+        # Use, load, or generate client keys
+        self._keys_loaded = False
+        self._keys_valid = False
+
+        if manual_auth or not ( client_pub_key_file or client_pub_key or client_priv_key_file or client_priv_key ):
+            pub,priv = zmq.curve_keypair()
+            _client_pub_key = pub.decode("utf-8")
+            _client_priv_key = priv.decode("utf-8")
+        else:
+            try:
+                if client_pub_key_file:
+                    keyf = open(client_pub_key_file, "r" )
+                    _client_pub_key = keyf.read()
+                    keyf.close()
+                else:
+                    _client_pub_key = client_pub_key
+
+                if client_priv_key_file:
+                    keyf = open(client_priv_key_file, "r" )
+                    _client_priv_key = keyf.read()
+                    keyf.close()
+                else:
+                    _client_priv_key = client_priv_key
+
+                # Check for obviously bad keys
+                if len(_client_pub_key) != 40 or len(_client_priv_key) != 40:
+                    pub,priv = zmq.curve_keypair()
+                    _client_pub_key = pub.decode("utf-8")
+                    _client_priv_key = priv.decode("utf-8")
+                else:
+                    self._keys_valid = True
+                self._keys_loaded = True
+            except:
+                pub,priv = zmq.curve_keypair()
+                _client_pub_key = pub.decode("utf-8")
+                _client_priv_key = priv.decode("utf-8")
 
         if not pub:
             raise Exception("Client public key is not defined")
@@ -137,7 +144,7 @@ class API:
         if not priv:
             raise Exception("Client private key is not defined")
 
-        self._conn = Connection.Connection( server_host, server_port, serv_pub, pub, priv )
+        self._conn = Connection.Connection( server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key )
 
         self._conn.registerProtocol(anon)
         self._conn.registerProtocol(auth)

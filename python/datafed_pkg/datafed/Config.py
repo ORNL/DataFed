@@ -140,34 +140,30 @@ class API:
         # Load client config file, if specified/available
 
         cfg_file = None
+        cfg_dir = None
+        loaded = False
 
         if "client_cfg_file" in self._opts:
             cfg_file = self._opts["client_cfg_file"]["val"]
             if os.path.exists( cfg_file ):
                 self._loadConfigFile( cfg_file, 2 )
-            else:
-                open( cfg_file, "a" ).close()
-        elif 'client_cfg_dir' in self._opts:
+                loaded = True
+
+        if not 'client_cfg_dir' in self._opts:
+            cfg_dir = os.path.expanduser("~/.datafed")
+            if not os.path.exists( cfg_dir ):
+                try:
+                    os.mkdir( cfg_dir )
+                except:
+                    return
+            self._opts["client_cfg_dir"] = {"val": cfg_dir, "pri": 5 }
+
+        if not loaded:
             cfg_file = os.path.expanduser( os.path.join( self._opts['client_cfg_dir']["val"], "datafed-client.ini" ))
             self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
             if os.path.exists( cfg_file ):
                 self._loadConfigFile( cfg_file, 2 )
-            else:
-                open( cfg_file, "a" ).close()
-        else:
-            cfg_file = os.path.expanduser("~/.datafed/datafed-client.ini")
-            if os.path.exists( cfg_file ):
-                self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
-                self._loadConfigFile( cfg_file, 2 )
-            else:
-                tmp = os.path.expanduser( "~/.datafed" )
-                if not os.path.exists( tmp ):
-                    try:
-                        os.mkdir( tmp )
-                        cfg_file = os.path.join( tmp, "datafed-client.ini" )
-                        open( cfg_file, "a" ).close()
-                    except:
-                        pass
+                loaded = True
 
     def _loadEnvironVars( self ):
         # Check each defined option for a set and non-empty environment variable
@@ -276,25 +272,36 @@ class API:
     #
     def set( self, key, value, save = False ):
         if not key in _opt_info:
-            raise Exception("Undefined configuration key")
+            raise Exception("Undefined configuration key:",key)
 
         if key in self._opts:
             self._opts[key]["val"] = value
         else:
             self._opts[key] = { "val" : value, "pri" : 0 }
 
-        if save and "client_cfg_file" in self._opts:
-            with open( self._opts["client_cfg_file"]["val"], 'r+') as f:
-                config = configparser.ConfigParser()
-                config.read_file( f )
-                opt = _opt_info[key]
-                print("check for section:",opt[0])
-                if not config.has_section( opt[0] ):
-                    print("adding section:",opt[0])
-                    config.add_section( opt[0] )
-                config.set( opt[0], opt[1], value )
-                f.seek(0)
+        if save:
+            self.save()
+            #with open( self._opts["client_cfg_file"]["val"], 'r+') as f:
+            #    config = configparser.ConfigParser()
+            #    config.read_file( f )
+            #    opt = _opt_info[key]
+            #    if not config.has_section( opt[0] ):
+            #        config.add_section( opt[0] )
+            #    config.set( opt[0], opt[1], value )
+            #    f.seek(0)
+            #    f.truncate()
+            #    config.write( f )
+
+    def save( self ):
+        if "client_cfg_file" in self._opts:
+            config = configparser.ConfigParser()
+            for key, val in self._opts.items():
+                if key in _opt_info:
+                    opt = _opt_info[key]
+                    if not config.has_section( opt[0] ):
+                        config.add_section( opt[0] )
+                    config.set( opt[0], opt[1], str(val["val"]) )
+            with open( self._opts["client_cfg_file"]["val"], 'w') as f:
                 f.truncate()
                 config.write( f )
-
 

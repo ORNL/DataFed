@@ -86,7 +86,7 @@ class Connection:
             try:
                 self._socket.setsockopt_string( zmq.CURVE_SERVERKEY, server_pub_key )
             except:
-                raise Exception("Invalid server public key")
+                raise Exception("Invalid server public key: " + server_pub_key )
         else:
             self._socket.curve_secretkey = client_priv_key
             self._socket.curve_publickey = client_pub_key

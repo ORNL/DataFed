@@ -155,16 +155,13 @@ def init( opts = {} ):
     global _cur_sel
     global _cfg
 
-    _cfg = Config.API( opts )
-    _addConfigOptions()
-
     if _mapi:
         raise Exception("init function can only be called once.")
 
-    # Get config options
-    opts = _cfg.getOpts()
+    _addConfigOptions()
 
-    #print( "opts:", opts )
+    _cfg = Config.API( opts )
+    opts =_defaultOptions()
 
     _mapi = MessageLib.API( **opts )
     _mapi.setNackExceptionEnabled( False )
@@ -305,8 +302,6 @@ def _global_output_options(func):
     return func
 
 def _addConfigOptions():
-    global _cfg
-
     for k, v in Config._opt_info.items():
         if not v[3] & Config._OPT_NO_CL:
             if v[3] & Config._OPT_HIDE:
@@ -2124,6 +2119,55 @@ def bar_adaptive_human_readable(current, total, width=80):
 
     return output
 
+def _defaultOptions():
+    opts = _cfg.getOpts()
+
+    # Examine initial configuration options and set & save defaults where needed
+    save = False
+
+    if not "server_host" in opts:
+        _cfg.set( "server_host", "datafed.ornl.gov" )
+        opts["server_host"] = "datafed.ornl.gov"
+        save = True
+
+    if not "server_port" in opts:
+        _cfg.set( "server_port", 7512 )
+        opts["server_port"] = 7512
+        save = True
+
+    if not "server_pub_key_file" in opts:
+        serv_key_file = None
+
+        if "server_cfg_dir" in opts:
+            serv_key_file = os.path.expanduser( os.path.join( opts['server_cfg_dir'], "datafed-core-key.pub" ))
+            _cfg.set( "server_pub_key_file", serv_key_file )
+            opts["server_pub_key_file"] = serv_key_file
+
+        if not serv_key_file or not os.path.exists( serv_key_file ):
+            serv_key_file = None
+            if "client_cfg_dir" in opts:
+                serv_key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-core-key.pub" ))
+                _cfg.set( "server_pub_key_file", serv_key_file )
+                opts["server_pub_key_file"] = serv_key_file
+                save = True
+
+            if not serv_key_file:
+                raise Exception("Could not find location of server public key file.")
+
+            if not os.path.exists(serv_key_file):
+                # Make default server pub key file
+                url = "https://"+opts["server_host"]+"/datafed-core-key.pub"
+                print( "Downloading server public key from", url )
+                fname = wget.download( url, out=serv_key_file, bar=bar_adaptive_human_readable)
+                print( "\nServer key written to", serv_key_file )
+
+    if save:
+        _cfg.save()
+
+    # Verify that there is either a server or client config directory
+
+    # Verify server public key file exists
+    return opts
 
 def _initialize( opts ):
     global _mapi
@@ -2136,7 +2180,7 @@ def _initialize( opts ):
     global _ep_cur
 
     _cfg = Config.API( opts )
-    opts = _cfg.getOpts()
+    opts =_defaultOptions()
 
     _ep_default = _cfg.get("default_ep")
     _ep_cur = _ep_default
@@ -2153,7 +2197,7 @@ def _initialize( opts ):
         info( 1, "Welcome to DataFed CLI, version", version )
 
     if _verbosity > 1 and _interactive:
-        print( "Settings details:" )
+        print( "Settings:" )
         _cfg.printSettingInfo()
 
     #print("opts:",opts)
