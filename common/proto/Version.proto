@@ -10,5 +10,5 @@ enum VerMinor
 
 enum VerBuild
 {
-    VER_BUILD = 3;
+    VER_BUILD = 10;
 }
