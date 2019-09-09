@@ -138,10 +138,10 @@ class API:
                 _client_pub_key = pub.decode("utf-8")
                 _client_priv_key = priv.decode("utf-8")
 
-        if not pub:
+        if not _client_pub_key:
             raise Exception("Client public key is not defined")
 
-        if not priv:
+        if not _client_priv_key:
             raise Exception("Client private key is not defined")
 
         self._conn = Connection.Connection( server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key )

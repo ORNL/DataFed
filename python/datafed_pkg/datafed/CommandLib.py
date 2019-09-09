@@ -83,12 +83,17 @@ _output_mode = _OM_TEXT
 _STAT_OK     = 0
 _STAT_ERROR  = 1
 
+class NoCommand(Exception):
+    def __init__(self,*args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)
+
 # Used by CLI script to run interactively
 def _run():
     global _output_mode_sticky
     global _output_mode
     global _verbosity_sticky
     global _verbosity
+    global _interactive
 
     _addConfigOptions()
 
@@ -126,10 +131,12 @@ def _run():
                 click.echo(e)
             elif _output_mode == _OM_JSON:
                 click.echo("{{\"err_code\": 1, \"err_msg\": \"{}\" }}".format(e))
-            
-            # RETN mode will never be set within the _run() function
 
-            if _interactive == False:
+            # Be nice and switch to interactive when no command given
+            if isinstance( e, NoCommand ) and _output_mode == _OM_TEXT and _interactive == False:
+                print("Switching to interactive mode...")
+                _interactive = True
+            elif _interactive == False:
                 break
 
     if _interactive:
@@ -263,7 +270,6 @@ def _set_output_json(ctx, param, value):
     global _output_mode_sticky
     global _output_mode
     if value:
-        print("setting OM to JSON")
         _output_mode_sticky = _OM_JSON
         _output_mode = _OM_JSON
 
@@ -271,7 +277,6 @@ def _set_output_text(ctx, param, value):
     global _output_mode_sticky
     global _output_mode
     if value:
-        print("setting OM to TEXT")
         _output_mode_sticky = _OM_TEXT
         _output_mode = _OM_TEXT
 
@@ -335,8 +340,7 @@ def cli(ctx,*args,**kwargs):
         _verbosity = _verbosity_sticky
 
     if not _interactive and ctx.invoked_subcommand is None:
-        click.echo("No command specified.")
-        click.echo(ctx.get_help())
+        raise NoCommand("No command specified.")
 
 
 '''
@@ -2161,12 +2165,25 @@ def _defaultOptions():
                 fname = wget.download( url, out=serv_key_file, bar=bar_adaptive_human_readable)
                 print( "\nServer key written to", serv_key_file )
 
+    if not "client_pub_key_file" in opts or not "client_priv_key_file" in opts:
+        if not "client_cfg_dir" in opts:
+            raise Exception("Client key file(s) or client configuration directory not specified or invalid.")
+
+        if not "client_pub_key_file" in opts:
+            key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-user-key.pub" ))
+            _cfg.set( "client_pub_key_file", key_file )
+            opts["client_pub_key_file"] = key_file
+            save = True
+
+        if not "client_priv_key_file" in opts:
+            key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-user-key.priv" ))
+            _cfg.set( "client_priv_key_file", key_file )
+            opts["client_priv_key_file"] = key_file
+            save = True
+
     if save:
         _cfg.save()
 
-    # Verify that there is either a server or client config directory
-
-    # Verify server public key file exists
     return opts
 
 def _initialize( opts ):
