@@ -60,14 +60,14 @@ Server::~Server()
 void
 Server::loadKeys( const std::string & a_cred_dir )
 {
-    string fname = a_cred_dir + "sdms-core-key.pub";
+    string fname = a_cred_dir + "datafed-core-key.pub";
     ifstream inf( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open public key file: " << fname );
     inf >> m_pub_key;
     inf.close();
 
-    fname = a_cred_dir + "sdms-core-key.priv";
+    fname = a_cred_dir + "datafed-core-key.priv";
     inf.open( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open private key file: " << fname );
@@ -81,7 +81,6 @@ Server::loadRepositoryConfig()
     DL_INFO("Loading repo configuration");
 
     DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
-    //db_client.setClient( "sdms" );
 
     vector<RepoData*> repos;
 
@@ -622,8 +621,6 @@ Server::zapHandler()
         zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
         string uid;
         DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
-
-        //db_client.setClient( "sdms" );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );

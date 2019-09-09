@@ -21,12 +21,12 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "SDMS core server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
+        DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
 
         uint16_t    port = 7512;
         int         timeout = 5;
         uint32_t    num_threads = 1;
-        string      cred_dir = "/etc/sdms/";
+        string      cred_dir = "/etc/datafed/";
         string      db_url = "http://sdms.ornl.gov:8529/_db/sdms/api/";
         string      db_user = "root";
         string      db_pass = "sdms!";
@@ -60,7 +60,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "SDMS Core Server, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
+                cout << "DataFed Core Server, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
                 cout << "Usage: sdms-core [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -69,28 +69,6 @@ int main( int a_argc, char ** a_argv )
             if ( opt_map.count( "version" ))
             {
                 cout << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << endl;
-                return 0;
-            }
-
-            if ( gen_keys )
-            {
-                string pub_key, priv_key;
-                generateKeys( pub_key, priv_key );
-
-                string fname = cred_dir + "sdms-core-key.pub";
-                ofstream outf( fname.c_str() );
-                if ( !outf.is_open() || !outf.good() )
-                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
-                outf << pub_key;
-                outf.close();
-
-                fname = cred_dir + "sdms-core-key.priv";
-                outf.open( fname.c_str() );
-                if ( !outf.is_open() || !outf.good() )
-                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
-                outf << priv_key;
-                outf.close();
-
                 return 0;
             }
 
@@ -105,6 +83,31 @@ int main( int a_argc, char ** a_argv )
 
                 optfile.close();
             }
+
+            if ( cred_dir.size() && cred_dir.back() != '/' )
+                cred_dir += "/";
+
+            if ( gen_keys )
+            {
+                string pub_key, priv_key;
+                generateKeys( pub_key, priv_key );
+
+                string fname = cred_dir + "datafed-core-key.pub";
+                ofstream outf( fname.c_str() );
+                if ( !outf.is_open() || !outf.good() )
+                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
+                outf << pub_key;
+                outf.close();
+
+                fname = cred_dir + "datafed-core-key.priv";
+                outf.open( fname.c_str() );
+                if ( !outf.is_open() || !outf.good() )
+                    EXCEPT_PARAM( 1, "Could not open file: " << fname );
+                outf << priv_key;
+                outf.close();
+
+                return 0;
+            }
         }
         catch( po::unknown_option & e )
         {
@@ -116,7 +119,7 @@ int main( int a_argc, char ** a_argv )
 
         server.run( false );
 
-        DL_INFO( "SDMS core server exiting" );
+        DL_INFO( "DataFed core server exiting" );
     }
     catch( TraceException &e )
     {

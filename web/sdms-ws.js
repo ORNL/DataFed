@@ -59,9 +59,9 @@ g_ctx.fill(null);
 function defaultSettings(){
     g_host = "sdms.ornl.gov";
     g_port = 443;
-    g_server_key_file = '/etc/sdms/sdms_web_key';
-    g_server_cert_file = '/etc/sdms/sdms_web_cert';
-    g_server_chain_file = '/etc/sdms/DigiCertSHA2SecureServerCA.pem';
+    g_server_key_file = '/etc/datafed/datafed-web-key.pem';
+    g_server_cert_file = '/etc/datafed/datafed-web-cert.pem';
+    g_server_chain_file = '/etc/datafed/DigiCertSHA2SecureServerCA.pem';
     g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
     g_client_id = '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454';
     g_client_secret = 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=';
