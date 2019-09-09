@@ -458,7 +458,7 @@ def data_view(df_id,details,verbosity,json,text):
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-kw","--key-words",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks")
 @click.option("-df","--data-file",type=str,required=False,help="Specify the path to local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.")
-@click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
+@click.option("-ext","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
 @click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias. Defaults to current working collection. For batch imports: if a collection is specified using this option, the parent collection will be set for all records in the import file. If not specified by the user, the current working collection will be used UNLESS a parent collection has already been included for the record object within the import file (pre-specified parent collection fields will be unchanged). ")
@@ -549,7 +549,7 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)")
 @click.option("-df","--data-file",type=str,required=False,help="Local raw data file")
-@click.option("-ext","--extension",type=str,required=False,help="Specify an extension for the raw data file. If not provided, DataFed will automatically default to the extension of the file at time of put/upload.")
+@click.option("-ext","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (json)")
 @click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
 @click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
@@ -718,7 +718,7 @@ def data_get( df_id, path, wait, verbosity, json, text): #Multi-get will initiat
 @click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 #@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
-@click.option("-ext", "--extension",type=str,required=False,help="Specify an extension for the raw data file. This will override any previously specified extension or auto-extension behavior.")
+@click.option("-ext", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @_global_output_options
 def data_put(df_id, filepath, wait, extension, verbosity, json, text):
     output_checks( verbosity, json, text )
@@ -1770,10 +1770,14 @@ def print_xfr_stat( message ):
         xfr_mode = _xfr_modes.get(xfr.mode, "None")
         xfr_status = _xfr_statuses.get(xfr.status, "None")
 
-        click.echo("{:<20} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
+        click.echo( "{:<20} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
                     "{:<20} {:<50}".format('Mode: ', xfr_mode) + '\n' +
-                    "{:<20} {:<50}".format('Status: ', xfr_status) + '\n' +
-                    "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
+                    "{:<20} {:<50}".format('Status: ', xfr_status))
+
+        if xfr.status == 4:
+            click.echo("{:<20} {:<50}".format('Error: ', xfr.err_msg))
+
+        click.echo( "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
                     "{:<20} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
                     "{:<20} {:<50}".format('Started: ', timestampToStr(xfr.started)) + '\n' +
                     "{:<20} {:<50}".format('Updated: ', timestampToStr(xfr.started)))
