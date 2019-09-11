@@ -461,7 +461,7 @@ def data_view(df_id,details,verbosity,json,text):
 @click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
 @click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
-@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias (default = current working collection)")
+@click.option("-c","--collection",type=str,required=False, help="Parent collection ID/alias (default = current working collection)")
 @click.option("-R","--repository",type=str,required=False,help="Repository ID")
 @click.option("-D","--dep",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @_global_output_options
@@ -1679,7 +1679,7 @@ def generic_reply_handler( reply, printFunc ): # NOTE: Reply is a tuple containi
         printFunc( reply[0] )
 
 
-def print_ack_reply( reply ):
+def print_ack_reply( reply = None ):
     if _output_mode == _OM_JSON:
         click.echo('{}')
     elif _output_mode == _OM_TEXT and _verbosity > 0:
