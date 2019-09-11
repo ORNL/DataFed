@@ -66,7 +66,9 @@ _verbosity = 1
 _ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
 _ep_default = None
 _ep_cur = None
-_max_import_file_size = 1e6 # 1 MB
+_max_md_size = 102400
+_max_payload_size = 1048576
+
 _most_recent_list_request = None
 _most_recent_list_count = None
 _xfr_statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
@@ -356,8 +358,8 @@ def globe():
 # ------------------------------------------------------------------------------
 # Collection listing/navigation commands
 @cli.command(help="List current collection, or collection specified by ID")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
 @click.argument("df-id", required=False)
 @_global_output_options
 @click.pass_context
@@ -430,7 +432,6 @@ def more(count,verbosity,json,text):
 def data():
     pass
 
-
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
 @_global_output_options
@@ -453,176 +454,160 @@ def data_view(df_id,details,verbosity,json,text):
 
 @data.command(name='create',help="Create new data record")
 @click.argument("title", required=False)
-@click.option("-b", "--batch", type=str, required=False, help="JSON file containing array of record data to be imported directly for creation.")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-kw","--key-words",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks")
-@click.option("-df","--data-file",type=str,required=False,help="Specify the path to local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.")
-@click.option("-ext","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@click.option("-k","--keywords",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks")
+@click.option("-r","--raw-data-file",type=str,required=False,help="Specify the path to a local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.")
+@click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
-@click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
-@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias. Defaults to current working collection. For batch imports: if a collection is specified using this option, the parent collection will be set for all records in the import file. If not specified by the user, the current working collection will be used UNLESS a parent collection has already been included for the record object within the import file (pre-specified parent collection fields will be unchanged). ")
-@click.option("-r","--repository",type=str,required=False,help="Repository ID")
-@click.option("-dep","--dependencies",multiple=True, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
+@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
+@click.option("-c","--collection",type=str,required=False, default= _cur_coll, help="Parent collection ID/alias (default = current working collection)")
+@click.option("-R","--repository",type=str,required=False,help="Repository ID")
+@click.option("-D","--dep",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @_global_output_options
-def data_create(title,batch,alias,description,key_words,data_file,extension,metadata,metadata_file,collection,repository,dependencies,verbosity,json,text): #cTODO: FIX
+def data_create(title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,collection,repository,dep,verbosity,json,text): #cTODO: FIX
     output_checks( verbosity, json, text )
 
     if metadata and metadata_file:
         printError( "Cannot specify both --metadata and --metadata-file options" )
         return
 
-    if batch:
-        fp = pathlib.Path(batch)
-        if not fp.is_file():
-            printError( "Batch create file not found." )
-            return
-        if fp.stat().st_size > _max_import_file_size:
-            printError( "Batch create file exceeds maximum size." )
-            return
+    msg = auth.RecordCreateRequest()
+    msg.title = title
 
-        msg = auth.RecordCreateBatchRequest()
+    if description:
+        msg.desc = description
 
-        global _cur_sel
-        with fp.open('r+') as f:
-            records = jsonlib.load(f) #will always be an array
-            if collection != _cur_coll:
-                for item in records:
-                    item["parent"] = resolve_coll_id(collection)
-            elif collection == _cur_coll:
-                for item in records:
-                    if "parent" not in item:
-                        item["parent"] = resolve_coll_id(collection)
-            if not isinstance(records, list):
-                printError( "Batch file must be JSON array of records." )
-                return
-            record = str(records).replace("\'", '"')
-            msg.records = record
-        reply = _mapi.sendRecv(msg) #gives error parsing message
-        generic_reply_handler( reply, print_batch )
-        return
-    else:
-        msg = auth.RecordCreateRequest()
-        msg.title = title
-        if description: msg.desc = description
-        if key_words: msg.keyw = key_words   # TODO: Determine input format for keywords -- list? quotation marks? commas?
-        if alias: msg.alias = alias
+    if keywords:
+        msg.keyw = keywords
+
+    if alias:
+        msg.alias = alias
+
+    if collection:
         msg.parent_id = resolve_coll_id(collection)
-        if repository: msg.repo_id = repository
-        msg.ext_auto = True
-        if extension:
-            msg.ext = extension
-            msg.ext_auto = False
-        if metadata_file:
-            metadata = metadata_file.read()
-        if metadata: msg.metadata = metadata
-        if dependencies:
-            deps = list(dependencies)
-            for i in range(len(deps)):
-                item = deps[i-1]
-                dep = msg.deps.add()
-                dep.dir = 0
-                if item[0] == "derived" or item[0] == "der": dep.type = 0
-                elif item[0] == "component" or item[0] == "comp": dep.type = 1
-                elif item[0] == "version" or item[0] == "ver":
-                    dep.type = 2
-                    dep.dir = 1
-                if re.search(r'^d/[0-9]{8}', item[1]):
-                    dep.id = item[1]
-                else: dep.alias = item[1]
+    else:
+        msg.parent_id = _cur_coll
 
-        if not data_file:
-            reply = _mapi.sendRecv(msg)
-            #generic_reply_handler( reply, print_data )
-            print_ack_reply()
-        elif data_file:
-            create_reply = _mapi.sendRecv(msg)
-            print_ack_reply()
-            put_data( create_reply[0].data[0].id, resolve_filepath_for_xfr(data_file), False, None )
+    if repository:
+        msg.repo_id = repository
+
+    if extension:
+        msg.ext = extension
+        msg.ext_auto = False
+    else:
+        msg.ext_auto = True
+
+    if metadata_file:
+        metadata = metadata_file.read()
+
+    if metadata:
+        msg.metadata = metadata
+
+    if dep:
+        for d in dep:
+            dp = msg.deps_add.add()
+            if d[0] == "der":
+                dp.type = 0
+            elif d[0] == "comp":
+                dp.type = 1
+            elif d[0] == "ver":
+                dp.type = 2
+            dp.id = resolve_id(d[1])
+
+    if not raw_data_file:
+        reply = _mapi.sendRecv(msg)
+        #generic_reply_handler( reply, print_data )
+        print_ack_reply()
+    else:
+        create_reply = _mapi.sendRecv(msg)
+        print_ack_reply()
+        put_data( create_reply[0].data[0].id, resolve_filepath_for_xfr(raw_data_file), False, None )
 
 
 @data.command(name='update',help="Update existing data record")
 @click.argument("df_id", metavar="id", required=False)
-@click.option("-b", "--batch", type=str, required=False, help="JSON file containing array of record data to be imported directly for update.")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-kw","--key-words",type=str,required=False,help="Keywords (comma separated list)")
-@click.option("-df","--data-file",type=str,required=False,help="Local raw data file")
-@click.option("-ext","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list)")
+@click.option("-r","--raw-data-file",type=str,required=False,help="Local raw data file")
+@click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Metadata (json)")
-@click.option("-mf","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
-@click.option("-da","--dependencies-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to add multiple dependencies.")
-@click.option("-dr","--dependencies-remove",multiple=True, nargs=2, type=click.Tuple([click.Choice(['derived', 'component', 'version', 'der', 'comp', 'ver', 'clear']), str]),help="Specify dependencies to remove by listing first the type of relationship -- 'derived' from, 'component' of, or new 'version' of -- and then the id or alias of the related record. Can be used multiple times to remove multiple dependencies. To remove all existing dependencies, specify the argument as 'clear all'.") #Make type optional -- if no type given, then deletes all relationships with that record
+@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
+@click.option("-C","--dep-clear",is_flag=True,help="Clear all dependencies on record. May be used in conjunction with --dep-add to replace existing dependencies.")
+@click.option("-A","--dep-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-R","--dep-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @_global_output_options
-def data_update(df_id,batch,title,alias,description,key_words,data_file,extension,metadata,metadata_file,dependencies_add,dependencies_remove,verbosity,json,text):
+def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,dep_clear,dep_add,dep_rem,verbosity,json,text):
     output_checks( verbosity, json, text )
 
     if metadata and metadata_file:
-        printError( "Cannot specify both --metadata and --metadata-file options" )
+        printError( "Cannot specify both --metadata and --metadata-file options." )
         return
-    if batch:
-        fp = pathlib.Path(batch)
-        if not fp.is_file():
-            printError( "Batch create file not found." )
-            return
-        if fp.stat().st_size > _max_import_file_size:
-            printError( "Batch create file exceeds maximum size." )
-            return
 
-        msg = auth.RecordUpdateBatchRequest()
+    if dep_clear and dep_rem:
+        printError( "Cannot specify both --dep-clear and --dep-rem options." )
+        return
 
-        with fp.open() as f:
-            msg.records = f.read()
+    msg = auth.RecordUpdateRequest()
+    msg.id = resolve_id(df_id)
+
+    if title:
+        msg.title = title
+
+    if description:
+        msg.desc = description
+
+    if keywords:
+        msg.keyw = keywords
+
+    if alias:
+        msg.alias = alias
+
+    if extension:
+        msg.ext = extension
+        msg.ext_auto = False
+
+    if metadata_file:
+        metadata = metadata_file.read()
+
+    if metadata:
+        msg.metadata = metadata
+
+    if dep_clear:
+        msg.deps_clear = True
+
+    if dep_add:
+        for d in dep_add:
+            dep = msg.deps_add.add()
+            if d[0] == "der":
+                dep.type = 0
+            elif d[0] == "comp":
+                dep.type = 1
+            elif d[0] == "ver":
+                dep.type = 2
+            dep.id = resolve_id(d[1])
+
+    if dep_rem:
+        for d in dep_rem:
+            dep = msg.deps_rem.add()
+            if d[0] == "der":
+                dep.type = 0
+            elif d[0] == "comp":
+                dep.type = 1
+            elif d[0] == "ver":
+                dep.type = 2
+            dep.id = resolve_id(d[1])
+
+    if not raw_data_file:
         reply = _mapi.sendRecv(msg)
-        generic_reply_handler( reply, print_batch )
-        return
-    else:
-        msg = auth.RecordUpdateRequest()
-        msg.id = resolve_id(df_id)
-        if title: msg.title = title
-        if description: msg.desc = description
-        if key_words: msg.keyw = key_words # how can this be inputted? must it be a string without spaces? must python keep as such a string, or convert to list?
-        if alias: msg.alias = alias
-        if extension:
-            msg.ext = extension
-            msg.ext_auto = False
-        if metadata_file:
-            metadata = metadata_file.read()
-        if metadata: msg.metadata = metadata
-        if dependencies_add:
-            deps = list(dependencies_add)
-            for i in range(len(deps)):
-                item = deps[i-1]
-                dep = msg.deps_add.add()
-                if item[0] == "derived" or item[0] == "der": dep.type = 0
-                elif item[0] == "component" or item[0] == "comp": dep.type = 1
-                elif item[0] == "version" or item[0] == "ver": dep.type = 2
-                dep.id = item[1]
-        if dependencies_remove:
-            deps = list(dependencies_remove)
-            if ("clear", "all") in deps:
-                msg.deps_clear = True
-            elif ("clear", str) in deps:
-                click.echo("To remove all existing dependencies, specify the command option '-dr clear all'.")
-                return
-            else:
-                for i in range(len(deps)):
-                    item = deps[i-1]
-                    dep = msg.deps_rem.add()
-                    if item[0] == "derived" or item[0] == "der": dep.type = 0
-                    elif item[0] == "component" or item[0] == "comp": dep.type = 1
-                    elif item[0] == "version" or item[0] == "ver": dep.type = 2
-
-        if not data_file:
-            reply = _mapi.sendRecv(msg)
-            #generic_reply_handler( reply, print_data )
-            print_ack_reply()
-
-        elif data_file: # TODO: Incorporate global output options for put-on-update
-            update_reply = _mapi.sendRecv(msg)
-            print_ack_reply()
-            put_data( update_reply[0].data[0].id, resolve_filepath_for_xfr(data_file), False, None )
+        #generic_reply_handler( reply, print_data )
+        print_ack_reply()
+    elif raw_data_file:
+        update_reply = _mapi.sendRecv(msg)
+        print_ack_reply()
+        put_data( update_reply[0].data[0].id, resolve_filepath_for_xfr(raw_data_file), False, None )
 
 
 @data.command(name='delete',help="Delete existing data record")
@@ -718,7 +703,7 @@ def data_get( df_id, path, wait, verbosity, json, text): #Multi-get will initiat
 @click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 #@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
-@click.option("-ext", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@click.option("-e", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @_global_output_options
 def data_put(df_id, filepath, wait, extension, verbosity, json, text):
     output_checks( verbosity, json, text )
@@ -731,6 +716,99 @@ def data_put(df_id, filepath, wait, extension, verbosity, json, text):
     # elif gp is None:
     #    click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
     # TODO Handle return value in _OM_RETV
+
+# ------------------------------------------------------------------------------
+# Data batch command group
+@data.command(cls=AliasedGroup,help="Data batch subcommands")
+def batch():
+    pass
+
+@batch.command(name='create',help="Batch create data records from JSON file(s)")
+@click.option("-c","--collection",type=str,required=False, help="Optional target collection")
+@click.argument("file", type=str, required=True, nargs=-1)
+@_global_output_options
+def data_batch_create(collection,file,verbosity,json,text):
+    output_checks( verbosity, json, text )
+
+    payload = []
+    tot_size = 0
+
+    for f in file:
+        fp = pathlib.Path(f)
+
+        if not fp.is_file():
+            printError( "File not found: " + f )
+            return
+
+        if fp.stat().st_size > _max_md_size:
+            printError( "Batch create file, " + f +", exceeds maximum size ("+_max_md_size+")" )
+            return
+
+        tot_size += fp.stat().st_size
+        if tot_size > _max_payload_size:
+            printError( "Total batch create size exceeds limit ("+_max_payload_size+")" )
+            return
+
+        with fp.open('r+') as f:
+            records = jsonlib.load(f)
+
+            if not isinstance(records, list):
+                records = [records]
+
+            if collection:
+                coll = resolve_coll_id(collection)
+                for item in records:
+                    item["parent"] = coll
+            else:
+                for item in records:
+                    if "parent" not in item:
+                        item["parent"] = _cur_coll
+
+            payload.extend( records )
+
+    msg = auth.RecordCreateBatchRequest()
+    msg.records = jsonlib.dumps(payload)
+    reply = _mapi.sendRecv(msg)
+    generic_reply_handler( reply, print_batch )
+
+
+@batch.command(name='update',help="Batch update existing data records from JSON file(s)")
+@click.argument("file", type=str, required=True, nargs=-1)
+@_global_output_options
+def data_batch_update(file,verbosity,json,text):
+    output_checks( verbosity, json, text )
+
+    payload = []
+    tot_size = 0
+
+    for f in file:
+        fp = pathlib.Path(f)
+
+        if not fp.is_file():
+            printError( "File not found: " + f )
+            return
+
+        if fp.stat().st_size > _max_md_size:
+            printError( "Batch update file, " + f +", exceeds maximum size ("+_max_md_size+")" )
+            return
+
+        tot_size += fp.stat().st_size
+        if tot_size > _max_payload_size:
+            printError( "Total batch update size exceeds limit ("+_max_payload_size+")" )
+            return
+
+        with fp.open('r+') as f:
+            records = jsonlib.load(f)
+
+            if not isinstance(records, list):
+                payload.append( records )
+            else:
+                payload.extend( records )
+
+    msg = auth.RecordUpdateBatchRequest()
+    msg.records = jsonlib.dumps(payload)
+    reply = _mapi.sendRecv(msg)
+    generic_reply_handler( reply, print_ack_reply )
 
 
 # ------------------------------------------------------------------------------
@@ -874,8 +952,8 @@ def query():
 
 
 @query.command(name='list',help="List saved queries")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
 @_global_output_options
 def query_list(offset,count, verbosity, json, text):
     msg = auth.QueryListRequest()
@@ -908,7 +986,7 @@ def query_exec(df_id, verbosity, json, text):
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_listing ) #QueryData does not match lisitng reply for print function
 
-
+'''
 @query.command(name='text',help="Query by words or phrases")
 def query_text():
     click.echo("TODO: NOT IMPLEMENTED")
@@ -947,7 +1025,7 @@ def scope_clear():
 @scope.command(name='reset',help="Reset query scope to default")
 def scope_reset():
     click.echo("TODO: NOT IMPLEMENTED")
-
+'''
 
 # ------------------------------------------------------------------------------
 # User command group
@@ -958,8 +1036,8 @@ def user():
 
 
 @user.command(name='collab',help="List all users associated with common projects")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
 @_global_output_options
 def user_collab(offset,count, verbosity, json, text):
     msg = auth.UserListCollabRequest()
@@ -977,8 +1055,8 @@ def user_collab(offset,count, verbosity, json, text):
 
 
 @user.command(name='all',help="List all users")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
 @_global_output_options
 def user_all(offset,count, verbosity, json, text):
     msg = auth.UserListAllRequest()
@@ -1019,11 +1097,11 @@ def project():
 
 
 @project.command(name='list',help="List projects")
-@click.option("-o","--owner",is_flag=True,help="Include owned projects")
+@click.option("-o","--owned",is_flag=True,help="Include owned projects")
 @click.option("-a","--admin",is_flag=True,help="Include administered projects")
 @click.option("-m","--member",is_flag=True,help="Include membership projects")
-@click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
 @_global_output_options
 def project_list(owner,admin,member,offset,count, verbosity, json, text):
     if not (owner or admin or member):
@@ -1090,7 +1168,7 @@ def shared_projects(verbosity, json, text):
     generic_reply_handler( reply, print_proj_listing ) #Haven't tested
 
 
-@shared.command(name="list",help="List data shared by user/project ID")
+@shared.command(name="ls",help="List shared data records and collections by user/project ID")
 @click.argument("df_id", metavar = "id")
 @_global_output_options
 def shared_list(df_id, verbosity, json, text):
@@ -1601,7 +1679,7 @@ def generic_reply_handler( reply, printFunc ): # NOTE: Reply is a tuple containi
         printFunc( reply[0] )
 
 
-def print_ack_reply():
+def print_ack_reply( reply ):
     if _output_mode == _OM_JSON:
         click.echo('{}')
     elif _output_mode == _OM_TEXT and _verbosity > 0:
@@ -1707,19 +1785,16 @@ def print_data( message ):
 
 
 def print_batch( message ):
-    if _verbosity >= 0:
-        click.echo("Successfully imported {} records.".format(len(message.data)))
-    if _verbosity == 2:
-        if click.confirm("Do you want to view a listing of {} imported records?".format(len(message.data))):
-            df_idx = 1
-            global _list_items
-            _list_items = []
-            for i in message.data:
-                _list_items.append(i.id)
-                click.echo("{:2}. {:12} ({:20} {}".format(df_idx, i.id, i.alias + ')', i.title))
-                df_idx += 1
-        else:
-            return
+    if _verbosity == 1:
+        df_idx = 1
+        global _list_items
+        _list_items = []
+        for i in message.data:
+            _list_items.append(i.id)
+            click.echo("{:2}. {:12} ({:20} {}".format(df_idx, i.id, i.alias + ')', i.title))
+            df_idx += 1
+        click.echo("Processed {} records.".format(len(message.data)))
+
 
 def print_coll( message ):
     for coll in message.coll:
