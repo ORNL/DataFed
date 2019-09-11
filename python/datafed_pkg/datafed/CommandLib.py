@@ -58,6 +58,7 @@ _return_val = None
 _uid = None
 _cur_sel = None
 _cur_coll = "root"
+_cur_coll_title = None
 _cur_alias_prefix = ""
 _list_items = []
 _interactive = False
@@ -395,15 +396,26 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
 @click.argument("df-id",required=False)
 def wc(df_id):
     global _cur_coll
-    if df_id is not None:
-        tmp = resolve_coll_id(df_id)
+    global _cur_coll_title
+
+    if df_id is not None or _cur_coll_title == None:
+        if df_id == None:
+            tmp = "root"
+        else:
+            tmp = resolve_coll_id(df_id)
         # Verify collection is valid
         msg = auth.CollViewRequest()
         msg.id = tmp
         reply = _mapi.sendRecv( msg )
         _cur_coll = tmp
-    else:
-        click.echo(_cur_coll)
+        coll = reply[0].coll[0]
+        if coll.alias:
+            _cur_coll_title = "\"{}\" ({})".format(coll.title,coll.alias)
+        else:
+            _cur_coll_title = "\"{}\" [{}]".format(coll.title,coll.id)
+
+    if df_id == None:
+        click.echo(_cur_coll_title)
 
 
 @cli.command(help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
