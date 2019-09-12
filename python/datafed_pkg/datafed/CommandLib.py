@@ -361,7 +361,7 @@ def globe():
 @cli.command(help="List current collection, or collection specified by ID")
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
-@click.argument("df-id", required=False)
+@click.argument("df_id", required=False, metavar="ID")
 @_global_output_options
 @click.pass_context
 def ls(ctx,df_id,offset,count,verbosity,json,text):
@@ -392,31 +392,76 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     generic_reply_handler( reply, print_listing )
 
 
-@cli.command(help="Print or change current working collection")
-@click.argument("df-id",required=False)
+@cli.command(help="Set current working collection. 'ID' can be a collection ID, alias, list index number, or path. Only '..' and '/' are supported for paths.")
+@click.argument("df_id",required=False, metavar="ID")
 def wc(df_id):
     global _cur_coll
     global _cur_coll_title
 
-    if df_id is not None or _cur_coll_title == None:
-        if df_id == None:
-            tmp = "root"
-        else:
-            tmp = resolve_coll_id(df_id)
-        # Verify collection is valid
+    if df_id == None:
+        pwc()
+    else:
         msg = auth.CollViewRequest()
-        msg.id = tmp
+        msg.id = resolve_coll_id(df_id)
         reply = _mapi.sendRecv( msg )
-        _cur_coll = tmp
+        _cur_coll = msg.id
         coll = reply[0].coll[0]
         if coll.alias:
             _cur_coll_title = "\"{}\" ({})".format(coll.title,coll.alias)
         else:
             _cur_coll_title = "\"{}\" [{}]".format(coll.title,coll.id)
 
-    if df_id == None:
-        click.echo(_cur_coll_title)
 
+@cli.command(help="Print current working collection.")
+def pwc():
+    if _cur_coll_title == None:
+        setWorkingCollectionTitle()
+
+    click.echo(_cur_coll_title)
+
+
+@cli.command(help="Print current working path")
+def pwp():
+    global _cur_coll_title
+
+    if _cur_coll_title == None:
+        setWorkingCollectionTitle()
+
+    msg = auth.CollGetParentsRequest()
+    msg.id = _cur_coll
+    reply = _mapi.sendRecv( msg )
+    ind = 0
+    for p in reply[0].path:
+        for i in reversed(p.item):
+            if ind == 0:
+                if i.alias:
+                    print( "\"{}\" ({})".format(i.title,i.alias))
+                else:
+                    print( "\"{}\" [{}]".format(i.title,i.id))
+            else:
+                if i.alias:
+                    print( "{:{}}\"{}\" ({})".format(' ',ind,i.title,i.alias))
+                else:
+                    print( "{:{}}\"{}\" [{}]".format(' ',ind,i.title,i.id))
+            ind = ind + 3
+
+    if ind == 0:
+        print( _cur_coll_title )
+    else:
+        print( "{:{}}{}".format(' ',ind,_cur_coll_title))
+
+def setWorkingCollectionTitle():
+    global _cur_coll
+    global _cur_coll_title
+
+    msg = auth.CollViewRequest()
+    msg.id = _cur_coll
+    reply = _mapi.sendRecv( msg )
+    coll = reply[0].coll[0]
+    if coll.alias:
+        _cur_coll_title = "\"{}\" ({})".format(coll.title,coll.alias)
+    else:
+        _cur_coll_title = "\"{}\" [{}]".format(coll.title,coll.id)
 
 @cli.command(help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
 @click.argument("count",type=int,required=False)
@@ -447,7 +492,7 @@ def data():
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
 @_global_output_options
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="ID")
 def data_view(df_id,details,verbosity,json,text):
     output_checks( verbosity, json, text )
 
@@ -538,7 +583,7 @@ def data_create(title,alias,description,keywords,raw_data_file,extension,metadat
 
 
 @data.command(name='update',help="Update existing data record")
-@click.argument("df_id", metavar="id", required=False)
+@click.argument("df_id", metavar="ID", required=False)
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -623,7 +668,7 @@ def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,m
 
 
 @data.command(name='delete',help="Delete existing data record")
-@click.argument("df_id", metavar="id", nargs=-1)
+@click.argument("df_id", metavar="ID", nargs=-1)
 @_global_output_options
 def data_delete(df_id, verbosity, json, text):
     resolved_list = []
@@ -711,7 +756,7 @@ def data_get( df_id, path, wait, verbosity, json, text): #Multi-get will initiat
 
 
 @data.command(name='put',help="Put (upload) raw data to DataFed")
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="ID")
 @click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 #@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
@@ -831,7 +876,7 @@ def coll():
 
 
 @coll.command(name='view',help="View collection")
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="ID")
 @_global_output_options
 def coll_view(df_id, verbosity, json, text):
     msg = auth.CollViewRequest()
@@ -870,7 +915,7 @@ def coll_create(title,alias,description,topic,collection,verbosity,json,text):
 
 
 @coll.command(name='update',help="Update existing collection")
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="ID")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -897,7 +942,7 @@ def coll_update(df_id,title,alias,description,topic,verbosity,json,text):
 
 
 @coll.command(name='delete',help="Delete existing collection")
-@click.argument("df_id", metavar="id", nargs=-1)
+@click.argument("df_id", metavar="ID", nargs=-1)
 @_global_output_options
 def coll_delete(df_id, verbosity, json, text):
     resolved_list = []
@@ -984,7 +1029,7 @@ def query_list(offset,count, verbosity, json, text):
 
 
 @query.command(name='exec',help="Execute a stored query by ID")
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="ID")
 @_global_output_options
 def query_exec(df_id, verbosity, json, text):
     msg = auth.QueryExecRequest()
@@ -1138,7 +1183,7 @@ def project_list(owner,admin,member,offset,count, verbosity, json, text):
 
 
 @project.command(name='view',help="View project specified by ID")
-@click.argument("df_id", metavar="id")
+@click.argument("df_id", metavar="ID")
 @_global_output_options
 def project_view(df_id, verbosity, json, text):
     msg = auth.ProjectViewRequest()
@@ -1181,7 +1226,7 @@ def shared_projects(verbosity, json, text):
 
 
 @shared.command(name="ls",help="List shared data records and collections by user/project ID")
-@click.argument("df_id", metavar = "id")
+@click.argument("df_id", metavar = "ID")
 @_global_output_options
 def shared_list(df_id, verbosity, json, text):
     id2 = resolve_id(df_id)
@@ -1401,7 +1446,7 @@ def ep_list(verbosity, json, text):
 
 @cli.command(name='ident',help="Set current user or project identity to ID (omit for self)") # Does this actually switch the identity??
 @click.option("-s","--show",is_flag=True,help="Show current identity")
-@click.argument("df_id", metavar="id",required=False)
+@click.argument("df_id", metavar="ID",required=False)
 def ident(df_id,show):
     global _cur_sel
     global _cur_coll
