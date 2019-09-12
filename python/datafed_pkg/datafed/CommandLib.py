@@ -58,6 +58,7 @@ _return_val = None
 _uid = None
 _cur_sel = None
 _cur_coll = "root"
+_cur_coll_prefix = "root"
 _cur_coll_title = None
 _cur_alias_prefix = ""
 _list_items = []
@@ -113,8 +114,13 @@ def _run():
                 # cli always raises an exception
             else:
                 if session == None:
-                    session = PromptSession(unicode("> "),history=FileHistory(os.path.expanduser("~/.datafed-hist")))
-                _args = shlex.split(session.prompt(auto_suggest=AutoSuggestFromHistory()))
+                    session = PromptSession(history=FileHistory(os.path.expanduser("~/.datafed-hist")))
+                    #session = PromptSession(unicode("> "),history=FileHistory(os.path.expanduser("~/.datafed-hist")))
+                if _cur_sel[0:2] == "p/":
+                    prefix = "(" + _cur_sel[2:] + ") " + _cur_coll_prefix + ">"
+                else:
+                    prefix = _cur_coll_prefix + ">"
+                _args = shlex.split(session.prompt(prefix,auto_suggest=AutoSuggestFromHistory()))
                 cli(prog_name="datafed",args=_args,standalone_mode=True)
         except SystemExit as e:
             #print( "except - sys exit" )
@@ -293,6 +299,10 @@ __global_output_options = [
 class AliasedGroup(click.Group):
     # Allows command matching by unique suffix
     def get_command(self, ctx, cmd_name):
+        # Process aliases
+        if cmd_name == "cd":
+            return click.Group.get_command(self, ctx, "wc")
+
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
@@ -392,14 +402,26 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     generic_reply_handler( reply, print_listing )
 
 
-@cli.command(help="Set current working collection. 'ID' can be a collection ID, alias, list index number, or path. Only '..' and '/' are supported for paths.")
+@cli.command(help="Set/print current working collection or path. 'ID' can be a collection ID, alias, list index number, or path. Only '..' and '/' are supported for paths. 'cd' is an alias for this command.")
+#@click.option("-p","--path",is_flag=True,help="Print full path.")
 @click.argument("df_id",required=False, metavar="ID")
-def wc(df_id):
+@_global_output_options
+@click.pass_context
+def wc(ctx,df_id,verbosity,json,text):
+    output_checks( verbosity, json, text )
+
     global _cur_coll
     global _cur_coll_title
+    global _cur_coll_prefix
 
     if df_id == None:
-        pwc()
+        if _cur_coll_title == None:
+            setWorkingCollectionTitle()
+
+        if _output_mode == _OM_TEXT:
+            click.echo(_cur_coll_title)
+        else:
+            click.echo("{\"wc\":\"" + _cur_coll + "\"}")
     else:
         msg = auth.CollViewRequest()
         msg.id = resolve_coll_id(df_id)
@@ -408,20 +430,24 @@ def wc(df_id):
         coll = reply[0].coll[0]
         if coll.alias:
             _cur_coll_title = "\"{}\" ({})".format(coll.title,coll.alias)
+            _cur_coll_prefix = coll.alias
         else:
             _cur_coll_title = "\"{}\" [{}]".format(coll.title,coll.id)
+            _cur_coll_prefix = coll.id
 
-
+'''
 @cli.command(help="Print current working collection.")
 def pwc():
     if _cur_coll_title == None:
         setWorkingCollectionTitle()
 
     click.echo(_cur_coll_title)
-
+'''
 
 @cli.command(help="Print current working path")
-def pwp():
+@_global_output_options
+@click.pass_context
+def wp(ctx):
     global _cur_coll_title
 
     if _cur_coll_title == None:
@@ -460,8 +486,10 @@ def setWorkingCollectionTitle():
     coll = reply[0].coll[0]
     if coll.alias:
         _cur_coll_title = "\"{}\" ({})".format(coll.title,coll.alias)
+        _cur_coll_prefix = coll.alias
     else:
         _cur_coll_title = "\"{}\" [{}]".format(coll.title,coll.id)
+        _cur_coll_prefix = coll.id
 
 @cli.command(help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
 @click.argument("count",type=int,required=False)
@@ -526,8 +554,7 @@ def data_create(title,alias,description,keywords,raw_data_file,extension,metadat
     output_checks( verbosity, json, text )
 
     if metadata and metadata_file:
-        printError( "Cannot specify both --metadata and --metadata-file options" )
-        return
+        raise Exception( "Cannot specify both --metadata and --metadata-file options" )
 
     msg = auth.RecordCreateRequest()
     msg.title = title
@@ -600,12 +627,10 @@ def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,m
     output_checks( verbosity, json, text )
 
     if metadata and metadata_file:
-        printError( "Cannot specify both --metadata and --metadata-file options." )
-        return
+        raise Exception( "Cannot specify both --metadata and --metadata-file options." )
 
     if dep_clear and dep_rem:
-        printError( "Cannot specify both --dep-clear and --dep-rem options." )
-        return
+        raise Exception( "Cannot specify both --dep-clear and --dep-rem options." )
 
     msg = auth.RecordUpdateRequest()
     msg.id = resolve_id(df_id)
@@ -710,8 +735,7 @@ def data_get( df_id, path, wait, verbosity, json, text): #Multi-get will initiat
             checked_list.append(i.id)
 
     if checked_list and url_list:
-        printError("Cannot 'get' records via Globus and http with same command.")
-        return
+        raise Exception("Cannot 'get' records via Globus and http with same command.")
 
     if url_list: #HTTP transfers
         for url in url_list:
@@ -794,17 +818,14 @@ def data_batch_create(collection,file,verbosity,json,text):
         fp = pathlib.Path(f)
 
         if not fp.is_file():
-            printError( "File not found: " + f )
-            return
+            raise Exception( "File not found: " + f )
 
         if fp.stat().st_size > _max_md_size:
-            printError( "Batch create file, " + f +", exceeds maximum size ("+_max_md_size+")" )
-            return
+            raise Exception( "Batch create file, " + f +", exceeds maximum size ("+_max_md_size+")" )
 
         tot_size += fp.stat().st_size
         if tot_size > _max_payload_size:
-            printError( "Total batch create size exceeds limit ("+_max_payload_size+")" )
-            return
+            raise Exception( "Total batch create size exceeds limit ("+_max_payload_size+")" )
 
         with fp.open('r+') as f:
             records = jsonlib.load(f)
@@ -842,17 +863,14 @@ def data_batch_update(file,verbosity,json,text):
         fp = pathlib.Path(f)
 
         if not fp.is_file():
-            printError( "File not found: " + f )
-            return
+            raise Exception( "File not found: " + f )
 
         if fp.stat().st_size > _max_md_size:
-            printError( "Batch update file, " + f +", exceeds maximum size ("+_max_md_size+")" )
-            return
+            raise Exception( "Batch update file, " + f +", exceeds maximum size ("+_max_md_size+")" )
 
         tot_size += fp.stat().st_size
         if tot_size > _max_payload_size:
-            printError( "Total batch update size exceeds limit ("+_max_payload_size+")" )
-            return
+            raise Exception( "Total batch update size exceeds limit ("+_max_payload_size+")" )
 
         with fp.open('r+') as f:
             records = jsonlib.load(f)
@@ -1145,6 +1163,10 @@ def user_view(uid, verbosity, json, text):
     generic_reply_handler( reply, print_user )
 
 
+@user.command(name='who',help="Show current user identity.")
+def user_who():
+    click.echo(_uid)
+
 # ------------------------------------------------------------------------------
 # Project command group
 
@@ -1165,7 +1187,9 @@ def project_list(owned,admin,member,offset,count, verbosity, json, text):
         owned = True
         admin = True
         member = True
+
     msg = auth.ProjectListRequest()
+    msg.subject = _cur_sel
     msg.as_owner = owned
     msg.as_admin = admin
     msg.as_member = member
@@ -1194,6 +1218,41 @@ def project_view(df_id, verbosity, json, text):
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_proj )
 
+@project.command(name='select',help="Select project for use. ID may be a project ID, or an index value from a project listing. If ID is omitted, current project is deselected.")
+@click.argument("df_id", metavar="ID",required=False)
+def project_select(df_id):
+    global _cur_sel
+    global _cur_coll
+    global _cur_alias_prefix
+
+    if df_id == None:
+        if _cur_sel == _uid:
+            return
+
+        _cur_sel = _uid
+        _cur_coll = "c/u_" + _uid[2:] + "_root"
+        _cur_alias_prefix = ""
+
+        info(1,"Switched to user " + _cur_sel)
+    else:
+        df_id = resolve_index_val(df_id)
+
+        if df_id[0:2] != "p/":
+            if df_id.find("/") != -1:
+                raise Exception("Invalid ID - must be a project ID.")
+            df_id = "p/" + df_id
+
+        msg = auth.ProjectViewRequest()
+        msg.id = df_id
+        reply, mt = _mapi.sendRecv( msg )
+
+        _cur_sel = df_id
+        _cur_coll = "c/p_" + _cur_sel[2:] + "_root"
+        _cur_alias_prefix = "p:" + _cur_sel[2:] + ":"
+
+        info(1,"Switched to project " + _cur_sel)
+
+    setWorkingCollectionTitle()
 
 # ------------------------------------------------------------------------------
 # Shared data command group
@@ -1263,25 +1322,22 @@ def xfr():
 @_global_output_options
 def xfr_list(time_from,to,since,status,limit,verbosity,json,text): # TODO: Absolute time is not user friendly
     if since != None and (time_from != None or to != None):
-        printError("Cannot specify 'since' and 'from'/'to' ranges.")
-        return
+        raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
     msg = auth.XfrListRequest()
 
     if time_from != None:
         ts = strToTimestamp( time_from )
-        print("ts:",ts)
         if ts == None:
-            printError("Invalid time format for 'from' option.")
-            return
+            raise Exception("Invalid time format for 'from' option.")
+
         setattr( msg, "from", ts )
 
     if to != None:
         ts = strToTimestamp( to )
-        print("ts:",ts)
         if ts == None:
-            printError("Invalid time format for 'to' option.")
-            return
+            raise Exception("Invalid time format for 'to' option.")
+
         msg.to = ts
 
     if since != None:
@@ -1302,13 +1358,11 @@ def xfr_list(time_from,to,since,status,limit,verbosity,json,text): # TODO: Absol
                 val = int(since)
 
             if val == None:
-                printError("Invalid value for 'since' 1")
-                return
+                raise Exception("Invalid value for 'since'")
 
             msg.since = val*mod
         except:
-            printError("Invalid value for 'since'")
-            return
+            raise Exception("Invalid value for 'since'")
 
     if status in ["0","1","2","3","4"]: msg.status = int(status)
     elif status == "init" or status == "initiated": msg.status = 0
@@ -1366,11 +1420,11 @@ def ep_get(verbosity, json, text):
     _ep_cur = _ep_cur if _ep_cur else _ep_default
 
     if not _ep_cur:
-        printError("No endpoint specified or configured")
-    else:
-        if _output_mode == _OM_TEXT and _verbosity >= 1: click.echo("Current working endpoint: {}".format(_ep_cur))
-        elif _output_mode == _OM_TEXT and _verbosity == 0: click.echo("{}".format(_ep_cur))
-        elif _output_mode == _OM_JSON: click.echo('{{ "endpoint": "{}" }}'.format(_ep_cur))
+        raise Exception("No endpoint specified or configured")
+
+    if _output_mode == _OM_TEXT and _verbosity >= 1: click.echo("Current working endpoint: {}".format(_ep_cur))
+    elif _output_mode == _OM_TEXT and _verbosity == 0: click.echo("{}".format(_ep_cur))
+    elif _output_mode == _OM_JSON: click.echo('{{ "endpoint": "{}" }}'.format(_ep_cur))
 
 
 @ep.command(name='default',help="Get or set the default Globus endpoint. If no endpoint is given, the previously configured default endpoint will be returned. If an argument is given, the new endpoint will be set as the default.")
@@ -1384,8 +1438,8 @@ def ep_default(current, new_default_ep, verbosity, json, text):
 
     if current:
         if _ep_cur == None:
-            printError("No current working endpoint set.")
-            return
+            raise Exception("No current working endpoint set.")
+
         _cfg.set("default_ep",_ep_cur,True)
         _ep_default = _ep_cur
     elif new_default_ep:
@@ -1401,7 +1455,7 @@ def ep_default(current, new_default_ep, verbosity, json, text):
         elif _output_mode == _OM_JSON:
             click.echo('{{ "endpoint": "{}" }}'.format(_ep_default))
     else:
-        printError("Default endpoint not set.")
+        raise Exception("Default endpoint not set.")
 
 
 @ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the previously configured default endpoint will be used.")
@@ -1418,8 +1472,7 @@ def ep_set(current_endpoint, verbosity, json, text):
     elif _ep_default:
         _ep_cur = _ep_default
     elif not _ep_cur and not _ep_default:
-        printError("No endpoint specified or configured")
-        return
+        raise Exception("No endpoint specified or configured")
 
     if _ep_cur:
         if _output_mode == _OM_TEXT and _verbosity >= 1:
@@ -1443,21 +1496,18 @@ def ep_list(verbosity, json, text):
 
 # ------------------------------------------------------------------------------
 # Miscellaneous commands
-
-@cli.command(name='ident',help="Set current user or project identity to ID (omit for self)") # Does this actually switch the identity??
-@click.option("-s","--show",is_flag=True,help="Show current identity")
+'''
+@cli.command(name='ident',help="Set current user or project identity to ID. ID may be an ID, a UID, or an index value from a user/project listing. If ID is omitted, identity is reset back to authenticated UID.")
 @click.argument("df_id", metavar="ID",required=False)
-def ident(df_id,show):
+def ident(df_id):
     global _cur_sel
     global _cur_coll
     global _cur_alias_prefix
 
-    if show:
-        click.echo(_cur_sel)
-        return
-
     if df_id == None:
         df_id = _uid
+    else:
+        df_id = resolve_index_val(df_id)
 
     if df_id[0:2] == "p/":
         msg = auth.ProjectViewRequest()
@@ -1471,7 +1521,7 @@ def ident(df_id,show):
         info(1,"Switched to project " + _cur_sel)
     else:
         if df_id[0:2] != "u/":
-            id = "u/" + df_id
+            df_id = "u/" + df_id
 
         msg = auth.UserViewRequest()
         msg.uid = df_id
@@ -1482,6 +1532,7 @@ def ident(df_id,show):
         _cur_alias_prefix = "u:" + _cur_sel[2:] + ":"
 
         info(1,"Switched to user " + _cur_sel)
+'''
 
 @cli.command(name='setup',help="Setup local credentials")
 @click.pass_context
@@ -1512,17 +1563,39 @@ def setup(ctx):
 
     print("Ok")
 
-@cli.command(name='json',help="Set output mode to JSON")
+@cli.command(cls=AliasedGroup,help="Set output mode")
+def output():
+    pass
+
+@output.command(name='json',help="Set output mode to JSON")
 @click.pass_context
-def json_cli(ctx):
+def output_json(ctx):
     global _output_mode_sticky
     _output_mode_sticky = _OM_JSON
 
-@cli.command(name='text',help="Set output mode to TEXT")
+@output.command(name='text',help="Set output mode to TEXT")
 @click.pass_context
-def text_cli(ctx):
+def output_text(ctx):
     global _output_mode_sticky
     _output_mode_sticky = _OM_TEXT
+
+@output.command(name='view',help="View current output mode")
+@_global_output_options
+@click.pass_context
+def output_view(ctx, verbosity, json, text):
+    output_checks( verbosity, json, text )
+
+    global _output_mode_sticky
+    if _output_mode_sticky == _OM_TEXT:
+        if _output_mode == _OM_TEXT:
+            click.echo("text")
+        else:
+            click.echo("{\"output\":\"text\"}")
+    else:
+        if _output_mode == _OM_TEXT:
+            click.echo("json")
+        else:
+            click.echo("{\"output\":\"json\"}")
 
 @cli.command(name='verbosity',help="Set verbosity level")
 @click.argument("level", required=True)
@@ -1531,10 +1604,22 @@ def verbosity_cli(ctx,level):
     global _verbosity_sticky
     _verbosity_sticky = int(level)
 
-@cli.command(name='help',help="Show datafed client help")
+@cli.command(name='help',help="Show datafed client help. Specify command(s) to see command-specific help.")
+@click.argument("command", required=False, nargs=-1)
 @click.pass_context
-def help_cli(ctx):
-    click.echo(ctx.parent.get_help())
+def help_cli(ctx,command):
+    print("cmd:",command)
+    if not command:
+        click.echo(ctx.parent.get_help())
+    else:
+        for c in command:
+            if c in cli.commands:
+                click.echo(cli.commands[c].get_help(ctx))
+            else:
+                click.echo("Unknown command: " + c)
+                click.echo(ctx.parent.get_help())
+        
+        #print("Help on",command)
 
 
 @cli.command(name="exit",help="Exit interactive session")
@@ -1986,11 +2071,6 @@ def print_proj( message ):
         else:
             click.echo( "{:<20} {:<50}".format('Description: ', '(none)'))
 
-def printError( msg ):
-    if _output_mode == _OM_TEXT:
-        click.echo( msg )
-    elif _output_mode == _OM_JSON:
-        click.echo('{{ "err_code": 1, "err_msg": "{}" }}'.format( msg ))
 
 _listing_requests = {
     auth.UserListAllRequest: print_user_listing,
