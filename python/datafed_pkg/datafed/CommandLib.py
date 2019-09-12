@@ -1160,13 +1160,13 @@ def project():
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 @_global_output_options
-def project_list(owner,admin,member,offset,count, verbosity, json, text):
-    if not (owner or admin or member):
-        owner = True
+def project_list(owned,admin,member,offset,count, verbosity, json, text):
+    if not (owned or admin or member):
+        owned = True
         admin = True
         member = True
     msg = auth.ProjectListRequest()
-    msg.as_owner = owner
+    msg.as_owner = owned
     msg.as_admin = admin
     msg.as_member = member
     msg.offset = offset
