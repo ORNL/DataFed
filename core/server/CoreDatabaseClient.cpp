@@ -1470,8 +1470,12 @@ void
 DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_inclusive() )
+        params.push_back({"inclusive",a_request.inclusive()?"true":"false"});
 
-    dbGet( "col/get_parents", {{"id",a_request.id()}}, result );
+    dbGet( "col/get_parents", params, result );
 
     setCollPathData( a_reply, result );
 }

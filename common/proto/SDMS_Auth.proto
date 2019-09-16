@@ -379,6 +379,7 @@ message CollMoveRequest
 message CollGetParentsRequest
 {
     required string             id          = 1;
+    optional bool               inclusive   = 2;
 }
 
 message CollPathReply

@@ -447,34 +447,15 @@ def pwc():
 @cli.command(help="Print current working path")
 @_global_output_options
 @click.pass_context
-def wp(ctx):
-    global _cur_coll_title
-
-    if _cur_coll_title == None:
-        setWorkingCollectionTitle()
+def wp(ctx,verbosity,json,text):
+    output_checks( verbosity, json, text )
 
     msg = auth.CollGetParentsRequest()
     msg.id = _cur_coll
+    msg.inclusive = True
     reply = _mapi.sendRecv( msg )
-    ind = 0
-    for p in reply[0].path:
-        for i in reversed(p.item):
-            if ind == 0:
-                if i.alias:
-                    print( "\"{}\" ({})".format(i.title,i.alias))
-                else:
-                    print( "\"{}\" [{}]".format(i.title,i.id))
-            else:
-                if i.alias:
-                    print( "{:{}}\"{}\" ({})".format(' ',ind,i.title,i.alias))
-                else:
-                    print( "{:{}}\"{}\" [{}]".format(' ',ind,i.title,i.id))
-            ind = ind + 3
+    generic_reply_handler( reply, print_path )
 
-    if ind == 0:
-        print( _cur_coll_title )
-    else:
-        print( "{:{}}{}".format(' ',ind,_cur_coll_title))
 
 def setWorkingCollectionTitle():
     global _cur_coll
@@ -499,8 +480,8 @@ def more(count,verbosity,json,text):
     global _most_recent_list_count
     _most_recent_list_request.offset += _most_recent_list_count
     if count:
-       _most_recent_list_request.count = count
-       _most_recent_list_count = count
+        _most_recent_list_request.count = count
+        _most_recent_list_count = count
     elif not count:
         _most_recent_list_request.count = _most_recent_list_count
 
@@ -2071,6 +2052,22 @@ def print_proj( message ):
         else:
             click.echo( "{:<20} {:<50}".format('Description: ', '(none)'))
 
+def print_path( message ):
+    ind = 0
+    for p in message.path:
+        for i in reversed(p.item):
+            if ind == 0:
+                if i.alias:
+                    print( "\"{}\" ({})".format(i.title,i.alias))
+                else:
+                    print( "\"{}\" [{}]".format(i.title,i.id))
+            else:
+                if i.alias:
+                    print( "{:{}}\"{}\" ({})".format(' ',ind,i.title,i.alias))
+                else:
+                    print( "{:{}}\"{}\" [{}]".format(' ',ind,i.title,i.id))
+            ind = ind + 3
+
 
 _listing_requests = {
     auth.UserListAllRequest: print_user_listing,
@@ -2083,7 +2080,7 @@ _listing_requests = {
     auth.CollListRequest: '',
     auth.RecordListByAllocRequest: '',
     auth.CollReadRequest: print_listing,
-                     }
+    }
 
 
 def output_checks(verbosity=None,json=None,text=None):
