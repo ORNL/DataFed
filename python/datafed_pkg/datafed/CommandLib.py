@@ -61,6 +61,7 @@ _cur_coll = "root"
 _cur_coll_prefix = "root"
 _cur_coll_title = None
 _cur_alias_prefix = ""
+_prev_coll = "root"
 _list_items = []
 _interactive = False
 _verbosity_sticky = 1
@@ -402,7 +403,7 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     generic_reply_handler( reply, print_listing )
 
 
-@cli.command(help="Set/print current working collection or path. 'ID' can be a collection ID, alias, list index number, or path. Only '..' and '/' are supported for paths. 'cd' is an alias for this command.")
+@cli.command(help="Set/print current working collection or path. 'ID' can be a collection ID, alias, list index number, '-' (previous collection), or path. Only '..' and '/' are supported for paths. 'cd' is an alias for this command.")
 #@click.option("-p","--path",is_flag=True,help="Print full path.")
 @click.argument("df_id",required=False, metavar="ID")
 @_global_output_options
@@ -411,6 +412,7 @@ def wc(ctx,df_id,verbosity,json,text):
     output_checks( verbosity, json, text )
 
     global _cur_coll
+    global _prev_coll
     global _cur_coll_title
     global _cur_coll_prefix
 
@@ -426,6 +428,7 @@ def wc(ctx,df_id,verbosity,json,text):
         msg = auth.CollViewRequest()
         msg.id = resolve_coll_id(df_id)
         reply = _mapi.sendRecv( msg )
+        _prev_coll = _cur_coll
         _cur_coll = msg.id
         coll = reply[0].coll[0]
         if coll.alias:
@@ -1643,6 +1646,8 @@ def resolve_id(df_id):
 def resolve_coll_id(df_id):
     if df_id == ".":
         return _cur_coll
+    elif df_id == "-":
+        return _prev_coll
     elif df_id == "/":
         if _cur_sel[0] == "p":
             return "c/p_" + _cur_sel[2:] + "_root"
