@@ -253,6 +253,7 @@ def command( command ):
 
     _return_val = None
     _output_mode = _OM_RETN
+    _output_mode_sticky = _OM_RETN
 
     try:
         _args = shlex.split( command )
@@ -963,45 +964,37 @@ def coll_delete(df_id, verbosity, json, text):
     generic_reply_handler( reply, print_ack_reply )
 
 
-@coll.command(name='add',help="Add data/collection ITEM_ID to collection COLL_ID")
-@click.argument("item_id")
-@click.argument("coll_id")
+@coll.command(name='add',help="Add data records and/or collections to a collection. Specify one or more items to add using the ITEM_ID arguments, and a target collection using the COLL_ID argument.")
+@click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
+@click.argument("coll_id",metavar="COLL_ID", required=True, nargs=1)
 @_global_output_options
-def coll_add(item_id,coll_id, verbosity, json, text):
-    msg = auth.CollWriteRequest()
-    msg.id = resolve_coll_id(coll_id)
-    msg.add.append(resolve_id(item_id))
-
+def coll_add( item_id, coll_id, verbosity, json, text ):
     output_checks( verbosity, json, text )
 
-    reply = _mapi.sendRecv(msg)
-    if _verbosity <= 1:
-        if reply[1] == "ListingReply": # TODO: Returns empty listing reply -- should it be AckReply?
-            click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
- #   elif _verbosity == 2:
-  #      click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
-   #     generic_reply_handler( reply, print_listing )
-
-
-@coll.command(name='remove',help="Remove data/collection ITEM_ID from collection COLL_ID")
-@click.argument("item_id")
-@click.argument("coll_id")
-@_global_output_options
-def coll_rem(item_id,coll_id, verbosity, json, text):
     msg = auth.CollWriteRequest()
     msg.id = resolve_coll_id(coll_id)
-    msg.rem.append(resolve_id(item_id))
-
-    output_checks( verbosity, json, text )
+    for i in item_id:
+        msg.add.append(resolve_id(i))
 
     reply = _mapi.sendRecv(msg)
-    if _verbosity <= 1:
-        if reply[1] == "ListingReply": # TODO: Returns empty listing reply -- should it be AckReply?
-            click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
- #   elif _verbosity == 2:
-  #      click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
-   #     generic_reply_handler( reply, print_listing )
 
+    print_ack_reply()
+
+@coll.command(name='remove',help="Remove data records and/or collections from a collection. Specify one or more items to remove using the ITEM_ID arguments, and a target collection using the COLL_ID argument.")
+@click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
+@click.argument("coll_id",metavar="COLL_ID", required=True, nargs=1)
+@_global_output_options
+def coll_rem( item_id, coll_id, verbosity, json, text ):
+    output_checks( verbosity, json, text )
+
+    msg = auth.CollWriteRequest()
+    msg.id = resolve_coll_id(coll_id)
+    for i in item_id:
+        msg.rem.append(resolve_id(i))
+
+    reply = _mapi.sendRecv(msg)
+
+    print_ack_reply()
 
 #------------------------------------------------------------------------------
 # Query command group
@@ -1545,6 +1538,7 @@ def setup(ctx):
     keyf.write( reply.priv_key )
     keyf.close()
 
+    #TODO Fix for output modes
     print("Ok")
 
 @cli.command(cls=AliasedGroup,help="Set output mode")
@@ -1555,12 +1549,17 @@ def output():
 @click.pass_context
 def output_json(ctx):
     global _output_mode_sticky
+    if _output_mode_sticky == _OM_RETN:
+        return
+
     _output_mode_sticky = _OM_JSON
 
 @output.command(name='text',help="Set output mode to TEXT")
 @click.pass_context
 def output_text(ctx):
     global _output_mode_sticky
+    if _output_mode_sticky == _OM_RETN:
+        return
     _output_mode_sticky = _OM_TEXT
 
 @output.command(name='view',help="View current output mode")
@@ -1575,18 +1574,30 @@ def output_view(ctx, verbosity, json, text):
             click.echo("text")
         else:
             click.echo("{\"output\":\"text\"}")
-    else:
+    elif _output_mode_sticky == _OM_JSON:
         if _output_mode == _OM_TEXT:
             click.echo("json")
         else:
             click.echo("{\"output\":\"json\"}")
+    else:
+        global _return_val
+        _return_val = { "output" : "object" }
 
-@cli.command(name='verbosity',help="Set verbosity level")
-@click.argument("level", required=True)
+@cli.command(name='verbosity',help="Set/display verbosity level. The verbosity level argument can be 0 (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the current verbosity level is returned.")
+@click.argument("level", required=False)
 @click.pass_context
 def verbosity_cli(ctx,level):
     global _verbosity_sticky
-    _verbosity_sticky = int(level)
+    if level != None:
+        _verbosity_sticky = int(level)
+    else:
+        if _output_mode == _OM_TEXT:
+            click.echo("{}".format(_verbosity_sticky))
+        elif _output_mode == _OM_JSON:
+            click.echo("{\"verbosity\":{}}".format(_verbosity_sticky))
+        else:
+            global _return_val
+            _return_val = { "verbosity": _verbosity_sticky }
 
 @cli.command(name='help',help="Show datafed client help. Specify command(s) to see command-specific help.")
 @click.argument("command", required=False, nargs=-1)
@@ -1794,7 +1805,7 @@ def resolve_filepath_for_xfr(path):
 
 
 def generic_reply_handler( reply, printFunc ): # NOTE: Reply is a tuple containing (reply msg, msg type)
-    if _output_mode == _OM_RETN:
+    if _output_mode_sticky == _OM_RETN:
         global _return_val
         _return_val = reply
         return
@@ -2089,6 +2100,10 @@ _listing_requests = {
 
 
 def output_checks(verbosity=None,json=None,text=None):
+    global _output_mode_sticky
+    if _output_mode_sticky == _OM_RETN:
+        return
+
     global _verbosity
     global _output_mode
 
