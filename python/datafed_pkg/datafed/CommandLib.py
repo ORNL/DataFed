@@ -178,7 +178,7 @@ def init( opts = {} ):
     _addConfigOptions()
 
     _cfg = Config.API( opts )
-    opts =_defaultOptions()
+    opts = _defaultOptions()
 
     _mapi = MessageLib.API( **opts )
     _mapi.setNackExceptionEnabled( False )
@@ -270,7 +270,7 @@ def command( command ):
 # Verbosity-aware print
 def info( level, *args ):
     global _verbosity
-    if level <= int(_verbosity):
+    if level <= _verbosity:
         print( *args )
 
 # -----------------------------------------------------------------------------------------------------------------
@@ -350,9 +350,18 @@ def cli(ctx,*args,**kwargs):
     if _mapi == None:
         _initialize(ctx.params)
 
-    if ctx.params['verbosity'] is not None and int(ctx.params['verbosity']) != _verbosity:
-        _verbosity_sticky = int(ctx.params['verbosity'])
-        _verbosity = _verbosity_sticky
+    if ctx.params['verbosity'] is not None:
+        try:
+            v = int(ctx.params['verbosity'])
+        except:
+            raise Exception("Invalid verbosity value.")
+
+        if v < 0 or v > 2:
+            raise Exception("Invalid verbosity value.")
+
+        if v != _verbosity:
+            _verbosity_sticky = v
+            _verbosity = v
 
     if not _interactive and ctx.invoked_subcommand is None:
         raise NoCommand("No command specified.")
@@ -1355,9 +1364,15 @@ def xfr_list(time_from,to,since,status,limit,verbosity,json,text): # TODO: Absol
     elif status == "failed": msg.status = 4
 
     if limit != None:
-        lim = int(limit)
+        try:
+            lim = int(limit)
+        except:
+            raise Exception("Invalid limit value.")
+
         if lim > 0:
             msg.limit = lim
+        else:
+            raise Exception("Invalid limit value.")
 
     output_checks( verbosity, json, text )
 
@@ -1568,47 +1583,36 @@ def setup(ctx):
     #TODO Fix for output modes
     print("Ok")
 
-@cli.command(cls=AliasedGroup,help="Set output mode")
-def output():
-    pass
-
-@output.command(name='json',help="Set output mode to JSON")
-@click.pass_context
-def output_json(ctx):
-    global _output_mode_sticky
-    if _output_mode_sticky == _OM_RETN:
-        return
-
-    _output_mode_sticky = _OM_JSON
-
-@output.command(name='text',help="Set output mode to TEXT")
-@click.pass_context
-def output_text(ctx):
-    global _output_mode_sticky
-    if _output_mode_sticky == _OM_RETN:
-        return
-    _output_mode_sticky = _OM_TEXT
-
-@output.command(name='view',help="View current output mode")
+@cli.command(name='output',help="Set output mode. If MODE argument is 'json' or 'text', the current mode will be set accordingly. If no argument is provided, the current output mode will be displayed.")
+@click.argument("mode",metavar='MODE',required=False)
 @_global_output_options
 @click.pass_context
-def output_view(ctx, verbosity, json, text):
+def output_json( ctx, mode, verbosity, json, text ):
     output_checks( verbosity, json, text )
 
     global _output_mode_sticky
-    if _output_mode_sticky == _OM_TEXT:
-        if _output_mode == _OM_TEXT:
-            click.echo("text")
-        else:
-            click.echo("{\"output\":\"text\"}")
-    elif _output_mode_sticky == _OM_JSON:
-        if _output_mode == _OM_TEXT:
-            click.echo("json")
-        else:
-            click.echo("{\"output\":\"json\"}")
+    if _output_mode_sticky == _OM_RETN:
+        return
+
+    if mode == None:
+        if _output_mode_sticky == _OM_TEXT:
+            if _output_mode == _OM_TEXT:
+                click.echo("text")
+            else:
+                click.echo("{\"output\":\"text\"}")
+        elif _output_mode_sticky == _OM_JSON:
+            if _output_mode == _OM_TEXT:
+                click.echo("json")
+            else:
+                click.echo("{\"output\":\"json\"}")
     else:
-        global _return_val
-        _return_val = { "output" : "object" }
+        m = mode.lower()
+        if m == "j" or m == "json":
+            _output_mode_sticky = _OM_JSON
+        elif m == "t" or m == "text":
+            _output_mode_sticky = _OM_TEXT
+        else:
+            raise Exception("Invalid output mode.")
 
 @cli.command(name='verbosity',help="Set/display verbosity level. The verbosity level argument can be 0 (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the current verbosity level is returned.")
 @click.argument("level", required=False)
@@ -1616,7 +1620,15 @@ def output_view(ctx, verbosity, json, text):
 def verbosity_cli(ctx,level):
     global _verbosity_sticky
     if level != None:
-        _verbosity_sticky = int(level)
+        try:
+            v = int(level)
+        except:
+            raise Exception("Invalid verbosity value.")
+
+        if v < 0 or v > 2:
+            raise Exception("Invalid verbosity value.")
+
+        _verbosity_sticky = v
     else:
         if _output_mode == _OM_TEXT:
             click.echo("{}".format(_verbosity_sticky))
@@ -2138,9 +2150,8 @@ def output_checks(verbosity=None,json=None,text=None):
     global _output_mode
 
     if verbosity:
+        # don't need to protect from invalid values here - click does that for us
         _verbosity = int(verbosity)
-    elif not verbosity:
-        _verbosity = _verbosity
 
     if json:
         _output_mode = _OM_JSON
@@ -2452,6 +2463,7 @@ def _defaultOptions():
 def _initialize( opts ):
     global _mapi
     global _uid
+    global _verbosity_sticky
     global _verbosity
     global _interactive
     global _cur_sel
@@ -2467,6 +2479,7 @@ def _initialize( opts ):
 
     tmp = _cfg.get("verbosity")
     if tmp != None:
+        _verbosity_sticky = tmp
         _verbosity = tmp
 
     tmp = _cfg.get("interactive")

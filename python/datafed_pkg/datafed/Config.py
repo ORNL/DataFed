@@ -174,9 +174,18 @@ class API:
             if (not k in self._opts) and ((v[3] & _OPT_NO_ENV) == 0) and (v[2] in os.environ) and os.environ[v[2]]:
                 tmp = os.environ[v[2]]
                 if v[3] & _OPT_INT:
-                    tmp = int(tmp)
+                    try:
+                        tmp = int(tmp)
+                    except:
+                        raise Exception( "Invalid value specified for {} ({}) from ENV {}".format(k,tmp,v[2]) )
                 elif v[3] & _OPT_BOOL:
-                    tmp = bool(int(tmp))
+                    tmp = tmp.lower()
+                    if tmp in ("true","yes","1"):
+                        tmp = True
+                    elif tmp in ("false","no","0"):
+                        tmp = False
+                    else:
+                        raise Exception("Invalid value for {} ({}) from ENV {}".format(k,tmp,v[2]))
                 elif v[3] & _OPT_PATH:
                     tmp = os.path.expanduser(tmp)
 
@@ -197,7 +206,10 @@ class API:
                         if config.has_option(v[0],v[1]):
                             tmp = config.get(v[0],v[1])
                             if v[3] & _OPT_INT:
-                                tmp = int(tmp)
+                                try:
+                                    tmp = int(tmp)
+                                except:
+                                    raise Exception( "Invalid value specified for {} ({}) in {}".format(k,tmp,cfg_file) )
                             elif v[3] & _OPT_BOOL:
                                 tmp = tmp.lower()
                                 if tmp in ("true","yes","1"):
@@ -205,7 +217,7 @@ class API:
                                 elif tmp in ("false","no","0"):
                                     tmp = False
                                 else:
-                                    raise Exception("Invalid value for {} : {} in {}".format(k,tmp,cfg_file))
+                                    raise Exception("Invalid value for {} ({}) in {}".format(k,tmp,cfg_file))
                             elif v[3] & _OPT_PATH:
                                 tmp = os.path.expanduser(tmp)
 
