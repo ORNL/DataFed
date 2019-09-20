@@ -381,11 +381,14 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     global _most_recent_list_request
     global _most_recent_list_count
 
-    msg = auth.CollReadRequest()
+
     if df_id is not None:
-        msg.id = resolve_coll_id(df_id)
+        cid = resolve_coll_id(df_id)
     elif not df_id:
-        msg.id = _cur_coll
+        cid = _cur_coll
+
+    msg = auth.CollReadRequest()
+    msg.id = cid
     msg.count = count
     msg.offset = offset
 
@@ -922,7 +925,7 @@ def coll_create(title,alias,description,topic,collection,verbosity,json,text):
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-p", "--topic", type=str, required=False, help="Publish the collection (make associated records and datas read-only to everyone) under the provided topic. Topics use periods ('.') as delimiters. To unpublish, specify '-p undo'")
+@click.option("-p", "--topic", type=str, required=False, help="Publish the collection under the provided topic. Topics use periods ('.') as delimiters. To revoke published status, specify '-p undo'")
 @_global_output_options
 def coll_update(df_id,title,alias,description,topic,verbosity,json,text):
     msg = auth.CollUpdateRequest()
@@ -944,17 +947,20 @@ def coll_update(df_id,title,alias,description,topic,verbosity,json,text):
     generic_reply_handler( reply, print_coll )
 
 
-@coll.command(name='delete',help="Delete existing collection")
+@coll.command(name='delete',help="Delete existing collection. ID may be a collection ID or alias, or an index value from a listing.")
+@click.option("-f","--force",is_flag=True,help="Delete collection without confirmation.")
 @click.argument("df_id", metavar="ID", nargs=-1)
 @_global_output_options
-def coll_delete(df_id, verbosity, json, text):
+def coll_delete(df_id, force, verbosity, json, text):
     resolved_list = []
     for ids in df_id:
         resolved_list.append(resolve_coll_id(ids))
-    if _interactive:
+
+    if _interactive and not force:
         click.echo("Warning: this will delete all data records and collections contained in the specified collection(s).")
-        if not click.confirm("Do you want to delete collection(s) {} ?".format(resolved_list)):
+        if not click.confirm("Continue?"):
             return
+
     msg = auth.CollDeleteRequest()
     msg.id.extend(resolved_list)
 
@@ -1390,77 +1396,48 @@ def ep():
 @_global_output_options
 def ep_get(verbosity, json, text):
     global _ep_cur
-    global _ep_default
 
     output_checks( verbosity, json, text )
-
-    _ep_cur = _ep_cur if _ep_cur else _ep_default
 
     if not _ep_cur:
-        raise Exception("No endpoint specified or configured")
+        raise Exception("No endpoint set or configured")
 
-    if _output_mode == _OM_TEXT and _verbosity >= 1: click.echo("Current working endpoint: {}".format(_ep_cur))
-    elif _output_mode == _OM_TEXT and _verbosity == 0: click.echo("{}".format(_ep_cur))
-    elif _output_mode == _OM_JSON: click.echo('{{ "endpoint": "{}" }}'.format(_ep_cur))
-
-
-@ep.command(name='default',help="Get or set the default Globus endpoint. If no endpoint is given, the previously configured default endpoint will be returned. If an argument is given, the new endpoint will be set as the default.")
-@click.argument("new_default_ep",required=False)
-@click.option("-c","--current",is_flag=True,help="Set default endpoint to current working endpoint.")
-@_global_output_options
-def ep_default(current, new_default_ep, verbosity, json, text):
-    output_checks( verbosity, json, text )
-
-    global _ep_default
-
-    if current:
-        if _ep_cur == None:
-            raise Exception("No current working endpoint set.")
-
-        _cfg.set("default_ep",_ep_cur,True)
-        _ep_default = _ep_cur
-    elif new_default_ep:
-        new_default_ep = resolve_index_val(new_default_ep)
-        _cfg.set("default_ep",new_default_ep,True)
-        _ep_default = new_default_ep
-
-    if _ep_default:
-        if _output_mode == _OM_TEXT and _verbosity >= 1:
-            click.echo("Default endpoint: {}".format(_ep_default))
-        elif _output_mode == _OM_TEXT and _verbosity == 0:
-            click.echo("{}".format(_ep_default))
-        elif _output_mode == _OM_JSON:
-            click.echo('{{ "endpoint": "{}" }}'.format(_ep_default))
+    if _output_mode_sticky == _OM_RETN:
+        global _return_val
+        _return_val = { "endpoint": _ep_cur }
+    elif _output_mode == _OM_TEXT:
+        click.echo(_ep_cur)
     else:
-        raise Exception("Default endpoint not set.")
+        click.echo('{{ "endpoint": "{}" }}'.format(_ep_cur))
 
 
-@ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the previously configured default endpoint will be used.")
-@click.argument("current_endpoint",required=False)
+@ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the configured default endpoint will be set as the current endpoint.")
+@click.argument("endpoint",required=False)
 @_global_output_options
-def ep_set(current_endpoint, verbosity, json, text):
+def ep_set(endpoint, verbosity, json, text):
     output_checks( verbosity, json, text )
 
     global _ep_cur
     global _ep_default
 
-    if current_endpoint:
-        _ep_cur = resolve_index_val(current_endpoint)
+    if endpoint:
+        _ep_cur = resolve_index_val(endpoint)
     elif _ep_default:
         _ep_cur = _ep_default
-    elif not _ep_cur and not _ep_default:
-        raise Exception("No endpoint specified or configured")
+    else:
+        raise Exception("No default configured.")
 
     if _ep_cur:
-        if _output_mode == _OM_TEXT and _verbosity >= 1:
-            click.echo("Working endpoint set to {}".format(_ep_cur))
-        elif _output_mode == _OM_TEXT and _verbosity == 0:
-            click.echo("{}".format(_ep_cur))
-        elif _output_mode == _OM_JSON:
+        if _output_mode_sticky == _OM_RETN:
+            global _return_val
+            _return_val = { "endpoint": _ep_cur }
+        elif _output_mode == _OM_TEXT:
+            click.echo(_ep_cur)
+        else:
             click.echo('{{ "endpoint": "{}" }}'.format(_ep_cur))
 
 
-@ep.command(name='list',help="List recent endpoints.") # TODO: Process returned paths to isolate and list indexed endpoints only. With index
+@ep.command(name='list',help="List recently used endpoints.") # TODO: Process returned paths to isolate and list indexed endpoints only. With index
 @_global_output_options
 def ep_list(verbosity, json, text):
     msg = auth.UserGetRecentEPRequest()
@@ -1470,6 +1447,56 @@ def ep_list(verbosity, json, text):
 
     generic_reply_handler( reply, print_endpoints )
 
+@ep.command(name='default',cls=AliasedGroup,help="Default endpoint commands")
+def ep_default():
+    pass
+
+@ep_default.command(name='get',help="Get the default Globus endpoint.")
+@_global_output_options
+def ep_default_get( verbosity, json, text ):
+    output_checks( verbosity, json, text )
+
+    global _ep_default
+
+    if _ep_default == None:
+        raise Exception("No default endpoint configured.")
+
+    if _output_mode_sticky == _OM_RETN:
+        global _return_val
+        _return_val = { "endpoint": _ep_default }
+    elif _output_mode == _OM_TEXT:
+        click.echo(_ep_default)
+    else:
+        click.echo('{{ "endpoint": "{}" }}'.format(_ep_default))
+
+@ep_default.command(name='set',help="Set the default Globus endpoint. The default endpoint will be set from the 'endpoint' argument, or, if the --current options is provided, from the currently active endpoint.")
+@click.argument("endpoint",required=False)
+@click.option("-c","--current",is_flag=True,help="Set default endpoint to current endpoint.")
+@_global_output_options
+def ep_default_set( current, endpoint, verbosity, json, text ):
+    output_checks( verbosity, json, text )
+
+    global _ep_default
+
+    if current:
+        if _ep_cur == None:
+            raise Exception("No current endpoint set.")
+
+        _ep_default = _ep_cur
+        _cfg.set("default_ep",_ep_default,True)
+    elif endpoint:
+        _ep_default = resolve_index_val(endpoint)
+        _cfg.set("default_ep",_ep_default,True)
+    else:
+        raise Exception("Must specify an endpoint or the --current flag.")
+
+    if _output_mode_sticky == _OM_RETN:
+        global _return_val
+        _return_val = { "endpoint": _ep_default }
+    elif _output_mode == _OM_TEXT:
+        click.echo(_ep_default)
+    else:
+        click.echo('{{ "endpoint": "{}" }}'.format(_ep_default))
 
 # ------------------------------------------------------------------------------
 # Miscellaneous commands
@@ -1862,9 +1889,12 @@ def print_endpoints( message ):
     global _list_items
     _list_items = []
     for i in message.ep:
-        p = i.rfind("/")
+        p = i.find("/")
         if p >= 0:
-            path = i[0:p+1]
+            path = i[0:p]
+        try:
+            idx = _list_items.index(path)
+        except:
             _list_items.append(path)
             click.echo("{:2}. {}".format(df_idx,path))
             df_idx += 1
