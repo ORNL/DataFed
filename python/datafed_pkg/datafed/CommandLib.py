@@ -506,9 +506,9 @@ def data_create(title,batch,alias,description,key_words,data_file,extension,meta
             reply = _mapi.sendRecv(msg)
             generic_reply_handler(reply, print_data, __output_mode, __verbosity)
 
-        elif data_file: # TODO: Incorporate global output options for put-on-create
+        elif data_file:
             create_reply = _mapi.sendRecv(msg)
-            if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
+            if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.")
             elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
             put_data(create_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
 
@@ -598,9 +598,9 @@ def data_update(df_id,batch,title,alias,description,key_words,data_file,extensio
             reply = _mapi.sendRecv(msg)
             generic_reply_handler(reply, print_data, __output_mode, __verbosity)
 
-        elif data_file: # TODO: Incorporate global output options for put-on-update
+        elif data_file:
             update_reply = _mapi.sendRecv(msg)
-            if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.") # TODO: JSON output support
+            if __output_mode == _OM_TEXT: click.echo("Data Record update successful. Initiating raw data transfer.")
             elif __output_mode == _OM_JSON: click.echo('{ "Status":"OK" }')
             put_data(update_reply[0].data[0].id,resolve_filepath_for_xfr(data_file),False,None,__output_mode, __verbosity)
 
@@ -693,19 +693,12 @@ def data_get(df_id,filepath,wait, verbosity, json, text): #Multi-get will initia
 @click.argument("df_id", metavar="id")
 @click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
-#@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-ext", "--extension",type=str,required=False,help="Specify an extension for the raw data file. This will override any previously specified extension or auto-extension behavior.")
 @_global_output_options
 def data_put(df_id, filepath, wait, extension, verbosity, json, text):
     __output_mode, __verbosity = output_checks(verbosity,json,text)
-    # gp = resolve_filepath_for_xfr(filepath)
-    # if endpoint: gp = resolve_globus_path(fp, endpoint)
-    # elif not endpoint: gp = resolve_globus_path(fp, "None")
-    # if gp:
     put_data(df_id, resolve_filepath_for_xfr(filepath), wait, extension, __output_mode, __verbosity)
-    # elif gp is None:
-    #    click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
-    # TODO Handle return value in _OM_RETV
+
 
 
 # ------------------------------------------------------------------------------
@@ -811,12 +804,7 @@ def coll_add(item_id,coll_id, verbosity, json, text):
     __output_mode, __verbosity = output_checks(verbosity,json,text)
 
     reply = _mapi.sendRecv(msg)
-    if __verbosity <= 1:
-        if reply[1] == "ListingReply": # TODO: Returns empty listing reply -- should it be AckReply?
-            click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
- #   elif __verbosity == 2:
-  #      click.echo("Success: Item {} added to collection {}.".format(item_id, coll_id))
-   #     generic_reply_handler(reply, print_listing, __output_mode, __verbosity)
+    generic_reply_handler(reply, print_ack_reply, __output_mode, __verbosity)
 
 
 @coll.command(name='remove',help="Remove data/collection ITEM_ID from collection COLL_ID")
@@ -830,12 +818,7 @@ def coll_rem(item_id,coll_id, verbosity, json, text):
     __output_mode, __verbosity = output_checks(verbosity,json,text)
 
     reply = _mapi.sendRecv(msg)
-    if __verbosity <= 1:
-        if reply[1] == "ListingReply": # TODO: Returns empty listing reply -- should it be AckReply?
-            click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
- #   elif __verbosity == 2:
-  #      click.echo("Success: Item {} removed from collection {}.".format(item_id, coll_id))
-   #     generic_reply_handler(reply, print_listing, __output_mode, __verbosity)
+    generic_reply_handler(reply, print_ack_reply, __output_mode, __verbosity)
 
 
 #------------------------------------------------------------------------------
@@ -860,7 +843,6 @@ def query_list(offset,count, verbosity, json, text):
     _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
-    #TODO: Figure out verbosity-dependent replies
 
 
 @query.command(name='exec',help="Execute a stored query by ID")
@@ -1329,7 +1311,7 @@ def http_download(url,destination,output_mode,verbosity): # First argument is tu
     filename = os.path.join(destination, wget.filename_from_url(url[0]))
     new_filename = uniquify(filename) # wget has a buggy filename uniquifier, appended integer will not increase after 1
     if output_mode == _OM_TEXT and verbosity >=1:
-        raw_data_record = wget.download(url[0], out=str(new_filename), bar=bar_adaptive_human_readable) # TODO: Will rewrite any file copy (1).file    # TODO: Use new module for this -- ability to multithread download
+        raw_data_record = wget.download(url[0], out=str(new_filename), bar=bar_adaptive_human_readable)  # TODO: Use new module for this -- ability to multithread download
         click.echo("\nRaw data for record {} downloaded to {}".format(url[1], raw_data_record))
     else: ## TODO: Re-work to use generic_reply_handler
         raw_data_record = wget.download(url[0], out=str(new_filename), bar=None)
@@ -1442,10 +1424,8 @@ def generic_reply_handler(reply, printFunc , output_mode, verbosity ): # NOTE: R
     if output_mode == _OM_RETN:
         global _return_val
         _return_val = reply
-    if reply[1] == "AckReply":
+    if reply[1] == "AckReply" or printFunc == print_ack_reply:
         print_ack_reply(output_mode, verbosity)
-    #elif str(reply[0]) == "":
-    #    click.echo("None")
     elif output_mode == _OM_JSON:
         click.echo(MessageToJson(reply[0],preserving_proto_field_name=True))
     elif output_mode == _OM_TEXT:
@@ -1877,7 +1857,7 @@ def _initialize( opts ):
             _interactive = True
             sys.exit(1)
 
-        _mapi.installLocalCredentials()
+       # _mapi.installLocalCredentials()
     else:
         info(1,"Authenticated as",uid)
 

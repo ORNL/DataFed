@@ -140,29 +140,43 @@ class API:
         cfg_file = None
 
         if "client_cfg_file" in self._opts:
+            #print("first: client_cfg_file in opts")
             cfg_file = self._opts["client_cfg_file"]["val"]
             if os.path.exists( cfg_file ):
+                #print("client_cfg_file found")
                 self._loadConfigFile( cfg_file, 2 )
             else:
                 open( cfg_file, "a" ).close()
+                #print("created cfg file")
         elif 'client_cfg_dir' in self._opts:
+            #print("second: client_cfg_dir in opts, now expanding cfg file path")
             cfg_file = os.path.expanduser( os.path.join( self._opts['client_cfg_dir']["val"], "client.ini" ))
+            #print("cfg file expanded as {}".format(cfg_file))
             self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
             if os.path.exists( cfg_file ):
+                #print("loading cfg file after expanding cfg file path")
                 self._loadConfigFile( cfg_file, 2 )
             else:
                 open( cfg_file, "a" ).close()
+                #print("creating cfg file after expanding cfg file path")
         else:
             cfg_file = os.path.expanduser("~/.datafed/client.ini")
+            #print("no file or dir found in opts, so creating .datafed folder")
+            #print("cfg file expanded as {}".format(cfg_file))
             if os.path.exists( cfg_file ):
                 self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
+                #print("loading cfg file after expanding cfg file path")
                 self._loadConfigFile( cfg_file, 2 )
             else:
                 tmp = os.path.expanduser( "~/.datafed" )
+                #print("expand user for tmp directory ~/.datafed expanded as {}".format(tmp))
                 if not os.path.exists( tmp ):
+                    #print("tmp not found")
                     try:
                         os.mkdir( tmp )
+                        #print("tmp created")
                         cfg_file = os.path.join( tmp, "client.ini" )
+                        #print("cfg file created as {}".format(cfg_file))
                         open( cfg_file, "a" ).close()
                     except:
                         pass

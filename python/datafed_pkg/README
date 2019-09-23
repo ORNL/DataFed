@@ -15,3 +15,5 @@ To deploy to TestPyPi, run:
 To deploy to PyPi, run:
 
     TBD
+
+twine upload -r pypi home/cades/jbreet/DataFed/build/python/datafed_pkg/dist/datafed-0.6.0.tar.gz
