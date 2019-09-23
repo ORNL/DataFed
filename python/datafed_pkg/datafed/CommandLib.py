@@ -1765,19 +1765,19 @@ def put_data(df_id, gp, wait, extension ):
         generic_reply_handler(reply,print_xfr_stat )
 
 def resolve_filepath_for_http(path):
-    print("res path:",path)
+    #print("res path:",path)
     if path[0] == "~":
-        print("1")
+        #print("1")
         res = pathlib.Path(path).expanduser().resolve()
     elif path[0] == "." or path[0] != '/':
-        print("2")
+        #print("2")
         res = pathlib.Path.cwd() / path
         res = res.resolve()
     else:
-        print("3")
+        #print("3")
         res = path
 
-    print("result:",res)
+    #print("result:",res)
 
     return str(res)
 
