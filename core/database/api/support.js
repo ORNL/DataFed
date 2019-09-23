@@ -228,6 +228,9 @@ module.exports = ( function() {
                 case 1202:
                     res.throw( 404, "Record does not exist" );
                     break;
+                case 1205:
+                    res.throw( 404, "Invalid ID" );
+                    break;
                 case 1210:
                     res.throw( 409, "Conflicting ID or alias" );
                     break;
@@ -807,6 +810,9 @@ module.exports = ( function() {
         var i, parents,results=[];
 
         parents = obj.db._query( "for v in 1..1 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : item_id }).toArray();
+        if ( !parents.length )
+            return [[]];
+
         for ( i in parents ){
             results.push([parents[i]]);
         }

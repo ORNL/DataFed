@@ -20,7 +20,7 @@
 }
 
 
-class TraceException
+class TraceException : public std::exception
 {
 public:
     TraceException( const char *a_file, unsigned long a_line, unsigned long a_error_code, const std::string & a_context )
@@ -54,6 +54,11 @@ public:
     unsigned long getErrorCode()
     {
         return m_error_code;
+    }
+
+    const char* what() const throw ()
+    {
+        return m_context.c_str();
     }
 
 private:

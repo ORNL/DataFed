@@ -6,8 +6,19 @@
 #include <globus_types.h>
 #include <globus_error_hierarchy.h>
 #include <gssapi.h>
-#include "libsdms_gsi_authz.h"
-#include "sdms_db_authz.h"
+#include <globus_types.h>
+#include <globus_error_hierarchy.h>
+#include <gssapi.h>
+
+#include "AuthzWorker.h"
+
+typedef void * globus_gsi_authz_handle_t;
+typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_handle_t handle, globus_result_t result ); 
+
+
+gss_ctx_id_t    findContext( globus_gsi_authz_handle_t a_handle );
+bool            setContext( globus_gsi_authz_handle_t a_handle, gss_ctx_id_t a_ctx );
+bool            clearContext( globus_gsi_authz_handle_t a_handle );
 
 // TODO This value must be pulled from server config (max concurrency)
 #define MAX_ACTIVE_CTX 25
@@ -20,9 +31,12 @@ struct ContextHandleEntry
     globus_gsi_authz_handle_t   handle;
     gss_ctx_id_t                context;
 };
+
 static struct ContextHandleEntry   g_active_contexts[MAX_ACTIVE_CTX];
 
-void uuidToStr( unsigned char * a_uuid, char * a_out )
+
+void
+uuidToStr( unsigned char * a_uuid, char * a_out )
 {
     static const char * hex = "0123456789abcdef";
     static const char * form = "xxxx-xx-xx-xx-xxxxxx";
@@ -45,7 +59,9 @@ void uuidToStr( unsigned char * a_uuid, char * a_out )
     pout[0] = 0;
 }
 
-bool decodeUUID( const char * a_input, char * a_uuid )
+
+bool
+decodeUUID( const char * a_input, char * a_uuid )
 {
     static char vocab[33] = "abcdefghijklmnopqrstuvwxyz234567";
     uint64_t word;
@@ -98,7 +114,9 @@ bool decodeUUID( const char * a_input, char * a_uuid )
     return true;
 }
 
-gss_ctx_id_t findContext( globus_gsi_authz_handle_t a_handle )
+
+gss_ctx_id_t
+findContext( globus_gsi_authz_handle_t a_handle )
 {
     struct ContextHandleEntry *c = &g_active_contexts[0];
     struct ContextHandleEntry *e = c + MAX_ACTIVE_CTX;
@@ -111,7 +129,9 @@ gss_ctx_id_t findContext( globus_gsi_authz_handle_t a_handle )
     return 0;
 }
 
-bool setContext( globus_gsi_authz_handle_t a_handle, gss_ctx_id_t a_ctx )
+
+bool
+setContext( globus_gsi_authz_handle_t a_handle, gss_ctx_id_t a_ctx )
 {
     struct ContextHandleEntry *c = &g_active_contexts[0];
     struct ContextHandleEntry *e = c + MAX_ACTIVE_CTX;
@@ -128,7 +148,9 @@ bool setContext( globus_gsi_authz_handle_t a_handle, gss_ctx_id_t a_ctx )
     return true;
 }
 
-bool clearContext( globus_gsi_authz_handle_t a_handle )
+
+bool
+clearContext( globus_gsi_authz_handle_t a_handle )
 {
     struct ContextHandleEntry *c = &g_active_contexts[0];
     struct ContextHandleEntry *e = c + MAX_ACTIVE_CTX;
@@ -144,29 +166,30 @@ bool clearContext( globus_gsi_authz_handle_t a_handle )
     return true;
 }
 
+
 globus_result_t
-sdms_gsi_authz_init()
+gsi_authz_init()
 {
-    openlog( "sdms_gsi_authz", 0, LOG_AUTH );
-    syslog( LOG_INFO, "libsdms_gsi_authz_init, ver %s\n", getVersion() );
+    openlog( "gsi_authz", 0, LOG_AUTH );
+    syslog( LOG_INFO, "DataFed Authz module started, version %s\n", getVersion() );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
     return 0;
 }
 
 globus_result_t
-sdms_gsi_authz_destroy()
+gsi_authz_destroy()
 {
-    syslog( LOG_INFO, "sdms_gsi_authz_destroy\n" );
+    //syslog( LOG_INFO, "gsi_authz_destroy\n" );
 
     return 0;
 }
 
 
 globus_result_t
-sdms_gsi_authz_handle_init( va_list ap )
+gsi_authz_handle_init( va_list ap )
 {
-    syslog( LOG_INFO, "sdms_gsi_authz_handle_init" );
+    //syslog( LOG_INFO, "gsi_authz_handle_init" );
 
     globus_result_t             result              = GLOBUS_FAILURE;
     globus_gsi_authz_handle_t * handle              = va_arg( ap, globus_gsi_authz_handle_t * );
@@ -179,21 +202,21 @@ sdms_gsi_authz_handle_init( va_list ap )
     // Unused arguments
     (void)service_name;
 
-    syslog( LOG_ERR, "handle %p", *handle );
+    //syslog( LOG_ERR, "handle %p", *handle );
 
     if ( findContext( *handle ) == 0 )
     {
         if ( setContext( *handle, context ) == false )
             result = GLOBUS_SUCCESS;
         else
-            syslog( LOG_ERR, "sdms_gsi_authz_handle_init out of handle context space" );
+            syslog( LOG_ERR, "gsi_authz_handle_init out of handle context space" );
     }
     else
     {
-        syslog( LOG_ERR, "sdms_gsi_authz_handle_init context handle already initialized" );
+        syslog( LOG_ERR, "gsi_authz_handle_init context handle already initialized" );
     }
 
-    //syslog( LOG_ERR, "sdms_gsi_authz_handle_init, handle: %p, serv: %s, cb: %p", *handle, service_name, callback );
+    //syslog( LOG_ERR, "gsi_authz_handle_init, handle: %p, serv: %s, cb: %p", *handle, service_name, callback );
 
     callback( callback_arg, callback_arg, result );
 
@@ -202,9 +225,9 @@ sdms_gsi_authz_handle_init( va_list ap )
 
 
 globus_result_t
-sdms_gsi_authz_handle_destroy( va_list ap )
+gsi_authz_handle_destroy( va_list ap )
 {
-    syslog( LOG_INFO, "sdms_gsi_authz_handle_destroy" );
+    //syslog( LOG_INFO, "gsi_authz_handle_destroy" );
 
     globus_result_t             result              = GLOBUS_FAILURE;
     globus_gsi_authz_handle_t   handle              = va_arg( ap, globus_gsi_authz_handle_t );
@@ -212,7 +235,7 @@ sdms_gsi_authz_handle_destroy( va_list ap )
     void *                      callback_arg        = va_arg( ap, void * );
     //void *                      authz_system_state  = va_arg( ap, void * );
 
-    syslog( LOG_ERR, "handle %p", handle );
+    //syslog( LOG_ERR, "handle %p", handle );
 
     if ( clearContext( handle ) == false )
     {
@@ -220,7 +243,7 @@ sdms_gsi_authz_handle_destroy( va_list ap )
     }
     else
     {
-        syslog( LOG_ERR, "sdms_gsi_authz_handle_destroy context handle lookup FAILED" );
+        syslog( LOG_ERR, "gsi_authz_handle_destroy context handle lookup FAILED" );
     }
 
     callback( callback_arg, handle, result );
@@ -230,9 +253,9 @@ sdms_gsi_authz_handle_destroy( va_list ap )
 
 
 globus_result_t
-sdms_gsi_authz_authorize_async( va_list ap )
+gsi_authz_authorize_async( va_list ap )
 {
-    syslog( LOG_INFO, "sdms_gsi_authz_authorize_async" );
+    //syslog( LOG_INFO, "gsi_authz_authorize_async" );
 
     globus_result_t             result              = GLOBUS_FAILURE;
     globus_gsi_authz_handle_t   handle              = va_arg(ap, globus_gsi_authz_handle_t);
@@ -242,8 +265,6 @@ sdms_gsi_authz_authorize_async( va_list ap )
     void *                      callback_arg        = va_arg(ap, void *);
     //void *                      authz_system_state  = va_arg(ap, void *);
 
-    syslog( LOG_ERR, "handle %p", handle );
-    
     if ( strcmp( action, "lookup" ) == 0 || strcmp( action, "chdir" ) == 0  )
     {
         result = GLOBUS_SUCCESS;
@@ -251,9 +272,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
         return result;
     }
 
-    //syslog( LOG_ERR, "sdms_gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
-    
-    // TODO - Everything below must all be done on a worker thread
+    //syslog( LOG_ERR, "gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
     
     OM_uint32 min_stat;
     gss_name_t client = GSS_C_NO_NAME;
@@ -277,7 +296,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                 maj_stat = gss_display_name( &min_stat, target, &target_buf, &target_type );
                 if ( maj_stat == GSS_S_COMPLETE )
                 {
-                    syslog( LOG_INFO, "client: %s, file: %s, action: %s", (char*)client_buf.value, object, action );
+                    syslog( LOG_INFO, "Auth client: %s, file: %s, action: %s", (char*)client_buf.value, object, action );
 
                     // Testing hack
                     #if 0
@@ -317,6 +336,7 @@ sdms_gsi_authz_authorize_async( va_list ap )
                         else
                         {
                             syslog( LOG_INFO, "Using client CN for authz" );
+
                             // Find "/CN=" in cert DN
                             const char * cn = strstr( client_buf.value, "/CN=" );
                             if ( !cn )
@@ -327,16 +347,9 @@ sdms_gsi_authz_authorize_async( va_list ap )
 
                         if ( client_id )
                         {
-                            syslog( LOG_DEBUG, "Client ID (CN/UUID): %s", client_id );
-
-                            if (authzdb(client_id, object, action) == 0 )
+                            if ( checkAuthorization( client_id, object, action ) == 0 )
                             {
                                 result = GLOBUS_SUCCESS;
-                                syslog( LOG_INFO, "DataFed core authz PASSED" );
-                            }
-                            else
-                            {
-                                syslog( LOG_ERR, "DataFed core authz FAILED" );
                             }
 
                             free( client_id );
@@ -370,49 +383,45 @@ sdms_gsi_authz_authorize_async( va_list ap )
     if ( result != GLOBUS_SUCCESS )
     {
         globus_object_t * error = globus_error_construct_no_authentication( 0, 0 );
-        //globus_module_descriptor_t * base_source,
-        //globus_object_t * base_cause);
-
-        syslog( LOG_INFO, "Authz final: FAILED" );
+        syslog( LOG_INFO, "Authz: FAILED" );
         result = globus_error_put( error );
     }
     else
     {
-        syslog( LOG_ERR, "Authz final: PASSED" );
+        syslog( LOG_ERR, "Authz: PASSED" );
         callback( callback_arg, handle, result );
     }
 
     return result;
 }
 
+
 globus_result_t
-sdms_gsi_authz_cancel()
+gsi_authz_cancel()
 {
-    syslog( LOG_INFO, "sdms_gsi_authz_cancel\n" );
+    //syslog( LOG_INFO, "gsi_authz_cancel\n" );
     return 0;
 }
 
 
 globus_result_t
-sdms_gsi_authz_identify( va_list ap )
+gsi_authz_identify( va_list ap )
 {
     (void)ap;
 
-    syslog( LOG_INFO, "sdms_gsi_authz_identify\n" );
+    //syslog( LOG_INFO, "gsi_authz_identify\n" );
     return 0;
 }
 
-globus_result_t
-sdms_map_user( va_list Ap )
-{
-    syslog( LOG_INFO, "sdms_map_user" );
 
-    //char *          users_dn         = NULL;
-    //char            translated_dn[MAX_DN_LENGTH];
+globus_result_t
+gsi_map_user( va_list Ap )
+{
+    //syslog( LOG_INFO, "gsi_map_user" );
+
     char *          service          = NULL;
     char *          desired_identity = NULL;
     char *          identity_buffer  = NULL;
-    //char *          shared_user_cert = NULL;
     unsigned int    buffer_length    = 0;
     gss_ctx_id_t    context;
 
@@ -421,9 +430,12 @@ sdms_map_user( va_list Ap )
     desired_identity = va_arg(Ap, char *);
     identity_buffer  = va_arg(Ap, char *);
     buffer_length    = va_arg(Ap, unsigned int);
-    //shared_user_cert = va_arg(Ap, char *);
 
-    //(void) context;
+    (void) context;
+    (void) desired_identity;
+    (void) service;
+
+    #if 0
     OM_uint32 min_stat;
     gss_name_t client = GSS_C_NO_NAME;
     gss_name_t target = GSS_C_NO_NAME;
@@ -447,8 +459,8 @@ sdms_map_user( va_list Ap )
         }
     }
 
-    syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s)", service, desired_identity );
-    //syslog( LOG_INFO, "sdms_map_user request service(%s), user (%s), shared(%s)", service, desired_identity, shared_user_cert );
+    syslog( LOG_INFO, "gsi_map_user request service(%s), user (%s)", service, desired_identity );
+    #endif
 
     strncpy( identity_buffer, "cades", buffer_length );
     buffer_length = 5;

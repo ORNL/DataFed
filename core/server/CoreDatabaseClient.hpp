@@ -23,7 +23,8 @@ public:
     ~DatabaseClient();
 
     void setClient( const std::string & a_client );
-    void clientAuthenticate( const std::string & a_password );
+    void clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply );
+    void clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply );
     void clientLinkIdentity( const std::string & a_identity );
     std::string getDataStorageLocation( const std::string & a_data_id );
     bool uidByPubKey( const std::string & a_pub_key, std::string & a_uid );
@@ -135,6 +136,7 @@ private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result, bool a_log = true );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, rapidjson::Document & a_result );
+    void setAuthStatus( Anon::AuthStatusReply & a_reply, rapidjson::Document & a_result );
     void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
     void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result, std::vector<RepoRecordDataLocations> * a_locs = 0 );

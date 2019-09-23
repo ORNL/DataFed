@@ -60,14 +60,14 @@ Server::~Server()
 void
 Server::loadKeys( const std::string & a_cred_dir )
 {
-    string fname = a_cred_dir + "sdms-core-key.pub";
+    string fname = a_cred_dir + "datafed-core-key.pub";
     ifstream inf( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open public key file: " << fname );
     inf >> m_pub_key;
     inf.close();
 
-    fname = a_cred_dir + "sdms-core-key.priv";
+    fname = a_cred_dir + "datafed-core-key.priv";
     inf.open( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open private key file: " << fname );
@@ -81,7 +81,6 @@ Server::loadRepositoryConfig()
     DL_INFO("Loading repo configuration");
 
     DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
-    //db_client.setClient( "sdms" );
 
     vector<RepoData*> repos;
 
@@ -328,30 +327,34 @@ Server::msgRouter()
 void
 Server::ioSecure()
 {
-    MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
-    MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
+    try
+    {
+        MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
+        MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
-    // Must use custom proxy to inject ZAP User-Id into message frame
-    frontend.proxy( backend );
+        // Must use custom proxy to inject ZAP User-Id into message frame
+        frontend.proxy( backend );
+    }
+    catch( exception & e)
+    {
+        DL_ERROR( "Exception in secure interface: " << e.what() )
+    }
 }
 
 void
 Server::ioInsecure()
 {
-    MsgComm frontend( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
-    MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
+    try
+    {
+        MsgComm frontend( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
+        MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
-    /*
-    int linger = 100;
-    void * ctx = MsgComm::getContext();
-    void *backend = zmq_socket( ctx, ZMQ_DEALER );
-    zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int ));
-    zmq_connect( backend, "inproc://msg_proc" );
-
-    zmq_proxy( comm.getSocket(), backend, 0 );
-    */
-
-    zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
+        zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
+    }
+    catch( exception & e)
+    {
+        DL_ERROR( "Exception in insecure interface: " << e.what() )
+    }
 }
 
 /*
@@ -618,8 +621,6 @@ Server::zapHandler()
         zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
         string uid;
         DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
-
-        //db_client.setClient( "sdms" );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );

@@ -320,6 +320,47 @@ svg text
     width:100%;
     text-align:left;
 }
+
+.border-table
+{
+    border-collapse: collapse;
+}
+
+.border-table
+{
+    border:1px solid #808080;
+}
+
+.border-table th
+{
+    border:1px solid #808080;
+    text-align: left;
+    padding: .25em;
+}
+
+.border-table td
+{
+    border:1px solid #808080;
+    padding: .25em;
+    vertical-align:top;
+}
+
+.cfg-info-table
+{
+    font-size: 90%;
+}
+
+.cfg-info-table td:nth-child(1)
+{
+    font-weight: bold;
+}
+
+.cfg-info-div
+{
+    float:left;
+    margin:0 1em 0 0;
+}
+
 /*
 .perm_table td:last-child{
     width:50%;
@@ -473,6 +514,12 @@ textarea
     -webkit-animation:3s blinker linear infinite;
     -moz-animation:3s blinker linear infinite;
     
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
 }
 
 @-moz-keyframes blinker{

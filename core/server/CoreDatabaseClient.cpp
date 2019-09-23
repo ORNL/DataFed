@@ -260,11 +260,28 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
 }
 
 void
-DatabaseClient::clientAuthenticate( const std::string & a_password )
+DatabaseClient::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
 {
     rapidjson::Document result;
 
-    dbGet( "usr/authn", {{"pw",a_password}}, result );
+    dbGet( "usr/authn/password", {{"pw",a_password}}, result );
+    setAuthStatus( a_reply, result );
+}
+
+void
+DatabaseClient::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply )
+{
+    rapidjson::Document result;
+
+    dbGet( "usr/authn/token", {{"token",a_token}}, result );
+    setAuthStatus( a_reply, result );
+}
+
+void
+DatabaseClient::setAuthStatus( Anon::AuthStatusReply & a_reply, rapidjson::Document & a_result )
+{
+    a_reply.set_uid( a_result["uid"].GetString() );
+    a_reply.set_auth( a_result["authorized"].GetInt() == 1 );
 }
 
 void
@@ -1453,8 +1470,12 @@ void
 DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_inclusive() )
+        params.push_back({"inclusive",a_request.inclusive()?"true":"false"});
 
-    dbGet( "col/get_parents", {{"id",a_request.id()}}, result );
+    dbGet( "col/get_parents", params, result );
 
     setCollPathData( a_reply, result );
 }
@@ -1763,6 +1784,8 @@ DatabaseClient::xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataRe
         params.push_back({"to",to_string(a_request.to())});
     if ( a_request.has_status() )
         params.push_back({"status",to_string((unsigned int)a_request.status())});
+    if ( a_request.has_limit() )
+        params.push_back({"limit",to_string(a_request.limit())});
 
     dbGet( "xfr/list", params, result, false );
 

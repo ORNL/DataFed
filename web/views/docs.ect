@@ -46,10 +46,32 @@
                 &nbsp&nbsp<a href='#s45'>4.5 Transfers</a><br>
                 &nbsp&nbsp<a href='#s46'>4.6 Settings</a><br>
                 &nbsp&nbsp<a href='#s47'>4.6 Header and Footer</a><br>
+                <a href='#s5'>5. Command Line Interface (CLI)</a><br>
+                &nbsp&nbsp<a href='#s51'>5.1 CLI Introduction</a><br>
+                &nbsp&nbsp<a href='#s52'>5.2 CLI Installation</a><br>
+                &nbsp&nbsp<a href='#s53'>5.3 CLI Configuration</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s531'>5.3.1 Configuration Settings</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5311'>5.3.1.1 Server Config File</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5312'>5.3.1.2 Server Config Directory</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5313'>5.3.1.3 Server Public Key File</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5314'>5.3.1.4 Server Host</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5315'>5.3.1.5 Server Port</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5316'>5.3.1.6 Client Config File</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5317'>5.3.1.7 Client Config Directory</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5318'>5.3.1.8 Client Public Key File</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5319'>5.3.1.9 Client Private Key File</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s53110'>5.3.1.10 Default Endpoint</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s53111'>5.3.1.11 Default Verbosity</a><br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s53112'>5.3.1.12 Default Interactivity</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s532'>5.3.2 Configuration Files</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s533'>5.3.3 Configuration Priority</a><br>
+                &nbsp&nbsp&nbsp&nbsp<a href='#s534'>5.3.4 Automatic Authentication</a><br>
+                &nbsp&nbsp<a href='#s54'>5.4 CLI Commands</a><br>
+                &nbsp&nbsp<a href='#s55'>5.5 Client API</a><br>
             </div>
             <div class='ui-widget-content' style='flex:auto;height:auto;overflow:auto;padding: 0em 2em 0em 2em'>
 
-<h2 id='s1'>1. Introduction</h2>
+<h1 id='s1'>1. Introduction</h1>
 
 <p>DataFed is a federated data <i>collaboration</i> and <i>management</i> system for science. DataFed provides many features that ease the <i>data management burden</i> associated with general scientific research; however, the primary goal of DataFed is to <i>improve scientific data quality</i> by enabling precise full-life-cycle control over data artifacts, with the ability to uniformly share and access data across geographically distributed facilities. The combined capabilities of DataFed directly support the concept of <i>"repeatable science"</i> by unambiguously identifying data, capturing context and metadata, and by providing the means to access and utilize data globally.</p>
 
@@ -57,13 +79,13 @@
 
 <p>DataFed utilizes <a href="https://www.globus.org" target="_blank">Globus Online</a> for efficient and secure data transfers, as well as for user authentication. Globus Online can be thought of as a "data network" where data transfers take place between Globus "endpoints" - which are Globus services that enable access to underlying file systems hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data to be located and accessed without needing to know where the data is physically stored within the Globus network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize themselves with how Globus works from the documentation <a href="https://www.globus.org/what-we-do" _target="_blank">here</a>.</p>
 
-<h3 id='s11'>1.1 Interfaces</h3>
+<h2 id='s11'>1.1 Interfaces</h2>
 
 <p>There are two ways to access DataFed: 1) DataFed Web Portal, and 2) DataFed command-line interface (CLI). This on-line documentation primarily covers DataFed Web Portal; however, DataFed CLI is critical for accessing and managing data from within computational and analytics environments. The CLI was specifically created to ease the data management burden of computational scientists within HPC facilities with complex security environments. DataFed CLI fills the gap left in HPC systems by the deprecation of the Globus Toolkit.</p>
 
 <p>DataFed Web Portal provides full access to DataFed through a graphical user interface. Whereas DataFed CLI is intended primarily for accessing and updating data, DataFed Web Portal is intended to facilitate tasks such as creating and organizing collections of data, sharing data with other users, managing projects, data browsing, and performing metadata queries.</p>
 
-<h2 id='s2'>2 System Overview</h2>
+<h1 id='s2'>2 System Overview</h1>
 <p>DataFed aggregates and abstracts the federation of distributed data, storage systems, facilities, users, groups, and projects into a single logical unit - with a common nomenclature and uniform access patterns. Some of the components of DataFed represent real physical systems; whereas others are purely abstract. These components are defined as follows:</p>
 <ul>
     <li><b>Data Record</b> - A single unit of data with associated unique identity, attributes, metadata, and raw data.</li>
@@ -79,30 +101,30 @@
 </ul>
 <p>A key concept of DataFed is the presentation of data in an location-agnostic manner. From a logical viewpoint, users do not need to know where data is physically stored within DataFed - data can be accessed from any supported facility, or the web portal, by using assigned data record identifiers or user-defined aliases. From a performance standpoint, the physical storage location of data likely matters depending on where the data is being accessed from. For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.</p>
 
-<h3 id='s21'>2.1 Identifiers and Aliases</h3>
+<h2 id='s21'>2.1 Identifiers and Aliases</h2>
 
 <p>All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier consisting of a prefix and an alphanumeric value. For data records and collections these identifiers are numeric, so users may choose to assign a more human-friendly "alias" that can be used in place of identifiers. Aliases are alphanumeric (with certain restrictions) and case sensitive, and, to avoid collisions, are automatically prefixed with the type ("u" or "p") and value portion of the identifier of the owning user or project, delimited with colons. When aliases are used by the owner, the alias prefix may be omitted.</p>
 
 <p>For example, if a user with an ID of "u/jsmith" creates an alias "mydata", then the full alias would be "u:jsmith:mydata". User "jsmith" can simply use "mydata", but other users would need to use the full alias instead. Note that in DataFed web portal, aliases are typically shown without the prefix. Also DataFed CLI provides a "select" command to automatically prefix subsequent commands with a specific user or project ID.</p>
 
-<h3 id='s22'>2.2 Collective Ownership</h3>
+<h2 id='s22'>2.2 Collective Ownership</h2>
 
-<p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of the newly create data record or collection. Collective ownership is achieved through the use of <i>projects</i>. A DataFed project is a distinct organizational entity that permits multiple associated users to create and manage data records and collections as a team - without requiring member users to configure individual access control rules. When a project member creates a data record or collection, the project becomes the owner rather than the user.</p>
+<p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of the newly created data record or collection. Collective ownership is achieved through the use of <i>projects</i>. A DataFed project is a distinct organizational entity that permits multiple associated users to create and manage data records and collections as a team - without requiring member users to configure individual access control rules. When a project member creates a data record or collection, the project becomes the owner of the new record, rather than the creating user; however, both the project (project owner and administrators) as well as the creating user have administrative rights to the created record. Other project members have access to project data based on project-wide access control lists managed by the project owner and administrators.</p>
 
 <p>Projects support specific roles for associated users:</p>
 <ul>
-    <li><b>Administrators</b> - These users have complete control over the project and contained data and collections. The user that initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.</li>
-    <li><b>Managers</b> - These users have the ability to add and remove project members (but not administrators or other managers), and can also configure access control rules on the projects root collection. A project can have multiple managers assigned by administrators.</li>
-    <li><b>Members</b> - These users may create and update data records and collections based on the access control rules set by managers or administrators.</li>
+    <li><b>Project Owner</b> - These users have complete control over the project and contained data and collections. The user that initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.</li>
+    <li><b>Administrators</b> - These users have the ability to add and remove project members (but not administrators or other managers), and can also configure access control rules on the projects root collection. A project can have multiple managers assigned by administrators.</li>
+    <li><b>Members</b> - These users may create and update data records and collections based on the access control rules set by managers or administrators. Always has administrative access to created records.</li>
 </ul>
 
-<h3 id='s23'>2.3 Metadata</h3>
+<h2 id='s23'>2.3 Metadata</h2>
 
 <p>Data records support user-defined metadata. "Metadata" is distinct from built-on record attributes such as title and description, and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent arbitrary structured documents. When creating or updating a data record, metadata may be directly specified in textual form, or, with DataFed CLI, a JSON file may be used as the metadata source. When updating, the user has the option to either replace existing metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present both the new and existing metadata will be overwritten by the new values - other existing keys are left unchanged and new keys are inserted.</p>
 
 <p><i>Note that when providing metadata, it must fully comply with the JSON specification, located <a href="https://tools.ietf.org/html/rfc8259" target="_blank">here</a>.</i></p>
 
-<h3 id='s24'>2.4 Collection Hierarchies</h3>
+<h2 id='s24'>2.4 Collection Hierarchies</h2>
 
 <p>When initially encountered, collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories. While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical file systems:</p>
 <ul>
@@ -111,7 +133,7 @@
     <li>In a file system, there is no way to consistently and unambiguously identify a specific file instance over time. Because a file's identity is defined only by it path, if the file is moved, it essentially has a new identity. On the other hand, a file could be overwritten by a new file with the same path but entirely different contents - in this case the new file has the identity of a previous file, but may be entirely unrelated. DataFed associates a unique, immutable, and non-recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times it is update, or where the associated raw data is physically stored, a record's identity is always known.</li>
 </ul>
 
-<h3 id='s25'>2.5 Access Control</h3>
+<h2 id='s25'>2.5 Access Control</h2>
 
 <p>DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of these. Data records and collections share the same set of permissions; however, collections have an additional set of permissions specifically for permission inheritance. The individual permissions are defined as follows:</p>
 <ul>
@@ -132,7 +154,7 @@
 
 <p>Access controls are typically applied to parent collections of a collection hierarchy where contained data and sub-collections inherit the permissions defined by the top-level parent. Collections have both "local" and "inherited" permissions; where local permissions control access to the collection record itself, and "inherited" permissions are the permissions passed down to all contained data records and sub-collections. Note that because data records can be placed into multiple collections, the inherited permissions of <i>all</i> associated parent collections are evaluated for <i>all</i> users accessing a given data record.</p>
 
-<h3 id='s26'>2.6 Storage Allocations</h3>
+<h2 id='s26'>2.6 Storage Allocations</h2>
 
 <p>Having access to DataFed does not, in itself, grant users the ability to create or manage data within DataFed. This is due to the fact that DataFed does not provide any data storage of its own, but instead relies on <i>federated</i> storage provided by DataFed member organizations. Federated storage is implemented through a network of geographically distributed "data repositories" that are owned and maintained by specific DataFed member organizations, yet potentially accessible by all DataFed users. It is DataFed member organizations that individually determine how storage allocations are assigned to specific users.</p>
 
@@ -140,7 +162,7 @@
 
 <p>It is typical for DataFed users to have multiple storage allocations on different data repositories. In this case, a default storage allocation may be specified, or a specific storage allocation selected when creating new DataFed data records. Data can be accessed in a consistent manner no matter which data repository it is stored on; however, the physical location of a data repository in relation to the point of use of data can impact initial access time.</p>
 
-<h2 id='s3'>3. Registration</h2>
+<h1 id='s3'>3. Registration</h1>
 
 <p>User registration is required in order to access DataFed. Registration is free and secure, but requires users to have, or obtain, a free <a href="https://www.globus.org" target="_blank">Globus Online</a> account. Many universities and research facilities, worldwide, are "member organizations" of Globus and typically provide Globus accounts for their students, staff, and/or users. If your home institute does not provide Globus accounts, you can obtain a personal Globus account through Globus ID, located <a href="https://www.globusid.org" target="_blank">here</a>.</p>
 
@@ -148,74 +170,74 @@
 
 <p>Note that DataFed will only initiate data transfers when you (or a process running as you) explicity request it to. Further, DataFed data transfers are constrained to be between DataFed data storage repositories and Globus endpoints that you have pre-authorized (or "activated") for access. Globus end-point activation is transient and access will expire within a period determined by the host institute.</p>
 
-<h2 id='s4'>4. Web Portal User Interface</h2>
+<h1 id='s4'>4. Web Portal</h1>
 
-<p>The focal-point of the <a href="https://sdms.ornl.gov" target="sdms_target">DataFed web portal</a> is the "Data Browser" that allows users to navigate through data, collections, and projects that they own or have access to. Depending on a users role and/or access permission, a variety of actions may be performed on the data, collections, and projects presented in the Data Browser (i.e. editing, sharing, etc.). Additional features include searching with metadata-based queries, viewing recent data transfers, and managing settings. Sections 4.1 through 4.6 describe the location and function(s) of the major elements of the web portal. Note that the web portal is implemented as a <i>single-page</i> application; therefore, web browser navigation functions (i.e. forward/back) should not be used.</p>
+<p>The focal-point of the DataFed Web Portal is the "Data Browser" that allows users to navigate through data, collections, and projects that they own or have access to. Depending on a users role and/or access permission, a variety of actions may be performed on the data, collections, and projects presented in the Data Browser (i.e. editing, sharing, etc.). Additional features include searching with metadata-based queries, viewing recent data transfers, and managing settings. Sections 4.1 through 4.6 describe the location and function(s) of the major elements of the web portal. Note that the web portal is implemented as a <i>single-page</i> application; therefore, web browser navigation functions (i.e. forward/back) should not be used.</p>
 
 <p><i>Note that DataFed web portal uses browser cookies to store user identity and context information. Once these cookies are set, DataFed web portal tracks a user's Globus Online authentication status and, while logged-in to Globus, users will be granted access to DataFed portal without requiring an additional log-in. If a user wishes to disable web portal access, they must explicitly log-out of Globus using the "log-out" link <h href="https://www.globus.org/" target="_blank">here</h>.</i></p>
 
-<h3 id='s41'>4.1 Data Browser</h3>
+<h2 id='s41'>4.1 Data Browser</h2>
 
 <p>The "Data Browser", located on the left hand side of the interface, contains a navigable tree structure organized into categories. When an item in the browser tree is selected (by either clicking on them, or using keyboard navigation), information about the item is displayed in the "Selection Information" panel located to the right of the browser panel. In addition, the "action buttons" located below the data browser may be enabled or disabled depending on what actions are valid for the selected item.</p>
 
-    <h4 id='s411'>4.1.1 Drag and Drop</h4>
+    <h2 id='s411'>4.1.1 Drag and Drop</h2>
 
     <p>Data records and collections in the browser tree may be organized by dragging items from one location to another. For example, data records in one collection may be dragged into another collection, or an entire collection may be dragged into another collection - whereupon the receiving collection becomes the parent of the moved data record or collection. By default, data records are linked into new locations when dragged, rather than moved. To move a data record, the "Shift" key must be held while dragging the data record. (Collections cannot be linked and are always moved.)</p>
 
     <p>A data record or collection can be "unlinked" from a parent collection by holding thr "Ctrl" key and clicking the data record. This does not delete the unlinked data record or collection, it simply removes it from the parent collection. In the case of collections, or data records that are not linked to other collections, unlinking will re-link the item to the root collection. This is because all data records and collections must have a parent collection (except for root collection itself).
     </p>
 
-    <h4 id='s412'>4.1.2 My Data</h4>
+    <h3 id='s412'>4.1.2 My Data</h3>
 
     <p>This category shows data records and collections owned by the current user. All actions are permitted on these data records and collections.</p>
 
-    <h4 id='s413'>4.1.3 My Projects</h4>
+    <h3 id='s413'>4.1.3 My Projects</h3>
 
     <p>This category shows projects that are owned by the current user. All actions are permitted on these projects.</p>
 
-    <h4 id='s414'>4.1.4 Managed Projects</h4>
+    <h3 id='s414'>4.1.4 Managed Projects</h3>
 
     <p>This category shows projects that are managed by the current user. Project managers are allowed to add/remove project members and set permissions on the root collection.</p>
 
-    <h4 id='s415'>4.1.5 Member Projects</h4>
+    <h3 id='s415'>4.1.5 Member Projects</h3>
 
     <p>This category shows projects that the current user is a member of. Project members are allowed to create and access data and collections per the permissions set by the project owner and/or manager.</p>
 
-    <h4 id='s416'>4.1.6 Shared Data</h4>
+    <h3 id='s416'>4.1.6 Shared Data</h3>
 
     <p>This category of the shows data and collections that have been explicitly shared with the current user. The current user is allowed to view and/or perform actions on the listed data and collections per the permissions set by the associated user or project sharing the data.</p>
 
-    <h4 id='s417'>4.1.7 Search Results</h4>
+    <h3 id='s417'>4.1.7 Search Results</h3>
 
     <p>This category shows any matching data records returned from a query initiated under the "Search" tab. Actions are permitted based on permissions set by the owners of matched data records. Note: collections will never be returned as matches.</p>
 
-<h3 id='s42'>4.2 Selection Information</h3>
+<h2 id='s42'>4.2 Selection Information</h2>
 
 <p>When an item in the Data Browser tree is selected, if any information about that item is available (and the current user has sufficient permissions), it is displayed in the "Selection Information" panel located on the right-hand side of the web portal. The information will include the identity of the item and, optionally, a title (or name), a description, item details, and metadata. The "Description", "Details", and "Metadata" tabs may be collapsed and expanded by clicking on them.</p>
 
-<h3 id='s43'>4.3 Action Buttons</h3>
-    <h4 id='s431'>4.3.1 New</h4>
+<h2 id='s43'>4.3 Action Buttons</h2>
+    <h3 id='s431'>4.3.1 New</h3>
     <p>Allows user to create new data records, collections, and projects. When selecting "data" or "collection" option, the current selection in the data browser will determine the default parent collection shown in the associated dialog.</p>
-    <h4 id='s432'>4.3.2 Edit</h4>
+    <h3 id='s432'>4.3.2 Edit</h3>
     <p>Allows users with ADMIN and/or WRITE_META permission to edit a data record or collection, or a project administrator to edit a project.</p>
-    <h4 id='s433'>4.3.3 Copy</h4>
+    <h3 id='s433'>4.3.3 Copy</h3>
     <p>Allows users with VIEW, READ_META, and READ_DATA permission to copy a selected data record as a new data record.</p>
-    <h4 id='s434'>4.3.4 Delete</h4>
+    <h3 id='s434'>4.3.4 Delete</h3>
     <p>Allows users with ADMIN permission to delete a data record or collection, or a project administrator to delete a project.</p>
-    <h4 id='s435'>4.3.5 Share</h4>
+    <h3 id='s435'>4.3.5 Share</h3>
     <p>Allows users with ADMIN permission to configure access controls for a data record or collection.</p>
-    <h4 id='s436'>4.3.6 Get</h4>
+    <h3 id='s436'>4.3.6 Get</h3>
     <p>Allows users with READ_DATA permission to "get" (download) the raw data of a data record.</p>
-    <h4 id='s437'>4.3.7 Put</h4>
+    <h3 id='s437'>4.3.7 Put</h3>
     <p>Allows users with WRITE_DATA permission to "put" (upload) the raw data of a data record.</p>
 
-<h3 id='s44'>4.4 Search</h3>
+<h2 id='s44'>4.4 Search</h2>
     <p>The "Search" tab below the action buttons allows users to query DataFed for data matching a specified metadata expression within a specified scope.</p>
     <p style="color:red">Note: the query language is currently a subset of ArangoDB AQL; however, this will be changing in the near future.</p>
 
-<h3 id='s45'>4.5 Transfers</h3>
+<h2 id='s45'>4.5 Transfers</h2>
     <p>The "Transfers" tab below the action buttons shows recent data transfers (get/put) initiated either from DataFed Web Portal or via the CLI.</p>
-<h3 id='s46'>4.6 Settings</h3>
+<h2 id='s46'>4.6 Settings</h2>
     <p>The "Settings" tab below the action buttons allows the current user to update a number of DataFed configuration parameters, as follows:</p>
     <ul>
         <li><b>CLI Password</b> - This is the password that is required when manually authenticating through DataFed CLI. This password is only required until the CLI "setup" command is used to generate and install local credentials.</li>
@@ -224,11 +246,273 @@
         <li><b>E-mail Address</b> - The E-mail address that will be used to contact the current user.</li>
     </ul>
     <p>These settings are saved automatically whenever they are changed.</p>
-<h3 id='s47'>4.7 Header and Footer</h3>
+<h2 id='s47'>4.7 Header and Footer</h2>
     <p>The "header" is the section of the user interface at the very top of the page amd contains the title, a "help" button (which opens this document), and a "log-out" button. The "footer" is located at the very bottom of the page amd contains the status bar that displays the current user name and informational messages.</p>
 <br>
-<br>
-<br>
+<h1 id='s5'>5. Command Line Interface (CLI)</h1>
+
+<h2 id='s51'>5.1 CLI Introduction</h2>
+
+<p>The DataFed command-line-interface (CLI) provides access to basic DataFed features for both interactive use and scripting. The DataFed CLI is provided via a Python3 package, called "datafed", available on PyPi and installable using the Python pip tool. The "datafed" package also contains a Python API that can be used to build custom Python applications that directly interface with DataFed. (A C++ client library is also available from the DataFed code repository.)</p>
+
+<h2 id='s52'>5.2 CLI Installation</h2>
+
+<p>The DataFed CLI is typically pre-installed within the compute and data environments of DataFed-supported facilities; however, if you need to use the DataFed CLI from a non-supported facility or device, then you will need to install and configure the CLI manually. Like most Python packages, the DataFed CLI is installed using Python's "pip" tool, as follows:<p>
+
+<pre style='margin:0 5em'>pip install datafed</pre>
+
+<p>
+Once the DataFed package and its dependencies are installed, the "datafed" script will be available in the Python path to run the CLI either interactively or from scripts. Note, however, that the DataFed CLI must be properly <a href='#s521'>configured</a> before it can be used. After configuration, refer to the <a href='#s3'>Commands</a> section, below, for details on how to use the DataFed CLI (a '--help' option is also available). Several DataFed Python modules are available for direct access to DataFed services from custom Python scripts, and these modules are documented in the <a href='#s54'>Client API</a> section, below.
+</p>
+
+<h2 id='s53'>5.3 CLI Configuration</h2>
+
+<p>
+Users would typically not need to configure the DataFed CLI from within a facility-supported environment; however, when installing the CLI within an unsupported environment, such as a laptop, the CLI must be configured by the user. Configuration settings may be specified using environment variables, configuration files, or command-line options (or any combination thereof), and the majority of these settings relate to client-server communication. The following sections list and describe the DataFed CLI settings.</p>
+
+<h3 id='s531'>5.3.1 Configuration Settings</h3>
+
+<p>
+Table 5.3.1-1, below, lists all of the CLI settings and how they can be set using either a configuration file (.ini), an environment variable, or a command-line option. Many of the listed settings relate to configuring the communication channel between the CLI and the DataFed server (aka Core Services). Because all communications across the channel are encrypted, the locations of public and private DataFed encryption key files must be specified. These keys are similar to SSH keys, but they are unique to DataFed; however, like SSH keys, access to private DataFed key files must be restricted to prevent unauthorized access to user accounts. Configuring DataFed key files, as well as other settings, are discussed in following sections.
+</p>
+
+<table class='border-table'>
+<tr><th colspan="2">Config File</th><th rowspan="2">Environment Variable</th><th rowspan="2">CLI Option(s)</th><th rowspan="2">Description</th></tr>
+<tr><th>Section</th><th>Setting</th></tr>
+<tr><td>N/A</td><td>N/A</td><td>DATAFED_SERVER_CFG_FILE</td><td>--server-cfg-file</td><td>Server configuration file</td></tr>
+<tr><td>server</td><td>config_dir</td><td>DATAFED_SERVER_CFG_DIR</td><td>--server-cfg-dir</td><td>Server configuration directory</td></tr>
+<tr><td>server</td><td>public_key_file</td><td>DATAFED_SERVER_PUB_KEY_FILE</td><td>--server-pub-key-file</td><td>Server public key file</td></tr>
+<tr><td>server</td><td>host</td><td>DATAFED_SERVER_HOST</td><td>--server-host, -H</td><td>Sever host name or IP address</td></tr>
+<tr><td>server</td><td>port</td><td>DATAFED_SERVER_PORT</td><td>--server-port, -P</td><td>Server port number</td></tr>
+<tr><td>client</td><td>config_file</td><td>DATAFED_CLIENT_CFG_FILE</td><td>--client-cfg-file</td><td>Client configuration file</td></tr>
+<tr><td>client</td><td>config_dir</td><td>DATAFED_CLIENT_CFG_DIR</td><td>--client-cfg-dir</td><td>Client configuration directory</td></tr>
+<tr><td>client</td><td>public_key_file</td><td>DATAFED_CLIENT_PUB_KEY_FILE</td><td>--client-pub-key-file</td><td>Client public key file</td></tr>
+<tr><td>client</td><td>private_key_file</td><td>DATAFED_CLIENT_PRIV_KEY_FILE</td><td>--client-priv-key-file</td><td>Client private key file</td></tr>
+<tr><td>general</td><td>default_endpoint</td><td>DATAFED_DEFAULT_ENDPOINT</td><td>--default-ep, -e</td><td>Default Globus endpoint</td></tr>
+<tr><td>general</td><td>verbosity</td><td>DATAFED_DEFAULT_VERBOSITY</td><td>--verbosity, -v</td><td>Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.</td></tr>
+<tr><td>general</td><td>interactive</td><td>DATAFED_DEFAULT_INTERACT</td><td>--interactive/--no-interactive, -i/-n</td><td>Start an interactive session</td></tr>
+</table><br>
+<center><b>Table 5.3.1-1 DataFed Client Configuration Settings</b></center>
+
+<h4 id='s5311'>5.3.1.1 Server Configuration File</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>N/A</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_SERVER_CFG_FILE</td></tr>
+<tr><td>Option</td><td>--server-cfg-file</td></tr>
+</table>
+
+<p>
+The server configuration file setting specifies a full path to a server ".ini" file. This file may contain additional settings as specified in Table 5.3.1-1.
+</p>
+
+<h4 id='s5312'>5.3.1.2 Server Configuration Directory</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[server] config_dir</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_SERVER_CFG_DIR</td></tr>
+<tr><td>Option</td><td>--server-cfg-dir</td></tr>
+</table>
+
+<p>
+The server configuration directory setting specifies a path to a directory that will be searched for a default server config file, "server.ini", and the default server public key, "datafed-core-key.pub". If this setting is not provided, "~/.default" will be searched if it exists.
+</p>
+
+<h4 id='s5313'>5.3.1.3 Server Public Key File</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[server] public_key_file</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_SERVER_PUB_KEY_FILE</td></tr>
+<tr><td>Option</td><td>--server-pub-key-file</td></tr>
+</table>
+
+<p>
+The server public key file setting specifies a full path to a locally accessible file containing the latest DataFed server public key. If this setting is not provided, the CLI will look for a default key file, "datafed-core-key.pub", in the server config directory (or "~/.datafed" if no directory is specified). The latest DataFed server public key file must is available for download from the following link:
+</p>
+<a href='/datafed-core-key.pub' style='margin:0 5em'>Download DataFed Server Public Key</a>
+
+<p>
+Note that if the server public key is invalid or out of date, the CLI will timeout after 10 seconds from being run.
+</p>
+
+<h4 id='s5314'>5.3.1.4 Server Host</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[server] host</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_SERVER_HOST</td></tr>
+<tr><td>Option</td><td>--server-host, -H</td></tr>
+</table>
+
+<p>
+The server host setting is the DataFed server name or IP address with no protocol prefix or port number - for example: "datafed.ornl.gov". Note that if the server host is incorrect, the CLI will timeout after 10 seconds from being run.
+</p>
+
+<h4 id='s5315'>5.3.1.5 Server Port</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[server] port</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_SERVER_PORT</td></tr>
+<tr><td>Option</td><td>--server-port, -P</td></tr>
+</table>
+
+<p>
+The server port setting is the TCP port number used by the DataFed server for secure client connections. This port number is distinct from two other ports used by the DataFed server for back-end services cross-communication. Note that if the server port number is incorrect, the CLI will timeout after 10 seconds from being run.
+</p>
+
+<h4 id='s5316'>5.3.1.6 Client Configuration File</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[client] config_file</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_CLIENT_CFG_FILE</td></tr>
+<tr><td>Option</td><td>--client-cfg-file</td></tr>
+</table>
+
+<p>
+The client configuration file setting specifies a full path to a server ".ini" file. This file may contain additional settings as specified in Table 5.3.1-1. Note that settings in the client configuration file will override the same settings in the server configuration file, if present.
+</p>
+
+<h4 id='s5317'>5.3.1.7 Client Config Directory</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[client] config_dir</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_CLIENT_CFG_DIR</td></tr>
+<tr><td>Option</td><td>--client-cfg-dir</td></tr>
+</table>
+
+<p>
+The client configuration directory setting specifies a path to a directory that will be searched for a default client config file, "client.ini", and the default client public and private keys, "datafed-user-key.pub" and "datafed-user-key.priv". If this setting is not provided, "~/.default" will be searched if it exists.
+</p>
+
+
+<h4 id='s5318'>5.3.1.8 Client Public Key File</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[client] public_key_file</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_CLIENT_PUB_KEY_FILE</td></tr>
+<tr><td>Option</td><td>--client-pub-key-file</td></tr>
+</table>
+
+<p>
+The client public key file setting specifies a full path to a locally accessible file containing the DataFed client public key. If this setting is not provided, the CLI will look for a default key file, "datafed-user-key.pub", in the client config directory (or "~/.datafed" if no directory is specified). Client key files are automatically created in the specified location by the CLI (see <a href="#s534">Configuring Automatic Authentication</a>
+</p>
+
+<h4 id='s5319'>5.3.1.9 Client Private Key File</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[client] private_key_file</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_CLIENT_PRIV_KEY_FILE</td></tr>
+<tr><td>Option</td><td>--client-priv-key-file</td></tr>
+</table>
+
+<p>
+The client private key file setting specifies a full path to a locally accessible file containing the DataFed client private key. If this setting is not provided, the CLI will look for a default key file, "datafed-user-key.priv", in the client config directory (or "~/.datafed" if no directory is specified). Client key files are automatically created in the specified location by the CLI (see <a href="#s534">Configuring Automatic Authentication</a>
+</p>
+
+<h4 id='s53110'>5.3.1.10 Default Endpoint</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[general] default_endpoint</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_DEFAULT_ENDPOINT</td></tr>
+<tr><td>Option</td><td>--default-ep, -e</td></tr>
+</table>
+
+<p>
+The default endpoint setting determines which Globus endpoint to prepend to the source or destination path of a "put" or "get" command, respectively, when no endpoint is specified. The default end-point can be changed with the "ep default" command, or temporarily overridden use the "ep set" command.
+</p>
+
+<h4 id='s53111'>5.3.1.11 Default Verbosity</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[general] verbosity</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_DEFAULT_VERBOSITY</td></tr>
+<tr><td>Option</td><td>--verbosity, -v</td></tr>
+</table>
+
+<p>
+The default verbosity level setting adjusts the output detail level for text-format output only. The value is an integer, where 0 = quiet, 1 = normal, and 2 = verbose.
+</p>
+
+<h4 id='s3112'>3.1.12 Default Interactivity</h4>
+
+<table class='border-table cfg-info-table'>
+<tr><td>Cfg. File</td><td>[general] interactive</td></tr>
+<tr><td>Env. Var.</td><td>DATAFED_DEFAULT_INTERACT</td></tr>
+<tr><td>Option</td><td>--interactive/--no-interactive, -i/-n</td></tr>
+</table>
+
+<p>
+The default interactivity setting determines if an interactive shell is started when the CLI is run, with or without an initial command. For configuration files and environment variables, the value is an integer where 0 = non-interactive, and 1 = interactive. This setting is a simple flag (no value) when used as a CLI option.
+</p>
+
+
+<div class='clearfix'>
+    <h3 id='s532'>5.3.2 Configuration Files</h3>
+
+    <div style='float:right;margin:0 1em 1em 1em'>
+<pre style="border:1px solid #808080;padding:1em;margin:0 1em 1em 0">
+[server]
+host = datafed.ornl.gov
+port = 7512
+config_dir = /usr/share/datafed
+
+[client]
+config_dir = ~/.datafed
+
+[general]
+default_endpoint = cades#CADES-OR
+</pre>
+        <center><b>Example Configuration File</b></center>
+    </div>
+
+    <p>
+    Both a server and a client configuration file may be used to specify CLI settings. Typically, a server configuration file would be maintained by a system administrator and contain server-only settings. Per-user client configuration files would allow individuals to tailor their CLI settings by specifying additional options, or overriding server settings (the client file takes priority over the server file). 
+    </p>
+    <p>
+    Both server and client configuration files are standard ".ini" files and follow the same format, and Table 5.3.1-1 (above) shows the section and setting name for all available options. An example configuration file is shown to the right.
+    </p>
+</div>
+
+<div class='clearfix'>
+    <h3 id='s533'>5.3.3 Configuration Priority</h3>
+
+    <div style='float:right; margin:0 1em 1em 1em'>
+        <table class='border-table'>
+        <tr><th>Source</th><th>Priority</th></tr>
+        <tr><td>Default</td><td>0 (lowest)</td></tr>
+        <tr><td>Environment Variable</td><td>1</td></tr>
+        <tr><td>Server Config File</td><td>2</td></tr>
+        <tr><td>Client Config File</td><td>3</td></tr>
+        <tr><td>Command-Line Option</td><td>4</td></tr>
+        <tr><td>Programmatic</td><td>5 (highest)</td></tr>
+        </table><br>
+        <center><b>Source Priorities</b></center>
+    </div>
+
+    <p>
+    Each mechanism for specifying settings (environment variables, files, options, etc.) has a given priority, and individual settings from configuration sources with higher priorities override those with lower priorities. The result is that various configuration settings may come from a variety of sources (defaults or set by system administrators), but these settings can always be overridden by the user by using the appropriate mechanism. Configuration source priorities are shown to the right.
+    </p>
+    <p>
+    Note that most settings do not have default values and must be specified using one of the supported mechanisms. The server and client configuration files and directories are exceptions in that the CLI will search for a ".datafed" folder in the user home directory if these settings are not specified.
+    </p>
+</div>
+
+
+<h3 id='s534'>5.3.4 Configuring Automatic Authentication</h3>
+
+<p>Once the DataFed CLI is installed and configured, automatic authentication can be enabled for the CLI by installing local client credentials (encryption key files). This is done by simply running the following CLI command from the environment to be configured for automatic authentication:</p>
+
+<pre style='margin:0 5em'>datafed setup</pre>
+
+<p>When run, manual authentication will be required, then the CLI will install local user encryption keys (public and private) in the configured client configuration directory (see <a href='#s531'>Configuration Settings</a>, above). Subsequent use of the DateFed CLI within the same environment will authenticate using the local client keys. These client key files must be protected and kept private. In the event of a security incident, automatic authentication can be disabled by deleting the local key files, or, alternatively, all of a user's installed keys can be revoked from the DataFed Web Portal using the "Revoke Credentials" button in the application settings dialog. (This does not delete local key files, but invalidates the keys on the server side.)</p>
+
+<h2 id='s54'>5.4 CLI Commands</h2>
+
+<span style='color:red'>TO DO: LIST AND DESCRIBE ALL COMMANDS WITH OPTIONS</span>
+
+<h2 id='s55'>5.5 Client API</h2>
+
+<p>The DataFed Python CLI package includes a client library module, "ClientLib.py", used by the CLI to communicate with central DataFed services. This module is available for integration into custom, user-created Python applications. The ClientLib module provides basic connectivity and authentication functionality, as well as access to the underlying message-based application programming interface (MAPI) used by DataFed services. The DataFed MAPI (requests, replies, and associated data structures) is defined by a set of included Google Protocol Buffer files (.proto extension). At a very basic level, an application would created, initialize, and send a request message to the DataFed server using functions in the ClientLib module. Subsequent reply messages are received (synchronously or asynchronously) and decoded for processing by the application.</p>
+<p>A similar C++ client library is also available in the DataFed code repository, at https://github.com/ORNL/DataFed. Please refer to the DataFed MAPI documentation for further information regarding both the Python and C++ MAPIs. All documentation is located in the "/docs" folder of the DataFed code repository.</p>
 
             </div>
         </div>

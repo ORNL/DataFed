@@ -73,7 +73,8 @@ Worker::setupMsgHandlers()
 
         SET_MSG_HANDLER( proto_id, StatusRequest, &Worker::procStatusRequest );
         SET_MSG_HANDLER( proto_id, VersionRequest, &Worker::procVersionRequest );
-        SET_MSG_HANDLER( proto_id, AuthenticateRequest, &Worker::procAuthenticateRequest );
+        SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &Worker::procAuthenticateByPasswordRequest );
+        SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &Worker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &Worker::procGetAuthStatusRequest );
 
         proto_id = REG_PROTO( SDMS::Auth );
@@ -333,19 +334,37 @@ Worker::procVersionRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procAuthenticateRequest( const std::string & a_uid )
+Worker::procAuthenticateByPasswordRequest( const std::string & a_uid )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( AuthenticateRequest, AckReply )
+    PROC_MSG_BEGIN( AuthenticateByPasswordRequest, AuthStatusReply )
 
-    DL_INFO( "Starting manual authentication for " << request->uid() );
+    DL_INFO( "Starting manual password authentication for " << request->uid() );
 
     m_db_client.setClient( request->uid() );
-    m_db_client.clientAuthenticate( request->password() );
+    m_db_client.clientAuthenticateByPassword( request->password(), reply );
 
-    DL_INFO( "Manual authentication SUCCESS for " << request->uid() );
+    DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_mgr.authorizeClient( a_uid, request->uid() );
+    m_mgr.authorizeClient( a_uid, reply.uid() );
+
+    PROC_MSG_END
+}
+
+bool
+Worker::procAuthenticateByTokenRequest( const std::string & a_uid )
+{
+    (void)a_uid;
+    PROC_MSG_BEGIN( AuthenticateByTokenRequest, AuthStatusReply )
+
+    DL_INFO( "Starting manual token authentication" );
+
+    m_db_client.setClient( a_uid );
+    m_db_client.clientAuthenticateByToken( request->token(), reply );
+
+    DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
+
+    m_mgr.authorizeClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
@@ -354,7 +373,7 @@ bool
 Worker::procGetAuthStatusRequest( const std::string & a_uid )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( GetAuthStatusRequest, GetAuthStatusReply )
+    PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
 
     if ( strncmp( a_uid.c_str(), "anon_", 5 ) == 0 )
     {

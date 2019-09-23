@@ -61,15 +61,20 @@ message GetAuthStatusRequest
 {
 }
 
-message GetAuthStatusReply
+message AuthStatusReply
 {
     required bool               auth        = 1;
     optional string             uid         = 2;
 }
 
-message AuthenticateRequest
+message AuthenticateByPasswordRequest
 {
     required string             uid         = 1;    // Local user ID
     required string             password    = 2;    // Password or passcode
+}
+
+message AuthenticateByTokenRequest
+{
+    required string             token       = 1;    // Access token
 }
 

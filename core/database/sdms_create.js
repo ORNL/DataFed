@@ -91,6 +91,7 @@ db.d.ensureIndex({ type: "hash", unique: false, fields: [ "doi" ], sparse: true 
 
 //db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
+db.u.ensureIndex({ type: "hash", unique: true, fields: [ "access" ], sparse: true });
 
 //db.p.ensureIndex({ type: "hash", unique: true, fields: [ "domain", "title" ], sparse: true });
 

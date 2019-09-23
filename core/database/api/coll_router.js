@@ -599,17 +599,32 @@ router.get('/get_parents', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var item_id = g_lib.resolveID( req.queryParams.id, client );
 
-        // TODO Check non-owner permission for this?
+        if ( !item_id.startsWith("d/") && !item_id.startsWith("c/") )
+            throw [ g_lib.ERR_INVALID_PARAM, "ID is not a collection or record." ];
 
-        res.send( g_lib.getParents( item_id ) );
+        var results = g_lib.getParents( item_id );
+        if ( req.queryParams.inclusive ){
+            var item;
+            if ( item_id[0] == 'c' )
+                item = g_db.c.document( item_id );
+            else
+                item = g_db.d.document( item_id );
+
+            item = {id:item._id,title:item.title,alias:item.alias};
+            for ( var i in results ){
+                results[i].unshift(item);
+            }
+        }
+        res.send( results );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of child item")
-.summary('Get parent collection(s) of item')
-.description('Get parent collection(s) of item');
+.queryParam('inclusive', joi.boolean().optional(), "Include child item in result")
+.summary('Get parent collection(s) (path) of item')
+.description('Get parent collection(s) (path) of item');
 
 router.get('/get_offset', function (req, res) {
     try {
