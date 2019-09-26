@@ -122,17 +122,11 @@ def _run():
                 _args = shlex.split(session.prompt(prefix,auto_suggest=AutoSuggestFromHistory()))
                 _cli(prog_name="datafed",args=_args,standalone_mode=False)
 
-        except click.UsageError as e:
-            if _output_mode == _OM_TEXT:
-                click.echo( "Usage error: {}".format(e))
-            elif _output_mode == _OM_JSON:
-                click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"Usage error: {}\"}}".format(e))
-
         except click.ClickException as e:
             if _output_mode == _OM_TEXT:
-                click.echo( "{}".format(e))
+                click.echo( e.format_message() )
             elif _output_mode == _OM_JSON:
-                click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
+                click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e.format_message()))
 
         except SystemExit as e:
             # For subsequent interactive commands, hide top-level (start-up) options
@@ -454,7 +448,6 @@ def _ls(ctx,df_id,offset,count,project,verbosity,json,text):
     _most_recent_list_count = int(msg.count)
 
     reply = _mapi.sendRecv( msg )
-
     _generic_reply_handler( reply, _print_listing )
 
 
@@ -463,7 +456,7 @@ def _ls(ctx,df_id,offset,count,project,verbosity,json,text):
 @_global_output_options
 @click.pass_context
 def _wc(ctx,df_id,verbosity,json,text):
-    if not _interactive:
+    if _output_mode_sticky != _OM_RETN and not _interactive:
         raise Exception("Command not supported in non-interactive modes.")
 
     _output_checks( verbosity, json, text )
@@ -487,7 +480,13 @@ def _wc(ctx,df_id,verbosity,json,text):
     else:
         msg = auth.CollViewRequest()
         msg.id = _resolve_coll_id(df_id)
+
         reply = _mapi.sendRecv( msg )
+
+        # For RETN mode, must check for NACK
+        if _checkNackReply( reply ):
+            return
+
         _prev_coll = _cur_coll
         _cur_coll = msg.id
         coll = reply[0].coll[0]
@@ -502,7 +501,7 @@ def _wc(ctx,df_id,verbosity,json,text):
 @_global_output_options
 @click.pass_context
 def _wp(ctx,verbosity,json,text):
-    if not _interactive:
+    if _output_mode_sticky != _OM_RETN and not _interactive:
         raise Exception("Command not supported in non-interactive modes.")
 
     _output_checks( verbosity, json, text )
@@ -510,6 +509,7 @@ def _wp(ctx,verbosity,json,text):
     msg = auth.CollGetParentsRequest()
     msg.id = _cur_coll
     msg.inclusive = True
+
     reply = _mapi.sendRecv( msg )
     _generic_reply_handler( reply, _print_path )
 
@@ -520,7 +520,13 @@ def _setWorkingCollectionTitle():
 
     msg = auth.CollViewRequest()
     msg.id = _cur_coll
+
     reply = _mapi.sendRecv( msg )
+
+    # For RETN mode, must check for NACK
+    if _checkNackReply( reply ):
+        return
+
     coll = reply[0].coll[0]
     if coll.alias:
         _cur_coll_title = "\"{}\" ({})".format(coll.title,coll.alias)
@@ -548,6 +554,11 @@ def _more(count,verbosity,json,text):
     _output_checks( verbosity, json, text )
 
     reply = _mapi.sendRecv(_most_recent_list_request)
+
+    # For RETN mode, must check for NACK
+    if _checkNackReply( reply ):
+        return
+
     for key in _listing_requests:
         if isinstance(_most_recent_list_request, key):
             _generic_reply_handler( reply, _listing_requests[key] )
@@ -575,7 +586,6 @@ def _data_view(df_id,details, project, verbosity,json,text):
         msg.details = False
 
     reply = _mapi.sendRecv( msg )
-
     _generic_reply_handler( reply, _print_data )
 
 
@@ -644,6 +654,7 @@ def _data_create(title,alias,description,keywords,raw_data_file,extension,metada
                 dp.type = 2
             dp.id = _resolve_id(d[1],project)
 
+    # TODO - Fix this for output modes
     if not raw_data_file:
         reply = _mapi.sendRecv(msg)
         #_generic_reply_handler( reply, _print_data )
@@ -728,6 +739,8 @@ def _data_update(df_id,title,alias,description,keywords,raw_data_file,extension,
                 dep.type = 2
             dep.id = _resolve_id(d[1],project)
 
+    # TODO Fixe for output modes
+
     if not raw_data_file:
         reply = _mapi.sendRecv(msg)
         #_generic_reply_handler( reply, _print_data )
@@ -777,10 +790,15 @@ def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get wi
     for ids in df_id:
         check.id.append( _resolve_id( ids, project ))
 
-    check_reply, mt = _mapi.sendRecv(check)
+    reply = _mapi.sendRecv(check)
+
+    # For RETN mode, must check for NACK
+    if _checkNackReply( reply ):
+        return
+
     checked_list = []
     url_list = []
-    for i in check_reply.item:
+    for i in reply[0].item:
         if i.url:
             url_list.append((i.url, i.id))
         else:
@@ -802,6 +820,10 @@ def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get wi
 
         reply = _mapi.sendRecv(msg)
 
+        # For RETN mode, must check for NACK
+        if _checkNackReply( reply ):
+            return
+
         xfr_ids = []
         replies = []
 
@@ -815,7 +837,13 @@ def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get wi
                 for xfrs in xfr_ids:
                     update_msg = auth.XfrViewRequest()
                     update_msg.xfr_id = xfrs
+
                     reply = _mapi.sendRecv(update_msg)
+
+                    # For RETN mode, must check for NACK
+                    if _checkNackReply( reply ):
+                        return
+
                     check = reply[0].xfr[0]
                     if check.status >=3:
                         replies.append(reply)
@@ -902,6 +930,7 @@ def _data_batch_create(collection,file,project,verbosity,json,text):
 
     msg = auth.RecordCreateBatchRequest()
     msg.records = jsonlib.dumps(payload)
+
     reply = _mapi.sendRecv(msg)
     _generic_reply_handler( reply, _print_batch )
 
@@ -938,6 +967,7 @@ def _data_batch_update(file,verbosity,json,text):
 
     msg = auth.RecordUpdateBatchRequest()
     msg.records = jsonlib.dumps(payload)
+
     reply = _mapi.sendRecv(msg)
     _generic_reply_handler( reply, _print_ack_reply )
 
@@ -1059,8 +1089,7 @@ def _coll_add( item_id, coll_id, project, verbosity, json, text ):
         msg.add.append(_resolve_id(i,project))
 
     reply = _mapi.sendRecv(msg)
-
-    _print_ack_reply()
+    _generic_reply_handler( reply, _print_ack_reply )
 
 @_coll.command(name='remove',help="Remove data records and/or collections from a collection. Specify one or more items to remove using the ITEM_ID arguments, and a target collection using the COLL_ID argument.")
 @click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
@@ -1076,8 +1105,7 @@ def _coll_rem( item_id, coll_id, project, verbosity, json, text ):
         msg.rem.append(_resolve_id(i,project))
 
     reply = _mapi.sendRecv(msg)
-
-    _print_ack_reply()
+    _generic_reply_handler( reply, _print_ack_reply )
 
 #------------------------------------------------------------------------------
 # Query command group
@@ -1099,11 +1127,12 @@ def _query_list(offset,count, verbosity, json, text):
 
     global _most_recent_list_request
     global _most_recent_list_count
+
     _most_recent_list_request = msg
     _most_recent_list_count = int(msg.count)
+
     reply = _mapi.sendRecv(msg)
     _generic_reply_handler( reply, _print_listing )
-    #TODO: Figure out verbosity-dependent replies
 
 
 @_query.command(name='exec',help="Execute a stored query by ID")
@@ -1144,6 +1173,7 @@ def _user_collab(offset,count, verbosity, json, text):
     global _most_recent_list_count
     _most_recent_list_request = msg
     _most_recent_list_count = int(msg.count)
+
     reply = _mapi.sendRecv(msg)
     _generic_reply_handler( reply, _print_user_listing )
 
@@ -1178,7 +1208,6 @@ def _user_view(uid, verbosity, json, text):
     _output_checks( verbosity, json, text )
 
     reply = _mapi.sendRecv(msg)
-
     _generic_reply_handler( reply, _print_user )
 
 
@@ -1227,6 +1256,7 @@ def _project_list(owned,admin,member,offset,count, verbosity, json, text):
     global _most_recent_list_count
     _most_recent_list_request = msg
     _most_recent_list_count = int(msg.count)
+
     reply = _mapi.sendRecv( msg )
     _generic_reply_handler( reply, _print_listing )
 
@@ -1246,7 +1276,7 @@ def _project_view(df_id, verbosity, json, text):
 @_project.command(name='select',help="Select project for use. ID may be a project ID, or an index value from a project listing. If ID is omitted, current project is deselected.")
 @click.argument("df_id", metavar="ID",required=False)
 def _project_select(df_id):
-    if not _interactive:
+    if _output_mode_sticky != _OM_RETN and not _interactive:
         raise Exception("Command not supported in non-interactive modes.")
 
     global _cur_sel
@@ -1272,7 +1302,12 @@ def _project_select(df_id):
 
         msg = auth.ProjectViewRequest()
         msg.id = df_id
-        reply, mt = _mapi.sendRecv( msg )
+
+        reply = _mapi.sendRecv( msg )
+
+        # For RETN mode, must check for NACK
+        if _checkNackReply( reply ):
+            return
 
         _cur_sel = df_id
         _cur_coll = "c/p_" + _cur_sel[2:] + "_root"
@@ -1281,6 +1316,25 @@ def _project_select(df_id):
         _print_msg(1,"Switched to project " + _cur_sel)
 
     _setWorkingCollectionTitle()
+
+@_project.command(name='who',help="View currently selected project.")
+def _project_who():
+    if _output_mode_sticky != _OM_RETN and not _interactive:
+        raise Exception("Command not supported in non-interactive modes.")
+
+    global _cur_sel
+    if _cur_sel and _cur_sel[:2] == "p/":
+        proj = _cur_sel
+    else:
+        proj = None
+
+    if _output_mode_sticky == _OM_RETN:
+        global _return_val
+        _return_val = proj
+    elif proj:
+        click.echo(proj)
+    else:
+        click.echo("(no project selected)")
 
 # ------------------------------------------------------------------------------
 # Shared data command group
@@ -1413,7 +1467,6 @@ def _xfr_list(time_from,to,since,status,limit,verbosity,json,text): # TODO: Abso
     _output_checks( verbosity, json, text )
 
     reply = _mapi.sendRecv(msg)
-
     _generic_reply_handler( reply, _print_xfr_listing )
 
 
@@ -1426,13 +1479,15 @@ def _xfr_stat(df_id, verbosity, json, text):
     if df_id:
         msg = auth.XfrViewRequest()
         msg.xfr_id = _resolve_id(df_id)
+
         reply = _mapi.sendRecv(msg)
-        _generic_reply_handler( reply, _print_xfr_stat )
     elif not df_id:
         msg = auth.XfrListRequest()
         msg.limit = 1
+
         reply = _mapi.sendRecv(msg)
-        _generic_reply_handler( reply, _print_xfr_stat )
+
+    _generic_reply_handler( reply, _print_xfr_stat )
 
 
 # ------------------------------------------------------------------------------
@@ -1494,11 +1549,11 @@ def _ep_set(endpoint, verbosity, json, text):
 @_ep.command(name='list',help="List recently used endpoints.") # TODO: Process returned paths to isolate and list indexed endpoints only. With index
 @_global_output_options
 def _ep_list(verbosity, json, text):
-    msg = auth.UserGetRecentEPRequest()
-    reply = _mapi.sendRecv( msg )
-
     _output_checks( verbosity, json, text )
 
+    msg = auth.UserGetRecentEPRequest()
+
+    reply = _mapi.sendRecv( msg )
     _generic_reply_handler( reply, _print_endpoints )
 
 @_ep.command(name='default',cls=AliasedGroup,help="Default endpoint commands")
@@ -1569,23 +1624,29 @@ def _setup(ctx):
         raise Exception("Client configuration directory and/or client key files not configured")
 
     msg = auth.GenerateCredentialsRequest()
-    reply, mt = _mapi.sendRecv( msg )
+
+    reply = _mapi.sendRecv( msg )
+
+    # For RETN mode, must check for NACK
+    if _checkNackReply( reply ):
+        return
 
     if pub_file == None:
         pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
     keyf = open( pub_file, "w" )
-    keyf.write( reply.pub_key )
+    keyf.write( reply[0].pub_key )
     keyf.close()
 
     if priv_file == None:
         priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
 
     keyf = open( priv_file, "w" )
-    keyf.write( reply.priv_key )
+    keyf.write( reply[0].priv_key )
     keyf.close()
 
-    _print_ack_reply()
+    if _output_mode_sticky != _OM_RETN:
+        _print_ack_reply()
 
 
 @_cli.command(name='output',help="Set output mode. If MODE argument is 'json' or 'text', the current mode will be set accordingly. If no argument is provided, the current output mode will be displayed.")
@@ -1601,7 +1662,7 @@ def _output_mode( ctx, mode ):
         if _output_mode_sticky == _OM_TEXT:
             click.echo("text")
         elif _output_mode_sticky == _OM_JSON:
-            click.echo("{\"output\":\"json\"}")
+            click.echo("json")
     else:
         m = mode.lower()
         if m == "j" or m == "json":
@@ -1630,10 +1691,7 @@ def _verbosity_cli(ctx,level):
 
         _verbosity_sticky = v
     else:
-        if _output_mode == _OM_TEXT:
-            click.echo("{}".format(_verbosity_sticky))
-        elif _output_mode == _OM_JSON:
-            click.echo("{{\"verbosity\": {}}}".format(_verbosity_sticky))
+        click.echo(_verbosity_sticky)
 
 @_cli.command(name='help',help="Show datafed client help. Specify command(s) to see command-specific help.")
 @click.argument("command", required=False, nargs=-1)
@@ -1722,9 +1780,15 @@ def _resolve_coll_id(df_id,project = None):
             raise Exception("Project option may not be used with relative paths")
         msg = auth.CollGetParentsRequest()
         msg.id = _cur_coll
-        reply, mt = _mapi.sendRecv(msg)
-        if len(reply.path) and len(reply.path[0].item):
-            return reply.path[0].item[0].id
+
+        reply = _mapi.sendRecv(msg)
+
+        # For RETN mode, must check for NACK
+        if _checkNackReply( reply ):
+            return
+
+        if len(reply[0].path) and len(reply[0].path[0].item):
+            return reply[0].path[0].item[0].id
         else:
             raise Exception("Already at root")
 
@@ -1770,6 +1834,11 @@ def _put_data(df_id, project, gp, wait, extension ):
         msg.ext = extension
 
     reply = _mapi.sendRecv(msg)
+
+    # For RETN mode, must check for NACK
+    if _checkNackReply( reply ):
+        return
+
     xfr_id = reply[0].xfr[0].id
 
     if _output_mode == _OM_TEXT:
@@ -1779,9 +1848,16 @@ def _put_data(df_id, project, gp, wait, extension ):
 
         while wait is True:
             time.sleep(2)
+
             update_msg = auth.XfrViewRequest()
             update_msg.xfr_id = xfr_id
+
             reply = _mapi.sendRecv(update_msg)
+
+            # For RETN mode, must check for NACK
+            if _checkNackReply( reply ):
+                return
+
             check = reply[0].xfr[0]
             if check.status == 3 or check.status == 4: break
             xfr_status = _xfr_statuses.get(check.status, "None")
@@ -2401,6 +2477,14 @@ def _bar_adaptive_human_readable(current, total, width=80):
             output += ' '  # add field separator
 
     return output
+
+def _checkNackReply( reply ):
+    if _output_mode_sticky == _OM_RETN and reply[1] == "NackReply":
+        global _return_val
+        _return_val = reply
+        return True
+    else:
+        return False
 
 def _defaultOptions():
     opts = _cfg.getOpts()
