@@ -960,7 +960,7 @@ def _data_put(df_id, path, wait, extension, project, verbosity, json, text):
 
 # ------------------------------------------------------------------------------
 # Data batch command group
-@_data.command(cls=AliasedGroup,help="Data batch subcommands")
+@_data.command(name='batch',cls=AliasedGroup,help="Data batch subcommands")
 def _batch():
     pass
 
