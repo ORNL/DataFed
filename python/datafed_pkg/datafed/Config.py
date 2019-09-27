@@ -24,6 +24,7 @@ _OPT_NO_ENV  = 0x08
 _OPT_NO_CF   = 0x10
 _OPT_NO_CL   = 0x20
 _OPT_HIDE    = 0x40
+_OPT_EAGER   = 0x80
 
 _opt_info = {
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
@@ -39,7 +40,6 @@ _opt_info = {
     "client_token":["client","token","DATAFED_CLIENT_TOKEN",_OPT_HIDE,["--client-token"],"Client access token"],
     "default_ep":["general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
     "verbosity":["general","verbosity","DATAFED_DEFAULT_VERBOSITY",_OPT_INT,["--verbosity","-v"],"Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."],
-    "interactive":["general","interactive","DATAFED_DEFAULT_INTERACT",_OPT_BOOL,["--interactive/--no-interactive","-i/-n"],"Start an interactive session"]
 }
 
 ##

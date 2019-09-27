@@ -61,10 +61,10 @@ _cur_coll_title = None
 _cur_alias_prefix = ""
 _prev_coll = "root"
 _list_items = []
-_interactive = False
+_interactive = True
 _verbosity_sticky = 1
 _verbosity = 1
-_ctxt_settings = dict(help_option_names=['-h', '-?', '--help'])
+_ctxt_settings = dict(help_option_names=['-?', '--help'],ignore_unknown_options=True,allow_extra_args=True)
 _ep_default = None
 _ep_cur = None
 _max_md_size = 102400
@@ -109,9 +109,10 @@ def _run():
         _verbosity = _verbosity_sticky
 
         try:
-            # _interactive is always false initially
-            if _interactive == False:
+            if _first:
                 _cli(standalone_mode=False)
+                # Won't get here if a command was specified on command-line
+                _interactive = False
             else:
                 if session == None:
                     session = PromptSession(history=FileHistory(os.path.expanduser("~/.datafed-hist")))
@@ -131,7 +132,6 @@ def _run():
         except SystemExit as e:
             # For subsequent interactive commands, hide top-level (start-up) options
             if _first and _interactive and _initialized:
-                _first = False
                 for i in _cli.params:
                     i.hidden = True
 
@@ -140,27 +140,36 @@ def _run():
             _interactive = False
             break
 
+        except NoCommand as e:
+            # Be nice and switch to interactive when no command given
+            if _interactive:
+                _print_msg( 1, "Welcome to DataFed CLI, version {}".format(version))
+                _print_msg( 1, "Authenticated as " + _mapi._uid )
+
+                if _verbosity > 1:
+                    _print_msg( 2, "Settings:" )
+                    _cfg.printSettingInfo()
+            else:
+                if _output_mode == _OM_TEXT:
+                    click.echo(e)
+                elif _output_mode == _OM_JSON:
+                    click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
+
+        '''
         except Exception as e:
             if _output_mode == _OM_TEXT:
                 click.echo(e)
             elif _output_mode == _OM_JSON:
                 click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
-
-            """
-            # Be nice and switch to interactive when no command given
-            if isinstance( e, NoCommand ) and  _interactive == False:
-                _print_msg(1,"Switching to interactive mode...")
-                _interactive = True
-            elif _interactive == False:
-                break
-            """
+        '''
 
         # If initialization failed or not in interactive mode, exit main loop
         if not _initialized or _interactive == False:
             break
 
-    if _interactive:
-        _print_msg(1,"Goodbye!")
+        if _first:
+            _first = False
+
 
 ##
 # @brief Initialize Commandlib for programmatic access
@@ -298,8 +307,17 @@ def _print_msg( level, message, err = False ):
 
 # -----------------------------------------------------------------------------------------------------------------
 # Switch functions
+def _set_script_opt(ctx, param, value):
+    global _interactive
+    global _output_mode_sticky
+    global _output_mode
 
+    if value:
+        _interactive = False
+        _output_mode_sticky = _OM_JSON
+        _output_mode = _OM_JSON
 
+'''
 def _set_output_json(ctx, param, value):
     global _output_mode_sticky
     global _output_mode
@@ -313,6 +331,7 @@ def _set_output_text(ctx, param, value):
     if value:
         _output_mode_sticky = _OM_TEXT
         _output_mode = _OM_TEXT
+'''
 
 __global_project_options = [
     click.option('-p', '--project', required=False,type=str, help='Project ID for command'),
@@ -329,6 +348,7 @@ __global_output_options = [
 class AliasedGroup(click.Group):
     # Allows command matching by unique suffix
     def get_command(self, ctx, cmd_name):
+
         # Process aliases
         if cmd_name == "cd":
             return click.Group.get_command(self, ctx, "wc")
@@ -338,7 +358,12 @@ class AliasedGroup(click.Group):
             return rv
         matches = [x for x in self.list_commands(ctx)
             if x.startswith(cmd_name)]
+
         if not matches:
+            # Cmd was not found - might be an invalid option
+            if cmd_name[:1]=="-":
+                raise Exception( "Invalid option: " + cmd_name )
+            # Or not, unknown command
             return None
         elif len(matches) == 1:
             return click.Group.get_command(self, ctx, matches[0])
@@ -353,6 +378,7 @@ def _global_output_options(func):
     for option in reversed(__global_output_options):
         func = option(func)
     return func
+
 
 def _addConfigOptions():
     for k, v in Config._opt_info.items():
@@ -376,7 +402,7 @@ def _addConfigOptions():
 #@click.option("-J", "--json", is_flag=True,callback=_set_output_json,help="Set _cli output format to JSON, when applicable.")
 #@click.option("-T","--text",is_flag=True,callback=_set_output_text,help="Set _cli output format to human-friendly text.")
 #@click.option("-q","--quiet",is_flag=True,help="Suppress all output except for return value. Useful for scripting where unexpected prompts would cause issues. An error is generated if input is required when silenced.")
-#@click.option("-s","--script",is_flag=True,help="Run in script mode. Output is JSON format and all other I/O is disabled.")
+@click.option("-s","--script",is_flag=True,is_eager=True,callback=_set_script_opt,help="Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.")
 @click.option("--version",is_flag=True,help="Print version number and exit.")
 @click.pass_context
 def _cli(ctx,*args,**kwargs):
@@ -394,20 +420,7 @@ def _cli(ctx,*args,**kwargs):
     if _mapi == None:
         _initialize(ctx.params)
 
-    if ctx.params['verbosity'] is not None:
-        try:
-            v = int(ctx.params['verbosity'])
-        except:
-            raise Exception("Invalid verbosity value.")
-
-        if v < 0 or v > 2:
-            raise Exception("Invalid verbosity value.")
-
-        if v != _verbosity:
-            _verbosity_sticky = v
-            _verbosity = v
-
-    if not _interactive and ctx.invoked_subcommand is None:
+    if ctx.invoked_subcommand is None:
         raise NoCommand("No command specified.")
 
 
@@ -589,22 +602,25 @@ def _data_view(df_id,details, project, verbosity,json,text):
     _generic_reply_handler( reply, _print_data )
 
 
-@_data.command(name='create',help="Create new data record")
+@_data.command(name='create',help="Create a new data record.")
 @click.argument("title", required=False)
-@click.option("-a","--alias",type=str,required=False,help="Alias")
-@click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-k","--keywords",type=str,required=False,help="Keywords should be in the form of a comma separated list enclosed by double quotation marks")
-@click.option("-r","--raw-data-file",type=str,required=False,help="Specify the path to a local raw data file, either relative or absolute. This will initiate a Globus transfer. If no endpoint is provided, the default endpoint will be used.")
+@click.option("-a","--alias",type=str,required=False,help="Alias.")
+@click.option("-d","--description",type=str,required=False,help="Description text.")
+@click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list)")
+@click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.")
 @click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
-@click.option("-m","--metadata",type=str,required=False,help="Metadata (JSON)")
-@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (.json with relative or absolute path)") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
+@click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
+@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Path to local metadata file containing JSON.") ####WARNING:NEEDS ABSOLUTE PATH? DOES NOT RECOGNIZE ~ AS HOME DIRECTORY
 @click.option("-c","--collection",type=str,required=False, help="Parent collection ID/alias (default = current working collection)")
 @click.option("-R","--repository",type=str,required=False,help="Repository ID")
 @click.option("-D","--dep",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @_global_project_options
 @_global_output_options
-def _data_create(title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,collection,repository,dep,project,verbosity,json,text): #cTODO: FIX
+def _data_create(title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,collection,repository,dep,project,verbosity,json,text):
     _output_checks( verbosity, json, text )
+
+    if _output_mode_sticky == _OM_RETN and raw_data_file:
+        raise Exception( "Cannot specify --raw-data-file option in API mode" )
 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options" )
@@ -654,15 +670,13 @@ def _data_create(title,alias,description,keywords,raw_data_file,extension,metada
                 dp.type = 2
             dp.id = _resolve_id(d[1],project)
 
-    # TODO - Fix this for output modes
     if not raw_data_file:
         reply = _mapi.sendRecv(msg)
-        #_generic_reply_handler( reply, _print_data )
-        _print_ack_reply()
+        _generic_reply_handler( reply, _print_data )
     else:
-        create_reply = _mapi.sendRecv(msg)
-        _print_ack_reply()
-        _put_data( create_reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
+        reply = _mapi.sendRecv(msg)
+        _generic_reply_handler( reply, _print_data )
+        _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
 
 
 @_data.command(name='update',help="Update existing data record")
@@ -671,10 +685,10 @@ def _data_create(title,alias,description,keywords,raw_data_file,extension,metada
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list)")
-@click.option("-r","--raw-data-file",type=str,required=False,help="Local raw data file")
+@click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.")
 @click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
-@click.option("-m","--metadata",type=str,required=False,help="Metadata (json)")
-@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
+@click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
+@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Path to local metadata file containing JSON.")
 @click.option("-C","--dep-clear",is_flag=True,help="Clear all dependencies on record. May be used in conjunction with --dep-add to replace existing dependencies.")
 @click.option("-A","--dep-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @click.option("-R","--dep-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
@@ -739,16 +753,21 @@ def _data_update(df_id,title,alias,description,keywords,raw_data_file,extension,
                 dep.type = 2
             dep.id = _resolve_id(d[1],project)
 
-    # TODO Fixe for output modes
-
     if not raw_data_file:
         reply = _mapi.sendRecv(msg)
-        #_generic_reply_handler( reply, _print_data )
-        _print_ack_reply()
-    elif raw_data_file:
-        update_reply = _mapi.sendRecv(msg)
-        _print_ack_reply()
-        _put_data( update_reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
+        _generic_reply_handler( reply, _print_data )
+    else:
+        if _output_mode == _OM_JSON:
+            click.echo("[")
+        reply = _mapi.sendRecv(msg)
+        _generic_reply_handler( reply, _print_data )
+        if _output_mode == _OM_JSON:
+            click.echo(",")
+        else:
+            click.echo("")
+        _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
+        if _output_mode == _OM_JSON:
+            click.echo("]")
 
 
 @_data.command(name='delete',help="Delete existing data record")
@@ -828,8 +847,10 @@ def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get wi
         replies = []
 
         for xfrs in reply[0].xfr:
-            if _output_mode == _OM_TEXT: click.echo("Transfer ID: {}".format(xfrs.id))
+            if _output_mode == _OM_TEXT:
+                click.echo("Transfer ID: {}".format(xfrs.id))
             xfr_ids.append(xfrs.id)
+
         if wait:
             if _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo("Waiting")
             while wait is True:
@@ -851,32 +872,29 @@ def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get wi
                     xfr_status = _xfr_statuses.get( check.status, "None ")
                     if _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo(
                         "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
+            # TODO cant do this
             for xfrs in replies:
                 _generic_reply_handler( xfrs, _print_xfr_stat )
         else:
-            for xfrs in replies:
-                _generic_reply_handler( xfrs, _print_xfr_stat )
+            # TODO Fix this
+            _generic_reply_handler( reply, _print_xfr_listing )
 
 
 
-@_data.command(name='put',help="Put (upload) raw data to DataFed")
-@click.argument("df_id", metavar="ID")
-@click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
+@_data.command(name='put',help="Put (upload) raw data located at PATH to DataFed record ID.")
+@click.argument("df_id", metavar="ID", required=True, nargs=1)
+@click.argument("path", metavar="PATH", required=True, nargs=1)
+#@click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 #@click.option("-ep","--endpoint",type=str,required=False,help="The endpoint from which the raw data file is to be transferred. If no endpoint is specified, the current session endpoint will be used.")
 @click.option("-e", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @_global_project_options
 @_global_output_options
-def _data_put(df_id, filepath, wait, extension, project, verbosity, json, text):
+def _data_put(df_id, path, wait, extension, project, verbosity, json, text):
     _output_checks( verbosity, json, text )
 
-    # gp = _resolve_filepath_for_xfr(filepath)
-    # if endpoint: gp = resolve_globus_path(fp, endpoint)
-    # elif not endpoint: gp = resolve_globus_path(fp, "None")
-    # if gp:
-    _put_data(df_id, project, _resolve_filepath_for_xfr(filepath), wait, extension )
-    # elif gp is None:
-    #    click.echo("No endpoint provided, and neither current working endpoint nor default endpoint have been configured.")
+    _put_data(df_id, project, _resolve_filepath_for_xfr(path), wait, extension )
+
     # TODO Handle return value in _OM_RETV
 
 # ------------------------------------------------------------------------------
@@ -1825,10 +1843,10 @@ def _http_download( url, destination ): # First argument is tuple (url, datafed 
             return
 
 
-def _put_data(df_id, project, gp, wait, extension ):
+def _put_data(df_id, project, path, wait, extension ):
     msg = auth.DataPutRequest()
     msg.id = _resolve_id(df_id,project)
-    msg.path = gp
+    msg.path = path
 
     if extension:
         msg.ext = extension
@@ -2524,9 +2542,9 @@ def _defaultOptions():
             if not os.path.exists(serv_key_file):
                 # Make default server pub key file
                 url = "https://"+opts["server_host"]+"/datafed-core-key.pub"
-                _print_msg( 1, "Downloading server public key from", url )
+                _print_msg( 1, "Downloading server public key from " + url )
                 fname = wget.download( url, out=serv_key_file, bar=_bar_adaptive_human_readable)
-                _print_msg( 1, "\nServer key written to", serv_key_file )
+                _print_msg( 1, "\nServer key written to " + serv_key_file )
 
     if not "client_pub_key_file" in opts or not "client_priv_key_file" in opts:
         if not "client_cfg_dir" in opts:
@@ -2563,6 +2581,13 @@ def _initialize( opts ):
     global _ep_default
     global _ep_cur
 
+    #print("_initialize, opts:",opts)
+
+    if "version" in opts and opts["version"]:
+        click.echo( version )
+        _interactive = False
+        raise SystemExit()
+
     _cfg = Config.API( opts )
     opts =_defaultOptions()
 
@@ -2573,26 +2598,6 @@ def _initialize( opts ):
     if tmp != None:
         _verbosity_sticky = tmp
         _verbosity = tmp
-
-    tmp = _cfg.get("interactive")
-    if tmp != None:
-        _interactive = tmp
-
-    if "version" in opts and opts["version"]:
-        click.echo( version )
-        _interactive = False
-        raise SystemExit()
-
-    if _interactive:
-        _output_mode_sticky = _OM_TEXT
-        _output_mode = _OM_TEXT
-        _print_msg( 1, "Welcome to DataFed CLI, version {}".format(version))
-        if _verbosity > 1:
-            _print_msg( 2, "Settings:" )
-            _cfg.printSettingInfo()
-    else:
-        _output_mode_sticky = _OM_JSON
-        _output_mode = _OM_JSON
 
     try:
         _mapi = MessageLib.API( **opts )
@@ -2613,8 +2618,6 @@ def _initialize( opts ):
     tmp = _cfg.get("client_token")
     if tmp != None:
         _mapi.manualAuthByToken( tmp )
-        if _interactive:
-            _print_msg(1,"Authenticated via token as",_mapi._uid)
     elif opts["manual_auth"] or not auth:
         if not opts["manual_auth"]:
             if not _mapi.keysLoaded():
@@ -2624,7 +2627,7 @@ def _initialize( opts ):
             elif not _mapi.keysValid():
                 if _output_mode == _OM_RETN:
                     raise Exception("Not authenticated: invalid local credentials.")
-                _print_msg(1,"Invalid local credentials.")
+                _print_msg(1,"Invalid local credentials.",True)
 
             _print_msg(0,"Manual authentication required.")
 
@@ -2646,9 +2649,6 @@ def _initialize( opts ):
             _print_msg(1,"Aborting...",True)
             _interactive = False
             sys.exit(1)
-    else:
-        if _interactive:
-            _print_msg(1,"Authenticated via keys as",uid)
 
     _uid = uid
     _cur_sel = uid
