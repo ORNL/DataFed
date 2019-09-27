@@ -321,7 +321,6 @@ message CollCreateRequest
     optional string             desc        = 2;
     optional string             alias       = 3;
     optional string             parent_id   = 4;
-    optional bool               ispublic    = 5;
     optional string             topic       = 6;
 }
 
@@ -331,7 +330,6 @@ message CollUpdateRequest
     optional string             title       = 2;
     optional string             desc        = 3;
     optional string             alias       = 4;
-    optional bool               ispublic    = 5;
     optional string             topic       = 6;
 }
 

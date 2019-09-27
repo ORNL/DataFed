@@ -291,10 +291,15 @@ def _set_output_text(ctx, param, value):
         _output_mode_sticky = _OM_TEXT
         _output_mode = _OM_TEXT
 
+__global_project_options = [
+    click.option('-p', '--project', required=False,type=str, help='Project ID for command'),
+    ]
+
 __global_output_options = [
     click.option('-v', '--verbosity', required=False,type=click.Choice(['0', '1', '2']), help='Verbosity of reply'),
     click.option("-J", "--json", is_flag=True, help="Set CLI output format to JSON, when applicable."),
-    click.option("-T", "--text", is_flag=True, help="Set CLI output format to human-friendly text.")]
+    click.option("-T", "--text", is_flag=True, help="Set CLI output format to human-friendly text.")
+    ]
 
 ##############################################################################
 
@@ -315,6 +320,11 @@ class AliasedGroup(click.Group):
         elif len(matches) == 1:
             return click.Group.get_command(self, ctx, matches[0])
         ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+
+def _global_project_options(func):
+    for option in __global_project_options:
+        func = option(func)
+    return func
 
 def _global_output_options(func):
     for option in reversed(__global_output_options):
@@ -383,17 +393,19 @@ def globe():
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 @click.argument("df_id", required=False, metavar="ID")
+@_global_project_options
 @_global_output_options
 @click.pass_context
-def ls(ctx,df_id,offset,count,verbosity,json,text):
+def ls(ctx,df_id,offset,count,project,verbosity,json,text):
     global _cur_coll
     global _most_recent_list_request
     global _most_recent_list_count
 
-
     if df_id is not None:
-        cid = resolve_coll_id(df_id)
+        cid = resolve_coll_id(df_id,project)
     elif not df_id:
+        if project is not None:
+            raise Exception("Project option not allowed without a collection ID/alias")
         cid = _cur_coll
 
     msg = auth.CollReadRequest()
@@ -417,7 +429,6 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
 
 
 @cli.command(help="Set/print current working collection or path. 'ID' can be a collection ID, alias, list index number, '-' (previous collection), or path. Only '..' and '/' are supported for paths. 'cd' is an alias for this command.")
-#@click.option("-p","--path",is_flag=True,help="Print full path.")
 @click.argument("df_id",required=False, metavar="ID")
 @_global_output_options
 @click.pass_context
@@ -516,13 +527,14 @@ def data():
 
 @data.command(name='view',help="View data record")
 @click.option("-d","--details",is_flag=True,help="Show additional fields")
+@_global_project_options
 @_global_output_options
 @click.argument("df_id", metavar="ID")
-def data_view(df_id,details,verbosity,json,text):
+def data_view(df_id,details, project, verbosity,json,text):
     output_checks( verbosity, json, text )
 
     msg = auth.RecordViewRequest()
-    msg.id = resolve_id(df_id)
+    msg.id = resolve_id(df_id,project)
 
     if details:
         msg.details = True
@@ -546,8 +558,9 @@ def data_view(df_id,details,verbosity,json,text):
 @click.option("-c","--collection",type=str,required=False, help="Parent collection ID/alias (default = current working collection)")
 @click.option("-R","--repository",type=str,required=False,help="Repository ID")
 @click.option("-D","--dep",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@_global_project_options
 @_global_output_options
-def data_create(title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,collection,repository,dep,verbosity,json,text): #cTODO: FIX
+def data_create(title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,collection,repository,dep,project,verbosity,json,text): #cTODO: FIX
     output_checks( verbosity, json, text )
 
     if metadata and metadata_file:
@@ -566,8 +579,10 @@ def data_create(title,alias,description,keywords,raw_data_file,extension,metadat
         msg.alias = alias
 
     if collection:
-        msg.parent_id = resolve_coll_id(collection)
+        msg.parent_id = resolve_coll_id(collection,project)
     else:
+        if project is not None:
+            raise Exception("Project option not allowed without a collection ID/alias")
         msg.parent_id = _cur_coll
 
     if repository:
@@ -594,7 +609,7 @@ def data_create(title,alias,description,keywords,raw_data_file,extension,metadat
                 dp.type = 1
             elif d[0] == "ver":
                 dp.type = 2
-            dp.id = resolve_id(d[1])
+            dp.id = resolve_id(d[1],project)
 
     if not raw_data_file:
         reply = _mapi.sendRecv(msg)
@@ -603,7 +618,7 @@ def data_create(title,alias,description,keywords,raw_data_file,extension,metadat
     else:
         create_reply = _mapi.sendRecv(msg)
         print_ack_reply()
-        put_data( create_reply[0].data[0].id, resolve_filepath_for_xfr(raw_data_file), False, None )
+        put_data( create_reply[0].data[0].id, project, resolve_filepath_for_xfr(raw_data_file), False, None )
 
 
 @data.command(name='update',help="Update existing data record")
@@ -618,9 +633,10 @@ def data_create(title,alias,description,keywords,raw_data_file,extension,metadat
 @click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Metadata file (JSON)")
 @click.option("-C","--dep-clear",is_flag=True,help="Clear all dependencies on record. May be used in conjunction with --dep-add to replace existing dependencies.")
 @click.option("-A","--dep-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
-@click.option("-R","--dep-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-R","--dep-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
+@_global_project_options
 @_global_output_options
-def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,dep_clear,dep_add,dep_rem,verbosity,json,text):
+def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,metadata,metadata_file,dep_clear,dep_add,dep_rem,project,verbosity,json,text):
     output_checks( verbosity, json, text )
 
     if metadata and metadata_file:
@@ -630,7 +646,7 @@ def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,m
         raise Exception( "Cannot specify both --dep-clear and --dep-rem options." )
 
     msg = auth.RecordUpdateRequest()
-    msg.id = resolve_id(df_id)
+    msg.id = resolve_id(df_id,project)
 
     if title:
         msg.title = title
@@ -666,7 +682,7 @@ def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,m
                 dep.type = 1
             elif d[0] == "ver":
                 dep.type = 2
-            dep.id = resolve_id(d[1])
+            dep.id = resolve_id(d[1],project)
 
     if dep_rem:
         for d in dep_rem:
@@ -677,7 +693,7 @@ def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,m
                 dep.type = 1
             elif d[0] == "ver":
                 dep.type = 2
-            dep.id = resolve_id(d[1])
+            dep.id = resolve_id(d[1],project)
 
     if not raw_data_file:
         reply = _mapi.sendRecv(msg)
@@ -686,17 +702,19 @@ def data_update(df_id,title,alias,description,keywords,raw_data_file,extension,m
     elif raw_data_file:
         update_reply = _mapi.sendRecv(msg)
         print_ack_reply()
-        put_data( update_reply[0].data[0].id, resolve_filepath_for_xfr(raw_data_file), False, None )
+        put_data( update_reply[0].data[0].id, project, resolve_filepath_for_xfr(raw_data_file), False, None )
 
 
 @data.command(name='delete',help="Delete existing data record")
+@click.option("-f","--force",is_flag=True,help="Delete record without confirmation.")
 @click.argument("df_id", metavar="ID", nargs=-1)
+@_global_project_options
 @_global_output_options
-def data_delete(df_id, verbosity, json, text):
+def data_delete(df_id, force, project, verbosity, json, text):
     resolved_list = []
     for ids in df_id:
-        resolved_list.append(resolve_id(ids))
-    if _interactive:
+        resolved_list.append(resolve_id(ids,project))
+    if _interactive and not force:
         if not click.confirm("Confirm delete record(s) {} ('y' to delete)?".format(resolved_list)):
             return
     msg = auth.RecordDeleteRequest()
@@ -713,14 +731,15 @@ def data_delete(df_id, verbosity, json, text):
 @click.argument("path", required=True, nargs=1)
 #@click.option("-fp","--filepath",type=str,required=True,help="Destination to which file is to be downloaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block until Globus transfer is complete")
+@_global_project_options
 @_global_output_options
-def data_get( df_id, path, wait, verbosity, json, text): #Multi-get will initiate one transfer per repo (multiple records in one transfer, as long as they're in the same repo)
+def data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get will initiate one transfer per repo (multiple records in one transfer, as long as they're in the same repo)
     output_checks( verbosity, json, text )
 
     check = auth.DataGetPreprocRequest()
 
     for ids in df_id:
-        check.id.append( resolve_id( ids ))
+        check.id.append( resolve_id( ids, project ))
 
     check_reply, mt = _mapi.sendRecv(check)
     checked_list = []
@@ -781,10 +800,14 @@ def data_get( df_id, path, wait, verbosity, json, text): #Multi-get will initiat
 @click.option("-fp","--filepath",type=str,required=True,help="Path to the file being uploaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 @click.option("-e", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@_global_project_options
 @_global_output_options
+
 def data_put(df_id, filepath, wait, extension, verbosity, json, text):
     output_checks(verbosity, json, text)
     put_data(df_id, resolve_filepath_for_xfr(filepath), wait, extension)
+
+    # TODO Handle return value in _OM_RETV
 
 
 # ------------------------------------------------------------------------------
@@ -796,8 +819,9 @@ def batch():
 @batch.command(name='create',help="Batch create data records from JSON file(s)")
 @click.option("-c","--collection",type=str,required=False, help="Optional target collection")
 @click.argument("file", type=str, required=True, nargs=-1)
+@_global_project_options
 @_global_output_options
-def data_batch_create(collection,file,verbosity,json,text):
+def data_batch_create(collection,file,project,verbosity,json,text):
     output_checks( verbosity, json, text )
 
     payload = []
@@ -823,10 +847,12 @@ def data_batch_create(collection,file,verbosity,json,text):
                 records = [records]
 
             if collection:
-                coll = resolve_coll_id(collection)
+                coll = resolve_coll_id(collection,project)
                 for item in records:
                     item["parent"] = coll
             else:
+                if project:
+                    raise Exception("Project option not allowed without a collection ID/alias")
                 for item in records:
                     if "parent" not in item:
                         item["parent"] = _cur_coll
@@ -884,10 +910,11 @@ def coll():
 
 @coll.command(name='view',help="View collection")
 @click.argument("df_id", metavar="ID")
+@_global_project_options
 @_global_output_options
-def coll_view(df_id, verbosity, json, text):
+def coll_view(df_id, project, verbosity, json, text):
     msg = auth.CollViewRequest()
-    msg.id = resolve_coll_id(df_id)
+    msg.id = resolve_coll_id(df_id,project)
 
     output_checks( verbosity, json, text )
 
@@ -900,19 +927,22 @@ def coll_view(df_id, verbosity, json, text):
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-c","--collection",type=str,required=False,help="Parent collection ID/alias (default is current working collection)")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-p", "--topic", type=str, required=False, help="Publish the collection (make associated records and datas read-only to everyone) under the provided topic. Topics use periods ('.') as delimiters.")
+@click.option("--topic", type=str, required=False, help="Publish the collection (make associated records and data read-only to everyone) under the provided topic. Topics use periods ('.') as delimiters.")
+@_global_project_options
 @_global_output_options
-def coll_create(title,alias,description,topic,collection,verbosity,json,text):
+def coll_create(title,alias,description,topic,collection,project,verbosity,json,text):
     msg = auth.CollCreateRequest()
     msg.title = title
     if alias: msg.alias = alias
     if description: msg.desc = description
     if topic:
-        msg.ispublic = True
         msg.topic = topic
     if collection:
-        msg.parent_id = resolve_coll_id(collection)
+        msg.parent_id = resolve_coll_id(collection,project)
     else:
+        if project is not None:
+            raise Exception("Project option not allowed without a collection ID/alias")
+
         msg.parent_id = _cur_coll
 
     output_checks( verbosity, json, text )
@@ -926,20 +956,19 @@ def coll_create(title,alias,description,topic,collection,verbosity,json,text):
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-p", "--topic", type=str, required=False, help="Publish the collection under the provided topic. Topics use periods ('.') as delimiters. To revoke published status, specify '-p undo'")
+@click.option("--topic", type=str, required=False, help="Publish the collection under the provided topic. Topics use periods ('.') as delimiters. To revoke published status, specify '-p undo'")
+@_global_project_options
 @_global_output_options
-def coll_update(df_id,title,alias,description,topic,verbosity,json,text):
+def coll_update(df_id,title,alias,description,topic,project,verbosity,json,text):
     msg = auth.CollUpdateRequest()
-    msg.id = resolve_coll_id(df_id)
+    msg.id = resolve_coll_id(df_id,project)
     if title: msg.title = title
     if alias: msg.alias = alias
     if description: msg.desc = description
     if topic:
         if topic == 'undo':
-            msg.ispublic = False
             msg.topic = ""
         else:
-            msg.ispublic = True
             msg.topic = topic
 
     output_checks( verbosity, json, text )
@@ -951,11 +980,12 @@ def coll_update(df_id,title,alias,description,topic,verbosity,json,text):
 @coll.command(name='delete',help="Delete existing collection. ID may be a collection ID or alias, or an index value from a listing.")
 @click.option("-f","--force",is_flag=True,help="Delete collection without confirmation.")
 @click.argument("df_id", metavar="ID", nargs=-1)
+@_global_project_options
 @_global_output_options
-def coll_delete(df_id, force, verbosity, json, text):
+def coll_delete(df_id, force, project, verbosity, json, text):
     resolved_list = []
     for ids in df_id:
-        resolved_list.append(resolve_coll_id(ids))
+        resolved_list.append(resolve_coll_id(ids,project))
 
     if _interactive and not force:
         click.echo("Warning: this will delete all data records and collections contained in the specified collection(s).")
@@ -974,14 +1004,15 @@ def coll_delete(df_id, force, verbosity, json, text):
 @coll.command(name='add',help="Add data records and/or collections to a collection. Specify one or more items to add using the ITEM_ID arguments, and a target collection using the COLL_ID argument.")
 @click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
 @click.argument("coll_id",metavar="COLL_ID", required=True, nargs=1)
+@_global_project_options
 @_global_output_options
-def coll_add( item_id, coll_id, verbosity, json, text ):
+def coll_add( item_id, coll_id, project, verbosity, json, text ):
     output_checks( verbosity, json, text )
 
     msg = auth.CollWriteRequest()
-    msg.id = resolve_coll_id(coll_id)
+    msg.id = resolve_coll_id(coll_id,project)
     for i in item_id:
-        msg.add.append(resolve_id(i))
+        msg.add.append(resolve_id(i,project))
 
     reply = _mapi.sendRecv(msg)
     #generic_reply_handler(reply, print_ack_reply)
@@ -990,14 +1021,15 @@ def coll_add( item_id, coll_id, verbosity, json, text ):
 @coll.command(name='remove',help="Remove data records and/or collections from a collection. Specify one or more items to remove using the ITEM_ID arguments, and a target collection using the COLL_ID argument.")
 @click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
 @click.argument("coll_id",metavar="COLL_ID", required=True, nargs=1)
+@_global_project_options
 @_global_output_options
-def coll_rem( item_id, coll_id, verbosity, json, text ):
+def coll_rem( item_id, coll_id, project, verbosity, json, text ):
     output_checks( verbosity, json, text )
 
     msg = auth.CollWriteRequest()
-    msg.id = resolve_coll_id(coll_id)
+    msg.id = resolve_coll_id(coll_id,project)
     for i in item_id:
-        msg.rem.append(resolve_id(i))
+        msg.rem.append(resolve_id(i,project))
 
     reply = _mapi.sendRecv(msg)
     #generic_reply_handler(reply, print_ack_reply)
@@ -1676,26 +1708,43 @@ def resolve_index_val(df_id):
     return df_id
 
 
-def resolve_id(df_id):
+def resolve_id(df_id,project):
     df_id2 = resolve_index_val(df_id)
 
     if (len(df_id2) > 2 and df_id2[1] == "/") or (df_id2.find(":") > 0):
         return df_id2
 
-    return _cur_alias_prefix + df_id2
+    if project:
+        if project[:2] == "p/":
+            return "p:" + project[2:] + ":" + df_id2
+        else:
+            return "p:" + project + ":" + df_id2
+    else:
+        return _cur_alias_prefix + df_id2
 
 
-def resolve_coll_id(df_id):
+def resolve_coll_id(df_id,project):
     if df_id == ".":
+        if project:
+            raise Exception("Project option may not be used with relative paths")
         return _cur_coll
     elif df_id == "-":
+        if project:
+            raise Exception("Project option may not be used with previous working collection")
         return _prev_coll
     elif df_id == "/":
-        if _cur_sel[0] == "p":
+        if project:
+            if project[:2] == "p/":
+                return "c/p_" + project[2:] + "_root"
+            else:
+                return "c/p_" + project + "_root"
+        elif _cur_sel[0] == "p":
             return "c/p_" + _cur_sel[2:] + "_root"
         else:
             return "c/u_" + _cur_sel[2:] + "_root"
     elif df_id == "..":
+        if project:
+            raise Exception("Project option may not be used with relative paths")
         msg = auth.CollGetParentsRequest()
         msg.id = _cur_coll
         reply, mt = _mapi.sendRecv(msg)
@@ -1709,7 +1758,13 @@ def resolve_coll_id(df_id):
     if df_id2.find("/") > 0 or df_id2.find(":") > 0:
         return df_id2
 
-    return _cur_alias_prefix + df_id2
+    if project:
+        if project[:2] == "p/":
+            return "p:" + project[2:] + ":" + df_id2
+        else:
+            return "p:" + project + ":" + df_id2
+    else:
+        return _cur_alias_prefix + df_id2
 
 
 def http_download( url, destination ): # First argument is tuple (url, datafed record ID)
@@ -1732,9 +1787,9 @@ def http_download( url, destination ): # First argument is tuple (url, datafed r
             return
 
 
-def put_data(df_id, gp, wait, extension ):
+def put_data(df_id, project, gp, wait, extension ):
     msg = auth.DataPutRequest()
-    msg.id = resolve_id(df_id)
+    msg.id = resolve_id(df_id,project)
     msg.path = gp
 
     if extension:

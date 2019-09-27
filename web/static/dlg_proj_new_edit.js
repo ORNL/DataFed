@@ -229,7 +229,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         }
                     }
 
-                    $("#suballoc",frame).html(alloc_opt).selectmenu({width:"auto",disabled:!(a_upd_perms&PERM_WR_REC)}).on('selectmenuchange', function( ev, ui ) {
+                    $("#suballoc",frame).html(alloc_opt).selectmenu({width:"auto",disabled:a_data?!(a_upd_perms&PERM_WR_REC):false}).on('selectmenuchange', function( ev, ui ) {
                         console.log("alloc changed",ui.item.value,$("#suballoc",frame).val());
 
                         if ( ui.item.value == "none" ){

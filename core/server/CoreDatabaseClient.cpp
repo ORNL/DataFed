@@ -1330,8 +1330,6 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
         body += ",\"alias\":\"" + a_request.alias() + "\"";
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
-    if ( a_request.has_ispublic() )
-        body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     body += "}";
@@ -1353,8 +1351,6 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
-    if ( a_request.has_ispublic() )
-        body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
     body += "}";

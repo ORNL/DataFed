@@ -70,9 +70,11 @@ router.post('/create', function (req, res) {
                 g_lib.procInputParam( req.body, "desc", false, obj );
                 g_lib.procInputParam( req.body, "alias", false, obj );
 
-                if ( req.body.public ){
-                    obj.public = req.body.public;
+                if ( req.body.topic ){
+                    obj.public = true;
                     g_lib.procInputParam( req.body, "topic", false, obj );
+                }else{
+                    obj.public = false;
                 }
 
                 var coll = g_db.c.save( obj, { returnNew: true });
@@ -113,7 +115,6 @@ router.post('/create', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    public: joi.boolean().optional(),
     topic: joi.string().allow('').optional(),
     parent: joi.string().allow('').optional()
 }).required(), 'Collection fields')
@@ -219,7 +220,6 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    //public: joi.boolean().optional(),
     topic: joi.string().allow('').optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
