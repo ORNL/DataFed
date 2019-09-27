@@ -274,6 +274,11 @@ message XfrDataReply
     repeated SDMS.XfrData       xfr         = 1;
 }
 
+message HttpXfrDataReply
+{
+    repeated SDMS.HttpXfrData   xfr         = 1;
+}
+
 // Perform pre-download verification/processing
 message DataGetPreprocRequest
 {

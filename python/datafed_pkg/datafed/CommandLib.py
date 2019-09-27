@@ -43,6 +43,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.formatted_text import to_formatted_text
 
 from . import SDMS_Auth_pb2 as auth
+from . import SDMS_pb2 as sdms
 from . import MessageLib
 from . import Config
 from . import version
@@ -674,9 +675,17 @@ def _data_create(title,alias,description,keywords,raw_data_file,extension,metada
         reply = _mapi.sendRecv(msg)
         _generic_reply_handler( reply, _print_data )
     else:
+        if _output_mode == _OM_JSON:
+            click.echo("[")
         reply = _mapi.sendRecv(msg)
         _generic_reply_handler( reply, _print_data )
+        if _output_mode == _OM_JSON:
+            click.echo(",")
+        else:
+            click.echo("")
         _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
+        if _output_mode == _OM_JSON:
+            click.echo("]")
 
 
 @_data.command(name='update',help="Update existing data record")
@@ -797,45 +806,92 @@ def _data_delete(df_id, force, project, verbosity, json, text):
 @_data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
 @click.argument("df_id", required=True, metavar="ID", nargs=-1)
 @click.argument("path", required=True, nargs=1)
-#@click.option("-fp","--filepath",type=str,required=True,help="Destination to which file is to be downloaded. Relative paths are acceptable if transferring from the operating file system. Note that Windows-style paths need to be escaped, i.e. all single backslashes should be entered as double backslashes. If you wish to use a Windows path from a Unix-style machine, please use an absolute path in Globus-style format (see docs for details.)")
 @click.option("-w","--wait",is_flag=True,help="Block until Globus transfer is complete")
 @_global_project_options
 @_global_output_options
-def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get will initiate one transfer per repo (multiple records in one transfer, as long as they're in the same repo)
+def _data_get( df_id, path, wait, project, verbosity, json, text):
     _output_checks( verbosity, json, text )
 
-    check = auth.DataGetPreprocRequest()
+    # Request server to map specified IDs into a list of specific record IDs.
+    # This accounts for download of collections.
 
+    msg = auth.DataGetPreprocRequest()
     for ids in df_id:
-        check.id.append( _resolve_id( ids, project ))
+        msg.id.append( _resolve_id( ids, project ))
 
-    reply = _mapi.sendRecv(check)
+    reply = _mapi.sendRecv(msg)
 
     # For RETN mode, must check for NACK
     if _checkNackReply( reply ):
         return
 
-    checked_list = []
-    url_list = []
+    # May initiate multiple transfers - one per repo with multiple records per transfer
+    # Downloads may be Globus OR HTTP, but not both
+
+    glob_list = []
+    http_list = []
     for i in reply[0].item:
         if i.url:
-            url_list.append((i.url, i.id))
+            http_list.append((i.url, i.id))
         else:
-            checked_list.append(i.id)
+            glob_list.append(i.id)
 
-    if checked_list and url_list:
+    if glob_list and http_list:
         raise Exception("Cannot 'get' records via Globus and http with same command.")
 
-    if url_list: #HTTP transfers
-        for url in url_list:
-            _http_download( url, _resolve_filepath_for_http( path ))
-    elif len(checked_list) > 0: #Globus transfers
+    if http_list:
+        # HTTP transfers
+        path = _resolve_filepath_for_http( path )
+        #result = []
+        result = auth.HttpXfrDataReply()
+
+        for item in http_list:
+            xfr = result.xfr.add()
+            xfr.rec_id = item[1]
+            xfr.mode = sdms.XM_GET
+            setattr(xfr,"from",item[0])
+            xfr.to = path
+            xfr.started = int(time.time())
+
+            try:
+                filename = os.path.join( path, wget.filename_from_url( item[0] ))
+                # wget has a buggy filename uniquifier, appended integer will not increase after 1
+                new_filename = _uniquify(filename)
+
+                if _output_mode == _OM_TEXT and _verbosity >= 1:
+                    data_file = wget.download( item[0], out=str(new_filename), bar=_bar_adaptive_human_readable)
+                    _print_msg(1,"\nRecord {} downloaded to {}".format( item[1], data_file ))
+                else:
+                    data_file = wget.download( item[0], out=str(new_filename), bar=None)
+                    #result.append({"id":item[1],"url":item[0],"file":data_file,"status":"SUCCEEDED"})
+                    xfr.to = data_file
+                    xfr.updated = int(time.time())
+                    xfr.status = sdms.XS_SUCCEEDED
+
+
+            except Exception as e:
+                _print_msg(0,"Record {} download failed: {}".format(item[1],e))
+                xfr.status = sdms.XS_FAILED
+                xfr.err_msg = str(e)
+                xfr.updated = int(time.time())
+                #result.append({"id":item[1],"url":item[0],"file":new_filename,"status":"FAILED","err_msg":str(e)})
+
+        if _output_mode_sticky == _OM_RETN:
+            global _return_val
+            _return_val = {"msg_type":"HttpXfrDataReply","message":result}
+            return
+        elif _output_mode == _OM_JSON:
+            #click.echo( jsonlib.dumps( {"msg_type":"HttpXfrDataReply","message":result} ))
+            click.echo( "{{\"msg_type\":\"{}\",\"message\":{}}}".format("HttpXfrDataReply",MessageToJson( result, preserving_proto_field_name=True )))
+
+    elif len(glob_list) > 0:
+        # Globus transfers
         msg = auth.DataGetRequest()
-        msg.id.extend(checked_list)
+        msg.id.extend(glob_list)
         msg.path = _resolve_filepath_for_xfr(path)
 
-        if msg.path != path and _verbosity >= 1 and _output_mode == _OM_TEXT:
-            click.echo("Initiating Globus transfer to {}".format( msg.path ))
+        if msg.path != path:
+            _print_msg(1,"Initiating Globus transfer to {}".format( msg.path ))
 
         reply = _mapi.sendRecv(msg)
 
@@ -843,41 +899,48 @@ def _data_get( df_id, path, wait, project, verbosity, json, text): #Multi-get wi
         if _checkNackReply( reply ):
             return
 
-        xfr_ids = []
-        replies = []
-
-        for xfrs in reply[0].xfr:
-            if _output_mode == _OM_TEXT:
-                click.echo("Transfer ID: {}".format(xfrs.id))
-            xfr_ids.append(xfrs.id)
-
         if wait:
-            if _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo("Waiting")
-            while wait is True:
-                time.sleep(3)
-                for xfrs in xfr_ids:
-                    update_msg = auth.XfrViewRequest()
-                    update_msg.xfr_id = xfrs
+            xfr_ids = []
+            replies = []
+            num_xfr = len( reply[0].xfr )
 
-                    reply = _mapi.sendRecv(update_msg)
+            for xfrs in reply[0].xfr:
+                xfr_ids.append(xfrs.id)
+
+            _print_msg(1,"Waiting on transfer ID(s) {}".format( str( xfr_ids )))
+
+            msg = auth.XfrViewRequest()
+
+            while wait and num_xfr > 0:
+                time.sleep(3)
+
+                for xid in xfr_ids:
+                    msg.xfr_id = xid
+
+                    reply = _mapi.sendRecv(msg)
 
                     # For RETN mode, must check for NACK
                     if _checkNackReply( reply ):
                         return
 
                     check = reply[0].xfr[0]
-                    if check.status >=3:
-                        replies.append(reply)
-                        wait = False
-                    xfr_status = _xfr_statuses.get( check.status, "None ")
-                    if _verbosity >= 1 and _output_mode == _OM_TEXT: click.echo(
-                        "{:15} {:15} {:15} {:15}".format("Transfer ID:", check.id, "Status:", xfr_status)) # BUG: Gets stuck after 2 go-arounds
-            # TODO cant do this
-            for xfrs in replies:
-                _generic_reply_handler( xfrs, _print_xfr_stat )
+                    if check.status >= 3:
+                        replies.append(check)
+                        num_xfr = num_xfr - 1
+
+                    if num_xfr > 0:
+                        _print_msg(1,"  Transfer {}, status: {}".format( check.id,_xfr_statuses.get( check.status, "None ")))
+
+            # This is messy... there is no single transfer status reply available from the server after the initial request
+            # Must create a new reply and insert the contents of the status replies from the polling loop
+            reply = auth.XfrDataReply()
+            reply.xfr.extend(replies)
+            _generic_reply_handler( [reply,"XfrDataReply"], _print_xfr_stat )
         else:
-            # TODO Fix this
-            _generic_reply_handler( reply, _print_xfr_listing )
+            _generic_reply_handler( reply, _print_xfr_stat )
+    else:
+        # Will land here if tried to get a collection with no records
+        raise Exception("No data records found to download")
 
 
 
@@ -894,8 +957,6 @@ def _data_put(df_id, path, wait, extension, project, verbosity, json, text):
     _output_checks( verbosity, json, text )
 
     _put_data(df_id, project, _resolve_filepath_for_xfr(path), wait, extension )
-
-    # TODO Handle return value in _OM_RETV
 
 # ------------------------------------------------------------------------------
 # Data batch command group
@@ -1823,31 +1884,10 @@ def _resolve_coll_id(df_id,project = None):
     else:
         return _cur_alias_prefix + df_id2
 
-
-def _http_download( url, destination ): # First argument is tuple (url, datafed record ID)
-    filename = os.path.join(destination, wget.filename_from_url(url[0]))
-    new_filename = _uniquify(filename) # wget has a buggy filename uniquifier, appended integer will not increase after 1
-
-    if _output_mode == _OM_TEXT and _verbosity >= 1:
-        data_file = wget.download(url[0], out=str(new_filename), bar=_bar_adaptive_human_readable)
-        click.echo("\nRaw data for record {} downloaded to {}".format(url[1], data_file))
-    else:
-        data_file = wget.download(url[0], out=str(new_filename), bar=None)
-        if _output_mode == _OM_TEXT:
-            click.echo("\nRecord {} downloaded to {}".format(url[1], data_file))
-        elif _output_mode == _OM_JSON:
-            click.echo('{{ "id": "{}", "file": "{}" }}'.format( url[1], data_file ))
-        elif output_mode == _OM_RETN:
-            global _return_val
-            _return_val = { "id": url[1], "file": data_file }
-            return
-
-
 def _put_data(df_id, project, path, wait, extension ):
     msg = auth.DataPutRequest()
     msg.id = _resolve_id(df_id,project)
     msg.path = path
-
     if extension:
         msg.ext = extension
 
@@ -1857,12 +1897,9 @@ def _put_data(df_id, project, path, wait, extension ):
     if _checkNackReply( reply ):
         return
 
-    xfr_id = reply[0].xfr[0].id
-
-    if _output_mode == _OM_TEXT:
-        click.echo("{:<20} {:<50}".format("Transfer ID:",xfr_id))
     if wait:
-        _print_msg(1,"Waiting")
+        xfr_id = reply[0].xfr[0].id
+        _print_msg(1,"Waiting on transfer ID {}".format( xfr_id ))
 
         while wait is True:
             time.sleep(2)
@@ -1877,14 +1914,17 @@ def _put_data(df_id, project, path, wait, extension ):
                 return
 
             check = reply[0].xfr[0]
-            if check.status == 3 or check.status == 4: break
-            xfr_status = _xfr_statuses.get(check.status, "None")
-            if _verbosity >= 1 and _output_mode == _OM_TEXT:
-                click.echo("{:<20} {:<50} {:<25} {:<25}".format("Transfer ID:",check.id,"Status:",xfr_status))
 
-        _generic_reply_handler(reply,_print_xfr_stat )
+            if check.status == 3 or check.status == 4:
+                break
+
+            _print_msg(1,"  Status: {}".format( _xfr_statuses.get(check.status, "None") ))
+
+        _print_msg(1,"")
+        _generic_reply_handler( reply, _print_xfr_stat )
     else:
-        _generic_reply_handler(reply,_print_xfr_stat )
+        _generic_reply_handler( reply, _print_xfr_stat )
+
 
 def _resolve_filepath_for_http(path):
     if path[0] == "~":
@@ -2154,7 +2194,6 @@ def _print_xfr_stat( message ):
             df_ids += xfr.repo.file[f].id
 
         click.echo("{:<20} {:<50}".format('Data Record(s): ', df_ids ))
-
 
 def _print_user( message ):
     for usr in message.user:
@@ -2653,4 +2692,5 @@ def _initialize( opts ):
     _uid = uid
     _cur_sel = uid
     _initialized = True
+
 

@@ -295,6 +295,17 @@ message XfrData
     optional string             err_msg     = 12; // Only set if status == XFR_FAILED
 }
 
+message HttpXfrData
+{
+    required string             rec_id      = 1;
+    required XfrMode            mode        = 2; // Always XM_GET for now
+    required string             from        = 3;
+    required string             to          = 4;
+    required uint32             started     = 5;
+    required uint32             updated     = 6;
+    required XfrStatus          status      = 7;
+    optional string             err_msg     = 8; // Only set if status == XFR_FAILED
+}
 
 message GroupData
 {
