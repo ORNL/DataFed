@@ -62,7 +62,6 @@
                 &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s5319'>5.3.1.9 Client Private Key File</a><br>
                 &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s53110'>5.3.1.10 Default Endpoint</a><br>
                 &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s53111'>5.3.1.11 Default Verbosity</a><br>
-                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#s53112'>5.3.1.12 Default Interactivity</a><br>
                 &nbsp&nbsp&nbsp&nbsp<a href='#s532'>5.3.2 Configuration Files</a><br>
                 &nbsp&nbsp&nbsp&nbsp<a href='#s533'>5.3.3 Configuration Priority</a><br>
                 &nbsp&nbsp&nbsp&nbsp<a href='#s534'>5.3.4 Automatic Authentication</a><br>
@@ -262,7 +261,7 @@
 <pre style='margin:0 5em'>pip install datafed</pre>
 
 <p>
-Once the DataFed package and its dependencies are installed, the "datafed" script will be available in the Python path to run the CLI either interactively or from scripts. Note, however, that the DataFed CLI must be properly <a href='#s521'>configured</a> before it can be used. After configuration, refer to the <a href='#s3'>Commands</a> section, below, for details on how to use the DataFed CLI (a '--help' option is also available). Several DataFed Python modules are available for direct access to DataFed services from custom Python scripts, and these modules are documented in the <a href='#s54'>Client API</a> section, below.
+Once the DataFed package and its dependencies are installed, the "datafed" script will be available in the Python path to run the CLI either interactively or from scripts (with the --script, or -s, option). Note, however, that the DataFed CLI must be properly <a href='#s521'>configured</a> before it can be used. After configuration, refer to the <a href='#s3'>Commands</a> section, below, for details on how to use the DataFed CLI (a '--help' option is also available). Several DataFed Python modules are available for direct access to DataFed services from custom Python scripts, and these modules are documented in the <a href='#s54'>Client API</a> section, below.
 </p>
 
 <h2 id='s53'>5.3 CLI Configuration</h2>
@@ -290,7 +289,7 @@ Table 5.3.1-1, below, lists all of the CLI settings and how they can be set usin
 <tr><td>client</td><td>private_key_file</td><td>DATAFED_CLIENT_PRIV_KEY_FILE</td><td>--client-priv-key-file</td><td>Client private key file</td></tr>
 <tr><td>general</td><td>default_endpoint</td><td>DATAFED_DEFAULT_ENDPOINT</td><td>--default-ep, -e</td><td>Default Globus endpoint</td></tr>
 <tr><td>general</td><td>verbosity</td><td>DATAFED_DEFAULT_VERBOSITY</td><td>--verbosity, -v</td><td>Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.</td></tr>
-<tr><td>general</td><td>interactive</td><td>DATAFED_DEFAULT_INTERACT</td><td>--interactive/--no-interactive, -i/-n</td><td>Start an interactive session</td></tr>
+</tr>
 </table><br>
 <center><b>Table 5.3.1-1 DataFed Client Configuration Settings</b></center>
 
@@ -431,19 +430,6 @@ The default endpoint setting determines which Globus endpoint to prepend to the 
 <p>
 The default verbosity level setting adjusts the output detail level for text-format output only. The value is an integer, where 0 = quiet, 1 = normal, and 2 = verbose.
 </p>
-
-<h4 id='s3112'>3.1.12 Default Interactivity</h4>
-
-<table class='border-table cfg-info-table'>
-<tr><td>Cfg. File</td><td>[general] interactive</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_DEFAULT_INTERACT</td></tr>
-<tr><td>Option</td><td>--interactive/--no-interactive, -i/-n</td></tr>
-</table>
-
-<p>
-The default interactivity setting determines if an interactive shell is started when the CLI is run, with or without an initial command. For configuration files and environment variables, the value is an integer where 0 = non-interactive, and 1 = interactive. This setting is a simple flag (no value) when used as a CLI option.
-</p>
-
 
 <div class='clearfix'>
     <h3 id='s532'>5.3.2 Configuration Files</h3>

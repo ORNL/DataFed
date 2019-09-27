@@ -369,9 +369,9 @@ function dedupShares( client, shares ){
 router.get('/by_user/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        const owner_id = req.queryParams.owner;
+        const owner = g_lib.getUserFromClientID( req.queryParams.owner );
 
-        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
+        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: client._id, owner: owner._id }).toArray();
 
         if ( shares.length < 2 ){
             res.send(shares);
@@ -404,6 +404,15 @@ router.get('/by_proj/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         const owner_id = req.queryParams.owner;
+
+        // Verify owner ID is a project
+        if ( !owner_id.startsWith( "p/" ))
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid project ID: "+owner_id];
+
+        // Verify owner exists
+        if ( !g_db._exists( owner_id ))
+            throw [g_lib.ERR_NOT_FOUND,"Project "+owner_id+" not found"];
+
         var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
 
         if ( shares.length < 2 ){
