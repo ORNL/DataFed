@@ -4,8 +4,9 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             <div id='dlg_user_tree' class='no-border'></div>\
         </div>";
 
+    var sel_users = []
+
     this.userPageLoad = function( key, offset ){
-        console.log("userPageLoad",key, offset);
         var node = tree.getNodeByKey( key );
         if ( node ){
             node.data.offset = offset;
@@ -29,7 +30,8 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             id:"ok_btn",
             text: "Ok",
             click: function() {
-                users = [];
+                
+                /*users = [];
                 //var tree = $("#dlg_user_tree",frame).fancytree("getTree");
                 var sel = tree.getSelectedNodes();
                 var key;
@@ -37,8 +39,8 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                     key = sel[i].key;
                     if ( users.indexOf( key ) == -1 )
                         users.push( key );
-                }
-                cb( users );
+                }*/
+                cb( sel_users );
                 $(this).dialog('destroy').remove();
             }
         },{
@@ -71,8 +73,27 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         },
         source: src,
         selectMode: a_single_sel?1:2,
-        select: function(){
-            if ( tree.getSelectedNodes().length ){
+        select: function( ev, data ){
+            var idx = sel_users.indexOf( data.node.key )
+            if ( data.node.isSelected()){
+                if ( idx == -1 ){
+                    sel_users.push( data.node.key );
+                    tree.visit( function( vnode ){
+                        if ( vnode.key == data.node.key )
+                            vnode.setSelected( true );
+                    });
+                }
+            }else{
+                if ( idx != -1 ){
+                    sel_users.splice( idx, 1 );
+                    tree.visit( function( vnode ){
+                        if ( vnode.key == data.node.key )
+                            vnode.setSelected( false );
+                    });
+                }
+            }
+
+            if ( sel_users.length ){
                 $("#ok_btn").button("enable");
             }else{
                 $("#ok_btn").button("disable");
@@ -109,7 +130,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 var user;
                 for ( var i in data.response.user ) {
                     user = data.response.user[i];
-                    data.result.push({ title: user.name + " ("+user.uid.substr(2) +")",icon:"ui-icon ui-icon-person",key: user.uid,unselectable:(a_excl.indexOf( user.uid ) != -1) });
+                    data.result.push({ title: user.name + " ("+user.uid.substr(2) +")",icon:"ui-icon ui-icon-person",key: user.uid,unselectable:(a_excl.indexOf( user.uid ) != -1), selected: sel_users.indexOf( user.uid ) != -1 });
                 }
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
