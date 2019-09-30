@@ -1660,6 +1660,7 @@ def _ep_default_get( verbosity, json, text ):
 def _ep_default_set( current, endpoint, verbosity, json, text ):
     _output_checks( verbosity, json, text )
 
+    global _ep_cur
     global _ep_default
 
     if current:
@@ -1674,6 +1675,8 @@ def _ep_default_set( current, endpoint, verbosity, json, text ):
     elif endpoint:
         _ep_default = _resolve_index_val(endpoint)
         _cfg.set("default_ep",_ep_default,True)
+        if _ep_cur == None:
+            _ep_cur = _ep_default
     else:
         raise Exception("Must specify an endpoint or the --current flag.")
 
@@ -1998,17 +2001,11 @@ def _resolve_filepath_for_xfr(path,must_exist):
                     fp = "/" + fp
 
         global _ep_cur
-        global _ep_default
+
         if _ep_cur:
             fp = _ep_cur + str(fp)
-    #        click.echo("Found current endpoint, globus path is {}".format(str(fp)))
-        elif _ep_cur is None:
-            if _ep_default:
-                fp = _ep_default + str(fp)
-    #            click.echo("Found default endpoint, globus path is {}".format(str(fp)))
-            elif _ep_default is None:
-    #            click.echo("Path given does not appear to contain an endpoint, and no default or current session endpoint has been specified.")
-                return
+        else:
+            raise Exception("No endpoint set")
 
     return str(fp)
 
