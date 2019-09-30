@@ -984,11 +984,11 @@ def _data_batch_create(collection,file,project,verbosity,json,text):
             raise Exception( "File not found: " + f )
 
         if fp.stat().st_size > _max_md_size:
-            raise Exception( "Batch create file, " + f +", exceeds maximum size ("+_max_md_size+")" )
+            raise Exception( "Batch create file, " + f +", exceeds maximum size ("+str(_max_md_size)+")" )
 
         tot_size += fp.stat().st_size
         if tot_size > _max_payload_size:
-            raise Exception( "Total batch create size exceeds limit ("+_max_payload_size+")" )
+            raise Exception( "Total batch create size exceeds limit ("+str(_max_payload_size)+")" )
 
         with fp.open('r+') as f:
             records = jsonlib.load(f)
@@ -1032,11 +1032,11 @@ def _data_batch_update(file,verbosity,json,text):
             raise Exception( "File not found: " + f )
 
         if fp.stat().st_size > _max_md_size:
-            raise Exception( "Batch update file, " + f +", exceeds maximum size ("+_max_md_size+")" )
+            raise Exception( "Batch update file, " + f +", exceeds maximum size ("+str(_max_md_size)+")" )
 
         tot_size += fp.stat().st_size
         if tot_size > _max_payload_size:
-            raise Exception( "Total batch update size exceeds limit ("+_max_payload_size+")" )
+            raise Exception( "Total batch update size exceeds limit ("+str(_max_payload_size)+")" )
 
         with fp.open('r+') as f:
             records = jsonlib.load(f)
