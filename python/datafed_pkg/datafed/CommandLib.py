@@ -129,6 +129,8 @@ def _run():
                 click.echo( e.format_message() )
             elif _output_mode == _OM_JSON:
                 click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e.format_message()))
+            if _first:
+                _interactive = False
 
         except SystemExit as e:
             # For subsequent interactive commands, hide top-level (start-up) options
