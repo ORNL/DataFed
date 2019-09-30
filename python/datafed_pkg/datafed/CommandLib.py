@@ -158,13 +158,13 @@ def _run():
                 elif _output_mode == _OM_JSON:
                     click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
 
-        '''
         except Exception as e:
             if _output_mode == _OM_TEXT:
                 click.echo(e)
             elif _output_mode == _OM_JSON:
                 click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
-        '''
+            if _first:
+                _interactive = False
 
         # If initialization failed or not in interactive mode, exit main loop
         if not _initialized or _interactive == False:
@@ -685,7 +685,7 @@ def _data_create(title,alias,description,keywords,raw_data_file,extension,metada
             click.echo(",")
         else:
             click.echo("")
-        _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
+        _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file,True), False, None )
         if _output_mode == _OM_JSON:
             click.echo("]")
 
@@ -776,7 +776,7 @@ def _data_update(df_id,title,alias,description,keywords,raw_data_file,extension,
             click.echo(",")
         else:
             click.echo("")
-        _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file), False, None )
+        _put_data( reply[0].data[0].id, project, _resolve_filepath_for_xfr(raw_data_file,True), False, None )
         if _output_mode == _OM_JSON:
             click.echo("]")
 
@@ -890,7 +890,7 @@ def _data_get( df_id, path, wait, project, verbosity, json, text):
         # Globus transfers
         msg = auth.DataGetRequest()
         msg.id.extend(glob_list)
-        msg.path = _resolve_filepath_for_xfr(path)
+        msg.path = _resolve_filepath_for_xfr(path,False)
 
         if msg.path != path:
             _print_msg(1,"Initiating Globus transfer to {}".format( msg.path ))
@@ -958,7 +958,7 @@ def _data_get( df_id, path, wait, project, verbosity, json, text):
 def _data_put(df_id, path, wait, extension, project, verbosity, json, text):
     _output_checks( verbosity, json, text )
 
-    _put_data(df_id, project, _resolve_filepath_for_xfr(path), wait, extension )
+    _put_data(df_id, project, _resolve_filepath_for_xfr(path,True), wait, extension )
 
 # ------------------------------------------------------------------------------
 # Data batch command group
@@ -1933,12 +1933,42 @@ def _resolve_filepath_for_http(path):
 
     return str(res)
 
-def _resolve_filepath_for_xfr(path):
+def _resolve_filepath_for_xfr(path,must_exist):
+    # path arg is a string
+
     if path[0] == "~":
-        path = pathlib.Path(path).expanduser().resolve() #home, no endpoint
+        path = pathlib.Path(path).expanduser()
     elif path[0] == ".":
         path = pathlib.Path.cwd() / path
-        path = path.resolve() #relative path
+    else:
+        path = pathlib.Path(path)
+
+    if must_exist:
+        path = path.resolve()
+    else:
+        # Can't use resolve b/c it throws an exception when a path doesn't exist pre python 3.6
+        # Must manually locate the lowest relative path component and resolve only to that point
+        # Then append then remainder to the resolved portion
+
+        idx = 0
+        rel = None
+        for p in path.parts:
+            if p == "." or p == "..":
+                rel = idx
+            idx = idx + 1
+
+        if rel != None:
+            basep = pathlib.Path()
+            endp = pathlib.Path()
+            idx = 0
+            for p in path.parts:
+                if idx <= rel:
+                    basep = basep.joinpath( p )
+                else:
+                    endp = endp.joinpath( p )
+                idx = idx + 1
+
+            path = basep.resolve().joinpath(endp)
 
     endpoint_name = re.compile(r'[\w\-]+#[\w\-]+')
     endpoint_uuid = re.compile(r'[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}', re.I)
