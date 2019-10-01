@@ -52,13 +52,16 @@ function makeBrowserTab(){
     this.select_source = SS_TREE;
 
     this.windowResized = function(){
-        console.log("browser panel resized");
-
         var h = $("#data-tabs-parent").height();
         inst.graph_center_x = $("#data-tabs-parent").width()/2;
         var tabs = $("#data-tabs");
         var hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
+        tabs.outerHeight(h);
+        $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
 
+        h = $("#info-tabs-parent").height();
+        tabs = $("#info-tabs");
+        hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
         tabs.outerHeight(h);
         $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
     }
@@ -1987,7 +1990,7 @@ function makeBrowserTab(){
             return;
 
         _asyncGet( "/api/xfr/list" + (inst.pollSince?"?since="+inst.pollSince:""), null, function( ok, data ){
-            if ( ok ) {
+            if ( ok && data ) {
                 if ( data.xfr && data.xfr.length ) {
                     // Find and remove any previous entries
                     for ( var i in data.xfr ){
@@ -3653,6 +3656,11 @@ function makeBrowserTab(){
             }
             inst.updateBtnState();
         }
+    });
+
+    $("#info-tabs").tabs({
+        heightStyle:"fill",
+        active: 0,
     });
 
     $(".prov-graph-close").click( function(){

@@ -30,16 +30,6 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             id:"ok_btn",
             text: "Ok",
             click: function() {
-                
-                /*users = [];
-                //var tree = $("#dlg_user_tree",frame).fancytree("getTree");
-                var sel = tree.getSelectedNodes();
-                var key;
-                for ( var i in sel ){
-                    key = sel[i].key;
-                    if ( users.indexOf( key ) == -1 )
-                        users.push( key );
-                }*/
                 cb( sel_users );
                 $(this).dialog('destroy').remove();
             }
@@ -59,8 +49,6 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         {title:"By Groups",icon:"ui-icon ui-icon-view-list",folder:true,lazy:true,checkbox:false,key:"groups"},
         {title:"All",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,checkbox:false,key:"all",offset:0}
     ];
-
-    //src.push({title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"});
 
     $("#dlg_user_tree",frame).fancytree({
         extensions: ["themeroller"],
@@ -100,7 +88,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             };
         },
         checkbox: true,
-        lazyLoad: function( event, data ) {
+        lazyLoad: function( ev, data ) {
             if ( data.node.key == "collab" ) {
                 data.result = {
                     url: "/api/usr/list/collab?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
@@ -123,7 +111,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 };
             }
         },
-        postProcess: function( event, data ) {
+        postProcess: function( ev, data ) {
             if ( data.node.key == "collab" || data.node.key == "all" ){
                 console.log( "user list:",data.response);
                 data.result = [];
