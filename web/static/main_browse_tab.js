@@ -403,6 +403,40 @@ function makeBrowserTab(){
         });
     }
 
+    this.refreshPublishedNodes = function( src_node, dst_node ){
+        // See if either coll are visible in published tree
+        var res = 0;
+        var pub = inst.data_tree.getNodeByKey("published_"+(dst_node.data.scope[0]=="u"?"u_":"p_")+dst_node.data.scope.substr(2))
+        if ( pub ){
+            pub.visit( function( node ){
+                if ( src_node && node.key == src_node.key )
+                    res |= 1;
+
+                if ( node.key == dst_node.key )
+                    res |= 2;
+
+                if ( res == 3 )
+                    return false;
+            });
+
+            if ( res > 0 ){
+                inst.reloadNode(pub);
+                refresh = [];
+                inst.cat_tree.visit( function( node ){
+                    if ( node.key == dst_node.key || (src_node && node.key == src_node.key )){
+                        refresh.push( node );
+                        return "skip";
+                    }
+                });
+
+                for ( var i in refresh ){
+                    inst.reloadNode(refresh[i]);
+                }
+            }
+        }
+
+        return res;
+    }
 
     this.copyItems = function( items, dest_node, cb ){
         var item_keys = [];
@@ -411,8 +445,16 @@ function makeBrowserTab(){
 
         linkItems( item_keys, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                if ( dest_node.isLoaded() )
+                inst.refreshPublishedNodes( null, dest_node );
+
+                var _root = inst.data_tree.getNodeByKey("c/"+(dest_node.data.scope[0]=="u"?"u_":"p_")+dest_node.data.scope.substr(2)+"_root");
+                var par = dest_node.getParentList(false,false);
+
+                if ( par[1] == _root ){
                     inst.reloadNode(dest_node);
+                }else{
+                    inst.reloadNode(_root);
+                }
             }else{
                 dlgAlert( "Copy Error", msg );
                 //setStatusText( "Copy Error: " + msg, 1 );
@@ -423,22 +465,25 @@ function makeBrowserTab(){
         });
     }
 
+
     this.moveItems = function( items, dest_node, cb ){
-        console.log("moveItems",items,dest_node,inst.pasteSource);
+        //console.log("moveItems",items,dest_node,inst.pasteSource);
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
 
         colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                console.log("move OK");
+                inst.refreshPublishedNodes( inst.pasteSource, dest_node );
+                var _root = inst.data_tree.getNodeByKey("c/"+(dest_node.data.scope[0]=="u"?"u_":"p_")+dest_node.data.scope.substr(2)+"_root");
+                inst.reloadNode(_root);
 
+                /*
                 // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
                 var i, par = inst.pasteSource.getParentList(false,true);
-                //console.log("Source node parents:",par);
+
                 for ( i in par ){
                     if ( par[i].key == dest_node.key ){
-                        //console.log("Reload dest node ONLY");
                         inst.reloadNode(dest_node);
                         return;
                     }
@@ -456,6 +501,7 @@ function makeBrowserTab(){
                 if ( dest_node.isLoaded() )
                     inst.reloadNode(dest_node);
                 inst.reloadNode(inst.pasteSource);
+                */
             }else{
                 dlgAlert( "Move Error", msg );
                 //setStatusText( "Move Error: " + msg, 1 );
@@ -1166,36 +1212,48 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
     }
 
+    this.saveExpandedPaths = function( node, paths ){
+        var subp = {};
+        if ( node.children ){
+            var child;
+            for ( var i in node.children ){
+                child = node.children[i]
+                if ( child.isExpanded() ){
+                    inst.saveExpandedPaths( child, subp );
+                }
+            }
+        }
+        paths[node.key] = subp;
+    }
+
+    this.restoreExpandedPaths = function( node, paths ){
+        node.setExpanded(true).always(function(){
+            if ( node.children ){
+                var child;
+                for ( var i in node.children ){
+                    child = node.children[i];
+                    if ( child.key in paths ){
+                        inst.restoreExpandedPaths( child, paths[child.key] );
+                    }
+                }
+            }
+        });
+    }
+
     this.reloadNode = function( node, tree ){
         if ( !node || node.isLazy() && !node.isLoaded() )
             return;
-        var tr = tree || inst.data_tree;
+
         var save_exp = node.isExpanded();
+        var paths = {};
+
         if ( save_exp ){
-            var exp = [];
-            node.visit(function(n){
-                //console.log("node:",n.key);
-                if ( n.isExpanded() )
-                    exp.push(n.key);
-            });
+            inst.saveExpandedPaths( node, paths );
         }
-        //console.log( "expanded:", exp );
+
         node.load(true).always(function(){
             if ( save_exp ){
-                function expNode( idx ){
-                    if ( idx < exp.length ){
-                        var n = tr.getNodeByKey( exp[idx] );
-                        if ( n ){
-                            n.setExpanded(true).always(function(){
-                                expNode( idx + 1 );
-                            });
-                        }else{
-                            expNode( idx + 1 );
-                        }
-                    };
-                }
-
-                expNode(0);
+                inst.restoreExpandedPaths( node, paths[node.key] );
             }
         });
     }
@@ -1572,7 +1630,7 @@ function makeBrowserTab(){
             fields.id = "My Allocations";
             fields.descr = "Lists allocations and associated data records.";
             inst.updateSelectionField( fields );
-        } else if ( key == "published" ) {
+        } else if ( key.startsWith("published")) {
             fields.id = "Published Collections";
             fields.descr = "Lists collections published to DataFed catalogs.";
             inst.updateSelectionField( fields );
@@ -2871,16 +2929,6 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
-                /*
-                var repo,j,dest_par = dest_node.getParentList(false,true);
-                for ( j in dest_par ){
-                    if ( dest_par[j].key.startsWith("repo/")){
-                        repo = dest_par[j].key.substr(0,key.indexOf("/",5));
-                        console.log("repo:",repo);
-                        break;
-                    }
-                }*/
-
                 if ( inst.pasteSource.data.scope != dest_node.data.scope /*|| repo*/ ){
                     /*var msg;
                     if ( repo )
@@ -2911,7 +2959,9 @@ function makeBrowserTab(){
                         /*}
                     });*/
                     return;
-                }else if ( dest_node.key == "empty" ) {
+                }else if ( dest_node.key.startsWith("d/")){
+                    dest_node = dest_node.parent;
+                }else if ( dest_node.key == "empty" ){
                     dest_node = dest_node.parent;
                 }
 
@@ -2958,7 +3008,7 @@ function makeBrowserTab(){
             if ( data.node.key == "mydata" ){
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published",offset:0,scope:"u/"+g_user.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:"u/"+g_user.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -2980,7 +3030,7 @@ function makeBrowserTab(){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published",offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
@@ -3022,7 +3072,7 @@ function makeBrowserTab(){
                     url: "/api/query/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
-            } else if ( data.node.key == "published" ) {
+            } else if ( data.node.key.startsWith("published")) {
                 data.result = {
                     url: "/api/col/published/list?subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
@@ -3122,7 +3172,7 @@ function makeBrowserTab(){
                         //data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
                 }
-            } else if ( data.node.parent || data.node.key == "published" ) {
+            } else if ( data.node.parent || data.node.key.startsWith("published")) {
                 //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
