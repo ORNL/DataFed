@@ -403,39 +403,71 @@ function makeBrowserTab(){
         });
     }
 
-    this.refreshPublishedNodes = function( src_node, dst_node ){
-        // See if either coll are visible in published tree
-        var res = 0;
-        var pub = inst.data_tree.getNodeByKey("published_"+(dst_node.data.scope[0]=="u"?"u_":"p_")+dst_node.data.scope.substr(2))
-        if ( pub ){
-            pub.visit( function( node ){
-                if ( src_node && node.key == src_node.key )
-                    res |= 1;
+    this.refreshCollectionNodes = function( node_keys, scope ){
+        // Refresh any collection nodes in data tree and catalog tree
+        // Scope is used to narrow search in trees
 
-                if ( node.key == dst_node.key )
-                    res |= 2;
+        // Note: FancyTree does not have an efficient way to get a node by key (just linear search), so
+        // instead we will do our own linear search that is more efficient due to branch pruning and early termination
 
-                if ( res == 3 )
+        var refresh = [];
+        var i,found = false;
+
+        //console.log("REF: search data tree");
+
+        inst.data_tree.visit( function( node ){
+            // Ignore nodes without scope (top-level nodes)
+            if ( node.data.scope !== undefined ){
+                if ( node.data.scope == scope ){
+                    if ( node_keys.indexOf( node.key ) != -1 ){
+                        //console.log("REF: found node:",node.key);
+                        refresh.push( node );
+                        found = true;
+                        return "skip";
+                    }
+                }else if (found){
+                    //console.log("REF: early terminate search at:",node.key);
                     return false;
-            });
+                }else{
+                    //console.log("REF: skip node:",node.key);
+                    return "skip";
+                }
+            }else{
+                //console.log("REF: ignore node:",node.key);
+            }
+        });
 
-            if ( res > 0 ){
-                inst.reloadNode(pub);
-                refresh = [];
-                inst.cat_tree.visit( function( node ){
-                    if ( node.key == dst_node.key || (src_node && node.key == src_node.key )){
+        //console.log("REF: refresh results:",refresh);
+
+        for ( i in refresh )
+            inst.reloadNode(refresh[i]);
+
+        refresh= [];
+        //console.log("REF: search catalog tree");
+
+        // catalog_tree is slightly different than data_tree
+        inst.cat_tree.visit( function( node ){
+            // Ignore nodes without scope (top-level nodes)
+            if ( node.data.scope !== undefined ){
+                if ( node.data.scope == scope ){
+                    if ( node_keys.indexOf( node.key ) != -1 ){
+                        //console.log("REF: found node:",node.key);
                         refresh.push( node );
                         return "skip";
                     }
-                });
-
-                for ( var i in refresh ){
-                    inst.reloadNode(refresh[i]);
+                }else{
+                    //console.log("REF: skip node:",node.key);
+                    return "skip";
                 }
+            }else{
+                //console.log("REF: ignore node:",node.key);
             }
-        }
+        });
 
-        return res;
+        //console.log("REF: refresh results:",refresh);
+
+        for ( i in refresh )
+            inst.reloadNode(refresh[i]);
     }
 
     this.copyItems = function( items, dest_node, cb ){
@@ -445,16 +477,7 @@ function makeBrowserTab(){
 
         linkItems( item_keys, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                inst.refreshPublishedNodes( null, dest_node );
-
-                var _root = inst.data_tree.getNodeByKey("c/"+(dest_node.data.scope[0]=="u"?"u_":"p_")+dest_node.data.scope.substr(2)+"_root");
-                var par = dest_node.getParentList(false,false);
-
-                if ( par[1] == _root ){
-                    inst.reloadNode(dest_node);
-                }else{
-                    inst.reloadNode(_root);
-                }
+                inst.refreshCollectionNodes([dest_node.key],dest_node.data.scope);
             }else{
                 dlgAlert( "Copy Error", msg );
                 //setStatusText( "Copy Error: " + msg, 1 );
@@ -474,34 +497,7 @@ function makeBrowserTab(){
 
         colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                inst.refreshPublishedNodes( inst.pasteSource, dest_node );
-                var _root = inst.data_tree.getNodeByKey("c/"+(dest_node.data.scope[0]=="u"?"u_":"p_")+dest_node.data.scope.substr(2)+"_root");
-                inst.reloadNode(_root);
-
-                /*
-                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
-                var i, par = inst.pasteSource.getParentList(false,true);
-
-                for ( i in par ){
-                    if ( par[i].key == dest_node.key ){
-                        inst.reloadNode(dest_node);
-                        return;
-                    }
-                }
-                par = dest_node.getParentList(false,true);
-                //console.log("Dest node parents:",par);
-                for ( i in par ){
-                    if ( par[i].key == inst.pasteSource.key ){
-                        //console.log("Reload source node ONLY");
-                        inst.reloadNode(inst.pasteSource);
-                        return;
-                    }
-                }
-                //console.log("Reload BOTH nodes");
-                if ( dest_node.isLoaded() )
-                    inst.reloadNode(dest_node);
-                inst.reloadNode(inst.pasteSource);
-                */
+                inst.refreshCollectionNodes([inst.pasteSource.key,dest_node.key],dest_node.data.scope);
             }else{
                 dlgAlert( "Move Error", msg );
                 //setStatusText( "Move Error: " + msg, 1 );
@@ -871,9 +867,11 @@ function makeBrowserTab(){
                 if ( ok ){
                     if ( data.item && data.item.length ){
                         var loc_root = "c/" + scope.charAt(0) + "_" + scope.substr(2) + "_root";
-                        inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
+                        //inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
+                        inst.refreshCollectionNodes([loc_root,sel[0].parent.key],sel[0].parent.data.scope);
                     }else{
-                        inst.reloadNode( sel[0].parent );
+                        //inst.reloadNode( sel[0].parent );
+                        inst.refreshCollectionNodes([sel[0].parent.key],sel[0].parent.data.scope);
                     }
                 }else{
                     dlgAlert( "Unlink Error", data );
