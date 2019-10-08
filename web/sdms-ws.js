@@ -831,10 +831,11 @@ app.get('/api/col/delete', ( a_req, a_resp ) => {
 
 app.get('/api/col/view', ( a_req, a_resp ) => {
     sendMessage( "CollViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        if ( reply.coll && reply.coll.length )
+        if ( reply.coll && reply.coll.length ){
             a_resp.send(reply.coll[0]);
-        else
+        }else{
             a_resp.send();
+        }
     });
 });
 

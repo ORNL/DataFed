@@ -102,7 +102,10 @@ function CatalogSubTab( browser, frame ){
                 data.result = [];
                 var item,entry;
                 var items = data.response.item;
+                var scope = data.node.data.scope;
+
                 console.log("topic resp:",data.response);
+
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="t" ){
@@ -114,9 +117,9 @@ function CatalogSubTab( browser, frame ){
                             entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
                         }
                     }else if ( item.id[0]=="c" ){
-                        entry = { title: browser.generateTitle(item),tooltip:browser.generateTooltip(item),folder:true,lazy:true,key:item.id, offset: 0 };
+                        entry = { title: browser.generateTitle(item),tooltip:browser.generateTooltip(item),folder:true,lazy:true,key:item.id,offset:0,scope:item.owner?item.owner:scope };
                     }else{ // data records
-                        entry = { title:browser.generateTitle(item),tooltip:browser.generateTooltip(item),key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi };
+                        entry = { title:browser.generateTitle(item),tooltip:browser.generateTooltip(item),key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi,scope:item.owner?item.owner:scope };
                     }
 
                     data.result.push( entry );

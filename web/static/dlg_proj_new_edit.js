@@ -12,7 +12,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             </table>\
         </div>\
         <div style='flex:none'>&nbsp</div>\
-        <div class='row-flex' style='flex: 1 1 100%'>\
+        <div class='row-flex' style='flex: 1 1 100%;min-height:0'>\
             <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
                 <div style='flex:none'>Members:</div>\
                 <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
@@ -48,7 +48,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         title: a_data?"Edit Project " + a_data.id:"New Project",
         modal: true,
         width: 500,
-        height: 'auto',
+        height: 550,
         resizable: true,
         closeOnEscape: false,
         buttons: [{

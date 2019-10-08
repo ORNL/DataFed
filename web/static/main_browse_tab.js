@@ -52,13 +52,16 @@ function makeBrowserTab(){
     this.select_source = SS_TREE;
 
     this.windowResized = function(){
-        console.log("browser panel resized");
-
         var h = $("#data-tabs-parent").height();
         inst.graph_center_x = $("#data-tabs-parent").width()/2;
         var tabs = $("#data-tabs");
         var hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
+        tabs.outerHeight(h);
+        $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
 
+        h = $("#info-tabs-parent").height();
+        tabs = $("#info-tabs");
+        hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
         tabs.outerHeight(h);
         $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
     }
@@ -400,6 +403,72 @@ function makeBrowserTab(){
         });
     }
 
+    this.refreshCollectionNodes = function( node_keys, scope ){
+        // Refresh any collection nodes in data tree and catalog tree
+        // Scope is used to narrow search in trees
+
+        // Note: FancyTree does not have an efficient way to get a node by key (just linear search), so
+        // instead we will do our own linear search that is more efficient due to branch pruning and early termination
+
+        var refresh = [];
+        var i,found = false;
+
+        //console.log("REF: search data tree");
+
+        inst.data_tree.visit( function( node ){
+            // Ignore nodes without scope (top-level nodes)
+            if ( node.data.scope !== undefined ){
+                if ( node.data.scope == scope ){
+                    if ( node_keys.indexOf( node.key ) != -1 ){
+                        //console.log("REF: found node:",node.key);
+                        refresh.push( node );
+                        found = true;
+                        return "skip";
+                    }
+                }else if (found){
+                    //console.log("REF: early terminate search at:",node.key);
+                    return false;
+                }else{
+                    //console.log("REF: skip node:",node.key);
+                    return "skip";
+                }
+            }else{
+                //console.log("REF: ignore node:",node.key);
+            }
+        });
+
+        //console.log("REF: refresh results:",refresh);
+
+        for ( i in refresh )
+            inst.reloadNode(refresh[i]);
+
+        refresh= [];
+        //console.log("REF: search catalog tree");
+
+        // catalog_tree is slightly different than data_tree
+        inst.cat_tree.visit( function( node ){
+            // Ignore nodes without scope (top-level nodes)
+            if ( node.data.scope !== undefined ){
+                if ( node.data.scope == scope ){
+                    if ( node_keys.indexOf( node.key ) != -1 ){
+                        //console.log("REF: found node:",node.key);
+                        refresh.push( node );
+                        return "skip";
+                    }
+                }else{
+                    //console.log("REF: skip node:",node.key);
+                    return "skip";
+                }
+            }else{
+                //console.log("REF: ignore node:",node.key);
+            }
+        });
+
+        //console.log("REF: refresh results:",refresh);
+
+        for ( i in refresh )
+            inst.reloadNode(refresh[i]);
+    }
 
     this.copyItems = function( items, dest_node, cb ){
         var item_keys = [];
@@ -408,8 +477,7 @@ function makeBrowserTab(){
 
         linkItems( item_keys, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                if ( dest_node.isLoaded() )
-                    inst.reloadNode(dest_node);
+                inst.refreshCollectionNodes([dest_node.key],dest_node.data.scope);
             }else{
                 dlgAlert( "Copy Error", msg );
                 //setStatusText( "Copy Error: " + msg, 1 );
@@ -420,39 +488,16 @@ function makeBrowserTab(){
         });
     }
 
+
     this.moveItems = function( items, dest_node, cb ){
-        console.log("moveItems",items,dest_node,inst.pasteSource);
+        //console.log("moveItems",items,dest_node,inst.pasteSource);
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
 
         colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                console.log("move OK");
-
-                // If there is a hierarchical relationship between source and dest, only need to reload the top-most node.
-                var i, par = inst.pasteSource.getParentList(false,true);
-                //console.log("Source node parents:",par);
-                for ( i in par ){
-                    if ( par[i].key == dest_node.key ){
-                        //console.log("Reload dest node ONLY");
-                        inst.reloadNode(dest_node);
-                        return;
-                    }
-                }
-                par = dest_node.getParentList(false,true);
-                //console.log("Dest node parents:",par);
-                for ( i in par ){
-                    if ( par[i].key == inst.pasteSource.key ){
-                        //console.log("Reload source node ONLY");
-                        inst.reloadNode(inst.pasteSource);
-                        return;
-                    }
-                }
-                //console.log("Reload BOTH nodes");
-                if ( dest_node.isLoaded() )
-                    inst.reloadNode(dest_node);
-                inst.reloadNode(inst.pasteSource);
+                inst.refreshCollectionNodes([inst.pasteSource.key,dest_node.key],dest_node.data.scope);
             }else{
                 dlgAlert( "Move Error", msg );
                 //setStatusText( "Move Error: " + msg, 1 );
@@ -822,9 +867,11 @@ function makeBrowserTab(){
                 if ( ok ){
                     if ( data.item && data.item.length ){
                         var loc_root = "c/" + scope.charAt(0) + "_" + scope.substr(2) + "_root";
-                        inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
+                        //inst.reloadNode( inst.data_tree.getNodeByKey( loc_root ));
+                        inst.refreshCollectionNodes([loc_root,sel[0].parent.key],sel[0].parent.data.scope);
                     }else{
-                        inst.reloadNode( sel[0].parent );
+                        //inst.reloadNode( sel[0].parent );
+                        inst.refreshCollectionNodes([sel[0].parent.key],sel[0].parent.data.scope);
                     }
                 }else{
                     dlgAlert( "Unlink Error", data );
@@ -1163,36 +1210,48 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
     }
 
+    this.saveExpandedPaths = function( node, paths ){
+        var subp = {};
+        if ( node.children ){
+            var child;
+            for ( var i in node.children ){
+                child = node.children[i]
+                if ( child.isExpanded() ){
+                    inst.saveExpandedPaths( child, subp );
+                }
+            }
+        }
+        paths[node.key] = subp;
+    }
+
+    this.restoreExpandedPaths = function( node, paths ){
+        node.setExpanded(true).always(function(){
+            if ( node.children ){
+                var child;
+                for ( var i in node.children ){
+                    child = node.children[i];
+                    if ( child.key in paths ){
+                        inst.restoreExpandedPaths( child, paths[child.key] );
+                    }
+                }
+            }
+        });
+    }
+
     this.reloadNode = function( node, tree ){
         if ( !node || node.isLazy() && !node.isLoaded() )
             return;
-        var tr = tree || inst.data_tree;
+
         var save_exp = node.isExpanded();
+        var paths = {};
+
         if ( save_exp ){
-            var exp = [];
-            node.visit(function(n){
-                //console.log("node:",n.key);
-                if ( n.isExpanded() )
-                    exp.push(n.key);
-            });
+            inst.saveExpandedPaths( node, paths );
         }
-        //console.log( "expanded:", exp );
+
         node.load(true).always(function(){
             if ( save_exp ){
-                function expNode( idx ){
-                    if ( idx < exp.length ){
-                        var n = tr.getNodeByKey( exp[idx] );
-                        if ( n ){
-                            n.setExpanded(true).always(function(){
-                                expNode( idx + 1 );
-                            });
-                        }else{
-                            expNode( idx + 1 );
-                        }
-                    };
-                }
-
-                expNode(0);
+                inst.restoreExpandedPaths( node, paths[node.key] );
             }
         });
     }
@@ -1569,7 +1628,7 @@ function makeBrowserTab(){
             fields.id = "My Allocations";
             fields.descr = "Lists allocations and associated data records.";
             inst.updateSelectionField( fields );
-        } else if ( key == "published" ) {
+        } else if ( key.startsWith("published")) {
             fields.id = "Published Collections";
             fields.descr = "Lists collections published to DataFed catalogs.";
             inst.updateSelectionField( fields );
@@ -1987,7 +2046,7 @@ function makeBrowserTab(){
             return;
 
         _asyncGet( "/api/xfr/list" + (inst.pollSince?"?since="+inst.pollSince:""), null, function( ok, data ){
-            if ( ok ) {
+            if ( ok && data ) {
                 if ( data.xfr && data.xfr.length ) {
                     // Find and remove any previous entries
                     for ( var i in data.xfr ){
@@ -2868,16 +2927,6 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
-                /*
-                var repo,j,dest_par = dest_node.getParentList(false,true);
-                for ( j in dest_par ){
-                    if ( dest_par[j].key.startsWith("repo/")){
-                        repo = dest_par[j].key.substr(0,key.indexOf("/",5));
-                        console.log("repo:",repo);
-                        break;
-                    }
-                }*/
-
                 if ( inst.pasteSource.data.scope != dest_node.data.scope /*|| repo*/ ){
                     /*var msg;
                     if ( repo )
@@ -2908,7 +2957,9 @@ function makeBrowserTab(){
                         /*}
                     });*/
                     return;
-                }else if ( dest_node.key == "empty" ) {
+                }else if ( dest_node.key.startsWith("d/")){
+                    dest_node = dest_node.parent;
+                }else if ( dest_node.key == "empty" ){
                     dest_node = dest_node.parent;
                 }
 
@@ -2955,7 +3006,7 @@ function makeBrowserTab(){
             if ( data.node.key == "mydata" ){
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published",offset:0,scope:"u/"+g_user.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:"u/"+g_user.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -2977,7 +3028,7 @@ function makeBrowserTab(){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published",offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
@@ -3019,7 +3070,7 @@ function makeBrowserTab(){
                     url: "/api/query/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
-            } else if ( data.node.key == "published" ) {
+            } else if ( data.node.key.startsWith("published")) {
                 data.result = {
                     url: "/api/col/published/list?subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
@@ -3119,7 +3170,7 @@ function makeBrowserTab(){
                         //data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
                     }
                 }
-            } else if ( data.node.parent || data.node.key == "published" ) {
+            } else if ( data.node.parent || data.node.key.startsWith("published")) {
                 //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
                 var item,entry,scope = data.node.data.scope;
@@ -3653,6 +3704,11 @@ function makeBrowserTab(){
             }
             inst.updateBtnState();
         }
+    });
+
+    $("#info-tabs").tabs({
+        heightStyle:"fill",
+        active: 0,
     });
 
     $(".prov-graph-close").click( function(){
