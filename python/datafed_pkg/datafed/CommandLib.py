@@ -1114,7 +1114,7 @@ def _coll_create(title,alias,description,topic,collection,project,verbosity,json
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("--topic", type=str, required=False, help="Publish the collection under the provided topic. Topics use periods ('.') as delimiters. To revoke published status, specify '-p undo'")
+@click.option("--topic", type=str, required=False, help="Publish the collection under the provided topic. Topics use periods ('.') as delimiters. To revoke published status, specify '--topic undo'")
 @_global_project_options
 @_global_output_options
 def _coll_update(df_id,title,alias,description,topic,project,verbosity,json,text):
