@@ -39,6 +39,7 @@ module.exports = ( function() {
     obj.PERM_PUBLIC         = 0x0047;
 
     obj.MAX_COLL_ITEMS      = 1000;
+    obj.MAX_MD_SIZE         = 102400;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;

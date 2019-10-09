@@ -103,16 +103,16 @@ function recordCreate( client, record, results ){
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
 
-    if ( record.public )
+    if ( record.public ){
         obj.public = record.public;
+    }
 
     if ( record.md ){
-        obj.md = record.md; //JSON.parse( record.md );
+        obj.md = record.md;
         if ( Array.isArray( obj.md ))
             throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
-
-        //console.log( "parsed:", obj.md );
     }
+
     if ( obj.doi || obj.data_url ){
         if ( !obj.doi || !obj.data_url )
             throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
@@ -183,7 +183,6 @@ function recordCreate( client, record, results ){
 router.post('/create', function (req, res) {
     try {
         var result = [];
-        console.log( "create data" );
 
         g_db._executeTransaction({
             collections: {
