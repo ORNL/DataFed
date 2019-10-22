@@ -1031,18 +1031,9 @@ def _data_batch_update(file,verbosity,json,text):
         if not fp.is_file():
             raise Exception( "File not found: " + f )
 
-<<<<<<< HEAD
-        if fp.stat().st_size > _max_md_size:
-            raise Exception( "Batch update file, " + f +", exceeds maximum size ("+str(_max_md_size)+")" )
-
-        tot_size += fp.stat().st_size
-        if tot_size > _max_payload_size:
-            raise Exception( "Total batch update size exceeds limit ("+str(_max_payload_size)+")" )
-=======
         tot_size += fp.stat().st_size
         if tot_size > _max_payload_size:
             raise Exception( "Total batch update size exceeds limit ({})".format( _max_payload_size ))
->>>>>>> 8e77a04a1b3595f78ac04e86010d74dc94ac1644
 
         with fp.open('r+') as f:
             records = jsonlib.load(f)
