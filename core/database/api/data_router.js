@@ -977,7 +977,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","owner","item","acl","alias","loc","alloc","p","t","top","dep"]
+                write: ["d","a","owner","item","acl","alias","loc","lock","alloc","p","t","top","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );

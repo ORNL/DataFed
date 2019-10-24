@@ -41,6 +41,14 @@ module.exports = ( function() {
     obj.MAX_COLL_ITEMS      = 1000;
     obj.MAX_MD_SIZE         = 102400;
 
+    obj.TS_BLOCKED          = 0;
+    obj.TS_READY            = 1;
+    obj.TS_RUNNING          = 2;
+    obj.TS_PAUSED           = 3;
+    obj.TS_SUCCEEDED        = 4;
+    obj.TS_FAILED           = 5;
+    obj.TS_COUNT            = 6;
+
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
     obj.XS_INACTIVE         = 2;
@@ -518,25 +526,25 @@ module.exports = ( function() {
             next = [];
             for ( c in cur ){
                 coll = cur[c];
-                console.log("del coll: ",coll);
-                //items = obj.db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,links:links}", { coll: coll });
-                items = obj.db._query( "for v in 1..1 outbound @coll item return {_id:v._id,size:v.size,owner:v.owner}", { coll: coll });
+                //console.log("del coll: ",coll);
+                items = obj.db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,owner:v.owner,links:links}", { coll: coll });
+                //items = obj.db._query( "for v in 1..1 outbound @coll item return {_id:v._id,size:v.size,owner:v.owner}", { coll: coll });
 
                 while ( items.hasNext() ) {
                     item = items.next();
                     if ( item._id[0] == "d" ){
-                        console.log("del data: ",item._id);
+                        //console.log("del data: ",item._id);
 
-                        obj.deleteData( item, a_allocs, a_locations );
-                        /*if ( item.links == 1 ){
+                        //obj.deleteData( item, a_allocs, a_locations );
+                        if ( item.links == 1 ){
                             // Save location and delete
                             obj.deleteData( item, a_allocs, a_locations );
                         }else{
                             // Unlink from current collection
                             obj.db.item.removeByExample({_from:coll,_to:item._id});
-                        }*/
+                        }
                     }else{
-                        console.log("add other: ",item._id);
+                        //console.log("add other: ",item._id);
                         next.push(item._id);
                     }
                 }
