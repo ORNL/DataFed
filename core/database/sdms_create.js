@@ -20,10 +20,11 @@ graph._addVertexCollection("q");    // Saved queries
 //graph._addVertexCollection("l");    // Label
 graph._addVertexCollection("tr");   // Transfers
 graph._addVertexCollection("repo"); // Repository servers
+graph._addVertexCollection("task"); // Tasks
 
 
 //var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u","p"]);
-var owner = graph_module._relation("owner", ["d","c","p","g","a","q"], ["u","p"]);
+var owner = graph_module._relation("owner", ["d","c","p","g","a","q","task"], ["u","p"]);
 graph._extendEdgeDefinitions(owner);
 
 var mem = graph_module._relation("member", ["g"], ["u"]);
@@ -59,6 +60,11 @@ graph._extendEdgeDefinitions(loc);
 var dep = graph_module._relation("dep", ["d"], ["d"]);
 graph._extendEdgeDefinitions(dep);
 
+var lock = graph_module._relation("lock", ["task"], ["d","c","repo"]);
+graph._extendEdgeDefinitions(lock);
+
+var block = graph_module._relation("block", ["task"], ["task"]);
+graph._extendEdgeDefinitions(block);
 
 var view = db._createView("textview","arangosearch",{});
 
@@ -85,6 +91,12 @@ view.properties({
   },
   true
 );
+
+db.task.ensureIndex({ type: "hash", unique: false, fields: [ "client" ], sparse: true });
+db.task.ensureIndex({ type: "skiplist", unique: false, fields: [ "status" ], sparse: true });
+db.task.ensureIndex({ type: "hash", unique: false, fields: [ "servers[*]" ], sparse: true });
+
+//db.lock.ensureIndex({ type: "skiplist", unique: false, fields: [ "write" ], sparse: true });
 
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "doi" ], sparse: true });
