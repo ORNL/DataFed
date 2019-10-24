@@ -550,3 +550,27 @@ textarea
     50% { opacity: 0.0; }
     100% { opacity: 1.0; }*/
 }
+
+.toc1
+{
+    text-decoration: none;
+    font-size: 110%;
+}
+
+.toc2
+{
+    text-decoration: none;
+    font-size: 100%;
+}
+
+.toc3
+{
+    text-decoration: none;
+    font-size: 90%;
+}
+
+.toc4
+{
+    text-decoration: none;
+    font-size: 85%;
+}

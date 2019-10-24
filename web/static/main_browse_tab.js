@@ -529,14 +529,10 @@ function makeBrowserTab(){
         }
 
         var msg = "Delete selected items?";
-        if ( coll.length || proj.length ){
-            msg += " Note that this action will delete all data records and collections contained within selected ";
-            if ( coll.length && proj.length )
-                msg += "collection(s) and project(s).";
-            else if ( coll.length )
-                msg += "collection(s).";
-            else
-                msg += "project(s).";
+        if ( proj.length ){
+            msg += " Note that this action will delete all data records and collections contained within selected project(s)";
+        } else if ( coll.length ){
+            msg += " Note that this action will delete data records contained within the selected collection(s) that are not linked elsewhere.";
         }
 
         dlgConfirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){

@@ -396,7 +396,7 @@ function sendDataLock( a_ids, a_lock, a_cb ){
 function viewColl( a_id, a_cb ) {
     _asyncGet( "/api/col/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            console.log("viewColl ok, data:", data, typeof data );
+            //console.log("viewColl ok, data:", data, typeof data );
             if ( data )
                 a_cb( data );
             else

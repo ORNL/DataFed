@@ -14,7 +14,6 @@ with open(path.join(this_directory, 'VERSION'), encoding='utf-8') as f:
 setuptools.setup(
     name="datafed",
     version=version,
-    scripts = ['scripts/datafed'],
     author="Dale Stansberry",
     author_email="stansberrydv@ornl.gov",
     description="DataFed CLI and API",
@@ -32,6 +31,9 @@ setuptools.setup(
         'click>=7',
         'prompt_toolkit>=2'
     ],
+    entry_points={
+        "console_scripts" : ["datafed = datafed.CommandLib:_run"]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

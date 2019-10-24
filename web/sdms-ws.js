@@ -158,9 +158,9 @@ app.get('/ui/docs', (request, response) => {
     response.render( 'docs',{theme:theme,version:g_version,test_mode:g_test});
 });
 
-app.get('/ui/docs/cli', (request, response) => {
+app.get('/ui/docs/api', (request, response) => {
     var theme = request.cookies['sdms-theme'] || "light";
-    response.render( 'docs-cli',{theme:theme,version:g_version,test_mode:g_test});
+    response.render( 'docs_api',{theme:theme,version:g_version,test_mode:g_test});
 });
 
 app.get('/ui/register', (request, response) => {
