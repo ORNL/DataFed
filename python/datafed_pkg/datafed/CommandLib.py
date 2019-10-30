@@ -20,6 +20,8 @@
 # a reply in the form of a Google protobuf message.
 
 from __future__ import division, print_function, absolute_import #, unicode_literals
+import getopt
+import argparse
 import shlex
 import getpass
 import os
@@ -27,8 +29,6 @@ import sys
 import datetime
 import textwrap
 import shutil
-import click
-import click.decorators
 import re
 import json as jsonlib
 import time
@@ -37,10 +37,6 @@ import wget
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.formatted_text import to_formatted_text
 
 from . import SDMS_Auth_pb2 as auth
 from . import SDMS_pb2 as sdms
@@ -87,6 +83,262 @@ _output_mode = _OM_TEXT
 
 _STAT_OK     = 0
 _STAT_ERROR  = 1
+
+class ArgumentParserError(Exception):
+    pass
+
+class ThrowingArgumentParser(argparse.ArgumentParser):
+    def error( self, message ):
+        raise ArgumentParserError(message)
+
+class API:
+    def __init__( self, opts = {} ):
+        pass
+
+    def dataView( self, args ):
+        print("data view command",args)
+
+    def dataCreate( self, args ):
+        print("data create command")
+
+    def collView( self, args ):
+        print("coll view command")
+
+    def collList( self, args ):
+        print("coll list command")
+
+    def collCreate( self, args ):
+        print("coll create command")
+
+
+class CLI( API ):
+    FLAG = 0
+    STR = 1
+    INT = 2
+
+    def __init__( self, opts = {} ):
+        super().__init__( opts )
+
+        #gen_opt = ThrowingArgumentParser()
+
+        self.commands = {
+            "brief" : "DataFed command-line interface.",
+            "desc" : "The DataFed CLI provides a lot of commands.... more",
+            "opt": [
+                ["script","script","s",FLAG,"Run in non-interactive script mode with JSON output."],
+                ["man_auth","manual-auth","m",FLAG,"Force manual authentication"],
+            ],
+            "cb" : self._main, "sub" : {
+                "data" : {
+                    "brief" : "Data subcommands.",
+                    "args" : "COMMAND",
+                    "cb" : self._main, "sub" : {
+                        "view" : {
+                            "brief" : "View data record information.",
+                            "help" : "View data details...",
+                            "args" : "ID",
+                            "cb" : self.dataView, "opt" : self._dataView_opt
+                        },
+                        "create" : { 
+                            "brief" : "Create a new data record.",
+                            "desc" : "Data create details...",
+                            "args" : "TITLE",
+                            "cb" : self.dataCreate, "opt" : self._dataCreate_opt
+                        }
+                    }
+                },
+                "coll" : {
+                    "brief" : "Collection subcommands help (brief).",
+                    "args" : "COMMAND",
+                    "cb" : self._main, "sub" : {
+                        "view" : {
+                            "brief" : "View collection information.",
+                            "desc" : "View collection information such as title, description, owner.",
+                            "args" : "ID",
+                            "cb" : self.collView, "opt" : self._collView_opt
+                        },
+                        "create" : {
+                            "brief" : "Create a new collection.",
+                            "desc" : "DataFed coll create subcommand longer help info.",
+                            "args" : "TITLE",
+                            "cb" : self.collCreate, "opt" : self._collCreate_opt
+                        },
+                        "list" : {
+                            "brief" : "List items in a collection.",
+                            "desc" : "DataFed coll view subcommand longer help info.",
+                            "args" : "ID",
+                            "cb" : self.collList, "opt" : self._collList_opt
+                        }
+                    }
+                },
+            }
+        }
+
+        # Walk sub-command dict to init per-command option parser
+        self._initOpts( self.commands, "datafed" )
+
+        # TODO if opts contains interactive flag, start REPL loop here
+
+
+    def _initOpts( self, cmd, path ):
+        parser = self._gen_opt( cmd, path )
+        if "opt" in cmd:
+            cmd["opt"](parser)
+
+        cmd["opt"] = parser
+
+        if len(path):
+            new_path = path + " "
+        else:
+            new_path = ""
+
+        if "sub" in cmd:
+            for attr, value in cmd["sub"].items():
+                self._initOpts( value, new_path + attr )
+
+
+    def _gen_opt( self, cmd, path ):
+        if "args" in cmd:
+            usage = path + " " + cmd["args"] + " [options]"
+        else:
+            usage = path + " [options]"
+
+        if "brief" in cmd:
+            desc = cmd["brief"]
+        else:
+            desc = None
+
+        if "desc" in cmd:
+            epi = cmd["desc"]
+        else:
+            epi = ""
+
+        if "sub" in cmd:
+            if len(epi):
+                epi = epi + "\n"
+
+            epi = epi + "\nSubcommands:\n"
+
+            for attr, value in cmd["sub"].items():
+                epi = epi + "  {:10}{}\n".format(attr,value["brief"])
+
+        return ThrowingArgumentParser(usage=usage,description=desc,epilog=epi,formatter_class=argparse.RawDescriptionHelpFormatter)
+
+
+    def run( self, args ):
+        if isinstance( args, str ):
+            _args = shlex.split( args )
+        elif isinstance( args, list ):
+            _args = args
+        else:
+            raise Exception("CLI.run() expects string or list argument type.")
+
+        if len(_args) == 0:
+            self.printUsage()
+            return
+        else:
+            idx = 0
+            cmd = self.commands
+
+            # Use parse_known_args at top-level to handle global options (before subcommands)
+            # Then feed the remaining args into the subcommand tree
+            # Note that mid-level subcommands cannot have any options
+
+            while True:
+                if idx >= len(_args):
+                    print( "Expected another subcmd" )
+                    break
+
+                arg = _args[idx]
+
+                # Encountering an option stops subcmd processing
+                if arg[0] == "-":
+                    break
+
+                found = False
+
+                if "sub" in cmd:
+                    for attr, value in cmd["sub"].items():
+                        if attr.find( arg, 0 ) == 0:
+                            found = True
+                            #print("matches:",attr)
+                            idx = idx + 1
+                            cmd = value
+                            break
+
+                if not found:
+                    break
+
+            if "cb" in cmd:
+                if "opt" in cmd:
+                    #print("cb with opts:",_args, idx)
+                    try:
+                        cmd["cb"]( cmd["opt"].parse_args( _args[idx:] ))
+                    except ArgumentParserError as e:
+                        print("Error:",e)
+                else:
+                    print("cb without opts")
+                    cmd["cb"]()
+            else:
+                print("Show help for command (missused)")
+
+    def printUsage( self ):
+        print("DataFed Command-Line Interface")
+        print("usage: datafed COMMAND [ARGS]")
+
+    def _main( self, opts = {} ):
+        print("in main, opts:",opts)
+        if opts.version:
+            print( "version: 1.2.3" )
+
+    def _main_opt( self, parser ):
+        parser.add_argument('--version',action='store_true')
+
+    def _dataView_opt( self, parser ):
+        self._addOutputOpts( parser )
+        parser.add_argument('ID', type=str, nargs=1, help='Data record ID or alias')
+
+    def _dataCreate_opt( self, parser ):
+        parser.add_argument('-f','--foo',type=str, help='Set foo value')
+
+    def _collView_opt( self, parser ):
+        parser.add_argument('-f','--foo',type=str, help='Set foo value')
+
+    def _collCreate_opt( self, parser ):
+        parser.add_argument('-f','--foo',type=str, help='Set foo value')
+
+    def _collList_opt( self, parser ):
+        parser.add_argument('-f','--foo',type=str, help='Set foo value')
+
+_args = shlex.split( "-a --beta --delta=delta  --alpha xxx yyy \"aa bb\" -c CCC" )
+opts, args = getopt.getopt(_args, 'abc:d:',["alpha","beta","charlie=","delta="])
+print( "opts:",opts,"args:",args)
+sys.exit()
+
+cli = CLI()
+cli.run( sys.argv[1:] )
+sys.exit()
+
+parser = ThrowingArgumentParser(description='My broken CLI.')
+parser.add_argument('-e','--echo',type=str, help='print something')
+
+
+try:
+    args = parser.parse_args()
+    if args.echo:
+        print("echoing:",args.echo)
+    #print( args.accumulate( args.integers ))
+except ArgumentParserError as e:
+    print("Parse Exception:",e)
+except Exception as e:
+    print("Exception:",e)
+except SystemExit:
+    print("Sys exit!")
+except:
+    print("WTF")
+
+sys.exit()
+
 
 class NoCommand(Exception):
     def __init__(self,*args,**kwargs):
@@ -320,21 +572,6 @@ def _set_script_opt(ctx, param, value):
         _output_mode_sticky = _OM_JSON
         _output_mode = _OM_JSON
 
-'''
-def _set_output_json(ctx, param, value):
-    global _output_mode_sticky
-    global _output_mode
-    if value:
-        _output_mode_sticky = _OM_JSON
-        _output_mode = _OM_JSON
-
-def _set_output_text(ctx, param, value):
-    global _output_mode_sticky
-    global _output_mode
-    if value:
-        _output_mode_sticky = _OM_TEXT
-        _output_mode = _OM_TEXT
-'''
 
 __global_project_options = [
     click.option('-p', '--project', required=False,type=str, help='Project ID for command'),
