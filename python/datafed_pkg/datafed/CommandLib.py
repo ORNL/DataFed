@@ -609,11 +609,10 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    def collectionGetParents( self, coll_id, context = None ):
+    def collectionGetParents( self, coll_id, inclusive = False, context = None ):
         msg = auth.CollGetParentsRequest()
         msg.id = self._resolve_id( coll_id, context )
-        #msg.id = self._resolve_coll_id( coll_id, context )
-        msg.inclusive = False
+        msg.inclusive = inclusive
 
         return self._mapi.sendRecv( msg )
 
