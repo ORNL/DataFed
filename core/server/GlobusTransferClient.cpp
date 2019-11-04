@@ -257,6 +257,7 @@ GlobusTransferClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc
     body.AddMember( "source_endpoint", rapidjson::StringRef( src_ep.c_str() ), allocator );
     body.AddMember( "destination_endpoint", rapidjson::StringRef( dst_ep.c_str() ), allocator );
     body.AddMember( "verify_checksum", true, allocator );
+    body.AddMember( "notify_on_succeeded", false, allocator );
 
     rapidjson::Value xfr_list;
     xfr_list.SetArray();
