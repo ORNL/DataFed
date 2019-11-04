@@ -6,7 +6,7 @@
                     <li><a href="#tab-data-tree">My Data</a></li>
                     <li><a href="#tab-catalogs">Catalogs</a></li>
                     <li style="display:none"><a href="#tab-prov-graph">Provenance</a><span class='ui-icon ui-icon-circle-close prov-graph-close'></span></li>
-                    <li style="display:none"><a href="#tab-search-results">Search</a><span class='ui-icon ui-icon-circle-close search-results-close'></span></li>
+                    <li style="display:none"><a href="#tab-search-results">Search Results</a><span class='ui-icon ui-icon-circle-close search-results-close'></span></li>
                 </ul>
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="col-flex" style="height:100%">
@@ -55,6 +55,7 @@
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
                             <button class="btn" id="btn_srch_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
+                            <button class="btn" id="btn_srch_refresh" title='Refresh query results'>Refresh</button>
                         </div>
                     </div>
                 </div>
@@ -136,7 +137,7 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
                     <table style='width:100%'>
-                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
+                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button id="run_qry_btn" class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
 
                         <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button class='btn small' onclick='querySave()' style='width:12ch' >Save Query</button></td></tr>
                         <tr><td>Scope:</td><td colspan="3">

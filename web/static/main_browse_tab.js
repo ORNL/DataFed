@@ -1897,6 +1897,8 @@ function makeBrowserTab(){
     }
 
     this.searchDirect = function(){
+        $("#run_qry_btn").removeClass("ui-state-error")
+
         var query = parseQuickSearch();
 
         if ( query.scopes.length && ( query.quick || query.meta || query.id ))
@@ -3479,9 +3481,19 @@ function makeBrowserTab(){
 
     $(document.body).on('click', '.browse-reload' , inst.actionReloadSelected );
 
-    $("#id_query,#text_query,#meta_query").on('keyup', function (e) {
-        if (e.keyCode == 13)
+    $("#id_query,#text_query,#meta_query").on('keypress', function (e) {
+        if (e.keyCode == 13){
             inst.searchDirect();
+        }
+    });
+
+    $("#id_query,#text_query,#meta_query").on( "input", function(e) {
+        $("#run_qry_btn").addClass("ui-state-error")
+    });
+
+    $("#btn_srch_refresh").on("click", function(){
+        if ( inst.cur_query )
+            inst.execQuery( inst.cur_query );
     });
 
     if ( g_user.isRepoAdmin ){
