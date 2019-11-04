@@ -131,6 +131,10 @@ function makeBrowserTab(){
             });
         }
 
+        if ( inst.cur_query ){
+            inst.execQuery( inst.cur_query );
+        }
+
         if ( inst.focus_node_id ){
             if ( a_ids && a_data )
                 inst.graphUpdate( a_ids, a_data );
@@ -1781,6 +1785,10 @@ function makeBrowserTab(){
             console.log( "qry res:", ok, items );
             if ( ok ){
                 //var srch_node = inst.data_tree.getNodeByKey("search");
+
+                // Set this query as current for refresh
+                inst.cur_query = query;
+
                 var results = [];
                 if ( items.length > 0 ){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
@@ -3717,6 +3725,7 @@ function makeBrowserTab(){
     });
 
     $(".search-results-close").click( function(){
+        inst.cur_query = null;
         $("#search_results_tree").fancytree("getTree").clear();
         $('[href="#tab-search-results"]').closest('li').hide();
         $( "#data-tabs" ).tabs({ active: 0 });
