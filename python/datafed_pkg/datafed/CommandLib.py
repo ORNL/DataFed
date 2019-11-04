@@ -28,8 +28,6 @@ import json as jsonlib
 import time
 import pathlib
 import wget
-from google.protobuf.json_format import MessageToJson
-from google.protobuf.json_format import MessageToDict
 from . import SDMS_Auth_pb2 as auth
 from . import SDMS_pb2 as sdms
 from . import MessageLib
@@ -57,20 +55,24 @@ class API:
     # @param opts - Configuration options (optional)
     # @exception Exception: if invalid config values are present
     #
-    def __init__( self, opts = {} ):
+    def __init__( self, opts = {}, cfg = None, **kwargs ):
+        print("CmdLib - init()")
+
         self._uid = None
         self._cur_sel = None
         self._cur_ep = None
-        self._cur_coll = "root"
+        #self._cur_coll = "root"
         self._cur_alias_prefix = ""
-        self._prev_coll = "root"
-        self._list_items = []
+        #self._prev_coll = "root"
+        #self._list_items = []
 
-        self._addConfigOptions()
-        self._cfg = Config.API( opts )
+        if cfg == None:
+            self._cfg = Config.API( opts )
+        else:
+            self._cfg = cfg
         _opts = self._setSaneDefaultOptions()
         self._mapi = MessageLib.API( **_opts )
-        self._mapi.setNackExceptionEnabled( False )
+        self._mapi.setNackExceptionEnabled( True )
         auth, uid = self._mapi.getAuthStatus()
 
         if auth:
@@ -149,7 +151,6 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
     def dataCreate( self, title, alias = None, description = None, keywords = None, extension = None,
         metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
 
@@ -158,7 +159,8 @@ class API:
 
         msg = auth.RecordCreateRequest()
         msg.title = title
-        msg.parent_id = self._resolve_coll_id( parent_id, context )
+        msg.parent_id = self._resolve_id( parent_id, context )
+        #msg.parent_id = self._resolve_coll_id( parent_id, context )
 
         if alias:
             msg.alias = alias
@@ -287,21 +289,21 @@ class API:
     #
     # @param item_id - Data record or collection ID/alias, or a list of IDs/aliases
     # @param path - Globus or file system destination path
-    # @param wait - 
-    # @param context - 
+    # @param wait - Wait for get to complete if True
+    # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
+    # @param display_progress - Enable display of HTTP download progress bar if True
+    # @param context - Optional user or project ID to use for alias resolution
     # @exception Exception: if both Globus and HTTP transfers are required
     #
-    def dataGet( self, item_id, path, wait = False, display_progress = False, context = None ):
+    def dataGet( self, item_id, path, wait = False, timeout_sec = 0, display_progress = False, context = None ):
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
         msg = auth.DataGetPreprocRequest()
         for ids in df_id:
-            msg.id.append( _resolve_id( ids, project ))
+            msg.id.append( self._resolve_id( ids, context ))
 
-        reply = _mapi.sendRecv(msg)
-
-        self._checkNackReply( reply )
+        reply = self._mapi.sendRecv( msg )
 
         # May initiate multiple transfers - one per repo with multiple records per transfer
         # Downloads may be Globus OR HTTP, but not both
@@ -314,20 +316,19 @@ class API:
             else:
                 glob_list.append(i.id)
 
-        if glob_list and http_list:
+        if len(glob_list) > 0 and len(http_list) > 0:
             raise Exception("Cannot 'get' records via Globus and http with same command.")
 
-        if http_list:
+        if len(http_list) > 0:
             # HTTP transfers
             path = self._resolvePathForHTTP( path )
-            #result = []
-            result = auth.HttpXfrDataReply()
+            reply = auth.HttpXfrDataReply()
 
             for item in http_list:
-                xfr = result.xfr.add()
+                xfr = reply.xfr.add()
                 xfr.rec_id = item[1]
                 xfr.mode = sdms.XM_GET
-                setattr(xfr,"from",item[0])
+                setattr( xfr, "from", item[0] )
                 xfr.to = path
                 xfr.started = int(time.time())
 
@@ -336,84 +337,70 @@ class API:
                     # wget has a buggy filename uniquifier, appended integer will not increase after 1
                     new_filename = self._uniquifyFilename( filename )
 
-                    if _output_mode == _OM_TEXT and _verbosity >= 1:
+                    if display_progress:
                         data_file = wget.download( item[0], out=str(new_filename), bar=_bar_adaptive_human_readable)
-                        _print_msg(1,"\nRecord {} downloaded to {}".format( item[1], data_file ))
+                        #_print_msg(1,"\nRecord {} downloaded to {}".format( item[1], data_file ))
                     else:
                         data_file = wget.download( item[0], out=str(new_filename), bar=None)
-                        #result.append({"id":item[1],"url":item[0],"file":data_file,"status":"SUCCEEDED"})
                         xfr.to = data_file
                         xfr.updated = int(time.time())
                         xfr.status = sdms.XS_SUCCEEDED
-
-
                 except Exception as e:
-                    _print_msg(0,"Record {} download failed: {}".format(item[1],e))
                     xfr.status = sdms.XS_FAILED
                     xfr.err_msg = str(e)
                     xfr.updated = int(time.time())
-                    #result.append({"id":item[1],"url":item[0],"file":new_filename,"status":"FAILED","err_msg":str(e)})
 
-            if _output_mode_sticky == _OM_RETN:
-                global _return_val
-                _return_val = {"msg_type":"HttpXfrDataReply","message":result}
-                return
-            elif _output_mode == _OM_JSON:
-                #click.echo( jsonlib.dumps( {"msg_type":"HttpXfrDataReply","message":result} ))
-                click.echo( "{{\"msg_type\":\"{}\",\"message\":{}}}".format("HttpXfrDataReply",MessageToJson( result, preserving_proto_field_name=True )))
-
+                return [ reply, "HttpXfrDataReply" ]
         elif len(glob_list) > 0:
             # Globus transfers
             msg = auth.DataGetRequest()
             msg.id.extend(glob_list)
             msg.path = self._resolvePathForGlobus( path, False )
 
-            if msg.path != path:
-                _print_msg(1,"Initiating Globus transfer to {}".format( msg.path ))
-
-            reply = _mapi.sendRecv(msg)
-
-            self._checkNackReply( reply )
+            reply = self._mapi.sendRecv( msg )
 
             if wait:
                 xfr_ids = []
                 replies = []
                 num_xfr = len( reply[0].xfr )
+                elapsed = 0
 
                 for xfrs in reply[0].xfr:
-                    xfr_ids.append(xfrs.id)
-
-                _print_msg(1,"Waiting on transfer ID(s) {}".format( str( xfr_ids )))
+                    xfr_ids.append(( xfrs.id, True ))
 
                 msg = auth.XfrViewRequest()
 
                 while wait and num_xfr > 0:
-                    time.sleep(3)
+                    time.sleep( 2 )
+                    elapsed = elapsed + 2
 
                     for xid in xfr_ids:
-                        msg.xfr_id = xid
+                        if xid[1]:
+                            msg.xfr_id = xid[0]
 
-                        reply = _mapi.sendRecv(msg)
+                            reply = self._mapi.sendRecv( msg, nack_except = False )
 
-                        # For RETN mode, must check for NACK
-                        #if _checkNackReply( reply ):
-                        #    return
+                            # Not sure this can happen:
+                            if reply[1] == "NackReply":
+                                num_xfr = num_xfr - 1
+                                xid[1] = False
 
-                        check = reply[0].xfr[0]
-                        if check.status >= 3:
-                            replies.append(check)
-                            num_xfr = num_xfr - 1
+                            check = reply[0].xfr[0]
+                            if check.status >= 3:
+                                replies.append( check )
+                                num_xfr = num_xfr - 1
+                                xid[1] = False
 
-                        if num_xfr > 0:
-                            #_print_msg(1,"  Transfer {}, status: {}".format( check.id,_xfr_statuses.get( check.status, "None ")))
+                    if timeout_sec and elapsed > timeout_sec:
+                        break
 
                 # This is messy... there is no single transfer status reply available from the server after the initial request
                 # Must create a new reply and insert the contents of the status replies from the polling loop
                 reply = auth.XfrDataReply()
-                reply.xfr.extend(replies)
-                _generic_reply_handler( [reply,"XfrDataReply"], _print_xfr_stat )
+                reply.xfr.extend( replies )
+                return [reply,"XfrDataReply"]
             else:
-                _generic_reply_handler( reply, _print_xfr_stat )
+                return reply
         else:
             # Will land here if tried to get a collection with no records
             raise Exception("No data records found to download")
@@ -426,9 +413,9 @@ class API:
         if extension:
             msg.ext = extension
 
-        reply = _mapi.sendRecv( msg )
+        reply = self._mapi.sendRecv( msg )
 
-        if wait and reply[1] != "NackReply":
+        if wait:
             #TODO Eventually replace polling with server push
             msg2 = auth.XfrViewRequest()
             msg2.xfr_id = reply[0].xfr[0].id
@@ -438,11 +425,11 @@ class API:
                 time.sleep(2)
                 elapsed = elapsed + 2
 
-                reply2 = _mapi.sendRecv( msg2 )
+                reply2 = self._mapi.sendRecv( msg2, nack_except = False )
 
                 # Not sure if this can happen:
                 if reply2[1] == "NackReply":
-                    raise Exception( "Transfer status polling error: " + reply[0].err_msg )
+                    break
 
                 reply = reply2
                 check = reply[0].xfr[0]
@@ -522,7 +509,8 @@ class API:
 
     def collectionView( self, coll_id, context = None ):
         msg = auth.CollViewRequest()
-        msg.id = self._resolve_coll_id( coll_id, context )
+        msg.id = self._resolve_id( coll_id, context )
+        #msg.id = self._resolve_coll_id( coll_id, context )
 
         return self._mapi.sendRecv( msg )
 
@@ -541,14 +529,16 @@ class API:
             msg.topic = topic
 
         if parent_id:
-            msg.parent_id = self._resolve_coll_id( parent_id, context )
+            msg.parent_id = self._resolve_id( parent_id, context )
+            #msg.parent_id = self._resolve_coll_id( parent_id, context )
 
         return self._mapi.sendRecv( msg )
 
 
     def collectionUpdate( self, coll_id, title = None, alias = None, description = None, topic = None, context = None ):
         msg = auth.CollUpdateRequest()
-        msg.id = self._resolve_coll_id( coll_id, context )
+        msg.id = self._resolve_id( coll_id, context )
+        #msg.id = self._resolve_coll_id( coll_id, context )
 
         if title:
             msg.title = title
@@ -593,14 +583,16 @@ class API:
         msg = auth.CollReadRequest()
         msg.count = count
         msg.offset = offset
-        msg.id = self._resolve_coll_id( coll_id, context )
+        msg.id = self._resolve_id( coll_id, context )
+        #msg.id = self._resolve_coll_id( coll_id, context )
 
         return self._mapi.sendRecv( msg )
 
 
     def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None, context = None ):
         msg = auth.CollWriteRequest()
-        msg.id = self._resolve_coll_id( coll_id, context )
+        msg.id = self._resolve_id( coll_id, context )
+        #msg.id = self._resolve_coll_id( coll_id, context )
 
         if isinstance( add_ids, list ):
             for i in add_ids:
@@ -616,6 +608,14 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+
+    def collectionGetParents( self, coll_id, context = None ):
+        msg = auth.CollGetParentsRequest()
+        msg.id = self._resolve_id( coll_id, context )
+        #msg.id = self._resolve_coll_id( coll_id, context )
+        msg.inclusive = False
+
+        return self._mapi.sendRecv( msg )
 
     # =========================================================================
     # ----------------------------------------------------------- Query Methods
@@ -800,7 +800,7 @@ class API:
             msg.xfr_id = xfr_id
 
             reply = self._mapi.sendRecv( msg )
-        elif not df_id:
+        else:
             msg = auth.XfrListRequest()
             msg.limit = 1
 
@@ -821,17 +821,15 @@ class API:
         return self._cfg.get( "default_ep" )
 
     def endpointDefaultSet( self, endpoint ):
-        ep = self._resolve_index_val( endpoint )
         # TODO validate ep is UUID or legacy (not an ID)
-        self._cfg.set( "default_ep", ep, True )
+        self._cfg.set( "default_ep", endpoint, True )
 
     def endpointGet( self ):
         return self._cur_ep
 
     def endpointSet( self, endpoint ):
-        ep = self._resolve_index_val( endpoint )
         # TODO validate ep is UUID or legacy (not an ID)
-        self._cur_ep = ep
+        self._cur_ep = endpoint
 
 
     # =========================================================================
@@ -850,9 +848,6 @@ class API:
 
         reply = self._mapi.sendRecv( msg )
 
-        if reply[1] == "NackReply"
-            return reply
-
         if pub_file == None:
             pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
@@ -868,6 +863,7 @@ class API:
         keyf.close()
 
 
+    '''
     def getWorkingCollection( self ):
         return self._cur_coll
 
@@ -878,11 +874,9 @@ class API:
 
         reply = self._mapi.sendRecv( msg )
 
-        self._checkNackReply( reply )
-
         self._prev_coll = self._cur_coll
         self._cur_coll = msg.id
-
+    '''
 
     def setContext( self, item_id = None ):
         if item_id == None:
@@ -890,17 +884,18 @@ class API:
                 return
 
             self._cur_sel = self._uid
-            self._cur_coll = "c/u_" + self._uid[2:] + "_root"
+            #self._cur_coll = "c/u_" + self._uid[2:] + "_root"
             self._cur_alias_prefix = ""
         else:
-            id2 = self._resolve_index_val( item_id )
+            #id2 = self._resolve_index_val( item_id )
+            id2 = item_id
 
             if id2[0:2] == "p/":
                 msg = auth.ProjectViewRequest()
                 msg.id = id2
             else:
                 if id2[0:2] != "u/":
-                    if id2.find("/") > 0 || id2.find(":") > 0
+                    if id2.find("/") > 0 or id2.find(":") > 0:
                         raise Exception("setContext invalid ID, '" + id2 + "'. Must be a user or a project ID")
                     id2 = "u/" + id2
 
@@ -909,30 +904,27 @@ class API:
 
             reply = self._mapi.sendRecv( msg )
 
-            if reply[1] == "NackReply":
-                raise Exception( "setContext failed - " + repl[0].err_msg )
-
             self._cur_sel = id2
 
             if id2[0] == "u":
-                self._cur_coll = "c/u_" + self._cur_sel[2:] + "_root"
+                #self._cur_coll = "c/u_" + self._cur_sel[2:] + "_root"
                 self._cur_alias_prefix = "u:" + self._cur_sel[2:] + ":"
             else:
-                self._cur_coll = "c/p_" + self._cur_sel[2:] + "_root"
+                #self._cur_coll = "c/p_" + self._cur_sel[2:] + "_root"
                 self._cur_alias_prefix = "p:" + self._cur_sel[2:] + ":"
 
 
     def getContext( self ):
         return self._cur_sel
 
-
+    '''
     def getWorkingPath( self ):
         msg = auth.CollGetParentsRequest()
         msg.id = self._cur_coll
         msg.inclusive = True
 
         return self._mapi.sendRecv( msg )
-
+    '''
 
     def timestampToStr( self, ts ):
         return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
@@ -1068,16 +1060,17 @@ class API:
 
 
     def _resolve_id( self, item_id, context = None ):
-        id2 = self._resolve_index_val( item_id )
+        #id2 = self._resolve_index_val( item_id )
 
-        if ( len( id2 ) > 2 and id2[1] == "/" ) or ( id2.find(":") > 0 ):
-            return id2
+        if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
+            return item_id
 
         if context:
+            return context[0] + ":" + context[2:] + ":" + item_id
         else:
-            return self._cur_alias_prefix + id2
+            return self._cur_alias_prefix + item_id
 
-
+    '''
     def _resolve_coll_id( self, coll_id, context = None ):
         if coll_id == ".":
             return self._cur_coll
@@ -1085,13 +1078,9 @@ class API:
             return self._prev_coll
         elif coll_id == "/":
             if context:
-                ctx = context
-            else
-                ctx = self._cur_sel
-            if ctx[0] == "p":
-                return "c/p_" + ctx[2:] + "_root"
+                return "c/" + context[0] + "_" + context[2:] + "_root"
             else:
-                return "c/u_" + ctx[2:] + "_root"
+                return "c/" + self._cur_sel[0] + "_" + self._cur_sel[2:] + "_root"
         elif coll_id == "..":
             # TODO This should be GetParent no GetParents
             msg = auth.CollGetParentsRequest()
@@ -1099,16 +1088,12 @@ class API:
 
             reply = self._mapi.sendRecv( msg )
 
-            if reply[1] == "NackReply":
-                raise Exception( reply[0].err_msg )
-
             if len(reply[0].path) and len(reply[0].path[0].item):
                 return reply[0].path[0].item[0].id
             else:
                 raise Exception("Already at root")
         else:
             return self._resolve_id( coll_id, context )
-
 
     def _resolve_index_val( self, item_id ):
         try:
@@ -1126,11 +1111,7 @@ class API:
             pass
 
         return item_id
-
-
-    def _checkNackReply( self, reply ):
-        if reply[1] == "NackReply":
-            raise Exception( reply[0].err_msg )
+    '''
 
 
     def _setSaneDefaultOptions( self ):

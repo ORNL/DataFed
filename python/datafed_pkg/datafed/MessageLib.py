@@ -64,9 +64,12 @@ class API:
         manual_auth = None,
         **kwargs
         ):
+        print("MsgLib - init()")
+
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
+        self._timeout = 5000
 
         if not server_host:
             raise Exception("Server host is not defined")
@@ -260,6 +263,12 @@ class API:
             self._nack_except = False
 
 
+    def setDefaultTimeout( self, timeout ):
+        self._timeout = timeout
+
+    def getDefaultTimeout( self ):
+        return self._timeout
+
     ## @brief Synchronously send a message then receive a reply to/from DataFed server.
     #
     # @param msg: Protobuf message to send to the server
@@ -271,9 +280,10 @@ class API:
     # @retval (obj,str)
     # @exception Exception: On message context mismatch (out of sync)
     #
-    def sendRecv( self, msg, timeout = 5000 ):
+    def sendRecv( self, msg, timeout = None, nack_except = None ):
         self.send( msg )
-        reply, mt, ctxt = self.recv( timeout )
+        _timeout = (timeout if timeout != None else self._timeout)
+        reply, mt, ctxt = self.recv( _timeout, nack_except )
         if reply == None:
             return None, None
         if ctxt != self._ctxt:
@@ -306,12 +316,16 @@ class API:
     #   (None,None,None).
     # @retval (obj,str,int)
     #
-    def recv( self, timeout = 5000 ):
-        reply, msg_type, ctxt = self._conn.recv( timeout )
+    def recv( self, timeout = None, nack_except = None ):
+        _timeout = (timeout if timeout != None else self._timeout)
+
+        reply, msg_type, ctxt = self._conn.recv( _timeout )
         if reply == None:
             return None, None, None
 
-        if msg_type == "NackReply" and self._nack_except:
+        _nack_except = (nack_except if nack_except != None else self._nack_except)
+
+        if msg_type == "NackReply" and _nack_except:
             if reply.err_msg:
                 raise Exception(reply.err_msg)
             else:
