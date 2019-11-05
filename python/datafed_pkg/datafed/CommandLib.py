@@ -40,6 +40,8 @@ if sys.version_info.major == 3:
 class API:
     _max_md_size = 102400
     _max_payload_size = 1048576
+    _endpoint_legacy = re.compile(r'[\w\-]+#[\w\-]+')
+    _endpoint_uuid = re.compile( r'[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}', re.I )
 
     ##
     # @brief Commandlib API constructor
@@ -55,22 +57,15 @@ class API:
     # @param opts - Configuration options (optional)
     # @exception Exception: if invalid config values are present
     #
-    def __init__( self, opts = {}, cfg = None, **kwargs ):
-        print("CmdLib - init()")
-
+    def __init__( self, opts = {}, **kwargs ):
         self._uid = None
         self._cur_sel = None
         self._cur_ep = None
-        #self._cur_coll = "root"
         self._cur_alias_prefix = ""
-        #self._prev_coll = "root"
-        #self._list_items = []
 
-        if cfg == None:
-            self._cfg = Config.API( opts )
-        else:
-            self._cfg = cfg
+        self.cfg = Config.API( opts )
         _opts = self._setSaneDefaultOptions()
+
         self._mapi = MessageLib.API( **_opts )
         self._mapi.setNackExceptionEnabled( True )
         auth, uid = self._mapi.getAuthStatus()
@@ -78,6 +73,8 @@ class API:
         if auth:
             self._uid = uid
             self._cur_sel = uid
+
+        self._cur_ep = self.cfg.get( "default_ep" )
 
     # =========================================================================
     # -------------------------------------------------- Authentication Methods
@@ -123,6 +120,12 @@ class API:
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
 
+    def generateCredentials( self ):
+        msg = auth.GenerateCredentialsRequest()
+
+        return self._mapi.sendRecv( msg )
+
+    '''
     ##
     # @brief Manually authenticate client by access token
     #
@@ -139,6 +142,7 @@ class API:
 
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
+    '''
 
     # =========================================================================
     # ------------------------------------------------------------ Data Methods
@@ -160,7 +164,6 @@ class API:
         msg = auth.RecordCreateRequest()
         msg.title = title
         msg.parent_id = self._resolve_id( parent_id, context )
-        #msg.parent_id = self._resolve_coll_id( parent_id, context )
 
         if alias:
             msg.alias = alias
@@ -177,8 +180,6 @@ class API:
         if extension:
             msg.ext = extension
             msg.ext_auto = False
-        else:
-            msg.ext_auto = True
 
         # TODO Broken code
         #if metadata_file:
@@ -201,7 +202,7 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def dataUpdate( self, data_id, title = None, alias = None, description = None, keywords = None,
-        extension = None, metadata = None, metadata_file = None, dep_clear = False, dep_add = None,
+        extension = None, metadata = None, metadata_file = None, metadata_set = False, dep_clear = False, dep_add = None,
         dep_rem = None, context = None ):
 
         if metadata and metadata_file:
@@ -213,28 +214,34 @@ class API:
         msg = auth.RecordUpdateRequest()
         msg.id = self._resolve_id( data_id, context )
 
-        if title:
+        if title is not None:
             msg.title = title
 
-        if alias:
+        if alias is not None:
             msg.alias = alias
 
-        if description:
+        if description is not None:
             msg.desc = description
 
-        if keywords:
+        if keywords is not None:
             msg.keyw = keywords
 
-        if extension:
-            msg.ext = extension
-            msg.ext_auto = False
+        if extension is not None:
+            if extension:
+                msg.ext = extension
+                msg.ext_auto = False
+            else:
+                msg.ext_auto = True
 
         # TODO Broken code
         #if metadata_file:
         #    metadata = metadata_file.read()
 
-        if metadata:
+        if metadata is not None:
             msg.metadata = metadata
+
+        if metadata_set:
+            msg.mdset = False
 
         if dep_clear:
             msg.deps_clear = True
@@ -300,7 +307,7 @@ class API:
         # This accounts for download of collections.
 
         msg = auth.DataGetPreprocRequest()
-        for ids in df_id:
+        for ids in item_id:
             msg.id.append( self._resolve_id( ids, context ))
 
         reply = self._mapi.sendRecv( msg )
@@ -540,19 +547,16 @@ class API:
         msg.id = self._resolve_id( coll_id, context )
         #msg.id = self._resolve_coll_id( coll_id, context )
 
-        if title:
+        if title is not None:
             msg.title = title
 
-        if alias:
+        if alias is not None:
             msg.alias = alias
 
-        if description:
+        if description is not None:
             msg.desc = description
 
-        if topic:
-            msg.topic = topic
-
-        if topic:
+        if topic is not None:
             msg.topic = topic
 
         return self._mapi.sendRecv( msg )
@@ -793,7 +797,7 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    def _xfr_stat( self, xfr_id = None ):
+    def xfrStat( self, xfr_id = None ):
         if xfr_id:
             msg = auth.XfrViewRequest()
             msg.xfr_id = xfr_id
@@ -817,11 +821,13 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def endpointDefaultGet( self ):
-        return self._cfg.get( "default_ep" )
+        return self.cfg.get( "default_ep" )
 
     def endpointDefaultSet( self, endpoint ):
         # TODO validate ep is UUID or legacy (not an ID)
-        self._cfg.set( "default_ep", endpoint, True )
+        self.cfg.set( "default_ep", endpoint, True )
+        if not self._cur_ep:
+            self._cur_ep = endpoint
 
     def endpointGet( self ):
         return self._cur_ep
@@ -836,9 +842,9 @@ class API:
     # =========================================================================
 
     def setupCredentials( self ):
-        cfg_dir = self._cfg.get("client_cfg_dir")
-        pub_file = self._cfg.get("client_pub_key_file")
-        priv_file = self._cfg.get("client_priv_key_file")
+        cfg_dir = self.cfg.get("client_cfg_dir")
+        pub_file = self.cfg.get("client_pub_key_file")
+        priv_file = self.cfg.get("client_priv_key_file")
 
         if cfg_dir == None and (pub_file == None or priv_file == None):
             raise Exception("Client configuration directory and/or client key files not configured")
@@ -992,18 +998,26 @@ class API:
 
         return str(res)
 
+
     def _resolvePathForGlobus( self, path, must_exist ):
-        # path arg is a string
+        # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
+        if re.match( _endpoint_legacy, path ) or re.match( _endpoint_uuid, path ):
+            return path
+
+        # Does not have an endpoint prefix, might be a full or relative path
+
+        if self._cur_ep == None:
+            raise Exception("No endpoint set.")
 
         if path[0] == "~":
-            path = pathlib.Path(path).expanduser()
-        elif path[0] == ".":
-            path = pathlib.Path.cwd() / path
+            _path = pathlib.Path( path ).expanduser()
+        elif path[0] == "." or path[0] != "/": # Relative path: ./something ../something or something
+            _path = pathlib.Path.cwd() / path
         else:
-            path = pathlib.Path(path)
+            _path = pathlib.Path(path)
 
         if must_exist:
-            path = path.resolve()
+            _path = str(_path.resolve())
         else:
             # Can't use resolve b/c it throws an exception when a path doesn't exist pre python 3.6
             # Must manually locate the lowest relative path component and resolve only to that point
@@ -1011,7 +1025,8 @@ class API:
 
             idx = 0
             rel = None
-            for p in path.parts:
+
+            for p in _path.parts:
                 if p == "." or p == "..":
                     rel = idx
                 idx = idx + 1
@@ -1020,41 +1035,34 @@ class API:
                 basep = pathlib.Path()
                 endp = pathlib.Path()
                 idx = 0
-                for p in path.parts:
+                for p in _path.parts:
                     if idx <= rel:
                         basep = basep.joinpath( p )
                     else:
                         endp = endp.joinpath( p )
                     idx = idx + 1
 
-                path = basep.resolve().joinpath(endp)
+                _path = basep.resolve().joinpath(endp)
 
-        endpoint_name = re.compile(r'[\w\-]+#[\w\-]+')
-        endpoint_uuid = re.compile(r'[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}', re.I)
+            winp = pathlib.PurePath(_path)
 
-        if re.match(endpoint_name, str(path)) or re.match(endpoint_uuid, str(path)): #starts with endpoint
-            fp = path
-        else:
-            fp = pathlib.PurePath(path)
-
-            if isinstance(fp, pathlib.PureWindowsPath):
-                if fp.drive:
-                    drive_name = fp.drive.replace(':', '')
-                    parts = fp.parts[1:]
-                    fp = pathlib.PurePosixPath('/' + drive_name)
+            # TODO The follow windows-specific code needs to be tested on windows...
+            if isinstance(winp, pathlib.PureWindowsPath):
+                if winp.drive:
+                    drive_name = winp.drive.replace(':', '')
+                    parts = winp.parts[1:]
+                    winp = pathlib.PurePosixPath('/' + drive_name)
                     for item in parts:
-                        fp = fp / str(item)  # adds each part
-                elif not fp.drive:
-                    fp = fp.as_posix()
-                    if fp[0] != '/':
-                        fp = "/" + fp
-
-            if self._cur_ep:
-                fp = self._cur_ep + str(fp)
+                        winp = winp / str(item)  # adds each part
+                    _path = str(_path)
+                elif not winp.drive:
+                    _path = winp.as_posix()
+                    if _path[0] != '/':
+                        _path = "/" + _path
             else:
-                raise Exception("No endpoint set")
+                _path = str(_path)
 
-        return str(fp)
+        return self._cur_ep + _path
 
 
 
@@ -1065,7 +1073,12 @@ class API:
             return item_id
 
         if context:
-            return context[0] + ":" + context[2:] + ":" + item_id
+            if context[:2] == "p/":
+                return "p:" + context[2:] + ":" + item_id
+            elif context[:2] == "u/":
+                return "u:" + context[2:] + ":" + item_id
+            else:
+                return "u:" + context + ":" + item_id
         else:
             return self._cur_alias_prefix + item_id
 
@@ -1114,18 +1127,18 @@ class API:
 
 
     def _setSaneDefaultOptions( self ):
-        opts = self._cfg.getOpts()
+        opts = self.cfg.getOpts()
 
         # Examine initial configuration options and set & save defaults where needed
         save = False
 
         if not "server_host" in opts:
-            self._cfg.set( "server_host", "datafed.ornl.gov" )
+            self.cfg.set( "server_host", "datafed.ornl.gov" )
             opts["server_host"] = "datafed.ornl.gov"
             save = True
 
         if not "server_port" in opts:
-            self._cfg.set( "server_port", 7512 )
+            self.cfg.set( "server_port", 7512 )
             opts["server_port"] = 7512
             save = True
 
@@ -1134,14 +1147,14 @@ class API:
 
             if "server_cfg_dir" in opts:
                 serv_key_file = os.path.expanduser( os.path.join( opts['server_cfg_dir'], "datafed-core-key.pub" ))
-                self._cfg.set( "server_pub_key_file", serv_key_file )
+                self.cfg.set( "server_pub_key_file", serv_key_file )
                 opts["server_pub_key_file"] = serv_key_file
 
             if not serv_key_file or not os.path.exists( serv_key_file ):
                 serv_key_file = None
                 if "client_cfg_dir" in opts:
                     serv_key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-core-key.pub" ))
-                    self._cfg.set( "server_pub_key_file", serv_key_file )
+                    self.cfg.set( "server_pub_key_file", serv_key_file )
                     opts["server_pub_key_file"] = serv_key_file
                     save = True
 
@@ -1151,7 +1164,7 @@ class API:
                 if not os.path.exists(serv_key_file):
                     # Make default server pub key file
                     url = "https://"+opts["server_host"]+"/datafed-core-key.pub"
-                    fname = wget.download( url, out=serv_key_file )
+                    wget.download( url, out=serv_key_file )
 
         if not "client_pub_key_file" in opts or not "client_priv_key_file" in opts:
             if not "client_cfg_dir" in opts:
@@ -1159,18 +1172,18 @@ class API:
 
             if not "client_pub_key_file" in opts:
                 key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-user-key.pub" ))
-                self._cfg.set( "client_pub_key_file", key_file )
+                self.cfg.set( "client_pub_key_file", key_file )
                 opts["client_pub_key_file"] = key_file
                 save = True
 
             if not "client_priv_key_file" in opts:
                 key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-user-key.priv" ))
-                self._cfg.set( "client_priv_key_file", key_file )
+                self.cfg.set( "client_priv_key_file", key_file )
                 opts["client_priv_key_file"] = key_file
                 save = True
 
         if save:
-            self._cfg.save()
+            self.cfg.save()
 
         return opts
 

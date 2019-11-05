@@ -1244,7 +1244,6 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
                 EXCEPT( ID_INTERNAL_ERROR, "Deps not an array!" );
             }
 
-            DL_DEBUG("got deps, size:" << imem->value.Size() );
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
             {
                 rapidjson::Value & val2 = imem->value[j];

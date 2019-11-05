@@ -61,10 +61,11 @@ class API:
         client_pub_key = None,
         client_priv_key_file = None,
         client_priv_key = None,
+        client_token = None,
         manual_auth = None,
         **kwargs
         ):
-        print("MsgLib - init()")
+        #print("MsgLib - init()")
 
         self._ctxt = 0
         self._auth = False
@@ -108,7 +109,7 @@ class API:
         self._keys_loaded = False
         self._keys_valid = False
 
-        if manual_auth or not ( client_pub_key_file or client_pub_key or client_priv_key_file or client_priv_key ):
+        if manual_auth or client_token or not ( client_pub_key_file or client_pub_key or client_priv_key_file or client_priv_key ):
             pub,priv = zmq.curve_keypair()
             _client_pub_key = pub.decode("utf-8")
             _client_priv_key = priv.decode("utf-8")
@@ -160,10 +161,13 @@ class API:
         if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
             raise Exception( "Incompatible server version {}.{}.{}".format(reply.major,reply.minor,reply.build))
 
-        # Check if server authenticated based on keys
-        reply, mt = self.sendRecv( anon.GetAuthStatusRequest(), 10000 )
-        self._auth = reply.auth
-        self._uid = reply.uid
+        if client_token:
+            self.manualAuthByToken( client_token )
+        else:
+            # Check if server authenticated based on keys
+            reply, mt = self.sendRecv( anon.GetAuthStatusRequest(), 10000 )
+            self._auth = reply.auth
+            self._uid = reply.uid
 
 
     ## @brief Determines if client security keys were loaded.
@@ -216,7 +220,7 @@ class API:
         # Test auth status
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
         if not reply.auth:
-            raise Exception("Authentication failed")
+            raise Exception("Password authentication failed")
 
         self._auth = True
         self._uid = reply.uid
@@ -233,7 +237,7 @@ class API:
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
 
         if not reply.auth:
-            raise Exception("Authentication failed")
+            raise Exception("Token authentication failed")
 
         self._auth = True
         self._uid = reply.uid

@@ -32,7 +32,7 @@ setuptools.setup(
         'prompt_toolkit>=2'
     ],
     entry_points={
-        "console_scripts" : ["datafed = datafed.CommandLib:_run"]
+        "console_scripts" : ["datafed = datafed.CLI:_run"]
     },
     classifiers=[
         "Programming Language :: Python :: 3",
