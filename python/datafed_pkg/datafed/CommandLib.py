@@ -241,7 +241,7 @@ class API:
             msg.metadata = metadata
 
         if metadata_set:
-            msg.mdset = False
+            msg.mdset = True
 
         if dep_clear:
             msg.deps_clear = True
@@ -302,7 +302,7 @@ class API:
     # @param context - Optional user or project ID to use for alias resolution
     # @exception Exception: if both Globus and HTTP transfers are required
     #
-    def dataGet( self, item_id, path, wait = False, timeout_sec = 0, display_progress = False, context = None ):
+    def dataGet( self, item_id, path, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
@@ -343,21 +343,20 @@ class API:
                     filename = os.path.join( path, wget.filename_from_url( item[0] ))
                     # wget has a buggy filename uniquifier, appended integer will not increase after 1
                     new_filename = self._uniquifyFilename( filename )
-
-                    if display_progress:
-                        data_file = wget.download( item[0], out=str(new_filename), bar=_bar_adaptive_human_readable)
-                        #_print_msg(1,"\nRecord {} downloaded to {}".format( item[1], data_file ))
-                    else:
-                        data_file = wget.download( item[0], out=str(new_filename), bar=None)
-                        xfr.to = data_file
-                        xfr.updated = int(time.time())
-                        xfr.status = sdms.XS_SUCCEEDED
+                    if progress_bar != None:
+                        print("Downloading {} to {}".format(item[1],new_filename))
+                    data_file = wget.download( item[0], out=str(new_filename), bar = progress_bar )
+                    if progress_bar != None:
+                        print("")
+                    xfr.to = data_file
+                    xfr.updated = int(time.time())
+                    xfr.status = sdms.XS_SUCCEEDED
                 except Exception as e:
                     xfr.status = sdms.XS_FAILED
                     xfr.err_msg = str(e)
                     xfr.updated = int(time.time())
 
-                return [ reply, "HttpXfrDataReply" ]
+            return [ reply, "HttpXfrDataReply" ]
         elif len(glob_list) > 0:
             # Globus transfers
             msg = auth.DataGetRequest()
@@ -661,7 +660,7 @@ class API:
 
     def userView( self, uid ):
         msg = auth.UserViewRequest()
-        msg.uid = self._resolve_index_id( uid )
+        msg.uid = uid
 
         return self._mapi.sendRecv( msg )
 
@@ -867,32 +866,14 @@ class API:
         keyf.write( reply[0].priv_key )
         keyf.close()
 
-
-    '''
-    def getWorkingCollection( self ):
-        return self._cur_coll
-
-
-    def setWorkingCollection( self, coll_id, context = None ):
-        msg = auth.CollViewRequest()
-        msg.id = self._resolve_coll_id( coll_id, context )
-
-        reply = self._mapi.sendRecv( msg )
-
-        self._prev_coll = self._cur_coll
-        self._cur_coll = msg.id
-    '''
-
     def setContext( self, item_id = None ):
         if item_id == None:
             if self._cur_sel == self._uid:
                 return
 
             self._cur_sel = self._uid
-            #self._cur_coll = "c/u_" + self._uid[2:] + "_root"
             self._cur_alias_prefix = ""
         else:
-            #id2 = self._resolve_index_val( item_id )
             id2 = item_id
 
             if id2[0:2] == "p/":
@@ -907,8 +888,8 @@ class API:
                 msg = auth.UserViewRequest()
                 msg.uid = id2
 
-            reply = self._mapi.sendRecv( msg )
-
+            # Don't need reply - just using to throw an except if id/uid is invalid
+            self._mapi.sendRecv( msg )
             self._cur_sel = id2
 
             if id2[0] == "u":
@@ -922,14 +903,6 @@ class API:
     def getContext( self ):
         return self._cur_sel
 
-    '''
-    def getWorkingPath( self ):
-        msg = auth.CollGetParentsRequest()
-        msg.id = self._cur_coll
-        msg.inclusive = True
-
-        return self._mapi.sendRecv( msg )
-    '''
 
     def timestampToStr( self, ts ):
         return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
@@ -957,6 +930,26 @@ class API:
             pass
 
         return None
+
+    def sizeToStr( self, size, precision = 1 ):
+        if size == 0:
+            return "0"
+        elif size < 1024:
+            return str(size) + " B"
+        elif size < 1048576:
+            denom = 1024
+            unit = "KB"
+        elif size < 1073741824:
+            denom = 1048576
+            unit = "MB"
+        elif size < 1099511627776:
+            denom = 1073741824
+            unit = "GB"
+        else:
+            denom = 1099511627776
+            unit = "TB"
+
+        return "{:.{}f} {}".format( size/denom, precision, unit )
 
     # =========================================================================
     # --------------------------------------------------------- Private Methods
@@ -1081,50 +1074,6 @@ class API:
                 return "u:" + context + ":" + item_id
         else:
             return self._cur_alias_prefix + item_id
-
-    '''
-    def _resolve_coll_id( self, coll_id, context = None ):
-        if coll_id == ".":
-            return self._cur_coll
-        elif coll_id == "-":
-            return self._prev_coll
-        elif coll_id == "/":
-            if context:
-                return "c/" + context[0] + "_" + context[2:] + "_root"
-            else:
-                return "c/" + self._cur_sel[0] + "_" + self._cur_sel[2:] + "_root"
-        elif coll_id == "..":
-            # TODO This should be GetParent no GetParents
-            msg = auth.CollGetParentsRequest()
-            msg.id = self._cur_coll
-
-            reply = self._mapi.sendRecv( msg )
-
-            if len(reply[0].path) and len(reply[0].path[0].item):
-                return reply[0].path[0].item[0].id
-            else:
-                raise Exception("Already at root")
-        else:
-            return self._resolve_id( coll_id, context )
-
-    def _resolve_index_val( self, item_id ):
-        try:
-            if len( item_id ) <= 3:
-
-                if item_id.endswith("."):
-                    idx = int(item_id[:-1])
-                else:
-                    idx = int(item_id)
-
-                if idx <= len( self._list_items ):
-                    return self._list_items[idx-1]
-
-        except ValueError:
-            pass
-
-        return item_id
-    '''
-
 
     def _setSaneDefaultOptions( self ):
         opts = self.cfg.getOpts()

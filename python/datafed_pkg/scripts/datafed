@@ -6,4 +6,4 @@ DataFed CLI
 
 import datafed.CLI
 
-datafed.CLI._run()
+datafed.CLI.run()
