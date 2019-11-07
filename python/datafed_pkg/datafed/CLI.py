@@ -930,11 +930,12 @@ def _queryList( offset, count ):
 @click.argument("qry_id", metavar="ID")
 def _queryView( qry_id ):
     '''
-    View saved queries.
+    View a saved query by ID.
     '''
 
     reply = _capi.queryView( qry_id )
-    _generic_reply_handler( reply, _print_listing )
+    # TODO - Need a new query view print function
+    #_generic_reply_handler( reply, _print_listing )
 
 
 @_query.command(name='exec')
@@ -965,7 +966,7 @@ def _queryDirect( id, text, meta, no_default, coll, proj, save, offset, count ):
     Run a directly entered query. Unless the 'no-default' option is included,
     the search scope includes all data owned by the authenticated user (in
     their root collection and projects that are owned or managed, or where the
-    user is a member of the project. Projects anc collections that are not part
+    user is a member of the project. Projects and collections that are not part
     of the default scope may be added using the --proj and --coll optiones
     respectively.
     '''
@@ -981,31 +982,49 @@ def _queryDirect( id, text, meta, no_default, coll, proj, save, offset, count ):
 def _user():
     pass
 
-@_user.command(name='collab',help="List all users associated with common projects")
+@_user.command(name='collab')
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 def _userListCollab( offset, count ):
+    '''
+    List all users that are collaborators. Collaborators are defined as users
+    that have projects in common with the current user, or that have data-
+    sharing relationships with the current user.
+    '''
+
     reply = _capi.userListCollaborators( offset = offset, count = count )
     _generic_reply_handler( reply, _print_user_listing )
 
 
-@_user.command(name='all',help="List all users")
+@_user.command(name='all')
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 def _userListAll( offset, count ):
+    '''
+    List all users.
+    '''
+
     reply = _capi.userListAll( offset = offset, count = count )
     _generic_reply_handler( reply, _print_user_listing )
 
 
-@_user.command(name='view',help="View information for user UID")
-@click.argument("uid")
+@_user.command( name='view' )
+@click.argument("uid", metavar="UID" )
 def _userView( uid ):
+    '''
+    View user information.
+    '''
+
     reply = _capi.userView( _resolve_id( uid ))
     _generic_reply_handler( reply, _print_user )
 
 
-@_user.command( name='who', help="Show authenticated user identity.")
+@_user.command( name='who' )
 def _userWho():
+    '''
+    Show current authenticated user ID.
+    '''
+
     if not _uid:
         raise Exception( "Not authenticated." )
 
@@ -1027,13 +1046,18 @@ def _project():
     pass
 
 
-@_project.command(name='list',help="List projects")
+@_project.command( name='list' )
 @click.option("-o","--owned",is_flag=True,help="Include owned projects")
 @click.option("-a","--admin",is_flag=True,help="Include administered projects")
 @click.option("-m","--member",is_flag=True,help="Include membership projects")
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 def _projectList( owned, admin, member, offset, count ):
+    '''
+    List associated projects. List projects that are owned or managed by the
+    current user, as well as projects were the current user is a member.
+    '''
+
     if not (owned or admin or member):
         owned = True
         admin = True
@@ -1043,9 +1067,14 @@ def _projectList( owned, admin, member, offset, count ):
     _generic_reply_handler( reply, _print_listing )
 
 
-@_project.command(name='view',help="View project specified by ID")
+@_project.command(name='view')
 @click.argument("proj_id", metavar="ID")
 def _projectView( proj_id ):
+    '''
+    View project information. Current user must have a role (owner, manager, or
+    member) within the project specified by the ID argument.
+    '''
+
     reply = _capi.projectView( _resolve_id( proj_id ))
     _generic_reply_handler( reply, _print_proj )
 
@@ -1054,26 +1083,41 @@ def _projectView( proj_id ):
 # ------------------------------------------------------- Shared Data Functions
 # =============================================================================
 
-@_cli.command(name='shared',cls=AliasedGroup,help="Shared data commands")
+@_cli.command(name='shared',cls=AliasedGroup,help="Shared data commands.")
 def _shared():
     pass
 
 
-@_shared.command(name="users",help="List users with shared data")
+@_shared.command(name="users")
 def _sharedUsers():
+    '''
+    List users that have shared data. Only users that have shared data with the
+    current user are listed, not users that the current user has shared data
+    with.
+    '''
+
     reply = _capi.sharedUsersList()
     _generic_reply_handler( reply, _print_user_listing )
 
 
 @_shared.command(name="projects",help="List projects with shared data")
 def _sharedProjects():
+    '''
+    List projects that have shared data.
+    '''
+
     reply = _capi.sharedProjectsList()
     _generic_reply_handler( reply, _print_proj_listing )
 
 
-@_shared.command(name="ls",help="List shared data records and collections by user/project ID")
-@click.argument("df_id", metavar = "ID")
+@_shared.command( name = "ls" )
+@click.argument( "df_id", metavar = "ID" )
 def _sharedList( df_id ):
+    '''
+    List shared data records and collections by user/project ID. ID may be a
+    user or project ID, or an index value from a listing.
+    '''
+
     reply = _capi.sharedDataList( _resolve_id( df_id ))
     _generic_reply_handler( reply, _print_listing )
 
@@ -1082,18 +1126,33 @@ def _sharedList( df_id ):
 # ---------------------------------------------------------- Transfer Functions
 # =============================================================================
 
-@_cli.command(name='xfr',cls=AliasedGroup,help="Globus data transfer management commands")
+@_cli.command(name='xfr',cls=AliasedGroup,help="Globus data transfer management commands.")
 def _xfr():
     pass
 
+# TODO - change limit to offset + count
 
-@_xfr.command(name='list',help="List recent Globus transfers")
+@_xfr.command( name = 'list' )
 @click.option("-s","--since",help="List from specified time in seconds (suffix h = hours, d = days, w = weeks)")
 @click.option("-f","--from","time_from",help="List from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("-t","--to",help="List up to specified date/time (M/D/YYYY[,HH:MM])")
-@click.option("-st","--status",type=click.Choice(["0","1","2","3","4","init","initiated","active","inactive","succeeded","failed"]),help="List transfers matching specified status")
+@click.option("-S","--status",type=click.Choice(["0","1","2","3","4","init","initial","active","inactive","succeeded","failed"]),help="List transfers matching specified status")
 @click.option("-l","--limit",type=int,help="Limit to 'n' most recent transfers")
 def _xfrList( time_from, to, since, status, limit ):
+    '''
+    List recent Globus transfers. If no time or status filter options are
+    provided, all Globus transfers initiated by the current user are listed,
+    most recent first. Note that the DataFed server periodically purges
+    transfer history such that only up to 30 days of history are retained.
+    
+    The status option indicates the current stage of a transfer:
+    * INITIAL - Transfer has been requested but not started
+    * ACTIVE - Transfer is in progress
+    * INACTIVE - Transfer is paused
+    * SUCCEEDED - Transfer has completed successfully
+    * FAILED - Transfer has failed and has been stopped
+    '''
+
     if since != None and (time_from != None or to != None):
         raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
@@ -1101,9 +1160,23 @@ def _xfrList( time_from, to, since, status, limit ):
     _generic_reply_handler( reply, _print_xfr_listing )
 
 
-@_xfr.command(name='stat',help="Get status of transfer ID, or most recent transfer if ID omitted")
+@_xfr.command(name='stat')
 @click.argument( "xfr_id", metavar="ID", required=False )
 def _xfrStat( xfr_id ):
+    '''
+    Show transfer information. Use the ID argument to view a specific transfer
+    record, or omit to view the latest transfer initiated by the current user.
+    Information include status, source, destination, and other administrative
+    attributes.
+
+    The status field indicates the current stage of a transfer:
+    * INITIAL - Transfer has been requested but not started
+    * ACTIVE - Transfer is in progress
+    * INACTIVE - Transfer is paused
+    * SUCCEEDED - Transfer has completed successfully
+    * FAILED - Transfer has failed and has been stopped
+    '''
+
     reply = _capi.xfrStat( xfr_id )
     _generic_reply_handler( reply, _print_xfr_stat )
 
@@ -1112,13 +1185,18 @@ def _xfrStat( xfr_id ):
 # ---------------------------------------------------------- Endpoint Functions
 # =============================================================================
 
-@_cli.command(name='ep',cls=AliasedGroup,help="Endpoint commands")
+@_cli.command(name='ep',cls=AliasedGroup,help="Endpoint commands.")
 def _ep():
     pass
 
 
-@_ep.command(name='get',help="Get Globus endpoint for the current session. At the start of the session, this will be the previously configured default endpoint.")
+@_ep.command(name='get')
 def _epGet():
+    '''
+    Get Globus endpoint for the current session. At the start of a session, the
+    current endpoint will be set to the default endpoint, if configured.
+    '''
+
     ep = _capi.endpointGet()
 
     if not ep:
@@ -1133,9 +1211,14 @@ def _epGet():
         click.echo('{{ "endpoint": "{}" }}'.format( ep ))
 
 
-@_ep.command(name='set',help="Set endpoint for the current session. If no endpoint is given, the configured default endpoint will be set as the current endpoint.")
-@click.argument("endpoint",required=False)
+@_ep.command( name='set' )
+@click.argument( "endpoint", required=False )
 def _epSet( endpoint ):
+    '''
+    Set endpoint for the current session. If no endpoint is given, the
+    default endpoint will be set as the current endpoint, if configured.
+    '''
+
     if _output_mode_sticky != _OM_RETN and not _interactive:
         raise Exception("Command not supported in non-interactive modes.")
 
@@ -1157,19 +1240,27 @@ def _epSet( endpoint ):
         click.echo('{{ "endpoint": "{}" }}'.format( ep ))
 
 
-@_ep.command(name='list',help="List recently used endpoints.")
+@_ep.command( name='list' )
 def _epList():
+    '''
+    List recently used endpoints.
+    '''
+
     reply = _capi.endpointListRecent()
     _generic_reply_handler( reply, _print_endpoints )
 
 
-@_ep.command(name='default',cls=AliasedGroup,help="Default endpoint commands")
+@_ep.command(name='default',cls=AliasedGroup,help="Default endpoint commands.")
 def _epDefault():
     pass
 
 
-@_epDefault.command(name='get',help="Get the default Globus endpoint.")
+@_epDefault.command(name='get')
 def _epDefaultGet():
+    '''
+    Show the default Globus endpoint.
+    '''
+
     ep = _capi.endpointDefaultGet()
     if not ep:
         raise Exception( "No default endpoint configured." )
@@ -1183,10 +1274,15 @@ def _epDefaultGet():
         click.echo('{{ "endpoint": "{}" }}'.format( ep ))
 
 
-@_epDefault.command(name='set',help="Set the default Globus endpoint. The default endpoint will be set from the 'endpoint' argument, or, if the --current options is provided, from the currently active endpoint.")
+@_epDefault.command(name='set')
 @click.argument("endpoint",required=False)
 @click.option("-c","--current",is_flag=True,help="Set default endpoint to current endpoint.")
 def _epDefaultSet( current, endpoint ):
+    '''
+    Set the default Globus endpoint. The default endpoint will be set from the
+    'endpoint' argument, or if the '--current' options is specified, from the
+    currently active endpoint.
+    '''
 
     if current:
         if _output_mode_sticky != _OM_RETN and not _interactive:
@@ -1216,9 +1312,16 @@ def _epDefaultSet( current, endpoint ):
 # -------------------------------------------------------------- Misc Functions
 # =============================================================================
 
-@_cli.command(name='setup',help="Setup local credentials")
+@_cli.command( name='setup' )
 @click.pass_context
 def _setup(ctx):
+    '''
+    Setup local credentials. This command installs DataFed credentials for the
+    current user in the configured client configuration directory. Subsequent
+    use of the DataFed CLI will read these credentials instead of requiring
+    manual authentication.
+    '''
+
     cfg_dir = _capi.cfg.get("client_cfg_dir")
     pub_file = _capi.cfg.get("client_pub_key_file")
     priv_file = _capi.cfg.get("client_priv_key_file")
@@ -1245,7 +1348,7 @@ def _setup(ctx):
     if _output_mode_sticky != _OM_RETN:
         _print_ack_reply()
 
-
+'''
 @_cli.command(name='output',help="Set output mode. If MODE argument is 'json' or 'text', the current mode will be set accordingly. If no argument is provided, the current output mode will be displayed.")
 @click.argument("mode",metavar='MODE',required=False)
 @click.pass_context
@@ -1268,11 +1371,18 @@ def _outputModeSet( ctx, mode ):
             _output_mode_sticky = _OM_TEXT
         else:
             raise Exception("Invalid output mode.")
+'''
 
-@_cli.command(name='verbosity',help="Set/display verbosity level. The verbosity level argument can be 0 (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the current verbosity level is returned.")
+
+@_cli.command(name='verbosity')
 @click.argument("level", required=False)
-@click.pass_context
-def _verbositySet(ctx,level):
+def _verbositySet(level):
+    '''
+    Set/display verbosity level. The verbosity level argument can be 0
+    (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
+    current verbosity level is returned.
+    '''
+
     if not _interactive:
         raise Exception("Command not supported in non-interactive modes.")
 
@@ -1290,11 +1400,15 @@ def _verbositySet(ctx,level):
     else:
         click.echo(_verbosity_sticky)
 
-@_cli.command(name='help',help="Show datafed client help. Specify command(s) to see command-specific help.")
+        
+@_cli.command( name='help' )
 @click.argument("command", required=False, nargs=-1)
 @click.pass_context
 def _help_cli(ctx,command):
-    # TODO hand non-text output modes
+    '''
+    Show DataFed CLI help. Include a subcommand name as the argument to see
+    subcommand-specific help.
+    '''
 
     if not command:
         click.echo("DataFed _cli, version {}\n".format(version))
@@ -1308,8 +1422,12 @@ def _help_cli(ctx,command):
                 click.echo(ctx.parent.get_help())
 
 
-@_cli.command(name="exit",help="Exit interactive session")
+@_cli.command( name="exit" )
 def _exit_cli():
+    '''
+    Exit an interactive session. Ctrl-C may also be used to exit the shell.
+    '''
+
     global _interactive
 
     if not _interactive:

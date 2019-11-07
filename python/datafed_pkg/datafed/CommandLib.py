@@ -823,7 +823,7 @@ class API:
             stat = status.lower()
             if stat in ["0","1","2","3","4"]:
                 msg.status = int(stat)
-            elif stat == "init" or stat == "initiated":
+            elif stat == "init" or stat == "initial":
                 msg.status = 0
             elif stat == "active":
                 msg.status = 1
