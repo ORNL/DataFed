@@ -631,9 +631,61 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    def queryExec( self, query_id ):
+    def queryExec( self, query_id, offset = 0, count = 20  ):
         msg = auth.QueryExecRequest()
         msg.id = query_id
+
+        return self._mapi.sendRecv( msg )
+
+    def queryDirect( self, id = None, text = None, meta = None, no_default = None, coll = None, proj = None, save = False, offset = 0, count = 20 ):
+        print( no_default, coll, proj )
+
+        if no_default and (( coll is None or len( coll ) == 0 ) and ( proj is None or len( proj ) == 0 )):
+            raise Exception("Must specify one or more collections or projects to search if 'no default' option is enabled.")
+
+        qry = "{"
+
+        if id:
+            qry = qry + "\"id\":\"" + id + "\","
+
+        if text:
+            qry = qry + "\"quick\":\"" + text + "\","
+
+        if meta:
+            qry = qry + "\"meta\":\"" + meta + "\","
+
+        scopes = ""
+        delim = ""
+
+        if not no_default:
+            scopes = scopes + "{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}"
+
+        if coll:
+            if len(scopes):
+                delim = ","
+
+            for c in coll:
+                scopes = scopes + delim + "{\"scope\":6,\"id\":\"" + self._resolve_id( c ) + "\"}"
+                delim = ","
+
+        if proj:
+            if len(scopes):
+                delim = ","
+
+            for p in proj:
+                scopes = scopes + delim + "{\"scope\":2,\"id\":\"" + p + "\"}"
+                delim = ","
+
+        # TODO - Add topics when topics are supported by CLI
+
+        qry = qry + "\"scopes\":[" + scopes + "]}"
+
+        # TODO - Support offset and count when supported by services
+
+        #print("qry:",qry)
+
+        msg = auth.RecordSearchRequest()
+        msg.query = qry
 
         return self._mapi.sendRecv( msg )
 

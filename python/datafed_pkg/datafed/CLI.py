@@ -535,7 +535,13 @@ def _dataView( data_id, context ):
 @_global_output_options
 def _dataCreate( title, alias, description, keywords, raw_data_file, extension, metadata, metadata_file, parent, repository, deps, context ):
     '''
-    Create a new data record. The data record 'title' is required, but all other attributes are optional. On success, the ID of the create data record is returned. Note that if a parent collection is specified, and that collection belongs to a project or other collaborator, the creating user must have permission to write to that collection.
+    Create a new data record. The data record 'title' is required, but all
+    other attributes are optional. On success, the ID of the created data
+    record is returned. Note that if a parent collection is specified, and
+    that collection belongs to a project or other collaborator, the creating
+    user must have permission to write to that collection. The raw-data-file
+    option is only supported in interactive mode and is provided as a
+    convenience to avoid a separate dataPut() call.
     '''
 
     if raw_data_file and not _interactive:
@@ -559,7 +565,7 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
         _generic_reply_handler( reply, _print_xfr_stat )
 
 
-@_data.command(name='update',help="Update an existing data record.")
+@_data.command(name='update')
 @click.argument("data_id", metavar="ID", required=False)
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
@@ -576,6 +582,13 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
 @_global_context_options
 @_global_output_options
 def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, extension, metadata, metadata_file, metadata_set, dep_clear, dep_add, dep_rem, context ):
+    '''
+    Update an existing data record. The data record ID is required and can be
+    an ID, alias, or listing index; all other record attributes are optional.
+    The raw-data-file option is only supported in interactive mode and is
+    provided as a convenience to avoid a separate dataPut() call.
+    '''
+
     if raw_data_file and not _interactive:
         raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
 
@@ -595,11 +608,18 @@ def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, ex
         _generic_reply_handler( reply, _print_xfr_stat )
 
 
-@_data.command(name='delete',help="Delete one or more existing data records.")
-@click.option("-f","--force",is_flag=True,help="Delete record without confirmation.")
+@_data.command(name='delete')
+@click.option("-f","--force",is_flag=True,help="Delete record(s) without confirmation.")
 @click.argument("data_id", metavar="ID", nargs=-1)
 @_global_context_options
 def _dataDelete( data_id, force, context ):
+    '''
+    Delete one or more existing data records. Multiple ID arguments can be
+    provided and may data record IDs, aliases, or index values from a listing.
+    By default, a confirmation prompt is used, but this can be bypassed with
+    the '--force' option.
+    '''
+
     resolved_ids = []
     for ids in data_id:
         resolved_ids.append( _resolve_id( ids ))
@@ -615,12 +635,31 @@ def _dataDelete( data_id, force, context ):
     _generic_reply_handler( reply, _print_ack_reply )
 
 
-@_data.command(name='get',help="Get (download) raw data of record ID and place in local PATH")
+@_data.command(name='get')
 @click.argument("df_id", required=True, metavar="ID", nargs=-1)
-@click.argument("path", required=True, nargs=1)
-@click.option("-w","--wait",is_flag=True,help="Block until Globus transfer is complete")
+@click.argument("path", required=True, metavar="PATH", nargs=1)
+@click.option("-w","--wait",is_flag=True,help="Block until Globus transfer is complete.")
 @_global_context_options
 def _dataGet( df_id, path, wait, context ):
+    '''
+    Get (download) raw data of data records and/or collections. Multiple ID
+    arguments can be specified and may be data record and/or collection IDs,
+    aliases, or index values from s listing. The PATH argument is the
+    destination for the download and can be either a full Globus path (with
+    endpoint), or a local file system path (absolute or relative).
+    
+    Downloads will involve either Globus transfers or HTTP transfers depending
+    on the source data for the selected records, and the two source types may
+    not be mixed. For Globus transfers, if no endpoint is specified in the PATH
+    argument, the current endpoint will be used. For HTTP transfers, the PATH
+    argument may be an absolute or relative path within the local filesystem.
+    For both cases, if the destination PATH doesn't exist, it will be created
+    given sufficient filesystem permissions.
+
+    Because HTTP downloads are performed directly by the CLI, they are always
+    blocking calls; thus the 'wait' option only applies to Globus transfers.
+    '''
+
     resolved_ids = []
     for ids in df_id:
         resolved_ids.append( _resolve_id( ids ))
@@ -640,13 +679,22 @@ def _dataGet( df_id, path, wait, context ):
         click.echo( "{{\"msg_type\":\"{}\",\"message\":{}}}".format(reply[1],MessageToJson( reply[0], preserving_proto_field_name=True )))
 
 
-@_data.command(name='put',help="Put (upload) raw data located at PATH to DataFed record ID.")
+@_data.command(name='put')
 @click.argument("data_id", metavar="ID", required=True, nargs=1)
 @click.argument("path", metavar="PATH", required=True, nargs=1)
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
 @click.option("-e", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @_global_context_options
 def _dataPut( data_id, path, wait, extension, context ):
+    '''
+    Put (upload) raw data located at PATH to DataFed record ID.  The ID
+    argument may be data record ID, alias, or index value from a listing.
+    The PATH argument specifies the source file for the upload and can be
+    either a full Globus path (with endpoint), or a local file system path
+    (absolute or relative). If no endpoint is specified in the PATH
+    argument, the current endpoint will be used.
+    '''
+
     reply = _capi.dataPut( _resolve_id( data_id ), path, wait = wait, extension = extension, context = context )
     _generic_reply_handler( reply, _print_xfr_stat )
 
@@ -655,15 +703,23 @@ def _dataPut( data_id, path, wait, extension, context ):
 # -------------------------------------------------------- Data-Batch Functions
 # =============================================================================
 
-@_data.command(name='batch',cls=AliasedGroup,help="Data batch subcommands")
+@_data.command(name='batch',cls=AliasedGroup,help="Data batch subcommands.")
 def _batch():
     pass
 
-@_batch.command(name='create',help="Batch create data records from JSON file(s)")
-@click.option("-c","--collection",type=str,required=False, help="Optional target collection")
-@click.argument("file", type=str, required=True, nargs=-1)
+@_batch.command(name='create')
+@click.option("-c","--collection",type=str,required=False, help="Optional target collection (default is root).")
+@click.argument("file", type=str, required=True, metavar="FILE", nargs=-1)
 @_global_context_options
 def _data_batch_create( collection, file, context ):
+    '''
+    Batch create data records from JSON file(s). Multiple FILE arguments may be
+    specified and are absolute or relative paths to JSON inputs file on a local
+    filesystem. JSON input files may contain individual JSON objects, or arrays
+    of JSON objects. Each JSON object represents a new data record and the JSON
+    must comply with the DataFed record input schema (see online documentation).
+    '''
+
     if collection:
         coll_id = _resolve_coll_id( collection, context )
 
@@ -671,9 +727,17 @@ def _data_batch_create( collection, file, context ):
     _generic_reply_handler( reply, _print_batch )
 
 
-@_batch.command(name='update',help="Batch update existing data records from JSON file(s)")
+@_batch.command(name='update')
 @click.argument("file", type=str, required=True, nargs=-1)
 def _data_batch_update( file ):
+    '''
+    Batch update data records from JSON file(s). Multiple FILE arguments may be
+    specified and are absolute or relative paths to JSON inputs file on a local
+    filesystem. JSON input files may contain individual JSON objects, or arrays
+    of JSON objects. Each JSON object represents a new data record and the JSON
+    must comply with the DataFed record input schema (see online documentation).
+    '''
+
     reply = _capi.dataBatchUpdate( file )
     _generic_reply_handler( reply, _print_batch )
 
@@ -682,7 +746,8 @@ def _data_batch_update( file ):
 # -------------------------------------------------------- Collection Functions
 # =============================================================================
 
-@_cli.command( name='coll',cls=AliasedGroup, help="Collection subcommands" )
+
+@_cli.command( name='coll',cls=AliasedGroup, help="Collection subcommands." )
 def _coll():
     pass
 
@@ -702,7 +767,7 @@ def _collView( coll_id, context ):
     _generic_reply_handler( reply, _print_coll )
 
 
-@_coll.command(name='create',help="Create new collection")
+@_coll.command(name='create')
 @click.argument("title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-p","--parent",type=str,required=False,help="Parent collection ID/alias (default is current working collection)")
@@ -710,6 +775,14 @@ def _collView( coll_id, context ):
 @click.option("--topic", type=str, required=False, help="Publish the collection to the provided topic.")
 @_global_context_options
 def _collCreate( title, alias, description, topic, parent, context ):
+    '''
+    Create a new collection. The collection 'title' is required, but all
+    other attributes are optional. On success, the ID of the created
+    collection is returned. Note that if a parent collection is specified, and
+    that collection belongs to a project or other collaborator, the creating
+    user must have permission to write to that collection.
+    '''
+
     if parent:
         parent_id = _resolve_coll_id( parent, context )
     else:
@@ -719,7 +792,7 @@ def _collCreate( title, alias, description, topic, parent, context ):
     _generic_reply_handler( reply, _print_coll )
 
 
-@_coll.command(name='update',help="Update existing collection. ID may be a collection ID or alias, or an index value from a listing.")
+@_coll.command(name='update')
 @click.argument("coll_id", metavar="ID")
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
@@ -727,15 +800,32 @@ def _collCreate( title, alias, description, topic, parent, context ):
 @click.option("--topic", type=str, required=False, help="Publish the collection under the provided topic.")
 @_global_context_options
 def _collUpdate( coll_id, title, alias, description, topic, context):
+    '''
+    Update an existing collection. The collection ID is required and can be
+    an ID, alias, or listing index; all other collection attributes are
+    optional.
+    '''
+
     reply = _capi.collectionUpdate( coll_id, alias = alias, description = description, topic = topic, context = context )
     _generic_reply_handler( reply, _print_coll )
 
 
-@_coll.command(name='delete',help="Delete one or more existing collection(s). IDs may be collection IDs or aliases, or index values from a listing.")
+@_coll.command(name='delete')
 @click.option("-f","--force",is_flag=True,help="Delete without confirmation.")
 @click.argument("coll_id", metavar="ID", nargs=-1)
 @_global_context_options
 def _collDelete( coll_id, force, context ):
+    '''
+    Delete one or more existing collections. Multiple ID arguments can be
+    provided and may be collection IDs, aliases, or index values from a
+    listing. By default, a confirmation prompt is used, but this can be
+    bypassed with the '--force' option.
+
+    When a collection is deleted, all contained collections are also deleted;
+    however, contained data records are only deleted if the are not linked to
+    another collection not involved in the deletion.
+    '''
+
     resolved_ids = []
     for ids in coll_id:
         resolved_ids.append( _resolve_coll_id( ids, context = context ))
@@ -752,13 +842,18 @@ def _collDelete( coll_id, force, context ):
     _generic_reply_handler( reply, _print_ack_reply )
 
 
-@_coll.command(name='list',help="List items in collection. ID may be a collection ID or alias, an index value from a listing, or omitted for the current working collection.")
+@_coll.command(name='list')
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 @click.argument("coll_id", required=False, metavar="ID")
 @_global_context_options
 @click.pass_context
 def _collItemsList( ctx, coll_id, offset, count, context ):
+    '''
+    List items in collection. ID may be a collection ID or alias, an index
+    value from a listing, or omitted for the current working collection.
+    '''
+
     global _cur_coll
 
     if coll_id == None:
@@ -770,11 +865,19 @@ def _collItemsList( ctx, coll_id, offset, count, context ):
     _generic_reply_handler( reply, _print_listing )
 
 
-@_coll.command(name='add',help="Add data records and/or collections to a collection. COLL_ID is the destination collection and ITEM_IDs specify one or more data records and/or collections to add to the destination collection. COLL_ID and ITEM_IDs may be IDs, aliases, or index values from a listing. COLL_ID may also be a relative collection path ('.', '..', or '/').")
+@_coll.command(name='add')
 @click.argument("coll_id",metavar="COLL_ID", required=True, nargs=1)
 @click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
 @_global_context_options
 def _collItemsAdd( coll_id, item_id, context ):
+    '''
+    Add data records and/or collections to a collection. COLL_ID is the
+    destination collection and ITEM_IDs specify one or more data records and/or
+    collections to add to the destination collection. COLL_ID and ITEM_IDs may
+    be IDs, aliases, or index values from a listing. COLL_ID may also be a
+    relative collection path ('.', '..', or '/').
+    '''
+
     resolved_ids = []
     for i in item_id:
         resolved_ids.append( _resolve_id( i ))
@@ -783,11 +886,19 @@ def _collItemsAdd( coll_id, item_id, context ):
     _generic_reply_handler( reply, _print_ack_reply )
 
 
-@_coll.command(name='remove',help="Remove data records and/or collections from a collection. COLL_ID is the containing collection and ITEM_IDs specify one or more data records and/or collections to remove from the containing collection. COLL_ID and ITEM_IDs may be IDs, aliases, or index values from a listing. COLL_ID may also be a relative collection path ('.', '..', or '/').")
+@_coll.command(name='remove')
 @click.argument("coll_id",metavar="COLL_ID", required=True, nargs=1)
 @click.argument("item_id",metavar="ITEM_ID", required=True, nargs=-1)
 @_global_context_options
 def _coll_rem(  coll_id, item_id, context ):
+    '''
+    Remove data records and/or collections from a collection. COLL_ID is the
+    containing collection and ITEM_IDs specify one or more data records and/or
+    collections to remove from the containing collection. COLL_ID and ITEM_IDs
+    may be IDs, aliases, or index values from a listing. COLL_ID may also be a
+    relative collection path ('.', '..', or '/').
+    '''
+
     resolved_ids = []
     for i in item_id:
         resolved_ids.append( _resolve_id( i ))
@@ -800,22 +911,66 @@ def _coll_rem(  coll_id, item_id, context ):
 # ------------------------------------------------------------- Query Functions
 # =============================================================================
 
-@_cli.command(name='query',cls=AliasedGroup,help="Query subcommands")
+@_cli.command(name='query',cls=AliasedGroup,help="Query subcommands.")
 def _query():
     pass
 
-@_query.command(name='list',help="List saved queries")
+@_query.command(name='list')
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 def _queryList( offset, count ):
+    '''
+    List saved queries.
+    '''
+
     reply = _capi.queryList( offset = offset, count = count )
     _generic_reply_handler( reply, _print_listing )
 
+@_query.command(name='view')
+@click.argument("qry_id", metavar="ID")
+def _queryView( qry_id ):
+    '''
+    View saved queries.
+    '''
 
-@_query.command(name='exec',help="Execute a stored query by ID")
+    reply = _capi.queryView( qry_id )
+    _generic_reply_handler( reply, _print_listing )
+
+
+@_query.command(name='exec')
+@click.option("-O","--offset",default=0,help="Start results list at offset")
+@click.option("-C","--count",default=20,help="Limit to count results")
 @click.argument("qry_id", metavar="ID")
 def _queryExec( qry_id ):
-    reply = _capi.queryExec( _resolve_id( qry_id ))
+    '''
+    Execute a saved query by ID.
+    '''
+
+    reply = _capi.queryExec( _resolve_id( qry_id ), offset = offset, count = count )
+    _generic_reply_handler( reply, _print_listing )
+
+
+@_query.command(name='direct')
+@click.option("-i","--id",help="ID/alias expression")
+@click.option("-t","--text",help="Text expression")
+@click.option("-m","--meta",help="Metadata expression")
+@click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
+@click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
+@click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
+@click.option("-s","--save",help="Save query to specified ID.")
+@click.option("-O","--offset",default=0,help="Start result list at offset")
+@click.option("-C","--count",default=20,help="Limit to count results")
+def _queryDirect( id, text, meta, no_default, coll, proj, save, offset, count ):
+    '''
+    Run a directly entered query. Unless the 'no-default' option is included,
+    the search scope includes all data owned by the authenticated user (in
+    their root collection and projects that are owned or managed, or where the
+    user is a member of the project. Projects anc collections that are not part
+    of the default scope may be added using the --proj and --coll optiones
+    respectively.
+    '''
+
+    reply = _capi.queryDirect( id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj, save = save, offset = offset, count = count )
     _generic_reply_handler( reply, _print_listing )
 
 # =============================================================================
