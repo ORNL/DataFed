@@ -953,11 +953,23 @@ router.get('/search', function (req, res) {
         if ( req.queryParams.use_shared_projects ){
             params.projs = g_lib.projectsWithClientACLs( client._id, true );
         }
-        console.log("params:",params);
+
+        if ( req.queryParams.offset )
+            params.offset = req.queryParams.offset;
+        else
+            params.offset = 0;
+
+        if ( req.queryParams.count ){
+            params.count = Math.min(req.queryParams.count,1000-params.offset);
+        }else{
+            params.count = Math.min(50,1000-params.offset);
+        }
+
+        //console.log("params:",params);
 
         var results = g_db._query( req.queryParams.query, params ).toArray();
 
-        console.log("results:",results.length);
+        //console.log("results:",results.length);
 
         res.send( results );
     } catch( e ) {
@@ -969,6 +981,8 @@ router.get('/search', function (req, res) {
 .queryParam('use_client', joi.bool().required(), "Query uses client param")
 .queryParam('use_shared_users', joi.bool().required(), "Query uses shared users param")
 .queryParam('use_shared_projects', joi.bool().required(), "Query uses shared projects param")
+.queryParam('offset', joi.number().integer().min(0).max(999).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).max(1000).optional(), "Count")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
 

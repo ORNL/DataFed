@@ -351,8 +351,8 @@ router.get('/read', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Collection ID or alias to list")
-.queryParam('offset', joi.number().optional(), "Offset")
-.queryParam('count', joi.number().optional(), "Count")
+.queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('Read contents of a collection by ID or alias')
 .description('Read contents of a collection by ID or alias');
 

@@ -238,6 +238,7 @@ module.exports = ( function() {
                     res.throw( 404, "Record does not exist" );
                     break;
                 case 1205:
+                case 1213:
                     res.throw( 404, "Invalid ID" );
                     break;
                 case 1210:

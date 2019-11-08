@@ -218,8 +218,8 @@ router.get('/list', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('offset', joi.number().optional(), "Offset")
-.queryParam('count', joi.number().optional(), "Count")
+.queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('List client saved queries')
 .description('List client saved queries');
 
@@ -242,7 +242,18 @@ router.get('/exec', function (req, res) {
 
         if ( qry.use_sh_prj )
             params.projs = g_lib.projectsWithClientACLs( qry.owner, true );
-        
+
+        if ( req.queryParams.offset )
+            params.offset = req.queryParams.offset;
+        else
+            params.offset = 0;
+
+        if ( req.queryParams.count ){
+            params.count = Math.min(req.queryParams.count,1000-params.offset);
+        }else{
+            params.count = Math.min(50,1000-params.offset);
+        }
+
         res.send( g_db._query( qry.query_comp, params ));
     } catch( e ) {
         g_lib.handleException( e, res );
@@ -250,5 +261,7 @@ router.get('/exec', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Query ID")
+.queryParam('offset', joi.number().integer().min(0).max(999).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).max(1000).optional(), "Count")
 .summary('Execute specified query')
 .description('Execute specified query');
