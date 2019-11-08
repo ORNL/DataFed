@@ -59,7 +59,7 @@ private:
 
     std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms );
     std::string parseSearchPhrase( const char * key, const std::string & a_phrase );
-    std::string parseSearchQuickPhrase( const std::string & a_phrase );
+    std::string parseSearchTextPhrase( const std::string & a_phrase );
     std::string parseSearchIdAlias( const std::string & a_query );
     std::string parseSearchMetadata( const std::string & a_query );
     std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );

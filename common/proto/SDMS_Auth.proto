@@ -234,6 +234,8 @@ message RecordSearchRequest
     optional bool               use_client  = 2;
     optional bool               use_shared_users  = 3;
     optional bool               use_shared_projects  = 4;
+    optional uint32             offset      = 5;
+    optional uint32             count       = 6;
 }
 
 message RecordGetDependenciesRequest
@@ -760,6 +762,8 @@ message QueryViewRequest
 message QueryExecRequest
 {
     required string             id          = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
 }
 
 message QueryDataReply

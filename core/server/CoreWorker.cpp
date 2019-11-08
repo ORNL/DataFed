@@ -714,6 +714,13 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     req2.set_use_client( use_client );
     req2.set_use_shared_users( use_shared_users );
     req2.set_use_shared_projects( use_shared_projects );
+
+    if ( request->has_offset() )
+        req2.set_offset( request->offset());
+
+    if ( request->has_count() )
+        req2.set_count( request->count());
+
     m_db_client.recordSearch( req2, reply );
 
     PROC_MSG_END
@@ -931,10 +938,10 @@ Worker::parseSearchPhrase( const char * key, const string & a_phrase )
 }
 
 string
-Worker::parseSearchQuickPhrase( const string & a_phrase )
+Worker::parseSearchTextPhrase( const string & a_phrase )
 {
-    /* This function parses category logic (if present) around "quick" full-
-    text queries. Quick queries are typed into the "quick" text input and are
+    /* This function parses category logic (if present) around full-
+    text queries. Text queries are typed into the text input and are
     simpler than advanced queries.Categories are title, description, and
     keywords. Categories may be specified just before query terms:
 
@@ -1364,10 +1371,10 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     }
 
     string phrase;
-    rapidjson::Value::MemberIterator imem = query.FindMember("quick");
+    rapidjson::Value::MemberIterator imem = query.FindMember("text");
     if ( imem != query.MemberEnd() )
     {
-        phrase = parseSearchQuickPhrase( imem->value.GetString() );
+        phrase = parseSearchTextPhrase( imem->value.GetString() );
     }
     else
     {
@@ -1550,7 +1557,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " limit 100 return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,doi:i.doi}";
+    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,doi:i.doi}";
 
 
     return result;
@@ -1560,7 +1567,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
 string
 Worker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
 {
-    string phrase = parseSearchQuickPhrase( a_text_query );
+    string phrase = parseSearchTextPhrase( a_text_query );
 
     if ( phrase.size() == 0 )
         EXCEPT(1,"Empty query string");

@@ -120,34 +120,32 @@ class API:
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
 
+    ##
+    # @brief Generate/download local user credentials
+    #
+    # Requests the DataFed server to generate and send local credentials for
+    # the current user. These credentials should be saved/loaded from a
+    # set of public/private client keys files as specified via the Config
+    # module.
+    #
     def generateCredentials( self ):
         msg = auth.GenerateCredentialsRequest()
 
         return self._mapi.sendRecv( msg )
 
-    '''
-    ##
-    # @brief Manually authenticate client by access token
-    #
-    # If not authenticated, this method attempts manual authentication
-    # using the supplied Globus access token.
-    #
-    # @param token - Globus access token
-    # @exception Exception: if authentication fails.
-    #
-    def loginByToken( self, token ):
-        self.logout()
-
-        self._mapi.manualAuthByToken( token )
-
-        self._uid = self._mapi._uid
-        self._cur_sel = self._mapi._uid
-    '''
 
     # =========================================================================
     # ------------------------------------------------------------ Data Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataView( self, data_id, details = False, context = None ):
         msg = auth.RecordViewRequest()
         msg.id = self._resolve_id( data_id, context )
@@ -155,6 +153,14 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataCreate( self, title, alias = None, description = None, keywords = None, extension = None,
         metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
 
@@ -181,9 +187,13 @@ class API:
             msg.ext = extension
             msg.ext_auto = False
 
-        # TODO Broken code
-        #if metadata_file:
-        #    metadata = metadata_file.read()
+        if metadata_file:
+            try:
+                f = open( metadata_file, "r" )
+                metadata = f.read()
+                f.close()
+            except:
+                raise Exception("Could not open metadata file: {}".format( metadata_file ))
 
         if metadata:
             msg.metadata = metadata
@@ -201,6 +211,14 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataUpdate( self, data_id, title = None, alias = None, description = None, keywords = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False, dep_clear = False, dep_add = None,
         dep_rem = None, context = None ):
@@ -233,9 +251,13 @@ class API:
             else:
                 msg.ext_auto = True
 
-        # TODO Broken code
-        #if metadata_file:
-        #    metadata = metadata_file.read()
+        if metadata_file:
+            try:
+                f = open( metadata_file, "r" )
+                metadata = f.read()
+                f.close()
+            except:
+                raise Exception("Could not open metadata file: {}".format( metadata_file ))
 
         if metadata is not None:
             msg.metadata = metadata
@@ -271,6 +293,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataDelete( self, data_id, context = None ):
         msg = auth.RecordDeleteRequest()
 
@@ -412,6 +442,14 @@ class API:
             raise Exception("No data records found to download")
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataPut( self, data_id, path, wait = False, timeout_sec = 0, extension = None, context = None ):
         msg = auth.DataPutRequest()
         msg.id = self._resolve_id( data_id, context )
@@ -449,6 +487,14 @@ class API:
         return reply
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataBatchCreate( self, file, coll_id = None, context = None ):
         payload = []
         tot_size = 0
@@ -482,6 +528,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def dataBatchUpdate( self, file ):
         payload = []
         tot_size = 0
@@ -513,6 +567,14 @@ class API:
     # ------------------------------------------------------ Collection Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def collectionView( self, coll_id, context = None ):
         msg = auth.CollViewRequest()
         msg.id = self._resolve_id( coll_id, context )
@@ -521,6 +583,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def collectionCreate( self, title, alias = None, description = None, topic = None, parent_id = None, context = None ):
         msg = auth.CollCreateRequest()
         msg.title = title
@@ -541,6 +611,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def collectionUpdate( self, coll_id, title = None, alias = None, description = None, topic = None, context = None ):
         msg = auth.CollUpdateRequest()
         msg.id = self._resolve_id( coll_id, context )
@@ -561,6 +639,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def collectiondelete( self, coll_id, context = None ):
         msg = auth.CollDeleteRequest()
 
@@ -592,6 +678,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None, context = None ):
         msg = auth.CollWriteRequest()
         msg.id = self._resolve_id( coll_id, context )
@@ -612,6 +706,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def collectionGetParents( self, coll_id, inclusive = False, context = None ):
         msg = auth.CollGetParentsRequest()
         msg.id = self._resolve_id( coll_id, context )
@@ -623,6 +725,14 @@ class API:
     # ----------------------------------------------------------- Query Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def queryList( self, offset = 0, count = 20 ):
         msg = auth.QueryListRequest()
         msg.offset = offset
@@ -631,14 +741,131 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    def queryExec( self, query_id, offset = 0, count = 20  ):
-        msg = auth.QueryExecRequest()
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
+    def queryView( self, query_id ):
+        msg = auth.QueryViewRequest()
         msg.id = query_id
 
         return self._mapi.sendRecv( msg )
 
-    def queryDirect( self, id = None, text = None, meta = None, no_default = None, coll = None, proj = None, save = False, offset = 0, count = 20 ):
-        print( no_default, coll, proj )
+
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
+    def queryCreate( self, title, id = None, text = None, meta = None, no_default = None, coll = None, proj = None ):
+        msg = auth.QueryCreateRequest()
+        msg.title = title
+        msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
+
+        return self._mapi.sendRecv( msg )
+
+
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
+    def queryUpdate( self, query_id, title = None, id = None, text = None, meta = None ):
+        msg = auth.QueryViewRequest()
+        msg.id = query_id
+
+        reply = self._mapi.sendRecv( msg )
+
+        msg = auth.QueryUpdateRequest()
+        msg.id = query_id
+
+        for q in reply[0].query:
+            if title:
+                msg.title = title
+            else:
+                msg.title = q.title
+
+            qry = jsonlib.loads( q.query )
+
+            if id is not None:
+                qry["id"] = id
+
+            if text is not None:
+                qry["text"] = text
+
+            if meta is not None:
+                qry["meta"] = meta
+
+            if not (('id' in qry and qry["id"]) or ('text' in qry and qry["text"]) or ('meta' in qry and qry["meta"])):
+                raise Exception("No search terms left in query.")
+
+            msg.query = jsonlib.dumps( qry )
+            break
+
+        return self._mapi.sendRecv( msg )
+
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
+    def queryDelete( self, query_id ):
+        msg = auth.QueryDeleteRequest()
+        msg.id.append( query_id )
+
+        return self._mapi.sendRecv( msg )
+
+
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
+    def queryExec( self, query_id, offset = 0, count = 20 ):
+        msg = auth.QueryExecRequest()
+        msg.id = query_id
+        msg.offset = offset
+        msg.count = count
+
+        return self._mapi.sendRecv( msg )
+
+
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
+    def queryDirect( self, id = None, text = None, meta = None, no_default = None, coll = None, proj = None, offset = 0, count = 20 ):
+        msg = auth.RecordSearchRequest()
+        msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
+        msg.offset = offset
+        msg.count = count
+
+        return self._mapi.sendRecv( msg )
+
+
+    def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
+        if id is None and text is None and meta is None:
+            raise Exception("No search terms provided.")
 
         if no_default and (( coll is None or len( coll ) == 0 ) and ( proj is None or len( proj ) == 0 )):
             raise Exception("Must specify one or more collections or projects to search if 'no default' option is enabled.")
@@ -649,7 +876,7 @@ class API:
             qry = qry + "\"id\":\"" + id + "\","
 
         if text:
-            qry = qry + "\"quick\":\"" + text + "\","
+            qry = qry + "\"text\":\"" + text + "\","
 
         if meta:
             qry = qry + "\"meta\":\"" + meta + "\","
@@ -678,22 +905,21 @@ class API:
 
         # TODO - Add topics when topics are supported by CLI
 
-        qry = qry + "\"scopes\":[" + scopes + "]}"
-
-        # TODO - Support offset and count when supported by services
-
-        #print("qry:",qry)
-
-        msg = auth.RecordSearchRequest()
-        msg.query = qry
-
-        return self._mapi.sendRecv( msg )
+        return qry + "\"scopes\":[" + scopes + "]}"
 
 
     # =========================================================================
     # ------------------------------------------------------------ User Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def userListCollaborators( self, offset = 0, count = 20 ):
         msg = auth.UserListCollabRequest()
         msg.offset = offset
@@ -702,6 +928,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def userListAll( self, offset = 0, count = 20 ):
         msg = auth.UserListAllRequest()
         msg.offset = offset
@@ -710,6 +944,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def userView( self, uid ):
         msg = auth.UserViewRequest()
         msg.uid = uid
@@ -721,6 +963,14 @@ class API:
     # --------------------------------------------------------- Project Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def projectList( self, owned = True, admin = True, member = True, offset = 0, count = 20 ):
         msg = auth.ProjectListRequest()
         msg.as_owner = owned
@@ -732,6 +982,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def projectView( self, project_id ):
         msg = auth.ProjectViewRequest()
         msg.id = project_id
@@ -744,18 +1002,42 @@ class API:
     # =========================================================================
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def sharedUsersList( self ):
         msg = auth.ACLByUserRequest()
 
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def sharedProjectsList( self ):
         msg = auth.ACLByProjRequest()
 
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def sharedDataList( self, owner_id ):
         oid = owner_id.lower()
 
@@ -775,6 +1057,14 @@ class API:
     # --------------------------------------------------- Data Transfer Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def xfrList( self, time_from = None, to = None, since = None, status = None, limit = 20 ):
         if since != None and (time_from != None or to != None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
@@ -848,6 +1138,14 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def xfrStat( self, xfr_id = None ):
         if xfr_id:
             msg = auth.XfrViewRequest()
@@ -866,23 +1164,63 @@ class API:
     # -------------------------------------------------------- Endpoint Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def endpointListRecent( self ):
         msg = auth.UserGetRecentEPRequest()
 
         return self._mapi.sendRecv( msg )
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def endpointDefaultGet( self ):
         return self.cfg.get( "default_ep" )
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def endpointDefaultSet( self, endpoint ):
         # TODO validate ep is UUID or legacy (not an ID)
         self.cfg.set( "default_ep", endpoint, True )
         if not self._cur_ep:
             self._cur_ep = endpoint
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def endpointGet( self ):
         return self._cur_ep
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def endpointSet( self, endpoint ):
         # TODO validate ep is UUID or legacy (not an ID)
         self._cur_ep = endpoint
@@ -892,6 +1230,14 @@ class API:
     # --------------------------------------------------- Miscellaneous Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def setupCredentials( self ):
         cfg_dir = self.cfg.get("client_cfg_dir")
         pub_file = self.cfg.get("client_pub_key_file")
@@ -918,6 +1264,14 @@ class API:
         keyf.write( reply[0].priv_key )
         keyf.close()
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def setContext( self, item_id = None ):
         if item_id == None:
             if self._cur_sel == self._uid:
@@ -952,14 +1306,38 @@ class API:
                 self._cur_alias_prefix = "p:" + self._cur_sel[2:] + ":"
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def getContext( self ):
         return self._cur_sel
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def timestampToStr( self, ts ):
         return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def strToTimestamp( self, time_str ):
         try:
             return int( time_str )
@@ -983,6 +1361,14 @@ class API:
 
         return None
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def sizeToStr( self, size, precision = 1 ):
         if size == 0:
             return "0"
@@ -1007,6 +1393,14 @@ class API:
     # --------------------------------------------------------- Private Methods
     # =========================================================================
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def _uniquifyFilename( self, path ):
         filepath = pathlib.Path(path)
         while filepath.exists():
@@ -1032,6 +1426,14 @@ class API:
 
         return str(filepath)
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def _resolvePathForHTTP( self, path ):
         if path[0] == "~":
             res = pathlib.Path(path).expanduser().resolve()
@@ -1044,6 +1446,14 @@ class API:
         return str(res)
 
 
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def _resolvePathForGlobus( self, path, must_exist ):
         # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
         if re.match( _endpoint_legacy, path ) or re.match( _endpoint_uuid, path ):
@@ -1110,10 +1520,15 @@ class API:
         return self._cur_ep + _path
 
 
-
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def _resolve_id( self, item_id, context = None ):
-        #id2 = self._resolve_index_val( item_id )
-
         if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
             return item_id
 
@@ -1127,6 +1542,15 @@ class API:
         else:
             return self._cur_alias_prefix + item_id
 
+
+    ##
+    # @brief 
+    #
+    # Desc
+    #
+    # @param  - 
+    # @exception Exception: 
+    #
     def _setSaneDefaultOptions( self ):
         opts = self.cfg.getOpts()
 

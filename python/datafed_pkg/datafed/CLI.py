@@ -527,7 +527,7 @@ def _dataView( data_id, context ):
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.")
 @click.option("-e","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
-@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
+@click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
 @click.option("-p","--parent",type=str,required=False, help="Parent collection ID, alias, or listing index. Default is the current working collection.")
 @click.option("-R","--repository",type=str,required=False,help="Repository ID. Uses default allocation if not specified.")
 @click.option("-D","--deps",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.")
@@ -574,7 +574,7 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.")
 @click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
-@click.option("-f","--metadata-file",type=click.File(mode='r'),required=False,help="Path to local metadata file containing JSON.")
+@click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON.")
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
 @click.option("-C","--dep-clear",is_flag=True,help="Clear all dependencies on record. May be used in conjunction with --dep-add to replace existing dependencies.")
 @click.option("-A","--dep-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
@@ -911,8 +911,8 @@ def _coll_rem(  coll_id, item_id, context ):
 # ------------------------------------------------------------- Query Functions
 # =============================================================================
 
-@_cli.command(name='query',cls=AliasedGroup,help="Query subcommands.")
-def _query():
+@_cli.command(name='query',cls=AliasedGroup)
+def _query(*args,**kwargs):
     pass
 
 @_query.command(name='list')
@@ -933,16 +933,58 @@ def _queryView( qry_id ):
     View a saved query by ID.
     '''
 
-    reply = _capi.queryView( qry_id )
-    # TODO - Need a new query view print function
-    #_generic_reply_handler( reply, _print_listing )
+    reply = _capi.queryView( _resolve_id( qry_id ))
+    _generic_reply_handler( reply, _print_query )
+
+@_query.command(name='create')
+@click.option("-i","--id",help="ID/alias expression")
+@click.option("-t","--text",help="Text expression")
+@click.option("-m","--meta",help="Metadata expression")
+@click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
+@click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
+@click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
+@click.argument("title", metavar="TITLE")
+def _queryCreate( title, id, text, meta, no_default, coll, proj ):
+    '''
+    Create a saved query.
+    '''
+
+    reply = _capi.queryCreate( title, id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj )
+    _generic_reply_handler( reply, _print_query )
+
+@_query.command(name='update')
+@click.option("--title",help="New query title")
+@click.option("-i","--id",help="ID/alias expression")
+@click.option("-t","--text",help="Text expression")
+@click.option("-m","--meta",help="Metadata expression")
+@click.argument("qry_id", metavar="ID")
+def _queryUpdate( qry_id, title, id, text, meta ):
+    '''
+    Update a saved query. The title and search terms of a query may be updated;
+    however, search scope cannot currently be changed. To remove a term,
+    specify an empty string ("") for the associated option.
+    '''
+
+    reply = _capi.queryUpdate( _resolve_id( qry_id ), title = title, id = id, text = text, meta = meta )
+    _generic_reply_handler( reply, _print_query )
+
+
+@_query.command(name='delete')
+@click.argument("qry_id", metavar="ID")
+def _queryDelete( qry_id ):
+    '''
+    Delete a saved query by ID.
+    '''
+
+    reply = _capi.queryDelete( _resolve_id( qry_id ))
+    _generic_reply_handler( reply, _print_ack_reply )
 
 
 @_query.command(name='exec')
 @click.option("-O","--offset",default=0,help="Start results list at offset")
 @click.option("-C","--count",default=20,help="Limit to count results")
 @click.argument("qry_id", metavar="ID")
-def _queryExec( qry_id ):
+def _queryExec( qry_id, offset, count ):
     '''
     Execute a saved query by ID.
     '''
@@ -951,27 +993,26 @@ def _queryExec( qry_id ):
     _generic_reply_handler( reply, _print_listing )
 
 
-@_query.command(name='direct')
+@_query.command(name='run')
 @click.option("-i","--id",help="ID/alias expression")
 @click.option("-t","--text",help="Text expression")
 @click.option("-m","--meta",help="Metadata expression")
 @click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
 @click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
 @click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
-@click.option("-s","--save",help="Save query to specified ID.")
 @click.option("-O","--offset",default=0,help="Start result list at offset")
-@click.option("-C","--count",default=20,help="Limit to count results")
-def _queryDirect( id, text, meta, no_default, coll, proj, save, offset, count ):
+@click.option("-C","--count",default=20,help="Limit to count results (default = 20)")
+def _queryRun( id, text, meta, no_default, coll, proj, offset, count ):
     '''
     Run a directly entered query. Unless the 'no-default' option is included,
     the search scope includes all data owned by the authenticated user (in
     their root collection and projects that are owned or managed, or where the
     user is a member of the project. Projects and collections that are not part
-    of the default scope may be added using the --proj and --coll optiones
+    of the default scope may be added using the --proj and --coll options
     respectively.
     '''
 
-    reply = _capi.queryDirect( id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj, save = save, offset = offset, count = count )
+    reply = _capi.queryDirect( id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj, offset = offset, count = count )
     _generic_reply_handler( reply, _print_listing )
 
 # =============================================================================
@@ -1129,8 +1170,6 @@ def _sharedList( df_id ):
 @_cli.command(name='xfr',cls=AliasedGroup,help="Globus data transfer management commands.")
 def _xfr():
     pass
-
-# TODO - change limit to offset + count
 
 @_xfr.command( name = 'list' )
 @click.option("-s","--since",help="List from specified time in seconds (suffix h = hours, d = days, w = weeks)")
@@ -1587,7 +1626,7 @@ def _print_data( message ):
                 click.echo( "Metadata:\n" )
                 json = jsonlib.loads( dr.metadata )
                 _printJSON( json, 2, 2 )
-                click.echo( "" )
+                click.echo( "\n" )
                 # TODO: Paging function?
             elif not dr.metadata:
                 click.echo("{:<20} {:<50}".format('Metadata: ', "(none)"))
@@ -1754,6 +1793,41 @@ def _print_path( message ):
                     click.echo( "{:{}}\"{}\" [{}]".format(' ',ind,i.title,i.id))
             ind = ind + 3
 
+def _print_query( message ):
+    for q in message.query:
+        click.echo( "{:<20} {:<50}\n".format('ID: ', q.id)+
+                    "{:<20} {:<50}".format('Title: ', q.title))
+
+        qry = jsonlib.loads( q.query )
+        click.echo( "{:<20} {:<50}".format('ID Term: ', "\"" + qry["id"] + "\"" if "id" in qry else "N/A"))
+        click.echo( "{:<20} {:<50}".format('Text Term: ', "\"" + qry["text"] + "\"" if "text" in qry else "N/A"))
+        click.echo( "{:<20} {:<50}".format('Meta Term: ', "\"" + qry["meta"] + "\"" if "meta" in qry else "N/A"))
+        delim = ""
+        scopes = ""
+        for s in qry["scopes"]:
+            scopes = scopes + delim + _scopeToStr( s )
+            delim = ", "
+        click.echo( "{:<20} {:<50}".format('Scopes: ', scopes ))
+
+        click.echo( "{:<20} {:<50}\n".format('Owner: ', q.owner[2:]) +
+                    "{:<20} {:<50}\n".format('Created: ', _capi.timestampToStr(q.ct)) +
+                    "{:<20} {:<50}\n".format('Updated: ', _capi.timestampToStr(q.ut)))
+
+def _scopeToStr( scope ):
+    s = scope["scope"]
+
+    if s == 1:
+        return "my-data"
+    elif s == 2:
+        return "proj: " + scope["id"]
+    elif s == 3:
+        return "my-proj"
+    elif s == 4:
+        return "mgd-proj"
+    elif s == 5:
+        return "mem-proj"
+    elif s == 6:
+        return "coll: " + scope["id"]
 
 
 # =============================================================================
@@ -1982,8 +2056,6 @@ def _bar_adaptive_human_readable( current, total, width=80 ):
 
 
 def _initialize( opts ):
-    print("CLI - init()")
-
     global _initialized
     global _capi
     global _uid
@@ -2011,7 +2083,6 @@ def _initialize( opts ):
             elif not _interactive:
                 raise Exception("The --manual-auth option may not be used when running non-interactively.")
 
-        # TODO change API() to accept an already inited config instance
         _capi = CommandLib.API( **opts )
 
         if man_auth or _capi.getAuthUser() == None:
@@ -2055,9 +2126,6 @@ def _initialize( opts ):
         _cur_ctx = uid
         _cur_coll = "c/u_"+uid[2:]+"_root"
         _initialized = True
-
-        print("Init done. interactive:",_interactive)
-
     except Exception as e:
         _interactive = False
         raise
