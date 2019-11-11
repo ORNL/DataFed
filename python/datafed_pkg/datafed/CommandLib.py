@@ -200,7 +200,7 @@ class API:
 
         if deps:
             for d in deps:
-                dp = msg.deps_add.add()
+                dp = msg.deps.add()
                 if d[0] == "der":
                     dp.type = 0
                 elif d[0] == "comp":
@@ -647,7 +647,7 @@ class API:
     # @param  - 
     # @exception Exception: 
     #
-    def collectiondelete( self, coll_id, context = None ):
+    def collectionDelete( self, coll_id, context = None ):
         msg = auth.CollDeleteRequest()
 
         if isinstance( coll_id, list ):
@@ -1146,7 +1146,7 @@ class API:
     # @param  - 
     # @exception Exception: 
     #
-    def xfrStat( self, xfr_id = None ):
+    def xfrView( self, xfr_id = None ):
         if xfr_id:
             msg = auth.XfrViewRequest()
             msg.xfr_id = xfr_id

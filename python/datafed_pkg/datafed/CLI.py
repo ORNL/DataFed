@@ -138,18 +138,16 @@ def run():
 
         except NoCommand as e:
             # Be nice and switch to interactive when no command given
-            if _interactive:
+            if _interactive and _first:
                 _print_msg( 1, "Welcome to DataFed CLI, version {}".format(version))
                 _print_msg( 1, "Authenticated as " + _capi.getAuthUser() )
+                _print_msg( 1, "Use 'exit' command or Ctrl-C to exit shell." )
 
                 if _verbosity > 1:
                     _print_msg( 2, "Settings:" )
                     _capi.cfg.printSettingInfo()
-            else:
-                if _output_mode == _OM_TEXT:
-                    click.echo(e)
-                elif _output_mode == _OM_JSON:
-                    click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
+            elif not _interactive:
+                click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))
 
         except Exception as e:
             if _output_mode == _OM_TEXT:
@@ -426,8 +424,15 @@ def _wc( coll_id ):
             global _return_val
             _return_val = _cur_coll
     else:
-        reply = _capi.collectionView( _resolve_coll_id( coll_id ))
+        _id = _resolve_coll_id( coll_id )
+
+        if len(_id) > 2 and _id[:2] == "p/":
+            reply = _capi.collectionView( "c/p_" + _id[2:] + "_root" )
+        else:
+            reply = _capi.collectionView( _id )
+
         coll = reply[0].coll[0]
+
         _prev_coll = _cur_coll
         _cur_coll = coll.id
 
@@ -438,6 +443,10 @@ def _wc( coll_id ):
             _cur_coll_title = "\"{}\" [{}]".format(coll.title,coll.id)
             _cur_coll_prefix = coll.id
 
+        global _cur_ctx
+        if coll.owner != _cur_ctx:
+            _cur_ctx = coll.owner
+            _capi.setContext( _cur_ctx )
 
 @_cli.command(name='wp')
 def _wp():
@@ -452,17 +461,17 @@ def _wp():
     reply = _capi.collectionGetParents( _cur_coll, True )
     _generic_reply_handler( reply, _print_path )
 
-
+'''
 @_cli.command(name='alias')
 @click.argument("context",required=False, metavar="ID")
 def _alias( context ):
-    '''
+    """
     Get or set the current user/project alias context. To set the context,
     specify a user or project ID for the ID argument. Use '-' for the ID
     argument to swap between the current and previously set context, and use
     '.' to set the context to the current authenticated user. Omitting the ID
     argument will print the current context.
-    '''
+    """
 
     if _output_mode_sticky != _OM_RETN and not _interactive:
         raise Exception("Command not supported in non-interactive modes.")
@@ -490,14 +499,14 @@ def _alias( context ):
                 _cur_ctx = ctx
 
     click.echo( _capi.getContext() )
-
+'''
 
 # =============================================================================
 # -------------------------------------------------------------- Data Functions
 # =============================================================================
 
 
-@_cli.command(name='data',cls=AliasedGroup,help="Data subcommands")
+@_cli.command(name='data',cls=AliasedGroup,help="Data subcommands.")
 def _data():
     pass
 
@@ -859,7 +868,7 @@ def _collItemsList( ctx, coll_id, offset, count, context ):
     if coll_id == None:
         cid = _cur_coll
     else:
-        cid = coll_id
+        cid = _resolve_coll_id( coll_id )
 
     reply = _capi.collectionItemsList( cid, offset = offset, count = count, context = context )
     _generic_reply_handler( reply, _print_listing )
@@ -911,7 +920,7 @@ def _coll_rem(  coll_id, item_id, context ):
 # ------------------------------------------------------------- Query Functions
 # =============================================================================
 
-@_cli.command(name='query',cls=AliasedGroup)
+@_cli.command(name='query',cls=AliasedGroup,help="Data query subcommands.")
 def _query(*args,**kwargs):
     pass
 
@@ -1019,7 +1028,7 @@ def _queryRun( id, text, meta, no_default, coll, proj, offset, count ):
 # -------------------------------------------------------------- User Functions
 # =============================================================================
 
-@_cli.command(name='user',cls=AliasedGroup,help="User commands")
+@_cli.command(name='user',cls=AliasedGroup,help="User subcommands.")
 def _user():
     pass
 
@@ -1082,7 +1091,7 @@ def _userWho():
 # ----------------------------------------------------------- Project Functions
 # =============================================================================
 
-@_cli.command(name='project',cls=AliasedGroup,help="Project commands")
+@_cli.command(name='project',cls=AliasedGroup,help="Project subcommands.")
 def _project():
     pass
 
@@ -1104,7 +1113,7 @@ def _projectList( owned, admin, member, offset, count ):
         admin = True
         member = True
 
-    reply = _capi.projectList( self, owned = owned, admin = admin, member = member, offset = offset, count = count )
+    reply = _capi.projectList( owned = owned, admin = admin, member = member, offset = offset, count = count )
     _generic_reply_handler( reply, _print_listing )
 
 
@@ -1124,7 +1133,7 @@ def _projectView( proj_id ):
 # ------------------------------------------------------- Shared Data Functions
 # =============================================================================
 
-@_cli.command(name='shared',cls=AliasedGroup,help="Shared data commands.")
+@_cli.command(name='shared',cls=AliasedGroup,help="Shared data subcommands.")
 def _shared():
     pass
 
@@ -1151,7 +1160,7 @@ def _sharedProjects():
     _generic_reply_handler( reply, _print_proj_listing )
 
 
-@_shared.command( name = "ls" )
+@_shared.command( name = "list" )
 @click.argument( "df_id", metavar = "ID" )
 def _sharedList( df_id ):
     '''
@@ -1199,9 +1208,9 @@ def _xfrList( time_from, to, since, status, limit ):
     _generic_reply_handler( reply, _print_xfr_listing )
 
 
-@_xfr.command(name='stat')
+@_xfr.command(name='view')
 @click.argument( "xfr_id", metavar="ID", required=False )
-def _xfrStat( xfr_id ):
+def _xfrView( xfr_id ):
     '''
     Show transfer information. Use the ID argument to view a specific transfer
     record, or omit to view the latest transfer initiated by the current user.
@@ -1216,7 +1225,7 @@ def _xfrStat( xfr_id ):
     * FAILED - Transfer has failed and has been stopped
     '''
 
-    reply = _capi.xfrStat( xfr_id )
+    reply = _capi.xfrView( _resolve_id( xfr_id ))
     _generic_reply_handler( reply, _print_xfr_stat )
 
 
@@ -1538,10 +1547,14 @@ def _print_ack_reply( reply = None ):
         click.echo("OK")
 
 def _print_listing( message ):
+    if len(message.item) == 0:
+        click.echo("(no items)")
+        return
+
     df_idx = 1
     global _list_items
     _list_items = []
-    #click.echo("{:3} {:12} ({:20} {}".format("","DataFed ID","Alias)","Title")) #because projects don't have aliases
+
     for i in message.item:
         _list_items.append(i.id)
         if i.alias:
@@ -1551,6 +1564,10 @@ def _print_listing( message ):
         df_idx += 1
 
 def _print_user_listing( message ):
+    if len(message.user) == 0:
+        click.echo("(no users)")
+        return
+
     df_idx = 1
     global _list_items
     _list_items = []
@@ -1560,7 +1577,11 @@ def _print_user_listing( message ):
         df_idx += 1
 
 
-def _print_proj_listing( message ): #reply is a ListingReply message
+def _print_proj_listing( message ):
+    if len(message.proj) == 0:
+        click.echo("(no projects)")
+        return
+
     df_idx = 1
     global _list_items
     _list_items = []
@@ -1571,6 +1592,10 @@ def _print_proj_listing( message ): #reply is a ListingReply message
 
 
 def _print_endpoints( message ):
+    if len(message.ep) == 0:
+        click.echo("(no endpoints)")
+        return
+
     df_idx = 1
     global _list_items
     _list_items = []
@@ -1681,6 +1706,10 @@ def _print_deps( dr ):
     click.echo("")
 
 def _print_xfr_listing( message ):
+    if len(message.xfr) == 0:
+        click.echo("(no transfers)")
+        return
+
     df_idx = 1
     global _list_items
     _list_items = []
@@ -1733,7 +1762,6 @@ def _print_user( message ):
 
 
 def _print_proj( message ):
-
     for proj in message.proj:
         #for i in proj.member: members.append(i)
 
@@ -1857,6 +1885,8 @@ def _resolve_id( df_id ):
 def _resolve_coll_id( coll_id, context = None ):
     if coll_id == ".":
         return _cur_coll
+    elif coll_id == "~":
+        return "c/u_" + _uid[2:] + "_root"
     elif coll_id == "-":
         return _prev_coll
     elif coll_id == "/":
