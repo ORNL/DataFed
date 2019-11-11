@@ -271,7 +271,7 @@ class API:
     #
     def get( self, key ):
         if not key in _opt_info:
-            raise Exception("Undefined configuration key")
+            raise Exception("Undefined configuration key: " + key )
 
         if key in self._opts:
             return self._opts[key]["val"]

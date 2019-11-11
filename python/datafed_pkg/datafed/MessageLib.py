@@ -61,12 +61,14 @@ class API:
         client_pub_key = None,
         client_priv_key_file = None,
         client_priv_key = None,
+        client_token = None,
         manual_auth = None,
         **kwargs
         ):
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
+        self._timeout = 5000
 
         if not server_host:
             raise Exception("Server host is not defined")
@@ -105,7 +107,7 @@ class API:
         self._keys_loaded = False
         self._keys_valid = False
 
-        if manual_auth or not ( client_pub_key_file or client_pub_key or client_priv_key_file or client_priv_key ):
+        if manual_auth or client_token or not ( client_pub_key_file or client_pub_key or client_priv_key_file or client_priv_key ):
             pub,priv = zmq.curve_keypair()
             _client_pub_key = pub.decode("utf-8")
             _client_priv_key = priv.decode("utf-8")
@@ -157,10 +159,13 @@ class API:
         if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
             raise Exception( "Incompatible server version {}.{}.{}".format(reply.major,reply.minor,reply.build))
 
-        # Check if server authenticated based on keys
-        reply, mt = self.sendRecv( anon.GetAuthStatusRequest(), 10000 )
-        self._auth = reply.auth
-        self._uid = reply.uid
+        if client_token:
+            self.manualAuthByToken( client_token )
+        else:
+            # Check if server authenticated based on keys
+            reply, mt = self.sendRecv( anon.GetAuthStatusRequest(), 10000 )
+            self._auth = reply.auth
+            self._uid = reply.uid
 
 
     ## @brief Determines if client security keys were loaded.
@@ -213,7 +218,7 @@ class API:
         # Test auth status
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
         if not reply.auth:
-            raise Exception("Authentication failed")
+            raise Exception("Password authentication failed")
 
         self._auth = True
         self._uid = reply.uid
@@ -230,7 +235,7 @@ class API:
         reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
 
         if not reply.auth:
-            raise Exception("Authentication failed")
+            raise Exception("Token authentication failed")
 
         self._auth = True
         self._uid = reply.uid
@@ -260,6 +265,12 @@ class API:
             self._nack_except = False
 
 
+    def setDefaultTimeout( self, timeout ):
+        self._timeout = timeout
+
+    def getDefaultTimeout( self ):
+        return self._timeout
+
     ## @brief Synchronously send a message then receive a reply to/from DataFed server.
     #
     # @param msg: Protobuf message to send to the server
@@ -271,9 +282,10 @@ class API:
     # @retval (obj,str)
     # @exception Exception: On message context mismatch (out of sync)
     #
-    def sendRecv( self, msg, timeout = 5000 ):
+    def sendRecv( self, msg, timeout = None, nack_except = None ):
         self.send( msg )
-        reply, mt, ctxt = self.recv( timeout )
+        _timeout = (timeout if timeout != None else self._timeout)
+        reply, mt, ctxt = self.recv( _timeout, nack_except )
         if reply == None:
             return None, None
         if ctxt != self._ctxt:
@@ -306,12 +318,16 @@ class API:
     #   (None,None,None).
     # @retval (obj,str,int)
     #
-    def recv( self, timeout = 5000 ):
-        reply, msg_type, ctxt = self._conn.recv( timeout )
+    def recv( self, timeout = None, nack_except = None ):
+        _timeout = (timeout if timeout != None else self._timeout)
+
+        reply, msg_type, ctxt = self._conn.recv( _timeout )
         if reply == None:
             return None, None, None
 
-        if msg_type == "NackReply" and self._nack_except:
+        _nack_except = (nack_except if nack_except != None else self._nack_except)
+
+        if msg_type == "NackReply" and _nack_except:
             if reply.err_msg:
                 raise Exception(reply.err_msg)
             else:

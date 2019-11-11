@@ -1560,7 +1560,7 @@ function makeBrowserTab(){
                     fields.title = item.title;
 
                     var qry = JSON.parse( item.query );
-                    fields.descr_html = "<table class='info_table'><col width='20%'><col width='80%'><tr><td><u>Query Field</u></td><td><u>Value</u></td></tr><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"---")+"</td></tr><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"---")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"---")+"</td></tr></table>";
+                    fields.descr_html = "<table class='info_table'><col width='20%'><col width='80%'><tr><td><u>Query Field</u></td><td><u>Value</u></td></tr><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"---")+"</td></tr><tr><td>Text:</td><td>"+(qry.text?qry.text:"---")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"---")+"</td></tr></table>";
 
                     html = "<table class='info_table'><col width='20%'><col width='80%'>";
                     html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
@@ -1821,7 +1821,7 @@ function makeBrowserTab(){
         var query = {};
         var tmp = $("#text_query").val();
         if ( tmp )
-            query.quick = tmp;
+            query.text = tmp;
 
         tmp = $("#id_query").val();
         if ( tmp )
@@ -1901,7 +1901,7 @@ function makeBrowserTab(){
 
         var query = parseQuickSearch();
 
-        if ( query.scopes.length && ( query.quick || query.meta || query.id ))
+        if ( query.scopes.length && ( query.text || query.meta || query.id ))
             inst.execQuery( query );
     }
 

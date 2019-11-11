@@ -4,6 +4,6 @@
 DataFed CLI
 """
 
-import datafed.CommandLib
+import datafed.CLI
 
-datafed.CommandLib._run()
+datafed.CLI.run()

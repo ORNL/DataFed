@@ -860,6 +860,10 @@ DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingRepl
     params.push_back({"use_client",a_request.use_client()?"true":"false"});
     params.push_back({"use_shared_users",a_request.use_shared_users()?"true":"false"});
     params.push_back({"use_shared_projects",a_request.use_shared_projects()?"true":"false"});
+    if ( a_request.has_offset())
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count() )
+        params.push_back({"count",to_string(a_request.count())});
 
     dbGet( "/dat/search", params, result );
 
@@ -1244,7 +1248,6 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
                 EXCEPT( ID_INTERNAL_ERROR, "Deps not an array!" );
             }
 
-            DL_DEBUG("got deps, size:" << imem->value.Size() );
             for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
             {
                 rapidjson::Value & val2 = imem->value[j];
@@ -1714,8 +1717,15 @@ void
 DatabaseClient::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
 {
     rapidjson::Document result;
+    vector<pair<string,string>> params;
 
-    dbGet( "/qry/exec", {{"id",a_request.id()}}, result );
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_offset())
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count() )
+        params.push_back({"count",to_string(a_request.count())});
+
+    dbGet( "/qry/exec", params, result );
 
     setListingData( a_reply, result );
 }
