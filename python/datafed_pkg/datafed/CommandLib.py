@@ -86,7 +86,6 @@ class API:
     # If current connection is authenticated, returns current user ID; otherwise returns None.
     #
     # @return Authenticated user ID or None if not authenticated
-    # @retval (str or None)
     #
     def getAuthUser( self ):
         return self._uid
@@ -96,9 +95,11 @@ class API:
     #
     # If connected, logs-out by reseting underlying connection and clearing current user.
     #
+    # @return None
+    #
     def logout( self ):
         if self._uid:
-            self._mapi.reset()
+            self._mapi.logout()
             self._uid = None
             self._cur_sel = None
 
@@ -111,6 +112,7 @@ class API:
     # @param uid - DataFed user ID
     # @param password - DataFed password
     # @exception Exception: if authentication fails.
+    # @return None
     #
     def loginByPassword( self, uid, password ):
         self.logout()
@@ -128,6 +130,9 @@ class API:
     # set of public/private client keys files as specified via the Config
     # module.
     #
+    # @exception Exception: On communication or server error
+    # @return A ???? Google protobuf message object
+    #
     def generateCredentials( self ):
         msg = auth.GenerateCredentialsRequest()
 
@@ -139,12 +144,15 @@ class API:
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief View a data record
     #
-    # Desc
+    # Retrieves full data record with metadata (without raw data).
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param data_id - Data record ID or alias
+    # @param details - NOT USED
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A RecordDataReply Google protobuf message object
+    # @exception Exception: On communication or server error
     #
     def dataView( self, data_id, details = False, context = None ):
         msg = auth.RecordViewRequest()
@@ -154,12 +162,25 @@ class API:
         return self._mapi.sendRecv( msg )
 
     ##
-    # @brief 
+    # @brief Create a new data record
     #
-    # Desc
+    # Create a new data record. May specify alias, containing collection,
+    # metadata, dependencies, and allocation. Raw data must be uploaded
+    # separately. Cannot use both metadata and metadata_file options.
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param title - Title of record (required)
+    # @param alias - Alias of record (optional)
+    # @param description - Text description (optional)
+    # @param keywords - Comma-separated keywords (optional)
+    # @param extension - Raw data file extension override (optional)
+    # @param metadata - Domain-specific metadata (JSON object, optional)
+    # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
+    # @param parent_id - ID/alias of containing collection (root is default)
+    # @param deps - Dependencies (array of tuples of relation type and record ID)
+    # @param repo_id - Repository ID (use default of owner if not specified)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A RecordDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataCreate( self, title, alias = None, description = None, keywords = None, extension = None,
         metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
@@ -212,12 +233,27 @@ class API:
         return self._mapi.sendRecv( msg )
 
     ##
-    # @brief 
+    # @brief Update an existing data record
     #
-    # Desc
+    # Update an existing data record. May specify title, alias, metadata,
+    # dependencies, and allocation. Raw data must be uploaded separately.
+    # Cannot use both metadata and metadata_file options.
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param data_id - Record ID/alias (required)
+    # @param title - Title of record (optional)
+    # @param alias - Alias of record (optional)
+    # @param description - Text description (optional)
+    # @param keywords - Comma-separated keywords (optional)
+    # @param extension - Raw data file extension override (optional)
+    # @param metadata - Domain-specific metadata (JSON object, optional)
+    # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
+    # @param metadata_set - Set (replace) existing metadata with provided (default is merge)
+    # @param dep_clear - Clear existing dependencies
+    # @param deps_add - Dependencies to add (array of tuples of relation type and record ID)
+    # @param deps_rem - Dependencies to remove (array of tuples of relation type and record ID)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A RecordDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataUpdate( self, data_id, title = None, alias = None, description = None, keywords = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False, dep_clear = False, dep_add = None,
@@ -294,12 +330,14 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Delete one or more data records
     #
-    # Desc
+    # Deletes onr or more data records and associated raw data.
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param data_id - A record ID/alias or list of Ids/aliases (required)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return An AckReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataDelete( self, data_id, context = None ):
         msg = auth.RecordDeleteRequest()
@@ -328,9 +366,11 @@ class API:
     # @param path - Globus or file system destination path
     # @param wait - Wait for get to complete if True
     # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
-    # @param display_progress - Enable display of HTTP download progress bar if True
-    # @param context - Optional user or project ID to use for alias resolution
-    # @exception Exception: if both Globus and HTTP transfers are required
+    # @param progress_bar - A progess bar class to display download progress (optional)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A XfrDataReply Google protobuf message object
+    # @exception Exception: If both Globus and HTTP transfers are required
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataGet( self, item_id, path, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
         # Request server to map specified IDs into a list of specific record IDs.
@@ -443,17 +483,26 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Put (upload) raw data for a data record
     #
-    # Desc
+    # This method uploads raw data from the specified path to the specified
+    # data record. The upload involves a Globus transfer, and the path may be a
+    # full globus path, or a full or relative local file system path (the
+    # current endpoint will be prepended).
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param data_id - Data record ID/alias
+    # @param path - Globus or file system source path
+    # @param wait - Wait for put to complete if True
+    # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
+    # @param extension - Override source file extension (default is autodetect)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A XfrDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataPut( self, data_id, path, wait = False, timeout_sec = 0, extension = None, context = None ):
         msg = auth.DataPutRequest()
         msg.id = self._resolve_id( data_id, context )
-        msg.path = path
+        msg.path = self._resolvePathForGlobus( path, False )
         if extension:
             msg.ext = extension
 
@@ -488,12 +537,19 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Batch create data records
     #
-    # Desc
+    # Create one or more data records from JSON source files that specify all
+    # metadata for the record. The source files may contain an individual JSON
+    # object, or an array of JSON objects. There is a maximum limit to the
+    # amount of data that can be sent in a single batch create request (see
+    # _max_payload_size).
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param file - An array of filenames to process
+    # @param coll_id - Parent collection ID/alias (replaces parent field in JSON)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A RecordDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataBatchCreate( self, file, coll_id = None, context = None ):
         payload = []
@@ -506,8 +562,8 @@ class API:
                 raise Exception( "File not found: " + f )
 
             tot_size += fp.stat().st_size
-            if tot_size > _max_payload_size:
-                raise Exception( "Total batch create size exceeds limit ({})".format( _max_payload_size ))
+            if tot_size > API._max_payload_size:
+                raise Exception( "Total batch create size exceeds limit ({})".format( API._max_payload_size ))
 
             with fp.open('r+') as f:
                 records = jsonlib.load(f)
@@ -528,13 +584,17 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    ##
-    # @brief 
+    # @brief Batch update data records
     #
-    # Desc
+    # Update one or more data records from JSON source files that specify all
+    # updated metadata for the record. The source files may contain an
+    # individual JSON object, or an array of JSON objects. There is a maximum
+    # limit to the amount of data that can be sent in a single batch create
+    # request (see _max_payload_size).
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param file - An array of filenames to process
+    # @return A RecordDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def dataBatchUpdate( self, file ):
         payload = []
@@ -547,8 +607,8 @@ class API:
                 raise Exception( "File not found: " + f )
 
             tot_size += fp.stat().st_size
-            if tot_size > _max_payload_size:
-                raise Exception( "Total batch update size exceeds limit ({})".format( _max_payload_size ))
+            if tot_size > API._max_payload_size:
+                raise Exception( "Total batch update size exceeds limit ({})".format( API._max_payload_size ))
 
             with fp.open('r+') as f:
                 records = jsonlib.load(f)
@@ -568,12 +628,14 @@ class API:
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief View collection information
     #
-    # Desc
+    # View alias, title, and description fof a collection
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param coll_id - Collection ID/alias to view
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A CollDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionView( self, coll_id, context = None ):
         msg = auth.CollViewRequest()
@@ -584,12 +646,20 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Create a new collection
     #
-    # Desc
+    # Create a new collection with title, alias, and description. Note that if
+    # topic is provided, the collection and contents become publicly readable
+    # and will be presented in DataFed catalog browser.
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param title - Title of collection (required)
+    # @param alias - Alias of collection (optional)
+    # @param description - Text description (optional)
+    # @param topic - Topic for publishing collection
+    # @param parent_id - ID/alias of parent collection (default is root)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A CollDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionCreate( self, title, alias = None, description = None, topic = None, parent_id = None, context = None ):
         msg = auth.CollCreateRequest()
@@ -611,18 +681,24 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    ##
-    # @brief 
+    # @brief Update an existing collection
     #
-    # Desc
+    # Update an existing collection with title, alias, and description. Note
+    # that if topic is added, the collection and contents become publicly
+    # readable and will be presented in DataFed catalog browser.
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param coll_id - ID/alias of collection (required)
+    # @param title - Title of collection (optional)
+    # @param alias - Alias of collection (optional)
+    # @param description - Text description (optional)
+    # @param topic - Topic for publishing collection
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A CollDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionUpdate( self, coll_id, title = None, alias = None, description = None, topic = None, context = None ):
         msg = auth.CollUpdateRequest()
         msg.id = self._resolve_id( coll_id, context )
-        #msg.id = self._resolve_coll_id( coll_id, context )
 
         if title is not None:
             msg.title = title
@@ -640,12 +716,17 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Delete one or more existing collections
     #
-    # Desc
+    # Deletes onr or more collections and contained items. When a collection is
+    # deleted, all contained collections are also deleted; however, contained
+    # data records are only deleted if they are not linked to another
+    # collection not involved in the deletion.
     #
-    # @param  - 
-    # @exception Exception: 
+    # @param coll_id - A collection ID/alias or list of IDs/aliases (required)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return An AckReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionDelete( self, coll_id, context = None ):
         msg = auth.CollDeleteRequest()
@@ -662,34 +743,48 @@ class API:
     ##
     # @brief List items in collection
     #
-    # If not authenticated, this method attempts manual authentication
-    # using the supplied Globus access token.
+    # List items linked to the specified collection.
     #
     # @param coll_id - Collection ID or alias
-    # @exception Exception: if authentication fails.
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A ListingReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionItemsList( self, coll_id, offset = 0, count = 20, context = None ):
         msg = auth.CollReadRequest()
         msg.count = count
         msg.offset = offset
         msg.id = self._resolve_id( coll_id, context )
-        #msg.id = self._resolve_coll_id( coll_id, context )
 
         return self._mapi.sendRecv( msg )
 
 
     ##
-    # @brief 
+    # @brief Update (add/remove) items linked to a collection
     #
-    # Desc
+    # Add and/or remove items linked to a specified collection. Note that data
+    # records may be linked to any number of collections, but collections can
+    # only be linked to one parent collection. If a collection is added to a
+    # new parent collection, it is automatically unlinked from it's current
+    # parent. An ancestor (parent, grandparent, etc) collection cannot be
+    # linked to a descendent collection.
     #
-    # @param  - 
-    # @exception Exception: 
+    # Items removed from a collection that have no other parent collections
+    # are automatically re-linked to the root collection. The return reply
+    # of this method contains any such re-linked items.
+    #
+    # @param coll_id - Collection ID or alias
+    # @param add_ids - String or list of ID/alias of record(s) and/or collection(s) to add (optional)
+    # @param rem_ids - String or list of ID/alias of record(s) and/or collection(s) to remove (optional)
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A ListingReply Google protobuf message object containing re-linked items
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None, context = None ):
         msg = auth.CollWriteRequest()
         msg.id = self._resolve_id( coll_id, context )
-        #msg.id = self._resolve_coll_id( coll_id, context )
 
         if isinstance( add_ids, list ):
             for i in add_ids:
@@ -707,12 +802,14 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Get parents of specifies collection
     #
-    # Desc
+    # Gets the parents
     #
     # @param  - 
-    # @exception Exception: 
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def collectionGetParents( self, coll_id, inclusive = False, context = None ):
         msg = auth.CollGetParentsRequest()
@@ -731,7 +828,10 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @return A ListingReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryList( self, offset = 0, count = 20 ):
         msg = auth.QueryListRequest()
@@ -747,7 +847,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryView( self, query_id ):
         msg = auth.QueryViewRequest()
@@ -762,7 +863,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryCreate( self, title, id = None, text = None, meta = None, no_default = None, coll = None, proj = None ):
         msg = auth.QueryCreateRequest()
@@ -778,7 +880,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryUpdate( self, query_id, title = None, id = None, text = None, meta = None ):
         msg = auth.QueryViewRequest()
@@ -820,7 +923,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryDelete( self, query_id ):
         msg = auth.QueryDeleteRequest()
@@ -835,7 +939,10 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @return A ListingReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryExec( self, query_id, offset = 0, count = 20 ):
         msg = auth.QueryExecRequest()
@@ -852,7 +959,10 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @return A ListingReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def queryDirect( self, id = None, text = None, meta = None, no_default = None, coll = None, proj = None, offset = 0, count = 20 ):
         msg = auth.RecordSearchRequest()
@@ -918,7 +1028,10 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @return A UserDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def userListCollaborators( self, offset = 0, count = 20 ):
         msg = auth.UserListCollabRequest()
@@ -934,7 +1047,10 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @return A UserDataReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def userListAll( self, offset = 0, count = 20 ):
         msg = auth.UserListAllRequest()
@@ -950,7 +1066,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def userView( self, uid ):
         msg = auth.UserViewRequest()
@@ -969,7 +1086,10 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param offset - Offset of listing results for paging (optional)
+    # @param count - Count (limit) of listing results for paging (optional)
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def projectList( self, owned = True, admin = True, member = True, offset = 0, count = 20 ):
         msg = auth.ProjectListRequest()
@@ -988,7 +1108,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def projectView( self, project_id ):
         msg = auth.ProjectViewRequest()
@@ -1008,7 +1129,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def sharedUsersList( self ):
         msg = auth.ACLByUserRequest()
@@ -1022,7 +1144,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def sharedProjectsList( self ):
         msg = auth.ACLByProjRequest()
@@ -1036,7 +1159,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ListingReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def sharedDataList( self, owner_id ):
         oid = owner_id.lower()
@@ -1063,7 +1187,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def xfrList( self, time_from = None, to = None, since = None, status = None, limit = 20 ):
         if since != None and (time_from != None or to != None):
@@ -1144,7 +1269,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def xfrView( self, xfr_id = None ):
         if xfr_id:
@@ -1170,7 +1296,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A ???? Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
     #
     def endpointListRecent( self ):
         msg = auth.UserGetRecentEPRequest()
@@ -1183,7 +1310,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return The default endpoint string
     #
     def endpointDefaultGet( self ):
         return self.cfg.get( "default_ep" )
@@ -1194,7 +1321,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return None
     #
     def endpointDefaultSet( self, endpoint ):
         # TODO validate ep is UUID or legacy (not an ID)
@@ -1208,7 +1335,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return The current endpoint string
     #
     def endpointGet( self ):
         return self._cur_ep
@@ -1219,7 +1346,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return None
     #
     def endpointSet( self, endpoint ):
         # TODO validate ep is UUID or legacy (not an ID)
@@ -1236,7 +1363,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @exception Exception: On configuration or communication/server error
+    # @return None
     #
     def setupCredentials( self ):
         cfg_dir = self.cfg.get("client_cfg_dir")
@@ -1270,7 +1398,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @exception Exception: On invalid options or communication/server error
+    # @return None
     #
     def setContext( self, item_id = None ):
         if item_id == None:
@@ -1312,7 +1441,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return The current user or project ID context string
     #
     def getContext( self ):
         return self._cur_sel
@@ -1324,7 +1453,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return A string representation of the timestamp in local time
     #
     def timestampToStr( self, ts ):
         return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
@@ -1336,7 +1465,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return The integer timestamp representation of the time string in local time
     #
     def strToTimestamp( self, time_str ):
         try:
@@ -1367,7 +1496,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return The size as a string with byte units
     #
     def sizeToStr( self, size, precision = 1 ):
         if size == 0:
@@ -1399,7 +1528,7 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @return The unique filename string
     #
     def _uniquifyFilename( self, path ):
         filepath = pathlib.Path(path)
@@ -1433,6 +1562,7 @@ class API:
     #
     # @param  - 
     # @exception Exception: 
+    # @return The fully resolved local path string
     #
     def _resolvePathForHTTP( self, path ):
         if path[0] == "~":
@@ -1453,10 +1583,11 @@ class API:
     #
     # @param  - 
     # @exception Exception: 
+    # @return The fully resolved Globus path string
     #
     def _resolvePathForGlobus( self, path, must_exist ):
         # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
-        if re.match( _endpoint_legacy, path ) or re.match( _endpoint_uuid, path ):
+        if re.match( API._endpoint_legacy, path ) or re.match( API._endpoint_uuid, path ):
             return path
 
         # Does not have an endpoint prefix, might be a full or relative path
@@ -1526,7 +1657,8 @@ class API:
     # Desc
     #
     # @param  - 
-    # @exception Exception: 
+    # @param context - User or project ID to use for alias resolution (optional)
+    # @return Resolved ID
     #
     def _resolve_id( self, item_id, context = None ):
         if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
@@ -1550,6 +1682,7 @@ class API:
     #
     # @param  - 
     # @exception Exception: 
+    # @return Updated configuration as dictionary
     #
     def _setSaneDefaultOptions( self ):
         opts = self.cfg.getOpts()

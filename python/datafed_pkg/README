@@ -1,23 +1,2 @@
-<<<<<<< HEAD
-After building the DataFed project, the Python CLI module must be packaged and deployed to PyPi or TestPyPi.
 
-To package, run the following command from the ...DataFed/build/python/datafed_pkg directory:
-
-    python3 setup.py sdist bdist_wheel
-
-To deploy to TestPyPi, run:
-
-    python3 -m twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*
-
-* PyPi and TestPyPi do not allow a deployed version to overwritten. You must increment the version number each time.
-* The --skip-existing option is only needed if multiple versions have been built locally.
-* You may need to temporarily alter the package name in the setup.py file to avoid conflicts with other developers.
-
-To deploy to PyPi, run:
-
-    TBD
-
-twine upload -r pypi home/cades/jbreet/DataFed/build/python/datafed_pkg/dist/datafed-0.6.0.tar.gz
-=======
 DataFed is a federated scientific data management system developed by Oak Ridge National Laboratories to facilitate FAIR data practices within supported experimental, compute, and analytics environments. The DataFed Python package provides both a command-line-interface (CLI) and a programming API for interacting with DataFed services.
->>>>>>> 22fc8139acc8437e29fc638a921ac92d873e7a29

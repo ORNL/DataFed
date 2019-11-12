@@ -240,6 +240,11 @@ class API:
         self._auth = True
         self._uid = reply.uid
 
+    def logout( self ):
+        self._conn.reset()
+        self._auth = False
+        self._uid = None
+
     ## @brief Get NackReply exception enable state.
     #
     # @return True if Nack exceptions are enabled; False otherwise.

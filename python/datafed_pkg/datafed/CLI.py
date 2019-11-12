@@ -831,7 +831,7 @@ def _collDelete( coll_id, force, context ):
     bypassed with the '--force' option.
 
     When a collection is deleted, all contained collections are also deleted;
-    however, contained data records are only deleted if the are not linked to
+    however, contained data records are only deleted if they are not linked to
     another collection not involved in the deletion.
     '''
 
@@ -1224,8 +1224,11 @@ def _xfrView( xfr_id ):
     * SUCCEEDED - Transfer has completed successfully
     * FAILED - Transfer has failed and has been stopped
     '''
-
-    reply = _capi.xfrView( _resolve_id( xfr_id ))
+    if xfr_id:
+        _id = _resolve_id( xfr_id )
+    else:
+        _id = xfr_id
+    reply = _capi.xfrView( _id )
     _generic_reply_handler( reply, _print_xfr_stat )
 
 
