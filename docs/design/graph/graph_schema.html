@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <title>DataFed Graph Schema</title>
+    </head>
+    <body>
+        DataFed Graph Schema:<br>
+        <svg style='display:block;width:100%;height:100%'></svg>
+    </body>
+    <script>
+        function renderDepGraph(){
+            var g;
+
+            links = links_grp.selectAll('line')
+                .data( link_data, function(d) { return d.id; });
+
+            links.enter()
+                .append("line")
+                    .attr('marker-start',function(d){
+                        switch ( d.ty ){
+                            case 0: return 'url(#arrow-derivation)';
+                            case 1: return 'url(#arrow-component)';
+                            default: return '';
+                        }
+                    })
+                    .attr('marker-end',function(d){
+                        //console.log("link enter 1");
+                        switch ( d.ty ){
+                            case 2: return 'url(#arrow-new-version)';
+                            default: return '';
+                        }
+                    })
+                    .attr('class',function(d){
+                        //console.log("link enter 2");
+                        switch ( d.ty ){
+                            case 0: return 'link derivation';
+                            case 1: return 'link component';
+                            case 2: return 'link new-version';
+                        }
+                    });
+
+            links.exit()
+                .remove();
+
+            links = links_grp.selectAll('line');
+
+            nodes = nodes_grp.selectAll('g')
+                .data( node_data, function(d) { return d.id; });
+
+            nodes.select("text.label")
+                .text(function(d) {
+                    return d.label;
+                })
+
+
+            g = nodes.enter()
+                .append("g")
+                    .attr("class", "node")
+                    .call(d3.drag()
+                        .on("start", dragStarted)
+                        .on("drag", dragged)
+                        .on("end", dragEnded));
+
+            g.append("circle")
+                .attr("r", r)
+                .on("mouseover",function(d){
+                    //console.log("mouse over");
+                    d3.select(this)
+                        .transition()
+                        .duration(150)
+                        .attr('r',r*1.5);
+                })
+                .on("mouseout",function(d){
+                    d3.select(this)
+                        .transition()
+                        .duration(500)
+                        .attr('r',r);
+                });
+
+            g.append("circle")
+                .attr("r", r *1.5);
+
+            g.append("text")
+                .attr("class","label")
+                .text(function(d) {
+                    return d.label;
+                })
+                .attr('x', function(d){
+                    return r;
+                })
+                .attr('y', -r)
+
+            nodes.exit()
+                .remove();
+
+            nodes = nodes_grp.selectAll('g');
+
+            if ( simulation ){
+                //console.log("restart sim");
+                simulation
+                    .nodes(node_data)
+                    .force("link").links(link_data);
+
+                simulation.alpha(1).restart();
+            }else{
+                var linkForce = d3.forceLink(link_data)
+                    .strength(function(d){
+                        switch(d.ty){
+                            case 0: return .2;
+                            case 1: return .2;
+                            case 2: return .2;
+                        }
+                    })
+                    .id( function(d) { return d.id; })
+
+                simulation = d3.forceSimulation()
+                    .nodes(node_data)
+                    //.force('center', d3.forceCenter(200,200))
+                    .force('charge', d3.forceManyBody()
+                        .strength(-300))
+                    .force("link", linkForce )
+                    .on('tick', simTick);
+            }
+        }
+
+        function dragStarted(d) {
+            //console.log("drag start",d.id);
+            if (!d3.event.active) 
+                simulation.alphaTarget(0.3).restart();
+
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+            d3.event.sourceEvent.stopPropagation();
+        }
+
+        function dragged(d) {
+            //console.log("drag",d3.event.x,d3.event.y);
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+            simTick(); 
+            d3.event.sourceEvent.stopPropagation();
+        }
+
+        function dragEnded(d){
+            //console.log("drag end",d.id);
+            if (!d3.event.active)
+                simulation.alphaTarget(0);
+            d.x = d.fx;
+            d.y = d.fy;
+            delete d.fx;
+            delete d.fy;
+            //console.log("at:",d);
+            d3.event.sourceEvent.stopPropagation();
+        }
+
+        function simTick() {
+            //console.log("tick");
+            nodes
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")"; });
+
+            links
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+        }
+
+        var r = 15;
+        var simulation;
+        var zoom = d3.zoom();
+        var svg = d3.select("svg")
+            .call(zoom.on("zoom", function () {
+                svg.attr("transform", d3.event.transform)
+            }))
+            .append("g")
+
+        //defineArrowMarkerDeriv(inst.svg);
+        //defineArrowMarkerComp(inst.svg);
+        //defineArrowMarkerNewVer(inst.svg);
+
+        var links_grp = svg.append("g")
+            .attr("class", "links");
+
+        var nodes_grp = svg.append("g")
+            .attr("class", "nodes");
+
+        var link_data = [];
+        var node_data = [];
+
+        node_data.push({"id":"user","label":"User","x":100,"y":100})
+        node_data.push({"id":"proj","label":"Project","x":100,"y":100})
+        node_data.push({"id":"data","label":"Data","x":100,"y":100})
+        node_data.push({"id":"folder","label":"Folder","x":100,"y":100})
+
+        link_data.push({source:"data",target:"user",ty:"owner"});
+        link_data.push({source:"data",target:"proj",ty:"owner"});
+        link_data.push({source:"folder",target:"user",ty:"owner"});
+        link_data.push({source:"folder",target:"proj",ty:"owner"});
+        link_data.push({source:"folder",target:"data",ty:"item"});
+
+        renderDepGraph();
+    </script>
+</html>
