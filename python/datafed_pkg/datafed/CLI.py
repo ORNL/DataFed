@@ -1181,7 +1181,7 @@ def _xfr():
     pass
 
 @_xfr.command( name = 'list' )
-@click.option("-s","--since",help="List from specified time in seconds (suffix h = hours, d = days, w = weeks)")
+@click.option("-s","--since",help="List from specified time (seconds default, suffix h = hours, d = days, w = weeks)")
 @click.option("-f","--from","time_from",help="List from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("-t","--to",help="List up to specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("-S","--status",type=click.Choice(["0","1","2","3","4","init","initial","active","inactive","succeeded","failed"]),help="List transfers matching specified status")
@@ -1204,7 +1204,7 @@ def _xfrList( time_from, to, since, status, limit ):
     if since != None and (time_from != None or to != None):
         raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
-    reply = _capi.xfrList( time_from = time_from, to = to, since = since, status = status, limit = limit )
+    reply = _capi.xfrList( time_from = time_from, time_to = to, since = since, status = status, limit = limit )
     _generic_reply_handler( reply, _print_xfr_listing )
 
 

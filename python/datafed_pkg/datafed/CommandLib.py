@@ -804,11 +804,12 @@ class API:
     ##
     # @brief Get parents of specifies collection
     #
-    # Gets the parents
+    # Gets the parents of the specified collection up to the root collection.
     #
-    # @param  - 
+    # @param coll_id - Collection ID or alias
+    # @param inclusive - Include starting collection if True
     # @param context - User or project ID to use for alias resolution (optional)
-    # @return A ???? Google protobuf message object
+    # @return A CollPathReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def collectionGetParents( self, coll_id, inclusive = False, context = None ):
@@ -818,16 +819,16 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+
     # =========================================================================
     # ----------------------------------------------------------- Query Methods
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief List saved queries
     #
-    # Desc
+    # List saved queries.
     #
-    # @param  - 
     # @param offset - Offset of listing results for paging (optional)
     # @param count - Count (limit) of listing results for paging (optional)
     # @return A ListingReply Google protobuf message object
@@ -842,12 +843,12 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief View a saved query
     #
-    # Desc
+    # View specified saved query.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param query_id - ID of saved query to view
+    # @return A QueryDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def queryView( self, query_id ):
@@ -858,12 +859,19 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Create a new saved query
     #
-    # Desc
+    # Create a new saved query. Default scope inclues owned data and all data
+    # associated with owned and managed projects, as well as member projects.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param title - Title of query (required)
+    # @param id - ID/alias query text (optional)
+    # @param text - Title, description, and/or keyword text query (optional)
+    # @param meta - Metadata query (optional)
+    # @param no_default - Omit default scopes if True (optional)
+    # @param coll - A collection ID/alias to add to scope (multiple allowed)
+    # @param proj - A project ID to add to scope (multiple allowed)
+    # @return A QueryDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def queryCreate( self, title, id = None, text = None, meta = None, no_default = None, coll = None, proj = None ):
@@ -875,12 +883,16 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Update an existing saved query
     #
-    # Desc
+    # Update an existing saved query. Can specity new title and query
+    # expressions; however scope cannot be changed.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param query_id - Query ID (required)
+    # @param id - ID/alias query text (optional)
+    # @param text - Title, description, and/or keyword text query (optional)
+    # @param meta - Metadata query (optional)
+    # @return A QueryDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def queryUpdate( self, query_id, title = None, id = None, text = None, meta = None ):
@@ -917,13 +929,14 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+
     ##
-    # @brief 
+    # @brief Delete a saved query
     #
-    # Desc
+    # Delete a saved query.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param query_id - Query ID to delete (required)
+    # @return An AckReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def queryDelete( self, query_id ):
@@ -934,11 +947,11 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Execute a stored query
     #
-    # Desc
+    # Execute a store query and return matches.
     #
-    # @param  - 
+    # @param query_id - Query ID to execute (required)
     # @param offset - Offset of listing results for paging (optional)
     # @param count - Count (limit) of listing results for paging (optional)
     # @return A ListingReply Google protobuf message object
@@ -954,11 +967,16 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Directly run a manually entered query
     #
-    # Desc
+    # Directly run a manually entered query and return matches.
     #
-    # @param  - 
+    # @param id - ID/alias query text (optional)
+    # @param text - Title, description, and/or keyword text query (optional)
+    # @param meta - Metadata query (optional)
+    # @param no_default - Omit default scopes if True (optional)
+    # @param coll - A collection ID/alias to add to scope (multiple allowed)
+    # @param proj - A project ID to add to scope (multiple allowed)
     # @param offset - Offset of listing results for paging (optional)
     # @param count - Count (limit) of listing results for paging (optional)
     # @return A ListingReply Google protobuf message object
@@ -973,61 +991,17 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
-        if id is None and text is None and meta is None:
-            raise Exception("No search terms provided.")
-
-        if no_default and (( coll is None or len( coll ) == 0 ) and ( proj is None or len( proj ) == 0 )):
-            raise Exception("Must specify one or more collections or projects to search if 'no default' option is enabled.")
-
-        qry = "{"
-
-        if id:
-            qry = qry + "\"id\":\"" + id + "\","
-
-        if text:
-            qry = qry + "\"text\":\"" + text + "\","
-
-        if meta:
-            qry = qry + "\"meta\":\"" + meta + "\","
-
-        scopes = ""
-        delim = ""
-
-        if not no_default:
-            scopes = scopes + "{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}"
-
-        if coll:
-            if len(scopes):
-                delim = ","
-
-            for c in coll:
-                scopes = scopes + delim + "{\"scope\":6,\"id\":\"" + self._resolve_id( c ) + "\"}"
-                delim = ","
-
-        if proj:
-            if len(scopes):
-                delim = ","
-
-            for p in proj:
-                scopes = scopes + delim + "{\"scope\":2,\"id\":\"" + p + "\"}"
-                delim = ","
-
-        # TODO - Add topics when topics are supported by CLI
-
-        return qry + "\"scopes\":[" + scopes + "]}"
-
-
     # =========================================================================
     # ------------------------------------------------------------ User Methods
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief List collaborators
     #
-    # Desc
+    # List collaborators. Collaborators are defined as users that have projects
+    # in common with the current user, or that have data-sharing relationships
+    # with the current user.
     #
-    # @param  - 
     # @param offset - Offset of listing results for paging (optional)
     # @param count - Count (limit) of listing results for paging (optional)
     # @return A UserDataReply Google protobuf message object
@@ -1042,11 +1016,10 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief List all users
     #
-    # Desc
+    # List all users.
     #
-    # @param  - 
     # @param offset - Offset of listing results for paging (optional)
     # @param count - Count (limit) of listing results for paging (optional)
     # @return A UserDataReply Google protobuf message object
@@ -1061,12 +1034,12 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief View user information
     #
-    # Desc
+    # View user information.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param uid - ID of user to view
+    # @return A UserDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def userView( self, uid ):
@@ -1081,14 +1054,17 @@ class API:
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief List projects associated with current user
     #
-    # Desc
+    # List projects that are owned or managed by the current user, as well as
+    # projects were the current user is a member.
     #
-    # @param  - 
+    # @param owned - Include owned projects
+    # @param admin - Include managed projects
+    # @param member - Include projects where current user is a member
     # @param offset - Offset of listing results for paging (optional)
     # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ???? Google protobuf message object
+    # @return A ListingReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def projectList( self, owned = True, admin = True, member = True, offset = 0, count = 20 ):
@@ -1103,12 +1079,12 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief View project information
     #
-    # Desc
+    # View project information (title, description, owner, etc.)
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param project_id - ID of project to view
+    # @return A ProjectDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def projectView( self, project_id ):
@@ -1124,12 +1100,13 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief List users with shared data
     #
-    # Desc
+    # List users that have shared data. Only users that have shared data with
+    # the current user are listed, not users that the current user has shared
+    # data with.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @return A UserDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def sharedUsersList( self ):
@@ -1139,12 +1116,11 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief List projects with shared data
     #
-    # Desc
+    # List projects that have shared data with the current user.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @return A ProjectDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def sharedProjectsList( self ):
@@ -1154,11 +1130,11 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief List shared data records and collections
     #
-    # Desc
+    # List shared data records and collections by user/project ID.
     #
-    # @param  - 
+    # @param owner_id - User or project ID
     # @return A ListingReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
@@ -1182,16 +1158,23 @@ class API:
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief List recent Globus transfers
     #
-    # Desc
+    # List recent Globus transfers. If no time or status filter options are
+    # provided, all Globus transfers initiated by the current user are listed,
+    # most recent first. Note that the DataFed server periodically purges
+    # transfer history such that only up to 30 days of history are retained.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param time_from - List from specified date/time (M/D/YYYY[,HH:MM])
+    # @param time_to - List to specified date/time (M/D/YYYY[,HH:MM])
+    # @param since - List from specified time string (second default, suffix h = hours, d = days, w = weeks)
+    # @param status - List matching status ("0"/"init","1"/"active","2"/"inactive","3"/"succeeded","4"/"failed")
+    # @param limit - Limit to number of matches
+    # @return A XfrDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def xfrList( self, time_from = None, to = None, since = None, status = None, limit = 20 ):
-        if since != None and (time_from != None or to != None):
+    def xfrList( self, time_from = None, time_to = None, since = None, status = None, limit = 20 ):
+        if since != None and (time_from != None or time_to != None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
         msg = auth.XfrListRequest()
@@ -1203,10 +1186,10 @@ class API:
 
             setattr( msg, "from", ts )
 
-        if to != None:
-            ts = self.strToTimestamp( to )
+        if time_to != None:
+            ts = self.strToTimestamp( time_to )
             if ts == None:
-                raise Exception("Invalid time format for 'to' option.")
+                raise Exception("Invalid time format for 'time_to' option.")
 
             msg.to = ts
 
@@ -1264,12 +1247,15 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief View transfer information
     #
-    # Desc
+    # Show transfer information. Use the ID argument to view a specific transfer
+    # record, or omit to view the latest transfer initiated by the current user.
+    # Information include status, source, destination, and other administrative
+    # attributes.
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
+    # @param xfr_id - Transfer ID to view (optional)
+    # @return A ACLDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
     def xfrView( self, xfr_id = None ):
@@ -1291,13 +1277,12 @@ class API:
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief List recent endpoints
     #
-    # Desc
+    # List recently used Globus endpoints
     #
-    # @param  - 
-    # @return A ???? Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
+    # @return A UserGetRecentEPReply Google protobuf message object
+    # @exception Exception: On communication/server error
     #
     def endpointListRecent( self ):
         msg = auth.UserGetRecentEPRequest()
@@ -1305,22 +1290,21 @@ class API:
         return self._mapi.sendRecv( msg )
 
     ##
-    # @brief 
+    # @brief Get default endpoint
     #
-    # Desc
+    # Get configured default endpoint
     #
-    # @param  - 
-    # @return The default endpoint string
+    # @return The default endpoint string, or None if not configured
     #
     def endpointDefaultGet( self ):
         return self.cfg.get( "default_ep" )
 
     ##
-    # @brief 
+    # @brief Set the default endpoint
     #
-    # Desc
+    # Set the default Globus endpoint (used to set initial current endpoint).
     #
-    # @param  - 
+    # @param endpoint - New default endpoint
     # @return None
     #
     def endpointDefaultSet( self, endpoint ):
@@ -1330,22 +1314,21 @@ class API:
             self._cur_ep = endpoint
 
     ##
-    # @brief 
+    # @brief Get current endpoint
     #
-    # Desc
+    # Get current Globus endpoint
     #
-    # @param  - 
-    # @return The current endpoint string
+    # @return The current endpoint string, or None if not set
     #
     def endpointGet( self ):
         return self._cur_ep
 
     ##
-    # @brief 
+    # @brief Set current endpoint
     #
-    # Desc
+    # Set current Globus endpoint (added to partial get/put paths)
     #
-    # @param  - 
+    # @param endpoint - New current Globus endpoint
     # @return None
     #
     def endpointSet( self, endpoint ):
@@ -1358,11 +1341,12 @@ class API:
     # =========================================================================
 
     ##
-    # @brief 
+    # @brief Setup local credentials
     #
-    # Desc
+    # This command installs DataFed credentials for the current user in the
+    # configured client configuration directory. Subsequent use of the DataFed
+    # API will read these credentials instead of requiring manual authentication.
     #
-    # @param  - 
     # @exception Exception: On configuration or communication/server error
     # @return None
     #
@@ -1393,11 +1377,11 @@ class API:
         keyf.close()
 
     ##
-    # @brief 
+    # @brief Set current user/project context
     #
-    # Desc
+    # Set current context which is used to resolve relative aliases.
     #
-    # @param  - 
+    # @param item_id - A user or project ID
     # @exception Exception: On invalid options or communication/server error
     # @return None
     #
@@ -1436,11 +1420,10 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Get current context
     #
-    # Desc
+    # Gets the current context which is used to resolve relative aliases.
     #
-    # @param  - 
     # @return The current user or project ID context string
     #
     def getContext( self ):
@@ -1448,11 +1431,9 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Convert timestamp into standard string format
     #
-    # Desc
-    #
-    # @param  - 
+    # @param ts - Timestamp in local time
     # @return A string representation of the timestamp in local time
     #
     def timestampToStr( self, ts ):
@@ -1460,11 +1441,9 @@ class API:
 
 
     ##
-    # @brief 
+    # @brief Convert a date/time string into a timestamp
     #
-    # Desc
-    #
-    # @param  - 
+    # @param time_str - Date/time in %m/%d/%Y[,%H:%M[:%S]] format
     # @return The integer timestamp representation of the time string in local time
     #
     def strToTimestamp( self, time_str ):
@@ -1491,11 +1470,12 @@ class API:
         return None
 
     ##
-    # @brief 
+    # @brief Convert integer size to string
     #
-    # Desc
+    # Convert integer size to human readable size string with metric units.
     #
-    # @param  - 
+    # @param size - Size value to convert
+    # @param precision - Precision of converted value
     # @return The size as a string with byte units
     #
     def sizeToStr( self, size, precision = 1 ):
@@ -1522,14 +1502,53 @@ class API:
     # --------------------------------------------------------- Private Methods
     # =========================================================================
 
-    ##
-    # @brief 
-    #
-    # Desc
-    #
-    # @param  - 
-    # @return The unique filename string
-    #
+
+    # @brief Compose query parameters into a query string
+    def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
+        if id is None and text is None and meta is None:
+            raise Exception("No search terms provided.")
+
+        if no_default and (( coll is None or len( coll ) == 0 ) and ( proj is None or len( proj ) == 0 )):
+            raise Exception("Must specify one or more collections or projects to search if 'no default' option is enabled.")
+
+        qry = "{"
+
+        if id:
+            qry = qry + "\"id\":\"" + id + "\","
+
+        if text:
+            qry = qry + "\"text\":\"" + text + "\","
+
+        if meta:
+            qry = qry + "\"meta\":\"" + meta + "\","
+
+        scopes = ""
+        delim = ""
+
+        if not no_default:
+            scopes = scopes + "{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}"
+
+        if coll:
+            if len(scopes):
+                delim = ","
+
+            for c in coll:
+                scopes = scopes + delim + "{\"scope\":6,\"id\":\"" + self._resolve_id( c ) + "\"}"
+                delim = ","
+
+        if proj:
+            if len(scopes):
+                delim = ","
+
+            for p in proj:
+                scopes = scopes + delim + "{\"scope\":2,\"id\":\"" + p + "\"}"
+                delim = ","
+
+        # TODO - Add topics when topics are supported by CLI
+
+        return qry + "\"scopes\":[" + scopes + "]}"
+
+    # If specified filename exists, a new unique filename will be generated.
     def _uniquifyFilename( self, path ):
         filepath = pathlib.Path(path)
         while filepath.exists():
@@ -1555,15 +1574,7 @@ class API:
 
         return str(filepath)
 
-    ##
-    # @brief 
-    #
-    # Desc
-    #
-    # @param  - 
-    # @exception Exception: 
-    # @return The fully resolved local path string
-    #
+    # Resolve relative local path
     def _resolvePathForHTTP( self, path ):
         if path[0] == "~":
             res = pathlib.Path(path).expanduser().resolve()
@@ -1576,15 +1587,7 @@ class API:
         return str(res)
 
 
-    ##
-    # @brief 
-    #
-    # Desc
-    #
-    # @param  - 
-    # @exception Exception: 
-    # @return The fully resolved Globus path string
-    #
+    # Resolve relative paths and prefix with current endpoint if needed
     def _resolvePathForGlobus( self, path, must_exist ):
         # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
         if re.match( API._endpoint_legacy, path ) or re.match( API._endpoint_uuid, path ):
@@ -1651,15 +1654,7 @@ class API:
         return self._cur_ep + _path
 
 
-    ##
-    # @brief 
-    #
-    # Desc
-    #
-    # @param  - 
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return Resolved ID
-    #
+    # Resolve ID by prefixing relative aliases with current or specifies context
     def _resolve_id( self, item_id, context = None ):
         if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
             return item_id
@@ -1675,15 +1670,7 @@ class API:
             return self._cur_alias_prefix + item_id
 
 
-    ##
-    # @brief 
-    #
-    # Desc
-    #
-    # @param  - 
-    # @exception Exception: 
-    # @return Updated configuration as dictionary
-    #
+    # Set any missing config options to sane defaults
     def _setSaneDefaultOptions( self ):
         opts = self.cfg.getOpts()
 
