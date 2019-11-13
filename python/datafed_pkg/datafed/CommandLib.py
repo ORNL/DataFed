@@ -908,14 +908,20 @@ class API:
 
             qry = jsonlib.loads( q.query )
 
-            if id is not None:
+            if id:
                 qry["id"] = id
+            elif id == "":
+                qry.pop("id",None)
 
-            if text is not None:
+            if text:
                 qry["text"] = text
+            elif text == "":
+                qry.pop("text",None)
 
-            if meta is not None:
+            if meta:
                 qry["meta"] = meta
+            elif meta == "":
+                qry.pop("meta",None)
 
             if not (('id' in qry and qry["id"]) or ('text' in qry and qry["text"]) or ('meta' in qry and qry["meta"])):
                 raise Exception("No search terms left in query.")
