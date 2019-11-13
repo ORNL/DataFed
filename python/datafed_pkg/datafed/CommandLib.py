@@ -1,25 +1,12 @@
-## @namespace datafed.CommandLib
-# @brief Provides a high-level client interface to the DataFed server
+## @package datafed.CommandLib
+# Provides a high-level client interface to the DataFed server
 # 
-# The DataFed CommandLib module provides a high-level, text-based client
-# interface for sending commands to, and receiving replies from, a DateFed
-# server. Comands are structured hierarchically, with sub-commands taking
-# specific options and arguments.
-#
-# The CommandLib module is meant to be embedded in a Python script or
-# application, and can be used in two ways: 1) interactively via the run()
-# function, or 2) programmatically via the exec() function.
-#
-# For interactive applications, the run() function will prompt the user for
-# input, then print a response. Optionally, the run() method can loop until
-# the user chooses to exit. The DataFed _cli is a very thin wrapper around
-# the CommandLib run() function.
-#
-# The programmatic interface consists of the init(), login(), and command()
-# functions. The command() function executes a single command and returns
-# a reply in the form of a Google protobuf message.
+# The DataFed CommandLib module contains a single API class that provides
+# a high-level client interface for interacting with a DataFed server. This
+# module relies on the DataFed MessageLib and Connection modules  for lower-
+# level communication support.
 
-from __future__ import division, print_function, absolute_import #, unicode_literals
+from __future__ import division, print_function, absolute_import
 import os
 import sys
 import datetime
@@ -34,9 +21,18 @@ from . import MessageLib
 from . import Config
 from . import version
 
-if sys.version_info.major == 3:
-    unicode = str
 
+##
+# @class API
+# @brief Provides a high-level messaging interface to the DataFed core server.
+#
+# The DataFed CommandLib.API class provides a high-level interface
+# for sending requests to a DataFed server. Requests are sent via regular
+# class methods and replies are returned as Google protobuf message objects.
+# These reply messages are defined in the \*.proto files included in the
+# DataFed client package. Basic functionality of th API class mirrors the 
+# capabilities exposed in the DataFed CLI.
+#
 class API:
     _max_md_size = 102400
     _max_payload_size = 1048576

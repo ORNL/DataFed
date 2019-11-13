@@ -1,25 +1,24 @@
-## @namespace datafed.CommandLib
+## @namespace datafed.CLI
 # @brief Provides a high-level client interface to the DataFed server
 # 
-# The DataFed CommandLib module provides a high-level, text-based client
+# The DataFed CLI module provides a high-level, text-based client
 # interface for sending commands to, and receiving replies from, a DateFed
 # server. Comands are structured hierarchically, with sub-commands taking
 # specific options and arguments.
 #
 # The CommandLib module is meant to be embedded in a Python script or
 # application, and can be used in two ways: 1) interactively via the run()
-# function, or 2) programmatically via the exec() function.
+# function, or 2) programmatically via the command() function.
 #
 # For interactive applications, the run() function will prompt the user for
 # input, then print a response. Optionally, the run() method can loop until
-# the user chooses to exit. The DataFed _cli is a very thin wrapper around
-# the CommandLib run() function.
+# the user chooses to exit.
 #
 # The programmatic interface consists of the init(), login(), and command()
 # functions. The command() function executes a single command and returns
 # a reply in the form of a Google protobuf message.
 
-from __future__ import division, print_function, absolute_import #, unicode_literals
+from __future__ import division, print_function, absolute_import
 import shlex
 import getpass
 import os
@@ -36,7 +35,6 @@ import pathlib
 import wget
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
-
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -48,13 +46,10 @@ from . import CommandLib
 from . import Config
 from . import version
 
-if sys.version_info.major == 3:
-    unicode = str
 
 _OM_TEXT = 0
 _OM_JSON = 1
 _OM_RETN = 2
-
 _STAT_OK     = 0
 _STAT_ERROR  = 1
 
@@ -86,6 +81,12 @@ _devnull = None
 # =============================================================================
 
 
+##
+# @brief Run a CLI shell
+#
+# The run function will start an interactive shell that will prompt for
+# command input and display human-readable output.
+#
 def run():
     global _output_mode_sticky
     global _output_mode
@@ -136,7 +137,7 @@ def run():
             _interactive = False
             break
 
-        except NoCommand as e:
+        except _NoCommand as e:
             # Be nice and switch to interactive when no command given
             if _interactive and _first:
                 _print_msg( 1, "Welcome to DataFed CLI, version {}".format(version))
@@ -166,18 +167,17 @@ def run():
 
 
 ##
-# @brief Initialize Commandlib for programmatic access
+# @brief Initialize CLI for programmatic access
 #
-# This function must be called before any other CommandLib functions.
-# The Config class is used to load configuration settings, but settings
-# (all or some) may also be supplied as an argument to init(). This
-# function establishes a secure connection to the configured DataFed
-# core server.
+# This function must be called before calling the command() function.
+# The underlying Config class is used to load configuration settings, but
+# settings (all or some) may also be supplied as an argument to init(). This
+# function establishes a secure connection to the configured DataFed core
+# server.
 #
 # @param opts - Configuration options (optional)
-# @return Tuple of authentication status and DataFed user ID
-# @retval (bool,str)
-# @exception Exception: if init() called more than once
+# @return Authentication DataFed user ID, or None if could not authenticate
+# @exception Exception: if init() called more than once, or configuration error
 #
 def init( opts = {} ):
     global _initialized
@@ -206,14 +206,14 @@ def init( opts = {} ):
 
 
 ##
-# @brief Manually authenticate client
+# @brief Manually authenticate client with username and password
 #
-# If not authenticated, this method attempts manual authentication
-# using the supplied DataFed user ID and password.
+# This method attempts manual authentication using the supplied DataFed user
+# ID and password.
 #
 # @param uid - DataFed user ID
 # @param password - DataFed password
-# @exception Exception: if called prior to init(), or multiple login() calls.
+# @exception Exception: if called prior to init()
 #
 def loginByPassword( uid, password ):
     global _uid
@@ -222,14 +222,20 @@ def loginByPassword( uid, password ):
     if not _initialized:
         raise Exception("login called before init.")
 
-    if _uid:
-        raise Exception("login can only be called once.")
-
     _capi.loginByPassword( uid, password )
 
     _uid = _capi.getAuthUser()
     _cur_ctx = _uid
 
+##
+# @brief Manually authenticate client with access token
+#
+# This function attempts manual authentication using the supplied Globus
+# access token.
+#
+# @param token - Globus access token
+# @exception Exception: if called prior to init()
+#
 def loginByToken( token ):
     global _uid
     global _cur_ctx
@@ -237,24 +243,21 @@ def loginByToken( token ):
     if not _initialized:
         raise Exception("login called before init.")
 
-    if _uid:
-        raise Exception("login can only be called once.")
-
     _capi.loginByToken( token )
 
     _uid = _capi.getAuthUser()
     _cur_ctx = _uid
 
 ##
-# @brief Execute a client _cli-style command
+# @brief Execute a client CLI-style command
 #
 # This functions executes a text-based DataFed command in the same format as
-# used by the DataFed _cli. Instead of printing output, this function returns
+# used by the DataFed CLI. Instead of printing output, this function returns
 # the received DataFed server reply directly to the caller as a Python
 # protobuf message instance. Refer to the *.proto files for details on
 # the message interface.
 #
-# @param command - String containg _cli-style DataFed command
+# @param command - String containing CLI-style DataFed command
 # @exception Exception: if called prior to init(), or if command parsing fails.
 # @return DataFed reply message
 # @retval Protobuf message object
@@ -293,7 +296,10 @@ def command( command ):
 # ------------------------------------ Click Classes, Decorators, and Callbacks
 # =============================================================================
 
-class AliasedGroup(click.Group):
+# @cond
+
+# Aliases click commands
+class _AliasedGroup(click.Group):
     # Allows command matching by unique suffix
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
@@ -314,7 +320,7 @@ class AliasedGroup(click.Group):
 
 
 # Same as AliasGroup but checks for global aliases
-class AliasedGroupRoot( AliasedGroup ):
+class _AliasedGroupRoot( _AliasedGroup ):
     def get_command(self, ctx, cmd_name):
         if cmd_name == "ls" or cmd_name == "dir":
             return _collItemsList
@@ -322,6 +328,12 @@ class AliasedGroupRoot( AliasedGroup ):
             return _wc
 
         return super().get_command( ctx, cmd_name )
+
+class _NoCommand(Exception):
+    def __init__(self,*args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)
+
+# @endcond
 
 def _set_script_cb(ctx, param, value):
     global _interactive
@@ -370,7 +382,7 @@ def _global_output_options(func):
 # -------------------------------------------------- Click Entry Point Function
 # =============================================================================
 
-@click.group(cls=AliasedGroupRoot,invoke_without_command=True,context_settings=_ctxt_settings)
+@click.group(cls=_AliasedGroupRoot,invoke_without_command=True,context_settings=_ctxt_settings)
 @click.option("-m","--manual-auth",is_flag=True,help="Force manual authentication")
 @click.option("-s","--script",is_flag=True,is_eager=True,callback=_set_script_cb,help="Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.")
 @click.option("--version",is_flag=True,help="Print version number and exit.")
@@ -391,7 +403,8 @@ def _cli(ctx,*args,**kwargs):
         _initialize(ctx.params)
 
     if ctx.invoked_subcommand is None:
-        raise NoCommand("No command specified.")
+        raise _NoCommand("No command specified.")
+
 
 # =============================================================================
 # --------------------------------------------------------- CLI State Functions
@@ -506,7 +519,7 @@ def _alias( context ):
 # =============================================================================
 
 
-@_cli.command(name='data',cls=AliasedGroup,help="Data subcommands.")
+@_cli.command(name='data',cls=_AliasedGroup,help="Data subcommands.")
 def _data():
     pass
 
@@ -712,7 +725,7 @@ def _dataPut( data_id, path, wait, extension, context ):
 # -------------------------------------------------------- Data-Batch Functions
 # =============================================================================
 
-@_data.command(name='batch',cls=AliasedGroup,help="Data batch subcommands.")
+@_data.command(name='batch',cls=_AliasedGroup,help="Data batch subcommands.")
 def _batch():
     pass
 
@@ -756,7 +769,7 @@ def _data_batch_update( file ):
 # =============================================================================
 
 
-@_cli.command( name='coll',cls=AliasedGroup, help="Collection subcommands." )
+@_cli.command( name='coll',cls=_AliasedGroup, help="Collection subcommands." )
 def _coll():
     pass
 
@@ -920,7 +933,7 @@ def _coll_rem(  coll_id, item_id, context ):
 # ------------------------------------------------------------- Query Functions
 # =============================================================================
 
-@_cli.command(name='query',cls=AliasedGroup,help="Data query subcommands.")
+@_cli.command(name='query',cls=_AliasedGroup,help="Data query subcommands.")
 def _query(*args,**kwargs):
     pass
 
@@ -1028,7 +1041,7 @@ def _queryRun( id, text, meta, no_default, coll, proj, offset, count ):
 # -------------------------------------------------------------- User Functions
 # =============================================================================
 
-@_cli.command(name='user',cls=AliasedGroup,help="User subcommands.")
+@_cli.command(name='user',cls=_AliasedGroup,help="User subcommands.")
 def _user():
     pass
 
@@ -1091,7 +1104,7 @@ def _userWho():
 # ----------------------------------------------------------- Project Functions
 # =============================================================================
 
-@_cli.command(name='project',cls=AliasedGroup,help="Project subcommands.")
+@_cli.command(name='project',cls=_AliasedGroup,help="Project subcommands.")
 def _project():
     pass
 
@@ -1133,7 +1146,7 @@ def _projectView( proj_id ):
 # ------------------------------------------------------- Shared Data Functions
 # =============================================================================
 
-@_cli.command(name='shared',cls=AliasedGroup,help="Shared data subcommands.")
+@_cli.command(name='shared',cls=_AliasedGroup,help="Shared data subcommands.")
 def _shared():
     pass
 
@@ -1176,7 +1189,7 @@ def _sharedList( df_id ):
 # ---------------------------------------------------------- Transfer Functions
 # =============================================================================
 
-@_cli.command(name='xfr',cls=AliasedGroup,help="Globus data transfer management commands.")
+@_cli.command(name='xfr',cls=_AliasedGroup,help="Globus data transfer management commands.")
 def _xfr():
     pass
 
@@ -1236,7 +1249,7 @@ def _xfrView( xfr_id ):
 # ---------------------------------------------------------- Endpoint Functions
 # =============================================================================
 
-@_cli.command(name='ep',cls=AliasedGroup,help="Endpoint commands.")
+@_cli.command(name='ep',cls=_AliasedGroup,help="Endpoint commands.")
 def _ep():
     pass
 
@@ -1301,7 +1314,7 @@ def _epList():
     _generic_reply_handler( reply, _print_endpoints )
 
 
-@_ep.command(name='default',cls=AliasedGroup,help="Default endpoint commands.")
+@_ep.command(name='default',cls=_AliasedGroup,help="Default endpoint commands.")
 def _epDefault():
     pass
 
@@ -1865,9 +1878,8 @@ def _scopeToStr( scope ):
 # ----------------------------------------------------------- Support Functions
 # =============================================================================
 
-class NoCommand(Exception):
-    def __init__(self,*args,**kwargs):
-        Exception.__init__(self,*args,**kwargs)
+
+
 
 def _resolve_id( df_id ):
     try:
