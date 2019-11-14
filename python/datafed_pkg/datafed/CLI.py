@@ -1526,13 +1526,24 @@ def _help_cli(ctx,command):
         click.echo("DataFed _cli, version {}\n".format(version))
         click.echo(ctx.parent.get_help())
     else:
+        first = True
         for c in command:
-            if c in _cli.commands:
-                click.echo(_cli.commands[c].get_help(ctx))
+            #print( c )
+            if first:
+                first = False
+                subcmd = _cli.get_command( _cli, c )
             else:
-                click.echo("Unknown command: " + c)
-                click.echo(ctx.parent.get_help())
+                subcmd = subcmd.get_command( subcmd, c )
 
+            if not subcmd:
+                break
+            else:
+                ctx = click.Context( subcmd, info_name = subcmd.name, parent = ctx )
+
+        if subcmd:
+            click.echo( subcmd.get_help( ctx ))
+        else:
+            click.echo( "No such command: {}".format( c ))
 
 @_cli.command( name="exit" )
 def _exit_cli():
