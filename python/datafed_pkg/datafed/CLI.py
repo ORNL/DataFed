@@ -292,6 +292,7 @@ def command( command ):
 
     return _return_val
 
+
 # =============================================================================
 # ------------------------------------ Click Classes, Decorators, and Callbacks
 # =============================================================================
@@ -318,6 +319,10 @@ class _AliasedGroup(click.Group):
             return click.Group.get_command(self, ctx, matches[0])
         ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
 
+    # This is to work-around a help bug in click production code
+    def resolve_command(self, ctx, args):
+        cmd_name, cmd, args = super().resolve_command( ctx, args )
+        return cmd.name, cmd, args
 
 # Same as AliasGroup but checks for global aliases
 class _AliasedGroupRoot( _AliasedGroup ):
@@ -410,6 +415,49 @@ def _cli(ctx,*args,**kwargs):
 # --------------------------------------------------------- CLI State Functions
 # =============================================================================
 
+@_cli.command(name='gendoc',hidden=True)
+@click.pass_context
+def _genDoc( ctx ):
+    toc = []
+
+    #print( _cli.get_help( ctx.parent ), "\n" )
+
+    body = "<h1 id='main'>Main</h1>\n\n<pre>" + _cli.get_help( ctx.parent ) + "</pre>\n"
+    toc.append("<a href='#main'>Main</a>")
+
+    sec = 1
+    for c in _cli.list_commands( ctx ):
+        subcmd = _cli.get_command( _cli, c )
+        if not subcmd.hidden:
+            body = body + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx.parent ), str(sec), "", 2, toc )
+            sec = sec + 1
+
+    _toc = "Contents:<br>"
+    for t in toc:
+        _toc = _toc + t + "<br>\n"
+
+    print("<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;font-size:2em;background:#4040bb;color:#ffffff'>DataFed - CLI Help</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'>{}</div><div style='flex:1 1 auto;overflow:auto;padding: 0em 2em 0em 2em'>{}</div></div></div></body></html>".format( _toc, body ))
+
+
+def _genDocCmd( cmd, ctx, section, path, hlev, toc ):
+    if hasattr( cmd, 'list_commands' ):
+        is_group = True
+    else:
+        is_group = False
+
+    cname = cmd.name.capitalize()
+    html = "\n<h{} id='s{}'>{} {}{}{}</h{}>\n\n<pre>".format(hlev,section,section,path,cname," Commands" if is_group else "",hlev) + cmd.get_help( ctx ) + "</pre>\n"
+    toc.append("<a href='#s{}'>{} {}{}{}</a>".format(section,section,path,cname," Commands" if is_group else ""))
+
+    if is_group:
+        sec = 1
+        for c in cmd.list_commands( ctx ):
+            subcmd = cmd.get_command( cmd, c )
+            if not subcmd.hidden:
+                html = html + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx ), section + "." + str(sec), path + cname + " ", hlev + 1, toc )
+                sec = sec + 1
+
+    return html
 
 @_cli.command(name='wc')
 @click.argument("coll_id",required=False, metavar="ID")
