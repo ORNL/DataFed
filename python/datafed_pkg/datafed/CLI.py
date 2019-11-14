@@ -432,11 +432,11 @@ def _genDoc( ctx ):
             body = body + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx.parent ), str(sec), "", 2, toc )
             sec = sec + 1
 
-    _toc = "Contents:<br>"
+    _toc = ""
     for t in toc:
         _toc = _toc + t + "<br>\n"
 
-    print("<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;font-size:2em;background:#4040bb;color:#ffffff'>DataFed - CLI Help</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'>{}</div><div style='flex:1 1 auto;overflow:auto;padding: 0em 2em 0em 2em'>{}</div></div></div></body></html>".format( _toc, body ))
+    print("<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;background:#4040bb;color:#ffffff;padding:.5em'><span style='font-size:2em'>DataFed Command Line Interface Help</span>&nbsp&nbsp&nbsp&nbspCLI V-{}<br>This documentation is automatically generated from the latest released DataFed CLI, available as the 'datafed' package on PyPi.</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'>{}</div><div style='flex:1 1 auto;overflow:auto;padding: 0em 2em 0em 2em'>{}</div></div></div></body></html>".format( version, _toc, body ))
 
 
 def _genDocCmd( cmd, ctx, section, path, hlev, toc ):

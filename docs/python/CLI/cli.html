@@ -1,4 +1,4 @@
-<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;font-size:2em;background:#4040bb;color:#ffffff'>DataFed - CLI Help</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'>Contents:<br><a href='#main'>Main</a><br>
+<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;background:#4040bb;color:#ffffff;padding:.5em'><span style='font-size:2em'>DataFed Command Line Interface Help</span>&nbsp&nbsp&nbsp&nbspCLI V-0.8.4<br>This documentation is automatically generated from the latest released DataFed CLI, available as the 'datafed' package on PyPi.</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'><a href='#main'>Main</a><br>
 <a href='#s1'>1 Coll Commands</a><br>
 <a href='#s1.1'>1.1 Coll Add</a><br>
 <a href='#s1.2'>1.2 Coll Create</a><br>
@@ -73,19 +73,19 @@ Options:
                                and certain client-side commands are
                                unavailable.
   --version                    Print version number and exit.
-  -H, --server-host TEXT       Sever host name or IP address
-  --client-priv-key-file TEXT  Client private key file
   -v, --verbosity INTEGER      Verbosity level (0=quiet,1=normal,2=verbose)
                                for text-format output only.
-  --server-pub-key-file TEXT   Server public key file
-  --server-cfg-file TEXT       Server configuration file
-  --server-cfg-dir TEXT        Server configuration directory
   -e, --default-ep TEXT        Default Globus endpoint
   --client-pub-key-file TEXT   Client public key file
+  --server-cfg-dir TEXT        Server configuration directory
+  --server-pub-key-file TEXT   Server public key file
   -P, --server-port INTEGER    Server port number
-  --client-cfg-file TEXT       Client configuration file
+  --server-cfg-file TEXT       Server configuration file
   --client-cfg-dir TEXT        Client configuration directory
-  -h, -?, --help               Show this message and exit.
+  --client-priv-key-file TEXT  Client private key file
+  --client-cfg-file TEXT       Client configuration file
+  -H, --server-host TEXT       Sever host name or IP address
+  -?, -h, --help               Show this message and exit.
 
 Commands:
   coll       Collection subcommands.
@@ -110,7 +110,7 @@ Commands:
   Collection subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   add     Add data records and/or collections to a collection.
@@ -134,7 +134,7 @@ Commands:
 Options:
   -x, --context TEXT  User or project ID for command alias context. See
                       'alias' command help for more information.
-  -h, -?, --help      Show this message and exit.</pre>
+  -?, -h, --help      Show this message and exit.</pre>
 
 <h3 id='s1.2'>1.2 Coll Create</h3>
 
@@ -154,7 +154,7 @@ Options:
   --topic TEXT            Publish the collection to the provided topic.
   -x, --context TEXT      User or project ID for command alias context. See
                           'alias' command help for more information.
-  -h, -?, --help          Show this message and exit.</pre>
+  -?, -h, --help          Show this message and exit.</pre>
 
 <h3 id='s1.3'>1.3 Coll Delete</h3>
 
@@ -173,7 +173,7 @@ Options:
   -f, --force         Delete without confirmation.
   -x, --context TEXT  User or project ID for command alias context. See
                       'alias' command help for more information.
-  -h, -?, --help      Show this message and exit.</pre>
+  -?, -h, --help      Show this message and exit.</pre>
 
 <h3 id='s1.4'>1.4 Coll List</h3>
 
@@ -187,7 +187,7 @@ Options:
   -C, --count INTEGER   Limit list to count results
   -x, --context TEXT    User or project ID for command alias context. See
                         'alias' command help for more information.
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s1.5'>1.5 Coll Remove</h3>
 
@@ -202,7 +202,7 @@ Options:
 Options:
   -x, --context TEXT  User or project ID for command alias context. See
                       'alias' command help for more information.
-  -h, -?, --help      Show this message and exit.</pre>
+  -?, -h, --help      Show this message and exit.</pre>
 
 <h3 id='s1.6'>1.6 Coll Update</h3>
 
@@ -218,7 +218,7 @@ Options:
   --topic TEXT            Publish the collection under the provided topic.
   -x, --context TEXT      User or project ID for command alias context. See
                           'alias' command help for more information.
-  -h, -?, --help          Show this message and exit.</pre>
+  -?, -h, --help          Show this message and exit.</pre>
 
 <h3 id='s1.7'>1.7 Coll View</h3>
 
@@ -232,7 +232,7 @@ Options:
 Options:
   -x, --context TEXT  User or project ID for command alias context. See
                       'alias' command help for more information.
-  -h, -?, --help      Show this message and exit.</pre>
+  -?, -h, --help      Show this message and exit.</pre>
 
 <h2 id='s2'>2 Data Commands</h2>
 
@@ -241,7 +241,7 @@ Options:
   Data subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   batch   Data batch subcommands.
@@ -259,7 +259,7 @@ Commands:
   Data batch subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   create  Batch create data records from JSON file(s).
@@ -280,7 +280,7 @@ Options:
   -c, --collection TEXT  Optional target collection (default is root).
   -x, --context TEXT     User or project ID for command alias context. See
                          'alias' command help for more information.
-  -h, -?, --help         Show this message and exit.</pre>
+  -?, -h, --help         Show this message and exit.</pre>
 
 <h4 id='s2.1.2'>2.1.2 Data Batch Update</h4>
 
@@ -294,7 +294,7 @@ Options:
   documentation).
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s2.2'>2.2 Data Create</h3>
 
@@ -338,7 +338,7 @@ Options:
   -x, --context TEXT           User or project ID for command alias context.
                                See 'alias' command help for more information.
   -v, --verbosity [0|1|2]      Verbosity level of output
-  -h, -?, --help               Show this message and exit.</pre>
+  -?, -h, --help               Show this message and exit.</pre>
 
 <h3 id='s2.3'>2.3 Data Delete</h3>
 
@@ -353,7 +353,7 @@ Options:
   -f, --force         Delete record(s) without confirmation.
   -x, --context TEXT  User or project ID for command alias context. See
                       'alias' command help for more information.
-  -h, -?, --help      Show this message and exit.</pre>
+  -?, -h, --help      Show this message and exit.</pre>
 
 <h3 id='s2.4'>2.4 Data Get</h3>
 
@@ -380,7 +380,7 @@ Options:
   -w, --wait          Block until Globus transfer is complete.
   -x, --context TEXT  User or project ID for command alias context. See
                       'alias' command help for more information.
-  -h, -?, --help      Show this message and exit.</pre>
+  -?, -h, --help      Show this message and exit.</pre>
 
 <h3 id='s2.5'>2.5 Data Put</h3>
 
@@ -400,7 +400,7 @@ Options:
                         detect).
   -x, --context TEXT    User or project ID for command alias context. See
                         'alias' command help for more information.
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s2.6'>2.6 Data Update</h3>
 
@@ -441,7 +441,7 @@ Options:
                                   context. See 'alias' command help for more
                                   information.
   -v, --verbosity [0|1|2]         Verbosity level of output
-  -h, -?, --help                  Show this message and exit.</pre>
+  -?, -h, --help                  Show this message and exit.</pre>
 
 <h3 id='s2.7'>2.7 Data View</h3>
 
@@ -457,7 +457,7 @@ Options:
   -x, --context TEXT       User or project ID for command alias context. See
                            'alias' command help for more information.
   -v, --verbosity [0|1|2]  Verbosity level of output
-  -h, -?, --help           Show this message and exit.</pre>
+  -?, -h, --help           Show this message and exit.</pre>
 
 <h2 id='s3'>3 Ep Commands</h2>
 
@@ -466,7 +466,7 @@ Options:
   Endpoint commands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   default  Default endpoint commands.
@@ -481,7 +481,7 @@ Commands:
   Default endpoint commands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   get  Show the default Globus endpoint.
@@ -494,7 +494,7 @@ Commands:
   Show the default Globus endpoint.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h4 id='s3.1.2'>3.1.2 Ep Default Set</h4>
 
@@ -506,7 +506,7 @@ Options:
 
 Options:
   -c, --current   Set default endpoint to current endpoint.
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s3.2'>3.2 Ep Get</h3>
 
@@ -516,7 +516,7 @@ Options:
   the current endpoint will be set to the default endpoint, if configured.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s3.3'>3.3 Ep List</h3>
 
@@ -525,7 +525,7 @@ Options:
   List recently used endpoints.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s3.4'>3.4 Ep Set</h3>
 
@@ -535,7 +535,7 @@ Options:
   endpoint will be set as the current endpoint, if configured.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s4'>4 Exit</h2>
 
@@ -544,7 +544,7 @@ Options:
   Exit an interactive session. Ctrl-C may also be used to exit the shell.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s5'>5 Help</h2>
 
@@ -554,7 +554,7 @@ Options:
   subcommand-specific help.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s6'>6 Project Commands</h2>
 
@@ -563,7 +563,7 @@ Options:
   Project subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   list  List associated projects.
@@ -582,7 +582,7 @@ Options:
   -m, --member          Include membership projects
   -O, --offset INTEGER  Start list at offset
   -C, --count INTEGER   Limit list to count results
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s6.2'>6.2 Project View</h3>
 
@@ -592,7 +592,7 @@ Options:
   or member) within the project specified by the ID argument.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s7'>7 Query Commands</h2>
 
@@ -601,7 +601,7 @@ Options:
   Data query subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   create  Create a saved query.
@@ -625,7 +625,7 @@ Options:
   -n, --no-default  Exclude personal data and projects
   -c, --coll TEXT   Collection(s) to search
   -p, --proj TEXT   Project(s) to search
-  -h, -?, --help    Show this message and exit.</pre>
+  -?, -h, --help    Show this message and exit.</pre>
 
 <h3 id='s7.2'>7.2 Query Delete</h3>
 
@@ -634,7 +634,7 @@ Options:
   Delete a saved query by ID.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s7.3'>7.3 Query Exec</h3>
 
@@ -645,7 +645,7 @@ Options:
 Options:
   -O, --offset INTEGER  Start results list at offset
   -C, --count INTEGER   Limit to count results
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s7.4'>7.4 Query List</h3>
 
@@ -656,7 +656,7 @@ Options:
 Options:
   -O, --offset INTEGER  Start list at offset
   -C, --count INTEGER   Limit list to count results
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s7.5'>7.5 Query Run</h3>
 
@@ -678,7 +678,7 @@ Options:
   -p, --proj TEXT       Project(s) to search
   -O, --offset INTEGER  Start result list at offset
   -C, --count INTEGER   Limit to count results (default = 20)
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s7.6'>7.6 Query Update</h3>
 
@@ -693,7 +693,7 @@ Options:
   -i, --id TEXT    ID/alias expression
   -t, --text TEXT  Text expression
   -m, --meta TEXT  Metadata expression
-  -h, -?, --help   Show this message and exit.</pre>
+  -?, -h, --help   Show this message and exit.</pre>
 
 <h3 id='s7.7'>7.7 Query View</h3>
 
@@ -702,7 +702,7 @@ Options:
   View a saved query by ID.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s8'>8 Setup</h2>
 
@@ -714,7 +714,7 @@ Options:
   manual authentication.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s9'>9 Shared Commands</h2>
 
@@ -723,7 +723,7 @@ Options:
   Shared data subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   list      List shared data records and collections by user/project ID.
@@ -738,7 +738,7 @@ Commands:
   user or project ID, or an index value from a listing.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s9.2'>9.2 Shared Projects</h3>
 
@@ -747,7 +747,7 @@ Options:
   List projects with shared data
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s9.3'>9.3 Shared Users</h3>
 
@@ -758,7 +758,7 @@ Options:
   data with.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s10'>10 User Commands</h2>
 
@@ -767,7 +767,7 @@ Options:
   User subcommands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   all     List all users.
@@ -784,7 +784,7 @@ Commands:
 Options:
   -O, --offset INTEGER  Start list at offset
   -C, --count INTEGER   Limit list to count results
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s10.2'>10.2 User Collab</h3>
 
@@ -797,7 +797,7 @@ Options:
 Options:
   -O, --offset INTEGER  Start list at offset
   -C, --count INTEGER   Limit list to count results
-  -h, -?, --help        Show this message and exit.</pre>
+  -?, -h, --help        Show this message and exit.</pre>
 
 <h3 id='s10.3'>10.3 User View</h3>
 
@@ -806,7 +806,7 @@ Options:
   View user information.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h3 id='s10.4'>10.4 User Who</h3>
 
@@ -815,7 +815,7 @@ Options:
   Show current authenticated user ID.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s11'>11 Verbosity</h2>
 
@@ -826,7 +826,7 @@ Options:
   current verbosity level is returned.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s12'>12 Wc</h2>
 
@@ -837,7 +837,7 @@ Options:
   and '/' are supported for paths. 'cd' is an alias for this command.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s13'>13 Wp</h2>
 
@@ -848,7 +848,7 @@ Options:
   project.
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 
 <h2 id='s14'>14 Xfr Commands</h2>
 
@@ -857,7 +857,7 @@ Options:
   Globus data transfer management commands.
 
 Options:
-  -h, -?, --help  Show this message and exit.
+  -?, -h, --help  Show this message and exit.
 
 Commands:
   list  List recent Globus transfers.
@@ -887,7 +887,7 @@ Options:
   -S, --status [0|1|2|3|4|init|initial|active|inactive|succeeded|failed]
                                   List transfers matching specified status
   -l, --limit INTEGER             Limit to 'n' most recent transfers
-  -h, -?, --help                  Show this message and exit.</pre>
+  -?, -h, --help                  Show this message and exit.</pre>
 
 <h3 id='s14.2'>14.2 Xfr View</h3>
 
@@ -904,5 +904,5 @@ Options:
   completed successfully * FAILED - Transfer has failed and has been stopped
 
 Options:
-  -h, -?, --help  Show this message and exit.</pre>
+  -?, -h, --help  Show this message and exit.</pre>
 </div></div></div></body></html>
