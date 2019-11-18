@@ -5,6 +5,7 @@ function dlgQueryNewEdit(a_data,a_cb) {
             <div style='flex:none'>\
                 <table class='form-table'>\
                     <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
+                    <tr><td>ID/Alias:</td><td><input type='text' id='id_query' style='width:100%'></input></td></tr>\
                     <tr><td>Text:</td><td><textarea id='text_query' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Metadata:</td><td><textarea id='meta_query' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Scope:</td><td id='scope_cell'>\
@@ -32,13 +33,23 @@ function dlgQueryNewEdit(a_data,a_cb) {
 
     function parseSearchDialog(){
         var query = {};
-        var tmp = $("#text_query",frame).val();
+        var tmp = $("#id_query",frame).val();
         if ( tmp )
-            query.quick = tmp;
+            query.id = tmp;
+        else
+            delete query.id;
+
+        tmp = $("#text_query",frame).val();
+        if ( tmp )
+            query.text = tmp;
+        else
+            delete query.text;
 
         tmp = $("#meta_query",frame).val();
         if ( tmp )
             query.meta = tmp;
+        else
+            delete query.meta;
 
         if ( old_qry.scope_manual ){
             query.scopes = old_qry.scopes;
@@ -132,7 +143,8 @@ function dlgQueryNewEdit(a_data,a_cb) {
         open: function(ev,ui){
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
-                $("#text_query",frame).val(old_qry.quick);
+                $("#id_query",frame).val(old_qry.id);
+                $("#text_query",frame).val(old_qry.text);
                 $("#meta_query",frame).val(old_qry.meta);
 
                 for ( var i in old_qry.scopes ){

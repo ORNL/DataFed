@@ -1390,6 +1390,9 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
         EXCEPT_PARAM( 1, "Invalid query: " << rapidjson::GetParseError_En( ec ));
     }
 
+    if ( query.FindMember("id") == query.MemberEnd() && query.FindMember("text") == query.MemberEnd() && query.FindMember("meta") == query.MemberEnd())
+        EXCEPT( 1, "No search terms specified" );
+
     string phrase;
     rapidjson::Value::MemberIterator imem = query.FindMember("text");
     if ( imem != query.MemberEnd() )
@@ -1451,8 +1454,8 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
         result += string("for i in intersection((for i in textview search analyzer(") + phrase + ",'text_en') return i),(";
 
     imem = query.FindMember("scopes");
-    if ( imem == query.MemberEnd() )
-        EXCEPT(1,"No query scope provided");
+    if ( imem == query.MemberEnd() || imem->value.Size() == 0 )
+        EXCEPT(1,"No query scopes provided");
 
     int scope;
     rapidjson::Value::MemberIterator imem2;

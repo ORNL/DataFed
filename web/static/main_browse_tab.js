@@ -1901,8 +1901,8 @@ function makeBrowserTab(){
 
         var query = parseQuickSearch();
 
-        if ( query.scopes.length && ( query.text || query.meta || query.id ))
-            inst.execQuery( query );
+        //if ( query.scopes.length && ( query.text || query.meta || query.id ))
+        inst.execQuery( query );
     }
 
     this.querySave = function(){
