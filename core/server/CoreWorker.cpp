@@ -989,40 +989,53 @@ Worker::parseSearchTextPhrase( const string & a_phrase )
 
     string result;
     vector<string>  title,desc,keyw;
-
+    size_t pos;
     int op = 0;
     int ops[5] = {0,0,0,0,0};
     int cat = 7;
     int count_or = 0;
     int count_other = 0;
+    string op_str, extra;
 
     map<string,int>::const_iterator c;
 
     for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
     {
-        if ( *(*t).rbegin() == ':' )
+        pos = (*t).find_first_of(':');
+        if ( pos != string::npos )
         {
-            if ( (*t)[0] == '+' )
+            if ( pos < (*t).size() -  1 )
             {
-                c = cat_map.find((*t).substr(1));
+                op_str = (*t).substr(0,pos+1);
+                extra = (*t).substr(pos+1);
+            }
+            else
+            {
+                op_str = *t;
+                extra.clear();
+            }
+
+            if ( op_str[0] == '+' )
+            {
+                c = cat_map.find(op_str.substr(1));
                 op = 2; // AND
                 count_other++;
             }
-            else if ( (*t)[0] == '-' )
+            else if ( op_str[0] == '-' )
             {
-                c = cat_map.find((*t).substr(1));
+                c = cat_map.find(op_str.substr(1));
                 op = 3; // NAND
                 count_other++;
             }
             else
             {
-                c = cat_map.find(*t);
+                c = cat_map.find(op_str);
                 op = 1; // OR
                 count_or++;
             }
 
             if ( c == cat_map.end() )
-                EXCEPT_PARAM(1,"Invalid query scope '" << *t << "'" );
+                EXCEPT_PARAM(1,"Invalid query scope '" << op_str << "'" );
 
             cat = c->second;
 
@@ -1030,6 +1043,13 @@ Worker::parseSearchTextPhrase( const string & a_phrase )
                 EXCEPT_PARAM(1,"Invalid query - categories may only be specified once." );
 
             ops[cat] = op;
+
+            if ( extra.size() )
+            {
+                if ( cat & 1 ) title.push_back( extra );
+                if ( cat & 2 ) desc.push_back( extra );
+                if ( cat & 4 ) keyw.push_back( extra );
+            }
         }
         else
         {
