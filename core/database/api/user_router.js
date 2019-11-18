@@ -363,7 +363,7 @@ router.get('/token/set', function (req, res) {
                     user_id = client._id;
                 }
 
-                var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh };
+                var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh, expiration: req.queryParams.expiration };
                 g_db._update( user_id, obj, { keepNull: false });
             }
         });
@@ -375,6 +375,7 @@ router.get('/token/set', function (req, res) {
 .queryParam('subject', joi.string().optional(), "UID of subject user")
 .queryParam('access', joi.string().required(), "User access token")
 .queryParam('refresh', joi.string().required(), "User refresh token")
+.queryParam('expiration', joi.number().integer().required(), "Access token expiration timestamp")
 .summary('Set user tokens')
 .description('Set user tokens');
 
@@ -392,10 +393,12 @@ router.get('/token/get', function( req, res ) {
         }
 
         var result = {};
-        if ( user.access )
+        if ( user.access != undefined )
             result.access = user.access;
-        if ( user.refresh )
+        if ( user.refresh != undefined )
             result.refresh = user.refresh;
+        if ( user.expiration != undefined )
+            result.refresh = user.expiration;
 
         res.send(result);
     } catch( e ) {
