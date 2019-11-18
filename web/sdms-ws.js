@@ -170,7 +170,7 @@ app.get('/ui/register', (request, response) => {
 
     var theme = request.cookies['sdms-theme'] || "light";
 
-    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, uid: request.query.uid, uname: request.query.uname,theme:theme,version:g_version,test_mode:g_test });
+    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, acc_tok_ttl: request.query.acc_tok_ttl, uid: request.query.uid, uname: request.query.uname,theme:theme,version:g_version,test_mode:g_test });
 });
 
 app.get('/ui/login', (request, response) => {
@@ -200,7 +200,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
     globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
-        //console.log( 'client token:', client_token );
+        console.log( 'client token:', client_token );
         var xfr_token = client_token.data.other_tokens[0];
         //console.log( 'xfr token:', xfr_token );
 
@@ -243,21 +243,21 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                     } else if ( !reply.user || !reply.user.length ) {
                         // Not registered
                         console.log("User not registered", userinfo );
-                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
+                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
                         //a_response.redirect( "/ui/register" );
                         //console.log("uid", userinfo.uid, "uname", userinfo.name );
 
-                        a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
+                        a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&acc_tok_ttl=" + xfr_token.expires_in + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
                     } else {
                         console.log( 'user', userinfo.uid, 'verified' );
                         // Registered, save access token
                         userinfo.acc_tok = xfr_token.access_token;
                         userinfo.ref_tok = xfr_token.refresh_token;
-                        saveToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token );
+                        saveToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
 
                         // TODO Account may be disable from SDMS (active = false)
-                        a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 259200000 });
-                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui" });
+                        a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
+                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
                         a_response.redirect( "/ui/main" );
                     }
                 });
@@ -292,11 +292,11 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             }
         } else {
             // Save access token
-            saveToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok );
+            saveToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok, a_req.query.acc_tok_ttl );
             userinfo.acc_tok = a_req.query.acc_tok;
             userinfo.ref_tok = a_req.query.ref_tok;
-            a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 259200000 });
-            a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui" });
+            a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
+            a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui", maxAge: 31536000000 /*1 year in msec */ });
             a_resp.redirect( "/ui/main" );
         }
     });
@@ -1085,13 +1085,14 @@ app.get('/ui/theme/load', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/theme/save', ( a_req, a_resp ) => {
-    a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui", maxAge: 100000000000 });
+    a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
     a_resp.send("");
 });
 
 
-function saveToken( a_uid, a_acc_tok, a_ref_tok ) {
-    sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok }, function( reply ) {
+function saveToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
+    var ts = (Date.now()/1000) + a_expires_sec;
+    sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiration: ts }, function( reply ) {
     });
 }
 

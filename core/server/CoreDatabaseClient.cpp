@@ -356,15 +356,17 @@ DatabaseClient::userClearKeys()
     dbGet( "usr/keys/clear", {}, result );
 }
 
+/*
 void
 DatabaseClient::userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok )
 {
     string result;
     dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok}}, result );
 }
+*/
 
 bool
-DatabaseClient::userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok )
+DatabaseClient::userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expiration )
 {
     rapidjson::Document result;
 
@@ -382,6 +384,11 @@ DatabaseClient::userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok 
         return false;
     a_ref_tok = imem->value.GetString();
 
+    imem = val.FindMember("expiration");
+    if ( imem == val.MemberEnd() )
+        return false;
+    a_expiration = imem->value.GetUint();
+
     return true;
 }
 
@@ -395,7 +402,10 @@ void
 DatabaseClient::userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply )
 {
     (void)a_reply;
-    userSetTokens( a_request.access(), a_request.refresh() );
+    string result;
+    dbGetRaw( "usr/token/set", {{"access",a_request.access()},{"refresh",a_request.refresh()},{"expiration",to_string(a_request.expiration())}}, result );
+
+    //userSetTokens( a_request.access(), a_request.refresh(), a_request.ttl() );
 }
 
 void

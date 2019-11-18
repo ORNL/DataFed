@@ -55,6 +55,7 @@ message UserSaveTokensRequest
 {
     required string             access      = 1;
     required string             refresh     = 2;
+    required uint32             expiration  = 3;
 }
 
 message UserCreateRequest

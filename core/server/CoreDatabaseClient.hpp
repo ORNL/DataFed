@@ -31,8 +31,8 @@ public:
     bool userGetKeys( std::string & a_pub_key, std::string & a_priv_key);
     void userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key );
     void userClearKeys();
-    void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
-    bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok );
+    //void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
+    bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expiration );
     bool userGetAccessToken( std::string & a_token );
     void purgeTransferRecords( size_t age );
 
