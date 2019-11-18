@@ -149,7 +149,7 @@ router.post('/update', function (req, res) {
                     obj.public = false;
                 }
 
-                console.log("coll obj:",obj);
+                //console.log("coll obj:",obj);
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                     var perms = 0;

@@ -516,11 +516,7 @@ module.exports = ( function() {
         // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
         // at the final instance of this data (thie link count will be 1 then).
 
-        var alias,item,items,coll,c,cur,next = [a_coll_id];
-
-        var top = obj.db.top.firstExample({_from: a_coll_id});
-        if ( top )
-            obj.topicUnlink( a_coll_id );
+        var top,alias,item,items,coll,c,cur,next = [a_coll_id];
 
         while ( next.length ){
             cur = next;
@@ -554,6 +550,10 @@ module.exports = ( function() {
                 if ( alias.hasNext() ) {
                     obj.graph.a.remove( alias.next() );
                 }
+
+                top = obj.db.top.firstExample({_from: coll});
+                if ( top )
+                    obj.topicUnlink( coll );
 
                 obj.graph.c.remove( coll );
             }
