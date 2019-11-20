@@ -414,7 +414,11 @@ router.get('/list', function (req, res) {
     if ( req.queryParams.sort_rev )
         qry += " desc";
 
-    var user_id = req.queryParams.subject || client._id;
+    var user_id;
+    if ( req.queryParams.subject ){
+        g_lib.ensureAdminPermUser( client, req.queryParams.subject );
+    }else
+        user_id =  client._id;
 
     if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
         qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
