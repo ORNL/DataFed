@@ -1154,10 +1154,10 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
         uint16_t    isContext
         */
         var frame = Buffer.alloc(8);
-        frame.writeUInt32LE( msg_buf.length, 0 );
+        frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
-        frame.writeUInt16LE( ctx, 6 );
+        frame.writeUInt16BE( ctx, 6 );
 
         g_ctx[ctx] = function( a_reply ) {
             if ( !a_reply ) {
@@ -1198,10 +1198,10 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         var frame = Buffer.alloc(8);
-        frame.writeUInt32LE( msg_buf.length, 0 );
+        frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
-        frame.writeUInt16LE( ctx, 6 );
+        frame.writeUInt16BE( ctx, 6 );
 
         g_ctx[ctx] = a_cb;
 
@@ -1302,9 +1302,9 @@ process.on('unhandledRejection', (reason, p) => {
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
-    var mlen = frame.readUInt32LE( 0 );
+    var mlen = frame.readUInt32BE( 0 );
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
-    var ctx = frame.readUInt16LE( 6 );
+    var ctx = frame.readUInt16BE( 6 );
 
     //console.log( "got msg type:", mtype );
     //console.log( "client len:", client?client.length:0 );

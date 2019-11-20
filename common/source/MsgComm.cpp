@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <arpa/inet.h>
 #include "TraceException.hpp"
 #include "MsgComm.hpp"
 #include "Util.hpp"
@@ -89,9 +90,18 @@ MsgComm::send( MsgBuf & a_msg_buf, bool a_proc_uid )
         EXCEPT( 1, "zmq_msg_send (delimiter) failed." );
 
     // Send message Frame
+    // Convert host binary to network (big-endian)
+    zmq_msg_init_size( &msg, 8 );
+    unsigned char * dest = (unsigned char *)zmq_msg_data( &msg );
+    MsgBuf::Frame & frame = a_msg_buf.getFrame();
+    *((uint32_t*)dest) = htonl( frame.size );
+    *(dest+4) = frame.proto_id;
+    *(dest+5) = frame.msg_id;
+    *((uint16_t*)(dest+6)) = htons( frame.context );
 
-    zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
-    memcpy( zmq_msg_data( &msg ), &a_msg_buf.getFrame(), sizeof( MsgBuf::Frame ));
+    //zmq_msg_init_size( &msg, sizeof( MsgBuf::Frame ));
+    //memcpy( zmq_msg_data( &msg ), &a_msg_buf.getFrame(), sizeof( MsgBuf::Frame ));
+
     if (( rc = zmq_msg_send( &msg, m_socket, (a_msg_buf.getFrame().size || a_proc_uid )?ZMQ_SNDMORE:0 )) < 0 )
         EXCEPT( 1, "zmq_msg_send (frame) failed." );
 
@@ -173,7 +183,6 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 
     uint8_t * route = a_msg_buf.getRouteBuffer();
     uint8_t * rptr = route + 1;
-    //size_t tot_len = 1;
 
     *route = 0;
 
@@ -196,29 +205,13 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
         if ((( rptr + len ) - route ) > MAX_ROUTE_LEN )
             EXCEPT( 1, "Message route total max len exceeded." );
 
-        //tot_len += len + 1;
-
         *rptr = (uint8_t) len;
         memcpy( rptr + 1, (char *)zmq_msg_data( &msg ), len );
-
-        //cout << "Route addr ("<< zmq_msg_size( &msg ) << "):\n";
-        //hexDump( (char *)zmq_msg_data( &msg ), ((char *)zmq_msg_data( &msg )) + zmq_msg_size( &msg ), cout );
 
         zmq_msg_close( &msg );
         (*route)++;
         rptr += *rptr + 1;
     }
-
-
-/*
-    if ( tot_len > 1 )
-    {
-        cout << "RCV route("<< tot_len << "):\n";
-        hexDump( (char*)route, (char*)(route + tot_len), cout );
-    }
-    else
-        cout << "RCV delim with no route\n";
-*/
 
     zmq_msg_init( &msg );
 
@@ -233,7 +226,15 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
         EXCEPT_PARAM( 1, "RCV Invalid message frame received. Expected " << sizeof( MsgBuf::Frame ) << " got " << zmq_msg_size( &msg ) );
     }
 
-    a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
+    unsigned char * src = (unsigned char *)zmq_msg_data( &msg );
+    MsgBuf::Frame & frame = a_msg_buf.getFrame();
+
+    frame.size = ntohl( *((uint32_t*) src ));
+    frame.proto_id = *(src+4);
+    frame.msg_id = *(src+5);
+    frame.context = ntohs( *((uint16_t*)( src + 6 )));
+
+    //a_msg_buf.getFrame() = *((MsgBuf::Frame*) zmq_msg_data( &msg ));
 
     //cout << "RCV frame[sz:" << a_msg_buf.getFrame().size << ",pid:" << (int)a_msg_buf.getFrame().proto_id << ",mid:" << (int)a_msg_buf.getFrame().msg_id<<",ctx:"<<a_msg_buf.getFrame().context << "]\n";
 

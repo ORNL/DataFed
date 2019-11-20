@@ -148,7 +148,7 @@ class Connection:
 
             # receive custom frame header and unpack
             frame_data = self._socket.recv( 0 )
-            frame_values = struct.unpack( '<LBBH', frame_data )
+            frame_values = struct.unpack( '>LBBH', frame_data )
             msg_type = (frame_values[1] << 8) | frame_values[2]
 
             # find message descriptor based on type (descriptor index)
@@ -194,7 +194,7 @@ class Connection:
         data_sz = len( data )
 
         # Build the message frame, to match C-struct MessageFrame
-        frame = struct.pack( '<LBBH', data_sz, msg_type >> 8, msg_type & 0xFF, ctxt )
+        frame = struct.pack( '>LBBH', data_sz, msg_type >> 8, msg_type & 0xFF, ctxt )
 
         if data_sz > 0:
             # Send frame and payload
