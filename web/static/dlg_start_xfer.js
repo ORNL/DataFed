@@ -166,18 +166,24 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
 
     var in_timer;
     function inTimerExpired(){
-        var ep = path_in.val();
-        if ( ep.length == 0 )
+        var ep = path_in.val().trim();
+
+        if ( ep.length == 0 ){
+            ep_list = null;
+            matches.html( "<option disabled selected>No Matches</option>" );
+            matches.selectmenu("refresh");
+            matches.selectmenu("disable");
             return;
+        }
+
         var delim = ep.indexOf("/");
         if ( delim != -1 )
             ep = ep.substr(0,delim);
-        //console.log("cur_ep", cur_ep, "ep", ep );
+
+
         if ( !cur_ep || ep != cur_ep.name ){
             $("#browse",frame).button("disable");
             $("#activate",frame).button("disable");
-
-            //console.log("ep changed:",ep);
 
             epView( ep, function( ok, data ){
                 if ( ok && !data.code ){
