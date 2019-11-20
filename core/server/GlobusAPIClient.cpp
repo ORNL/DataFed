@@ -259,6 +259,8 @@ GlobusAPIClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_toke
     body.AddMember( "destination_endpoint", rapidjson::StringRef( dst_ep.c_str() ), allocator );
     body.AddMember( "verify_checksum", true, allocator );
     body.AddMember( "notify_on_succeeded", false, allocator );
+    body.AddMember( "encrypt_data", true, allocator );
+
 
     rapidjson::Value xfr_list;
     xfr_list.SetArray();
@@ -321,12 +323,12 @@ GlobusAPIClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_toke
         if ( imem == result.MemberEnd() )
         {
             DL_ERROR( "Globus xfr call failed, code: " << code );
-            EXCEPT( 1, "Globus API call failed." );
+            EXCEPT( 1, "Globus transfer request failed, no reason given." );
         }
         else
         {
             DL_ERROR( "Globus xfr call failed, code: " << code << ", reason: " << imem->value.GetString() );
-            EXCEPT_PARAM( 1, "Globus xfr req failed: "  << imem->value.GetString() );
+            EXCEPT_PARAM( 1, imem->value.GetString() );
         }
     }
     else
@@ -335,14 +337,14 @@ GlobusAPIClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_toke
         if ( imem == result.MemberEnd() )
         {
             DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
-            EXCEPT( 1, "Globus API call failed." );
+            EXCEPT( 1, "Invalid response from Globus." );
         }
 
         imem = result.FindMember("code");
         if ( imem == result.MemberEnd() )
         {
             DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
-            EXCEPT( 1, "Invalid response from Globus" );
+            EXCEPT( 1, "Invalid response from Globus." );
         }
 
         if ( strcmp( imem->value.GetString(), "Accepted" ) != 0 )
@@ -351,12 +353,12 @@ GlobusAPIClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_toke
             if ( imem == result.MemberEnd() )
             {
                 DL_ERROR( "Globus xfr req not accepted (no reason)." );
-                EXCEPT( 1, "Globus API call failed." );
+                EXCEPT( 1, "Globus transfer request failed, no reason given." );
             }
             else
             {
                 DL_ERROR( "Globus xfr req not accepted: " << imem->value.GetString() );
-                EXCEPT_PARAM( 1, "Globus xfr req failed: "  << imem->value.GetString() );
+                EXCEPT_PARAM( 1, imem->value.GetString() );
             }
         }
 
@@ -364,7 +366,7 @@ GlobusAPIClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_toke
         if ( imem == result.MemberEnd() )
         {
             DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
-            EXCEPT( 1, "Globus API call failed." );
+            EXCEPT( 1, "Invalid response from Globus." );
         }
 
         a_xfr.set_task_id( imem->value.GetString() );
@@ -380,6 +382,8 @@ GlobusAPIClient::checkTransferStatus( const std::string & a_acc_tok, const std::
     string raw_result;
 
     long code = get( m_xfr_url + "task/" + a_task_id + "/event_list", a_acc_tok, {}, raw_result );
+
+    DL_INFO( "XFR STAT: " << raw_result );
 
     if ( code < 200 || code > 202 )
         EXCEPT( 1, "Unknown Globus event_list failure" );
@@ -415,6 +419,13 @@ GlobusAPIClient::checkTransferStatus( const std::string & a_acc_tok, const std::
 
         for ( int i = 0; i < len; i++ )
         {
+            if ( imem->value[i]["is_error"].GetBool() )
+            {
+                a_status = XS_FAILED;
+                a_err_msg = imem->value[i]["details"].GetString();
+                return true;
+            }
+
             events.push_back( imem->value[i]["code"].GetString());
         }
 
@@ -553,7 +564,7 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
         else
         {
             DL_ERROR( "Globus refresh call failed, code: " << code << ", reason: " << imem->value.GetString() );
-            EXCEPT_PARAM( 1, "Globus xfr req failed: "  << imem->value.GetString() );
+            EXCEPT_PARAM( 1, imem->value.GetString() );
         }
     }
 

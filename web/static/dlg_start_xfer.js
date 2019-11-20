@@ -187,7 +187,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
 
             epView( ep, function( ok, data ){
                 if ( ok && !data.code ){
-                    //console.log( "OK", data );
+                    console.log( "endpoint:", data );
                     cur_ep = data;
                     cur_ep.name = cur_ep.canonical_name || cur_ep.id;
 

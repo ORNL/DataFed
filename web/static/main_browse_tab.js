@@ -2010,8 +2010,13 @@ function makeBrowserTab(){
 
             for ( var i = 0; i < len; i++ ) {
                 stat = xfr_list[i];
-                console.log("repo stat:",stat);
-                html += "<tr><td>" + stat.id + "</td><td>";
+                //console.log("repo stat:",stat);
+                if ( stat.status == "XS_FAILED" )
+                    html += "<tr title='" + escapeHTML(stat.errMsg) + "' class='ui-state-error'>";
+                else
+                    html += "<tr>";
+
+                html += "<td>" + stat.id + "</td><td>";
                 switch(stat.mode){
                     case "XM_GET": html += "Get"; break;
                     case "XM_PUT": html += "Put"; break;
@@ -2033,12 +2038,7 @@ function makeBrowserTab(){
                 html += "</td>";
                 start.setTime( stat.started*1000 );
                 update.setTime( stat.updated*1000 );
-                html += "<td>" + start.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + update.toLocaleDateString("en-US", g_date_opts) + "</td><td>";
-
-                if ( stat.status == "XS_FAILED" )
-                    html += "FAILED: " + stat.errMsg + "</td></tr>";
-                else
-                    html += stat.status.substr(3) + "</td></tr>";
+                html += "<td>" + start.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + update.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + stat.status.substr(3) + "</td></tr>";
             }
             html += "</table>";
         }
