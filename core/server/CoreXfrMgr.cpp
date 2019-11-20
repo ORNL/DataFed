@@ -4,7 +4,7 @@
 #include "MsgComm.hpp"
 #include "CoreXfrMgr.hpp"
 #include "CoreDatabaseClient.hpp"
-#include "GlobusTransferClient.hpp"
+#include "GlobusAPIClient.hpp"
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
 #include "Util.hpp"
@@ -87,7 +87,7 @@ XfrMgr::xfrThreadFunc()
         Auth::RecordDataReply  reply;
         string error_msg;
         DatabaseClient db_client( m_mgr.getDbURL(), m_mgr.getDbUser(), m_mgr.getDbPass() );
-        GlobusTransferClient glob;
+        GlobusAPIClient glob;
         vector<string> events;
 
         db_client.setClient( "sdms" );
@@ -102,7 +102,12 @@ XfrMgr::xfrThreadFunc()
         map<string,MsgComm*>        repo_comm;
         map<string,MsgComm*>::iterator comm;
         size_t                      purge_timer = 10;
+        //size_t                      refresh_timer = 10;
         vector<RepoRecordDataLocations> locs;
+        vector<DatabaseClient::UserTokenInfo> expiring_tokens;
+        vector<DatabaseClient::UserTokenInfo>::iterator iep;
+        string acc_tok, ref_tok;
+        uint32_t expires_in;
 
         while( m_run )
         {
@@ -114,6 +119,33 @@ XfrMgr::xfrThreadFunc()
                 db_client.purgeTransferRecords( m_mgr.getXfrPurgeAge() );
                 purge_timer = m_mgr.getXfrPurgePeriod();
             }
+
+/*
+            if ( --refresh_timer == 0 )
+            {
+                db_client.getExpiringAccessTokens( 600, expiring_tokens );
+                if ( expiring_tokens.size() )
+                {
+                    DL_INFO( "Have " << expiring_tokens.size() << "token(s) to refresh" );
+                    for ( iep = expiring_tokens.begin(); iep != expiring_tokens.end(); iep++ )
+                    {
+                        try
+                        {
+                            glob.refreshAccessToken( iep->refresh_token, acc_tok, expires_in );
+                            //DL_INFO( iep->uid << " got new acc tok " << new_acc_tok << ", expires in " << expires_in );
+                            db_client.setClient( iep->uid );
+                            db_client.userSetAccessToken( acc_tok, expires_in, iep->refresh_token );
+                        }
+                        catch(...)
+                        {
+                            DL_ERROR( "Access token refresh failed for " << iep->uid )
+                        }
+                    }
+                    expiring_tokens.clear();
+                }
+                refresh_timer = 60;
+            }
+*/
 
             {
                 lock_guard<mutex> lock( m_xfr_mutex );
@@ -145,8 +177,18 @@ XfrMgr::xfrThreadFunc()
                         {
                             // TODO - This code currently treats ALL errors as permanent, need to handle transient errors differently
 
-                            if ( !db_client.userGetAccessToken( (*ixfr)->token ))
-                                EXCEPT_PARAM( 1, "No access token. Re-login required." );
+                            db_client.userGetAccessToken( acc_tok, ref_tok, expires_in );
+                            if ( expires_in < 300 )
+                            {
+                                DL_INFO( "Refreshing access token for " << (*ixfr)->xfr.user_id() );
+
+                                glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
+                                db_client.userSetAccessToken( acc_tok, expires_in, ref_tok );
+
+                                (*ixfr)->token = acc_tok;
+                            }
+                            else
+                                (*ixfr)->token = acc_tok;
 
                             glob.transfer( (*ixfr)->xfr, (*ixfr)->token );
                             DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );

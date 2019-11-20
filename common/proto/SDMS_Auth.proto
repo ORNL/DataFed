@@ -51,11 +51,11 @@ message GetPermsReply
 
 // ============================ User Messages
 
-message UserSaveTokensRequest
+message UserSetAccessTokenRequest
 {
     required string             access      = 1;
-    required string             refresh     = 2;
-    required uint32             expiration  = 3;
+    required uint32             expires_in  = 2;
+    required string             refresh     = 3;
 }
 
 message UserCreateRequest

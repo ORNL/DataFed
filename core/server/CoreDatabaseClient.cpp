@@ -356,56 +356,74 @@ DatabaseClient::userClearKeys()
     dbGet( "usr/keys/clear", {}, result );
 }
 
-/*
-void
-DatabaseClient::userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok )
-{
-    string result;
-    dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok}}, result );
-}
-*/
 
-bool
-DatabaseClient::userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expiration )
+void
+DatabaseClient::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in )
 {
     rapidjson::Document result;
-
     dbGet( "usr/token/get", {}, result );
 
-    rapidjson::Value & val = result[0];
-
-    rapidjson::Value::MemberIterator imem = val.FindMember("access");
-    if ( imem == val.MemberEnd() )
-        return false;
+    rapidjson::Value::MemberIterator imem = result.FindMember("access");
+    if ( imem == result.MemberEnd() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     a_acc_tok = imem->value.GetString();
 
-    imem = val.FindMember("refresh");
-    if ( imem == val.MemberEnd() )
-        return false;
+    imem = result.FindMember("refresh");
+    if ( imem == result.MemberEnd() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     a_ref_tok = imem->value.GetString();
 
-    imem = val.FindMember("expiration");
-    if ( imem == val.MemberEnd() )
-        return false;
-    a_expiration = imem->value.GetUint();
-
-    return true;
+    imem = result.FindMember("expires_in");
+    if ( imem == result.MemberEnd() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    a_expires_in = imem->value.GetUint();
 }
 
+/*
 bool
 DatabaseClient::userGetAccessToken( std::string & a_acc_tok )
 {
     return dbGetRaw( "usr/token/get/access", {}, a_acc_tok );
 }
+*/
 
 void
-DatabaseClient::userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply )
+DatabaseClient::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
+{
+    string result;
+    dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok},{"expires_in",to_string(a_expires_in)}}, result );
+}
+
+void
+DatabaseClient::userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply )
 {
     (void)a_reply;
-    string result;
-    dbGetRaw( "usr/token/set", {{"access",a_request.access()},{"refresh",a_request.refresh()},{"expiration",to_string(a_request.expiration())}}, result );
+    userSetAccessToken( a_request.access(), a_request.expires_in(), a_request.refresh() );
+}
 
-    //userSetTokens( a_request.access(), a_request.refresh(), a_request.ttl() );
+void
+DatabaseClient::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInfo> & a_expiring_tokens )
+{
+    rapidjson::Document result;
+    dbGet( "usr/token/get/expiring", {{"expires_in",to_string(a_expires_in)}}, result );
+
+    if ( !result.IsArray() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+
+    UserTokenInfo info;
+    a_expiring_tokens.clear();
+
+    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    {
+        rapidjson::Value & val = result[i];
+
+        info.uid = val["id"].GetString();
+        info.access_token = val["access"].GetString();
+        info.refresh_token = val["refresh"].GetString();
+        info.expiration = val["expiration"].GetUint();
+
+        a_expiring_tokens.push_back( info );
+    }
 }
 
 void

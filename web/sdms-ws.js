@@ -253,7 +253,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                         // Registered, save access token
                         userinfo.acc_tok = xfr_token.access_token;
                         userinfo.ref_tok = xfr_token.refresh_token;
-                        saveToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
+                        setAccessToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
 
                         // TODO Account may be disable from SDMS (active = false)
                         a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
@@ -292,7 +292,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             }
         } else {
             // Save access token
-            saveToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok, a_req.query.acc_tok_ttl );
+            setAccessToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok, a_req.query.acc_tok_ttl );
             userinfo.acc_tok = a_req.query.acc_tok;
             userinfo.ref_tok = a_req.query.ref_tok;
             a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
@@ -1090,9 +1090,10 @@ app.get('/ui/theme/save', ( a_req, a_resp ) => {
 });
 
 
-function saveToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
-    var ts = (Date.now()/1000) + a_expires_sec;
-    sendMessageDirect( "UserSaveTokensRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiration: ts }, function( reply ) {
+function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
+    //var ts = (Date.now()/1000) + a_expires_sec;
+    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expires_in: a_expires_sec }, function( reply ){
+
     });
 }
 

@@ -19,6 +19,14 @@ namespace Core {
 class DatabaseClient
 {
 public:
+    struct UserTokenInfo
+    {
+        std::string uid;
+        std::string access_token;
+        std::string refresh_token;
+        uint32_t    expiration;
+    };
+
     DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
     ~DatabaseClient();
 
@@ -31,15 +39,16 @@ public:
     bool userGetKeys( std::string & a_pub_key, std::string & a_priv_key);
     void userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key );
     void userClearKeys();
-    //void userSetTokens( const std::string & a_acc_tok, const std::string & a_ref_tok );
-    bool userGetTokens( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expiration );
-    bool userGetAccessToken( std::string & a_token );
+    void userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok );
+    void userGetAccessToken(  std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in );
+    void getExpiringAccessTokens( uint32_t a_expires_in, std::vector<UserTokenInfo> & a_expiring_tokens );
     void purgeTransferRecords( size_t age );
+
 
     void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
     void getPerms( const Auth::GetPermsRequest & a_request, Auth::GetPermsReply & a_reply );
 
-    void userSaveTokens( const Auth::UserSaveTokensRequest & a_request, Anon::AckReply & a_reply );
+    void userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply );
     void userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply );
     void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
     void userUpdate( const Auth::UserUpdateRequest & a_request, Auth::UserDataReply & a_reply );
