@@ -362,8 +362,8 @@ router.get('/token/set', function (req, res) {
                 else {
                     user_id = client._id;
                 }
-
-                var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh, expiration: req.queryParams.expiration };
+                console.log("updating tokens for", user_id, req.queryParams.access, req.queryParams.expires_in );
+                var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh, expiration: Math.floor(Date.now()/1000) + req.queryParams.expires_in };
                 g_db._update( user_id, obj, { keepNull: false });
             }
         });
@@ -375,7 +375,7 @@ router.get('/token/set', function (req, res) {
 .queryParam('subject', joi.string().optional(), "UID of subject user")
 .queryParam('access', joi.string().required(), "User access token")
 .queryParam('refresh', joi.string().required(), "User refresh token")
-.queryParam('expiration', joi.number().integer().required(), "Access token expiration timestamp")
+.queryParam('expires_in', joi.number().integer().required(), "Access token expiration timestamp")
 .summary('Set user tokens')
 .description('Set user tokens');
 
@@ -397,8 +397,11 @@ router.get('/token/get', function( req, res ) {
             result.access = user.access;
         if ( user.refresh != undefined )
             result.refresh = user.refresh;
-        if ( user.expiration != undefined )
-            result.refresh = user.expiration;
+        if ( user.expiration ){
+            var exp = user.expiration - Math.floor(Date.now()/1000);
+            result.expires_in = exp > 0 ? exp : 0;
+        }else
+            result.expires_in = 0;
 
         res.send(result);
     } catch( e ) {
@@ -434,6 +437,22 @@ router.get('/token/get/access', function( req, res ) {
 .queryParam('subject', joi.string().optional(), "UID of subject user")
 .summary('Get user access token')
 .description('Get user access token');
+
+
+router.get('/token/get/expiring', function( req, res ) {
+    try {
+        //console.log("exp:",(Date.now()/1000) + req.queryParams.expires_in);
+
+        var results = g_db._query("for i in u filter i.expiration != Null && i.expiration < @exp return {id:i._id,access:i.access,refresh:i.refresh,expiration:i.expiration}",{exp: Math.floor(Date.now()/1000) + req.queryParams.expires_in});
+        res.send( results );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('expires_in', joi.number().integer().required(), "Expires in (sec)")
+.summary('Get expiring user access tokens')
+.description('Get expiring user access token');
 
 
 router.get('/view', function (req, res) {
