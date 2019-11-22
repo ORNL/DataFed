@@ -9,7 +9,7 @@
 #include <mutex>
 #include "CoreIWorkerMgr.hpp"
 #include "SDMS.pb.h"
-
+#include "GlobusAPIClient.hpp"
 
 namespace SDMS {
 namespace Core {
@@ -39,6 +39,12 @@ private:
         int             fail_count;
     };
 
+    struct EpEntry
+    {
+        GlobusAPIClient::EndpointInfo   ep_info;
+        uint32_t                        last_used;
+    };
+
     void    xfrThreadFunc();
     void    xfrBackOffPolling( const std::list<XfrDataInfo*>::iterator & ixfr );
 
@@ -49,6 +55,7 @@ private:
     std::deque<std::string>             m_xfr_pending;
     std::list<XfrDataInfo*>             m_xfr_active;
     std::map<std::string,XfrDataInfo*>  m_xfr_all;
+    std::map<std::string,EpEntry>       m_ep_cache;
 };
 
 }}

@@ -38,6 +38,12 @@ enum XfrStatus
     XS_FAILED       = 4;
 }
 
+enum XfrEncrypt
+{
+    XE_NONE         = 0;
+    XE_AVAIL        = 1;
+    XE_FORCE        = 2;
+}
 
 enum CollDelMode
 {
@@ -283,16 +289,17 @@ message XfrData
 {
     required string             id          = 1;
     required XfrMode            mode        = 2;
-    required XfrStatus          status      = 3;
-    required XfrRepo            repo        = 4;
-    required string             rem_ep      = 5;
-    required string             rem_path    = 6;
-    optional string             ext         = 7; // Puts only
-    required string             user_id     = 8;
-    required uint32             started     = 9;
-    required uint32             updated     = 10;
-    optional string             task_id     = 11; // Only set if status > XFR_INIT
-    optional string             err_msg     = 12; // Only set if status == XFR_FAILED
+    required XfrEncrypt         encrypt     = 3;
+    required XfrStatus          status      = 4;
+    required XfrRepo            repo        = 5;
+    required string             rem_ep      = 6;
+    required string             rem_path    = 7;
+    optional string             ext         = 8; // Puts only
+    required string             user_id     = 9;
+    required uint32             started     = 10;
+    required uint32             updated     = 11;
+    optional string             task_id     = 12; // Only set if status > XFR_INIT
+    optional string             err_msg     = 13; // Only set if status == XFR_FAILED
 }
 
 message HttpXfrData

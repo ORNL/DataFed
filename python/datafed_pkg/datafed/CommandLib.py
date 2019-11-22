@@ -360,6 +360,7 @@ class API:
     #
     # @param item_id - Data record or collection ID/alias, or a list of IDs/aliases
     # @param path - Globus or file system destination path
+    # @param encrypt - Encrypt mode (none, if avail, force)
     # @param wait - Wait for get to complete if True
     # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
     # @param progress_bar - A progess bar class to display download progress (optional)
@@ -368,7 +369,7 @@ class API:
     # @exception Exception: If both Globus and HTTP transfers are required
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataGet( self, item_id, path, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
+    def dataGet( self, item_id, path, encrypt = sdms.XE_AVAIL, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
@@ -428,6 +429,7 @@ class API:
             msg = auth.DataGetRequest()
             msg.id.extend(glob_list)
             msg.path = self._resolvePathForGlobus( path, False )
+            msg.encrypt = encrypt
 
             reply = self._mapi.sendRecv( msg )
 
@@ -488,6 +490,7 @@ class API:
     #
     # @param data_id - Data record ID/alias
     # @param path - Globus or file system source path
+    # @param encrypt - Encrypt mode (none, if avail, force)
     # @param wait - Wait for put to complete if True
     # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
     # @param extension - Override source file extension (default is autodetect)
@@ -495,10 +498,11 @@ class API:
     # @return A XfrDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataPut( self, data_id, path, wait = False, timeout_sec = 0, extension = None, context = None ):
+    def dataPut( self, data_id, path, encrypt = sdms.XE_AVAIL, wait = False, timeout_sec = 0, extension = None, context = None ):
         msg = auth.DataPutRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.path = self._resolvePathForGlobus( path, False )
+        msg.encrypt = encrypt
         if extension:
             msg.ext = extension
 

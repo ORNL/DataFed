@@ -13,8 +13,16 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         <div style='padding:.25em 2em'>\
         <button class='btn small' id='refresh'>Refresh</button>&nbsp<button class='btn small' id='activate' disabled>(re)Activate</button>&nbsp<button class='btn small' id='browse' style='margin:0' disabled>Browse</button></div><br>" +
         ep_lab + " Path:<br>\
-        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%;resize:none'></textarea><br>" +
-        (a_mode == XFR_PUT?"File extension override: <input id='ext' type='text'></input><br>":"") +
+        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%;resize:none'></textarea><br>\
+        <br>Transfer Encryption:&nbsp\
+        <input type='radio' id='encrypt_none' name='encrypt_mode' value='0'>\
+        <label for='encrypt_none'>None</label>&nbsp\
+        <input type='radio' id='encrypt_avail' name='encrypt_mode' value='1' checked/>\
+        <label for='encrypt_avail'>If Available</label>&nbsp\
+        <input type='radio' id='encrypt_req' name='encrypt_mode' value='2'/>\
+        <label for='encrypt_req'>Required</label>\
+        <br>" +
+        (a_mode == XFR_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
         "</div></div></div>");
 
     var label = ["Get (Download)","Put (Upload)","Select"];
@@ -106,23 +114,15 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
 
     matches.on('selectmenuchange', function( ev, ui ) {
         if ( ep_list && ui.item ){
-            cur_ep = ep_list[ui.item.index-1];
-
-            path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
-            if ( cur_ep.activated || cur_ep.expires_in == -1 ){
-                $("#browse",frame).button("enable");
-                endpoint_ok = true;
-                updateGoBtn();
-            }else{
-                $("#browse",frame).button("disable");
-                endpoint_ok = false;
-                updateGoBtn();
-            }
-
-            if ( cur_ep.expires_in == -1 )
-                $("#activate",frame).button("disable");
-            else
-                $("#activate",frame).button("enable");
+            var ep = ep_list[ui.item.index-1].id;
+            epView( ep, function( ok, data ){
+                if ( ok && !data.code ){
+                    cur_ep = data;
+                    cur_ep.name = cur_ep.canonical_name || cur_ep.id;
+                    path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
+                    updateEndpointOptions( cur_ep );
+                }
+            });
         }
     });
 
@@ -164,6 +164,39 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         window.open('https://app.globus.org/file-manager?origin_id='+ encodeURIComponent(cur_ep.id),'');
     });
 
+    function updateEndpointOptions( cur_ep ){
+        if ( cur_ep.activated || cur_ep.expires_in == -1 ){
+            $("#browse",frame).button("enable");
+            endpoint_ok = true;
+            updateGoBtn();
+        }else{
+            $("#browse",frame).button("disable");
+            endpoint_ok = false;
+            updateGoBtn();
+        }
+
+        if ( cur_ep.expires_in == -1 )
+            $("#activate",frame).button("disable");
+        else
+            $("#activate",frame).button("enable");
+
+        if ( cur_ep.force_encryption ){
+            $("#encrypt_none").checkboxradio( "option", "disabled", true );
+            $("#encrypt_avail").checkboxradio( "option", "disabled", true );
+            $("#encrypt_req").prop('checked',true).checkboxradio( "option", "disabled", false );
+        }else if ( cur_ep.DATA[0].scheme == "ftp" ){
+            $("#encrypt_none").prop('checked',true).checkboxradio( "option", "disabled", false );
+            $("#encrypt_avail").checkboxradio( "option", "disabled", true );
+            $("#encrypt_req").checkboxradio( "option", "disabled", true );
+        }else{
+            $("#encrypt_none").checkboxradio( "option", "disabled", false );
+            $("#encrypt_avail").checkboxradio( "option", "disabled", false );
+            $("#encrypt_req").checkboxradio( "option", "disabled", false );
+        }
+
+        $(":radio").button("refresh");
+    }
+
     var in_timer;
     function inTimerExpired(){
         var ep = path_in.val().trim();
@@ -187,9 +220,11 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
 
             epView( ep, function( ok, data ){
                 if ( ok && !data.code ){
-                    console.log( "endpoint:", data );
+                    //console.log( "endpoint:", data );
                     cur_ep = data;
                     cur_ep.name = cur_ep.canonical_name || cur_ep.id;
+                    //path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
+                    updateEndpointOptions( cur_ep );
 
                     var html = "<option title='" + (cur_ep.description?cur_ep.description:"(no info)") + "'>" + (cur_ep.display_name || cur_ep.name) + " (";
 
@@ -205,16 +240,6 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                     matches.html( html );
                     matches.selectmenu("refresh");
                     matches.selectmenu("enable");
-
-                    if ( cur_ep.activated || cur_ep.expires_in == -1 ){
-                        $("#browse",frame).button("enable");
-                        endpoint_ok = true;
-                        updateGoBtn();
-                    }
-
-                    if ( cur_ep.expires_in != -1 )
-                        $("#activate",frame).button("enable");
-
                 }else{
                     cur_ep = null;
                     epAutocomplete( ep, function( ok, data ){
@@ -269,6 +294,9 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                     dlgAlert("Input Error","Path cannot be empty.");
                     return;
                 }
+
+                var encrypt = $("input[name='encrypt_mode']:checked").val();
+
                 var inst = $(this);
                 if ( a_mode != XFR_SELECT ){
                     var ext = $("#ext",frame).val();
@@ -284,8 +312,8 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                             ids.push( sel[i].key );
                         }
                     }
-                    console.log("ids:", ids );
-                    xfrStart( ids, a_mode, raw_path, ext, function( ok, data ){
+                    //console.log("ids:", ids );
+                    xfrStart( ids, a_mode, raw_path, ext, encrypt, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
@@ -295,7 +323,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                         }
                     });
                 }else{
-                    a_cb( raw_path );
+                    a_cb( raw_path, encrypt );
                     clearTimeout( in_timer );
                     $(this).dialog('destroy').remove();
                 }
@@ -309,6 +337,8 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         }],
         open: function(){
             updateGoBtn();
+
+            $( ":radio" ).checkboxradio();
 
             if ( g_ep_recent.length ){
                 path_in.val( g_ep_recent[0] );

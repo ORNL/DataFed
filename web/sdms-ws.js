@@ -712,13 +712,13 @@ app.get('/api/dat/get/preproc', ( a_req, a_resp ) => {
 
 app.get('/api/dat/get', ( a_req, a_resp ) => {
     console.log("/api/dat/get, ids:",a_req.query.ids);
-    sendMessage( "DataGetRequest", { id: JSON.parse(a_req.query.ids), path: a_req.query.path }, a_req, a_resp, function( reply ) {
+    sendMessage( "DataGetRequest", { id: JSON.parse(a_req.query.ids), path: a_req.query.path, encrypt: a_req.query.encrypt }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.get('/api/dat/put', ( a_req, a_resp ) => {
-    var par = { id: a_req.query.id, path: a_req.query.path };
+    var par = { id: a_req.query.id, path: a_req.query.path, encrypt: a_req.query.encrypt };
     if ( a_req.query.ext )
         par.ext = a_req.query.ext;
     console.log("dat put:",par);
@@ -1032,6 +1032,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
 
     request.get({
         uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
+        //uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&filter_fulltext='+a_req.query.term,
         auth: {
             bearer: userinfo.acc_tok,
         }

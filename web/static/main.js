@@ -943,7 +943,7 @@ function dataGetPreprocess( a_ids, a_cb ){
     _asyncGet( url, null, a_cb );
 }
 
-function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
+function xfrStart( a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_cb ){
     var url = "/api/dat/";
 
     if ( a_mode == XFR_GET )
@@ -953,8 +953,8 @@ function xfrStart( a_ids, a_mode, a_path, a_ext, a_cb ){
     else{
         return;
     }
-
-    url += "&path=" + encodeURIComponent(a_path) + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
+    console.log("a_encrypt_mode:",a_encrypt_mode);
+    url += "&path=" + encodeURIComponent(a_path)  + "&encrypt=" + a_encrypt_mode + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){
         if ( ok ){
@@ -1051,9 +1051,12 @@ var SS_SHARED_BY_ANY_PROJECT    = 11;
 var SS_PUBLIC                   = 12;
 var SS_VIEW                     = 13;
 
-var XFR_GET         = 0;
-var XFR_PUT         = 1;
-var XFR_SELECT      = 2;
+var XFR_GET             = 0;
+var XFR_PUT             = 1;
+var XFR_SELECT          = 2;
+var XFR_ENCRYPT_NONE    = 0;
+var XFR_ENCRYPT_AVAIL   = 1;
+var XFR_ENCRYPT_FORCE   = 2;
 
 var DEP_IN          = 0;
 var DEP_OUT         = 1;

@@ -40,7 +40,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 <div id='working_data'>\
                     <table class='form-table'>\
                         <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon'><span class='ui-icon ui-icon-file'></span></button></tr>\
+                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon'><span class='ui-icon ui-icon-file'></span></button></tr>\
                         <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                     </table>\
                 </div>\
@@ -89,8 +89,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     $(".btn",frame).button();
 
     $("#pick_source",frame).on("click",function(){
-        dlgStartTransfer( XFR_SELECT, null, function( path ){
-            $("#source_file",frame).val( path );
+        dlgStartTransfer( XFR_SELECT, null, function( a_path, a_encrypt_mode ){
+            $("#source_file",frame).val( a_path );
+            encrypt_mode = a_encrypt_mode;
             if ( $("#ext_auto",frame).prop("checked") )
                 updateAutoExt();
         });
@@ -111,6 +112,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var jsoned;
     var ref_rows = 1;
     var orig_deps = [];
+    var encrypt_mode = 1;
 
     function addRef(){
         var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
@@ -403,14 +405,14 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 var inst = $(this);
 
-                console.log("data upd, obj:",obj);
+                //console.log("data upd, obj:",obj);
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
-                        console.log("new data:",data);
+                        //console.log("new data:",data);
                         tmp = $("#source_file").val().trim();
                         if ( !is_published && tmp && (!a_data || tmp != a_data.source)){
-                            xfrStart( [data.data[0].id], XFR_PUT, tmp, 0, function( ok2, data2 ){
+                            xfrStart( [data.data[0].id], XFR_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
                                 if ( ok2 ){
                                     dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
                                     jsoned.destroy();
@@ -502,7 +504,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     if (( a_upd_perms & PERM_WR_DATA ) == 0 ){
-                        inputDisable( $("#source_file,#extension,#doi,data_url,#pick_source", frame ));
+                        inputDisable( $("#extension,#doi,data_url,#pick_source", frame ));
                         $("#ext_auto,#published",frame).prop("disabled",true);
                     }
 
@@ -542,6 +544,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#extension",frame).val("(auto)").prop("disabled",true);
             }
 
+            /*
             var srcEditTimer;
             $("#source_file",frame).on("input",function(ev){
                 if ( srcEditTimer )
@@ -549,6 +552,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 srcEditTimer = setTimeout( function(){ if ( $("#ext_auto",frame).prop("checked") ){ updateAutoExt() }}, 1000 );
             });
+            */
 
             $("#published",frame).checkboxradio().on( "change",function(ev){
                 var pub = $("#published",frame).prop("checked");

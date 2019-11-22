@@ -4,7 +4,6 @@
 #include "MsgComm.hpp"
 #include "CoreXfrMgr.hpp"
 #include "CoreDatabaseClient.hpp"
-#include "GlobusAPIClient.hpp"
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
 #include "Util.hpp"
@@ -108,6 +107,8 @@ XfrMgr::xfrThreadFunc()
         vector<DatabaseClient::UserTokenInfo>::iterator iep;
         string acc_tok, ref_tok;
         uint32_t expires_in;
+        map<string,EpEntry>::iterator iepc;
+        EpEntry ep_entry;
 
         while( m_run )
         {
@@ -189,6 +190,37 @@ XfrMgr::xfrThreadFunc()
                             }
                             else
                                 (*ixfr)->token = acc_tok;
+
+                            if (( iepc = m_ep_cache.find( (*ixfr)->xfr.rem_ep() )) == m_ep_cache.end() )
+                            {
+                                glob.getEndpointInfo( (*ixfr)->xfr.rem_ep(), (*ixfr)->token, ep_entry.ep_info );
+                                ep_entry.last_used = time(0);
+                                iepc = m_ep_cache.insert(make_pair<>((*ixfr)->xfr.rem_ep(),ep_entry)).first;
+                            }
+                            iepc->second.last_used = time(0);
+
+                            if ( !iepc->second.ep_info.activated )
+                                EXCEPT(1,"Remote endpoint requires activation.");
+
+                            // TODO Notify if activation expiring soon
+
+                            switch ( (*ixfr)->xfr.encrypt() )
+                            {
+                                case XE_NONE:
+                                    if ( iepc->second.ep_info.force_encryption )
+                                        EXCEPT(1,"Remote endpoint requires encryption.");
+                                    break;
+                                case XE_AVAIL:
+                                    if ( iepc->second.ep_info.supports_encryption )
+                                        (*ixfr)->xfr.set_encrypt( XE_FORCE );
+                                    else
+                                        (*ixfr)->xfr.set_encrypt( XE_NONE );
+                                    break;
+                                case XE_FORCE:
+                                    if ( !iepc->second.ep_info.supports_encryption )
+                                        EXCEPT(1,"Remote endpoint does not support encryption.");
+                                    break;
+                            }
 
                             glob.transfer( (*ixfr)->xfr, (*ixfr)->token );
                             DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );

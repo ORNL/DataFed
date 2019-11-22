@@ -293,6 +293,7 @@ message DataGetRequest
 {
     repeated string             id          = 1;
     required string             path        = 2;
+    required XfrEncrypt         encrypt     = 3;
 }
 
 // Upload raw data for one record
@@ -300,7 +301,8 @@ message DataPutRequest
 {
     required string             id          = 1;
     required string             path        = 2;
-    optional string             ext         = 3;
+    required XfrEncrypt         encrypt     = 3;
+    optional string             ext         = 4;
 }
 
 // Delete raw data only (not record)

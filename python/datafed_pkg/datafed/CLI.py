@@ -359,7 +359,7 @@ def _set_verbosity_cb(ctx, param, value):
 
 
 __global_context_options = [
-    click.option( '-x', '--context', required=False, type=str, help="User or project ID for command alias context. See 'alias' command help for more information." ),
+    click.option( '-X', '--context', required=False, type=str, help="User or project ID for command alias context. See 'alias' command help for more information." ),
     ]
 
 
@@ -595,7 +595,7 @@ def _dataView( data_id, context ):
 @click.option("-d","--description",type=str,required=False,help="Description text.")
 @click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list).")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.")
-@click.option("-e","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
+@click.option("-x","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
 @click.option("-p","--parent",type=str,required=False, help="Parent collection ID, alias, or listing index. Default is the current working collection.")
@@ -642,7 +642,7 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list)")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.")
-@click.option("-e","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@click.option("-x","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON.")
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
@@ -709,8 +709,9 @@ def _dataDelete( data_id, force, context ):
 @click.argument("df_id", required=True, metavar="ID", nargs=-1)
 @click.argument("path", required=True, metavar="PATH", nargs=1)
 @click.option("-w","--wait",is_flag=True,help="Block until Globus transfer is complete.")
+@click.option("-e","--encrypt",type=click.Choice(['0', '1', '2']),default='1',help="Encryption mode: 0 = none, 1 = if available (default), 2 = force.")
 @_global_context_options
-def _dataGet( df_id, path, wait, context ):
+def _dataGet( df_id, path, wait, encrypt, context ):
     '''
     Get (download) raw data of data records and/or collections. Multiple ID
     arguments can be specified and may be data record and/or collection IDs,
@@ -739,7 +740,7 @@ def _dataGet( df_id, path, wait, context ):
     else:
         bar = None
 
-    reply = _capi.dataGet( resolved_ids, path, wait = wait, progress_bar = bar, context = context )
+    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), wait = wait, progress_bar = bar, context = context )
 
     if _output_mode_sticky == _OM_RETN:
         global _return_val
@@ -753,7 +754,8 @@ def _dataGet( df_id, path, wait, context ):
 @click.argument("data_id", metavar="ID", required=True, nargs=1)
 @click.argument("path", metavar="PATH", required=True, nargs=1)
 @click.option("-w","--wait",is_flag=True,help="Block reply or further commands until transfer is complete")
-@click.option("-e", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@click.option("-x", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
+@click.option("-e","--encrypt",type=click.Choice(['0', '1', '2']),default='1',help="Encryption mode: 0 = none, 1 = if available (default), 2 = force.")
 @_global_context_options
 def _dataPut( data_id, path, wait, extension, context ):
     '''
@@ -765,7 +767,7 @@ def _dataPut( data_id, path, wait, extension, context ):
     argument, the current endpoint will be used.
     '''
 
-    reply = _capi.dataPut( _resolve_id( data_id ), path, wait = wait, extension = extension, context = context )
+    reply = _capi.dataPut( _resolve_id( data_id ), path, encrypt= int(encrypt), wait = wait, extension = extension, context = context )
     _generic_reply_handler( reply, _print_xfr_stat )
 
 

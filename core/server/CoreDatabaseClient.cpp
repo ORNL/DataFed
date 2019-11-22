@@ -1886,7 +1886,7 @@ DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_pa
 }*/
 
 void
-DatabaseClient::xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
+DatabaseClient::xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrEncrypt a_encrypt, XfrMode a_mode, Auth::XfrDataReply & a_reply )
 {
     rapidjson::Document result;
     vector<pair<string,string>> params;
@@ -1902,6 +1902,7 @@ DatabaseClient::xfrInit( const std::vector<std::string> & a_ids, const std::stri
     params.push_back({"ids",ids});
     params.push_back({"path",a_path});
     params.push_back({"mode",to_string(a_mode)});
+    params.push_back({"encrypt",to_string(a_encrypt)});
     if ( a_ext )
         params.push_back({"ext",*a_ext});
 
@@ -1936,6 +1937,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_user_id( val["user_id"].GetString() );
         xfr->set_started( val["started"].GetUint() );
         xfr->set_updated( val["updated"].GetUint() );
+        xfr->set_encrypt( (XfrEncrypt)val["encrypt"].GetUint() );
 
         imem = val.FindMember("ext");
         if ( imem != val.MemberEnd() )

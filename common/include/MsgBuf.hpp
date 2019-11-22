@@ -401,7 +401,7 @@ public:
         MsgTypeMap & mt_map = getMsgTypeMap();
         MsgTypeMap::iterator i_mt = mt_map.find( desc );
         if ( i_mt == mt_map.end() )
-            EXCEPT_PARAM( EC_SERIALIZE, "Attempt to serialize unregistered message type: " << desc->name() )
+            EXCEPT_PARAM( EC_SERIALIZE, "Attempt to serialize unregistered message type: " << desc->name() );
 
         //std::cout << "serialize msg type: " << i_mt->second << ", " << desc->name() << "\n";
 

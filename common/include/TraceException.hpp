@@ -5,12 +5,11 @@
 
 #define EXCEPT(err_code,msg) throw TraceException( __FUNCTION__, __LINE__, err_code, msg )
 
-#define EXCEPT_PARAM(err_code,msg) \
-{ \
+#define EXCEPT_PARAM(err_code,msg) do{ \
     std::stringstream _trace_excep_sstr; \
     _trace_excep_sstr << msg; \
     throw TraceException( __FUNCTION__, __LINE__, err_code, _trace_excep_sstr.str()); \
-}
+}while(0)
 
 #define EXCEPT_CONTEXT(e,msg) \
 { \

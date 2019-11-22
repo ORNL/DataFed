@@ -449,11 +449,11 @@ Worker::procDataGetRequest( const std::string & a_uid )
     PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
     if ( request->id_size() > 1 )
     {
-        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->path() );
+        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->path() << ", encrypt: " << request->encrypt() );
     }
     else
     {
-        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->path() );
+        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->path() << ", encrypt: " << request->encrypt()  );
     }
 
     m_db_client.setClient( a_uid );
@@ -464,7 +464,7 @@ Worker::procDataGetRequest( const std::string & a_uid )
     for ( i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    m_db_client.xfrInit( ids, request->path(), 0, XM_GET, reply );
+    m_db_client.xfrInit( ids, request->path(), 0, request->encrypt(), XM_GET, reply );
 
     //if ( reply.xfr_size() != 1 )
     //    EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
@@ -482,12 +482,12 @@ Worker::procDataPutRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
 
-    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->path() );
+    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->path() << ", encrypt: " << request->encrypt() );
 
     m_db_client.setClient( a_uid );
     //vector<string> ids = { request->id() };
 
-    m_db_client.xfrInit( { request->id() }, request->path(), request->has_ext()?&request->ext():0, XM_PUT, reply );
+    m_db_client.xfrInit( { request->id() }, request->path(), request->has_ext()?&request->ext():0, request->encrypt(), XM_PUT, reply );
 
     if ( reply.xfr_size() != 1 )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
