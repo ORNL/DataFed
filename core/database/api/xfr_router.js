@@ -259,6 +259,7 @@ router.get('/init2', function (req, res) {
                     var tr_obj = {
                         mode: req.queryParams.mode,
                         status: g_lib.XS_INIT,
+                        encrypt: req.queryParams.encrypt,
                         rem_ep: rem_ep,
                         rem_path: rem_path,
                         user_id: client._id,
@@ -304,6 +305,7 @@ router.get('/init2', function (req, res) {
 .queryParam('ids', joi.array().items(joi.string()).required(), "Array of data record IDs or aliases")
 .queryParam('path', joi.string().required(), "Remote path")
 .queryParam('mode', joi.number().required(), "Transfer mode (get, put)")
+.queryParam('encrypt', joi.number().required(), "Encrypt mode (0=none,1=try,2=force)")
 .queryParam('ext', joi.string().optional(), "Extension override (put only)")
 .queryParam('validate', joi.bool().optional(), "Perform validation only")
 .summary('Performs pre-transfer authorization and initialization')
