@@ -109,6 +109,7 @@ XfrMgr::xfrThreadFunc()
         uint32_t expires_in;
         map<string,EpEntry>::iterator iepc;
         EpEntry ep_entry;
+        bool encrypted;
 
         while( m_run )
         {
@@ -226,7 +227,8 @@ XfrMgr::xfrThreadFunc()
                             DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );
 
                             // Update DB entry
-                            db_client.xfrUpdate( (*ixfr)->xfr.id(), 0, "", (*ixfr)->xfr.task_id().c_str() );
+                            encrypted = ((*ixfr)->xfr.encrypt() == XE_FORCE );
+                            db_client.xfrUpdate( (*ixfr)->xfr.id(), 0, &encrypted, "", (*ixfr)->xfr.task_id().c_str() );
                             (*ixfr)->stage = 1;
                             (*ixfr)->poll = INIT_POLL_PERIOD;
 
@@ -237,7 +239,7 @@ XfrMgr::xfrThreadFunc()
                             // Permanent failure, e.what()
                             (*ixfr)->xfr.set_status( XS_FAILED );
                             status = (*ixfr)->xfr.status();
-                            db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, e.toString() );
+                            db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, 0, e.toString() );
                             ixfr = m_xfr_active.erase( ixfr );
                         }
                         catch( ... )
@@ -245,7 +247,7 @@ XfrMgr::xfrThreadFunc()
                             // Permanent failure, e.what()
                             (*ixfr)->xfr.set_status( XS_FAILED );
                             status = (*ixfr)->xfr.status();
-                            db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, "Unknown exception" );
+                            db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, 0, "Unknown exception" );
                             ixfr = m_xfr_active.erase( ixfr );
                         }
                     }
@@ -266,7 +268,7 @@ XfrMgr::xfrThreadFunc()
                                 if ( (*ixfr)->xfr.status() != status )
                                 {
                                     // Update DB entry
-                                    db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, error_msg );
+                                    db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, 0, error_msg );
                                     (*ixfr)->xfr.set_status( status );
 
                                     if (( (*ixfr)->xfr.mode() == XM_PUT || (*ixfr)->xfr.mode() == XM_COPY ) && (*ixfr)->xfr.status() == XS_SUCCEEDED )
@@ -341,7 +343,7 @@ XfrMgr::xfrThreadFunc()
                                 // Permanent failure, e.what()
                                 (*ixfr)->xfr.set_status( XS_FAILED );
                                 status = (*ixfr)->xfr.status();
-                                db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, e.toString() );
+                                db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, 0, e.toString() );
                                 ixfr = m_xfr_active.erase( ixfr );
                             }
                             catch( ... )
@@ -349,7 +351,7 @@ XfrMgr::xfrThreadFunc()
                                 // Permanent failure, e.what()
                                 (*ixfr)->xfr.set_status( XS_FAILED );
                                 status = (*ixfr)->xfr.status();
-                                db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, "Unknown exception" );
+                                db_client.xfrUpdate( (*ixfr)->xfr.id(), &status, 0, "Unknown exception" );
                                 ixfr = m_xfr_active.erase( ixfr );
                             }
                         }

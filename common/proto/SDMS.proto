@@ -290,16 +290,17 @@ message XfrData
     required string             id          = 1;
     required XfrMode            mode        = 2;
     required XfrEncrypt         encrypt     = 3;
-    required XfrStatus          status      = 4;
-    required XfrRepo            repo        = 5;
-    required string             rem_ep      = 6;
-    required string             rem_path    = 7;
-    optional string             ext         = 8; // Puts only
-    required string             user_id     = 9;
-    required uint32             started     = 10;
-    required uint32             updated     = 11;
-    optional string             task_id     = 12; // Only set if status > XFR_INIT
-    optional string             err_msg     = 13; // Only set if status == XFR_FAILED
+    required bool               encrypted   = 4;
+    required XfrStatus          status      = 5;
+    required XfrRepo            repo        = 6;
+    required string             rem_ep      = 7;
+    required string             rem_path    = 8;
+    optional string             ext         = 9; // Puts only
+    required string             user_id     = 10;
+    required uint32             started     = 11;
+    required uint32             updated     = 12;
+    optional string             task_id     = 13; // Only set if status > XFR_INIT
+    optional string             err_msg     = 14; // Only set if status == XFR_FAILED
 }
 
 message HttpXfrData

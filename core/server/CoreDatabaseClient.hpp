@@ -107,7 +107,7 @@ public:
     //void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
     //void xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrEncrypt a_encrypt, XfrMode a_mode, Auth::XfrDataReply & a_reply );
-    void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
+    void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const bool * a_encrypted = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );

@@ -1938,6 +1938,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
         xfr->set_started( val["started"].GetUint() );
         xfr->set_updated( val["updated"].GetUint() );
         xfr->set_encrypt( (XfrEncrypt)val["encrypt"].GetUint() );
+        xfr->set_encrypted( val["encrypted"].GetBool() );
 
         imem = val.FindMember("ext");
         if ( imem != val.MemberEnd() )
@@ -1971,7 +1972,7 @@ DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_resu
 }
 
 void
-DatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const std::string & a_err_msg, const char * a_task_id )
+DatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const bool * a_encrypted, const std::string & a_err_msg, const char * a_task_id )
 {
     rapidjson::Document result;
 
@@ -1979,6 +1980,8 @@ DatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, c
     params.push_back({"xfr_id",a_xfr_id});
     if ( a_status )
         params.push_back({"status",to_string(*a_status)});
+    if ( a_encrypted )
+        params.push_back({"encrypted", *a_encrypted?"true":"false"});
     if ( a_task_id )
         params.push_back({"task_id", string(a_task_id)});
     if ( a_err_msg.size() )

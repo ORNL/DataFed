@@ -72,6 +72,7 @@ _output_mode = _OM_TEXT
 _ctxt_settings = dict(help_option_names=['-?','-h','--help'],ignore_unknown_options=True,allow_extra_args=True)
 _xfr_statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
 _xfr_modes = { 0: "Get", 1: "Put", 2: "Copy"}
+_xfr_encrypt_modes = { 0: "Disabled", 1: "Enabled", 2: "Required"}
 _initialized = False
 _devnull = None
 
@@ -1803,6 +1804,7 @@ def _print_xfr_stat( message ):
     for xfr in message.xfr:
         xfr_mode = _xfr_modes.get(xfr.mode, "None")
         xfr_status = _xfr_statuses.get(xfr.status, "None")
+        xfr_encrypt = _xfr_encrypt_modes.get(xfr.encrypt, "None")
 
         click.echo( "{:<20} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
                     "{:<20} {:<50}".format('Mode: ', xfr_mode) + '\n' +
@@ -1813,6 +1815,7 @@ def _print_xfr_stat( message ):
 
         click.echo( "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
                     "{:<20} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
+                    "{:<20} {} ({})".format('Encrypted:', xfr.encrypted, xfr_encrypt) + '\n' +
                     "{:<20} {:<50}".format('Started: ', _capi.timestampToStr(xfr.started)) + '\n' +
                     "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(xfr.started)))
 

@@ -579,6 +579,8 @@ GlobusAPIClient::getEndpointInfo( const std::string & a_ep_id, const std::string
     if (( imem = result.FindMember("force_encryption")) == result.MemberEnd() )
         EXCEPT( 1, "5 Invalid response from Globus Endpoint API." );
 
+    a_ep_info.supports_encryption = false;
+
     a_ep_info.force_encryption = imem->value.GetBool();
     if ( a_ep_info.force_encryption )
         a_ep_info.supports_encryption = true;
@@ -615,10 +617,14 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
     body.Accept(writer);
     cout << buffer.GetString() << endl;
     */
+    cout << "request refresh" << endl;
+
     string raw_result;
     long code = post( m_auth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
 
     // Try to decode result as JSON - even if call failed
+
+    cout << "got: " << raw_result << endl;
 
     DL_ERROR("Refresh result: " << raw_result );
 
@@ -634,6 +640,8 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
             EXCEPT( 1, "Globus refresh API call failed." );
         }
     }
+
+    cout << "parsed OK" << endl;
 
     rapidjson::Value::MemberIterator imem;
 
@@ -652,6 +660,8 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
         }
     }
 
+    cout << "about to use json" << endl;
+
     imem = result.FindMember("access_token");
     rapidjson::Value::MemberIterator imem2 = result.FindMember("expires_in");
 
@@ -661,7 +671,10 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
         EXCEPT( 1, "Invalid refresh response from Globus." );
     }
 
+    cout << "get acc tok" << endl;
     a_new_acc_tok = imem->value.GetString();
+
+    cout << "get expires" << endl;
     a_expires_in = imem2->value.GetUint();
 }
 
