@@ -260,6 +260,7 @@ router.get('/init2', function (req, res) {
                         mode: req.queryParams.mode,
                         status: g_lib.XS_INIT,
                         encrypt: req.queryParams.encrypt,
+                        encrypted: false,
                         rem_ep: rem_ep,
                         rem_path: rem_path,
                         user_id: client._id,
@@ -324,8 +325,11 @@ router.get('/update', function (req, res) {
             action: function() {
                 var obj = { updated: ((Date.now()/1000)|0) };
 
-                if ( req.queryParams.status != null )
+                if ( req.queryParams.status != undefined )
                     obj.status = req.queryParams.status;
+
+                if ( req.queryParams.encrypted != undefined )
+                    obj.encrypted = req.queryParams.encrypted;
 
                 if ( req.queryParams.task_id )
                     obj.task_id = req.queryParams.task_id;
@@ -346,6 +350,7 @@ router.get('/update', function (req, res) {
 //.queryParam('client', joi.string().required(), "Client UID")
 .queryParam('xfr_id', joi.string().required(), "Xfr record ID")
 .queryParam('status', joi.number().optional(), "New status")
+.queryParam('encrypted', joi.boolean().optional(), "New encrypted state")
 .queryParam('task_id', joi.string().optional(), "New task ID")
 .queryParam('err_msg', joi.string().optional(), "Error message")
 .summary('Update transfer record')
