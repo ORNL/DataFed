@@ -9,6 +9,7 @@
 #include "MsgComm.hpp"
 #include "CoreDatabaseClient.hpp"
 #include "CoreIWorkerMgr.hpp"
+#include "GlobusAPIClient.hpp"
 
 namespace SDMS {
 namespace Core {
@@ -51,6 +52,7 @@ private:
     bool procQueryUpdateRequest( const std::string & a_uid );
     bool procRepoAllocationSetRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );
+    bool procUserGetAccessTokenRequest( const std::string & a_uid );
 
     inline bool isPhrase( const std::string &str )
     {
@@ -73,6 +75,7 @@ private:
     bool                m_run;
     DatabaseClient      m_db_client;
     MsgBuf              m_msg_buf;
+    GlobusAPIClient     m_globus_api;
 
     //std::string         m_client_id;
 

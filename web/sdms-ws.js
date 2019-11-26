@@ -1009,38 +1009,43 @@ app.get('/api/top/unlink', ( a_req, a_resp ) => {
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
     console.log("/ui/ep/view", a_req.query.ep );
 
-    var userinfo = JSON.parse(a_req.cookies['sdms-user']);
-    //console.log("userinfo", userinfo );
+    //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
 
-    request.get({
-        uri: 'https://transfer.api.globusonline.org/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
-        auth: {
-            bearer: userinfo.acc_tok,
-        }
-    }, function( error, response, body ) {
-        //console.log( body );
-        a_resp.json(JSON.parse(body));
+    sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
+        console.log("reply:", reply );
+
+        request.get({
+            uri: 'https://transfer.api.globusonline.org/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
+            auth: {
+                bearer: reply.access,
+            }
+        }, function( error, response, body ) {
+            //console.log( body );
+            a_resp.json(JSON.parse(body));
+        });
     });
-
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
     console.log("/ui/eo/autocomp", a_req.query.term);
 
-    var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
     //console.log("userinfo", userinfo );
 
-    request.get({
-        uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
-        //uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&filter_fulltext='+a_req.query.term,
-        auth: {
-            bearer: userinfo.acc_tok,
-        }
-    }, function( error, response, body ) {
-        //console.log( body );
-        a_resp.json(JSON.parse(body));
-    });
+    sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
+        console.log("reply:", reply );
 
+        request.get({
+            uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
+            //uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&filter_fulltext='+a_req.query.term,
+            auth: {
+                bearer: reply.access,
+            }
+        }, function( error, response, body ) {
+            //console.log( body );
+            a_resp.json(JSON.parse(body));
+        });
+    });
 });
 
 app.get('/ui/ep/recent/load', ( a_req, a_resp ) => {

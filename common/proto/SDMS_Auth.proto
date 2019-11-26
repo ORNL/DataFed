@@ -58,6 +58,16 @@ message UserSetAccessTokenRequest
     required string             refresh     = 3;
 }
 
+message UserGetAccessTokenRequest
+{
+}
+
+message UserAccessTokenReply
+{
+    required string             access      = 1;
+    required uint32             expires_in  = 2;
+}
+
 message UserCreateRequest
 {
     required string             uid         = 1;

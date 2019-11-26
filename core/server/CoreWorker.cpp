@@ -97,6 +97,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &Worker::procQueryDeleteRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &Worker::procRepoAllocationSetRequest );
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
+        SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &Worker::procUserGetAccessTokenRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
@@ -844,6 +845,33 @@ Worker::procRepoAuthzRequest( const std::string & a_uid )
 
     m_db_client.setClient( request->client() );
     m_db_client.repoAuthz( *request, reply );
+
+    PROC_MSG_END
+}
+
+
+bool
+Worker::procUserGetAccessTokenRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( UserGetAccessTokenRequest, UserAccessTokenReply )
+
+    string acc_tok, ref_tok;
+    uint32_t expires_in;
+
+    m_db_client.setClient( a_uid );
+    m_db_client.userGetAccessToken( acc_tok, ref_tok, expires_in );
+
+    if ( expires_in < 300 )
+    {
+        DL_INFO( "Refreshing access token for " << a_uid );
+
+        m_globus_api.refreshAccessToken( ref_tok, acc_tok, expires_in );
+        m_db_client.userSetAccessToken( acc_tok, expires_in, ref_tok );
+
+    }
+
+    reply.set_access( acc_tok );
+    reply.set_expires_in( expires_in );
 
     PROC_MSG_END
 }
