@@ -21,28 +21,21 @@ namespace SDMS {
 namespace Core {
 
 
-Server::Server( uint32_t a_port, const string & a_cred_dir, uint32_t a_timeout, uint32_t a_num_workers, const string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per ) :
-    m_port( a_port ),
-    m_timeout(a_timeout),
+Server::Server() :
+    m_config(Config::getInstance()),
     m_io_secure_thread(0),
     m_io_insecure_thread(0),
     m_maint_thread(0),
     m_io_running(false),
-    m_db_url(a_db_url),
-    m_db_user(a_db_user),
-    m_db_pass(a_db_pass),
-    m_xfr_purge_age(a_xfr_purge_age),
-    m_xfr_purge_per(a_xfr_purge_per),
     m_zap_thread(0),
     m_xfr_mgr( *this ),
-    m_msg_router_thread(0),
-    m_num_workers(a_num_workers)
+    m_msg_router_thread(0)
 {
-    loadKeys( a_cred_dir );
-
+    loadKeys (m_config.cred_dir );
     m_sec_ctx.is_server = true;
     m_sec_ctx.public_key = m_pub_key;
     m_sec_ctx.private_key = m_priv_key;
+
     loadRepositoryConfig();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
@@ -80,7 +73,7 @@ Server::loadRepositoryConfig()
 {
     DL_INFO("Loading repo configuration");
 
-    DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
+    DatabaseClient  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
 
     vector<RepoData*> repos;
 
@@ -129,7 +122,7 @@ Server::run( bool a_async )
         throw runtime_error( "Only one worker router instance allowed" );
 
     m_io_running = true;
-    DL_INFO( "Public/private MAPI starting on ports " << m_port << "/" << ( m_port + 1))
+    DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
 
     if ( a_async )
     {
@@ -305,7 +298,7 @@ Server::msgRouter()
     zmq_setsockopt( control, ZMQ_SUBSCRIBE, "", 0 );
 
     // Ceate worker threads
-    for ( uint16_t t = 0; t < m_num_workers; ++t )
+    for ( uint16_t t = 0; t < m_config.worker_threads; ++t )
         m_workers.push_back( new Worker( *this, t+1 ));
 
     // Connect backend to frontend via a proxy
@@ -329,7 +322,7 @@ Server::ioSecure()
 {
     try
     {
-        MsgComm frontend( "tcp://*:" + to_string(m_port), MsgComm::ROUTER, true, &m_sec_ctx );
+        MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_sec_ctx );
         MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
         // Must use custom proxy to inject ZAP User-Id into message frame
@@ -346,7 +339,7 @@ Server::ioInsecure()
 {
     try
     {
-        MsgComm frontend( "tcp://*:" + to_string(m_port + 1), MsgComm::ROUTER, true );
+        MsgComm frontend( "tcp://*:" + to_string(m_config.port + 1), MsgComm::ROUTER, true );
         MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
         zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
@@ -620,7 +613,7 @@ Server::zapHandler()
         map<string,pair<string,size_t>>::iterator itrans_client;
         zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
         string uid;
-        DatabaseClient  db_client( m_db_url, m_db_user, m_db_pass );
+        DatabaseClient  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );

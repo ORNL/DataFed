@@ -69,6 +69,7 @@ private:
 
     typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
 
+    Config &            m_config;
     IWorkerMgr &        m_mgr;
     size_t              m_tid;
     std::thread *       m_worker_thread;
@@ -76,8 +77,6 @@ private:
     DatabaseClient      m_db_client;
     MsgBuf              m_msg_buf;
     GlobusAPIClient     m_globus_api;
-
-    //std::string         m_client_id;
 
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 };

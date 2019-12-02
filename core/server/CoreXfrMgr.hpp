@@ -48,6 +48,7 @@ private:
     void    xfrThreadFunc();
     void    xfrBackOffPolling( const std::list<XfrDataInfo*>::iterator & ixfr );
 
+    Config &                            m_config;
     IWorkerMgr &                        m_mgr;
     bool                                m_run;
     std::thread *                       m_mgr_thread;

@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include "MsgComm.hpp"
+#include "Config.hpp"
 #include "CoreIWorkerMgr.hpp"
 #include "CoreXfrMgr.hpp"
 #include "CoreWorker.hpp"
@@ -22,7 +23,7 @@ namespace Core {
 class Server : public IWorkerMgr
 {
 public:
-    Server( uint32_t a_server_port, const std::string & a_cert_dir, uint32_t a_timeout, uint32_t a_num_workers, const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass, size_t a_xfr_purge_age, size_t a_xfr_purge_per );
+    Server();
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -34,18 +35,12 @@ public:
 private:
 
     // IWorkerMgr methods
-    const std::string & getDbURL() { return m_db_url; }
-    const std::string & getDbUser() { return m_db_user; }
-    const std::string & getDbPass() { return m_db_pass; }
     const std::string * getRepoAddress( const std::string & a_repo_id );
     void                repoPathCreate( const std::string & a_repo_id, const std::string & a_id );
     void                repoPathDelete( const std::string & a_repo_id, const std::string & a_id );
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     void                handleNewXfr( const XfrData & a_xfr );
-    //void                handleNewXfr2( const XfrGetData & a_xfr );
-    size_t              getXfrPurgeAge() { return m_xfr_purge_age; }
-    size_t              getXfrPurgePeriod() { return m_xfr_purge_per; }
     void                dataDelete( const std::vector<RepoRecordDataLocations> & a_locs );
 
     void loadKeys( const std::string & a_cred_dir );
@@ -58,9 +53,7 @@ private:
     void backgroundMaintenance();
     void zapHandler();
 
-    std::string                     m_host;
-    uint32_t                        m_port;
-    uint32_t                        m_timeout;
+    Config &                        m_config;
     std::thread *                   m_io_secure_thread;
     std::thread *                   m_io_insecure_thread;
     std::thread *                   m_maint_thread;
@@ -70,11 +63,6 @@ private:
     std::condition_variable         m_router_cvar;
     std::string                     m_pub_key;
     std::string                     m_priv_key;
-    std::string                     m_db_url;
-    std::string                     m_db_user;
-    std::string                     m_db_pass;
-    size_t                          m_xfr_purge_age;
-    size_t                          m_xfr_purge_per;
     MsgComm::SecurityContext        m_sec_ctx;
     std::map<std::string,RepoData*> m_repos;
     //std::string                     m_repo_address;

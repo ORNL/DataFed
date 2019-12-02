@@ -7,6 +7,7 @@
 #include "TraceException.hpp"
 #include "Util.hpp"
 #include "CoreServer.hpp"
+#include "Config.hpp"
 
 using namespace std;
 using namespace SDMS;
@@ -23,31 +24,27 @@ int main( int a_argc, char ** a_argv )
 
         DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
 
-        uint16_t    port = 7512;
-        int         timeout = 5;
-        uint32_t    num_threads = 1;
-        string      cred_dir = "/etc/datafed/";
-        string      db_url = "http://sdms.ornl.gov:8529/_db/sdms/api/";
-        string      db_user = "root";
-        string      db_pass = "sdms!";
-        string      cfg_file;
-        bool        gen_keys = false;
-        size_t      tr_purge_age = 30*24*3600;
-        size_t      tr_purge_per = 6*3600;
+        Core::Config &  config = Core::Config::getInstance();
+        string          cfg_file;
+        bool            gen_keys = false;
 
         po::options_description opts( "Options" );
 
         opts.add_options()
             ("help,?", "Show help")
             ("version,v", "Show version number")
-            ("cred-dir,c",po::value<string>( &cred_dir ),"Server credentials directory")
-            ("port,p",po::value<uint16_t>( &port ),"Service port")
-            ("db-url,u",po::value<string>( &db_url ),"DB url")
-            ("db-user,U",po::value<string>( &db_user ),"DB user name")
-            ("db-pass,P",po::value<string>( &db_pass ),"DB password")
-            ("xfr-purge-age",po::value<size_t>( &tr_purge_age ),"Transfer purge age (seconds)")
-            ("xfr-purge-per",po::value<size_t>( &tr_purge_per ),"Transfer purge period (seconds)")
-            ("threads,t",po::value<uint32_t>( &num_threads ),"Number of I/O threads")
+            ("cred-dir,c",po::value<string>( &config.cred_dir ),"Server credentials directory")
+            ("port,p",po::value<uint32_t>( &config.port ),"Service port")
+            ("db-url,u",po::value<string>( &config.db_url ),"DB url")
+            ("db-user,U",po::value<string>( &config.db_user ),"DB user name")
+            ("db-pass,P",po::value<string>( &config.db_pass ),"DB password")
+            ("glob-oauth-url",po::value<string>( &config.glob_oauth_url ),"Globus authorization API base URL")
+            ("glob-xfr-url",po::value<string>( &config.glob_xfr_url ),"Globus transfer API base URL")
+            ("client-id",po::value<string>( &config.client_id ),"Client ID")
+            ("client-secret",po::value<string>( &config.client_secret ),"Client secret")
+            ("xfr-purge-age",po::value<size_t>( &config.xfr_purge_age ),"Transfer purge age (seconds)")
+            ("xfr-purge-per",po::value<size_t>( &config.xfr_purge_per ),"Transfer purge period (seconds)")
+            ("threads,t",po::value<uint32_t>( &config.worker_threads ),"Number of I/O threads")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
@@ -84,22 +81,22 @@ int main( int a_argc, char ** a_argv )
                 optfile.close();
             }
 
-            if ( cred_dir.size() && cred_dir.back() != '/' )
-                cred_dir += "/";
+            if ( config.cred_dir.size() && config.cred_dir.back() != '/' )
+                config.cred_dir += "/";
 
             if ( gen_keys )
             {
                 string pub_key, priv_key;
                 generateKeys( pub_key, priv_key );
 
-                string fname = cred_dir + "datafed-core-key.pub";
+                string fname = config.cred_dir + "datafed-core-key.pub";
                 ofstream outf( fname.c_str() );
                 if ( !outf.is_open() || !outf.good() )
                     EXCEPT_PARAM( 1, "Could not open file: " << fname );
                 outf << pub_key;
                 outf.close();
 
-                fname = cred_dir + "datafed-core-key.priv";
+                fname = config.cred_dir + "datafed-core-key.priv";
                 outf.open( fname.c_str() );
                 if ( !outf.is_open() || !outf.good() )
                     EXCEPT_PARAM( 1, "Could not open file: " << fname );
@@ -115,8 +112,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Core::Server server( port, cred_dir, timeout, num_threads, db_url, db_user, db_pass, tr_purge_age, tr_purge_per );
-
+        Core::Server server;
         server.run( false );
 
         DL_INFO( "DataFed core server exiting" );

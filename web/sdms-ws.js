@@ -63,19 +63,19 @@ function defaultSettings(){
     g_server_cert_file = '/etc/datafed/datafed-web-cert.pem';
     g_server_chain_file = '/etc/datafed/DigiCertSHA2SecureServerCA.pem';
     g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
-    g_client_id = '7bc68d7b-4ad4-4991-8a49-ecbfcae1a454';
-    g_client_secret = 'FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=';
     g_test = false;
 }
 
 function startServer(){
-    console.log( "host:", g_host );
-    console.log( "port:", g_port );
-    console.log( "server key file:", g_server_key_file );
-    console.log( "server cert file:", g_server_cert_file );
-    console.log( "server chain file:", g_server_chain_file );
-    console.log( "core server addr:", g_core_serv_addr );
-    console.log( "tes mode:", g_test );
+    console.log( "Host:", g_host );
+    console.log( "Port:", g_port );
+    console.log( "Server key file:", g_server_key_file );
+    console.log( "Server cert file:", g_server_cert_file );
+    console.log( "Server chain file:", g_server_chain_file );
+    console.log( "Core server addr:", g_core_serv_addr );
+    console.log( "Client ID:", g_client_id );
+    console.log( "Client Secret:", g_client_secret );
+    console.log( "Test mode:", g_test );
 
     g_core_sock.connect( g_core_serv_addr );
 

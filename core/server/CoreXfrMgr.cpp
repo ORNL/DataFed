@@ -19,7 +19,7 @@ namespace SDMS {
 namespace Core {
 
 XfrMgr::XfrMgr( IWorkerMgr & a_mgr ) :
-    m_mgr(a_mgr), m_run(false), m_mgr_thread(0)
+    m_config(Config::getInstance()), m_mgr(a_mgr), m_run(false), m_mgr_thread(0)
 {
 }
 
@@ -85,7 +85,7 @@ XfrMgr::xfrThreadFunc()
         Auth::RecordUpdateRequest upd_req;
         Auth::RecordDataReply  reply;
         string error_msg;
-        DatabaseClient db_client( m_mgr.getDbURL(), m_mgr.getDbUser(), m_mgr.getDbPass() );
+        DatabaseClient db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
         GlobusAPIClient glob;
         vector<string> events;
 
@@ -96,12 +96,9 @@ XfrMgr::xfrThreadFunc()
         Auth::RepoDataSizeReply *    sz_rep;
         RecordDataLocation *            loc;
         MsgBuf::Frame                frame;
-        //string                       uid;
-        //size_t                       pos;
         map<string,MsgComm*>        repo_comm;
         map<string,MsgComm*>::iterator comm;
         size_t                      purge_timer = 10;
-        //size_t                      refresh_timer = 10;
         vector<RepoRecordDataLocations> locs;
         vector<DatabaseClient::UserTokenInfo> expiring_tokens;
         vector<DatabaseClient::UserTokenInfo>::iterator iep;
@@ -118,8 +115,8 @@ XfrMgr::xfrThreadFunc()
             if ( --purge_timer == 0 )
             {
                 DL_INFO( "Purging old transfer records" );
-                db_client.purgeTransferRecords( m_mgr.getXfrPurgeAge() );
-                purge_timer = m_mgr.getXfrPurgePeriod();
+                db_client.purgeTransferRecords( m_config.xfr_purge_age );
+                purge_timer = m_config.xfr_purge_per;
             }
 
 /*

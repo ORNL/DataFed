@@ -26,8 +26,8 @@ map<uint16_t,Worker::msg_fun_t> Worker::m_msg_handlers;
 
 
 Worker::Worker( IWorkerMgr & a_mgr, size_t a_tid ) :
-    m_mgr(a_mgr), m_tid(a_tid), m_worker_thread(0), m_run(true),
-    m_db_client( a_mgr.getDbURL(), a_mgr.getDbUser(), a_mgr.getDbPass() )
+    m_config(Config::getInstance()), m_mgr(a_mgr), m_tid(a_tid), m_worker_thread(0), m_run(true),
+    m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
 {
     setupMsgHandlers();
     m_worker_thread = new thread( &Worker::workerThread, this );

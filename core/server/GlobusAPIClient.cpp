@@ -14,11 +14,7 @@ namespace SDMS {
 namespace Core {
 
 GlobusAPIClient::GlobusAPIClient():
-    m_auth_url("https://auth.globus.org/v2/oauth2/"),
-    m_xfr_url("https://transfer.api.globusonline.org/v0.10/"),
-    m_auth_id("7bc68d7b-4ad4-4991-8a49-ecbfcae1a454"), // TODO Must come from config
-    m_auth_secret("FpqvBscUorqgNLXKzlBAV0EQTdLXtBTTnGpf0+YnKEQ=") // TODO Must come from config
-
+    m_config( Config::getInstance() )
 {
     m_curl = curl_easy_init();
     if ( !m_curl )
@@ -80,8 +76,8 @@ GlobusAPIClient::get( const std::string & a_base_url, const std::string & a_url_
     else
     {
         curl_easy_setopt( m_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
-        curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_auth_id.c_str() );
-        curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_auth_secret.c_str() );
+        curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
+        curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
     }
 
     CURLcode res = curl_easy_perform( m_curl );
@@ -156,8 +152,8 @@ GlobusAPIClient::post( const std::string & a_base_url, const std::string & a_url
     else
     {
         curl_easy_setopt( m_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
-        curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_auth_id.c_str() );
-        curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_auth_secret.c_str() );
+        curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
+        curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
     }
 
     if ( a_body )
@@ -190,7 +186,7 @@ std::string
 GlobusAPIClient::getSubmissionID( const std::string & a_acc_token )
 {
     string raw_result;
-    long code = get( m_xfr_url + "submission_id", "", a_acc_token, {}, raw_result );
+    long code = get( m_config.glob_xfr_url + "submission_id", "", a_acc_token, {}, raw_result );
 
     if ( code < 200 || code > 202 )
     {
@@ -306,7 +302,7 @@ GlobusAPIClient::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_toke
     cout << buffer.GetString() << endl;
 
     string raw_result;
-    long code = post( m_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
+    long code = post( m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
 
     // Try to decode result as JSON - even if call failed
 
@@ -389,7 +385,7 @@ GlobusAPIClient::checkTransferStatus( const std::string & a_acc_tok, const std::
     a_err_msg.clear();
     string raw_result;
 
-    long code = get( m_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
+    long code = get( m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
 
     DL_INFO( "XFR STAT: " << raw_result );
 
@@ -449,7 +445,7 @@ GlobusAPIClient::cancelTask( const std::string & a_acc_tok, const std::string & 
     string raw_result;
 
     //string url = string("task/")+a_task_id+"/cancel";
-    long code = post( m_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
+    long code = post( m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
 
     if ( code < 200 || code > 202 )
         EXCEPT_PARAM( 1, "Globus cancel task API error, code: " << code );
@@ -527,7 +523,7 @@ void
 GlobusAPIClient::getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info )
 {
     string raw_result;
-    long code = get( m_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
+    long code = get( m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
     DL_ERROR("EP result: " << raw_result );
 
 
@@ -620,7 +616,7 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
     cout << "request refresh" << endl;
 
     string raw_result;
-    long code = post( m_auth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
+    long code = post( m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
 
     // Try to decode result as JSON - even if call failed
 
@@ -677,7 +673,5 @@ GlobusAPIClient::refreshAccessToken( const std::string & a_ref_tok, std::string 
     cout << "get expires" << endl;
     a_expires_in = imem2->value.GetUint();
 }
-
-
 
 }}

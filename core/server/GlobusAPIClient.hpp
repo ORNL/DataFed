@@ -5,6 +5,7 @@
 #include <vector>
 #include <curl/curl.h>
 #include <rapidjson/document.h>
+#include "Config.hpp"
 #include "SDMS.pb.h"
 
 namespace SDMS {
@@ -37,10 +38,7 @@ private:
     long        post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, std::string & a_result );
     bool        eventsHaveErrors( const std::vector<std::string> & a_events, SDMS::XfrStatus & status, std::string & a_err_msg );
 
-    std::string m_auth_url;
-    std::string m_xfr_url;
-    std::string m_auth_id;
-    std::string m_auth_secret;
+    Config &    m_config;
     CURL *      m_curl;
 };
 
