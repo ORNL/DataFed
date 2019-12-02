@@ -1608,7 +1608,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,doi:i.doi}";
+    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi}";
 
 
     return result;

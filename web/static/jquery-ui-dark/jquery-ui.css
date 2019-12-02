@@ -254,12 +254,22 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 
 .data-tree-id
 {
-	color:#8090FF;
+    color:#8090FF;
 }
 
 .data-tree-alias
 {
-	color:#40A040;
+    color:#40A040;
+}
+
+.data-tree-owner
+{
+    color:#F03030;
+}
+
+.data-tree-creator
+{
+    color:#E07010;
 }
 
 /* Layout helpers

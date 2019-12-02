@@ -1636,6 +1636,8 @@ DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_
                 item->set_locked( imem->value.GetBool() );
             if (( imem = val.FindMember("owner")) != val.MemberEnd() && !imem->value.IsNull() )
                 item->set_owner( imem->value.GetString() );
+            if (( imem = val.FindMember("creator")) != val.MemberEnd() && !imem->value.IsNull() )
+                item->set_creator( imem->value.GetString() );
             if (( imem = val.FindMember("size")) != val.MemberEnd() )
                 item->set_size( imem->value.GetUint() );
             if (( imem = val.FindMember("gen")) != val.MemberEnd() )

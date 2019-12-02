@@ -27,6 +27,7 @@ function makeBrowserTab(){
     this.xfrHist = [];
     this.pollSince = g_opts.xfr_hist * 3600;
     this.my_root_key = "c/u_" + g_user.uid + "_root";
+    this.uid = "u/" + g_user.uid;
     this.drag_mode = 0;
     this.drag_enabled = true;
     this.searchSelect = false;
@@ -204,13 +205,13 @@ function makeBrowserTab(){
             viewProj( proj_id, function( proj ){
                 if ( proj ){
                     //console.log("proj:",proj,g_user.uid);
-                    var uid = "u/"+g_user.uid;
+                    //var uid = "u/"+g_user.uid;
                     path.push({id:proj_id,off:0});
-                    if ( proj.owner == uid )
+                    if ( proj.owner == inst.uid )
                         path.push({id:"proj_own",off:0});
-                    else if ( proj.admin && proj.admin.indexOf( uid ) != -1 )
+                    else if ( proj.admin && proj.admin.indexOf( inst.uid ) != -1 )
                         path.push({id:"proj_adm",off:0});
-                    else if ( proj.member && proj.member.indexOf( uid ) != -1 )
+                    else if ( proj.member && proj.member.indexOf( inst.uid ) != -1 )
                         path.push({id:"proj_mem",off:0});
                     else{
                         console.log("NOT FOUND - shared project folder?" );
@@ -1442,7 +1443,7 @@ function makeBrowserTab(){
             fields.id = "My Data";
             fields.descr = "Location for creating and organizing personal data and collections.";
 
-            userView( g_user.uid, true, function( ok, user ){
+            userView( inst.uid, true, function( ok, user ){
                 if ( ok && user ){
                     html = "<table class='info_table'><col width='20%'><col width='80%'>";
                     html += "<tr><td>Allocation(s):</td><td>";
@@ -1969,14 +1970,32 @@ function makeBrowserTab(){
         if ( item.locked )
             title += "<i class='ui-icon ui-icon-locked'></i> ";
 
-        title += "\"<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>\"&nbsp&nbsp<span class='";
+        title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>&nbsp&nbsp<span class='";
 
         if ( item.alias )
-            title += "data-tree-alias'>("+ item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")";
+            title += "data-tree-alias'>"+ item.alias.substr(item.alias.lastIndexOf(":") + 1);
         else
-            title += "data-tree-id'>[" + item.id + "]";
+            title += "data-tree-id'>" + item.id;
 
         title += "</span>";
+
+        if ( item.owner && item.owner.startsWith( "p/" )){
+            if ( item.creator && item.creator != inst.uid )
+                title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
+        }else{
+            if ( item.owner && item.creator ){
+                if ( item.owner != inst.uid && item.creator != inst.uid )
+                    title += "&nbsp<span class='data-tree-owner'(>" + item.owner.substr(2) + ")</span>";
+                else if ( item.creator != inst.uid )
+                    title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
+            }else if ( item.owner ){
+                if ( item.owner != inst.uid )
+                    title += "&nbsp<span class='data-tree-owner'>(" + item.owner.substr(2) + ")</span>";
+            }else if ( item.creator ){
+                if ( item.creator != inst.uid )
+                    title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
+            }
+        }
 
         return title;
     }
@@ -3011,9 +3030,9 @@ function makeBrowserTab(){
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = [
-                    {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:"u/"+g_user.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
-                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,checkbox:false}
+                    {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:inst.uid,nodrag:true,isroot:true,admin:true},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:inst.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:inst.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
                     data.result = {
