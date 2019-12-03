@@ -168,11 +168,11 @@ svg text
 
 .data-tree-title
 {
-    display:inline-block;
+    /*display:inline-block;
     min-width:13em;
     max-width:13em;
     overflow:hidden;
-    text-overflow: ellipsis;
+    text-overflow: ellipsis;*/
     margin:0!important;
     padding:0!important;
 }
@@ -183,14 +183,16 @@ svg text
     min-width:7em;
     margin:0!important;
     padding:0!important;
+    font-size: .85rem;
 }
 
 .data-tree-alias
 {
     display:inline-block;
-    min-width:7em;
+    min-width:15em;
     margin:0!important;
     padding:0!important;
+    font-size: .85rem;
 }
 
 .panel-sunk

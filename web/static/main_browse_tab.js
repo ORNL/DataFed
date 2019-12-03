@@ -124,7 +124,6 @@ function makeBrowserTab(){
                     //node.setTitle( inst.generateTitle( data[idx] ));
                     node.title = inst.generateTitle( data[idx] );
                     inst.updateIcon( node, data[idx] );
-                    node.tooltip = inst.generateTooltip( data[idx] );
                     node.renderTitle();
                     if ( a_reload )
                         inst.reloadNode( node );
@@ -1011,16 +1010,6 @@ function makeBrowserTab(){
         });
     }
 
-    /* Doesn't seem to be in use
-    this.editAllocSelected = function(){
-        // TODO - use selection, not active node
-        var node = inst.data_tree.activeNode;
-        if ( node ) {
-            dlgAllocations.show();
-        }
-    }
-    */
-
     this.actionDepGraph = function(){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
@@ -1034,16 +1023,6 @@ function makeBrowserTab(){
             $( "#data-tabs" ).tabs({ active: 2 });
         }
     }
-
-    /*
-    this.updateNodeTitle = function( data ){
-        var title = inst.generateTitle( data );
-
-        inst.data_tree.visit(function(node){
-            if ( node.key == data.id )
-                node.setTitle(title);
-        });
-    }*/
 
     this.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
@@ -1717,11 +1696,6 @@ function makeBrowserTab(){
 
             var src = [{title:"Metadata",folder:true,expanded:inst.data_md_exp["Metadata"]?true:false,children:inst.buildObjSrcTree(md,"Metadata")}];
 
-            //console.log("md:",md);
-            //console.log("keys:",Object.keys(md));
-            //for ( var p in md ) {
-                //if ( md.hasOwnProperty( p )) {
-
             inst.data_md_tree.reload( src );
             inst.data_md_empty = false;
         } else if ( !inst.data_md_empty ) {
@@ -1729,56 +1703,6 @@ function makeBrowserTab(){
             inst.data_md_empty = true;
         }
     }
-
-    /*
-    this.addNode = function( item ){
-        console.log( "addnode", item );
-
-        if ( item.id.startsWith("p/")){
-            // Projects can only be added to "my projects"
-            var node = inst.data_tree.getNodeByKey("proj_own");
-            if ( node ){
-                var prj_id = item.id.substr(2);
-                node.addNode({ title: item.title + " (" + prj_id + ")",icon:"ui-icon ui-icon-box", folder: true, key:item.id,scope:item.id,isproj:true,admin:true,nodrag:true,children:[
-                    {title: "Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:item.id,isroot:true,admin:true,nodrag:true}
-                ]});
-            }
-        }else{
-            // Data and/or collections
-            // Get collections that this item belongs to
-            getParents( item.id, function( ok, data ) {
-                if ( ok ) {
-                    var par = data.coll;
-                    var scope;
-
-                    if ( par && par.length ) {
-                        var updnodes = [];
-                        inst.data_tree.visit(function(node){
-                            if ( node.isFolder() ) {
-                                for ( var i in par ) {
-                                    if ( par[i].id == node.key ) {
-                                        updnodes.push( node );
-                                        scope = node.data.scope;
-                                        break;
-                                    }
-                                }
-                            }
-                        });
-                        if ( updnodes.length ) {
-                            var nodedat;
-                            if ( item.id[0] == "c" )
-                                nodedat = {title:inst.generateTitle(item),key:item.id,folder:true,icon:"ui-icon ui-icon-folder",scope:scope};
-                            else
-                                nodedat = {title:inst.generateTitle( item ),key:item.id,icon:"ui-icon ui-icon-file",scope:scope};
-                            for ( var i in updnodes ) {
-                                updnodes[i].addNode( nodedat );
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }*/
 
     this.execQuery = function( query ){
         setStatusText("Executing search query...");
@@ -1795,7 +1719,7 @@ function makeBrowserTab(){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                     for ( var i in items ){
                         var item = items[i];
-                        results.push({title:inst.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,tooltip:inst.generateTooltip(item)});
+                        results.push({title:inst.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi});
                     }
                 } else {
                     setStatusText("No results found");
@@ -1964,20 +1888,15 @@ function makeBrowserTab(){
         inst.cat_tree.selectAll(false);
     }
 
-    this.generateTitle = function( item ) {
+    this.generateTitle = function( item, refresh ) {
         var title = "";
 
         if ( item.locked )
             title += "<i class='ui-icon ui-icon-locked'></i> ";
 
-        title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>&nbsp&nbsp<span class='";
-
-        if ( item.alias )
-            title += "data-tree-alias'>"+ item.alias.substr(item.alias.lastIndexOf(":") + 1);
-        else
-            title += "data-tree-id'>" + item.id;
-
-        title += "</span>";
+        title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>" + (refresh?"&nbsp<i class='browse-reload ui-icon ui-icon-reload'></i>":"") + "<br>";
+        title += "<span class='data-tree-id'>" + item.id + "</span>";
+        title += "<span class='data-tree-alias'>" + (item.alias?item.alias.substr(item.alias.lastIndexOf(":") + 1):"") + "</span>";
 
         if ( item.owner && item.owner.startsWith( "p/" )){
             if ( item.creator && item.creator != inst.uid )
@@ -2007,13 +1926,6 @@ function makeBrowserTab(){
             else
                 node.icon = "ui-icon ui-icon-file";
         }
-    }
-
-    this.generateTooltip = function( item ) {
-        return escapeHTML("\"" + item.title + "\"") +
-            ", id: " + item.id +
-            (item.alias?", alias: "+item.alias:"") +
-            (item.doi?", doi: "+item.doi:"");
     }
 
     this.xfrUpdateHistory = function( xfr_list ){
@@ -3149,7 +3061,7 @@ function makeBrowserTab(){
 
                     for ( var i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: inst.generateTitle(item)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:item.id,isproj:true,admin:admin,mgr:mgr,nodrag:true,lazy:true});
+                        data.result.push({ title: inst.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true,admin:admin,mgr:mgr,nodrag:true,lazy:true});
                     }
                 }
 
@@ -3172,7 +3084,7 @@ function makeBrowserTab(){
                     var item;
                     for ( var i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: inst.generateTitle(item) + " <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",tooltip:inst.generateTooltip(item),folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: inst.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "queries" ) {
@@ -3203,9 +3115,9 @@ function makeBrowserTab(){
                 for ( var i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
-                        entry = { title: inst.generateTitle(item),tooltip:inst.generateTooltip(item),folder:true,lazy:true,scope:scope,key:item.id, offset: 0 };
+                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope,key:item.id, offset: 0 };
                     }else{
-                        entry = { title: inst.generateTitle(item),tooltip:inst.generateTooltip(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
+                        entry = { title: inst.generateTitle(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
                     }
 
                     data.result.push( entry );
