@@ -2460,9 +2460,9 @@ function makeBrowserTab(){
             var linkForce = d3.forceLink(inst.link_data)
                 .strength(function(d){
                     switch(d.ty){
-                        case 0: return .2;
-                        case 1: return .2;
-                        case 2: return .2;
+                        case 0: return .1;
+                        case 1: return .1;
+                        case 2: return .1;
                     }
                 })
                 .id( function(d) { return d.id; })

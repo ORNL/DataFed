@@ -1068,18 +1068,22 @@ app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
 app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
     console.log("/ui/ep/dir/list", a_req.query.ep, a_req.query.path );
 
-    var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
     //console.log("userinfo", userinfo );
 
-    request.get({
-        uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
-        auth: {
-            bearer: userinfo.acc_tok,
-        }
-    }, function( error, response, body ) {
-        //console.log("ep ls err:",error);
-        //console.log("ep ls body sz:",body.length );
-        a_resp.json(JSON.parse(body));
+    sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
+        console.log("reply:", reply );
+
+        request.get({
+            uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
+            auth: {
+                bearer: reply.access,
+            }
+        }, function( error, response, body ) {
+            //console.log("ep ls err:",error);
+            //console.log("ep ls body sz:",body.length );
+            a_resp.json(JSON.parse(body));
+        });
     });
 
 });
