@@ -21,6 +21,11 @@ div
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
+span.fancytree-title
+{
+    font-size: 1rem;
+}
+
 span.fancytree-custom-icon {
     margin-left:0!important;
 }
@@ -44,6 +49,7 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
     font-family:"jquery-ui";
     content: "\e69b";
 }
+
 
 /*.text
 {
@@ -163,8 +169,8 @@ svg text
 .data-tree-title
 {
     display:inline-block;
-    min-width:10em;
-    max-width:10em;
+    min-width:13em;
+    max-width:13em;
     overflow:hidden;
     text-overflow: ellipsis;
     margin:0!important;
