@@ -118,7 +118,7 @@ module.exports = ( function() {
 
     obj.field_reqs = {
         title: { required: true, update: true, max_len: 80, label: 'title' },
-        alias: { required: false, update: true, max_len: 60, lower: true, charset: obj.CHARSET_ALIAS, label: 'alias' },
+        alias: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ALIAS, label: 'alias' },
         desc: { required: false, update: true, max_len: 2000, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
