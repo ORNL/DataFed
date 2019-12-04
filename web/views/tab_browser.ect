@@ -11,7 +11,7 @@
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="col-flex" style="height:100%">
                         <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
-                            <div id="data_tree" class="no-border"></div>
+                            <div id="data_tree" class="no-border" style="display:inline-block"></div>
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
                             <button class="btn" id="btn_new_data" title='Create new data record' disabled><span class="ui-icon ui-icon-file"></span></button>
@@ -29,7 +29,7 @@
                 <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
                     <div class="col-flex" style="height:100%">
                         <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
-                            <div id="catalog_tree" class="no-border"></div>
+                            <div id="catalog_tree" class="no-border" style="display:inline-block"></div>
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 0">
                             <button class="btn" id="btn_cat_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
@@ -69,15 +69,16 @@
                 </ul>
                 <div id="tab-sel-info" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="ui-widget-content" style="height:100%;overflow:auto;padding:.25em">
-                        <div id="sel_id"></div>
                         <div id="sel_title_div">
-                            <br>
                             <div id="sel_title"></div>
+                            <br>
                         </div>
+                        <div id="sel_id"></div>
+                        <div id="sel_alias"></div>
                         <div id="sel_descr_div">
                             <br>
                             <div id="sel_descr_hdr" style="" class="sub-header">Description</div>
-                            <div style="padding:0" class="ui-widget-content" >
+                            <div style="padding:0;overflow-wrap:break-word" class="ui-widget-content" >
                                     <div id="sel_descr" style="padding:.25em;white-space:pre-wrap"></div>
                             </div>
                         </div>
@@ -91,8 +92,8 @@
                         <div id="sel_details_div">
                             <br>
                             <div id="sel_details_hdr" class="sub-header">Details</div>
-                            <div class="ui-widget-content" >
-                                <div id="sel_details" style="padding:.25em"></div>
+                            <div class="ui-widget-content" style="">
+                                <div id="sel_details" style="padding:.25em;overflow-wrap:break-word"></div>
                             </div>
                         </div>
                     </div>
@@ -100,7 +101,7 @@
                 <div id="tab-sel-md" class="ui-widget-content" style="padding:0;height:100%;min-height:0;overflow:auto">
                     <div class="ui-widget-content" style="height:100%;overflow:auto;padding:.25em">
                         <div id="sel_md" style="padding:.25em">
-                            <div id="data_md_tree" class="no-border"></div>
+                            <div id="data_md_tree" class="no-border" style="display:inline-block"></div>
                         </div>
                     </div>
                 </div>

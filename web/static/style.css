@@ -422,6 +422,15 @@ td
     border:none!important;
 }
 
+.form-grid
+{
+    display:grid;
+    grid-template-columns:max-content auto;
+    column-gap:1em;
+    overflow-y:hidden;
+    width:100%;
+}
+
 /*
 .ui-selectablexx
 {

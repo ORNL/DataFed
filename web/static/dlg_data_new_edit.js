@@ -18,9 +18,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             </ul>\
             <div id='tab-dlg-gen' style='padding:1em'>\
                 <table class='form-table'>\
-                    <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' style='width:100%'></input></td></tr>\
-                    <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' id='alias' style='width:100%'></input></td></tr>\
-                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' maxlength='80' style='width:100%'></input></td></tr>\
+                    <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' maxlength='40' id='alias' style='width:100%'></input></td></tr>\
+                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Keywords:</td><td colspan='3'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                 </table>\

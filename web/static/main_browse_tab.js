@@ -7,6 +7,7 @@ function makeBrowserTab(){
     //inst.frame = $("#tab-browse");
     //inst.data_ident = $("#data_ident",inst.frame);
     inst.sel_id = $("#sel_id",inst.frame);
+    inst.sel_alias = $("#sel_alias",inst.frame);
     inst.sel_title_div = $("#sel_title_div",inst.frame);
     inst.sel_title = $("#sel_title",inst.frame);
     inst.sel_details_div = $("#sel_details_div",inst.frame);
@@ -1251,16 +1252,16 @@ function makeBrowserTab(){
     }*/
 
     this.updateSelectionField = function( fields ){
-        if ( fields.id )
-            inst.sel_id.text( fields.id );
-        else
-            inst.sel_id.text("(no information)");
-
         if ( fields.title ){
             inst.sel_title.text( fields.title );
             inst.sel_title_div.show();
         }else
             inst.sel_title_div.hide();
+
+        if ( fields.id )
+            inst.sel_id.html( fields.id );
+        else
+            inst.sel_id.text("(no information)");
 
         if ( fields.descr ){
             inst.sel_descr.text(fields.descr);
@@ -1303,48 +1304,49 @@ function makeBrowserTab(){
             if ( item ){
                 var date = new Date();
 
-                fields.id = "Data ID: " + key;
+                fields.id = "<div class='form-grid'><div>ID:</div><div>" + key + "</div>";
                 if ( item.alias )
-                    fields.id += ", Alias: " + item.alias;
+                    fields.id += "<div>Alias:</div><div>" + item.alias + "</div>";
+                if ( item.doi )
+                    fields.id += "<div>DOI:</div><div>" + item.doi + "</div>";
+                fields.id += "</div>";
 
                 fields.title = "\"" + item.title + "\"";
 
                 if ( item.desc )
                     fields.descr = item.desc;
 
-                var html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                html += "<tr><td>Keywords:</td><td>" + (item.keyw?item.keyw:"N/A") + "</td></tr>";
-                if ( item.doi )
-                    html += "<tr><td>DOI:</td><td>" + item.doi + "</td></tr>";
-                html += "<tr><td>Locked:</td><td>" + (item.locked?"Yes":"No") + "</td></tr>";
+                var html = "<div class='form-grid'>";
+                html += "<div>Keywords:</div><div>" + (item.keyw?item.keyw:"N/A") + "</div>";
+                html += "<div>Locked:</div><div>" + (item.locked?"Yes":"No") + "</div>";
                 if ( item.dataUrl ){
-                    html += "<tr><td>Data URL:</td><td><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></td></tr>";
+                    html += "<div>Data URL:</div><div style='word-break:break-all'><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></div>";
                 }else{
-                    html += "<tr><td>Data Repo:</td><td>" + item.repoId.substr(5) + "</td></tr>";
-                    html += "<tr><td>Data Size:</td><td>" + sizeToString( item.size ) + "</td></tr>";
+                    html += "<div>Data Repo:</div><div>" + item.repoId.substr(5) + "</div>";
+                    html += "<div>Data Size:</div><div>" + sizeToString( item.size ) + "</div>";
                     if ( item.source )
-                        html += "<tr><td>Source:</td><td>" + item.source + "</td></tr>";
+                        html += "<div>Source:</div><div>" + item.source + "</div>";
                     if ( item.ext )
-                        html += "<tr><td>Extension:</td><td>" + item.ext + "</td></tr>";
-                    html += "<tr><td>Auto Ext.:</td><td>" + (item.extAuto?"Yes":"No") + "</td></tr>";
+                        html += "<div>Extension:</div><div>" + item.ext + "</div>";
+                    html += "<div>Auto Ext.:</div><div>" + (item.extAuto?"Yes":"No") + "</div>";
                 }
                 if ( item.ct ){
                     date.setTime(item.ct*1000);
-                    html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    html += "<div>Created:</div><div>" + date.toLocaleDateString("en-US", g_date_opts) + "</div>";
                 }
                 if ( item.ut ){
                     date.setTime(item.ut*1000);
-                    html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
+                    html += "<div>Updated:</div><div>" + date.toLocaleDateString("en-US", g_date_opts) + "</div>";
                 }
                 if ( item.dt ){
                     date.setTime(item.dt*1000);
-                    html += "<tr><td>Uploaded:</td><td>" + date.toLocaleDateString("en-US", g_date_opts)+ "</td></tr>";
+                    html += "<div>Uploaded:</div><div>" + date.toLocaleDateString("en-US", g_date_opts)+ "</div>";
                 }
-                html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
+                html += "<div>Owner:</div><div>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</div>";
                 if ( item.creator ){
-                    html += "<tr><td>Creator:</td><td>" + item.creator.substr(2) + "</td></tr>";
+                    html += "<div>Creator:</div><div>" + item.creator.substr(2) + "</div>";
                 }
-                html += "</table>";
+                html += "</div>";
 
                 fields.details = html;
 
@@ -1419,7 +1421,7 @@ function makeBrowserTab(){
             key = node.key;
 
         if ( key == "mydata" ) {
-            fields.id = "My Data";
+            fields.id = "All non-prject related data owned by you.";
             fields.descr = "Location for creating and organizing personal data and collections.";
 
             userView( inst.uid, true, function( ok, user ){
@@ -1443,12 +1445,41 @@ function makeBrowserTab(){
 
                 inst.updateSelectionField( fields );
             });
+        }else if ( key == "proj_own" ) {
+            fields.id = "My Projects";
+            fields.descr = "All projects owned by you.";
+            inst.updateSelectionField( fields );
+        }else if ( key == "proj_adm" ) {
+            fields.id = "Managed Projects";
+            fields.descr = "Projects owned by other users that are managed by you.";
+            inst.updateSelectionField( fields );
+        }else if ( key == "proj_mem" ) {
+            fields.id = "Member Projects";
+            fields.descr = "Projects owned by other users where you are a member.";
+            inst.updateSelectionField( fields );
+        }else if ( key == "shared_all" ) {
+            fields.id = "Shared Data";
+            fields.descr = "Data shared with you by other users and projects.";
+            inst.updateSelectionField( fields );
+        }else if ( key == "shared_user" ) {
+            fields.id = "Shared Data by User";
+            fields.descr = "Data shared with you by other users.";
+            inst.updateSelectionField( fields );
+        }else if ( key == "shared_proj" ) {
+            fields.id = "Shared Data by Project";
+            fields.descr = "Data shared with you by other projects.";
+            inst.updateSelectionField( fields );
+        }else if ( key == "queries" ) {
+            fields.id = "Saved Queries";
+            fields.descr = "All saved queries created by you.";
+            inst.updateSelectionField( fields );
         }else if ( key[0] == "c" ) {
             viewColl( key, function( item ){
                 if ( item ){
-                    fields.id = "Collection ID: " + key;
+                    fields.id = "<div class='form-grid'><div>ID:</div><div>" + key + "</div>";
                     if ( item.alias )
-                        fields.id += ", Alias: " + item.alias;
+                        fields.id += "<div>Alias:</div><div>" + item.alias + "</div>";
+                    fields.id += "</div>";
 
                     fields.title = "\"" + item.title + "\"";
 
@@ -1480,7 +1511,7 @@ function makeBrowserTab(){
         } else if ( key.startsWith("p/")) {
             viewProj( key, function( item ){
                 if ( item ){
-                    fields.id = "Project ID: " + key;
+                    fields.id = "ID: " + key;
                     fields.title = "\"" + item.title + "\"";
 
                     if ( item.desc )
@@ -1536,7 +1567,7 @@ function makeBrowserTab(){
         } else if ( key.startsWith("q/")) {
             sendQueryView( key, function( ok, item ){
                 if ( ok && item ){
-                    fields.id = "Query ID: " + item.id;
+                    fields.id = "ID: " + item.id;
                     fields.title = item.title;
 
                     var qry = JSON.parse( item.query );
@@ -1561,7 +1592,7 @@ function makeBrowserTab(){
         } else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ) {
             userView( node.data.scope, false, function( ok, item ){
                 if ( ok && item ){
-                    fields.id = "User ID: " + item.uid;
+                    fields.id = "ID: " + item.uid;
                     fields.title = item.name;
 
                     html = "<table class='info_table'><col width='20%'><col width='80%'>";
@@ -1574,7 +1605,7 @@ function makeBrowserTab(){
         } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
             viewProj( node.data.scope, function( item ){
                 if ( item ){
-                    fields.id = "Project ID: " + key;
+                    fields.id = "ID: " + key;
                     fields.title = "\"" + item.title + "\"";
 
                     if ( item.desc )
