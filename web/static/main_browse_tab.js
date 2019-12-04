@@ -3707,21 +3707,22 @@ function makeBrowserTab(){
 
     $("#footer-tabs").tabs({
         heightStyle:"auto",
-        //collapsible: true,
+        collapsible: true,
         activate: function(ev,ui){
+            console.log("tab activate",ui,ui.newTab.length,ui.newPanel.length);
             if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
+                console.log("1");
                 inst.updateSearchSelectState( true );
             } else if ( ui.oldPanel.length && ui.oldPanel[0].id == "tab-search" ){
+                console.log("2");
                 inst.updateSearchSelectState( false );
+            }
+            
+            if (( ui.newTab.length == 0 && ui.newPanel.length == 0 ) || ( ui.oldTab.length == 0 && ui.oldPanel.length == 0 )){
+                inst.windowResized();
             }
         }
     }).css({'overflow': 'auto'});
-
-    $("#toggle_footer").click( function(){
-        $("#footer-tabs").toggle(0,function(){
-            inst.windowResized();
-        });
-    });
 
     $("#sel_descr_hdr").button().click( function(){
         $("#sel_descr").slideToggle();
