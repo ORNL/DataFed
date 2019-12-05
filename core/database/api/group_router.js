@@ -85,7 +85,7 @@ router.get('/create', function (req, res) {
 .queryParam('gid', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().optional().allow(""), "Title")
 .queryParam('desc', joi.string().optional().allow(""), "Description")
-.queryParam('members', joi.array(joi.string()).optional(), "Array of member UIDs")
+.queryParam('members', joi.array().items(joi.string()).optional(), "Array of member UIDs")
 .summary('Creates a new group')
 .description('Creates a new group owned by client (or project), with optional members');
 
@@ -174,8 +174,8 @@ router.get('/update', function (req, res) {
 .queryParam('gid', joi.string().required(), "Group ID")
 .queryParam('title', joi.string().allow('').optional(), "New title")
 .queryParam('desc', joi.string().allow('').optional(), "New description")
-.queryParam('add', joi.array(joi.string()).optional(), "Array of member UIDs to add to group")
-.queryParam('rem', joi.array(joi.string()).optional(), "Array of member UIDs to remove from group")
+.queryParam('add', joi.array().items(joi.string()).optional(), "Array of member UIDs to add to group")
+.queryParam('rem', joi.array().items(joi.string()).optional(), "Array of member UIDs to remove from group")
 .summary('Updates an existing group')
 .description('Updates an existing group owned by client (or project).');
 

@@ -588,7 +588,7 @@ router.get('/move', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('items', joi.array(joi.string()).optional(), "Items IDs/aliases to move")
+.queryParam('items', joi.array().items(joi.string()).optional(), "Items IDs/aliases to move")
 .queryParam('source', joi.string().required(), "Source collection ID/alias" )
 .queryParam('dest', joi.string().required(), "Destination collection ID/alias" )
 .summary('Move items from source collection to destination collection')
