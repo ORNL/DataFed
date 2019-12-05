@@ -636,6 +636,35 @@ function makeBrowserTab(){
         });
     }
 
+    this.actionDupData = function(){
+        var parent = "root";
+        var node = inst.data_tree.activeNode;
+        if ( node ){
+            if ( node.key.startsWith("d/")) {
+                parent = node.parent.key;
+                console.log("parent",parent);
+            }
+        }
+
+        checkPerms( parent, PERM_CREATE, function( granted ){
+            if ( !granted ){
+                alertPermDenied();
+                return;
+            }
+            viewData( node.key, function( data ){
+                if ( data ){
+                    dlgDataNewEdit(DLG_DATA_DUP,data,parent,0,function(data2,parent_id){
+                        console.log("back from dup",parent_id);
+                        var node = inst.data_tree.getNodeByKey( parent_id );
+                        if ( node )
+                            inst.reloadNode( node );
+                        if ( inst.focus_node_id )
+                            inst.graphLoad( inst.focus_node_id, inst.sel_node.id );
+                    });
+                }
+            });
+        });
+    }
 
     this.actionNewColl = function(){
         var node = inst.data_tree.activeNode;
@@ -1075,7 +1104,7 @@ function makeBrowserTab(){
         var bits,node;
 
         if ( sel.length > 1 ){
-            bits = 0x319; //0x319;
+            bits = 0x31A; //0x319;
             for ( var i in sel ){
                 node = sel[i];
                 switch ( node.key[0] ){
@@ -1105,7 +1134,7 @@ function makeBrowserTab(){
                     if ( node.parent.key.startsWith("c/"))
                         bits = 0x00;
                     else
-                        bits = 0x100;
+                        bits = 0x102;
                     if ( node.data.doi )
                         bits |= 0x10;
                     break;
@@ -1116,7 +1145,7 @@ function makeBrowserTab(){
                     else if ( !node.data.admin )
                         bits |= 5;
                     break;
-                case "q": bits = 0x3F8; break;
+                case "q": bits = 0x3FA; break;
                 default:  bits = 0x3FF;  break;
             }
             //console.log("single",bits);
@@ -1153,7 +1182,7 @@ function makeBrowserTab(){
         }
 
         $("#btn_edit",inst.frame).button("option","disabled",(bits & 1) != 0 );
-        //$("#btn_dup",inst.frame).button("option","disabled",(bits & 2) != 0);
+        $("#btn_dup_data",inst.frame).button("option","disabled",(bits & 2) != 0 );
         $("#btn_del",inst.frame).button("option","disabled",(bits & 4) != 0 );
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0 );
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0 );
@@ -1925,7 +1954,7 @@ function makeBrowserTab(){
         if ( item.locked )
             title += "<i class='ui-icon ui-icon-locked'></i> ";
 
-        title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>" + (refresh?"&nbsp<i class='browse-reload ui-icon ui-icon-reload'></i>":"") + "<br>";
+        title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>" + (refresh?"&nbsp<i class='browse-reload ui-icon ui-icon-reload'></i>":"") + "<span class='data-tree-subtitle'>";
         title += "<span class='data-tree-id'>" + item.id + "</span>";
         title += "<span class='data-tree-alias'>" + (item.alias?item.alias.substr(item.alias.lastIndexOf(":") + 1):"") + "</span>";
 
@@ -1946,6 +1975,8 @@ function makeBrowserTab(){
                     title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
             }
         }
+
+        title += "</span>";
 
         return title;
     }
@@ -3363,6 +3394,7 @@ function makeBrowserTab(){
     $("#btn_file_menu",inst.frame).on('click', inst.fileMenu );
     $("#btn_new_proj",inst.frame).on('click', inst.actionNewProj );
     $("#btn_new_data",inst.frame).on('click', inst.actionNewData );
+    $("#btn_dup_data",inst.frame).on('click', inst.actionDupData );
     $("#btn_new_coll",inst.frame).on('click', inst.actionNewColl );
     $("#btn_import_data",inst.frame).on('click', function(){
         $("#filemenu").hide();
@@ -3709,15 +3741,12 @@ function makeBrowserTab(){
         heightStyle:"auto",
         collapsible: true,
         activate: function(ev,ui){
-            console.log("tab activate",ui,ui.newTab.length,ui.newPanel.length);
             if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
-                console.log("1");
                 inst.updateSearchSelectState( true );
             } else if ( ui.oldPanel.length && ui.oldPanel[0].id == "tab-search" ){
-                console.log("2");
                 inst.updateSearchSelectState( false );
             }
-            
+
             if (( ui.newTab.length == 0 && ui.newPanel.length == 0 ) || ( ui.oldTab.length == 0 && ui.oldPanel.length == 0 )){
                 inst.windowResized();
             }

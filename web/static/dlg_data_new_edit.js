@@ -2,7 +2,7 @@ var DLG_DATA_NEW = 0;
 var DLG_DATA_EDIT = 1;
 var DLG_DATA_DUP = 2;
 var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
-var DLG_DATA_BTN_LABEL = ["Create", "Update", "Duplicate"];
+var DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
 
 //<tr><td title='Metadata JSON document (optional)'>Metadata:</td><td colspan='2'><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>
 
@@ -131,7 +131,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     }
 
     function remRef(ev){
-        //console.log("remove ref",ev.currentTarget);
         var tr = ev.currentTarget.closest("tr");
         if ( ref_rows > 1 ){
             if ( tr ){
@@ -144,7 +143,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     }
 
     function findRef(ev){
-        //console.log("remove ref",ev.currentTarget);
         dlgPickData( function( data_id ){
             var tr = ev.currentTarget.closest("tr");
             $("input",tr).val(data_id);
@@ -153,9 +151,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
-        console.log("updateAllocSelect", coll_id );
         allocListByObject( coll_id, function( ok, data ){
-            console.log( "updateAllocSelect", ok, data );
             var html;
             var have_cap = false;
             if ( ok ){
@@ -166,7 +162,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     html = "";
                     for ( var i in data ){
                         alloc = data[i];
-                        //console.log( "alloc", alloc );
                         if ( alloc.subAlloc ){
                             html += "<option value='default'";
                         }else{
@@ -188,7 +183,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                             return;
                         }else{
                             viewColl( coll_id, function( data2 ){
-                                console.log(data2);
                                 if ( data2 ){
                                     if ( data2.owner.startsWith( "u/" )){
                                         dlgAlert("Data Allocation Error","No available storage allocations.");
@@ -253,7 +247,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         height: 530,
         resizable: true,
         resizeStop: function(ev,ui){
-            //console.log("resized");
             $("#dlg-tabs",frame).tabs("refresh");
         },
         closeOnEscape: false,
@@ -332,12 +325,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     if (  orig_deps.length != deps.length ){
                         deps_diff = true;
-                        console.log("diff lengths",orig_deps,deps);
                     }else if ( deps.length ){
                         for ( var i in orig_deps ){
-                            console.log("deps?",orig_deps[i], deps[i]);
                             if ( orig_deps[i].id != deps[i].id || orig_deps[i].type != deps[i].type ){
-                                console.log("diff deps at",orig_deps[i], deps[i]);
                                 deps_diff = true;
                                 break;
                             }
@@ -345,11 +335,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     if ( deps_diff ){
-                        console.log("deps are different");
                         obj.depsAdd = deps;
                         obj.depsClear = true;
-                    }else{
-                        console.log("deps are same");
                     }
 
                     if ( Object.keys(obj).length === 0 ){
@@ -359,8 +346,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     obj.id = a_data.id;
-
-                    console.log("sending:",obj );
                 }else{
                     url += "create";
 
@@ -405,16 +390,14 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 var inst = $(this);
 
-                //console.log("data upd, obj:",obj);
-
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
-                        //console.log("new data:",data);
                         tmp = $("#source_file").val().trim();
-                        if ( !is_published && tmp && (!a_data || tmp != a_data.source)){
+                        if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_DUP )){
                             xfrStart( [data.data[0].id], XFR_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
                                 if ( ok2 ){
-                                    dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                                    setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
+                                    //dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
                                     jsoned.destroy();
                                     inst.dialog('destroy').remove();
                                     if ( a_cb )
@@ -443,14 +426,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             $(this).css('padding', '0');
 
             $("#dlg-tabs",frame).tabs({heightStyle:"fill"});
-                //.css({'overflow': 'auto'});
 
             var widget = frame.dialog( "widget" );
             $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
 
             $("select",frame).selectmenu({width:200});
 
-    
             jsoned = ace.edit("md", {
                 theme:(g_theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
@@ -529,7 +510,10 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
-                    parent = "root";
+                    if ( a_parent )
+                        parent = a_parent;
+                    else
+                        parent = "root";
                 }
             } else {
                 $("#title",frame).val("");
@@ -544,24 +528,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#extension",frame).val("(auto)").prop("disabled",true);
             }
 
-            /*
-            var srcEditTimer;
-            $("#source_file",frame).on("input",function(ev){
-                if ( srcEditTimer )
-                    clearTimeout( srcEditTimer );
-
-                srcEditTimer = setTimeout( function(){ if ( $("#ext_auto",frame).prop("checked") ){ updateAutoExt() }}, 1000 );
-            });
-            */
-
             $("#published",frame).checkboxradio().on( "change",function(ev){
                 var pub = $("#published",frame).prop("checked");
                 if ( pub ){
-                    console.log("published");
                     $("#working_data",frame).hide();
                     $("#published_data",frame).show();
                 }else{
-                    console.log("NOT published");
                     $("#working_data",frame).show();
                     $("#published_data",frame).hide();
                 }
