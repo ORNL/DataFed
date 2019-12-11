@@ -141,6 +141,8 @@ public:
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
 
+    void initTaskDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, XfrEncrypt a_encrypt, Auth::TaskReply & a_reply );
+
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result, bool a_log = true );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );

@@ -22,6 +22,7 @@ enum ServiceStatus
     SS_OFFLINE      = 3;
 }
 
+/*
 enum XfrMode
 {
     XM_GET          = 0;
@@ -37,13 +38,7 @@ enum XfrStatus
     XS_SUCCEEDED    = 3;
     XS_FAILED       = 4;
 }
-
-enum XfrEncrypt
-{
-    XE_NONE         = 0;
-    XE_AVAIL        = 1;
-    XE_FORCE        = 2;
-}
+*/
 
 enum CollDelMode
 {
@@ -254,68 +249,6 @@ message CollData
     optional string             parent_id   = 10;
 }
 
-/*
-message XfrData
-{
-    required string             id          = 1;
-    required XfrMode            mode        = 2;
-    required XfrStatus          status      = 3;
-    required string             data_id     = 4;
-    required string             repo_path   = 5;
-    required string             local_path  = 6;
-    optional string             ext         = 7;
-    required string             user_id     = 8;
-    required string             repo_id     = 9;
-    required uint32             started     = 10;
-    required uint32             updated     = 11;
-    optional string             task_id     = 12;
-    optional string             err_msg     = 13;
-}*/
-
-message XfrFile
-{
-    required string             id          = 1;
-    required string             from        = 2;
-    required string             to          = 3;
-}
-
-message XfrRepo
-{
-    required string             repo_id     = 1;
-    required string             repo_ep     = 2;
-    repeated XfrFile            file        = 3;
-}
-
-message XfrData
-{
-    required string             id          = 1;
-    required XfrMode            mode        = 2;
-    required XfrEncrypt         encrypt     = 3;
-    required bool               encrypted   = 4;
-    required XfrStatus          status      = 5;
-    required XfrRepo            repo        = 6;
-    required string             rem_ep      = 7;
-    required string             rem_path    = 8;
-    optional string             ext         = 9; // Puts only
-    required string             user_id     = 10;
-    required uint32             started     = 11;
-    required uint32             updated     = 12;
-    optional string             task_id     = 13; // Only set if status > XFR_INIT
-    optional string             err_msg     = 14; // Only set if status == XFR_FAILED
-}
-
-message HttpXfrData
-{
-    required string             rec_id      = 1;
-    required XfrMode            mode        = 2; // Always XM_GET for now
-    required string             from        = 3;
-    required string             to          = 4;
-    required uint32             started     = 5;
-    required uint32             updated     = 6;
-    required XfrStatus          status      = 7;
-    optional string             err_msg     = 8; // Only set if status == XFR_FAILED
-}
-
 message GroupData
 {
     required string             uid         = 1;
@@ -360,4 +293,111 @@ message QueryData
     optional bool               use_sh_prj  = 7;
     optional uint32             ct          = 8;
     optional uint32             ut          = 9;
+}
+
+// -------------------------------------------------- TASK DEFINES
+
+enum TaskType
+{
+    TT_DATA_GET     = 0;
+    TT_DATA_PUT     = 1;
+    TT_DATA_MOVE    = 2;
+    TT_DATA_DEL     = 3;
+}
+
+enum TaskStatus
+{
+    TS_BLOCKED      = 0;
+    TS_READY        = 1;
+    TS_RUNNING      = 2;
+    TS_SUCCEEDED    = 3;
+    TS_FAILED       = 4;
+}
+
+enum Encryption
+{
+    ENCRYPT_NONE    = 0;
+    ENCRYPT_AVAIL   = 1;
+    ENCRYPT_FORCE   = 2;
+}
+
+message TaskData
+{
+    required string             id          = 1;
+    optional TaskType           type        = 2;
+    optional TaskStatus         status      = 3;
+    optional string             user        = 4;
+    optional float              progress    = 5;
+    optional string             msg         = 6;
+    optional uint32             ct          = 7;
+    optional uint32             ut          = 8;
+}
+
+message FileInfo
+{
+    required string             id          = 1;
+    required string             filename    = 2;
+}
+
+message TaskGetData
+{
+    required TaskData           task        = 1;
+    required Encryption         encrypt     = 2;
+    required bool               encrypted   = 3;
+    required string             repo_id     = 4;
+    required string             repo_ep     = 5;
+    required string             repo_path   = 6;
+    required string             dst_ep      = 7;
+    required string             dst_path    = 8;
+    repeated FileInfo           files       = 9;
+    required uint32             file_idx    = 10;
+}
+
+message TaskPutData
+{
+    required TaskData           task        = 1;
+    required Encryption         encrypt     = 2;
+    required bool               encrypted   = 3;
+    required string             repo_id     = 4;
+    required string             repo_ep     = 5;
+    required string             repo_path   = 6;
+    required string             src_ep      = 7;
+    required string             src_path    = 8;
+    required FileInfo           file        = 9;
+    optional string             ext         = 10;
+}
+
+message TaskMoveData
+{
+    required TaskData           task        = 1;
+    required Encryption         encrypt     = 2;
+    required bool               encrypted   = 3;
+    required string             repo_id     = 4;
+    required string             repo_ep     = 5;
+    required string             repo_path   = 6;
+    required string             dst_repo_id = 7;
+    required string             dst_ep      = 8;
+    required string             dst_path    = 9;
+    repeated string             data_id     = 10;
+    required uint32             file_idx    = 11;
+}
+
+message TaskDeleteData
+{
+    required TaskData           task        = 1;
+    required string             repo_id     = 2;
+    required string             repo_path   = 3;
+    repeated string             data_id     = 4;
+    required uint32             file_idx    = 5;
+}
+
+message HttpXfrData
+{
+    required string             rec_id      = 1;
+    required string             from        = 3;
+    required string             to          = 4;
+    required uint32             started     = 5;
+    required uint32             updated     = 6;
+    //required XfrStatus          status      = 7;
+    //optional string             err_msg     = 8; // Only set if status == XFR_FAILED
 }

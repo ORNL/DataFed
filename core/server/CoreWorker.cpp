@@ -447,7 +447,7 @@ Worker::procRevokeCredentialsRequest( const std::string & a_uid )
 bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataGetRequest, XfrDataReply )
+    PROC_MSG_BEGIN( DataGetRequest, TaskReply )
     if ( request->id_size() > 1 )
     {
         DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->path() << ", encrypt: " << request->encrypt() );
@@ -465,12 +465,11 @@ Worker::procDataGetRequest( const std::string & a_uid )
     for ( i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    m_db_client.xfrInit( ids, request->path(), 0, request->encrypt(), XM_GET, reply );
+    //m_db_client.xfrInit( ids, request->path(), 0, request->encrypt(), XM_GET, reply );
 
-    //if ( reply.xfr_size() != 1 )
-    //    EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+    m_db_client.initTaskDataGet( ids, request->path(), 0, request->encrypt(), reply );
 
-    for ( int i = 0; i < reply.xfr_size(); i++ )
+    for ( int i = 0; i < reply.task_size(); i++ )
     {
         m_mgr.handleNewXfr( reply.xfr(i) );
     }

@@ -2733,4 +2733,34 @@ DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 }
 */
 
+void
+DatabaseClient::initTaskDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, XfrEncrypt a_encrypt, Auth::TaskReply & a_reply )
+{
+    rapidjson::Document result;
+
+    string body = "{\"id\":\"" + a_request.id() + "\"";
+    if ( a_request.has_title() )
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+
+    string ids = "[";
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            ids += ",";
+
+        ids += "\"" + *i + "\"";
+    }
+    ids += "]";
+    params.push_back({"ids",ids});
+    params.push_back({"path",a_path});
+    params.push_back({"mode",to_string(a_mode)});
+    params.push_back({"encrypt",to_string(a_encrypt)});
+    if ( a_ext )
+        params.push_back({"ext",*a_ext});
+
+    dbPost( "task/create", {}, &body, result );
+
+    setTaskData( a_reply, result );
+}
+
 }}

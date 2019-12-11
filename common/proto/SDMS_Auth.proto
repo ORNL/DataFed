@@ -783,3 +783,10 @@ message QueryDataReply
 {
     repeated SDMS.QueryData     query       = 1;
 }
+
+// ============================ Task Messages
+
+message TaskReply
+{
+    repeated SDMS.TaskData      task        = 1;
+}
