@@ -1063,6 +1063,7 @@ function dataGetPreproc( a_client, a_ids, a_res, a_vis ){
     }
 }
 
+/*
 router.get('/get/preproc', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -1093,3 +1094,15 @@ router.get('/get/preproc', function (req, res) {
 .queryParam('ids', joi.array().items(joi.string()).required(), "Array of data/collection IDs or aliases")
 .summary('Data get preprocessing')
 .description('Data get preprocessing (check permission, data size, lock, deduplicate)');
+*/
+
+router.post('/get', function (req, res) {
+}
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+    path: joi.string().required(),
+    encrypt: joi.number().required()
+}).required(), 'Parameters')
+.summary('Get (download) data to Globus destination path')
+.description('Get (download) data to Globus destination path. IDs may be data/collection IDs or aliases.');

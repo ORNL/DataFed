@@ -41,13 +41,17 @@ module.exports = ( function() {
     obj.MAX_COLL_ITEMS      = 1000;
     obj.MAX_MD_SIZE         = 102400;
 
+    obj.TT_DATA_GET         = 0;
+    obj.TT_DATA_PUT         = 1;
+    obj.TT_DATA_MOVE        = 2;
+    obj.TT_DATA_DEL         = 3;
+
     obj.TS_BLOCKED          = 0;
     obj.TS_READY            = 1;
     obj.TS_RUNNING          = 2;
-    obj.TS_PAUSED           = 3;
-    obj.TS_SUCCEEDED        = 4;
-    obj.TS_FAILED           = 5;
-    obj.TS_COUNT            = 6;
+    obj.TS_SUCCEEDED        = 3;
+    obj.TS_FAILED           = 4;
+    obj.TS_COUNT            = 5;
 
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
@@ -380,23 +384,16 @@ module.exports = ( function() {
     };
 
     obj.computeDataPath = function( a_loc, a_export ){
-        console.log("cp 1");
         var repo = obj.db._document( a_loc._to );
-        console.log("cp 2");
         var repo_path = a_export?repo.export_path:repo.path;
-        console.log("cp 3");
 
         if ( a_loc.parent ){
             var user = obj.db._document( a_loc.parent )._from;
-            console.log("cp 4");
             return repo_path + "user" + user.substr(1) + a_loc._from.substr(1);
         }else{
-            console.log("cp 5");
             if ( a_loc.uid.charAt(0) == 'u' ){
-                console.log("cp 6");
                 return repo_path + "user" + a_loc.uid.substr(1) + a_loc._from.substr(1);
             }else{
-                console.log("cp 7");
                 return repo_path + "project" + a_loc.uid.substr(1) + a_loc._from.substr(1);
             }
         }
