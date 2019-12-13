@@ -332,7 +332,7 @@ function dedupShares( client, shares ){
 
                 for ( k = path.path.length-1; k > 0; k-- ){
                     coll = g_db.c.document( path.path[k] );
-                    perm = g_lib.getPermissionsLocal( client, coll );
+                    perm = g_lib.getPermissionsLocal( client._id, coll );
                     if ( perm.inhgrant & g_lib.PERM_LIST ){
                         k = 0;
                         break;

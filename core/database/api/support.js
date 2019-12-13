@@ -415,6 +415,10 @@ module.exports = ( function() {
         return obj.db._document( id );
     };
 
+    obj.getDataCollectionLinkCount = function( id ){
+        return obj.db._query( "for v in 1..1 inbound @id item return v._id", { id: id }).count();
+    };
+
     obj.deleteRawData = function( a_data, a_alloc_size, a_locations ){
         var loc = obj.db.loc.firstExample({_from: a_data._id });
         var path = obj.computeDataPath( loc );
@@ -597,6 +601,21 @@ module.exports = ( function() {
         }
     };
 
+    obj.hasAdminPermObjectLoaded = function( a_client, a_object ) {
+        if ( a_object.owner == a_client._id || a_object.creator == a_client._id || a_client.is_admin )
+            return true;
+
+        if ( a_object.owner.charAt(0) == 'p' ){
+            if ( obj.db.owner.firstExample({ _from: a_object.owner, _to: a_client._id }))
+                return true;
+
+            if ( obj.db.admin.firstExample({ _from: a_object.owner, _to: a_client._id }))
+                return true;
+        }
+
+        return false;
+    };
+
     obj.hasAdminPermObject = function( a_client, a_object_id ) {
         if ( a_client.is_admin )
             return true;
@@ -764,6 +783,34 @@ module.exports = ( function() {
         return id;
     };
 
+    obj.resolveDataCollID = function( a_id, a_client ) {
+        var id,i=a_id.indexOf('/');
+
+        if ( i != -1 ) {
+            if ( !a_id.startsWith('d/') && !a_id.startsWith('c/'))
+                throw [ obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'" ];
+            id = a_id;
+        } else {
+            var alias_id = "a/";
+            if ( a_id.indexOf(":") == -1 )
+                alias_id += "u:"+a_client._key + ":" + a_id;
+            else
+                alias_id += a_id;
+
+            var alias = obj.db.alias.firstExample({ _to: alias_id });
+            if ( !alias )
+                throw [obj.ERR_NOT_FOUND,"Alias '" + a_id + "' does not exist"];
+
+            id = alias._from;
+        }
+
+        // This will only happen if graph integrity is lost
+        if ( !obj.db._exists( id ) ){
+            throw [ obj.ERR_INVALID_PARAM, (id.charAt(0)=='d'?"Data record '":"Collection '") + id + "' does not exist." ];
+        }
+
+        return id;
+    };
 
     obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
         //var top_ar = obj.parseTopic( a_topic );
@@ -1193,8 +1240,8 @@ module.exports = ( function() {
         return perm_found & a_req_perm;
     };
 
-    obj.getPermissionsLocal = function( a_client, a_object ) {
-        var perm={grant:0,inhgrant:0},acl,acls,i;
+    obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
+        var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
         if ( a_object.grant )
             perm.grant |= a_object.grant;
@@ -1203,7 +1250,7 @@ module.exports = ( function() {
             perm.inhgrant |= a_object.inhgrant;
 
         if ( a_object.acls & 1 ){
-            acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
+            acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client_id } ).toArray();
 
             for ( i in acls ) {
                 acl = acls[i];
@@ -1214,11 +1261,67 @@ module.exports = ( function() {
 
         // Evaluate group permissions on object
         if ( a_object.acls & 2 ){
-            acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
+            acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client_id } ).toArray();
             for ( i in acls ) {
                 acl = acls[i];
                 perm.grant |= acl.grant;
                 perm.inhgrant |= acl.inhgrant;
+            }
+        }
+
+        if ( a_get_inherited ){
+            var children = [a_object];
+            var parents,parent;
+
+            while ( 1 ) {
+                // Find all parent collections owned by object owner
+
+                parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.public,acls:v.acls}", { children : children }).toArray();
+
+                if ( parents.length == 0 )
+                    break;
+
+                for ( i in parents ) {
+                    parent = parents[i];
+
+                    if ( parent.inhgrant )
+                        perm.inherited |= parent.inhgrant;
+
+                    if (( a_req_perm & perm.inherited ) == a_req_perm )
+                        break;
+
+                    // User ACL
+                    if ( parent.acls && (( parent.acls & 1 ) != 0 )){
+                        acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client_id } ).toArray();
+                        if ( acls.length ){
+                            for ( i in acls ) {
+                                acl = acls[i];
+                                perm.inherited |= acl.inhgrant;
+                            }
+
+                            if (( a_req_perm & perm.inherited ) == a_req_perm )
+                                break;
+                        }
+                    }
+
+                    // Group ACL
+                    if ( parent.acls && (( parent.acls & 2 ) != 0 )){
+                        acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client_id } ).toArray();
+                        if ( acls.length ){
+                            for ( i in acls ) {
+                                acl = acls[i];
+                                perm.inherited |= acl.inhgrant;
+                            }
+
+                            if (( a_req_perm & perm.inherited ) == a_req_perm )
+                                break;
+                        }
+                    }
+                }
+
+                // If there are still missing require permissions...
+                // Determine which parents are candidates for further evaluation (have req bits not set in inherited permissions)
+                children = parents;
             }
         }
 

@@ -14,6 +14,7 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
+const   g_proc = require('./process');
 
 module.exports = router;
 
@@ -986,6 +987,7 @@ router.get('/search', function (req, res) {
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
 
+/*
 router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -1025,43 +1027,8 @@ router.get('/delete', function (req, res) {
 .queryParam('ids', joi.array().items(joi.string()).required(), "Array of data IDs or aliases")
 .summary('Deletes an existing data record')
 .description('Deletes an existing data record');
+*/
 
-function dataGetPreproc( a_client, a_ids, a_res, a_vis ){
-    var id, obj, list, locked;
-
-    for ( var i in a_ids ){
-        id = a_ids[i];
-        //console.log("proc",id);
-
-        if ( id.charAt(0) == 'c' ){
-            if ( !g_lib.hasAdminPermObject( a_client, id )) {
-                obj = g_db.c.document( id );
-                if ( !g_lib.hasPermissions( a_client, obj, g_lib.PERM_LIST ))
-                    throw g_lib.ERR_PERM_DENIED;
-            }
-            //console.log("read coll");
-
-            list = g_db._query( "for v in 1..1 outbound @coll item return v._id", { coll: id }).toArray();
-            dataGetPreproc( a_client, list, a_res, a_vis );
-        }else{
-            if ( a_vis.indexOf(id) == -1 ){
-                //console.log("not visited");
-
-                obj = g_db.d.document( id );
-                if ( !g_lib.hasAdminPermObject( a_client, id )) {
-                    if ( !g_lib.hasPermissions( a_client, obj, g_lib.PERM_RD_DATA ))
-                        throw g_lib.ERR_PERM_DENIED;
-                    locked = obj.locked;
-                }else{
-                    locked = false;
-                }
-                //console.log("store res");
-                a_res.push({id:id,title:obj.title,locked:obj.locked,size:obj.size,url:obj.data_url});
-                a_vis.push(id);
-            }
-        }
-    }
-}
 
 /*
 router.get('/get/preproc', function (req, res) {
@@ -1096,8 +1063,34 @@ router.get('/get/preproc', function (req, res) {
 .description('Data get preprocessing (check permission, data size, lock, deduplicate)');
 */
 
+
+
 router.post('/get', function (req, res) {
-}
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d","c","item"],
+                write: ["task","lock","block"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var id, res_ids = [];
+
+                for ( var i in req.body.ids ){
+                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                    res_ids.push( id );
+                }
+
+                var result = g_proc.dataGet( client, req.body.path, req.body.encrypt, res_ids );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     ids: joi.array().items(joi.string()).required(),
@@ -1106,3 +1099,167 @@ router.post('/get', function (req, res) {
 }).required(), 'Parameters')
 .summary('Get (download) data to Globus destination path')
 .description('Get (download) data to Globus destination path. IDs may be data/collection IDs or aliases.');
+
+
+router.post('/put', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d","c","item"],
+                write: ["task","lock","block"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var res_ids = [];
+
+                if ( req.body.ids.length > 1 )
+                    throw [g_lib.ERR_INVALID_PARAM,"Concurrent put of multiple records no supported."];
+
+                for ( var i in req.body.ids ){
+                    res_ids.push( g_lib.resolveDataID( req.body.ids[i], client ));
+                }
+
+                var result = g_proc.dataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+    path: joi.string().required(),
+    encrypt: joi.number().required(),
+    ext: joi.string().optional()
+}).required(), 'Parameters')
+.summary('Put (upload) raw data to record')
+.description('Put (upload) raw data to record from Globus source path. ID must be a data ID or alias.');
+
+
+router.post('/move/raw', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d","c","item"],
+                write: ["task","lock","block"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var id, res_ids = [];
+
+                for ( var i in req.body.ids ){
+                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                    res_ids.push( id );
+                }
+                if ( req.body.repo_id.startsWith( "repo/" ))
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid repo ID: '" + req.body.repo_id + "'."];
+
+                if ( !g_db._exists( req.body.repo_id ))
+                    throw [g_lib.ERR_INVALID_PARAM,"Repo '" + req.body.repo_id + "' does not exist."];
+
+                var result = g_proc.dataMove( client, req.body.repo_id, req.body.encrypt, res_ids );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+    repo_id: joi.string().required(),
+    encrypt: joi.number().required()
+}).required(), 'Parameters')
+.summary('Move raw data to a new allocation')
+.description('Move data to a new allocation. IDs may be data/collection IDs or aliases.');
+
+
+router.post('/move/full', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d","c","item"],
+                write: ["task","lock","block"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var id, res_ids = [];
+
+                for ( var i in req.body.ids ){
+                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                    res_ids.push( id );
+                }
+
+                if ( req.body.repo_id.startsWith( "repo/" ))
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid repo ID: '" + req.body.repo_id + "'."];
+
+                if ( !g_db._exists( req.body.repo_id ))
+                    throw [g_lib.ERR_INVALID_PARAM,"Repo '" + req.body.repo_id + "' does not exist."];
+
+                var result = g_proc.dataMove( client, req.body.repo_id, req.body.encrypt, res_ids );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+    dst_coll_id: joi.string().required(),
+    dst_repo_id: joi.string().optional(),
+    inc_coll: joi.boolean().optional(),
+    encrypt: joi.number().required()
+}).required(), 'Parameters')
+.summary('Move data records and raw data to a new owner/allocation')
+.description('Move data records and raw data to a new owner/allocation. IDs may be data/collection IDs or aliases.');
+
+
+router.post('/delete', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d"],
+                write: ["d","a","owner","item","acl","alias","loc","lock","alloc","p","t","top","dep","task","block"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var i, id, res_ids = [];
+
+                for ( i in req.body.ids ){
+                    id = g_lib.resolveDataID( req.body.ids[i], client );
+                    res_ids.push( id );
+                }
+
+                var result = g_proc.dataDelete( client, res_ids );
+
+                // TODO delete records
+                //g_lib.deleteData( data, alloc_sz, locations );
+                //g_lib.updateAllocations( alloc_sz );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+}).required(), 'Parameters')
+.summary('Delete data records and raw data')
+.description('Delete data records and associated raw data. IDs may be data IDs or aliases.');
+
+
