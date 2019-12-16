@@ -23,8 +23,8 @@ module.exports = ( function() {
      * all collections. In delete mode, for data records in collections, only data
      * that isn't linked elsewhere are returned.
      */
-    obj._preprocessItems = function( a_client, a_ids, a_mode ){
-        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, mode: a_mode, coll: [], globus_data: [], http_data: [], no_data: [], visited: {} };
+    obj._preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
+        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], globus_data: [], http_data: [], no_data: [], tot_size: 0, visited: {} };
 
         switch( a_mode ){
             case g_lib.TT_DATA_GET:
@@ -36,7 +36,13 @@ module.exports = ( function() {
                 // Collections not allowed
                 break;
             case g_lib.TT_DATA_MOVE:
-                ctxt.data_perm = g_lib.PERM_DELETE;
+                // Must be data owner to move data
+                //ctxt.data_perm = g_lib.PERM_DELETE;
+                ctxt.coll_perm = g_lib.PERM_LIST;
+                break;
+            case g_lib.TT_DATA_GIVE:
+                // Must be data owner or creator to move data+record
+                //ctxt.data_perm = g_lib.PERM_DELETE;
                 ctxt.coll_perm = g_lib.PERM_LIST;
                 break;
             case g_lib.TT_DATA_DEL:
@@ -162,15 +168,25 @@ module.exports = ( function() {
                     }
                 }
             }else{
-                if (( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
-                    if ( !g_lib.hasAdminPermObjectLoaded( a_ctxt.client, doc )){
-                        if ( a_data_perm != null ) // Already have inherited permission, don't ask again
-                            perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
-                        else
-                            perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
+                if ( a_ctxt.mode == g_lib.TT_DATA_MOVE ){
+                    if ( doc.owner != a_ctxt.client._id )
+                        throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                }else if ( a_ctxt.mode == g_lib.TT_DATA_GIVE ){
+                    if ( doc.owner != a_ctxt.client._id || doc.creator != a_ctxt.client._id )
+                        throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                    if ( doc.owner == new_owner )
+                        throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                }else{
+                    if (( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
+                        if ( !g_lib.hasAdminPermObjectLoaded( a_ctxt.client, doc )){
+                            if ( a_data_perm != null ) // Already have inherited permission, don't ask again
+                                perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
+                            else
+                                perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
-                        if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
-                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                            if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
+                                throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                        }
                     }
                 }
             }
@@ -191,6 +207,7 @@ module.exports = ( function() {
                         a_ctxt.no_data.push({ id: id, owner: doc.owner });
                 }else if ( doc.size || a_ctxt.mode == g_lib.TT_DATA_PUT ){
                     a_ctxt.globus_data.push({ id: id, owner: doc.owner, size: doc.size, ext: doc.ext });
+                    a_ctxt.tot_size += doc.size;
                 }else if ( !doc.size ){
                     a_ctxt.no_data.push({ id: id, owner: doc.owner });
                 }
@@ -378,7 +395,7 @@ module.exports = ( function() {
 
 
     obj.dataGet = function( a_client, a_path, a_encrypt, a_res_ids ){
-        var result = obj._preprocessItems( a_client, a_res_ids, g_lib.TT_DATA_GET );
+        var result = obj._preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_GET );
 
         //var result = {globus_data: [], http_data: [], no_data: []};
         //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_GET, perm: g_lib.PERM_RD_DATA, result: result }, a_res_ids );
@@ -418,7 +435,7 @@ module.exports = ( function() {
 
 
     obj.dataPut = function( a_client, a_path, a_encrypt, a_ext, a_res_ids ){
-        var result = obj._preprocessItems( a_client, a_res_ids, g_lib.TT_DATA_PUT );
+        var result = obj._preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_PUT );
 
         //var result = {globus_data: []};
         //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_PUT, perm: g_lib.PERM_WR_DATA, result: result }, a_res_ids );
@@ -469,19 +486,126 @@ module.exports = ( function() {
      * error will be thrown. This means that "guest" creators of data in other
      * accounts can not change the initial allocation used for that data.
      */
-    obj.dataMove = function( a_client, a_owner_id, a_dst_repo_id, a_encrypt, a_res_ids ){
-        var result = obj._preprocessItems( a_client, a_res_ids, g_lib.TT_DATA_MOVE );
+    obj.dataChangeAllocation = function( a_client, a_owner_id, a_dst_repo_id, a_encrypt, a_res_ids ){
+        // Verify that client is owner, or has admin permission to project owner
+        if ( a_client._id != a_owner_id ){
+            if ( !a_owner_id.startsWith("p/"))
+                throw [g_lib.ERR_INVALID_PARAM,"Invalid project ID '" + owner_id + "'"];
 
-        //var result = {globus_data: [], no_data: []};
-        //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_MOVE, perm: g_lib.PERM_DELETE, result: result }, a_res_id );
+            if ( g_lib.hasManagerPermProj( client, a_owner_id ))
+                throw [g_lib.ERR_PERM_DENIED,"Operation requires admin permissions to project."];
+        }
+
+        // Verify destination repo
+        if ( !g_db.repo.exists( a_dst_repo_id ))
+            throw [obj.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'" ];
+
+        // Verify client/owner has an allocation
+        var alloc = g_db.alloc.firstExample({ _from: a_owner_id, _to: a_dst_repo_id });
+        if ( !alloc )
+            throw [g_lib.ERR_INVALID_PARAM,"No allocation on '" + a_dst_repo_id + "'"];
+
+        // Owner is client for move operation
+        var result = obj._preprocessItems({ _id: a_owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_DATA_MOVE );
 
         if ( result.globus_data.length > 0 ){
+            // Verify that allocation has room for data
+            if ( result.tot_size + alloc.tot_size > alloc.max_size )
+                throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.max_size+")."];
+
+            // Verify that allocation has room for records
+            if ( result.tot_count + alloc.tot_count > alloc.max_count )
+                throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.max_count+")."];
+
             var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
-
-            if ( !g_db.repo.exists( a_dst_repo_id ))
-                throw [obj.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'" ];
-
             var dst_repo = g_db.repo.document( a_dst_repo_id );
+
+            state.dst_ep = dst_repo.endpoint;
+
+            if ( a_owner_id.charAt(0) == 'u' ){
+                state.dst_path = dst_repo.path + "user" + a_owner_id.substr(1) + "/";
+            }else{
+                state.dst_path = dst_repo.path + "project" + a_owner_id.substr(1) + "/";
+            }
+
+            //state.dst_path = g_lib.computeDataPathPrefix( a_dst_repo_id, a_client._id );
+
+            obj._computeDataPaths( a_client, g_lib.TT_DATA_MOVE, result.globus_data, state.repos, state.dst_path );
+
+            var doc = obj._createTask( a_client._id, g_lib.TT_DATA_MOVE, state );
+            var task = g_db.task.save( doc, { returnNew: true });
+
+            if ( obj._processTaskDeps( task.new._id, result.globus_data, true )){
+
+                task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+            }
+
+            task.id = task._id;
+            delete task._id;
+            delete task._key;
+            delete task._rev;
+
+            result.task = task;
+        }
+
+        return result;
+    };
+
+
+    /**
+     * 
+     * This operation changes the owner of one or more data records (specified
+     * by ID or by parent collection) and moves the associated raw data to an
+     * allocation of the new owner. The new owner and allocation are determined
+     * by the destination collection which may have a default allocation, or if
+     * not, the global default for the new owner is used. The client must be
+     * the owner or creator of the data being transferred, and they must have
+     * CREATE permission on the destination collection. Any existing ACLs on
+     * the data are cleared.
+     */
+    obj.dataChangeOwner = function( a_client, a_dst_coll_id, a_encrypt, a_res_ids ){
+        // Verify dest collection exists
+        if ( !g_db.c.exists( a_dst_coll_id ))
+            throw [obj.ERR_INVALID_PARAM, "No such collection '" + a_dst_coll_id + "'" ];
+
+        // Verify change of ownership
+        var dest_coll = g_db.c.document( a_dst_coll_id );
+        if ( dest_coll.owner == a_client._id )
+            throw [ obj.ERR_INVALID_PARAM, "Destination collection is already owned by current user." ];
+
+        // Verify client create permission
+        if ( !g_lib.hasAdminPermObjectLoaded( a_client, dest_coll )){
+            if ( !g_lib.hasPermissions( a_client, dest_coll, g_lib.PERM_CREATE, true ))
+                throw [ obj.ERR_INVALID_PARAM, "Operation requires CREATE permission on destination collection." ];
+        }
+
+        // Get associated or default allocation for new owner
+        var alloc, loc = g_db.loc.firstExample({ _from: dest_coll._id });
+        if ( loc ){
+            if ( loc.parent )
+                alloc = g_db.alloc.document( loc.parent );
+            else
+                alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
+        }else{
+            alloc = g_lib.assignRepo( dest_coll.owner );
+        }
+
+        if ( !alloc )
+            throw [ obj.ERR_INVALID_PARAM, "No allocation available for destination owner." ];
+
+        var result = obj._preprocessItems( a_client, dest_coll.owner, a_res_ids, g_lib.TT_DATA_GIVE );
+
+        // Verify that allocation has room for records
+        if ( result.tot_count + alloc.tot_count > alloc.max_count )
+            throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.max_count+")."];
+
+        if ( result.globus_data.length > 0 ){
+            // Verify that allocation has room for data
+            if ( result.tot_size + alloc.tot_size > alloc.max_size )
+                throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.max_size+")."];
+
+            var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
+            var dst_repo = g_db.repo.document( alloc._to );
 
             state.dst_ep = dst_repo.endpoint;
 
@@ -512,7 +636,7 @@ module.exports = ( function() {
         }
 
         return result;
-    };
+    }
 
 
     /** @brief Delete data and/or collections by ID (not alias)
@@ -527,7 +651,7 @@ module.exports = ( function() {
      * are only linked within the collections being deleted.
      */
     obj.dataCollDelete = function( a_client, a_res_ids ){
-        var result = obj._preprocessItems( a_client, a_res_ids, g_lib.TT_DATA_DEL );
+        var result = obj._preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_DEL );
         var i;
 
         // Delete collections

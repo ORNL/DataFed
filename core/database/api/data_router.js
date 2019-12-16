@@ -70,7 +70,6 @@ function recordCreate( client, record, results ){
                     if ( proj.sub_usage > proj.sub_alloc )
                         throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+proj.sub_alloc+")"];
 
-                    // TODO Handle multiple project owners?
                     var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
                     repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
                     alloc_parent = repo_alloc._id;
@@ -130,18 +129,15 @@ function recordCreate( client, record, results ){
         }
     }
 
-    //console.log("Save data");
-
     var data = g_db.d.save( obj, { returnNew: true });
-    //console.log("Save owner");
     g_db.owner.save({ _from: data.new._id, _to: owner_id });
 
-    //console.log("Save loc", repo_alloc );
-    //var loc = { _from: data.new._id, _to: repo_alloc._to, path: repo_alloc.path + data.new._key, uid: owner_id };
     var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
     if ( alloc_parent )
         loc.parent = alloc_parent;
     g_db.loc.save(loc);
+
+    g_db.alloc.update( repo_alloc._id, { tot_count: repo_alloc.tot_count + 1 });
 
     if ( obj.alias ) {
         var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
@@ -372,7 +368,7 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
         }
 
         if ( record.size !== undefined ) {
-            console.log("new data syze:",record.size,typeof record.size);
+            console.log("new data size:",record.size,typeof record.size);
 
             obj.size = record.size;
 

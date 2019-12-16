@@ -44,7 +44,8 @@ module.exports = ( function() {
     obj.TT_DATA_GET         = 0;
     obj.TT_DATA_PUT         = 1;
     obj.TT_DATA_MOVE        = 2;
-    obj.TT_DATA_DEL         = 3;
+    obj.TT_DATA_GIVE        = 3;
+    obj.TT_DATA_DEL         = 4;
 
     obj.TS_BLOCKED          = 0;
     obj.TS_READY            = 1;
@@ -349,14 +350,15 @@ module.exports = ( function() {
     };
 
     obj.assignRepo = function( a_user_id ){
-        //var repos = obj.db._query( "for v, e in 1..1 outbound @user alloc return { repo: v, alloc: e }", { user: a_user_id }).toArray();
-        var i,count,repos = obj.db.alloc.byExample({ _from: a_user_id }).toArray();
+        // TODO use default if specified
 
-        for ( i in repos ){
-            if ( repos[i].tot_size < repos[i].max_size ){
-                count = obj.db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('d',i._from) RETURN 1)",{id:a_user_id}).next();
-                if ( count < repos[i].max_count )
-                    return repos[i];
+        var alloc, allocs = obj.db.alloc.byExample({ _from: a_user_id });
+
+        while ( allocs.hasNext() ){
+            alloc = allocs.next();
+
+            if ( alloc.tot_size < alloc.max_size && alloc.tot_count < alloc.max_count ){
+                return alloc;
             }
         }
 
@@ -369,12 +371,10 @@ module.exports = ( function() {
             throw [obj.ERR_NO_ALLOCATION,"No allocation on repo " + a_repo_id];
 
         if ( alloc.tot_size >= alloc.max_size )
-            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation size exceeded (max: "+alloc.max_size+")"];
+            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation data size exceeded (max: "+alloc.max_size+")"];
 
-        var count = obj.db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('d',i._from) RETURN 1)",{id:a_user_id}).next();
-
-        if ( count >= alloc.max_count )
-            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation count exceeded (max: "+alloc.max_count+")"];
+        if ( alloc.tot_count >= alloc.max_count )
+            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation record count exceeded (max: "+alloc.max_count+")"];
 
         return alloc;
     };
