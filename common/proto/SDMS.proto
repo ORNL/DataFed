@@ -299,10 +299,11 @@ message QueryData
 
 enum TaskType
 {
-    TT_DATA_GET     = 0;
-    TT_DATA_PUT     = 1;
-    TT_DATA_MOVE    = 2;
-    TT_DATA_DEL     = 3;
+    TT_DATA_GET         = 0;
+    TT_DATA_PUT         = 1;
+    TT_DATA_CHG_ALLOC   = 2;
+    TT_DATA_CHG_OWNER   = 3;
+    TT_DATA_DEL         = 4;
 }
 
 enum TaskStatus
@@ -321,17 +322,6 @@ enum Encryption
     ENCRYPT_FORCE   = 2;
 }
 
-message TaskData
-{
-    required string             id          = 1;
-    optional TaskType           type        = 2;
-    optional TaskStatus         status      = 3;
-    optional string             user        = 4;
-    optional float              progress    = 5;
-    optional string             msg         = 6;
-    optional uint32             ct          = 7;
-    optional uint32             ut          = 8;
-}
 
 message FileInfo
 {
@@ -339,9 +329,8 @@ message FileInfo
     required string             filename    = 2;
 }
 
-message TaskGetData
+message TaskDataGet
 {
-    required TaskData           task        = 1;
     required Encryption         encrypt     = 2;
     required bool               encrypted   = 3;
     required string             repo_id     = 4;
@@ -353,9 +342,8 @@ message TaskGetData
     required uint32             file_idx    = 10;
 }
 
-message TaskPutData
+message TaskDataPut
 {
-    required TaskData           task        = 1;
     required Encryption         encrypt     = 2;
     required bool               encrypted   = 3;
     required string             repo_id     = 4;
@@ -367,29 +355,49 @@ message TaskPutData
     optional string             ext         = 10;
 }
 
-message TaskMoveData
+message TaskDataChangeAlloc
 {
-    required TaskData           task        = 1;
-    required Encryption         encrypt     = 2;
-    required bool               encrypted   = 3;
-    required string             repo_id     = 4;
-    required string             repo_ep     = 5;
-    required string             repo_path   = 6;
-    required string             dst_repo_id = 7;
-    required string             dst_ep      = 8;
-    required string             dst_path    = 9;
-    repeated string             data_id     = 10;
+    required Encryption         encrypt     = 1;
+    required bool               encrypted   = 2;
+    required string             repo_id     = 3;
+    required string             repo_ep     = 4;
+    required string             repo_path   = 5;
+    required string             dst_repo_id = 6;
+    required string             dst_ep      = 7;
+    required string             dst_path    = 8;
+    repeated string             data_id     = 9;
     required uint32             file_idx    = 11;
 }
 
-message TaskDeleteData
+message TaskDataChangeOwner
 {
-    required TaskData           task        = 1;
-    required string             repo_id     = 2;
-    required string             repo_path   = 3;
-    repeated string             data_id     = 4;
-    required uint32             file_idx    = 5;
 }
+
+message TaskDataDelete
+{
+    required string             repo_id     = 1;
+    required string             repo_path   = 2;
+    repeated string             data_id     = 3;
+    required uint32             file_idx    = 4;
+}
+
+message Task
+{
+    required string                 id          = 1;
+    optional TaskType               type        = 2;
+    optional TaskStatus             status      = 3;
+    optional string                 user        = 4;
+    optional float                  progress    = 5;
+    optional string                 msg         = 6;
+    optional uint32                 ct          = 7;
+    optional uint32                 ut          = 8;
+    optional TaskDataGet            state_get   = 9;
+    optional TaskDataPut            state_put   = 10;
+    optional TaskDataChangeAlloc    state_all   = 11;
+    optional TaskDataChangeOwner    state_own   = 12;
+    optional TaskDataDelete         state_del   = 13;
+}
+
 
 message HttpXfrData
 {

@@ -19,10 +19,12 @@ class TaskMgr
 public:
     static TaskMgr & getInstance();
 
-    void    transferData( XfrDataReply );
+    void    newTask( TaskData & a_task );
+
+    //void    transferData( XfrDataReply );
     //void    putData( const std::string& a_id, const std::string & a_path, XfrEncrypt a_encrypt, const std::string * a_ext = 0 );
     //void    moveData( const std::vector<std::string> & a_ids, const std::string & a_repo, XfrEncrypt a_encrypt );
-    void    deleteData( const std::vector<std::string> & a_ids );
+    //void    deleteData( const std::vector<std::string> & a_ids );
 
 private:
     typedef std::vector<std::pair<std::string,std::string>> url_params_t;

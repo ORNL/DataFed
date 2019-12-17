@@ -54,7 +54,13 @@ TaskMgr::getInstance()
     return *mgr;
 }
 
+void
+TaskMgr::newTask( TaskData & a_task )
+{
+}
 
+
+/*
 void
 TaskMgr::transferData( XfrDataReply & a_reply )
 {
@@ -72,6 +78,7 @@ void
 TaskMgr::deleteData( const std::vector<std::string> & a_ids )
 {
 }
+*/
 
 
 void

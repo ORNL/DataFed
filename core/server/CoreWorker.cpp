@@ -465,13 +465,11 @@ Worker::procDataGetRequest( const std::string & a_uid )
     for ( i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    //m_db_client.xfrInit( ids, request->path(), 0, request->encrypt(), XM_GET, reply );
-
     m_db_client.initTaskDataGet( ids, request->path(), 0, request->encrypt(), reply );
 
-    for ( int i = 0; i < reply.task_size(); i++ )
+    if ( reply.task() )
     {
-        m_mgr.handleNewXfr( reply.xfr(i) );
+        TaskMgr::getInstance().newTask( reply.xfr(i) );
     }
 
     PROC_MSG_END
