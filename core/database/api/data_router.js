@@ -1136,7 +1136,7 @@ router.post('/put', function (req, res) {
 .description('Put (upload) raw data to record from Globus source path. ID must be a data ID or alias.');
 
 
-router.post('/move/raw', function (req, res) {
+router.post('/change_alloc', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -1151,13 +1151,14 @@ router.post('/move/raw', function (req, res) {
                     id = g_lib.resolveDataCollID( req.body.ids[i], client );
                     res_ids.push( id );
                 }
-                if ( req.body.repo_id.startsWith( "repo/" ))
+
+                if ( !req.body.repo_id.startsWith( "repo/" ))
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid repo ID: '" + req.body.repo_id + "'."];
 
                 if ( !g_db._exists( req.body.repo_id ))
                     throw [g_lib.ERR_INVALID_PARAM,"Repo '" + req.body.repo_id + "' does not exist."];
 
-                var result = g_proc.dataMove( client, req.body.repo_id, req.body.encrypt, res_ids );
+                var result = g_proc.dataChangeAllocation( client, req.body.proj_id, req.body.repo_id, req.body.encrypt, res_ids );
 
                 res.send(result);
             }
@@ -1170,6 +1171,7 @@ router.post('/move/raw', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     ids: joi.array().items(joi.string()).required(),
+    proj_id: joi.string().optional(),
     repo_id: joi.string().required(),
     encrypt: joi.number().required()
 }).required(), 'Parameters')
@@ -1177,7 +1179,7 @@ router.post('/move/raw', function (req, res) {
 .description('Move data to a new allocation. IDs may be data/collection IDs or aliases.');
 
 
-router.post('/move/full', function (req, res) {
+router.post('/change_owner', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -1193,13 +1195,9 @@ router.post('/move/full', function (req, res) {
                     res_ids.push( id );
                 }
 
-                if ( req.body.repo_id.startsWith( "repo/" ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Invalid repo ID: '" + req.body.repo_id + "'."];
+                var dst_coll_id = g_lib.resolveDataCollID( req.body.dst_coll_id, client );
 
-                if ( !g_db._exists( req.body.repo_id ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Repo '" + req.body.repo_id + "' does not exist."];
-
-                var result = g_proc.dataMove( client, req.body.repo_id, req.body.encrypt, res_ids );
+                var result = g_proc.dataChangeOwner( client, dst_coll_id, req.body.encrypt, res_ids );
 
                 res.send(result);
             }
@@ -1213,7 +1211,7 @@ router.post('/move/full', function (req, res) {
 .body(joi.object({
     ids: joi.array().items(joi.string()).required(),
     dst_coll_id: joi.string().required(),
-    dst_repo_id: joi.string().optional(),
+    //dst_repo_id: joi.string().optional(),
     inc_coll: joi.boolean().optional(),
     encrypt: joi.number().required()
 }).required(), 'Parameters')
@@ -1226,23 +1224,24 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","owner","item","acl","alias","loc","lock","alloc","p","t","top","dep","task","block"]
+                write: ["d","c","a","alias","owner","item","acl","loc","lock","alloc","p","t","top","dep","task","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var i, id, res_ids = [];
 
                 for ( i in req.body.ids ){
-                    id = g_lib.resolveDataID( req.body.ids[i], client );
+                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
                     res_ids.push( id );
                 }
 
-                var result = g_proc.dataDelete( client, res_ids );
+                var result = g_proc.dataCollDelete( client, res_ids );
 
                 // TODO delete records
                 //g_lib.deleteData( data, alloc_sz, locations );
                 //g_lib.updateAllocations( alloc_sz );
 
+                throw [1, "TEST exception to prevent delete!" ];
                 res.send(result);
             }
         });

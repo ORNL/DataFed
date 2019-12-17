@@ -43,8 +43,8 @@ module.exports = ( function() {
 
     obj.TT_DATA_GET         = 0;
     obj.TT_DATA_PUT         = 1;
-    obj.TT_DATA_MOVE        = 2;
-    obj.TT_DATA_GIVE        = 3;
+    obj.TT_DATA_CHG_ALLOC   = 2;
+    obj.TT_DATA_CHG_OWNER   = 3;
     obj.TT_DATA_DEL         = 4;
 
     obj.TS_BLOCKED          = 0;
@@ -602,6 +602,7 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermObjectLoaded = function( a_client, a_object ) {
+        // TODO Should collection creator have admin rights?
         if ( a_object.owner == a_client._id || a_object.creator == a_client._id || a_client.is_admin )
             return true;
 
