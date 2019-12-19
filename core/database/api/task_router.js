@@ -125,14 +125,14 @@ router.post('/finalize', function (req, res) {
                 if ( !g_db._exists( req.queryParams.task_id ))
                     throw [g_lib.ERR_INVALID_PARAM,"Task " + req.queryParams.task_id + " does not exist."];
 
-                var dep, dep_blocks, blocks = g_db.block.byExample({_to:req.queryParams.task_id});
+                var new_tasks = [], dep, dep_blocks, blocks = g_db.block.byExample({_to:req.queryParams.task_id});
 
                 while ( blocks.hasNext() ){
                     dep = blocks.next()._from;
                     dep_blocks = g_db.block.byExample({_from:dep}).toArray();
                     // If blocked task has only one block, then it's this task being finalized and will be able to run now
                     if ( dep_blocks.length == 1 ){
-                        result.push( dep );
+                        new_tasks.push( dep );
                         g_db._update( dep, { status: g_lib.TS_READY, msg: "Pending" }, { keepNull: false, returnNew: false });
                     }
                 }
@@ -147,6 +147,18 @@ router.post('/finalize', function (req, res) {
                 g_db.lock.removeByExample({_from:req.queryParams.task_id});
                 // Should only have in-coming block edges
                 g_db.block.removeByExample({_to:req.queryParams.task_id});
+
+                var i, task;
+                for ( i in new_tasks ){
+                    task = g_db.task.document( new_tasks[i] );
+
+                    task.id = task._id;
+                    delete task._id;
+                    delete task._rev;
+                    delete task._key;
+
+                    result.push( task );
+                }
             }
         });
 
