@@ -1,5 +1,7 @@
 #include <fstream>
 #include <time.h>
+#include <curl/curl.h>
+
 #include "MsgBuf.hpp"
 #include "DynaLog.hpp"
 #include "CoreServer.hpp"
@@ -28,9 +30,11 @@ Server::Server() :
     m_maint_thread(0),
     m_io_running(false),
     m_zap_thread(0),
-    m_xfr_mgr( *this ),
+    //m_xfr_mgr( *this ),
     m_msg_router_thread(0)
 {
+    curl_global_init( CURL_GLOBAL_DEFAULT );
+
     loadKeys (m_config.cred_dir );
     m_sec_ctx.is_server = true;
     m_sec_ctx.public_key = m_pub_key;
@@ -127,7 +131,7 @@ Server::run( bool a_async )
     if ( a_async )
     {
         //m_io_thread = new thread( &Server::ioRun, this );
-        m_xfr_mgr.start();
+        //m_xfr_mgr.start();
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         m_msg_router_thread = new thread( &Server::msgRouter, this );
         m_io_secure_thread = new thread( &Server::ioSecure, this );
@@ -136,7 +140,7 @@ Server::run( bool a_async )
     else
     {
         lock.unlock();
-        m_xfr_mgr.start();
+        //m_xfr_mgr.start();
         m_maint_thread = new thread( &Server::backgroundMaintenance, this );
         m_msg_router_thread = new thread( &Server::msgRouter, this );
         m_io_secure_thread = new thread( &Server::ioSecure, this );
@@ -298,7 +302,7 @@ Server::msgRouter()
     zmq_setsockopt( control, ZMQ_SUBSCRIBE, "", 0 );
 
     // Ceate worker threads
-    for ( uint16_t t = 0; t < m_config.worker_threads; ++t )
+    for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t )
         m_workers.push_back( new Worker( *this, t+1 ));
 
     // Connect backend to frontend via a proxy
@@ -563,11 +567,13 @@ Server::backgroundMaintenance()
     DL_DEBUG( "Maint thread stopped" );
 }
 
+/*
 void
 Server::handleNewXfr( const XfrData & a_xfr )
 {
     m_xfr_mgr.newXfr( a_xfr );
 }
+
 
 void
 Server::dataDelete( const vector<RepoRecordDataLocations> & a_locs )
@@ -588,7 +594,7 @@ Server::dataDelete( const vector<RepoRecordDataLocations> & a_locs )
         }
     }
 }
-
+*/
 
 void
 Server::zapHandler()

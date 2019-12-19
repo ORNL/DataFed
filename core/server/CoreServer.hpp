@@ -12,7 +12,6 @@
 #include "MsgComm.hpp"
 #include "Config.hpp"
 #include "CoreIWorkerMgr.hpp"
-#include "CoreXfrMgr.hpp"
 #include "CoreWorker.hpp"
 #include "CoreDatabaseClient.hpp"
 #include "Version.pb.h"
@@ -40,8 +39,8 @@ private:
     void                repoPathDelete( const std::string & a_repo_id, const std::string & a_id );
     const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
-    void                handleNewXfr( const XfrData & a_xfr );
-    void                dataDelete( const std::vector<RepoRecordDataLocations> & a_locs );
+    //void                handleNewXfr( const XfrData & a_xfr );
+    //void                dataDelete( const std::vector<RepoRecordDataLocations> & a_locs );
 
     void loadKeys( const std::string & a_cred_dir );
     void loadRepositoryConfig();
@@ -73,7 +72,7 @@ private:
     std::map<std::string,std::vector<std::pair<std::string,std::string>>> m_data_delete; // repo_id -> list of record id,path
     std::vector<std::pair<std::string,std::string>> m_path_create;
     std::vector<std::pair<std::string,std::string>> m_path_delete;
-    XfrMgr                          m_xfr_mgr;
+    //XfrMgr                          m_xfr_mgr;
     std::thread *                   m_msg_router_thread;
     std::vector<Worker*>            m_workers;
     size_t                          m_num_workers;

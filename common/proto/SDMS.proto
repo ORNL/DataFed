@@ -29,16 +29,8 @@ enum XfrMode
     XM_PUT          = 1;
     XM_COPY         = 2;
 }
-
-enum XfrStatus
-{
-    XS_INIT         = 0;
-    XS_ACTIVE       = 1;
-    XS_INACTIVE     = 2;
-    XS_SUCCEEDED    = 3;
-    XS_FAILED       = 4;
-}
 */
+
 
 enum CollDelMode
 {
@@ -322,7 +314,7 @@ enum Encryption
     ENCRYPT_FORCE   = 2;
 }
 
-
+/*
 message FileInfo
 {
     required string             id          = 1;
@@ -380,22 +372,23 @@ message TaskDataDelete
     repeated string             data_id     = 3;
     required uint32             file_idx    = 4;
 }
+*/
 
-message Task
+message TaskData
 {
     required string                 id          = 1;
-    optional TaskType               type        = 2;
-    optional TaskStatus             status      = 3;
-    optional string                 user        = 4;
-    optional float                  progress    = 5;
-    optional string                 msg         = 6;
-    optional uint32                 ct          = 7;
-    optional uint32                 ut          = 8;
-    optional TaskDataGet            state_get   = 9;
-    optional TaskDataPut            state_put   = 10;
-    optional TaskDataChangeAlloc    state_all   = 11;
-    optional TaskDataChangeOwner    state_own   = 12;
-    optional TaskDataDelete         state_del   = 13;
+    required TaskType               type        = 2;
+    required TaskStatus             status      = 3;
+    required string                 user        = 4;
+    required float                  progress    = 5;
+    required string                 msg         = 6;
+    required uint32                 ct          = 7;
+    required uint32                 ut          = 8;
+    //optional TaskDataGet            state_get   = 9;
+    //optional TaskDataPut            state_put   = 10;
+    //optional TaskDataChangeAlloc    state_all   = 11;
+    //optional TaskDataChangeOwner    state_own   = 12;
+    //optional TaskDataDelete         state_del   = 13;
 }
 
 

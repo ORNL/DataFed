@@ -14,6 +14,15 @@ namespace Core {
 class GlobusAPI
 {
 public:
+    enum XfrStatus
+    {
+        XS_INIT = 0,
+        XS_ACTIVE,
+        XS_INACTIVE,
+        XS_SUCCEEDED,
+        XS_FAILED
+    };
+
     class IGlobusAPIClient
     {
     public:
@@ -35,9 +44,11 @@ public:
     GlobusAPI();
     ~GlobusAPI();
 
-    std::string getTaskID( const std::string & a_acc_token );
-    void        startTransfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token );
-    bool        checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, SDMS::XfrStatus & a_status, std::string & a_err_msg );
+    std::string transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, Encryption a_encrypt, const std::string & a_acc_token );
+
+    //std::string getTaskID( const std::string & a_acc_token );
+
+    bool        checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, XfrStatus & a_status, std::string & a_err_msg );
     void        cancelTask( const std::string & a_acc_tok, const std::string & a_task_id );
     void        getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info );
     void        refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in );
@@ -45,7 +56,8 @@ public:
 private:
     long        get( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, std::string & a_result );
     long        post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, std::string & a_result );
-    bool        eventsHaveErrors( const std::vector<std::string> & a_events, SDMS::XfrStatus & status, std::string & a_err_msg );
+    std::string getSubmissionID( const std::string & a_acc_token );
+    bool        eventsHaveErrors( const std::vector<std::string> & a_events, XfrStatus & status, std::string & a_err_msg );
 
     Config &    m_config;
     CURL *      m_curl;

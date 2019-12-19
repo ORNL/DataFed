@@ -102,12 +102,14 @@ public:
     void queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply );
     void queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply );
 
+/*
     void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
     //void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
     //void xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply );
     void xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrEncrypt a_encrypt, XfrMode a_mode, Auth::XfrDataReply & a_reply );
     void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const bool * a_encrypted = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
+*/
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );
@@ -141,7 +143,8 @@ public:
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
 
-    void initTaskDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, XfrEncrypt a_encrypt, Auth::TaskReply & a_reply );
+    void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, rapidjson::Value *& a_task );
+    void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<rapidjson::Value *> & a_new_tasks );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result, bool a_log = true );
@@ -158,20 +161,19 @@ private:
     void setQueryData( Auth::QueryDataReply & a_reply, rapidjson::Document & a_result );
     void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
-    void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
+    //void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
     //void setXfrGetData( Auth::XfrGetDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result );
     void setAllocStatsData( rapidjson::Value & a_value, AllocStatsData & a_stats );
+    void setTaskData( Auth::TaskReply & a_reply, rapidjson::Document & a_result, rapidjson::Value *& a_task );
 
     CURL *      m_curl;
     char *      m_client;
     std::string m_client_uid;
     std::string m_db_url;
-    std::string m_db_user;
-    std::string m_db_pass;
 };
 
 }}

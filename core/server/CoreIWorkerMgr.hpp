@@ -15,9 +15,9 @@ public:
     virtual void                repoPathCreate( const std::string & a_repo_id, const std::string & a_id ) = 0;
     virtual void                repoPathDelete( const std::string & a_repo_id, const std::string & a_id ) = 0;
     virtual const MsgComm::SecurityContext & getSecurityContext() = 0;
-    virtual void                dataDelete( const std::vector<RepoRecordDataLocations> & ) = 0;
+    //virtual void                dataDelete( const std::vector<RepoRecordDataLocations> & ) = 0;
     virtual void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid ) = 0;
-    virtual void                handleNewXfr( const XfrData & a_xfr ) = 0;
+    //virtual void                handleNewXfr( const XfrData & a_xfr ) = 0;
 };
 
 }}

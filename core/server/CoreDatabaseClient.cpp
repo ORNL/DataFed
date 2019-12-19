@@ -15,7 +15,7 @@ namespace Core {
 using namespace SDMS::Auth;
 
 DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
-    m_client(0), m_db_url(a_db_url), m_db_user(a_db_user), m_db_pass(a_db_pass)
+    m_client(0), m_db_url(a_db_url)
 {
     m_curl = curl_easy_init();
     if ( !m_curl )
@@ -24,8 +24,8 @@ DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string 
     setClient("");
 
     curl_easy_setopt( m_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-    curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_db_user.c_str() );
-    curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_db_pass.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_USERNAME, a_db_user.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_PASSWORD, a_db_pass.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
     curl_easy_setopt( m_curl, CURLOPT_SSL_VERIFYPEER, 0 );
     curl_easy_setopt( m_curl, CURLOPT_TCP_NODELAY, 1 );
@@ -43,6 +43,9 @@ void
 DatabaseClient::setClient( const std::string & a_client )
 {
     m_client_uid = a_client.size()?(string("u/") + a_client):"";
+    if ( m_client )
+        curl_free( m_client );
+
     m_client = curl_easy_escape( m_curl, a_client.c_str(), 0 );
 }
 
@@ -1796,203 +1799,6 @@ DatabaseClient::setQueryData( QueryDataReply & a_reply, rapidjson::Document & a_
 }
 
 void
-DatabaseClient::xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply )
-{
-    rapidjson::Document result;
-
-    dbGet( "xfr/view", {{"xfr_id",a_request.xfr_id()}}, result );
-
-    setXfrData( a_reply, result );
-}
-
-void
-DatabaseClient::xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply )
-{
-    rapidjson::Document result;
-
-    vector<pair<string,string>> params;
-
-    if ( a_request.has_since() )
-        params.push_back({"since",to_string(a_request.since())});
-    if ( a_request.has_from() )
-        params.push_back({"from",to_string(a_request.from())});
-    if ( a_request.has_to() )
-        params.push_back({"to",to_string(a_request.to())});
-    if ( a_request.has_status() )
-        params.push_back({"status",to_string((unsigned int)a_request.status())});
-    if ( a_request.has_limit() )
-        params.push_back({"limit",to_string(a_request.limit())});
-
-    dbGet( "xfr/list", params, result, false );
-
-    setXfrData( a_reply, result );
-}
-
-/*
-void
-DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_result )
-{
-    if ( !a_result.IsArray() )
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-
-    XfrData* xfr;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        xfr = a_reply.add_xfr();
-        xfr->set_id( val["_id"].GetString() );
-        xfr->set_mode( (XfrMode)val["mode"].GetInt() );
-        xfr->set_status( (XfrStatus)val["status"].GetInt() );
-        xfr->set_data_id( val["data_id"].GetString() );
-        xfr->set_repo_path( val["repo_path"].GetString() );
-        xfr->set_local_path( val["local_path"].GetString() );
-        xfr->set_user_id( val["user_id"].GetString() );
-        xfr->set_repo_id( val["repo_id"].GetString() );
-        xfr->set_started( val["started"].GetUint() );
-        xfr->set_updated( val["updated"].GetUint() );
-
-        imem = val.FindMember("ext");
-        if ( imem != val.MemberEnd() )
-            xfr->set_ext( imem->value.GetString() );
-
-        imem = val.FindMember("task_id");
-        if ( imem != val.MemberEnd() )
-            xfr->set_task_id( imem->value.GetString() );
-
-        imem = val.FindMember("err_msg");
-        if ( imem != val.MemberEnd() )
-            xfr->set_err_msg( imem->value.GetString() );
-    }
-}*/
-
-/*
-void
-DatabaseClient::xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply )
-{
-    rapidjson::Document result;
-    vector<pair<string,string>> params;
-    params.push_back({"id",a_id});
-    params.push_back({"path",a_data_path});
-    params.push_back({"mode",to_string(a_mode)});
-    if ( a_ext )
-        params.push_back({"ext",*a_ext});
-
-    dbGet( "xfr/init", params, result );
-
-    setXfrData( a_reply, result );
-}*/
-
-void
-DatabaseClient::xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrEncrypt a_encrypt, XfrMode a_mode, Auth::XfrDataReply & a_reply )
-{
-    rapidjson::Document result;
-    vector<pair<string,string>> params;
-    string ids = "[";
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
-    {
-        if ( i != a_ids.begin() )
-            ids += ",";
-
-        ids += "\"" + *i + "\"";
-    }
-    ids += "]";
-    params.push_back({"ids",ids});
-    params.push_back({"path",a_path});
-    params.push_back({"mode",to_string(a_mode)});
-    params.push_back({"encrypt",to_string(a_encrypt)});
-    if ( a_ext )
-        params.push_back({"ext",*a_ext});
-
-    dbGet( "xfr/init2", params, result );
-
-    setXfrData( a_reply, result );
-}
-
-void
-DatabaseClient::setXfrData( XfrDataReply & a_reply, rapidjson::Document & a_result )
-{
-    if ( !a_result.IsArray() )
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-
-    XfrData*    xfr;
-    XfrRepo*    repo;
-    XfrFile*    file;
-    rapidjson::Value::MemberIterator imem, imem2;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        xfr = a_reply.add_xfr();
-        xfr->set_id( val["_id"].GetString() );
-        xfr->set_mode( (XfrMode)val["mode"].GetInt() );
-        xfr->set_status( (XfrStatus)val["status"].GetInt() );
-        xfr->set_rem_ep( val["rem_ep"].GetString() );
-        xfr->set_rem_path( val["rem_path"].GetString() );
-        xfr->set_user_id( val["user_id"].GetString() );
-        xfr->set_started( val["started"].GetUint() );
-        xfr->set_updated( val["updated"].GetUint() );
-        xfr->set_encrypt( (XfrEncrypt)val["encrypt"].GetUint() );
-        xfr->set_encrypted( val["encrypted"].GetBool() );
-
-        imem = val.FindMember("ext");
-        if ( imem != val.MemberEnd() )
-            xfr->set_ext( val["ext"].GetString() );
-
-        imem = val.FindMember("repo");
-        if ( imem != val.MemberEnd() )
-        {
-            repo = xfr->mutable_repo();
-            //repo->set_repo_id( imem2->name.GetString() );
-            repo->set_repo_id( imem->value["repo_id"].GetString() );
-            repo->set_repo_ep( imem->value["repo_ep"].GetString() );
-            const rapidjson::Value & fval = imem->value["files"];
-            for ( rapidjson::SizeType f = 0; f < fval.Size(); f++ )
-            {
-                file = repo->add_file();
-                file->set_id( fval[f]["id"].GetString() );
-                file->set_from( fval[f]["from"].GetString() );
-                file->set_to( fval[f]["to"].GetString() );
-            }
-        }
-
-        imem = val.FindMember("task_id");
-        if ( imem != val.MemberEnd() )
-            xfr->set_task_id( imem->value.GetString() );
-
-        imem = val.FindMember("err_msg");
-        if ( imem != val.MemberEnd() )
-            xfr->set_err_msg( imem->value.GetString() );
-    }
-}
-
-void
-DatabaseClient::xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status, const bool * a_encrypted, const std::string & a_err_msg, const char * a_task_id )
-{
-    rapidjson::Document result;
-
-    vector<pair<string,string>> params;
-    params.push_back({"xfr_id",a_xfr_id});
-    if ( a_status )
-        params.push_back({"status",to_string(*a_status)});
-    if ( a_encrypted )
-        params.push_back({"encrypted", *a_encrypted?"true":"false"});
-    if ( a_task_id )
-        params.push_back({"task_id", string(a_task_id)});
-    if ( a_err_msg.size() )
-        params.push_back({"err_msg", a_err_msg});
-
-    dbGet( "xfr/update", params, result );
-}
-
-void
 DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply )
 {
     rapidjson::Document result;
@@ -2001,6 +1807,7 @@ DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataRe
 
     setACLData( a_reply, result );
 }
+
 
 void
 DatabaseClient::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
@@ -2734,33 +2541,66 @@ DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 */
 
 void
-DatabaseClient::initTaskDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, XfrEncrypt a_encrypt, Auth::TaskReply & a_reply )
+DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, rapidjson::Value *& a_task )
 {
-    rapidjson::Document result;
+    string body = "{\"ids\":[";
 
-    string body = "{\"id\":\"" + a_request.id() + "\"";
-    if ( a_request.has_title() )
-        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
-
-    string ids = "[";
     for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
     {
         if ( i != a_ids.begin() )
-            ids += ",";
+            body += ",";
 
-        ids += "\"" + *i + "\"";
+        body += "\"" + *i + "\"";
     }
-    ids += "]";
-    params.push_back({"ids",ids});
-    params.push_back({"path",a_path});
-    params.push_back({"mode",to_string(a_mode)});
-    params.push_back({"encrypt",to_string(a_encrypt)});
-    if ( a_ext )
-        params.push_back({"ext",*a_ext});
 
-    dbPost( "task/create", {}, &body, result );
+    body += "],\"path\":\"";
+    body += a_path;
+    body += "\",\"encrypt\":";
+    body += to_string(a_encrypt);
+    body += "}";
 
-    setTaskData( a_reply, result );
+    rapidjson::Document result;
+
+    dbPost( "data/get", {}, &body, result );
+
+    setTaskData( a_reply, result, a_task );
 }
+
+
+void
+DatabaseClient::setTaskData( Auth::TaskReply & a_reply, rapidjson::Document & a_result, rapidjson::Value *& a_task )
+{
+    if ( a_result.IsArray() )
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+
+    rapidjson::Value::MemberIterator imem = a_result.FindMember("task");
+    if ( imem != a_result.MemberEnd( ))
+    {
+        rapidjson::Value & val = imem->value;
+        TaskData * task = a_reply.mutable_task();
+
+        task->set_id(val["id"].GetString());
+        task->set_type((TaskType)val["type"].GetUint());
+        task->set_status((TaskStatus)val["status"].GetUint());
+        task->set_user(val["user"].GetString());
+        task->set_progress(val["progress"].GetDouble());
+        task->set_msg(val["msg"].GetString());
+        task->set_ct(val["ct"].GetUint());
+        task->set_ut(val["ut"].GetUint());
+
+        // Put all of task field into new task document
+        a_task = new rapidjson::Value();
+        // Assignment should MOVE contents (verify)
+        *a_task = val;
+    }
+}
+
+
+void
+DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<rapidjson::Value *> & a_new_tasks )
+{
+    // TODO Implement!
+}
+
 
 }}

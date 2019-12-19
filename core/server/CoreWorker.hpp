@@ -9,7 +9,7 @@
 #include "MsgComm.hpp"
 #include "CoreDatabaseClient.hpp"
 #include "CoreIWorkerMgr.hpp"
-#include "GlobusAPIClient.hpp"
+#include "GlobusAPI.hpp"
 
 namespace SDMS {
 namespace Core {
@@ -76,7 +76,7 @@ private:
     bool                m_run;
     DatabaseClient      m_db_client;
     MsgBuf              m_msg_buf;
-    GlobusAPIClient     m_globus_api;
+    GlobusAPI           m_globus_api;
 
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 };

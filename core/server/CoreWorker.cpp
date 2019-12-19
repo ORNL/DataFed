@@ -11,6 +11,7 @@
 #include <SDMS.pb.h>
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>
+#include "TaskMgr.hpp"
 
 using namespace std;
 
@@ -140,8 +141,8 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
-        SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
-        SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
+        //SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
+        //SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
         SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );
@@ -448,14 +449,8 @@ bool
 Worker::procDataGetRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataGetRequest, TaskReply )
-    if ( request->id_size() > 1 )
-    {
-        DL_INFO( "Data GET, uid: " << a_uid << ", rec count: " << request->id_size() << ", path: " << request->path() << ", encrypt: " << request->encrypt() );
-    }
-    else
-    {
-        DL_INFO( "Data GET, uid: " << a_uid << ", id: " << request->id(0) << ", path: " << request->path() << ", encrypt: " << request->encrypt()  );
-    }
+
+    DL_INFO( "procDataGetRequest, uid: " << a_uid );
 
     m_db_client.setClient( a_uid );
     vector<string> ids;
@@ -465,12 +460,12 @@ Worker::procDataGetRequest( const std::string & a_uid )
     for ( i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    m_db_client.initTaskDataGet( ids, request->path(), 0, request->encrypt(), reply );
+    rapidjson::Value *task = 0;
 
-    if ( reply.task() )
-    {
-        TaskMgr::getInstance().newTask( reply.xfr(i) );
-    }
+    m_db_client.taskInitDataGet( ids, request->path(), request->encrypt(), reply, task );
+
+    if ( task )
+        TaskMgr::getInstance().newTask( task );
 
     PROC_MSG_END
 }
@@ -478,9 +473,11 @@ Worker::procDataGetRequest( const std::string & a_uid )
 bool
 Worker::procDataPutRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataPutRequest, XfrDataReply )
+    PROC_MSG_BEGIN( DataPutRequest, TaskReply )
 
-    DL_INFO( "Data PUT, uid: " << a_uid << ", id: " << request->id() << ", path: " << request->path() << ", encrypt: " << request->encrypt() );
+    DL_INFO( "procDataPutRequest, uid: " << a_uid );
+
+/*
 
     m_db_client.setClient( a_uid );
     //vector<string> ids = { request->id() };
@@ -491,6 +488,7 @@ Worker::procDataPutRequest( const std::string & a_uid )
         EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
 
     m_mgr.handleNewXfr( reply.xfr(0) );
+*/
 
     PROC_MSG_END
 }
@@ -499,10 +497,11 @@ Worker::procDataPutRequest( const std::string & a_uid )
 bool
 Worker::procDataDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( DataDeleteRequest, TaskReply )
 
-    DL_INFO( "Data RAW-DELETE, uid: " << a_uid );
+    DL_INFO( "procDataDeleteRequest, uid: " << a_uid );
 
+/*
     // Get data path and delete raw data first, then update data record
 
     vector<string> ids;
@@ -533,6 +532,7 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
             m_db_client.recordUpdate( upd_req, upd_reply, loc );
         }
     }
+*/
 
     PROC_MSG_END
 }
@@ -543,6 +543,7 @@ Worker::procRecordUpdateRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
 
+/*
     vector<RepoRecordDataLocations> locs;
 
     // TODO Acquire write lock here
@@ -554,6 +555,7 @@ Worker::procRecordUpdateRequest( const std::string & a_uid )
 
     if ( locs.size() )
         m_mgr.dataDelete( locs );
+*/
 
     PROC_MSG_END
 }
@@ -571,10 +573,9 @@ Worker::procRecordUpdateBatchRequest( const std::string & a_uid )
     m_db_client.setClient( a_uid );
     m_db_client.recordUpdateBatch( *request, reply, locs );
 
-    // TODO Must be durable (use DB to track delete progress)
-
-    if ( locs.size() )
-        m_mgr.dataDelete( locs );
+    // Raw data may need to be deleted if records are published
+    //if ( locs.size() )
+    //    m_mgr.dataDelete( locs );
 
     PROC_MSG_END
 }
@@ -583,12 +584,13 @@ Worker::procRecordUpdateBatchRequest( const std::string & a_uid )
 bool
 Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( RecordDeleteRequest, TaskReply )
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    /*
     vector<string> ids;
     int i;
 
@@ -604,6 +606,7 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
     // TODO Must be durable (use DB to track delete progress)
 
     m_mgr.dataDelete( loc );
+    */
 
     PROC_MSG_END
 }
@@ -612,12 +615,13 @@ Worker::procRecordDeleteRequest( const std::string & a_uid )
 bool
 Worker::procCollectionDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( CollDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( CollDeleteRequest, TaskReply )
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    /*
     m_db_client.setClient( a_uid );
     vector<RepoRecordDataLocations> locs;
 
@@ -633,6 +637,7 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
 
         locs.clear();
     }
+    */
 
     PROC_MSG_END
 }
@@ -640,12 +645,13 @@ Worker::procCollectionDeleteRequest( const std::string & a_uid )
 bool
 Worker::procProjectDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( ProjectDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskReply )
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)
 
     // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
+    /*
     m_db_client.setClient( a_uid );
     vector<RepoRecordDataLocations> locs;
     bool suballoc;
@@ -669,7 +675,7 @@ Worker::procProjectDeleteRequest( const std::string & a_uid )
         }
 
         locs.clear();
-    }
+    }*/
 
     PROC_MSG_END
 }

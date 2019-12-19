@@ -67,6 +67,6 @@ private:
     std::string         m_context;
 };
 
-
+#define RAPIDJSON_ASSERT(x) if (!(x)) throw TraceException(__FUNCTION__, __LINE__,0,RAPIDJSON_STRINGIFY(x))
 
 #endif // TRACEEXCEPTION_H

@@ -222,71 +222,43 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
     return imem->value.GetString();
 }
 
-void
-GlobusAPI::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
+//GlobusAPI::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
+
+string
+GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, Encryption a_encrypt, const std::string & a_acc_token )
 {
-    DL_DEBUG( "GlobusAPI::transfer, ID: " << a_xfr.id() << ", mode,  " << a_xfr.mode() << ", rem path: " << a_xfr.rem_path() );
+    DL_DEBUG( "GlobusAPI::transfer" );
 
     string sub_id = getSubmissionID( a_acc_token );
-
-    DL_DEBUG( "  xfr ID: " << a_xfr.id() << ", sub ID: " << sub_id  );
-
-    //if ( a_xfr.repo_size() > 1 )
-    //    EXCEPT( 1, "Transfers involving multiple repositories not supported." );
 
     rapidjson::Document body;
     rapidjson::Document::AllocatorType& allocator = body.GetAllocator();
 
-    string src_ep;
-    string dst_ep;
-
-    if ( a_xfr.mode() == XM_GET )
-        dst_ep = a_xfr.rem_ep();
-    else
-        src_ep = a_xfr.rem_ep();
-
-    const XfrRepo & repo = a_xfr.repo();
-
-    if ( a_xfr.mode() == XM_GET )
-        src_ep = repo.repo_ep();
-    else
-        dst_ep = repo.repo_ep();
-
-    DL_DEBUG( "  xfr from EP " << src_ep << " to " << dst_ep );
 
     body.SetObject();
     body.AddMember( "DATA_TYPE", "transfer", allocator );
     body.AddMember( "submission_id", rapidjson::StringRef( sub_id.c_str() ), allocator );
-    body.AddMember( "source_endpoint", rapidjson::StringRef( src_ep.c_str() ), allocator );
-    body.AddMember( "destination_endpoint", rapidjson::StringRef( dst_ep.c_str() ), allocator );
+    body.AddMember( "source_endpoint", rapidjson::StringRef( a_src_ep.c_str() ), allocator );
+    body.AddMember( "destination_endpoint", rapidjson::StringRef( a_dst_ep.c_str() ), allocator );
     body.AddMember( "verify_checksum", true, allocator );
     body.AddMember( "notify_on_succeeded", false, allocator );
-    if ( a_xfr.encrypt() == XE_FORCE )
+    if ( a_encrypt == ENCRYPT_FORCE )
         body.AddMember( "encrypt_data", true, allocator );
-    else if ( a_xfr.encrypt() == XE_NONE )
+    else if ( a_encrypt == ENCRYPT_NONE )
         body.AddMember( "encrypt_data", false, allocator );
 
     rapidjson::Value xfr_list;
     xfr_list.SetArray();
 
-    for ( int f = 0; f < repo.file_size(); f++ )
+    for ( vector<pair<string,string>>::const_iterator f = a_files.begin(); f != a_files.end(); f++ )
     {
-        const XfrFile & file = repo.file(f);
-        DL_DEBUG( "  xfr from " << file.from() << " to " << file.to() );
+        DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
 
         rapidjson::Value xfr_item;
         xfr_item.SetObject();
         xfr_item.AddMember( "DATA_TYPE", "transfer_item", allocator );
-        if ( a_xfr.mode() == XM_GET )
-        {
-            xfr_item.AddMember( "source_path", rapidjson::StringRef( file.from().c_str() ), allocator );
-            xfr_item.AddMember( "destination_path", rapidjson::Value( (a_xfr.rem_path() + file.to()).c_str(), allocator ), allocator );
-        }
-        else
-        {
-            xfr_item.AddMember( "source_path", rapidjson::Value( ( a_xfr.rem_path() + file.from()).c_str(), allocator ), allocator );
-            xfr_item.AddMember( "destination_path", rapidjson::StringRef( file.to().c_str() ), allocator );
-        }
+        xfr_item.AddMember( "source_path", rapidjson::StringRef( f->first.c_str( )), allocator );
+        xfr_item.AddMember( "destination_path", rapidjson::StringRef( f->second.c_str( )), allocator );
         xfr_item.AddMember( "recursive", false, allocator );
         xfr_list.PushBack( xfr_item, allocator );
     }
@@ -373,7 +345,7 @@ GlobusAPI::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
             EXCEPT( 1, "Invalid response from Globus Transfer API." );
         }
 
-        a_xfr.set_task_id( imem->value.GetString() );
+        return imem->value.GetString();
     }
 }
 

@@ -268,6 +268,7 @@ message RecordDataLocationReply
 
 // ============================ Raw Data Messages
 
+/*
 message XfrViewRequest
 {
     required string             xfr_id      = 1;
@@ -287,6 +288,8 @@ message XfrDataReply
     repeated SDMS.XfrData       xfr         = 1;
 }
 
+*/
+
 message HttpXfrDataReply
 {
     repeated SDMS.HttpXfrData   xfr         = 1;
@@ -303,7 +306,7 @@ message DataGetRequest
 {
     repeated string             id          = 1;
     required string             path        = 2;
-    required XfrEncrypt         encrypt     = 3;
+    required Encryption         encrypt     = 3;
 }
 
 // Upload raw data for one record
@@ -311,7 +314,7 @@ message DataPutRequest
 {
     required string             id          = 1;
     required string             path        = 2;
-    required XfrEncrypt         encrypt     = 3;
+    required Encryption         encrypt     = 3;
     optional string             ext         = 4;
 }
 
@@ -788,5 +791,5 @@ message QueryDataReply
 
 message TaskReply
 {
-    repeated SDMS.TaskData      task        = 1;
+    optional SDMS.TaskData      task        = 1;
 }
