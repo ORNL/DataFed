@@ -85,7 +85,7 @@ private:
 
     Task *      getNextTask();
     void        finalizeTask( DatabaseClient & a_db_client, Task * a_task, bool a_succeeded, const std::string & a_msg );
-    std::string getUserAccessToken( Worker * a_worker, const std:string & a_uid );
+    std::string getUserAccessToken( Worker * a_worker, const std::string & a_uid );
 
     Config &                    m_config;
     std::deque<Task*>           m_tasks_ready;
