@@ -1,10 +1,10 @@
-#include <rapidjson/document.h>
 #include <curl/curl.h>
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
 #include "TaskMgr.hpp"
 #include "Config.hpp"
 #include "SDMS.pb.h"
+#include <rapidjson/document.h>
 
 using namespace std;
 
@@ -220,12 +220,16 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
 
     try
     {
-        string                      rem_ep;
+        string                      rem_ep, acc_tok;
+        bool                        encrypted;
         GlobusAPI::EndpointInfo     ep_info;
         string                      uid = (*task->state)["user"].GetString();
         rapidjson::Value &          state = (*task->state)["state"];
         uint32_t                    encrypt = state["encrypt"].GetUint();
         rapidjson::Value &          repos = state["repos"];
+        rapidjson::Value::MemberIterator    imem;
+
+        //rapidjson::Document::AllocatorType & alloc = task->state->GetAllocator();
 
         worker->db.setClient( uid );
 
@@ -237,7 +241,7 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
 
             rem_ep = repo["rem_ep"].GetString();
 
-            worker->glob.getEndpointInfo( rem_ep, acc_tok, &ep_info );
+            worker->glob.getEndpointInfo( rem_ep, acc_tok, ep_info );
 
             if ( !ep_info.activated )
                 EXCEPT(1,"Remote endpoint requires activation.");
@@ -246,26 +250,34 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
 
             switch ( encrypt )
             {
-                case XE_NONE:
+                case ENCRYPT_NONE:
                     if ( ep_info.force_encryption )
                         EXCEPT(1,"Remote endpoint requires encryption.");
+                    encrypted = false;
                     break;
-                case XE_AVAIL:
+                case ENCRYPT_AVAIL:
                     if ( ep_info.supports_encryption )
-                        state["encrypted"] = true;
+                        encrypted = true;
                     else
-                        (*ixfr)->xfr.set_encrypt( XE_NONE );
+                        encrypted = false;
                     break;
-                case XE_FORCE:
-                    if ( ep_info.supports_encryption )
+                case ENCRYPT_FORCE:
+                    if ( !ep_info.supports_encryption )
                         EXCEPT(1,"Remote endpoint does not support encryption.");
+                    encrypted = true;
                     break;
             }
 
-            glob.transfer( (*ixfr)->xfr, acc_token );
+            imem = state.FindMember("encrypted");
+            if ( imem == state.MemberEnd( ))
+                state.AddMember( "encrypted", encrypted );
+            else
+                imem->value = encrypted;
+
+            //glob.transfer( (*ixfr)->xfr, acc_token );
             //DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );
 
-            db.taskUpdate( task->task_id,  );
+            //db.taskUpdate( task->task_id,  );
         }
     }
     catch( TraceException & e )
@@ -312,9 +324,9 @@ TaskMgr::handleDataDelete( Worker *worker, Task * task )
 
 
 std::string
-TaskMgr::getUserAccessToken( Worker * a_worker, const std:string & a_uid )
+TaskMgr::getUserAccessToken( Worker * a_worker, const std::string & a_uid )
 {
-    string acc_tok, ref_token;
+    string acc_tok, ref_tok;
     uint32_t expires_in;
 
     a_worker->db.userGetAccessToken( acc_tok, ref_tok, expires_in );
@@ -328,17 +340,6 @@ TaskMgr::getUserAccessToken( Worker * a_worker, const std:string & a_uid )
     }
 
     return acc_tok;
-}
-
-GlobusAPI::spEndpointInfo
-TaskMgr::getEndpointInfo( Worker * a_worker, const std::string & a_ep_id )
-{
-
-                                
-                                ep_entry.last_used = time(0);
-                                iepc = m_ep_cache.insert(make_pair<>((*ixfr)->xfr.rem_ep(),ep_entry)).first;
-                            }
-                            iepc->second.last_used = time(0);
 }
 
 

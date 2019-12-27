@@ -2590,8 +2590,7 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, rapidjson::Document & a_
 
         // Put all of task field into new task document
         a_task = new rapidjson::Value();
-        // Assignment should MOVE contents (verify)
-        *a_task = val;
+        a_task->Swap( val );
     }
 }
 

@@ -1,7 +1,5 @@
 #include <iostream>
 #include <atomic>
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
 #include <boost/tokenizer.hpp>
 #include <CoreWorker.hpp>
 #include <TraceException.hpp>
@@ -12,6 +10,10 @@
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>
 #include "TaskMgr.hpp"
+
+// Must be after TraceExcpetion
+#include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
 
 using namespace std;
 
