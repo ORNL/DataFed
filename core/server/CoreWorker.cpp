@@ -265,7 +265,7 @@ if ( base_msg ) \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
-                nack.set_err_msg( e.toString() ); \
+                nack.set_err_msg( e.toString( true ) ); \
                 m_msg_buf.serialize( nack ); }\
         } \
         catch( exception &e ) \

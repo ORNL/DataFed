@@ -268,11 +268,13 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
                     break;
             }
 
+            /*
             imem = state.FindMember("encrypted");
             if ( imem == state.MemberEnd( ))
                 state.AddMember( "encrypted", encrypted );
             else
                 imem->value = encrypted;
+            */
 
             //glob.transfer( (*ixfr)->xfr, acc_token );
             //DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );

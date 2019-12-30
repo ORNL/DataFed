@@ -4,14 +4,11 @@
 
 #include <string>
 #include <vector>
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/error/en.h>
 #include <curl/curl.h>
 #include "SDMS.pb.h"
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
+#include "libjson.hpp"
 
 namespace SDMS {
 namespace Core {
@@ -143,32 +140,32 @@ public:
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
 
-    void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, rapidjson::Value *& a_task );
-    void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<rapidjson::Value *> & a_new_tasks );
+    void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply );
+    void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<libjson::Value> & a_new_tasks );
 
 private:
-    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, rapidjson::Document & a_result, bool a_log = true );
+    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
-    long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, rapidjson::Document & a_result );
-    void setAuthStatus( Anon::AuthStatusReply & a_reply, rapidjson::Document & a_result );
-    void setUserData( Auth::UserDataReply & a_reply, rapidjson::Document & a_result );
-    void setProjectData( Auth::ProjectDataReply & a_reply, rapidjson::Document & a_result );
-    void setRecordData( Auth::RecordDataReply & a_reply, rapidjson::Document & a_result, std::vector<RepoRecordDataLocations> * a_locs = 0 );
+    long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, libjson::Value & a_result );
+    void setAuthStatus( Anon::AuthStatusReply & a_reply, libjson::Value & a_result );
+    void setUserData( Auth::UserDataReply & a_reply, libjson::Value & a_result );
+    void setProjectData( Auth::ProjectDataReply & a_reply, libjson::Value & a_result );
+    void setRecordData( Auth::RecordDataReply & a_reply, libjson::Value & a_result, std::vector<RepoRecordDataLocations> * a_locs = 0 );
     //void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
-    void setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, rapidjson::Value & a_result );
-    void setCollData( Auth::CollDataReply & a_reply, rapidjson::Document & a_result );
-    void setCollPathData( Auth::CollPathReply & a_reply, rapidjson::Document & a_result );
-    void setQueryData( Auth::QueryDataReply & a_reply, rapidjson::Document & a_result );
-    void setListingData( Auth::ListingReply & a_reply, rapidjson::Document & a_result );
-    void setGroupData( Auth::GroupDataReply & a_reply, rapidjson::Document & a_result );
+    void setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, libjson::Value & a_result );
+    void setCollData( Auth::CollDataReply & a_reply, libjson::Value & a_result );
+    void setCollPathData( Auth::CollPathReply & a_reply, libjson::Value & a_result );
+    void setQueryData( Auth::QueryDataReply & a_reply, libjson::Value & a_result );
+    void setListingData( Auth::ListingReply & a_reply, libjson::Value & a_result );
+    void setGroupData( Auth::GroupDataReply & a_reply, libjson::Value & a_result );
     //void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
     //void setXfrGetData( Auth::XfrGetDataReply & a_reply, rapidjson::Document & a_result );
-    void setACLData( Auth::ACLDataReply & a_reply, rapidjson::Document & a_result );
-    void setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result );
-    void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result );
-    void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result );
-    void setAllocStatsData( rapidjson::Value & a_value, AllocStatsData & a_stats );
-    void setTaskData( Auth::TaskReply & a_reply, rapidjson::Document & a_result, rapidjson::Value *& a_task );
+    void setACLData( Auth::ACLDataReply & a_reply, libjson::Value & a_result );
+    void setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result );
+    void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );
+    void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result );
+    void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );
+    void setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result );
 
     CURL *      m_curl;
     char *      m_client;

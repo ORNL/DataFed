@@ -10,6 +10,7 @@ namespace libjson{
 
 class Value;
 
+
 class ParseError
 {
 public:
@@ -27,7 +28,7 @@ public:
     }
 
 private:
-    size_t setOffset( size_t a_offset )
+    void setOffset( size_t a_offset )
     {
         m_pos -= a_offset;
     }
@@ -47,12 +48,87 @@ private:
 #define  ERR_INVALID_KEY( p ) throw ParseError( "Invalid key string", (size_t)p )
 #define  ERR_INVALID_ESC( p ) throw ParseError( "Invalid escape sequence", (size_t)p )
 
+/*
+class IObject
+{
+public:
+    typedef std::map<std::string,Value>::iterator iterator;
+    typedef std::map<std::string,Value>::const_iterator const_iterator;
+
+    ~IObject()
+    {}
+
+    inline bool
+    has( const std::string & a_key ) const
+    {
+        return m_map.find( a_key ) != m_map.end();
+    }
+
+    inline iterator
+    find( const std::string & a_key )
+    {
+        return m_map.begin( a_key );
+    }
+
+    inline const_iterator
+    find( const std::string & a_key ) const
+    {
+        return m_map.begin( a_key );
+    }
+
+    inline iterator
+    begin()
+    {
+        return m_map.begin();
+    }
+
+    inline iterator
+    end()
+    {
+        return m_map.begin();
+    }
+
+    inline const_iterator
+    begin() const
+    {
+        return m_map.begin();
+    }
+
+    inline const_iterator
+    end() const
+    {
+        return m_map.begin();
+    }
+
+    inline Value &
+    operator[]( const std::string & a_key )
+    {
+        return m_map[a_key];
+    }
+
+    inline void
+    erase( const std::string & a_key )
+    {
+        m_map.erase( a_key );
+    }
+
+private:
+    Value::Object & m_map;
+
+    IObject( const Value & a_value ) : m_map( *a_value.m_value.o )
+    {}
+};
+*/
+
+
 class Value
 {
 public:
     typedef std::vector<Value> Array;
     typedef std::map<std::string,Value> Object;
     typedef std::string String;
+    typedef std::vector<Value>::iterator ArrayIter;
+    typedef std::map<std::string,Value>::iterator ObjectIter;
 
     enum ValueType : uint8_t
     {
@@ -64,8 +140,6 @@ public:
         VT_BOOL
     };
 
-    typedef std::vector<Value>::iterator ArrayIter;
-    typedef std::map<std::string,Value>::iterator ObjectIter;
 
     Value() :
         m_type( VT_NULL ), m_value({ 0 })
@@ -147,13 +221,16 @@ public:
     {
         if ( this != &a_source )
         {
-            this->~Value();
-
-            m_type = a_source.m_type;
-            m_value = a_source.m_value;
+            ValueType   type = a_source.m_type;
+            ValueUnion  value = a_source.m_value;
 
             a_source.m_type = VT_NULL;
             a_source.m_value.o = 0;
+
+            this->~Value();
+
+            m_type = type;
+            m_value = value;
         }
 
         return *this;
@@ -164,13 +241,16 @@ public:
     {
         if ( this != &a_source )
         {
-            this->~Value();
-
-            m_type = a_source.m_type;
-            m_value = a_source.m_value;
+            ValueType   type = a_source.m_type;
+            ValueUnion  value = a_source.m_value;
 
             a_source.m_type = VT_NULL;
             a_source.m_value.o = 0;
+
+            this->~Value();
+
+            m_type = type;
+            m_value = value;
         }
 
         return *this;
@@ -187,6 +267,8 @@ public:
         }
 
         m_value.b = a_value;
+
+        return *this;
     }
 
 
@@ -201,6 +283,8 @@ public:
         }
 
         m_value.n = a_value;
+
+        return *this;
     }
 
     Value &
@@ -214,6 +298,8 @@ public:
         }
 
         m_value.n = a_value;
+
+        return *this;
     }
 
     Value &
@@ -227,6 +313,8 @@ public:
         }
 
         *m_value.s = a_value;
+
+        return *this;
     }
 
     Value &
@@ -240,6 +328,8 @@ public:
         }
 
         *m_value.s = a_value;
+
+        return *this;
     }
 
     inline ValueType
@@ -332,12 +422,31 @@ public:
     // ----- Object-only Methods -----
 
     void
-    object()
+    initObject()
     {
         this->~Value();
         m_type = VT_OBJECT;
         m_value.o = new Object();
+        //return IObject( *this );
     }
+
+/*
+    IObject
+    setObject()
+    {
+        this->~Value();
+        m_type = VT_OBJECT;
+        m_value.o = new Object();
+        return IObject( *this );
+    }
+
+    IObject
+    object()
+    {
+        enforceObjectType();
+        return IObject( *this );
+    }
+*/
 
     bool
     has( const std::string & a_key ) const
@@ -353,6 +462,14 @@ public:
         enforceObjectType();
 
         return m_value.o->find( a_key );
+    }
+
+    inline ObjectIter
+    end() const
+    {
+        enforceObjectType();
+
+        return m_value.o->end();
     }
 
     Value &
@@ -382,7 +499,7 @@ public:
     // ----- Array-only Methods -----
 
     void
-    array()
+    initArray()
     {
         this->~Value();
         m_type = VT_ARRAY;
@@ -418,7 +535,7 @@ public:
     {
         enforceArrayType();
 
-        m_value.a->back();
+        return m_value.a->back();
     }
 
     Array &
@@ -505,6 +622,9 @@ public:
 
 
 private:
+    friend class IObject;
+    friend class IArray;
+
     inline bool notWS( char c ) const
     {
         return !(c == ' ' || c == '\n' || c == '\t' || c == '\r' );
@@ -525,13 +645,13 @@ private:
         return !c || !isHexDigit( *c );
     }
 
-    inline bool enforceObjectType() const
+    inline void enforceObjectType() const
     {
         if ( m_type != VT_OBJECT )
             throw std::runtime_error("Value is not an object");
     }
 
-    inline bool enforceArrayType() const
+    inline void enforceArrayType() const
     {
         if ( m_type != VT_ARRAY )
             throw std::runtime_error("Value is not an array");
@@ -557,7 +677,7 @@ private:
 
     ValueType   m_type;
 
-    union
+    union ValueUnion
     {
         Object *    o;
         Array *     a;
@@ -565,9 +685,6 @@ private:
         double      n;
         String *    s;
     } m_value;
-
-
-
 
 
     void
@@ -950,6 +1067,7 @@ private:
 
 #endif
     }
+
 
 
 };

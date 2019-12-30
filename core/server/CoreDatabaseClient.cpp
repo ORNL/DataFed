@@ -13,6 +13,7 @@ namespace SDMS {
 namespace Core {
 
 using namespace SDMS::Auth;
+using namespace libjson;
 
 DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_client(0), m_db_url(a_db_url)
@@ -50,7 +51,7 @@ DatabaseClient::setClient( const std::string & a_client )
 }
 
 long
-DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, rapidjson::Document & a_result, bool a_log )
+DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
 {
     string  url;
     string  res_json;
@@ -101,26 +102,18 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
             {
                 DL_DEBUG( "About to parse[" << res_json << "]" );
             }
-            a_result.Parse( res_json.c_str() );
+            a_result.fromString( res_json );
         }
 
         if ( http_code >= 200 && http_code < 300 )
         {
-            if ( a_result.HasParseError() )
-            {
-                DL_INFO( "HAS PARSE ERROR" );
-
-                rapidjson::ParseErrorCode ec = a_result.GetParseError();
-                EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << rapidjson::GetParseError_En( ec ));
-            }
-
             return http_code;
         }
         else
         {
-            if ( res_json.size() && !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
+            if ( res_json.size() && a_result.has( "errorMessage" ))
             {
-                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].GetString() );
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].asString() );
             }
             else
             {
@@ -133,6 +126,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
         EXCEPT_PARAM( ID_SERVICE_ERROR, "SDMS DB interface failed. error: " << error << ", " << curl_easy_strerror( res ));
     }
 }
+
 
 bool
 DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
@@ -182,7 +176,7 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
 }
 
 long
-DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, rapidjson::Document & a_result )
+DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
 {
     DL_DEBUG( "dbPost " << a_url_path << " [" << *a_body << "]" );
 
@@ -231,24 +225,18 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
         if ( res_json.size() )
         {
             DL_TRACE( "About to parse[" << res_json << "]" );
-            a_result.Parse( res_json.c_str() );
+            a_result.fromString( res_json );
         }
 
         if ( http_code >= 200 && http_code < 300 )
         {
-            if ( a_result.HasParseError() )
-            {
-                rapidjson::ParseErrorCode ec = a_result.GetParseError();
-                EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << rapidjson::GetParseError_En( ec ));
-            }
-
             return http_code;
         }
         else
         {
-            if ( res_json.size() && !a_result.HasParseError() && a_result.HasMember( "errorMessage" ))
+            if ( res_json.size() && a_result.has( "errorMessage" ))
             {
-                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].GetString() );
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].asString() );
             }
             else
             {
@@ -265,7 +253,7 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
 void
 DatabaseClient::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/authn/password", {{"pw",a_password}}, result );
     setAuthStatus( a_reply, result );
@@ -274,23 +262,23 @@ DatabaseClient::clientAuthenticateByPassword( const std::string & a_password, An
 void
 DatabaseClient::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/authn/token", {{"token",a_token}}, result );
     setAuthStatus( a_reply, result );
 }
 
 void
-DatabaseClient::setAuthStatus( Anon::AuthStatusReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setAuthStatus( Anon::AuthStatusReply & a_reply, Value & a_result )
 {
-    a_reply.set_uid( a_result["uid"].GetString() );
-    a_reply.set_auth( a_result["authorized"].GetInt() == 1 );
+    a_reply.set_uid( a_result["uid"].asString() );
+    a_reply.set_auth( a_result["authorized"].asBool());
 }
 
 void
 DatabaseClient::clientLinkIdentity( const std::string & a_identity )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/ident/add", {{"ident",a_identity}}, result );
 }
@@ -298,18 +286,16 @@ DatabaseClient::clientLinkIdentity( const std::string & a_identity )
 std::string
 DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
 {
-    rapidjson::Document result;
+    Value result;
 
     // TODO This need to be done correctly without assuming storage location
     dbGet( "dat/view", {{"id",a_data_id}}, result );
 
     // TODO Not sure if this check is needed
-    if ( result.Size() != 1 )
+    if ( result.size() != 1 )
         EXCEPT_PARAM( ID_BAD_REQUEST, "No such data record: " << a_data_id );
 
-    rapidjson::Value & val = result[0];
-
-    string id = val["id"].GetString();
+    string id = result[0]["id"].asString();
 
     return string("/data/") + id.substr(2);
 }
@@ -324,21 +310,23 @@ DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid 
 bool
 DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/keys/get", {}, result );
 
-    rapidjson::Value & val = result[0];
+    Value::Object & obj = result[0].getObject();
 
-    rapidjson::Value::MemberIterator imem = val.FindMember("pub_key");
-    if ( imem == val.MemberEnd() )
+    Value::ObjectIter i = obj.find("pub_key");
+    if ( i == obj.end() )
         return false;
-    a_pub_key = imem->value.GetString();
 
-    imem = val.FindMember("priv_key");
-    if ( imem == val.MemberEnd() )
+    a_pub_key = i->second.asString();
+
+    i = obj.find("priv_key");
+    if ( i == obj.end() )
         return false;
-    a_priv_key = imem->value.GetString();
+
+    a_priv_key = i->second.asString();
 
     return true;
 }
@@ -346,7 +334,7 @@ DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 void
 DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result );
 }
@@ -354,7 +342,7 @@ DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & 
 void
 DatabaseClient::userClearKeys()
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/keys/clear", {}, result );
 }
@@ -363,23 +351,21 @@ DatabaseClient::userClearKeys()
 void
 DatabaseClient::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in )
 {
-    rapidjson::Document result;
+    Value result;
     dbGet( "usr/token/get", {}, result );
 
-    rapidjson::Value::MemberIterator imem = result.FindMember("access");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    a_acc_tok = imem->value.GetString();
+    try
+    {
+        Value::Object & obj = result.getObject();
 
-    imem = result.FindMember("refresh");
-    if ( imem == result.MemberEnd() )
+        a_acc_tok = obj.at("access").asString();
+        a_ref_tok = obj.at("refresh").asString();
+        a_expires_in = (uint32_t)obj.at("expires_in").asNumber();
+    }
+    catch(...)
+    {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    a_ref_tok = imem->value.GetString();
-
-    imem = result.FindMember("expires_in");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    a_expires_in = imem->value.GetUint();
+    }
 }
 
 /*
@@ -407,25 +393,31 @@ DatabaseClient::userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_re
 void
 DatabaseClient::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInfo> & a_expiring_tokens )
 {
-    rapidjson::Document result;
+    Value result;
     dbGet( "usr/token/get/expiring", {{"expires_in",to_string(a_expires_in)}}, result );
-
-    if ( !result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
 
     UserTokenInfo info;
     a_expiring_tokens.clear();
 
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    try
     {
-        rapidjson::Value & val = result[i];
+        Value::Array & arr = result.getArray();
 
-        info.uid = val["id"].GetString();
-        info.access_token = val["access"].GetString();
-        info.refresh_token = val["refresh"].GetString();
-        info.expiration = val["expiration"].GetUint();
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
 
-        a_expiring_tokens.push_back( info );
+            info.uid = obj.at("id").asString();
+            info.access_token = obj.at("access").asString();
+            info.refresh_token = obj.at("refresh").asString();
+            info.expiration = (uint32_t)obj.at("expiration").asNumber();
+
+            a_expiring_tokens.push_back( info );
+        }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
@@ -456,7 +448,7 @@ DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::Use
     uuids += "]";
     params.push_back({"uuids",uuids});
 
-    rapidjson::Document result;
+    Value result;
     dbGet( "usr/create", params, result );
 
     setUserData( a_reply, result );
@@ -473,7 +465,7 @@ DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_r
     if ( a_request.has_details() && a_request.details() )
         params.push_back({"details","true"});
 
-    rapidjson::Document result;
+    Value result;
     dbGet( "usr/view", params, result );
 
     setUserData( a_reply, result );
@@ -483,7 +475,7 @@ DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_r
 void
 DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
@@ -510,7 +502,7 @@ DatabaseClient::userListAll( const UserListAllRequest & a_request, UserDataReply
         params.push_back({"count",to_string(a_request.count())});
     }
 
-    rapidjson::Document result;
+    Value result;
     dbGet( "usr/list/all", params, result );
 
     setUserData( a_reply, result );
@@ -519,8 +511,7 @@ DatabaseClient::userListAll( const UserListAllRequest & a_request, UserDataReply
 void
 DatabaseClient::userListCollab( const UserListCollabRequest & a_request, UserDataReply & a_reply )
 {
-    (void)a_request;
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_offset() && a_request.has_count() )
     {
@@ -546,7 +537,7 @@ DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request,
 
     uuids += "]";
 
-    rapidjson::Document result;
+    Value result;
     dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result );
 
     setUserData( a_reply, result );
@@ -556,13 +547,22 @@ void
 DatabaseClient::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply )
 {
     (void)a_request;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "usr/ep/get", {}, result );
 
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    try
     {
-        a_reply.add_ep( result[i].GetString() );
+        Value::Array & arr = result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            a_reply.add_ep( i->asString() );
+        }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
@@ -570,7 +570,7 @@ void
 DatabaseClient::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply )
 {
     (void) a_reply;
-    rapidjson::Document result;
+    Value result;
 
     string eps = "[";
     for ( int i = 0; i < a_request.ep_size(); i++ )
@@ -585,72 +585,85 @@ DatabaseClient::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request,
 }
 
 void
-DatabaseClient::setUserData( UserDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setUserData( UserDataReply & a_reply, Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    UserData*           user;
+    AllocData*          alloc;
+    Value::ObjectIter   j;
+
+    try
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+        Value::Array & arr = a_result.getArray();
 
-    UserData* user;
-    AllocData* alloc;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        if (( imem = val.FindMember("paging")) != val.MemberEnd())
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            a_reply.set_offset( imem->value["off"].GetUint() );
-            a_reply.set_count( imem->value["cnt"].GetUint() );
-            a_reply.set_total( imem->value["tot"].GetUint() );
-        }
-        else
-        {
-            user = a_reply.add_user();
-            user->set_uid( val["uid"].GetString() );
-            user->set_name( val["name"].GetString() );
+            Value::Object & obj = i->getObject();
 
-            if (( imem = val.FindMember("email")) != val.MemberEnd() )
-                user->set_email( imem->value.GetString() );
-
-            if (( imem = val.FindMember("options")) != val.MemberEnd() )
-                user->set_options( imem->value.GetString() );
-
-            if (( imem = val.FindMember("is_admin")) != val.MemberEnd() )
-                user->set_is_admin( imem->value.GetBool() );
-
-            if (( imem = val.FindMember("is_repo_admin")) != val.MemberEnd() )
-                user->set_is_repo_admin( imem->value.GetBool() );
-
-            if (( imem = val.FindMember("idents")) != val.MemberEnd() )
+            if (( j = obj.find( "paging" )) != obj.end( ))
             {
-                for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-                    user->add_ident( imem->value[j].GetString() );
+                Value::Object & obj2 = j->second.getObject();
+
+                a_reply.set_offset( obj2.at( "off" ).asNumber( ));
+                a_reply.set_count( obj2.at( "cnt" ).asNumber( ));
+                a_reply.set_total( obj2.at( "tot" ).asNumber( ));
             }
-
-            if (( imem = val.FindMember("allocs")) != val.MemberEnd() )
+            else
             {
-                for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+                user = a_reply.add_user();
+                user->set_uid( obj.at( "uid" ).asString( ));
+                user->set_name( obj.at( "name" ).asString( ));
+
+                if (( j = obj.find( "email" )) != obj.end( ))
+                    user->set_email( j->second.asString( ));
+
+                if (( j = obj.find( "options" )) != obj.end( ))
+                    user->set_options( j->second.asString( ));
+
+                if (( j = obj.find( "is_admin" )) != obj.end( ))
+                    user->set_is_admin( j->second.asBool( ));
+
+                if (( j = obj.find( "is_repo_admin" )) != obj.end( ))
+                    user->set_is_repo_admin( j->second.asBool( ));
+
+                if (( j = obj.find( "idents" )) != obj.end( ))
                 {
-                    rapidjson::Value & alloc_val = imem->value[j];
-                    alloc = user->add_alloc();
-                    alloc->set_repo(alloc_val["repo"].GetString());
-                    alloc->set_max_size(alloc_val["max_size"].GetUint64());
-                    alloc->set_tot_size(alloc_val["tot_size"].GetUint64());
-                    alloc->set_max_count(alloc_val["max_count"].GetUint());
-                    alloc->set_path(alloc_val["path"].GetString());
+                    Value::Array & arr2 = j->second.getArray();
+
+                    for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+                    {
+                        user->add_ident( k->asString( ));
+                    }
+                }
+
+                if (( j = obj.find( "allocs" )) != obj.end( ))
+                {
+                    Value::Array & arr2 = j->second.getArray();
+
+                    for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+                    {
+                        Value::Object & obj2 = k->getObject();
+
+                        alloc = user->add_alloc( );
+                        alloc->set_repo( obj2.at( "repo" ).asString( ));
+                        alloc->set_max_size( obj2.at( "max_size" ).asNumber( ));
+                        alloc->set_tot_size( obj2.at( "tot_size" ).asNumber( ));
+                        alloc->set_max_count( obj2.at( "max_count" ).asNumber( ));
+                        alloc->set_path( obj2.at( "path" ).asString( ));
+                    }
                 }
             }
         }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 void
 DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"id",a_request.id()});
@@ -699,7 +712,7 @@ DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::
 void
 DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"id",a_request.id()});
@@ -747,31 +760,31 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
     setProjectData( a_reply, result );
 }
 
+
 void
 DatabaseClient::projDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs, bool & a_suballoc )
 {
-    rapidjson::Document result;
+    Value result;
 
-    dbGet( "prj/delete", {{"id",a_id}}, result );
+    dbGet( "prj/delete", {{ "id", a_id }}, result );
 
-    if ( !result.IsObject() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    Value::Object & obj = result.getObject();
+    Value::ObjectIter i;
 
-    rapidjson::Value::MemberIterator imem;
-
-    if (( imem = result.FindMember("suballoc")) != result.MemberEnd() )
-        a_suballoc = imem->value.GetBool();
+    if (( i = obj.find( "suballoc" )) != obj.end( ))
+        a_suballoc = i->second.asBool();
     else
         a_suballoc = false;
 
-    if (( imem = result.FindMember("locs")) != result.MemberEnd() )
-        setRepoRecordDataLocations( a_locs, imem->value );
+    if (( i = obj.find( "locs" )) != obj.end( ))
+        setRepoRecordDataLocations( a_locs, i->second );
 }
+
 
 void
 DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     dbGet( "prj/view", {{"id",a_request.id()}}, result );
 
     setProjectData( a_reply, result );
@@ -780,7 +793,7 @@ DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::Proj
 void
 DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_subject() )
         params.push_back({"subject",a_request.subject()});
@@ -807,7 +820,7 @@ DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::List
 void
 DatabaseClient::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "prj/search", {{"query",a_query}}, result );
 
@@ -815,77 +828,94 @@ DatabaseClient::projSearch( const std::string & a_query, Auth::ProjectDataReply 
 }
 
 void
-DatabaseClient::setProjectData( ProjectDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 {
-    if ( !a_result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    ProjectData*        proj;
+    AllocData*          alloc;
+    Value::ObjectIter   j;
+    Value::ArrayIter    k;
 
-    ProjectData* proj;
-    AllocData* alloc;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    try
     {
-        rapidjson::Value & val = a_result[i];
+        Value::Array & arr = a_result.getArray();
 
-        proj = a_reply.add_proj();
-        proj->set_id( val["id"].GetString() );
-        proj->set_title( val["title"].GetString() );
-
-        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
-            proj->set_desc( imem->value.GetString() );
-
-        if (( imem = val.FindMember("sub_repo")) != val.MemberEnd() )
-            proj->set_sub_repo( imem->value.GetString() );
-
-        if (( imem = val.FindMember("sub_alloc")) != val.MemberEnd() )
-            proj->set_sub_alloc( imem->value.GetUint64() );
-
-        if (( imem = val.FindMember("sub_usage")) != val.MemberEnd() )
-            proj->set_sub_usage( imem->value.GetUint64() );
-
-        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
-            proj->set_owner( imem->value.GetString() );
-
-        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
-            proj->set_ct( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
-            proj->set_ut( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("admins")) != val.MemberEnd() )
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-                proj->add_admin( imem->value[j].GetString() );
-        }
+            Value::Object & obj = i->getObject();
 
-        if (( imem = val.FindMember("members")) != val.MemberEnd() )
-        {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-                proj->add_member( imem->value[j].GetString() );
-        }
+            proj = a_reply.add_proj();
+            proj->set_id( obj.at( "id" ).asString( ));
+            proj->set_title( obj.at( "title").asString() );
 
-        if (( imem = val.FindMember("allocs")) != val.MemberEnd() )
-        {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
+            if (( j = obj.find("desc")) != obj.end( ))
+                proj->set_desc( j->second.asString( ));
+
+            if (( j = obj.find("sub_repo")) != obj.end( ))
+                proj->set_sub_repo( j->second.asString( ));
+
+            if (( j = obj.find("sub_alloc")) != obj.end( ))
+                proj->set_sub_alloc( j->second.asNumber( ));
+
+            if (( j = obj.find("sub_usage")) != obj.end( ))
+                proj->set_sub_usage( j->second.asNumber( ));
+
+            if (( j = obj.find("owner")) != obj.end( ))
+                proj->set_owner( j->second.asString( ));
+
+            if (( j = obj.find("ct")) != obj.end( ))
+                proj->set_ct( j->second.asNumber( ));
+
+            if (( j = obj.find("ut")) != obj.end( ))
+                proj->set_ut( j->second.asNumber( ));
+
+            if (( j = obj.find("admins")) != obj.end( ))
             {
-                rapidjson::Value & alloc_val = imem->value[j];
+                Value::Array & arr2 = j->second.getArray();
 
-                alloc = proj->add_alloc();
-                alloc->set_repo(alloc_val["repo"].GetString());
-                alloc->set_max_size(alloc_val["max_size"].GetUint64());
-                alloc->set_tot_size(alloc_val["tot_size"].GetUint64());
-                alloc->set_max_count(alloc_val["max_count"].GetUint());
-                alloc->set_path(alloc_val["path"].GetString());
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    proj->add_admin( k->asString( ));
+                }
+            }
+
+            if (( j = obj.find("members")) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    proj->add_member( k->asString( ));
+                }
+            }
+
+            if (( j = obj.find("allocs")) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    Value::Object & obj2 = k->getObject();
+
+                    alloc = proj->add_alloc();
+                    alloc->set_repo( obj2.at( "repo" ).asString( ));
+                    alloc->set_max_size( obj2.at( "max_size" ).asNumber( ));
+                    alloc->set_tot_size( obj2.at( "tot_size" ).asNumber( ));
+                    alloc->set_max_count( obj2.at( "max_count" ).asNumber( ));
+                    alloc->set_path( obj2.at( "path" ).asString( ));
+                }
             }
         }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 void
 DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"query",a_request.query()});
     params.push_back({"use_client",a_request.use_client()?"true":"false"});
@@ -904,7 +934,7 @@ DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingRepl
 void
 DatabaseClient::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"repo",a_request.repo()});
     params.push_back({"subject",a_request.subject()});
@@ -921,7 +951,7 @@ DatabaseClient::recordListByAlloc( const Auth::RecordListByAllocRequest & a_requ
 void
 DatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "dat/view", {{"id",a_request.id()}}, result );
 
@@ -931,7 +961,7 @@ DatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply
 void
 DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
@@ -970,7 +1000,7 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
 void
 DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbPost( "dat/create/batch", {}, &a_request.records(), result );
 
@@ -980,7 +1010,7 @@ DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_requ
 void
 DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs )
 {
-    rapidjson::Document result;
+    Value result;
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -1050,7 +1080,7 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 void
 DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
 
@@ -1061,7 +1091,7 @@ void
 //DatabaseClient::recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc )
 DatabaseClient::recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
 {
-    rapidjson::Document result;
+    Value result;
     string ids = "[";
 
     for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
@@ -1081,7 +1111,7 @@ DatabaseClient::recordDelete( const std::vector<std::string> & a_ids, std::vecto
 void
 DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     string ids;
 
     if ( a_request.id_size() > 0 )
@@ -1108,7 +1138,7 @@ void
 //DatabaseClient::recordGetDataLocation( const std::string & a_id, RepoRecordDataLocations & a_loc )
 DatabaseClient::recordGetDataLocation( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
 {
-    rapidjson::Document result;
+    Value result;
     string ids = "[";
 
     for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
@@ -1125,43 +1155,50 @@ DatabaseClient::recordGetDataLocation( const std::vector<std::string> & a_ids, s
     setRepoRecordDataLocations( a_locs, result );
 }
 
+
 void
-DatabaseClient::setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, rapidjson::Value & a_result )
+DatabaseClient::setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, Value & a_result )
 {
-    if ( !a_result.IsObject() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB (repo data not an object)" );
+    RecordDataLocation *    loc;
+    Value::ArrayIter        i;
 
-    rapidjson::Value::ConstMemberIterator   imem;
-    RecordDataLocation *                    loc;
-    rapidjson::SizeType                     i;
-
-    a_locs.clear();
-    a_locs.reserve( a_result.MemberCount() );
-
-    for ( rapidjson::Value::ConstMemberIterator iter = a_result.MemberBegin(); iter != a_result.MemberEnd(); ++iter )
+    try
     {
-        if ( !iter->value.IsArray() )
-            EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB (repo field not an array)" );
+        Value::Object & obj = a_result.getObject();
 
-        RepoRecordDataLocations repo_locs;
+        a_locs.clear();
+        a_locs.reserve( obj.size( ));
 
-        repo_locs.set_repo_id( iter->name.GetString() );
-
-        for ( i = 0; i < iter->value.Size(); i++ )
+        for ( Value::ObjectIter iter = obj.begin(); iter != obj.end(); ++iter )
         {
-            loc = repo_locs.add_loc();
-            loc->set_id( iter->value[i]["id"].GetString() );
-            loc->set_path( iter->value[i]["path"].GetString() );
-        }
+            RepoRecordDataLocations repo_locs;
 
-        a_locs.push_back( repo_locs );
+            repo_locs.set_repo_id( iter->first );
+
+            Value::Array & arr = iter->second.getArray();
+
+            for ( i = arr.begin(); i != arr.end(); i++ )
+            {
+                Value::Object & obj2 = i->getObject();
+
+                loc = repo_locs.add_loc();
+                loc->set_id( obj2.at( "id" ).asString() );
+                loc->set_path( obj2.at( "path" ).asString() );
+            }
+
+            a_locs.push_back( repo_locs );
+        }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 void
 DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "dat/dep/get", {{"id",a_request.id()}}, result );
 
@@ -1171,7 +1208,7 @@ DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest 
 void
 DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "dat/dep/graph/get", {{"id",a_request.id()}}, result );
 
@@ -1179,118 +1216,110 @@ DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRe
 }
 
 void
-DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & a_result, std::vector<RepoRecordDataLocations> * a_locs )
+DatabaseClient::setRecordData( RecordDataReply & a_reply, Value & a_result, std::vector<RepoRecordDataLocations> * a_locs )
 {
-    if ( !a_result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    RecordData *        rec;
+    DependencyData *    deps;
+    Value::ObjectIter   j,m;
+    Value::ArrayIter    k;
 
-    RecordData* rec;
-    DependencyData *deps;
-    rapidjson::Value::MemberIterator imem,imem2;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    try
     {
-        rapidjson::Value & val = a_result[i];
+        Value::Array & arr = a_result.getArray();
 
-        if (( imem = val.FindMember("deletions")) != val.MemberEnd() )
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            if ( a_locs )
-                setRepoRecordDataLocations( *a_locs, imem->value );
-            continue;
-        }
+            Value::Object & obj = i->getObject();
 
-        rec = a_reply.add_data();
-        rec->set_id( val["id"].GetString() );
-        rec->set_title( val["title"].GetString() );
-
-        if (( imem = val.FindMember("alias")) != val.MemberEnd() )
-        {
-            if ( !imem->value.IsNull() )
-                rec->set_alias( imem->value.GetString() );
-        }
-
-        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
-            rec->set_owner( imem->value.GetString() );
-
-        if (( imem = val.FindMember("creator")) != val.MemberEnd() )
-            rec->set_creator( imem->value.GetString() );
-
-        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
-            rec->set_desc( imem->value.GetString() );
-
-        if (( imem = val.FindMember("keyw")) != val.MemberEnd() )
-            rec->set_keyw( imem->value.GetString() );
-
-        if (( imem = val.FindMember("public")) != val.MemberEnd() )
-            rec->set_ispublic( imem->value.GetBool() );
-
-        if (( imem = val.FindMember("doi")) != val.MemberEnd() )
-            rec->set_doi( imem->value.GetString() );
-
-        if (( imem = val.FindMember("data_url")) != val.MemberEnd() )
-            rec->set_data_url( imem->value.GetString() );
-
-        if (( imem = val.FindMember("md")) != val.MemberEnd() )
-        {
-            rapidjson::StringBuffer buffer;
-            rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-            //rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-            imem->value.Accept(writer);
-            rec->set_metadata( buffer.GetString() );
-            //rec->set_metadata( imem->value.GetString() );
-        }
-
-        //if (( imem = val.FindMember("data_path")) != val.MemberEnd() )
-        //    rec->set_data_path( imem->value.GetString() );
-        if (( imem = val.FindMember("repo_id")) != val.MemberEnd() )
-            rec->set_repo_id( imem->value.GetString() );
-
-        if (( imem = val.FindMember("size")) != val.MemberEnd() )
-            rec->set_size( imem->value.GetUint64() );
-
-        if (( imem = val.FindMember("source")) != val.MemberEnd() )
-            rec->set_source( imem->value.GetString() );
-
-        if (( imem = val.FindMember("ext")) != val.MemberEnd() )
-            rec->set_ext( imem->value.GetString() );
-
-        if (( imem = val.FindMember("ext_auto")) != val.MemberEnd() )
-            rec->set_ext_auto( imem->value.GetBool() );
-
-        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
-            rec->set_ct( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
-            rec->set_ut( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("dt")) != val.MemberEnd() )
-            rec->set_dt( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("locked")) != val.MemberEnd() )
-            rec->set_locked( imem->value.GetBool() );
-
-        if (( imem = val.FindMember("parent_id")) != val.MemberEnd() )
-            rec->set_parent_id( imem->value.GetString() );
-
-        if (( imem = val.FindMember("deps")) != val.MemberEnd() )
-        {
-            if ( !imem->value.IsArray() )
+            if (( j = obj.find( "deletions" )) != obj.end( ))
             {
-                EXCEPT( ID_INTERNAL_ERROR, "Deps not an array!" );
+                if ( a_locs )
+                    setRepoRecordDataLocations( *a_locs, j->second );
+                continue;
             }
 
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-            {
-                rapidjson::Value & val2 = imem->value[j];
+            rec = a_reply.add_data();
+            rec->set_id( obj.at( "id" ).asString( ));
+            rec->set_title( obj.at( "title" ).asString( ));
 
-                deps = rec->add_deps();
-                deps->set_id(val2["id"].GetString());
-                deps->set_type((DependencyType)val2["type"].GetInt());
-                deps->set_dir((DependencyDir)val2["dir"].GetInt());
-                if (( imem2 = val2.FindMember("alias")) != val2.MemberEnd() && !imem2->value.IsNull() )
-                    deps->set_alias( imem2->value.GetString() );
+            if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
+                rec->set_alias( j->second.asString( ));
+
+            if (( j = obj.find( "owner" )) != obj.end( ))
+                rec->set_owner( j->second.asString( ));
+
+            if (( j = obj.find( "creator" )) != obj.end( ))
+                rec->set_creator( j->second.asString( ));
+
+            if (( j = obj.find( "desc" )) != obj.end( ))
+                rec->set_desc( j->second.asString( ));
+
+            if (( j = obj.find( "keyw" )) != obj.end( ))
+                rec->set_keyw( j->second.asString( ));
+
+            if (( j = obj.find( "public" )) != obj.end( ))
+                rec->set_ispublic( j->second.asBool( ));
+
+            if (( j = obj.find( "doi" )) != obj.end( ))
+                rec->set_doi( j->second.asString( ));
+
+            if (( j = obj.find( "data_url" )) != obj.end( ))
+                rec->set_data_url( j->second.asString( ));
+
+            if (( j = obj.find( "md" )) != obj.end( ))
+                rec->set_metadata( j->second.toString( ));
+
+            if (( j = obj.find( "repo_id" )) != obj.end( ))
+                rec->set_repo_id( j->second.asString( ));
+
+            if (( j = obj.find( "size" )) != obj.end( ))
+                rec->set_size( j->second.asNumber( ));
+
+            if (( j = obj.find( "source" )) != obj.end( ))
+                rec->set_source( j->second.asString( ));
+
+            if (( j = obj.find( "ext" )) != obj.end( ))
+                rec->set_ext( j->second.asString( ));
+
+            if (( j = obj.find( "ext_auto" )) != obj.end( ))
+                rec->set_ext_auto( j->second.asBool( ));
+
+            if (( j = obj.find( "ct" )) != obj.end( ))
+                rec->set_ct( j->second.asNumber( ));
+
+            if (( j = obj.find( "ut" )) != obj.end( ))
+                rec->set_ut( j->second.asNumber( ));
+
+            if (( j = obj.find( "dt" )) != obj.end( ))
+                rec->set_dt( j->second.asNumber( ));
+
+            if (( j = obj.find( "locked" )) != obj.end( ))
+                rec->set_locked( j->second.asBool( ));
+
+            if (( j = obj.find( "parent_id" )) != obj.end( ))
+                rec->set_parent_id( j->second.asString( ));
+
+            if (( j = obj.find( "deps" )) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    Value::Object & obj2 = k->getObject();
+
+                    deps = rec->add_deps();
+                    deps->set_id( obj2.at( "id" ).asString());
+                    deps->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
+                    deps->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+                    if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
+                        deps->set_alias( m->second.asString() );
+                }
             }
         }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
@@ -1298,17 +1327,17 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, rapidjson::Document & 
 void
 DatabaseClient::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "dat/path", {{"id",a_request.id()},{"domain",a_request.domain()}}, result );
 
-    a_reply.set_path( result["path"].GetString() );
+    a_reply.set_path( result["path"].asString() );
 }
 
 void
 DatabaseClient::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     string ids = "[";
     for ( int i = 0; i < a_request.id_size(); i++ )
@@ -1329,7 +1358,7 @@ DatabaseClient::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, A
 void
 DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     if ( a_request.has_user() )
         dbGet( "col/priv/list", {{"subject",a_request.user()}}, result );
@@ -1342,7 +1371,7 @@ DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_r
 void
 DatabaseClient::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     if ( a_request.has_subject() )
         dbGet( "col/published/list", {{"subject",a_request.subject()}}, result );
@@ -1355,7 +1384,7 @@ DatabaseClient::collListPublished( const Auth::CollListPublishedRequest & a_requ
 void
 DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
@@ -1376,7 +1405,7 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
 void
 DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -1398,7 +1427,7 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 void
 DatabaseClient::collDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "col/delete", {{"id",a_id}}, result );
 
@@ -1408,7 +1437,7 @@ DatabaseClient::collDelete( const std::string & a_id, std::vector<RepoRecordData
 void
 DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "col/view", {{"id",a_request.id()}}, result );
 
@@ -1418,7 +1447,7 @@ DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDat
 void
 DatabaseClient::collRead( const CollReadRequest & a_request, ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"id",a_request.id()});
     if ( a_request.has_offset() )
@@ -1466,7 +1495,7 @@ DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::ListingRepl
     else
         rem_list = "[]";
 
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
 
@@ -1492,14 +1521,14 @@ DatabaseClient::collMove( const Auth::CollMoveRequest & a_request, Anon::AckRepl
     }
     items += "]";
 
-    rapidjson::Document result;
+    Value result;
     dbGet( "col/move", {{"source",a_request.src_id()},{"dest",a_request.dst_id()},{"items",items}}, result );
 }
 
 void
 DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"id",a_request.id()});
     if ( a_request.has_inclusive() )
@@ -1513,164 +1542,187 @@ DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, A
 void
 DatabaseClient::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "col/get_offset", {{"id",a_request.id()},{"item",a_request.item()},{"page_sz",to_string(a_request.page_sz())}}, result );
 
     a_reply.set_id( a_request.id() );
     a_reply.set_item( a_request.item() );
-    a_reply.set_offset( result["offset"].GetUint() );
+    a_reply.set_offset( result["offset"].asNumber() );
 }
 
 void
-DatabaseClient::setCollData( CollDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    CollData* coll;
+    Value::ObjectIter j;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            coll = a_reply.add_coll();
+            coll->set_id( obj.at( "id" ).asString( ));
+            coll->set_title( obj.at( "title" ).asString( ));
+
+            if (( j = obj.find( "desc" )) != obj.end( ))
+                coll->set_desc( j->second.asString( ));
+
+            if (( j = obj.find( "public" )) != obj.end( ))
+                coll->set_ispublic( j->second.asBool( ));
+
+            if (( j = obj.find( "topic" )) != obj.end( ))
+                coll->set_topic( j->second.asString( ));
+
+            if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
+                coll->set_alias( j->second.asString( ));
+
+            if (( j = obj.find( "ct" )) != obj.end( ))
+                coll->set_ct( j->second.asNumber( ));
+
+            if (( j = obj.find( "ut" )) != obj.end( ))
+                coll->set_ut( j->second.asNumber( ));
+
+            if (( j = obj.find( "parent_id" )) != obj.end( ))
+                coll->set_parent_id( j->second.asString( ));
+
+            if (( j = obj.find( "owner" )) != obj.end( ))
+                coll->set_owner( j->second.asString( ));
+        }
+    }
+    catch(...)
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
+}
 
-    CollData* coll;
-    rapidjson::Value::MemberIterator imem;
+void
+DatabaseClient::setCollPathData( CollPathReply & a_reply, libjson::Value & a_result )
+{
+    PathData *          path;
+    ListingData *       item;
+    Value::ArrayIter    j;
+    Value::ObjectIter   k;
 
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    try
     {
-        rapidjson::Value & val = a_result[i];
+        Value::Array & arr = a_result.getArray();
 
-        coll = a_reply.add_coll();
-        coll->set_id( val["id"].GetString() );
-        coll->set_title( val["title"].GetString() );
-
-        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
-            coll->set_desc( imem->value.GetString() );
-        if (( imem = val.FindMember("public")) != val.MemberEnd() )
-            coll->set_ispublic( imem->value.GetBool() );
-        if (( imem = val.FindMember("topic")) != val.MemberEnd() )
-            coll->set_topic( imem->value.GetString() );
-
-        if (( imem = val.FindMember("alias")) != val.MemberEnd() )
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            if ( !imem->value.IsNull() )
+            Value::Array & arr2 = i->getArray();
+
+            path = a_reply.add_path();
+
+            for ( j = arr2.begin(); j != arr2.end(); j++ )
             {
-                coll->set_alias( imem->value.GetString() );
+                Value::Object & obj = j->getObject();
+
+                item = path->add_item();
+                item->set_id( obj.at( "id" ).asString( ));
+                item->set_title( obj.at( "title" ).asString( ));
+
+                if (( k = obj.find( "alias" )) != obj.end() && !k->second.isNull( ))
+                    item->set_alias( k->second.asString() );
+
+                if (( k = obj.find( "owner" )) != obj.end( ))
+                    item->set_owner( k->second.asString() );
             }
         }
-
-        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
-            coll->set_ct( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
-            coll->set_ut( imem->value.GetUint() );
-
-        if (( imem = val.FindMember("parent_id")) != val.MemberEnd() )
-            coll->set_parent_id( imem->value.GetString() );
-
-        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
-            coll->set_owner( imem->value.GetString() );
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 void
-DatabaseClient::setCollPathData( CollPathReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setListingData( ListingReply & a_reply, libjson::Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    ListingData *       item;
+    DependencyData *    dep;
+    Value::ObjectIter   j,m;
+    Value::ArrayIter    k;
+
+    try
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+        Value::Array & arr = a_result.getArray();
 
-    PathData* path;
-    ListingData* item;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType p = 0; p < a_result.Size(); p++ )
-    {
-        rapidjson::Value & path_val = a_result[p];
-        path = a_reply.add_path();
-
-        for ( rapidjson::SizeType i = 0; i < path_val.Size(); i++ )
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            rapidjson::Value & val = path_val[i];
+            Value::Object & obj = i->getObject();
 
-            item = path->add_item();
-            item->set_id( val["id"].GetString() );
-            item->set_title( val["title"].GetString() );
-
-            if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_alias( imem->value.GetString() );
-
-            if (( imem = val.FindMember("owner")) != val.MemberEnd() )
-                item->set_owner( imem->value.GetString() );
-        }
-    }
-}
-
-void
-DatabaseClient::setListingData( ListingReply & a_reply, rapidjson::Document & a_result )
-{
-    if ( !a_result.IsArray() )
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-
-    ListingData* item;
-    rapidjson::Value::MemberIterator imem,imem2;
-    rapidjson::SizeType i,j;
-    DependencyData *dep;
-
-    for ( i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        if (( imem = val.FindMember("paging")) != val.MemberEnd())
-        {
-            a_reply.set_offset( imem->value["off"].GetUint() );
-            a_reply.set_count( imem->value["cnt"].GetUint() );
-            a_reply.set_total( imem->value["tot"].GetUint() );
-            DL_INFO( "Paged, tot:" << imem->value["tot"].GetUint() );
-        }
-        else
-        {
-            item = a_reply.add_item();
-            item->set_id( val["id"].GetString() );
-            item->set_title( val["title"].GetString() );
-            if (( imem = val.FindMember("alias")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_alias( imem->value.GetString() );
-            if (( imem = val.FindMember("locked")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_locked( imem->value.GetBool() );
-            if (( imem = val.FindMember("owner")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_owner( imem->value.GetString() );
-            if (( imem = val.FindMember("creator")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_creator( imem->value.GetString() );
-            if (( imem = val.FindMember("size")) != val.MemberEnd() )
-                item->set_size( imem->value.GetUint() );
-            if (( imem = val.FindMember("gen")) != val.MemberEnd() )
-                item->set_gen( imem->value.GetInt() );
-            if (( imem = val.FindMember("doi")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_doi( imem->value.GetString() );
-            if (( imem = val.FindMember("url")) != val.MemberEnd() && !imem->value.IsNull() )
-                item->set_url( imem->value.GetString() );
-            if (( imem = val.FindMember("deps")) != val.MemberEnd() )
+            if (( j = obj.find( "paging" )) != obj.end( ))
             {
-                for ( j = 0; j < imem->value.Size(); j++ )
-                {
-                    rapidjson::Value & val2 = imem->value[j];
+                Value::Object & obj2 = j->second.getObject();
 
-                    dep = item->add_dep();
-                    dep->set_id( val2["id"].GetString());
-                    dep->set_type((DependencyType)val2["type"].GetInt());
-                    dep->set_dir((DependencyDir)val2["dir"].GetInt());
-                    if (( imem2 = val2.FindMember("alias")) != val2.MemberEnd() && !imem2->value.IsNull() )
-                        dep->set_alias( imem2->value.GetString() );
+                a_reply.set_offset( obj2.at( "off" ).asNumber( ));
+                a_reply.set_count( obj2.at( "cnt" ).asNumber( ));
+                a_reply.set_total( obj2.at( "tot" ).asNumber( ));
+            }
+            else
+            {
+                item = a_reply.add_item();
+                item->set_id( obj.at( "id" ).asString( ));
+                item->set_title( obj.at( "title" ).asString( ));
+
+                if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
+                    item->set_alias( j->second.asString( ));
+
+                if (( j = obj.find( "owner" )) != obj.end( ))
+                    item->set_owner( j->second.asString( ));
+
+                if (( j = obj.find( "creator" )) != obj.end( ))
+                    item->set_creator( j->second.asString( ));
+
+                if (( j = obj.find( "doi" )) != obj.end( ))
+                    item->set_doi( j->second.asString( ));
+
+                if (( j = obj.find( "url" )) != obj.end( ))
+                    item->set_url( j->second.asString( ));
+
+                if (( j = obj.find( "size" )) != obj.end( ))
+                    item->set_size( j->second.asNumber( ));
+
+                if (( j = obj.find( "locked" )) != obj.end( ) && !j->second.isNull( ))
+                    item->set_locked( j->second.asBool( ));
+
+                if (( j = obj.find( "gen" )) != obj.end( ))
+                    item->set_gen( j->second.asNumber( ));
+
+                if (( j = obj.find( "deps" )) != obj.end( ))
+                {
+                    Value::Array & arr2 = j->second.getArray();
+
+                    for ( k = arr2.begin(); k != arr2.end(); k++ )
+                    {
+                        Value::Object & obj2 = k->getObject();
+
+                        dep = item->add_dep();
+                        dep->set_id( obj2.at( "id" ).asString());
+                        dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
+                        dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+                        if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
+                            dep->set_alias( m->second.asString() );
+                    }
                 }
             }
         }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 void
 DatabaseClient::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_offset() )
         params.push_back({"offset",to_string(a_request.offset())});
@@ -1685,7 +1737,7 @@ DatabaseClient::queryList( const Auth::QueryListRequest & a_request, Auth::Listi
 void
 DatabaseClient::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"title",a_request.title()});
@@ -1706,7 +1758,7 @@ DatabaseClient::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Q
 void
 DatabaseClient::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"id",a_request.id()});
@@ -1731,7 +1783,7 @@ DatabaseClient::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Q
 void
 DatabaseClient::queryDelete( const std::string & a_id )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "qry/delete", {{"id",a_id}}, result );
 }
@@ -1739,7 +1791,7 @@ DatabaseClient::queryDelete( const std::string & a_id )
 void
 DatabaseClient::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "qry/view", {{"id",a_request.id()}}, result );
 
@@ -1749,7 +1801,7 @@ DatabaseClient::queryView( const Auth::QueryViewRequest & a_request, Auth::Query
 void
 DatabaseClient::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"id",a_request.id()});
@@ -1764,44 +1816,54 @@ DatabaseClient::queryExec( const Auth::QueryExecRequest & a_request, Auth::Listi
 }
 
 void
-DatabaseClient::setQueryData( QueryDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setQueryData( QueryDataReply & a_reply, libjson::Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    QueryData *         qry;
+    Value::ObjectIter   j;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            qry = a_reply.add_query();
+            qry->set_id( obj.at( "id" ).asString() );
+            qry->set_title( obj.at( "title" ).asString() );
+            qry->set_query( obj.at( "query" ).asString() );
+
+            if (( j = obj.find( "owner" )) != obj.end( ))
+                qry->set_owner( j->second.asString( ));
+
+            if (( j = obj.find( "ct" )) != obj.end( ))
+                qry->set_ct( j->second.asNumber( ));
+
+            if (( j = obj.find( "ut" )) != obj.end( ))
+                qry->set_ut( j->second.asNumber( ));
+
+            if (( j = obj.find( "use_owner" )) != obj.end( ) && !j->second.isNull( ))
+                qry->set_use_owner( j->second.asBool( ));
+
+            if (( j = obj.find( "use_sh_usr" )) != obj.end( ) && !j->second.isNull( ))
+                qry->set_use_sh_usr( j->second.asBool( ));
+
+            if (( j = obj.find( "use_sh_prj" )) != obj.end( ) && !j->second.isNull( ))
+                qry->set_use_sh_prj( j->second.asBool( ));
+        }
+    }
+    catch(...)
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
-
-    QueryData* qry;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        qry = a_reply.add_query();
-        qry->set_id( val["id"].GetString() );
-        qry->set_title( val["title"].GetString() );
-        qry->set_query( val["query"].GetString() );
-
-        if (( imem = val.FindMember("owner")) != val.MemberEnd() )
-            qry->set_owner( imem->value.GetString() );
-        if (( imem = val.FindMember("ct")) != val.MemberEnd() )
-            qry->set_ct( imem->value.GetUint() );
-        if (( imem = val.FindMember("ut")) != val.MemberEnd() )
-            qry->set_ut( imem->value.GetUint() );
-        if (( imem = val.FindMember("use_owner")) != val.MemberEnd() && !imem->value.IsNull() )
-            qry->set_use_owner( imem->value.GetBool() );
-        if (( imem = val.FindMember("use_sh_usr")) != val.MemberEnd() && !imem->value.IsNull() )
-            qry->set_use_sh_usr( imem->value.GetBool() );
-        if (( imem = val.FindMember("use_sh_prj")) != val.MemberEnd() && !imem->value.IsNull() )
-            qry->set_use_sh_prj( imem->value.GetBool() );
-    }
 }
+
 
 void
 DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply )
 {
-    rapidjson::Document result;
+    libjson::Value result;
 
     dbGet( "acl/view", {{"id",a_request.id()}}, result );
 
@@ -1812,7 +1874,7 @@ DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataRe
 void
 DatabaseClient::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"id",a_request.id()});
     if ( a_request.has_rules() )
@@ -1829,7 +1891,7 @@ void
 DatabaseClient::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply )
 {
     (void)a_request;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "acl/by_user", {}, result );
 
@@ -1839,7 +1901,7 @@ DatabaseClient::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::User
 void
 DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "acl/by_user/list", {{"owner",a_request.owner()}}, result );
 
@@ -1850,7 +1912,7 @@ void
 DatabaseClient::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply )
 {
     (void)a_request;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "acl/by_proj", {}, result );
 
@@ -1860,7 +1922,7 @@ DatabaseClient::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::Proj
 void
 DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "acl/by_proj/list", {{"owner",a_request.owner()}}, result );
 
@@ -1868,43 +1930,40 @@ DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Au
 }
 
 void
-DatabaseClient::setACLData( ACLDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setACLData( ACLDataReply & a_reply, libjson::Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    ACLRule *           rule;
+    Value::ObjectIter   j;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            rule = a_reply.add_rule();
+            rule->set_id( obj.at( "id" ).asString( ));
+
+            if (( j = obj.find( "grant" )) != obj.end( ))
+                rule->set_grant( j->second.asNumber( ));
+
+            if (( j = obj.find( "inhgrant" )) != obj.end( ))
+                rule->set_inhgrant( j->second.asNumber( ));
+        }
+    }
+    catch(...)
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
-
-    ACLRule* rule;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        rule = a_reply.add_rule();
-
-        rule->set_id( val["id"].GetString() );
-
-        imem = val.FindMember("grant");
-        if ( imem != val.MemberEnd() )
-            rule->set_grant( imem->value.GetInt() );
-        imem = val.FindMember("deny");
-        if ( imem != val.MemberEnd() )
-            rule->set_deny( imem->value.GetInt() );
-        imem = val.FindMember("inhgrant");
-        if ( imem != val.MemberEnd() )
-            rule->set_inhgrant( imem->value.GetInt() );
-        imem = val.FindMember("inhdeny");
-        if ( imem != val.MemberEnd() )
-            rule->set_inhdeny( imem->value.GetInt() );
-    }
 }
+
 
 void
 DatabaseClient::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     vector<pair<string,string>> params;
     params.push_back({"gid", a_request.group().gid()});
@@ -1935,7 +1994,7 @@ DatabaseClient::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::G
 void
 DatabaseClient::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     vector<pair<string,string>> params;
     params.push_back({"gid", a_request.gid()});
@@ -1979,7 +2038,7 @@ void
 DatabaseClient::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
 {
     (void) a_reply;
-    rapidjson::Document result;
+    Value result;
 
     vector<pair<string,string>> params;
     params.push_back({"gid", a_request.gid()});
@@ -1994,7 +2053,7 @@ DatabaseClient::groupList( const Auth::GroupListRequest & a_request, Auth::Group
 {
     (void) a_request;
 
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.uid().compare( m_client_uid ) != 0 )
         params.push_back({"proj", a_request.uid()});
@@ -2007,7 +2066,7 @@ DatabaseClient::groupList( const Auth::GroupListRequest & a_request, Auth::Group
 void
 DatabaseClient::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"gid", a_request.gid()});
     if ( a_request.uid().compare( m_client_uid ) != 0 )
@@ -2019,45 +2078,53 @@ DatabaseClient::groupView( const Auth::GroupViewRequest & a_request, Auth::Group
 }
 
 void
-DatabaseClient::setGroupData( GroupDataReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setGroupData( GroupDataReply & a_reply, libjson::Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    GroupData *         group;
+    Value::ObjectIter   j;
+    Value::ArrayIter    k;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            group = a_reply.add_group();
+            group->set_gid( obj.at( "gid" ).asString( ));
+
+            if (( j = obj.find( "uid" )) != obj.end() && !j->second.isNull( ))
+                group->set_uid( j->second.asString( ));
+
+            if (( j = obj.find( "title" )) != obj.end() && !j->second.isNull( ))
+                group->set_title( j->second.asString( ));
+
+            if (( j = obj.find( "desc" )) != obj.end() && !j->second.isNull( ))
+                group->set_desc( j->second.asString( ));
+
+            if (( j = obj.find( "members" )) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    group->add_member( k->asString( ));
+                }
+            }
+        }
+    }
+    catch(...)
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-
-    GroupData * group;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        group = a_reply.add_group();
-        group->set_gid( val["gid"].GetString() );
-
-        imem = val.FindMember("uid");
-        if ( imem != val.MemberEnd() && !imem->value.IsNull() )
-            group->set_uid( val["uid"].GetString() );
-        imem = val.FindMember("title");
-        if ( imem != val.MemberEnd() && !imem->value.IsNull() )
-            group->set_title( imem->value.GetString() );
-        imem = val.FindMember("desc");
-        if ( imem != val.MemberEnd() && !imem->value.IsNull() )
-            group->set_desc( imem->value.GetString() );
-        imem = val.FindMember("members");
-        if ( imem != val.MemberEnd() )
-        {
-            for ( rapidjson::SizeType m = 0; m < imem->value.Size(); m++ )
-                group->add_member( imem->value[m].GetString() );
-        }
     }
 }
 
 void
 DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_all() )
         params.push_back({"all", a_request.all()?"true":"false"});
@@ -2072,7 +2139,7 @@ DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDat
 void
 DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "repo/list", {{"all","true"},{"details","true"}}, result );
 
@@ -2082,7 +2149,7 @@ DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
 void
 DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "repo/view", {{"id",a_request.id()}}, result );
 
@@ -2092,7 +2159,7 @@ DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDat
 void
 DatabaseClient::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
@@ -2130,7 +2197,7 @@ DatabaseClient::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::Rep
 void
 DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -2174,7 +2241,7 @@ void
 DatabaseClient::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void) a_reply;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "repo/delete", {{"id",a_request.id()}}, result );
 }
@@ -2182,7 +2249,7 @@ DatabaseClient::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::Ack
 void
 DatabaseClient::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     string items = "[";
     if ( a_request.item_size() > 0 )
@@ -2200,71 +2267,99 @@ DatabaseClient::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth:
 
     AllocStatsData * stats;
 
-    for ( rapidjson::SizeType i = 0; i < result.Size(); i++ )
+    try
     {
-        rapidjson::Value & val = result[i];
-        stats = a_reply.add_stats();
-        setAllocStatsData( val, *stats );
+        Value::Array & arr = result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            stats = a_reply.add_stats();
+            setAllocStatsData( *i, *stats );
+        }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
+
 void
-DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, rapidjson::Document & a_result )
+DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result )
 {
     if ( !a_reply && !a_repos )
         EXCEPT( ID_INTERNAL_ERROR, "Missing parameters" );
 
-    if ( !a_result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service (not an array)" );
+    RepoData *          repo;
+    Value::ObjectIter   j;
+    Value::ArrayIter    k;
 
-    RepoData* repo;
-    rapidjson::Value::MemberIterator imem;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
+    try
     {
-        rapidjson::Value & val = a_result[i];
+        Value::Array & arr = a_result.getArray();
 
-        if ( a_reply )
-            repo = a_reply->add_repo();
-        else
-            repo = new RepoData();
-
-        repo->set_id( val["id"].GetString() );
-        if (( imem = val.FindMember("title")) != val.MemberEnd() )
-            repo->set_title( imem->value.GetString() );
-        if (( imem = val.FindMember("desc")) != val.MemberEnd() )
-            repo->set_desc( imem->value.GetString() );
-        if (( imem = val.FindMember("capacity")) != val.MemberEnd() )
-            repo->set_capacity( imem->value.GetUint64() );
-        if (( imem = val.FindMember("address")) != val.MemberEnd() )
-            repo->set_address( imem->value.GetString() );
-        if (( imem = val.FindMember("endpoint")) != val.MemberEnd() )
-            repo->set_endpoint( imem->value.GetString() );
-        if (( imem = val.FindMember("pub_key")) != val.MemberEnd() )
-            repo->set_pub_key( imem->value.GetString() );
-        if (( imem = val.FindMember("path")) != val.MemberEnd() )
-            repo->set_path( imem->value.GetString() );
-        if (( imem = val.FindMember("domain")) != val.MemberEnd() && !imem->value.IsNull() )
-            repo->set_domain( imem->value.GetString() );
-        if (( imem = val.FindMember("exp_path")) != val.MemberEnd() )
-            repo->set_exp_path( imem->value.GetString() );
-
-        if (( imem = val.FindMember("admins")) != val.MemberEnd() )
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            for ( rapidjson::SizeType j = 0; j < imem->value.Size(); j++ )
-                repo->add_admin( imem->value[j].GetString() );
+            Value::Object & obj = i->getObject();
+
+            if ( a_reply )
+                repo = a_reply->add_repo();
+            else
+                repo = new RepoData();
+
+            repo->set_id( obj.at( "id" ).asString( ));
+
+            if (( j = obj.find( "title" )) != obj.end( ))
+                repo->set_title( j->second.asString( ));
+
+            if (( j = obj.find( "desc" )) != obj.end( ))
+                repo->set_desc( j->second.asString( ));
+
+            if (( j = obj.find( "capacity" )) != obj.end( ))
+                repo->set_capacity( j->second.asNumber( )); // TODO Needs to be 64 bit integer (string in JSON)
+
+            if (( j = obj.find( "address" )) != obj.end( ))
+                repo->set_address( j->second.asString( ));
+
+            if (( j = obj.find( "endpoint" )) != obj.end( ))
+                repo->set_endpoint( j->second.asString( ));
+
+            if (( j = obj.find( "pub_key" )) != obj.end( ))
+                repo->set_pub_key( j->second.asString( ));
+
+            if (( j = obj.find( "path" )) != obj.end( ))
+                repo->set_path( j->second.asString( ));
+
+            if (( j = obj.find( "exp_path" )) != obj.end( ))
+                repo->set_exp_path( j->second.asString( ));
+
+            if (( j = obj.find( "domain" )) != obj.end() && !j->second.isNull( ))
+                repo->set_domain( j->second.asString( ));
+
+            if (( j = obj.find( "admins" )) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    repo->add_admin( k->asString( ));
+                }
+            }
+
+            if ( a_repos )
+                a_repos->push_back( repo );
         }
-
-        if ( a_repos )
-            a_repos->push_back( repo );
-
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 void
 DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "repo/alloc/list/by_repo", {{"repo",a_request.id()}}, result );
 
@@ -2274,7 +2369,7 @@ DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_
 void
 DatabaseClient::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_subject() )
         params.push_back({"owner",a_request.subject()});
@@ -2291,7 +2386,7 @@ DatabaseClient::repoListSubjectAllocations( const Auth::RepoListSubjectAllocatio
 void
 DatabaseClient::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "repo/alloc/list/by_object", {{"object",a_request.id()}}, result );
 
@@ -2300,51 +2395,54 @@ DatabaseClient::repoListObjectAllocations( const Auth::RepoListObjectAllocations
 
 
 void
-DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result )
 {
-    if ( !a_result.IsArray() )
+    AllocData *         alloc;
+    Value::ObjectIter   j;
+    Value::ArrayIter    k;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            alloc = a_reply.add_alloc();
+            alloc->set_repo( obj.at( "repo" ).asString( ));
+            alloc->set_max_size( obj.at( "max_size" ).asNumber( ));
+            alloc->set_tot_size( obj.at( "tot_size" ).asNumber( ));
+            alloc->set_max_count( obj.at( "max_count" ).asNumber( ));
+            alloc->set_path( obj.at( "path" ).asString( ));
+
+            if (( j = obj.find( "id" )) != obj.end( ))
+                alloc->set_id( j->second.asString( ));
+
+            if (( j = obj.find( "sub_alloc" )) != obj.end( ))
+                alloc->set_sub_alloc( j->second.asBool( ));
+
+            if (( j = obj.find( "stats" )) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    setAllocStatsData( *k, *alloc->mutable_stats( ));
+                }
+            }
+        }
+    }
+    catch(...)
     {
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-
-    AllocData * alloc;
-    rapidjson::Value::MemberIterator imem,imem2;
-
-    for ( rapidjson::SizeType i = 0; i < a_result.Size(); i++ )
-    {
-        rapidjson::Value & val = a_result[i];
-
-        alloc = a_reply.add_alloc();
-        alloc->set_repo(val["repo"].GetString());
-        alloc->set_max_size(val["max_size"].GetUint64());
-        alloc->set_tot_size(val["tot_size"].GetUint64());
-        alloc->set_max_count(val["max_count"].GetUint());
-        alloc->set_path(val["path"].GetString());
-        if (( imem = val.FindMember("id")) != val.MemberEnd() )
-            alloc->set_id( imem->value.GetString() );
-        if (( imem = val.FindMember("sub_alloc")) != val.MemberEnd() )
-            alloc->set_sub_alloc( imem->value.GetBool() );
-        if (( imem = val.FindMember("stats")) != val.MemberEnd() )
-        {
-            setAllocStatsData( imem->value, *alloc->mutable_stats() );
-/*
-            alloc->mutable_stats()->set_repo(imem->value["repo"].GetString());
-            alloc->mutable_stats()->set_records(imem->value["records"].GetUint());
-            alloc->mutable_stats()->set_files(imem->value["files"].GetUint());
-            alloc->mutable_stats()->set_total_sz(imem->value["total_sz"].GetUint64());
-
-            imem2 = imem->value.FindMember("histogram");
-            for ( rapidjson::SizeType i = 0; i < imem2->value.Size(); i++ )
-                alloc->mutable_stats()->add_histogram(imem2->value[i].GetUint());
-*/
-        }
     }
 }
 
 void
 DatabaseClient::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"repo",a_request.repo()});
     if ( a_request.has_subject() )
@@ -2358,7 +2456,7 @@ DatabaseClient::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_re
 void
 DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({"repo",a_request.repo()});
     if ( a_request.has_subject() )
@@ -2370,35 +2468,31 @@ DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_
 }
 
 void
-DatabaseClient::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, rapidjson::Document & a_result )
+DatabaseClient::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result )
 {
     AllocStatsData * stats = a_reply.mutable_alloc();
     setAllocStatsData( a_result, *stats );
-    /*
-    stats->set_repo(a_result["repo"].GetString());
-    stats->set_records(a_result["records"].GetUint());
-    stats->set_files(a_result["files"].GetUint());
-    stats->set_total_sz(a_result["total_sz"].GetUint64());
-
-    rapidjson::Value::MemberIterator imem = a_result.FindMember("histogram");
-    for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
-        stats->add_histogram(imem->value[i].GetDouble());
-    */
 }
 
 void
-DatabaseClient::setAllocStatsData( rapidjson::Value & a_value, AllocStatsData & a_stats )
+DatabaseClient::setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats )
 {
-    a_stats.set_repo(a_value["repo"].GetString());
-    a_stats.set_records(a_value["records"].GetUint());
-    a_stats.set_files(a_value["files"].GetUint());
-    a_stats.set_total_sz(a_value["total_sz"].GetUint64());
+    Value::Object & obj = a_value.getObject();
 
-    rapidjson::Value::MemberIterator imem = a_value.FindMember("histogram");
-    if ( imem != a_value.MemberEnd() )
+    a_stats.set_repo( obj.at( "repo" ).asString( ));
+    a_stats.set_records( obj.at( "records" ).asNumber( ));
+    a_stats.set_files( obj.at( "files" ).asNumber( ));
+    a_stats.set_total_sz( obj.at( "total_sz" ).asNumber( ));
+
+    Value::ObjectIter i = obj.find( "histogram" );
+    if ( i != obj.end( ))
     {
-        for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
-            a_stats.add_histogram(imem->value[i].GetDouble());
+        Value::Array & arr = i->second.getArray();
+
+        for ( Value::ArrayIter j = arr.begin(); j != arr.end(); j++ )
+        {
+            a_stats.add_histogram( j->asNumber( ));
+        }
     }
 }
 
@@ -2406,7 +2500,7 @@ void
 DatabaseClient::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void)a_reply;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"max_size",to_string(a_request.max_size())},{"max_count",to_string(a_request.max_count())}}, result );
 }
@@ -2414,7 +2508,7 @@ DatabaseClient::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_requ
 void
 DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({ "id", a_request.id()});
     if ( a_request.has_perms() )
@@ -2422,13 +2516,13 @@ DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply
 
     dbGet( "authz/perm/check", params, result );
 
-    a_reply.set_granted( result["granted"].GetBool() );
+    a_reply.set_granted( result["granted"].asBool( ));
 }
 
 void
 DatabaseClient::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     params.push_back({ "id", a_request.id()});
     if ( a_request.has_perms() )
@@ -2436,14 +2530,14 @@ DatabaseClient::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_r
 
     dbGet( "authz/perm/get", params, result );
 
-    a_reply.set_granted( result["granted"].GetInt() );
+    a_reply.set_granted( result["granted"].asNumber( ));
 }
 
 void
 DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void)a_reply;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "authz/gridftp", {{"repo",a_request.repo()},{"file",a_request.file()},{"act",a_request.action()}}, result );
 }
@@ -2451,7 +2545,7 @@ DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckRe
 void
 DatabaseClient::topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply )
 {
-    rapidjson::Document result;
+    Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_topic_id() )
         params.push_back({ "id", a_request.topic_id() });
@@ -2514,7 +2608,7 @@ void
 DatabaseClient::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void) a_reply;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "topic/link", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
 }
@@ -2523,7 +2617,7 @@ void
 DatabaseClient::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void) a_reply;
-    rapidjson::Document result;
+    Value result;
 
     dbGet( "topic/unlink", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
 }
@@ -2532,7 +2626,7 @@ DatabaseClient::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::A
 uint16_t
 DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 {
-    rapidjson::Document result;
+    libjson::Value result;
 
     dbGet( "authz/check", {{"id",a_id},{"perms",to_string( a_perms )}}, result );
 
@@ -2541,7 +2635,7 @@ DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 */
 
 void
-DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, rapidjson::Value *& a_task )
+DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply )
 {
     string body = "{\"ids\":[";
 
@@ -2559,44 +2653,49 @@ DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const s
     body += to_string(a_encrypt);
     body += "}";
 
-    rapidjson::Document result;
+    Value result;
 
     dbPost( "data/get", {}, &body, result );
 
-    setTaskData( a_reply, result, a_task );
+    setTaskData( a_reply, result );
 }
 
 
 void
-DatabaseClient::setTaskData( Auth::TaskReply & a_reply, rapidjson::Document & a_result, rapidjson::Value *& a_task )
+DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
-    if ( a_result.IsArray() )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    Value::ObjectIter   j;
+    Value::ArrayIter    k;
 
-    rapidjson::Value::MemberIterator imem = a_result.FindMember("task");
-    if ( imem != a_result.MemberEnd( ))
+    try
     {
-        rapidjson::Value & val = imem->value;
-        TaskData * task = a_reply.mutable_task();
+        Value::Object & obj = a_result.getObject();
 
-        task->set_id(val["id"].GetString());
-        task->set_type((TaskType)val["type"].GetUint());
-        task->set_status((TaskStatus)val["status"].GetUint());
-        task->set_user(val["user"].GetString());
-        task->set_progress(val["progress"].GetDouble());
-        task->set_msg(val["msg"].GetString());
-        task->set_ct(val["ct"].GetUint());
-        task->set_ut(val["ut"].GetUint());
+        j = obj.find( "task" );
+        if ( j != obj.end( ))
+        {
+            Value::Object & obj2 = j->second.getObject();
 
-        // Put all of task field into new task document
-        a_task = new rapidjson::Value();
-        a_task->Swap( val );
+            TaskData * task = a_reply.mutable_task();
+            task->set_id( obj2.at( "id" ).asString( ));
+            task->set_type((TaskType)obj2.at( "type" ).asNumber( ));
+            task->set_status((TaskStatus) obj2.at( "status" ).asNumber( ));
+            task->set_user( obj2.at( "user" ).asString( ));
+            task->set_progress( obj2.at( "progress" ).asNumber( ));
+            task->set_msg( obj2.at( "msg" ).asString( ));
+            task->set_ct( obj2.at( "ct" ).asNumber( ));
+            task->set_ut( obj2.at( "ut" ).asNumber( ));
+        }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
 
 
 void
-DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<rapidjson::Value *> & a_new_tasks )
+DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<Value> & a_new_tasks )
 {
     // TODO Implement!
 }
