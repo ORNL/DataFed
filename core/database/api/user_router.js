@@ -26,7 +26,7 @@ router.get('/authn/password', function (req, res) {
         if ( client.password != req.queryParams.pw )
             throw g_lib.ERR_AUTHN_FAILED;
 
-        res.send({ "uid": client._id, "authorized": 1 });
+        res.send({ "uid": client._id, "authorized": true });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -42,7 +42,7 @@ router.get('/authn/token', function (req, res) {
         if ( !user.hasNext())
             throw g_lib.ERR_AUTHN_FAILED;
 
-        res.send({ "uid": user.next()._id, "authorized": 1 });
+        res.send({ "uid": user.next()._id, "authorized": true });
     } catch( e ) {
         g_lib.handleException( e, res );
     }

@@ -50,78 +50,7 @@ private:
 #define  ERR_INVALID_VALUE( p ) throw ParseError( "Invalid value", (size_t)p )
 #define  ERR_INVALID_KEY( p ) throw ParseError( "Invalid key string", (size_t)p )
 #define  ERR_INVALID_ESC( p ) throw ParseError( "Invalid escape sequence", (size_t)p )
-
-/*
-class IObject
-{
-public:
-    typedef std::map<std::string,Value>::iterator iterator;
-    typedef std::map<std::string,Value>::const_iterator const_iterator;
-
-    ~IObject()
-    {}
-
-    inline bool
-    has( const std::string & a_key ) const
-    {
-        return m_map.find( a_key ) != m_map.end();
-    }
-
-    inline iterator
-    find( const std::string & a_key )
-    {
-        return m_map.begin( a_key );
-    }
-
-    inline const_iterator
-    find( const std::string & a_key ) const
-    {
-        return m_map.begin( a_key );
-    }
-
-    inline iterator
-    begin()
-    {
-        return m_map.begin();
-    }
-
-    inline iterator
-    end()
-    {
-        return m_map.begin();
-    }
-
-    inline const_iterator
-    begin() const
-    {
-        return m_map.begin();
-    }
-
-    inline const_iterator
-    end() const
-    {
-        return m_map.begin();
-    }
-
-    inline Value &
-    operator[]( const std::string & a_key )
-    {
-        return m_map[a_key];
-    }
-
-    inline void
-    erase( const std::string & a_key )
-    {
-        m_map.erase( a_key );
-    }
-
-private:
-    Value::Object & m_map;
-
-    IObject( const Value & a_value ) : m_map( *a_value.m_value.o )
-    {}
-};
-*/
+#define  ERR_INVALID_UNICODE( p ) throw ParseError( "Invalid unicode escape sequence", (size_t)p )
 
 
 class Value
@@ -430,26 +359,8 @@ public:
         this->~Value();
         m_type = VT_OBJECT;
         m_value.o = new Object();
-        //return IObject( *this );
     }
 
-/*
-    IObject
-    setObject()
-    {
-        this->~Value();
-        m_type = VT_OBJECT;
-        m_value.o = new Object();
-        return IObject( *this );
-    }
-
-    IObject
-    object()
-    {
-        enforceObjectType();
-        return IObject( *this );
-    }
-*/
 
     bool
     has( const std::string & a_key ) const
@@ -638,6 +549,7 @@ private:
         return ( c >= '0' && c <= '9' );
     }
 
+/*
     inline bool isHexDigit( char c ) const
     {
         return ( c >= '0' && c <= '9' ) || ( c >= 'A' && c <= 'F' ) || ( c >= 'a' && c <= 'f' );
@@ -646,6 +558,21 @@ private:
     inline bool badHexDigit( const char * c ) const
     {
         return !c || !isHexDigit( *c );
+    }
+*/
+
+    uint8_t toHex( const char * C )
+    {
+        char c = *C;
+
+        if ( c >= '0' && c <= '9' )
+            return c - '0';
+        else if ( c >= 'A' && c <= 'F' )
+            return 10 + c - 'A';
+        else if ( c >= 'a' && c <= 'f' )
+            return 10 + c - 'a';
+        else
+            ERR_INVALID_CHAR( C );
     }
 
     inline void enforceObjectType() const
@@ -721,19 +648,10 @@ private:
             a_buffer.append("]");
             break;
         case VT_STRING:
-            a_buffer.append("\"");
-            a_buffer.append( *m_value.s );
-            a_buffer.append("\"");
+            strToString( a_buffer, *m_value.s );
             break;
         case VT_NUMBER:
-            {
-                //a_buffer.append( std::to_string( m_value.n ));
-                size_t sz1 = a_buffer.size();
-                a_buffer.resize( sz1 + 50 );
-                //int sz2 = sprintf( (char *)a_buffer.c_str() + sz1, "%g", m_value.n );
-                int sz2 = fpconv_dtoa( m_value.n, (char *)a_buffer.c_str() + sz1 );
-                a_buffer.resize( sz1 + sz2 );
-            }
+            numToString( a_buffer, m_value.n );
             break;
         case VT_BOOL:
             if ( m_value.b )
@@ -745,6 +663,59 @@ private:
             a_buffer.append("null");
             break;
         }
+    }
+
+    inline void
+    strToString( std::string & a_buffer, const std::string & a_value ) const
+    {
+        std::string::const_iterator c = a_value.begin();
+        std::string::const_iterator a = c;
+
+        a_buffer.append("\"");
+        
+        for ( c = a_value.begin(); c != a_value.end(); c++ )
+        {
+            if ( *c < 0x20 )
+            {
+                a_buffer.append( a, c );
+                a = c + 1;
+
+                switch( *c )
+                {
+                case '\b':  a_buffer.append( "\\b" ); break;
+                case '\f':  a_buffer.append( "\\f" ); break;
+                case '\n':  a_buffer.append( "\\n" ); break;
+                case '\r':  a_buffer.append( "\\r" ); break;
+                case '\t':  a_buffer.append( "\\t" ); break;
+                }
+            }
+            else if ( *c == '\"' )
+            {
+                a_buffer.append( a, c );
+                a_buffer.append( "\\\"" );
+                a = c + 1;
+            }
+            else if ( *c == '\\' )
+            {
+                a_buffer.append( a, c );
+                a_buffer.append( "\\\\" );
+                a = c + 1;
+            }
+        }
+
+        a_buffer.append( a, c );
+        a_buffer.append("\"");
+    }
+
+    inline void
+    numToString( std::string & a_buffer, double a_value ) const
+    {
+        //a_buffer.append( std::to_string( m_value.n ));
+        size_t sz1 = a_buffer.size();
+        a_buffer.resize( sz1 + 50 );
+        //int sz2 = sprintf( (char *)a_buffer.c_str() + sz1, "%g", m_value.n );
+        int sz2 = fpconv_dtoa( a_value, (char *)a_buffer.c_str() + sz1 );
+        a_buffer.resize( sz1 + sz2 );
     }
 
     const char *
@@ -937,18 +908,21 @@ private:
         //std::cout << "parseString(" << (size_t)start << ")\n";
 
         // On entry, c is next char after "
-        const char * c = start;
-        const char * a = start;
+        const char *    c = start;
+        const char *    a = start;
+        uint32_t        utf8;
 
         a_value.clear();
 
         while ( *c )
         {
-            //std::cout << "ps val: " << *c << "\n";
+            //std::cout << "ps val: " << (int)(*c) << "\n";
 
             if ( *c == '\\' )
             {
-                a_value.append( a, c - a );
+                if ( c != a )
+                    a_value.append( a, c - a );
+
                 switch ( *(c+1) )
                 {
                     case 'b':  a_value.append( "\b" ); break;
@@ -960,8 +934,32 @@ private:
                     case '"':  a_value.append( "\"" ); break;
                     case '\\':  a_value.append( "\\" ); break;
                     case 'u':
-                        if ( badHexDigit( c + 2 ) || badHexDigit( c + 3 ) || badHexDigit( c + 4 ) || badHexDigit( c + 5 ))
-                            ERR_INVALID_ESC( c );
+                        utf8 = ( toHex( c + 2 ) << 12 ) | ( toHex( c + 3 ) << 8 ) | ( toHex( c + 4 ) << 4 ) | toHex( c + 5 );
+                        //std::cout << "hex: " << std::hex << utf8 << std::dec << "\n";
+
+                        if ( utf8 < 0x80 )
+                            a_value.append( 1, (char) utf8 );
+                        else if ( utf8 < 0x800 )
+                        {
+                            a_value.append( 1, (char)( 0xC0 | ( utf8 >> 6 )) );
+                            a_value.append( 1, (char)( 0x80 | ( utf8 & 0x3F )) );
+                        }
+                        else if ( utf8 < 0x10000 )
+                        {
+                            a_value.append( 1, (char)( 0xE0 | ( utf8 >> 12 )) );
+                            a_value.append( 1, (char)( 0x80 | (( utf8 >> 6 ) & 0x3F )) );
+                            a_value.append( 1, (char)( 0x80 | ( utf8 & 0x3F )) );
+                        }
+                        else if ( utf8 < 0x110000 )
+                        {
+                            a_value.append( 1, (char)( 0xF0 | ( utf8 >> 18 )) );
+                            a_value.append( 1, (char)( 0x80 | (( utf8 >> 12 ) & 0x3F )) );
+                            a_value.append( 1, (char)( 0x80 | (( utf8 >> 6 ) & 0x3F )) );
+                            a_value.append( 1, (char)( 0x80 | ( utf8 & 0x3F )) );
+                        }
+                        else
+                            ERR_INVALID_UNICODE( c );
+
                         c += 4;
                         break;
                     default:
@@ -969,15 +967,15 @@ private:
                 }
 
                 c++;
-                a = c;
+                a = c + 1;
             }
             else if ( *c == '"' )
             {
-                //a_value.append( start, c - start );
-                a_value.append( a, c - a );
+                if ( c != a )
+                    a_value.append( a, c - a );
                 return c;
             }
-            else if ( *c < 0x1F )
+            else if ( *c >= 0 && *c < 0x20 )
             {
                 ERR_INVALID_CHAR( c );
             }
