@@ -4,7 +4,7 @@
 #include "TaskMgr.hpp"
 #include "Config.hpp"
 #include "SDMS.pb.h"
-#include <rapidjson/document.h>
+#include <libjson.hpp>
 
 using namespace std;
 
@@ -50,11 +50,11 @@ TaskMgr::getInstance()
 
 
 void
-TaskMgr::newTask( rapidjson::Value *a_task )
+TaskMgr::newTask( libjson::Value & a_task )
 {
     lock_guard<mutex> lock( m_worker_mutex );
 
-    m_tasks_ready.push_back( new Task( (*a_task)["id"].GetString(), a_task ));
+    m_tasks_ready.push_back( new Task( a_task["id"].asString(), a_task ));
 
     if ( m_worker_next )
         m_worker_next->cvar.notify_one();
@@ -113,7 +113,7 @@ TaskMgr::getNextTask()
 void
 TaskMgr::finalizeTask( DatabaseClient & a_db, Task * a_task, bool a_succeeded, const std::string & a_msg )
 {
-    vector<rapidjson::Value*> new_tasks;
+    vector<libjson::Value> new_tasks;
 
     a_db.taskFinalize( a_task->task_id, a_succeeded, a_msg, new_tasks );
 
@@ -122,9 +122,9 @@ TaskMgr::finalizeTask( DatabaseClient & a_db, Task * a_task, bool a_succeeded, c
     m_tasks_running.erase( a_task->task_id );
     delete a_task;
 
-    for ( vector<rapidjson::Value*>::iterator t = new_tasks.begin(); t != new_tasks.end(); t++ )
+    for ( vector<libjson::Value>::iterator t = new_tasks.begin(); t != new_tasks.end(); t++ )
     {
-        m_tasks_ready.push_back( new Task( (**t)["id"].GetString(), *t ));
+        m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
     }
 }
 
@@ -165,7 +165,7 @@ TaskMgr::workerThread( Worker * worker )
             {
                 // Dispatch task to handler method
 
-                task_type = (*task->state)["type"].GetUint();
+                task_type = task->data["type"].asNumber();
                 switch( task_type )
                 {
                     case TT_DATA_GET:
@@ -223,23 +223,20 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
         string                      rem_ep, acc_tok;
         bool                        encrypted;
         GlobusAPI::EndpointInfo     ep_info;
-        string                      uid = (*task->state)["user"].GetString();
-        rapidjson::Value &          state = (*task->state)["state"];
-        uint32_t                    encrypt = state["encrypt"].GetUint();
-        rapidjson::Value &          repos = state["repos"];
-        rapidjson::Value::MemberIterator    imem;
-
-        //rapidjson::Document::AllocatorType & alloc = task->state->GetAllocator();
+        string                      uid = task->data["user"].asString();
+        libjson::Value &            state = task->data["state"];
+        uint32_t                    encrypt = state["encrypt"].asNumber();
+        libjson::Value::Array &     repo_arr = state["repos"].getArray();
 
         worker->db.setClient( uid );
 
         acc_tok = getUserAccessToken( worker, uid );
-
-        for ( rapidjson::SizeType r = 0; r < repos.Size(); r++ )
+        
+        for ( libjson::Value::ArrayIter r = repo_arr.begin(); r != repo_arr.end(); r++ )
         {
-            rapidjson::Value & repo = repos[r];
+            libjson::Value::Object & repo = r->getObject();
 
-            rem_ep = repo["rem_ep"].GetString();
+            rem_ep = repo.at( "rem_ep" ).asString();
 
             worker->glob.getEndpointInfo( rem_ep, acc_tok, ep_info );
 

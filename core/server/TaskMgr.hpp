@@ -7,10 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/error/en.h>
+#include <libjson.hpp>
 
 #include "Config.hpp"
 #include "CoreDatabaseClient.hpp"
@@ -26,7 +23,7 @@ class TaskMgr
 public:
     static TaskMgr & getInstance();
 
-    void    newTask( rapidjson::Value *a_task );
+    void    newTask( libjson::Value & a_task );
     void    cancelTask( const std::string & a_task_id );
 
     //void    transferData( XfrDataReply );
@@ -52,18 +49,15 @@ private:
 
     struct Task
     {
-        Task( const std::string & a_id, rapidjson::Value * a_state ) :
-            task_id( a_id ), state( a_state ), cancel(false)
+        Task( const std::string & a_id, libjson::Value & a_data ) :
+            task_id( a_id ), data( std::move( a_data )), cancel(false)
         {}
 
         ~Task()
-        {
-            if ( state )
-                delete state;
-        }
+        {}
 
         std::string                 task_id;
-        rapidjson::Value *          state;
+        libjson::Value              data;
         bool                        cancel;
     };
 

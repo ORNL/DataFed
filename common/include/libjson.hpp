@@ -1,3 +1,6 @@
+#ifndef LIBJSON_HPP
+#define LIBJSON_HPP
+
 #include <stdint.h>
 #include <math.h>
 #include <cstdlib>
@@ -935,6 +938,7 @@ private:
 
         // On entry, c is next char after "
         const char * c = start;
+        const char * a = start;
 
         a_value.clear();
 
@@ -944,31 +948,38 @@ private:
 
             if ( *c == '\\' )
             {
+                a_value.append( a, c - a );
                 switch ( *(c+1) )
                 {
-                    case 'b':
-                    case 'f':
-                    case 'n':
-                    case 'r':
-                    case 't':
-                    case '/':
-                    case '\\':
-                    case '"':
-                        c++;
-                        break;
+                    case 'b':  a_value.append( "\b" ); break;
+                    case 'f':  a_value.append( "\f" ); break;
+                    case 'n':  a_value.append( "\n" ); break;
+                    case 'r':  a_value.append( "\r" ); break;
+                    case 't':  a_value.append( "\t" ); break;
+                    case '/':  a_value.append( "/" ); break;
+                    case '"':  a_value.append( "\"" ); break;
+                    case '\\':  a_value.append( "\\" ); break;
                     case 'u':
                         if ( badHexDigit( c + 2 ) || badHexDigit( c + 3 ) || badHexDigit( c + 4 ) || badHexDigit( c + 5 ))
                             ERR_INVALID_ESC( c );
-                        c += 5;
+                        c += 4;
                         break;
                     default:
                         ERR_INVALID_CHAR( c );
                 }
+
+                c++;
+                a = c;
             }
             else if ( *c == '"' )
             {
-                a_value.append( start, c - start );
+                //a_value.append( start, c - start );
+                a_value.append( a, c - a );
                 return c;
+            }
+            else if ( *c < 0x1F )
+            {
+                ERR_INVALID_CHAR( c );
             }
 
             c++;
@@ -1068,9 +1079,8 @@ private:
 #endif
     }
 
-
-
 };
 
-
 }
+
+#endif

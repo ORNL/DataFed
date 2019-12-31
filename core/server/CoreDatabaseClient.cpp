@@ -617,7 +617,9 @@ DatabaseClient::setUserData( UserDataReply & a_reply, Value & a_result )
                     user->set_email( j->second.asString( ));
 
                 if (( j = obj.find( "options" )) != obj.end( ))
+                {
                     user->set_options( j->second.asString( ));
+                }
 
                 if (( j = obj.find( "is_admin" )) != obj.end( ))
                     user->set_is_admin( j->second.asBool( ));
@@ -2635,7 +2637,7 @@ DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 */
 
 void
-DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply )
+DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
@@ -2653,11 +2655,11 @@ DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const s
     body += to_string(a_encrypt);
     body += "}";
 
-    Value result;
+    //Value result;
 
-    dbPost( "data/get", {}, &body, result );
+    dbPost( "data/get", {}, &body, a_result );
 
-    setTaskData( a_reply, result );
+    setTaskData( a_reply, a_result );
 }
 
 

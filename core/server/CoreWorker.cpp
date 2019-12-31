@@ -10,10 +10,7 @@
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>
 #include "TaskMgr.hpp"
-
-// Must be after TraceExcpetion
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
+#include "libjson.hpp"
 
 using namespace std;
 
@@ -462,12 +459,15 @@ Worker::procDataGetRequest( const std::string & a_uid )
     for ( i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    rapidjson::Value *task = 0;
+    libjson::Value result;
 
-    m_db_client.taskInitDataGet( ids, request->path(), request->encrypt(), reply, task );
+    m_db_client.taskInitDataGet( ids, request->path(), request->encrypt(), reply, result );
 
-    if ( task )
-        TaskMgr::getInstance().newTask( task );
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter j = obj.find( "task" );
+
+    if ( j != obj.end( ))
+        TaskMgr::getInstance().newTask( j->second );
 
     PROC_MSG_END
 }
@@ -1181,22 +1181,23 @@ Worker::parseSearchIdAlias( const string & a_query )
         if ( p == 0 || ( p == 1 && val[0] == 'd' ))
         {
             // Minimum len of key (numbers) is 2
-            if ( val.size() < p + 3 )
-                return "";
-
-            for ( string::const_iterator c = val.begin()+p+1; c != val.end(); c++ )
+            if ( val.size() >= p + 3 )
             {
-                if ( !isdigit( *c ) )
+                for ( string::const_iterator c = val.begin()+p+1; c != val.end(); c++ )
                 {
-                    id_ok = false;
-                    break;
+                    if ( !isdigit( *c ) )
+                    {
+                        id_ok = false;
+                        break;
+                    }
                 }
+
+                if ( id_ok )
+                    return string("i._id like \'d/") + val.substr(p+1) + "%\'";
             }
-            if ( id_ok )
-                return string("i._id like \'d/") + val.substr(p+1) + "%\'";
         }
 
-        return "";
+        EXCEPT(1,"Invalid ID/Alias query value.");
     }
 
     for ( string::const_iterator c = val.begin(); c != val.end(); c++ )
@@ -1221,8 +1222,9 @@ Worker::parseSearchIdAlias( const string & a_query )
     else if ( alias_ok )
         return string("i.alias like \"%") + val + "%\"";
     else
-        return "";
+        EXCEPT(1,"Invalid ID/Alias query value.");
 }
+
 
 string
 Worker::parseSearchMetadata( const string & a_query )
@@ -1413,63 +1415,52 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
 {
     use_client = false;
 
-    rapidjson::Document query;
+    libjson::Value query;
+    query.fromString( a_query );
 
-    query.Parse( a_query.c_str() );
-
-    if ( query.HasParseError() )
-    {
-        rapidjson::ParseErrorCode ec = query.GetParseError();
-        EXCEPT_PARAM( 1, "Invalid query: " << rapidjson::GetParseError_En( ec ));
-    }
-
-    if ( query.FindMember("id") == query.MemberEnd() && query.FindMember("text") == query.MemberEnd() && query.FindMember("meta") == query.MemberEnd())
-        EXCEPT( 1, "No search terms specified" );
+    if ( !query.has( "id" ) && !query.has( "text" ) && !query.has( "meta" ))
+        EXCEPT( 1, "Query contains no search terms." );
 
     string phrase;
-    rapidjson::Value::MemberIterator imem = query.FindMember("text");
-    if ( imem != query.MemberEnd() )
+    libjson::Value::Object &    obj = query.getObject();
+    libjson::Value::ObjectIter  j, i = obj.find( "text" );
+
+    if ( i != obj.end( ))
     {
-        phrase = parseSearchTextPhrase( imem->value.GetString() );
+        phrase = parseSearchTextPhrase( i->second.asString( ));
     }
     else
     {
-        rapidjson::Value::MemberIterator imem = query.FindMember("title");
-        if ( imem != query.MemberEnd() )
-            phrase = parseSearchPhrase( "title", imem->value.GetString() );
+        if (( i = obj.find( "title" )) != obj.end( ))
+            phrase = parseSearchPhrase( "title", i->second.asString( ));
 
-        imem = query.FindMember("desc");
-        if ( imem != query.MemberEnd() )
+        if (( i = obj.find( "desc" )) != obj.end( ))
         {
-            if ( phrase.size() )
+            if ( phrase.size( ))
                 phrase += " or ";
-            phrase += parseSearchPhrase( "desc", imem->value.GetString() );
+            phrase += parseSearchPhrase( "desc", i->second.asString( ));
         }
 
-        imem = query.FindMember("keyw");
-        if ( imem != query.MemberEnd() )
+        if (( i = obj.find( "keyw" )) != obj.end( ))
         {
-            if ( phrase.size() )
+            if ( phrase.size( ))
                 phrase += " or ";
-            phrase += parseSearchPhrase( "keyw", imem->value.GetString() );
+            phrase += parseSearchPhrase( "keyw", i->second.asString( ));
         }
     }
 
     string id;
-    imem = query.FindMember("id");
-    if ( imem != query.MemberEnd() )
+
+    if (( i = obj.find( "id" )) != obj.end( ))
     {
-        id = parseSearchIdAlias( imem->value.GetString() );
-        DL_INFO("ID search: " << id );
-        if ( !id.size() )
-            EXCEPT(1,"Invalid ID/Alias query value.");
+        id = parseSearchIdAlias( i->second.asString() );
     }
 
     string meta;
-    imem = query.FindMember("meta");
-    if ( imem != query.MemberEnd() )
+
+    if (( i = obj.find( "meta" )) != obj.end( ))
     {
-        meta = parseSearchMetadata( imem->value.GetString() );
+        id = parseSearchMetadata( i->second.asString() );
     }
 
     if ( meta.size() && id.size() )
@@ -1486,42 +1477,43 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
     if ( phrase.size() )
         result += string("for i in intersection((for i in textview search analyzer(") + phrase + ",'text_en') return i),(";
 
-    imem = query.FindMember("scopes");
-    if ( imem == query.MemberEnd() || imem->value.Size() == 0 )
+    if (( i = obj.find( "scopes" )) == obj.end( ))
         EXCEPT(1,"No query scopes provided");
 
-    int scope;
-    rapidjson::Value::MemberIterator imem2;
+    libjson::Value::Array & scopes = i->second.getArray();
 
-    if ( imem->value.Size() > 1 )
+    if ( scopes.size() == 0 )
+        EXCEPT(1,"No query scopes provided");
+
+    if ( scopes.size() > 1 )
         result += "for i in union((";
 
     bool inc_ret = false;
-    if ( imem->value.Size() > 1 || phrase.size() )
+    if ( scopes.size() > 1 || phrase.size() )
         inc_ret = true;
 
-    for ( rapidjson::SizeType i = 0; i < imem->value.Size(); i++ )
+    for ( libjson::Value::ArrayIter s = scopes.begin(); s != scopes.end(); s++ )
     {
-        if ( i > 0 )
+        libjson::Value::Object & scope = s->getObject();
+
+        if ( s != scopes.begin( ))
             result += "),(";
 
-        rapidjson::Value & val = imem->value[i];
-        imem2 = val.FindMember("scope");
-        if ( imem2 == val.MemberEnd() )
+        i = scope.find( "scope" );
+        if ( i == scope.end( ))
             EXCEPT(1,"Missing scope value");
-        scope = imem2->value.GetUint();
 
-        switch( scope )
+        switch( (int)i->second.asNumber( ))
         {
         case SDMS::SS_USER:
             result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
             use_client = true;
             break;
         case SDMS::SS_PROJECT:
-            imem2 = val.FindMember("id");
-            if ( imem2 == val.MemberEnd() )
+            if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for project");
-            result += string("for i in 1..1 inbound '") + imem2->value.GetString() + "' owner filter is_same_collection('d',i)";
+
+            result += string("for i in 1..1 inbound '") + j->second.asString() + "' owner filter is_same_collection('d',i)";
             break;
         case SDMS::SS_OWNED_PROJECTS:
             result += "for i,e,p in 2..2 inbound @client owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
@@ -1536,27 +1528,26 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             use_client = true;
             break;
         case SDMS::SS_COLLECTION:
-            imem2 = val.FindMember("id");
-            if ( imem2 == val.MemberEnd() )
+            if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for collection");
-            result += string("for i in 1..10 outbound '") + imem2->value.GetString() + "' item filter is_same_collection('d',i)";
+
+            result += string("for i in 1..10 outbound '") + j->second.asString() + "' item filter is_same_collection('d',i)";
             break;
         case SDMS::SS_TOPIC:
-            imem2 = val.FindMember("id");
-            if ( imem2 == val.MemberEnd() )
+            if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for topic");
-            result += string("for i in 1..10 inbound '") + imem2->value.GetString() + "' top, outbound item filter is_same_collection('d',i)";
+
+            result += string("for i in 1..10 inbound '") + j->second.asString() + "' top, outbound item filter is_same_collection('d',i)";
             break;
         case SDMS::SS_SHARED_BY_USER:
-            imem2 = val.FindMember("id");
-            if ( imem2 == val.MemberEnd() )
+            if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for shared user");
-            //result += "for i in 1..1 inbound " + imem2->value.GetString() + " owner filter IS_SAME_COLLECTION('d',i) return i";
+
             use_client = true;
             result += string("for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + imem2->value.GetString() + "' return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + imem2->value.GetString() + "' return v)"
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + j->second.asString() + "' return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + j->second.asString() + "' return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + j->second.asString() + "' return v)"
                 ")";
             break;
         case SDMS::SS_SHARED_BY_ANY_USER:
@@ -1570,14 +1561,14 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
                 ")";
             break;
         case SDMS::SS_SHARED_BY_PROJECT:
-            imem2 = val.FindMember("id");
-            if ( imem2 == val.MemberEnd() )
+            if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for shared project");
+
             use_client = true;
             result += string("for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + imem2->value.GetString() + "' return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + imem2->value.GetString() + "' return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + imem2->value.GetString() + "' return v)"
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + j->second.asString() + "' return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + j->second.asString() + "' return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + j->second.asString() + "' return v)"
                 ")";
             break;
         case SDMS::SS_SHARED_BY_ANY_PROJECT:
@@ -1600,7 +1591,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
             result += " return i";
     }
 
-    if ( imem->value.Size() > 1 )
+    if ( scopes.size() > 1 )
     {
         result += "))";
         if ( phrase.size() )

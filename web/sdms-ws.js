@@ -321,8 +321,10 @@ app.get('/api/usr/update', ( a_req, a_resp ) => {
         params.email = a_req.query.email;
     if ( a_req.query.pw != undefined )
         params.password = a_req.query.pw;
-    if ( a_req.query.opts != undefined )
+    if ( a_req.query.opts != undefined ){
         params.options = a_req.query.opts;
+        console.log("user opts:",params.options);
+    }
 
     sendMessage( "UserUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );

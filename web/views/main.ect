@@ -105,8 +105,14 @@
                 g_user.isAdmin = user.isAdmin;
                 g_user.isRepoAdmin = user.isRepoAdmin;
                 if ( user.options ){
-                    console.log("user opts:",user.options);
+                    //console.log("user opts:",user.options);
+                    console.log("User options:");
+                    for ( var c = 0; c < user.options.length; c++ ){
+                        console.log(c,"=",user.options.charAt(c));
+                    }
+                    console.log( "parsing...");
                     g_opts = JSON.parse( user.options );
+                    console.log( "done");
                 }
 
                 tab_browser = makeBrowserTab();
