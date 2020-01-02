@@ -23,7 +23,7 @@ module.exports = ( function() {
      * all collections. In delete mode, for data records in collections, only data
      * that isn't linked elsewhere are returned.
      */
-    obj._preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
+    obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
         var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], globus_data: [], http_data: [], no_data: [], visited: {} };
 
         switch( a_mode ){
@@ -230,11 +230,11 @@ module.exports = ( function() {
                     if ( a_ctxt.mode == g_lib.TT_DATA_PUT )
                         throw [g_lib.ERR_INVALID_PARAM,"Cannot PUT data to published record."];
                     if ( a_ctxt.mode == g_lib.TT_DATA_GET )
-                        a_ctxt.http_data.push({ id: id, owner: doc.owner, url: doc.data_url, ext: doc.ext });
+                        a_ctxt.http_data.push({ id: id, title: doc.title, owner: doc.owner, url: doc.data_url, ext: doc.ext });
                     else
                         a_ctxt.no_data.push({ id: id, owner: doc.owner });
                 }else if ( doc.size || a_ctxt.mode == g_lib.TT_DATA_PUT ){
-                    a_ctxt.globus_data.push({ id: id, owner: doc.owner, size: doc.size, ext: doc.ext });
+                    a_ctxt.globus_data.push({ id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
                 }else if ( !doc.size ){
                     a_ctxt.no_data.push({ id: id, owner: doc.owner });
                 }
@@ -388,7 +388,7 @@ module.exports = ( function() {
 
 
     obj.dataGet = function( a_client, a_path, a_encrypt, a_res_ids ){
-        var result = obj._preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_GET );
+        var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_GET );
 
         //var result = {globus_data: [], http_data: [], no_data: []};
         //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_GET, perm: g_lib.PERM_RD_DATA, result: result }, a_res_ids );
@@ -416,12 +416,12 @@ module.exports = ( function() {
                     task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
                 }
 
-                task.id = task._id;
-                delete task._id;
-                delete task._key;
-                delete task._rev;
+                task.new.id = task.new._id;
+                delete task.new._id;
+                delete task.new._key;
+                delete task.new._rev;
 
-                result.task = task;
+                result.task = task.new;
             }
         }
 
@@ -430,7 +430,7 @@ module.exports = ( function() {
 
 
     obj.dataPut = function( a_client, a_path, a_encrypt, a_ext, a_res_ids ){
-        var result = obj._preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_PUT );
+        var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_PUT );
 
         //var result = {globus_data: []};
         //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_PUT, perm: g_lib.PERM_WR_DATA, result: result }, a_res_ids );
@@ -509,7 +509,7 @@ module.exports = ( function() {
             throw [ g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'" ];
 
         // Owner is client for move operation
-        var result = obj._preprocessItems({ _id: owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_DATA_CHG_ALLOC );
+        var result = obj.preprocessItems({ _id: owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_DATA_CHG_ALLOC );
 
         if ( result.globus_data.length > 0 ){
             var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
@@ -590,7 +590,7 @@ module.exports = ( function() {
         if ( !alloc )
             throw [ g_lib.ERR_INVALID_PARAM, "No allocation available for destination owner." ];
 
-        var result = obj._preprocessItems( a_client, dest_coll.owner, a_res_ids, g_lib.TT_DATA_CHG_OWNER );
+        var result = obj.preprocessItems( a_client, dest_coll.owner, a_res_ids, g_lib.TT_DATA_CHG_OWNER );
 
         if ( result.globus_data.length > 0 ){
             var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
@@ -651,7 +651,7 @@ module.exports = ( function() {
     obj.dataCollDelete = function( a_client, a_res_ids ){
         // TODO Handle data owned by projects
 
-        var result = obj._preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_DEL );
+        var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_DEL );
         var i;
 
         // Delete collections

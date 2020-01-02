@@ -73,10 +73,11 @@ router.post('/update', function (req, res) {
                 }
 
                 if ( req.body.state ){
-                    obj.state = {};
+                    obj.state = req.body.state;
+                    /*obj.state = {};
                     for ( var k in req.body.state ){
                         obj.state[k] = req.body.state[k];
-                    }
+                    }*/
                 }
 
                 if ( req.body.progress )
@@ -119,7 +120,7 @@ router.post('/finalize', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["task","lock","block"]
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 if ( !g_db._exists( req.queryParams.task_id ))

@@ -1026,7 +1026,6 @@ router.get('/delete', function (req, res) {
 */
 
 
-/*
 router.get('/get/preproc', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -1036,14 +1035,15 @@ router.get('/get/preproc', function (req, res) {
             action: function() {
                 //console.log("/dat/get/preproc client", req.queryParams.client);
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var ids = [], result = [];
+                var ids = [];
                 for ( var i in req.queryParams.ids ){
                     //console.log("id ini: ",req.queryParams.ids[i]);
                     var id = g_lib.resolveID( req.queryParams.ids[i], client );
                     //console.log("id: ",id);
                     ids.push( id );
                 }
-                dataGetPreproc( client, ids, result, [] );
+
+                var result = g_proc.preprocessItems( client, null, ids, g_lib.TT_DATA_GET );
 
                 res.send(result);
             }
@@ -1057,7 +1057,6 @@ router.get('/get/preproc', function (req, res) {
 .queryParam('ids', joi.array().items(joi.string()).required(), "Array of data/collection IDs or aliases")
 .summary('Data get preprocessing')
 .description('Data get preprocessing (check permission, data size, lock, deduplicate)');
-*/
 
 
 
@@ -1066,7 +1065,7 @@ router.post('/get', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d","c","item"],
-                write: ["task","lock","block"]
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -1102,7 +1101,7 @@ router.post('/put', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d","c","item"],
-                write: ["task","lock","block"]
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -1141,7 +1140,7 @@ router.post('/change_alloc', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d","c","item"],
-                write: ["task","lock","block"]
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -1184,7 +1183,7 @@ router.post('/change_owner', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d","c","item"],
-                write: ["task","lock","block"]
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -1224,7 +1223,8 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","c","a","alias","owner","item","acl","loc","lock","alloc","p","t","top","dep","task","block"]
+                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"],
+                exclusive: ["lock","task","block"],
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
