@@ -953,7 +953,7 @@ function xfrStart( a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_cb ){
     else{
         return;
     }
-    console.log("a_encrypt_mode:",a_encrypt_mode);
+
     url += "&path=" + encodeURIComponent(a_path)  + "&encrypt=" + a_encrypt_mode + ((a_ext && a_ext.length)?"&ext="+encodeURIComponent(a_ext):"");
 
     _asyncGet( url, null, function( ok, data ){

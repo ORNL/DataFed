@@ -317,7 +317,8 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
-                            dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                            console.log(data.task);
+                            setStatusText( "Task ID '" + data.task.id + "' created for data transfer." );
                         }else{
                             dlgAlert( "Transfer Error", data );
                         }

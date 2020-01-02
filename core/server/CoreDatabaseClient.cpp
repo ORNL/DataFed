@@ -98,11 +98,15 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
     {
         if ( res_json.size() )
         {
-            if ( a_log )
+            try
             {
-                DL_DEBUG( "About to parse[" << res_json << "]" );
+                a_result.fromString( res_json );
             }
-            a_result.fromString( res_json );
+            catch( libjson::ParseError & e )
+            {
+                DL_DEBUG( "PARSE [" << res_json << "]" );
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString( ));
+            }
         }
 
         if ( http_code >= 200 && http_code < 300 )
@@ -178,7 +182,7 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
 long
 DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
 {
-    DL_DEBUG( "dbPost " << a_url_path << " [" << *a_body << "]" );
+    //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
 
     string  url;
     string  res_json;
@@ -224,8 +228,15 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
     {
         if ( res_json.size() )
         {
-            DL_TRACE( "About to parse[" << res_json << "]" );
-            a_result.fromString( res_json );
+            try
+            {
+                a_result.fromString( res_json );
+            }
+            catch( libjson::ParseError & e )
+            {
+                DL_DEBUG( "PARSE [" << res_json << "]" );
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString( ));
+            }
         }
 
         if ( http_code >= 200 && http_code < 300 )
@@ -1354,7 +1365,16 @@ DatabaseClient::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, A
 
     dbGet( "dat/get/preproc", params, result );
 
-    setListingData( a_reply, result );
+    DL_DEBUG( "PREPROC: " << result.toString( ));
+
+    Value::Object & obj = result.getObject();
+    Value::ObjectIter i;
+
+    if (( i = obj.find("globus_data")) != obj.end() && i->second.size( ))
+        setListingData( a_reply, i->second );
+
+    if (( i = obj.find("http_data")) != obj.end() && i->second.size( ))
+        setListingData( a_reply, i->second );
 }
 
 void
@@ -1675,16 +1695,16 @@ DatabaseClient::setListingData( ListingReply & a_reply, libjson::Value & a_resul
                 if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
                     item->set_alias( j->second.asString( ));
 
-                if (( j = obj.find( "owner" )) != obj.end( ))
+                if (( j = obj.find( "owner" )) != obj.end( ) && !j->second.isNull( ))
                     item->set_owner( j->second.asString( ));
 
-                if (( j = obj.find( "creator" )) != obj.end( ))
+                if (( j = obj.find( "creator" )) != obj.end( ) && !j->second.isNull( ))
                     item->set_creator( j->second.asString( ));
 
-                if (( j = obj.find( "doi" )) != obj.end( ))
+                if (( j = obj.find( "doi" )) != obj.end( ) && !j->second.isNull( ))
                     item->set_doi( j->second.asString( ));
 
-                if (( j = obj.find( "url" )) != obj.end( ))
+                if (( j = obj.find( "url" )) != obj.end( ) && !j->second.isNull( ))
                     item->set_url( j->second.asString( ));
 
                 if (( j = obj.find( "size" )) != obj.end( ))
@@ -1715,9 +1735,9 @@ DatabaseClient::setListingData( ListingReply & a_reply, libjson::Value & a_resul
             }
         }
     }
-    catch(...)
+    catch( exception & e )
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service. " << e.what( ));
     }
 }
 
@@ -2657,7 +2677,7 @@ DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const s
 
     //Value result;
 
-    dbPost( "data/get", {}, &body, a_result );
+    dbPost( "dat/get", {}, &body, a_result );
 
     setTaskData( a_reply, a_result );
 }
@@ -2668,6 +2688,8 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_resul
 {
     Value::ObjectIter   j;
     Value::ArrayIter    k;
+
+    cerr << "TASK RES: " << a_result.toString() << endl;
 
     try
     {
@@ -2689,17 +2711,52 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_resul
             task->set_ut( obj2.at( "ut" ).asNumber( ));
         }
     }
-    catch(...)
+    catch ( exception & e )
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
     }
 }
 
+void
+DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, double * a_progress, libjson::Value * a_state )
+{
+    if ( !a_status && !a_progress && !a_state )
+        return;
+
+    string body = "{";
+    string delim = "";
+
+    if ( a_status )
+    {
+        body += "\"status\":" + to_string(*a_status);
+        delim = ",";
+    }
+
+    if ( a_progress )
+    {
+        body += delim + "\"progress\":" + to_string(*a_progress);
+        if ( !delim.size( ))
+            delim = ",";
+    }
+
+    if ( a_state )
+    {
+        body += delim + "\"state\":" + a_state->toString();
+    }
+
+    body += "}";
+
+    Value result;
+    dbPost( "task/update", {{"task_id",a_id}}, &body, result );
+}
 
 void
 DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<Value> & a_new_tasks )
 {
-    // TODO Implement!
+    Value result;
+    cerr << "finalizing..." << endl;
+    dbPost( "task/finalize", {{"task_id",a_task_id},{"succeeded",(a_succeeded?"true":"false")},{"message",a_msg}}, 0, result );
+    cerr << "finalize result: " << result.toString() << endl;
 }
 
 

@@ -63,7 +63,6 @@ function dlgSettings( a_cb ){
 
                 var tmp = $("#new_email",frame).val();
                 if ( tmp != g_user.email ){
-                    console.log("update email",tmp);
                     if (!emailFilter.test(String(tmp).toLowerCase())) {
                         dlgAlert( "Data Entry Error", "Invalid e-mail" );
                         return;
@@ -75,7 +74,6 @@ function dlgSettings( a_cb ){
 
                 tmp = $("#cli_new_pw",frame).val();
                 if ( tmp ){
-                    console.log("update password",tmp);
                     var pw2 = $('#cli_confirm_pw',frame).val();
                     if ( tmp != pw2 ){
                         dlgAlert( "Update CLI Password", "Passwords do not match" );
@@ -87,7 +85,6 @@ function dlgSettings( a_cb ){
 
                 tmp = $("#page-size",frame).val();
                 if ( tmp != g_opts.page_sz ){
-                    console.log("update page-sz",tmp);
                     g_opts.page_sz = parseInt(tmp);
                     save = true;
                     reload = true;
@@ -97,19 +94,16 @@ function dlgSettings( a_cb ){
                 if ( tmp != g_opts.xfr_hist ){
                     g_opts.xfr_hist = parseInt(tmp);
                     save = true;
-                    console.log("update history",tmp);
                 }
 
                 tmp = $("#def-alloc",frame).val();
                 if ( tmp != g_opts.def_alloc ){
                     g_opts.def_alloc = tmp;
                     save = true;
-                    console.log("update def-alloc",tmp);
                 }
 
                 tmp = $("#theme-sel",frame).val();
                 if ( tmp != g_theme ){
-                    console.log("update theme",tmp);
                     themeSet( tmp );
                 }
 
@@ -118,7 +112,7 @@ function dlgSettings( a_cb ){
                         if ( !ok )
                             dlgAlert( "Update Options Error", data );
                         else
-                            console.log("saved");
+                            setStatusText("Options saved.");
                     });
                 }
 

@@ -141,6 +141,7 @@ public:
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
 
     void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
+    void taskUpdate( const std::string & a_id, TaskStatus * a_status = 0, double * a_progress = 0, libjson::Value * a_state = 0 );
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<libjson::Value> & a_new_tasks );
 
 private:

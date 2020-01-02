@@ -14,11 +14,19 @@ namespace libjson{
 class Value;
 
 
-class ParseError
+class ParseError //: public std::exception
 {
 public:
     ParseError( const char * a_msg, size_t a_pos ): m_msg( a_msg ), m_pos( a_pos )
     {}
+
+/*
+    const char * what()
+    {
+        m_what = toString();
+        return m_what.c_str();
+    }
+*/
 
     std::string toString()
     {
@@ -38,6 +46,7 @@ private:
 
     const char *    m_msg;
     size_t          m_pos;
+    //std::string     m_what;
 
     friend class Value;
 };
@@ -740,7 +749,9 @@ private:
             switch ( state )
             {
             case PS_SEEK_KEY:
-                if ( *c == '"' )
+                if ( *c == '}' )
+                    return c;
+                else if ( *c == '"' )
                 {
                     c = parseString( key, c + 1 );
 
@@ -803,7 +814,9 @@ private:
             switch ( state )
             {
             case PS_SEEK_VAL:
-                if ( notWS( *c ))
+                if ( *c == ']' )
+                    return c;
+                else if ( notWS( *c ))
                 {
                     c = parseValue( value, c );
                     a_parent.m_value.a->push_back( std::move( value ));
@@ -814,7 +827,6 @@ private:
                 if ( *c == ',' )
                     state = PS_SEEK_VAL;
                 else if ( *c == ']' )
-                    // TODO Attach array to parent
                     return c;
                 else if ( notWS( *c ))
                     ERR_INVALID_CHAR( c );

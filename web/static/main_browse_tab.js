@@ -3503,22 +3503,7 @@ function makeBrowserTab(){
 
     $(".btn-refresh").button({icon:"ui-icon-refresh"});
     inputTheme( $('input'));
-/*
-    userView( g_user.uid, true, function( ok, user ){
-        if ( ok && user ){
-            g_user.isAdmin = user.isAdmin;
-            g_user.isRepoAdmin = user.isRepoAdmin;
-            if ( g_user.isRepoAdmin ){
-                setupRepoTab();
-                $('[href="#tab-repo"]').closest('li').show();
-            }
-            if ( user.options ){
-                console.log("user opts:",user.options);
-                g_opts = JSON.parse( user.options );
-            }
-        }
-    });
-*/
+
     //-------------------------------------------------------------------------
     // CATALOG TREE
 

@@ -5,6 +5,7 @@
 #include "MsgBuf.hpp"
 #include "DynaLog.hpp"
 #include "CoreServer.hpp"
+#include "TaskMgr.hpp"
 #include "Util.hpp"
 
 
@@ -43,6 +44,9 @@ Server::Server() :
     loadRepositoryConfig();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
+
+    // Create task mgr
+    TaskMgr::getInstance();
 }
 
 

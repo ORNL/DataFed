@@ -22,6 +22,8 @@ TaskMgr::TaskMgr():
 
     lock_guard<mutex>   lock(m_worker_mutex);
 
+    DL_DEBUG("TaskMgr creating " << m_config.num_task_worker_threads << " task worker threads." );
+
     for ( uint32_t i = 0; i < m_config.num_task_worker_threads; i++ )
     {
         worker = new Worker(i);
@@ -52,18 +54,25 @@ TaskMgr::getInstance()
 void
 TaskMgr::newTask( libjson::Value & a_task )
 {
+    DL_DEBUG("TaskMgr adding new task");
+
     lock_guard<mutex> lock( m_worker_mutex );
 
     m_tasks_ready.push_back( new Task( a_task["id"].asString(), a_task ));
 
     if ( m_worker_next )
+    {
+        DL_DEBUG("Waking task worker " << m_worker_next->worker_id );
         m_worker_next->cvar.notify_one();
+    }
 }
 
 
 void
 TaskMgr::cancelTask( const std::string & a_task_id )
 {
+    DL_DEBUG("TaskMgr cancel task " << a_task_id );
+
     unique_lock<mutex> lock( m_worker_mutex );
 
     map<string,Task*>::iterator t = m_tasks_running.find( a_task_id );
@@ -113,18 +122,37 @@ TaskMgr::getNextTask()
 void
 TaskMgr::finalizeTask( DatabaseClient & a_db, Task * a_task, bool a_succeeded, const std::string & a_msg )
 {
+    DL_DEBUG("TaskMgr finalizeTask " << a_task->task_id );
+
     vector<libjson::Value> new_tasks;
 
-    a_db.taskFinalize( a_task->task_id, a_succeeded, a_msg, new_tasks );
-
-    lock_guard<mutex> lock(m_worker_mutex);
-
-    m_tasks_running.erase( a_task->task_id );
-    delete a_task;
-
-    for ( vector<libjson::Value>::iterator t = new_tasks.begin(); t != new_tasks.end(); t++ )
+    try
     {
-        m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
+        a_db.taskFinalize( a_task->task_id, a_succeeded, a_msg, new_tasks );
+
+        DL_DEBUG("found " << new_tasks.size() << " new tasks." );
+
+        lock_guard<mutex> lock(m_worker_mutex);
+
+        m_tasks_running.erase( a_task->task_id );
+        delete a_task;
+
+        for ( vector<libjson::Value>::iterator t = new_tasks.begin(); t != new_tasks.end(); t++ )
+        {
+            m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
+        }
+    }
+    catch( TraceException & e )
+    {
+        DL_ERROR("Exception in finalizeTask " << a_task->task_id << ": " << e.toString( ));
+    }
+    catch( exception & e )
+    {
+        DL_ERROR("Exception in finalizeTask " << a_task->task_id << ": " << e.what( ));
+    }
+    catch( ... )
+    {
+        DL_ERROR("Unknown exception in finalizeTask " << a_task->task_id );
     }
 }
 
@@ -134,6 +162,10 @@ TaskMgr::workerThread( Worker * worker )
 {
     Task *              task;
     uint32_t            task_type;
+    bool                success;
+    string              msg;
+
+    DL_DEBUG( "Task worker " << worker->worker_id << " started." )
 
     unique_lock<mutex>  lock(m_worker_mutex);
 
@@ -161,9 +193,12 @@ TaskMgr::workerThread( Worker * worker )
 
             lock.unlock();
 
+            DL_DEBUG("Task worker " << worker->worker_id << " handling new task " << task->task_id );
+
             try
             {
                 // Dispatch task to handler method
+                success = false;
 
                 task_type = task->data["type"].asNumber();
                 switch( task_type )
@@ -188,16 +223,25 @@ TaskMgr::workerThread( Worker * worker )
                         break;
                 }
 
-                // Finish task
-                finalizeTask( worker->db, task, true, "Yay" );
+                // Do work
+
+                success = true;
+                msg = "";
             }
-            catch( ... )
+            catch( TraceException & e )
             {
-                DL_ERROR( "Unhandled exception in task handler for worker " << worker->worker_id );
+                DL_ERROR( "Task handler error,  worker " << worker->worker_id );
+                msg = e.toString( );
             }
+            catch( exception & e )
+            {
+                DL_ERROR( "Task handler error, worker " << worker->worker_id );
+                msg = e.what();
+            }
+
+            finalizeTask( worker->db, task, success, msg );
 
             lock.lock();
-
 
             // If no more work, stop and go back to wait queue
             if ( m_tasks_ready.empty( ))
@@ -218,79 +262,87 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
 {
     DL_INFO( "Starting task '" << task->task_id << "', type: DataGet" );
 
-    try
+    string                      dst_ep, dst_path, acc_tok;
+    bool                        encrypted = false;
+    GlobusAPI::EndpointInfo     ep_info;
+    string                      uid = task->data["user"].asString();
+    TaskStatus                  status = task->data["status"].asNumber();
+    double                      prog = 10;
+    libjson::Value &            state = task->data["state"];
+    uint32_t                    encrypt = state["encrypt"].asNumber();
+    libjson::Value::Object &    repos = state["repos"].getObject();
+    libjson::Value              upd_state;
+    size_t                      repo_idx = state["repo_idx"].asNumber();
+
+    DL_INFO("state: " << state.toString( ));
+
+    worker->db.setClient( uid );
+
+    upd_state.initObject();
+
+    if ( status == TS_READY )
     {
-        string                      rem_ep, acc_tok;
-        bool                        encrypted;
-        GlobusAPI::EndpointInfo     ep_info;
-        string                      uid = task->data["user"].asString();
-        libjson::Value &            state = task->data["state"];
-        uint32_t                    encrypt = state["encrypt"].asNumber();
-        libjson::Value::Array &     repo_arr = state["repos"].getArray();
+        status = TS_RUNNING;
+        worker->db.taskUpdate( task->task_id, &status, 0, 0 );
+    }
 
-        worker->db.setClient( uid );
+    acc_tok = getUserAccessToken( worker, uid );
 
-        acc_tok = getUserAccessToken( worker, uid );
-        
-        for ( libjson::Value::ArrayIter r = repo_arr.begin(); r != repo_arr.end(); r++ )
+    // Check destination endpoint
+
+    dst_ep = state.at( "dst_ep" ).asString();
+    dst_path = state.at( "dst_path" ).asString();
+
+    worker->glob.getEndpointInfo( dst_ep, acc_tok, ep_info );
+
+    if ( !ep_info.activated )
+        EXCEPT(1,"Remote endpoint requires activation.");
+
+    // TODO Notify if activation expiring soon
+
+    // Determine encryption state
+    if ( repo_idx == 0 )
+    {
+        switch ( encrypt )
         {
-            libjson::Value::Object & repo = r->getObject();
-
-            rem_ep = repo.at( "rem_ep" ).asString();
-
-            worker->glob.getEndpointInfo( rem_ep, acc_tok, ep_info );
-
-            if ( !ep_info.activated )
-                EXCEPT(1,"Remote endpoint requires activation.");
-
-            // TODO Notify if activation expiring soon
-
-            switch ( encrypt )
-            {
-                case ENCRYPT_NONE:
-                    if ( ep_info.force_encryption )
-                        EXCEPT(1,"Remote endpoint requires encryption.");
-                    encrypted = false;
-                    break;
-                case ENCRYPT_AVAIL:
-                    if ( ep_info.supports_encryption )
-                        encrypted = true;
-                    else
-                        encrypted = false;
-                    break;
-                case ENCRYPT_FORCE:
-                    if ( !ep_info.supports_encryption )
-                        EXCEPT(1,"Remote endpoint does not support encryption.");
+            case ENCRYPT_NONE:
+                if ( ep_info.force_encryption )
+                    EXCEPT(1,"Remote endpoint requires encryption.");
+                encrypted = false;
+                break;
+            case ENCRYPT_AVAIL:
+                if ( ep_info.supports_encryption )
                     encrypted = true;
-                    break;
-            }
-
-            /*
-            imem = state.FindMember("encrypted");
-            if ( imem == state.MemberEnd( ))
-                state.AddMember( "encrypted", encrypted );
-            else
-                imem->value = encrypted;
-            */
-
-            //glob.transfer( (*ixfr)->xfr, acc_token );
-            //DL_DEBUG( "Started xfr with task id: " << (*ixfr)->xfr.task_id() );
-
-            //db.taskUpdate( task->task_id,  );
+                else
+                    encrypted = false;
+                break;
+            case ENCRYPT_FORCE:
+                if ( !ep_info.supports_encryption )
+                    EXCEPT(1,"Remote endpoint does not support encryption.");
+                encrypted = true;
+                break;
         }
+
+        upd_state["encrypted"] = encrypted;
     }
-    catch( TraceException & e )
+
+    // Setup a transfer for current repo index
+    if ( repo_idx >= repos.size() )
+        EXCEPT(1,"Task repo_idx (" << repo_idx << ") out of range (max: " << repos.size() << ")");
+
+    libjson::Value::ObjectIter r = repos.begin() + repo_idx;
+
+    for ( ; r != repos.end(); r++ )
     {
-        DL_ERROR("Exception in handleDataGet for task '" << task->task_id << "':" << e.toString( true ) );
+        libjson::Value::Object & repo = r->second.getObject();
+
+        DL_INFO("repo: " << r->first);
+
+        //worker->glob.transfer( (*ixfr)->xfr, acc_token );
+
+        worker->db.taskUpdate( task->task_id, 0, &prog, &upd_state );
     }
-    catch( exception & e )
-    {
-        DL_ERROR("Exception in handleDataGet for task '" << task->task_id << "':" << e.what() );
-    }
-    catch( ... )
-    {
-        DL_ERROR("Unknown exception in handleDataGet for task '" << task->task_id << "'" );
-    }
+
 }
 
 

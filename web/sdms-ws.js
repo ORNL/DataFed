@@ -323,7 +323,6 @@ app.get('/api/usr/update', ( a_req, a_resp ) => {
         params.password = a_req.query.pw;
     if ( a_req.query.opts != undefined ){
         params.options = a_req.query.opts;
-        console.log("user opts:",params.options);
     }
 
     sendMessage( "UserUpdateRequest", params, a_req, a_resp, function( reply ) {
