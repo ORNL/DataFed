@@ -72,16 +72,14 @@ router.post('/update', function (req, res) {
                     obj.status = req.body.status;
                 }
 
-                if ( req.body.state ){
+                if ( req.body.state )
                     obj.state = req.body.state;
-                    /*obj.state = {};
-                    for ( var k in req.body.state ){
-                        obj.state[k] = req.body.state[k];
-                    }*/
-                }
 
                 if ( req.body.progress )
                     obj.progress = req.body.progress;
+
+                if ( req.body.msg != undefined )
+                    obj.msg = req.body.message;
 
                 var task = g_db._update( req.queryParams.task_id, obj, { keepNull: false, returnNew: true });
 
@@ -103,7 +101,8 @@ router.post('/update', function (req, res) {
 .body(joi.object({
     status: joi.number().integer().optional(),
     state: joi.any().optional(),
-    progress: joi.number().min(0).max(100).optional()
+    progress: joi.number().min(0).max(100).optional(),
+    message: joi.string().allow('').optional()
 }).required(), 'Record fields')
 .summary('Update an existing task record')
 .description('Update an existing task record from JSON body');
@@ -138,10 +137,14 @@ router.post('/finalize', function (req, res) {
                     }
                 }
 
-                var obj = {status:req.queryParams.succeeded?g_lib.TS_SUCCEEDED:g_lib.TS_FAILED,msg:req.queryParams.message?req.queryParams.message:null};
+                var obj = {status:req.queryParams.succeeded?g_lib.TS_SUCCEEDED:g_lib.TS_FAILED};
 
-                if ( req.queryParams.succeeded )
+                if ( req.queryParams.succeeded ){
                     obj.progress = 100;
+                    obj.msg = "Finished";
+                }else{
+                    obj.msg = req.queryParams.message?req.queryParams.message:"Failed (unknown error)";
+                }
 
                 g_db._update( req.queryParams.task_id, obj, { keepNull: false, returnNew: false });
 

@@ -183,8 +183,8 @@ router.post('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","repo","alloc"],
-                write: ["d","a","loc","owner","alias","item","dep"]
+                read: ["u","uuid","accn","repo"],
+                write: ["d","a","alloc","loc","owner","alias","item","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -226,8 +226,8 @@ router.post('/create/batch', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","repo","alloc"],
-                write: ["d","a","loc","owner","alias","item","dep"]
+                read: ["u","uuid","accn","repo"],
+                write: ["d","a","alloc","loc","owner","alias","item","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -1064,7 +1064,8 @@ router.post('/get', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","d","c","item"],
+                read: ["uuid","accn","d","c","item"],
+                write: ["u"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -1077,6 +1078,23 @@ router.post('/get', function (req, res) {
                 }
 
                 var result = g_proc.dataGet( client, req.body.path, req.body.encrypt, res_ids );
+
+                // Save remote path to recent ep list
+                if ( client.eps && client.eps.length ){
+                    var idx = client.eps.indexOf( req.body.path );
+                    if ( idx == -1 ){
+                        if ( client.eps.unshift( req.body.path ) > 20 ){
+                            client.eps.length = 20;
+                        }
+                    }else{
+                        client.eps.splice( idx, 1 );
+                        client.eps.unshift( req.body.path );
+                    }
+                }else{
+                    client.eps = [req.body.path];
+                }
+
+                g_db._update( client._id, {eps:client.eps}, { keepNull: false });
 
                 res.send(result);
             }
@@ -1100,7 +1118,8 @@ router.post('/put', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","d","c","item"],
+                read: ["uuid","accn","d","c","item"],
+                write: ["u"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -1115,6 +1134,29 @@ router.post('/put', function (req, res) {
                 }
 
                 var result = g_proc.dataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids );
+
+                // Save remote path to recent ep list
+                var path, idx = req.body.path.lastIndexOf("/");
+                if ( idx > 0 )
+                    path = req.body.path.substr(0,idx);
+                else
+                    path = req.body.path;
+
+                if ( client.eps && client.eps.length ){
+                    idx = client.eps.indexOf( path );
+                    if ( idx == -1 ){
+                        if ( client.eps.unshift( path ) > 20 ){
+                            client.eps.length = 20;
+                        }
+                    }else{
+                        client.eps.splice( idx, 1 );
+                        client.eps.unshift( path );
+                    }
+                }else{
+                    client.eps = [path];
+                }
+
+                g_db._update( client._id, {eps:client.eps}, { keepNull: false });
 
                 res.send(result);
             }

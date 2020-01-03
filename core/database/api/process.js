@@ -276,6 +276,8 @@ module.exports = ( function() {
     obj._computeDataPaths = function( a_owner_id, a_mode, a_data, a_src_repos, a_rem_path ){
         var data, loc, file, result = { ids: [], tot_size: 0, tot_count: 0 };
 
+        var repo_map = {};
+
         for ( var i in a_data ){
             data = a_data[i];
 
@@ -319,12 +321,17 @@ module.exports = ( function() {
             result.tot_count++;
             result.ids.push( data.id );
 
-            if ( loc.repo._key in a_src_repos ){
-                a_src_repos[loc.repo._key].files.push(file);
+            if ( loc.repo._key in repo_map ){
+                repo_map[loc.repo._key].files.push(file);
             }else{
-                a_src_repos[loc.repo._key] = {repo_id:loc.repo._key,repo_ep:loc.repo.endpoint,files:[file]};
+                repo_map[loc.repo._key] = {repo_id:loc.repo._key,repo_ep:loc.repo.endpoint,files:[file]};
             }
         }
+
+        for ( i in repo_map ){
+            a_src_repos.push(repo_map[i]);
+        }
+
         return result;
     };
 
@@ -394,7 +401,7 @@ module.exports = ( function() {
         //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_GET, perm: g_lib.PERM_RD_DATA, result: result }, a_res_ids );
 
         if ( result.globus_data.length > 0 ){
-            var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
+            var state = { encrypt: a_encrypt, repos: [] };
             var idx = a_path.indexOf("/");
 
             if ( idx == -1 )
@@ -436,7 +443,7 @@ module.exports = ( function() {
         //obj._dataOpPreProc({ client: a_client, mode: g_lib.TT_DATA_PUT, perm: g_lib.PERM_WR_DATA, result: result }, a_res_ids );
 
         if ( result.globus_data.length > 0 ){
-            var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
+            var state = { encrypt: a_encrypt, repos: [] };
 
             if ( a_ext )
                 state.ext = a_ext;
@@ -459,12 +466,12 @@ module.exports = ( function() {
                     task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
                 }
 
-                task.id = task._id;
-                delete task._id;
-                delete task._key;
-                delete task._rev;
+                task.new.id = task.new._id;
+                delete task.new._id;
+                delete task.new._key;
+                delete task.new._rev;
 
-                result.task = task;
+                result.task = task.new;
             }
         }
 
@@ -512,7 +519,7 @@ module.exports = ( function() {
         var result = obj.preprocessItems({ _id: owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_DATA_CHG_ALLOC );
 
         if ( result.globus_data.length > 0 ){
-            var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
+            var state = { encrypt: a_encrypt, repos: [] };
             var dst_repo = g_db.repo.document( a_dst_repo_id );
 
             state.dst_ep = dst_repo.endpoint;
@@ -593,7 +600,7 @@ module.exports = ( function() {
         var result = obj.preprocessItems( a_client, dest_coll.owner, a_res_ids, g_lib.TT_DATA_CHG_OWNER );
 
         if ( result.globus_data.length > 0 ){
-            var state = { encrypt: a_encrypt, encrypted: false, repo_idx: 0, file_idx: 0, repos: {} };
+            var state = { encrypt: a_encrypt, repos: [] };
             var dst_repo = g_db.repo.document( alloc._to );
 
             state.dst_repo_id = dst_repo.endpoint;
@@ -666,7 +673,7 @@ module.exports = ( function() {
 
         // Mark and schedule records with data for delete
         if ( result.globus_data.length ){
-            var state = { repo_idx: 0, file_idx: 0, repos: {} };
+            var state = { repos: [] };
             var data = obj._computeDataPaths( a_client._id, g_lib.TT_DATA_DEL, result.globus_data, state.repos );
 
             if ( data.ids.length ){
