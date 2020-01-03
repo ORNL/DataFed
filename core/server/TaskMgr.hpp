@@ -45,6 +45,8 @@ private:
         Worker *                    next;
         DatabaseClient              db;
         GlobusAPI                   glob;
+        std::string                 glob_task_id;
+        std::string                 access_token;
     };
 
     struct Task
@@ -79,7 +81,10 @@ private:
 
     Task *      getNextTask();
     void        finalizeTask( DatabaseClient & a_db_client, Task * a_task, bool a_succeeded, const std::string & a_msg );
-    std::string getUserAccessToken( Worker * a_worker, const std::string & a_uid );
+    void        getUserAccessToken( Worker * a_worker, const std::string & a_uid );
+    bool        checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info );
+    void        monitorTransfer( Worker *worker );
+    void        refreshDataSize( Worker * a_worker, const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext );
 
     Config &                    m_config;
     std::deque<Task*>           m_tasks_ready;

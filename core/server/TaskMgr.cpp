@@ -1,7 +1,9 @@
+#include <unistd.h>
 #include <curl/curl.h>
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
 #include "TaskMgr.hpp"
+#include "MsgComm.hpp"
 #include "Config.hpp"
 #include "SDMS.pb.h"
 #include <libjson.hpp>
@@ -124,20 +126,21 @@ TaskMgr::finalizeTask( DatabaseClient & a_db, Task * a_task, bool a_succeeded, c
 {
     DL_DEBUG("TaskMgr finalizeTask " << a_task->task_id );
 
-    vector<libjson::Value> new_tasks;
+    libjson::Value new_tasks;
 
     try
     {
         a_db.taskFinalize( a_task->task_id, a_succeeded, a_msg, new_tasks );
 
-        DL_DEBUG("found " << new_tasks.size() << " new tasks." );
+        DL_DEBUG("found " << new_tasks.size() << " new ready tasks." );
 
         lock_guard<mutex> lock(m_worker_mutex);
 
         m_tasks_running.erase( a_task->task_id );
         delete a_task;
 
-        for ( vector<libjson::Value>::iterator t = new_tasks.begin(); t != new_tasks.end(); t++ )
+        libjson::Value::Array & tasks = new_tasks.getArray();
+        for ( libjson::Value::ArrayIter t = tasks.begin(); t != tasks.end(); t++ )
         {
             m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
         }
@@ -262,87 +265,118 @@ TaskMgr::handleDataGet( Worker *worker, Task * task )
 {
     DL_INFO( "Starting task '" << task->task_id << "', type: DataGet" );
 
-    string                      dst_ep, dst_path, acc_tok;
+    string                      src_repo_ep;
     bool                        encrypted = false;
     GlobusAPI::EndpointInfo     ep_info;
     string                      uid = task->data["user"].asString();
-    TaskStatus                  status = task->data["status"].asNumber();
-    double                      prog = 10;
+    TaskStatus                  status = (TaskStatus) task->data["status"].asNumber();
+    GlobusAPI::XfrStatus        xfr_status;
+    double                      prog = 0;
     libjson::Value &            state = task->data["state"];
-    uint32_t                    encrypt = state["encrypt"].asNumber();
-    libjson::Value::Object &    repos = state["repos"].getObject();
+    Encryption                  encrypt = (Encryption)state["encrypt"].asNumber();
+    libjson::Value::Array  &    repos = state["repos"].getArray();
     libjson::Value              upd_state;
-    size_t                      repo_idx = state["repo_idx"].asNumber();
+    size_t                      repo_idx = 0;
+    string                      dst_ep = state["dst_ep"].asString();
+    string                      dst_path = state["dst_path"].asString();
 
-    DL_INFO("state: " << state.toString( ));
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString( ));
 
     worker->db.setClient( uid );
+    getUserAccessToken( worker, uid );
+
+    // Check destination endpoint
+    worker->glob.getEndpointInfo( dst_ep, worker->access_token, ep_info );
+    if ( !ep_info.activated )
+        EXCEPT_PARAM( 1, "Remote endpoint " << dst_ep << " requires activation." );
+
+    // TODO Notify if dst ep activation expiring soon
 
     upd_state.initObject();
 
     if ( status == TS_READY )
     {
+        // Initialize state
+
         status = TS_RUNNING;
-        worker->db.taskUpdate( task->task_id, &status, 0, 0 );
-    }
+        upd_state["repo_idx"] = 0;
+        xfr_status = GlobusAPI::XS_INIT;
+        upd_state["xfr_status"] = GlobusAPI::XS_INIT;
+        // TODO Limit number of records transferred per globus request
 
-    acc_tok = getUserAccessToken( worker, uid );
-
-    // Check destination endpoint
-
-    dst_ep = state.at( "dst_ep" ).asString();
-    dst_path = state.at( "dst_path" ).asString();
-
-    worker->glob.getEndpointInfo( dst_ep, acc_tok, ep_info );
-
-    if ( !ep_info.activated )
-        EXCEPT(1,"Remote endpoint requires activation.");
-
-    // TODO Notify if activation expiring soon
-
-    // Determine encryption state
-    if ( repo_idx == 0 )
-    {
-        switch ( encrypt )
-        {
-            case ENCRYPT_NONE:
-                if ( ep_info.force_encryption )
-                    EXCEPT(1,"Remote endpoint requires encryption.");
-                encrypted = false;
-                break;
-            case ENCRYPT_AVAIL:
-                if ( ep_info.supports_encryption )
-                    encrypted = true;
-                else
-                    encrypted = false;
-                break;
-            case ENCRYPT_FORCE:
-                if ( !ep_info.supports_encryption )
-                    EXCEPT(1,"Remote endpoint does not support encryption.");
-                encrypted = true;
-                break;
-        }
+        // Calculate encryption state
+        encrypted = checkEncryption( encrypt, ep_info );
 
         upd_state["encrypted"] = encrypted;
+        string msg = "Running";
+        worker->db.taskUpdate( task->task_id, &status, &msg, 0, 0 );
     }
-
-    // Setup a transfer for current repo index
-    if ( repo_idx >= repos.size() )
-        EXCEPT(1,"Task repo_idx (" << repo_idx << ") out of range (max: " << repos.size() << ")");
-
-    libjson::Value::ObjectIter r = repos.begin() + repo_idx;
-
-    for ( ; r != repos.end(); r++ )
+    else if ( status == TS_RUNNING )
     {
-        libjson::Value::Object & repo = r->second.getObject();
+        // Load state
 
-        DL_INFO("repo: " << r->first);
-
-        //worker->glob.transfer( (*ixfr)->xfr, acc_token );
-
-        worker->db.taskUpdate( task->task_id, 0, &prog, &upd_state );
+        repo_idx = state["repo_idx"].asNumber();
+        encrypted = state["encrypted"].asBool();
+        xfr_status = (GlobusAPI::XfrStatus) state["xfr_status"].asNumber();
+        if ( xfr_status > GlobusAPI::XS_INIT )
+            worker->glob_task_id = state["glob_task_id"].asString();
+    }
+    else
+    {
+        EXCEPT_PARAM( 1, "Task '" << task->task_id << "' has invalid status: " << status );
     }
 
+    if ( repo_idx >= repos.size() )
+        EXCEPT_PARAM( 1, "Task repo_idx (" << repo_idx << ") out of range (max: " << repos.size() << ")" );
+
+    libjson::Value::ArrayIter   f, r;
+    vector<pair<string,string>> files_v;
+    string                      err_msg;
+
+    for ( r = repos.begin() + repo_idx; r != repos.end(); r++ )
+    {
+        libjson::Value::Object & repo = r->getObject();
+
+        // Initialize Globus transfer
+        if ( xfr_status == GlobusAPI::XS_INIT )
+        {
+            libjson::Value::Array & files = repo["files"].getArray();
+
+            upd_state.clear();
+            files_v.clear();
+
+            for ( f = files.begin(); f != files.end(); f++ )
+            {
+                files_v.push_back(make_pair( (*f)["from"].asString( ), dst_path + (*f)["to"].asString( )));
+            }
+
+            src_repo_ep = repo["repo_ep"].asString();
+
+            DL_INFO( "src_repo_ep: " << src_repo_ep );
+
+            worker->glob_task_id = worker->glob.transfer( src_repo_ep, dst_ep, files_v, encrypted, worker->access_token );
+
+            xfr_status = GlobusAPI::XS_ACTIVE;
+            upd_state["glob_task_id"] = worker->glob_task_id;
+            upd_state["xfr_status"] = xfr_status;
+            prog = 100.0*(repo_idx + .5)/repos.size();
+
+            worker->db.taskUpdate( task->task_id, 0, 0, &prog, &upd_state );
+        }
+
+        // Monitor Globus transfer
+        monitorTransfer( worker );
+
+        // Xfr SUCCEEDED
+        upd_state.clear();
+        upd_state["xfr_status"] = xfr_status;
+        prog = 100.0*(repo_idx + 1)/repos.size();
+        worker->db.taskUpdate( task->task_id, 0, 0, &prog, &upd_state );
+
+        repo_idx++;
+        xfr_status = GlobusAPI::XS_INIT;
+    }
 }
 
 
@@ -350,12 +384,179 @@ void
 TaskMgr::handleDataPut( Worker *worker, Task * task )
 {
     DL_INFO( "Starting task " << task->task_id << ", type: DataPut" );
+
+    string                      dst_ep;
+    bool                        encrypted = false;
+    GlobusAPI::EndpointInfo     ep_info;
+    string                      uid = task->data["user"].asString();
+    TaskStatus                  status = (TaskStatus) task->data["status"].asNumber();
+    GlobusAPI::XfrStatus        xfr_status;
+    double                      prog = 0;
+    libjson::Value &            state = task->data["state"];
+    Encryption                  encrypt = (Encryption)state["encrypt"].asNumber();
+    libjson::Value::Array  &    repos = state["repos"].getArray();
+    libjson::Value              upd_state;
+    string                      src_ep = state["src_ep"].asString();
+    string                      src_path = state["src_path"].asString();
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString( ));
+
+    worker->db.setClient( uid );
+    getUserAccessToken( worker, uid );
+
+    // Check destination endpoint
+    worker->glob.getEndpointInfo( src_ep, worker->access_token, ep_info );
+    if ( !ep_info.activated )
+        EXCEPT_PARAM( 1, "Remote endpoint " << dst_ep << " requires activation." );
+
+    // TODO Notify if dst ep activation expiring soon
+
+    upd_state.initObject();
+
+    if ( status == TS_READY )
+    {
+        status = TS_RUNNING;
+        xfr_status = GlobusAPI::XS_INIT;
+        upd_state["xfr_status"] = GlobusAPI::XS_INIT;
+
+        // Calculate encryption state
+        encrypted = checkEncryption( encrypt, ep_info );
+
+        upd_state["encrypted"] = encrypted;
+        string msg = "Running";
+        worker->db.taskUpdate( task->task_id, &status, &msg, 0, 0 );
+    }
+    else if ( status == TS_RUNNING )
+    {
+        encrypted = state["encrypted"].asBool();
+        xfr_status = (GlobusAPI::XfrStatus) state["xfr_status"].asNumber();
+        if ( xfr_status > GlobusAPI::XS_INIT )
+            worker->glob_task_id = state["glob_task_id"].asString();
+    }
+    else
+    {
+        EXCEPT_PARAM( 1, "Task '" << task->task_id << "' has invalid status: " << status );
+    }
+
+
+    if ( repos.size() != 1 )
+        EXCEPT_PARAM( 1, "Task repo list size != 1, size: " << repos.size( ));
+
+    libjson::Value::ArrayIter   f;
+    vector<pair<string,string>> files_v;
+    string                      err_msg;
+
+    libjson::Value::Object & repo = repos[0].getObject();
+    libjson::Value::Array & files = repo["files"].getArray();
+    libjson::Value::Object & file = files[0].getObject();
+
+    if ( files.size() != 1 )
+        EXCEPT_PARAM( 1, "Task file list size != 1, size: " << files.size( ));
+
+    // Initialize Globus transfer
+    if ( xfr_status == GlobusAPI::XS_INIT )
+    {
+        upd_state.clear();
+
+        files_v.push_back(make_pair( file.at( "from" ).asString( ), file.at( "to" ).asString( )));
+
+        dst_ep = repo["repo_ep"].asString();
+
+        DL_INFO( "dst_ep: " << dst_ep );
+
+        worker->glob_task_id = worker->glob.transfer( src_ep, dst_ep, files_v, encrypted, worker->access_token );
+
+        xfr_status = GlobusAPI::XS_ACTIVE;
+        upd_state["glob_task_id"] = worker->glob_task_id;
+        upd_state["xfr_status"] = xfr_status;
+        prog = 10.0;
+
+        worker->db.taskUpdate( task->task_id, 0, 0, &prog, &upd_state );
+    }
+
+    if ( xfr_status < GlobusAPI::XS_SUCCEEDED )
+    {
+        // Monitor Globus transfer
+        monitorTransfer( worker );
+
+        // SUCCEEDED
+        upd_state.clear();
+        upd_state["xfr_status"] = GlobusAPI::XS_SUCCEEDED;
+        prog = 90.0;
+        worker->db.taskUpdate( task->task_id, 0, 0, &prog, &upd_state );
+    }
+
+    // Request size from dst_repo
+    refreshDataSize( worker, string("repo/") + repo["repo_id"].asString(), file.at( "id" ).asString(), file.at( "to" ).asString( ), src_ep + file.at( "from" ).asString( ), state["ext"] );
+
+/*
+    time_t mod_time = time(0);
+    size_t file_size = 1;
+    string dst_repo_id = string("repo/") + repo["repo_id"].asString();
+    string data_id = file.at( "id" ).asString();
+
+    map<string,RepoData*>::iterator rd = m_config.repos.find( dst_repo_id );
+
+    if ( rd == m_config.repos.end( ))
+        EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << dst_repo_id );
+
+    MsgComm comm( rd->second->address(), MsgComm::DEALER, false, &m_config.sec_ctx );
+
+    Auth::RepoDataGetSizeRequest    sz_req;
+    Auth::RepoDataSizeReply *       sz_rep;
+    RecordDataLocation *            loc;
+    MsgBuf::Message *               raw_msg;
+    MsgBuf::Frame                   frame;
+
+    loc = sz_req.add_loc();
+    loc->set_id( data_id );
+    loc->set_path( file.at( "to" ).asString( ));
+
+    comm.send( sz_req );
+    if ( !comm.recv( raw_msg, frame, 600000 ))
+    {
+        DL_ERROR( "Timeout waiting for size response from repo " << dst_repo_id );
+    }
+    else
+    {
+        if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
+        {
+            if ( sz_rep->size_size() == 1 )
+                file_size = sz_rep->size(0).size();
+        }
+
+        delete raw_msg;
+    }
+
+    // Update DB record with new file stats
+    Auth::RecordUpdateRequest       upd_req;
+    Auth::RecordDataReply           upd_reply;
+    vector<RepoRecordDataLocations> locs; // Not used, be required by DB api
+
+    upd_req.set_id( data_id );
+    upd_req.set_size( file_size );
+    upd_req.set_dt( mod_time );
+    upd_req.set_source( src_ep + file.at( "from" ).asString( ));
+    if ( state.has( "ext" ))
+    {
+        upd_req.set_ext( state["ext"].asString( ));
+        upd_req.set_ext_auto( false );
+    }
+
+    worker->db.recordUpdate( upd_req, upd_reply, locs );
+*/
+
+    prog = 100.0;
+    worker->db.taskUpdate( task->task_id, 0, 0, &prog, 0 );
 }
 
 
 void
 TaskMgr::handleDataChangeAlloc( Worker *worker, Task * task )
 {
+    (void) worker;
+    (void) task;
     DL_INFO( "Starting task " << task->task_id << ", type: DataChangeAlloc" );
 }
 
@@ -363,6 +564,8 @@ TaskMgr::handleDataChangeAlloc( Worker *worker, Task * task )
 void
 TaskMgr::handleDataChangeOwner( Worker *worker, Task * task )
 {
+    (void) worker;
+    (void) task;
     DL_INFO( "Starting task " << task->task_id << ", type: DataChangeOwner" );
 }
 
@@ -370,29 +573,141 @@ TaskMgr::handleDataChangeOwner( Worker *worker, Task * task )
 void
 TaskMgr::handleDataDelete( Worker *worker, Task * task )
 {
+    (void) worker;
+    (void) task;
     DL_INFO( "Starting task " << task->task_id << ", type: DataDelete" );
 }
 
 
-std::string
+void
 TaskMgr::getUserAccessToken( Worker * a_worker, const std::string & a_uid )
 {
-    string acc_tok, ref_tok;
-    uint32_t expires_in;
+    string      ref_tok;
+    uint32_t    expires_in;
 
-    a_worker->db.userGetAccessToken( acc_tok, ref_tok, expires_in );
+    a_worker->db.userGetAccessToken( a_worker->access_token, ref_tok, expires_in );
 
     if ( expires_in < 300 )
     {
         DL_INFO( "Refreshing access token for " << a_uid );
 
-        a_worker->glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
-        a_worker->db.userSetAccessToken( acc_tok, expires_in, ref_tok );
+        a_worker->glob.refreshAccessToken( ref_tok, a_worker->access_token, expires_in );
+        a_worker->db.userSetAccessToken( a_worker->access_token, expires_in, ref_tok );
     }
-
-    return acc_tok;
 }
 
+
+bool
+TaskMgr::checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info )
+{
+    switch ( a_encrypt )
+    {
+        case ENCRYPT_NONE:
+            if ( a_ep_info.force_encryption )
+                EXCEPT(1,"Remote endpoint requires encryption.");
+            return false;
+        case ENCRYPT_AVAIL:
+            if ( a_ep_info.supports_encryption )
+                return true;
+            else
+                return false;
+        case ENCRYPT_FORCE:
+            if ( !a_ep_info.supports_encryption )
+                EXCEPT(1,"Remote endpoint does not support encryption.");
+            return true;
+        default:
+            EXCEPT(1,"Invalid transfer encryption value.");
+    }
+
+    // compiler warns, but can't get here
+    return false;
+}
+
+
+void
+TaskMgr::monitorTransfer( Worker *worker )
+{
+    GlobusAPI::XfrStatus    xfr_status;
+    string                  err_msg;
+
+    while( 1 )
+    {
+        sleep( 5 );
+
+        if ( worker->glob.checkTransferStatus( worker->glob_task_id, worker->access_token, xfr_status, err_msg ))
+        {
+            // Transfer task needs to be cancelled
+            worker->glob.cancelTask( worker->glob_task_id, worker->access_token );
+        }
+
+        if ( xfr_status == GlobusAPI::XS_FAILED )
+        {
+            // err_msg will be set by checkTransferStatus on failure
+            EXCEPT( 1, err_msg );
+        }
+        else if ( xfr_status == GlobusAPI::XS_SUCCEEDED )
+        {
+            break;
+        }
+    }
+}
+
+void
+TaskMgr::refreshDataSize( Worker * a_worker, const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext )
+{
+    time_t mod_time = time(0);
+    size_t file_size = 1;
+
+    map<string,RepoData*>::iterator rd = m_config.repos.find( a_repo_id );
+
+    if ( rd == m_config.repos.end( ))
+        EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id );
+
+    MsgComm comm( rd->second->address(), MsgComm::DEALER, false, &m_config.sec_ctx );
+
+    Auth::RepoDataGetSizeRequest    sz_req;
+    Auth::RepoDataSizeReply *       sz_rep;
+    RecordDataLocation *            loc;
+    MsgBuf::Message *               raw_msg;
+    MsgBuf::Frame                   frame;
+
+    loc = sz_req.add_loc();
+    loc->set_id( a_data_id );
+    loc->set_path( a_data_path );
+
+    comm.send( sz_req );
+    if ( !comm.recv( raw_msg, frame, 600000 ))
+    {
+        DL_ERROR( "Timeout waiting for size response from repo " << a_repo_id );
+    }
+    else
+    {
+        if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
+        {
+            if ( sz_rep->size_size() == 1 )
+                file_size = sz_rep->size(0).size();
+        }
+
+        delete raw_msg;
+    }
+
+    // Update DB record with new file stats
+    Auth::RecordUpdateRequest       upd_req;
+    Auth::RecordDataReply           upd_reply;
+    vector<RepoRecordDataLocations> locs; // Not used, be required by DB api
+
+    upd_req.set_id( a_data_id );
+    upd_req.set_size( file_size );
+    upd_req.set_dt( mod_time );
+    upd_req.set_source( a_src_path );
+    if ( a_ext.isString() )
+    {
+        upd_req.set_ext( a_ext.asString( ));
+        upd_req.set_ext_auto( false );
+    }
+
+    a_worker->db.recordUpdate( upd_req, upd_reply, locs );
+}
 
 /*
 void

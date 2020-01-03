@@ -37,9 +37,9 @@ Server::Server() :
     curl_global_init( CURL_GLOBAL_DEFAULT );
 
     loadKeys (m_config.cred_dir );
-    m_sec_ctx.is_server = true;
-    m_sec_ctx.public_key = m_pub_key;
-    m_sec_ctx.private_key = m_priv_key;
+    m_config.sec_ctx.is_server = true;
+    m_config.sec_ctx.public_key = m_pub_key;
+    m_config.sec_ctx.private_key = m_priv_key;
 
     loadRepositoryConfig();
 
@@ -114,7 +114,7 @@ Server::loadRepositoryConfig()
         DL_DEBUG("UUID: " << (*r)->endpoint() );
 
         // Cache repo data for data handling
-        m_repos[(*r)->id()] = *r;
+        m_config.repos[(*r)->id()] = *r;
 
         // Cache pub key for ZAP handler
         m_auth_clients[(*r)->pub_key()] = (*r)->id();
@@ -330,7 +330,7 @@ Server::ioSecure()
 {
     try
     {
-        MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_sec_ctx );
+        MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_config.sec_ctx );
         MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
         // Must use custom proxy to inject ZAP User-Id into message frame
@@ -407,9 +407,9 @@ Server::backgroundMaintenance()
     {
         // TODO Should not create connections to all repos, create on-demand, then close after a period of inactivity
         DL_INFO( "Confirming repository server connections" );
-        for ( map<std::string,RepoData*>::iterator r = m_repos.begin(); r != m_repos.end(); r++ )
+        for ( map<std::string,RepoData*>::iterator r = m_config.repos.begin(); r != m_config.repos.end(); r++ )
         {
-            repo_map[r->first] = new MsgComm( r->second->address(), MsgComm::DEALER, false, &m_sec_ctx );
+            repo_map[r->first] = new MsgComm( r->second->address(), MsgComm::DEALER, false, &m_config.sec_ctx );
         }
 
         DL_INFO( "Starting repository control thread" );
@@ -491,7 +491,7 @@ Server::backgroundMaintenance()
                         repo = repo_map.find( path_iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            path = m_repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
+                            path = m_config.repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
                             DL_DEBUG( "Sending path-create to repo " << repo->first << " for path: " << path );
                             path_create_req.set_path( path );
                             repo->second->send( path_create_req );
@@ -518,7 +518,7 @@ Server::backgroundMaintenance()
                         repo = repo_map.find( path_iter->first );
                         if ( repo != repo_map.end() )
                         {
-                            path = m_repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
+                            path = m_config.repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
                             DL_DEBUG( "Sending path-delete to repo " << repo->first << " for path: " << path );
                             path_delete_req.set_path( path );
                             repo->second->send( path_delete_req );
@@ -739,21 +739,12 @@ Server::zapHandler()
     DL_INFO( "ZAP handler thread exiting" );
 }
 
-const std::string *
-Server::getRepoAddress( const std::string & a_repo_id )
-{
-    map<string,RepoData*>::iterator r = m_repos.find( a_repo_id );
-    if ( r != m_repos.end() )
-        return &r->second->address(); // This is safe with current protobuf implementation
-    else
-        return 0;
-}
 
 void
 Server::repoPathCreate( const std::string & a_repo_id, const std::string & a_id )
 {
-    map<string,RepoData*>::iterator r = m_repos.find( a_repo_id );
-    if ( r != m_repos.end() )
+    map<string,RepoData*>::iterator r = m_config.repos.find( a_repo_id );
+    if ( r != m_config.repos.end() )
     {
         lock_guard<mutex> lock( m_data_mutex );
         m_path_create.push_back( make_pair( a_repo_id, a_id ));
@@ -763,8 +754,8 @@ Server::repoPathCreate( const std::string & a_repo_id, const std::string & a_id 
 void
 Server::repoPathDelete( const std::string & a_repo_id, const std::string & a_id )
 {
-    map<string,RepoData*>::iterator r = m_repos.find( a_repo_id );
-    if ( r != m_repos.end() )
+    map<string,RepoData*>::iterator r = m_config.repos.find( a_repo_id );
+    if ( r != m_config.repos.end() )
     {
         lock_guard<mutex> lock( m_data_mutex );
         m_path_delete.push_back( make_pair( a_repo_id, a_id ));

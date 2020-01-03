@@ -346,6 +346,15 @@ public:
             throw std::logic_error("Invalid conversion of Value to string");
     }
 
+    const std::string &
+    asString() const
+    {
+        if ( m_type == VT_STRING )
+            return *m_value.s;
+        else
+            throw std::logic_error("Invalid conversion of Value to string");
+    }
+
     // ----- Object & Array Methods -----
 
     size_t
@@ -359,6 +368,16 @@ public:
             throw std::runtime_error("Value::size() requires object or array");
     }
 
+    void
+    clear()
+    {
+        if ( m_type == VT_OBJECT )
+            m_value.o->clear();
+        else if ( m_type == VT_ARRAY )
+            m_value.a->clear();
+        else
+            m_value.o = 0;
+    }
 
     // ----- Object-only Methods -----
 

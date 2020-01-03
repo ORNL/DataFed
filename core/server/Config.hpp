@@ -2,10 +2,14 @@
 #define CONFIG_HPP
 
 #include <string>
+#include <map>
 #include <stdint.h>
+#include "SDMS.pb.h"
+#include "MsgComm.hpp"
 
 namespace SDMS {
 namespace Core {
+
 
 struct Config
 {
@@ -41,6 +45,8 @@ struct Config
     size_t          task_purge_age;
     size_t          task_purge_per;
 
+    MsgComm::SecurityContext            sec_ctx;
+    std::map<std::string,RepoData*>     repos;
 };
 
 }}

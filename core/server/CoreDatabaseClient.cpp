@@ -2684,6 +2684,21 @@ DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const s
 
 
 void
+DatabaseClient::taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
+{
+    string body = "{\"ids\":[\"" + a_id + "\"],\"path\":\"";
+    body += a_path;
+    body += "\",\"encrypt\":";
+    body += to_string(a_encrypt);
+    body += "}";
+
+    dbPost( "dat/put", {}, &body, a_result );
+
+    setTaskData( a_reply, a_result );
+}
+
+
+void
 DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   j;
@@ -2718,7 +2733,7 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_resul
 }
 
 void
-DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, double * a_progress, libjson::Value * a_state )
+DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, const std::string * a_message, double * a_progress, libjson::Value * a_state )
 {
     if ( !a_status && !a_progress && !a_state )
         return;
@@ -2730,6 +2745,13 @@ DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, dou
     {
         body += "\"status\":" + to_string(*a_status);
         delim = ",";
+    }
+
+    if ( a_message )
+    {
+        body += delim + "\"message\":\"" + *a_message + "\"";
+        if ( !delim.size( ))
+            delim = ",";
     }
 
     if ( a_progress )
@@ -2751,12 +2773,15 @@ DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, dou
 }
 
 void
-DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, std::vector<Value> & a_new_tasks )
+DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result )
 {
-    Value result;
-    cerr << "finalizing..." << endl;
-    dbPost( "task/finalize", {{"task_id",a_task_id},{"succeeded",(a_succeeded?"true":"false")},{"message",a_msg}}, 0, result );
-    cerr << "finalize result: " << result.toString() << endl;
+   vector<pair<string,string>> params;
+    params.push_back({ "task_id", a_task_id });
+    params.push_back({ "succeeded", ( a_succeeded?"true":"false" )});
+    if ( a_msg.size( ))
+        params.push_back({ "message", a_msg });
+
+    dbPost( "task/finalize", params, 0, a_result );
 }
 
 

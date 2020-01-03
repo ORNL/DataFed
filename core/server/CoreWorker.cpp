@@ -472,6 +472,7 @@ Worker::procDataGetRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+
 bool
 Worker::procDataPutRequest( const std::string & a_uid )
 {
@@ -479,18 +480,17 @@ Worker::procDataPutRequest( const std::string & a_uid )
 
     DL_INFO( "procDataPutRequest, uid: " << a_uid );
 
-/*
-
     m_db_client.setClient( a_uid );
-    //vector<string> ids = { request->id() };
 
-    m_db_client.xfrInit( { request->id() }, request->path(), request->has_ext()?&request->ext():0, request->encrypt(), XM_PUT, reply );
+    libjson::Value result;
 
-    if ( reply.xfr_size() != 1 )
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid data returned from DB service" );
+    m_db_client.taskInitDataPut( request->id( ), request->path(), request->encrypt(), reply, result );
 
-    m_mgr.handleNewXfr( reply.xfr(0) );
-*/
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter j = obj.find( "task" );
+
+    if ( j != obj.end( ))
+        TaskMgr::getInstance().newTask( j->second );
 
     PROC_MSG_END
 }

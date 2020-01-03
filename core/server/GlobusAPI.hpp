@@ -44,12 +44,12 @@ public:
     GlobusAPI();
     ~GlobusAPI();
 
-    std::string transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, Encryption a_encrypt, const std::string & a_acc_token );
+    std::string transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token );
 
     //std::string getTaskID( const std::string & a_acc_token );
 
-    bool        checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, XfrStatus & a_status, std::string & a_err_msg );
-    void        cancelTask( const std::string & a_acc_tok, const std::string & a_task_id );
+    bool        checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg );
+    void        cancelTask( const std::string & a_task_id, const std::string & a_acc_tok );
     void        getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info );
     void        refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in );
 

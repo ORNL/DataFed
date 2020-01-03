@@ -225,7 +225,7 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
 //GlobusAPI::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
 
 string
-GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, Encryption a_encrypt, const std::string & a_acc_token )
+GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token )
 {
     DL_DEBUG( "GlobusAPI::transfer" );
 
@@ -242,10 +242,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     body.AddMember( "destination_endpoint", rapidjson::StringRef( a_dst_ep.c_str() ), allocator );
     body.AddMember( "verify_checksum", true, allocator );
     body.AddMember( "notify_on_succeeded", false, allocator );
-    if ( a_encrypt == ENCRYPT_FORCE )
-        body.AddMember( "encrypt_data", true, allocator );
-    else if ( a_encrypt == ENCRYPT_NONE )
-        body.AddMember( "encrypt_data", false, allocator );
+    body.AddMember( "encrypt_data", a_encrypt, allocator );
 
     rapidjson::Value xfr_list;
     xfr_list.SetArray();
@@ -351,7 +348,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
 
 
 bool
-GlobusAPI::checkTransferStatus( const std::string & a_acc_tok, const std::string & a_task_id, XfrStatus & a_status, std::string & a_err_msg )
+GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg )
 {
     a_status = XS_INIT;
     a_err_msg.clear();
@@ -412,7 +409,7 @@ GlobusAPI::checkTransferStatus( const std::string & a_acc_tok, const std::string
 }
 
 void
-GlobusAPI::cancelTask( const std::string & a_acc_tok, const std::string & a_task_id )
+GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_tok )
 {
     string raw_result;
 
@@ -496,7 +493,7 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
 {
     string raw_result;
     long code = get( m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
-    DL_ERROR("EP result: " << raw_result );
+    //DL_ERROR("EP result: " << raw_result );
 
 
 

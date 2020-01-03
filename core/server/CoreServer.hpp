@@ -37,7 +37,6 @@ private:
     const std::string * getRepoAddress( const std::string & a_repo_id );
     void                repoPathCreate( const std::string & a_repo_id, const std::string & a_id );
     void                repoPathDelete( const std::string & a_repo_id, const std::string & a_id );
-    const MsgComm::SecurityContext & getSecurityContext() { return m_sec_ctx; }
     void                authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     //void                handleNewXfr( const XfrData & a_xfr );
     //void                dataDelete( const std::vector<RepoRecordDataLocations> & a_locs );
@@ -62,8 +61,7 @@ private:
     std::condition_variable         m_router_cvar;
     std::string                     m_pub_key;
     std::string                     m_priv_key;
-    MsgComm::SecurityContext        m_sec_ctx;
-    std::map<std::string,RepoData*> m_repos;
+    
     //std::string                     m_repo_address;
     std::thread *                   m_zap_thread;
     std::map<std::string,std::string>   m_auth_clients;
