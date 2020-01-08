@@ -564,14 +564,14 @@ module.exports = ( function() {
     obj.updateAllocations = function( a_alloc_sz ){
         //console.log("updateAllocations",a_alloc_sz);
 
-        var alloc;
+        var doc;
         for ( var id in a_alloc_sz ){
             if ( id.startsWith( "alloc" )){
-                alloc = obj.db.alloc.document(id);
-                obj.db._update( id, { tot_size: alloc.tot_size - a_alloc_sz[id] });
+                doc = obj.db.alloc.document(id);
+                obj.db._update( id, { tot_size: doc.tot_size - a_alloc_sz[id] });
             }else{
-                alloc = obj.db.p.document(id);
-                obj.db._update( id, { sub_usage: alloc.sub_usage - a_alloc_sz[id] });
+                doc = obj.db.p.document(id);
+                obj.db._update( id, { sub_usage: doc.sub_usage - a_alloc_sz[id] });
             }
         }
     };

@@ -137,6 +137,9 @@ module.exports = ( function() {
 
             doc = g_db._document( id );
 
+            if ( doc.deleted )
+                throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
+
             // Check permissions
 
             if ( is_coll ){

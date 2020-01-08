@@ -1277,13 +1277,9 @@ router.post('/delete', function (req, res) {
                     res_ids.push( id );
                 }
 
+                // Deletes records w/ no raw data, returns those with for delete task
                 var result = g_proc.dataCollDelete( client, res_ids );
 
-                // TODO delete records
-                //g_lib.deleteData( data, alloc_sz, locations );
-                //g_lib.updateAllocations( alloc_sz );
-
-                throw [1, "TEST exception to prevent delete!" ];
                 res.send(result);
             }
         });
@@ -1298,5 +1294,61 @@ router.post('/delete', function (req, res) {
 }).required(), 'Parameters')
 .summary('Delete data records and raw data')
 .description('Delete data records and associated raw data. IDs may be data IDs or aliases.');
+
+
+function deleteRecord( a_data, a_alloc_size ){
+    var alloc_id, loc = g_db.loc.firstExample({ _from: a_data._id });
+
+    if ( a_data.size ){
+        if ( loc.parent ){
+            if ( a_alloc_size[a_data.owner] )
+                a_alloc_size[a_data.owner] += a_data.size;
+            else
+                a_alloc_size[a_data.owner] = a_data.size;
+            alloc_id = loc.parent;
+        }else{
+            alloc_id = g_db.alloc.firstExample({ _from: a_data.owner, _to: loc._to })._id;
+        }
+
+        if ( a_alloc_size[alloc_id] )
+            a_alloc_size[alloc_id] += a_data.size;
+        else
+            a_alloc_size[alloc_id] = a_data.size;
+    }
+
+    g_graph.d.remove( a_data._id );
+}
+
+
+router.post('/trash/delete', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d"],
+                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"]
+            },
+            action: function() {
+                //const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var data, alloc_sz = {};
+
+                for ( var i in req.body.ids ){
+                    data = g_db.d.document( req.body.ids[i] );
+                    deleteRecord( data, alloc_sz );
+                }
+
+                g_lib.updateAllocations( alloc_sz );
+            }
+        });
+
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+}).required(), 'Parameters')
+.summary('Delete trashed data records')
+.description('Delete trashed data records after raw data has been deleted.');
 
 

@@ -78,7 +78,7 @@ router.post('/update', function (req, res) {
                 if ( req.body.progress )
                     obj.progress = req.body.progress;
 
-                if ( req.body.msg != undefined )
+                if ( req.body.message != undefined )
                     obj.msg = req.body.message;
 
                 var task = g_db._update( req.queryParams.task_id, obj, { keepNull: false, returnNew: true });
