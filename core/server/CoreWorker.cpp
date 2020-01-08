@@ -84,7 +84,7 @@ Worker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &Worker::procRevokeCredentialsRequest );
         SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
-        SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
+        //SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &Worker::procRecordUpdateRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &Worker::procRecordUpdateBatchRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
@@ -496,14 +496,15 @@ Worker::procDataPutRequest( const std::string & a_uid )
 }
 
 
+/*
 bool
 Worker::procDataDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataDeleteRequest, TaskReply )
+    PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
 
     DL_INFO( "procDataDeleteRequest, uid: " << a_uid );
 
-/*
+
     // Get data path and delete raw data first, then update data record
 
     vector<string> ids;
@@ -534,10 +535,10 @@ Worker::procDataDeleteRequest( const std::string & a_uid )
             m_db_client.recordUpdate( upd_req, upd_reply, loc );
         }
     }
-*/
 
     PROC_MSG_END
 }
+*/
 
 
 bool
@@ -586,29 +587,24 @@ Worker::procRecordUpdateBatchRequest( const std::string & a_uid )
 bool
 Worker::procRecordDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, TaskReply )
-
-    // TODO Acquire write lock here
-    // TODO Need better error handling (plus retry)
-
-    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
-    /*
-    vector<string> ids;
-    int i;
-
-    ids.reserve( request->id_size() );
-    for ( i = 0; i < request->id_size(); i++ )
-        ids.push_back( request->id(i) );
-
-    vector<RepoRecordDataLocations> loc;
+    PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
 
     m_db_client.setClient( a_uid );
-    m_db_client.recordDelete( ids, loc );
 
-    // TODO Must be durable (use DB to track delete progress)
+    libjson::Value result;
+    vector<string> ids;
 
-    m_mgr.dataDelete( loc );
-    */
+    ids.reserve( request->id_size() );
+    for ( int i = 0; i < request->id_size(); i++ )
+        ids.push_back( request->id(i) );
+
+    m_db_client.taskInitDataDelete( ids, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+        TaskMgr::getInstance().newTask( t->second );
 
     PROC_MSG_END
 }

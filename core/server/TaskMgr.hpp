@@ -1,9 +1,11 @@
 #ifndef TASKMGR_HPP
 #define TASKMGR_HPP
 
+#include <chrono>
 #include <string>
 #include <vector>
 #include <deque>
+#include <map>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -32,6 +34,9 @@ public:
     //void    deleteData( const std::vector<std::string> & a_ids );
 
 private:
+    typedef std::chrono::system_clock::time_point   timepoint_t;
+    typedef std::chrono::system_clock::duration     duration_t;
+
     struct Worker
     {
         Worker( uint32_t a_id ) :
@@ -52,15 +57,18 @@ private:
     struct Task
     {
         Task( const std::string & a_id, libjson::Value & a_data ) :
-            task_id( a_id ), data( std::move( a_data )), cancel(false)
+            task_id( a_id ), data( std::move( a_data )), cancel(false), retry_count(0)
         {}
 
         ~Task()
         {}
 
-        std::string                 task_id;
-        libjson::Value              data;
-        bool                        cancel;
+        std::string         task_id;
+        libjson::Value      data;
+        bool                cancel;
+        uint32_t            retry_count;
+        timepoint_t         retry_time;
+        timepoint_t         retry_fail_time;
     };
 
 
@@ -69,30 +77,34 @@ private:
     TaskMgr();
     ~TaskMgr();
 
-    void        mainThread();
+    void        maintenanceThread();
     void        workerThread( Worker * worker );
-    void        handleDataGet( Worker *worker, Task * task );
-    void        handleDataPut( Worker *worker, Task * task );
-    void        handleDataChangeAlloc( Worker *worker, Task * task );
-    void        handleDataChangeOwner( Worker *worker, Task * task );
-    void        handleDataDelete( Worker *worker, Task * task );
+    bool        handleDataGet( Worker *worker, Task * task );
+    bool        handleDataPut( Worker *worker, Task * task );
+    bool        handleDataChangeAlloc( Worker *worker, Task * task );
+    bool        handleDataChangeOwner( Worker *worker, Task * task );
+    bool        handleDataDelete( Worker *worker, Task * task );
 
     //void        httpInit( TaskInfo & a_task, bool a_post, const std::string & a_url_base, const std::string & a_url_path, const std::string & a_token, const url_params_t & a_params, const rapidjson::Document * a_body )
 
     Task *      getNextTask();
     void        finalizeTask( DatabaseClient & a_db_client, Task * a_task, bool a_succeeded, const std::string & a_msg );
+    bool        retryTask( Task * a_task );
     void        getUserAccessToken( Worker * a_worker, const std::string & a_uid );
     bool        checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info );
     void        monitorTransfer( Worker *worker );
-    void        refreshDataSize( Worker * a_worker, const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext );
+    bool        refreshDataSize( Worker * a_worker, const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext );
+    bool        repoSendRecv( const std::string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply );
 
-    Config &                    m_config;
-    std::deque<Task*>           m_tasks_ready;
-    std::map<std::string,Task*> m_tasks_running;
-    std::mutex                  m_worker_mutex;
-    std::vector<Worker*>        m_workers;
-    Worker *                    m_worker_next;
-    std::thread *               m_main_thread;
+    Config &                            m_config;
+    std::deque<Task*>                   m_tasks_ready;
+    std::multimap<timepoint_t,Task*>    m_tasks_retry;
+    std::map<std::string,Task*>         m_tasks_running;
+    std::mutex                          m_worker_mutex;
+    std::vector<Worker*>                m_workers;
+    Worker *                            m_worker_next;
+    std::thread *                       m_maint_thread;
+    std::condition_variable             m_maint_cvar;
 };
 
 }}

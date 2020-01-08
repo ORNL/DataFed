@@ -707,6 +707,20 @@ Server::zapHandler()
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
                 zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
+
+                // TODO Delete expired transient client credentials
+
+                /* for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
+                {
+                    if ( itrans_client->second.second < t )
+                    {
+                        DL_DEBUG( "Purging expired transient client " << itrans_client->second.first );
+                        itrans_client = m_trans_auth_clients.erase( itrans_client );
+                    }
+                    else
+                        itrans_client++;
+                }
+                */
             }
             catch( TraceException & e )
             {

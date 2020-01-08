@@ -34,7 +34,13 @@ MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, SockType a_sock_t
 
 MsgComm::~MsgComm()
 {
+    cerr << "~MsgComm - closing socket" << endl;
+    cerr.flush();
+
     zmq_close( m_socket );
+    cerr << "~MsgComm - socket closed" << endl;
+    cerr.flush();
+
 }
 
 void
@@ -132,6 +138,7 @@ MsgComm::send( MsgBuf & a_msg_buf, bool a_proc_uid )
             EXCEPT( 1, "zmq_msg_send (uid) failed." );
     }
 }
+
 
 bool
 MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_timeout )

@@ -294,6 +294,8 @@ enum TaskType
     TT_DATA_CHG_ALLOC   = 2;
     TT_DATA_CHG_OWNER   = 3;
     TT_DATA_DEL         = 4;
+    TT_ALLOC_NEW        = 5;
+    TT_ALLOC_DEL        = 6;
 }
 
 enum TaskStatus

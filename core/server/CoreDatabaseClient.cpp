@@ -2697,11 +2697,41 @@ DatabaseClient::taskInitDataPut( const std::string & a_id, const std::string & a
     setTaskData( a_reply, a_result );
 }
 
+void
+DatabaseClient::taskInitDataDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
+{
+    string body = "{\"ids\":[";
+
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            body += ",";
+
+        body += "\"" + *i + "\"";
+    }
+    body += "]}";
+
+    dbPost( "dat/delete", {}, &body, a_result );
+
+    Value::Object & obj = a_result.getObject();
+    Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+    {
+        Value::Object & obj2 = t->second.getObject();
+        TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
+
+        // If task is blocked, remove task from result to prevent immediate scheduling
+        if ( ts == TS_BLOCKED )
+            obj.erase( t );
+    }
+}
+
 
 void
 DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
-    Value::ObjectIter   j;
+    Value::ObjectIter   t;
     Value::ArrayIter    k;
 
     cerr << "TASK RES: " << a_result.toString() << endl;
@@ -2710,20 +2740,26 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_resul
     {
         Value::Object & obj = a_result.getObject();
 
-        j = obj.find( "task" );
-        if ( j != obj.end( ))
+        t = obj.find( "task" );
+        if ( t != obj.end( ))
         {
-            Value::Object & obj2 = j->second.getObject();
+            Value::Object & obj2 = t->second.getObject();
+
+            TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
 
             TaskData * task = a_reply.mutable_task();
             task->set_id( obj2.at( "id" ).asString( ));
             task->set_type((TaskType)obj2.at( "type" ).asNumber( ));
-            task->set_status((TaskStatus) obj2.at( "status" ).asNumber( ));
+            task->set_status( ts );
             task->set_user( obj2.at( "user" ).asString( ));
             task->set_progress( obj2.at( "progress" ).asNumber( ));
             task->set_msg( obj2.at( "msg" ).asString( ));
             task->set_ct( obj2.at( "ct" ).asNumber( ));
             task->set_ut( obj2.at( "ut" ).asNumber( ));
+
+            // If task is blocked, remove task from result to prevent immediate scheduling
+            if ( ts == TS_BLOCKED )
+                obj.erase( t );
         }
     }
     catch ( exception & e )

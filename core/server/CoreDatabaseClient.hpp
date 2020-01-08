@@ -142,6 +142,7 @@ public:
 
     void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
     void taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
+    void taskInitDataDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
     void taskUpdate( const std::string & a_id, TaskStatus * a_status = 0, const std::string * a_message = 0, double * a_progress = 0, libjson::Value * a_state = 0 );
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result );
 
