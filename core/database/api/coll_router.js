@@ -225,6 +225,7 @@ router.post('/update', function (req, res) {
 .summary('Update an existing collection')
 .description('Update an existing collection from JSON body');
 
+/*
 router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -260,6 +261,8 @@ router.get('/delete', function (req, res) {
 .queryParam('id', joi.string().required(), "Collection ID or alias")
 .summary('Deletes an existing data collection')
 .description('Deletes an existing data collection and contained data');
+*/
+
 
 // This is an OWNER or ADMIN only function, other users must navigate the collection hierarchy
 router.get('/priv/list', function (req, res) {

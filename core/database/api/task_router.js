@@ -238,3 +238,34 @@ router.get('/list', function (req, res) {
 .queryParam('status', joi.array().items(joi.number().integer()).optional(), "List of task states to retrieve.")
 .summary('List task records')
 .description('List task records.');
+
+
+router.get('/reload', function (req, res) {
+    try{
+        var result = [];
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                exclusive: ["task","lock","block"]
+            },
+            action: function() {
+                result = g_db._query( "for i in task filter i.status > 0 and i.status < 3 sort i.status desc return i" ).toArray();
+                var task;
+                for ( var i in result ){
+                    task = result[i];
+                    task.id = task._id;
+                    delete task._id;
+                    delete task._rev;
+                    delete task._key;
+                }
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.summary('Reload ready/running task records')
+.description('Reload ready/running task records.');

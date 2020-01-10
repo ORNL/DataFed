@@ -327,7 +327,7 @@ module.exports = ( function() {
             if ( loc.repo._key in repo_map ){
                 repo_map[loc.repo._key].files.push(file);
             }else{
-                repo_map[loc.repo._key] = {repo_id:loc.repo._key,repo_ep:loc.repo.endpoint,files:[file]};
+                repo_map[loc.repo._key] = {repo_id:loc.repo._id,repo_ep:loc.repo.endpoint,files:[file]};
             }
         }
 
@@ -547,12 +547,12 @@ module.exports = ( function() {
                     task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
                 }
 
-                task.id = task._id;
-                delete task._id;
-                delete task._key;
-                delete task._rev;
+                task.new.id = task.new._id;
+                delete task.new._id;
+                delete task.new._key;
+                delete task.new._rev;
 
-                result.task = task;
+                result.task = task.new;
             }
         }
 
@@ -606,7 +606,7 @@ module.exports = ( function() {
             var state = { encrypt: a_encrypt, repos: [] };
             var dst_repo = g_db.repo.document( alloc._to );
 
-            state.dst_repo_id = dst_repo.endpoint;
+            state.dst_repo_id = dst_repo._id;
             state.dst_ep = dst_repo.endpoint;
 
             if ( dest_coll.owner.charAt(0) == 'u' ){
@@ -634,12 +634,12 @@ module.exports = ( function() {
                     task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
                 }
 
-                task.id = task._id;
-                delete task._id;
-                delete task._key;
-                delete task._rev;
+                task.new.id = task.new._id;
+                delete task.new._id;
+                delete task.new._key;
+                delete task.new._rev;
 
-                result.task = task;
+                result.task = task.new;
             }
         }
 
@@ -692,12 +692,12 @@ module.exports = ( function() {
                     obj._trashDataRecord( result.globus_data[i].id );
                 }
 
-                task.id = task._id;
-                delete task._id;
-                delete task._key;
-                delete task._rev;
+                task.new.id = task.new._id;
+                delete task.new._id;
+                delete task.new._key;
+                delete task.new._rev;
 
-                result.task = task;
+                result.task = task.new;
             }
         }
 

@@ -372,7 +372,6 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
 
             obj.size = record.size;
 
-            data = g_db.d.document( data_id );
             if ( obj.size != data.size ){
                 var loc = g_db.loc.firstExample({ _from: data_id });
                 if ( loc ){
@@ -588,6 +587,97 @@ router.post('/update/batch', function (req, res) {
 ).required(), 'Array of records and field updates')
 .summary('Update a batch of existing data record')
 .description('Update a batch of existing data record from JSON body');
+
+
+router.post('/update/post_put', function (req, res) {
+    try {
+        var result = [];
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","loc"],
+                write: ["d","a","p","owner","alloc"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var data_id = g_lib.resolveDataID( req.body.id, client );
+                var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
+                var data = g_db.d.document( data_id );
+                var alloc_sz = {};
+            
+                var obj = { ut: Math.floor( Date.now()/1000 ), size: req.body.size, dt: req.body.dt };
+
+                g_lib.procInputParam( req.body, "source", true, obj );
+
+                if ( req.body.ext_auto !== undefined ){
+                    obj.ext_auto = req.body.ext_auto;
+                }
+
+                if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
+                    if ( obj.source !== undefined || data.source !== undefined ){
+                        // Changed - update auto extension
+                        var src = obj.source || data.source;
+                        if ( src ){
+                            // Skip possible "." in end-point name
+                            var pos = src.lastIndexOf("/");
+                            pos = src.indexOf(".",pos>0?pos:0);
+                            if ( pos != -1 ){
+                                obj.ext = src.substr( pos );
+                            }else{
+                                obj.ext = null;
+                            }
+                        }
+                    }
+                }else{
+                    g_lib.procInputParam( req.body, "ext", true, obj );
+                    if ( obj.ext && obj.ext.charAt(0) != "." )
+                        obj.ext = "." + obj.ext;
+                }
+
+                if ( obj.size != data.size ){
+                    var loc = g_db.loc.firstExample({ _from: data_id });
+                    if ( !loc )
+                        throw [g_lib.ERR_INTERNAL_FAULT,"Record update after PUT found no data location for '" + data_id + "'"];
+
+                    var alloc, usage;
+                    if ( loc.parent ){
+                        // Only projects have suballocations
+                        alloc = g_db.alloc.document( loc.parent );
+                        // Update project sub allocation
+                        var proj = g_db.p.document( owner_id );
+                        usage = Math.max(0,proj.sub_usage - data.size + obj.size);
+                        g_db._update( proj._id, {sub_usage:usage});
+                    }else{
+                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                    }
+
+                    // Update primary/parent allocation
+                    usage = Math.max(0,alloc.tot_size - data.size + obj.size);
+                    g_db._update( alloc._id, {tot_size:usage});
+                }
+
+                g_db._update( data_id, obj, { keepNull: false });
+
+                g_lib.updateAllocations( alloc_sz );
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    id: joi.string().required(),
+    size: joi.number().required(),
+    source: joi.string().allow('').required(),
+    ext: joi.string().allow('').optional(),
+    ext_auto: joi.boolean().optional(),
+    dt: joi.number().required()
+}).required(), 'Record fields')
+.summary('Update an existing data record after data put')
+.description('Update an existing data record from JSON body');
 
 
 router.get('/view', function (req, res) {
@@ -1292,8 +1382,8 @@ router.post('/delete', function (req, res) {
 .body(joi.object({
     ids: joi.array().items(joi.string()).required(),
 }).required(), 'Parameters')
-.summary('Delete data records and raw data')
-.description('Delete data records and associated raw data. IDs may be data IDs or aliases.');
+.summary('Delete collections, data records and raw data')
+.description('Delete collections, data records and associated raw data. IDs may be data IDs or aliases.');
 
 
 function deleteRecord( a_data, a_alloc_size ){
