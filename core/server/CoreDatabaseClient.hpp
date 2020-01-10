@@ -31,7 +31,6 @@ public:
     void clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply );
     void clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply );
     void clientLinkIdentity( const std::string & a_identity );
-    std::string getDataStorageLocation( const std::string & a_data_id );
     bool uidByPubKey( const std::string & a_pub_key, std::string & a_uid );
     bool userGetKeys( std::string & a_pub_key, std::string & a_priv_key);
     void userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key );
@@ -40,8 +39,6 @@ public:
     void userGetAccessToken(  std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in );
     void getExpiringAccessTokens( uint32_t a_expires_in, std::vector<UserTokenInfo> & a_expiring_tokens );
     void purgeTransferRecords( size_t age );
-
-
     void checkPerms( const Auth::CheckPermsRequest & a_request, Auth::CheckPermsReply & a_reply );
     void getPerms( const Auth::GetPermsRequest & a_request, Auth::GetPermsReply & a_reply );
 
@@ -57,7 +54,6 @@ public:
 
     void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs, bool & a_suballoc );
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply );
     void projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply );
@@ -65,13 +61,11 @@ public:
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs );
-    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs );
+    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result );
+    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result );
+    void recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext = 0 );
+
     void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
-    //void recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc );
-    void recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs );
-    //void recordGetDataLocation( const std::string & a_id, RepoRecordDataLocations & a_loc );
-    void recordGetDataLocation( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply );
     void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply );
@@ -84,7 +78,6 @@ public:
     void collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
-    void collDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs );
     void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
     void collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply );
     void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
@@ -140,11 +133,14 @@ public:
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
 
+
+    void taskLoadReady( libjson::Value & a_result );
     void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
     void taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
-    void taskInitDataDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
+    void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
     void taskUpdate( const std::string & a_id, TaskStatus * a_status = 0, const std::string * a_message = 0, double * a_progress = 0, libjson::Value * a_state = 0 );
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result );
+    // TODO Project Delete
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
@@ -153,16 +149,12 @@ private:
     void setAuthStatus( Anon::AuthStatusReply & a_reply, libjson::Value & a_result );
     void setUserData( Auth::UserDataReply & a_reply, libjson::Value & a_result );
     void setProjectData( Auth::ProjectDataReply & a_reply, libjson::Value & a_result );
-    void setRecordData( Auth::RecordDataReply & a_reply, libjson::Value & a_result, std::vector<RepoRecordDataLocations> * a_locs = 0 );
-    //void setRecordLocationData( Auth::RecordDataLocationReply & a_reply, rapidjson::Document & a_result );
-    void setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, libjson::Value & a_result );
+    void setRecordData( Auth::RecordDataReply & a_reply, libjson::Value & a_result );
     void setCollData( Auth::CollDataReply & a_reply, libjson::Value & a_result );
     void setCollPathData( Auth::CollPathReply & a_reply, libjson::Value & a_result );
     void setQueryData( Auth::QueryDataReply & a_reply, libjson::Value & a_result );
     void setListingData( Auth::ListingReply & a_reply, libjson::Value & a_result );
     void setGroupData( Auth::GroupDataReply & a_reply, libjson::Value & a_result );
-    //void setXfrData( Auth::XfrDataReply & a_reply, rapidjson::Document & a_result );
-    //void setXfrGetData( Auth::XfrGetDataReply & a_reply, rapidjson::Document & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, libjson::Value & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );

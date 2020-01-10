@@ -34,13 +34,7 @@ MsgComm::MsgComm( const std::string & a_host, uint16_t a_port, SockType a_sock_t
 
 MsgComm::~MsgComm()
 {
-    cerr << "~MsgComm - closing socket" << endl;
-    cerr.flush();
-
     zmq_close( m_socket );
-    cerr << "~MsgComm - socket closed" << endl;
-    cerr.flush();
-
 }
 
 void

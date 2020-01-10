@@ -8,18 +8,18 @@
 #include <zmq.h>
 #include "MsgComm.hpp"
 #include "CoreDatabaseClient.hpp"
-#include "CoreIWorkerMgr.hpp"
+#include "ICoreServer.hpp"
 #include "GlobusAPI.hpp"
 
 namespace SDMS {
 namespace Core {
 
 
-class Worker
+class ClientWorker
 {
 public:
-    Worker( IWorkerMgr & a_mgr, size_t a_tid );
-    ~Worker();
+    ClientWorker( ICoreServer & a_core, size_t a_tid );
+    ~ClientWorker();
 
     void stop();
     void wait();
@@ -39,7 +39,6 @@ private:
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataCopyRequest( const std::string & a_uid );
-    //bool procDataDeleteRequest( const std::string & a_uid );
     bool procRecordUpdateRequest( const std::string & a_uid );
     bool procRecordUpdateBatchRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
@@ -54,6 +53,8 @@ private:
     bool procRepoAuthzRequest( const std::string & a_uid );
     bool procUserGetAccessTokenRequest( const std::string & a_uid );
 
+    void recordCollectionDelete( const std::vector<std::string> & a_ids );
+
     inline bool isPhrase( const std::string &str )
     {
         return find_if(str.begin(), str.end(), []( char c ){ return !isalnum(c); }) != str.end();
@@ -67,10 +68,10 @@ private:
     std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );
     std::string parseProjectQuery( const std::string & a_text_query, const std::vector<std::string> & a_scope );
 
-    typedef bool (Worker::*msg_fun_t)( const std::string & a_uid );
+    typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
 
     Config &            m_config;
-    IWorkerMgr &        m_mgr;
+    ICoreServer &       m_core;
     size_t              m_tid;
     std::thread *       m_worker_thread;
     bool                m_run;

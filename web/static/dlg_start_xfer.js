@@ -29,6 +29,10 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     var dlg_title = label[a_mode] + " Data";
     var selection_ok = true;
     var endpoint_ok = false;
+    var matches = $("#matches",frame);
+    var path_in = $("#path",frame);
+    var ep_list = null;
+    var cur_ep = null;
 
     //console.log("records:",a_ids);
 
@@ -102,12 +106,10 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         item = a_ids[0];
         html = item.id + "&nbsp&nbsp" + sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
         $("#title",frame).html( html );
+        if ( a_mode == XFR_PUT && item.source ){
+            path_in.val( item.source );
+        }
     }
-
-    var matches = $("#matches",frame);
-    var path_in = $("#path",frame);
-    var ep_list = null;
-    var cur_ep = null;
 
     inputTheme(path_in);
     inputTheme($("#ext",frame));
@@ -341,19 +343,23 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
 
             $( ":radio" ).checkboxradio();
 
-            if ( g_ep_recent.length ){
-                path_in.val( g_ep_recent[0] );
-                path_in.select();
-                path_in.autocomplete({
-                    source: g_ep_recent,
-                    select: function(){
-                        clearTimeout( in_timer );
-                        in_timer = setTimeout( inTimerExpired, 250 );
-                    }
-                });
+            if ( path_in.val().length == 0 ){
+                if ( g_ep_recent.length ){
+                    path_in.val( g_ep_recent[0] );
+                    path_in.select();
+                    path_in.autocomplete({
+                        source: g_ep_recent,
+                        select: function(){
+                            clearTimeout( in_timer );
+                            in_timer = setTimeout( inTimerExpired, 250 );
+                        }
+                    });
+                    inTimerExpired();
+                }
+            }else{
                 inTimerExpired();
             }
-            //matches.selectmenu({width:"90%"});
+
             matches.selectmenu({width: 400});
 
             path_in.on('input', function(){

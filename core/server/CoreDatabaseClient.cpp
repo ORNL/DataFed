@@ -294,24 +294,6 @@ DatabaseClient::clientLinkIdentity( const std::string & a_identity )
     dbGet( "usr/ident/add", {{"ident",a_identity}}, result );
 }
 
-std::string
-DatabaseClient::getDataStorageLocation( const std::string & a_data_id )
-{
-    Value result;
-
-    // TODO This need to be done correctly without assuming storage location
-    dbGet( "dat/view", {{"id",a_data_id}}, result );
-
-    // TODO Not sure if this check is needed
-    if ( result.size() != 1 )
-        EXCEPT_PARAM( ID_BAD_REQUEST, "No such data record: " << a_data_id );
-
-    string id = result[0]["id"].asString();
-
-    return string("/data/") + id.substr(2);
-}
-
-
 bool
 DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
 {
@@ -469,8 +451,6 @@ DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::Use
 void
 DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
-    cout << "UserViewRequest" << endl;
-
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
     if ( a_request.has_details() && a_request.details() )
@@ -773,27 +753,6 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
     setProjectData( a_reply, result );
 }
 
-
-void
-DatabaseClient::projDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs, bool & a_suballoc )
-{
-    Value result;
-
-    dbGet( "prj/delete", {{ "id", a_id }}, result );
-
-    Value::Object & obj = result.getObject();
-    Value::ObjectIter i;
-
-    if (( i = obj.find( "suballoc" )) != obj.end( ))
-        a_suballoc = i->second.asBool();
-    else
-        a_suballoc = false;
-
-    if (( i = obj.find( "locs" )) != obj.end( ))
-        setRepoRecordDataLocations( a_locs, i->second );
-}
-
-
 void
 DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
@@ -1021,10 +980,8 @@ DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_requ
 }
 
 void
-DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs )
+DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
-    Value result;
-
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
         body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
@@ -1087,39 +1044,31 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 
     dbPost( "dat/update", {}, &body, result );
 
-    setRecordData( a_reply, result, &a_locs );
+    setRecordData( a_reply, result );
 }
 
 void
-DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, std::vector<RepoRecordDataLocations> & a_locs )
+DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
-    Value result;
-
+    // "records" field is a JSON document - send directly to DB
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
 
-    setRecordData( a_reply, result, &a_locs );
+    setRecordData( a_reply, result );
 }
 
 void
-//DatabaseClient::recordDelete( const std::string & a_id, RepoRecordDataLocations & a_loc )
-DatabaseClient::recordDelete( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
+DatabaseClient::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext )
 {
-    Value result;
-    string ids = "[";
+    libjson::Value result;
 
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
-    {
-        if ( i != a_ids.begin() )
-            ids += ",";
+    string body = "{\"id\":\"" + a_data_id + "\",\"size\":" + to_string(a_file_size) + ",\"source\":\"" + a_src_path + "\",\"dt\":" + to_string(a_mod_time);
+    if ( a_ext )
+        body += ",\"ext\":\"" + *a_ext + "\",\"ext_auto\":false";
+    body += "}";
 
-        ids += "\"" + *i + "\"";
-    }
-    ids += "]";
-
-    dbGet( "dat/delete", {{"ids",ids}}, result );
-
-    setRepoRecordDataLocations( a_locs, result );
+    dbPost( "dat/update/post_put", {}, &body, result );
 }
+
 
 void
 DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
@@ -1148,67 +1097,6 @@ DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::Lis
 }
 
 void
-//DatabaseClient::recordGetDataLocation( const std::string & a_id, RepoRecordDataLocations & a_loc )
-DatabaseClient::recordGetDataLocation( const std::vector<std::string> & a_ids, std::vector<RepoRecordDataLocations> & a_locs )
-{
-    Value result;
-    string ids = "[";
-
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
-    {
-        if ( i != a_ids.begin() )
-            ids += ",";
-
-        ids += "\"" + *i + "\"";
-    }
-    ids += "]";
-
-    dbGet( "dat/loc", {{"ids",ids}}, result );
-
-    setRepoRecordDataLocations( a_locs, result );
-}
-
-
-void
-DatabaseClient::setRepoRecordDataLocations( std::vector<RepoRecordDataLocations> & a_locs, Value & a_result )
-{
-    RecordDataLocation *    loc;
-    Value::ArrayIter        i;
-
-    try
-    {
-        Value::Object & obj = a_result.getObject();
-
-        a_locs.clear();
-        a_locs.reserve( obj.size( ));
-
-        for ( Value::ObjectIter iter = obj.begin(); iter != obj.end(); ++iter )
-        {
-            RepoRecordDataLocations repo_locs;
-
-            repo_locs.set_repo_id( iter->first );
-
-            Value::Array & arr = iter->second.getArray();
-
-            for ( i = arr.begin(); i != arr.end(); i++ )
-            {
-                Value::Object & obj2 = i->getObject();
-
-                loc = repo_locs.add_loc();
-                loc->set_id( obj2.at( "id" ).asString() );
-                loc->set_path( obj2.at( "path" ).asString() );
-            }
-
-            a_locs.push_back( repo_locs );
-        }
-    }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
-}
-
-void
 DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
@@ -1229,7 +1117,7 @@ DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRe
 }
 
 void
-DatabaseClient::setRecordData( RecordDataReply & a_reply, Value & a_result, std::vector<RepoRecordDataLocations> * a_locs )
+DatabaseClient::setRecordData( RecordDataReply & a_reply, Value & a_result )
 {
     RecordData *        rec;
     DependencyData *    deps;
@@ -1243,13 +1131,6 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, Value & a_result, std:
         for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
             Value::Object & obj = i->getObject();
-
-            if (( j = obj.find( "deletions" )) != obj.end( ))
-            {
-                if ( a_locs )
-                    setRepoRecordDataLocations( *a_locs, j->second );
-                continue;
-            }
 
             rec = a_reply.add_data();
             rec->set_id( obj.at( "id" ).asString( ));
@@ -1445,16 +1326,6 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
     setCollData( a_reply, result );
 }
 
-// TODO collDelete should take list of coll IDs
-void
-DatabaseClient::collDelete( const std::string & a_id, std::vector<RepoRecordDataLocations> & a_locs )
-{
-    Value result;
-
-    dbGet( "col/delete", {{"id",a_id}}, result );
-
-    setRepoRecordDataLocations( a_locs, result );
-}
 
 void
 DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
@@ -2656,6 +2527,14 @@ DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 }
 */
 
+
+void
+DatabaseClient::taskLoadReady( libjson::Value & a_result )
+{
+    dbGet( "task/reload", {}, a_result );
+}
+
+
 void
 DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
@@ -2698,7 +2577,7 @@ DatabaseClient::taskInitDataPut( const std::string & a_id, const std::string & a
 }
 
 void
-DatabaseClient::taskInitDataDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
+DatabaseClient::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
@@ -2712,6 +2591,8 @@ DatabaseClient::taskInitDataDelete( const std::vector<std::string> & a_ids, libj
     body += "]}";
 
     dbPost( "dat/delete", {}, &body, a_result );
+
+    DL_ERROR( "DATA DEL: json: " << a_result.toString());
 
     Value::Object & obj = a_result.getObject();
     Value::ObjectIter t = obj.find( "task" );
@@ -2734,7 +2615,7 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_resul
     Value::ObjectIter   t;
     Value::ArrayIter    k;
 
-    cerr << "TASK RES: " << a_result.toString() << endl;
+    //cerr << "TASK RES: " << a_result.toString() << endl;
 
     try
     {

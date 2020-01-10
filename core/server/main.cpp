@@ -8,6 +8,8 @@
 #include "Util.hpp"
 #include "CoreServer.hpp"
 #include "Config.hpp"
+#include "Version.pb.h"
+
 
 using namespace std;
 using namespace SDMS;
@@ -114,7 +116,7 @@ int main( int a_argc, char ** a_argv )
         }
 
         Core::Server server;
-        server.run( false );
+        server.run();
 
         DL_INFO( "DataFed core server exiting" );
     }

@@ -262,13 +262,13 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
 
     body.AddMember( "DATA", xfr_list, allocator );
 
-    cout << "XFR REQUEST BODY:\n";
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    body.Accept(writer);
+    //cout << "XFR REQUEST BODY:\n";
+    //rapidjson::StringBuffer buffer;
+    //rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    //body.Accept(writer);
 
     // Output {"project":"rapidjson","stars":11}
-    cout << buffer.GetString() << endl;
+    //cout << buffer.GetString() << endl;
 
     string raw_result;
     long code = post( m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
@@ -356,7 +356,7 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
 
     long code = get( m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
 
-    DL_INFO( "XFR STAT: " << raw_result );
+    //DL_INFO( "XFR STAT: " << raw_result );
 
     if ( code < 200 || code > 202 )
         EXCEPT( 1, "Unknown Globus event_list failure" );
@@ -495,8 +495,6 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
     long code = get( m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
     //DL_ERROR("EP result: " << raw_result );
 
-
-
     if ( !raw_result.size() )
         EXCEPT( 1, "1 Invalid response from Globus Endpoint API." );
 
@@ -568,30 +566,10 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
 void
 GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in )
 {
-    /*
-    rapidjson::Document body;
-    rapidjson::Document::AllocatorType& allocator = body.GetAllocator();
-
-    body.SetObject();
-    body.AddMember( "refresh_token", rapidjson::StringRef( a_ref_tok.c_str() ), allocator );
-    body.AddMember( "grant_type", "refresh_token", allocator );
-
-    cout << "REFRESH REQUEST BODY:\n";
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    body.Accept(writer);
-    cout << buffer.GetString() << endl;
-    */
-    cout << "request refresh" << endl;
-
     string raw_result;
     long code = post( m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
 
     // Try to decode result as JSON - even if call failed
-
-    cout << "got: " << raw_result << endl;
-
-    DL_ERROR("Refresh result: " << raw_result );
 
     rapidjson::Document result;
 
@@ -605,8 +583,6 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
             EXCEPT( 1, "Globus refresh API call failed." );
         }
     }
-
-    cout << "parsed OK" << endl;
 
     rapidjson::Value::MemberIterator imem;
 
@@ -625,8 +601,6 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
         }
     }
 
-    cout << "about to use json" << endl;
-
     imem = result.FindMember("access_token");
     rapidjson::Value::MemberIterator imem2 = result.FindMember("expires_in");
 
@@ -636,10 +610,7 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
         EXCEPT( 1, "Invalid refresh response from Globus." );
     }
 
-    cout << "get acc tok" << endl;
     a_new_acc_tok = imem->value.GetString();
-
-    cout << "get expires" << endl;
     a_expires_in = imem2->value.GetUint();
 }
 

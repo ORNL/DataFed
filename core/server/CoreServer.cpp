@@ -1,12 +1,13 @@
 #include <fstream>
 #include <time.h>
 #include <curl/curl.h>
-
-#include "MsgBuf.hpp"
 #include "DynaLog.hpp"
+#include "Util.hpp"
 #include "CoreServer.hpp"
 #include "TaskMgr.hpp"
-#include "Util.hpp"
+#include "ClientWorker.hpp"
+#include "MsgComm.hpp"
+#include "CoreDatabaseClient.hpp"
 
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
@@ -28,15 +29,14 @@ Server::Server() :
     m_config(Config::getInstance()),
     m_io_secure_thread(0),
     m_io_insecure_thread(0),
-    m_maint_thread(0),
     m_io_running(false),
     m_zap_thread(0),
-    //m_xfr_mgr( *this ),
     m_msg_router_thread(0)
 {
     curl_global_init( CURL_GLOBAL_DEFAULT );
 
     loadKeys (m_config.cred_dir );
+
     m_config.sec_ctx.is_server = true;
     m_config.sec_ctx.public_key = m_pub_key;
     m_config.sec_ctx.private_key = m_priv_key;
@@ -52,7 +52,7 @@ Server::Server() :
 
 Server::~Server()
 {
-    stop( true );
+    // TODO There is no way to cleanly shutdown the server, prob not needed
 
     m_zap_thread->join();
     delete m_zap_thread;
@@ -122,168 +122,28 @@ Server::loadRepositoryConfig()
 }
 
 void
-Server::run( bool a_async )
+Server::run()
 {
-    unique_lock<mutex> lock(m_api_mutex);
-
     if ( m_io_running )
         throw runtime_error( "Only one worker router instance allowed" );
 
     m_io_running = true;
     DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
 
-    if ( a_async )
-    {
-        //m_io_thread = new thread( &Server::ioRun, this );
-        //m_xfr_mgr.start();
-        m_maint_thread = new thread( &Server::backgroundMaintenance, this );
-        m_msg_router_thread = new thread( &Server::msgRouter, this );
-        m_io_secure_thread = new thread( &Server::ioSecure, this );
-        m_io_insecure_thread = new thread( &Server::ioInsecure, this );
-    }
-    else
-    {
-        lock.unlock();
-        //m_xfr_mgr.start();
-        m_maint_thread = new thread( &Server::backgroundMaintenance, this );
-        m_msg_router_thread = new thread( &Server::msgRouter, this );
-        m_io_secure_thread = new thread( &Server::ioSecure, this );
-        //m_io_insecure_thread = new thread( &Server::ioInsecure, this );
-        ioInsecure();
-        //ioRun();
-        lock.lock();
-        m_io_running = false;
-        m_router_cvar.notify_all();
 
-        m_msg_router_thread->join();
-        delete m_msg_router_thread;
-        m_msg_router_thread = 0;
+    m_msg_router_thread = new thread( &Server::msgRouter, this );
+    m_io_secure_thread = new thread( &Server::ioSecure, this );
+    ioInsecure();
 
-        m_maint_thread->join();
-        delete m_maint_thread;
-        m_maint_thread = 0;
-    }
+
+    m_io_running = false;
+    m_router_cvar.notify_all();
+
+    m_msg_router_thread->join();
+    delete m_msg_router_thread;
+    m_msg_router_thread = 0;
 }
 
-
-void
-Server::stop( bool a_wait )
-{
-    // TODO This method is not being used currently
-    (void)a_wait;
-    unique_lock<mutex> lock(m_api_mutex);
-
-    if ( m_io_running )
-    {
-#if 0
-        // Signal ioPump to stop
-        m_io_service.stop();
-
-        if ( a_wait )
-        {
-            if ( m_io_thread )
-            {
-                m_io_thread->join();
-                delete m_io_thread;
-
-                m_io_thread = 0;
-                m_io_running = false;
-            }
-            else
-            {
-                while( m_io_running )
-                    m_router_cvar.wait( lock );
-            }
-
-            m_msg_router_thread->join();
-            delete m_msg_router_thread;
-            m_msg_router_thread = 0;
-
-            m_xfr_thread->join();
-            delete m_xfr_thread;
-            m_xfr_thread = 0;
-
-            m_maint_thread->join();
-            delete m_maint_thread;
-            m_maint_thread = 0;
-        }
-#endif
-    }
-}
-
-
-void
-Server::wait()
-{
-    unique_lock<mutex> lock(m_api_mutex);
-
-#if 0
-
-    if ( m_io_running )
-    {
-        if ( m_io_thread )
-        {
-            m_io_thread->join();
-            delete m_io_thread;
-
-            m_io_thread = 0;
-            m_io_running = false;
-
-            m_msg_router_thread->join();
-            delete m_msg_router_thread;
-            m_msg_router_thread = 0;
-
-            m_xfr_thread->join();
-            delete m_xfr_thread;
-            m_xfr_thread = 0;
-
-            m_maint_thread->join();
-            delete m_maint_thread;
-            m_maint_thread = 0;
-        }
-        else
-        {
-            while( m_io_running )
-                m_router_cvar.wait( lock );
-        }
-    }
-#endif
-}
-
-/*
-void
-Server::ioRun()
-{
-    DL_INFO( "io thread started" );
-
-    if ( m_io_service.stopped() )
-        m_io_service.reset();
-    
-    if ( m_num_threads == 0 )
-        m_num_threads = max( 1u, std::thread::hardware_concurrency() - 1 );
-
-    accept();
-
-    vector<thread*> io_threads;
-
-    for ( uint32_t i = m_num_threads - 1; i > 0; i-- )
-    {
-        io_threads.push_back( new thread( [this](){ m_io_service.run(); } ));
-        DL_DEBUG( "io extra thread started" );
-    }
-
-    m_io_service.run();
-
-    for ( vector<thread*>::iterator t = io_threads.begin(); t != io_threads.end(); ++t )
-    {
-        (*t)->join();
-        delete *t;
-        DL_DEBUG( "io extra thread stopped" );
-    }
-
-    DL_INFO( "io thread stopped" );
-}
-*/
 
 void
 Server::msgRouter()
@@ -307,7 +167,7 @@ Server::msgRouter()
 
     // Ceate worker threads
     for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t )
-        m_workers.push_back( new Worker( *this, t+1 ));
+        m_workers.push_back( new ClientWorker( *this, t+1 ));
 
     // Connect backend to frontend via a proxy
     zmq_proxy_steerable( frontend, backend, 0, control );
@@ -316,7 +176,7 @@ Server::msgRouter()
     zmq_close( control );
 
     // Clean-up workers
-    vector<Worker*>::iterator iwrk;
+    vector<ClientWorker*>::iterator iwrk;
 
     for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
         (*iwrk)->stop();
@@ -358,247 +218,7 @@ Server::ioInsecure()
     }
 }
 
-/*
-void
-Server::accept()
-{
-    spSession session = make_shared<Session>( m_io_service, m_context, *this, m_db_url, m_db_user, m_db_pass );
 
-    m_acceptor.async_accept( session->getSocket(),
-        [this, session]( error_code ec )
-            {
-                if ( !ec )
-                {
-                    DL_INFO( "New connection from " << session->remoteAddress() );
-
-                    unique_lock<mutex>  lock( m_data_mutex );
-                    m_sessions.insert( session );
-                    lock.unlock();
-
-                    session->start();
-                }
-
-                accept();
-            });
-}
-*/
-
-void
-Server::backgroundMaintenance()
-{
-    DL_DEBUG( "Maint thread started" );
-
-    struct timespec             _t;
-    double                      t;
-    map<string,vector<pair<string,string>>>::iterator    del_iter;
-    vector<pair<string,string>>::iterator    path_iter;
-    Auth::RepoDataDeleteRequest       del_req;
-    RecordDataLocation *        loc;
-    Auth::RepoPathCreateRequest       path_create_req;
-    Auth::RepoPathDeleteRequest       path_delete_req;
-    MsgBuf::Message *           reply;
-    MsgBuf::Frame               frame;
-    map<string,pair<string,size_t>>::iterator itrans_client;
-    map<string,MsgComm*>        repo_map;
-    map<string,MsgComm*>::iterator repo;
-    string path;
-
-    try
-    {
-        // TODO Should not create connections to all repos, create on-demand, then close after a period of inactivity
-        DL_INFO( "Confirming repository server connections" );
-        for ( map<std::string,RepoData*>::iterator r = m_config.repos.begin(); r != m_config.repos.end(); r++ )
-        {
-            repo_map[r->first] = new MsgComm( r->second->address(), MsgComm::DEALER, false, &m_config.sec_ctx );
-        }
-
-        DL_INFO( "Starting repository control thread" );
-
-        while( m_io_running )
-        {
-            sleep( MAINT_POLL_INTERVAL );
-
-            lock_guard<mutex> lock( m_data_mutex );
-
-            clock_gettime( CLOCK_REALTIME, &_t );
-            t = _t.tv_sec + (_t.tv_nsec*1e-9);
-
-
-            // Delete expired transient client credentials
-            for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
-            {
-                if ( itrans_client->second.second < t )
-                {
-                    DL_DEBUG( "Purging expired transient client " << itrans_client->second.first );
-                    itrans_client = m_trans_auth_clients.erase( itrans_client );
-                }
-                else
-                    itrans_client++;
-            }
-
-            // Process data deletion requests
-            try
-            {
-                // TODO This needs to be re-written in an async manner
-                // TODO Deletes also need to be serialized so they aren't lost in the event of a restart
-                if ( m_data_delete.size() )
-                {
-                    cout << "server::backgroundMaintenance - data to delete!" << endl;
-
-                    for ( del_iter = m_data_delete.begin(); del_iter != m_data_delete.end(); ++del_iter )
-                    {
-                        repo = repo_map.find( del_iter->first );
-                        if ( repo != repo_map.end() )
-                        {
-                            del_req.clear_loc();
-                            for ( path_iter = del_iter->second.begin(); path_iter != del_iter->second.end(); path_iter++ )
-                            {
-                                cout << "  del " << path_iter->first << endl;
-
-                                loc = del_req.add_loc();
-                                loc->set_id(path_iter->first);
-                                loc->set_path(path_iter->second);
-                            }
-
-                            cout << "  send msg" << endl;
-
-                            repo->second->send( del_req );
-                            if ( !repo->second->recv( reply, frame, 10000 ))
-                            {
-                                cout << "  no response!" << endl;
-                                DL_ERROR( "No response to data-delete req from " << repo->first );
-                                break;
-                            }
-                            else
-                                delete reply;
-                        }
-                        else
-                        {
-                            cout << "  bad repo " << del_iter->first << endl;
-
-                            DL_ERROR( "Bad repo in delete list: " << del_iter->first );
-                        }
-                    }
-                    m_data_delete.clear();
-                }
-
-                // TODO This needs to be re-written in an async manner, and be durable
-
-                if ( m_path_create.size() )
-                {
-                    for ( path_iter = m_path_create.begin(); path_iter != m_path_create.end(); ++path_iter )
-                    {
-                        repo = repo_map.find( path_iter->first );
-                        if ( repo != repo_map.end() )
-                        {
-                            path = m_config.repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
-                            DL_DEBUG( "Sending path-create to repo " << repo->first << " for path: " << path );
-                            path_create_req.set_path( path );
-                            repo->second->send( path_create_req );
-                            if ( !repo->second->recv( reply, frame, 5000 ))
-                            {
-                                DL_ERROR( "No response to path-create req from " << repo->first << " for path: " << path_iter->second );
-                                break;
-                            }
-                            else
-                                delete reply;
-                        }
-                        else
-                        {
-                            DL_ERROR( "Bad repo in path create list: " << path_iter->first << ", for path " << path_iter->second );
-                        }
-                    }
-                    m_path_create.clear();
-                }
-
-                if ( m_path_delete.size() )
-                {
-                    for ( path_iter = m_path_delete.begin(); path_iter != m_path_delete.end(); ++path_iter )
-                    {
-                        repo = repo_map.find( path_iter->first );
-                        if ( repo != repo_map.end() )
-                        {
-                            path = m_config.repos[path_iter->first]->path() + ( path_iter->second[0]=='u'?"user/":"project/" )+ path_iter->second.substr(2);
-                            DL_DEBUG( "Sending path-delete to repo " << repo->first << " for path: " << path );
-                            path_delete_req.set_path( path );
-                            repo->second->send( path_delete_req );
-                            if ( !repo->second->recv( reply, frame, 5000 ))
-                            {
-                                DL_ERROR( "No response to path-delete req from " << repo->first << " for path: " << path_iter->second );
-                                break;
-                            }
-                            else
-                                delete reply;
-                        }
-                        else
-                        {
-                            DL_ERROR( "Bad repo in path delete list: " << path_iter->first << ", for path " << path_iter->second );
-                        }
-                    }
-                    m_path_delete.clear();
-                }
-            }
-            catch( TraceException & e )
-            {
-                DL_ERROR( "Maint thread proc-loop: " << e.toString() );
-            }
-            catch( exception & e )
-            {
-                DL_ERROR( "Maint thread proc-loop: " << e.what() );
-            }
-            catch( ... )
-            {
-                DL_ERROR( "Maint thread proc-loop: unkown exception " );
-            }
-        }
-    }
-    catch( TraceException & e )
-    {
-        DL_ERROR( "Maint thread: " << e.toString() );
-    }
-    catch( exception & e )
-    {
-        DL_ERROR( "Maint thread: " << e.what() );
-    }
-    catch( ... )
-    {
-        DL_ERROR( "Maint thread: unkown exception " );
-    }
-
-    for ( repo = repo_map.begin(); repo != repo_map.end(); repo++ )
-        delete repo->second;
-
-    DL_DEBUG( "Maint thread stopped" );
-}
-
-/*
-void
-Server::handleNewXfr( const XfrData & a_xfr )
-{
-    m_xfr_mgr.newXfr( a_xfr );
-}
-
-
-void
-Server::dataDelete( const vector<RepoRecordDataLocations> & a_locs )
-{
-    cout << "server::dataDelete" << endl;
-    int i;
-
-    lock_guard<mutex> lock( m_data_mutex );
-
-    for ( vector<RepoRecordDataLocations>::const_iterator r = a_locs.begin(); r != a_locs.end(); r++ )
-    {
-        if ( r->loc_size() > 0 )
-        {
-            cout << "  del " << r->loc_size() << " file(s)" << endl;
-            vector<pair<string,string>> & locs = m_data_delete[r->repo_id()];
-            for ( i = 0; i < r->loc_size(); i++ )
-                locs.push_back( make_pair( r->loc(i).id(), r->loc(i).path() ));
-        }
-    }
-}
-*/
 
 void
 Server::zapHandler()
@@ -607,33 +227,58 @@ Server::zapHandler()
     
     try
     {
-        void * ctx = MsgComm::getContext();
-
-        char    client_key_text[41];
-        void *  socket = zmq_socket( ctx, ZMQ_REP );
-        int     rc;
-        char    version[100];
-        char    request_id[100];
-        char    domain[100];
-        char    address[100];
-        char    identity_property[100];
-        char    mechanism[100];
-        char    client_key[100];
-        map<string,string>::iterator iclient;
-        map<string,pair<string,size_t>>::iterator itrans_client;
-        zmq_pollitem_t poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
-        string uid;
-        DatabaseClient  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
+        void *      ctx = MsgComm::getContext();
+        char        client_key_text[41];
+        void *      socket = zmq_socket( ctx, ZMQ_REP );
+        int         rc;
+        char        version[100];
+        char        request_id[100];
+        char        domain[100];
+        char        address[100];
+        char        identity_property[100];
+        char        mechanism[100];
+        char        client_key[100];
+        string      uid;
+        time_t      now, next_purge;
+        auth_client_map_t::iterator     iclient;
+        trans_client_map_t::iterator    itrans_client;
+        zmq_pollitem_t                  poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
+        DatabaseClient                  db( m_config.db_url, m_config.db_user, m_config.db_pass );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );
+
+        next_purge = time(0) + 30;
 
         while ( 1 )
         {
             try
             {
-                if (( rc = zmq_poll( poll_items, 1, 2000 )) == -1 )
+                if (( rc = zmq_poll( poll_items, 1, 10000 )) == -1 )
                     EXCEPT( 1, "Poll on ZAP socket failed." );
+
+                if ( m_trans_auth_clients.size() )
+                {
+                    now = time( 0 );
+                    if ( now > next_purge )
+                    {
+                        DL_DEBUG( "ZAP: Purging expired transient clients" );
+                        lock_guard<mutex> lock( m_trans_client_mutex );
+
+                        for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
+                        {
+                            if ( itrans_client->second.second < now )
+                            {
+                                DL_DEBUG( "ZAP: Purging client " << itrans_client->second.first );
+                                itrans_client = m_trans_auth_clients.erase( itrans_client );
+                            }
+                            else
+                                itrans_client++;
+                        }
+
+                        next_purge = now + 30;
+                    }
+                }
 
                 if ( !(poll_items[0].revents & ZMQ_POLLIN ))
                     continue;
@@ -683,14 +328,13 @@ Server::zapHandler()
                     uid = iclient->second;
                     DL_DEBUG( "ZAP: Known pre-authorized client connected: " << uid );
                 }
-                else if (( itrans_client = m_trans_auth_clients.find( client_key_text )) != m_trans_auth_clients.end())
+                else if ( isClientAuthorized( client_key_text, uid ))
                 {
-                    uid = itrans_client->second.first;
                     DL_DEBUG( "ZAP: Known transient client connected: " << uid );
                 }
                 else
                 {
-                    if ( db_client.uidByPubKey( client_key_text, uid ) )
+                    if ( db.uidByPubKey( client_key_text, uid ) )
                     {
                         DL_DEBUG( "ZAP: Known client connected: " << uid );
                     }
@@ -708,19 +352,6 @@ Server::zapHandler()
                 zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
 
-                // TODO Delete expired transient client credentials
-
-                /* for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
-                {
-                    if ( itrans_client->second.second < t )
-                    {
-                        DL_DEBUG( "Purging expired transient client " << itrans_client->second.first );
-                        itrans_client = m_trans_auth_clients.erase( itrans_client );
-                    }
-                    else
-                        itrans_client++;
-                }
-                */
             }
             catch( TraceException & e )
             {
@@ -755,39 +386,31 @@ Server::zapHandler()
 
 
 void
-Server::repoPathCreate( const std::string & a_repo_id, const std::string & a_id )
-{
-    map<string,RepoData*>::iterator r = m_config.repos.find( a_repo_id );
-    if ( r != m_config.repos.end() )
-    {
-        lock_guard<mutex> lock( m_data_mutex );
-        m_path_create.push_back( make_pair( a_repo_id, a_id ));
-    }
-}
-
-void
-Server::repoPathDelete( const std::string & a_repo_id, const std::string & a_id )
-{
-    map<string,RepoData*>::iterator r = m_config.repos.find( a_repo_id );
-    if ( r != m_config.repos.end() )
-    {
-        lock_guard<mutex> lock( m_data_mutex );
-        m_path_delete.push_back( make_pair( a_repo_id, a_id ));
-    }
-}
-
-void
 Server::authorizeClient( const std::string & a_cert_uid, const std::string & a_uid )
 {
     if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
     {
-        struct timespec             _t;
+        lock_guard<mutex> lock( m_trans_client_mutex );
 
-        lock_guard<mutex> lock( m_data_mutex );
-        clock_gettime( CLOCK_REALTIME, &_t );
-
-        m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, _t.tv_sec + 30 );
+        m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, time(0) + 30 );
     }
+}
+
+bool
+Server::isClientAuthorized( const std::string & a_client_key, std::string & a_uid )
+{
+    lock_guard<mutex> lock( m_trans_client_mutex );
+
+    trans_client_map_t::iterator i = m_trans_auth_clients.find( a_client_key );
+    if ( i != m_trans_auth_clients.end())
+    {
+        a_uid = i->second.first;
+        m_trans_auth_clients.erase( i );
+
+        return true;
+    }
+
+    return false;
 }
 
 

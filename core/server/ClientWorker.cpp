@@ -1,7 +1,7 @@
 #include <iostream>
 #include <atomic>
 #include <boost/tokenizer.hpp>
-#include <CoreWorker.hpp>
+#include <ClientWorker.hpp>
 #include <TraceException.hpp>
 #include <DynaLog.hpp>
 #include <Util.hpp>
@@ -22,31 +22,31 @@ using namespace SDMS::Auth;
 namespace Core {
 
 
-map<uint16_t,Worker::msg_fun_t> Worker::m_msg_handlers;
+map<uint16_t,ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 
 
-Worker::Worker( IWorkerMgr & a_mgr, size_t a_tid ) :
-    m_config(Config::getInstance()), m_mgr(a_mgr), m_tid(a_tid), m_worker_thread(0), m_run(true),
+ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
+    m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
     m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
 {
     setupMsgHandlers();
-    m_worker_thread = new thread( &Worker::workerThread, this );
+    m_worker_thread = new thread( &ClientWorker::workerThread, this );
 }
 
-Worker::~Worker()
+ClientWorker::~ClientWorker()
 {
     stop();
     wait();
 }
 
 void
-Worker::stop()
+ClientWorker::stop()
 {
     m_run = false;
 }
 
 void
-Worker::wait()
+ClientWorker::wait()
 {
     if ( m_worker_thread )
     {
@@ -57,10 +57,10 @@ Worker::wait()
 }
 
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &Worker::dbPassThrough<rq,rp,&DatabaseClient::func>
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseClient::func>
 
 void
-Worker::setupMsgHandlers()
+ClientWorker::setupMsgHandlers()
 {
     static std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
@@ -71,33 +71,32 @@ Worker::setupMsgHandlers()
     {
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
-        SET_MSG_HANDLER( proto_id, StatusRequest, &Worker::procStatusRequest );
-        SET_MSG_HANDLER( proto_id, VersionRequest, &Worker::procVersionRequest );
-        SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &Worker::procAuthenticateByPasswordRequest );
-        SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &Worker::procAuthenticateByTokenRequest );
-        SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &Worker::procGetAuthStatusRequest );
+        SET_MSG_HANDLER( proto_id, StatusRequest, &ClientWorker::procStatusRequest );
+        SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
+        SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
+        SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
+        SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
         // Requests that require the server to take action
-        SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &Worker::procGenerateCredentialsRequest );
-        SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &Worker::procRevokeCredentialsRequest );
-        SET_MSG_HANDLER( proto_id, DataGetRequest, &Worker::procDataGetRequest );
-        SET_MSG_HANDLER( proto_id, DataPutRequest, &Worker::procDataPutRequest );
-        //SET_MSG_HANDLER( proto_id, DataDeleteRequest, &Worker::procDataDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &Worker::procRecordUpdateRequest );
-        SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &Worker::procRecordUpdateBatchRequest );
-        SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &Worker::procRecordDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RecordSearchRequest, &Worker::procRecordSearchRequest );
-        SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &Worker::procProjectSearchRequest );
-        SET_MSG_HANDLER( proto_id, QueryCreateRequest, &Worker::procQueryCreateRequest );
-        SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &Worker::procQueryUpdateRequest );
-        SET_MSG_HANDLER( proto_id, CollDeleteRequest, &Worker::procCollectionDeleteRequest );
-        SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &Worker::procProjectDeleteRequest );
-        SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &Worker::procQueryDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &Worker::procRepoAllocationSetRequest );
-        SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &Worker::procRepoAuthzRequest );
-        SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &Worker::procUserGetAccessTokenRequest );
+        SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &ClientWorker::procGenerateCredentialsRequest );
+        SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &ClientWorker::procRevokeCredentialsRequest );
+        SET_MSG_HANDLER( proto_id, DataGetRequest, &ClientWorker::procDataGetRequest );
+        SET_MSG_HANDLER( proto_id, DataPutRequest, &ClientWorker::procDataPutRequest );
+        SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &ClientWorker::procRecordUpdateRequest );
+        SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &ClientWorker::procRecordUpdateBatchRequest );
+        SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
+        SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
+        SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
+        SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &ClientWorker::procQueryUpdateRequest );
+        SET_MSG_HANDLER( proto_id, CollDeleteRequest, &ClientWorker::procCollectionDeleteRequest );
+        SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &ClientWorker::procProjectDeleteRequest );
+        SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &ClientWorker::procQueryDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &ClientWorker::procRepoAllocationSetRequest );
+        SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest );
+        SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &ClientWorker::procUserGetAccessTokenRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
@@ -170,14 +169,14 @@ Worker::setupMsgHandlers()
     }
     catch( TraceException & e)
     {
-        DL_ERROR( "CoreWorker::setupMsgHandlers, exception: " << e.toString() );
+        DL_ERROR( "ClientWorker::setupMsgHandlers, exception: " << e.toString() );
         throw;
     }
 }
 
 
 void
-Worker::workerThread()
+ClientWorker::workerThread()
 {
     DL_DEBUG( "W" << m_tid << " thread started" );
 
@@ -298,7 +297,7 @@ return send_reply;
 
 template<typename RQ, typename RP, void (DatabaseClient::*func)( const RQ &, RP &)>
 bool
-Worker::dbPassThrough( const std::string & a_uid )
+ClientWorker::dbPassThrough( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RQ, RP )
 
@@ -310,7 +309,7 @@ Worker::dbPassThrough( const std::string & a_uid )
 }
 
 bool
-Worker::procStatusRequest( const std::string & a_uid )
+ClientWorker::procStatusRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( StatusRequest, StatusReply )
     (void)a_uid;
@@ -321,7 +320,7 @@ Worker::procStatusRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procVersionRequest( const std::string & a_uid )
+ClientWorker::procVersionRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( VersionRequest, VersionReply )
     (void)a_uid;
@@ -335,7 +334,7 @@ Worker::procVersionRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procAuthenticateByPasswordRequest( const std::string & a_uid )
+ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateByPasswordRequest, AuthStatusReply )
@@ -347,13 +346,13 @@ Worker::procAuthenticateByPasswordRequest( const std::string & a_uid )
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_mgr.authorizeClient( a_uid, reply.uid() );
+    m_core.authorizeClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
 
 bool
-Worker::procAuthenticateByTokenRequest( const std::string & a_uid )
+ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateByTokenRequest, AuthStatusReply )
@@ -365,13 +364,13 @@ Worker::procAuthenticateByTokenRequest( const std::string & a_uid )
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_mgr.authorizeClient( a_uid, reply.uid() );
+    m_core.authorizeClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
 
 bool
-Worker::procGetAuthStatusRequest( const std::string & a_uid )
+ClientWorker::procGetAuthStatusRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
@@ -392,7 +391,7 @@ Worker::procGetAuthStatusRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procGenerateCredentialsRequest( const std::string & a_uid )
+ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
@@ -430,7 +429,7 @@ Worker::procGenerateCredentialsRequest( const std::string & a_uid )
 
 
 bool
-Worker::procRevokeCredentialsRequest( const std::string & a_uid )
+ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply )
@@ -445,11 +444,11 @@ Worker::procRevokeCredentialsRequest( const std::string & a_uid )
 
 
 bool
-Worker::procDataGetRequest( const std::string & a_uid )
+ClientWorker::procDataGetRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataGetRequest, TaskReply )
 
-    DL_INFO( "procDataGetRequest, uid: " << a_uid );
+    DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
 
     m_db_client.setClient( a_uid );
     vector<string> ids;
@@ -467,18 +466,21 @@ Worker::procDataGetRequest( const std::string & a_uid )
     libjson::Value::ObjectIter j = obj.find( "task" );
 
     if ( j != obj.end( ))
+    {
+        DL_INFO( "CWORKER scheduling data get task" );
         TaskMgr::getInstance().newTask( j->second );
+    }
 
     PROC_MSG_END
 }
 
 
 bool
-Worker::procDataPutRequest( const std::string & a_uid )
+ClientWorker::procDataPutRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( DataPutRequest, TaskReply )
 
-    DL_INFO( "procDataPutRequest, uid: " << a_uid );
+    DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
 
     m_db_client.setClient( a_uid );
 
@@ -490,158 +492,118 @@ Worker::procDataPutRequest( const std::string & a_uid )
     libjson::Value::ObjectIter j = obj.find( "task" );
 
     if ( j != obj.end( ))
-        TaskMgr::getInstance().newTask( j->second );
-
-    PROC_MSG_END
-}
-
-
-/*
-bool
-Worker::procDataDeleteRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( DataDeleteRequest, AckReply )
-
-    DL_INFO( "procDataDeleteRequest, uid: " << a_uid );
-
-
-    // Get data path and delete raw data first, then update data record
-
-    vector<string> ids;
-    int i;
-
-    ids.reserve( request->id_size() );
-    for ( i = 0; i < request->id_size(); i++ )
-        ids.push_back( request->id(i) );
-
-    vector<RepoRecordDataLocations> loc;
-    m_db_client.recordGetDataLocation( ids, loc );
-
-    // TODO This must be durable, mgr should initiate record updates AFTER data is deleted
-    m_mgr.dataDelete( loc );
-
-    m_db_client.setClient( a_uid );
-
-    RecordUpdateRequest upd_req;
-    RecordDataReply upd_reply;
-
-    for ( vector<RepoRecordDataLocations>::iterator r = loc.begin(); r != loc.end(); r++ )
     {
-        for ( i = 0; i < r->loc_size(); i++ )
-        {
-            upd_req.set_id( r->loc(i).id() );
-            upd_req.set_size( 0 );
-
-            m_db_client.recordUpdate( upd_req, upd_reply, loc );
-        }
+        DL_INFO( "CWORKER scheduling data put task" );
+        TaskMgr::getInstance().newTask( j->second );
     }
 
     PROC_MSG_END
 }
-*/
 
 
 bool
-Worker::procRecordUpdateRequest( const std::string & a_uid )
+ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
 
-/*
-    vector<RepoRecordDataLocations> locs;
-
-    // TODO Acquire write lock here
-
     m_db_client.setClient( a_uid );
-    m_db_client.recordUpdate( *request, reply, locs );
 
-    // TODO Must be durable (use DB to track delete progress)
+    libjson::Value result;
 
-    if ( locs.size() )
-        m_mgr.dataDelete( locs );
-*/
+    m_db_client.recordUpdate( *request, reply, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter j = obj.find( "task" );
+
+    if ( j != obj.end( ))
+    {
+        DL_INFO( "CWORKER scheduling record update task" );
+        TaskMgr::getInstance().newTask( j->second );
+    }
 
     PROC_MSG_END
 }
 
 
 bool
-Worker::procRecordUpdateBatchRequest( const std::string & a_uid )
+ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply )
 
-    vector<RepoRecordDataLocations> locs;
-
-    // TODO Acquire write lock here
-
     m_db_client.setClient( a_uid );
-    m_db_client.recordUpdateBatch( *request, reply, locs );
 
-    // Raw data may need to be deleted if records are published
-    //if ( locs.size() )
-    //    m_mgr.dataDelete( locs );
+    libjson::Value result;
+
+    m_db_client.recordUpdateBatch( *request, reply, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter j = obj.find( "task" );
+
+    if ( j != obj.end( ))
+    {
+        DL_INFO( "CWORKER scheduling record update task" );
+        TaskMgr::getInstance().newTask( j->second );
+    }
 
     PROC_MSG_END
 }
 
 
 bool
-Worker::procRecordDeleteRequest( const std::string & a_uid )
+ClientWorker::procRecordDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
 
     m_db_client.setClient( a_uid );
 
-    libjson::Value result;
     vector<string> ids;
 
     ids.reserve( request->id_size() );
     for ( int i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    m_db_client.taskInitDataDelete( ids, result );
+    recordCollectionDelete( ids );
+
+    PROC_MSG_END
+}
+
+
+bool
+ClientWorker::procCollectionDeleteRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( CollDeleteRequest, TaskReply )
+
+    m_db_client.setClient( a_uid );
+
+    vector<string> ids;
+
+    ids.reserve( request->id_size() );
+    for ( int i = 0; i < request->id_size(); i++ )
+        ids.push_back( request->id(i) );
+
+    recordCollectionDelete( ids );
+
+    PROC_MSG_END
+}
+
+
+void
+ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids )
+{
+    libjson::Value result;
+
+    m_db_client.taskInitRecordCollectionDelete( a_ids, result );
 
     libjson::Value::Object & obj = result.getObject();
     libjson::Value::ObjectIter t = obj.find( "task" );
 
     if ( t != obj.end( ))
         TaskMgr::getInstance().newTask( t->second );
-
-    PROC_MSG_END
 }
 
 
 bool
-Worker::procCollectionDeleteRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( CollDeleteRequest, TaskReply )
-
-    // TODO Acquire write lock here
-    // TODO Need better error handling (plus retry)
-
-    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
-    /*
-    m_db_client.setClient( a_uid );
-    vector<RepoRecordDataLocations> locs;
-
-    for ( int i = 0; i < request->id_size(); i++ )
-    {
-        DL_INFO( "Collection DELETE, uid: " << a_uid << ", coll: " << request->id(i) );
-        m_db_client.collDelete( request->id(i), locs );
-
-        // TODO A crash after DB delete will leave orphaned raw data files behind, need to make durable
-
-        // Ask FileManager to delete files
-        m_mgr.dataDelete( locs );
-
-        locs.clear();
-    }
-    */
-
-    PROC_MSG_END
-}
-
-bool
-Worker::procProjectDeleteRequest( const std::string & a_uid )
+ClientWorker::procProjectDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( ProjectDeleteRequest, TaskReply )
 
@@ -678,29 +640,25 @@ Worker::procProjectDeleteRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+
 bool
-Worker::procQueryDeleteRequest( const std::string & a_uid )
+ClientWorker::procQueryDeleteRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( QueryDeleteRequest, AckReply )
 
-    // TODO Acquire write lock here
-    // TODO Need better error handling (plus retry)
-
-    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
     m_db_client.setClient( a_uid );
 
     for ( int i = 0; i < request->id_size(); i++ )
     {
-        //DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id(i) );
-
         m_db_client.queryDelete( request->id(i) );
     }
 
     PROC_MSG_END
 }
 
+
 bool
-Worker::procRecordSearchRequest( const std::string & a_uid )
+ClientWorker::procRecordSearchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordSearchRequest, ListingReply )
 
@@ -728,8 +686,9 @@ Worker::procRecordSearchRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+
 bool
-Worker::procProjectSearchRequest( const std::string & a_uid )
+ClientWorker::procProjectSearchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
 
@@ -745,8 +704,9 @@ Worker::procProjectSearchRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+
 bool
-Worker::procQueryCreateRequest( const std::string & a_uid )
+ClientWorker::procQueryCreateRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( QueryCreateRequest, QueryDataReply )
 
@@ -776,7 +736,7 @@ Worker::procQueryCreateRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procQueryUpdateRequest( const std::string & a_uid )
+ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( QueryUpdateRequest, QueryDataReply )
 
@@ -815,13 +775,14 @@ Worker::procQueryUpdateRequest( const std::string & a_uid )
 }
 
 bool
-Worker::procRepoAllocationSetRequest( const std::string & a_uid )
+ClientWorker::procRepoAllocationSetRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RepoAllocationSetRequest, AckReply )
 
     m_db_client.setClient( a_uid );
     m_db_client.repoAllocationSet( *request, reply );
 
+/*
     if ( request->max_size() > 0 )
     {
         DL_DEBUG( "Create/ensure path for " << request->subject() );
@@ -832,12 +793,12 @@ Worker::procRepoAllocationSetRequest( const std::string & a_uid )
         DL_DEBUG( "Delete path for " << request->subject() );
         m_mgr.repoPathDelete( request->repo(), request->subject() );
     }
-
+*/
     PROC_MSG_END
 }
 
 bool
-Worker::procRepoAuthzRequest( const std::string & a_uid )
+ClientWorker::procRepoAuthzRequest( const std::string & a_uid )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
@@ -852,7 +813,7 @@ Worker::procRepoAuthzRequest( const std::string & a_uid )
 
 
 bool
-Worker::procUserGetAccessTokenRequest( const std::string & a_uid )
+ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( UserGetAccessTokenRequest, UserAccessTokenReply )
 
@@ -879,7 +840,7 @@ Worker::procUserGetAccessTokenRequest( const std::string & a_uid )
 
 
 string
-Worker::parseSearchTerms( const string & a_key, const vector<string> & a_terms )
+ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_terms )
 {
     vector<string> and_terms;
     vector<string> nand_terms;
@@ -944,7 +905,7 @@ Worker::parseSearchTerms( const string & a_key, const vector<string> & a_terms )
 }
 
 string
-Worker::parseSearchPhrase( const char * key, const string & a_phrase )
+ClientWorker::parseSearchPhrase( const char * key, const string & a_phrase )
 {
     // tokenize phrase on ws, comma, and semicolons - properly handling quotes
     // each token is used as a search phrase and joined based on eny prefix operators:
@@ -967,7 +928,7 @@ Worker::parseSearchPhrase( const char * key, const string & a_phrase )
 }
 
 string
-Worker::parseSearchTextPhrase( const string & a_phrase )
+ClientWorker::parseSearchTextPhrase( const string & a_phrase )
 {
     /* This function parses category logic (if present) around full-
     text queries. Text queries are typed into the text input and are
@@ -1162,7 +1123,7 @@ Worker::parseSearchTextPhrase( const string & a_phrase )
 }
 
 string
-Worker::parseSearchIdAlias( const string & a_query )
+ClientWorker::parseSearchIdAlias( const string & a_query )
 {
     string val;
     val.resize(a_query.size());
@@ -1223,7 +1184,7 @@ Worker::parseSearchIdAlias( const string & a_query )
 
 
 string
-Worker::parseSearchMetadata( const string & a_query )
+ClientWorker::parseSearchMetadata( const string & a_query )
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
@@ -1407,7 +1368,7 @@ Worker::parseSearchMetadata( const string & a_query )
 
 
 string
-Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
+ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
 {
     use_client = false;
 
@@ -1608,7 +1569,7 @@ Worker::parseQuery( const string & a_query, bool & use_client, bool & use_shared
 
 
 string
-Worker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
+ClientWorker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
 {
     string phrase = parseSearchTextPhrase( a_text_query );
 
