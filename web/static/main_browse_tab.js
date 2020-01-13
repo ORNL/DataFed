@@ -17,7 +17,7 @@ function makeBrowserTab(){
     inst.sel_links_div = $("#sel_links_div",inst.frame);
     inst.sel_links = $("#sel_links",inst.frame);
     inst.sel_md_div = $("#sel_md_div",inst.frame);
-    this.xfr_hist = $("#xfr_hist",inst.frame);
+    this.task_hist = $("#task_hist",inst.frame);
     this.alloc_stat = $("#alloc_stat",inst.frame);
     this.data_tree = null;
     this.data_md_tree = null;
@@ -25,8 +25,8 @@ function makeBrowserTab(){
     this.data_md_empty_src = [{title:"(n/a)", icon:false}];
     //this.data_md_cur = {};
     this.data_md_exp = {};
-    this.xfrHist = [];
-    this.pollSince = g_opts.xfr_hist * 3600;
+    this.taskHist = [];
+    this.pollSince = g_opts.task_hist * 3600;
     this.my_root_key = "c/u_" + g_user.uid + "_root";
     this.uid = "u/" + g_user.uid;
     this.drag_mode = 0;
@@ -1990,8 +1990,8 @@ function makeBrowserTab(){
         }
     }
 
-    this.xfrUpdateHistory = function( xfr_list ){
-        var len = xfr_list.length;
+    this.taskUpdateHistory = function( task_list ){
+        var len = task_list.length;
         var html;
         if ( len == 0 ){
             html = "(no recent transfers)";
@@ -2002,7 +2002,7 @@ function makeBrowserTab(){
             var update = new Date(0);
 
             for ( var i = 0; i < len; i++ ) {
-                stat = xfr_list[i];
+                stat = task_list[i];
                 //console.log("repo stat:",stat);
                 if ( stat.status == "XS_FAILED" )
                     html += "<tr title='" + escapeHTML(stat.errMsg) + "' class='ui-state-error'>";
@@ -2035,34 +2035,35 @@ function makeBrowserTab(){
             }
             html += "</table>";
         }
-        this.xfr_hist.html( html );
+        this.task_hist.html( html );
     }
 
-    this.xfrHistoryPoll = function(){
-        //console.log("xfrHistoryPoll",inst.pollSince);
+    this.taskHistoryPoll = function(){
+        //console.log("taskHistoryPoll",inst.pollSince);
 
         if ( !g_user )
             return;
 
-        _asyncGet( "/api/xfr/list" + (inst.pollSince?"?since="+inst.pollSince:""), null, function( ok, data ){
+        _asyncGet( "/api/task/list" + (inst.pollSince?"?since="+inst.pollSince:""), null, function( ok, data ){
             if ( ok && data ) {
-                if ( data.xfr && data.xfr.length ) {
+                if ( data.task && data.task.length ) {
                     // Find and remove any previous entries
-                    for ( var i in data.xfr ){
-                        var xfr = data.xfr[i];
-                        for ( var j in inst.xfrHist ){
-                            if ( inst.xfrHist[j].id == xfr.id ){
-                                inst.xfrHist.splice(j,1);
+                    var task;
+                    for ( var i in data.task ){
+                        task = data.task[i];
+                        for ( var j in inst.taskHist ){
+                            if ( inst.taskHist[j].id == task.id ){
+                                inst.taskHist.splice(j,1);
                                 break;
                             }
                         }
                     }
-                    inst.xfrHist = data.xfr.concat( inst.xfrHist );
-                    inst.xfrUpdateHistory( inst.xfrHist );
+                    inst.taskHist = data.task.concat( inst.taskHist );
+                    inst.taskUpdateHistory( inst.taskHist );
                 }
             }
             inst.pollSince = 10;
-            inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000*(inst.pollSince-1));
+            inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000*(inst.pollSince-1));
         });
     }
 
@@ -3466,11 +3467,11 @@ function makeBrowserTab(){
         if(reload){
             inst.refreshUI();
         }
-        clearTimeout(inst.xfrTimer);
-        this.xfr_hist.html( "(no recent transfers)" );
-        inst.xfrHist = [];
-        inst.pollSince = g_opts.xfr_hist * 3600;
-        inst.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
+        clearTimeout(inst.taskTimer);
+        this.task_hist.html( "(no recent transfers)" );
+        inst.taskHist = [];
+        inst.pollSince = g_opts.task_hist * 3600;
+        inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
     })});
 
     $(document.body).on('click', '.browse-reload' , inst.actionReloadSelected );
@@ -3819,8 +3820,8 @@ function makeBrowserTab(){
     });
 
     inst.showSelectedInfo();
-    this.xfr_hist.html( "(no recent transfers)" );
-    this.xfrTimer = setTimeout( inst.xfrHistoryPoll, 1000 );
+    this.task_hist.html( "(no recent transfers)" );
+    this.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
 
     return inst;
 }

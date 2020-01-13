@@ -114,12 +114,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
         SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
-        //SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ProjectDataReply, projList );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
-        //SET_MSG_HANDLER_DB( proto_id, RecordUpdateRequest, RecordDataReply, recordUpdate );
-        //SET_MSG_HANDLER_DB( proto_id, RecordUpdateBatchRequest, RecordDataReply, recordUpdateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
@@ -140,7 +137,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
         //SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
-        //SET_MSG_HANDLER_DB( proto_id, XfrListRequest, XfrDataReply, xfrList );
+        SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
         SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );
@@ -446,7 +443,7 @@ ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataGetRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataGetRequest, TaskReply )
+    PROC_MSG_BEGIN( DataGetRequest, TaskDataReply )
 
     DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
 
@@ -478,7 +475,7 @@ ClientWorker::procDataGetRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataPutRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataPutRequest, TaskReply )
+    PROC_MSG_BEGIN( DataPutRequest, TaskDataReply )
 
     DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
 
@@ -571,7 +568,7 @@ ClientWorker::procRecordDeleteRequest( const std::string & a_uid )
 bool
 ClientWorker::procCollectionDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( CollDeleteRequest, TaskReply )
+    PROC_MSG_BEGIN( CollDeleteRequest, TaskDataReply )
 
     m_db_client.setClient( a_uid );
 
@@ -605,7 +602,7 @@ ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids )
 bool
 ClientWorker::procProjectDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskReply )
+    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply )
 
     // TODO Acquire write lock here
     // TODO Need better error handling (plus retry)

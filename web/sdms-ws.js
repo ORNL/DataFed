@@ -802,11 +802,11 @@ app.get('/api/acl/by_proj/list', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/xfr/list', ( a_req, a_resp ) => {
+app.get('/api/task/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.since )
         params.since = a_req.query.since;
-    sendMessage( "XfrListRequest", params, a_req, a_resp, function( reply ) {
+    sendMessage( "TaskListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });

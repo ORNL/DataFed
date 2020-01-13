@@ -259,36 +259,8 @@ message RecordGetDependencyGraphRequest
     required string             id          = 1;
 }
 
-
-/*
-message RecordDataLocationReply
-{
-    repeated RecordDataLocation location    = 1;
-}*/
-
 // ============================ Raw Data Messages
 
-/*
-message XfrViewRequest
-{
-    required string             xfr_id      = 1;
-}
-
-message XfrListRequest
-{
-    optional uint32             from        = 1;
-    optional uint32             to          = 2;
-    optional uint32             since       = 3;
-    optional uint32             limit       = 4;
-    optional SDMS.XfrStatus     status      = 5;
-}
-
-message XfrDataReply
-{
-    repeated SDMS.XfrData       xfr         = 1;
-}
-
-*/
 
 message HttpXfrDataReply
 {
@@ -789,7 +761,15 @@ message QueryDataReply
 
 // ============================ Task Messages
 
-message TaskReply
+
+message TaskListRequest
 {
-    optional SDMS.TaskData      task        = 1;
+    optional uint32             since       = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+message TaskDataReply
+{
+    repeated SDMS.TaskData      task        = 1;
 }

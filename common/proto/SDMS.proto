@@ -22,16 +22,6 @@ enum ServiceStatus
     SS_OFFLINE      = 3;
 }
 
-/*
-enum XfrMode
-{
-    XM_GET          = 0;
-    XM_PUT          = 1;
-    XM_COPY         = 2;
-}
-*/
-
-
 enum CollDelMode
 {
     CDM_ALL         = 0;
@@ -314,65 +304,6 @@ enum Encryption
     ENCRYPT_FORCE   = 2;
 }
 
-/*
-message FileInfo
-{
-    required string             id          = 1;
-    required string             filename    = 2;
-}
-
-message TaskDataGet
-{
-    required Encryption         encrypt     = 2;
-    required bool               encrypted   = 3;
-    required string             repo_id     = 4;
-    required string             repo_ep     = 5;
-    required string             repo_path   = 6;
-    required string             dst_ep      = 7;
-    required string             dst_path    = 8;
-    repeated FileInfo           files       = 9;
-    required uint32             file_idx    = 10;
-}
-
-message TaskDataPut
-{
-    required Encryption         encrypt     = 2;
-    required bool               encrypted   = 3;
-    required string             repo_id     = 4;
-    required string             repo_ep     = 5;
-    required string             repo_path   = 6;
-    required string             src_ep      = 7;
-    required string             src_path    = 8;
-    required FileInfo           file        = 9;
-    optional string             ext         = 10;
-}
-
-message TaskDataChangeAlloc
-{
-    required Encryption         encrypt     = 1;
-    required bool               encrypted   = 2;
-    required string             repo_id     = 3;
-    required string             repo_ep     = 4;
-    required string             repo_path   = 5;
-    required string             dst_repo_id = 6;
-    required string             dst_ep      = 7;
-    required string             dst_path    = 8;
-    repeated string             data_id     = 9;
-    required uint32             file_idx    = 11;
-}
-
-message TaskDataChangeOwner
-{
-}
-
-message TaskDataDelete
-{
-    required string             repo_id     = 1;
-    required string             repo_path   = 2;
-    repeated string             data_id     = 3;
-    required uint32             file_idx    = 4;
-}
-*/
 
 message TaskData
 {
@@ -384,11 +315,6 @@ message TaskData
     required string                 msg         = 6;
     required uint32                 ct          = 7;
     required uint32                 ut          = 8;
-    //optional TaskDataGet            state_get   = 9;
-    //optional TaskDataPut            state_put   = 10;
-    //optional TaskDataChangeAlloc    state_all   = 11;
-    //optional TaskDataChangeOwner    state_own   = 12;
-    //optional TaskDataDelete         state_del   = 13;
 }
 
 

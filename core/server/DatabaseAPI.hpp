@@ -135,11 +135,13 @@ public:
 
 
     void taskLoadReady( libjson::Value & a_result );
-    void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
-    void taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result );
+    void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
     void taskUpdate( const std::string & a_id, TaskStatus * a_status = 0, const std::string * a_message = 0, double * a_progress = 0, libjson::Value * a_state = 0 );
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result );
+    void taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataReply & a_reply );
+
     // TODO Project Delete
 
 private:
@@ -160,7 +162,7 @@ private:
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result );
     void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );
-    void setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result );
+    void setTaskData( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
 
     CURL *      m_curl;
     char *      m_client;

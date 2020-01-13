@@ -2536,7 +2536,7 @@ DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 
 
 void
-DatabaseAPI::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
@@ -2563,7 +2563,7 @@ DatabaseAPI::taskInitDataGet( const std::vector<std::string> & a_ids, const std:
 
 
 void
-DatabaseAPI::taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[\"" + a_id + "\"],\"path\":\"";
     body += a_path;
@@ -2610,7 +2610,7 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
 
 
 void
-DatabaseAPI::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setTaskData( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   t;
     Value::ArrayIter    k;
@@ -2628,7 +2628,7 @@ DatabaseAPI::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
 
             TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
 
-            TaskData * task = a_reply.mutable_task();
+            TaskData * task = a_reply.add_task();
             task->set_id( obj2.at( "id" ).asString( ));
             task->set_type((TaskType)obj2.at( "type" ).asNumber( ));
             task->set_status( ts );
@@ -2689,16 +2689,37 @@ DatabaseAPI::taskUpdate( const std::string & a_id, TaskStatus * a_status, const 
     dbPost( "task/update", {{"task_id",a_id}}, &body, result );
 }
 
+
 void
 DatabaseAPI::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result )
 {
-   vector<pair<string,string>> params;
+    vector<pair<string,string>> params;
     params.push_back({ "task_id", a_task_id });
     params.push_back({ "succeeded", ( a_succeeded?"true":"false" )});
     if ( a_msg.size( ))
         params.push_back({ "message", a_msg });
 
     dbPost( "task/finalize", params, 0, a_result );
+}
+
+
+void
+DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataReply & a_reply )
+{
+    vector<pair<string,string>> params;
+
+    if ( a_request.has_since( ))
+        params.push_back({ "since", to_string( a_request.since() )});
+    if ( a_request.has_offset( ))
+        params.push_back({ "offset", to_string( a_request.offset() )});
+    if ( a_request.has_count( ))
+        params.push_back({ "count", to_string( a_request.count() )});
+
+    libjson::Value result;
+
+    dbPost( "task/list", params, 0, result );
+
+    setTaskData( a_reply, result );
 }
 
 

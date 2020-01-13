@@ -2,7 +2,7 @@ function dlgSettings( a_cb ){
     var content = "\
         User Interface<hr>\
         <table class='setting-table'>\
-            <tr><td>Transfer History:</td><td><select id='xfr-poll-hours'>\
+            <tr><td>Task History:</td><td><select id='task-poll-hours'>\
                 <option value='1'>1 Hour</option>\
                 <option value='12'>12 Hours</option>\
                 <option value='24'>1 Day</option>\
@@ -90,9 +90,9 @@ function dlgSettings( a_cb ){
                     reload = true;
                 }
 
-                tmp = $("#xfr-poll-hours",frame).val();
-                if ( tmp != g_opts.xfr_hist ){
-                    g_opts.xfr_hist = parseInt(tmp);
+                tmp = $("#task-poll-hours",frame).val();
+                if ( tmp != g_opts.task_hist ){
+                    g_opts.task_hist = parseInt(tmp);
                     save = true;
                 }
 
@@ -142,7 +142,7 @@ function dlgSettings( a_cb ){
         open: function(event,ui){
             $("#page-size",frame).val(g_opts.page_sz).selectmenu({width:150});
             $("#theme-sel",frame).val(g_theme).selectmenu({width:150});
-            $("#xfr-poll-hours",frame).val(g_opts.xfr_hist).selectmenu({width:150});
+            $("#task-poll-hours",frame).val(g_opts.task_hist).selectmenu({width:150});
             $("#def-alloc",frame).val(g_opts.def_alloc).selectmenu({width:225});
             $("#new_email",frame).val( g_user.email );
         }
