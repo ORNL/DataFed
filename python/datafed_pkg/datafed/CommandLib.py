@@ -369,7 +369,7 @@ class API:
     # @exception Exception: If both Globus and HTTP transfers are required
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataGet( self, item_id, path, encrypt = sdms.XE_AVAIL, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
+    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
@@ -417,9 +417,9 @@ class API:
                         print("")
                     xfr.to = data_file
                     xfr.updated = int(time.time())
-                    xfr.status = sdms.XS_SUCCEEDED
+                    xfr.status = sdms.TS_SUCCEEDED
                 except Exception as e:
-                    xfr.status = sdms.XS_FAILED
+                    xfr.status = sdms.TS_FAILED
                     xfr.err_msg = str(e)
                     xfr.updated = int(time.time())
 
@@ -498,7 +498,7 @@ class API:
     # @return A XfrDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataPut( self, data_id, path, encrypt = sdms.XE_AVAIL, wait = False, timeout_sec = 0, extension = None, context = None ):
+    def dataPut( self, data_id, path, encrypt = sdms.ENCRYPT_AVAIL, wait = False, timeout_sec = 0, extension = None, context = None ):
         msg = auth.DataPutRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.path = self._resolvePathForGlobus( path, False )

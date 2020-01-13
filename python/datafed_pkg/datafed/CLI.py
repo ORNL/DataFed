@@ -758,7 +758,7 @@ def _dataGet( df_id, path, wait, encrypt, context ):
 @click.option("-x", "--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-e","--encrypt",type=click.Choice(['0', '1', '2']),default='1',help="Encryption mode: 0 = none, 1 = if available (default), 2 = force.")
 @_global_context_options
-def _dataPut( data_id, path, wait, extension, context ):
+def _dataPut( data_id, path, wait, extension, encrypt, context ):
     '''
     Put (upload) raw data located at PATH to DataFed record ID.  The ID
     argument may be data record ID, alias, or index value from a listing.
@@ -768,7 +768,7 @@ def _dataPut( data_id, path, wait, extension, context ):
     argument, the current endpoint will be used.
     '''
 
-    reply = _capi.dataPut( _resolve_id( data_id ), path, encrypt= int(encrypt), wait = wait, extension = extension, context = context )
+    reply = _capi.dataPut( _resolve_id( data_id ), path, encrypt = int(encrypt), wait = wait, extension = extension, context = context )
     _generic_reply_handler( reply, _print_xfr_stat )
 
 

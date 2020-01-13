@@ -3,6 +3,7 @@
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
 #include "TaskMgr.hpp"
+#include "TaskWorker.hpp"
 #include "MsgComm.hpp"
 #include "Config.hpp"
 #include "SDMS.pb.h"
@@ -24,18 +25,18 @@ TaskMgr::TaskMgr():
 
     m_maint_thread = new thread( &TaskMgr::maintenanceThread, this );
 
-    lock_guard<mutex>   lock(m_worker_mutex);
+    unique_lock<mutex>   lock( m_worker_mutex );
 
     DL_DEBUG("TaskMgr creating " << m_config.num_task_worker_threads << " task worker threads." );
 
     for ( uint32_t i = 0; i < m_config.num_task_worker_threads; i++ )
     {
         worker = new TaskWorker( *this, i );
-
         if ( i )
         {
-            worker->m_prev = m_workers.back();
-            worker->m_prev->m_next = worker;
+            m_workers.back()->m_next = worker;
+            //worker->m_prev = m_workers.back();
+            //worker->m_prev->m_next = worker;
         }
 
         m_workers.push_back( worker );
@@ -43,7 +44,13 @@ TaskMgr::TaskMgr():
 
     m_worker_next = m_workers.front();
 
-    loadReadyTasks();
+    lock.unlock();
+
+    // Load ready & running tasks and schedule workers
+    DatabaseClient  db( m_config.db_url, m_config.db_user, m_config.db_pass );
+    libjson::Value tasks;
+    db.taskLoadReady( tasks );
+    newTasks( tasks );
 }
 
 TaskMgr::~TaskMgr()
@@ -74,7 +81,7 @@ TaskMgr::maintenanceThread()
     multimap<timepoint_t,Task*>::iterator   t;
     unique_lock<mutex>                      sched_lock( m_worker_mutex, defer_lock );
     unique_lock<mutex>                      maint_lock( m_maint_mutex );
-    TaskWorker *                            worker;
+    //TaskWorker *                            worker;
 
     while( 1 )
     {
@@ -123,7 +130,7 @@ TaskMgr::maintenanceThread()
         // Reschedule tasks for retry
         DL_INFO( "MAINT: tasks in retry queue: " << m_tasks_retry.size() );
 
-        worker = m_worker_next;
+        //worker = m_worker_next;
 
         for ( t = m_tasks_retry.begin(); t != m_tasks_retry.end(); )
         {
@@ -131,14 +138,8 @@ TaskMgr::maintenanceThread()
             {
                 DL_INFO( "MAINT: rescheduling failed task " << t->second->task_id );
 
-                m_tasks_ready.push_back( t->second );
+                retryTaskAndScheduleWorker( t->second );
                 t = m_tasks_retry.erase( t );
-                if ( worker )
-                {
-                    DL_DEBUG("Waking task worker " << worker->id() );
-                    worker->wake();
-                    worker = worker->m_next;
-                }
             }
             else
                 break;
@@ -151,34 +152,15 @@ TaskMgr::maintenanceThread()
 }
 
 
-void
-TaskMgr::loadReadyTasks()
-{
-    DL_DEBUG("TaskMgr loading ready tasks");
-
-    libjson::Value  tasks;
-    TaskWorker * worker = m_worker_next;
-    DatabaseClient  db( m_config.db_url, m_config.db_user, m_config.db_pass );
-
-    db.taskLoadReady( tasks );
-
-    libjson::Value::Array & arr = tasks.getArray();
-
-    DL_INFO( "Loaded " << arr.size() << " ready/running tasks" );
-
-    for ( libjson::Value::ArrayIter t = arr.begin(); t != arr.end(); t++ )
-    {
-        m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
-        if ( worker )
-        {
-            DL_DEBUG("Waking task worker " << worker->id() );
-            worker->wake();
-            worker = worker->m_next;
-        }
-    }
-}
-
-
+/**
+ * @brief Public method to add a new task to the "ready" queue
+ * @param a_task - JSON task descriptor for NEW and READY task
+ *
+ * Adds task to ready queue and schedules a worker if available. Called by
+ * ClientWorkers or other external entities.
+ *
+ * NOTE: Takes ownership of JSON value leaving a NULL value in place.
+ */
 void
 TaskMgr::newTask( libjson::Value & a_task )
 {
@@ -186,15 +168,19 @@ TaskMgr::newTask( libjson::Value & a_task )
 
     lock_guard<mutex> lock( m_worker_mutex );
 
-    m_tasks_ready.push_back( new Task( a_task["id"].asString(), a_task ));
-    if ( m_worker_next )
-    {
-        DL_DEBUG("Waking task worker " << m_worker_next->id() );
-        m_worker_next->wake();
-    }
+    addNewTaskAndScheduleWorker( a_task );
 }
 
-
+/**
+ * @brief Internal method to add one or more new tasks
+ * 
+ * @param a_tasks JSON array of task descriptors for NEW and READY tasks
+ *
+ * Adds task(s) to ready queue and schedules workers if available. Called by
+ * TaskWorkers after finalizing a task returns new and/or unblocked tasks.
+ *
+ * NOTE: Takes ownership of JSON values leaving NULL values in place.
+ */
 void
 TaskMgr::newTasks( libjson::Value & a_tasks )
 {
@@ -207,8 +193,46 @@ TaskMgr::newTasks( libjson::Value & a_tasks )
 
     for ( ; t != arr.end(); t++ )
     {
-        m_tasks_ready.push_back( new Task( a_task["id"].asString(), a_task ));
-        wakeNextWorker();
+        addNewTaskAndScheduleWorker( *t );
+    }
+}
+
+
+/**
+ * @brief Private method to add task and schedule
+ * 
+ * @param a_task - JSON task descriptor
+ *
+ * NOTE: must be called with m_worker_mutex held by caller
+ * NOTE: Takes ownership of JSON values leaving NULL values in place.
+ */
+void
+TaskMgr::addNewTaskAndScheduleWorker( libjson::Value & a_task )
+{
+    // TODO Add logic to limit max number of ready tasks in memory
+
+    m_tasks_ready.push_back( new Task( a_task["id"].asString(), a_task ));
+
+    if ( m_worker_next )
+    {
+        DL_DEBUG("Waking task worker " << m_worker_next->id() );
+        m_worker_next->m_run = true;
+        m_worker_next->m_cvar.notify_one();
+        m_worker_next = m_worker_next->m_next?m_worker_next->m_next:0;
+    }
+}
+
+void
+TaskMgr::retryTaskAndScheduleWorker( Task * a_task )
+{
+    m_tasks_ready.push_back( a_task );
+
+    if ( m_worker_next )
+    {
+        DL_DEBUG("Waking task worker " << m_worker_next->id() );
+        m_worker_next->m_run = true;
+        m_worker_next->m_cvar.notify_one();
+        m_worker_next = m_worker_next->m_next?m_worker_next->m_next:0;
     }
 }
 
@@ -251,9 +275,17 @@ TaskMgr::cancelTask( const std::string & a_task_id )
 */
 }
 
-
+/**
+ * @brief Get a ready task or block until one is available
+ * @param a_worker - Task worker to receive task
+ * @return Task instance
+ *
+ * Task workers call this method to get new tasks to process. If one
+ * is available, it is returned directly; otherwise the worker is
+ * descheduled until one becomes available.
+ */
 TaskMgr::Task *
-TaskMgr::getNextTask( TaskWorker * a_worker )
+TaskMgr::getNextTask( ITaskWorker * a_worker )
 {
     Task * task = 0;
 
@@ -261,27 +293,34 @@ TaskMgr::getNextTask( TaskWorker * a_worker )
 
     if ( m_tasks_ready.empty() )
     {
-        // Put worker at front of ready worker queue
+        // No work right now, put worker at front of ready worker queue
+        a_worker->m_run = false;
         a_worker->m_next = m_worker_next;
         m_worker_next = a_worker;
 
-        // Sleep until work available
-        while ( m_tasks_ready.empty() )
-            a_worker->sleep( lock );
+        // Sleep until work available, run flag suppresses spurious wakes
+        while ( m_tasks_ready.empty() || !a_worker->m_run )
+            a_worker->m_cvar.wait( lock );
 
-        // Remove worker from ready queue
-        //m_tasks_ready.erase( t );
+        // No need to remove worker from ready queue, TaskMgr does that when worker is scheduled
     }
 
     // Pop next task from ready queue and place in running map
     task = m_tasks_ready.front();
     m_tasks_ready.pop_front();
-    //m_tasks_running[task->task_id] = task;
 
     return task;
 }
 
 
+/**
+ * @brief Submit a task with a transient failure for later retry
+ * 
+ * @param a_task - task to retry
+ * @return true if task has expired and should be failed, false otherwise
+ *
+ * Called by task workers on transient failures.
+ */
 bool
 TaskMgr::retryTask( Task * a_task )
 {

@@ -3,10 +3,19 @@
 
 #include <string>
 #include "libjson.hpp"
+#include "ITaskWorker.hpp"
 
 namespace SDMS {
 namespace Core {
 
+/**
+ * @brief Interface use by TaskWorkers to interact with TaskMgr
+ * 
+ * This interface is "private" for TaskWorkers only, not for external clients
+ * of the TaskMgr (i.e. ClientWorkers). Provides worker scheduling and work
+ * work assignment methods. Also defines a task control structure for ready
+ * and running tasks.
+ */
 class ITaskMgr
 {
 public:
@@ -30,10 +39,9 @@ public:
         timepoint_t         retry_fail_time;
     };
 
-    virtual Task *      getNextTask() = 0;
-    virtual bool        retryTask() = 0;
-    virtual void        newTasks( libjson::Value & a_tasks );
-
+    virtual Task *      getNextTask( ITaskWorker * a_worker ) = 0;
+    virtual bool        retryTask( Task * a_task ) = 0;
+    virtual void        newTasks( libjson::Value & a_tasks ) = 0;
 };
 
 }}

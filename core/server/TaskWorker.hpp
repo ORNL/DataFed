@@ -3,7 +3,6 @@
 
 #include <string>
 #include <thread>
-#include <condition_variable>
 #include "CoreDatabaseClient.hpp"
 #include "GlobusAPI.hpp"
 #include "ITaskMgr.hpp"
@@ -18,24 +17,6 @@ public:
 
     TaskWorker( ITaskMgr & a_mgr, uint32_t a_id );
     ~TaskWorker();
-
-    inline uint32_t
-    id()
-    {
-        return m_worker_id;
-    }
-
-    inline void
-    sleep( std::unique_lock<std::mutex> & a_lock )
-    {
-        m_cvar.wait( a_lock );
-    }
-
-    inline void
-    wake()
-    {
-        m_cvar.notify_one();
-    }
 
 private:
 
@@ -55,9 +36,7 @@ private:
     void        finalizeTask( bool a_succeeded, const std::string & a_msg );
 
     ITaskMgr &                  m_mgr;
-    uint32_t                    m_worker_id;
     std::thread *               m_thread;
-    std::condition_variable     m_cvar;
     ITaskMgr::Task *            m_task;
     DatabaseClient              m_db;
     GlobusAPI                   m_glob;

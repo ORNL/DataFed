@@ -12,7 +12,7 @@
 #include <condition_variable>
 #include <libjson.hpp>
 #include "ITaskMgr.hpp"
-#include "TaskWorker.hpp"
+#include "ITaskWorker.hpp"
 #include "Config.hpp"
 #include "SDMS_Auth.pb.h"
 #include "SDMS.pb.h"
@@ -37,10 +37,13 @@ private:
     ~TaskMgr();
 
     void        maintenanceThread();
+    void        newTasks( libjson::Value & a_tasks );
+    void        addNewTaskAndScheduleWorker( libjson::Value & a_task );
+    void        retryTaskAndScheduleWorker( Task * a_task );
+
     void        wakeNextWorker();
-    void        loadReadyTasks();
-    Task *      getNextTask();
-    bool        retryTask();
+    Task *      getNextTask( ITaskWorker * a_worker );
+    bool        retryTask( Task * a_task );
 
 
     Config &                            m_config;
@@ -48,9 +51,9 @@ private:
     std::multimap<timepoint_t,Task*>    m_tasks_retry;
     //std::map<std::string,Task*>         m_tasks_running;
     std::mutex                          m_worker_mutex;
-    std::vector<TaskWorker*>            m_workers;
+    std::vector<ITaskWorker*>           m_workers;
     //std::list<TaskWorker*>              m_ready_workers;
-    TaskWorker *                        m_worker_next;
+    ITaskWorker *                       m_worker_next;
     std::thread *                       m_maint_thread;
     std::mutex                          m_maint_mutex;
     std::condition_variable             m_maint_cvar;

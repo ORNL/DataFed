@@ -1,11 +1,17 @@
+#include "unistd.h"
+#include "DynaLog.hpp"
+#include "Config.hpp"
+#include "ITaskMgr.hpp"
 #include "TaskWorker.hpp"
+
+using namespace std;
 
 namespace SDMS {
 namespace Core {
 
 TaskWorker::TaskWorker( ITaskMgr & a_mgr, uint32_t a_worker_id ) :
+    ITaskWorker( a_worker_id ),
     m_mgr( a_mgr ),
-    m_worker_id( a_worker_id ),
     m_thread( 0 ),
     m_db( Config::getInstance().db_url , Config::getInstance().db_user, Config::getInstance().db_pass )
 {
@@ -24,14 +30,14 @@ TaskWorker::workerThread()
     bool                success, retry = false;
     string              msg;
 
-    DL_DEBUG( "Task worker " << m_worker_id << " started." )
+    DL_DEBUG( "Task worker " << id() << " started." )
 
     while( 1 )
     {
-        m_task = getNextTask();
+        m_task = m_mgr.getNextTask( this );
 
 
-        DL_DEBUG("Task worker " << m_worker_id << " handling new task " << m_task->task_id );
+        DL_DEBUG("Task worker " << id() << " handling new task " << m_task->task_id );
 
         try
         {
@@ -67,12 +73,12 @@ TaskWorker::workerThread()
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "Task handler error,  worker " << m_worker_id );
+            DL_ERROR( "Task handler error,  worker " << id() );
             msg = e.toString( );
         }
         catch( exception & e )
         {
-            DL_ERROR( "Task handler error, worker " << m_worker_id );
+            DL_ERROR( "Task handler error, worker " << id() );
             msg = e.what();
         }
 
@@ -103,7 +109,7 @@ TaskWorker::workerThread()
 void
 TaskWorker::finalizeTask( bool a_succeeded, const std::string & a_msg )
 {
-    DL_DEBUG("TaskWorker finalizeTask " << m_task->task_id );
+    DL_DEBUG( "TaskWorker finalizeTask " << m_task->task_id );
 
     libjson::Value new_tasks;
 
@@ -112,7 +118,8 @@ TaskWorker::finalizeTask( bool a_succeeded, const std::string & a_msg )
         m_db.taskFinalize( m_task->task_id, a_succeeded, a_msg, new_tasks );
 
         DL_DEBUG("found " << new_tasks.size() << " new ready tasks." );
-
+        m_mgr.newTasks( new_tasks );
+/*
         lock_guard<mutex> lock(m_worker_mutex);
 
         libjson::Value::Array & tasks = new_tasks.getArray();
@@ -120,6 +127,7 @@ TaskWorker::finalizeTask( bool a_succeeded, const std::string & a_msg )
         {
             m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
         }
+*/
     }
     catch( TraceException & e )
     {
@@ -164,7 +172,7 @@ TaskWorker::handleDataGet( )
     DL_DEBUG( "state: " << state.toString() );
 
     m_db.setClient( uid );
-    getUserAccessToken( worker, uid );
+    getUserAccessToken( uid );
 
     // Check destination endpoint
     m_glob.getEndpointInfo( dst_ep, m_access_token, ep_info );
@@ -255,7 +263,7 @@ TaskWorker::handleDataGet( )
         }
 
         // Monitor Globus transfer
-        monitorTransfer( worker );
+        monitorTransfer();
 
         // Xfr SUCCEEDED
         upd_state.clear();
@@ -296,7 +304,7 @@ TaskWorker::handleDataPut()
     DL_DEBUG( "status: " << status << ", state: " << state.toString() );
 
     m_db.setClient( uid );
-    getUserAccessToken( worker, uid );
+    getUserAccessToken( uid );
 
     // Check destination endpoint
     m_glob.getEndpointInfo( src_ep, m_access_token, ep_info );
@@ -383,7 +391,7 @@ TaskWorker::handleDataPut()
     if ( xfr_status < GlobusAPI::XS_SUCCEEDED )
     {
         // Monitor Globus transfer, throws on failure, kills task
-        monitorTransfer( worker );
+        monitorTransfer();
 
         DL_INFO( "Upload completed!" );
 
@@ -402,7 +410,7 @@ TaskWorker::handleDataPut()
     DL_INFO( "Requesting file size" );
 
     // Request size from dst_repo
-    if ( refreshDataSize( worker, repo["repo_id"].asString(), file.at( "id" ).asString(), file.at( "to" ).asString( ), src_ep + file.at( "from" ).asString( ), state["ext"] ))
+    if ( refreshDataSize( repo["repo_id"].asString(), file.at( "id" ).asString(), file.at( "to" ).asString( ), src_ep + file.at( "from" ).asString( ), state["ext"] ))
         return true;
 
     prog = 100.0;
@@ -589,11 +597,13 @@ TaskWorker::monitorTransfer()
 bool
 TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply )
 {
-    map<string,RepoData*>::iterator rd = m_config.repos.find( a_repo_id );
-    if ( rd == m_config.repos.end() )
+    Config & config = Config::getInstance();
+
+    map<string,RepoData*>::iterator rd = config.repos.find( a_repo_id );
+    if ( rd == config.repos.end() )
         EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id );
 
-    MsgComm comm( rd->second->address(), MsgComm::DEALER, false, &m_config.sec_ctx );
+    MsgComm comm( rd->second->address(), MsgComm::DEALER, false, &config.sec_ctx );
 
     comm.send( a_msg );
 
