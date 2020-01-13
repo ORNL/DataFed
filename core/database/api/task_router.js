@@ -211,12 +211,10 @@ router.get('/list', function (req, res) {
                 a = true;
             }
 
-            if ( req.queryParams.server ){
-                qry += (a?" and":" ") + "@server in i.servers";
-                params.server =  req.queryParams.server;
-                a = true;
+            if ( req.queryParams.since != undefined ) {
+                filter += "i.ut >= " + ((Date.now()/1000) - req.queryParams.since);
             }
-
+        
             if ( req.queryParams.status ){
                 qry += (a?" and":" ") + "i.status in @status";
                 params.status =  req.queryParams.status;
@@ -234,8 +232,10 @@ router.get('/list', function (req, res) {
     }
 })
 .queryParam('user', joi.string().optional(), "Filter by user ID")
-.queryParam('server', joi.string().optional(), "Filter by server ID")
 .queryParam('status', joi.array().items(joi.number().integer()).optional(), "List of task states to retrieve.")
+.queryParam('since', joi.number().integer().min(0).optional(), "List tasks updated since this many seconds ago.")
+.queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(0).optional(), "Count")
 .summary('List task records')
 .description('List task records.');
 
