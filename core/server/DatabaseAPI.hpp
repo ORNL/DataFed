@@ -1,5 +1,5 @@
-#ifndef CENTRALDBCLIENT_HPP
-#define CENTRALDBCLIENT_HPP
+#ifndef DATABASEAPI_HPP
+#define DATABASEAPI_HPP
 
 
 #include <string>
@@ -13,7 +13,7 @@
 namespace SDMS {
 namespace Core {
 
-class DatabaseClient
+class DatabaseAPI
 {
 public:
     struct UserTokenInfo
@@ -24,8 +24,8 @@ public:
         uint32_t    expiration;
     };
 
-    DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
-    ~DatabaseClient();
+    DatabaseAPI( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
+    ~DatabaseAPI();
 
     void setClient( const std::string & a_client );
     void clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply );

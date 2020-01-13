@@ -57,7 +57,7 @@ ClientWorker::wait()
 }
 
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseClient::func>
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
 
 void
 ClientWorker::setupMsgHandlers()
@@ -295,7 +295,7 @@ else { \
 return send_reply;
 
 
-template<typename RQ, typename RP, void (DatabaseClient::*func)( const RQ &, RP &)>
+template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
 bool
 ClientWorker::dbPassThrough( const std::string & a_uid )
 {

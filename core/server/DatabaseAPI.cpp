@@ -5,7 +5,7 @@
 #include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
-#include "CoreDatabaseClient.hpp"
+#include "DatabaseAPI.hpp"
 
 using namespace std;
 
@@ -15,7 +15,7 @@ namespace Core {
 using namespace SDMS::Auth;
 using namespace libjson;
 
-DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
+DatabaseAPI::DatabaseAPI( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_client(0), m_db_url(a_db_url)
 {
     m_curl = curl_easy_init();
@@ -32,7 +32,7 @@ DatabaseClient::DatabaseClient( const std::string & a_db_url, const std::string 
     curl_easy_setopt( m_curl, CURLOPT_TCP_NODELAY, 1 );
 }
 
-DatabaseClient::~DatabaseClient()
+DatabaseAPI::~DatabaseAPI()
 {
     if ( m_client )
         curl_free( m_client );
@@ -41,7 +41,7 @@ DatabaseClient::~DatabaseClient()
 }
 
 void
-DatabaseClient::setClient( const std::string & a_client )
+DatabaseAPI::setClient( const std::string & a_client )
 {
     m_client_uid = a_client.size()?(string("u/") + a_client):"";
     if ( m_client )
@@ -51,7 +51,7 @@ DatabaseClient::setClient( const std::string & a_client )
 }
 
 long
-DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
+DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
 {
     string  url;
     string  res_json;
@@ -133,7 +133,7 @@ DatabaseClient::dbGet( const char * a_url_path, const vector<pair<string,string>
 
 
 bool
-DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
+DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
 {
     string  url;
     char    error[CURL_ERROR_SIZE];
@@ -180,7 +180,7 @@ DatabaseClient::dbGetRaw( const char * a_url_path, const vector<pair<string,stri
 }
 
 long
-DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
+DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
 {
     //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
 
@@ -262,7 +262,7 @@ DatabaseClient::dbPost( const char * a_url_path, const vector<pair<string,string
 }
 
 void
-DatabaseClient::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
+DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
 {
     Value result;
 
@@ -271,7 +271,7 @@ DatabaseClient::clientAuthenticateByPassword( const std::string & a_password, An
 }
 
 void
-DatabaseClient::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply )
+DatabaseAPI::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply )
 {
     Value result;
 
@@ -280,14 +280,14 @@ DatabaseClient::clientAuthenticateByToken( const std::string & a_token, Anon::Au
 }
 
 void
-DatabaseClient::setAuthStatus( Anon::AuthStatusReply & a_reply, Value & a_result )
+DatabaseAPI::setAuthStatus( Anon::AuthStatusReply & a_reply, Value & a_result )
 {
     a_reply.set_uid( a_result["uid"].asString() );
     a_reply.set_auth( a_result["authorized"].asBool());
 }
 
 void
-DatabaseClient::clientLinkIdentity( const std::string & a_identity )
+DatabaseAPI::clientLinkIdentity( const std::string & a_identity )
 {
     Value result;
 
@@ -295,13 +295,13 @@ DatabaseClient::clientLinkIdentity( const std::string & a_identity )
 }
 
 bool
-DatabaseClient::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
+DatabaseAPI::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
 {
     return dbGetRaw( "usr/find/by_pub_key", {{"pub_key",a_pub_key}}, a_uid );
 }
 
 bool
-DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
+DatabaseAPI::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 {
     Value result;
 
@@ -325,7 +325,7 @@ DatabaseClient::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 }
 
 void
-DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key )
+DatabaseAPI::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key )
 {
     Value result;
 
@@ -333,7 +333,7 @@ DatabaseClient::userSetKeys( const std::string & a_pub_key, const std::string & 
 }
 
 void
-DatabaseClient::userClearKeys()
+DatabaseAPI::userClearKeys()
 {
     Value result;
 
@@ -342,7 +342,7 @@ DatabaseClient::userClearKeys()
 
 
 void
-DatabaseClient::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in )
+DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in )
 {
     Value result;
     dbGet( "usr/token/get", {}, result );
@@ -363,28 +363,28 @@ DatabaseClient::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref
 
 /*
 bool
-DatabaseClient::userGetAccessToken( std::string & a_acc_tok )
+DatabaseAPI::userGetAccessToken( std::string & a_acc_tok )
 {
     return dbGetRaw( "usr/token/get/access", {}, a_acc_tok );
 }
 */
 
 void
-DatabaseClient::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
+DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
 {
     string result;
     dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok},{"expires_in",to_string(a_expires_in)}}, result );
 }
 
 void
-DatabaseClient::userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply )
 {
     (void)a_reply;
     userSetAccessToken( a_request.access(), a_request.expires_in(), a_request.refresh() );
 }
 
 void
-DatabaseClient::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInfo> & a_expiring_tokens )
+DatabaseAPI::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInfo> & a_expiring_tokens )
 {
     Value result;
     dbGet( "usr/token/get/expiring", {{"expires_in",to_string(a_expires_in)}}, result );
@@ -415,14 +415,14 @@ DatabaseClient::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserToken
 }
 
 void
-DatabaseClient::purgeTransferRecords( size_t age )
+DatabaseAPI::purgeTransferRecords( size_t age )
 {
     string result;
     dbGetRaw( "xfr/purge", {{"age",to_string(age)}}, result );
 }
 
 void
-DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     params.push_back({"uid",a_request.uid()});
@@ -449,7 +449,7 @@ DatabaseClient::userCreate( const Auth::UserCreateRequest & a_request, Auth::Use
 
 
 void
-DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
+DatabaseAPI::userView( const UserViewRequest & a_request, UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
@@ -464,7 +464,7 @@ DatabaseClient::userView( const UserViewRequest & a_request, UserDataReply & a_r
 
 
 void
-DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply & a_reply )
+DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, UserDataReply & a_reply )
 {
     Value result;
 
@@ -484,7 +484,7 @@ DatabaseClient::userUpdate( const UserUpdateRequest & a_request, UserDataReply &
 
 
 void
-DatabaseClient::userListAll( const UserListAllRequest & a_request, UserDataReply & a_reply )
+DatabaseAPI::userListAll( const UserListAllRequest & a_request, UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     if ( a_request.has_offset() && a_request.has_count() )
@@ -500,7 +500,7 @@ DatabaseClient::userListAll( const UserListAllRequest & a_request, UserDataReply
 }
 
 void
-DatabaseClient::userListCollab( const UserListCollabRequest & a_request, UserDataReply & a_reply )
+DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, UserDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -515,7 +515,7 @@ DatabaseClient::userListCollab( const UserListCollabRequest & a_request, UserDat
 }
 
 void
-DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
 {
     string uuids = "[";
 
@@ -535,7 +535,7 @@ DatabaseClient::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request,
 }
 
 void
-DatabaseClient::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply )
+DatabaseAPI::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply )
 {
     (void)a_request;
     Value result;
@@ -558,7 +558,7 @@ DatabaseClient::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request,
 }
 
 void
-DatabaseClient::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply )
 {
     (void) a_reply;
     Value result;
@@ -576,7 +576,7 @@ DatabaseClient::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request,
 }
 
 void
-DatabaseClient::setUserData( UserDataReply & a_reply, Value & a_result )
+DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
 {
     UserData*           user;
     AllocData*          alloc;
@@ -654,7 +654,7 @@ DatabaseClient::setUserData( UserDataReply & a_reply, Value & a_result )
 }
 
 void
-DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -703,7 +703,7 @@ DatabaseClient::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::
 }
 
 void
-DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -754,7 +754,7 @@ DatabaseClient::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::
 }
 
 void
-DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     dbGet( "prj/view", {{"id",a_request.id()}}, result );
@@ -763,7 +763,7 @@ DatabaseClient::projView( const Auth::ProjectViewRequest & a_request, Auth::Proj
 }
 
 void
-DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -790,7 +790,7 @@ DatabaseClient::projList( const Auth::ProjectListRequest & a_request, Auth::List
 }
 
 void
-DatabaseClient::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
 {
     Value result;
 
@@ -800,7 +800,7 @@ DatabaseClient::projSearch( const std::string & a_query, Auth::ProjectDataReply 
 }
 
 void
-DatabaseClient::setProjectData( ProjectDataReply & a_reply, Value & a_result )
+DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 {
     ProjectData*        proj;
     AllocData*          alloc;
@@ -885,7 +885,7 @@ DatabaseClient::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 }
 
 void
-DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingReply & a_reply )
+DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -904,7 +904,7 @@ DatabaseClient::recordSearch( const RecordSearchRequest & a_request, ListingRepl
 }
 
 void
-DatabaseClient::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -921,7 +921,7 @@ DatabaseClient::recordListByAlloc( const Auth::RecordListByAllocRequest & a_requ
 }
 
 void
-DatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
+DatabaseAPI::recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
 {
     Value result;
 
@@ -931,7 +931,7 @@ DatabaseClient::recordView( const RecordViewRequest & a_request, RecordDataReply
 }
 
 void
-DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -970,7 +970,7 @@ DatabaseClient::recordCreate( const Auth::RecordCreateRequest & a_request, Auth:
 }
 
 void
-DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -980,7 +980,7 @@ DatabaseClient::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_requ
 }
 
 void
-DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -1048,7 +1048,7 @@ DatabaseClient::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth:
 }
 
 void
-DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
     // "records" field is a JSON document - send directly to DB
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
@@ -1057,7 +1057,7 @@ DatabaseClient::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_requ
 }
 
 void
-DatabaseClient::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext )
+DatabaseAPI::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext )
 {
     libjson::Value result;
 
@@ -1071,7 +1071,7 @@ DatabaseClient::recordUpdatePostPut( const std::string & a_data_id, size_t a_fil
 
 
 void
-DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     string ids;
@@ -1097,7 +1097,7 @@ DatabaseClient::recordLock( const Auth::RecordLockRequest & a_request, Auth::Lis
 }
 
 void
-DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1107,7 +1107,7 @@ DatabaseClient::recordGetDependencies( const Auth::RecordGetDependenciesRequest 
 }
 
 void
-DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1117,7 +1117,7 @@ DatabaseClient::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRe
 }
 
 void
-DatabaseClient::setRecordData( RecordDataReply & a_reply, Value & a_result )
+DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
 {
     RecordData *        rec;
     DependencyData *    deps;
@@ -1219,7 +1219,7 @@ DatabaseClient::setRecordData( RecordDataReply & a_reply, Value & a_result )
 
 
 void
-DatabaseClient::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply )
+DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply )
 {
     Value result;
 
@@ -1229,7 +1229,7 @@ DatabaseClient::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPat
 }
 
 void
-DatabaseClient::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1259,7 +1259,7 @@ DatabaseClient::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, A
 }
 
 void
-DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_reply )
+DatabaseAPI::collList( const CollListRequest & a_request, CollDataReply & a_reply )
 {
     Value result;
 
@@ -1272,7 +1272,7 @@ DatabaseClient::collList( const CollListRequest & a_request, CollDataReply & a_r
 }
 
 void
-DatabaseClient::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1285,7 +1285,7 @@ DatabaseClient::collListPublished( const Auth::CollListPublishedRequest & a_requ
 }
 
 void
-DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1306,7 +1306,7 @@ DatabaseClient::collCreate( const Auth::CollCreateRequest & a_request, Auth::Col
 }
 
 void
-DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1328,7 +1328,7 @@ DatabaseClient::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::Col
 
 
 void
-DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1338,7 +1338,7 @@ DatabaseClient::collView( const Auth::CollViewRequest & a_request, Auth::CollDat
 }
 
 void
-DatabaseClient::collRead( const CollReadRequest & a_request, ListingReply & a_reply )
+DatabaseAPI::collRead( const CollReadRequest & a_request, ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1354,7 +1354,7 @@ DatabaseClient::collRead( const CollReadRequest & a_request, ListingReply & a_re
 }
 
 void
-DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::collWrite( const CollWriteRequest & a_request, Auth::ListingReply & a_reply )
 {
     string add_list, rem_list;
 
@@ -1396,7 +1396,7 @@ DatabaseClient::collWrite( const CollWriteRequest & a_request, Auth::ListingRepl
 }
 
 void
-DatabaseClient::collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply )
 {
     (void) a_reply;
 
@@ -1419,7 +1419,7 @@ DatabaseClient::collMove( const Auth::CollMoveRequest & a_request, Anon::AckRepl
 }
 
 void
-DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
+DatabaseAPI::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1433,7 +1433,7 @@ DatabaseClient::collGetParents( const Auth::CollGetParentsRequest & a_request, A
 }
 
 void
-DatabaseClient::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply )
+DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply )
 {
     Value result;
 
@@ -1445,7 +1445,7 @@ DatabaseClient::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Aut
 }
 
 void
-DatabaseClient::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
 {
     CollData* coll;
     Value::ObjectIter j;
@@ -1494,7 +1494,7 @@ DatabaseClient::setCollData( CollDataReply & a_reply, libjson::Value & a_result 
 }
 
 void
-DatabaseClient::setCollPathData( CollPathReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setCollPathData( CollPathReply & a_reply, libjson::Value & a_result )
 {
     PathData *          path;
     ListingData *       item;
@@ -1534,7 +1534,7 @@ DatabaseClient::setCollPathData( CollPathReply & a_reply, libjson::Value & a_res
 }
 
 void
-DatabaseClient::setListingData( ListingReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setListingData( ListingReply & a_reply, libjson::Value & a_result )
 {
     ListingData *       item;
     DependencyData *    dep;
@@ -1613,7 +1613,7 @@ DatabaseClient::setListingData( ListingReply & a_reply, libjson::Value & a_resul
 }
 
 void
-DatabaseClient::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1628,7 +1628,7 @@ DatabaseClient::queryList( const Auth::QueryListRequest & a_request, Auth::Listi
 }
 
 void
-DatabaseClient::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
+DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1649,7 +1649,7 @@ DatabaseClient::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Q
 }
 
 void
-DatabaseClient::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
+DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1674,7 +1674,7 @@ DatabaseClient::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Q
 }
 
 void
-DatabaseClient::queryDelete( const std::string & a_id )
+DatabaseAPI::queryDelete( const std::string & a_id )
 {
     Value result;
 
@@ -1682,7 +1682,7 @@ DatabaseClient::queryDelete( const std::string & a_id )
 }
 
 void
-DatabaseClient::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply )
+DatabaseAPI::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
 
@@ -1692,7 +1692,7 @@ DatabaseClient::queryView( const Auth::QueryViewRequest & a_request, Auth::Query
 }
 
 void
-DatabaseClient::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1709,7 +1709,7 @@ DatabaseClient::queryExec( const Auth::QueryExecRequest & a_request, Auth::Listi
 }
 
 void
-DatabaseClient::setQueryData( QueryDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setQueryData( QueryDataReply & a_reply, libjson::Value & a_result )
 {
     QueryData *         qry;
     Value::ObjectIter   j;
@@ -1754,7 +1754,7 @@ DatabaseClient::setQueryData( QueryDataReply & a_reply, libjson::Value & a_resul
 
 
 void
-DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply )
+DatabaseAPI::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply )
 {
     libjson::Value result;
 
@@ -1765,7 +1765,7 @@ DatabaseClient::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataRe
 
 
 void
-DatabaseClient::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
+DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1781,7 +1781,7 @@ DatabaseClient::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDa
 }
 
 void
-DatabaseClient::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply )
+DatabaseAPI::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply )
 {
     (void)a_request;
     Value result;
@@ -1792,7 +1792,7 @@ DatabaseClient::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::User
 }
 
 void
-DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1802,7 +1802,7 @@ DatabaseClient::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Au
 }
 
 void
-DatabaseClient::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply )
+DatabaseAPI::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply )
 {
     (void)a_request;
     Value result;
@@ -1813,7 +1813,7 @@ DatabaseClient::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::Proj
 }
 
 void
-DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1823,7 +1823,7 @@ DatabaseClient::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Au
 }
 
 void
-DatabaseClient::setACLData( ACLDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setACLData( ACLDataReply & a_reply, libjson::Value & a_result )
 {
     ACLRule *           rule;
     Value::ObjectIter   j;
@@ -1854,7 +1854,7 @@ DatabaseClient::setACLData( ACLDataReply & a_reply, libjson::Value & a_result )
 
 
 void
-DatabaseClient::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply )
 {
     Value result;
 
@@ -1885,7 +1885,7 @@ DatabaseClient::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::G
 }
 
 void
-DatabaseClient::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply )
 {
     Value result;
 
@@ -1928,7 +1928,7 @@ DatabaseClient::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::G
 }
 
 void
-DatabaseClient::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
 {
     (void) a_reply;
     Value result;
@@ -1942,7 +1942,7 @@ DatabaseClient::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::A
 }
 
 void
-DatabaseClient::groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply )
 {
     (void) a_request;
 
@@ -1957,7 +1957,7 @@ DatabaseClient::groupList( const Auth::GroupListRequest & a_request, Auth::Group
 }
 
 void
-DatabaseClient::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1971,7 +1971,7 @@ DatabaseClient::groupView( const Auth::GroupViewRequest & a_request, Auth::Group
 }
 
 void
-DatabaseClient::setGroupData( GroupDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setGroupData( GroupDataReply & a_reply, libjson::Value & a_result )
 {
     GroupData *         group;
     Value::ObjectIter   j;
@@ -2015,7 +2015,7 @@ DatabaseClient::setGroupData( GroupDataReply & a_reply, libjson::Value & a_resul
 }
 
 void
-DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2030,7 +2030,7 @@ DatabaseClient::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDat
 }
 
 void
-DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
+DatabaseAPI::repoList( std::vector<RepoData*> & a_repos )
 {
     Value result;
 
@@ -2040,7 +2040,7 @@ DatabaseClient::repoList( std::vector<RepoData*> & a_repos )
 }
 
 void
-DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
     Value result;
 
@@ -2050,7 +2050,7 @@ DatabaseClient::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDat
 }
 
 void
-DatabaseClient::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
     Value result;
 
@@ -2088,7 +2088,7 @@ DatabaseClient::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::Rep
 }
 
 void
-DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
     Value result;
 
@@ -2131,7 +2131,7 @@ DatabaseClient::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::Rep
 }
 
 void
-DatabaseClient::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void) a_reply;
     Value result;
@@ -2140,7 +2140,7 @@ DatabaseClient::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::Ack
 }
 
 void
-DatabaseClient::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply )
+DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply )
 {
     Value result;
 
@@ -2178,7 +2178,7 @@ DatabaseClient::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth:
 
 
 void
-DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result )
+DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result )
 {
     if ( !a_reply && !a_repos )
         EXCEPT( ID_INTERNAL_ERROR, "Missing parameters" );
@@ -2250,7 +2250,7 @@ DatabaseClient::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData
 }
 
 void
-DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseAPI::repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     Value result;
 
@@ -2260,7 +2260,7 @@ DatabaseClient::repoListAllocations( const Auth::RepoListAllocationsRequest & a_
 }
 
 void
-DatabaseClient::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseAPI::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2277,7 +2277,7 @@ DatabaseClient::repoListSubjectAllocations( const Auth::RepoListSubjectAllocatio
 }
 
 void
-DatabaseClient::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseAPI::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     Value result;
 
@@ -2288,7 +2288,7 @@ DatabaseClient::repoListObjectAllocations( const Auth::RepoListObjectAllocations
 
 
 void
-DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result )
 {
     AllocData *         alloc;
     Value::ObjectIter   j;
@@ -2333,7 +2333,7 @@ DatabaseClient::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Val
 }
 
 void
-DatabaseClient::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )
+DatabaseAPI::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2347,7 +2347,7 @@ DatabaseClient::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_re
 }
 
 void
-DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
+DatabaseAPI::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2361,14 +2361,14 @@ DatabaseClient::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_
 }
 
 void
-DatabaseClient::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result )
 {
     AllocStatsData * stats = a_reply.mutable_alloc();
     setAllocStatsData( a_result, *stats );
 }
 
 void
-DatabaseClient::setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats )
+DatabaseAPI::setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats )
 {
     Value::Object & obj = a_value.getObject();
 
@@ -2390,7 +2390,7 @@ DatabaseClient::setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_
 }
 
 void
-DatabaseClient::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void)a_reply;
     Value result;
@@ -2399,7 +2399,7 @@ DatabaseClient::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_requ
 }
 
 void
-DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
+DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2413,7 +2413,7 @@ DatabaseClient::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply
 }
 
 void
-DatabaseClient::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_reply )
+DatabaseAPI::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2427,7 +2427,7 @@ DatabaseClient::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_r
 }
 
 void
-DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void)a_reply;
     Value result;
@@ -2436,7 +2436,7 @@ DatabaseClient::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckRe
 }
 
 void
-DatabaseClient::topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply )
+DatabaseAPI::topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2498,7 +2498,7 @@ string parseTopic( const string & a_topic )
 }*/
 
 void
-DatabaseClient::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void) a_reply;
     Value result;
@@ -2507,7 +2507,7 @@ DatabaseClient::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckRe
 }
 
 void
-DatabaseClient::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void) a_reply;
     Value result;
@@ -2517,7 +2517,7 @@ DatabaseClient::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::A
 
 /*
 uint16_t
-DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
+DatabaseAPI::checkPerms( const string & a_id, uint16_t a_perms )
 {
     libjson::Value result;
 
@@ -2529,14 +2529,14 @@ DatabaseClient::checkPerms( const string & a_id, uint16_t a_perms )
 
 
 void
-DatabaseClient::taskLoadReady( libjson::Value & a_result )
+DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 {
     dbGet( "task/reload", {}, a_result );
 }
 
 
 void
-DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
@@ -2563,7 +2563,7 @@ DatabaseClient::taskInitDataGet( const std::vector<std::string> & a_ids, const s
 
 
 void
-DatabaseClient::taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[\"" + a_id + "\"],\"path\":\"";
     body += a_path;
@@ -2577,7 +2577,7 @@ DatabaseClient::taskInitDataPut( const std::string & a_id, const std::string & a
 }
 
 void
-DatabaseClient::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
+DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
@@ -2610,7 +2610,7 @@ DatabaseClient::taskInitRecordCollectionDelete( const std::vector<std::string> &
 
 
 void
-DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   t;
     Value::ArrayIter    k;
@@ -2650,7 +2650,7 @@ DatabaseClient::setTaskData( Auth::TaskReply & a_reply, libjson::Value & a_resul
 }
 
 void
-DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, const std::string * a_message, double * a_progress, libjson::Value * a_state )
+DatabaseAPI::taskUpdate( const std::string & a_id, TaskStatus * a_status, const std::string * a_message, double * a_progress, libjson::Value * a_state )
 {
     if ( !a_status && !a_progress && !a_state )
         return;
@@ -2690,7 +2690,7 @@ DatabaseClient::taskUpdate( const std::string & a_id, TaskStatus * a_status, con
 }
 
 void
-DatabaseClient::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result )
+DatabaseAPI::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result )
 {
    vector<pair<string,string>> params;
     params.push_back({ "task_id", a_task_id });

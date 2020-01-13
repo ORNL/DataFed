@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <zmq.h>
 #include "MsgComm.hpp"
-#include "CoreDatabaseClient.hpp"
+#include "DatabaseAPI.hpp"
 #include "ICoreServer.hpp"
 #include "GlobusAPI.hpp"
 
@@ -27,7 +27,7 @@ public:
 private:
     void setupMsgHandlers();
     void workerThread();
-    template<typename RQ, typename RP, void (DatabaseClient::*func)( const RQ &, RP &)>
+    template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
     bool dbPassThrough( const std::string & a_uid );
     bool procGetAuthStatusRequest( const std::string & a_uid );
     bool procStatusRequest( const std::string & a_uid );
@@ -75,7 +75,7 @@ private:
     size_t              m_tid;
     std::thread *       m_worker_thread;
     bool                m_run;
-    DatabaseClient      m_db_client;
+    DatabaseAPI         m_db_client;
     MsgBuf              m_msg_buf;
     GlobusAPI           m_globus_api;
 

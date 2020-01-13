@@ -7,7 +7,7 @@
 #include "TaskMgr.hpp"
 #include "ClientWorker.hpp"
 #include "MsgComm.hpp"
-#include "CoreDatabaseClient.hpp"
+#include "DatabaseAPI.hpp"
 
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
@@ -81,7 +81,7 @@ Server::loadRepositoryConfig()
 {
     DL_INFO("Loading repo configuration");
 
-    DatabaseClient  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
+    DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
 
     vector<RepoData*> repos;
 
@@ -243,7 +243,7 @@ Server::zapHandler()
         auth_client_map_t::iterator     iclient;
         trans_client_map_t::iterator    itrans_client;
         zmq_pollitem_t                  poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
-        DatabaseClient                  db( m_config.db_url, m_config.db_user, m_config.db_pass );
+        DatabaseAPI                  db( m_config.db_url, m_config.db_user, m_config.db_pass );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );

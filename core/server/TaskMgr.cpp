@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "TraceException.hpp"
 #include "DynaLog.hpp"
+#include "DatabaseAPI.hpp"
 #include "TaskMgr.hpp"
 #include "TaskWorker.hpp"
 #include "MsgComm.hpp"
@@ -47,7 +48,7 @@ TaskMgr::TaskMgr():
     lock.unlock();
 
     // Load ready & running tasks and schedule workers
-    DatabaseClient  db( m_config.db_url, m_config.db_user, m_config.db_pass );
+    DatabaseAPI  db( m_config.db_url, m_config.db_user, m_config.db_pass );
     libjson::Value tasks;
     db.taskLoadReady( tasks );
     newTasks( tasks );

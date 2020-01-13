@@ -3,7 +3,7 @@
 
 #include <string>
 #include <thread>
-#include "CoreDatabaseClient.hpp"
+#include "DatabaseAPI.hpp"
 #include "GlobusAPI.hpp"
 #include "ITaskMgr.hpp"
 #include "ITaskWorker.hpp"
@@ -38,7 +38,7 @@ private:
     ITaskMgr &                  m_mgr;
     std::thread *               m_thread;
     ITaskMgr::Task *            m_task;
-    DatabaseClient              m_db;
+    DatabaseAPI                 m_db;
     GlobusAPI                   m_glob;
     std::string                 m_glob_task_id;
     std::string                 m_access_token;
