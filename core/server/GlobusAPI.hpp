@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <curl/curl.h>
-#include <rapidjson/document.h>
+#include "libjson.hpp"
 #include "Config.hpp"
 #include "SDMS.pb.h"
 
@@ -55,7 +55,7 @@ public:
 
 private:
     long        get( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, std::string & a_result );
-    long        post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, std::string & a_result );
+    long        post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, std::string & a_result );
     std::string getSubmissionID( const std::string & a_acc_token );
     bool        eventsHaveErrors( const std::vector<std::string> & a_events, XfrStatus & status, std::string & a_err_msg );
 

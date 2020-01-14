@@ -1,8 +1,5 @@
 #include <iostream>
 #include <time.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/error/en.h>
 #include "GlobusAPI.hpp"
 #include "Util.hpp"
 #include "TraceException.hpp"
@@ -98,7 +95,7 @@ GlobusAPI::get( const std::string & a_base_url, const std::string & a_url_path, 
 }
 
 long
-GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const rapidjson::Document * a_body, string & a_result )
+GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, string & a_result )
 {
     string  url;
     char    error[CURL_ERROR_SIZE];
@@ -125,11 +122,6 @@ GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path,
         curl_free( esc_txt );
     }
 
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    if ( a_body )
-        a_body->Accept(writer);
-
     //curl_easy_setopt( m_curl, CURLOPT_VERBOSE, 1 );
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
@@ -137,7 +129,7 @@ GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path,
     curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
 
     if ( a_body )
-        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, buffer.GetString());
+        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body->toString() );
     else
         curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, "");
 
@@ -194,7 +186,7 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
         EXCEPT_PARAM( 1, "Globus Task API request failed, code: " << code );
     }
 
-    rapidjson::Document result;
+    libjson::Value result;
 
     if ( !raw_result.size() )
     {
@@ -203,23 +195,26 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
     }
 
     // Try to decode result as JSON - even if call failed
-    result.Parse( raw_result.c_str() );
-
-    if ( result.HasParseError() )
+    try
+    {
+        result.fromString( raw_result );
+    }
+    catch( libjson::ParseError & e )
     {
         DL_ERROR( "getSubmissionID - invalid JSON from Globus" );
-        EXCEPT_PARAM( 1, "Invalid response from Globus Task API." );
+        DL_DEBUG( "PARSE [" << raw_result << "]" );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from Globus Task API: " << e.toString( ));
     }
 
-    rapidjson::Value::MemberIterator imem = result.FindMember("value");
+    libjson::Value::ObjectIter i = result.find( "value" );
     
-    if ( imem == result.MemberEnd() )
+    if ( i == result.end() )
     {
         DL_ERROR( "getSubmissionID - missing content from Globus" );
         EXCEPT_PARAM( 1, "Invalid response from Globus Task API." );
     }
 
-    return imem->value.GetString();
+    return i->second.asString();
 }
 
 //GlobusAPI::transfer( SDMS::XfrData & a_xfr, const std::string & a_acc_token )
@@ -231,118 +226,79 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
 
     string sub_id = getSubmissionID( a_acc_token );
 
-    rapidjson::Document body;
-    rapidjson::Document::AllocatorType& allocator = body.GetAllocator();
+    libjson::Value body;
 
+    body.initObject();
+    body["DATA_TYPE"] = "transfer";
+    body["submission_id"] = sub_id;
+    body["source_endpoint"] = a_src_ep;
+    body["destination_endpoint"] = a_dst_ep;
+    body["verify_checksum"] = true;
+    body["notify_on_succeeded"] = false;
+    body["encrypt_data"] = a_encrypt;
 
-    body.SetObject();
-    body.AddMember( "DATA_TYPE", "transfer", allocator );
-    body.AddMember( "submission_id", rapidjson::StringRef( sub_id.c_str() ), allocator );
-    body.AddMember( "source_endpoint", rapidjson::StringRef( a_src_ep.c_str() ), allocator );
-    body.AddMember( "destination_endpoint", rapidjson::StringRef( a_dst_ep.c_str() ), allocator );
-    body.AddMember( "verify_checksum", true, allocator );
-    body.AddMember( "notify_on_succeeded", false, allocator );
-    body.AddMember( "encrypt_data", a_encrypt, allocator );
-
-    rapidjson::Value xfr_list;
-    xfr_list.SetArray();
+    libjson::Value::Array & xfr_list = body["DATA"].initArray();
+    xfr_list.reserve( a_files.size() );
 
     for ( vector<pair<string,string>>::const_iterator f = a_files.begin(); f != a_files.end(); f++ )
     {
         DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
 
-        rapidjson::Value xfr_item;
-        xfr_item.SetObject();
-        xfr_item.AddMember( "DATA_TYPE", "transfer_item", allocator );
-        xfr_item.AddMember( "source_path", rapidjson::StringRef( f->first.c_str( )), allocator );
-        xfr_item.AddMember( "destination_path", rapidjson::StringRef( f->second.c_str( )), allocator );
-        xfr_item.AddMember( "recursive", false, allocator );
-        xfr_list.PushBack( xfr_item, allocator );
+        libjson::Value xfr_item;
+        xfr_item.initObject();
+        xfr_item["DATA_TYPE"] = "transfer_item";
+        xfr_item["source_path"] = f->first;
+        xfr_item["destination_path"] = f->second;
+        xfr_item["recursive"] = false;
+        xfr_list.push_back( xfr_item );
+        DL_DEBUG("Is NULL after PUSH:" << xfr_item.isNull() );
     }
-
-    body.AddMember( "DATA", xfr_list, allocator );
-
-    //cout << "XFR REQUEST BODY:\n";
-    //rapidjson::StringBuffer buffer;
-    //rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    //body.Accept(writer);
-
-    // Output {"project":"rapidjson","stars":11}
-    //cout << buffer.GetString() << endl;
 
     string raw_result;
     long code = post( m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
 
-    // Try to decode result as JSON - even if call failed
-
-    rapidjson::Document result;
-
-    if ( raw_result.size() )
+    try
     {
-        result.Parse( raw_result.c_str() );
+        if ( !raw_result.size() )
+            EXCEPT( ID_SERVICE_ERROR, "Empty response." );
 
-        if ( result.HasParseError() )
+        libjson::Value result;
+
+        result.fromString( raw_result );
+
+        libjson::Value::Object & resp_obj = result.getObject();
+        libjson::Value::ObjectIter i;
+
+        if ( code >= 200 && code <= 202 )
         {
-            DL_ERROR( "Globus xfr call failed, returned invalid JSON." );
-            EXCEPT( 1, "Globus API call failed." );
-        }
-    }
+            i = resp_obj.find("code");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'code' field" );
 
-    rapidjson::Value::MemberIterator imem;
+            if ( i->second.asString().compare( "Accepted" ) != 0 )
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Request not accepted (" << i->second.asString() << ")" );
 
-    if ( code < 200 || code > 202 )
-    {
-        imem = result.FindMember("message");
-        if ( imem == result.MemberEnd() )
-        {
-            DL_ERROR( "Globus xfr call failed, code: " << code );
-            EXCEPT_PARAM( 1, "Globus Transfer API request failed, code: " << code );
+            i = resp_obj.find("task_id");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'task_id' field" );
+
+            return i->second.asString();
         }
+
+        i = resp_obj.find("message");
+        if ( i == resp_obj.end() )
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Code: " << code );
         else
-        {
-            DL_ERROR( "Globus Transfer API request failed, code: " << code << ", reason: " << imem->value.GetString() );
-            EXCEPT_PARAM( 1, imem->value.GetString() );
-        }
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Code: " << code << ", reason: " << i->second.asString() );
     }
-    else
+    catch( libjson::ParseError & e )
     {
-        imem = result.FindMember("DATA_TYPE");
-        if ( imem == result.MemberEnd() )
-        {
-            DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
-            EXCEPT( 1, "Invalid response from Globus Transfer API." );
-        }
-
-        imem = result.FindMember("code");
-        if ( imem == result.MemberEnd() )
-        {
-            DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
-            EXCEPT( 1, "Invalid response from Globus Transfer API." );
-        }
-
-        if ( strcmp( imem->value.GetString(), "Accepted" ) != 0 )
-        {
-            imem = result.FindMember("message");
-            if ( imem == result.MemberEnd() )
-            {
-                DL_ERROR( "Globus transfer request not accepted (no reason)." );
-                EXCEPT( 1, "Globus transfer request failed, no reason given." );
-            }
-            else
-            {
-                DL_ERROR( "Globus xfr req not accepted: " << imem->value.GetString() );
-                EXCEPT_PARAM( 1, imem->value.GetString() );
-            }
-        }
-
-        imem = result.FindMember("task_id");
-        if ( imem == result.MemberEnd() )
-        {
-            DL_ERROR( "Globus xfr req failed: invalid response from Globus." );
-            EXCEPT( 1, "Invalid response from Globus Transfer API." );
-        }
-
-        return imem->value.GetString();
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
+    }
+    catch( TraceException & e )
+    {
+        e.addContext( "Globus Transfer API call failed." );
+        throw;
     }
 }
 
@@ -358,54 +314,75 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
 
     //DL_INFO( "XFR STAT: " << raw_result );
 
-    if ( code < 200 || code > 202 )
-        EXCEPT( 1, "Unknown Globus event_list failure" );
-
-    rapidjson::Document result;
-
     if ( !raw_result.size() )
-        EXCEPT( 1, "Empty response from Globus for event_list" );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus get task events API call failed: empty response." );
 
-    // Try to decode result as JSON - even if call failed
-    result.Parse( raw_result.c_str() );
-
-    if ( result.HasParseError() )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
-
-
-    rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
-    if ( imem == result.MemberEnd() || strcmp( imem->value.GetString(), "event_list" ) != 0 )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
-
-    imem = result.FindMember("length");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
-
-    int len = imem->value.GetInt();
-    if ( len )
+    try
     {
-        imem = result.FindMember("DATA");
-        if ( imem == result.MemberEnd() )
-            EXCEPT( 1, "Invalid response from Globus Task API." );
+        libjson::Value result;
 
-        vector<string> events;
+        result.fromString( raw_result );
 
-        for ( int i = 0; i < len; i++ )
+        libjson::Value::Object & resp_obj = result.getObject();
+
+        if ( code >= 200 && code <= 202 )
         {
-            if ( imem->value[i]["is_error"].GetBool() )
-            {
-                a_status = XS_FAILED;
-                a_err_msg = imem->value[i]["details"].GetString();
-                return true;
-            }
+            libjson::Value::ObjectIter i;
 
-            events.push_back( imem->value[i]["code"].GetString());
+            i = resp_obj.find("DATA_TYPE");
+            if ( i != resp_obj.end() && i->second.asString().compare( "event_list" ) != 0 )
+            {
+                i = resp_obj.find("length");
+                if ( i != resp_obj.end() )
+                {
+                    int len = (int)i->second.asNumber();
+                    if ( len > 0 )
+                    {
+                        vector<string> events;
+
+                        // TODO FIX ME!!!!! (proper array iteration)
+                        for ( int i = 0; i < len; i++ )
+                        {
+                            if ( imem->value[i]["is_error"].GetBool() )
+                            {
+                                a_status = XS_FAILED;
+                                a_err_msg = imem->value[i]["details"].GetString();
+                                return true;
+                            }
+
+                            events.push_back( imem->value[i]["code"].GetString());
+                        }
+
+                        return eventsHaveErrors( events, a_status, a_err_msg );
+                    }
+                    return false;
+                }
+            }
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API returned invalid JSON." );
         }
 
-        return eventsHaveErrors( events, a_status, a_err_msg );
+        i = resp_obj.find("message");
+        if ( i == resp_obj.end() )
+        {
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code );
+        }
+        else
+        {
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code << ", reason: " << i->second.asString() );
+        }
     }
-
-    return false;
+    catch( libjson::ParseError & e )
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
+    }
+    catch( TraceException & e )
+    {
+        throw;
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
+    }
 }
 
 void
@@ -416,28 +393,49 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
     //string url = string("task/")+a_task_id+"/cancel";
     long code = post( m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
 
-    if ( code < 200 || code > 202 )
-        EXCEPT_PARAM( 1, "Globus cancel task API error, code: " << code );
-
-    rapidjson::Document result;
-
     if ( !raw_result.size() )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus cancel task API call failed: empty response." );
 
-    // Try to decode result as JSON - even if call failed
+    try
+    {
+        libjson::Value result;
 
-    result.Parse( raw_result.c_str() );
+        result.fromString( raw_result );
 
-    if ( result.HasParseError() )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
+        libjson::Value::Object & resp_obj = result.getObject();
 
-    rapidjson::Value::MemberIterator imem = result.FindMember("DATA_TYPE");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
+        if ( code >= 200 && code <= 202 )
+        {
+            libjson::Value::ObjectIter i = resp_obj.find("code");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'code' field" );
 
-    imem = result.FindMember("code");
-    if ( imem == result.MemberEnd() )
-        EXCEPT( 1, "Invalid response from Globus Task API." );
+            if ( i->second.asString() == "Canceled" )
+                return;
+        }
+
+        i = resp_obj.find("message");
+        if ( i == resp_obj.end() )
+        {
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code );
+        }
+        else
+        {
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code << ", reason: " << i->second.asString() );
+        }
+    }
+    catch( libjson::ParseError & e )
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
+    }
+    catch( TraceException & e )
+    {
+        throw;
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
+    }
 }
 
 /**
@@ -496,69 +494,89 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
     //DL_ERROR("EP result: " << raw_result );
 
     if ( !raw_result.size() )
-        EXCEPT( 1, "1 Invalid response from Globus Endpoint API." );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus endpoint API call failed: empty response." );
 
-    rapidjson::Document result;
-    result.Parse( raw_result.c_str() );
-
-    if ( result.HasParseError() )
+    try
     {
-        DL_ERROR( "Globus endpoint call failed, returned invalid JSON." );
-        EXCEPT( 1, "2 Invalid response from Globus Endpoint API." );
-    }
+        libjson::Value result;
 
-    rapidjson::Value::MemberIterator imem;
+        result.fromString( raw_result );
 
-    if ( code < 200 || code > 202 )
-    {
-        imem = result.FindMember("message");
-        if ( imem == result.MemberEnd() )
-            EXCEPT_PARAM( 1, "Globus Endpoint API call failed, code: " << code );
+        libjson::Value::Object & resp_obj = result.getObject();
+
+        if ( code >= 200 && code <= 202 )
+        {
+            libjson::Value::ObjectIter i = resp_obj.find("activated");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'activated' field" );
+
+            a_ep_info.activated = i->second.GetBool();
+
+            i = resp_obj.find("expires_in");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'expires_in' field" );
+
+            int64_t exp = i->second.asNumber();
+            if ( exp < 0 )
+            {
+                a_ep_info.activated = true;
+                a_ep_info.never_expires = true;
+                a_ep_info.expiration = 0;
+            }
+            else
+            {
+                a_ep_info.never_expires = false;
+                a_ep_info.expiration = time(0) + exp;
+            }
+
+            i = resp_obj.find("force_encryption");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'force_encryption' field" );
+
+
+            a_ep_info.supports_encryption = false;
+
+            a_ep_info.force_encryption = i->second.asBool();
+            if ( a_ep_info.force_encryption )
+                a_ep_info.supports_encryption = true;
+            else
+            {
+                // Look at DATA[0].scheme to see if it's gsiftp
+                if (( i = resp_obj.find("DATA")) == resp_obj.end() )
+                    EXCEPT( ID_SERVICE_ERROR, "Missing 'DATA' field" );
+
+                libjson::Value::Object & server_obj = i->second[0].getObject();
+
+                i = server_obj.find("scheme");
+                if ( i == resp_obj.end() )
+                    EXCEPT( ID_SERVICE_ERROR, "Missing 'scheme' field" );
+
+
+                a_ep_info.supports_encryption = ( strcmp( i->second.asString(), "gsiftp" ) == 0 );
+            }
+        }
+
+        i = resp_obj.find("message");
+        if ( i == resp_obj.end() )
+        {
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code );
+        }
         else
-            EXCEPT( 1, imem->value.GetString() );
+        {
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code << ", reason: " << i->second.asString() );
+        }
     }
-
-    if (( imem = result.FindMember("activated")) == result.MemberEnd() )
-        EXCEPT( 1, "3 Invalid response from Globus Endpoint API." );
-
-    a_ep_info.activated = imem->value.GetBool();
-
-    if (( imem = result.FindMember("expires_in")) == result.MemberEnd() )
-        EXCEPT( 1, "4 Invalid response from Globus Endpoint API." );
-
-    int64_t exp = imem->value.GetInt();
-    if ( exp < 0 )
+    catch( libjson::ParseError & e )
     {
-        a_ep_info.activated = true;
-        a_ep_info.never_expires = true;
-        a_ep_info.expiration = 0;
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
     }
-    else
+    catch( TraceException & e )
     {
-        a_ep_info.never_expires = false;
-        a_ep_info.expiration = time(0) + exp;
+        throw;
     }
-
-    if (( imem = result.FindMember("force_encryption")) == result.MemberEnd() )
-        EXCEPT( 1, "5 Invalid response from Globus Endpoint API." );
-
-    a_ep_info.supports_encryption = false;
-
-    a_ep_info.force_encryption = imem->value.GetBool();
-    if ( a_ep_info.force_encryption )
-        a_ep_info.supports_encryption = true;
-    else
+    catch( exception & e )
     {
-        // Look at DATA[0].scheme to see if it's gsiftp
-        if (( imem = result.FindMember("DATA")) == result.MemberEnd() )
-            EXCEPT( 1, "6 Invalid response from Globus Endpoint API." );
-
-        rapidjson::Value & val = imem->value[0];
-
-        if (( imem = val.FindMember("scheme")) == val.MemberEnd() )
-            EXCEPT( 1, "7 Invalid response from Globus Endpoint API." );
-
-        a_ep_info.supports_encryption = ( strcmp( imem->value.GetString(), "gsiftp" ) == 0 );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
     }
 }
 
@@ -569,49 +587,56 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
     string raw_result;
     long code = post( m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
 
-    // Try to decode result as JSON - even if call failed
+    if ( !raw_result.size() )
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus endpoint API call failed: empty response." );
 
-    rapidjson::Document result;
-
-    if ( raw_result.size() )
+    try
     {
-        result.Parse( raw_result.c_str() );
+        libjson::Value result;
 
-        if ( result.HasParseError() )
+        result.fromString( raw_result );
+
+        libjson::Value::Object & resp_obj = result.getObject();
+
+        if ( code >= 200 && code <= 202 )
         {
-            DL_ERROR( "Globus refresh call failed, returned invalid JSON." );
-            EXCEPT( 1, "Globus refresh API call failed." );
+            libjson::Value::ObjectIter i = resp_obj.find("access_token");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'access_token' field" );
+
+            a_new_acc_tok = i->second.asString();
+
+            i = resp_obj.find("expires_in");
+            if ( i == resp_obj.end() )
+                EXCEPT( ID_SERVICE_ERROR, "Missing 'expires_in' field" );
+
+            a_expires_in = (uint32_t)i->second.asNumber();
+
+            return;
         }
-    }
 
-    rapidjson::Value::MemberIterator imem;
-
-    if ( code < 200 || code > 202 )
-    {
-        imem = result.FindMember("message");
-        if ( imem == result.MemberEnd() )
+        i = resp_obj.find("message");
+        if ( i == resp_obj.end() )
         {
-            DL_ERROR( "Globus refresh call failed, code: " << code );
-            EXCEPT( 1, "Globus API call failed." );
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code );
         }
         else
         {
-            DL_ERROR( "Globus refresh call failed, code: " << code << ", reason: " << imem->value.GetString() );
-            EXCEPT_PARAM( 1, imem->value.GetString() );
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus Transfer API request failed, code: " << code << ", reason: " << i->second.asString() );
         }
     }
-
-    imem = result.FindMember("access_token");
-    rapidjson::Value::MemberIterator imem2 = result.FindMember("expires_in");
-
-    if ( imem == result.MemberEnd() || imem2 == result.MemberEnd())
+    catch( libjson::ParseError & e )
     {
-        DL_ERROR( "Globus refresh req failed: invalid response from Globus." );
-        EXCEPT( 1, "Invalid refresh response from Globus." );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
     }
-
-    a_new_acc_tok = imem->value.GetString();
-    a_expires_in = imem2->value.GetUint();
+    catch( TraceException & e )
+    {
+        throw;
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus API call failed, returned invalid JSON." );
+    }
 }
 
 }}

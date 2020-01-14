@@ -764,9 +764,10 @@ message QueryDataReply
 
 message TaskListRequest
 {
-    optional uint32             since       = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    optional string             proj_id     = 1;
+    optional uint32             since       = 2;
+    optional uint32             offset      = 3;
+    optional uint32             count       = 4;
 }
 
 message TaskDataReply

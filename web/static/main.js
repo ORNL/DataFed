@@ -294,7 +294,7 @@ function dataGet( a_ids ){
                 dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
                 return;
             } else if ( internal ){
-                dlgStartTransfer( XFR_GET, data.item );
+                dlgStartTransfer( TT_DATA_GET, data.item );
             }else{
                 for ( var i in data.item ){
                     console.log("download ", data.item[i].url )
@@ -324,7 +324,7 @@ function dataPut( a_id ){
                 if ( data.doi ){
                     dlgAlert("Data Put Error","Record has read-only, externally managed data.");
                 }else{
-                    dlgStartTransfer( XFR_PUT, [data] );
+                    dlgStartTransfer( TT_DATA_PUT, [data] );
                 }
             }
         }); 
@@ -946,9 +946,9 @@ function dataGetPreprocess( a_ids, a_cb ){
 function xfrStart( a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_cb ){
     var url = "/api/dat/";
 
-    if ( a_mode == XFR_GET )
+    if ( a_mode == TT_DATA_GET )
         url += "get" + "?ids=" + encodeURIComponent(JSON.stringify(a_ids)) ;
-    else if ( a_mode == XFR_PUT )
+    else if ( a_mode == TT_DATA_PUT )
         url += "put" + "?id=" + encodeURIComponent(a_ids[0]) ;
     else{
         return;
@@ -1051,12 +1051,21 @@ var SS_SHARED_BY_ANY_PROJECT    = 11;
 var SS_PUBLIC                   = 12;
 var SS_VIEW                     = 13;
 
-var XFR_GET             = 0;
-var XFR_PUT             = 1;
-var XFR_SELECT          = 2;
-var XFR_ENCRYPT_NONE    = 0;
-var XFR_ENCRYPT_AVAIL   = 1;
-var XFR_ENCRYPT_FORCE   = 2;
+var TT_DATA_GET         = 0;
+var TT_DATA_PUT         = 1;
+var TT_DATA_CHG_ALLOC   = 2;
+var TT_DATA_CHG_OWNER   = 3;
+var TT_DATA_DEL         = 4;
+
+var TS_BLOCKED      = 0;
+var TS_READY        = 1;
+var TS_RUNNING      = 2;
+var TS_SUCCEEDED    = 3;
+var TS_FAILED       = 4;
+
+var ENCRYPT_NONE    = 0;
+var ENCRYPT_AVAIL   = 1;
+var ENCRYPT_FORCE   = 2;
 
 var DEP_IN          = 0;
 var DEP_OUT         = 1;

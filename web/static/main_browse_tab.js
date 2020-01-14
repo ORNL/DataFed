@@ -1994,44 +1994,43 @@ function makeBrowserTab(){
         var len = task_list.length;
         var html;
         if ( len == 0 ){
-            html = "(no recent transfers)";
+            html = "(no recent server tasks)";
         }else{
-            html = "<table class='info_table'><tr><th>Trans. ID</th><th>Mode</th><th>Data ID</th><th>Path</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
-            var stat;
-            var start = new Date(0);
-            var update = new Date(0);
+            html = "<table class='info_table'><tr><th>Task ID</th><th>Type</th><th>Status</th><th>Progress</th><th>Started</th><th>Updated</th><th>Message</th></tr>";
+            var task, time = new Date(0);
 
-            for ( var i = 0; i < len; i++ ) {
-                stat = task_list[i];
-                //console.log("repo stat:",stat);
-                if ( stat.status == "XS_FAILED" )
-                    html += "<tr title='" + escapeHTML(stat.errMsg) + "' class='ui-state-error'>";
-                else
-                    html += "<tr>";
+            for ( var i in task_list ) {
+                task = task_list[i];
 
-                html += "<td>" + stat.id + "</td><td>";
-                switch(stat.mode){
-                    case "XM_GET": html += "Get"; break;
-                    case "XM_PUT": html += "Put"; break;
-                    case "XM_COPY": html += "Copy"; break;
+                html += "<tr><td>" + task.id.substr(5) + "</td><td>";
+
+                switch( task.type ){
+                    case "TT_DATA_GET": html += "Get Data"; break;
+                    case "TT_DATA_PUT": html += "Put Data"; break;
+                    case "TT_DATA_CHG_ALLOC": html += "Change Allocation"; break;
+                    case "TT_DATA_CHG_OWNER": html += "Change Owner"; break;
+                    case "TT_DATA_DEL": html += "Delete Record"; break;
                 }
 
                 html += "</td><td>";
-                if ( stat.repo.file.length == 1 )
-                    html += stat.repo.file[0].id;
-                else
-                    html += "(multiple)";
 
-                html += "</td><td>";
+                switch( task.status ){
+                    case "TS_BLOCKED": html += "Blocked"; break;
+                    case "TS_READY": html += "Ready"; break;
+                    case "TS_RUNNING": html += "Running"; break;
+                    case "TS_SUCCEEDED": html += "Succeeded"; break;
+                    case "TS_FAILED": html += "Failed"; break;
+                }
 
-                if ( stat.mode == "XM_COPY" )
-                    html += "d/" + stat.localPath.substr( stat.localPath.lastIndexOf("/") + 1);
-                else
-                    html += stat.remEp + stat.remPath;
-                html += "</td>";
-                start.setTime( stat.started*1000 );
-                update.setTime( stat.updated*1000 );
-                html += "<td>" + start.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + update.toLocaleDateString("en-US", g_date_opts) + "</td><td>" + stat.status.substr(3) + "</td></tr>";
+                html += "</td><td>" + task.progress;
+
+                time.setTime( task.ct*1000 );
+                html += "</td><td>" + time.toLocaleDateString("en-US", g_date_opts );
+
+                time.setTime( task.ut*1000 );
+                html += "</td><td>" + time.toLocaleDateString("en-US", g_date_opts );
+
+                html += "</td><td>" + task.msg + "</td></tr>";
             }
             html += "</table>";
         }
@@ -2046,6 +2045,7 @@ function makeBrowserTab(){
 
         _asyncGet( "/api/task/list" + (inst.pollSince?"?since="+inst.pollSince:""), null, function( ok, data ){
             if ( ok && data ) {
+                console.log( "task list:",ok,data);
                 if ( data.task && data.task.length ) {
                     // Find and remove any previous entries
                     var task;

@@ -1,7 +1,7 @@
 function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     var frame = $(document.createElement('div'));
-    var ep_lab = a_mode == XFR_GET?"Destination":"Source";
-    var rec_lab = a_mode == XFR_GET?"Source":"Destination";
+    var ep_lab = a_mode == TT_DATA_GET?"Destination":"Source";
+    var rec_lab = a_mode == TT_DATA_GET?"Source":"Destination";
     var rec_tree;
 
     frame.html( "<div class='ui-widget' style='height:95%'>" +
@@ -22,7 +22,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         <input type='radio' id='encrypt_req' name='encrypt_mode' value='2'/>\
         <label for='encrypt_req'>Required</label>\
         <br>" +
-        (a_mode == XFR_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
+        (a_mode == TT_DATA_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
         "</div></div></div>");
 
     var label = ["Get (Download)","Put (Upload)","Select"];
@@ -106,7 +106,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         item = a_ids[0];
         html = item.id + "&nbsp&nbsp" + sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
         $("#title",frame).html( html );
-        if ( a_mode == XFR_PUT && item.source ){
+        if ( a_mode == TT_DATA_PUT && item.source ){
             path_in.val( item.source );
         }
     }
@@ -154,7 +154,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         }else
             path = cur_ep.default_directory?cur_ep.default_directory:"/";
         //console.log("path:",path);
-        dlgEpBrowse( cur_ep, path, (a_mode == XFR_GET)?"dir":"file", function( sel ){
+        dlgEpBrowse( cur_ep, path, (a_mode == TT_DATA_GET)?"dir":"file", function( sel ){
             path_in.val( cur_ep.name + sel );
         });
     });
@@ -300,7 +300,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                 var encrypt = $("input[name='encrypt_mode']:checked").val();
 
                 var inst = $(this);
-                if ( a_mode != XFR_SELECT ){
+                if ( a_mode == TT_DATA_GET || a_mode == TT_DATA_PUT ){
                     var ext = $("#ext",frame).val();
                     if ( ext )
                         ext.trim();
@@ -319,8 +319,8 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
-                            console.log(data.task);
-                            setStatusText( "Task ID '" + data.task.id + "' created for data transfer." );
+                            //console.log(data.task);
+                            setStatusText( "Task ID '" + data.task[0].id + "' created for data transfer." );
                         }else{
                             dlgAlert( "Transfer Error", data );
                         }

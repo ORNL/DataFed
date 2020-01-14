@@ -2558,7 +2558,7 @@ DatabaseAPI::taskInitDataGet( const std::vector<std::string> & a_ids, const std:
 
     dbPost( "dat/get", {}, &body, a_result );
 
-    setTaskData( a_reply, a_result );
+    setTaskDataFromTaskInit( a_reply, a_result );
 }
 
 
@@ -2573,7 +2573,7 @@ DatabaseAPI::taskInitDataPut( const std::string & a_id, const std::string & a_pa
 
     dbPost( "dat/put", {}, &body, a_result );
 
-    setTaskData( a_reply, a_result );
+    setTaskDataFromTaskInit( a_reply, a_result );
 }
 
 void
@@ -2609,11 +2609,19 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
 }
 
 
+/**
+ * @brief Sets TaskDataReply from JSON returned by a taskInit... call
+ * @param a_reply 
+ * @param a_result 
+ *
+ * JSON contains an object with a "task" field containing task fields. This
+ * method removes tasks that are nor in READY status from the original JSON
+ * input - this is to.
+ */
 void
-DatabaseAPI::setTaskData( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   t;
-    Value::ArrayIter    k;
 
     //cerr << "TASK RES: " << a_result.toString() << endl;
 
@@ -2641,6 +2649,46 @@ DatabaseAPI::setTaskData( Auth::TaskDataReply & a_reply, libjson::Value & a_resu
             // If task is blocked, remove task from result to prevent immediate scheduling
             if ( ts == TS_BLOCKED )
                 obj.erase( t );
+        }
+    }
+    catch ( exception & e )
+    {
+        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
+    }
+}
+
+/**
+ * @brief Sets TaskDataReply from JSON returned by a task management call
+ * @param a_reply 
+ * @param a_result 
+ *
+ * JSON contains an array of task objects containing task fields.
+ */
+void
+DatabaseAPI::setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+{
+    Value::ObjectIter   t;
+
+    //cerr << "TASK RES: " << a_result.toString() << endl;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            TaskStatus ts = (TaskStatus) obj.at( "status" ).asNumber();
+
+            TaskData * task = a_reply.add_task();
+            task->set_id( obj.at( "id" ).asString( ));
+            task->set_type((TaskType)obj.at( "type" ).asNumber( ));
+            task->set_status( ts );
+            task->set_user( obj.at( "user" ).asString( ));
+            task->set_progress( obj.at( "progress" ).asNumber( ));
+            task->set_msg( obj.at( "msg" ).asString( ));
+            task->set_ct( obj.at( "ct" ).asNumber( ));
+            task->set_ut( obj.at( "ut" ).asNumber( ));
         }
     }
     catch ( exception & e )
@@ -2708,6 +2756,8 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 {
     vector<pair<string,string>> params;
 
+    if ( a_request.has_proj_id( ))
+        params.push_back({ "proj_id", a_request.proj_id() });
     if ( a_request.has_since( ))
         params.push_back({ "since", to_string( a_request.since() )});
     if ( a_request.has_offset( ))
@@ -2717,9 +2767,9 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 
     libjson::Value result;
 
-    dbPost( "task/list", params, 0, result );
+    dbGet( "task/list", params, result );
 
-    setTaskData( a_reply, result );
+    setTaskDataFromList( a_reply, result );
 }
 
 

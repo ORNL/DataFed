@@ -381,12 +381,14 @@ public:
 
     // ----- Object-only Methods -----
 
-    void
+    Object &
     initObject()
     {
         this->~Value();
         m_type = VT_OBJECT;
         m_value.o = new Object();
+
+        return *m_value.o;
     }
 
 
@@ -440,12 +442,14 @@ public:
 
     // ----- Array-only Methods -----
 
-    void
+    Array &
     initArray()
     {
         this->~Value();
         m_type = VT_ARRAY;
         m_value.a = new Array();
+
+        return *m_value.a;
     }
 
     Value &

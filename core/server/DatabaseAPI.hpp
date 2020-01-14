@@ -162,7 +162,8 @@ private:
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result );
     void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );
-    void setTaskData( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
 
     CURL *      m_curl;
     char *      m_client;
