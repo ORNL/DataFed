@@ -1161,7 +1161,7 @@ function makeBrowserTab(){
         var bits,sel;
         switch( inst.select_source ){
             case SS_TREE:
-                 sel = inst.data_tree.getSelectedNodes();
+                sel = inst.data_tree.getSelectedNodes();
                 bits = calcActionState( sel );
                 break;
             case SS_CAT:
@@ -2043,7 +2043,7 @@ function makeBrowserTab(){
         if ( !g_user )
             return;
 
-        _asyncGet( "/api/task/list" + (inst.pollSince?"?since="+inst.pollSince:""), null, function( ok, data ){
+        _asyncGet( "/api/task/list" + (inst.pollSince?"?since="+(2*inst.pollSince):""), null, function( ok, data ){
             if ( ok && data ) {
                 console.log( "task list:",ok,data);
                 if ( data.task && data.task.length ) {
@@ -2063,7 +2063,7 @@ function makeBrowserTab(){
                 }
             }
             inst.pollSince = 10;
-            inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000*(inst.pollSince-1));
+            inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000*(inst.pollSince));
         });
     }
 

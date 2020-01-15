@@ -497,6 +497,8 @@ TaskWorker::handleDataDelete()
         upd_state.clear();
         del_req.clear_loc();
 
+        // Ask associated repo server to delete raw files
+
         for ( f = files.begin(); f != files.end(); f++ )
         {
             loc = del_req.add_loc();
@@ -508,6 +510,11 @@ TaskWorker::handleDataDelete()
             return true;
 
         delete reply;
+
+        // Ask DB to delete associated records and adjust allocations
+
+
+        // Checkpoint deletion task
 
         repo_idx++;
         state["repo_idx"] = repo_idx;

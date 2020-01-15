@@ -8,6 +8,8 @@
 #include "Config.hpp"
 #include "SDMS.pb.h"
 
+#include <rapidjson/document.h>
+
 namespace SDMS {
 namespace Core {
 
@@ -45,9 +47,6 @@ public:
     ~GlobusAPI();
 
     std::string transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token );
-
-    //std::string getTaskID( const std::string & a_acc_token );
-
     bool        checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg );
     void        cancelTask( const std::string & a_task_id, const std::string & a_acc_tok );
     void        getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info );
@@ -58,6 +57,7 @@ private:
     long        post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, std::string & a_result );
     std::string getSubmissionID( const std::string & a_acc_token );
     bool        eventsHaveErrors( const std::vector<std::string> & a_events, XfrStatus & status, std::string & a_err_msg );
+    void        checkResponsCode( long a_code, libjson::Value::Object & a_body ) const;
 
     Config &    m_config;
     CURL *      m_curl;

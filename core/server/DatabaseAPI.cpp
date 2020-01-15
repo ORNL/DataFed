@@ -641,6 +641,7 @@ DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
                         alloc->set_max_size( obj2.at( "max_size" ).asNumber( ));
                         alloc->set_tot_size( obj2.at( "tot_size" ).asNumber( ));
                         alloc->set_max_count( obj2.at( "max_count" ).asNumber( ));
+                        alloc->set_tot_count( obj2.at( "tot_count" ).asNumber( ));
                         alloc->set_path( obj2.at( "path" ).asString( ));
                     }
                 }
@@ -873,6 +874,7 @@ DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
                     alloc->set_max_size( obj2.at( "max_size" ).asNumber( ));
                     alloc->set_tot_size( obj2.at( "tot_size" ).asNumber( ));
                     alloc->set_max_count( obj2.at( "max_count" ).asNumber( ));
+                    alloc->set_tot_count( obj2.at( "tot_count" ).asNumber( ));
                     alloc->set_path( obj2.at( "path" ).asString( ));
                 }
             }
@@ -2307,6 +2309,7 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value 
             alloc->set_max_size( obj.at( "max_size" ).asNumber( ));
             alloc->set_tot_size( obj.at( "tot_size" ).asNumber( ));
             alloc->set_max_count( obj.at( "max_count" ).asNumber( ));
+            alloc->set_tot_count( obj.at( "tot_count" ).asNumber( ));
             alloc->set_path( obj.at( "path" ).asString( ));
 
             if (( j = obj.find( "id" )) != obj.end( ))
@@ -2317,12 +2320,7 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value 
 
             if (( j = obj.find( "stats" )) != obj.end( ))
             {
-                Value::Array & arr2 = j->second.getArray();
-
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    setAllocStatsData( *k, *alloc->mutable_stats( ));
-                }
+                setAllocStatsData( j->second, *alloc->mutable_stats( ));
             }
         }
     }
@@ -2331,6 +2329,7 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value 
         EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
     }
 }
+
 
 void
 DatabaseAPI::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )

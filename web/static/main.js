@@ -1089,7 +1089,7 @@ var dlgGroups = new makeDlgGroups();
 var dlgGroupEdit = new makeDlgGroupEdit();
 var dlgAllocNewEdit = new makeDlAllocNewEdit();
 var g_ep_recent = [];
-var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false };
+var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
 
 epRecentLoad();
 

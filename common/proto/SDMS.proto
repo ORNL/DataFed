@@ -99,10 +99,11 @@ message AllocData
     required uint64             max_size    = 2;
     required uint64             tot_size    = 3;
     required uint32             max_count   = 4;
-    required string             path        = 5;
-    optional string             id          = 6;
-    optional bool               sub_alloc   = 7;
-    optional AllocStatsData     stats       = 8;
+    required uint32             tot_count   = 5;
+    required string             path        = 6;
+    optional string             id          = 7;
+    optional bool               sub_alloc   = 8;
+    optional AllocStatsData     stats       = 9;
 }
 
 // For viewing dependencies
