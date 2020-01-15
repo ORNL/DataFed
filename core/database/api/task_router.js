@@ -199,30 +199,34 @@ router.post('/delete', function (req, res) {
 
 router.get('/list', function (req, res) {
     try{
-        var qry = "for i in task";
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+
         var params = {};
+        var qry = "for i in task filter i.user == @user";
 
-        if ( req.queryParams.user || req.queryParams.server || req.queryParams.status ){
-            var a = false;
-            qry += " filter";
-            if ( req.queryParams.user ){
-                qry += " i.user == @user";
-                params.user = g_lib.getUserFromClientID( req.queryParams.user )._id;
-                a = true;
-            }
+        if ( req.queryParams.proj_id ){
+            if ( !g_db.p.exists( req.queryParams.proj_id ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.proj_id + "'" ];
 
-            if ( req.queryParams.since != undefined ) {
-                filter += "i.ut >= " + ((Date.now()/1000) - req.queryParams.since);
-            }
-        
-            if ( req.queryParams.status ){
-                qry += (a?" and":" ") + "i.status in @status";
-                params.status =  req.queryParams.status;
-                a = true;
-            }
+            // Client must have access to project
+            if ( g_lib.getProjectRole( client._id, req.queryParams.proj_id ) == g_lib.PROJ_NO_ROLE )
+                throw g_lib.ERR_PERM_DENIED;
+
+            params.user = req.queryParams.proj_id;
+        }else{
+            params.user = client._id;
         }
 
-        qry += " return {id:i._id,type:i.type,status:i.status,progress:i.progress,msg:i.msg}";
+        if ( req.queryParams.since ) {
+            qry += " and i.ut >= " + ((Date.now()/1000) - req.queryParams.since);
+        }
+
+        if ( req.queryParams.status ){
+            qry += " and i.status in @status";
+            params.status =  req.queryParams.status;
+        }
+
+        qry += " sort i.ut desc return {id:i._id,type:i.type,status:i.status,user:i.user,progress:i.progress,msg:i.msg,ct:i.ct,ut:i.ut}";
 
         var result = g_db._query( qry, params );
 
@@ -231,7 +235,8 @@ router.get('/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('user', joi.string().optional(), "Filter by user ID")
+.queryParam('client', joi.string().required(), "Filter by user ID")
+.queryParam('proj_id', joi.string().optional(), "Filter by project ID instead of client ID")
 .queryParam('status', joi.array().items(joi.number().integer()).optional(), "List of task states to retrieve.")
 .queryParam('since', joi.number().integer().min(0).optional(), "List tasks updated since this many seconds ago.")
 .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")

@@ -336,7 +336,7 @@ router.get('/alloc/list/by_repo', function (req, res) {
 
     g_lib.ensureAdminPermRepo( client, repo._id );
 
-    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return {id:v._id,name:v.name?v.name:v.title,repo:@repo,max_size:e.max_size,tot_size:e.tot_size,max_count:e.max_count,path:e.path}", { repo: repo._id } ).toArray();
+    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return {id:v._id,name:v.name?v.name:v.title,repo:@repo,max_size:e.max_size,tot_size:e.tot_size,max_count:e.max_count,tot_count:e.tot_count,path:e.path}", { repo: repo._id } ).toArray();
 
     res.send( result );
 })
@@ -363,6 +363,7 @@ router.get('/alloc/list/by_owner', function (req, res) {
                 max_size:proj.sub_alloc,
                 tot_size:proj.sub_usage,
                 max_count:alloc.max_count,
+                tot_count:alloc.tot_count,
                 path:alloc.path,
                 sub_alloc:true
             }];
@@ -413,6 +414,7 @@ router.get('/alloc/list/by_object', function (req, res) {
                 max_size:proj.sub_alloc,
                 tot_size:proj.sub_usage,
                 max_count:alloc.max_count,
+                tot_count:alloc.tot_count,
                 path:alloc.path,
                 sub_alloc:true
             }];
@@ -470,6 +472,7 @@ router.get('/alloc/view', function (req, res) {
                     max_size:proj.sub_alloc,
                     tot_size:proj.sub_usage,
                     max_count:alloc.max_count,
+                    tot_count:alloc.tot_count,
                     path:alloc.path,
                     sub_alloc:true
                 }];
@@ -599,7 +602,7 @@ router.get('/alloc/set', function (req, res) {
                             path = repo.path + "project/";
                         else
                             path = repo.path + "user/";
-                        g_db.alloc.save({ _from: subject_id, _to: repo._id, max_size: req.queryParams.max_size, max_count: req.queryParams.max_count, tot_size: 0, path: path + subject_id.substr(2) + "/" });
+                        g_db.alloc.save({ _from: subject_id, _to: repo._id, max_size: req.queryParams.max_size, max_count: req.queryParams.max_count, tot_count: 0, tot_size: 0, path: path + subject_id.substr(2) + "/" });
                     }
                 }
             }
