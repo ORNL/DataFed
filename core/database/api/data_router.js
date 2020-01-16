@@ -1415,15 +1415,27 @@ router.post('/trash/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"]
+                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"],
+                exclusive: ["lock"]
             },
             action: function() {
                 //const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var data, alloc_sz = {};
 
+                // NOTE: This operation must be idempotent - it's OK if records have
+                // already been deleted; however, it is an error if they are not
+                // marked for deletion.
+                var id;
                 for ( var i in req.body.ids ){
-                    data = g_db.d.document( req.body.ids[i] );
-                    deleteRecord( data, alloc_sz );
+                    id = req.body.ids[i];
+                    if ( g_db.d.exists( id )){
+                        data = g_db.d.document( id );
+
+                        if ( !data.deleted )
+                            throw [g_lib.ERR_INVALID_PARAM,"Record ID: '" + id + "' not marked for deletion."];
+
+                        deleteRecord( data, alloc_sz );
+                    }
                 }
 
                 g_lib.updateAllocations( alloc_sz );
