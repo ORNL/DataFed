@@ -1119,6 +1119,24 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
 }
 
 void
+DatabaseAPI::recordDeleteTrash( const std::vector<std::string> & a_ids )
+{
+    Value result;
+    string body = "{\"ids\":[";
+
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            body += ",";
+
+        body += "\"" + *i + "\"";
+    }
+    body += "]}";
+
+    dbPost( "dat/trash/delete", {}, &body, result );
+}
+
+void
 DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
 {
     RecordData *        rec;

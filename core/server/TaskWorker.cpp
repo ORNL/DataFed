@@ -441,16 +441,33 @@ TaskWorker::handleDataChangeOwner()
     return false;
 }
 
-
+/**
+ * @brief Handle record deletion tasks
+ * @return true 
+ *
+ * Record deletion tasks are generated when a user deletes one or more data
+ * records that have associated raw data. A task must be started to coordinate
+ * and ensure that the raw data files are deleted from their respective data
+ * repositories.
+ */
 bool
 TaskWorker::handleDataDelete()
 {
+    /* Process:
+    1.  In DB init, records without data re immediately deleted, those with raw
+        data are marked for deletion and unlinked from all collections.
+    2.  When task runs, marked data records are deleted in DB and allocations are
+        adjusted.
+    3.  Each associated repo server is told to delete the associated raw data
+        files. On failures, these steps are retried until limit is reached, then
+        admins will be notified (repo is out of sync with DB).
+    */
     DL_INFO( "Starting task " << m_task->task_id << ", type: DataDelete" );
 
     string                      uid = m_task->data["user"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
-    int                         repo_idx = 0;
+    int                         repo_idx = -1;
     libjson::Value &            state = m_task->data["state"];
     libjson::Value::Array  &    repos = state["repos"].getArray();
     libjson::Value              upd_state;
@@ -464,14 +481,15 @@ TaskWorker::handleDataDelete()
 
     if ( status == TS_READY )
     {
-        state["repo_idx"] = 0;
-        upd_state["repo_idx"] = 0;
+        state["repo_idx"] = -1;
+        upd_state["repo_idx"] = -1;
 
         status = TS_RUNNING;
         m_task->data["status"] = status;
 
         string msg = "Running";
         m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
+        upd_state.clear();
     }
     else if ( status == TS_RUNNING )
     {
@@ -487,6 +505,31 @@ TaskWorker::handleDataDelete()
     Auth::RepoDataDeleteRequest         del_req;
     RecordDataLocation *                loc;
     MsgBuf::Message *                   reply;
+
+    if ( repo_idx < 0 )
+    {
+        // Delete DB records (adjusts allocations)
+        vector<string> ids;
+
+        for ( r = repos.begin(); r != repos.end(); r++ )
+        {
+            libjson::Value::Object & repo = r->getObject();
+            libjson::Value::Array & files = repo["files"].getArray();
+            for ( f = files.begin(); f != files.end(); f++ )
+            {
+                ids.push_back( (*f)["id"].asString() );
+            }
+        }
+
+        m_db.recordDeleteTrash( ids );
+
+        // Save task state
+        repo_idx = 0;
+        state["repo_idx"] = repo_idx;
+        upd_state["repo_idx"] = repo_idx;
+        m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
+        upd_state.clear();
+    }
 
     for ( r = repos.begin() + repo_idx; r != repos.end(); r++ )
     {

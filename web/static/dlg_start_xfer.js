@@ -25,8 +25,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         (a_mode == TT_DATA_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
         "</div></div></div>");
 
-    var label = ["Get (Download)","Put (Upload)","Select"];
-    var dlg_title = label[a_mode] + " Data";
+    var dlg_title = (a_mode == TT_DATA_GET?"Get Data":"Put Data");
     var selection_ok = true;
     var endpoint_ok = false;
     var matches = $("#matches",frame);
@@ -289,7 +288,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         closeOnEscape: false,
         buttons: [{
             id: "go_btn",
-            text: label[a_mode],
+            text: (a_mode == TT_DATA_GET?"Get Data":"Put Data"),
             click: function() {
                 var raw_path = $("#path",frame).val().trim();
                 if ( !raw_path ) {
