@@ -277,7 +277,7 @@ module.exports = ( function() {
 
 
     obj._computeDataPaths = function( a_owner_id, a_mode, a_data, a_src_repos, a_rem_path ){
-        var data, loc, file, result = { ids: [], tot_size: 0, tot_count: 0 };
+        var data, loc, file, result = { ids: [], data_size: 0, rec_count: 0 };
 
         var repo_map = {};
 
@@ -320,8 +320,8 @@ module.exports = ( function() {
                     break;
             }
 
-            result.tot_size += data.size;
-            result.tot_count++;
+            result.data_size += data.size;
+            result.rec_count++;
             result.ids.push( data.id );
 
             if ( loc.repo._key in repo_map ){
@@ -346,55 +346,6 @@ module.exports = ( function() {
         return obj;
     };
 
-    obj._deleteCollection = function( a_id ){
-        var tmp = g_db.alias.firstExample({ _from: a_id });
-        if ( tmp ){
-            g_graph.a.remove( tmp._to );
-        }
-
-        tmp = g_db.top.firstExample({ _from: a_id });
-        if ( tmp )
-            g_lib.topicUnlink( a_id );
-
-        g_graph.c.remove( a_id );
-    };
-
-    /** @brief Deletes data record but not raw data
-     *
-     * Deletes record and associated graph objects. Does not delete raw data
-     * nor adjust allocations for owner.
-     */
-    obj._deleteDataRecord = function( a_id ){
-        var alias = g_db.alias.firstExample({ _from: a_id });
-        if ( alias ){
-            g_graph.a.remove( alias._to );
-        }
-
-        g_graph.d.remove( a_id );
-    };
-
-
-    /** @brief Marks data record as deleted and moves to trash
-     *
-     * Marks record as deleted and removes some graph associations. Does not
-     * delete raw data nor adjust allocations for owner.
-     */
-    obj._trashDataRecord = function( a_id ){
-        // Get rid of alias
-        var alias = g_db.alias.firstExample({ _from: a_id });
-        if ( alias ){
-            g_graph.a.remove( alias._to );
-        }
-
-        // Get rid of collection links
-        g_db.item.removeByExample({ _to: a_id });
-
-        // Get rid of direct ACLs
-        g_db.acl.removeByExample({ _from: a_id });
-
-        // Mark record as deleted
-        g_db.d.update( a_id, { deleted: true });
-    };
 
 
     obj.dataGet = function( a_client, a_path, a_encrypt, a_res_ids ){
@@ -532,12 +483,12 @@ module.exports = ( function() {
 
             if ( data.ids.length ){
                 // Verify that allocation has room for records
-                if ( data.tot_count + alloc.tot_count > alloc.max_count )
-                    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.max_count+")." ];
+                if ( data.rec_count + alloc.rec_count > alloc.rec_limit )
+                    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.rec_limit+")." ];
 
                 // Verify that allocation has room for data
-                if ( data.tot_size + alloc.tot_size > alloc.max_size )
-                    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.max_size+")." ];
+                if ( data.data_size + alloc.data_size > alloc.data_limit )
+                    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.data_limit+")." ];
 
                 var doc = obj._createTask( a_client._id, g_lib.TT_DATA_CHG_ALLOC, state );
                 var task = g_db.task.save( doc, { returnNew: true });
@@ -589,10 +540,7 @@ module.exports = ( function() {
         // Get associated or default allocation for new owner
         var alloc, loc = g_db.loc.firstExample({ _from: dest_coll._id });
         if ( loc ){
-            if ( loc.parent )
-                alloc = g_db.alloc.document( loc.parent );
-            else
-                alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
+            alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
         }else{
             alloc = g_lib.assignRepo( dest_coll.owner );
         }
@@ -619,12 +567,12 @@ module.exports = ( function() {
 
             if ( data.ids.length ){
                 // Verify that allocation has room for records
-                if ( data.tot_count + alloc.tot_count > alloc.max_count )
-                    throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.max_count+")."];
+                if ( data.rec_count + alloc.rec_count > alloc.rec_limit )
+                    throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.rec_limit+")."];
 
                 // Verify that allocation has room for data
-                if ( data.tot_size + alloc.tot_size > alloc.max_size )
-                    throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.max_size+")."];
+                if ( data.data_size + alloc.data_size > alloc.data_limit )
+                    throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.data_limit+")."];
             
                 var doc = obj._createTask( a_client._id, g_lib.TT_DATA_CHG_OWNER, state );
                 var task = g_db.task.save( doc, { returnNew: true });
@@ -658,29 +606,31 @@ module.exports = ( function() {
      * specifically identified for deletion (in the initial ids parameter), or
      * are only linked within the collections being deleted.
      */
-    obj.dataCollDelete = function( a_client, a_res_ids ){
+    obj.dataCollDelete = function( a_owner, a_res_ids ){
         // TODO Handle data owned by projects
 
-        var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_DEL );
-        var i;
+        var result = obj.preprocessItems( a_owner, null, a_res_ids, g_lib.TT_DATA_DEL );
+        var i, alloc_adj = {};
 
         // Delete collections
         for ( i in result.coll ){
-            obj._deleteCollection( result.coll[i] );
+            obj.deleteCollection( result.coll[i] );
         }
 
         // Delete records with no data
         for ( i in result.no_data ){
-            obj._deleteDataRecord( result.no_data[i].id );
+            obj.deleteDataRecordWithoutData( result.no_data[i].id, alloc_adj );
         }
+
+        obj.updateAllocations( alloc_adj );
 
         // Mark and schedule records with data for delete
         if ( result.globus_data.length ){
             var state = { repos: [] };
-            var data = obj._computeDataPaths( a_client._id, g_lib.TT_DATA_DEL, result.globus_data, state.repos );
+            var data = obj._computeDataPaths( a_owner._id, g_lib.TT_DATA_DEL, result.globus_data, state.repos );
 
             if ( data.ids.length ){
-                var doc = obj._createTask( a_client._id, g_lib.TT_DATA_DEL, state );
+                var doc = obj._createTask( a_owner._id, g_lib.TT_DATA_DEL, state );
                 var task = g_db.task.save( doc, { returnNew: true });
 
                 if ( obj._processTaskDeps( task.new._id, data.ids, g_lib.TT_DATA_DEL )){
@@ -689,7 +639,7 @@ module.exports = ( function() {
 
                 // Records with managed data must be marked as deleted, but not actually deleted
                 for ( i in result.globus_data ){
-                    obj._trashDataRecord( result.globus_data[i].id );
+                    obj.trashDataRecordWithData( result.globus_data[i].id );
                 }
 
                 task.new.id = task.new._id;
@@ -710,6 +660,126 @@ module.exports = ( function() {
      * 
      */
     obj.projectDelete = function( a_client, a_proj_id ){
+        // TODO Implement!!!
+    };
+
+    /** @brief Deletes a collection record
+     *
+     * NOTE: DO NOT CALL THIS DIRECTLY - USED ONLY BY TASK/PROCESS CODE
+     *
+     * Does not recursively delete contained items.
+     */
+    obj.deleteCollection = function( a_id ){
+        var tmp = g_db.alias.firstExample({ _from: a_id });
+        if ( tmp ){
+            g_graph.a.remove( tmp._to );
+        }
+
+        tmp = g_db.top.firstExample({ _from: a_id });
+        if ( tmp )
+            g_lib.topicUnlink( a_id );
+
+        g_graph.c.remove( a_id );
+    };
+
+    /** @brief Deletes data records without raw data
+     *
+     * Deletes record and associated graph objects. Does not delete raw data
+     * nor adjust allocations for owner.
+     *
+     * DO NOT USE ON RECORDS WITH RAW DATA!!!!
+     */
+    obj.deleteDataRecordWithoutData = function( a_id, a_alloc_adj ){
+        var alias = g_db.alias.firstExample({ _from: a_id });
+        if ( alias ){
+            g_graph.a.remove( alias._to );
+        }
+
+        var owner = g_db.owner.firstExample({ _from: a_id });
+        var loc = g_db.loc.firstExample({ _from: a_id });
+        var alloc_id = g_db.alloc.firstExample({ _from: owner._to, _to: loc._to })._id;
+
+        if ( alloc_id in a_alloc_adj ){
+            a_alloc_adj[alloc_id].rec_count -= 1;
+        }else{
+            a_alloc_adj[alloc_id] = { data_size: 0, rec_count: -1 };
+        }
+
+        g_graph.d.remove( a_id );
+    };
+
+
+    /** @brief Marks data record as deleted and moves to trash
+     *
+     * Marks record as deleted and removes some graph associations. Does not
+     * delete raw data nor adjust allocations for owner.
+     */
+    obj.trashDataRecordWithData = function( a_id ){
+        // Get rid of alias
+        var alias = g_db.alias.firstExample({ _from: a_id });
+        if ( alias ){
+            g_graph.a.remove( alias._to );
+        }
+
+        // Get rid of collection links
+        g_db.item.removeByExample({ _to: a_id });
+
+        // Get rid of direct ACLs
+        g_db.acl.removeByExample({ _from: a_id });
+
+        // Mark record as deleted
+        g_db.d.update( a_id, { deleted: true });
+    };
+
+    /** @brief Deletes a data record that has been previously "trashed"
+     *
+     * Compute  allocation adjustments then remove data record. All other work
+     * has already been done when record was trashed.
+     */
+    obj.deleteTrashedRecord = function( a_data, a_alloc_adj ){
+        console.log("deleteThrashedRecord:",a_data._id);
+        var adj, loc = g_db.loc.firstExample({ _from: a_data._id });
+        var alloc_id = g_db.alloc.firstExample({ _from: a_data.owner, _to: loc._to })._id;
+
+        console.log("alloc ID:",alloc_id);
+
+        if ( alloc_id in a_alloc_adj ){
+            adj = a_alloc_adj[alloc_id];
+            console.log("in alloc_adj",adj);
+            adj.data_size -= a_data.size;
+            adj.rec_count -= 1;
+        }else{
+            console.log("NOT in alloc_adj");
+            a_alloc_adj[alloc_id] = { data_size: -a_data.size, rec_count: -1 };
+        }
+
+        console.log("new alloc_adj",a_alloc_adj[alloc_id]);
+
+        g_graph.d.remove( a_data._id );
+    };
+
+    /** @brief Update allocations with provided adjustments
+     * @param a_alloc_adj - object with alloc/user/project id as key and adjustments in value
+     *
+     * Adjustments are made to allocations, user, and/or project records.
+     * Allocations adjustments include data size and record count, user/project
+     * adjustments are record and collection count and data size (for summary purposes).
+     */
+    obj.updateAllocations = function( a_alloc_adj ){
+        console.log("updateAllocations",a_alloc_adj);
+        var doc, adj;
+        for ( var id in a_alloc_adj ){
+            adj = a_alloc_adj[id];
+            console.log("alloc",id,adj);
+
+            if ( id.charAt(0) == 'u'|| id.charAt(0) == 'p' ){
+                doc = g_db.document( id );
+                g_db._update( id, { data_size: doc.data_size + adj.data_size, rec_count: doc.rec_count + adj.rec_count, coll_count: doc.coll_count + adj.coll_count });
+            }else{
+                doc = g_db.alloc.document( id );
+                g_db._update( id, { data_size: doc.data_size + adj.data_size, rec_count: doc.rec_count + adj.rec_count });
+            }
+        }
     };
 
 

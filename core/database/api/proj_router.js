@@ -14,6 +14,7 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
+const   g_proc = require('./process');
 
 module.exports = router;
 
@@ -54,20 +55,6 @@ router.get('/create', function (req, res) {
                 g_lib.procInputParam( req.queryParams, "id", false, proj_data ); // Sets _key field
                 g_lib.procInputParam( req.queryParams, "title", false, proj_data );
                 g_lib.procInputParam( req.queryParams, "desc", false, proj_data );
-
-                if ( req.queryParams.sub_repo ){
-                    var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
-                    //var alloc_sz = parseInt( req.queryParams.sub_alloc );
-                    //if ( isNaN(alloc_sz) || alloc_sz <= 0 )
-                    if (  req.queryParams.sub_alloc <= 0 )
-                        throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
-                    if ( req.queryParams.sub_alloc > alloc.max_size ) // Ok to over-allocate across projects
-                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: " + alloc.max_size +")"];
-
-                    proj_data.sub_repo = req.queryParams.sub_repo;
-                    proj_data.sub_alloc = req.queryParams.sub_alloc;
-                    proj_data.sub_usage = 0;
-                }
 
                 var proj = g_db.p.save( proj_data, { returnNew: true });
                 g_db.owner.save({ _from: proj._id, _to: client._id });
@@ -136,8 +123,6 @@ router.get('/create', function (req, res) {
 .queryParam('id', joi.string().optional().allow(""), "ID for new project")
 .queryParam('title', joi.string().optional().allow(""), "Title")
 .queryParam('desc', joi.string().optional().allow(""), "Description")
-.queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
-.queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Additional project administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
 .summary('Create new project')
@@ -171,52 +156,15 @@ router.get('/update', function (req, res) {
                 }
 
                 var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
-
-                //console.log("proj update" );
-                //console.log("pu client id:", client._id );
-                //console.log("pu proj id:", proj_id );
-                //console.log("pu owner id:", owner_id );
-
                 var time = Math.floor( Date.now()/1000 );
-                var obj = {ut:time};
+                var obj = { ut: time };
 
                 g_lib.procInputParam( req.queryParams, "title", true, obj );
                 g_lib.procInputParam( req.queryParams, "desc", true, obj );
 
-                //console.log("pu 1" );
-
-                if ( req.queryParams.sub_repo ){
-                    // Verify there isn't a real allocation present
-                    if ( g_db.alloc.firstExample({_from:proj_id}))
-                        throw [g_lib.ERR_IN_USE,"Project sub-allocation not allowed (allocation defined)"];
-
-                    // Verify that there are no existing data records
-                    var data = g_db._query("for v in 1..1 inbound @proj owner filter IS_SAME_COLLECTION('d',v) return v._id",{proj:proj_id}).toArray();
-                    if ( data.length )
-                        throw [g_lib.ERR_IN_USE,"Project sub-allocation not allowed (existing records)"];
-                    if ( req.queryParams.sub_repo != 'none' ){
-                        var alloc = g_lib.verifyRepo( client._id, req.queryParams.sub_repo );
-                        if (  req.queryParams.sub_alloc <= 0 )
-                            throw [g_lib.ERR_INVALID_PARAM,"Invalid sub-allocation value: " + req.queryParams.sub_alloc];
-                        if ( req.queryParams.sub_alloc > alloc.max_size )
-                            throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+alloc.max_size+")"];
-
-                        obj.sub_repo = req.queryParams.sub_repo;
-                        obj.sub_alloc = req.queryParams.sub_alloc;
-                        obj.sub_usage = 0;
-                    }else{
-                        obj.sub_repo = null;
-                        obj.sub_alloc = null;
-                        obj.sub_usage = null;
-                    }
-                }else if ( req.queryParams.sub_alloc ){
-                    obj.sub_alloc = req.queryParams.sub_alloc;
-                }
-
                 // Managers can only update members
                 if ( !is_admin ){
-                    if ( obj.title !== undefined || obj.desc != undefined || obj.sub_repo != undefined || obj.sub_alloc != undefined || req.queryParams.admins != undefined ){
-                        console.log("perm denied:",obj,req.queryParams.admins);
+                    if ( obj.title !== undefined || obj.desc != undefined || req.queryParams.admins != undefined ){
                         throw g_lib.ERR_PERM_DENIED;
                     }
                 }
@@ -296,8 +244,6 @@ router.get('/update', function (req, res) {
 .queryParam('id', joi.string().required(), "Project ID")
 .queryParam('title', joi.string().optional().allow(''), "New title")
 .queryParam('desc', joi.string().optional().allow(''), "Description")
-.queryParam('sub_repo', joi.string().optional(), "Sub-allocation repo ID")
-.queryParam('sub_alloc', joi.number().optional(), "Sub-allocation size")
 .queryParam('admins', joi.array().items(joi.string()).optional(), "Account administrators (uids)")
 .queryParam('members', joi.array().items(joi.string()).optional(), "Project members (uids)")
 .summary('Update project information')
@@ -490,6 +436,7 @@ router.get('/search', function (req, res) {
 .summary('Find all projects that match query')
 .description('Find all projects that match query');
 
+/*
 router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -508,32 +455,12 @@ router.get('/delete', function (req, res) {
                 var size = 0;
                 var objects,obj,result={};
 
-                if ( proj.sub_repo ){
-                    // Collect data locations, size
-                    objects = g_db._query( "for v in 1..1 inbound @proj owner filter is_same_collection('d',v) let loc = (for v2,e2 in 1..1 outbound v._id loc return {repo:e2._to,path:e2.path}) return {id:v._id,size:v.size,loc:loc[0]}", { proj: proj_id });
-                    var locs = [];
-                    var path_prefix = g_lib.computeDataPathPrefix( proj.sub_repo, proj.owner );
-                    while ( objects.hasNext() ) {
-                        obj = objects.next();
-                        locs.push({ id: obj.id, path: path_prefix + obj.id.substr(2) });
-                        size += obj.size;
-                    }
-
-                    result.suballoc = true;
-                    result.locs = {};
-                    result.locs[proj.sub_repo] = locs;
-
-                    var owner_id = g_db.owner.firstExample({ _from: proj_id })._to;
-                    obj = g_db.alloc.firstExample({_from: owner_id, _to: proj.sub_repo});
-                    g_db._update( obj._id, { tot_size: obj.tot_size - size });
-                }else{
-                    result.suballoc = false;
-                    result.locs = {};
-                    objects = g_db.alloc.byExample({ _from: proj_id });
-                    while ( objects.hasNext() ) {
-                        obj = objects.next();
-                        result.locs[obj._to] = [];
-                    }
+                result.suballoc = false;
+                result.locs = {};
+                objects = g_db.alloc.byExample({ _from: proj_id });
+                while ( objects.hasNext() ) {
+                    obj = objects.next();
+                    result.locs[obj._to] = [];
                 }
 
                 objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id });
@@ -563,4 +490,39 @@ router.get('/delete', function (req, res) {
 .queryParam('id', joi.string().required(), "Project ID")
 .summary('Remove existing project')
 .description('Remove existing project.');
+*/
 
+router.post('/delete', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d"],
+                write: ["p","g","uuid","accn","c","d","a","acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
+                exclusive: ["lock","task","block"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var i, id, res_ids = [];
+
+                for ( i in req.body.ids ){
+                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                    res_ids.push( id );
+                }
+
+                // Deletes records w/ no raw data, returns those with for delete task
+                var result = g_proc.projectDelete( client, res_ids );
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+}).required(), 'Parameters')
+.summary('Delete project(s) and all associated data records and raw data.')
+.description('Delete project(s) and all associated data records and raw data.');

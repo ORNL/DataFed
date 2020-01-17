@@ -357,7 +357,7 @@ module.exports = ( function() {
         while ( allocs.hasNext() ){
             alloc = allocs.next();
 
-            if ( alloc.tot_size < alloc.max_size && alloc.tot_count < alloc.max_count ){
+            if ( alloc.data_size < alloc.data_limit && alloc.rec_count < alloc.rec_limit ){
                 return alloc;
             }
         }
@@ -370,11 +370,11 @@ module.exports = ( function() {
         if ( !alloc )
             throw [obj.ERR_NO_ALLOCATION,"No allocation on repo " + a_repo_id];
 
-        if ( alloc.tot_size >= alloc.max_size )
-            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation data size exceeded (max: "+alloc.max_size+")"];
+        if ( alloc.data_size >= alloc.data_limit )
+            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation data size exceeded (max: "+alloc.data_limit+")"];
 
-        if ( alloc.tot_count >= alloc.max_count )
-            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation record count exceeded (max: "+alloc.max_count+")"];
+        if ( alloc.rec_count >= alloc.rec_limit )
+            throw [obj.ERR_ALLOCATION_EXCEEDED,"Allocation record count exceeded (max: "+alloc.rec_limit+")"];
 
         return alloc;
     };
@@ -387,15 +387,10 @@ module.exports = ( function() {
         var repo = obj.db._document( a_loc._to );
         var repo_path = a_export?repo.export_path:repo.path;
 
-        if ( a_loc.parent ){
-            var user = obj.db._document( a_loc.parent )._from;
-            return repo_path + "user" + user.substr(1) + a_loc._from.substr(1);
+        if ( a_loc.uid.charAt(0) == 'u' ){
+            return repo_path + "user" + a_loc.uid.substr(1) + a_loc._from.substr(1);
         }else{
-            if ( a_loc.uid.charAt(0) == 'u' ){
-                return repo_path + "user" + a_loc.uid.substr(1) + a_loc._from.substr(1);
-            }else{
-                return repo_path + "project" + a_loc.uid.substr(1) + a_loc._from.substr(1);
-            }
+            return repo_path + "project" + a_loc.uid.substr(1) + a_loc._from.substr(1);
         }
     };
 
@@ -417,163 +412,6 @@ module.exports = ( function() {
 
     obj.getDataCollectionLinkCount = function( id ){
         return obj.db._query( "for v in 1..1 inbound @id item return v._id", { id: id }).count();
-    };
-
-    obj.deleteRawData = function( a_data, a_alloc_size, a_locations ){
-        var loc = obj.db.loc.firstExample({_from: a_data._id });
-        var path = obj.computeDataPath( loc );
-
-        if ( a_locations[loc._to] )
-            a_locations[loc._to].push({ id: a_data._id, path: path });
-        else
-            a_locations[loc._to] = [{ id: a_data._id, path: path }];
-
-        var alloc_id;
-
-        // Adjust allocation for data size
-        if ( a_data.size ){
-            if ( loc.parent ){
-                if ( a_alloc_size[a_data.owner] )
-                    a_alloc_size[a_data.owner] += a_data.size;
-                else
-                    a_alloc_size[a_data.owner] = a_data.size;
-                alloc_id = loc.parent;
-            }else{
-                alloc_id = obj.db.alloc.firstExample({_from:a_data.owner,_to:loc._to})._id;
-            }
-
-            if ( a_alloc_size[alloc_id] )
-                a_alloc_size[alloc_id] += a_data.size;
-            else
-                a_alloc_size[alloc_id] = a_data.size;
-        }
-    };
-
-    obj.deleteData = function( a_data, a_alloc_size, a_locations ){
-        console.log("deleteData:",a_data._id);
-        // Delete attached alias
-        var alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: a_data._id });
-        if ( alias.hasNext() ) {
-            obj.graph.a.remove( alias.next() );
-        }
-
-        /*
-        console.log("  unlink topic");
-
-        var top = obj.db.top.firstExample({_from: a_data._id});
-        if ( top )
-            obj.topicUnlink( a_data._id );
-        */
-
-        var loc = obj.db.loc.firstExample({_from: a_data._id });
-        console.log("  compute path");
-
-        var path = obj.computeDataPath( loc );
-
-        if ( a_locations[loc._to] )
-            a_locations[loc._to].push({ id: a_data._id, path: path });
-        else
-            a_locations[loc._to] = [{ id: a_data._id, path: path }];
-
-        var alloc_id;
-        // Adjust allocation for data size
-        if ( a_data.size ){
-            if ( loc.parent ){
-                if ( a_alloc_size[a_data.owner] )
-                    a_alloc_size[a_data.owner] += a_data.size;
-                else
-                    a_alloc_size[a_data.owner] = a_data.size;
-                alloc_id = loc.parent;
-            }else{
-                console.log("  alloc",a_data.owner,loc._to);
-                alloc_id = obj.db.alloc.firstExample({_from:a_data.owner,_to:loc._to})._id;
-            }
-
-            if ( a_alloc_size[alloc_id] )
-                a_alloc_size[alloc_id] += a_data.size;
-            else
-                a_alloc_size[alloc_id] = a_data.size;
-        }
-        console.log("  remove");
-
-        obj.graph.d.remove( a_data._id );
-    };
-
-    obj.deleteCollection = function( a_coll_id, a_allocs, a_locations ){
-        console.log("deleteCollection");
-        // Delete collection aliases, if present
-        /*var alias = obj.db._query( "for v in 1..1 outbound @coll alias return v._id", { coll: a_coll_id });
-        if ( alias.hasNext() ) {
-            obj.graph.a.remove( alias.next() );
-        }*/
-
-        // Recursively collect all linked items (data and collections) for deletion or unlinking
-        // Since this could be a very large and/or deep collection hierarchy, we will use a breadth-first traversal
-        // to delete the collection layer-by-layer, rather than all-at-once. While deleting, any data records that are
-        // actually deleted will have their data locations placed in an array that will be returned to the client. This
-        // allows the client to coordinate deletion of raw data from associated data repos.
-
-        // Note: data may be linked into the collection hierarchy being deleted more than once. This will cause the
-        // delete logic to initially pass-over this data (in OWNED mode), but it will be deleted when the logic arrives
-        // at the final instance of this data (thie link count will be 1 then).
-
-        var top,alias,item,items,coll,c,cur,next = [a_coll_id];
-
-        while ( next.length ){
-            cur = next;
-            next = [];
-            for ( c in cur ){
-                coll = cur[c];
-                //console.log("del coll: ",coll);
-                items = obj.db._query( "for v in 1..1 outbound @coll item let links = length(for v1 in 1..1 inbound v._id item return v1._id) return {_id:v._id,size:v.size,owner:v.owner,links:links}", { coll: coll });
-                //items = obj.db._query( "for v in 1..1 outbound @coll item return {_id:v._id,size:v.size,owner:v.owner}", { coll: coll });
-
-                while ( items.hasNext() ) {
-                    item = items.next();
-                    if ( item._id[0] == "d" ){
-                        //console.log("del data: ",item._id);
-
-                        //obj.deleteData( item, a_allocs, a_locations );
-                        if ( item.links == 1 ){
-                            // Save location and delete
-                            obj.deleteData( item, a_allocs, a_locations );
-                        }else{
-                            // Unlink from current collection
-                            obj.db.item.removeByExample({_from:coll,_to:item._id});
-                        }
-                    }else{
-                        //console.log("add other: ",item._id);
-                        next.push(item._id);
-                    }
-                }
-
-                alias = obj.db._query( "for v in 1..1 outbound @id alias return v._id", { id: coll });
-                if ( alias.hasNext() ) {
-                    obj.graph.a.remove( alias.next() );
-                }
-
-                top = obj.db.top.firstExample({_from: coll});
-                if ( top )
-                    obj.topicUnlink( coll );
-
-                obj.graph.c.remove( coll );
-            }
-        }
-    };
-
-    obj.updateAllocations = function( a_alloc_sz ){
-        //console.log("updateAllocations",a_alloc_sz);
-
-        var doc;
-        for ( var id in a_alloc_sz ){
-            if ( id.startsWith( "alloc" )){
-                doc = obj.db.alloc.document(id);
-                obj.db._update( id, { tot_size: doc.tot_size - a_alloc_sz[id] });
-            }else{
-                doc = obj.db.p.document(id);
-                obj.db._update( id, { sub_usage: doc.sub_usage - a_alloc_sz[id] });
-            }
-        }
     };
 
     obj.hasAdminPermUser = function( a_client, a_user_id ) {

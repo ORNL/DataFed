@@ -33,61 +33,23 @@ function recordCreate( client, record, results ){
         if ( owner_id != client._id ){
             if ( !g_lib.hasManagerPermProj( client, owner_id )){
                 var parent_coll = g_db.c.document( parent_id );
-
-                //console.log("check admin perm on parent coll: ",parent_id);
                 if ( !g_lib.hasPermissions( client, parent_coll, g_lib.PERM_CREATE )){
-                    //console.log("NO admin perm on parent coll: ",parent_id);
                     throw g_lib.ERR_PERM_DENIED;
                 }
             }
         }
     }else{
-        //console.log("no body?");
         parent_id = g_lib.getRootID(client._id);
         owner_id = client._id;
     }
 
-    var alloc_parent = null;
+    // TODO This need to be updated when allocations can be assigned to collections
 
-    if ( owner_id != client._id ){
-        //console.log( "not owner" );
-        if ( record.repo ) {
-            // If a repo is specified, must be a real allocation - verify it as usual
-            //console.log( "repo specified" );
-            //repo_alloc = g_db.alloc.firstExample({ _from: owner_id, _to: record.repo });
-            repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
-        } else {
-            // If a repo is not specified, must check for project sub-allocation
-            //console.log( "repo not specified" );
-
-            if ( owner_id[0] == 'p' ){
-                // For projects, use sub-allocation if defined, otherwise auto-assign from project owner
-                //console.log( "owner is a project" );
-                var proj = g_db.p.document( owner_id );
-                if ( proj.sub_repo ){
-                    //console.log( "project has sub allocation" );
-                    // Make sure soft capacity hasn't been exceeded
-                    if ( proj.sub_usage > proj.sub_alloc )
-                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Allocation exceeded (max: "+proj.sub_alloc+")"];
-
-                    var proj_owner_id = g_db.owner.firstExample({_from:proj._id})._to;
-                    repo_alloc = g_lib.verifyRepo( proj_owner_id, proj.sub_repo );
-                    alloc_parent = repo_alloc._id;
-                }
-            }
-
-            if ( !repo_alloc ){
-                // Try to auto-assign an available allocation
-                repo_alloc = g_lib.assignRepo( owner_id );
-            }
-        }
-    }else{
-        // Storage location uses client allocation(s)
-        if ( record.repo ) {
-            repo_alloc = g_lib.verifyRepo( client._id, record.repo );
-        } else {
-            repo_alloc = g_lib.assignRepo( client._id );
-        }
+    // If repo is specified, verify it; otherwise assign one (aware of default)
+    if ( record.repo ) {
+        repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
+    } else {
+        repo_alloc = g_lib.assignRepo( owner_id );
     }
 
     if ( !repo_alloc )
@@ -132,12 +94,10 @@ function recordCreate( client, record, results ){
     var data = g_db.d.save( obj, { returnNew: true });
     g_db.owner.save({ _from: data.new._id, _to: owner_id });
 
+    // Create data location edge and update allocation and stats
     var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
-    if ( alloc_parent )
-        loc.parent = alloc_parent;
-    g_db.loc.save(loc);
-
-    g_db.alloc.update( repo_alloc._id, { tot_count: repo_alloc.tot_count + 1 });
+    g_db.loc.save( loc );
+    g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
 
     if ( obj.alias ) {
         var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
@@ -150,6 +110,7 @@ function recordCreate( client, record, results ){
         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
 
+    // Handle specified dependencies
     if ( record.deps != undefined ){
         var dep,id,dep_data;
         data.new.deps = [];
@@ -158,7 +119,7 @@ function recordCreate( client, record, results ){
             dep = record.deps[i];
             id = g_lib.resolveDataID( dep.id, client );
             dep_data = g_db.d.document( id );
-            if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
+            if ( g_db.dep.firstExample({ _from: data._id, _to: id }))
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
             g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
             data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
@@ -265,7 +226,8 @@ router.post('/create/batch', function (req, res) {
 .summary('Create a batch of new data records')
 .description('Create a batch of new data records from JSON body');
 
-function recordUpdate( client, record, results, alloc_sz, locations ){
+
+function recordUpdate( client, record, results, alloc_adj ){
     var data_id = g_lib.resolveDataID( record.id, client );
     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
     var data = g_db.d.document( data_id );
@@ -329,7 +291,6 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
 
         if ( data.size ){
             // Data is being published, delete existing managed raw data
-            g_lib.deleteRawData( data, alloc_sz, locations );
             obj.size = 0;
         }
         obj.source = null;
@@ -368,36 +329,19 @@ function recordUpdate( client, record, results, alloc_sz, locations ){
         }
 
         if ( record.size !== undefined ) {
-            console.log("new data size:",record.size,typeof record.size);
-
             obj.size = record.size;
 
             if ( obj.size != data.size ){
                 var loc = g_db.loc.firstExample({ _from: data_id });
-                if ( loc ){
-                    //console.log("owner:",owner_id,"repo:",loc._to);
-                    var alloc, usage;
-                    if ( loc.parent ){
-                        alloc = g_db.alloc.document( loc.parent );
-                        // Update project sub allocation
-                        var proj = g_db.p.document( owner_id );
-                        usage = Math.max(0,proj.sub_usage - data.size + obj.size);
-                        g_db._update( proj._id, {sub_usage:usage});
-                    }else{
-                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                    }
-
-                    // Update primary/parent allocation
-                    usage = Math.max(0,alloc.tot_size - data.size + obj.size);
-                    g_db._update( alloc._id, {tot_size:usage});
-                }
+                var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
             }
         }
     }
 
     if ( record.dt != undefined )
         obj.dt = record.dt;
-    //console.log("new ext:",obj.ext,",auto:",obj.ext_auto);
+
     data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true });
     data = data.new;
 
@@ -489,12 +433,13 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var alloc_sz = {}, locations = {};
+                var alloc_adj = {};
 
-                recordUpdate( client, req.body, result, alloc_sz, locations );
-                console.log("update allocs:",alloc_sz);
-                g_lib.updateAllocations( alloc_sz );
-                result.push({"deletions":locations});
+                recordUpdate( client, req.body, result, alloc_adj );
+
+                if ( alloc_adj.length ){
+                    // TODO FIXME - needs to init a raw data delete task here
+                }
             }
         });
 
@@ -542,14 +487,15 @@ router.post('/update/batch', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var alloc_sz = {}, locations = {};
+                var alloc_adj = {};
 
                 for ( var i in req.body ){
-                    recordUpdate( client, req.body[i], result, alloc_sz, locations );
+                    recordUpdate( client, req.body[i], result, alloc_adj );
                 }
 
-                g_lib.updateAllocations( alloc_sz );
-                result.push({"deletions":locations});
+                if ( alloc_adj.length ){
+                    // TODO FIXME - needs to init a raw data delete task here
+                }
             }
         });
 
@@ -603,8 +549,7 @@ router.post('/update/post_put', function (req, res) {
                 var data_id = g_lib.resolveDataID( req.body.id, client );
                 var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
                 var data = g_db.d.document( data_id );
-                var alloc_sz = {};
-            
+
                 var obj = { ut: Math.floor( Date.now()/1000 ), size: req.body.size, dt: req.body.dt };
 
                 g_lib.procInputParam( req.body, "source", true, obj );
@@ -636,29 +581,12 @@ router.post('/update/post_put', function (req, res) {
 
                 if ( obj.size != data.size ){
                     var loc = g_db.loc.firstExample({ _from: data_id });
-                    if ( !loc )
-                        throw [g_lib.ERR_INTERNAL_FAULT,"Record update after PUT found no data location for '" + data_id + "'"];
+                    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
 
-                    var alloc, usage;
-                    if ( loc.parent ){
-                        // Only projects have suballocations
-                        alloc = g_db.alloc.document( loc.parent );
-                        // Update project sub allocation
-                        var proj = g_db.p.document( owner_id );
-                        usage = Math.max(0,proj.sub_usage - data.size + obj.size);
-                        g_db._update( proj._id, {sub_usage:usage});
-                    }else{
-                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                    }
-
-                    // Update primary/parent allocation
-                    usage = Math.max(0,alloc.tot_size - data.size + obj.size);
-                    g_db._update( alloc._id, {tot_size:usage});
+                    g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
                 }
 
                 g_db._update( data_id, obj, { keepNull: false });
-
-                g_lib.updateAllocations( alloc_sz );
             }
         });
 
@@ -1073,48 +1001,6 @@ router.get('/search', function (req, res) {
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
 
-/*
-router.get('/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","d"],
-                write: ["d","a","owner","item","acl","alias","loc","lock","alloc","p","t","top","dep"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data,data_id; //,owner_id;
-                var alloc_sz = {}, locations = {};
-
-                for ( var i in req.queryParams.ids ){
-                    data_id = g_lib.resolveDataID( req.queryParams.ids[i], client );
-                    data = g_db.d.document( data_id );
-
-                    if ( !g_lib.hasAdminPermObject( client, data_id )){
-                        if ( data.locked || !g_lib.hasPermissions( client, data, g_lib.PERM_DELETE ))
-                            throw g_lib.ERR_PERM_DENIED;
-                    }
-
-                    //owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-
-                    g_lib.deleteData( data, alloc_sz, locations );
-                }
-
-                g_lib.updateAllocations( alloc_sz );
-                res.send( locations );
-            }
-        });
-
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data IDs or aliases")
-.summary('Deletes an existing data record')
-.description('Deletes an existing data record');
-*/
-
 
 router.get('/get/preproc', function (req, res) {
     try {
@@ -1354,7 +1240,7 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","d"],
+                read: ["u","uuid","accn"],
                 write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"],
                 exclusive: ["lock","task","block"],
             },
@@ -1386,28 +1272,6 @@ router.post('/delete', function (req, res) {
 .description('Delete collections, data records and associated raw data. IDs may be data IDs or aliases.');
 
 
-function deleteRecord( a_data, a_alloc_size ){
-    var alloc_id, loc = g_db.loc.firstExample({ _from: a_data._id });
-
-    if ( a_data.size ){
-        if ( loc.parent ){
-            if ( a_alloc_size[a_data.owner] )
-                a_alloc_size[a_data.owner] += a_data.size;
-            else
-                a_alloc_size[a_data.owner] = a_data.size;
-            alloc_id = loc.parent;
-        }else{
-            alloc_id = g_db.alloc.firstExample({ _from: a_data.owner, _to: loc._to })._id;
-        }
-
-        if ( a_alloc_size[alloc_id] )
-            a_alloc_size[alloc_id] += a_data.size;
-        else
-            a_alloc_size[alloc_id] = a_data.size;
-    }
-
-    g_graph.d.remove( a_data._id );
-}
 
 
 router.post('/trash/delete', function (req, res) {
@@ -1420,12 +1284,12 @@ router.post('/trash/delete', function (req, res) {
             },
             action: function() {
                 //const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data, alloc_sz = {};
+                var id, data, alloc_adj = {};
 
                 // NOTE: This operation must be idempotent - it's OK if records have
                 // already been deleted; however, it is an error if they are not
                 // marked for deletion.
-                var id;
+
                 for ( var i in req.body.ids ){
                     id = req.body.ids[i];
                     if ( g_db.d.exists( id )){
@@ -1434,11 +1298,11 @@ router.post('/trash/delete', function (req, res) {
                         if ( !data.deleted )
                             throw [g_lib.ERR_INVALID_PARAM,"Record ID: '" + id + "' not marked for deletion."];
 
-                        deleteRecord( data, alloc_sz );
+                        g_proc.deleteTrashedRecord( data, alloc_adj );
                     }
                 }
 
-                g_lib.updateAllocations( alloc_sz );
+                g_proc.updateAllocations( alloc_adj );
             }
         });
 

@@ -50,12 +50,6 @@ router.post('/create', function (req, res) {
                     parent_id = g_lib.getRootID(client._id);
                 }
 
-                // Must have at least one allocation to create collections
-                if ( !g_db.alloc.firstExample({_from: owner._id }) ){
-                    if ( owner._id[0] != 'p' || !owner.sub_repo )
-                        throw [g_lib.ERR_NO_ALLOCATION,"Allocation required to create collections"];
-                }
-
                 // Enforce collection limit if set
                 if ( owner.max_coll >= 0 ){
                     var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",{id:owner._id}).next();
@@ -224,44 +218,6 @@ router.post('/update', function (req, res) {
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
 .description('Update an existing collection from JSON body');
-
-/*
-router.get('/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn"],
-                write: ["c","d","a","owner","item","loc","lock","acl","alias","alloc","t","top","p","dep"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
-                var coll = g_db.c.document( coll_id );
-
-                if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-                    if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_DELETE ))
-                        throw g_lib.ERR_PERM_DENIED;
-                }
-
-                if ( coll.is_root )
-                    throw [g_lib.ERR_INVALID_PARAM,"Cannot delete root collection"];
-
-                var locations={}, alloc_sz={};
-                g_lib.deleteCollection( coll._id, alloc_sz, locations );
-                g_lib.updateAllocations( alloc_sz );
-
-                res.send( locations );
-            }
-        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Collection ID or alias")
-.summary('Deletes an existing data collection')
-.description('Deletes an existing data collection and contained data');
-*/
 
 
 // This is an OWNER or ADMIN only function, other users must navigate the collection hierarchy
