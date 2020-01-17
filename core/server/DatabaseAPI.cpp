@@ -638,10 +638,10 @@ DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
 
                         alloc = user->add_alloc( );
                         alloc->set_repo( obj2.at( "repo" ).asString( ));
-                        alloc->set_max_size( obj2.at( "max_size" ).asNumber( ));
-                        alloc->set_tot_size( obj2.at( "tot_size" ).asNumber( ));
-                        alloc->set_max_count( obj2.at( "max_count" ).asNumber( ));
-                        alloc->set_tot_count( obj2.at( "tot_count" ).asNumber( ));
+                        alloc->set_data_limit( obj2.at( "data_limit" ).asNumber( ));
+                        alloc->set_data_size( obj2.at( "data_size" ).asNumber( ));
+                        alloc->set_rec_limit( obj2.at( "rec_limit" ).asNumber( ));
+                        alloc->set_rec_count( obj2.at( "rec_count" ).asNumber( ));
                         alloc->set_path( obj2.at( "path" ).asString( ));
                     }
                 }
@@ -871,10 +871,10 @@ DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 
                     alloc = proj->add_alloc();
                     alloc->set_repo( obj2.at( "repo" ).asString( ));
-                    alloc->set_max_size( obj2.at( "max_size" ).asNumber( ));
-                    alloc->set_tot_size( obj2.at( "tot_size" ).asNumber( ));
-                    alloc->set_max_count( obj2.at( "max_count" ).asNumber( ));
-                    alloc->set_tot_count( obj2.at( "tot_count" ).asNumber( ));
+                    alloc->set_data_limit( obj2.at( "data_limit" ).asNumber( ));
+                    alloc->set_data_size( obj2.at( "data_size" ).asNumber( ));
+                    alloc->set_rec_limit( obj2.at( "rec_limit" ).asNumber( ));
+                    alloc->set_rec_count( obj2.at( "rec_count" ).asNumber( ));
                     alloc->set_path( obj2.at( "path" ).asString( ));
                 }
             }
@@ -2324,17 +2324,14 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value 
 
             alloc = a_reply.add_alloc();
             alloc->set_repo( obj.at( "repo" ).asString( ));
-            alloc->set_max_size( obj.at( "max_size" ).asNumber( ));
-            alloc->set_tot_size( obj.at( "tot_size" ).asNumber( ));
-            alloc->set_max_count( obj.at( "max_count" ).asNumber( ));
-            alloc->set_tot_count( obj.at( "tot_count" ).asNumber( ));
+            alloc->set_data_limit( obj.at( "data_limit" ).asNumber( ));
+            alloc->set_data_size( obj.at( "data_size" ).asNumber( ));
+            alloc->set_rec_limit( obj.at( "rec_limit" ).asNumber( ));
+            alloc->set_rec_count( obj.at( "rec_count" ).asNumber( ));
             alloc->set_path( obj.at( "path" ).asString( ));
 
             if (( j = obj.find( "id" )) != obj.end( ))
                 alloc->set_id( j->second.asString( ));
-
-            if (( j = obj.find( "sub_alloc" )) != obj.end( ))
-                alloc->set_sub_alloc( j->second.asBool( ));
 
             if (( j = obj.find( "stats" )) != obj.end( ))
             {
@@ -2390,9 +2387,9 @@ DatabaseAPI::setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_sta
     Value::Object & obj = a_value.getObject();
 
     a_stats.set_repo( obj.at( "repo" ).asString( ));
-    a_stats.set_records( obj.at( "records" ).asNumber( ));
-    a_stats.set_files( obj.at( "files" ).asNumber( ));
-    a_stats.set_total_sz( obj.at( "total_sz" ).asNumber( ));
+    a_stats.set_rec_count( obj.at( "rec_count" ).asNumber( ));
+    a_stats.set_file_count( obj.at( "file_count" ).asNumber( ));
+    a_stats.set_data_size( obj.at( "data_size" ).asNumber( ));
 
     Value::ObjectIter i = obj.find( "histogram" );
     if ( i != obj.end( ))

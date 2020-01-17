@@ -156,64 +156,25 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             var have_cap = false;
             if ( ok ){
                 if ( data.length == 0 ){
-                    html="<option value='bad'>(no allocation)</option>";
+                    html="<option value='bad'>(no allocations)</option>";
                 }else{
                     var alloc;
                     html = "";
                     for ( var i in data ){
                         alloc = data[i];
-                        if ( alloc.subAlloc ){
-                            html += "<option value='default'";
-                        }else{
-                            html += "<option value='"+alloc.repo + "'";
-                        }
+                        html += "<option value='"+alloc.repo + "'";
 
-                        if ( parseInt( alloc.totSize ) < parseInt( alloc.maxSize ))
+                        if ( parseInt( alloc.dataSize ) < parseInt( alloc.dataLimit ) && alloc.recCount < alloc.recLimit )
                             have_cap = true;
                         else
                             html += " disabled";
 
-                        html += ">"+(alloc.subAlloc?"Default":alloc.repo.substr(5))+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
+                        html += ">"+ alloc.repo.substr(5) + " ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
                     }
 
-                    if ( !have_cap || !data.length ){
-                        if ( data.length && !have_cap ){
-                            dlgAlert("Data Allocation Error","All available storage allocations are full.");
-                            frame.dialog('destroy').remove();
-                            return;
-                        }else{
-                            viewColl( coll_id, function( data2 ){
-                                if ( data2 ){
-                                    if ( data2.owner.startsWith( "u/" )){
-                                        dlgAlert("Data Allocation Error","No available storage allocations.");
-                                        frame.dialog('destroy').remove();
-                                        return;
-                                    }else{
-                                        viewProj( data2.owner, function( proj ){
-                                            if ( proj ){
-                                                if ( !proj.subRepo ){
-                                                    dlgAlert("Data Allocation Error","No available storage allocations.");
-                                                    frame.dialog('destroy').remove();
-                                                    return;
-                                                }else if ( parseInt( proj.subUsage ) >= parseInt( proj.subAlloc )){
-                                                    dlgAlert("Data Allocation Error","Project sub-allocation is full.");
-                                                    frame.dialog('destroy').remove();
-                                                    return;
-                                                }else{
-                                                    $("#do_it").button("enable");
-                                                }
-                                            }else{
-                                                $("#do_it").button("enable");
-                                            }
-                                        });
-                                    }
-                                }else{
-                                    // Something went wrong - collection changed, no view permission?
-                                    // Just go ahead and let user try to create since we can't confirm default is valid here
-                                    $("#do_it").button("enable");
-                                }
-                            });
-                        }
+                    if ( !have_cap ){
+                        dlgAlert("Data Allocation Error","All available storage allocations are full.");
+                        return;
                     }else{
                         $("#do_it").button("enable");
                     }

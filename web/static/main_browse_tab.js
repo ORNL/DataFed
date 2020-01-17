@@ -1683,17 +1683,12 @@ function makeBrowserTab(){
 
                     html = "<table class='info_table'><col width='20%'><col width='80%'>";
                     html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
-                    if ( !is_user )
-                        html += "<tr><td>Sub-allocation:</td><td>" + (node.data.sub_alloc?"Yes":"No") + "</td></tr>";
-                    html += "<tr><td>Capacity:</td><td>" + sizeToString( alloc.maxSize ) + "</td></tr>";
-                    html += "<tr><td>Usage:";
-                    if ( is_user )
-                        html += " <span class='note'>*</span>";
-                    var used = Math.max( Math.floor(10000*alloc.totSize/alloc.maxSize)/100, 0 );
-                    html += "</td><td>" + sizeToString( alloc.totSize ) + " (" + used + " %)</td></tr>";
-                    html += "<tr><td>Max. Records:</td><td>" + alloc.maxCount + "</td></tr></table>";
-                    if ( is_user )
-                        html += "<br><span class='note'>* Includes any project sub-allocation usage</span>";
+                    html += "<tr><td>Data Limit:</td><td>" + sizeToString( alloc.dataLimit ) + "</td></tr>";
+                    html += "<tr><td>Data Usage:";
+                    var used = Math.max( Math.floor(10000*alloc.dataSize/alloc.dataLimit)/100, 0 );
+                    html += "</td><td>" + sizeToString( alloc.dataSize ) + " (" + used + " %)</td></tr>";
+                    html += "<tr><td>Record Limit:</td><td>" + alloc.recLimit + "</td></tr>";
+                    html += "<tr><td>Record Count:</td><td>" + alloc.recCount + "</td></tr></table>";
                     fields.details = html;
                 }else{
                     setStatusText( "Allocation View Error: " + data );
@@ -3724,7 +3719,7 @@ function makeBrowserTab(){
     });
 
     $("#footer-tabs").tabs({
-        heightStyle:"auto",
+        heightStyle: "auto",
         collapsible: true,
         activate: function(ev,ui){
             if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
@@ -3735,6 +3730,9 @@ function makeBrowserTab(){
 
             if (( ui.newTab.length == 0 && ui.newPanel.length == 0 ) || ( ui.oldTab.length == 0 && ui.oldPanel.length == 0 )){
                 inst.windowResized();
+                /*setTimeout( function(){
+                    inst.windowResized();
+                }, 1500 );*/
             }
         }
     }).css({'overflow': 'auto'});

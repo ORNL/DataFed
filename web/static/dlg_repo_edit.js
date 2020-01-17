@@ -100,11 +100,11 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     }
 
     function addAllocNode( alloc ){
-        alloc_tree.rootNode.addNode({title:alloc.id.substr(2) + "  (" +sizeToString(alloc.totSize) +"/"+sizeToString( alloc.maxSize )+")",icon:alloc.id.startsWith("u/")?"ui-icon ui-icon-person":"ui-icon ui-icon-box",key:alloc.id,alloc:alloc});
+        alloc_tree.rootNode.addNode({title:alloc.id.substr(2) + "  (" +sizeToString(alloc.dataSize) +"/"+sizeToString( alloc.dataLimit )+")",icon:alloc.id.startsWith("u/")?"ui-icon ui-icon-person":"ui-icon ui-icon-box",key:alloc.id,alloc:alloc});
     }
 
     function updateAllocTitle( node ){
-        node.setTitle( node.key.substr(2) + "  (" +sizeToString(node.data.alloc.totSize) +"/"+sizeToString( node.data.alloc.maxSize )+")");
+        node.setTitle( node.key.substr(2) + "  (" +sizeToString(node.data.alloc.dataSize) +"/"+sizeToString( node.data.alloc.dataLimit )+")");
     }
 
     $(".btn",frame).button();
@@ -183,10 +183,10 @@ function dlgRepoEdit( a_repo_id, a_cb ){
 
                     var msg =
                     "<table class='info_table'>\
-                    <tr><td>No. of Records:</td><td>" + data.records + "</td></tr>\
-                    <tr><td>No. of Files:</td><td>" + data.files + "</td></tr>\
-                    <tr><td>Total size:</td><td>" + data.totalSz + "<br>(" + sizeToString( data.totalSz ) + ")</td></tr>\
-                    <tr><td>Average size:</td><td>" + sizeToString( data.files>0?data.totalSz/data.files:0 ) + "</td></tr>\
+                    <tr><td>No. of Records:</td><td>" + data.recCount + "</td></tr>\
+                    <tr><td>No. of Files:</td><td>" + data.fileCount + "</td></tr>\
+                    <tr><td>Total size:</td><td>" + data.dataSize + "<br>(" + sizeToString( data.dataSize ) + ")</td></tr>\
+                    <tr><td>Average size:</td><td>" + sizeToString( data.fileCount>0?data.dataSize/data.fileCount:0 ) + "</td></tr>\
                     </table><br>Histogram:<br><br><table class='info_table'>\
                     <tr><th></th><th>1's</th><th>10's</th><th>100's</th></tr>\
                     <tr><td>B:</td><td>" + data.histogram[0] + "</td><td>"+ data.histogram[1] + "</td><td>"+ data.histogram[2] + "</td></tr>\
