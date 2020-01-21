@@ -46,6 +46,8 @@ module.exports = ( function() {
     obj.TT_DATA_CHG_ALLOC   = 2;
     obj.TT_DATA_CHG_OWNER   = 3;
     obj.TT_DATA_DEL         = 4;
+    obj.TT_ALLOC_CREATE     = 5;
+    obj.TT_ALLOC_DEL        = 6;
 
     obj.TS_BLOCKED          = 0;
     obj.TS_READY            = 1;

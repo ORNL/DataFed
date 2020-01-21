@@ -246,7 +246,7 @@ module.exports = ( function() {
     };
 
 
-    obj._processTaskDeps = function( a_task_id, a_ids, a_write ){
+    obj._processTaskDeps = function( a_task_id, a_ids, a_write, a_context ){
         var i, id, lock, locks, block = new Set();
         for ( i in a_ids ){
             // ensure dependency exists
@@ -256,13 +256,16 @@ module.exports = ( function() {
             locks = g_db.lock.byExample({_to: id });
             while ( locks.hasNext() ){
                 lock = locks.next();
-                if ( a_write || lock.write ){
+                if (( a_write || lock.write ) && ( lock.context == a_context )){
                     block.add(lock._from);
                 }
             }
 
             // Add new lock
-            g_db.lock.save({ _from: a_task_id, _to: id, write: a_write });
+            if ( a_context )
+                g_db.lock.save({ _from: a_task_id, _to: id, write: a_write, context: a_context });
+            else
+                g_db.lock.save({ _from: a_task_id, _to: id, write: a_write });
         }
 
         if ( block.size ){
@@ -780,6 +783,45 @@ module.exports = ( function() {
                 g_db._update( id, { data_size: doc.data_size + adj.data_size, rec_count: doc.rec_count + adj.rec_count });
             }
         }
+    };
+
+    obj.allocCreate = function( a_client, a_repo_id, a_subject_id, a_path ){
+        var state = { repo: a_repo_id, subject: a_subject_id, path: a_path };
+        var doc = obj._createTask( a_client._id, g_lib.TT_ALLOC_CREATE, state );
+        var task = g_db.task.save( doc, { returnNew: true });
+
+        if ( obj._processTaskDeps( task.new._id, [a_repo_id], true, a_subject_id )){
+            task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+        }
+
+        task.new.id = task.new._id;
+        delete task.new._id;
+        delete task.new._key;
+        delete task.new._rev;
+
+        task = task.new;
+
+        return { "task" : task };
+    };
+
+
+    obj.allocDelete = function( a_client, a_repo_id, a_subject_id, a_path ){
+        var state = { repo: a_repo_id, subject: a_subject_id, path: a_path };
+        var doc = obj._createTask( a_client._id, g_lib.TT_ALLOC_DEL, state );
+        var task = g_db.task.save( doc, { returnNew: true });
+
+        if ( obj._processTaskDeps( task.new._id, [a_repo_id], true, a_subject_id )){
+            task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+        }
+
+        task.new.id = task.new._id;
+        delete task.new._id;
+        delete task.new._key;
+        delete task.new._rev;
+
+        task = task.new;
+
+        return { "task" : task };
     };
 
 

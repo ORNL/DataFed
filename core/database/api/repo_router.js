@@ -14,6 +14,7 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
+const   g_proc = require('./process');
 
 module.exports = router;
 
@@ -497,6 +498,112 @@ router.get('/alloc/stats', function (req, res) {
 .description('View allocation statistics (or repo stats if no subject provided)');
 
 
+router.get('/alloc/create', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","repo","admin"],
+                write: ["alloc"],
+                exclusive: ["task","lock","block"]
+            },
+            action: function() {
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                var subject_id;
+                if ( req.queryParams.subject.startsWith("p/"))
+                    subject_id = req.queryParams.subject;
+                else
+                    subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+
+                if ( !g_db._exists( req.queryParams.repo ))
+                    throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
+
+                if ( !g_db._exists( subject_id ))
+                    throw [g_lib.ERR_NOT_FOUND,"Subject, '" + subject_id + "', does not exist"];
+
+                var repo = g_db.repo.document( req.queryParams.repo );
+
+                g_lib.ensureAdminPermRepo( client, repo._id );
+
+                var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
+                if ( alloc )
+                    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', already has as allocation on " + repo._id ];
+
+                var path = repo.path + (subject_id.charAt(0) == "p"?"project/":"user/") + subject_id.substr(2) + "/";
+
+                g_db.alloc.save({ _from: subject_id, _to: repo._id, data_limit: req.queryParams.data_limit, rec_limit: req.queryParams.rec_limit, rec_count: 0, data_size: 0, path: path });
+
+                var result = g_proc.allocCreate( client, repo._id, subject_id, path );
+
+                res.send(result);
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
+.queryParam('repo', joi.string().required(), "Repo ID")
+.queryParam('data_limit', joi.number().integer().min(1).required(), "Max total data size (bytes)")
+.queryParam('rec_limit', joi.number().integer().min(1).required(), "Max number of records (files)")
+.summary('Create user/project repo allocation')
+.description('Create user repo/project allocation. Only repo admin can set allocations. Returns a task document.');
+
+
+router.get('/alloc/delete', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","repo","admin"],
+                write: ["alloc"],
+                exclusive: ["task","lock","block"]
+            },
+            action: function() {
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                var subject_id;
+                if ( req.queryParams.subject.startsWith("p/"))
+                    subject_id = req.queryParams.subject;
+                else
+                    subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+
+                if ( !g_db._exists( req.queryParams.repo ))
+                    throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
+
+                if ( !g_db._exists( subject_id ))
+                    throw [g_lib.ERR_NOT_FOUND,"Subject, '" + subject_id + "', does not exist"];
+
+                var repo = g_db.repo.document( req.queryParams.repo );
+
+                g_lib.ensureAdminPermRepo( client, repo._id );
+
+                var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
+                if ( !alloc )
+                    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', has no allocation on " + repo._id ];
+
+                var count = g_db._query("return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)", { repo: repo._id, subj: subject_id }).next();
+                if ( count )
+                    throw [g_lib.ERR_IN_USE,"Cannot delete allocation - records present"];
+
+                g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
+
+                var path = repo.path + (subject_id.charAt(0) == "p"?"project/":"user/") + subject_id.substr(2) + "/";
+
+                var result = g_proc.allocDelete( client, repo._id, subject_id, path );
+
+                res.send(result);
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
+.queryParam('repo', joi.string().required(), "Repo ID")
+.summary('Delete user/project repo allocation')
+.description('Delete user repo/project allocation. Only repo admin can set allocations. Returns a task document.');
+
+
 router.get('/alloc/set', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -512,34 +619,21 @@ router.get('/alloc/set', function (req, res) {
                 else
                     subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
 
-                // Ensure subject exists
+                if ( !g_db._exists( req.queryParams.repo ))
+                    throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
+
                 if ( !g_db._exists( subject_id ))
                     throw [g_lib.ERR_NOT_FOUND,"Subject, "+subject_id+", not found"];
 
                 var repo = g_db.repo.document( req.queryParams.repo );
 
                 g_lib.ensureAdminPermRepo( client, repo._id );
+
                 var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
+                if ( !alloc )
+                    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', has no allocation on " + repo._id ];
 
-                if ( req.queryParams.max_size == 0 && alloc ){
-                    // Check if there are any records using this repo and fail if so
-                    var count = g_db._query("return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)", { repo: repo._id, subj: subject_id }).next();
-                    if ( count )
-                        throw [g_lib.ERR_IN_USE,"Cannot clear allocation - records present"];
-
-                    g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
-                } else {
-                    if ( alloc ){
-                        g_db.alloc.update( alloc._id, { data_limit: req.queryParams.data_limit, rec_limit:req.queryParams.rec_limit });
-                    } else {
-                        var path;
-                        if ( subject_id[0] == "p" )
-                            path = repo.path + "project/";
-                        else
-                            path = repo.path + "user/";
-                        g_db.alloc.save({ _from: subject_id, _to: repo._id, data_limit: req.queryParams.data_limit, rec_limit: req.queryParams.rec_limit, rec_count: 0, data_size: 0, path: path + subject_id.substr(2) + "/" });
-                    }
-                }
+                g_db.alloc.update( alloc._id, { data_limit: req.queryParams.data_limit, rec_limit: req.queryParams.rec_limit });
             }
         });
     } catch( e ) {
@@ -549,7 +643,7 @@ router.get('/alloc/set', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
 .queryParam('repo', joi.string().required(), "Repo ID")
-.queryParam('data_limit', joi.number().required(), "Max total data size (bytes)")
-.queryParam('rec_limit', joi.number().required(), "Max number of records (files)")
+.queryParam('data_limit', joi.number().integer().min(1).required(), "Max total data size (bytes)")
+.queryParam('rec_limit', joi.number().integer().min(1).required(), "Max number of records (files)")
 .summary('Set user/project repo allocation')
 .description('Set user repo/project allocation. Only repo admin can set allocations.');
