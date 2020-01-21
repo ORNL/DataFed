@@ -62,6 +62,12 @@ TaskWorker::workerThread()
                 case TT_DATA_DEL:
                     retry = handleDataDelete();
                     break;
+                case TT_ALLOC_CREATE:
+                    retry = handleAllocCreate();
+                    break;
+                case TT_ALLOC_DEL:
+                    retry = handleAllocDelete();
+                    break;
                 default:
                     retry = false;
                     msg = "Invalid task type";
@@ -569,6 +575,119 @@ TaskWorker::handleDataDelete()
 
     return false;
 }
+
+
+/**
+ * @brief Handle allocation creation tasks
+ * @return true 
+ *
+ * Allocation creation tasks are generated when a repo admin creates an
+ * allocation for a particular user or project. A task must be started to
+ * create directories for raw data on the associated repository.
+ */
+bool
+TaskWorker::handleAllocCreate()
+{
+    DL_INFO( "Starting task " << m_task->task_id << ", type: AllocCreate" );
+
+    string                      uid = m_task->data["user"].asString();
+    TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
+    double                      prog = 0;
+    libjson::Value &            state = m_task->data["state"];
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString() );
+
+    m_db.setClient( uid );
+
+    if ( status == TS_READY )
+    {
+        status = TS_RUNNING;
+        m_task->data["status"] = status;
+
+        string msg = "Running";
+        m_db.taskUpdate( m_task->task_id, &status, &msg, 0, 0 );
+    }
+    else if ( status != TS_RUNNING )
+    {
+        EXCEPT_PARAM( 1, "Task '" << m_task->task_id << "' has invalid status: " << status );
+    }
+
+    string & repo_id = state["repo"].asString();
+    string & path = state["path"].asString();
+
+    Auth::RepoPathCreateRequest         req;
+    MsgBuf::Message *                   reply;
+
+    req.set_path( path );
+
+    if ( repoSendRecv( repo_id, req, reply ))
+        return true;
+
+    delete reply;
+
+    prog = 100.0;
+    m_db.taskUpdate( m_task->task_id, 0, 0, &prog, 0 );
+
+    return false;
+}
+
+
+/**
+ * @brief Handle allocation creation tasks
+ * @return true 
+ *
+ * Allocation delete tasks are generated when a repo admin deletes an
+ * allocation for a particular user or project. A task must be started to
+ * delete directories for raw data on the associated repository.
+ */
+bool
+TaskWorker::handleAllocDelete()
+{
+    DL_INFO( "Starting task " << m_task->task_id << ", type: AllocDelete" );
+
+    string                      uid = m_task->data["user"].asString();
+    TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
+    double                      prog = 0;
+    libjson::Value &            state = m_task->data["state"];
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString() );
+
+    m_db.setClient( uid );
+
+    if ( status == TS_READY )
+    {
+        status = TS_RUNNING;
+        m_task->data["status"] = status;
+
+        string msg = "Running";
+        m_db.taskUpdate( m_task->task_id, &status, &msg, 0, 0 );
+    }
+    else if ( status != TS_RUNNING )
+    {
+        EXCEPT_PARAM( 1, "Task '" << m_task->task_id << "' has invalid status: " << status );
+    }
+
+    string & repo_id = state["repo"].asString();
+    string & path = state["path"].asString();
+
+    Auth::RepoPathDeleteRequest         req;
+    MsgBuf::Message *                   reply;
+
+    req.set_path( path );
+
+    if ( repoSendRecv( repo_id, req, reply ))
+        return true;
+
+    delete reply;
+
+    prog = 100.0;
+    m_db.taskUpdate( m_task->task_id, 0, 0, &prog, 0 );
+
+    return false;
+}
+
 
 void
 TaskWorker::getUserAccessToken( const std::string & a_uid )

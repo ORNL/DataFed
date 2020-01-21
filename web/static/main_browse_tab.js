@@ -2005,6 +2005,8 @@ function makeBrowserTab(){
                     case "TT_DATA_CHG_ALLOC": html += "Change Allocation"; break;
                     case "TT_DATA_CHG_OWNER": html += "Change Owner"; break;
                     case "TT_DATA_DEL": html += "Delete Record"; break;
+                    case "TT_ALLOC_CREATE": html += "Create Alloc"; break;
+                    case "TT_ALLOC_DEL": html += "Delete Alloc"; break;
                 }
 
                 html += "</td><td>";

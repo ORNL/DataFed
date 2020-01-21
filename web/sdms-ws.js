@@ -975,8 +975,21 @@ app.get('/api/repo/alloc/stats', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/alloc/create', ( a_req, a_resp ) => {
+    sendMessage( "RepoAllocationCreateRequest", {repo:a_req.query.repo,subject:a_req.query.subject,dataLimit:a_req.query.data_limit,recLimit:a_req.query.rec_limit}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/repo/alloc/delete', ( a_req, a_resp ) => {
+    sendMessage( "RepoAllocationDeleteRequest", {repo:a_req.query.repo,subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
-    sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,maxSize:a_req.query.max_size,maxCount:a_req.query.max_count}, a_req, a_resp, function( reply ) {
+    console.log("alloc set:",a_req.query.repo,a_req.query.subject,a_req.query.data_limit,a_req.query.rec_limit);
+    sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,dataLimit:a_req.query.data_limit,recLimit:a_req.query.rec_limit}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

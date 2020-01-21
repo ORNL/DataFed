@@ -26,7 +26,7 @@ private:
     bool        handleDataChangeAlloc();
     bool        handleDataChangeOwner();
     bool        handleDataDelete();
-    bool        handleAllocNew();
+    bool        handleAllocCreate();
     bool        handleAllocDelete();
     void        getUserAccessToken( const std::string & a_uid );
     bool        checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info );

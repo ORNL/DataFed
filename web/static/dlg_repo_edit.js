@@ -85,9 +85,9 @@ function dlgRepoEdit( a_repo_id, a_cb ){
 
     function initStats( stats ){
         if ( stats ){
-            $("#used",frame).val(sizeToString( stats.totalSz ));
-            $("#no_records",frame).val(stats.records);
-            $("#no_files",frame).val(stats.files);
+            $("#used",frame).val(sizeToString( stats.dataSize ));
+            $("#no_records",frame).val( stats.recCount );
+            $("#no_files",frame).val( stats.fileCount );
         }
     }
 
@@ -207,7 +207,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         if ( node ){
             dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Delete","Cancel"], function( choice ){
                 if ( choice == 0 ){
-                    allocSet( a_repo_id, node.key, 0, 0, function( ok, data ){
+                    allocDelete( a_repo_id, node.key, function( ok, data ){
                         if ( ok )
                             node.remove();
                         else

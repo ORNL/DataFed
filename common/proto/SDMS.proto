@@ -67,20 +67,6 @@ enum SortOption
     SORT_TIME_UPDATE            = 3;
 }
 
-/*
-enum Permissions
-{
-    PERM_NONE       = 0x00;
-    PERM_VIEW       = 0x01;   // Read public record fields (not collection items or raw data)
-    PERM_RD_META    = 0x02;   // Read raw data or list collection items
-    PERM_RD_DATA    = 0x04;   // Read raw data or list collection items
-    PERM_WR_META    = 0x08;   // Write raw data or add/remove collection items
-    PERM_WR_DATA    = 0x10;   // Write raw data or add/remove collection items
-    PERM_ADMIN      = 0x20;   // Read, write admin fields, delete record
-    //PERM_TAG        = 0x40;   // Add/remove tags on record
-    //PERM_NOTE       = 0x80;   // Add, remove, edit annotations on record
-    PERM_ALL        = 0x3F;
-}*/
 
 // ============================ Data Structures
 
@@ -138,15 +124,12 @@ message ProjectData
     required string             id          = 1;
     required string             title       = 2;
     optional string             desc        = 3;
-    optional string             sub_repo    = 4;
-    optional uint64             sub_alloc   = 5;
-    optional uint64             sub_usage   = 6;
-    optional string             owner       = 7;
-    optional uint32             ct          = 8;
-    optional uint32             ut          = 9;
-    repeated string             admin       = 10;
-    repeated string             member      = 11;
-    repeated AllocData          alloc       = 12;
+    optional string             owner       = 4;
+    optional uint32             ct          = 5;
+    optional uint32             ut          = 6;
+    repeated string             admin       = 7;
+    repeated string             member      = 8;
+    repeated AllocData          alloc       = 9;
 }
 
 message ListingData
@@ -284,6 +267,8 @@ enum TaskType
     TT_DATA_CHG_ALLOC   = 2;
     TT_DATA_CHG_OWNER   = 3;
     TT_DATA_DEL         = 4;
+    TT_ALLOC_CREATE     = 5;
+    TT_ALLOC_DEL        = 6;
 }
 
 enum TaskStatus

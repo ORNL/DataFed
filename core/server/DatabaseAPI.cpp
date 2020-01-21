@@ -666,12 +666,6 @@ DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::Pro
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
 
-    if ( a_request.has_sub_repo() )
-        params.push_back({"sub_repo",a_request.sub_repo()});
-
-    if ( a_request.has_sub_alloc() )
-        params.push_back({"sub_alloc",to_string(a_request.sub_alloc())});
-
     if ( a_request.admin_size() > 0 )
     {
         string members = "[";
@@ -716,12 +710,6 @@ DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::Pro
 
     if ( a_request.has_desc() )
         params.push_back({"desc",a_request.desc()});
-
-    if ( a_request.has_sub_repo() )
-        params.push_back({"sub_repo",a_request.sub_repo()});
-
-    if ( a_request.has_sub_alloc() )
-        params.push_back({"sub_alloc",to_string(a_request.sub_alloc())});
 
     if ( a_request.admin_set() )
     {
@@ -822,15 +810,6 @@ DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 
             if (( j = obj.find("desc")) != obj.end( ))
                 proj->set_desc( j->second.asString( ));
-
-            if (( j = obj.find("sub_repo")) != obj.end( ))
-                proj->set_sub_repo( j->second.asString( ));
-
-            if (( j = obj.find("sub_alloc")) != obj.end( ))
-                proj->set_sub_alloc( j->second.asNumber( ));
-
-            if (( j = obj.find("sub_usage")) != obj.end( ))
-                proj->set_sub_usage( j->second.asNumber( ));
 
             if (( j = obj.find("owner")) != obj.end( ))
                 proj->set_owner( j->second.asString( ));
@@ -2409,7 +2388,7 @@ DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request
     (void)a_reply;
     Value result;
 
-    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"max_size",to_string(a_request.max_size())},{"max_count",to_string(a_request.max_count())}}, result );
+    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, result );
 }
 
 void
@@ -2620,6 +2599,25 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
         if ( ts == TS_BLOCKED )
             obj.erase( t );
     }
+}
+
+
+void
+DatabaseAPI::taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+{
+    dbGet( "repo/alloc/create", {{"subject",a_request.subject()},{"repo",a_request.repo()},
+        {"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, a_result );
+
+    setTaskDataFromTaskInit( a_reply, a_result );
+}
+
+
+void
+DatabaseAPI::taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+{
+    dbGet( "repo/alloc/delete", {{"subject",a_request.subject()},{"repo",a_request.repo()}}, a_result );
+
+    setTaskDataFromTaskInit( a_reply, a_result );
 }
 
 

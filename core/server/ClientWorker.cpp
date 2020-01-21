@@ -94,8 +94,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &ClientWorker::procCollectionDeleteRequest );
         SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &ClientWorker::procProjectDeleteRequest );
         SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &ClientWorker::procQueryDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RepoAllocationSetRequest, &ClientWorker::procRepoAllocationSetRequest );
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest );
+        SET_MSG_HANDLER( proto_id, RepoAllocationCreateRequest, &ClientWorker::procRepoAllocationCreateRequest );
+        SET_MSG_HANDLER( proto_id, RepoAllocationDeleteRequest, &ClientWorker::procRepoAllocationDeleteRequest );
         SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &ClientWorker::procUserGetAccessTokenRequest );
 
         // Requests that can be handled by DB client directly
@@ -136,7 +137,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
-        //SET_MSG_HANDLER_DB( proto_id, XfrViewRequest, XfrDataReply, xfrView );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
@@ -159,6 +159,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoListSubjectAllocationsRequest, RepoAllocationsReply, repoListSubjectAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListObjectAllocationsRequest, RepoAllocationsReply, repoListObjectAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoViewAllocationRequest, RepoAllocationsReply, repoViewAllocation );
+        SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
         SET_MSG_HANDLER_DB( proto_id, TopicListRequest, ListingReply, topicList );
         SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
@@ -772,25 +773,48 @@ ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
 }
 
 bool
-ClientWorker::procRepoAllocationSetRequest( const std::string & a_uid )
+ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RepoAllocationSetRequest, AckReply )
+    PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply )
 
     m_db_client.setClient( a_uid );
-    m_db_client.repoAllocationSet( *request, reply );
 
-/*
-    if ( request->max_size() > 0 )
+    libjson::Value result;
+
+    m_db_client.taskInitRepoAllocationCreate( *request, reply, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
     {
-        DL_DEBUG( "Create/ensure path for " << request->subject() );
-        m_mgr.repoPathCreate( request->repo(), request->subject() );
+        DL_INFO( "CWORKER scheduling alloc create task" );
+        TaskMgr::getInstance().newTask( t->second );
     }
-    else
+
+    PROC_MSG_END
+}
+
+bool
+ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply )
+
+    m_db_client.setClient( a_uid );
+
+    libjson::Value result;
+
+    m_db_client.taskInitRepoAllocationDelete( *request, reply, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
     {
-        DL_DEBUG( "Delete path for " << request->subject() );
-        m_mgr.repoPathDelete( request->repo(), request->subject() );
+        DL_INFO( "CWORKER scheduling alloc delete task" );
+        TaskMgr::getInstance().newTask( t->second );
     }
-*/
+
     PROC_MSG_END
 }
 

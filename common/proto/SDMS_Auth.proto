@@ -489,10 +489,8 @@ message ProjectCreateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             sub_repo    = 4;
-    optional uint64             sub_alloc   = 5;
-    repeated string             admin       = 6;
-    repeated string             member      = 7;
+    repeated string             admin       = 4;
+    repeated string             member      = 5;
 }
 
 message ProjectUpdateRequest
@@ -500,12 +498,10 @@ message ProjectUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             sub_repo    = 4;
-    optional uint64             sub_alloc   = 5;
-    optional bool               admin_set   = 6 [default = false];
-    repeated string             admin       = 7;
-    optional bool               member_set  = 8 [default = false];
-    repeated string             member      = 9;
+    optional bool               admin_set   = 4 [default = false];
+    repeated string             admin       = 5;
+    optional bool               member_set  = 6 [default = false];
+    repeated string             member      = 7;
 }
 
 message ProjectDeleteRequest
@@ -669,12 +665,28 @@ message RepoAllocationStatsReply
 }
 
 // Reply is ACK/NACK
+message RepoAllocationCreateRequest
+{
+    required string             repo        = 1;
+    required string             subject     = 2;
+    required uint64             data_limit  = 3;
+    required uint32             rec_limit   = 4;
+}
+
+// Reply is ACK/NACK
 message RepoAllocationSetRequest
 {
     required string             repo        = 1;
     required string             subject     = 2;
-    required uint64             max_size    = 3;
-    required uint32             max_count   = 4;
+    required uint64             data_limit  = 3;
+    required uint32             rec_limit   = 4;
+}
+
+// Reply is ACK/NACK
+message RepoAllocationDeleteRequest
+{
+    required string             repo        = 1;
+    required string             subject     = 2;
 }
 
 // Reply is ACK/NACK

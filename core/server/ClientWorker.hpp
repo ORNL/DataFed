@@ -49,7 +49,8 @@ private:
     bool procProjectSearchRequest( const std::string & a_uid );
     bool procQueryCreateRequest( const std::string & a_uid );
     bool procQueryUpdateRequest( const std::string & a_uid );
-    bool procRepoAllocationSetRequest( const std::string & a_uid );
+    bool procRepoAllocationCreateRequest( const std::string & a_uid );
+    bool procRepoAllocationDeleteRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );
     bool procUserGetAccessTokenRequest( const std::string & a_uid );
 
