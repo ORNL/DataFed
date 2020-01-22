@@ -145,11 +145,14 @@ router.get('/update', function (req, res) {
                 if ( !g_db.p.exists( proj_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
 
+                var proj = g_db.p.document( proj_id );
+                if ( proj.deleted )
+                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+
                 var is_admin = true;
 
                 if ( !g_lib.hasAdminPermProj( client, proj_id )){
                     if ( !g_lib.hasManagerPermProj( client, proj_id )){
-                        console.log("perm denied: not mgr");
                         throw g_lib.ERR_PERM_DENIED;
                     }
                     is_admin = false;
@@ -169,7 +172,7 @@ router.get('/update', function (req, res) {
                     }
                 }
 
-                var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
+                proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
                 var uid, i;
                 proj.new.admins = [];
@@ -260,6 +263,9 @@ router.get('/view', function (req, res) {
             throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'" ];
 
         var proj = g_db.p.document({ _id: req.queryParams.id });
+        if ( proj.deleted )
+            throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+
         var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
         var admins = g_db._query("for v in 1..1 outbound @proj admin return v._id", { proj: proj._id } ).toArray();
         if ( admins.length ) {
@@ -322,21 +328,21 @@ router.get('/list', function (req, res) {
             qry = "";
 
         if ( req.queryParams.as_owner ){
-            qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
+            qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i) and i.deleted != true";
             if ( count > 1 )
                 qry += " return { _id: i._id, title: i.title, owner: i.owner }";
             comma = true;
         }
 
         if ( !count || req.queryParams.as_admin ){
-            qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
+            qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i) and i.deleted != true";
             if ( count > 1 )
                 qry += " return { _id: i._id, title: i.title, owner: i.owner }";
             comma = true;
         }
 
         if ( req.queryParams.as_member ){
-            qry += (comma?"),(":"") + "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
+            qry += (comma?"),(":"") + "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and i.deleted != true";
             if ( count > 1 )
                 qry += " return { _id: i._id, title: i.title, owner: i.owner }";
         }
@@ -497,20 +503,13 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["p","g","uuid","accn","c","d","a","acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
+                write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
                 exclusive: ["lock","task","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var i, id, res_ids = [];
 
-                for ( i in req.body.ids ){
-                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
-                    res_ids.push( id );
-                }
-
-                // Deletes records w/ no raw data, returns those with for delete task
-                var result = g_proc.projectDelete( client, res_ids );
+                var result = g_proc.projectDelete( client, req.body.ids );
 
                 res.send(result);
             }

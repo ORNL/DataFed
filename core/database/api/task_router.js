@@ -201,21 +201,8 @@ router.get('/list', function (req, res) {
     try{
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var params = {};
-        var qry = "for i in task filter i.user == @user";
-
-        if ( req.queryParams.proj_id ){
-            if ( !g_db.p.exists( req.queryParams.proj_id ))
-                throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.proj_id + "'" ];
-
-            // Client must have access to project
-            if ( g_lib.getProjectRole( client._id, req.queryParams.proj_id ) == g_lib.PROJ_NO_ROLE )
-                throw g_lib.ERR_PERM_DENIED;
-
-            params.user = req.queryParams.proj_id;
-        }else{
-            params.user = client._id;
-        }
+        var params = {client: client._id};
+        var qry = "for i in task filter i.client == @client";
 
         if ( req.queryParams.since ) {
             qry += " and i.ut >= " + ((Date.now()/1000) - req.queryParams.since);
@@ -226,7 +213,7 @@ router.get('/list', function (req, res) {
             params.status =  req.queryParams.status;
         }
 
-        qry += " sort i.ut desc return {id:i._id,type:i.type,status:i.status,user:i.user,progress:i.progress,msg:i.msg,ct:i.ct,ut:i.ut}";
+        qry += " sort i.ut desc return {id:i._id,type:i.type,status:i.status,client:i.client,progress:i.progress,msg:i.msg,ct:i.ct,ut:i.ut}";
 
         var result = g_db._query( qry, params );
 
@@ -235,8 +222,7 @@ router.get('/list', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Filter by user ID")
-.queryParam('proj_id', joi.string().optional(), "Filter by project ID instead of client ID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('status', joi.array().items(joi.number().integer()).optional(), "List of task states to retrieve.")
 .queryParam('since', joi.number().integer().min(0).optional(), "List tasks updated since this many seconds ago.")
 .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")

@@ -48,6 +48,8 @@ module.exports = ( function() {
     obj.TT_DATA_DEL         = 4;
     obj.TT_ALLOC_CREATE     = 5;
     obj.TT_ALLOC_DEL        = 6;
+    obj.TT_USER_DEL         = 7;
+    obj.TT_PROJ_DEL         = 8;
 
     obj.TS_BLOCKED          = 0;
     obj.TS_READY            = 1;

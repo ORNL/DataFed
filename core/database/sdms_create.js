@@ -18,7 +18,6 @@ graph._addVertexCollection("t");    // Topic
 graph._addVertexCollection("a");    // Alias
 graph._addVertexCollection("q");    // Saved queries
 //graph._addVertexCollection("l");    // Label
-graph._addVertexCollection("tr");   // Transfers
 graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
 
@@ -60,7 +59,7 @@ graph._extendEdgeDefinitions(loc);
 var dep = graph_module._relation("dep", ["d"], ["d"]);
 graph._extendEdgeDefinitions(dep);
 
-var lock = graph_module._relation("lock", ["task"], ["d","c","repo"]);
+var lock = graph_module._relation("lock", ["task"], ["d","c","p","u","repo"]);
 graph._extendEdgeDefinitions(lock);
 
 var block = graph_module._relation("block", ["task"], ["task"]);
@@ -109,11 +108,6 @@ db.u.ensureIndex({ type: "hash", unique: true, fields: [ "access" ], sparse: tru
 
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 
-db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "data_id" ] });
-db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "local_path" ] });
-db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "mode" ] });
-db.tr.ensureIndex({ type: "hash", unique: false, fields: [ "status" ] });
-
 db.loc.ensureIndex({ type: "hash", unique: false, fields: [ "uid" ], sparse: true });
 
 db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: true });
@@ -134,7 +128,6 @@ db._truncate("t");
 db._truncate("n");
 db._truncate("a");
 db._truncate("l");
-db._truncate("tr");
 db._truncate("owner");
 db._truncate("member");
 db._truncate("item");
