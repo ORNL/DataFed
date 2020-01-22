@@ -603,37 +603,25 @@ ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids )
 bool
 ClientWorker::procProjectDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply )
+    PROC_MSG_BEGIN( ProjectDeleteRequest, AckReply )
 
-    // TODO Acquire write lock here
-    // TODO Need better error handling (plus retry)
-
-    // Delete record FIRST - If successful, this verifies that client has permission and ID is valid
-    /*
     m_db_client.setClient( a_uid );
-    vector<RepoRecordDataLocations> locs;
-    bool suballoc;
 
+    vector<string> ids;
+
+    ids.reserve( request->id_size() );
     for ( int i = 0; i < request->id_size(); i++ )
-    {
-        DL_INFO( "Project DELETE, uid: " << a_uid << ", id: " << request->id(i) );
+        ids.push_back( request->id(i) );
 
-        m_db_client.projDelete( request->id(i), locs, suballoc );
+    libjson::Value result;
 
-        if ( suballoc )
-        {
-            m_mgr.dataDelete( locs );
-        }
-        else
-        {
-            for ( vector<RepoRecordDataLocations>::iterator l = locs.begin(); l != locs.end(); ++l )
-            {
-                m_mgr.repoPathDelete( l->repo_id(), request->id(i) );
-            }
-        }
+    m_db_client.taskInitProjectDelete( ids, result );
 
-        locs.clear();
-    }*/
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+        TaskMgr::getInstance().newTask( t->second );
 
     PROC_MSG_END
 }

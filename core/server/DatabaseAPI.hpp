@@ -57,6 +57,7 @@ public:
     void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
     void projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply );
     void projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply );
+    void projDeleteTrash( const std::vector<std::string> & a_ids );
 
     void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
     void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
@@ -140,6 +141,7 @@ public:
     void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
     void taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void taskInitProjectDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
     void taskUpdate( const std::string & a_id, TaskStatus * a_status = 0, const std::string * a_message = 0, double * a_progress = 0, libjson::Value * a_state = 0 );
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result );
     void taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataReply & a_reply );

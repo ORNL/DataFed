@@ -788,6 +788,26 @@ DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a
     setProjectData( a_reply, result );
 }
 
+
+void
+DatabaseAPI::projDeleteTrash( const std::vector<std::string> & a_ids )
+{
+    Value result;
+    string body = "{\"ids\":[";
+
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            body += ",";
+
+        body += "\"" + *i + "\"";
+    }
+    body += "]}";
+
+    dbPost( "prj/trash/delete", {}, &body, result );
+}
+
+
 void
 DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 {
@@ -2586,6 +2606,39 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
     dbPost( "dat/delete", {}, &body, a_result );
 
     DL_ERROR( "DATA DEL: json: " << a_result.toString());
+
+    Value::Object & obj = a_result.getObject();
+    Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+    {
+        Value::Object & obj2 = t->second.getObject();
+        TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
+
+        // If task is blocked, remove task from result to prevent immediate scheduling
+        if ( ts == TS_BLOCKED )
+            obj.erase( t );
+    }
+}
+
+
+void
+DatabaseAPI::taskInitProjectDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
+{
+    string body = "{\"ids\":[";
+
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    {
+        if ( i != a_ids.begin() )
+            body += ",";
+
+        body += "\"" + *i + "\"";
+    }
+    body += "]}";
+
+    dbPost( "prj/delete", {}, &body, a_result );
+
+    DL_ERROR( "PROJ DEL: json: " << a_result.toString());
 
     Value::Object & obj = a_result.getObject();
     Value::ObjectIter t = obj.find( "task" );

@@ -26,6 +26,7 @@ private:
     bool        handleDataChangeAlloc();
     bool        handleDataChangeOwner();
     bool        handleDataDelete();
+    bool        handleProjectDelete();
     bool        handleAllocCreate();
     bool        handleAllocDelete();
     void        getUserAccessToken( const std::string & a_uid );

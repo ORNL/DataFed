@@ -269,6 +269,8 @@ enum TaskType
     TT_DATA_DEL         = 4;
     TT_ALLOC_CREATE     = 5;
     TT_ALLOC_DEL        = 6;
+    TT_USER_DEL         = 7;
+    TT_PROJ_DEL         = 8;
 }
 
 enum TaskStatus

@@ -507,7 +507,6 @@ TaskWorker::handleDataDelete()
     }
 
     libjson::Value::ArrayIter           f, r;
-    string                              err_msg;
     Auth::RepoDataDeleteRequest         del_req;
     RecordDataLocation *                loc;
     MsgBuf::Message *                   reply;
@@ -570,6 +569,111 @@ TaskWorker::handleDataDelete()
         upd_state["repo_idx"] = repo_idx;
 
         prog = 100.0*repo_idx/repos.size();
+        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Handle project deletion tasks
+ * @return true 
+ *
+ * Project deletion tasks are generated when a user deletes one or more
+ * projects that have allocations. A task must be started to coordinate
+ * and ensure that the raw data files and repo directories are deleted
+ * from their respective data repositories.
+ */
+bool
+TaskWorker::handleProjectDelete()
+{
+    DL_INFO( "Starting task " << m_task->task_id << ", type: ProjectDelete" );
+
+    string                      uid = m_task->data["user"].asString();
+    TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
+    double                      prog = 0;
+    int                         alloc_idx = -1;
+    libjson::Value &            state = m_task->data["state"];
+    libjson::Value::Array  &    proj_ids = state["proj_ids"].getArray();
+    libjson::Value::Array  &    allocs = state["allocs"].getArray();
+    libjson::Value              upd_state;
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString() );
+
+    m_db.setClient( uid );
+
+    upd_state.initObject();
+
+    if ( status == TS_READY )
+    {
+        state["alloc_idx"] = -1;
+        upd_state["alloc_idx"] = -1;
+
+        status = TS_RUNNING;
+        m_task->data["status"] = status;
+
+        string msg = "Running";
+        m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
+        upd_state.clear();
+    }
+    else if ( status == TS_RUNNING )
+    {
+        alloc_idx = state["alloc_idx"].asNumber();
+    }
+    else
+    {
+        EXCEPT_PARAM( 1, "Task '" << m_task->task_id << "' has invalid status: " << status );
+    }
+
+    libjson::Value::ArrayIter a;
+
+    if ( alloc_idx < 0 )
+    {
+        vector<string> ids;
+
+        for ( a = proj_ids.begin(); a != proj_ids.end(); a++ )
+        {
+            ids.push_back( a->asString() );
+        }
+
+        // Delete "trashed" project
+        m_db.projDeleteTrash( ids );
+
+        // Save task state
+        alloc_idx = 0;
+        state["alloc_idx"] = alloc_idx;
+        upd_state["alloc_idx"] = alloc_idx;
+        m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
+        upd_state.clear();
+    }
+
+    Auth::RepoPathDeleteRequest         req;
+    MsgBuf::Message *                   reply;
+
+    for ( a = allocs.begin() + alloc_idx; a != allocs.end(); a++ )
+    {
+        libjson::Value::Object & alloc = a->getObject();
+
+        string & repo_id = alloc["repo_id"].asString();
+        string & path = alloc["path"].asString();
+
+        upd_state.clear();
+        req.set_path( path );
+
+        if ( repoSendRecv( repo_id, req, reply ))
+            return true;
+
+        delete reply;
+
+        // Checkpoint deletion task
+
+        alloc_idx++;
+        state["alloc_idx"] = alloc_idx;
+        upd_state["alloc_idx"] = alloc_idx;
+
+        prog = 100.0*alloc_idx/allocs.size();
         m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
     }
 
