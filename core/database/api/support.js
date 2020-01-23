@@ -43,13 +43,14 @@ module.exports = ( function() {
 
     obj.TT_DATA_GET         = 0;
     obj.TT_DATA_PUT         = 1;
-    obj.TT_DATA_CHG_ALLOC   = 2;
-    obj.TT_DATA_CHG_OWNER   = 3;
-    obj.TT_DATA_DEL         = 4;
-    obj.TT_ALLOC_CREATE     = 5;
-    obj.TT_ALLOC_DEL        = 6;
-    obj.TT_USER_DEL         = 7;
-    obj.TT_PROJ_DEL         = 8;
+    obj.TT_DATA_DEL         = 2;
+    obj.TT_REC_CHG_ALLOC    = 3;
+    obj.TT_REC_CHG_OWNER    = 4;
+    obj.TT_REC_DEL          = 5;
+    obj.TT_ALLOC_CREATE     = 6;
+    obj.TT_ALLOC_DEL        = 7;
+    obj.TT_USER_DEL         = 8;
+    obj.TT_PROJ_DEL         = 9;
 
     obj.TS_BLOCKED          = 0;
     obj.TS_READY            = 1;

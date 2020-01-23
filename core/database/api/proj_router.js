@@ -264,7 +264,7 @@ router.get('/view', function (req, res) {
 
         var proj = g_db.p.document({ _id: req.queryParams.id });
         if ( proj.deleted )
-            throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+            throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj._id + "'" ];
 
         var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
         var admins = g_db._query("for v in 1..1 outbound @proj admin return v._id", { proj: proj._id } ).toArray();
@@ -502,7 +502,7 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","d"],
+                read: ["u","uuid","accn"],
                 write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
                 exclusive: ["lock","task","block"]
             },
@@ -525,3 +525,47 @@ router.post('/delete', function (req, res) {
 }).required(), 'Parameters')
 .summary('Delete project(s) and all associated data records and raw data.')
 .description('Delete project(s) and all associated data records and raw data.');
+
+
+router.post('/trash/delete', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
+                exclusive: ["lock"]
+            },
+            action: function() {
+                //const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var id, proj;
+
+                // NOTE: This operation must be idempotent - it's OK if records have
+                // already been deleted; however, it is an error if they are not
+                // marked for deletion.
+
+                for ( var i in req.body.ids ){
+                    id = req.body.ids[i];
+                    if ( g_db.p.exists( id )){
+                        proj = g_db.p.document( id );
+
+                        if ( !proj.deleted )
+                            throw [g_lib.ERR_INVALID_PARAM,"Project ID: '" + id + "' not marked for deletion."];
+
+                        g_proc._projectDeleteImmediate( id );
+                    }
+                }
+            }
+        });
+
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+}).required(), 'Parameters')
+.summary('Delete trashed project(s)')
+.description('Delete trashed project(s).');
+
+
