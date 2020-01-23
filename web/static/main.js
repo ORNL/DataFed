@@ -276,6 +276,11 @@ function dataGet( a_ids ){
             console.log("proproc:",data);
             var internal = false, external = false;
 
+            if ( !data.item || !data.item.length ){
+                dlgAlert("Data Get Error","Selection contains no raw data.");
+                return;
+            }
+
             for ( var i in data.item ){
                 if ( data.item[i].locked ){
                     dlgAlert("Data Get Error","One or more data records are currently locked.");
@@ -290,6 +295,7 @@ function dataGet( a_ids ){
                     internal = true;
                 }
             }
+
             if ( internal && external ){
                 dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
                 return;
@@ -1061,9 +1067,14 @@ var SS_VIEW                     = 13;
 
 var TT_DATA_GET         = 0;
 var TT_DATA_PUT         = 1;
-var TT_DATA_CHG_ALLOC   = 2;
-var TT_DATA_CHG_OWNER   = 3;
-var TT_DATA_DEL         = 4;
+var TT_DATA_DEL         = 2;
+var TT_REC_CHG_ALLOC    = 3;
+var TT_REC_CHG_OWNER    = 4;
+var TT_REC_DEL          = 5;
+var TT_ALLOC_CREATE     = 6;
+var TT_ALLOC_DEL        = 7;
+var TT_USER_DEL         = 8;
+var TT_PROJ_DEL         = 9;
 
 var TS_BLOCKED      = 0;
 var TS_READY        = 1;

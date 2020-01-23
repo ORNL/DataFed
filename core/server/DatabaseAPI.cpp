@@ -1045,8 +1045,9 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
 
     dbPost( "dat/update", {}, &body, result );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result["data"] );
 }
+
 
 void
 DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
@@ -1054,7 +1055,7 @@ DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request
     // "records" field is a JSON document - send directly to DB
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result["data"] );
 }
 
 void
@@ -2705,7 +2706,7 @@ DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Va
             task->set_id( obj2.at( "id" ).asString( ));
             task->set_type((TaskType)obj2.at( "type" ).asNumber( ));
             task->set_status( ts );
-            task->set_user( obj2.at( "user" ).asString( ));
+            task->set_client( obj2.at( "client" ).asString( ));
             task->set_progress( obj2.at( "progress" ).asNumber( ));
             task->set_msg( obj2.at( "msg" ).asString( ));
             task->set_ct( obj2.at( "ct" ).asNumber( ));
@@ -2718,6 +2719,7 @@ DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Va
     }
     catch ( exception & e )
     {
+        DL_ERROR("JSON: " << a_result.toString());
         EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
     }
 }
@@ -2749,7 +2751,7 @@ DatabaseAPI::setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value 
             task->set_id( obj.at( "id" ).asString( ));
             task->set_type((TaskType)obj.at( "type" ).asNumber( ));
             task->set_status( ts );
-            task->set_user( obj.at( "user" ).asString( ));
+            task->set_client( obj.at( "client" ).asString( ));
             task->set_progress( obj.at( "progress" ).asNumber( ));
             task->set_msg( obj.at( "msg" ).asString( ));
             task->set_ct( obj.at( "ct" ).asNumber( ));

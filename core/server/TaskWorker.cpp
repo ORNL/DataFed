@@ -6,6 +6,8 @@
 
 using namespace std;
 
+#define TASK_DELAY sleep(60);
+
 namespace SDMS {
 namespace Core {
 
@@ -53,14 +55,17 @@ TaskWorker::workerThread()
                 case TT_DATA_PUT:
                     retry = handleDataPut();
                     break;
-                case TT_DATA_CHG_ALLOC:
-                    retry = handleDataChangeAlloc();
-                    break;
-                case TT_DATA_CHG_OWNER:
-                    retry = handleDataChangeOwner();
-                    break;
                 case TT_DATA_DEL:
                     retry = handleDataDelete();
+                    break;
+                case TT_REC_CHG_ALLOC:
+                    retry = handleRecordChangeAlloc();
+                    break;
+                case TT_REC_CHG_OWNER:
+                    retry = handleRecordChangeOwner();
+                    break;
+                case TT_REC_DEL:
+                    retry = handleRecordDelete();
                     break;
                 case TT_ALLOC_CREATE:
                     retry = handleAllocCreate();
@@ -68,10 +73,15 @@ TaskWorker::workerThread()
                 case TT_ALLOC_DEL:
                     retry = handleAllocDelete();
                     break;
+                case TT_USER_DEL:
+                    retry = false;
+                    break;
+                case TT_PROJ_DEL:
+                    retry = handleProjectDelete();
+                    break;
                 default:
                     retry = false;
-                    msg = "Invalid task type";
-                    DL_ERROR( "Invalid task type (" << task_type << ") for task ID '" << m_task->task_id << "'" );
+                    EXCEPT_PARAM( 1, "Invalid task type (" << task_type << ") for task ID '" << m_task->task_id << "'" );
                     break;
             }
 
@@ -162,7 +172,7 @@ TaskWorker::handleDataGet( )
     string                      src_repo_ep;
     bool                        encrypted = false;
     GlobusAPI::EndpointInfo     ep_info;
-    string                      uid = m_task->data["user"].asString();
+    string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     GlobusAPI::XfrStatus        xfr_status;
     double                      prog = 0;
@@ -211,6 +221,8 @@ TaskWorker::handleDataGet( )
 
         string msg = "Running";
         m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
+
+        TASK_DELAY
     }
     else if ( status == TS_RUNNING )
     {
@@ -295,7 +307,7 @@ TaskWorker::handleDataPut()
     string                      dst_ep;
     bool                        encrypted = false;
     GlobusAPI::EndpointInfo     ep_info;
-    string                      uid = m_task->data["user"].asString();
+    string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     GlobusAPI::XfrStatus        xfr_status;
     double                      prog = 0;
@@ -339,6 +351,8 @@ TaskWorker::handleDataPut()
         //DL_DEBUG( "Update task for running" );
 
         m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
+
+        TASK_DELAY
     }
     else if ( status == TS_RUNNING )
     {
@@ -368,8 +382,6 @@ TaskWorker::handleDataPut()
 
     if ( files.size() != 1 )
         EXCEPT_PARAM( 1, "Task file list size != 1, size: " << files.size() );
-
-    //sleep( 60 );
 
     // Initialize Globus transfer
     if ( xfr_status == GlobusAPI::XS_INIT )
@@ -425,11 +437,105 @@ TaskWorker::handleDataPut()
     return false;
 }
 
+bool
+TaskWorker::handleDataDelete()
+{
+    DL_INFO( "Starting task " << m_task->task_id << ", type: DataDelete" );
+
+    string                      uid = m_task->data["client"].asString();
+    TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
+    double                      prog = 0;
+    int                         repo_idx = 0;
+    libjson::Value &            state = m_task->data["state"];
+    libjson::Value::Array  &    repos = state["repos"].getArray();
+    libjson::Value              upd_state;
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString() );
+
+    m_db.setClient( uid );
+
+    upd_state.initObject();
+
+    if ( status == TS_READY )
+    {
+        state["repo_idx"] = 0;
+        upd_state["repo_idx"] = 0;
+
+        status = TS_RUNNING;
+        m_task->data["status"] = status;
+
+        string msg = "Running";
+        m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
+        upd_state.clear();
+
+        TASK_DELAY
+    }
+    else if ( status == TS_RUNNING )
+    {
+        repo_idx = state["repo_idx"].asNumber();
+    }
+    else
+    {
+        EXCEPT_PARAM( 1, "Task '" << m_task->task_id << "' has invalid status: " << status );
+    }
+
+    libjson::Value::ArrayIter           id, r;
+    Auth::RepoDataDeleteRequest         del_req;
+    RecordDataLocation *                loc;
+    MsgBuf::Message *                   reply;
+    time_t                              mod_time;
+
+    for ( r = repos.begin() + repo_idx; r != repos.end(); r++ )
+    {
+        libjson::Value::Object & repo = r->getObject();
+        libjson::Value::Array & ids = repo["ids"].getArray();
+        const string & repo_id = repo["repo_id"].asString();
+        const string & path = repo["path"].asString();
+
+        upd_state.clear();
+        del_req.clear_loc();
+
+        // Ask associated repo server to delete raw files
+
+        for ( id = ids.begin(); id != ids.end(); id++ )
+        {
+            loc = del_req.add_loc();
+            loc->set_id( id->asString() );
+            loc->set_path( path + id->asString() );
+        }
+
+        if ( repoSendRecv( repo_id, del_req, reply ))
+            return true;
+
+        delete reply;
+
+        mod_time = time(0);
+
+        // Update DB record with new file stats
+        for ( id = ids.begin(); id != ids.end(); id++ )
+        {
+            m_db.recordUpdatePostPut( id->asString(), 0, mod_time, "", 0 );
+        }
+
+        // Checkpoint deletion task
+
+        repo_idx++;
+        state["repo_idx"] = repo_idx;
+        upd_state["repo_idx"] = repo_idx;
+
+        prog = 100.0*repo_idx/repos.size();
+        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+    }
+
+    return false;
+}
+
 
 bool
-TaskWorker::handleDataChangeAlloc()
+TaskWorker::handleRecordChangeAlloc()
 {
-    DL_INFO( "Starting task " << m_task->task_id << ", type: DataChangeAlloc" );
+    DL_INFO( "Starting task " << m_task->task_id << ", type: RecordChangeAlloc" );
 
     EXCEPT( 1, "Operation not yet implemented" );
 
@@ -438,9 +544,9 @@ TaskWorker::handleDataChangeAlloc()
 
 
 bool
-TaskWorker::handleDataChangeOwner()
+TaskWorker::handleRecordChangeOwner()
 {
-    DL_INFO( "Starting task " << m_task->task_id << ", type: DataChangeOwner" );
+    DL_INFO( "Starting task " << m_task->task_id << ", type: RecordChangeOwner" );
 
     EXCEPT( 1, "Operation not yet implemented" );
 
@@ -457,7 +563,7 @@ TaskWorker::handleDataChangeOwner()
  * repositories.
  */
 bool
-TaskWorker::handleDataDelete()
+TaskWorker::handleRecordDelete()
 {
     /* Process:
     1.  In DB init, records without data re immediately deleted, those with raw
@@ -468,9 +574,9 @@ TaskWorker::handleDataDelete()
         files. On failures, these steps are retried until limit is reached, then
         admins will be notified (repo is out of sync with DB).
     */
-    DL_INFO( "Starting task " << m_task->task_id << ", type: DataDelete" );
+    DL_INFO( "Starting task " << m_task->task_id << ", type: RecordDelete" );
 
-    string                      uid = m_task->data["user"].asString();
+    string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
     int                         repo_idx = -1;
@@ -496,6 +602,8 @@ TaskWorker::handleDataDelete()
         string msg = "Running";
         m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
         upd_state.clear();
+
+        TASK_DELAY
     }
     else if ( status == TS_RUNNING )
     {
@@ -559,9 +667,6 @@ TaskWorker::handleDataDelete()
 
         delete reply;
 
-        // Ask DB to delete associated records and adjust allocations
-
-
         // Checkpoint deletion task
 
         repo_idx++;
@@ -590,12 +695,11 @@ TaskWorker::handleProjectDelete()
 {
     DL_INFO( "Starting task " << m_task->task_id << ", type: ProjectDelete" );
 
-    string                      uid = m_task->data["user"].asString();
+    string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
     int                         alloc_idx = -1;
     libjson::Value &            state = m_task->data["state"];
-    libjson::Value::Array  &    proj_ids = state["proj_ids"].getArray();
     libjson::Value::Array  &    allocs = state["allocs"].getArray();
     libjson::Value              upd_state;
 
@@ -617,6 +721,8 @@ TaskWorker::handleProjectDelete()
         string msg = "Running";
         m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
         upd_state.clear();
+
+        TASK_DELAY
     }
     else if ( status == TS_RUNNING )
     {
@@ -631,15 +737,20 @@ TaskWorker::handleProjectDelete()
 
     if ( alloc_idx < 0 )
     {
-        vector<string> ids;
-
-        for ( a = proj_ids.begin(); a != proj_ids.end(); a++ )
+        libjson::Value::ObjectIter p = state.find( "proj_ids" );
+        if ( p != state.end() )
         {
-            ids.push_back( a->asString() );
-        }
+            libjson::Value::Array & proj_ids = p->second.getArray();
+            vector<string> ids;
 
-        // Delete "trashed" project
-        m_db.projDeleteTrash( ids );
+            for ( a = proj_ids.begin(); a != proj_ids.end(); a++ )
+            {
+                ids.push_back( a->asString() );
+            }
+
+            // Delete "trashed" project
+            m_db.projDeleteTrash( ids );
+        }
 
         // Save task state
         alloc_idx = 0;
@@ -694,7 +805,7 @@ TaskWorker::handleAllocCreate()
 {
     DL_INFO( "Starting task " << m_task->task_id << ", type: AllocCreate" );
 
-    string                      uid = m_task->data["user"].asString();
+    string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
     libjson::Value &            state = m_task->data["state"];
@@ -750,7 +861,7 @@ TaskWorker::handleAllocDelete()
 {
     DL_INFO( "Starting task " << m_task->task_id << ", type: AllocDelete" );
 
-    string                      uid = m_task->data["user"].asString();
+    string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
     libjson::Value &            state = m_task->data["state"];

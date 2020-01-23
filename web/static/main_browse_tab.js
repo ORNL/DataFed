@@ -1997,16 +1997,19 @@ function makeBrowserTab(){
             for ( var i in task_list ) {
                 task = task_list[i];
 
-                html += "<tr><td>" + task.id.substr(5) + "</td><td>";
+                html += "<tr style='font-size:.9em'><td>" + task.id.substr(5) + "</td><td>";
 
                 switch( task.type ){
                     case "TT_DATA_GET": html += "Get Data"; break;
                     case "TT_DATA_PUT": html += "Put Data"; break;
-                    case "TT_DATA_CHG_ALLOC": html += "Change Allocation"; break;
-                    case "TT_DATA_CHG_OWNER": html += "Change Owner"; break;
-                    case "TT_DATA_DEL": html += "Delete Record"; break;
+                    case "TT_DATA_DEL": html += "Delete Data"; break;
+                    case "TT_REC_CHG_ALLOC": html += "Change Allocation"; break;
+                    case "TT_REC_CHG_OWNER": html += "Change Owner"; break;
+                    case "TT_REC_DEL": html += "Delete Record"; break;
                     case "TT_ALLOC_CREATE": html += "Create Alloc"; break;
                     case "TT_ALLOC_DEL": html += "Delete Alloc"; break;
+                    case "TT_USER_DEL": html += "Delete User"; break;
+                    case "TT_PROJ_DEL": html += "Delete Project"; break;
                 }
 
                 html += "</td><td>";

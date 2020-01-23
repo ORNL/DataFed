@@ -23,9 +23,10 @@ private:
     void        workerThread();
     bool        handleDataGet();
     bool        handleDataPut();
-    bool        handleDataChangeAlloc();
-    bool        handleDataChangeOwner();
     bool        handleDataDelete();
+    bool        handleRecordChangeAlloc();
+    bool        handleRecordChangeOwner();
+    bool        handleRecordDelete();
     bool        handleProjectDelete();
     bool        handleAllocCreate();
     bool        handleAllocDelete();

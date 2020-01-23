@@ -185,14 +185,14 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
             $("#encrypt_none").checkboxradio( "option", "disabled", true );
             $("#encrypt_avail").checkboxradio( "option", "disabled", true );
             $("#encrypt_req").prop('checked',true).checkboxradio( "option", "disabled", false );
-        }else if ( cur_ep.DATA[0].scheme == "ftp" ){
-            $("#encrypt_none").prop('checked',true).checkboxradio( "option", "disabled", false );
-            $("#encrypt_avail").checkboxradio( "option", "disabled", true );
-            $("#encrypt_req").checkboxradio( "option", "disabled", true );
-        }else{
+        }else if ( !cur_ep.DATA[0].scheme || cur_ep.DATA[0].scheme == "gsiftp" ){
             $("#encrypt_none").checkboxradio( "option", "disabled", false );
             $("#encrypt_avail").checkboxradio( "option", "disabled", false );
             $("#encrypt_req").checkboxradio( "option", "disabled", false );
+        }else{
+            $("#encrypt_none").prop('checked',true).checkboxradio( "option", "disabled", false );
+            $("#encrypt_avail").checkboxradio( "option", "disabled", true );
+            $("#encrypt_req").checkboxradio( "option", "disabled", true );
         }
 
         $(":radio").button("refresh");

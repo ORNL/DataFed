@@ -264,13 +264,14 @@ enum TaskType
 {
     TT_DATA_GET         = 0;
     TT_DATA_PUT         = 1;
-    TT_DATA_CHG_ALLOC   = 2;
-    TT_DATA_CHG_OWNER   = 3;
-    TT_DATA_DEL         = 4;
-    TT_ALLOC_CREATE     = 5;
-    TT_ALLOC_DEL        = 6;
-    TT_USER_DEL         = 7;
-    TT_PROJ_DEL         = 8;
+    TT_DATA_DEL         = 2;
+    TT_REC_CHG_ALLOC    = 3;
+    TT_REC_CHG_OWNER    = 4;
+    TT_REC_DEL          = 5;
+    TT_ALLOC_CREATE     = 6;
+    TT_ALLOC_DEL        = 7;
+    TT_USER_DEL         = 8;
+    TT_PROJ_DEL         = 9;
 }
 
 enum TaskStatus
@@ -295,7 +296,7 @@ message TaskData
     required string                 id          = 1;
     required TaskType               type        = 2;
     required TaskStatus             status      = 3;
-    required string                 user        = 4;
+    required string                 client      = 4;
     required float                  progress    = 5;
     required string                 msg         = 6;
     required uint32                 ct          = 7;

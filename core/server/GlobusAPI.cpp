@@ -543,8 +543,10 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
             if ( i == resp_obj.end() )
                 EXCEPT( ID_SERVICE_ERROR, "Missing 'scheme' field" );
 
-
-            a_ep_info.supports_encryption = ( i->second.asString().compare( "gsiftp" ) == 0 );
+            if ( i->second.isNull() )
+                a_ep_info.supports_encryption = true;
+            else if ( i->second.isString() )
+                a_ep_info.supports_encryption = ( i->second.asString().compare( "gsiftp" ) == 0 );
         }
     }
     catch( libjson::ParseError & e )
