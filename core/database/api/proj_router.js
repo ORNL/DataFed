@@ -145,10 +145,6 @@ router.get('/update', function (req, res) {
                 if ( !g_db.p.exists( proj_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
 
-                var proj = g_db.p.document( proj_id );
-                if ( proj.deleted )
-                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
-
                 var is_admin = true;
 
                 if ( !g_lib.hasAdminPermProj( client, proj_id )){
@@ -172,7 +168,7 @@ router.get('/update', function (req, res) {
                     }
                 }
 
-                proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
+                var proj = g_db._update( proj_id, obj, { keepNull: false, returnNew: true });
 
                 var uid, i;
                 proj.new.admins = [];
@@ -263,10 +259,8 @@ router.get('/view', function (req, res) {
             throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'" ];
 
         var proj = g_db.p.document({ _id: req.queryParams.id });
-        if ( proj.deleted )
-            throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj._id + "'" ];
 
-        var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
+        //var owner_id = g_db.owner.firstExample({_from: proj._id })._to;
         var admins = g_db._query("for v in 1..1 outbound @proj admin return v._id", { proj: proj._id } ).toArray();
         if ( admins.length ) {
             proj.admins = admins;
@@ -328,21 +322,21 @@ router.get('/list', function (req, res) {
             qry = "";
 
         if ( req.queryParams.as_owner ){
-            qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i) and i.deleted != true";
+            qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
             if ( count > 1 )
                 qry += " return { _id: i._id, title: i.title, owner: i.owner }";
             comma = true;
         }
 
         if ( !count || req.queryParams.as_admin ){
-            qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i) and i.deleted != true";
+            qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
             if ( count > 1 )
                 qry += " return { _id: i._id, title: i.title, owner: i.owner }";
             comma = true;
         }
 
         if ( req.queryParams.as_member ){
-            qry += (comma?"),(":"") + "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and i.deleted != true";
+            qry += (comma?"),(":"") + "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
             if ( count > 1 )
                 qry += " return { _id: i._id, title: i.title, owner: i.owner }";
         }

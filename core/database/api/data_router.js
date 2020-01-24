@@ -229,8 +229,29 @@ router.post('/create/batch', function (req, res) {
 
 function recordUpdate( client, record, results, a_del_map ){
     var data_id = g_lib.resolveDataID( record.id, client );
-    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
     var data = g_db.d.document( data_id );
+
+    if ( !g_lib.hasAdminPermObject( client, data_id )) {
+        // Required permissions depend on which fields are being modified:
+        // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
+        var perms = 0;
+        if ( obj.md !== undefined )
+            perms |= g_lib.PERM_WR_META;
+
+        if ( obj.title !== undefined || obj.alias !== undefined || obj.desc !== undefined || obj.keyw !== undefined )
+            perms |= g_lib.PERM_WR_REC;
+
+        if ( obj.size !== undefined || obj.dt !== undefined || obj.data_url !== undefined || obj.doi !== undefined || obj.source !== undefined )
+            perms |= g_lib.PERM_WR_DATA;
+
+        if ( obj.public !== undefined )
+            perms |= g_lib.PERM_SHARE;
+
+        if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
+            throw g_lib.ERR_PERM_DENIED;
+    }
+
+    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
 
     var obj = { ut: Math.floor( Date.now()/1000 ) };
 
@@ -253,25 +274,6 @@ function recordUpdate( client, record, results, a_del_map ){
     if ( record.public !== undefined )
         obj.public = record.public;
 
-    if ( !g_lib.hasAdminPermObject( client, data_id )) {
-        // Required permissions depend on which fields are being modified:
-        // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
-        var perms = 0;
-        if ( obj.md !== undefined )
-            perms |= g_lib.PERM_WR_META;
-
-        if ( obj.title !== undefined || obj.alias !== undefined || obj.desc !== undefined || obj.keyw !== undefined )
-            perms |= g_lib.PERM_WR_REC;
-
-        if ( obj.size !== undefined || obj.dt !== undefined || obj.data_url !== undefined || obj.doi !== undefined || obj.source !== undefined )
-            perms |= g_lib.PERM_WR_DATA;
-
-        if ( obj.public !== undefined )
-            perms |= g_lib.PERM_SHARE;
-
-        if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
-            throw g_lib.ERR_PERM_DENIED;
-    }
 
     var loc, alloc, has_data = true;
 
@@ -449,8 +451,6 @@ router.post('/update', function (req, res) {
 
                 recordUpdate( client, req.body, result.data, del_map );
 
-                console.log("update, del_map:", del_map );
-
                 result.task = g_proc.taskInitDeleteRawData( client, del_map );
             }
         });
@@ -625,6 +625,7 @@ router.get('/view', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveDataID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
+
         var i,dep,rem_md = false;
 
         if ( !g_lib.hasAdminPermObject( client, data_id )) {
@@ -825,67 +826,11 @@ router.get('/lock', function (req, res) {
 .summary('Toggle data record lock')
 .description('Toggle data record lock');
 
-router.get('/lock/toggle', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
 
-        if ( !g_lib.hasAdminPermObject( client, data_id )) {
-            throw g_lib.ERR_PERM_DENIED;
-        }
 
-        var data = g_db.d.document( data_id );
-        var obj = {};
-        if ( !data.locked )
-            obj.locked = true;
-        else
-            obj.locked = false;
-
-        data = g_db._update( data_id, obj, { returnNew: true });
-        data = data.new;
-
-        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
-
-        delete data._rev;
-        delete data._key;
-        data.id = data._id;
-        delete data._id;
-
-        res.send([data]);
-
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().optional(), "Client ID")
-.queryParam('id', joi.string().required(), "Data ID or alias")
-.summary('Toggle data record lock')
-.description('Toggle data record lock');
-
-router.get('/loc', function (req, res) {
-    try {
-        // This is a system call - no need to check permissions
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id,loc,result={};
-        for ( var i in req.queryParams.ids ){
-            data_id = g_lib.resolveDataID( req.queryParams.ids[i], client );
-            loc = g_db.loc.firstExample({ _from: data_id });
-            if ( result[loc._to] )
-                result[loc._to].push({ id: data_id, path: g_lib.computeDataPath( loc )});
-            else
-                result[loc._to] = [{ id: data_id, path: g_lib.computeDataPath( loc )}];
-        }
-
-        res.send(result);
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().optional(), "Client ID")
-.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data IDs and/or aliases")
-.summary('Get raw data repo location')
-.description('Get raw data repo location');
-
+/** @brief Get raw data path for local direct access, if possible from specified domain
+ * 
+ */
 router.get('/path', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -964,6 +909,7 @@ router.get('/list/by_alloc', function (req, res) {
 .queryParam('count', joi.number().optional(), "Count")
 .summary('List data records by allocation')
 .description('List data records by allocation');
+
 
 router.get('/search', function (req, res) {
     try {
