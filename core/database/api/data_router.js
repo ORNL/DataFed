@@ -227,7 +227,7 @@ router.post('/create/batch', function (req, res) {
 .description('Create a batch of new data records from JSON body');
 
 
-function recordUpdate( client, record, results, alloc_adj ){
+function recordUpdate( client, record, results, a_del_map ){
     var data_id = g_lib.resolveDataID( record.id, client );
     var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
     var data = g_db.d.document( data_id );
@@ -273,7 +273,7 @@ function recordUpdate( client, record, results, alloc_adj ){
             throw g_lib.ERR_PERM_DENIED;
     }
 
-    var has_data = true;
+    var loc, alloc, has_data = true;
 
     if ( data.doi ){
         // Data was previously published, check for invalid updates
@@ -290,7 +290,18 @@ function recordUpdate( client, record, results, alloc_adj ){
             throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
 
         if ( data.size ){
-            // Data is being published, delete existing managed raw data
+            // Adjust allocation usage
+            loc = g_db.loc.firstExample({ _from: data_id });
+            alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+            // DO NOT UPDATE ALLOC HERE - ASYNC TASK WILL DO SO AFTER RAW DATA IS DELETED
+            //g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size )});
+
+            // Add ID to list of raw files to delete
+            if ( loc._to in a_del_map )
+                a_del_map[loc._to].ids.push( data_id );
+            else
+                a_del_map[loc._to] = {repo_id:loc._to,path:alloc.path,ids:[data_id]};
+
             obj.size = 0;
         }
         obj.source = null;
@@ -332,8 +343,8 @@ function recordUpdate( client, record, results, alloc_adj ){
             obj.size = record.size;
 
             if ( obj.size != data.size ){
-                var loc = g_db.loc.firstExample({ _from: data_id });
-                var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                loc = g_db.loc.firstExample({ _from: data_id });
+                alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
                 g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
             }
         }
@@ -424,22 +435,23 @@ function recordUpdate( client, record, results, alloc_adj ){
 
 router.post('/update', function (req, res) {
     try {
-        var result = [];
+        var result = { data: [] };
 
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep"]
+                write: ["d","a","p","owner","alias","alloc","dep"],
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var alloc_adj = {};
+                var del_map = {};
 
-                recordUpdate( client, req.body, result, alloc_adj );
+                recordUpdate( client, req.body, result.data, del_map );
 
-                if ( alloc_adj.length ){
-                    // TODO FIXME - needs to init a raw data delete task here
-                }
+                console.log("update, del_map:", del_map );
+
+                result.task = g_proc.taskInitDeleteRawData( client, del_map );
             }
         });
 
@@ -476,26 +488,26 @@ router.post('/update', function (req, res) {
 .summary('Update an existing data record')
 .description('Update an existing data record from JSON body');
 
+
 router.post('/update/batch', function (req, res) {
     try {
-        var result = [];
+        var result = { data: [] };
 
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep"]
+                write: ["d","a","p","owner","alias","alloc","dep"],
+                exclusive: ["task","lock","block"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var alloc_adj = {};
+                var del_map = {};
 
                 for ( var i in req.body ){
-                    recordUpdate( client, req.body[i], result, alloc_adj );
+                    recordUpdate( client, req.body[i], result.data, del_map );
                 }
 
-                if ( alloc_adj.length ){
-                    // TODO FIXME - needs to init a raw data delete task here
-                }
+                result.task = g_proc.taskInitDeleteRawData( client, del_map );
             }
         });
 
@@ -1270,8 +1282,6 @@ router.post('/delete', function (req, res) {
 }).required(), 'Parameters')
 .summary('Delete collections, data records and raw data')
 .description('Delete collections, data records and associated raw data. IDs may be data IDs or aliases.');
-
-
 
 
 router.post('/trash/delete', function (req, res) {
