@@ -1,0 +1,56 @@
+FROM centos:centos7
+
+# CMake - Build-time only variables
+ARG CMAKE_MAJOR_MINOR_VERSION="3.16"
+ARG CMAKE_PATCH_LEVEL="3"
+ARG CMAKE_VERSION="${CMAKE_MAJOR_MINOR_VERSION}.${CMAKE_PATCH_LEVEL}"
+ARG CMAKE_DIR="cmake-${CMAKE_VERSION}"
+ARG CMAKE_ARCHIVE="${CMAKE_DIR}.tar.gz"
+ARG CMAKE_DOWNLOAD_LINK="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${CMAKE_ARCHIVE}"
+
+# ZeroMQ, Protobuf, and pyenv - Runtime variables
+ENV USR_INC_DIR="/usr/include"
+ENV ZMQ_INC_DIR=${USR_INC_DIR}
+ENV PBUF_INC_DIR=${USR_INC_DIR}
+
+ENV USR_LIB_DIR="/usr/lib64"
+ENV ZMQ_LIB_DIR=${USR_LIB_DIR}
+ENV PBUF_LIB_DIR=${USR_LIB_DIR}
+
+ENV PYENV_ROOT /root/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+# Install OS dependencies (to just get CMake installed)
+#  - CMake install layer takes forever,
+#    so moving install of other dependencies to a post-layer, 
+#    since they can change (for initial development)
+
+RUN yum update -y \
+    && yum install epel-release -y \
+    && yum group install "Development Tools" -y \
+    && yum install wget openssl-devel -y
+
+# Install CMake from source (needed to get v3.x.x)
+RUN wget ${CMAKE_DOWNLOAD_LINK} \
+    && tar xvzf ${CMAKE_ARCHIVE} \
+    && cd ${CMAKE_DIR} \
+    && ls \
+    && ./bootstrap --prefix=/usr/local \
+    && make \
+    && make install
+
+# Install extra dependencies:
+#  - TODO: If supporting multiple versions of python, switch to pyenv
+#          This would be very helpful for running tox to test the Python CLI
+RUN yum install -y \
+        boost-devel \
+        ninja-build \
+        protobuf-devel \
+        python36 \
+        vim \
+        zeromq-devel
+
+# Install python dependencies
+RUN pip3 install pip --upgrade \
+    && pip3 install \
+        google

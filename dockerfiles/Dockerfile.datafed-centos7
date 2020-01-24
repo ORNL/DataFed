@@ -1,0 +1,9 @@
+FROM datafed/datafed-kickstart:centos7
+
+ARG DATAFED_WORKDIR="/apps/datafed"
+
+RUN mkdir -p ${DATAFED_WORKDIR}
+ADD . ${DATAFED_WORKDIR}
+WORKDIR ${DATAFED_WORKDIR}
+
+
