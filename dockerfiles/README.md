@@ -25,11 +25,12 @@ So, a way to build the SDE for different OS.
 
 | OS       | Dockerfile                               | Tag                               |
 |----------|------------------------------------------|-----------------------------------|
-| Centos 7 | dockerfiles/Dockerfile.kickstart-centos7 | datefed/datafed-kickstart:centos7 |
+| Centos 7 | dockerfiles/Dockerfile.kickstart-centos7 | datafed/datafed-kickstart:centos7 |
 
 ## Application Containers
 These are to build DataFed using one of the respective kickstarts with paired OS.
 
 | OS       | Dockerfile                               | Tag                               |
 |----------|------------------------------------------|-----------------------------------|
-| Centos 7 | dockerfiles/Dockerfile.datafed-centos7   | datefed/datafed:centos7           |
+| Centos 7 | dockerfiles/Dockerfile.datafed-centos7   | datafed/datafed:centos7           |
+
