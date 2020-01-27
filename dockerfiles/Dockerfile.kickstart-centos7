@@ -52,5 +52,5 @@ RUN yum install -y \
 
 # Install python dependencies
 RUN pip3 install pip --upgrade \
-    && pip3 install \
-        google
+    && pip3 install protobuf
+
