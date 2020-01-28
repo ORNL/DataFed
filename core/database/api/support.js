@@ -412,7 +412,12 @@ module.exports = ( function() {
     obj.getObject = function( a_obj_id, a_client ) {
         var id = obj.resolveID( a_obj_id, a_client );
 
-        return obj.db._document( id );
+        if ( !obj.db._exists( id ))
+            throw [ obj.ERR_INVALID_PARAM, "Record '" + id + "' does not exist." ];
+
+        var doc = obj.db._document( id );
+
+        return doc;
     };
 
     obj.getDataCollectionLinkCount = function( id ){

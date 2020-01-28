@@ -24,7 +24,7 @@ module.exports = ( function() {
      * that isn't linked elsewhere are returned.
      */
     obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
-        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], globus_data: [], http_data: [], no_data: [], visited: {} };
+        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], globus_data: [], http_data: [], visited: {} };
 
         switch( a_mode ){
             case g_lib.TT_DATA_GET:
@@ -68,16 +68,6 @@ module.exports = ( function() {
             }
 
             ctxt.globus_data = remove;
-            remove = [];
-
-            for ( i in ctxt.no_data ){
-                data = ctxt.no_data[i];
-                cnt = ctxt.visited[data.id];
-                if ( cnt == -1 || cnt == g_lib.getDataCollectionLinkCount( data.id ))
-                    remove.push( data );
-            }
-
-            ctxt.no_data = remove;
         }
 
         delete ctxt.client;
@@ -229,13 +219,34 @@ module.exports = ( function() {
                 ids = g_db._query( "for v in 1..1 outbound @coll item return v._id", { coll: id }).toArray();
                 obj._preprocessItemsRecursive( a_ctxt, ids, data_perm, coll_perm );
             }else{
+                switch( a_ctxt.mode ){
+                    case g_lib.TT_DATA_GET:
+                        if ( doc.data_url )
+                            a_ctxt.http_data.push({ id: id, title: doc.title, owner: doc.owner, url: doc.data_url, ext: doc.ext });
+                        else
+                            a_ctxt.globus_data.push({ id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
+                        break;
+                    case g_lib.TT_DATA_PUT:
+                        if ( doc.data_url )
+                            throw [g_lib.ERR_INVALID_PARAM,"Cannot PUT data to published record."];
+                        else
+                            a_ctxt.globus_data.push({ id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
+                        break;
+                    case g_lib.TT_REC_DEL:
+                        break;
+                    case g_lib.TT_REC_CHG_ALLOC:
+                        break;
+                    case g_lib.TT_REC_CHG_OWNER:
+                        break;
+                }
+
                 if ( doc.data_url ){
                     if ( a_ctxt.mode == g_lib.TT_DATA_PUT )
                         throw [g_lib.ERR_INVALID_PARAM,"Cannot PUT data to published record."];
                     if ( a_ctxt.mode == g_lib.TT_DATA_GET )
                         a_ctxt.http_data.push({ id: id, title: doc.title, owner: doc.owner, url: doc.data_url, ext: doc.ext });
                     else
-                        a_ctxt.no_data.push({ id: id, owner: doc.owner });
+                        a_ctxt.globus_data.push({ id: id, owner: doc.owner });
                 }else if ( doc.size || a_ctxt.mode == g_lib.TT_DATA_PUT ){
                     a_ctxt.globus_data.push({ id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
                 }else if ( !doc.size ){
@@ -309,7 +320,7 @@ module.exports = ( function() {
 
 
     obj._computeDataPaths = function( a_owner_id, a_mode, a_data, a_src_repos, a_rem_path ){
-        var data, loc, file, result = { ids: [], data_size: 0, rec_count: 0 };
+        var data, loc, file;
 
         var repo_map = {};
 
@@ -352,10 +363,6 @@ module.exports = ( function() {
                     break;
             }
 
-            result.data_size += data.size;
-            result.rec_count++;
-            result.ids.push( data.id );
-
             if ( loc.repo._key in repo_map ){
                 repo_map[loc.repo._key].files.push(file);
             }else{
@@ -366,8 +373,6 @@ module.exports = ( function() {
         for ( i in repo_map ){
             a_src_repos.push(repo_map[i]);
         }
-
-        return result;
     };
 
 
@@ -398,23 +403,26 @@ module.exports = ( function() {
             if ( state.dst_path.charAt( state.dst_path.length - 1 ) != "/" )
                 state.dst_path += "/";
 
-            var data = obj._computeDataPaths( null, g_lib.TT_DATA_GET, result.globus_data, state.repos, null );
+            obj._computeDataPaths( null, g_lib.TT_DATA_GET, result.globus_data, state.repos, null );
 
-            if ( data.ids.length ){
-                var doc = obj._createTask( a_client._id, g_lib.TT_DATA_GET, state );
-                var task = g_db.task.save( doc, { returnNew: true });
+            var doc = obj._createTask( a_client._id, g_lib.TT_DATA_GET, state );
+            var task = g_db.task.save( doc, { returnNew: true });
 
-                if ( obj._processTaskDeps( task.new._id, data.ids, 0, 0 )){
-                    task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
-                }
-
-                task.new.id = task.new._id;
-                delete task.new._id;
-                delete task.new._key;
-                delete task.new._rev;
-
-                result.task = task.new;
+            var dep_ids = [];
+            for ( var i in result.globus_data ){
+                dep_ids.push( result.globus_data[i].id );
             }
+
+            if ( obj._processTaskDeps( task.new._id, dep_ids, 0, 0 )){
+                task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+            }
+
+            task.new.id = task.new._id;
+            delete task.new._id;
+            delete task.new._key;
+            delete task.new._rev;
+
+            result.task = task.new;
         }
 
         return result;
@@ -468,12 +476,12 @@ module.exports = ( function() {
      * Input map is an object with repo_id keys to path and data ID array.
      */
     obj.taskInitDeleteRawData = function( a_client, a_del_map ){
-        console.log("taskInitDeleteRawData");
+        //console.log("taskInitDeleteRawData");
         var state = {repos:[]};
         for ( var i in a_del_map ){
             state.repos.push(a_del_map[i]);
         }
-        console.log("state.repos", state.repos );
+        //console.log("state.repos", state.repos );
 
         if ( state.repos.length ){
             var doc = obj._createTask( a_client._id, g_lib.TT_DATA_DEL, state );
@@ -675,21 +683,23 @@ module.exports = ( function() {
      */
     obj.dataCollDelete = function( a_client, a_res_ids ){
         var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_REC_DEL );
-        var i, alloc_adj = {};
+        var i; //, alloc_adj = {};
 
-        // Delete collections
+        // Mark collections as deleted (can't delete as this will break ACLs that may be in use)
         for ( i in result.coll ){
             obj.deleteCollection( result.coll[i] );
         }
 
         // Delete records with no data
-        for ( i in result.no_data ){
-            obj.deleteDataRecordWithoutData( result.no_data[i].id, alloc_adj );
-        }
+        //for ( i in result.no_data ){
+        //    obj.deleteDataRecordWithoutData( result.no_data[i].id, alloc_adj );
+        //}
 
-        obj.updateAllocations( alloc_adj );
+        //obj.updateAllocations( alloc_adj );
 
-        // Mark and schedule records with data for delete
+        var data = result.globus_data.concat( result.no_data );
+
+        // Mark and schedule records for delete
         if ( result.globus_data.length ){
             var state = { repos: [] };
             var data = obj._computeDataPaths( null, g_lib.TT_REC_DEL, result.globus_data, state.repos );
@@ -987,6 +997,7 @@ module.exports = ( function() {
         }
     };
 
+
     obj.allocCreate = function( a_client, a_repo_id, a_subject_id, a_path ){
         var state = { repo: a_repo_id, subject: a_subject_id, path: a_path };
         var doc = obj._createTask( a_client._id, g_lib.TT_ALLOC_CREATE, state );
@@ -1012,7 +1023,7 @@ module.exports = ( function() {
         var doc = obj._createTask( a_client._id, g_lib.TT_ALLOC_DEL, state );
         var task = g_db.task.save( doc, { returnNew: true });
 
-        if ( obj._processTaskDeps( task.new._id, [a_repo_id], 1, 0, a_subject_id )){
+        if ( obj._processTaskDeps( task.new._id, [a_repo_id], 2, 0, a_subject_id )){
             task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
         }
 
