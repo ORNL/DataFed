@@ -274,83 +274,46 @@ function recordUpdate( client, record, results, a_del_map ){
     if ( record.public !== undefined )
         obj.public = record.public;
 
+    if ( record.ext_auto !== undefined )
+        obj.ext_auto = record.ext_auto;
 
-    var loc, alloc, has_data = true;
-
-    if ( data.doi ){
-        // Data was previously published, check for invalid updates
-        if ( obj.doi === null || obj.data_url === null ){
-            if ( obj.doi || obj.data_url )
-                throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must both be set or cleared together."];
-        }else{
-            has_data = false;
-        }
-    }else if ( obj.doi || obj.data_url ){
-        has_data = false;
-
-        if ( !obj.doi || !obj.data_url )
-            throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
-
-        if ( data.size ){
-            // Adjust allocation usage
-            loc = g_db.loc.firstExample({ _from: data_id });
-            alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-            // DO NOT UPDATE ALLOC HERE - ASYNC TASK WILL DO SO AFTER RAW DATA IS DELETED
-            //g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size )});
-
-            // Add ID to list of raw files to delete
-            if ( loc._to in a_del_map )
-                a_del_map[loc._to].ids.push( data_id );
-            else
-                a_del_map[loc._to] = {repo_id:loc._to,path:alloc.path,ids:[data_id]};
-
-            obj.size = 0;
-        }
-        obj.source = null;
-        obj.ext = null;
-    }
-
-    if ( has_data ){
-        if ( record.ext_auto !== undefined ){
-            //console.log("auto ext set:",record.ext_auto);
-            obj.ext_auto = record.ext_auto;
-        }
-
-        if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-            //console.log("auto ext ON, calc ext");
-            if ( obj.source !== undefined || data.source !== undefined ){
-                // Changed - update auto extension
-                var src = obj.source || data.source;
-                if ( src ){
-                    //console.log("src defined");
-                    // Skip possible "." in end-point name
-                    var pos = src.lastIndexOf("/");
-                    pos = src.indexOf(".",pos>0?pos:0);
-                    if ( pos != -1 ){
-                        obj.ext = src.substr( pos );
-                        //console.log("new auto ext",obj.ext);
-                    }else{
-                        obj.ext = null;
-                        //console.log("new auto ext = NONE");
-                    }
+    if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
+        if ( obj.source !== undefined || data.source !== undefined ){
+            var src = obj.source || data.source;
+            if ( src ){
+                // Skip possible "." in end-point name
+                var pos = src.lastIndexOf("/");
+                pos = src.indexOf(".",pos>0?pos:0);
+                if ( pos != -1 ){
+                    obj.ext = src.substr( pos );
+                }else{
+                    obj.ext = null;
                 }
             }
-        }else{
-            g_lib.procInputParam( record, "ext", true, obj );
-            if ( obj.ext && obj.ext.charAt(0) != "." )
-                obj.ext = "." + obj.ext;
         }
+    }else{
+        g_lib.procInputParam( record, "ext", true, obj );
+        if ( obj.ext && obj.ext.charAt(0) != "." )
+            obj.ext = "." + obj.ext;
+    }
 
-        if ( record.size !== undefined ) {
-            obj.size = record.size;
+    if ( record.size !== undefined ) {
+        var loc, alloc;
 
-            if ( obj.size != data.size ){
-                loc = g_db.loc.firstExample({ _from: data_id });
-                alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-                g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
-            }
+        obj.size = record.size;
+
+        if ( obj.size != data.size ){
+            loc = g_db.loc.firstExample({ _from: data_id });
+            alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+            g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
         }
     }
+
+    if ( !data.doi && ( obj.doi || obj.data_url ))
+        throw [ g_lib.ERR_INVALID_PARAM, "Cannot set DOI parameters for managed data." ];
+
+    if ( data.doi && ( obj.size !== undefined || obj.source !== undefined || obj.ext_auto !== undefined || obj.ext !== undefined ))
+        throw [ g_lib.ERR_INVALID_PARAM, "Cannot set data parameters for published data." ];
 
     if ( record.dt != undefined )
         obj.dt = record.dt;
