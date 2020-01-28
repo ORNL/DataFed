@@ -1271,7 +1271,7 @@ DatabaseAPI::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth
     Value::Object & obj = result.getObject();
     Value::ObjectIter i;
 
-    if (( i = obj.find("globus_data")) != obj.end() && i->second.size( ))
+    if (( i = obj.find("glob_data")) != obj.end() && i->second.size( ))
         setListingData( a_reply, i->second );
 
     if (( i = obj.find("http_data")) != obj.end() && i->second.size( ))

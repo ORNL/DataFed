@@ -270,7 +270,7 @@ function dataLock( a_id, a_lock, a_cb ){
     });
 }
 
-function dataGet( a_ids ){
+function dataGet( a_ids, a_cb ){
     dataGetPreprocess( a_ids, function( ok, data ){
         if ( ok ){
             console.log("proproc:",data);
@@ -300,7 +300,7 @@ function dataGet( a_ids ){
                 dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
                 return;
             } else if ( internal ){
-                dlgStartTransfer( TT_DATA_GET, data.item );
+                dlgStartTransfer( TT_DATA_GET, data.item, a_cb );
             }else{
                 for ( var i in data.item ){
                     console.log("download ", data.item[i].url )
@@ -318,7 +318,7 @@ function dataGet( a_ids ){
     });
 }
 
-function dataPut( a_id ){
+function dataPut( a_id, a_cb ){
     checkPerms( a_id, PERM_WR_DATA, function( granted ){
         if ( !granted ){
             alertPermDenied();
@@ -330,7 +330,7 @@ function dataPut( a_id ){
                 if ( data.doi ){
                     dlgAlert("Data Put Error","Record has read-only, externally managed data.");
                 }else{
-                    dlgStartTransfer( TT_DATA_PUT, [data] );
+                    dlgStartTransfer( TT_DATA_PUT, [data], a_cb );
                 }
             }
         }); 

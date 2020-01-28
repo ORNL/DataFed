@@ -157,6 +157,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             if ( ok ){
                 if ( data.length == 0 ){
                     html="<option value='bad'>(no allocations)</option>";
+                    dlgAlert("Allocation Error", "Cannot create new data record for this user/project. No available storage allocations.");
+                    return;
                 }else{
                     var alloc;
                     html = "";
@@ -173,7 +175,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     if ( !have_cap ){
-                        dlgAlert("Data Allocation Error","All available storage allocations are full.");
+                        dlgAlert("Data Allocation Error","Cannot create new data record for this user/project. All available storage allocations are full. ");
                         return;
                     }else{
                         $("#do_it").button("enable");
@@ -431,6 +433,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
 
                 if ( a_mode == DLG_DATA_EDIT ){
+                    $("#published",frame).prop("disabled",true);
+
                     if (( a_upd_perms & PERM_WR_META ) == 0 ){
                         jsoned.setReadOnly(true);
                         jsoned.container.style.opacity=0.45;
@@ -447,7 +451,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                     if (( a_upd_perms & PERM_WR_DATA ) == 0 ){
                         inputDisable( $("#extension,#doi,data_url,#pick_source", frame ));
-                        $("#ext_auto,#published",frame).prop("disabled",true);
+                        $("#ext_auto",frame).prop("disabled",true);
                     }
 
                     $("#dlg_coll_row",frame).css("display","none");

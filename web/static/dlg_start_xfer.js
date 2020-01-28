@@ -320,6 +320,9 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                             inst.dialog('destroy').remove();
                             //console.log(data.task);
                             setStatusText( "Task ID '" + data.task[0].id + "' created for data transfer." );
+                            if ( a_cb ){
+                                a_cb();
+                            }
                         }else{
                             dlgAlert( "Transfer Error", data );
                         }

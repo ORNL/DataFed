@@ -27,6 +27,8 @@ function makeBrowserTab(){
     this.data_md_exp = {};
     this.taskHist = [];
     this.pollSince = g_opts.task_hist * 3600;
+    this.pollMax = 32;
+    this.pollMin = 4;
     this.my_root_key = "c/u_" + g_user.uid + "_root";
     this.uid = "u/" + g_user.uid;
     this.drag_mode = 0;
@@ -1056,7 +1058,12 @@ function makeBrowserTab(){
 
     this.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
-        dataGet( ids );
+        dataGet( ids, function(){
+            console.log("reset task poll");
+            inst.pollSince = 0;
+            clearTimeout(inst.taskTimer);
+            inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
+        });
     }
 
     this.actionDataPut = function() {
@@ -1067,7 +1074,12 @@ function makeBrowserTab(){
         var id = ids[0];
 
         if ( id.charAt(0) == "d" ) {
-            dataPut( id );
+            dataPut( id, function(){
+                console.log("reset task poll");
+                inst.pollSince = 0;
+                clearTimeout(inst.taskTimer);
+                inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
+            });
         }
     }
 
@@ -1674,7 +1686,6 @@ function makeBrowserTab(){
             inst.updateSelectionField( fields );
         } else if ( key.startsWith( "repo/" )) {
             allocView( node.data.repo, node.data.scope, function( ok, data ){
-                console.log("allocView:",ok,data);
                 if ( ok ){
                     var alloc = data.alloc[0];
                     var is_user = node.data.scope.startsWith("u/");
@@ -2015,7 +2026,7 @@ function makeBrowserTab(){
                 html += "</td><td>";
 
                 switch( task.status ){
-                    case "TS_BLOCKED": html += "Blocked"; break;
+                    case "TS_BLOCKED": html += "Queued"; break;
                     case "TS_READY": html += "Ready"; break;
                     case "TS_RUNNING": html += "Running"; break;
                     case "TS_SUCCEEDED": html += "Succeeded"; break;
@@ -2043,9 +2054,9 @@ function makeBrowserTab(){
         if ( !g_user )
             return;
 
-        _asyncGet( "/api/task/list" + (inst.pollSince?"?since="+(2*inst.pollSince):""), null, function( ok, data ){
+        _asyncGet( "/api/task/list" + (inst.pollSince?"?since="+Math.round(2*inst.pollSince):""), null, function( ok, data ){
             if ( ok && data ) {
-                console.log( "task list:",ok,data);
+                //console.log( "task list:",ok,data);
                 if ( data.task && data.task.length ) {
                     // Find and remove any previous entries
                     var task;
@@ -2060,9 +2071,21 @@ function makeBrowserTab(){
                     }
                     inst.taskHist = data.task.concat( inst.taskHist );
                     inst.taskUpdateHistory( inst.taskHist );
+                    inst.pollSince = 0;
                 }
             }
-            inst.pollSince = 10;
+
+            // Poll period after initial scan should run at slowest rate
+            // If a transfer is started or detected, poll will drop to min period
+            if ( inst.pollSince == 0 )
+                inst.pollSince = inst.pollMin;
+            else if ( inst.pollSince < inst.pollMax )
+                inst.pollSince *= 2;
+            else
+                inst.pollSince = inst.pollMax;
+
+                console.log( "poll per:",inst.pollSince);
+
             inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000*(inst.pollSince));
         });
     }

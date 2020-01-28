@@ -7,6 +7,7 @@
 using namespace std;
 
 #define TASK_DELAY sleep(60);
+//#define TASK_DELAY
 
 namespace SDMS {
 namespace Core {
@@ -281,7 +282,10 @@ TaskWorker::handleDataGet( )
         }
 
         // Monitor Globus transfer
-        monitorTransfer();
+        xfr_status = monitorTransfer( err_msg );
+
+        if ( xfr_status == GlobusAPI::XS_FAILED )
+            EXCEPT( 1, err_msg );
 
         // Xfr SUCCEEDED
         upd_state.clear();
@@ -409,27 +413,33 @@ TaskWorker::handleDataPut()
     if ( xfr_status < GlobusAPI::XS_SUCCEEDED )
     {
         // Monitor Globus transfer, throws on failure, kills task
-        monitorTransfer();
+        xfr_status = monitorTransfer( err_msg );
 
-        DL_INFO( "Upload completed!" );
+        if ( xfr_status == GlobusAPI::XS_SUCCEEDED )
+        {
+            DL_INFO( "Upload completed!" );
 
-        // SUCCEEDED
-        upd_state.clear();
-        state["xfr_status"] = GlobusAPI::XS_SUCCEEDED;
-        upd_state["xfr_status"] = GlobusAPI::XS_SUCCEEDED;
+            // SUCCEEDED
+            upd_state.clear();
+            state["xfr_status"] = GlobusAPI::XS_SUCCEEDED;
+            upd_state["xfr_status"] = GlobusAPI::XS_SUCCEEDED;
 
-        prog = 90.0;
+            prog = 90.0;
 
-        //DL_INFO( "Update task state & prog, " << state.toString() );
+            //DL_INFO( "Update task state & prog, " << state.toString() );
 
-        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+            m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+        }
     }
 
     DL_INFO( "Requesting file size" );
 
-    // Request size from dst_repo
+    // Request size from dst_repo (even if transfer failed)
     if ( refreshDataSize( repo["repo_id"].asString(), file.at( "id" ).asString(), file.at( "to" ).asString( ), src_ep + file.at( "from" ).asString( ), state["ext"] ))
         return true;
+
+    if ( xfr_status == GlobusAPI::XS_FAILED )
+        EXCEPT( 1, err_msg );
 
     prog = 100.0;
     m_db.taskUpdate( m_task->task_id, 0, 0, &prog, 0 );
@@ -502,7 +512,7 @@ TaskWorker::handleDataDelete()
         {
             loc = del_req.add_loc();
             loc->set_id( id->asString() );
-            loc->set_path( path + id->asString() );
+            loc->set_path( path + id->asString().substr(2) );
         }
 
         if ( repoSendRecv( repo_id, del_req, reply ))
@@ -579,7 +589,7 @@ TaskWorker::handleRecordDelete()
     string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
-    int                         repo_idx = -1;
+    int                         repo_idx = 0;
     libjson::Value &            state = m_task->data["state"];
     libjson::Value::Array  &    repos = state["repos"].getArray();
     libjson::Value              upd_state;
@@ -593,8 +603,8 @@ TaskWorker::handleRecordDelete()
 
     if ( status == TS_READY )
     {
-        state["repo_idx"] = -1;
-        upd_state["repo_idx"] = -1;
+        state["repo_idx"] = 0;
+        upd_state["repo_idx"] = 0;
 
         status = TS_RUNNING;
         m_task->data["status"] = status;
@@ -618,31 +628,6 @@ TaskWorker::handleRecordDelete()
     Auth::RepoDataDeleteRequest         del_req;
     RecordDataLocation *                loc;
     MsgBuf::Message *                   reply;
-
-    if ( repo_idx < 0 )
-    {
-        // Delete DB records (adjusts allocations)
-        vector<string> ids;
-
-        for ( r = repos.begin(); r != repos.end(); r++ )
-        {
-            libjson::Value::Object & repo = r->getObject();
-            libjson::Value::Array & files = repo["files"].getArray();
-            for ( f = files.begin(); f != files.end(); f++ )
-            {
-                ids.push_back( (*f)["id"].asString() );
-            }
-        }
-
-        m_db.recordDeleteTrash( ids );
-
-        // Save task state
-        repo_idx = 0;
-        state["repo_idx"] = repo_idx;
-        upd_state["repo_idx"] = repo_idx;
-        m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
-        upd_state.clear();
-    }
 
     for ( r = repos.begin() + repo_idx; r != repos.end(); r++ )
     {
@@ -949,32 +934,23 @@ TaskWorker::checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo
 }
 
 
-void
-TaskWorker::monitorTransfer()
+GlobusAPI::XfrStatus
+TaskWorker::monitorTransfer( std::string & a_err_msg )
 {
-    GlobusAPI::XfrStatus    xfr_status;
-    string                  err_msg;
+    GlobusAPI::XfrStatus xfr_status;
 
-    while( 1 )
+    do
     {
         sleep( 5 );
 
-        if ( m_glob.checkTransferStatus( m_glob_task_id, m_access_token, xfr_status, err_msg ))
+        if ( m_glob.checkTransferStatus( m_glob_task_id, m_access_token, xfr_status, a_err_msg ))
         {
             // Transfer task needs to be cancelled
             m_glob.cancelTask( m_glob_task_id, m_access_token );
         }
+    } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 
-        if ( xfr_status == GlobusAPI::XS_FAILED )
-        {
-            // err_msg will be set by checkTransferStatus on failure
-            EXCEPT( 1, err_msg );
-        }
-        else if ( xfr_status == GlobusAPI::XS_SUCCEEDED )
-        {
-            break;
-        }
-    }
+    return xfr_status;
 }
 
 
