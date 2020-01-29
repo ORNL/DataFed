@@ -1,13 +1,6 @@
 FROM centos:centos7
 
-# CMake - Build-time only variables
-ARG CMAKE_MAJOR_MINOR_VERSION="3.16"
-ARG CMAKE_PATCH_LEVEL="3"
-ARG CMAKE_VERSION="${CMAKE_MAJOR_MINOR_VERSION}.${CMAKE_PATCH_LEVEL}"
-ARG CMAKE_DIR="cmake-${CMAKE_VERSION}"
-ARG CMAKE_ARCHIVE="${CMAKE_DIR}.tar.gz"
-ARG CMAKE_DOWNLOAD_LINK="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${CMAKE_ARCHIVE}"
-
+# Protobuf - Build-time only variables
 ARG PBUF_MAJOR_MINOR_VERSION="3.11"
 ARG PBUF_PATCH_LEVEL="2"
 ARG PBUF_VERSION="${PBUF_MAJOR_MINOR_VERSION}.${PBUF_PATCH_LEVEL}"
@@ -25,26 +18,19 @@ ENV PBUF_LIB_DIR="/usr/local/lib"
 # Change to working directory for installing "extra" software
 WORKDIR /opt
 
-# Install OS dependencies (to just get CMake installed)
-#  - CMake and Protobuf install layers take forever,
+# Install OS dependencies and make devtoolset-7 the set GNU compilers
+#  - Protobuf install layer take forever,
 #    so moving install of other dependencies to a post-layer, 
 #    since they can change (for initial development)
 #
 #  - TODO: If supporting multiple versions of python, switch to pyenv
 #          This would be very helpful for running tox to test the Python CLI
 RUN yum update -y \
-    && yum install epel-release -y \
     && yum group install "Development Tools" -y \
-    && yum install wget openssl-devel python36 -y
-
-# Install CMake from source
-#  - needed to get v3.x.x)
-RUN wget ${CMAKE_DOWNLOAD_LINK} \
-    && tar xvzf ${CMAKE_ARCHIVE} \
-    && cd ${CMAKE_DIR} \
-    && ./bootstrap --prefix=/usr/local \
-    && make \
-    && make install
+    && yum install -y epel-release centos-release-scl -y \
+    && yum install wget devtoolset-7 openssl-devel python36 cmake3 -y \
+    && echo "source scl_source enable devtoolset-7" >> /etc/bashrc \
+    && source /etc/bashrc
 
 # Install Protobuf (compiler and python package)
 #  - needed to get v3.x.x)
@@ -68,12 +54,13 @@ RUN mkdir globus-connect-server \
     && curl -LOs https://downloads.globus.org/toolkit/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm \
     && rpm --import https://downloads.globus.org/toolkit/gt6/stable/repo/rpm/RPM-GPG-KEY-Globus \
     && yum install globus-connect-server-repo-latest.noarch.rpm yum-plugin-priorities -y \
-    && yum install globus-connect-server -y \
+    && yum install globus-connect-server globus-common-devel -y \
     && cd ..
 
 # Install extra dependencies:
 RUN yum install -y \
         boost-devel \
+        fuse-devel \
         libcurl-devel \
         ninja-build \
         rapidjson-devel \
