@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define TASK_DELAY sleep(60);
-//#define TASK_DELAY
+//#define TASK_DELAY sleep(60);
+#define TASK_DELAY
 
 namespace SDMS {
 namespace Core {
@@ -683,7 +683,7 @@ TaskWorker::handleProjectDelete()
     string                      uid = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
     double                      prog = 0;
-    int                         alloc_idx = -1;
+    int                         alloc_idx = 0;
     libjson::Value &            state = m_task->data["state"];
     libjson::Value::Array  &    allocs = state["allocs"].getArray();
     libjson::Value              upd_state;
@@ -697,8 +697,8 @@ TaskWorker::handleProjectDelete()
 
     if ( status == TS_READY )
     {
-        state["alloc_idx"] = -1;
-        upd_state["alloc_idx"] = -1;
+        state["alloc_idx"] = 0;
+        upd_state["alloc_idx"] = 0;
 
         status = TS_RUNNING;
         m_task->data["status"] = status;
@@ -719,31 +719,6 @@ TaskWorker::handleProjectDelete()
     }
 
     libjson::Value::ArrayIter a;
-
-    if ( alloc_idx < 0 )
-    {
-        libjson::Value::ObjectIter p = state.find( "proj_ids" );
-        if ( p != state.end() )
-        {
-            libjson::Value::Array & proj_ids = p->second.getArray();
-            vector<string> ids;
-
-            for ( a = proj_ids.begin(); a != proj_ids.end(); a++ )
-            {
-                ids.push_back( a->asString() );
-            }
-
-            // Delete "trashed" project
-            m_db.projDeleteTrash( ids );
-        }
-
-        // Save task state
-        alloc_idx = 0;
-        state["alloc_idx"] = alloc_idx;
-        upd_state["alloc_idx"] = alloc_idx;
-        m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
-        upd_state.clear();
-    }
 
     Auth::RepoPathDeleteRequest         req;
     MsgBuf::Message *                   reply;

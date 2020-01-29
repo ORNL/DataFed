@@ -790,25 +790,6 @@ DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a
 
 
 void
-DatabaseAPI::projDeleteTrash( const std::vector<std::string> & a_ids )
-{
-    Value result;
-    string body = "{\"ids\":[";
-
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
-    {
-        if ( i != a_ids.begin() )
-            body += ",";
-
-        body += "\"" + *i + "\"";
-    }
-    body += "]}";
-
-    dbPost( "prj/trash/delete", {}, &body, result );
-}
-
-
-void
 DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 {
     ProjectData*        proj;
@@ -1118,23 +1099,6 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
     setListingData( a_reply, result );
 }
 
-void
-DatabaseAPI::recordDeleteTrash( const std::vector<std::string> & a_ids )
-{
-    Value result;
-    string body = "{\"ids\":[";
-
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
-    {
-        if ( i != a_ids.begin() )
-            body += ",";
-
-        body += "\"" + *i + "\"";
-    }
-    body += "]}";
-
-    dbPost( "dat/trash/delete", {}, &body, result );
-}
 
 void
 DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )

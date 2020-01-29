@@ -629,6 +629,7 @@ function makeBrowserTab(){
             }
 
             dlgDataNewEdit(DLG_DATA_NEW,null,parent,0,function(data,parent_id){
+                inst.resetTaskPoll();
                 var node = inst.data_tree.getNodeByKey( parent_id );
                 if ( node )
                     inst.reloadNode( node );
@@ -963,6 +964,7 @@ function makeBrowserTab(){
                         if ( data ){
                             dlgDataNewEdit( DLG_DATA_EDIT, data, null, perms, function( data ){
                                 refreshUI( id, data );
+                                inst.resetTaskPoll();
                             });
                         }
                     }); 
@@ -1059,10 +1061,7 @@ function makeBrowserTab(){
     this.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
         dataGet( ids, function(){
-            console.log("reset task poll");
-            inst.pollSince = 0;
-            clearTimeout(inst.taskTimer);
-            inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
+            inst.resetTaskPoll();
         });
     }
 
@@ -1075,10 +1074,7 @@ function makeBrowserTab(){
 
         if ( id.charAt(0) == "d" ) {
             dataPut( id, function(){
-                console.log("reset task poll");
-                inst.pollSince = 0;
-                clearTimeout(inst.taskTimer);
-                inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
+                inst.resetTaskPoll();
             });
         }
     }
@@ -2088,6 +2084,13 @@ function makeBrowserTab(){
 
             inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000*(inst.pollSince));
         });
+    }
+
+    this.resetTaskPoll = function(){
+        console.log("reset task poll");
+        inst.pollSince = 0;
+        clearTimeout(inst.taskTimer);
+        inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
     }
 
     this.setupRepoTab = function(){
