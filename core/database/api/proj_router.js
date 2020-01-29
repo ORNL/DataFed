@@ -291,7 +291,6 @@ router.get('/view', function (req, res) {
             }
         }
 
-
         proj.id = proj._id;
 
         delete proj._id;
@@ -396,31 +395,6 @@ router.get('/list', function (req, res) {
 .summary('List projects')
 .description('List projects. If no options are provided, lists all projects associated with client.');
 
-/*
-router.get('/list/by_owner', function (req, res) {
-    const client = g_lib.getUserFromClientID( req.queryParams.client );
-    res.send( g_db._query( "for v in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',v) return { uid: v._key, title: v.title }", { user: client._id }));
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.summary('List projects')
-.description('List projects');
-
-router.get('/list/by_admin', function (req, res) {
-    const client = g_lib.getUserFromClientID( req.queryParams.client );
-    res.send( g_db._query( "for v in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',v) return { uid: v._key, title: v.title }", { user: client._id }));
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.summary('List projects')
-.description('List projects');
-
-router.get('/list/by_member', function (req, res) {
-    const client = g_lib.getUserFromClientID( req.queryParams.client );
-    res.send( g_db._query( "for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' return { uid: v._key, title: v.title }", { user: client._id }));
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.summary('List projects')
-.description('List projects');
-*/
 
 router.get('/search', function (req, res) {
     try {
@@ -436,68 +410,13 @@ router.get('/search', function (req, res) {
 .summary('Find all projects that match query')
 .description('Find all projects that match query');
 
-/*
-router.get('/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","admin"],
-                write: ["p","g","uuid","accn","c","d","a","acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var proj_id = req.queryParams.id;
-                if ( !g_db.p.exists( proj_id ))
-                    throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
-    
-                g_lib.ensureAdminPermProj( client, proj_id );
-                var proj = g_db.p.document( proj_id );
-                var size = 0;
-                var objects,obj,result={};
-
-                result.suballoc = false;
-                result.locs = {};
-                objects = g_db.alloc.byExample({ _from: proj_id });
-                while ( objects.hasNext() ) {
-                    obj = objects.next();
-                    result.locs[obj._to] = [];
-                }
-
-                objects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: proj_id });
-                var top;
-
-                while ( objects.hasNext() ) {
-                    obj = objects.next();
-                    if ( obj[0] == "c" ){
-                        top = g_db.top.firstExample({_from: obj});
-                        if ( top )
-                            g_lib.topicUnlink( obj );
-                    }
-                    g_graph[obj[0]].remove( obj );
-                    //g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
-                }
-
-                g_graph.p.remove( proj_id );
-
-                res.send( result );
-            }
-        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Project ID")
-.summary('Remove existing project')
-.description('Remove existing project.');
-*/
 
 router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
+                write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t","dep"],
                 exclusive: ["lock","task","block"]
             },
             action: function() {
@@ -521,45 +440,5 @@ router.post('/delete', function (req, res) {
 .description('Delete project(s) and all associated data records and raw data.');
 
 
-router.post('/trash/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn"],
-                write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t"],
-                exclusive: ["lock"]
-            },
-            action: function() {
-                //const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id, proj;
-
-                // NOTE: This operation must be idempotent - it's OK if records have
-                // already been deleted; however, it is an error if they are not
-                // marked for deletion.
-
-                for ( var i in req.body.ids ){
-                    id = req.body.ids[i];
-                    if ( g_db.p.exists( id )){
-                        proj = g_db.p.document( id );
-
-                        if ( !proj.deleted )
-                            throw [g_lib.ERR_INVALID_PARAM,"Project ID: '" + id + "' not marked for deletion."];
-
-                        g_proc._projectDeleteImmediate( id );
-                    }
-                }
-            }
-        });
-
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().optional(), "Client ID")
-.body(joi.object({
-    ids: joi.array().items(joi.string()).required(),
-}).required(), 'Parameters')
-.summary('Delete trashed project(s)')
-.description('Delete trashed project(s).');
 
 
