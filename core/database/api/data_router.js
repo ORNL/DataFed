@@ -94,6 +94,8 @@ function recordCreate( client, record, results ){
     var data = g_db.d.save( obj, { returnNew: true });
     g_db.owner.save({ _from: data.new._id, _to: owner_id });
 
+    g_lib.makeTitleUnique( parent_id, data.new );
+
     // Create data location edge and update allocation and stats
     var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
     g_db.loc.save( loc );
@@ -227,7 +229,7 @@ router.post('/create/batch', function (req, res) {
 .description('Create a batch of new data records from JSON body');
 
 
-function recordUpdate( client, record, results, a_del_map ){
+function recordUpdate( client, record, results ){
     var data_id = g_lib.resolveDataID( record.id, client );
     var data = g_db.d.document( data_id );
 
@@ -410,11 +412,10 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var del_map = {};
 
-                recordUpdate( client, req.body, result.data, del_map );
+                recordUpdate( client, req.body, result.data );
 
-                result.task = g_proc.taskInitDeleteRawData( client, del_map );
+                //result.task = g_proc.taskInitDeleteRawData( client, del_map );
             }
         });
 
@@ -464,13 +465,12 @@ router.post('/update/batch', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var del_map = {};
 
                 for ( var i in req.body ){
-                    recordUpdate( client, req.body[i], result.data, del_map );
+                    recordUpdate( client, req.body[i], result.data );
                 }
 
-                result.task = g_proc.taskInitDeleteRawData( client, del_map );
+                //result.task = g_proc.taskInitDeleteRawData( client, del_map );
             }
         });
 

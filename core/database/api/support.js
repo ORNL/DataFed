@@ -729,6 +729,16 @@ module.exports = ( function() {
         return results;
     };
 
+
+    obj.makeTitleUnique = function( a_parent_id, a_doc ){
+        var conflicts = obj.db._query( "for v in 1..1 outbound @coll item filter is_same_collection(@type,v) and v.title == @title return {id:v._id}", { coll : a_parent_id, title: a_doc.title, type: a_doc._id.charAt(0) });
+
+        if ( conflicts.hasNext() ){
+            obj.db._update( a_doc._id, { title:a_doc.title + "_" + a_doc._key });
+        }
+    };
+
+
     obj.getCollDefaultACL = function( coll_id ){
         var res = obj.db._query("for i in c filter i._id == @id return {grant:i.grant,inhgrant:i.inhgrant}",{id:coll_id});
         if ( !res.hasNext() ){
