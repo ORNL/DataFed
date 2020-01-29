@@ -74,6 +74,8 @@ router.post('/create', function (req, res) {
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner._id });
 
+                g_lib.makeTitleUnique( parent_id, coll.new );
+
                 g_graph.item.save({ _from: parent_id, _to: coll._id });
 
                 if ( obj.alias ) {
