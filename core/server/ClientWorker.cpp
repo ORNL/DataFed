@@ -138,6 +138,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
+        SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
         SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );

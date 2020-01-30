@@ -2803,5 +2803,15 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
     setTaskDataFromList( a_reply, result );
 }
 
+void
+DatabaseAPI::taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataReply & a_reply )
+{
+    libjson::Value result;
+
+    dbGet( "task/view", {{"task_id",a_request.task_id()}}, result );
+
+    setTaskDataFromList( a_reply, result );
+}
+
 
 }}

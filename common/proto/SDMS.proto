@@ -311,6 +311,6 @@ message HttpXfrData
     required string             to          = 4;
     required uint32             started     = 5;
     required uint32             updated     = 6;
-    //required XfrStatus          status      = 7;
-    //optional string             err_msg     = 8; // Only set if status == XFR_FAILED
+    required bool               failed      = 7;
+    optional string             err_msg     = 8; // Only set if status == XFR_FAILED
 }

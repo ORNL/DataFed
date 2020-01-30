@@ -70,9 +70,10 @@ _verbosity = 1
 _output_mode_sticky = _OM_TEXT
 _output_mode = _OM_TEXT
 _ctxt_settings = dict(help_option_names=['-?','-h','--help'],ignore_unknown_options=True,allow_extra_args=True)
-_xfr_statuses = {0: "Initiated", 1: "Active", 2: "Inactive", 3: "Succeeded", 4: "Failed"}
-_xfr_modes = { 0: "Get", 1: "Put", 2: "Copy"}
-_xfr_encrypt_modes = { 0: "Disabled", 1: "Enabled", 2: "Required"}
+_task_statuses = {0: "Queued", 1: "Ready", 2: "Running", 3: "Succeeded", 4: "Failed"}
+_task_types = { 0: "Data Get", 1: "Data Put", 2: "Data Del", 3: "Rec Chg Alloc", 4: "Rec Chg Owner", 5: "Rec Delete", 6: "Alloc Create", 7: "Alloc Del", 8: "User Del", 9: "Project Del"}
+
+#_xfr_encrypt_modes = { 0: "Disabled", 1: "Enabled", 2: "Required"}
 _initialized = False
 _devnull = None
 
@@ -633,7 +634,7 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
     if raw_data_file:
         click.echo("")
         reply = _capi.dataPut( reply[0].data[0].id, raw_data_file )
-        _generic_reply_handler( reply, _print_xfr_stat )
+        _generic_reply_handler( reply, _print_task )
 
 
 @_data.command(name='update')
@@ -676,7 +677,7 @@ def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, ex
     if raw_data_file:
         click.echo("")
         reply = _capi.dataPut( reply[0].data[0].id, raw_data_file )
-        _generic_reply_handler( reply, _print_xfr_stat )
+        _generic_reply_handler( reply, _print_task )
 
 
 @_data.command(name='delete')
@@ -749,7 +750,8 @@ def _dataGet( df_id, path, wait, encrypt, context ):
         return
     elif _output_mode == _OM_JSON:
         click.echo( "{{\"msg_type\":\"{}\",\"message\":{}}}".format(reply[1],MessageToJson( reply[0], preserving_proto_field_name=True )))
-
+    elif reply[1] == "TaskDataReply":
+        click.echo( "Task ID: {}".format( reply[0].task[0].id ))
 
 @_data.command(name='put')
 @click.argument("data_id", metavar="ID", required=True, nargs=1)
@@ -769,7 +771,7 @@ def _dataPut( data_id, path, wait, extension, encrypt, context ):
     '''
 
     reply = _capi.dataPut( _resolve_id( data_id ), path, encrypt = int(encrypt), wait = wait, extension = extension, context = context )
-    _generic_reply_handler( reply, _print_xfr_stat )
+    _generic_reply_handler( reply, _print_task )
 
 
 # =============================================================================
@@ -1240,60 +1242,45 @@ def _sharedList( df_id ):
 # ---------------------------------------------------------- Transfer Functions
 # =============================================================================
 
-@_cli.command(name='xfr',cls=_AliasedGroup,help="Globus data transfer management commands.")
-def _xfr():
+@_cli.command(name='task',cls=_AliasedGroup,help="Task management commands.")
+def _task():
     pass
 
-@_xfr.command( name = 'list' )
+@_task.command( name = 'list' )
 @click.option("-s","--since",help="List from specified time (seconds default, suffix h = hours, d = days, w = weeks)")
 @click.option("-f","--from","time_from",help="List from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("-t","--to",help="List up to specified date/time (M/D/YYYY[,HH:MM])")
-@click.option("-S","--status",type=click.Choice(["0","1","2","3","4","init","initial","active","inactive","succeeded","failed"]),help="List transfers matching specified status")
-@click.option("-l","--limit",type=int,help="Limit to 'n' most recent transfers")
-def _xfrList( time_from, to, since, status, limit ):
+@click.option("-S","--status",type=click.Choice(["0","1","2","3","4","queued","ready","running","succeeded","failed"]),help="List tasks matching specified status")
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
+def _taskList( time_from, to, since, status, offset, count ):
     '''
-    List recent Globus transfers. If no time or status filter options are
-    provided, all Globus transfers initiated by the current user are listed,
+    List recent tasks. If no time or status filter options are
+    provided, all tasks initiated by the current user are listed,
     most recent first. Note that the DataFed server periodically purges
-    transfer history such that only up to 30 days of history are retained.
-    
-    The status option indicates the current stage of a transfer:
-    * INITIAL - Transfer has been requested but not started
-    * ACTIVE - Transfer is in progress
-    * INACTIVE - Transfer is paused
-    * SUCCEEDED - Transfer has completed successfully
-    * FAILED - Transfer has failed and has been stopped
+    tasks history such that only up to 30 days of history are retained.
     '''
 
     if since != None and (time_from != None or to != None):
         raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
-    reply = _capi.xfrList( time_from = time_from, time_to = to, since = since, status = status, limit = limit )
-    _generic_reply_handler( reply, _print_xfr_listing )
+    reply = _capi.taskList( time_from = time_from, time_to = to, since = since, status = status, offset = offset, count = count )
+    _generic_reply_handler( reply, _print_task_listing )
 
 
-@_xfr.command(name='view')
-@click.argument( "xfr_id", metavar="ID", required=False )
-def _xfrView( xfr_id ):
+@_task.command(name='view')
+@click.argument( "task_id", metavar="ID", required=False )
+def _taskView( task_id ):
     '''
-    Show transfer information. Use the ID argument to view a specific transfer
-    record, or omit to view the latest transfer initiated by the current user.
-    Information include status, source, destination, and other administrative
-    attributes.
-
-    The status field indicates the current stage of a transfer:
-    * INITIAL - Transfer has been requested but not started
-    * ACTIVE - Transfer is in progress
-    * INACTIVE - Transfer is paused
-    * SUCCEEDED - Transfer has completed successfully
-    * FAILED - Transfer has failed and has been stopped
+    Show task information. Use the ID argument to view a specific task
+    record, or omit to view the latest task initiated by the current user.
     '''
-    if xfr_id:
-        _id = _resolve_id( xfr_id )
+    if task_id:
+        _id = _resolve_id( task_id )
     else:
-        _id = xfr_id
-    reply = _capi.xfrView( _id )
-    _generic_reply_handler( reply, _print_xfr_stat )
+        _id = task_id
+    reply = _capi.taskView( _id )
+    _generic_reply_handler( reply, _print_task )
 
 
 # =============================================================================
@@ -1783,42 +1770,43 @@ def _print_deps( dr ):
                 dr.id,dr.alias+')',types[i.type],i.id,i.alias+')'))
     click.echo("")
 
-def _print_xfr_listing( message ):
-    if len(message.xfr) == 0:
-        click.echo("(no transfers)")
+def _print_task_listing( message ):
+    if len(message.task) == 0:
+        click.echo("(no tasks)")
         return
 
     df_idx = 1
     global _list_items
     _list_items = []
-    for i in message.xfr:
-        _list_items.append(i.id)
-        xfr_mode = _xfr_modes.get(i.mode, "None")
-        xfr_status = _xfr_statuses.get(i.status, "None")
+    for t in message.task:
+        _list_items.append(t.id)
+        task_type = _task_types.get(t.type, "None")
+        task_status = _task_statuses.get(t.status, "None")
 
-        click.echo("{:2}. {:13}  {}  {}  {:10}  {}".format(df_idx,i.id,xfr_mode,_capi.timestampToStr(i.started),xfr_status,i.rem_ep+i.rem_path))
+        click.echo("{:2}. {:14}  {:13}  {:9}  {}  {}".format(df_idx, t.id, task_type, task_status, _capi.timestampToStr(t.ct), _capi.timestampToStr(t.ut) ))
         df_idx += 1
 
 
-def _print_xfr_stat( message ):
-    for xfr in message.xfr:
-        xfr_mode = _xfr_modes.get(xfr.mode, "None")
-        xfr_status = _xfr_statuses.get(xfr.status, "None")
-        xfr_encrypt = _xfr_encrypt_modes.get(xfr.encrypt, "None")
+def _print_task( message ):
+    for t in message.task:
+        task_type = _task_types.get(t.type, "None")
+        task_status = _task_statuses.get(t.status, "None")
+        #xfr_encrypt = _xfr_encrypt_modes.get(xfr.encrypt, "None")
 
-        click.echo( "{:<20} {:<50}".format('Xfr ID: ', xfr.id) + '\n' +
-                    "{:<20} {:<50}".format('Mode: ', xfr_mode) + '\n' +
-                    "{:<20} {:<50}".format('Status: ', xfr_status))
+        click.echo( "{:<20} {:<50}".format('Task ID: ', t.id) + '\n' +
+                    "{:<20} {:<50}".format('Type: ', task_type) + '\n' +
+                    "{:<20} {:<50}".format('Status: ', task_status))
 
-        if xfr.status == 4:
-            click.echo("{:<20} {:<50}".format('Error: ', xfr.err_msg))
+        #if xfr.status == 4:
+        #    click.echo("{:<20} {:<50}".format('Error: ', xfr.err_msg))
 
-        click.echo( "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
-                    "{:<20} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
-                    "{:<20} {} ({})".format('Encrypted:', xfr.encrypted, xfr_encrypt) + '\n' +
-                    "{:<20} {:<50}".format('Started: ', _capi.timestampToStr(xfr.started)) + '\n' +
-                    "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(xfr.started)))
+        #click.echo( "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
+        #            "{:<20} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
+        #            "{:<20} {} ({})".format('Encrypted:', xfr.encrypted, xfr_encrypt) + '\n' +
+        click.echo( "{:<20} {:<50}".format('Started: ', _capi.timestampToStr(t.ct)) + '\n' +
+                    "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(t.ut)))
 
+        '''
         if _verbosity == 2:
             n = len( xfr.repo.file )
         else:
@@ -1832,6 +1820,7 @@ def _print_xfr_stat( message ):
             df_ids += xfr.repo.file[f].id
 
         click.echo("{:<20} {:<50}".format('Data Record(s): ', df_ids ))
+        '''
 
 def _print_user( message ):
     for usr in message.user:

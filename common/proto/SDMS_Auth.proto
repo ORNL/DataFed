@@ -773,11 +773,16 @@ message QueryDataReply
 
 // ============================ Task Messages
 
+message TaskViewRequest
+{
+    required string             task_id     = 1;
+}
 
 message TaskListRequest
 {
     optional string             proj_id     = 1;
     optional uint32             since       = 2;
+    repeated SDMS.TaskStatus    status      = 5;
     optional uint32             offset      = 3;
     optional uint32             count       = 4;
 }

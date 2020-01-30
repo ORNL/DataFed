@@ -401,7 +401,6 @@ class API:
             for item in http_list:
                 xfr = reply.xfr.add()
                 xfr.rec_id = item[1]
-                xfr.mode = sdms.XM_GET
                 setattr( xfr, "from", item[0] )
                 xfr.to = path
                 xfr.started = int(time.time())
@@ -417,11 +416,12 @@ class API:
                         print("")
                     xfr.to = data_file
                     xfr.updated = int(time.time())
-                    xfr.status = sdms.TS_SUCCEEDED
+                    xfr.failed = False
                 except Exception as e:
-                    xfr.status = sdms.TS_FAILED
+                    xfr.failed = True
                     xfr.err_msg = str(e)
                     xfr.updated = int(time.time())
+                    print( "Error: {}".format( e ))
 
             return [ reply, "HttpXfrDataReply" ]
         elif len(glob_list) > 0:
@@ -433,51 +433,33 @@ class API:
 
             reply = self._mapi.sendRecv( msg )
 
-            if wait:
-                xfr_ids = []
-                replies = []
-                num_xfr = len( reply[0].xfr )
+            if len(reply[0].task) > 0 and wait:
+                msg2 = auth.TaskViewRequest()
+                msg2.task_id = reply[0].task[0].id
                 elapsed = 0
 
-                for xfrs in reply[0].xfr:
-                    xfr_ids.append(( xfrs.id, True ))
+                while True:
+                    time.sleep(4)
+                    elapsed = elapsed + 4
 
-                msg = auth.XfrViewRequest()
+                    reply2 = self._mapi.sendRecv( msg2, nack_except = False )
 
-                while wait and num_xfr > 0:
-                    time.sleep( 2 )
-                    elapsed = elapsed + 2
+                    # Not sure if this can happen:
+                    if reply2[1] == "NackReply":
+                        break
 
-                    for xid in xfr_ids:
-                        if xid[1]:
-                            msg.xfr_id = xid[0]
+                    reply = reply2
 
-                            reply = self._mapi.sendRecv( msg, nack_except = False )
-
-                            # Not sure this can happen:
-                            if reply[1] == "NackReply":
-                                num_xfr = num_xfr - 1
-                                xid[1] = False
-
-                            check = reply[0].xfr[0]
-                            if check.status >= 3:
-                                replies.append( check )
-                                num_xfr = num_xfr - 1
-                                xid[1] = False
+                    if reply[0].task[0].status > 2:
+                        break
 
                     if timeout_sec and elapsed > timeout_sec:
                         break
 
-                # This is messy... there is no single transfer status reply available from the server after the initial request
-                # Must create a new reply and insert the contents of the status replies from the polling loop
-                reply = auth.XfrDataReply()
-                reply.xfr.extend( replies )
-                return [reply,"XfrDataReply"]
-            else:
-                return reply
+            return reply
         else:
             # Will land here if tried to get a collection with no records
-            raise Exception("No data records found to download")
+            raise Exception("Specified record(s) contain no raw data.")
 
 
     ##
@@ -508,15 +490,14 @@ class API:
 
         reply = self._mapi.sendRecv( msg )
 
-        if wait:
-            #TODO Eventually replace polling with server push
-            msg2 = auth.XfrViewRequest()
-            msg2.xfr_id = reply[0].xfr[0].id
+        if len(reply[0].task) > 0 and wait:
+            msg2 = auth.TaskViewRequest()
+            msg2.task_id = reply[0].task[0].id
             elapsed = 0
 
             while True:
-                time.sleep(2)
-                elapsed = elapsed + 2
+                time.sleep(4)
+                elapsed = elapsed + 4
 
                 reply2 = self._mapi.sendRecv( msg2, nack_except = False )
 
@@ -525,9 +506,8 @@ class API:
                     break
 
                 reply = reply2
-                check = reply[0].xfr[0]
 
-                if check.status == 3 or check.status == 4:
+                if reply[0].task[0].status > 2:
                     break
 
                 if timeout_sec and elapsed > timeout_sec:
@@ -1164,7 +1144,7 @@ class API:
     # =========================================================================
 
     ##
-    # @brief List recent Globus transfers
+    # @brief List recent tasks
     #
     # List recent Globus transfers. If no time or status filter options are
     # provided, all Globus transfers initiated by the current user are listed,
@@ -1174,16 +1154,17 @@ class API:
     # @param time_from - List from specified date/time (M/D/YYYY[,HH:MM])
     # @param time_to - List to specified date/time (M/D/YYYY[,HH:MM])
     # @param since - List from specified time string (second default, suffix h = hours, d = days, w = weeks)
-    # @param status - List matching status ("0"/"init","1"/"active","2"/"inactive","3"/"succeeded","4"/"failed")
-    # @param limit - Limit to number of matches
+    # @param status - List matching status (0 to 4)
+    # @param offset - Offset of matches
+    # @param count - Count of matches
     # @return A XfrDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def xfrList( self, time_from = None, time_to = None, since = None, status = None, limit = 20 ):
+    def taskList( self, time_from = None, time_to = None, since = None, status = None, offset = 0, count = 20 ):
         if since != None and (time_from != None or time_to != None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
-        msg = auth.XfrListRequest()
+        msg = auth.TaskListRequest()
 
         if time_from != None:
             ts = self.strToTimestamp( time_from )
@@ -1227,52 +1208,62 @@ class API:
             stat = status.lower()
             if stat in ["0","1","2","3","4"]:
                 msg.status = int(stat)
-            elif stat == "init" or stat == "initial":
+            elif stat == "queued":
                 msg.status = 0
-            elif stat == "active":
+            elif stat == "ready":
                 msg.status = 1
-            elif stat == "inactive":
+            elif stat == "running":
                 msg.status = 2
             elif stat == "succeeded":
                 msg.status = 3
             elif stat == "failed":
                 msg.status = 4
 
-        if limit != None:
+        if offset != None:
             try:
-                lim = int(limit)
+                tmp = int(offset)
             except:
-                raise Exception("Invalid limit value.")
+                raise Exception("Invalid offset value.")
 
-            if lim > 0:
-                msg.limit = lim
+            if offset >= 0:
+                msg.offset = offset
             else:
-                raise Exception("Invalid limit value.")
+                raise Exception("Invalid offset value.")
+
+        if count != None:
+            try:
+                tmp = int(count)
+            except:
+                raise Exception("Invalid count value.")
+
+            if count > 0:
+                msg.count = count
+            else:
+                raise Exception("Invalid count value.")
 
         return self._mapi.sendRecv( msg )
 
 
     ##
-    # @brief View transfer information
+    # @brief View task information
     #
-    # Show transfer information. Use the ID argument to view a specific transfer
-    # record, or omit to view the latest transfer initiated by the current user.
-    # Information include status, source, destination, and other administrative
-    # attributes.
+    # Show task information. Use the ID argument to view a specific task
+    # record, or omit to view the latest task initiated by the current user.
     #
-    # @param xfr_id - Transfer ID to view (optional)
-    # @return A ACLDataReply Google protobuf message object
+    # @param task_id - Task ID to view (optional)
+    # @return A TaskDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def xfrView( self, xfr_id = None ):
-        if xfr_id:
-            msg = auth.XfrViewRequest()
-            msg.xfr_id = xfr_id
+    def taskView( self, task_id = None ):
+        if task_id:
+            msg = auth.TaskViewRequest()
+            msg.task_id = task_id
 
             reply = self._mapi.sendRecv( msg )
         else:
-            msg = auth.XfrListRequest()
-            msg.limit = 1
+            msg = auth.TaskListRequest()
+            msg.offset = 0
+            msg.count = 1
 
             reply = self._mapi.sendRecv( msg )
 
