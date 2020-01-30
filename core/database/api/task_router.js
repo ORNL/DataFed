@@ -206,6 +206,14 @@ router.get('/list', function (req, res) {
 
         if ( req.queryParams.since ) {
             qry += " and i.ut >= " + ((Date.now()/1000) - req.queryParams.since);
+        }else{
+            if ( req.queryParams.from != undefined ) {
+                qry += " and i.ut >= " + req.queryParams.from;
+            }
+
+            if ( req.queryParams.to != undefined ) {
+                qry += " and i.ut <= " + req.queryParams.to;
+            }
         }
 
         if ( req.queryParams.status ){
@@ -213,7 +221,13 @@ router.get('/list', function (req, res) {
             params.status =  req.queryParams.status;
         }
 
-        qry += " sort i.ut desc return {id:i._id,type:i.type,status:i.status,client:i.client,progress:i.progress,msg:i.msg,ct:i.ct,ut:i.ut}";
+        qry += " sort i.ut desc";
+
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+        }
+
+        qry += " return {id:i._id,type:i.type,status:i.status,client:i.client,progress:i.progress,msg:i.msg,ct:i.ct,ut:i.ut}";
 
         var result = g_db._query( qry, params );
 
@@ -225,6 +239,8 @@ router.get('/list', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('status', joi.array().items(joi.number().integer()).optional(), "List of task states to retrieve.")
 .queryParam('since', joi.number().integer().min(0).optional(), "List tasks updated since this many seconds ago.")
+.queryParam('from', joi.number().integer().min(0).optional(), "List tasks from this timestamp.")
+.queryParam('to', joi.number().integer().min(0).optional(), "List tasks to this timestamp.")
 .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
 .queryParam('count', joi.number().integer().min(0).optional(), "Count")
 .summary('List task records')
