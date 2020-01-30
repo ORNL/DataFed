@@ -14,15 +14,12 @@ graph._addVertexCollection("g");    // Group
 graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
 graph._addVertexCollection("t");    // Topic
-//graph._addVertexCollection("n");    // Note
 graph._addVertexCollection("a");    // Alias
 graph._addVertexCollection("q");    // Saved queries
-//graph._addVertexCollection("l");    // Label
 graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
 
 
-//var owner = graph_module._relation("owner", ["d","c","p","g","n","a"], ["u","p"]);
 var owner = graph_module._relation("owner", ["d","c","p","g","a","q","task"], ["u","p"]);
 graph._extendEdgeDefinitions(owner);
 
@@ -37,9 +34,6 @@ graph._extendEdgeDefinitions(acl);
 
 var topic = graph_module._relation("top", ["d","t"], ["t"]);
 graph._extendEdgeDefinitions(topic);
-
-//var note = graph_module._relation("note", ["d","c"], ["n"]);
-//graph._extendEdgeDefinitions(note);
 
 var ident = graph_module._relation("ident", ["u"], ["accn","uuid"]);
 graph._extendEdgeDefinitions(ident);
@@ -94,50 +88,11 @@ view.properties({
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "client" ], sparse: true });
 db.task.ensureIndex({ type: "skiplist", unique: false, fields: [ "status" ], sparse: true });
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "servers[*]" ], sparse: true });
-
-//db.lock.ensureIndex({ type: "skiplist", unique: false, fields: [ "write" ], sparse: true });
-
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "doi" ], sparse: true });
-
-//db.accn.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ] });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "access" ], sparse: true });
-
-//db.p.ensureIndex({ type: "hash", unique: true, fields: [ "domain", "title" ], sparse: true });
-
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
-
 db.loc.ensureIndex({ type: "hash", unique: false, fields: [ "uid" ], sparse: true });
-
 db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: true });
 
-//db.d.ensureIndex({ type: "fulltext", fields: [ "title" ], minLength: 3 })
-//db.d.ensureIndex({ type: "fulltext", fields: [ "descr" ], minLength: 3 })
-
-// Also has user, mode (read/write), status (globus)
-
-
-db._truncate("u");
-db._truncate("accn");
-db._truncate("uuid");
-db._truncate("g");
-db._truncate("d");
-db._truncate("c");
-db._truncate("t");
-db._truncate("n");
-db._truncate("a");
-db._truncate("l");
-db._truncate("owner");
-db._truncate("member");
-db._truncate("item");
-db._truncate("acl");
-db._truncate("tag");
-db._truncate("note");
-db._truncate("ident");
-db._truncate("admin");
-db._truncate("alias");
-
-// Migration
-db._query("for i in alloc update i with { data_limit: i.max_size, data_size: i.tot_size, rec_limit: i.max_count, rec_count: i.tot_count }");
-db._query("for i in alloc update i with { max_count: null, max_size: null, tot_size: null, tot_count: null } in alloc options { keepNull:false }");
