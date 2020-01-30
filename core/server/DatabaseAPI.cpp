@@ -2791,10 +2791,26 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
         params.push_back({ "proj_id", a_request.proj_id() });
     if ( a_request.has_since( ))
         params.push_back({ "since", to_string( a_request.since() )});
+    if ( a_request.has_from( ))
+        params.push_back({ "from", to_string( a_request.from() )});
+    if ( a_request.has_to( ))
+        params.push_back({ "to", to_string( a_request.to() )});
     if ( a_request.has_offset( ))
         params.push_back({ "offset", to_string( a_request.offset() )});
     if ( a_request.has_count( ))
         params.push_back({ "count", to_string( a_request.count() )});
+    if ( a_request.status_size() > 0 )
+    {
+        string stat = "[";
+        for ( int i = 0; i < a_request.status_size(); ++i )
+        {
+            if ( i > 0 )
+                stat += ",";
+            stat += to_string(a_request.status(i));
+        }
+        stat += "]";
+        params.push_back({ "status",stat});
+    }
 
     libjson::Value result;
 

@@ -1250,7 +1250,7 @@ def _task():
 @click.option("-s","--since",help="List from specified time (seconds default, suffix h = hours, d = days, w = weeks)")
 @click.option("-f","--from","time_from",help="List from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("-t","--to",help="List up to specified date/time (M/D/YYYY[,HH:MM])")
-@click.option("-S","--status",type=click.Choice(["0","1","2","3","4","queued","ready","running","succeeded","failed"]),help="List tasks matching specified status")
+@click.option("-S","--status",type=click.Choice(["0","1","2","3","4","queued","ready","running","succeeded","failed"]),multiple=True,help="List tasks matching specified status")
 @click.option("-O","--offset",default=0,help="Start list at offset")
 @click.option("-C","--count",default=20,help="Limit list to count results")
 def _taskList( time_from, to, since, status, offset, count ):

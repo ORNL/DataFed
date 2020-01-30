@@ -782,9 +782,11 @@ message TaskListRequest
 {
     optional string             proj_id     = 1;
     optional uint32             since       = 2;
+    optional uint32             from        = 3;
+    optional uint32             to          = 4;
     repeated SDMS.TaskStatus    status      = 5;
-    optional uint32             offset      = 3;
-    optional uint32             count       = 4;
+    optional uint32             offset      = 6;
+    optional uint32             count       = 7;
 }
 
 message TaskDataReply

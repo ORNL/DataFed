@@ -1205,19 +1205,20 @@ class API:
                 raise Exception("Invalid value for 'since'")
 
         if status != None:
-            stat = status.lower()
-            if stat in ["0","1","2","3","4"]:
-                msg.status = int(stat)
-            elif stat == "queued":
-                msg.status = 0
-            elif stat == "ready":
-                msg.status = 1
-            elif stat == "running":
-                msg.status = 2
-            elif stat == "succeeded":
-                msg.status = 3
-            elif stat == "failed":
-                msg.status = 4
+            for s in status:
+                stat = s.lower()
+                if stat in ["0","1","2","3","4"]:
+                    msg.status.append( int( stat ))
+                elif stat == "queued":
+                    msg.status.append( 0 )
+                elif stat == "ready":
+                    msg.status.append( 1 )
+                elif stat == "running":
+                    msg.status.append( 2 )
+                elif stat == "succeeded":
+                    msg.status.append( 3 )
+                elif stat == "failed":
+                    msg.status.append( 4 )
 
         if offset != None:
             try:
