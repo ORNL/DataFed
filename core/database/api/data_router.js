@@ -583,6 +583,158 @@ router.post('/update/post_put', function (req, res) {
 .description('Update an existing data record from JSON body');
 
 
+router.post('/update/move_init', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d"],
+                write: ["loc"]
+            },
+            action: function() {
+                var id, loc;
+
+                if (( req.body.new_owner_id && !req.body.new_coll_id ) || ( !req.body.new_owner_id && req.body.new_coll_id ))
+                    throw [ g_lib.ERR_INVALID_PARAM, "New owner and new collection must be specified together." ];
+
+                if ( req.body.new_coll_id ){
+                    if ( !g_db.c.exists( req.body.new_coll_id ))
+                        throw [ g_lib.ERR_INTERNAL_FAULT, "New collection '" + req.body.new_coll_id + "' does not exist!" ];
+
+                    var coll = g_db.c.document( req.body.new_coll_id );
+
+                    if ( coll.owner != req.body.new_owner_id )
+                        throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' destination collection '" + req.body.new_coll_id + "' not owner by new owner!" ];
+                }
+
+                for ( var i in req.body.ids ){
+                    id = req.body.ids[i];
+
+                    if ( !g_db.d.exists( id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "Record '" + id + "' does not exist." ];
+
+                    loc = g_db.loc.firstExample({ _from: id });
+                    if ( !loc )
+                        throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' has no location edge!" ];
+
+                    var obj = {};
+
+                    if ( !req.body.new_owner_id && loc._to == req.body.new_repo_id )
+                        throw [ g_lib.ERR_INVALID_PARAM, "Record '" + id + "' allocation already on repo '" + loc._to + "'." ];
+
+                    obj.new_repo = req.body.new_repo_id;
+
+                    if ( req.body.new_owner_id ){
+                        if ( loc.uid == req.body.new_owner_id )
+                            throw [ g_lib.ERR_INVALID_PARAM, "Record '" + id + "' already owned by '" + loc.uid + "'." ];
+
+                        obj.new_owner = req.body.new_owner_id;
+                        obj.new_coll = req.body.new_coll_id;
+                    }
+
+                    g_db._update( loc._id, obj );
+                }
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+    new_repo_id: joi.string().required(),
+    new_owner_id: joi.string().allow('').optional(),
+    new_coll_id: joi.string().allow('').optional()
+}).required(), 'Parameters')
+.summary('Prepare record for raw data move to new allocation')
+.description('Prepare record for raw data move data to a new allocation.');
+
+
+router.post('/update/move_fini', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["d","owner","loc","alloc","item","acl"]
+            },
+            action: function() {
+                var id, loc, new_loc, alloc, rec, coll;
+
+                for ( var i in req.body.ids ){
+                    id = req.body.ids[i];
+
+                    if ( !g_db.d.exists( id ))
+                        throw [ g_lib.ERR_INVALID_PARAM, "Record '" + id + "' does not exist." ];
+
+                    loc = g_db.loc.firstExample({ _from: id });
+                    if ( !loc )
+                        throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' has no location edge!" ];
+
+                    if ( loc.new_owner ){
+                        // Changing owner and repo
+                        if ( !loc.new_coll )
+                            throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' missing destination collection!" ];
+
+                        if ( !g_db.c.exists( loc.new_coll ))
+                            throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' destination collection '" + loc.new_coll + "' does not exist!" ];
+
+                        coll = g_db.c.document( loc.new_coll );
+
+                        if ( coll.owner != loc.new_owner )
+                            throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' destination collection '" + loc.new_coll + "' not owner by new owner!" ];
+
+                        // Clear all record ACLs
+                        g_db.acl.removeByExample({ _from: id });
+
+                        // Update record to new owner
+                        g_db._update( id, { owner: loc.new_owner });
+
+                        // Move ownership edge
+                        g_db.owner.removeByExample({ _from: id });
+                        g_db.owner.save({ _from: id, _to: loc.new_owner });
+
+                        // Move to new collection
+                        g_db.item.removeByExample({ _to: id });
+                        g_db.item.save({ _from: loc.new_coll, _to: id });
+                    }
+
+                    rec = g_db.d.document( id );
+
+                    // Update old allocation stats
+                    alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
+                    if ( !alloc )
+                        throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' has mismatched allocation/location (cur)!" ];
+
+                    g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - rec.size });
+
+                    // Update new allocation stats
+                    alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc.new_repo });
+                    if ( !alloc )
+                        throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' has mismatched allocation/location (new)!" ];
+
+                    g_db._update( alloc._id, { rec_count: alloc.rec_count + 1, data_size: alloc.data_size + rec.size });
+
+                    // Create new edge to new owner/repo, delete old
+                    new_loc = { _from: loc._from, _to: loc.new_repo, uid: loc.new_owner?loc.new_owner:loc.uid };
+                    g_db.loc.save( new_loc );
+                    g_db.loc.remove( loc );
+                }
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+}).required(), 'Parameters')
+.summary('Finalize record after raw data move to new allocation')
+.description('Finalize record after raw data move data to a new allocation.');
+
+
 router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -1074,7 +1226,7 @@ router.post('/put', function (req, res) {
 .description('Put (upload) raw data to record from Globus source path. ID must be a data ID or alias.');
 
 
-router.post('/change_alloc', function (req, res) {
+router.post('/alloc_chg', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -1090,13 +1242,8 @@ router.post('/change_alloc', function (req, res) {
                     res_ids.push( id );
                 }
 
-                if ( !req.body.repo_id.startsWith( "repo/" ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Invalid repo ID: '" + req.body.repo_id + "'."];
-
-                if ( !g_db._exists( req.body.repo_id ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Repo '" + req.body.repo_id + "' does not exist."];
-
-                var result = g_proc.dataChangeAllocation( client, req.body.proj_id, req.body.repo_id, req.body.encrypt, res_ids );
+                var result = g_proc.dataAllocationChange( client, req.body.proj_id, res_ids, req.body.repo_id, req.body.check );
+                //var result = {act_cnt:10,act_size:10240,tot_cnt:15};
 
                 res.send(result);
             }
@@ -1111,13 +1258,13 @@ router.post('/change_alloc', function (req, res) {
     ids: joi.array().items(joi.string()).required(),
     proj_id: joi.string().optional(),
     repo_id: joi.string().required(),
-    encrypt: joi.number().required()
+    check: joi.boolean().optional()
 }).required(), 'Parameters')
 .summary('Move raw data to a new allocation')
 .description('Move data to a new allocation. IDs may be data/collection IDs or aliases.');
 
 
-router.post('/change_owner', function (req, res) {
+router.post('/owner_chg', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -1132,10 +1279,8 @@ router.post('/change_owner', function (req, res) {
                     id = g_lib.resolveDataCollID( req.body.ids[i], client );
                     res_ids.push( id );
                 }
-
-                var dst_coll_id = g_lib.resolveDataCollID( req.body.dst_coll_id, client );
-
-                var result = g_proc.dataChangeOwner( client, dst_coll_id, req.body.encrypt, res_ids );
+                var coll_id = g_lib.resolveDataCollID( req.body.coll_id, client );
+                var result = g_proc.dataOwnerChange( client, req.body.proj_id, res_ids, coll_id, req.body.repo_id );
 
                 res.send(result);
             }
@@ -1148,10 +1293,10 @@ router.post('/change_owner', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     ids: joi.array().items(joi.string()).required(),
-    dst_coll_id: joi.string().required(),
-    //dst_repo_id: joi.string().optional(),
-    inc_coll: joi.boolean().optional(),
-    encrypt: joi.number().required()
+    coll_id: joi.string().required(),
+    repo_id: joi.string().optional(),
+    proj_id: joi.string().optional(),
+    check: joi.boolean().optional()
 }).required(), 'Parameters')
 .summary('Move data records and raw data to a new owner/allocation')
 .description('Move data records and raw data to a new owner/allocation. IDs may be data/collection IDs or aliases.');

@@ -343,7 +343,7 @@ router.get('/alloc/list/by_repo', function (req, res) {
 
     g_lib.ensureAdminPermRepo( client, repo._id );
 
-    var result = g_db._query("for v, e in 1..1 inbound @repo alloc return {id:v._id,name:v.name?v.name:v.title,repo:@repo,data_limit:e.data_limit,data_size:e.data_size,rec_limit:e.rec_limit,rec_count:e.rec_count,path:e.path}", { repo: repo._id } ).toArray();
+    var result = g_db._query("for v, e in 1..1 inbound @repo alloc sort v._id return {id:v._id,name:v.name?v.name:v.title,repo:@repo,data_limit:e.data_limit,data_size:e.data_size,rec_limit:e.rec_limit,rec_count:e.rec_count,path:e.path}", { repo: repo._id } ).toArray();
 
     res.send( result );
 })
@@ -355,6 +355,10 @@ router.get('/alloc/list/by_repo', function (req, res) {
 
 router.get('/alloc/list/by_owner', function (req, res) {
     var obj, result = g_db.alloc.byExample({_from: req.queryParams.owner}).toArray();
+
+    result.sort(function(a,b){
+        return a._to < b._to?-1:1;
+    });
 
     for ( var i in result ){
         obj = result[i];
@@ -385,6 +389,10 @@ router.get('/alloc/list/by_object', function (req, res) {
     var obj_id = g_lib.resolveID( req.queryParams.object, client );
     var owner_id = g_db.owner.firstExample({ _from: obj_id })._to;
     var obj, result = g_db.alloc.byExample({ _from: owner_id }).toArray();
+
+    result.sort(function(a,b){
+        return a._to < b._to?-1:1;
+    });
 
     for ( var i in result ){
         obj = result[i];

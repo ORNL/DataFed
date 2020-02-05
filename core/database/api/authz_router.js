@@ -46,33 +46,36 @@ router.get('/gridftp', function (req, res) {
         }
 
         var idx = req.queryParams.file.lastIndexOf("/");
-        //console.log("doc ID:","d/" + req.queryParams.file.substr( idx + 1 ));
+        var data_key = req.queryParams.file.substr( idx + 1 );
+        var data_id = "d/" + data_key;
 
-        var data = g_db.d.document( "d/" + req.queryParams.file.substr( idx + 1 ));
-
-        if ( !g_lib.hasAdminPermObject( client, data._id )) {
+        if ( !g_lib.hasAdminPermObject( client, data_id )) {
+            var data = g_db.d.document( data_id );
             if ( !g_lib.hasPermissions( client, data, req_perm ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
         // Verify repo and path are correct for record
         var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
-        var loc = g_db.loc.firstExample({_from: data._id});
+        var loc = g_db.loc.firstExample({_from: data_id});
         if ( !loc )
             throw g_lib.ERR_PERM_DENIED;
 
-        var alloc = g_db.alloc.firstExample({ _from: data.owner, _to: loc._to });
+        var alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
         if ( !alloc )
             throw g_lib.ERR_PERM_DENIED;
 
-        //console.log( "file:",req.queryParams.file);
-        //console.log( "req loc:",path);
-        //console.log( "actual loc:",alloc.path);
-        //console.log( "req repo:",req.queryParams.repo,",actual repo",loc._to);
+        if ( alloc.path + data_key != path ){
+            // This may be due to an alloc/owner change
+            // Allow IF new path matches
+            if ( !loc.new_repo )
+                throw g_lib.ERR_PERM_DENIED;
 
-        // This could happen if a get/put request collides with a change alloc/owner task
-        if ( alloc.path + data._key != path )
-            throw g_lib.ERR_PERM_DENIED;
+            alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
+
+            if ( !alloc || ( alloc.path + data_key != path ))
+                throw g_lib.ERR_PERM_DENIED;
+        }
 
     } catch( e ) {
         g_lib.handleException( e, res );
