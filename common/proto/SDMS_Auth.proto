@@ -259,6 +259,39 @@ message RecordGetDependencyGraphRequest
     required string             id          = 1;
 }
 
+message RecordAllocChangeRequest
+{
+    repeated string             id          = 1;
+    required string             repo_id     = 2;
+    optional string             proj_id     = 3;
+    optional bool               check       = 4;
+}
+
+message RecordAllocChangeReply
+{
+    required uint32             act_cnt     = 1;
+    required uint64             act_size    = 2;
+    required uint32             tot_cnt     = 3;
+    optional SDMS.TaskData      task        = 4;
+}
+
+message RecordOwnerChangeRequest
+{
+    repeated string             id          = 1;
+    required string             coll_id     = 2;
+    optional string             repo_id     = 3;
+    optional string             proj_id     = 4;
+    optional bool               check       = 5;
+}
+
+message RecordOwnerChangeReply
+{
+    required uint32             act_cnt     = 1;
+    required uint64             act_size    = 2;
+    required uint32             tot_cnt     = 3;
+    optional SDMS.TaskData      task        = 4;
+}
+
 // ============================ Raw Data Messages
 
 

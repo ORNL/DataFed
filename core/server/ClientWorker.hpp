@@ -42,6 +42,8 @@ private:
     bool procRecordUpdateRequest( const std::string & a_uid );
     bool procRecordUpdateBatchRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
+    bool procRecordAllocChangeRequest( const std::string & a_uid );
+    bool procRecordOwnerChangeRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );
     bool procProjectDeleteRequest( const std::string & a_uid );
     bool procQueryDeleteRequest( const std::string & a_uid );

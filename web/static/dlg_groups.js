@@ -142,9 +142,9 @@ function makeDlgGroups(){
         var tree = $("#dlg_group_tree",inst.frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Delete","Cancel"], function( choice ) {
+            dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Cancel","Delete"], function( choice ) {
                 console.log( choice );
-                if ( choice == 0 ) {
+                if ( choice == 1 ) {
                     groupDelete( inst.uid, node.key.substr(2), function() {
                         node.remove();
                         inst.selectNone();

@@ -151,39 +151,6 @@ function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
         a_new_obj[a_field] = tmp;
 };
 
-/* Check permissions and available allocations/space, then show relocate dialog */
-/*
-function relocateItems( a_src_items, a_dest, a_owner, a_cb ){
-    console.log("relocate items", a_src_items, a_dest, a_owner );
-    var ok = true, count = a_src_items.length;
-    for ( var i in a_src_items ){
-        getPerms( a_src_items[i], PERM_DELETE, function( perms ){
-            if (( perms & PERM_DELETE ) == 0 ){
-                if ( ok ){
-                    ok = false;
-                    dlgAlert( "Cannot Perform Action", "Requires DELETE permission at source." );
-                    count--;
-                }
-            }else{
-                if ( --count == 0 && ok ){
-                    if ( a_dest.startsWith("c/") ){
-                        getPerms( a_dest, PERM_CREATE, function( perms ){
-                            if (( perms & PERM_CREATE ) == 0 ){
-                                dlgAlert( "Cannot Perform Action", "Requires CREATE permission at destination." );
-                            }else{
-                                console.log("Move to owner", a_owner,"collection",a_dest);
-                                dlgDataRelocate( a_src_items, a_dest, a_owner, 10, function(){
-                                });
-                            }
-                        });
-                    }else{
-                        console.log("Move to repo",a_dest);
-                    }
-                }
-            }
-        });
-    }
-}*/
 
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
@@ -241,8 +208,8 @@ function dataDelete( a_id, a_cb ) {
             return;
         }
 
-        dlgConfirmChoice( "Confirm Deletion", "Delete Data Record " + a_id + "?", ["Delete","Cancel"], function( choice ){
-            if ( choice == 0 ){
+        dlgConfirmChoice( "Confirm Deletion", "Delete Data Record " + a_id + "?", ["Cancel","Delete"], function( choice ){
+            if ( choice == 1 ){
                 sendDataDelete( [a_id], function( ok, data ){
                     if ( ok ){
                         a_cb();
@@ -336,6 +303,33 @@ function dataPut( a_id, a_cb ){
         }); 
     });
 }
+
+
+function dataChangeAlloc( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
+    console.log("change alloc, items", a_ids );
+    var url = "/api/dat/alloc_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&repo_id="+encodeURIComponent(a_repo_id);
+    if (a_proj_id )
+        url += "&proj_id="+encodeURIComponent(a_proj_id);
+    if ( a_check)
+        url += "&check=1";
+
+    _asyncGet( url, null, a_cb );
+}
+
+
+function dataChangeOwner( a_ids, a_coll_id, a_repo_id, a_proj_id, a_check, a_cb ){
+    console.log("change owner, items", a_ids );
+    var url = "/api/dat/alloc_owner?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&coll_id="+encodeURIComponent(a_coll_id);
+    if (a_repo_id )
+        url += "&repo_id="+encodeURIComponent(a_repo_id);
+    if (a_proj_id )
+        url += "&proj_id="+encodeURIComponent(a_proj_id);
+    if ( a_check)
+        url += "&check=1";
+
+    _asyncGet( url, null, a_cb );
+}
+
 
 function dataGetDeps( a_id, a_cb ) {
     _asyncGet( "/api/dat/dep/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
@@ -780,11 +774,15 @@ function setStatusText( text, err ){
 
 function dlgConfirmChoice( title, msg, btns, cb ) {
     var div = $(document.createElement('div'));
+    div.addClass("fubar");
     div.html( msg );
     var options = {
         title: title,
         modal: true,
-        buttons: []
+        buttons: [],
+        open: function(ev,ui){
+            $(':button',div.parent()).blur();
+        }
     };
 
     for ( var i in btns ){

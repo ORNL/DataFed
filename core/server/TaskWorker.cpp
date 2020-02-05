@@ -287,16 +287,17 @@ TaskWorker::handleDataGet( )
         if ( xfr_status == GlobusAPI::XS_FAILED )
             EXCEPT( 1, err_msg );
 
-        // Xfr SUCCEEDED
+        // Xfr SUCCEEDED, go to next
         upd_state.clear();
+        xfr_status = GlobusAPI::XS_INIT;
         state["xfr_status"] = xfr_status;
         upd_state["xfr_status"] = xfr_status;
-
-        prog = 100.0*(repo_idx + 1)/repos.size();
-        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
-
         repo_idx++;
-        xfr_status = GlobusAPI::XS_INIT;
+        state["repo_idx"] = repo_idx;
+        upd_state["repo_idx"] = repo_idx;
+
+        prog = 100.0*repo_idx/repos.size();
+        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
     }
 
     return false;
@@ -547,7 +548,189 @@ TaskWorker::handleRecordChangeAlloc()
 {
     DL_INFO( "Starting task " << m_task->task_id << ", type: RecordChangeAlloc" );
 
-    EXCEPT( 1, "Operation not yet implemented" );
+    string                      dst_repo_id;
+    string                      src_repo_ep;
+    string                      uid = m_task->data["client"].asString();
+    TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
+    GlobusAPI::XfrStatus        xfr_status;
+    double                      prog = 0;
+    libjson::Value &            state = m_task->data["state"];
+    libjson::Value::Array  &    repos = state["repos"].getArray();
+    libjson::Value              upd_state;
+    int                         repo_idx = -1;
+    string                      dst_ep = state["dst_ep"].asString();
+    string                      dst_path = state["dst_path"].asString();
+    string                      dst_id = state["dst_id"].asString();
+    libjson::Value &            rec_ids = state["rec_ids"];
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString() );
+
+    m_db.setClient( uid );
+    getUserAccessToken( uid );
+
+    upd_state.initObject();
+
+    if ( status == TS_READY )
+    {
+        // Initialize state
+        status = TS_RUNNING;
+        m_task->data["status"] = status;
+
+        repo_idx = -1;
+        state["repo_idx"] = repo_idx;
+        upd_state["repo_idx"] = repo_idx;
+
+        xfr_status = GlobusAPI::XS_INIT;
+        state["xfr_status"] = GlobusAPI::XS_INIT;
+        upd_state["xfr_status"] = GlobusAPI::XS_INIT;
+
+        string msg = "Running";
+        m_db.taskUpdate( m_task->task_id, &status, &msg, 0, &upd_state );
+
+        TASK_DELAY
+    }
+    else if ( status == TS_RUNNING )
+    {
+        // Load previous state
+        repo_idx = state["repo_idx"].asNumber();
+        xfr_status = (GlobusAPI::XfrStatus) state["xfr_status"].asNumber();
+        if ( xfr_status > GlobusAPI::XS_INIT )
+            m_glob_task_id = state["glob_task_id"].asString();
+    }
+    else
+    {
+        EXCEPT_PARAM( 1, "Task '" << m_task->task_id << "' has invalid status: " << status );
+    }
+
+    if ( repo_idx < 0 )
+    {
+        DL_DEBUG("TW.REC_ALL_CHG - INIT DATA MOVE" );
+
+        // Update records for new allocation and subsequent transfers
+
+        m_db.recordUpdateDataMoveInit( rec_ids, dst_id, "", "" );
+
+        repo_idx = 0;
+        state["repo_idx"] = repo_idx;
+        upd_state["repo_idx"] = repo_idx;
+        m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
+    }
+
+    if ( repo_idx >= (int)repos.size() )
+        EXCEPT_PARAM( 1, "Task repo_idx (" << repo_idx << ") out of range (max: " << repos.size() << ")" );
+
+    libjson::Value::ArrayIter   f, r;
+    vector<pair<string,string>> files_v;
+    string                      err_msg;
+
+    if ( repo_idx < (int)repos.size() )
+    {
+        DL_DEBUG("TW.REC_ALL_CHG - NEED TO MOVE RAW DATA" );
+
+        for ( r = repos.begin() + repo_idx; r != repos.end(); r++ )
+        {
+            libjson::Value::Object & repo = r->getObject();
+
+            // Initialize Globus transfer
+            if ( xfr_status == GlobusAPI::XS_INIT )
+            {
+                src_repo_ep = repo["repo_ep"].asString();
+
+                DL_DEBUG("TW.REC_ALL_CHG - MOVE RAW DATA FROM " << src_repo_ep );
+
+                libjson::Value::Array & files = repo["files"].getArray();
+
+                upd_state.clear();
+                files_v.clear();
+
+                for ( f = files.begin(); f != files.end(); f++ )
+                {
+                    files_v.push_back(make_pair( (*f)["from"].asString( ), dst_path + (*f)["to"].asString() ));
+                }
+
+                m_glob_task_id = m_glob.transfer( src_repo_ep, dst_ep, files_v, true, m_access_token );
+                state["glob_task_id"] = m_glob_task_id;
+                upd_state["glob_task_id"] = m_glob_task_id;
+
+                xfr_status = GlobusAPI::XS_ACTIVE;
+                state["xfr_status"] = xfr_status;
+                upd_state["xfr_status"] = xfr_status;
+
+                prog = 98.0*(repo_idx + .5)/repos.size();
+
+                m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+            }
+
+            // Monitor Globus transfer
+            xfr_status = monitorTransfer( err_msg );
+
+            if ( xfr_status == GlobusAPI::XS_FAILED )
+                EXCEPT( 1, err_msg );
+
+            // Xfr SUCCEEDED
+            upd_state.clear();
+            xfr_status = GlobusAPI::XS_INIT;
+            state["xfr_status"] = xfr_status;
+            upd_state["xfr_status"] = xfr_status;
+            repo_idx++;
+            state["repo_idx"] = repo_idx;
+            upd_state["repo_idx"] = repo_idx;
+
+            prog = 98.0*repo_idx/repos.size();
+            m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+        }
+    }
+
+    // Delete raw data files from old location(s)
+    if ( repo_idx == (int) repos.size())
+    {
+        DL_DEBUG("TW.REC_ALL_CHG - DELETE OLD DATA");
+
+        Auth::RepoDataDeleteRequest         del_req;
+        RecordDataLocation *                loc;
+        MsgBuf::Message *                   reply;
+
+        for ( r = repos.begin(); r != repos.end(); r++ )
+        {
+            libjson::Value::Object & repo = r->getObject();
+            libjson::Value::Array & files = repo["files"].getArray();
+            const string & repo_id = repo["repo_id"].asString();
+
+            upd_state.clear();
+            del_req.clear_loc();
+
+            // Ask associated repo server to delete raw files
+
+            for ( f = files.begin(); f != files.end(); f++ )
+            {
+                loc = del_req.add_loc();
+                loc->set_id( (*f)["id"].asString() );
+                loc->set_path( (*f)["from"].asString() );
+            }
+
+            DL_DEBUG("TW.REC_ALL_CHG - DELETE OLD DATA ON " << repo_id );
+
+            if ( repoSendRecv( repo_id, del_req, reply ))
+                return true;
+
+            delete reply;
+
+            // TODO Checkpoint deletions and update progress?
+        }
+
+        repo_idx++;
+        state["repo_idx"] = repo_idx;
+        upd_state["repo_idx"] = repo_idx;
+
+        prog = 99.0;
+        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+    }
+
+    // Update record locations to remove dual location
+    DL_DEBUG("TW.REC_ALL_CHG - FINALIZE MOVE");
+
+    m_db.recordUpdateDataMoveFinalize( rec_ids );
 
     return false;
 }

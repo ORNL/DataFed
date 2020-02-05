@@ -740,6 +740,35 @@ app.get('/api/dat/dep/graph/get', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
+    console.log('/api/dat/alloc_chg');
+
+    var params = { id: JSON.parse(a_req.query.id), repoId: a_req.query.repo_id };
+    if ( a_req.query.proj_id )
+        params.projId = a_req.query.proj_id;
+    if ( a_req.query.check )
+        params.check = true;
+
+    sendMessage( "RecordAllocChangeRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
+    console.log('/api/dat/owner_chg');
+    var params = { id: JSON.parse(a_req.query.id), collId: a_req.query.coll_id };
+    if ( a_req.query.repo_id )
+        params.repoId = repo_id;
+    if ( a_req.query.proj_id )
+        params.projId = a_req.query.proj_id;
+    if ( a_req.query.check )
+        params.check = true;
+
+    sendMessage( "RecordOwnerChangeRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/perms/check', ( a_req, a_resp ) => {
     var params = { id: a_req.query.id };
     if ( a_req.query.perms != undefined )
@@ -1167,6 +1196,8 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
+
+        //console.log("msg verify:",msg.verify(a_msg_data));
 
         var msg_buf = msg.encode(a_msg_data).finish();
         //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );

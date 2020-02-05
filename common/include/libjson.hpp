@@ -69,7 +69,9 @@ public:
     typedef std::map<std::string,Value> Object;
     typedef std::string String;
     typedef std::vector<Value>::iterator ArrayIter;
+    typedef std::vector<Value>::const_iterator ArrayConstIter;
     typedef std::map<std::string,Value>::iterator ObjectIter;
+    typedef std::map<std::string,Value>::const_iterator ObjectConstIter;
 
     enum ValueType : uint8_t
     {
@@ -230,6 +232,21 @@ public:
 
     Value &
     operator=( int a_value )
+    {
+        if ( m_type != VT_NUMBER )
+        {
+            this->~Value();
+            m_type = VT_NUMBER;
+            m_value.o = 0;
+        }
+
+        m_value.n = a_value;
+
+        return *this;
+    }
+
+    Value &
+    operator=( size_t a_value )
     {
         if ( m_type != VT_NUMBER )
         {

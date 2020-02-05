@@ -27,7 +27,7 @@ function makeBrowserTab(){
     this.data_md_exp = {};
     this.taskHist = [];
     this.pollSince = g_opts.task_hist * 3600;
-    this.pollMax = 32;
+    this.pollMax = 120;
     this.pollMin = 4;
     this.my_root_key = "c/u_" + g_user.uid + "_root";
     this.uid = "u/" + g_user.uid;
@@ -497,14 +497,14 @@ function makeBrowserTab(){
 
 
     this.moveItems = function( items, dest_node, cb ){
-        //console.log("moveItems",items,dest_node,inst.pasteSource);
+        //console.log("moveItems",items,dest_node,inst.pasteSourceParent);
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
 
-        colMoveItems( item_keys, inst.pasteSource.key, dest_node.key, function( ok, msg ) {
+        colMoveItems( item_keys, inst.pasteSourceParent.key, dest_node.key, function( ok, msg ) {
             if ( ok ){
-                inst.refreshCollectionNodes([inst.pasteSource.key,dest_node.key],dest_node.data.scope);
+                inst.refreshCollectionNodes([inst.pasteSourceParent.key,dest_node.key],dest_node.data.scope);
             }else{
                 dlgAlert( "Move Error", msg );
                 //setStatusText( "Move Error: " + msg, 1 );
@@ -542,8 +542,8 @@ function makeBrowserTab(){
             msg += " Note that this action will delete data records contained within the selected collection(s) that are not linked elsewhere.";
         }
 
-        dlgConfirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
-            if ( choice == 0 ){
+        dlgConfirmChoice( "Confirm Deletion", msg, ["Cancel","Delete"], function( choice ){
+            if ( choice == 1 ){
                 var done = 0;
                 if ( data.length )
                     done++;
@@ -841,14 +841,14 @@ function makeBrowserTab(){
 
     this.actionCutSelected = function(){
         inst.pasteItems = inst.data_tree.getSelectedNodes();
-        inst.pasteSource = pasteItems[0].parent;
+        inst.pasteSourceParent = pasteItems[0].parent;
         inst.pasteMode = "cut";
         inst.pasteCollections = [];
         for ( var i in inst.pasteItems ){
             if ( inst.pasteItems[i].key.startsWith("c/") )
                 inst.pasteCollections.push( inst.pasteItems[i] );
         }
-        //console.log("cutSelected",inst.pasteItems,inst.pasteSource);
+        //console.log("cutSelected",inst.pasteItems,inst.pasteSourceParent);
     }
 
     this.actionCopySelected = function(){
@@ -860,7 +860,7 @@ function makeBrowserTab(){
         else
             return;
 
-        inst.pasteSource = pasteItems[0].parent;
+        inst.pasteSourceParent = pasteItems[0].parent;
         inst.pasteMode = "copy";
         inst.pasteCollections = [];
         for ( var i in inst.pasteItems ){
@@ -874,7 +874,7 @@ function makeBrowserTab(){
         if ( node && inst.pasteItems.length ){
             function pasteDone(){
                 inst.pasteItems = [];
-                inst.pasteSource = null;
+                inst.pasteSourceParent = null;
                 inst.pasteCollections = null;
             }
 
@@ -1470,8 +1470,8 @@ function makeBrowserTab(){
                         var alloc,free;
                         for ( i in user.alloc ){
                             alloc = user.alloc[i]
-                            free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
-                            html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
+                            free = Math.max( Math.floor(10000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
+                            html += alloc.repo + ": " + sizeToString( alloc.dataLimit ) + " total, " + sizeToString( alloc.dataSize ) + " used (" + free + " % free)<br>";
                         }
                     }else{
                         html += "(n/a)";
@@ -1584,12 +1584,9 @@ function makeBrowserTab(){
                         var alloc,free;
                         for ( i in item.alloc ){
                             alloc = item.alloc[i]
-                            free = Math.max( Math.floor(10000*(alloc.maxSize - alloc.totSize)/alloc.maxSize)/100, 0 );
-                            html += alloc.repo + ": " + sizeToString( alloc.maxSize ) + " total, " + sizeToString( alloc.totSize ) + " used (" + free + " % free)<br>";
+                            free = Math.max( Math.floor(10000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
+                            html += alloc.repo + ": " + sizeToString( alloc.dataLimit ) + " total, " + sizeToString( alloc.dataSize ) + " used (" + free + " % free)<br>";
                         }
-                    }else if( item.subRepo ){
-                        free = Math.max( Math.floor(10000*(item.subAlloc - item.subUsage)/item.subAlloc)/100, 0 );
-                        html += item.subRepo + ": (sub-alloc) " + sizeToString( item.subAlloc ) + " total, " + sizeToString( item.subUsage ) + " used (" + free + " % free)";
                     }else{
                         html += "(n/a)";
                     }
@@ -2820,40 +2817,41 @@ function makeBrowserTab(){
         }
     }
 
+    /** @brief Check if past is allowed to specified node
+     *  @param dest_node - Candidate paste destination node
+     *  @param src_node - Node being dragged
+     *
+     * There is additional source information in inst.pasteXXX
+     */
     this.pasteAllowed = function( dest_node, src_node ){
-        console.log("pasteAllowed:",dest_node, src_node);
-        console.log("pasteSource:",inst.pasteSource);
-        //if ( !dest_node.data.notarg && dest_node.data.scope == src_node.data.scope ){
-        if ( !dest_node.data.notarg && dest_node.data.scope && (dest_node.data.scope.startsWith("u/") || dest_node.data.scope.startsWith("p/"))){
-            // TODO - Wrong: must check parent keys
-            //console.log("source par key:",inst.pasteSource.key,"dest:", dest_node.parent.key );
-            if ( dest_node.key.startsWith("c/") ){
-                if ( inst.pasteSource.key == dest_node.key )
-                    return false;
-            }else if (dest_node.key.startsWith("d/")){
-                if ( inst.pasteSource.key == dest_node.parent.key || !dest_node.parent.key.startsWith("c/"))
-                    return false;
-            }else if (dest_node.key.startsWith("repo/")){
-                if ( inst.pasteSource.data.scope != dest_node.data.scope )
-                    return false;
-            }else if ( dest_node.key != "empty" )
+        //console.log("pasteAllowed:",dest_node, src_node);
+
+        if ( !dest_node.data.notarg && dest_node.data.scope ){
+            // Prevent pasting to self or across scopes
+            if ( inst.pasteSourceParent.key == dest_node.key )
                 return false;
 
-            if ( inst.pasteCollections.length ){
-                var i,j,coll,dest_par = dest_node.getParentList(false,true);
-                // Prevent collection drop in non-collection hierarchy
-                /*for ( j in dest_par ){
-                    if ( dest_par[j].data.nocoll )
+            // Different scopes requires destination or destination parent to be a collection
+            if ( dest_node.data.scope != src_node.data.scope ){
+                if ( !(dest_node.key.startsWith( "c/" ) || dest_node.parent.key.startsWith( "c/" )))
+                    return false;
+            }else{
+                if ( dest_node.key.startsWith( "d/" ) || dest_node.key == "empty" ){
+                    if ( inst.pasteSourceParent.key == dest_node.parent.key || !(dest_node.parent.key.startsWith("c/") || dest_node.parent.key.startsWith("repo/")))
                         return false;
-                }*/
-                // Prevent collection reentrancy
-                // Fancytree handles this when one item selected, must check for multiple items
-                if ( inst.pasteCollections.length > 1 ){
-                    for ( i in inst.pasteCollections ){
-                        coll = inst.pasteCollections[i];
-                        for ( j in dest_par ){
-                            if ( dest_par[j].key == coll.key )
-                                return false;
+                }
+
+                if ( inst.pasteCollections.length ){
+                    var i,j,coll,dest_par = dest_node.getParentList(false,true);
+                    // Prevent collection reentrancy
+                    // Fancytree handles this when one item selected, must check for multiple items
+                    if ( inst.pasteCollections.length > 1 ){
+                        for ( i in inst.pasteCollections ){
+                            coll = inst.pasteCollections[i];
+                            for ( j in dest_par ){
+                                if ( dest_par[j].key == coll.key )
+                                    return false;
+                            }
                         }
                     }
                 }
@@ -2874,14 +2872,6 @@ function makeBrowserTab(){
         }
     }
 
-/*    this.pageLast = function( coll ){
-        console.log("pageLast", coll);
-    }*/
-
-    /*{title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:true,children:[
-        {title:"Root Collection <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,expanded:true,icon:"ui-icon ui-icon-folder",lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:"u/"+g_user.uid,nodrag:true,isroot:true,admin:true},
-        {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:"u/"+g_user.uid,nodrag:true,notarg:true,nocoll:true,checkbox:false}
-    ]},*/
 
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
@@ -2893,9 +2883,7 @@ function makeBrowserTab(){
             {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_user"},
             {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
         ]},
-        //{title:"My Topics <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
-        //{title:"Search Results",icon:"ui-icon ui-icon-zoom",checkbox:false,folder:true,children:[{title:"(no results)",icon:false, nodrag:true,checkbox:false}],key:"search",nodrag:true}
     ];
 
     
@@ -2932,7 +2920,7 @@ function makeBrowserTab(){
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
                 console.log( "drag start", inst.pasteItems );
 
-                inst.pasteSource = inst.pasteItems[0].parent;
+                inst.pasteSourceParent = inst.pasteItems[0].parent;
                 inst.pasteCollections = [];
                 for ( var i in inst.pasteItems ){
                     if ( inst.pasteItems[i].key.startsWith("c/") )
@@ -2953,16 +2941,13 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
-                if ( inst.pasteSource.data.scope != dest_node.data.scope /*|| repo*/ ){
-                    /*var msg;
-                    if ( repo )
-                        msg = "This operation will cause raw data to be relocated to another repository.";
-                    else
-                        msg = "This operation will transfer ownership to another user/project and relocate raw data.";
-                    msg += " Specified data records will be unavailable during relocation. Continue?";
+                if ( inst.pasteSourceParent.data.scope != dest_node.data.scope ){
+                    console.log("Change owner");
 
-                    dlgConfirmChoice( "Confirm Data Relocation", msg, ["Relocate","Cancel"], function(choice){
-                        if ( choice == 0 ){*/
+                    dlgConfirmChoice( "Confirm Change Ownership", "This operation will transfer data record ownership to '" + dest_node.data.scope + "' and transfer associated raw data.", ["Cancel","Confirm"], function(choice){
+                        if ( choice == 1 ){
+                            console.log("do change ownership");
+                            /*
                             var keys = [];
                             for( var i in inst.pasteItems ){
                                 keys.push( inst.pasteItems[i].key );
@@ -2979,9 +2964,46 @@ function makeBrowserTab(){
                             dlgDataRelocate( keys, dest, dest_node.data.scope, function(){
 
                             //relocateItems( keys, dest, dest_node.data.scope, function(){
-                            });
-                        /*}
-                    });*/
+                            });*/
+                        }
+                    });
+                    return;
+                }else if ( dest_node.key.startsWith( "repo/" ) || dest_node.parent.key.startsWith( "repo/" )){
+                    console.log("Change allocation");
+                    var key = dest_node.key.startsWith( "repo/" )? dest_node.key:dest_node.parent.key;
+                    var idx = key.indexOf("/",5);
+                    var repo_id = key.substr(0,idx);
+                    var proj_id = dest_node.data.scope.charAt(0) == 'p'?dest_node.data.scope:null;
+                    var ids = [];
+                    for( var i in inst.pasteItems )
+                    ids.push( inst.pasteItems[i].key );
+
+                    dataChangeAlloc( ids, repo_id, proj_id, true, function( ok, reply ){
+                        console.log("chg alloc:",ok,reply);
+                        if ( ok ){
+                            if ( reply.totCnt == 0 ){
+                                dlgAlert( "Change Allocation Error", "No data records contained in selection." );
+                            }else if ( reply.actCnt == 0 ){
+                                dlgAlert( "Change Allocation Error", "All selected data records already use allocation on '" + repo_id + "'" );
+                            }else{
+                                dlgConfirmChoice( "Confirm Change Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt+" selected) to allocation on '" + repo_id + "'.", ["Cancel","Confirm"], function(choice){
+                                    if ( choice == 1 ){
+                                        console.log("do change allocation");
+                                        dataChangeAlloc( ids, repo_id, proj_id, false, function( ok, reply ){
+                                            console.log("after chg alloc:",ok,reply);
+                                            if ( ok ){
+                                                dlgAlert("Change Allocation","Task " + reply.task.id.substr(5) + " created to move data records to new allocation.");
+                                            }else{
+                                                dlgAlert( "Change Allocation Error", reply );
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        }else{
+                            dlgAlert( "Change Allocation Error", reply );
+                        }
+                    });
                     return;
                 }else if ( dest_node.key.startsWith("d/")){
                     dest_node = dest_node.parent;
@@ -2991,7 +3013,7 @@ function makeBrowserTab(){
 
                 function pasteDone(){
                     inst.pasteItems = [];
-                    inst.pasteSource = null;
+                    inst.pasteSourceParent = null;
                     inst.pasteCollections = null;
                 }
 
@@ -3003,7 +3025,6 @@ function makeBrowserTab(){
             },
             dragEnter: function(node, data) {
                 if ( inst.dragging ){
-                    console.log( "drag enter:", node, data );
                     return inst.pasteAllowed( node, data.otherNode );
                 }else{
                     return false;
@@ -3032,7 +3053,7 @@ function makeBrowserTab(){
             if ( data.node.key == "mydata" ){
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:inst.uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:inst.uid,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:inst.uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:inst.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -3101,12 +3122,7 @@ function makeBrowserTab(){
                     url: "/api/col/published/list?subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
                     cache: false
                 };
-            }/* else if ( data.node.key == "topics" ) {
-                data.result = {
-                    url: "/api/top/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
-                    cache: false
-                };
-            }*/ else if ( data.node.key == "favorites" || data.node.key == "views" ) {
+            }else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
             } else if ( data.node.key.startsWith("t/") ) {
                 data.result = {
@@ -3137,6 +3153,8 @@ function makeBrowserTab(){
             }
         },
         postProcess: function( event, data ) {
+            var scope = null;
+
             //console.log( "pos proc:", data );
             if ( data.node.key == "mydata" || data.node.key.startsWith("p/")){
                 //console.log("post mydata",data.response);
@@ -3154,10 +3172,7 @@ function makeBrowserTab(){
                     }
                 }
 
-                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
-                }
+                inst.addTreePagingNode( data );
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
                 data.result = [];
                 if ( data.response.length ){
@@ -3191,15 +3206,15 @@ function makeBrowserTab(){
                     var alloc;
                     for ( var i in data.response ) {
                         alloc = data.response[i];
-                        //console.log("alloc:",alloc,"scope:",alloc.id);
-                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false,sub_alloc:alloc.subAlloc});
-                        //data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,alloc_capacity:alloc.maxSize,alloc_usage:alloc.totSize,alloc_max_count:alloc.maxCount,sub_alloc:alloc.subAlloc,nodrag:true,checkbox:false});
+                        data.result.push({ title: alloc.repo.substr(5)+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
                 }
             } else if ( data.node.parent || data.node.key.startsWith("published")) {
+                // General data/collection listing for all nodes
                 //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
-                var item,entry,scope = data.node.data.scope;
+                var item,entry;
+                scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
                 for ( var i in items ) {
                     item = items[i];
@@ -3212,17 +3227,18 @@ function makeBrowserTab(){
                     data.result.push( entry );
                 }
 
-                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
-                }
-                if (( !items || !items.length ) && data.node.parent.key.startsWith("c/") ){
-                    data.result.push({title:"(empty)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
+                inst. addTreePagingNode( data );
+
+                if (( !items || !items.length ) && ( data.node.parent.key.startsWith("c/") || data.node.parent.key.startsWith("repo/"))){
+                    //data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
                 }
             }
 
             if ( data.result && data.result.length == 0 ){
-                data.result.push({title:"(empty)",icon:false,checkbox:false,nodrag:true});
+                if ( scope )
+                    data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
+                else
+                    data.result.push({title:"(empty2)",icon:false,checkbox:false,nodrag:true,notarg:true,key:"empty"});
             }
         },
         renderNode: function(ev,data){
@@ -3276,8 +3292,6 @@ function makeBrowserTab(){
             }
         },
         click: function(event, data) {
-            //console.log("node click,target:",data.targetType);
-
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
             }
@@ -3287,7 +3301,6 @@ function makeBrowserTab(){
             }else if ( !inst.searchSelect ){ // Selection "rules" differ for search-select mode
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
-                    //console.log("click no which");
 
                     if ( !data.node.isSelected() ){
                         //console.log("not selected");
@@ -3322,15 +3335,11 @@ function makeBrowserTab(){
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "copy", true );
 
-
-                    //inst.data_tree_div.contextmenu("enableEntry", "copy", (bits & 0x80) == 0 );
-                    //if ( inst.pasteItems.length > 0 && sel[0].data.scope == inst.pasteItems[0].data.scope )
                     if ( inst.pasteItems.length > 0 && inst.pasteAllowed( sel[0], inst.pasteItems[0] ))
                         inst.data_tree_div.contextmenu("enableEntry", "paste", true );
                     else
                         inst.data_tree_div.contextmenu("enableEntry", "paste", false );
                 } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
-                    //console.log("has scope");
                     if ( inst.data_tree.getSelectedNodes().length == 0 )
                         inst.selectScope = data.node;
 
@@ -3347,11 +3356,8 @@ function makeBrowserTab(){
                         inst.selectScope = data.node;
                         inst.treeSelectNode(data.node);
                     }
-                }else{
-                    //console.log("DEFAULT",data.node);
                 }
             }
-            //}
         }
     }).on("mouseenter", ".fancytree-node", function(event){
         if ( event.ctrlKey || event.metaKey ){
@@ -3372,6 +3378,13 @@ function makeBrowserTab(){
         }
         //node.info(event.type);
     });
+
+    inst.addTreePagingNode = function( a_data ){
+        if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
+            var pages = Math.ceil(a_data.response.total/g_opts.page_sz), page = 1+a_data.response.offset/g_opts.page_sz;
+            a_data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+        }
+    }
 
     inst.data_tree_div = $('#data_tree');
     inst.data_tree = inst.data_tree_div.fancytree('getTree');

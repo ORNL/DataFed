@@ -33,8 +33,8 @@ function dlgRepoManage(){
         var tree = $("#dlg_repo_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Delete","Cancel"],function(choice){
-                if ( choice == 0 ){
+            dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Cancel","Delete"],function(choice){
+                if ( choice == 1 ){
                     repoDelete( node.key );
                     setStatusText("Repo deleted");
                     refreshRepoList();

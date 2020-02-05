@@ -1089,6 +1089,7 @@ DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a
     setListingData( a_reply, result );
 }
 
+
 void
 DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
 {
@@ -1099,6 +1100,39 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
     setListingData( a_reply, result );
 }
 
+void
+DatabaseAPI::recordUpdateDataMoveInit( const libjson::Value & a_rec_ids, const std::string & a_new_repo_id, const std::string & a_new_owner_id, const std::string & a_new_coll_id )
+{
+    string body = "{\"ids\":" + a_rec_ids.toString() + ",\"new_repo_id\":\"" + a_new_repo_id + "\",\"new_owner_id\":\"" + a_new_owner_id + "\",\"new_coll_id\":\"" + a_new_coll_id + "\"}";
+
+    DL_DEBUG("recordUpdateDataMoveInit" << body);
+
+    Value result;
+
+    dbPost( "dat/update/move_init", {}, &body, result );
+}
+
+void
+DatabaseAPI::recordUpdateDataMoveRevert( const libjson::Value & a_rec_ids )
+{
+    string body = "{\"ids\":" + a_rec_ids.toString() + "}";
+
+    Value result;
+
+    dbPost( "dat/update/move_revert", {}, &body, result );
+}
+
+void
+DatabaseAPI::recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids )
+{
+    string body = "{\"ids\":" + a_rec_ids.toString() + "}";
+
+    DL_DEBUG("recordUpdateDataMoveFinalize" << body);
+
+    Value result;
+
+    dbPost( "dat/update/move_fini", {}, &body, result );
+}
 
 void
 DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
@@ -2588,6 +2622,88 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
 
 
 void
+DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a_request, Auth::RecordAllocChangeReply & a_reply, libjson::Value & a_result )
+{
+    string body = "{\"ids\":[";
+
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i > 0 )
+            body += ",";
+
+        body += "\"" + a_request.id( i ) + "\"";
+    }
+    body += "],\"repo_id\":\"" + a_request.repo_id() + "\"";
+    if ( a_request.has_proj_id() )
+        body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
+    if ( a_request.has_check() )
+        body += string(",\"check\":\"") + (a_request.check()?"true":"false") + "\"";
+    body += "}";
+
+    dbPost( "dat/alloc_chg", {}, &body, a_result );
+
+    Value::Object & obj = a_result.getObject();
+    a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
+    a_reply.set_act_size( obj["act_size"].asNumber() );
+    a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
+
+    Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+    {
+        TaskData * task = a_reply.mutable_task();
+        setTaskData( task, t->second );
+
+        // If task is blocked, remove task from result to prevent immediate scheduling
+        if ( task->status() == TS_BLOCKED )
+            obj.erase( t );
+    }
+}
+
+
+void
+DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a_request, Auth::RecordOwnerChangeReply & a_reply, libjson::Value & a_result )
+{
+    string body = "{\"ids\":[";
+
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i > 0 )
+            body += ",";
+
+        body += "\"" + a_request.id( i ) + "\"";
+    }
+    body += "],\"coll_id\":\"" + a_request.coll_id() + "\"";
+    if ( a_request.has_repo_id() )
+        body += ",\"repo_id\":\"" + a_request.repo_id() + "\"";
+    if ( a_request.has_proj_id() )
+        body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
+    if ( a_request.has_check() )
+        body += string(",\"check\":\"") + (a_request.check()?"true":"false") + "\"";
+    body += "}";
+
+    dbPost( "dat/owner_chg", {}, &body, a_result );
+
+    Value::Object & obj = a_result.getObject();
+    a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
+    a_reply.set_act_size( obj["act_size"].asNumber() );
+    a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
+
+    Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+    {
+        Value::Object & obj2 = t->second.getObject();
+        TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
+
+        // If task is blocked, remove task from result to prevent immediate scheduling
+        if ( ts == TS_BLOCKED )
+            obj.erase( t );
+    }
+}
+
+
+void
 DatabaseAPI::taskInitProjectDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
@@ -2662,7 +2778,10 @@ DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Va
         t = obj.find( "task" );
         if ( t != obj.end( ))
         {
-            Value::Object & obj2 = t->second.getObject();
+            TaskData * task = a_reply.add_task();
+            setTaskData( task, t->second );
+
+            /*Value::Object & obj2 = t->second.getObject();
 
             TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
 
@@ -2675,9 +2794,10 @@ DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Va
             task->set_msg( obj2.at( "msg" ).asString( ));
             task->set_ct( obj2.at( "ct" ).asNumber( ));
             task->set_ut( obj2.at( "ut" ).asNumber( ));
+            */
 
             // If task is blocked, remove task from result to prevent immediate scheduling
-            if ( ts == TS_BLOCKED )
+            if ( task->status() == TS_BLOCKED )
                 obj.erase( t );
         }
     }
@@ -2686,6 +2806,21 @@ DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Va
         DL_ERROR("JSON: " << a_result.toString());
         EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
     }
+}
+
+void
+DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
+{
+    Value::Object & obj = a_task_json.getObject();
+
+    a_task->set_id( obj.at( "id" ).asString( ));
+    a_task->set_type((TaskType)obj.at( "type" ).asNumber( ));
+    a_task->set_status((TaskStatus) obj.at( "status" ).asNumber() );
+    a_task->set_client( obj.at( "client" ).asString( ));
+    a_task->set_progress( obj.at( "progress" ).asNumber( ));
+    a_task->set_msg( obj.at( "msg" ).asString( ));
+    a_task->set_ct( obj.at( "ct" ).asNumber( ));
+    a_task->set_ut( obj.at( "ut" ).asNumber( ));
 }
 
 /**

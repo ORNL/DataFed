@@ -205,8 +205,8 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     $("#del_alloc_btn",frame).click( function(){
         var node = alloc_tree.getActiveNode();
         if ( node ){
-            dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Delete","Cancel"], function( choice ){
-                if ( choice == 0 ){
+            dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Cancel","Delete"], function( choice ){
+                if ( choice == 1 ){
                     allocDelete( a_repo_id, node.key, function( ok, data ){
                         if ( ok )
                             node.remove();

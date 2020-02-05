@@ -69,6 +69,9 @@ public:
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply );
     void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply );
     void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply );
+    void recordUpdateDataMoveInit( const libjson::Value & a_rec_ids, const std::string & a_new_repo_id, const std::string & a_new_owner_id, const std::string & a_new_coll_id );
+    void recordUpdateDataMoveRevert( const libjson::Value & a_rec_ids );
+    void recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids );
 
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
     void dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply );
@@ -137,6 +140,8 @@ public:
     void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
+    void taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a_request, Auth::RecordAllocChangeReply & a_reply, libjson::Value & a_result );
+    void taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a_request, Auth::RecordOwnerChangeReply & a_reply, libjson::Value & a_result );
     void taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitProjectDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
@@ -167,6 +172,7 @@ private:
     void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );
     void setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void setTaskData( TaskData * a_task, libjson::Value & a_task_json );
 
     CURL *      m_curl;
     char *      m_client;

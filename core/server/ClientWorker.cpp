@@ -87,6 +87,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &ClientWorker::procRecordUpdateRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &ClientWorker::procRecordUpdateBatchRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
+        SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
+        SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
         SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
@@ -598,6 +600,48 @@ ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids )
 
     if ( t != obj.end( ))
         TaskMgr::getInstance().newTask( t->second );
+}
+
+
+bool
+ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordAllocChangeRequest, RecordAllocChangeReply )
+
+    m_db_client.setClient( a_uid );
+
+    libjson::Value result;
+
+    m_db_client.taskInitRecordAllocChange( *request, reply, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+        TaskMgr::getInstance().newTask( t->second );
+
+    PROC_MSG_END
+}
+
+
+bool
+ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordOwnerChangeRequest, RecordOwnerChangeReply )
+
+    m_db_client.setClient( a_uid );
+
+    libjson::Value result;
+
+    m_db_client.taskInitRecordOwnerChange( *request, reply, result );
+
+    libjson::Value::Object & obj = result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ))
+        TaskMgr::getInstance().newTask( t->second );
+
+    PROC_MSG_END
 }
 
 
