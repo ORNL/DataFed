@@ -1242,8 +1242,7 @@ router.post('/alloc_chg', function (req, res) {
                     res_ids.push( id );
                 }
 
-                var result = g_proc.dataAllocationChange( client, req.body.proj_id, res_ids, req.body.repo_id, req.body.check );
-                //var result = {act_cnt:10,act_size:10240,tot_cnt:15};
+                var result = g_proc.taskInitRecAllocChg( client, req.body.proj_id, res_ids, req.body.repo_id, req.body.check );
 
                 res.send(result);
             }

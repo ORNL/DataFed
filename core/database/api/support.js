@@ -146,6 +146,9 @@ module.exports = ( function() {
     obj.DEF_MAX_PROJ    = 10;
     obj.DEF_MAX_SAV_QRY = 20;
 
+    //obj.GLOB_MAX_XFR_SIZE = 10000000000; // ~10GB
+    obj.GLOB_MAX_XFR_SIZE = 2000000;
+
     obj.procInputParam = function( a_in, a_field, a_update, a_out ){
         var val, spec = obj.field_reqs[a_field];
 

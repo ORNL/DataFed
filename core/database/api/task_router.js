@@ -12,6 +12,7 @@ const   router = createRouter();
 const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_lib = require('./support');
+const   g_proc = require('./process');
 
 module.exports = router;
 
@@ -49,6 +50,47 @@ router.get('/view', function (req, res) {
 .queryParam('task_id', joi.string().required(), "Task ID")
 .summary('View an existing task record')
 .description('View an existing task record.');
+
+router.get('/start', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","d","c"],
+                write: ["task"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+                if ( !g_db.task.exists( req.queryParams.task_id ))
+                    throw [ g_lib.ERR_INVALID_PARAM, "Task " + req.queryParams.task_id + " does not exist." ];
+
+                var result, task = g_db.task.document( req.queryParams.task_id );
+
+                switch ( task.type ){
+                    case g_lib.TT_DATA_GET:      result = g_proc.taskStartDataGet( task ); break;
+                    case g_lib.TT_DATA_PUT:      result = g_proc.taskStartDataPut( task ); break;
+                    case g_lib.TT_DATA_DEL:      result = g_proc.taskStartDataDel( task ); break;
+                    case g_lib.TT_REC_ALLOC_CHG: result = g_proc.taskStartRecAllocChg( task ); break;
+                    case g_lib.TT_REC_OWNER_CHG: result = g_proc.taskStartRecOwnerChg( task ); break;
+                    case g_lib.TT_REC_DEL:       result = g_proc.taskStartRecDel( task ); break;
+                    case g_lib.TT_ALLOC_CREATE:  result = g_proc.taskStartAllocCreate( task ); break;
+                    case g_lib.TT_ALLOC_DEL:     result = g_proc.taskStartAllocDel( task ); break;
+                    case g_lib.TT_USER_DEL:      result = g_proc.taskStartUserDel( task ); break;
+                    case g_lib.TT_PROJ_DEL:      result = g_proc.taskStartProjDel( task ); break;
+                }
+
+                res.send( result );
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('task_id', joi.string().required(), "Task ID")
+.summary('Start task')
+.description('Start task. Creates and returns detailed task state');
 
 
 router.post('/update', function (req, res) {

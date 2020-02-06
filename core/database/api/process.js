@@ -488,7 +488,7 @@ module.exports = ( function() {
      * accounts can not change the initial allocation used for that data.
      */
 
-    obj.dataAllocationChange = function( a_client, a_proj_id, a_res_ids, a_dst_repo_id, a_check ){
+    obj.taskInitRecAllocChg = function( a_client, a_proj_id, a_res_ids, a_dst_repo_id, a_check ){
         // Verify that client is owner, or has admin permission to project owner
         var owner_id;
 
@@ -519,37 +519,46 @@ module.exports = ( function() {
 
         result.tot_cnt = result.http_data.length + result.glob_data.length;
         result.act_size = 0;
+        result.act_cnt = 0;
 
         for ( i in result.http_data ){
             rec = result.http_data[i];
+            rec_ids.push( rec.id );
+
             loc = g_db.loc.firstExample({ _from: rec.id });
             if ( loc._to != a_dst_repo_id ){
-                rec_ids.push( rec.id );
+                result.act_cnt++;
             }
         }
 
         for ( i in result.glob_data ){
             rec = result.glob_data[i];
+            rec_ids.push( rec.id );
+
             loc = g_db.loc.firstExample({ _from: rec.id });
             if ( loc._to != a_dst_repo_id ){
-                rec_ids.push( rec.id );
                 if ( rec.size ){
-                    rec.repo = loc._to;
-                    with_data.push( rec );
+                    //rec.repo = loc._to;
+                    //with_data.push( rec );
+                    result.act_cnt++;
                     result.act_size += rec.size;
                 }
             }
         }
 
         result.act_cnt = rec_ids.length;
+        result.data_limit = alloc.data_limit;
+        result.data_size = alloc.data_size;
+        result.rec_limit = alloc.rec_limit;
+        result.rec_count = alloc.rec_count;
 
         // Verify that allocation has room for records
-        if ( alloc.rec_count + result.act_cnt > alloc.rec_limit )
-            throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.rec_limit+")." ];
+        //if ( alloc.rec_count + result.act_cnt > alloc.rec_limit )
+        //    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.rec_limit+")." ];
 
         // Verify that allocation has room for data
-        if ( alloc.data_size + result.act_size > alloc.data_limit )
-            throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.data_limit+")." ];
+        //if ( alloc.data_size + result.act_size > alloc.data_limit )
+        //    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.data_limit+")." ];
     
         // Stop if no record to process, or if this is just a check
         if ( rec_ids.length == 0 || a_check )
@@ -557,37 +566,7 @@ module.exports = ( function() {
 
         //obj._ensureExclusiveAccess( rec_ids );
 
-        var state = { encrypt: 1, repos: [], rec_ids: rec_ids };
-        var dst_repo = g_db.repo.document( a_dst_repo_id );
-
-        state.dst_id = a_dst_repo_id;
-        state.dst_ep = dst_repo.endpoint;
-        state.dst_path = dst_repo.path + (a_proj_id?"project":"user") + owner_id.substr(1) + "/";
-
-        var file, repo, repo_map = {};
-
-        for ( i in with_data ){
-            rec = with_data[i];
-
-            file = { id: rec.id, size: rec.size };
-            repo = g_db._document( rec.repo );
-            if ( a_proj_id ){
-                file.from = repo.path + "project" + owner_id.substr(1) + rec.id.substr(1);
-            }else{
-                file.from = repo.path + "user" + owner_id.substr(1) + rec.id.substr(1);
-            }
-            file.to = rec.id.substr( 2 );
-
-            if ( repo._key in repo_map ){
-                repo_map[repo._key].files.push(file);
-            }else{
-                repo_map[repo._key] = {repo_id:repo._id,repo_ep:repo.endpoint,files:[file]};
-            }
-        }
-
-        for ( i in repo_map ){
-            state.repos.push(repo_map[i]);
-        }
+        var state = { encrypt: 1, rec_ids: rec_ids, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
 
         var doc = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, state );
         var task = g_db.task.save( doc, { returnNew: true });
@@ -607,6 +586,118 @@ module.exports = ( function() {
         return result;
     };
 
+
+    obj.taskStartRecAllocChg = function( a_task ){
+        console.log("taskStartRecAllocChg", a_task._id );
+
+        var dst_repo = g_db.repo.document( a_task.state.dst_repo_id );
+        var is_proj = a_task.state.owner_id.charAt(0)=='p';
+        var state = a_task.state;
+
+        state.dst_repo_ep = dst_repo.endpoint;
+        state.dst_repo_path = dst_repo.path + (is_proj?"project":"user") + state.owner_id.substr(1) + "/";
+        state.steps = [];
+        state.step = 0;
+        state.substep = 0;
+        state.xfr_status = 0;
+
+        var i, j, id, rec, loc, repo, repo_map = {}, file;
+
+        repo_map.empty = { rec_ids: []};
+
+        for ( i in state.rec_ids ){
+            id = state.rec_ids[i];
+            rec = g_db.d.document(id);
+
+            if ( !rec.data_url ){
+                if ( rec.size == 0 ){
+                    repo_map.empty.rec_ids.push( id );
+                }else{
+                    file = { id: id, size: rec.size };
+
+                    loc = g_db.loc.firstExample({ _from: id });
+                    repo = g_db._document( loc._to );
+
+                    if ( is_proj ){
+                        file.from = repo.path + "project" + state.owner_id.substr(1) + id.substr(1);
+                    }else{
+                        file.from = repo.path + "user" + state.owner_id.substr(1) + id.substr(1);
+                    }
+                    file.to = id.substr( 2 );
+
+                    if ( repo._key in repo_map ){
+                        repo_map[repo._key].files.push(file);
+                    }else{
+                        repo_map[repo._key] = {repo_id:repo._id,repo_ep:repo.endpoint,files:[file]};
+                    }
+                }
+            }
+        }
+
+        console.log("repo map", repo_map);
+
+        var files, sz, k, rec_ids;
+
+        if ( repo_map.empty.rec_ids.length ){
+            state.steps.push( repo_map.empty );
+        }
+
+        delete repo_map.empty;
+
+        for ( i in repo_map ){
+            console.log("proc repo", i);
+            repo = repo_map[i];
+
+            // Pack roughly equal transfer sizes into each transfer chunk/step
+
+            repo.files.sort( function( a, b ){
+                return b.size - a.size;
+            });
+
+            console.log("sorted files", repo.files );
+
+            // Push files larger than chunk size into own transfers
+            for ( j = 0; j < repo.files.length; j++ ){
+                if ( repo.files[j].size >= g_lib.GLOB_MAX_XFR_SIZE ){
+                    console.log("file bigger than chunk", repo.files[j].id );
+
+                    state.steps.push({ rec_ids: [repo.files[j].id], xfr: { src_repo_id:repo.repo_id,src_repo_ep:repo.repo_ep,files:[repo.files[j]]}});
+                }else{
+                    break;
+                }
+            }
+
+            for ( ; j < repo.files.length; j++ ){
+                // Remaining files are smaller than max chunk size
+                // Build new transfer by combining largest with smallest files
+                sz = repo.files[j].size;
+                rec_ids = [repo.files[j].id];
+                files = [repo.files[j]];
+
+                for ( k = j + 1; k < repo.files.length; ){
+                    if ( sz + repo.files[k].size <= g_lib.GLOB_MAX_XFR_SIZE ){
+                        rec_ids.push( repo.files[k].id );
+                        files.push( repo.files[k] );
+                        sz += repo.files[k].size;
+                        repo.files.splice(k,1);
+                    }else{
+                        k++;
+                    }
+                }
+
+                state.steps.push({ rec_ids: rec_ids, xfr: { src_repo_id: repo.repo_id, src_repo_ep: repo.repo_ep, files: files }});
+            }
+        }
+
+        var task = g_db._update( a_task._id, { status: g_lib.TS_RUNNING, msg: "Running", state: state }, { returnNew: true });
+
+        task.new.id = task.new._id;
+        delete task.new._id;
+        delete task.new._key;
+        delete task.new._rev;
+
+        return task.new;
+    };
 
     /**
      * 
