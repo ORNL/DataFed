@@ -2646,6 +2646,10 @@ DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a
     a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
     a_reply.set_act_size( obj["act_size"].asNumber() );
     a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
+    a_reply.set_data_limit( obj["data_limit"].asNumber() );
+    a_reply.set_data_size( obj["data_size"].asNumber() );
+    a_reply.set_rec_limit( obj["rec_limit"].asNumber() );
+    a_reply.set_rec_count( obj["rec_count"].asNumber() );
 
     Value::ObjectIter t = obj.find( "task" );
 
@@ -2688,6 +2692,10 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
     a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
     a_reply.set_act_size( obj["act_size"].asNumber() );
     a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
+    a_reply.set_data_limit( obj["data_limit"].asNumber() );
+    a_reply.set_data_size( obj["data_size"].asNumber() );
+    a_reply.set_rec_limit( obj["rec_limit"].asNumber() );
+    a_reply.set_rec_count( obj["rec_count"].asNumber() );
 
     Value::ObjectIter t = obj.find( "task" );
 
@@ -2862,6 +2870,14 @@ DatabaseAPI::setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value 
         EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
     }
 }
+
+
+void
+DatabaseAPI::taskStart( const std::string & a_task_id, libjson::Value & a_result )
+{
+    dbGet( "task/start", {{"task_id",a_task_id}}, a_result );
+}
+
 
 void
 DatabaseAPI::taskUpdate( const std::string & a_id, TaskStatus * a_status, const std::string * a_message, double * a_progress, libjson::Value * a_state )

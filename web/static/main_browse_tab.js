@@ -2969,7 +2969,6 @@ function makeBrowserTab(){
                     });
                     return;
                 }else if ( dest_node.key.startsWith( "repo/" ) || dest_node.parent.key.startsWith( "repo/" )){
-                    console.log("Change allocation");
                     var key = dest_node.key.startsWith( "repo/" )? dest_node.key:dest_node.parent.key;
                     var idx = key.indexOf("/",5);
                     var repo_id = key.substr(0,idx);
@@ -2979,19 +2978,17 @@ function makeBrowserTab(){
                     ids.push( inst.pasteItems[i].key );
 
                     dataChangeAlloc( ids, repo_id, proj_id, true, function( ok, reply ){
-                        console.log("chg alloc:",ok,reply);
                         if ( ok ){
                             if ( reply.totCnt == 0 ){
                                 dlgAlert( "Change Allocation Error", "No data records contained in selection." );
                             }else if ( reply.actCnt == 0 ){
                                 dlgAlert( "Change Allocation Error", "All selected data records already use allocation on '" + repo_id + "'" );
                             }else{
-                                dlgConfirmChoice( "Confirm Change Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt+" selected) to allocation on '" + repo_id + "'.", ["Cancel","Confirm"], function(choice){
+                                dlgConfirmChoice( "Confirm Change Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt+" selected) with " + sizeToString( reply.actSize ) + " of raw data to allocation on '" + repo_id + "'. Current allocation usage is " + sizeToString( reply.dataSize ) + " out of " + sizeToString( reply.dataLimit ) + " available and "+reply.recCount+" record(s) out of "+reply.recLimit+" available. Pending transfers may alter the amount of space available on target allocation.", ["Cancel","Confirm"], function(choice){
                                     if ( choice == 1 ){
-                                        console.log("do change allocation");
                                         dataChangeAlloc( ids, repo_id, proj_id, false, function( ok, reply ){
-                                            console.log("after chg alloc:",ok,reply);
                                             if ( ok ){
+                                                inst.resetTaskPoll();
                                                 dlgAlert("Change Allocation","Task " + reply.task.id.substr(5) + " created to move data records to new allocation.");
                                             }else{
                                                 dlgAlert( "Change Allocation Error", reply );

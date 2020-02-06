@@ -272,7 +272,11 @@ message RecordAllocChangeReply
     required uint32             act_cnt     = 1;
     required uint64             act_size    = 2;
     required uint32             tot_cnt     = 3;
-    optional SDMS.TaskData      task        = 4;
+    required uint64             data_limit  = 4;
+    required uint64             data_size   = 5;
+    required uint32             rec_limit   = 6;
+    required uint32             rec_count   = 7;
+    optional SDMS.TaskData      task        = 8;
 }
 
 message RecordOwnerChangeRequest
@@ -289,7 +293,11 @@ message RecordOwnerChangeReply
     required uint32             act_cnt     = 1;
     required uint64             act_size    = 2;
     required uint32             tot_cnt     = 3;
-    optional SDMS.TaskData      task        = 4;
+    required uint64             data_limit  = 4;
+    required uint64             data_size   = 5;
+    required uint32             rec_limit   = 6;
+    required uint32             rec_count   = 7;
+    optional SDMS.TaskData      task        = 8;
 }
 
 // ============================ Raw Data Messages
