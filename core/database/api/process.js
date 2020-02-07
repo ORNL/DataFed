@@ -603,7 +603,7 @@ module.exports = ( function() {
 
         var i, j, id, rec, loc, repo, repo_map = {}, file;
 
-        repo_map.empty = { rec_ids: []};
+        repo_map.empty = { rec_ids: [], size: 0 };
 
         for ( i in state.rec_ids ){
             id = state.rec_ids[i];
@@ -634,7 +634,7 @@ module.exports = ( function() {
             }
         }
 
-        console.log("repo map", repo_map);
+        //console.log("repo map", repo_map);
 
         var files, sz, k, rec_ids;
 
@@ -645,7 +645,7 @@ module.exports = ( function() {
         delete repo_map.empty;
 
         for ( i in repo_map ){
-            console.log("proc repo", i);
+            //console.log("proc repo", i);
             repo = repo_map[i];
 
             // Pack roughly equal transfer sizes into each transfer chunk/step
@@ -654,14 +654,12 @@ module.exports = ( function() {
                 return b.size - a.size;
             });
 
-            console.log("sorted files", repo.files );
+            //console.log("sorted files", repo.files );
 
             // Push files larger than chunk size into own transfers
             for ( j = 0; j < repo.files.length; j++ ){
                 if ( repo.files[j].size >= g_lib.GLOB_MAX_XFR_SIZE ){
-                    console.log("file bigger than chunk", repo.files[j].id );
-
-                    state.steps.push({ rec_ids: [repo.files[j].id], xfr: { src_repo_id:repo.repo_id,src_repo_ep:repo.repo_ep,files:[repo.files[j]]}});
+                    state.steps.push({ rec_ids: [repo.files[j].id], size: repo.files[j].size,  xfr: { src_repo_id:repo.repo_id,src_repo_ep:repo.repo_ep,files:[repo.files[j]]}});
                 }else{
                     break;
                 }
@@ -685,8 +683,15 @@ module.exports = ( function() {
                     }
                 }
 
-                state.steps.push({ rec_ids: rec_ids, xfr: { src_repo_id: repo.repo_id, src_repo_ep: repo.repo_ep, files: files }});
+                state.steps.push({ rec_ids: rec_ids, size: sz, xfr: { src_repo_id: repo.repo_id, src_repo_ep: repo.repo_ep, files: files }});
             }
+        }
+
+        // Sort steps from smallest to largest transfer size
+        if ( state.steps.length ){
+            state.steps.sort( function( a, b ){
+                return a.size - b.size;
+            });
         }
 
         var task = g_db._update( a_task._id, { status: g_lib.TS_RUNNING, msg: "Running", state: state }, { returnNew: true });

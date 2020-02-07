@@ -593,6 +593,8 @@ router.post('/update/move_init', function (req, res) {
             action: function() {
                 var id, loc;
 
+                // NOTE: This call must be idempotent!!!
+
                 if (( req.body.new_owner_id && !req.body.new_coll_id ) || ( !req.body.new_owner_id && req.body.new_coll_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "New owner and new collection must be specified together." ];
 
@@ -651,6 +653,43 @@ router.post('/update/move_init', function (req, res) {
 .description('Prepare record for raw data move data to a new allocation.');
 
 
+router.post('/update/move_revert', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["loc"]
+            },
+            action: function() {
+                var id, loc;
+
+                // NOTE: This call must be idempotent!!!
+                // Remove "new_xxx" attributes from loc edges
+                for ( var i in req.body.ids ){
+                    id = req.body.ids[i];
+
+                    if ( g_db.d.exists( id )){
+                        loc = g_db.loc.firstExample({ _from: id });
+                        if ( loc ){
+                            g_db._update( loc._id, { new_repo_id: null, new_owner_id: null, new_coll_id: null }, { keepNull: false } );
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    ids: joi.array().items(joi.string()).required(),
+}).required(), 'Parameters')
+.summary('Revert records after error on raw data move to new allocation')
+.description('Revert record(s) after error on raw data move data to a new allocation.');
+
+
 router.post('/update/move_fini', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -660,6 +699,8 @@ router.post('/update/move_fini', function (req, res) {
             },
             action: function() {
                 var id, loc, new_loc, alloc, rec, coll;
+
+                // NOTE: This call must be idempotent!!!
 
                 for ( var i in req.body.ids ){
                     id = req.body.ids[i];
