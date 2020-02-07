@@ -548,11 +548,11 @@ TaskWorker::handleRecordChangeAlloc()
 {
     DL_INFO( "Starting task " << m_task->task_id << ", type: RecordChangeAlloc" );
 
-    string                      uid = m_task->data["client"].asString();
+    string                      client_id = m_task->data["client"].asString();
     TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
 
-    m_db.setClient( uid );
-    getUserAccessToken( uid );
+    m_db.setClient( client_id );
+    getUserAccessToken( client_id );
 
     if ( status == TS_READY )
     {
@@ -565,18 +565,15 @@ TaskWorker::handleRecordChangeAlloc()
     // DEBUG OUTPUT
     DL_DEBUG( "state: " << state.toString() );
 
-
+    string                      owner_id = state["owner_id"].asString();
     libjson::Value::Array  &    steps = state["steps"].getArray();
     size_t                      step = state["step"].asNumber();
 
     if ( step >= steps.size() )
         EXCEPT_PARAM( 1, "Task step (" << step << ") out of range (max: " << steps.size() << ")" );
 
-    DL_DEBUG("1");
     string                      dst_repo_ep = state["dst_repo_ep"].asString();
-    DL_DEBUG("2");
     string                      dst_repo_path = state["dst_repo_path"].asString();
-    DL_DEBUG("3");
     string                      dst_repo_id = state["dst_repo_id"].asString();
     size_t                      substep = state["substep"].asNumber();
     double                      prog = 0;
@@ -585,25 +582,46 @@ TaskWorker::handleRecordChangeAlloc()
     libjson::Value::ArrayIter   f;
     vector<pair<string,string>> files_v;
     string                      err_msg;
-    Auth::RepoDataDeleteRequest del_req;
-    RecordDataLocation *        loc;
-    MsgBuf::Message *           reply;
+    size_t                      size;
+    Auth::RepoViewAllocationRequest  alloc_req;
+    Auth::RepoAllocationsReply  alloc_rep;
 
-    DL_DEBUG("4");
     if ( xfr_status > GlobusAPI::XS_INIT )
         m_glob_task_id = state["glob_task_id"].asString();
-    DL_DEBUG("5");
 
     upd_state.initObject();
+
+    alloc_req.set_repo( dst_repo_id );
+    if ( owner_id != client_id )
+        alloc_req.set_subject( owner_id );
 
     for ( libjson::Value::ArrayIter s = steps.begin() + step; s != steps.end(); s++ )
     {
         DL_DEBUG( "TW." << id() << ".REC_ALLOC_CHG - Begin Step " << step << " of " << steps.size() );
 
         libjson::Value &                rec_ids = (*s)["rec_ids"];
+        libjson::Value::ObjectIter      t = s->find("xfr");
 
         if ( substep == 0 )
         {
+            DL_DEBUG( "TW." << id() << ".REC_ALLOC_CHG - Check allocation for " << size << " free" );
+
+            alloc_rep.Clear();
+            m_db.repoViewAllocation( alloc_req, alloc_rep );
+
+            if ( alloc_rep.alloc_size() != 1 )
+                EXCEPT_PARAM( 1, "Allocation for " << owner_id << " on " << dst_repo_id << " not found." );
+
+            const AllocData & alloc = alloc_rep.alloc(0);
+
+            size = (*s)["size"].asNumber();
+
+            if ( alloc.data_size() + size > alloc.data_limit() )
+                EXCEPT_PARAM( 1, "Allocation for " << owner_id << " on " << dst_repo_id << " data size limit exceeded (" << alloc.data_limit() << ")." );
+
+            if ( alloc.rec_count() + rec_ids.size() > alloc.rec_limit() )
+                EXCEPT_PARAM( 1, "Allocation for " << owner_id << " on " << dst_repo_id << " record limit exceeded (" << alloc.rec_limit() << ")." );
+
             DL_DEBUG( "TW." << id() << ".REC_ALLOC_CHG - Record update: data move init" );
             m_db.recordUpdateDataMoveInit( rec_ids, dst_repo_id, "", "" );
 
@@ -612,8 +630,6 @@ TaskWorker::handleRecordChangeAlloc()
             upd_state["substep"] = substep;
             m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
         }
-
-        libjson::Value::ObjectIter      t = s->find("xfr");
 
         if ( substep == 1 )
         {
@@ -649,7 +665,9 @@ TaskWorker::handleRecordChangeAlloc()
                     DL_DEBUG( "TW." << id() << ".REC_ALLOC_CHG - Globus transfer FAILED, reverting" );
 
                     m_db.recordUpdateDataMoveRevert( rec_ids );
-                    // TODO Clean-up any partially transferred data
+                    // TODO An error here should cause a retry until clean-up finishes
+                    deleteNewRawFiles( dst_repo_id, dst_repo_path, files );
+
                     EXCEPT( 1, err_msg );
                 }
 
@@ -676,25 +694,8 @@ TaskWorker::handleRecordChangeAlloc()
                 const string &              src_repo_id = xfr["src_repo_id"].asString();
                 libjson::Value::Array &     files = xfr["files"].getArray();
 
-                del_req.clear_loc();
-                for ( f = files.begin(); f != files.end(); f++ )
-                {
-                    loc = del_req.add_loc();
-                    loc->set_id( (*f)["id"].asString() );
-                    loc->set_path( (*f)["from"].asString() );
-                }
-
-                DL_DEBUG( "TW." << id() << ".REC_ALLOC_CHG - Send delete req to " << src_repo_id );
-
-                // TODO Must catch exception here and revert
-
-                if ( repoSendRecv( src_repo_id, del_req, reply ))
-                {
-                    DL_DEBUG( "TW." << id() << ".REC_ALLOC_CHG - Timeout sending to " << src_repo_id );
+                if ( deleteOldRawFiles( src_repo_id, files ))
                     return true;
-                }
-
-                delete reply;
             }
 
             upd_state.clear();
@@ -718,9 +719,68 @@ TaskWorker::handleRecordChangeAlloc()
         upd_state["substep"] = substep;
         state["step"] = ++step;
         upd_state["step"] = step;
-        prog = step/steps.size();
+        prog = floor(100.0*step/steps.size());
         m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
     }
+
+    return false;
+}
+
+
+bool
+TaskWorker::deleteOldRawFiles( const std::string & a_dst_repo_id, libjson::Value::Array & a_files )
+{
+    Auth::RepoDataDeleteRequest del_req;
+    MsgBuf::Message *           reply;
+    RecordDataLocation *        loc;
+
+    for ( libjson::Value::ArrayIter f = a_files.begin(); f != a_files.end(); f++ )
+    {
+        loc = del_req.add_loc();
+        loc->set_id( (*f)["id"].asString() );
+        loc->set_path( (*f)["from"].asString() );
+    }
+
+    DL_DEBUG( "TW." << id() << " Sending delete req to " << a_dst_repo_id );
+
+    // TODO Must catch exception here and revert
+
+    if ( repoSendRecv( a_dst_repo_id, del_req, reply ))
+    {
+        DL_DEBUG( "TW." << id() << " - Timeout sending to " << a_dst_repo_id );
+        return true;
+    }
+
+    delete reply;
+
+    return false;
+}
+
+bool
+TaskWorker::deleteNewRawFiles( const std::string & a_dst_repo_id, const std::string & a_dst_repo_path, libjson::Value::Array & a_files )
+{
+    Auth::RepoDataDeleteRequest del_req;
+    MsgBuf::Message *           reply;
+    RecordDataLocation *        loc;
+
+    for ( libjson::Value::ArrayIter f = a_files.begin(); f != a_files.end(); f++ )
+    {
+        loc = del_req.add_loc();
+        loc->set_id( (*f)["id"].asString() );
+        loc->set_path( a_dst_repo_path + (*f)["to"].asString() );
+    }
+
+    DL_DEBUG( "TW." << id() << " Sending delete req to " << a_dst_repo_id );
+
+    // TODO Must catch exception here and revert
+
+    if ( repoSendRecv( a_dst_repo_id, del_req, reply ))
+    {
+        DL_DEBUG( "TW." << id() << " - Timeout sending to " << a_dst_repo_id );
+        return true;
+    }
+
+    delete reply;
 
     return false;
 }
