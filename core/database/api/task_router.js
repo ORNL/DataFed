@@ -59,8 +59,6 @@ router.get('/start', function (req, res) {
                 write: ["task"]
             },
             action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-
                 if ( !g_db.task.exists( req.queryParams.task_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "Task " + req.queryParams.task_id + " does not exist." ];
 

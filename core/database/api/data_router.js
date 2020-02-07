@@ -1320,7 +1320,7 @@ router.post('/owner_chg', function (req, res) {
                     res_ids.push( id );
                 }
                 var coll_id = g_lib.resolveDataCollID( req.body.coll_id, client );
-                var result = g_proc.dataOwnerChange( client, req.body.proj_id, res_ids, coll_id, req.body.repo_id );
+                var result = g_proc.taskInitRecOwnerChg( client, req.body.proj_id, res_ids, coll_id, req.body.repo_id, req.body.check );
 
                 res.send(result);
             }

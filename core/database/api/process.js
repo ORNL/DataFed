@@ -476,16 +476,14 @@ module.exports = ( function() {
     };
 
 
-    /**
+    /** @brief Initialize (or check) a record allocation change request
      * 
-     * This operation moves raw data of one or more data records (specified by
-     * ID or by parent collection) to a new allocation. Ownership and linkages
-     * of the data does not change. If the client is not the owner (i.e. project
-     * data), in order to move the raw data the client must be a project owner/
-     * admin, the creating team member of the data, or be a team member with
-     * delete permission on the data record. If these conditions are not met an
-     * error will be thrown. This means that "guest" creators of data in other
-     * accounts can not change the initial allocation used for that data.
+     * This operation initializes the move of raw data of one or more data
+     * records (specified by a list of record and/or collection IDs) to a new
+     * allocation. The actual move operation is implemented by a task worker
+     * method in the core services. This function validates parameters and
+     * checks permissions, and either reports information back to a client or
+     * creates a task record.
      */
 
     obj.taskInitRecAllocChg = function( a_client, a_proj_id, a_res_ids, a_dst_repo_id, a_check ){
@@ -515,7 +513,7 @@ module.exports = ( function() {
 
         var result = obj.preprocessItems({ _id: owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_REC_ALLOC_CHG );
 
-        var i,loc,rec,rec_ids = [], with_data = [];
+        var i,loc,rec,rec_ids = [];
 
         result.tot_cnt = result.http_data.length + result.glob_data.length;
         result.act_size = 0;
@@ -538,8 +536,6 @@ module.exports = ( function() {
             loc = g_db.loc.firstExample({ _from: rec.id });
             if ( loc._to != a_dst_repo_id ){
                 if ( rec.size ){
-                    //rec.repo = loc._to;
-                    //with_data.push( rec );
                     result.act_cnt++;
                     result.act_size += rec.size;
                 }
@@ -552,22 +548,11 @@ module.exports = ( function() {
         result.rec_limit = alloc.rec_limit;
         result.rec_count = alloc.rec_count;
 
-        // Verify that allocation has room for records
-        //if ( alloc.rec_count + result.act_cnt > alloc.rec_limit )
-        //    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.rec_limit+")." ];
-
-        // Verify that allocation has room for data
-        //if ( alloc.data_size + result.act_size > alloc.data_limit )
-        //    throw [ g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.data_limit+")." ];
-    
         // Stop if no record to process, or if this is just a check
         if ( rec_ids.length == 0 || a_check )
             return result;
 
-        //obj._ensureExclusiveAccess( rec_ids );
-
         var state = { encrypt: 1, rec_ids: rec_ids, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
-
         var doc = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, state );
         var task = g_db.task.save( doc, { returnNew: true });
 
@@ -704,6 +689,7 @@ module.exports = ( function() {
         return task.new;
     };
 
+
     /**
      * 
      * This operation changes the owner of one or more data records (specified
@@ -715,82 +701,114 @@ module.exports = ( function() {
      * CREATE permission on the destination collection. Any existing ACLs on
      * the data are cleared.
      */
-    obj.dataOwnerChange = function( a_client, a_proj_id, a_res_ids, a_coll_id, a_repo_id ){
-        // Verify dest collection exists
-        if ( !g_db.c.exists( a_coll_id ))
-            throw [ g_lib.ERR_INVALID_PARAM, "No such collection '" + a_coll_id + "'" ];
+    obj.taskInitRecOwnerChg = function( a_client, a_proj_id, a_res_ids, a_dst_coll_id, a_dst_repo_id, a_check ){
+        // Verify that client is owner, or has admin permission to project owner
+        var owner_id;
 
-        var dest_coll = g_db.c.document( a_coll_id );
+        if ( a_proj_id ){
+            if ( !g_db.p.exists( a_proj_id ))
+                throw [ g_lib.ERR_INVALID_PARAM, "Project '" + a_proj_id + "' does not exist." ];
 
-        // Verify client permissions on destination collection
-        if ( dest_coll.owner != a_client._id ){
-            if ( !g_lib.hasAdminPermObjectLoaded( a_client, dest_coll )){
-                if ( !g_lib.hasPermissions( a_client, dest_coll, g_lib.PERM_CREATE, true ))
-                    throw [ g_lib.ERR_INVALID_PARAM, "Operation requires CREATE permission on destination collection." ];
-            }
-        }
+            if ( g_lib.getProjectRole( a_client, a_proj_id ) == g_lib.PROJ_NO_ROLE )
+                throw [ g_lib.ERR_PERM_DENIED, "Operation requires affiliation with project '" + a_proj_id + "'" ];
 
-        // Get associated or default allocation for new owner
-        var alloc, loc = g_db.loc.firstExample({ _from: dest_coll._id });
-        if ( loc ){
-            alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
+            owner_id = a_proj_id;
         }else{
-            alloc = g_lib.assignRepo( dest_coll.owner );
+            owner_id = a_client._id;
         }
 
-        if ( !alloc )
-            throw [ g_lib.ERR_INVALID_PARAM, "No allocation available for destination owner." ];
+        // Verify dest collection is owned by same user/project
+        var col_owner = g_db.owner.firstExample({_from: a_dst_coll_id });
+        if ( col_owner._to != owner_id )
+            throw [ g_lib.ERR_INVALID_PARAM, "Invalid destination collection: '" + a_dst_coll_id + "'" ];
 
-        // TODO BROKEN CODE - Must check both records with and without raw data and handle them differently
+        var allocs;
 
-        var result = obj.preprocessItems( a_client, dest_coll.owner, a_res_ids, g_lib.TT_REC_OWNER_CHG );
-
-        obj._ensureExclusiveAccess( /* FIXME */ );
-
-        if ( result.glob_data.length > 0 ){
-            var state = { encrypt: 1, repos: [] };
-            var dst_repo = g_db.repo.document( alloc._to );
-
-            state.dst_repo_id = dst_repo._id;
-            state.dst_ep = dst_repo.endpoint;
-
-            if ( dest_coll.owner.charAt(0) == 'u' ){
-                state.dst_path = dst_repo.path + "user" + dest_coll.owner.substr(1) + "/";
-            }else{
-                state.dst_path = dst_repo.path + "project" + dest_coll.owner.substr(1) + "/";
+        if ( a_check ){
+            // Get a list of available repos for client to pick from (there must be at least one)
+            allocs = g_db.alloc.byExample({ _from: owner_id });
+            if ( !allocs.hasNext() ){
+                throw [ g_lib.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'" ];
             }
+        }else{
+            // Verify destination repo
+            if ( !g_db.repo.exists( a_dst_repo_id ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'" ];
 
-            var data = obj._computeDataPaths( dest_coll.owner, g_lib.TT_REC_OWNER_CHG, result.glob_data, state.repos, state.dst_repo_id );
+            // Verify client/owner has an allocation
+            if ( !g_db.alloc.firstExample({ _from: owner_id, _to: a_dst_repo_id }) )
+                throw [ g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'" ];
+        }
 
-            if ( data.ids.length ){
-                // Verify that allocation has room for records
-                if ( data.rec_count + alloc.rec_count > alloc.rec_limit )
-                    throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation record limit (max: "+alloc.rec_limit+")."];
 
-                // Verify that allocation has room for data
-                if ( data.data_size + alloc.data_size > alloc.data_limit )
-                    throw [g_lib.ERR_PERM_DENIED, "Operation exceeds allocation data size limit (max: "+alloc.data_limit+")."];
-            
-                var doc = obj._createTask( a_client._id, g_lib.TT_REC_OWNER_CHG, state );
-                var task = g_db.task.save( doc, { returnNew: true });
+        var result = obj.preprocessItems({ _id: owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_REC_OWNER_CHG );
+        var i,loc,rec,rec_ids = [];
 
-                if ( obj._processTaskDeps( task.new._id, 0 /* FIXME */, 1, 0 )){
+        result.tot_cnt = result.http_data.length + result.glob_data.length;
+        result.act_size = 0;
+        result.act_cnt = 0;
 
-                    task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+        for ( i in result.http_data ){
+            rec = result.http_data[i];
+            rec_ids.push( rec.id );
+
+            loc = g_db.loc.firstExample({ _from: rec.id });
+            if ( loc._to != a_dst_repo_id ){
+                result.act_cnt++;
+            }
+        }
+
+        for ( i in result.glob_data ){
+            rec = result.glob_data[i];
+            rec_ids.push( rec.id );
+
+            loc = g_db.loc.firstExample({ _from: rec.id });
+            if ( loc._to != a_dst_repo_id ){
+                if ( rec.size ){
+                    result.act_cnt++;
+                    result.act_size += rec.size;
                 }
-
-                task.new.id = task.new._id;
-                delete task.new._id;
-                delete task.new._key;
-                delete task.new._rev;
-
-                result.task = task.new;
             }
         }
+
+        result.act_cnt = rec_ids.length;
+
+        if ( a_check ){
+            result.allocs = [];
+            while ( allocs.hasNext() ){
+                rec = allocs.next();
+                rec.id = rec._id;
+                delete rec._id;
+                delete rec.path;
+                result.allocs.push( rec );
+            }
+        }
+
+        // Stop if no record to process, or if this is just a check
+        if ( rec_ids.length == 0 || a_check )
+            return result;
+
+        var state = { encrypt: 1, rec_ids: rec_ids, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
+        var doc = obj._createTask( a_client._id, g_lib.TT_REC_OWNER_CHG, state );
+        var task = g_db.task.save( doc, { returnNew: true });
+
+        if ( obj._processTaskDeps( task.new._id, rec_ids, 1, 0 )){
+            task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+        }
+
+        task.new.id = task.new._id;
+        delete task.new._id;
+        delete task.new._key;
+        delete task.new._rev;
+
+        result.task = task.new;
+
 
         return result;
     };
 
+    obj.taskStartRecOwnerChg = function( a_task ){
+    };
 
     /** @brief Delete data and/or collections by ID (not alias)
      * 
