@@ -579,7 +579,6 @@ void
 DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
 {
     UserData*           user;
-    AllocData*          alloc;
     Value::ObjectIter   j;
 
     try
@@ -634,15 +633,7 @@ DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
 
                     for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
                     {
-                        Value::Object & obj2 = k->getObject();
-
-                        alloc = user->add_alloc( );
-                        alloc->set_repo( obj2.at( "repo" ).asString( ));
-                        alloc->set_data_limit( obj2.at( "data_limit" ).asNumber( ));
-                        alloc->set_data_size( obj2.at( "data_size" ).asNumber( ));
-                        alloc->set_rec_limit( obj2.at( "rec_limit" ).asNumber( ));
-                        alloc->set_rec_count( obj2.at( "rec_count" ).asNumber( ));
-                        alloc->set_path( obj2.at( "path" ).asString( ));
+                        setAllocData( user->add_alloc(), k->getObject() );
                     }
                 }
             }
@@ -793,7 +784,6 @@ void
 DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 {
     ProjectData*        proj;
-    AllocData*          alloc;
     Value::ObjectIter   j;
     Value::ArrayIter    k;
 
@@ -847,15 +837,7 @@ DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
 
                 for ( k = arr2.begin(); k != arr2.end(); k++ )
                 {
-                    Value::Object & obj2 = k->getObject();
-
-                    alloc = proj->add_alloc();
-                    alloc->set_repo( obj2.at( "repo" ).asString( ));
-                    alloc->set_data_limit( obj2.at( "data_limit" ).asNumber( ));
-                    alloc->set_data_size( obj2.at( "data_size" ).asNumber( ));
-                    alloc->set_rec_limit( obj2.at( "rec_limit" ).asNumber( ));
-                    alloc->set_rec_count( obj2.at( "rec_count" ).asNumber( ));
-                    alloc->set_path( obj2.at( "path" ).asString( ));
+                    setAllocData( proj->add_alloc(), k->getObject() );
                 }
             }
         }
@@ -2308,9 +2290,7 @@ DatabaseAPI::repoListObjectAllocations( const Auth::RepoListObjectAllocationsReq
 void
 DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result )
 {
-    AllocData *         alloc;
-    Value::ObjectIter   j;
-    Value::ArrayIter    k;
+    //Value::ArrayIter    k;
 
     try
     {
@@ -2318,23 +2298,7 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value 
 
         for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            Value::Object & obj = i->getObject();
-
-            alloc = a_reply.add_alloc();
-            alloc->set_repo( obj.at( "repo" ).asString( ));
-            alloc->set_data_limit( obj.at( "data_limit" ).asNumber( ));
-            alloc->set_data_size( obj.at( "data_size" ).asNumber( ));
-            alloc->set_rec_limit( obj.at( "rec_limit" ).asNumber( ));
-            alloc->set_rec_count( obj.at( "rec_count" ).asNumber( ));
-            alloc->set_path( obj.at( "path" ).asString( ));
-
-            if (( j = obj.find( "id" )) != obj.end( ))
-                alloc->set_id( j->second.asString( ));
-
-            if (( j = obj.find( "stats" )) != obj.end( ))
-            {
-                setAllocStatsData( j->second, *alloc->mutable_stats( ));
-            }
+            setAllocData( a_reply.add_alloc(), i->getObject() );
         }
     }
     catch(...)
@@ -2343,6 +2307,27 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value 
     }
 }
 
+
+void
+DatabaseAPI::setAllocData( AllocData * a_alloc, libjson::Value::Object & a_obj )
+{
+    a_alloc->set_repo( a_obj.at( "repo" ).asString( ));
+    a_alloc->set_data_limit( a_obj.at( "data_limit" ).asNumber( ));
+    a_alloc->set_data_size( a_obj.at( "data_size" ).asNumber( ));
+    a_alloc->set_rec_limit( a_obj.at( "rec_limit" ).asNumber( ));
+    a_alloc->set_rec_count( a_obj.at( "rec_count" ).asNumber( ));
+    a_alloc->set_path( a_obj.at( "path" ).asString( ));
+
+    Value::ObjectIter j;
+
+    if (( j = a_obj.find( "id" )) != a_obj.end( ))
+        a_alloc->set_id( j->second.asString( ));
+
+    if (( j = a_obj.find( "stats" )) != a_obj.end( ))
+    {
+        setAllocStatsData( j->second, *a_alloc->mutable_stats( ));
+    }
+}
 
 void
 DatabaseAPI::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )
@@ -2692,16 +2677,26 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
     a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
     a_reply.set_act_size( obj["act_size"].asNumber() );
     a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
-    a_reply.set_data_limit( obj["data_limit"].asNumber() );
-    a_reply.set_data_size( obj["data_size"].asNumber() );
-    a_reply.set_rec_limit( obj["rec_limit"].asNumber() );
-    a_reply.set_rec_count( obj["rec_count"].asNumber() );
+
+    Value::ObjectIter allocs = a_result.find("allocs");
+    if ( allocs != a_result.end() )
+    {
+        Value::Array & alloc_arr = allocs->second.getArray();
+        for ( Value::ArrayIter a = alloc_arr.begin(); a != alloc_arr.end(); a++ )
+        {
+            setAllocData( a_reply.add_alloc(), a->getObject() );
+        }
+    }
 
     Value::ObjectIter t = obj.find( "task" );
 
     if ( t != obj.end( ))
     {
         Value::Object & obj2 = t->second.getObject();
+
+        TaskData * task = a_reply.mutable_task();
+        setTaskData( task, t->second );
+
         TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
 
         // If task is blocked, remove task from result to prevent immediate scheduling
@@ -2788,21 +2783,6 @@ DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Va
         {
             TaskData * task = a_reply.add_task();
             setTaskData( task, t->second );
-
-            /*Value::Object & obj2 = t->second.getObject();
-
-            TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
-
-            TaskData * task = a_reply.add_task();
-            task->set_id( obj2.at( "id" ).asString( ));
-            task->set_type((TaskType)obj2.at( "type" ).asNumber( ));
-            task->set_status( ts );
-            task->set_client( obj2.at( "client" ).asString( ));
-            task->set_progress( obj2.at( "progress" ).asNumber( ));
-            task->set_msg( obj2.at( "msg" ).asString( ));
-            task->set_ct( obj2.at( "ct" ).asNumber( ));
-            task->set_ut( obj2.at( "ut" ).asNumber( ));
-            */
 
             // If task is blocked, remove task from result to prevent immediate scheduling
             if ( task->status() == TS_BLOCKED )

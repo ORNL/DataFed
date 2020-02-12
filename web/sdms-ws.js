@@ -743,7 +743,9 @@ app.get('/api/dat/dep/graph/get', ( a_req, a_resp ) => {
 app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
     console.log('/api/dat/alloc_chg');
 
-    var params = { id: JSON.parse(a_req.query.id), repoId: a_req.query.repo_id };
+    var params = { id: JSON.parse(a_req.query.id) };
+    if ( a_req.query.repo_id )
+        params.repoId = a_req.query.repo_id;
     if ( a_req.query.proj_id )
         params.projId = a_req.query.proj_id;
     if ( a_req.query.check )
@@ -755,14 +757,16 @@ app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
-    console.log('/api/dat/owner_chg');
+    console.log('/api/dat/owner_chg',a_req.query);
     var params = { id: JSON.parse(a_req.query.id), collId: a_req.query.coll_id };
     if ( a_req.query.repo_id )
-        params.repoId = repo_id;
+        params.repoId = a_req.query.repo_id;
     if ( a_req.query.proj_id )
         params.projId = a_req.query.proj_id;
     if ( a_req.query.check )
         params.check = true;
+
+    console.log('/api/dat/owner_chg params:',params);
 
     sendMessage( "RecordOwnerChangeRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);

@@ -2921,6 +2921,7 @@ function makeBrowserTab(){
                 console.log( "drag start", inst.pasteItems );
 
                 inst.pasteSourceParent = inst.pasteItems[0].parent;
+                console.log("pasteSourceParent",inst.pasteSourceParent);
                 inst.pasteCollections = [];
                 for ( var i in inst.pasteItems ){
                     if ( inst.pasteItems[i].key.startsWith("c/") )
@@ -2937,68 +2938,73 @@ function makeBrowserTab(){
             },
             dragDrop: function(dest_node, data) {
                 inst.dragging = false;
+                inst.drag_enabled = false;
 
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
                 if ( inst.pasteSourceParent.data.scope != dest_node.data.scope ){
                     console.log("Change owner");
+                    var coll_id = dest_node.key.startsWith( "d/" )?dest_node.parent.key:dest_node.key;
+                    var proj_id = inst.pasteSourceParent.data.scope.charAt(0) == 'p'?inst.pasteSourceParent.data.scope:null;
+                    var ids = [];
+                    for( var i in inst.pasteItems )
+                    ids.push( inst.pasteItems[i].key );
 
-                    dlgConfirmChoice( "Confirm Change Ownership", "This operation will transfer data record ownership to '" + dest_node.data.scope + "' and transfer associated raw data.", ["Cancel","Confirm"], function(choice){
-                        if ( choice == 1 ){
-                            console.log("do change ownership");
-                            /*
-                            var keys = [];
-                            for( var i in inst.pasteItems ){
-                                keys.push( inst.pasteItems[i].key );
-                            }
-                            var dest;
-                            if ( dest_node.key.startsWith("c/") ){
-                                dest = dest_node.key;
-                            }else if ( dest_node.key.startsWith("repo/")){
-                                dest = dest_node.data.repo;
-                            }else{
-                                dest = dest_node.parent.key;
-                            }
-
-                            dlgDataRelocate( keys, dest, dest_node.data.scope, function(){
-
-                            //relocateItems( keys, dest, dest_node.data.scope, function(){
-                            });*/
+                    dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
+                        console.log("chg owner reply:",ok,reply);
+                        if ( ok ){
+                            dlgOwnerChangeConfirm( inst.pasteSourceParent.data.scope, dest_node.data.scope, reply, function( repo ){
+                                console.log("chg owner conf:", repo );
+                                dataOwnerChange( ids, coll_id, repo, proj_id, false, function( ok, reply ){
+                                    if ( ok ){
+                                        console.log("reply:", reply );
+                                        inst.resetTaskPoll();
+                                        dlgAlert( "Change Record Owner", "Task " + reply.task.id.substr(5) + " created to transfer data records to new owner." );
+                                    }else{
+                                        dlgAlert( "Change Record Owner Error", reply );
+                                    }
+                                });
+                            });
+                        }else{
+                            dlgAlert( "Change Record Owner Error", reply );
                         }
+                        inst.drag_enabled = true;
                     });
                     return;
                 }else if ( dest_node.key.startsWith( "repo/" ) || dest_node.parent.key.startsWith( "repo/" )){
                     var key = dest_node.key.startsWith( "repo/" )? dest_node.key:dest_node.parent.key;
                     var idx = key.indexOf("/",5);
                     var repo_id = key.substr(0,idx);
-                    var proj_id = dest_node.data.scope.charAt(0) == 'p'?dest_node.data.scope:null;
+                    var proj_id = inst.pasteSourceParent.data.scope.charAt(0) == 'p'?inst.pasteSourceParent.data.scope:null;
                     var ids = [];
                     for( var i in inst.pasteItems )
                     ids.push( inst.pasteItems[i].key );
 
-                    dataChangeAlloc( ids, repo_id, proj_id, true, function( ok, reply ){
+                    dataAllocChange( ids, repo_id, proj_id, true, function( ok, reply ){
                         if ( ok ){
                             if ( reply.totCnt == 0 ){
-                                dlgAlert( "Change Allocation Error", "No data records contained in selection." );
+                                dlgAlert( "Change Record Allocation Error", "No data records contained in selection." );
                             }else if ( reply.actCnt == 0 ){
-                                dlgAlert( "Change Allocation Error", "All selected data records already use allocation on '" + repo_id + "'" );
+                                dlgAlert( "Change Record Allocation Error", "All selected data records already use allocation on '" + repo_id + "'" );
                             }else{
-                                dlgConfirmChoice( "Confirm Change Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt+" selected) with " + sizeToString( reply.actSize ) + " of raw data to allocation on '" + repo_id + "'. Current allocation usage is " + sizeToString( reply.dataSize ) + " out of " + sizeToString( reply.dataLimit ) + " available and "+reply.recCount+" record(s) out of "+reply.recLimit+" available. Pending transfers may alter the amount of space available on target allocation.", ["Cancel","Confirm"], function(choice){
+                                dlgConfirmChoice( "Confirm Change Record Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt+" selected) with " + sizeToString( reply.actSize ) + " of raw data to allocation on '" + repo_id + "'. Current allocation usage is " + sizeToString( reply.dataSize ) + " out of " + sizeToString( reply.dataLimit ) + " available and "+reply.recCount+" record(s) out of "+reply.recLimit+" available. Pending transfers may alter the amount of space available on target allocation.", ["Cancel","Confirm"], function(choice){
                                     if ( choice == 1 ){
-                                        dataChangeAlloc( ids, repo_id, proj_id, false, function( ok, reply ){
+                                        dataAllocChange( ids, repo_id, proj_id, false, function( ok, reply ){
                                             if ( ok ){
                                                 inst.resetTaskPoll();
-                                                dlgAlert("Change Allocation","Task " + reply.task.id.substr(5) + " created to move data records to new allocation.");
+                                                dlgAlert("Change Record Allocation","Task " + reply.task.id.substr(5) + " created to move data records to new allocation.");
                                             }else{
-                                                dlgAlert( "Change Allocation Error", reply );
+                                                dlgAlert( "Change Record Allocation Error", reply );
                                             }
                                         });
                                     }
                                 });
                             }
+                            inst.drag_enabled = true;
                         }else{
-                            dlgAlert( "Change Allocation Error", reply );
+                            dlgAlert( "Change Record Allocation Error", reply );
+                            inst.drag_enabled = true;
                         }
                     });
                     return;
@@ -3019,6 +3025,7 @@ function makeBrowserTab(){
                 }else{
                     inst.copyItems( inst.pasteItems, dest_node, pasteDone );
                 }
+                inst.drag_enabled = true;
             },
             dragEnter: function(node, data) {
                 if ( inst.dragging ){

@@ -168,6 +168,7 @@ private:
     void setGroupData( Auth::GroupDataReply & a_reply, libjson::Value & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, libjson::Value & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result );
+    void setAllocData( AllocData * a_alloc, libjson::Value::Object & a_obj );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result );
     void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );

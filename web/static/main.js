@@ -305,7 +305,7 @@ function dataPut( a_id, a_cb ){
 }
 
 
-function dataChangeAlloc( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
+function dataAllocChange( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
     console.log("change alloc, items", a_ids );
     var url = "/api/dat/alloc_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&repo_id="+encodeURIComponent(a_repo_id);
     if (a_proj_id )
@@ -317,9 +317,9 @@ function dataChangeAlloc( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
 }
 
 
-function dataChangeOwner( a_ids, a_coll_id, a_repo_id, a_proj_id, a_check, a_cb ){
+function dataOwnerChange( a_ids, a_coll_id, a_repo_id, a_proj_id, a_check, a_cb ){
     console.log("change owner, items", a_ids );
-    var url = "/api/dat/alloc_owner?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&coll_id="+encodeURIComponent(a_coll_id);
+    var url = "/api/dat/owner_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&coll_id="+encodeURIComponent(a_coll_id);
     if (a_repo_id )
         url += "&repo_id="+encodeURIComponent(a_repo_id);
     if (a_proj_id )

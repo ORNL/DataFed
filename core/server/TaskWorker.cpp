@@ -791,7 +791,180 @@ TaskWorker::handleRecordChangeOwner()
 {
     DL_INFO( "Starting task " << m_task->task_id << ", type: RecordChangeOwner" );
 
-    EXCEPT( 1, "Operation not yet implemented" );
+    string                      client_id = m_task->data["client"].asString();
+    TaskStatus                  status = (TaskStatus) m_task->data["status"].asNumber();
+
+    m_db.setClient( client_id );
+    getUserAccessToken( client_id );
+
+    if ( status == TS_READY )
+    {
+        // Initialize state
+        m_db.taskStart( m_task->task_id, m_task->data );
+    }
+
+    libjson::Value &            state = m_task->data["state"];
+
+    // DEBUG OUTPUT
+    DL_DEBUG( "state: " << state.toString() );
+
+    string                      new_owner_id = state["new_owner_id"].asString();
+    libjson::Value::Array  &    steps = state["steps"].getArray();
+    size_t                      step = state["step"].asNumber();
+
+    if ( step >= steps.size() )
+        EXCEPT_PARAM( 1, "Task step (" << step << ") out of range (max: " << steps.size() << ")" );
+
+    string                      dst_repo_ep = state["dst_repo_ep"].asString();
+    string                      dst_repo_path = state["dst_repo_path"].asString();
+    string                      dst_repo_id = state["dst_repo_id"].asString();
+    string                      coll_id = state["dst_coll_id"].asString();
+    size_t                      substep = state["substep"].asNumber();
+    double                      prog = 0;
+    libjson::Value              upd_state;
+    GlobusAPI::XfrStatus        xfr_status = (GlobusAPI::XfrStatus) state["xfr_status"].asNumber();
+    libjson::Value::ArrayIter   f;
+    vector<pair<string,string>> files_v;
+    string                      err_msg;
+    size_t                      size;
+    Auth::RepoViewAllocationRequest  alloc_req;
+    Auth::RepoAllocationsReply  alloc_rep;
+
+    if ( xfr_status > GlobusAPI::XS_INIT )
+        m_glob_task_id = state["glob_task_id"].asString();
+
+    upd_state.initObject();
+
+    alloc_req.set_repo( dst_repo_id );
+    alloc_req.set_subject( new_owner_id );
+
+    for ( libjson::Value::ArrayIter s = steps.begin() + step; s != steps.end(); s++ )
+    {
+        DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Begin Step " << step << " of " << steps.size() );
+
+        libjson::Value &                rec_ids = (*s)["rec_ids"];
+        libjson::Value::ObjectIter      t = s->find("xfr");
+
+        if ( substep == 0 )
+        {
+            DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Check allocation for " << size << " free" );
+
+            alloc_rep.Clear();
+            m_db.repoViewAllocation( alloc_req, alloc_rep );
+
+            if ( alloc_rep.alloc_size() != 1 )
+                EXCEPT_PARAM( 1, "Allocation for " << new_owner_id << " on " << dst_repo_id << " not found." );
+
+            const AllocData & alloc = alloc_rep.alloc(0);
+
+            size = (*s)["size"].asNumber();
+
+            if ( alloc.data_size() + size > alloc.data_limit() )
+                EXCEPT_PARAM( 1, "Allocation for " << new_owner_id << " on " << dst_repo_id << " data size limit exceeded (" << alloc.data_limit() << ")." );
+
+            if ( alloc.rec_count() + rec_ids.size() > alloc.rec_limit() )
+                EXCEPT_PARAM( 1, "Allocation for " << new_owner_id << " on " << dst_repo_id << " record limit exceeded (" << alloc.rec_limit() << ")." );
+
+            DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Record update: data move init" );
+            m_db.recordUpdateDataMoveInit( rec_ids, dst_repo_id, new_owner_id, coll_id );
+
+            upd_state.clear();
+            state["substep"] = ++substep;
+            upd_state["substep"] = substep;
+            m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
+        }
+
+        if ( substep == 1 )
+        {
+            if ( t != s->end() )
+            {
+                libjson::Value::Object &    xfr = t->second.getObject();
+                const string &              src_repo_ep = xfr["src_repo_ep"].asString();
+                libjson::Value::Array &     files = xfr["files"].getArray();
+
+                DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Request globus transfer" );
+
+                if ( xfr_status == GlobusAPI::XS_INIT )
+                {
+                    files_v.clear();
+                    for ( f = files.begin(); f != files.end(); f++ )
+                        files_v.push_back(make_pair( (*f)["from"].asString(), dst_repo_path + (*f)["to"].asString() ));
+
+                    m_glob_task_id = m_glob.transfer( src_repo_ep, dst_repo_ep, files_v, true, m_access_token );
+
+                    upd_state.clear();
+                    state["glob_task_id"] = m_glob_task_id;
+                    upd_state["glob_task_id"] = m_glob_task_id;
+                    xfr_status = GlobusAPI::XS_ACTIVE;
+                    state["xfr_status"] = xfr_status;
+                    upd_state["xfr_status"] = xfr_status;
+                    m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+                }
+
+                xfr_status = monitorTransfer( err_msg );
+
+                if ( xfr_status == GlobusAPI::XS_FAILED )
+                {
+                    DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Globus transfer FAILED, reverting" );
+
+                    m_db.recordUpdateDataMoveRevert( rec_ids );
+                    // TODO An error here should cause a retry until clean-up finishes
+                    deleteNewRawFiles( dst_repo_id, dst_repo_path, files );
+
+                    EXCEPT( 1, err_msg );
+                }
+
+                DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Globus transfer SUCCEEDED" );
+            }
+
+
+            upd_state.clear();
+            xfr_status = GlobusAPI::XS_INIT;
+            state["xfr_status"] = xfr_status;
+            upd_state["xfr_status"] = xfr_status;
+            state["substep"] = ++substep;
+            upd_state["substep"] = substep;
+            m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
+        }
+
+        if ( substep == 2 )
+        {
+            if ( t != s->end() )
+            {
+                DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Deleting old raw data files" );
+
+                libjson::Value::Object &    xfr = t->second.getObject();
+                const string &              src_repo_id = xfr["src_repo_id"].asString();
+                libjson::Value::Array &     files = xfr["files"].getArray();
+
+                if ( deleteOldRawFiles( src_repo_id, files ))
+                    return true;
+            }
+
+            upd_state.clear();
+            state["substep"] = ++substep;
+            upd_state["substep"] = substep;
+            m_db.taskUpdate( m_task->task_id, 0, 0, 0, &upd_state );
+        }
+
+
+        if ( substep == 3 )
+        {
+            DL_DEBUG( "TW." << id() << ".REC_OWNER_CHG - Record update: data move finalize");
+
+            // TODO Next call may not be idempotent
+            m_db.recordUpdateDataMoveFinalize( rec_ids );
+        }
+
+        upd_state.clear();
+        substep = 0;
+        state["substep"] = substep;
+        upd_state["substep"] = substep;
+        state["step"] = ++step;
+        upd_state["step"] = step;
+        prog = floor(100.0*step/steps.size());
+        m_db.taskUpdate( m_task->task_id, 0, 0, &prog, &upd_state );
+    }
 
     return false;
 }
