@@ -703,45 +703,48 @@ module.exports = ( function() {
      */
     obj.taskInitRecOwnerChg = function( a_client, a_proj_id, a_res_ids, a_dst_coll_id, a_dst_repo_id, a_check ){
         // Verify that client is owner, or has admin permission to project owner
-        var owner_id;
+        var old_owner_id;
 
         if ( a_proj_id ){
             if ( !g_db.p.exists( a_proj_id ))
                 throw [ g_lib.ERR_INVALID_PARAM, "Project '" + a_proj_id + "' does not exist." ];
 
-            if ( g_lib.getProjectRole( a_client, a_proj_id ) == g_lib.PROJ_NO_ROLE )
+            if ( g_lib.getProjectRole( a_client._id, a_proj_id ) == g_lib.PROJ_NO_ROLE )
                 throw [ g_lib.ERR_PERM_DENIED, "Operation requires affiliation with project '" + a_proj_id + "'" ];
 
-            owner_id = a_proj_id;
+            old_owner_id = a_proj_id;
         }else{
-            owner_id = a_client._id;
+            old_owner_id = a_client._id;
         }
 
-        // Verify dest collection is owned by same user/project
         var col_owner = g_db.owner.firstExample({_from: a_dst_coll_id });
-        if ( col_owner._to != owner_id )
-            throw [ g_lib.ERR_INVALID_PARAM, "Invalid destination collection: '" + a_dst_coll_id + "'" ];
+        if ( col_owner._to != a_client._id ){
+            if (( col_owner._to.charAt(0) != 'p' ) || !g_lib.hasManagerPermProj( a_client, a_proj_id )){
+                var coll = g_db.c.document( a_dst_coll_id );
+                if ( g_lib.hasPermissions( a_client, coll, g_lib.PERM_CREATE ) != true )
+                    throw [ g_lib.ERR_PERM_DENIED, "Operation requires CREATE permission on destination collection '" + a_dst_coll_id + "'" ];
+            }
+        }
 
         var allocs;
 
         if ( a_check ){
             // Get a list of available repos for client to pick from (there must be at least one)
-            allocs = g_db.alloc.byExample({ _from: owner_id });
-            if ( !allocs.hasNext() ){
-                throw [ g_lib.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'" ];
-            }
+            allocs = g_db.alloc.byExample({ _from: col_owner._to });
+            if ( !allocs.hasNext() )
+                throw [ g_lib.ERR_PERM_DENIED, "No allocations available for '" + col_owner._to + "'" ];
         }else{
             // Verify destination repo
             if ( !g_db.repo.exists( a_dst_repo_id ))
                 throw [ g_lib.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'" ];
 
             // Verify client/owner has an allocation
-            if ( !g_db.alloc.firstExample({ _from: owner_id, _to: a_dst_repo_id }) )
+            if ( !g_db.alloc.firstExample({ _from: col_owner._to, _to: a_dst_repo_id }) )
                 throw [ g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'" ];
         }
 
-
-        var result = obj.preprocessItems({ _id: owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_REC_OWNER_CHG );
+        // TODO Revisit - why use owner_id instead of client?
+        var result = obj.preprocessItems({ _id: old_owner_id, is_admin: false }, null, a_res_ids, g_lib.TT_REC_OWNER_CHG );
         var i,loc,rec,rec_ids = [];
 
         result.tot_cnt = result.http_data.length + result.glob_data.length;
@@ -777,9 +780,8 @@ module.exports = ( function() {
             result.allocs = [];
             while ( allocs.hasNext() ){
                 rec = allocs.next();
-                rec.id = rec._id;
+                rec.repo = rec._to;
                 delete rec._id;
-                delete rec.path;
                 result.allocs.push( rec );
             }
         }
@@ -788,7 +790,7 @@ module.exports = ( function() {
         if ( rec_ids.length == 0 || a_check )
             return result;
 
-        var state = { encrypt: 1, rec_ids: rec_ids, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
+        var state = { encrypt: 1, rec_ids: rec_ids, dst_coll_id: a_dst_coll_id, dst_repo_id: a_dst_repo_id, old_owner_id: old_owner_id, new_owner_id: col_owner._to };
         var doc = obj._createTask( a_client._id, g_lib.TT_REC_OWNER_CHG, state );
         var task = g_db.task.save( doc, { returnNew: true });
 
@@ -808,6 +810,116 @@ module.exports = ( function() {
     };
 
     obj.taskStartRecOwnerChg = function( a_task ){
+        console.log("taskStartRecOwnerChg", a_task._id );
+
+        var dst_repo = g_db.repo.document( a_task.state.dst_repo_id );
+        var is_old_proj = a_task.state.old_owner_id.charAt(0)=='p';
+        var is_new_proj = a_task.state.new_owner_id.charAt(0)=='p';
+        var state = a_task.state;
+
+        state.dst_repo_ep = dst_repo.endpoint;
+        state.dst_repo_path = dst_repo.path + (is_new_proj?"project":"user") + state.new_owner_id.substr(1) + "/";
+        state.steps = [];
+        state.step = 0;
+        state.substep = 0;
+        state.xfr_status = 0;
+
+        var i, j, id, rec, loc, repo, repo_map = {}, file;
+
+        repo_map.empty = { rec_ids: [], size: 0 };
+
+        for ( i in state.rec_ids ){
+            id = state.rec_ids[i];
+            rec = g_db.d.document(id);
+
+            if ( !rec.data_url ){
+                if ( rec.size == 0 ){
+                    repo_map.empty.rec_ids.push( id );
+                }else{
+                    file = { id: id, size: rec.size };
+
+                    loc = g_db.loc.firstExample({ _from: id });
+                    repo = g_db._document( loc._to );
+                    file.from = repo.path + (is_old_proj?"project":"user") + state.old_owner_id.substr(1) + id.substr(1);
+                    file.to = id.substr( 2 );
+
+                    if ( repo._key in repo_map ){
+                        repo_map[repo._key].files.push(file);
+                    }else{
+                        repo_map[repo._key] = {repo_id:repo._id,repo_ep:repo.endpoint,files:[file]};
+                    }
+                }
+            }
+        }
+
+        //console.log("repo map", repo_map);
+
+        var files, sz, k, rec_ids;
+
+        if ( repo_map.empty.rec_ids.length ){
+            state.steps.push( repo_map.empty );
+        }
+
+        delete repo_map.empty;
+
+        for ( i in repo_map ){
+            //console.log("proc repo", i);
+            repo = repo_map[i];
+
+            // Pack roughly equal transfer sizes into each transfer chunk/step
+
+            repo.files.sort( function( a, b ){
+                return b.size - a.size;
+            });
+
+            //console.log("sorted files", repo.files );
+
+            // Push files larger than chunk size into own transfers
+            for ( j = 0; j < repo.files.length; j++ ){
+                if ( repo.files[j].size >= g_lib.GLOB_MAX_XFR_SIZE ){
+                    state.steps.push({ rec_ids: [repo.files[j].id], size: repo.files[j].size,  xfr: { src_repo_id:repo.repo_id,src_repo_ep:repo.repo_ep,files:[repo.files[j]]}});
+                }else{
+                    break;
+                }
+            }
+
+            for ( ; j < repo.files.length; j++ ){
+                // Remaining files are smaller than max chunk size
+                // Build new transfer by combining largest with smallest files
+                sz = repo.files[j].size;
+                rec_ids = [repo.files[j].id];
+                files = [repo.files[j]];
+
+                for ( k = j + 1; k < repo.files.length; ){
+                    if ( sz + repo.files[k].size <= g_lib.GLOB_MAX_XFR_SIZE ){
+                        rec_ids.push( repo.files[k].id );
+                        files.push( repo.files[k] );
+                        sz += repo.files[k].size;
+                        repo.files.splice(k,1);
+                    }else{
+                        k++;
+                    }
+                }
+
+                state.steps.push({ rec_ids: rec_ids, size: sz, xfr: { src_repo_id: repo.repo_id, src_repo_ep: repo.repo_ep, files: files }});
+            }
+        }
+
+        // Sort steps from smallest to largest transfer size
+        if ( state.steps.length ){
+            state.steps.sort( function( a, b ){
+                return a.size - b.size;
+            });
+        }
+
+        var task = g_db._update( a_task._id, { status: g_lib.TS_RUNNING, msg: "Running", state: state }, { returnNew: true });
+
+        task.new.id = task.new._id;
+        delete task.new._id;
+        delete task.new._key;
+        delete task.new._rev;
+
+        return task.new;
     };
 
     /** @brief Delete data and/or collections by ID (not alias)
