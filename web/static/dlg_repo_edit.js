@@ -292,19 +292,17 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         resizable: true,
         closeOnEscape: true,
         buttons: [{
+            text: a_repo_id?"Close":"Cancel",
+            click: function() {
+                if ( a_repo_id && a_cb )
+                    a_cb();
+                $(this).dialog('destroy').remove();
+            }
+        },{
             id: 'apply_btn',
             text: a_repo_id?"Apply Changes":"Save",
             click: function() {
                 if ( a_repo_id ){
-                    //var title = (changed & 1)?$("#title",frame).val():null;
-                    //var desc = (changed & 2)?$("#desc",frame).val():null;
-                    //var domain = (changed & 4)?$("#domain",frame).val():null;
-                    //var exp_path = (changed & 0x20)?$("#exp_path",frame).val():null;
-                    //var capacity = (changed & 8)?parseSize( $("#capacity",frame).val() ):null;
-                    //var address = (changed & 8)?$("#addr",frame).val():null;
-                    //var pubKey = (changed & 8)?$("#pub_key",frame).val();
-                    //var endpoint = (changed & 8)?$("#ep_id",frame).val();
-
                     var obj = {id:repo.id};
                     getUpdatedValue( $("#title",frame).val(), repo, obj, "title" );
                     getUpdatedValue( $("#desc",frame).val(), repo, obj, "desc" );
@@ -391,24 +389,17 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                         return;
                     }
 
-                    console.log("repo create:",obj);
+                    var inst = $(this);
 
                     repoCreate( obj, function( ok, data ){
                         if ( ok ){
                             if (a_cb) a_cb();
-                            $(this).dialog('destroy').remove();
+                            inst.dialog('destroy').remove();
                         }else{
                             dlgAlert( "Repo Create Failed", data );
                         }
                     });
                 }
-            }
-        },{
-            text: a_repo_id?"Close":"Cancel",
-            click: function() {
-                if ( a_repo_id && a_cb )
-                    a_cb();
-                $(this).dialog('destroy').remove();
             }
         }],
         open: function(event,ui){
