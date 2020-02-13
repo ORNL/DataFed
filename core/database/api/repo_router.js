@@ -121,9 +121,8 @@ router.post('/create', function (req, res) {
                     obj.path += "/";
 
                 var idx = obj.path.lastIndexOf( "/", obj.path.length - 2 );
-                var key = obj.id.substr( 5 );
-                if ( obj.path.substr( idx + 1, obj.path.length - idx - 2 ) != key )
-                    throw [ g_lib.ERR_INVALID_PARAM, "Last part of repository path must be repository ID suffix (" + key + ")" ];
+                if ( obj.path.substr( idx + 1, obj.path.length - idx - 2 ) != obj._key )
+                    throw [ g_lib.ERR_INVALID_PARAM, "Last part of repository path must be repository ID suffix (" + obj._key + ")" ];
 
                 if ( req.body.exp_path ){
                     obj.exp_path = req.body.exp_path;
