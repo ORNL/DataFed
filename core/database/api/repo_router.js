@@ -99,7 +99,7 @@ router.post('/create', function (req, res) {
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
                 if ( !client.is_admin )
-                    throw obj.ERR_PERM_DENIED;
+                    throw g_lib.ERR_PERM_DENIED;
 
                 var obj = {
                     capacity: req.body.capacity,
@@ -114,8 +114,16 @@ router.post('/create', function (req, res) {
                 g_lib.procInputParam( req.body, "summary", false, obj );
                 g_lib.procInputParam( req.body, "domain", false, obj );
 
+                if ( !obj.path.startsWith("/"))
+                    throw [ g_lib.ERR_INVALID_PARAM, "Repository path must be an absolute path file system path." ];
+
                 if ( !obj.path.endsWith("/"))
                     obj.path += "/";
+
+                var idx = obj.path.lastIndexOf( "/", obj.path.length - 2 );
+                var key = obj.id.substr( 5 );
+                if ( obj.path.substr( idx + 1, obj.path.length - idx - 2 ) != key )
+                    throw [ g_lib.ERR_INVALID_PARAM, "Last part of repository path must be repository ID suffix (" + key + ")" ];
 
                 if ( req.body.exp_path ){
                     obj.exp_path = req.body.exp_path;
@@ -179,9 +187,18 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "domain", true, obj );
 
                 if ( req.body.path ){
+                    if ( !req.body.path.startsWith("/"))
+                        throw [ g_lib.ERR_INVALID_PARAM, "Repository path must be an absolute path file system path." ];
+
                     obj.path = req.body.path;
                     if ( !obj.path.endsWith("/"))
                         obj.path += "/";
+
+                    // Last part of storage path MUST end with the repo ID
+                    var idx = obj.path.lastIndexOf( "/", obj.path.length - 2 );
+                    var key = req.body.id.substr( 5 );
+                    if ( obj.path.substr( idx + 1, obj.path.length - idx - 2 ) != key )
+                        throw [ g_lib.ERR_INVALID_PARAM, "Last part of repository path must be repository ID suffix (" + key + ")" ];
                 }
 
                 if ( req.body.exp_path ){
@@ -217,7 +234,7 @@ router.post('/update', function (req, res) {
                 delete repo.new._id;
                 delete repo.new._key;
                 delete repo.new._rev;
-                console.log("repo:",repo.new);
+
                 res.send([repo.new]);
             }
         });
