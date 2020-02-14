@@ -358,10 +358,10 @@ module.exports = ( function() {
     };
 
 
-    obj.dataGet = function( a_client, a_path, a_encrypt, a_res_ids ){
+    obj.taskInitDataGet = function( a_client, a_path, a_encrypt, a_res_ids, a_check ){
         var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_GET );
 
-        if ( result.glob_data.length > 0 ){
+        if ( result.glob_data.length > 0 && !a_check ){
             var state = { encrypt: a_encrypt, repos: [] };
             var idx = a_path.indexOf("/");
 
@@ -399,10 +399,10 @@ module.exports = ( function() {
     };
 
 
-    obj.dataPut = function( a_client, a_path, a_encrypt, a_ext, a_res_ids ){
+    obj.taskInitDataPut = function( a_client, a_path, a_encrypt, a_ext, a_res_ids, a_check ){
         var result = obj.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_PUT );
 
-        if ( result.glob_data.length > 0 ){
+        if ( result.glob_data.length > 0 && !a_check){
             var state = { encrypt: a_encrypt, repos: [] };
 
             if ( a_ext )
