@@ -1229,6 +1229,30 @@ module.exports = ( function() {
         }
     };
 
+    obj.saveRecentGlobusPath = function( a_client, a_path ){
+        var path, idx = a_path.lastIndexOf("/");
+        if ( idx > 0 )
+            path = a_path.substr(0,idx);
+        else
+            path = a_path;
+
+        if ( a_client.eps && a_client.eps.length ){
+            idx = a_client.eps.indexOf( path );
+            if ( idx == -1 ){
+                if ( a_client.eps.unshift( path ) > 20 ){
+                    a_client.eps.length = 20;
+                }
+            }else{
+                a_client.eps.splice( idx, 1 );
+                a_client.eps.unshift( path );
+            }
+        }else{
+            a_client.eps = [path];
+        }
+
+        obj.db._update( a_client._id, { eps: a_client.eps });
+    };
+
     return obj;
 }() );
 

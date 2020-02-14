@@ -1116,40 +1116,6 @@ router.get('/search', function (req, res) {
 .description('Find all data records that match query');
 
 
-router.get('/get/preproc', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","d","c","item"],
-            },
-            action: function() {
-                //console.log("/dat/get/preproc client", req.queryParams.client);
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var ids = [];
-                for ( var i in req.queryParams.ids ){
-                    //console.log("id ini: ",req.queryParams.ids[i]);
-                    var id = g_lib.resolveID( req.queryParams.ids[i], client );
-                    //console.log("id: ",id);
-                    ids.push( id );
-                }
-
-                var result = g_proc.preprocessItems( client, null, ids, g_lib.TT_DATA_GET );
-
-                res.send(result);
-            }
-        });
-
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('ids', joi.array().items(joi.string()).required(), "Array of data/collection IDs or aliases")
-.summary('Data get preprocessing')
-.description('Data get preprocessing (check permission, data size, lock, deduplicate)');
-
-
-
 router.post('/get', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -1162,29 +1128,18 @@ router.post('/get', function (req, res) {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var id, res_ids = [];
 
-                for ( var i in req.body.ids ){
-                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                if ( !req.body.check && !req.body.path )
+                    throw [ g_lib.ERR_INVALID_PARAM, "Must provide path parameter if not running check." ];
+
+                for ( var i in req.body.id ){
+                    id = g_lib.resolveDataCollID( req.body.id[i], client );
                     res_ids.push( id );
                 }
 
-                var result = g_proc.dataGet( client, req.body.path, req.body.encrypt, res_ids );
+                var result = g_proc.taskInitDataGet( client, req.body.path, req.body.encrypt, res_ids, req.body.check );
 
-                // Save remote path to recent ep list
-                if ( client.eps && client.eps.length ){
-                    var idx = client.eps.indexOf( req.body.path );
-                    if ( idx == -1 ){
-                        if ( client.eps.unshift( req.body.path ) > 20 ){
-                            client.eps.length = 20;
-                        }
-                    }else{
-                        client.eps.splice( idx, 1 );
-                        client.eps.unshift( req.body.path );
-                    }
-                }else{
-                    client.eps = [req.body.path];
-                }
-
-                g_db._update( client._id, {eps:client.eps}, { keepNull: false });
+                if ( !req.body.check )
+                    g_lib.saveRecentGlobusPath( client, req.body.path );
 
                 res.send(result);
             }
@@ -1196,9 +1151,10 @@ router.post('/get', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
-    ids: joi.array().items(joi.string()).required(),
-    path: joi.string().required(),
-    encrypt: joi.number().required()
+    id: joi.array().items(joi.string()).required(),
+    path: joi.string().optional(),
+    encrypt: joi.number().optional(),
+    check: joi.boolean().optional()
 }).required(), 'Parameters')
 .summary('Get (download) data to Globus destination path')
 .description('Get (download) data to Globus destination path. IDs may be data/collection IDs or aliases.');
@@ -1216,37 +1172,20 @@ router.post('/put', function (req, res) {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var res_ids = [];
 
-                if ( req.body.ids.length > 1 )
+                if ( !req.body.check && !req.body.path )
+                    throw [ g_lib.ERR_INVALID_PARAM, "Must provide path parameter if not running check." ];
+
+                if ( req.body.id.length > 1 )
                     throw [g_lib.ERR_INVALID_PARAM,"Concurrent put of multiple records no supported."];
 
-                for ( var i in req.body.ids ){
-                    res_ids.push( g_lib.resolveDataID( req.body.ids[i], client ));
+                for ( var i in req.body.id ){
+                    res_ids.push( g_lib.resolveDataID( req.body.id[i], client ));
                 }
 
-                var result = g_proc.dataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids );
+                var result = g_proc.taskInitDataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids, req.body.check );
 
-                // Save remote path to recent ep list
-                var path, idx = req.body.path.lastIndexOf("/");
-                if ( idx > 0 )
-                    path = req.body.path.substr(0,idx);
-                else
-                    path = req.body.path;
-
-                if ( client.eps && client.eps.length ){
-                    idx = client.eps.indexOf( path );
-                    if ( idx == -1 ){
-                        if ( client.eps.unshift( path ) > 20 ){
-                            client.eps.length = 20;
-                        }
-                    }else{
-                        client.eps.splice( idx, 1 );
-                        client.eps.unshift( path );
-                    }
-                }else{
-                    client.eps = [path];
-                }
-
-                g_db._update( client._id, {eps:client.eps}, { keepNull: false });
+                if ( !req.body.check )
+                    g_lib.saveRecentGlobusPath( client, req.body.path );
 
                 res.send(result);
             }
@@ -1258,10 +1197,11 @@ router.post('/put', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
-    ids: joi.array().items(joi.string()).required(),
-    path: joi.string().required(),
-    encrypt: joi.number().required(),
-    ext: joi.string().optional()
+    id: joi.array().items(joi.string()).required(),
+    path: joi.string().optional(),
+    encrypt: joi.number().optional(),
+    ext: joi.string().optional(),
+    check: joi.boolean().optional()
 }).required(), 'Parameters')
 .summary('Put (upload) raw data to record')
 .description('Put (upload) raw data to record from Globus source path. ID must be a data ID or alias.');
