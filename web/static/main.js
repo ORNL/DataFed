@@ -238,9 +238,9 @@ function dataLock( a_id, a_lock, a_cb ){
 }
 
 function dataGet( a_ids, a_cb ){
-    dataGetPreprocess( a_ids, function( ok, data ){
+    dataGetCheck( a_ids, function( ok, data ){
         if ( ok ){
-            console.log("proproc:",data);
+            console.log("data get check:",data);
             var internal = false, external = false;
 
             if ( !data.item || !data.item.length ){
@@ -286,21 +286,23 @@ function dataGet( a_ids, a_cb ){
 }
 
 function dataPut( a_id, a_cb ){
-    checkPerms( a_id, PERM_WR_DATA, function( granted ){
-        if ( !granted ){
-            alertPermDenied();
-            return;
-        }
+    dataPutCheck( a_id, function( ok, data ){
+        if ( ok ){
+            console.log("data put check:",data);
 
-        viewData( a_id, function( data ){
-            if ( data ){
-                if ( data.doi ){
-                    dlgAlert("Data Put Error","Record has read-only, externally managed data.");
-                }else{
-                    dlgStartTransfer( TT_DATA_PUT, [data], a_cb );
-                }
+            if ( !data.item || !data.item.length ){
+                dlgAlert("Data Put Error","Selection contains no record.");
+                return;
             }
-        }); 
+
+            if ( data.item[0].doi ){
+                dlgAlert("Data Put Error","Record has read-only, externally managed data.");
+            }else{
+                dlgStartTransfer( TT_DATA_PUT, data.item, a_cb );
+            }
+        }else{
+            dlgAlert("Data Put Error",data);
+        }
     });
 }
 
@@ -950,16 +952,19 @@ function inputEnable( a_objs ){
     return a_objs;
 }
 
-function dataGetPreprocess( a_ids, a_cb ){
-    var url = "/api/dat/get/preproc?ids=" + encodeURIComponent(JSON.stringify(a_ids));
-    _asyncGet( url, null, a_cb );
+function dataGetCheck( a_ids, a_cb ){
+    _asyncGet( "/api/dat/get?id=" + encodeURIComponent(JSON.stringify(a_ids)) + "&check=true", null, a_cb );
+}
+
+function dataPutCheck( a_id, a_cb ){
+    _asyncGet( "/api/dat/put?id=" + encodeURIComponent(a_id) + "&check=true", null, a_cb );
 }
 
 function xfrStart( a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_cb ){
     var url = "/api/dat/";
 
     if ( a_mode == TT_DATA_GET )
-        url += "get" + "?ids=" + encodeURIComponent(JSON.stringify(a_ids)) ;
+        url += "get" + "?id=" + encodeURIComponent(JSON.stringify(a_ids));
     else if ( a_mode == TT_DATA_PUT )
         url += "put" + "?id=" + encodeURIComponent(a_ids[0]) ;
     else{

@@ -51,7 +51,7 @@
     <div class="col-flex" style="height:100%;width:100%">
         <!-- div class="ui-widget-header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em" -->
         <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
-            <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span> DataFed <span style="font-size:40%">V-<%- @version %></span> <span id='mode_label' class='ui-state-error'></span></div>
+            <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span> DataFed <span style="font-size:40%">V-<%- @version %></span> <span id='mode_label' class='ui-state-error' style='display:none'><b>TEST MODE</b></span></div>
             <div style="flex:none">
                 <button class="btn" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'>Help</button>&nbsp
                 <!-- button class="btn" onclick="window.open('/ui/docs/cli','sdms-docs-cli')" title='DataFed Command-Line-Interface help &amp installation.' >CLI</button -->
@@ -63,7 +63,7 @@
         </div>
         <div class="ui-widget-header" style="flex:none;padding:.25em">
             <div class="row-flex">
-                <div style="flex:none;padding:.2em 0 0 0" >User: <span id="uname"></span>&nbsp&nbsp</div>
+                <div style="flex:none;padding:.2em 0 0 0" >User: <span id="uname"></span>&nbsp&nbsp<span id='is_admin' class='ui-state-error' style='display:none'>ADMIN</span>&nbsp&nbsp</div>
                 <div id="status_text" style="height:1.65em;padding:.3em 0 0 0;flex:1 1 100%;text-align:center;font-size:.9em;font-style:normal;background:black;color:white"></div>
             </div>
         </div>
@@ -74,12 +74,10 @@
         document.getElementById("uname").innerHTML = g_user.name;
 
         $(".btn").button();
-        //$( document ).tooltip({ show: false, hide: false});
         tooltipTheme( $("button,input") ); //.tooltip({ show: { effect: "slideDown", delay: 500 }});
-        //tooltipTheme( $("input").tooltip({ show: { effect: "slideDown", delay: 500 }});
 
         var g_theme = "<%- @theme %>";
-        var g_test_mode = "<%- @test_mode %>";
+        var g_test_mode = ("<%- @test_mode %>" == "true");
         var g_opts = { page_sz: 20, task_hist: 24, def_alloc: 'none' };
         var tab_browser;
         var resizeTimer = null;
@@ -95,15 +93,20 @@
         });
 
         if ( g_test_mode ){
-            $("#mode_label").html("<b>DEV/TEST MODE</b>");
+            $("#mode_label").show();
         }
 
         userView( g_user.uid, true, function( ok, user ){
             if ( ok && user ){
                 g_user.isAdmin = user.isAdmin;
                 g_user.isRepoAdmin = user.isRepoAdmin;
+
                 if ( user.options ){
                     g_opts = JSON.parse( user.options );
+                }
+
+                if ( g_user.isAdmin ){
+                    $("#is_admin").show();
                 }
 
                 tab_browser = makeBrowserTab();

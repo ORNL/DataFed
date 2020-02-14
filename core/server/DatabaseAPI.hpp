@@ -74,7 +74,6 @@ public:
     void recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids );
 
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
-    void dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply );
@@ -137,14 +136,14 @@ public:
 
 
     void taskLoadReady( libjson::Value & a_result );
-    void taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
-    void taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
-    void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
+    void taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
+    void taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
+    void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a_request, Auth::RecordAllocChangeReply & a_reply, libjson::Value & a_result );
     void taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a_request, Auth::RecordOwnerChangeReply & a_reply, libjson::Value & a_result );
     void taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
-    void taskInitProjectDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result );
+    void taskInitProjectDelete( const Auth::ProjectDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskStart( const std::string & a_task_id, libjson::Value & a_result );
     void taskUpdate( const std::string & a_id, TaskStatus * a_status = 0, const std::string * a_message = 0, double * a_progress = 0, libjson::Value * a_state = 0 );
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result );
@@ -164,7 +163,8 @@ private:
     void setCollData( Auth::CollDataReply & a_reply, libjson::Value & a_result );
     void setCollPathData( Auth::CollPathReply & a_reply, libjson::Value & a_result );
     void setQueryData( Auth::QueryDataReply & a_reply, libjson::Value & a_result );
-    void setListingData( Auth::ListingReply & a_reply, libjson::Value & a_result );
+    void setListingDataReply( Auth::ListingReply & a_reply, libjson::Value & a_result );
+    void setListingData( ListingData * a_item, libjson::Value::Object & a_obj );
     void setGroupData( Auth::GroupDataReply & a_reply, libjson::Value & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, libjson::Value & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result );
@@ -172,9 +172,10 @@ private:
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result );
     void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );
-    void setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
-    void setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void setTaskDataReply( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
+    void setTaskDataReplyArray( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void setTaskData( TaskData * a_task, libjson::Value & a_task_json );
+    void setDataGetSetReply( Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
 
     CURL *      m_curl;
     char *      m_client;

@@ -313,13 +313,12 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                             ids.push( sel[i].key );
                         }
                     }
-                    //console.log("ids:", ids );
+
                     xfrStart( ids, a_mode, raw_path, ext, encrypt, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('destroy').remove();
-                            //console.log(data.task);
-                            setStatusText( "Task '" + data.task[0].id + "' created for data transfer." );
+                            setStatusText( "Task '" + data.task.id + "' created for data transfer." );
                             if ( a_cb ){
                                 a_cb();
                             }

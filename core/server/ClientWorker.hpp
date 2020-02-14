@@ -56,7 +56,8 @@ private:
     bool procRepoAuthzRequest( const std::string & a_uid );
     bool procUserGetAccessTokenRequest( const std::string & a_uid );
 
-    void recordCollectionDelete( const std::vector<std::string> & a_ids );
+    void recordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply );
+    void handleTaskResponse( libjson::Value & a_result );
 
     inline bool isPhrase( const std::string &str )
     {

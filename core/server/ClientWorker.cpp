@@ -125,7 +125,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
-        SET_MSG_HANDLER_DB( proto_id, DataGetPreprocRequest, ListingReply, dataGetPreproc );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
@@ -447,30 +446,15 @@ ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataGetRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataGetRequest, TaskDataReply )
+    PROC_MSG_BEGIN( DataGetRequest, DataGetPutReply )
 
     DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
 
-    m_db_client.setClient( a_uid );
-    vector<string> ids;
-    int i;
-
-    ids.reserve( request->id_size() );
-    for ( i = 0; i < request->id_size(); i++ )
-        ids.push_back( request->id(i) );
-
     libjson::Value result;
 
-    m_db_client.taskInitDataGet( ids, request->path(), request->encrypt(), reply, result );
-
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter j = obj.find( "task" );
-
-    if ( j != obj.end( ))
-    {
-        DL_INFO( "CWORKER scheduling data get task" );
-        TaskMgr::getInstance().newTask( j->second );
-    }
+    m_db_client.setClient( a_uid );
+    m_db_client.taskInitDataGet( *request, reply, result );
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -479,24 +463,15 @@ ClientWorker::procDataGetRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataPutRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataPutRequest, TaskDataReply )
+    PROC_MSG_BEGIN( DataPutRequest, DataGetPutReply )
 
     DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
 
-    m_db_client.setClient( a_uid );
-
     libjson::Value result;
 
-    m_db_client.taskInitDataPut( request->id( ), request->path(), request->encrypt(), reply, result );
-
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter j = obj.find( "task" );
-
-    if ( j != obj.end( ))
-    {
-        DL_INFO( "CWORKER scheduling data put task" );
-        TaskMgr::getInstance().newTask( j->second );
-    }
+    m_db_client.setClient( a_uid );
+    m_db_client.taskInitDataPut( *request, reply, result );
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -513,14 +488,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_db_client.recordUpdate( *request, reply, result );
 
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter j = obj.find( "task" );
-
-    if ( j != obj.end( ))
-    {
-        DL_INFO( "CWORKER scheduling record update task" );
-        TaskMgr::getInstance().newTask( j->second );
-    }
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -537,14 +505,7 @@ ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid )
 
     m_db_client.recordUpdateBatch( *request, reply, result );
 
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter j = obj.find( "task" );
-
-    if ( j != obj.end( ))
-    {
-        DL_INFO( "CWORKER scheduling record update task" );
-        TaskMgr::getInstance().newTask( j->second );
-    }
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -553,7 +514,7 @@ ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid )
 bool
 ClientWorker::procRecordDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( RecordDeleteRequest, TaskDataReply )
 
     m_db_client.setClient( a_uid );
 
@@ -563,7 +524,7 @@ ClientWorker::procRecordDeleteRequest( const std::string & a_uid )
     for ( int i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    recordCollectionDelete( ids );
+    recordCollectionDelete( ids, reply );
 
     PROC_MSG_END
 }
@@ -582,24 +543,20 @@ ClientWorker::procCollectionDeleteRequest( const std::string & a_uid )
     for ( int i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    recordCollectionDelete( ids );
+    recordCollectionDelete( ids, reply );
 
     PROC_MSG_END
 }
 
 
 void
-ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids )
+ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply )
 {
     libjson::Value result;
 
-    m_db_client.taskInitRecordCollectionDelete( a_ids, result );
+    m_db_client.taskInitRecordCollectionDelete( a_ids, a_reply, result );
 
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-        TaskMgr::getInstance().newTask( t->second );
+    handleTaskResponse( result );
 }
 
 
@@ -614,11 +571,7 @@ ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid )
 
     m_db_client.taskInitRecordAllocChange( *request, reply, result );
 
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-        TaskMgr::getInstance().newTask( t->second );
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -635,11 +588,7 @@ ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid )
 
     m_db_client.taskInitRecordOwnerChange( *request, reply, result );
 
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-        TaskMgr::getInstance().newTask( t->second );
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -648,25 +597,47 @@ ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid )
 bool
 ClientWorker::procProjectDeleteRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( ProjectDeleteRequest, AckReply )
+    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply )
 
     m_db_client.setClient( a_uid );
 
-    vector<string> ids;
+    libjson::Value result;
 
-    ids.reserve( request->id_size() );
-    for ( int i = 0; i < request->id_size(); i++ )
-        ids.push_back( request->id(i) );
+    m_db_client.taskInitProjectDelete( *request, reply, result );
+
+    handleTaskResponse( result );
+
+    PROC_MSG_END
+}
+
+bool
+ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply )
+
+    m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.taskInitProjectDelete( ids, result );
+    m_db_client.taskInitRepoAllocationCreate( *request, reply, result );
 
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
+    handleTaskResponse( result );
 
-    if ( t != obj.end( ))
-        TaskMgr::getInstance().newTask( t->second );
+    PROC_MSG_END
+}
+
+bool
+ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply )
+
+    m_db_client.setClient( a_uid );
+
+    libjson::Value result;
+
+    m_db_client.taskInitRepoAllocationDelete( *request, reply, result );
+
+    handleTaskResponse( result );
 
     PROC_MSG_END
 }
@@ -805,51 +776,6 @@ ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply )
-
-    m_db_client.setClient( a_uid );
-
-    libjson::Value result;
-
-    m_db_client.taskInitRepoAllocationCreate( *request, reply, result );
-
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-    {
-        DL_INFO( "CWORKER scheduling alloc create task" );
-        TaskMgr::getInstance().newTask( t->second );
-    }
-
-    PROC_MSG_END
-}
-
-bool
-ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply )
-
-    m_db_client.setClient( a_uid );
-
-    libjson::Value result;
-
-    m_db_client.taskInitRepoAllocationDelete( *request, reply, result );
-
-    libjson::Value::Object & obj = result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-    {
-        DL_INFO( "CWORKER scheduling alloc delete task" );
-        TaskMgr::getInstance().newTask( t->second );
-    }
-
-    PROC_MSG_END
-}
 
 bool
 ClientWorker::procRepoAuthzRequest( const std::string & a_uid )
@@ -890,6 +816,18 @@ ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid )
     reply.set_expires_in( expires_in );
 
     PROC_MSG_END
+}
+
+void
+ClientWorker::handleTaskResponse( libjson::Value & a_result )
+{
+    libjson::Value::Object & obj = a_result.getObject();
+    libjson::Value::ObjectIter t = obj.find( "task" );
+
+    if ( t != obj.end( ) && t->second["status"].asNumber() != TS_BLOCKED )
+    {
+        TaskMgr::getInstance().newTask( t->second );
+    }
 }
 
 

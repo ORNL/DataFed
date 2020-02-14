@@ -766,7 +766,7 @@ DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::Listing
 
     dbGet( "prj/list", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -864,7 +864,7 @@ DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, ListingReply &
 
     dbGet( "/dat/search", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -881,7 +881,7 @@ DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request
 
     dbGet( "/dat/list/by_alloc", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1058,7 +1058,7 @@ DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::Listin
 
     dbGet( "dat/lock", {{"ids",ids},{"lock",a_request.lock()?"true":"false"}}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1068,7 +1068,7 @@ DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a
 
     dbGet( "dat/dep/get", {{"id",a_request.id()}}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 
@@ -1079,7 +1079,7 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
 
     dbGet( "dat/dep/graph/get", {{"id",a_request.id()}}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1228,35 +1228,6 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
     a_reply.set_path( result["path"].asString() );
 }
 
-void
-DatabaseAPI::dataGetPreproc( const Auth::DataGetPreprocRequest & a_request, Auth::ListingReply & a_reply )
-{
-    Value result;
-    vector<pair<string,string>> params;
-    string ids = "[";
-    for ( int i = 0; i < a_request.id_size(); i++ )
-    {
-        if ( i > 0 )
-            ids += ",";
-
-        ids += "\"" + a_request.id(i) + "\"";
-    }
-    ids += "]";
-    params.push_back({"ids",ids});
-
-    dbGet( "dat/get/preproc", params, result );
-
-    DL_DEBUG( "PREPROC: " << result.toString( ));
-
-    Value::Object & obj = result.getObject();
-    Value::ObjectIter i;
-
-    if (( i = obj.find("glob_data")) != obj.end() && i->second.size( ))
-        setListingData( a_reply, i->second );
-
-    if (( i = obj.find("http_data")) != obj.end() && i->second.size( ))
-        setListingData( a_reply, i->second );
-}
 
 void
 DatabaseAPI::collList( const CollListRequest & a_request, CollDataReply & a_reply )
@@ -1281,7 +1252,7 @@ DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request
     else
         dbGet( "col/published/list", {}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1350,7 +1321,7 @@ DatabaseAPI::collRead( const CollReadRequest & a_request, ListingReply & a_reply
 
     dbGet( "col/read", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1392,7 +1363,7 @@ DatabaseAPI::collWrite( const CollWriteRequest & a_request, Auth::ListingReply &
 
     dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1534,12 +1505,9 @@ DatabaseAPI::setCollPathData( CollPathReply & a_reply, libjson::Value & a_result
 }
 
 void
-DatabaseAPI::setListingData( ListingReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setListingDataReply( ListingReply & a_reply, libjson::Value & a_result )
 {
-    ListingData *       item;
-    DependencyData *    dep;
-    Value::ObjectIter   j,m;
-    Value::ArrayIter    k;
+    Value::ObjectIter   j;
 
     try
     {
@@ -1559,56 +1527,65 @@ DatabaseAPI::setListingData( ListingReply & a_reply, libjson::Value & a_result )
             }
             else
             {
-                item = a_reply.add_item();
-                item->set_id( obj.at( "id" ).asString( ));
-                item->set_title( obj.at( "title" ).asString( ));
-
-                if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
-                    item->set_alias( j->second.asString( ));
-
-                if (( j = obj.find( "owner" )) != obj.end( ) && !j->second.isNull( ))
-                    item->set_owner( j->second.asString( ));
-
-                if (( j = obj.find( "creator" )) != obj.end( ) && !j->second.isNull( ))
-                    item->set_creator( j->second.asString( ));
-
-                if (( j = obj.find( "doi" )) != obj.end( ) && !j->second.isNull( ))
-                    item->set_doi( j->second.asString( ));
-
-                if (( j = obj.find( "url" )) != obj.end( ) && !j->second.isNull( ))
-                    item->set_url( j->second.asString( ));
-
-                if (( j = obj.find( "size" )) != obj.end( ))
-                    item->set_size( j->second.asNumber( ));
-
-                if (( j = obj.find( "locked" )) != obj.end( ) && !j->second.isNull( ))
-                    item->set_locked( j->second.asBool( ));
-
-                if (( j = obj.find( "gen" )) != obj.end( ))
-                    item->set_gen( j->second.asNumber( ));
-
-                if (( j = obj.find( "deps" )) != obj.end( ))
-                {
-                    Value::Array & arr2 = j->second.getArray();
-
-                    for ( k = arr2.begin(); k != arr2.end(); k++ )
-                    {
-                        Value::Object & obj2 = k->getObject();
-
-                        dep = item->add_dep();
-                        dep->set_id( obj2.at( "id" ).asString());
-                        dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
-                        dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
-                        if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
-                            dep->set_alias( m->second.asString() );
-                    }
-                }
+                setListingData( a_reply.add_item(), obj );
             }
         }
     }
     catch( exception & e )
     {
         EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service. " << e.what( ));
+    }
+}
+
+void
+DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
+{
+    a_item->set_id( a_obj.at( "id" ).asString( ));
+    a_item->set_title( a_obj.at( "title" ).asString( ));
+
+    Value::ObjectIter   j;
+
+    if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
+        a_item->set_alias( j->second.asString( ));
+
+    if (( j = a_obj.find( "owner" )) != a_obj.end( ) && !j->second.isNull( ))
+        a_item->set_owner( j->second.asString( ));
+
+    if (( j = a_obj.find( "creator" )) != a_obj.end( ) && !j->second.isNull( ))
+        a_item->set_creator( j->second.asString( ));
+
+    if (( j = a_obj.find( "doi" )) != a_obj.end( ) && !j->second.isNull( ))
+        a_item->set_doi( j->second.asString( ));
+
+    if (( j = a_obj.find( "url" )) != a_obj.end( ) && !j->second.isNull( ))
+        a_item->set_url( j->second.asString( ));
+
+    if (( j = a_obj.find( "size" )) != a_obj.end( ))
+        a_item->set_size( j->second.asNumber( ));
+
+    if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
+        a_item->set_locked( j->second.asBool( ));
+
+    if (( j = a_obj.find( "gen" )) != a_obj.end( ))
+        a_item->set_gen( j->second.asNumber( ));
+
+    if (( j = a_obj.find( "deps" )) != a_obj.end( ))
+    {
+        Value::ObjectIter   m;
+        DependencyData *    dep;
+        Value::Array &      arr2 = j->second.getArray();
+
+        for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+        {
+            Value::Object & obj2 = k->getObject();
+
+            dep = a_item->add_dep();
+            dep->set_id( obj2.at( "id" ).asString());
+            dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
+            dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+            if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
+                dep->set_alias( m->second.asString() );
+        }
     }
 }
 
@@ -1624,7 +1601,7 @@ DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingR
 
     dbGet( "qry/list", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1705,7 +1682,7 @@ DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingR
 
     dbGet( "/qry/exec", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1798,7 +1775,7 @@ DatabaseAPI::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth:
 
     dbGet( "acl/by_user/list", {{"owner",a_request.owner()}}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -1819,7 +1796,7 @@ DatabaseAPI::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth:
 
     dbGet( "acl/by_proj/list", {{"owner",a_request.owner()}}, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 void
@@ -2449,7 +2426,7 @@ DatabaseAPI::topicList( const Auth::TopicListRequest & a_request, Auth::ListingR
 
     dbGet( "topic/list", params, result );
 
-    setListingData( a_reply, result );
+    setListingDataReply( a_reply, result );
 }
 
 /*
@@ -2533,48 +2510,98 @@ DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 
 
 void
-DatabaseAPI::taskInitDataGet( const std::vector<std::string> & a_ids, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
 {
-    string body = "{\"ids\":[";
+    string body = "{\"id\":[";
 
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    for ( int i = 0; i < a_request.id_size(); i++ )
     {
-        if ( i != a_ids.begin() )
+        if ( i > 0 )
             body += ",";
 
-        body += "\"" + *i + "\"";
+        body += "\"" + a_request.id(i) + "\"";
     }
+    body += "]";
 
-    body += "],\"path\":\"";
-    body += a_path;
-    body += "\",\"encrypt\":";
-    body += to_string(a_encrypt);
+    if ( a_request.has_path() )
+        body += ",\"path\":\"" + a_request.path() + "\"";
+
+    if ( a_request.has_encrypt() )
+        body += ",\"encrypt\":" + to_string( a_request.encrypt() );
+
+    if ( a_request.has_check() && a_request.check() )
+        body += ",\"check\":true";
+
     body += "}";
-
-    //Value result;
 
     dbPost( "dat/get", {}, &body, a_result );
 
-    setTaskDataFromTaskInit( a_reply, a_result );
+    setDataGetSetReply( a_reply, a_result );
 }
 
 
 void
-DatabaseAPI::taskInitDataPut( const std::string & a_id, const std::string & a_path, Encryption a_encrypt, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
 {
-    string body = "{\"ids\":[\"" + a_id + "\"],\"path\":\"";
-    body += a_path;
-    body += "\",\"encrypt\":";
-    body += to_string(a_encrypt);
+    string body = "{\"id\":[\"" + a_request.id() + "\"]";
+
+    if ( a_request.has_path() )
+        body += ",\"path\":\"" + a_request.path() + "\"";
+
+    if ( a_request.has_encrypt() )
+        body += ",\"encrypt\":" + to_string( a_request.encrypt() );
+
+    if ( a_request.has_check() && a_request.check() )
+        body += ",\"check\":true";
+
     body += "}";
 
     dbPost( "dat/put", {}, &body, a_result );
 
-    setTaskDataFromTaskInit( a_reply, a_result );
+    setDataGetSetReply( a_reply, a_result );
 }
 
 void
-DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
+DatabaseAPI::setDataGetSetReply( Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
+{
+    Value::ObjectIter   t;
+
+    try
+    {
+        Value::Object &     obj = a_result.getObject();
+        Value::ObjectIter   i;
+        Value::ArrayIter    j;
+
+        if (( i = obj.find("glob_data")) != obj.end() && i->second.size( ))
+        {
+            Value::Array & arr = i->second.getArray();
+
+            for ( j = arr.begin(); j != arr.end(); j++ )
+                setListingData( a_reply.add_item(), j->getObject() );
+        }
+
+        if (( i = obj.find("http_data")) != obj.end() && i->second.size( ))
+        {
+            Value::Array & arr = i->second.getArray();
+
+            for ( j = arr.begin(); j != arr.end(); j++ )
+                setListingData( a_reply.add_item(), j->getObject() );
+        }
+
+        if (( i = obj.find( "task" )) != obj.end( ))
+        {
+            setTaskData( a_reply.mutable_task(), i->second );
+        }
+    }
+    catch ( exception & e )
+    {
+        DL_ERROR("JSON: " << a_result.toString());
+        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
+    }
+}
+
+void
+DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
@@ -2589,20 +2616,7 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
 
     dbPost( "dat/delete", {}, &body, a_result );
 
-    DL_ERROR( "DATA DEL: json: " << a_result.toString());
-
-    Value::Object & obj = a_result.getObject();
-    Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-    {
-        Value::Object & obj2 = t->second.getObject();
-        TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
-
-        // If task is blocked, remove task from result to prevent immediate scheduling
-        if ( ts == TS_BLOCKED )
-            obj.erase( t );
-    }
+    setTaskDataReply( a_reply, a_result );
 }
 
 
@@ -2642,10 +2656,6 @@ DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a
     {
         TaskData * task = a_reply.mutable_task();
         setTaskData( task, t->second );
-
-        // If task is blocked, remove task from result to prevent immediate scheduling
-        if ( task->status() == TS_BLOCKED )
-            obj.erase( t );
     }
 }
 
@@ -2692,50 +2702,31 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
 
     if ( t != obj.end( ))
     {
-        Value::Object & obj2 = t->second.getObject();
+        //Value::Object & obj2 = t->second.getObject();
 
         TaskData * task = a_reply.mutable_task();
         setTaskData( task, t->second );
-
-        TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
-
-        // If task is blocked, remove task from result to prevent immediate scheduling
-        if ( ts == TS_BLOCKED )
-            obj.erase( t );
     }
 }
 
 
 void
-DatabaseAPI::taskInitProjectDelete( const std::vector<std::string> & a_ids, libjson::Value & a_result )
+DatabaseAPI::taskInitProjectDelete( const Auth::ProjectDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"ids\":[";
 
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    for ( int i = 0; i < a_request.id_size(); i++ )
     {
-        if ( i != a_ids.begin() )
+        if ( i > 0 )
             body += ",";
 
-        body += "\"" + *i + "\"";
+        body += "\"" + a_request.id(i) + "\"";
     }
     body += "]}";
 
     dbPost( "prj/delete", {}, &body, a_result );
 
-    DL_ERROR( "PROJ DEL: json: " << a_result.toString());
-
-    Value::Object & obj = a_result.getObject();
-    Value::ObjectIter t = obj.find( "task" );
-
-    if ( t != obj.end( ))
-    {
-        Value::Object & obj2 = t->second.getObject();
-        TaskStatus ts = (TaskStatus) obj2.at( "status" ).asNumber();
-
-        // If task is blocked, remove task from result to prevent immediate scheduling
-        if ( ts == TS_BLOCKED )
-            obj.erase( t );
-    }
+    setTaskDataReply( a_reply, a_result );
 }
 
 
@@ -2745,7 +2736,7 @@ DatabaseAPI::taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateReque
     dbGet( "repo/alloc/create", {{"subject",a_request.subject()},{"repo",a_request.repo()},
         {"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, a_result );
 
-    setTaskDataFromTaskInit( a_reply, a_result );
+    setTaskDataReply( a_reply, a_result );
 }
 
 
@@ -2754,47 +2745,9 @@ DatabaseAPI::taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteReque
 {
     dbGet( "repo/alloc/delete", {{"subject",a_request.subject()},{"repo",a_request.repo()}}, a_result );
 
-    setTaskDataFromTaskInit( a_reply, a_result );
+    setTaskDataReply( a_reply, a_result );
 }
 
-
-/**
- * @brief Sets TaskDataReply from JSON returned by a taskInit... call
- * @param a_reply 
- * @param a_result 
- *
- * JSON contains an object with a "task" field containing task fields. This
- * method removes tasks that are nor in READY status from the original JSON
- * input - this is to.
- */
-void
-DatabaseAPI::setTaskDataFromTaskInit( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
-{
-    Value::ObjectIter   t;
-
-    //cerr << "TASK RES: " << a_result.toString() << endl;
-
-    try
-    {
-        Value::Object & obj = a_result.getObject();
-
-        t = obj.find( "task" );
-        if ( t != obj.end( ))
-        {
-            TaskData * task = a_reply.add_task();
-            setTaskData( task, t->second );
-
-            // If task is blocked, remove task from result to prevent immediate scheduling
-            if ( task->status() == TS_BLOCKED )
-                obj.erase( t );
-        }
-    }
-    catch ( exception & e )
-    {
-        DL_ERROR("JSON: " << a_result.toString());
-        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
-    }
-}
 
 void
 DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
@@ -2811,6 +2764,41 @@ DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
     a_task->set_ut( obj.at( "ut" ).asNumber( ));
 }
 
+
+/**
+ * @brief Sets TaskDataReply from JSON returned by a taskInit... call
+ * @param a_reply 
+ * @param a_result 
+ *
+ * JSON contains an object with a "task" field containing task fields. This
+ * method removes tasks that are nor in READY status from the original JSON
+ * input - this is to.
+ */
+void
+DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+{
+    Value::ObjectIter   t;
+
+    try
+    {
+        Value::Object & obj = a_result.getObject();
+
+        t = obj.find( "task" );
+        if ( t != obj.end( ))
+        {
+            TaskData * task = a_reply.add_task();
+            setTaskData( task, t->second );
+        }
+    }
+    catch ( exception & e )
+    {
+        DL_ERROR("JSON: " << a_result.toString());
+        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
+    }
+}
+
+
+
 /**
  * @brief Sets TaskDataReply from JSON returned by a task management call
  * @param a_reply 
@@ -2819,7 +2807,7 @@ DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
  * JSON contains an array of task objects containing task fields.
  */
 void
-DatabaseAPI::setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setTaskDataReplyArray( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   t;
 
@@ -2830,23 +2818,13 @@ DatabaseAPI::setTaskDataFromList( Auth::TaskDataReply & a_reply, libjson::Value 
         Value::Array & arr = a_result.getArray();
         for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            Value::Object & obj = i->getObject();
-
-            TaskStatus ts = (TaskStatus) obj.at( "status" ).asNumber();
-
             TaskData * task = a_reply.add_task();
-            task->set_id( obj.at( "id" ).asString( ));
-            task->set_type((TaskType)obj.at( "type" ).asNumber( ));
-            task->set_status( ts );
-            task->set_client( obj.at( "client" ).asString( ));
-            task->set_progress( obj.at( "progress" ).asNumber( ));
-            task->set_msg( obj.at( "msg" ).asString( ));
-            task->set_ct( obj.at( "ct" ).asNumber( ));
-            task->set_ut( obj.at( "ut" ).asNumber( ));
+            setTaskData( task, *i );
         }
     }
     catch ( exception & e )
     {
+        DL_ERROR("JSON: " << a_result.toString());
         EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
     }
 }
@@ -2947,7 +2925,7 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 
     dbGet( "task/list", params, result );
 
-    setTaskDataFromList( a_reply, result );
+    setTaskDataReplyArray( a_reply, result );
 }
 
 void
@@ -2957,7 +2935,7 @@ DatabaseAPI::taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataRe
 
     dbGet( "task/view", {{"task_id",a_request.task_id()}}, result );
 
-    setTaskDataFromList( a_reply, result );
+    setTaskDataReplyArray( a_reply, result );
 }
 
 

@@ -305,27 +305,29 @@ message HttpXfrDataReply
     repeated SDMS.HttpXfrData   xfr         = 1;
 }
 
-// Perform pre-download verification/processing
-message DataGetPreprocRequest
-{
-    repeated string             id          = 1;
-}
-
 // Download raw data for one or more records
 message DataGetRequest
 {
     repeated string             id          = 1;
-    required string             path        = 2;
-    required Encryption         encrypt     = 3;
+    optional string             path        = 2;
+    optional Encryption         encrypt     = 3;
+    optional bool               check       = 4;
 }
 
 // Upload raw data for one record
 message DataPutRequest
 {
     required string             id          = 1;
-    required string             path        = 2;
-    required Encryption         encrypt     = 3;
+    optional string             path        = 2;
+    optional Encryption         encrypt     = 3;
     optional string             ext         = 4;
+    optional bool               check       = 5;
+}
+
+message DataGetPutReply
+{
+    repeated ListingData        item        = 1;
+    optional SDMS.TaskData      task        = 2;
 }
 
 // Delete raw data only (not record)
