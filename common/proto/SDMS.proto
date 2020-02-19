@@ -283,13 +283,22 @@ enum TaskStatus
     TS_FAILED       = 4;
 }
 
+enum TaskCommand
+{
+    TC_STOP                 = 0;
+    TC_RAW_DATA_TRANSFER    = 1;
+    TC_RAW_DATA_DELETE      = 2;
+    TC_RAW_DATA_UPDATE_SIZE = 3;
+    TC_ALLOC_CREATE         = 4;
+    TC_ALLOC_DELETE         = 5;
+}
+
 enum Encryption
 {
     ENCRYPT_NONE    = 0;
     ENCRYPT_AVAIL   = 1;
     ENCRYPT_FORCE   = 2;
 }
-
 
 message TaskData
 {

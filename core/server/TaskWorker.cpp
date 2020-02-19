@@ -29,9 +29,13 @@ TaskWorker::~TaskWorker()
 void
 TaskWorker::workerThread()
 {
-    uint32_t            task_type;
-    bool                success, retry = false;
-    string              msg;
+    bool                        retry = false;
+    string                      msg;
+    //string                      client_id;
+    //TaskStatus          status;
+    libjson::Value              task_cmd;
+    libjson::Value::ObjectIter  new_tasks;
+    uint32_t                    cmd;
 
     DL_DEBUG( "Task worker " << id() << " started." )
 
@@ -39,90 +43,279 @@ TaskWorker::workerThread()
     {
         m_task = m_mgr.getNextTask( this );
 
-
         DL_DEBUG("Task worker " << id() << " handling new task " << m_task->task_id );
 
         try
         {
-            // Dispatch task to handler method
-            success = false;
+            //client_id = m_task->data["client"].asString();
+            //status = (TaskStatus) m_task->data["status"].asNumber();
 
-            task_type = m_task->data["type"].asNumber();
-            switch( task_type )
+            //m_db.setClient( client_id );
+            //getUserAccessToken( client_id );
+
+            do
             {
-                case TT_DATA_GET:
-                    retry = handleDataGet();
-                    break;
-                case TT_DATA_PUT:
-                    retry = handleDataPut();
-                    break;
-                case TT_DATA_DEL:
-                    retry = handleDataDelete();
-                    break;
-                case TT_REC_CHG_ALLOC:
-                    retry = handleRecordChangeAlloc();
-                    break;
-                case TT_REC_CHG_OWNER:
-                    retry = handleRecordChangeOwner();
-                    break;
-                case TT_REC_DEL:
-                    retry = handleRecordDelete();
-                    break;
-                case TT_ALLOC_CREATE:
-                    retry = handleAllocCreate();
-                    break;
-                case TT_ALLOC_DEL:
-                    retry = handleAllocDelete();
-                    break;
-                case TT_USER_DEL:
-                    retry = false;
-                    break;
-                case TT_PROJ_DEL:
-                    retry = handleProjectDelete();
-                    break;
-                default:
-                    retry = false;
-                    EXCEPT_PARAM( 1, "Invalid task type (" << task_type << ") for task ID '" << m_task->task_id << "'" );
-                    break;
-            }
+                m_db.taskRun( m_task->task_id, task_cmd );
 
-            success = true;
+                cmd = (uint32_t)task_cmd["cmd"].asNumber();
+                libjson::Value & params = task_cmd["params"];
+
+                switch ( cmd )
+                {
+                case TC_RAW_DATA_TRANSFER:
+                    retry = cmdRawDataTransfer( params );
+                    break;
+                case TC_RAW_DATA_DELETE:
+                    retry = cmdRawDataDelete( params );
+                    break;
+                case TC_RAW_DATA_UPDATE_SIZE:
+                    retry = cmdRawDataUpdateSize( params );
+                    break;
+                case TC_ALLOC_CREATE:
+                    retry = cmdAllocCreate( params );
+                    break;
+                case TC_ALLOC_DELETE:
+                    retry = cmdAllocDelete( params );
+                    break;
+                case TC_STOP:
+                    new_tasks = task_cmd.find("new_tasks");
+                    if ( new_tasks != task_cmd.end() )
+                    {
+                        DL_DEBUG("found " << new_tasks->second.size() << " new ready tasks." );
+                        m_mgr.newTasks( new_tasks->second );
+                    }
+                    break;
+                }
+            }while ( cmd != TC_STOP && !retry );
+
+            if ( retry )
+            {
+                if ( m_mgr.retryTask( m_task ))
+                {
+                    m_db.taskAbort( m_task->task_id, "Maximum task retry period exceeded." );
+                }
+            }
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "Task handler error,  worker " << id() );
-            msg = e.toString( );
+            msg = e.toString();
+            DL_ERROR( "Task worker " << id() << " exception: " << msg );
+            m_db.taskAbort( m_task->task_id, msg );
         }
         catch( exception & e )
         {
-            DL_ERROR( "Task handler error, worker " << id() );
             msg = e.what();
-        }
-
-        if ( retry )
-        {
-            try
-            {
-                DL_INFO("Do retry here");
-
-                if ( m_mgr.retryTask( m_task ))
-                {
-                    DL_INFO("Retry time exceeded");
-                    finalizeTask( false, "Maximum task retry period exceeded." );
-                }
-            }
-            catch( ... )
-            {
-                DL_ERROR( "Exception in retry code" );
-            }
-        }
-        else
-        {
-            finalizeTask( success, msg );
+            DL_ERROR( "Task worker " << id() << " exception: " << msg );
+            m_db.taskAbort( m_task->task_id, msg );
         }
     }
 }
 
+/*
+bool
+TaskWorker::cmdRefreshUserAccessToken( libjson::Value & task_cmd )
+{
+    string      ref_tok;
+    uint32_t    expires_in;
+
+    m_db.userGetAccessToken( m_access_token, ref_tok, expires_in );
+
+    DL_INFO( "Refreshing access token for " << a_uid );
+
+        m_glob.refreshAccessToken( ref_tok, m_access_token, expires_in );
+        m_db.userSetAccessToken( m_access_token, expires_in, ref_tok );
+    }
+}
+*/
+
+bool
+TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
+{
+    DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
+    DL_DEBUG( "params: " << a_task_params.toString() );
+
+    string &                    uid = a_task_params["client"].asString();
+    TaskType                    type = (TaskType)a_task_params["type"].asNumber();
+    Encryption                  encrypt = (Encryption)a_task_params["encrypt"].asNumber();
+    string &                    src_ep = a_task_params["src_ep"].asString();
+    string &                    src_path = a_task_params["src_path"].asString();
+    string &                    dst_ep = a_task_params["dst_ep"].asString();
+    string &                    dst_path = a_task_params["dst_path"].asString();
+    libjson::Value::Array &     files = a_task_params["files"].getArray();
+    string                      src_repo_id;
+    string                      dst_repo_id;
+    bool                        encrypted = true;
+    GlobusAPI::EndpointInfo     ep_info;
+
+    switch ( type )
+    {
+    case TT_DATA_GET:
+        src_repo_id = a_task_params["src_repo_id"].asString();
+        break;
+    case TT_DATA_PUT:
+        dst_repo_id = a_task_params["dst_repo_id"].asString();
+        break;
+    case TT_REC_CHG_ALLOC:
+    case TT_REC_CHG_OWNER:
+        src_repo_id = a_task_params["src_repo_id"].asString();
+        dst_repo_id = a_task_params["dst_repo_id"].asString();
+        break;
+    default:
+        EXCEPT_PARAM( 1, "Invalid task type for raw data transfer command: " << type );
+        break;
+    }
+
+    string acc_tok = a_task_params["acc_tok"].asString();
+    string ref_tok = a_task_params["ref_tok"].asString();
+    uint32_t expires_in = a_task_params["acc_tok_exp_in"].asNumber();
+
+    if ( expires_in < 300 )
+    {
+        DL_INFO( "Refreshing access token for " << uid );
+
+        m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
+        m_db.setClient( uid );
+        m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
+    }
+
+    if ( type == TT_DATA_GET || type == TT_DATA_PUT )
+    {
+        string & ep = (type == TT_DATA_GET)?dst_ep:src_ep;
+
+        // Check destination endpoint
+        m_glob.getEndpointInfo( ep, acc_tok, ep_info );
+        if ( !ep_info.activated )
+            EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
+
+        // TODO Notify if ep activation expiring soon
+
+        // Calculate encryption state
+        encrypted = checkEncryption( ep, encrypt, ep_info );
+    }
+
+    // Init Globus transfer
+
+    vector<pair<string,string>> files_v;
+    for ( libjson::Value::ArrayIter f = files.begin(); f != files.end(); f++ )
+        files_v.push_back(make_pair( src_path + (*f)["from"].asString(), dst_path + (*f)["to"].asString() ));
+
+    string glob_task_id = m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
+
+    // Monitor Globus transfer
+
+    GlobusAPI::XfrStatus    xfr_status;
+    string                  err_msg;
+
+    do
+    {
+        sleep( 5 );
+
+        if ( m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
+        {
+            // Transfer task needs to be cancelled
+            m_glob.cancelTask( glob_task_id, acc_tok );
+        }
+    } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
+
+    if ( xfr_status == GlobusAPI::XS_FAILED )
+        EXCEPT( 1, err_msg );
+
+    return false;
+}
+
+
+bool
+TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
+{
+    DL_INFO( "Task " << m_task->task_id << " cmdRawDataDelete" );
+    DL_DEBUG( "params: " << a_task_params.toString() );
+
+    Auth::RepoDataDeleteRequest     del_req;
+    RecordDataLocation *            loc;
+    MsgBuf::Message *               reply;
+    time_t                          mod_time;
+    const string &                  repo_id = a_task_params["repo_id"].asString();
+    const string &                  path = a_task_params["path"].asString();
+    libjson::Value::Array &         ids = a_task_params["ids"].getArray();
+    libjson::Value::ArrayIter       id;
+
+    for ( id = ids.begin(); id != ids.end(); id++ )
+    {
+        loc = del_req.add_loc();
+        loc->set_id( id->asString() );
+        loc->set_path( path + id->asString().substr(2) );
+    }
+
+    if ( repoSendRecv( repo_id, del_req, reply ))
+        return true;
+
+    delete reply;
+
+    mod_time = time(0);
+
+    // Update DB record with new file stats
+    for ( id = ids.begin(); id != ids.end(); id++ )
+    {
+        m_db.recordUpdatePostPut( id->asString(), 0, mod_time, "", 0 );
+    }
+
+    return false;
+}
+
+
+bool
+TaskWorker::cmdRawDataUpdateSize( libjson::Value & a_task_params );
+{
+    // TODO
+}
+
+
+bool
+TaskWorker::cmdAllocCreate( libjson::Value & a_task_params )
+{
+    DL_INFO( "Task " << m_task->task_id << " cmdAllocCreate" );
+    DL_DEBUG( "params: " << a_task_params.toString() );
+
+    string & repo_id = a_task_params["repo"].asString();
+    string & path = a_task_params["path"].asString();
+
+    Auth::RepoPathCreateRequest     req;
+    MsgBuf::Message *               reply;
+
+    req.set_path( path );
+
+    if ( repoSendRecv( repo_id, req, reply ))
+        return true;
+
+    delete reply;
+
+    return false;
+}
+
+
+bool
+TaskWorker::cmdAllocDelete( libjson::Value & a_task_params )
+{
+    DL_INFO( "Task " << m_task->task_id << " cmdAllocDelete" );
+    DL_DEBUG( "params: " << a_task_params.toString() );
+
+    string & repo_id = a_task_params["repo"].asString();
+    string & path = a_task_params["path"].asString();
+
+    Auth::RepoPathDeleteRequest         req;
+    MsgBuf::Message *                   reply;
+
+    req.set_path( path );
+
+    if ( repoSendRecv( repo_id, req, reply ))
+        return true;
+
+    delete reply;
+
+    return false;
+}
+
+/*
 void
 TaskWorker::finalizeTask( bool a_succeeded, const std::string & a_msg )
 {
@@ -136,15 +329,6 @@ TaskWorker::finalizeTask( bool a_succeeded, const std::string & a_msg )
 
         DL_DEBUG("found " << new_tasks.size() << " new ready tasks." );
         m_mgr.newTasks( new_tasks );
-/*
-        lock_guard<mutex> lock(m_worker_mutex);
-
-        libjson::Value::Array & tasks = new_tasks.getArray();
-        for ( libjson::Value::ArrayIter t = tasks.begin(); t != tasks.end(); t++ )
-        {
-            m_tasks_ready.push_back( new Task( (*t)["id"].asString(), *t ));
-        }
-*/
     }
     catch( TraceException & e )
     {
@@ -163,7 +347,9 @@ TaskWorker::finalizeTask( bool a_succeeded, const std::string & a_msg )
     delete m_task;
     m_task = 0;
 }
+*/
 
+#if 0
 
 bool
 TaskWorker::handleDataGet( )
@@ -1269,7 +1455,9 @@ TaskWorker::handleAllocDelete()
     return false;
 }
 
+#endif
 
+/*
 void
 TaskWorker::getUserAccessToken( const std::string & a_uid )
 {
@@ -1285,17 +1473,17 @@ TaskWorker::getUserAccessToken( const std::string & a_uid )
         m_glob.refreshAccessToken( ref_tok, m_access_token, expires_in );
         m_db.userSetAccessToken( m_access_token, expires_in, ref_tok );
     }
-}
+}*/
 
 
 bool
-TaskWorker::checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info )
+TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info )
 {
     switch ( a_encrypt )
     {
         case ENCRYPT_NONE:
             if ( a_ep_info.force_encryption )
-                EXCEPT(1,"Remote endpoint requires encryption.");
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep << " requires encryption.");
             return false;
         case ENCRYPT_AVAIL:
             if ( a_ep_info.supports_encryption )
@@ -1304,19 +1492,19 @@ TaskWorker::checkEncryption( Encryption a_encrypt, const GlobusAPI::EndpointInfo
                 return false;
         case ENCRYPT_FORCE:
             if ( !a_ep_info.supports_encryption )
-                EXCEPT(1,"Remote endpoint does not support encryption.");
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep << " does not support encryption.");
             return true;
         default:
-            EXCEPT(1,"Invalid transfer encryption value.");
+            EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
     }
 
     // compiler warns, but can't get here
     return false;
 }
 
-
+/*
 GlobusAPI::XfrStatus
-TaskWorker::monitorTransfer( std::string & a_err_msg )
+TaskWorker::monitorTransfer( const std::string & a_acc_tok, const std::string & a_glob_task_id, std::string & a_err_msg )
 {
     GlobusAPI::XfrStatus xfr_status;
 
@@ -1324,15 +1512,16 @@ TaskWorker::monitorTransfer( std::string & a_err_msg )
     {
         sleep( 5 );
 
-        if ( m_glob.checkTransferStatus( m_glob_task_id, m_access_token, xfr_status, a_err_msg ))
+        if ( m_glob.checkTransferStatus( a_glob_task_id, a_acc_tok, xfr_status, a_err_msg ))
         {
             // Transfer task needs to be cancelled
-            m_glob.cancelTask( m_glob_task_id, m_access_token );
+            m_glob.cancelTask( a_glob_task_id, a_acc_tok );
         }
     } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 
     return xfr_status;
 }
+*/
 
 
 bool

@@ -2510,6 +2510,18 @@ DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 
 
 void
+DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply )
+{
+}
+
+
+void
+DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg )
+{
+}
+
+
+void
 DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"id\":[";

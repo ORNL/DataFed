@@ -136,6 +136,9 @@ public:
 
 
     void taskLoadReady( libjson::Value & a_result );
+    void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply );
+    void taskAbort( const std::string & a_task_id, const std::string & a_msg );
+
     void taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
     void taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
     void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
