@@ -163,13 +163,13 @@ TaskMgr::maintenanceThread()
  * NOTE: Takes ownership of JSON value leaving a NULL value in place.
  */
 void
-TaskMgr::newTask( libjson::Value & a_task )
+TaskMgr::newTask( const std::string & a_task_id )
 {
     DL_DEBUG("TaskMgr adding new task");
 
     lock_guard<mutex> lock( m_worker_mutex );
 
-    addNewTaskAndScheduleWorker( a_task );
+    addNewTaskAndScheduleWorker( a_task_id );
 }
 
 /**
@@ -194,7 +194,7 @@ TaskMgr::newTasks( libjson::Value & a_tasks )
 
     for ( ; t != arr.end(); t++ )
     {
-        addNewTaskAndScheduleWorker( *t );
+        addNewTaskAndScheduleWorker( t->asString() );
     }
 }
 
@@ -208,11 +208,11 @@ TaskMgr::newTasks( libjson::Value & a_tasks )
  * NOTE: Takes ownership of JSON values leaving NULL values in place.
  */
 void
-TaskMgr::addNewTaskAndScheduleWorker( libjson::Value & a_task )
+TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id )
 {
     // TODO Add logic to limit max number of ready tasks in memory
 
-    m_tasks_ready.push_back( new Task( a_task["id"].asString(), a_task ));
+    m_tasks_ready.push_back( new Task( a_task_id ));
 
     if ( m_worker_next )
     {

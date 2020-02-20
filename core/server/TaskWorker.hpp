@@ -39,6 +39,7 @@ private:
     */
     //void        getUserAccessToken( const std::string & a_uid );
 
+    void        abortTask( const std::string & a_msg );
     bool        checkEncryption( const std::string & a_ep, Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info );
     //GlobusAPI::XfrStatus  monitorTransfer( std::string & a_err_msg );
     bool        refreshDataSize( const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext );

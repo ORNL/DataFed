@@ -24,15 +24,15 @@ public:
 
     struct Task
     {
-        Task( const std::string & a_id, libjson::Value & a_data ) :
-            task_id( a_id ), data( std::move( a_data )), cancel(false), retry_count(0)
+        Task( const std::string & a_id /*, libjson::Value & a_data*/ ) :
+            task_id( a_id ), /*data( std::move( a_data )),*/ cancel(false), retry_count(0)
         {}
 
         ~Task()
         {}
 
         std::string         task_id;
-        libjson::Value      data;
+        //libjson::Value      data;
         bool                cancel;
         uint32_t            retry_count;
         timepoint_t         retry_time;

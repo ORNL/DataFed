@@ -27,7 +27,7 @@ class TaskMgr : public ITaskMgr
 public:
     static TaskMgr & getInstance();
 
-    void    newTask( libjson::Value & a_task );
+    void    newTask( const std::string & a_task_id );
     void    cancelTask( const std::string & a_task_id );
 
 private:
@@ -38,7 +38,7 @@ private:
 
     void        maintenanceThread();
     void        newTasks( libjson::Value & a_tasks );
-    void        addNewTaskAndScheduleWorker( libjson::Value & a_task );
+    void        addNewTaskAndScheduleWorker( const std::string & a_task_id );
     void        retryTaskAndScheduleWorker( Task * a_task );
 
     void        wakeNextWorker();

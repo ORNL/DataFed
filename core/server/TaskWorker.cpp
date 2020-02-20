@@ -92,7 +92,8 @@ TaskWorker::workerThread()
             {
                 if ( m_mgr.retryTask( m_task ))
                 {
-                    m_db.taskAbort( m_task->task_id, "Maximum task retry period exceeded." );
+                    DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
+                    abortTask( "Maximum task retry period exceeded." );
                 }
             }
         }
@@ -100,33 +101,35 @@ TaskWorker::workerThread()
         {
             msg = e.toString();
             DL_ERROR( "Task worker " << id() << " exception: " << msg );
-            m_db.taskAbort( m_task->task_id, msg );
+            abortTask( msg );
         }
         catch( exception & e )
         {
             msg = e.what();
             DL_ERROR( "Task worker " << id() << " exception: " << msg );
-            m_db.taskAbort( m_task->task_id, msg );
+            abortTask( msg );
         }
     }
 }
 
-/*
-bool
-TaskWorker::cmdRefreshUserAccessToken( libjson::Value & task_cmd )
+
+void
+TaskWorker::abortTask( const std::string & a_msg )
 {
-    string      ref_tok;
-    uint32_t    expires_in;
+    DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
 
-    m_db.userGetAccessToken( m_access_token, ref_tok, expires_in );
+    libjson::Value reply;
 
-    DL_INFO( "Refreshing access token for " << a_uid );
+    m_db.taskAbort( m_task->task_id, a_msg, reply );
 
-        m_glob.refreshAccessToken( ref_tok, m_access_token, expires_in );
-        m_db.userSetAccessToken( m_access_token, expires_in, ref_tok );
+    libjson::Value::ObjectIter new_tasks = reply.find("new_tasks");
+    if ( new_tasks != reply.end() )
+    {
+        DL_DEBUG("found " << new_tasks->second.size() << " new ready tasks." );
+        m_mgr.newTasks( new_tasks->second );
     }
 }
-*/
+
 
 bool
 TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
@@ -264,9 +267,45 @@ TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
 
 
 bool
-TaskWorker::cmdRawDataUpdateSize( libjson::Value & a_task_params );
+TaskWorker::cmdRawDataUpdateSize( libjson::Value & a_task_params )
 {
-    // TODO
+    DL_INFO( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
+    DL_DEBUG( "params: " << a_task_params.toString() );
+
+    const string &                  repo_id = a_task_params["repo_id"].asString();
+    const string &                  path = a_task_params["path"].asString();
+    libjson::Value::Array &         ids = a_task_params["ids"].getArray();
+    Auth::RepoDataGetSizeRequest    sz_req;
+    Auth::RepoDataSizeReply *       sz_rep;
+    RecordDataLocation *            loc;
+    MsgBuf::Message *               reply;
+
+    for ( libjson::Value::ArrayIter id = ids.begin(); id != ids.end(); id++ )
+    {
+        loc = sz_req.add_loc();
+        loc->set_id( id->asString() );
+        loc->set_path( path + id->asString().substr(2) );
+    }
+
+    if ( repoSendRecv( repo_id, sz_req, reply ))
+        return true;
+
+    if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( reply )) != 0 )
+    {
+        if ( sz_rep->size_size() != (int)ids.size() )
+            EXCEPT_PARAM( 1, "Mismatched result size with RepoDataSizeReply from repo: " << repo_id );
+
+        m_db.recordUpdateSize( *sz_rep );
+
+        delete reply;
+    }
+    else
+    {
+        delete reply;
+        EXCEPT_PARAM( 1, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id );
+    }
+
+    return false;
 }
 
 

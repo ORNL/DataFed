@@ -1034,6 +1034,24 @@ DatabaseAPI::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_s
     dbPost( "dat/update/post_put", {}, &body, result );
 }
 
+void
+DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
+{
+    libjson::Value result;
+
+    string body = "{\"records\":[";
+
+    for ( int i = 0; i < a_size_rep.size_size(); i++ )
+    {
+        if ( i > 0 )
+            body += ",";
+        body += "{\"id\":\"" + a_size_rep.size(i).id() + "\",\"size\":" + to_string(a_size_rep.size(i).size()) + "}";
+    }
+
+    body += "]}";
+
+    dbPost( "dat/update/size", {}, &body, result );
+}
 
 void
 DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
@@ -2512,12 +2530,14 @@ DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 void
 DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply )
 {
+    dbGet( "task/run", {{"task_id",a_task_id}}, a_task_reply );
 }
 
 
 void
-DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg )
+DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply )
 {
+    dbPost( "task/abort", {{"task_id",a_task_id}}, &a_msg, a_task_reply );
 }
 
 

@@ -826,7 +826,7 @@ ClientWorker::handleTaskResponse( libjson::Value & a_result )
 
     if ( t != obj.end( ) && t->second["status"].asNumber() != TS_BLOCKED )
     {
-        TaskMgr::getInstance().newTask( t->second );
+        TaskMgr::getInstance().newTask( t->second["id"].asString() );
     }
 }
 

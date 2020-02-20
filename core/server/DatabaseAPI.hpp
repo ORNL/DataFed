@@ -64,6 +64,7 @@ public:
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result );
     void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result );
     void recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext = 0 );
+    void recordUpdateSize( const Auth::RepoDataSizeReply & a_sizes );
     void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply );
@@ -92,15 +93,6 @@ public:
     void queryDelete( const std::string & a_id );
     void queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply );
     void queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply );
-
-/*
-    void xfrView( const Auth::XfrViewRequest & a_request, Auth::XfrDataReply & a_reply );
-    void xfrList( const Auth::XfrListRequest & a_request, Auth::XfrDataReply & a_reply );
-    //void xfrInit( const std::string & a_id, const std::string & a_data_path, const std::string * a_ext, XfrMode a_mode, Auth::XfrDataReply & a_reply );
-    //void xfrInit( const Auth::DataGetRequest & a_request, Auth::XfrDataReply & a_reply );
-    void xfrInit( const std::vector<std::string> & a_ids, const std::string & a_path, const std::string * a_ext, XfrEncrypt a_encrypt, XfrMode a_mode, Auth::XfrDataReply & a_reply );
-    void xfrUpdate( const std::string & a_xfr_id, XfrStatus * a_status = 0, const bool * a_encrypted = 0, const std::string & a_err_msg = "", const char * a_task_id = 0 );
-*/
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );
@@ -137,7 +129,7 @@ public:
 
     void taskLoadReady( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply );
-    void taskAbort( const std::string & a_task_id, const std::string & a_msg );
+    void taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply );
 
     void taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
     void taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
