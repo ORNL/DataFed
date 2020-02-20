@@ -13,6 +13,7 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_lib = require('./support');
 const   g_proc = require('./process');
+const   g_tasks = require('./tasks');
 
 module.exports = router;
 
@@ -51,7 +52,8 @@ router.get('/view', function (req, res) {
 .summary('View an existing task record')
 .description('View an existing task record.');
 
-router.get('/start', function (req, res) {
+
+router.get('/run', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -62,19 +64,28 @@ router.get('/start', function (req, res) {
                 if ( !g_db.task.exists( req.queryParams.task_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "Task " + req.queryParams.task_id + " does not exist." ];
 
-                var result, task = g_db.task.document( req.queryParams.task_id );
+                var result, task = g_db.task.document( req.queryParams.task_id ), step = req.queryParams.step;
+
+                // TODO Validate task state/step
+
+                if ( task.status == g_lib.TS_READY ){
+                    g_proc.taskReady( task._id );
+                } else if ( step == task.step ){
+                    task.step++;
+                    g_db._update( task._id, { step: task.step });
+                }
 
                 switch ( task.type ){
-                    case g_lib.TT_DATA_GET:      result = g_proc.taskStartDataGet( task ); break;
-                    case g_lib.TT_DATA_PUT:      result = g_proc.taskStartDataPut( task ); break;
-                    case g_lib.TT_DATA_DEL:      result = g_proc.taskStartDataDel( task ); break;
-                    case g_lib.TT_REC_ALLOC_CHG: result = g_proc.taskStartRecAllocChg( task ); break;
-                    case g_lib.TT_REC_OWNER_CHG: result = g_proc.taskStartRecOwnerChg( task ); break;
-                    case g_lib.TT_REC_DEL:       result = g_proc.taskStartRecDel( task ); break;
-                    case g_lib.TT_ALLOC_CREATE:  result = g_proc.taskStartAllocCreate( task ); break;
-                    case g_lib.TT_ALLOC_DEL:     result = g_proc.taskStartAllocDel( task ); break;
-                    case g_lib.TT_USER_DEL:      result = g_proc.taskStartUserDel( task ); break;
-                    case g_lib.TT_PROJ_DEL:      result = g_proc.taskStartProjDel( task ); break;
+                    case g_lib.TT_DATA_GET:      result = g_tasks.taskRunDataGet( task ); break;
+                    case g_lib.TT_DATA_PUT:      result = g_tasks.taskRunDataPut( task ); break;
+                    case g_lib.TT_DATA_DEL:      result = g_tasks.taskRunDataDel( task ); break;
+                    case g_lib.TT_REC_ALLOC_CHG: result = g_tasks.taskRunRecAllocChg( task ); break;
+                    case g_lib.TT_REC_OWNER_CHG: result = g_tasks.taskRunRecOwnerChg( task ); break;
+                    case g_lib.TT_REC_DEL:       result = g_tasks.taskRunRecDel( task ); break;
+                    case g_lib.TT_ALLOC_CREATE:  result = g_tasks.taskRunAllocCreate( task ); break;
+                    case g_lib.TT_ALLOC_DEL:     result = g_tasks.taskRunAllocDel( task ); break;
+                    case g_lib.TT_USER_DEL:      result = g_tasks.taskRunUserDel( task ); break;
+                    case g_lib.TT_PROJ_DEL:      result = g_tasks.taskRunProjDel( task ); break;
                 }
 
                 res.send( result );
@@ -85,12 +96,13 @@ router.get('/start', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('task_id', joi.string().required(), "Task ID")
+.queryParam('step', joi.number().integer().min(0).optional(), "Task step")
 .summary('Start task')
 .description('Start task. Creates and returns detailed task state');
 
-
+/*
 router.post('/update', function (req, res) {
     try {
         var result = [];
@@ -146,14 +158,14 @@ router.post('/update', function (req, res) {
 }).required(), 'Record fields')
 .summary('Update an existing task record')
 .description('Update an existing task record from JSON body');
-
+*/
 
 /** @brief Clean-up a task and remove it from task dependency graph
  *
  * Removes dependency locks and patches task dependency graph (up and down
  * stream). Returns list of new runnable tasks if available.
  */
-router.post('/finalize', function (req, res) {
+router.post('/abort', function (req, res) {
     try {
         var result = [];
         g_db._executeTransaction({
@@ -165,44 +177,7 @@ router.post('/finalize', function (req, res) {
                 if ( !g_db._exists( req.queryParams.task_id ))
                     throw [g_lib.ERR_INVALID_PARAM,"Task " + req.queryParams.task_id + " does not exist."];
 
-                var new_tasks = [], dep, dep_blocks, blocks = g_db.block.byExample({_to:req.queryParams.task_id});
-
-                while ( blocks.hasNext() ){
-                    dep = blocks.next()._from;
-                    dep_blocks = g_db.block.byExample({_from:dep}).toArray();
-                    // If blocked task has only one block, then it's this task being finalized and will be able to run now
-                    if ( dep_blocks.length == 1 ){
-                        new_tasks.push( dep );
-                        g_db._update( dep, { status: g_lib.TS_READY, msg: "Pending" }, { keepNull: false, returnNew: false });
-                    }
-                }
-
-                var obj = {status:req.queryParams.succeeded?g_lib.TS_SUCCEEDED:g_lib.TS_FAILED};
-
-                if ( req.queryParams.succeeded ){
-                    obj.progress = 100;
-                    obj.msg = "Finished";
-                }else{
-                    obj.msg = req.queryParams.message?req.queryParams.message:"Failed (unknown error)";
-                }
-
-                g_db._update( req.queryParams.task_id, obj, { keepNull: false, returnNew: false });
-
-                g_db.lock.removeByExample({_from:req.queryParams.task_id});
-                // Should only have in-coming block edges
-                g_db.block.removeByExample({_to:req.queryParams.task_id});
-
-                var i, task;
-                for ( i in new_tasks ){
-                    task = g_db.task.document( new_tasks[i] );
-
-                    task.id = task._id;
-                    delete task._id;
-                    delete task._rev;
-                    delete task._key;
-
-                    result.push( task );
-                }
+                result = g_proc._taskComplete( req.queryParams.task_id, false, req.queryParams.message );
             }
         });
 
@@ -212,10 +187,9 @@ router.post('/finalize', function (req, res) {
     }
 })
 .queryParam('task_id', joi.string().required(), "Task ID")
-.queryParam('succeeded', joi.boolean().required(), "Final task success/failure status.")
-.queryParam('message', joi.string().optional(), "Final task message.")
-.summary('Finalize an existing task record')
-.description('Clear locks, update dependencies & status, and return list of new runnable tasks.');
+.queryParam('message', joi.string().required(), "Final task message.")
+.summary('Abort a schedule task')
+.description('Abort a schedule task and return list of new runnable tasks.');
 
 
 router.post('/delete', function (req, res) {
@@ -225,7 +199,7 @@ router.post('/delete', function (req, res) {
 
         var task = g_db.task.document( req.queryParams.task_id );
         if ( task.status < g_lib.TS_SUCCEEDED )
-            throw [g_lib.ERR_IN_USE,"Cannot delete task that has not been finalized."];
+            throw [g_lib.ERR_IN_USE,"Cannot delete task that is still scheduled."];
 
         g_lib.graph.task.remove( req.queryParams.task_id );
     } catch( e ) {

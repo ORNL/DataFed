@@ -59,6 +59,13 @@ module.exports = ( function() {
     obj.TS_FAILED           = 4;
     obj.TS_COUNT            = 5;
 
+    obj.TC_STOP                 = 0;
+    obj.TC_RAW_DATA_TRANSFER    = 1;
+    obj.TC_RAW_DATA_DELETE      = 2;
+    obj.TC_RAW_DATA_UPDATE_SIZE = 3;
+    obj.TC_ALLOC_CREATE         = 4;
+    obj.TC_ALLOC_DELETE         = 5;
+
     obj.XS_INIT             = 0;
     obj.XS_ACTIVE           = 1;
     obj.XS_INACTIVE         = 2;

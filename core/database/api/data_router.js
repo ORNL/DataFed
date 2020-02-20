@@ -583,6 +583,53 @@ router.post('/update/post_put', function (req, res) {
 .description('Update an existing data record from JSON body');
 
 
+router.post('/update/size', function (req, res) {
+    try {
+        var result = [];
+
+        g_db._executeTransaction({
+            collections: {
+                read: ["owner","loc"],
+                write: ["d","alloc"]
+            },
+            action: function() {
+                var owner_id, data, loc, alloc, rec, obj, t = Math.floor( Date.now()/1000 );
+
+                for ( var i in req.body.records ){
+                    rec = req.body.records[i];
+
+                    data = g_db.d.document( rec.id );
+
+                    if ( rec.size != data.size ){
+                        owner_id = g_db.owner.firstExample({ _from: rec.id })._to;
+                        loc = g_db.loc.firstExample({ _from: rec.id });
+                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+
+                        obj = { ut: t, size: rec.size, dt: t };
+
+                        g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
+                        g_db._update( rec.id, obj );
+                    }
+                }
+            }
+        });
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    records: joi.array().items(joi.object({
+        id: joi.string().required(),
+        size: joi.number().required()
+    })).required()
+}).required(), 'Record fields')
+.summary('Update existing data record size')
+.description('Update existing data record raw data size');
+
+
 router.post('/update/move_init', function (req, res) {
     try {
         g_db._executeTransaction({

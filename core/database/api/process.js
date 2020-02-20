@@ -293,6 +293,46 @@ module.exports = ( function() {
     };
 
 
+    obj._lockDepsGeneral = function( a_task_id, a_deps ){
+        var i, dep, lock, locks, block = new Set();
+        for ( i in a_deps ){
+            dep = a_deps[i];
+
+            console.log("lock task dep:",dep.id);
+
+            // Gather other tasks with priority over this new one
+            locks = g_db.lock.byExample({_to: dep.id });
+            while ( locks.hasNext() ){
+                console.log("has a lock!");
+
+                lock = locks.next();
+                if ( lock.context == dep.ctx ){
+                    if ( dep.lev > 0 || lock.level > 0 ){
+                        block.add(lock._from);
+                    }
+                }
+            }
+
+            console.log("save a lock");
+
+            // Add new lock
+            if ( dep.ctx )
+                g_db.lock.save({ _from: a_task_id, _to: dep.id, level: dep.lev, context: dep.ctx });
+            else
+                g_db.lock.save({ _from: a_task_id, _to: dep.id, level: dep.lev });
+        }
+
+        if ( block.size ){
+            block.forEach( function(val){
+                g_db.block.save({ _from: a_task_id, _to: val });
+            });
+
+            return true;
+        }
+        return false;
+    };
+
+
     obj._computeDataPaths = function( a_owner_id, a_mode, a_data, a_src_repos, a_rem_path ){
         var data, loc, file;
 
@@ -350,11 +390,42 @@ module.exports = ( function() {
     };
 
 
-    obj._createTask = function( a_client_id, a_type, a_state ){
+    obj._createTask = function( a_client_id, a_type, a_steps, a_state ){
         var time = Math.floor( Date.now()/1000 );
-        var obj = { type: a_type, status: g_lib.TS_READY, msg: "Pending", ct: time, ut: time, progress: 0, client: a_client_id, state: a_state };
+        var obj = { type: a_type, status: g_lib.TS_READY, msg: "Pending", ct: time, ut: time, progress: 0, client: a_client_id, step: 0, steps: a_steps, state: a_state };
+        var task = g_db.task.save( obj, { returnNew: true });
+        return task.new;
+    };
 
-        return obj;
+    obj._taskReady = function( a_task_id, a_state ){
+        g_db._update( a_task_id, { status: g_lib.TS_RUNNING, msg: "Running", state: a_state });
+    };
+
+    obj._taskComplete = function( a_task_id, a_success, a_msg ){
+        var ready_tasks = [], dep, dep_blocks, blocks = g_db.block.byExample({_to: a_task_id});
+
+        while ( blocks.hasNext() ){
+            dep = blocks.next()._from;
+            dep_blocks = g_db.block.byExample({_from:dep}).toArray();
+            // If blocked task has only one block, then it's this task being finalized and will be able to run now
+            if ( dep_blocks.length == 1 ){
+                ready_tasks.push( dep );
+                g_db._update( dep, { status: g_lib.TS_READY, msg: "Pending" });
+            }
+        }
+
+        var obj;
+        if ( a_success ){
+            obj = { status: g_lib.TS_SUCCEEDED, msg: "Finished" };
+        }else{
+            obj = { status: g_lib.TS_FAILED, msg: a_msg?a_msg:"Failed (unknown reason)" };
+        }
+
+        g_db._update( a_task_id, obj );
+        g_db.lock.removeByExample({ _from: a_task_id });
+        g_db.block.removeByExample({ _to: a_task_id });
+
+        return ready_tasks;
     };
 
 
@@ -387,12 +458,7 @@ module.exports = ( function() {
                 task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
             }
 
-            task.new.id = task.new._id;
-            delete task.new._id;
-            delete task.new._key;
-            delete task.new._rev;
-
-            result.task = task.new;
+            result.task = { id: task.new._id, status: task.new.status };
         }
 
         return result;
@@ -429,12 +495,7 @@ module.exports = ( function() {
                 task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
             }
 
-            task.new.id = task.new._id;
-            delete task.new._id;
-            delete task.new._key;
-            delete task.new._rev;
-
-            result.task = task.new;
+            result.task = { id: task.new._id, status: task.new.status };
         }
 
         return result;
@@ -466,12 +527,7 @@ module.exports = ( function() {
                 task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
             }
 
-            task.new.id = task.new._id;
-            delete task.new._id;
-            delete task.new._key;
-            delete task.new._rev;
-
-            return task.new;
+            return { task: { id: task.new._id, status: task.new.status }};
         }
     };
 
@@ -560,15 +616,8 @@ module.exports = ( function() {
             task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
         }
 
-        task.new.id = task.new._id;
-        delete task.new._id;
-        delete task.new._key;
-        delete task.new._rev;
 
-        result.task = task.new;
-
-
-        return result;
+        return { task: { id: task.new._id, status: task.new.status }};
     };
 
 
@@ -681,12 +730,9 @@ module.exports = ( function() {
 
         var task = g_db._update( a_task._id, { status: g_lib.TS_RUNNING, msg: "Running", state: state }, { returnNew: true });
 
-        task.new.id = task.new._id;
-        delete task.new._id;
-        delete task.new._key;
-        delete task.new._rev;
+        var result = { task: { id: task.new._id, status: task.new.status }};
 
-        return task.new;
+        return result;
     };
 
 
@@ -798,15 +844,7 @@ module.exports = ( function() {
             task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
         }
 
-        task.new.id = task.new._id;
-        delete task.new._id;
-        delete task.new._key;
-        delete task.new._rev;
-
-        result.task = task.new;
-
-
-        return result;
+        return { task: { id: task.new._id, status: task.new.status }};
     };
 
     obj.taskStartRecOwnerChg = function( a_task ){
@@ -914,12 +952,7 @@ module.exports = ( function() {
 
         var task = g_db._update( a_task._id, { status: g_lib.TS_RUNNING, msg: "Running", state: state }, { returnNew: true });
 
-        task.new.id = task.new._id;
-        delete task.new._id;
-        delete task.new._key;
-        delete task.new._rev;
-
-        return task.new;
+        return { task: { id: task.new._id, status: task.new.status }};
     };
 
     /** @brief Delete data and/or collections by ID (not alias)
@@ -958,12 +991,7 @@ module.exports = ( function() {
             var doc = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state );
             var task = g_db.task.save( doc, { returnNew: true });
 
-            task.new.id = task.new._id;
-            delete task.new._id;
-            delete task.new._key;
-            delete task.new._rev;
-
-            result.task = task.new;
+            result.task = { id: task.new._id, status: task.new.status };
 
             // Records with managed data must be marked as deleted, but not actually deleted
             for ( i in result.glob_data ){
@@ -1023,7 +1051,6 @@ module.exports = ( function() {
             obj._projectDelete( proj_id );
         }
 
-
         var result = {};
 
         if ( task_allocs.length ){
@@ -1031,12 +1058,7 @@ module.exports = ( function() {
             var doc = obj._createTask( a_client._id, g_lib.TT_PROJ_DEL, state );
             var task = g_db.task.save( doc, { returnNew: true });
 
-            task.new.id = task.new._id;
-            delete task.new._id;
-            delete task.new._key;
-            delete task.new._rev;
-
-            result.task = task.new;
+            result.task = { id: task.new._id, status: task.new.status };
         }
 
         return result;
@@ -1114,44 +1136,6 @@ module.exports = ( function() {
     };
 
 
-    obj.allocCreate = function( a_client, a_repo_id, a_subject_id, a_path ){
-        var state = { repo: a_repo_id, subject: a_subject_id, path: a_path };
-        var doc = obj._createTask( a_client._id, g_lib.TT_ALLOC_CREATE, state );
-        var task = g_db.task.save( doc, { returnNew: true });
-
-        if ( obj._processTaskDeps( task.new._id, [a_repo_id], 1, 0, a_subject_id )){
-            task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
-        }
-
-        task.new.id = task.new._id;
-        delete task.new._id;
-        delete task.new._key;
-        delete task.new._rev;
-
-        task = task.new;
-
-        return { "task" : task };
-    };
-
-
-    obj.allocDelete = function( a_client, a_repo_id, a_subject_id, a_path ){
-        var state = { repo: a_repo_id, subject: a_subject_id, path: a_path };
-        var doc = obj._createTask( a_client._id, g_lib.TT_ALLOC_DEL, state );
-        var task = g_db.task.save( doc, { returnNew: true });
-
-        if ( obj._processTaskDeps( task.new._id, [a_repo_id], 2, 0, a_subject_id )){
-            task = g_db._update( task.new._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
-        }
-
-        task.new.id = task.new._id;
-        delete task.new._id;
-        delete task.new._key;
-        delete task.new._rev;
-
-        task = task.new;
-
-        return { "task" : task };
-    };
 
 
     return obj;

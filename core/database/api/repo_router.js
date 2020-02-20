@@ -14,7 +14,7 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
-const   g_proc = require('./process');
+const   g_tasks = require('./tasks');
 
 module.exports = router;
 
@@ -533,30 +533,13 @@ router.get('/alloc/create', function (req, res) {
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
                 var subject_id;
+
                 if ( req.queryParams.subject.startsWith("p/"))
                     subject_id = req.queryParams.subject;
                 else
                     subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
 
-                if ( !g_db._exists( req.queryParams.repo ))
-                    throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
-
-                if ( !g_db._exists( subject_id ))
-                    throw [g_lib.ERR_NOT_FOUND,"Subject, '" + subject_id + "', does not exist"];
-
-                var repo = g_db.repo.document( req.queryParams.repo );
-
-                g_lib.ensureAdminPermRepo( client, repo._id );
-
-                var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
-                if ( alloc )
-                    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', already has as allocation on " + repo._id ];
-
-                var path = repo.path + (subject_id.charAt(0) == "p"?"project/":"user/") + subject_id.substr(2) + "/";
-
-                g_db.alloc.save({ _from: subject_id, _to: repo._id, data_limit: req.queryParams.data_limit, rec_limit: req.queryParams.rec_limit, rec_count: 0, data_size: 0, path: path });
-
-                var result = g_proc.allocCreate( client, repo._id, subject_id, path );
+                var result = g_tasks.taskInitAllocCreate( client, req.queryParams.repo, subject_id, req.queryParams.data_limit, req.queryParams.rec_limit );
 
                 res.send(result);
             }
@@ -585,34 +568,13 @@ router.get('/alloc/delete', function (req, res) {
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
                 var subject_id;
+
                 if ( req.queryParams.subject.startsWith("p/"))
                     subject_id = req.queryParams.subject;
                 else
                     subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
 
-                if ( !g_db._exists( req.queryParams.repo ))
-                    throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
-
-                if ( !g_db._exists( subject_id ))
-                    throw [g_lib.ERR_NOT_FOUND,"Subject, '" + subject_id + "', does not exist"];
-
-                var repo = g_db.repo.document( req.queryParams.repo );
-
-                g_lib.ensureAdminPermRepo( client, repo._id );
-
-                var alloc = g_db.alloc.firstExample({ _from: subject_id, _to: repo._id });
-                if ( !alloc )
-                    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', has no allocation on " + repo._id ];
-
-                var count = g_db._query("return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)", { repo: repo._id, subj: subject_id }).next();
-                if ( count )
-                    throw [g_lib.ERR_IN_USE,"Cannot delete allocation - records present"];
-
-                g_db.alloc.removeByExample({ _from: subject_id, _to: repo._id });
-
-                var path = repo.path + (subject_id.charAt(0) == "p"?"project/":"user/") + subject_id.substr(2) + "/";
-
-                var result = g_proc.allocDelete( client, repo._id, subject_id, path );
+                var result = g_tasks.taskInitAllocDelete( client, req.queryParams.repo, subject_id );
 
                 res.send(result);
             }
