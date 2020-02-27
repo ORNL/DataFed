@@ -31,11 +31,10 @@ TaskWorker::workerThread()
 {
     bool                        retry = false;
     string                      msg;
-    //string                      client_id;
-    //TaskStatus          status;
     libjson::Value              task_cmd;
-    libjson::Value::ObjectIter  new_tasks;
+    libjson::Value::ObjectIter  iter;
     uint32_t                    cmd;
+    int                         step;
 
     DL_DEBUG( "Task worker " << id() << " started." )
 
@@ -47,18 +46,35 @@ TaskWorker::workerThread()
 
         try
         {
-            //client_id = m_task->data["client"].asString();
-            //status = (TaskStatus) m_task->data["status"].asNumber();
-
-            //m_db.setClient( client_id );
-            //getUserAccessToken( client_id );
+            step = -1;
 
             do
             {
-                m_db.taskRun( m_task->task_id, task_cmd );
+                DL_DEBUG( "Calling task run, step: " << step );
 
-                cmd = (uint32_t)task_cmd["cmd"].asNumber();
-                libjson::Value & params = task_cmd["params"];
+                m_db.taskRun( m_task->task_id, task_cmd, step>-1?&step:0 );
+
+                DL_DEBUG( "task reply: " << task_cmd.toString() );
+
+                iter = task_cmd.find("cmd");
+                if ( iter == task_cmd.end() )
+                    EXCEPT(1,"Reply missing command value" );
+
+                if ( !iter->second.isNumber() )
+                    EXCEPT(1,"Reply command value has invalid type" );
+                cmd = (uint32_t)iter->second.asNumber();
+
+                iter = task_cmd.find("params");
+                if ( iter == task_cmd.end() )
+                    EXCEPT(1,"Reply missing params value" );
+
+                libjson::Value & params = iter->second;
+
+                iter = task_cmd.find("step");
+                if ( iter != task_cmd.end() )
+                    step = iter->second.asNumber();
+                else
+                    step = -1;
 
                 switch ( cmd )
                 {
@@ -78,14 +94,18 @@ TaskWorker::workerThread()
                     retry = cmdAllocDelete( params );
                     break;
                 case TC_STOP:
-                    new_tasks = task_cmd.find("new_tasks");
-                    if ( new_tasks != task_cmd.end() )
+                    iter = task_cmd.find("new_tasks");
+                    if ( iter != task_cmd.end() )
                     {
-                        DL_DEBUG("found " << new_tasks->second.size() << " new ready tasks." );
-                        m_mgr.newTasks( new_tasks->second );
+                        DL_DEBUG("found " << iter->second.size() << " new ready tasks." );
+                        m_mgr.newTasks( iter->second );
                     }
                     break;
+                default:
+                    EXCEPT_PARAM(1,"Invalid task command: " << cmd );
                 }
+                //DL_DEBUG("sleep");
+                //sleep(10);
             }while ( cmd != TC_STOP && !retry );
 
             if ( retry )
@@ -118,15 +138,25 @@ TaskWorker::abortTask( const std::string & a_msg )
 {
     DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
 
-    libjson::Value reply;
-
-    m_db.taskAbort( m_task->task_id, a_msg, reply );
-
-    libjson::Value::ObjectIter new_tasks = reply.find("new_tasks");
-    if ( new_tasks != reply.end() )
+    try
     {
-        DL_DEBUG("found " << new_tasks->second.size() << " new ready tasks." );
-        m_mgr.newTasks( new_tasks->second );
+        libjson::Value reply;
+
+        m_db.taskAbort( m_task->task_id, a_msg, reply );
+
+        m_mgr.newTasks( reply );
+    }
+    catch( TraceException & e )
+    {
+        DL_ERROR("TaskWorker::abortTask - EXCEPTION: " << e.toString() );
+    }
+    catch( exception & e )
+    {
+        DL_ERROR("TaskWorker::abortTask - EXCEPTION: " << e.what() );
+    }
+    catch(...)
+    {
+        DL_ERROR("TaskWorker::abortTask - EXCEPTION!");
     }
 }
 
@@ -137,13 +167,13 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
     DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
     DL_DEBUG( "params: " << a_task_params.toString() );
 
-    string &                    uid = a_task_params["client"].asString();
+    string &                    uid = a_task_params["uid"].asString();
     TaskType                    type = (TaskType)a_task_params["type"].asNumber();
     Encryption                  encrypt = (Encryption)a_task_params["encrypt"].asNumber();
-    string &                    src_ep = a_task_params["src_ep"].asString();
-    string &                    src_path = a_task_params["src_path"].asString();
-    string &                    dst_ep = a_task_params["dst_ep"].asString();
-    string &                    dst_path = a_task_params["dst_path"].asString();
+    string &                    src_ep = a_task_params["src_repo_ep"].asString();
+    string &                    src_path = a_task_params["src_repo_path"].asString();
+    string &                    dst_ep = a_task_params["dst_repo_ep"].asString();
+    string &                    dst_path = a_task_params["dst_repo_path"].asString();
     libjson::Value::Array &     files = a_task_params["files"].getArray();
     string                      src_repo_id;
     string                      dst_repo_id;
@@ -254,6 +284,7 @@ TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
 
     delete reply;
 
+/*
     mod_time = time(0);
 
     // Update DB record with new file stats
@@ -261,6 +292,7 @@ TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
     {
         m_db.recordUpdatePostPut( id->asString(), 0, mod_time, "", 0 );
     }
+*/
 
     return false;
 }

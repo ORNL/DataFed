@@ -53,6 +53,8 @@ DatabaseAPI::setClient( const std::string & a_client )
 long
 DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
 {
+    a_result.clear();
+
     string  url;
     string  res_json;
     char    error[CURL_ERROR_SIZE];
@@ -135,6 +137,8 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
 bool
 DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
 {
+    a_result.clear();
+
     string  url;
     char    error[CURL_ERROR_SIZE];
 
@@ -183,6 +187,8 @@ long
 DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
 {
     //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
+
+    a_result.clear();
 
     string  url;
     string  res_json;
@@ -2528,16 +2534,24 @@ DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 
 
 void
-DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply )
+DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step )
 {
-    dbGet( "task/run", {{"task_id",a_task_id}}, a_task_reply );
+    vector<pair<string,string>> params;
+    params.push_back({"task_id",a_task_id});
+    if ( a_step )
+        params.push_back({ "step", to_string( *a_step )});
+
+    dbGet( "task/run", params, a_task_reply );
 }
 
 
 void
 DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply )
 {
-    dbPost( "task/abort", {{"task_id",a_task_id}}, &a_msg, a_task_reply );
+    libjson::Value doc = a_msg;
+    string body = doc.toString();
+
+    dbPost( "task/abort", {{"task_id",a_task_id}}, &body, a_task_reply );
 }
 
 
@@ -2784,16 +2798,25 @@ DatabaseAPI::taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteReque
 void
 DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
 {
-    Value::Object & obj = a_task_json.getObject();
+    try
+    {
+        Value::Object & obj = a_task_json.getObject();
 
-    a_task->set_id( obj.at( "id" ).asString( ));
-    a_task->set_type((TaskType)obj.at( "type" ).asNumber( ));
-    a_task->set_status((TaskStatus) obj.at( "status" ).asNumber() );
-    a_task->set_client( obj.at( "client" ).asString( ));
-    a_task->set_progress( obj.at( "progress" ).asNumber( ));
-    a_task->set_msg( obj.at( "msg" ).asString( ));
-    a_task->set_ct( obj.at( "ct" ).asNumber( ));
-    a_task->set_ut( obj.at( "ut" ).asNumber( ));
+        a_task->set_id( obj.at( "_id" ).asString( ));
+        a_task->set_type((TaskType)obj.at( "type" ).asNumber( ));
+        a_task->set_status((TaskStatus) obj.at( "status" ).asNumber() );
+        a_task->set_client( obj.at( "client" ).asString( ));
+        a_task->set_step( obj.at( "step" ).asNumber( ));
+        a_task->set_steps( obj.at( "steps" ).asNumber( ));
+        a_task->set_msg( obj.at( "msg" ).asString( ));
+        a_task->set_ct( obj.at( "ct" ).asNumber( ));
+        a_task->set_ut( obj.at( "ut" ).asNumber( ));
+    }
+    catch( exception & e )
+    {
+        DL_DEBUG("taskData:" << a_task_json.toString());
+        EXCEPT_PARAM( 1, "setTaskData - " << e.what() );
+    }
 }
 
 

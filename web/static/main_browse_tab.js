@@ -1995,7 +1995,7 @@ function makeBrowserTab(){
         if ( len == 0 ){
             html = "(no recent server tasks)";
         }else{
-            html = "<table class='info_table'><tr><th>Task ID</th><th>Type</th><th>Status</th><th>Progress</th><th>Started</th><th>Updated</th><th>Message</th></tr>";
+            html = "<table class='info_table'><tr><th>Task ID</th><th>Type</th><th>Status</th><th>Prog.</th><th>Started</th><th>Updated</th><th>Message</th></tr>";
             var task, time = new Date(0);
 
             for ( var i in task_list ) {
@@ -2026,7 +2026,20 @@ function makeBrowserTab(){
                     case "TS_FAILED": html += "Failed"; break;
                 }
 
-                html += "</td><td>" + task.progress;
+                switch( task.status ){
+                    case "TS_BLOCKED":
+                    case "TS_READY":
+                        html += "</td><td>";
+                        break;
+                    case "TS_RUNNING":
+                    case "TS_FAILED":
+                        html += "</td><td>" + Math.floor(100*task.step / task.steps) + "% (" + (task.step + 1) + "/" + task.steps + ")";
+                        break;
+                    case "TS_SUCCEEDED":
+                        html += "</td><td>100%";
+                        break;
+                    }
+
 
                 time.setTime( task.ct*1000 );
                 html += "</td><td>" + time.toLocaleDateString("en-US", g_date_opts );

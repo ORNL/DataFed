@@ -306,10 +306,11 @@ message TaskData
     required TaskType               type        = 2;
     required TaskStatus             status      = 3;
     required string                 client      = 4;
-    required float                  progress    = 5;
-    required string                 msg         = 6;
-    required uint32                 ct          = 7;
-    required uint32                 ut          = 8;
+    required uint32                 step        = 5;
+    required uint32                 steps       = 6;
+    required string                 msg         = 7;
+    required uint32                 ct          = 8;
+    required uint32                 ut          = 9;
 }
 
 

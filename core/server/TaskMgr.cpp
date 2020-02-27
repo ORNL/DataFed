@@ -36,8 +36,6 @@ TaskMgr::TaskMgr():
         if ( i )
         {
             m_workers.back()->m_next = worker;
-            //worker->m_prev = m_workers.back();
-            //worker->m_prev->m_next = worker;
         }
 
         m_workers.push_back( worker );
@@ -165,7 +163,7 @@ TaskMgr::maintenanceThread()
 void
 TaskMgr::newTask( const std::string & a_task_id )
 {
-    DL_DEBUG("TaskMgr adding new task");
+    DL_DEBUG("TaskMgr scheduling 1 new task");
 
     lock_guard<mutex> lock( m_worker_mutex );
 
@@ -185,16 +183,23 @@ TaskMgr::newTask( const std::string & a_task_id )
 void
 TaskMgr::newTasks( libjson::Value & a_tasks )
 {
-    DL_DEBUG("TaskMgr adding new task(s)");
-
-    libjson::Value::Array & arr = a_tasks.getArray();
-    libjson::Value::ArrayIter t = arr.begin();
-
-    lock_guard<mutex> lock( m_worker_mutex );
-
-    for ( ; t != arr.end(); t++ )
+    try
     {
-        addNewTaskAndScheduleWorker( t->asString() );
+        libjson::Value::Array & arr = a_tasks.getArray();
+        libjson::Value::ArrayIter t = arr.begin();
+
+        DL_DEBUG("TaskMgr scheduling " << arr.size() << "new task(s)");
+
+        lock_guard<mutex> lock( m_worker_mutex );
+
+        for ( ; t != arr.end(); t++ )
+        {
+            addNewTaskAndScheduleWorker( t->asString() );
+        }
+    }
+    catch(...)
+    {
+        DL_ERROR("TaskMgr::newTasks - Bad task JSON returned from DB.");
     }
 }
 
