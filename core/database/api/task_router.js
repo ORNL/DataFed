@@ -12,7 +12,6 @@ const   router = createRouter();
 const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_lib = require('./support');
-const   g_proc = require('./process');
 const   g_tasks = require('./tasks');
 
 module.exports = router;
@@ -54,111 +53,60 @@ router.get('/view', function (req, res) {
 
 
 router.get('/run', function (req, res) {
+    var task, run_func;
+
+    console.log("task/run - trans 1");
+
     try {
         g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","d","c"],
-                write: ["task"]
-            },
+            collections: { read: [], write: ["task"] },
+            lockTimeout: 0,
+            waitForSync: true,
             action: function() {
                 if ( !g_db.task.exists( req.queryParams.task_id ))
                     throw [ g_lib.ERR_INVALID_PARAM, "Task " + req.queryParams.task_id + " does not exist." ];
 
-                var result, task = g_db.task.document( req.queryParams.task_id ), step = req.queryParams.step;
+                task = g_db.task.document( req.queryParams.task_id );
+                run_func = g_tasks.taskGetRunFunc( task );
 
-                // TODO Validate task state/step
+                // If the last step is about to run, add exclusive lock, block access to transaction
+                //if ( req.queryParams.step != undefined && req.queryParams.step == task.steps - 2 ){
+                //    exc = ["lock","block"];
+                //}
 
+                // There should never be a wr-wr conflict here b/c the core server serializes task operations
                 if ( task.status == g_lib.TS_READY ){
-                    g_proc.taskReady( task._id );
-                } else if ( step == task.step ){
-                    task.step++;
-                    g_db._update( task._id, { step: task.step });
+                    g_tasks.taskReady( task._id );
+                } else if ( task.status == g_lib.TS_RUNNING ){
+                    if ( req.queryParams.step != undefined && req.queryParams.step == task.step ){
+                        // This confirms previous step was completed, so update step number
+                        task.step++;
+                        g_db.task.update( task._id, { step: task.step, ut: Math.floor( Date.now()/1000 ) }, { returnNew: true, waitForSync: true });
+                    } else if ( req.queryParams.step != undefined && req.queryParams.step >= task.steps ){
+                        throw [ g_lib.ERR_INVALID_PARAM, "Called run on task " + task._id + " with invalid step: " + req.queryParams.step ];
+                    }
+                } else {
+                    throw [ g_lib.ERR_INVALID_PARAM, "Called run on task " + task._id + " with incorrect status: " + task.status ];
                 }
-
-                switch ( task.type ){
-                    case g_lib.TT_DATA_GET:      result = g_tasks.taskRunDataGet( task ); break;
-                    case g_lib.TT_DATA_PUT:      result = g_tasks.taskRunDataPut( task ); break;
-                    case g_lib.TT_DATA_DEL:      result = g_tasks.taskRunDataDel( task ); break;
-                    case g_lib.TT_REC_ALLOC_CHG: result = g_tasks.taskRunRecAllocChg( task ); break;
-                    case g_lib.TT_REC_OWNER_CHG: result = g_tasks.taskRunRecOwnerChg( task ); break;
-                    case g_lib.TT_REC_DEL:       result = g_tasks.taskRunRecDel( task ); break;
-                    case g_lib.TT_ALLOC_CREATE:  result = g_tasks.taskRunAllocCreate( task ); break;
-                    case g_lib.TT_ALLOC_DEL:     result = g_tasks.taskRunAllocDel( task ); break;
-                    case g_lib.TT_USER_DEL:      result = g_tasks.taskRunUserDel( task ); break;
-                    case g_lib.TT_PROJ_DEL:      result = g_tasks.taskRunProjDel( task ); break;
-                }
-
-                res.send( result );
             }
         });
+
+        console.log("task/run - call handler" );
+
+        var result = run_func.call( g_tasks, task );
+
+        console.log("task/run result",result);
+        res.send( result );
 
     } catch( e ){
         g_lib.handleException( e, res );
     }
+    console.log("task/run - last");
 })
-.queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('task_id', joi.string().required(), "Task ID")
 .queryParam('step', joi.number().integer().min(0).optional(), "Task step")
 .summary('Start task')
 .description('Start task. Creates and returns detailed task state');
-
-/*
-router.post('/update', function (req, res) {
-    try {
-        var result = [];
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn"],
-                write: ["task"]
-            },
-            action: function() {
-                if ( !g_db._exists( req.queryParams.task_id ))
-                    throw [g_lib.ERR_INVALID_PARAM,"Task " + req.queryParams.task_id + " does not exist."];
-
-                var obj = { ut: Math.floor( Date.now()/1000 ) };
-
-                if ( req.body.status ){
-                    if ( req.body.status >= g_lib.TS_SUCCEEDED )
-                        throw [g_lib.ERR_INTERNAL_FAULT,"Must finalize task to set status to SUCCEEDED or FAILED."];
-
-                    obj.status = req.body.status;
-                }
-
-                if ( req.body.state )
-                    obj.state = req.body.state;
-
-                if ( req.body.progress )
-                    obj.progress = req.body.progress;
-
-                if ( req.body.message != undefined )
-                    obj.msg = req.body.message;
-
-                var task = g_db._update( req.queryParams.task_id, obj, { keepNull: false, returnNew: true });
-
-                task.new.id = task.new._id;
-                delete task.new._id;
-                delete task.new._key;
-                delete task.new._rev;
-            
-                result.push( task.new );
-            }
-        });
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('task_id', joi.string().required(), "Task ID")
-.body(joi.object({
-    status: joi.number().integer().optional(),
-    state: joi.any().optional(),
-    progress: joi.number().min(0).max(100).optional(),
-    message: joi.string().allow('').optional()
-}).required(), 'Record fields')
-.summary('Update an existing task record')
-.description('Update an existing task record from JSON body');
-*/
 
 /** @brief Clean-up a task and remove it from task dependency graph
  *
@@ -170,14 +118,15 @@ router.post('/abort', function (req, res) {
         var result = [];
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
-                exclusive: ["task","lock","block"]
+                read: [],
+                write: ["task"],
+                exclusive: ["lock","block"]
             },
             action: function() {
                 if ( !g_db._exists( req.queryParams.task_id ))
                     throw [g_lib.ERR_INVALID_PARAM,"Task " + req.queryParams.task_id + " does not exist."];
 
-                result = g_proc._taskComplete( req.queryParams.task_id, false, req.queryParams.message );
+                result = g_tasks.taskComplete( req.queryParams.task_id, false, req.body );
             }
         });
 
@@ -187,7 +136,7 @@ router.post('/abort', function (req, res) {
     }
 })
 .queryParam('task_id', joi.string().required(), "Task ID")
-.queryParam('message', joi.string().required(), "Final task message.")
+.body( joi.string().required(), 'Parameters' )
 .summary('Abort a schedule task')
 .description('Abort a schedule task and return list of new runnable tasks.');
 
@@ -241,7 +190,7 @@ router.get('/list', function (req, res) {
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
         }
 
-        qry += " return {id:i._id,type:i.type,status:i.status,client:i.client,progress:i.progress,msg:i.msg,ct:i.ct,ut:i.ut}";
+        qry += " return i";
 
         var result = g_db._query( qry, params );
 
@@ -271,15 +220,7 @@ router.get('/reload', function (req, res) {
                 exclusive: ["task","lock","block"]
             },
             action: function() {
-                result = g_db._query( "for i in task filter i.status > 0 and i.status < 3 sort i.status desc return i" ).toArray();
-                var task;
-                for ( var i in result ){
-                    task = result[i];
-                    task.id = task._id;
-                    delete task._id;
-                    delete task._rev;
-                    delete task._key;
-                }
+                result = g_db._query( "for i in task filter i.status > 0 and i.status < 3 sort i.status desc return i._id" ).toArray();
             }
         });
 

@@ -212,9 +212,9 @@ module.exports = ( function() {
                     if ( a_ctxt.mode == g_lib.TT_DATA_PUT )
                         throw [ g_lib.ERR_INVALID_PARAM, "Cannot put data to published record '" + doc.id + "'." ];
 
-                    a_ctxt.http_data.push({ id: id, title: doc.title, owner: doc.owner, url: doc.data_url, ext: doc.ext });
+                    a_ctxt.http_data.push({ _id: id, title: doc.title, owner: doc.owner, url: doc.data_url, ext: doc.ext });
                 }else if ( a_ctxt.mode != g_lib.TT_DATA_GET || doc.size ){
-                    a_ctxt.glob_data.push({ id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
+                    a_ctxt.glob_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
                 }
             }
         }
@@ -392,41 +392,11 @@ module.exports = ( function() {
 
     obj._createTask = function( a_client_id, a_type, a_steps, a_state ){
         var time = Math.floor( Date.now()/1000 );
-        var obj = { type: a_type, status: g_lib.TS_READY, msg: "Pending", ct: time, ut: time, progress: 0, client: a_client_id, step: 0, steps: a_steps, state: a_state };
+        var obj = { type: a_type, status: g_lib.TS_READY, msg: "Pending", ct: time, ut: time, client: a_client_id, step: 0, steps: a_steps, state: a_state };
         var task = g_db.task.save( obj, { returnNew: true });
         return task.new;
     };
 
-    obj._taskReady = function( a_task_id, a_state ){
-        g_db._update( a_task_id, { status: g_lib.TS_RUNNING, msg: "Running", state: a_state });
-    };
-
-    obj._taskComplete = function( a_task_id, a_success, a_msg ){
-        var ready_tasks = [], dep, dep_blocks, blocks = g_db.block.byExample({_to: a_task_id});
-
-        while ( blocks.hasNext() ){
-            dep = blocks.next()._from;
-            dep_blocks = g_db.block.byExample({_from:dep}).toArray();
-            // If blocked task has only one block, then it's this task being finalized and will be able to run now
-            if ( dep_blocks.length == 1 ){
-                ready_tasks.push( dep );
-                g_db._update( dep, { status: g_lib.TS_READY, msg: "Pending" });
-            }
-        }
-
-        var obj;
-        if ( a_success ){
-            obj = { status: g_lib.TS_SUCCEEDED, msg: "Finished" };
-        }else{
-            obj = { status: g_lib.TS_FAILED, msg: a_msg?a_msg:"Failed (unknown reason)" };
-        }
-
-        g_db._update( a_task_id, obj );
-        g_db.lock.removeByExample({ _from: a_task_id });
-        g_db.block.removeByExample({ _to: a_task_id });
-
-        return ready_tasks;
-    };
 
 
     obj.taskInitDataGet = function( a_client, a_path, a_encrypt, a_res_ids, a_check ){

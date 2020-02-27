@@ -264,6 +264,9 @@ module.exports = ( function() {
                 case 1210:
                     res.throw( 409, "Conflicting ID or alias" );
                     break;
+                case 1200:
+                    res.throw( 500, "Conflict: " + e );
+                    break;
                 default:
                     res.throw( 500, "Unexpected DB exception: " + e );
                     break;
@@ -347,6 +350,18 @@ module.exports = ( function() {
             throw [obj.ERR_NOT_FOUND,"No user matching authentication key found"];
 
         return result[0];
+    };
+
+    obj.getAccessToken = function( a_user_id ) {
+        var user = obj.db.u.document( a_user_id );
+        var exp_in = user.expiration - Math.floor(Date.now()/1000);
+        var result = {
+            acc_tok: user.access,
+            ref_tok: user.refresh,
+            acc_tok_exp_in: (exp_in > 0 ? exp_in : 0)
+        };
+
+        return result;
     };
 
     obj.getProjectRole = function( a_client_id, a_proj_id ){

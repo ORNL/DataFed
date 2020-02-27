@@ -15,6 +15,7 @@ const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
 const   g_proc = require('./process');
+const   g_tasks = require('./tasks');
 
 module.exports = router;
 
@@ -619,7 +620,7 @@ router.post('/update/size', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('client', joi.string().allow('').optional(), "Client ID")
 .body(joi.object({
     records: joi.array().items(joi.object({
         id: joi.string().required(),
@@ -1183,7 +1184,7 @@ router.post('/get', function (req, res) {
                     res_ids.push( id );
                 }
 
-                var result = g_proc.taskInitDataGet( client, req.body.path, req.body.encrypt, res_ids, req.body.check );
+                var result = g_tasks.taskInitDataGet( client, req.body.path, req.body.encrypt, res_ids, req.body.check );
 
                 if ( !req.body.check )
                     g_lib.saveRecentGlobusPath( client, req.body.path );
@@ -1229,7 +1230,7 @@ router.post('/put', function (req, res) {
                     res_ids.push( g_lib.resolveDataID( req.body.id[i], client ));
                 }
 
-                var result = g_proc.taskInitDataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids, req.body.check );
+                var result = g_tasks.taskInitDataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids, req.body.check );
 
                 if ( !req.body.check )
                     g_lib.saveRecentGlobusPath( client, req.body.path );
@@ -1270,7 +1271,7 @@ router.post('/alloc_chg', function (req, res) {
                     res_ids.push( id );
                 }
 
-                var result = g_proc.taskInitRecAllocChg( client, req.body.proj_id, res_ids, req.body.repo_id, req.body.check );
+                var result = g_tasks.taskInitRecAllocChg( client, req.body.proj_id, res_ids, req.body.repo_id, req.body.check );
 
                 res.send(result);
             }
