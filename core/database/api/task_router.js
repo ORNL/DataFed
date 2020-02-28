@@ -81,7 +81,7 @@ router.get('/run', function (req, res) {
                     if ( req.queryParams.step != undefined && req.queryParams.step == task.step ){
                         // This confirms previous step was completed, so update step number
                         task.step++;
-                        g_db.task.update( task._id, { step: task.step, ut: Math.floor( Date.now()/1000 ) }, { returnNew: true, waitForSync: true });
+                        g_db.task.update( task._id, { step: task.step, ut: Math.floor( Date.now()/1000 ) }, { waitForSync: true });
                     } else if ( req.queryParams.step != undefined && req.queryParams.step >= task.steps ){
                         throw [ g_lib.ERR_INVALID_PARAM, "Called run on task " + task._id + " with invalid step: " + req.queryParams.step ];
                     }
@@ -93,7 +93,35 @@ router.get('/run', function (req, res) {
 
         console.log("task/run - call handler" );
 
-        var result = run_func.call( g_tasks, task );
+        var result;
+
+        while ( true ){
+            try{
+                result = run_func.call( g_tasks, task );
+                // An empty result means rollback has completed without additional errors
+                if ( !result ){
+                    console.log("Task run handler stopped rollback" );
+                    result = { cmd: g_lib.TC_STOP, params: g_tasks.taskComplete( task._id, false, task.error )};
+                }
+                break;
+            }catch( e ){
+                console.log("Task run handler exception: " + e );
+                // Load current task and check step #
+                task = g_db.task.document( task._id );
+                if ( task.step > 0 ){
+                    console.log("First exception" );
+                    // Exception on processing, start roll-back
+                    task.step = -task.step;
+                    task.error = Array.isArray(e)?e[1]:e;
+                    g_db.task.update( task._id, { step: task.step, error: task.error, ut: Math.floor( Date.now()/1000 ) }, { waitForSync: true });
+                }else{
+                    console.log("Exception in rollback" );
+                    // Exception on roll-back, abort and return next tasks to process
+                    result = { cmd: g_lib.TC_STOP, params: g_tasks.taskComplete( task._id, false, task.error + " (Rollback failed: " + e + ")" )};
+                    break;
+                }
+            }
+        }
 
         console.log("task/run result",result);
         res.send( result );
@@ -104,7 +132,7 @@ router.get('/run', function (req, res) {
     console.log("task/run - last");
 })
 .queryParam('task_id', joi.string().required(), "Task ID")
-.queryParam('step', joi.number().integer().min(0).optional(), "Task step")
+.queryParam('step', joi.number().integer().optional(), "Task step")
 .summary('Start task')
 .description('Start task. Creates and returns detailed task state');
 

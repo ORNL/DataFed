@@ -16,69 +16,6 @@ var     g_internal = require("internal");
 var tasks_func = function() {
     var obj = {};
 
-    obj.taskReady = function( a_task_id ){
-        g_db._update( a_task_id, { status: g_lib.TS_RUNNING, msg: "Running", ut: Math.floor( Date.now()/1000 ) }, { returnNew: true, waitForSync: true });
-    };
-
-    obj.taskComplete = function( a_task_id, a_success, a_msg ){
-        //console.log("taskComplete 1");
-        var ready_tasks = [], dep, dep_blocks, blocks = g_db.block.byExample({_to: a_task_id});
-        var time = Math.floor( Date.now()/1000 );
-
-        //console.log("taskComplete 2");
-
-        while ( blocks.hasNext() ){
-            dep = blocks.next()._from;
-            dep_blocks = g_db.block.byExample({_from:dep}).toArray();
-            // If blocked task has only one block, then it's this task being finalized and will be able to run now
-            if ( dep_blocks.length == 1 ){
-                ready_tasks.push( dep );
-                //console.log("taskComplete - task", dep, "ready");
-                g_db.task.update( dep, { status: g_lib.TS_READY, msg: "Pending", ut: time }, { returnNew: true, waitForSync: true });
-            }
-        }
-        //console.log("taskComplete 3");
-
-        var doc;
-        if ( a_success ){
-            doc = { status: g_lib.TS_SUCCEEDED, msg: "Finished" };
-        }else{
-            doc = { status: g_lib.TS_FAILED, msg: a_msg?a_msg:"Failed (unknown reason)" };
-        }
-
-        doc.ut = time;
-
-        //console.log("taskComplete 4", doc );
-        g_db.block.removeByExample({ _to: a_task_id });
-        g_db.lock.removeByExample({ _from: a_task_id });
-        //console.log("taskComplete 5");
-        var delay = 1;
-        while( true ){
-            try{
-                g_db.task.update( a_task_id, doc );
-                break;
-            }
-            catch( e ){
-                if ( e.errorNum == 1200 ){
-                    if ( delay > 64 )
-                        throw e;
-
-                    //console.log("retry sleep");
-                    g_internal.sleep(0.2*delay);
-                    //console.log("do retry");
-
-                    delay *= 2;
-                }else{
-                    throw e;
-                }
-            }
-        }
-        //console.log("taskComplete 6");
-
-        return ready_tasks;
-    };
-
-
     // ----------------------- ALLOC CREATE ----------------------------
 
     obj.taskInitAllocCreate = function( a_client, a_repo_id, a_subject_id, a_data_limit, a_rec_limit ){
@@ -112,6 +49,10 @@ var tasks_func = function() {
         console.log("taskRunAllocCreate");
 
         var reply, state = a_task.state;
+
+        // No rollback functionality
+        if ( a_task.step < 0 )
+            return;
 
         if ( a_task.step == 0 ){
             reply = { cmd: g_lib.TC_ALLOC_CREATE, params: { repo: state.repo, path: state.path }, step: a_task.step };
@@ -167,6 +108,10 @@ var tasks_func = function() {
 
         var reply, state = a_task.state;
 
+        // No rollback functionality
+        if ( a_task.step < 0 )
+            return;
+
         if ( a_task.step == 0 ){
             // Delete alloc edge, request repo path delete
             obj._transact( function(){
@@ -216,6 +161,10 @@ var tasks_func = function() {
         console.log("taskRunDataGet");
 
         var reply, state = a_task.state;
+
+        // No rollback functionality
+        if ( a_task.step < 0 )
+            return;
 
         if ( a_task.step == 0 ){
             console.log("taskRunDataGet - do setup");
@@ -290,6 +239,10 @@ var tasks_func = function() {
     obj.taskRunDataPut = function( a_task ){
         console.log("taskRunDataPut");
         var reply, state = a_task.state, params, xfr;
+
+        // No rollback functionality
+        if ( a_task.step < 0 )
+            return;
 
         if ( a_task.step == 0 ){
             console.log("taskRunDataPut - do setup");
@@ -427,6 +380,11 @@ var tasks_func = function() {
 
         var reply, state = a_task.state, params, xfr, alloc;
 
+        // TODO Add rollback functionality
+        if ( a_task.step < 0 ){
+            return;
+        }
+
         if ( a_task.step == 0 ){
             console.log("taskRunRecAllocChg - do setup");
             obj._transact( function(){
@@ -559,6 +517,68 @@ var tasks_func = function() {
     };
 
     // ----------------------- Internal Support Functions ---------------------
+
+    obj.taskReady = function( a_task_id ){
+        g_db._update( a_task_id, { status: g_lib.TS_RUNNING, msg: "Running", ut: Math.floor( Date.now()/1000 ) }, { returnNew: true, waitForSync: true });
+    };
+
+    obj.taskComplete = function( a_task_id, a_success, a_msg ){
+        //console.log("taskComplete 1");
+        var ready_tasks = [], dep, dep_blocks, blocks = g_db.block.byExample({_to: a_task_id});
+        var time = Math.floor( Date.now()/1000 );
+
+        //console.log("taskComplete 2");
+
+        while ( blocks.hasNext() ){
+            dep = blocks.next()._from;
+            dep_blocks = g_db.block.byExample({_from:dep}).toArray();
+            // If blocked task has only one block, then it's this task being finalized and will be able to run now
+            if ( dep_blocks.length == 1 ){
+                ready_tasks.push( dep );
+                //console.log("taskComplete - task", dep, "ready");
+                g_db.task.update( dep, { status: g_lib.TS_READY, msg: "Pending", ut: time }, { returnNew: true, waitForSync: true });
+            }
+        }
+        //console.log("taskComplete 3");
+
+        var doc;
+        if ( a_success ){
+            doc = { status: g_lib.TS_SUCCEEDED, msg: "Finished" };
+        }else{
+            doc = { status: g_lib.TS_FAILED, msg: a_msg?a_msg:"Failed (unknown reason)" };
+        }
+
+        doc.ut = time;
+
+        //console.log("taskComplete 4", doc );
+        g_db.block.removeByExample({ _to: a_task_id });
+        g_db.lock.removeByExample({ _from: a_task_id });
+        //console.log("taskComplete 5");
+        var delay = 1;
+        while( true ){
+            try{
+                g_db.task.update( a_task_id, doc );
+                break;
+            }
+            catch( e ){
+                if ( e.errorNum == 1200 ){
+                    if ( delay > 64 )
+                        throw e;
+
+                    //console.log("retry sleep");
+                    g_internal.sleep(0.2*delay);
+                    //console.log("do retry");
+
+                    delay *= 2;
+                }else{
+                    throw e;
+                }
+            }
+        }
+        //console.log("taskComplete 6");
+
+        return ready_tasks;
+    };
 
     obj._transact = function( a_func, a_rdc = [], a_wrc = [], a_exc = [] ){
         g_db._executeTransaction({
@@ -811,6 +831,18 @@ var tasks_func = function() {
             }
 
             g_db._update( loc._id, obj );
+        }
+    };
+
+
+    obj.recMoveRevert = function( a_data ) {
+        var id, loc;
+
+        for ( var i in a_data ){
+            id = a_data[i].id;
+
+            loc = g_db.loc.firstExample({ _from: id });
+            g_db._update( loc._id, { new_repo_id: null, new_owner_id: null, new_coll_id: null }, { keepNull: false } );
         }
     };
 
