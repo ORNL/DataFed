@@ -46,13 +46,11 @@ TaskWorker::workerThread()
 
         try
         {
-            step = -1;
+            DL_DEBUG( "Calling task run (first)" );
+            m_db.taskRun( m_task->task_id, task_cmd, 0 );
 
-            do
+            while ( true )
             {
-                DL_DEBUG( "Calling task run, step: " << step );
-
-                m_db.taskRun( m_task->task_id, task_cmd, step>-1?&step:0 );
 
                 DL_DEBUG( "task reply: " << task_cmd.toString() );
 
@@ -73,8 +71,8 @@ TaskWorker::workerThread()
                 iter = task_cmd.find("step");
                 if ( iter != task_cmd.end() )
                     step = iter->second.asNumber();
-                else
-                    step = -1;
+                else if ( cmd != TC_STOP )
+                    EXCEPT(1,"Reply missing step value" );
 
                 switch ( cmd )
                 {
@@ -106,7 +104,13 @@ TaskWorker::workerThread()
                 }
                 //DL_DEBUG("sleep");
                 //sleep(10);
-            }while ( cmd != TC_STOP && !retry );
+
+                if ( cmd == TC_STOP || retry )
+                    break;
+
+                DL_DEBUG( "Calling task run, step: " << step );
+                m_db.taskRun( m_task->task_id, task_cmd, &step );
+            }
 
             if ( retry )
             {
@@ -266,7 +270,7 @@ TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
     Auth::RepoDataDeleteRequest     del_req;
     RecordDataLocation *            loc;
     MsgBuf::Message *               reply;
-    time_t                          mod_time;
+    //time_t                          mod_time;
     const string &                  repo_id = a_task_params["repo_id"].asString();
     const string &                  path = a_task_params["path"].asString();
     libjson::Value::Array &         ids = a_task_params["ids"].getArray();

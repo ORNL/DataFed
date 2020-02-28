@@ -2806,7 +2806,8 @@ DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
         a_task->set_type((TaskType)obj.at( "type" ).asNumber( ));
         a_task->set_status((TaskStatus) obj.at( "status" ).asNumber() );
         a_task->set_client( obj.at( "client" ).asString( ));
-        a_task->set_step( obj.at( "step" ).asNumber( ));
+        int step = obj.at( "step" ).asNumber( );
+        a_task->set_step( step < 0?-step:step);
         a_task->set_steps( obj.at( "steps" ).asNumber( ));
         a_task->set_msg( obj.at( "msg" ).asString( ));
         a_task->set_ct( obj.at( "ct" ).asNumber( ));
