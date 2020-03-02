@@ -97,6 +97,10 @@ router.get('/run', function (req, res) {
 
         while ( true ){
             try{
+                if ( req.queryParams.err_msg ){
+                    throw [0,req.queryParams.err_msg];
+                }
+
                 result = run_func.call( g_tasks, task );
                 // An empty result means rollback has completed without additional errors
                 if ( !result ){
@@ -105,21 +109,25 @@ router.get('/run', function (req, res) {
                 }
                 break;
             }catch( e ){
-                console.log("Task run handler exception: " + e );
+                var err = Array.isArray(e)?e[1]:e;
+                console.log("Task run handler exception: " + err );
+
                 // Load current task and check step #
                 task = g_db.task.document( task._id );
                 if ( task.step > 0 ){
                     console.log("First exception" );
                     // Exception on processing, start roll-back
                     task.step = -task.step;
-                    task.error = Array.isArray(e)?e[1]:e;
+                    task.error = err;
                     g_db.task.update( task._id, { step: task.step, error: task.error, ut: Math.floor( Date.now()/1000 ) }, { waitForSync: true });
                 }else{
                     console.log("Exception in rollback" );
                     // Exception on roll-back, abort and return next tasks to process
-                    result = { cmd: g_lib.TC_STOP, params: g_tasks.taskComplete( task._id, false, task.error + " (Rollback failed: " + e + ")" )};
+                    result = { cmd: g_lib.TC_STOP, params: g_tasks.taskComplete( task._id, false, task.error + " (Rollback failed: " + err + ")" )};
                     break;
                 }
+
+                req.queryParams.err_msg = null;
             }
         }
 
@@ -133,8 +141,9 @@ router.get('/run', function (req, res) {
 })
 .queryParam('task_id', joi.string().required(), "Task ID")
 .queryParam('step', joi.number().integer().optional(), "Task step")
-.summary('Start task')
-.description('Start task. Creates and returns detailed task state');
+.queryParam('err_msg', joi.string().optional(), "Error message")
+.summary('Run task')
+.description('Run an initialized task. Step param confirms last command. Error message indicates external permanent failure.');
 
 /** @brief Clean-up a task and remove it from task dependency graph
  *

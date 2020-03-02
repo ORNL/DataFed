@@ -378,10 +378,32 @@ var tasks_func = function() {
     obj.taskRunRecAllocChg = function( a_task ){
         console.log("taskRunRecAllocChg");
 
-        var reply, state = a_task.state, params, xfr, alloc;
+        var reply, state = a_task.state, params, xfr, alloc, substep, xfrnum;
 
         // TODO Add rollback functionality
         if ( a_task.step < 0 ){
+            var step = -a_task.step;
+            console.log("taskRunRecAllocChg - rollback step: ", step );
+
+            if ( step > 1 && step < a_task.steps - 1 ){
+                substep = (step - 2) % 4;
+                xfrnum = Math.floor((step-2)/4);
+                xfr = state.xfr[xfrnum];
+                console.log("taskRunRecAllocChg - rollback substep: ", substep );
+
+                // Only action is to revert location in DB if transfer failed.
+                if ( substep > 0 && substep < 3 ){
+                    obj._transact( function(){
+                        console.log("taskRunRecAllocChg - recMoveRevert" );
+                        obj.recMoveRevert( xfr.files );
+
+                        // Update task step
+                        a_task.step -= substep;
+                        g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+                    }, [], ["loc","task"] );
+                }
+            }
+
             return;
         }
 
@@ -419,8 +441,8 @@ var tasks_func = function() {
         }
 
         if ( a_task.step > 1 && a_task.step < a_task.steps - 1 ){
-            var substep = (a_task.step - 2) % 4;
-            var xfrnum = Math.floor((a_task.step-2)/4);
+            substep = (a_task.step - 2) % 4;
+            xfrnum = Math.floor((a_task.step-2)/4);
             xfr = state.xfr[xfrnum];
             console.log("taskRunRecAllocChg - xfr num",xfrnum,"substep",substep);
 
@@ -840,9 +862,10 @@ var tasks_func = function() {
 
         for ( var i in a_data ){
             id = a_data[i].id;
+            console.log("recMoveRevert", id );
 
             loc = g_db.loc.firstExample({ _from: id });
-            g_db._update( loc._id, { new_repo_id: null, new_owner_id: null, new_coll_id: null }, { keepNull: false } );
+            g_db._update( loc._id, { new_repo: null, new_owner: null, new_coll: null }, { keepNull: false } );
         }
     };
 
