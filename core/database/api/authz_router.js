@@ -68,10 +68,14 @@ router.get('/gridftp', function (req, res) {
         if ( alloc.path + data_key != path ){
             // This may be due to an alloc/owner change
             // Allow IF new path matches
+            console.log("authz loc info:", loc );
+
             if ( !loc.new_repo )
                 throw g_lib.ERR_PERM_DENIED;
 
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
+
+            console.log("path:", path, "alloc path:", alloc.path + data_key );
 
             if ( !alloc || ( alloc.path + data_key != path ))
                 throw g_lib.ERR_PERM_DENIED;

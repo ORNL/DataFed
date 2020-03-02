@@ -519,6 +519,274 @@ var tasks_func = function() {
         return reply;
     };
 
+    // ----------------------- OWNER CHANGE ----------------------------
+
+    obj.taskInitRecOwnerChg = function( a_client, a_res_ids, a_dst_coll_id, a_dst_repo_id, a_check ){
+        console.log("taskInitRecOwnerChg");
+
+
+        console.log("taskInitRecOwnerChg 2");
+
+        // Verify destination collection
+
+        if ( !g_db.c.exists( a_dst_coll_id ))
+            throw [ g_lib.ERR_INVALID_PARAM, "No such collection '" + a_dst_coll_id + "'" ];
+
+        console.log("taskInitRecOwnerChg 2.1");
+
+        var owner_id = g_db.owner.firstExample({_from: a_dst_coll_id })._to;
+
+        console.log("taskInitRecOwnerChg 2.2" );
+
+        if ( owner_id != a_client._id ){
+
+            if (( owner_id.charAt(0) != 'p' ) || !g_lib.hasManagerPermProj( a_client, owner_id )){
+                console.log("taskInitRecOwnerChg 2.3");
+
+                var coll = g_db.c.document( a_dst_coll_id );
+                console.log("taskInitRecOwnerChg 2.4");
+
+                if ( g_lib.hasPermissions( a_client, coll, g_lib.PERM_CREATE ) != true )
+                    throw [ g_lib.ERR_PERM_DENIED, "Operation requires CREATE permission on destination collection '" + a_dst_coll_id + "'" ];
+            }
+        }
+
+        console.log("taskInitRecOwnerChg 3");
+
+        var allocs;
+
+        if ( a_check ){
+            // Get a list of available repos for client to pick from (there must be at least one)
+            allocs = g_db.alloc.byExample({ _from: owner_id });
+            if ( !allocs.hasNext() )
+                throw [ g_lib.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'" ];
+        }else{
+            // Verify destination repo
+            if ( !g_db.repo.exists( a_dst_repo_id ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'" ];
+
+            // Verify client/owner has an allocation
+            if ( !g_db.alloc.firstExample({ _from: owner_id, _to: a_dst_repo_id }) )
+                throw [ g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'" ];
+        }
+
+        console.log("taskInitRecOwnerChg 3.1");
+
+        var result = g_proc.preprocessItems( a_client, owner_id, a_res_ids, g_lib.TT_REC_OWNER_CHG );
+
+        var i,loc,rec,deps = [];
+
+        console.log("taskInitRecOwnerChg 4");
+
+        result.tot_cnt = result.http_data.length + result.glob_data.length;
+        result.act_size = 0;
+        result.act_cnt = 0;
+
+        for ( i in result.http_data ){
+            rec = result.http_data[i];
+            deps.push({ id: rec.id, lev: 1 });
+
+            loc = g_db.loc.firstExample({ _from: rec.id });
+            if ( loc.uid != owner_id || loc._to != a_dst_repo_id ){
+                result.act_cnt++;
+            }
+        }
+
+        for ( i in result.glob_data ){
+            rec = result.glob_data[i];
+            deps.push({ id: rec.id, lev: 1 });
+
+            loc = g_db.loc.firstExample({ _from: rec.id });
+            if ( loc.uid != owner_id || loc._to != a_dst_repo_id ){
+                if ( rec.size ){
+                    result.act_cnt++;
+                    result.act_size += rec.size;
+                }
+            }
+        }
+
+        console.log("taskInitRecOwnerChg 5");
+
+        result.act_cnt = deps.length;
+        //result.data_limit = alloc.data_limit;
+        //result.data_size = alloc.data_size;
+        //result.rec_limit = alloc.rec_limit;
+        //result.rec_count = alloc.rec_count;
+
+        if ( a_check ){
+            result.allocs = [];
+            while ( allocs.hasNext() ){
+                rec = allocs.next();
+                rec.repo = rec._to;
+                delete rec._id;
+                result.allocs.push( rec );
+            }
+        }
+
+        // Stop if no record to process, or if this is just a check
+        if ( deps.length == 0 || a_check )
+            return result;
+
+        // Add additional dependencies for locks
+        deps.push({ id: a_dst_coll_id, lev: 0 });
+        deps.push({ id: owner_id, lev: 0 });
+        deps.push({ id: a_dst_repo_id, lev: 1, ctx: owner_id });
+
+        var state = { encrypt: 1, http_data: result.http_data, glob_data: result.glob_data, dst_coll_id: a_dst_coll_id, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
+        var task = obj._createTask( a_client._id, g_lib.TT_REC_OWNER_CHG, 3, state );
+        if ( g_proc._lockDepsGeneral( task._id, deps )){
+            task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true });
+        }
+
+        result.task = task;
+
+        return result;
+    };
+
+    obj.taskRunRecOwnerChg = function( a_task ){
+        console.log("taskRunRecOwnerChg");
+
+        var reply, state = a_task.state, params, xfr, alloc, substep, xfrnum;
+
+        // TODO Add rollback functionality
+        if ( a_task.step < 0 ){
+            var step = -a_task.step;
+            console.log("taskRunRecOwnerChg - rollback step: ", step );
+
+            if ( step > 1 && step < a_task.steps - 1 ){
+                substep = (step - 2) % 4;
+                xfrnum = Math.floor((step-2)/4);
+                xfr = state.xfr[xfrnum];
+                console.log("taskRunRecOwnerChg - rollback substep: ", substep );
+
+                // Only action is to revert location in DB if transfer failed.
+                if ( substep > 0 && substep < 3 ){
+                    obj._transact( function(){
+                        console.log("taskRunRecOwnerChg - recMoveRevert" );
+                        obj.recMoveRevert( xfr.files );
+
+                        // Update task step
+                        a_task.step -= substep;
+                        g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+                    }, [], ["loc","task"] );
+                }
+            }
+
+            return;
+        }
+
+        if ( a_task.step == 0 ){
+            console.log("taskRunRecOwnerChg - do setup");
+            obj._transact( function(){
+                // Generate transfer steps
+                state.xfr = obj._buildTransferDoc( g_lib.TT_REC_OWNER_CHG, state.glob_data, state.dst_repo_id, state.owner_id );
+                // Update step info
+                a_task.step = 1;
+                a_task.steps = ( state.xfr.length * 4 ) + 3;
+                // Update task
+                g_db._update( a_task._id, { step: a_task.step, steps: a_task.steps, state: { xfr: state.xfr }, ut: Math.floor( Date.now()/1000 )});
+                // Fall-through to initiate first transfer
+            }, ["repo","loc"], ["task"] );
+        }
+
+        if ( a_task.step == 1 ){
+            console.log("taskRunRecOwnerChg - move non-globus records");
+            obj._transact( function(){
+                if ( state.http_data.length ){
+                    // Ensure allocation has sufficient record capacity
+                    alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
+                    if ( alloc.rec_count + state.http_data.length > alloc.rec_limit )
+                        throw [ g_lib.ERR_PERM_DENIED, "Allocation record limit exceeded on " + state.dst_repo_id ];
+
+                    obj.recMoveInit( state.http_data, state.dst_repo_id, state.owner_id, state.dst_coll_id );
+                    obj.recMoveFini( state.http_data );
+                }
+                // Update task step
+                a_task.step = 2;
+                g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+                // Fall-through to next step
+            }, ["loc"], ["task"] );
+        }
+
+        if ( a_task.step > 1 && a_task.step < a_task.steps - 1 ){
+            substep = (a_task.step - 2) % 4;
+            xfrnum = Math.floor((a_task.step-2)/4);
+            xfr = state.xfr[xfrnum];
+            console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
+
+            switch ( substep ){
+                case 0:
+                    console.log("taskRunRecOwnerChg - init move");
+                    obj._transact( function(){
+                        // Ensure allocation has sufficient record and data capacity
+                        alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
+                        if ( alloc.rec_count + xfr.files.length > alloc.rec_limit )
+                            throw [ g_lib.ERR_PERM_DENIED, "Allocation record count limit exceeded on " + state.dst_repo_id ];
+                        if ( alloc.data_size + xfr.size > alloc.data_limit )
+                            throw [ g_lib.ERR_PERM_DENIED, "Allocation data size limit exceeded on " + state.dst_repo_id ];
+
+                        // Init record move
+                        obj.recMoveInit( xfr.files, state.dst_repo_id, state.owner_id, state.dst_coll_id );
+
+                        // Update task step
+                        a_task.step += 1;
+                        g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+                    }, [], ["loc","task"] );
+                    /* falls through */
+                case 1:
+                    console.log("taskRunRecOwnerChg - do xfr");
+                    // Transfer data step
+
+                    var tokens = g_lib.getAccessToken( a_task.client );
+                    params = {
+                        uid: a_task.client,
+                        type: a_task.type,
+                        encrypt: state.encrypt,
+                        acc_tok: tokens.acc_tok,
+                        ref_tok: tokens.ref_tok,
+                        acc_tok_exp_in: tokens.acc_tok_exp_in
+                    };
+                    params = Object.assign( params, xfr );
+                    reply = { cmd: g_lib.TC_RAW_DATA_TRANSFER, params: params, step: a_task.step };
+                    break;
+                case 2:
+                    console.log("taskRunRecOwnerChg - finalize move");
+                    obj._transact( function(){
+                        // Init record move
+                        obj.recMoveFini( xfr.files );
+
+                        // Update task step
+                        a_task.step += 1;
+                        g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+
+                    }, ["c"], ["loc","alloc","acl","d","owner","item","task"] );
+                    /* falls through */
+                case 3:
+                    console.log("taskRunRecOwnerChg - delete old data");
+                    // Request data size update
+                    params = {
+                        repo_id: xfr.src_repo_id,
+                        path: xfr.src_repo_path,
+                    };
+                    params.ids = [];
+                    for ( var i in xfr.files ){
+                        params.ids.push( xfr.files[i].id );
+                    }
+
+                    reply = { cmd: g_lib.TC_RAW_DATA_DELETE, params: params, step: a_task.step };
+                    break;
+            }
+        } else {
+            console.log("taskRunRecOwnerChg - complete task");
+            obj._transact( function(){
+                // Last step - complete task
+                reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
+            }, [], ["task"],["lock","block"] );
+        }
+
+        return reply;
+    };
+
     // ----------------------- External Support Functions ---------------------
 
     obj.taskGetRunFunc = function( a_task ){
@@ -832,6 +1100,8 @@ var tasks_func = function() {
     obj.recMoveInit = function( a_data, a_new_repo_id, a_new_owner_id, a_new_coll_id ) {
         var loc;
 
+        console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id );
+
         for ( var i in a_data ){
             loc = g_db.loc.firstExample({ _from: a_data[i].id });
 
@@ -918,7 +1188,7 @@ var tasks_func = function() {
             g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - data.size });
 
             // Update new allocation stats
-            alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc.new_repo });
+            alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (new)!" ];
 

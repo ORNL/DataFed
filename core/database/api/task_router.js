@@ -110,6 +110,9 @@ router.get('/run', function (req, res) {
                 break;
             }catch( e ){
                 var err = Array.isArray(e)?e[1]:e;
+                if ( err.errorMessage )
+                    err = err.errorMessage;
+
                 console.log("Task run handler exception: " + err );
 
                 // Load current task and check step #

@@ -127,7 +127,9 @@ module.exports = ( function() {
             if ( !g_db._exists( id ))
                 throw [ g_lib.ERR_INVALID_PARAM, (is_coll?"Collection '":"Data record '") + id + "' does not exist." ];
 
+            console.log("load",id);
             doc = g_db._document( id );
+            console.log("loaded");
 
             if ( doc.deleted )
                 throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
@@ -164,9 +166,20 @@ module.exports = ( function() {
                 }
             }else{
                 if ( a_ctxt.mode == g_lib.TT_REC_ALLOC_CHG ){
-                    // Must be data owner
+                    // Must be data owner or project admin
                     if ( doc.owner != a_ctxt.client._id ){
-                        throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                        if ( doc.owner.startsWith( "p/" )){
+                            if (!( doc.owner in a_ctxt.visited )){
+                                if ( g_lib.hasManagerPermProj( a_ctxt.client._id, doc.owner )){
+                                    // Put project ID in visited to avoid checking permissions again
+                                    a_ctxt.visited[doc.owner] = 1;
+                                }else{
+                                    throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                                }
+                            }
+                        }else{
+                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                        }
                     }
                 }else if ( a_ctxt.mode == g_lib.TT_REC_OWNER_CHG ){
                     // Must be data owner or creator OR if owned by a project, the project or

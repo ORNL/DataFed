@@ -1296,7 +1296,7 @@ router.post('/owner_chg', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn","d","c","item"],
+                read: ["u","uuid","accn","d","c","item","admin"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -1308,7 +1308,7 @@ router.post('/owner_chg', function (req, res) {
                     res_ids.push( id );
                 }
                 var coll_id = g_lib.resolveDataCollID( req.body.coll_id, client );
-                var result = g_proc.taskInitRecOwnerChg( client, req.body.proj_id, res_ids, coll_id, req.body.repo_id, req.body.check );
+                var result = g_tasks.taskInitRecOwnerChg( client, res_ids, coll_id, req.body.repo_id, req.body.check );
 
                 res.send(result);
             }
@@ -1323,7 +1323,6 @@ router.post('/owner_chg', function (req, res) {
     ids: joi.array().items(joi.string()).required(),
     coll_id: joi.string().required(),
     repo_id: joi.string().optional(),
-    proj_id: joi.string().optional(),
     check: joi.boolean().optional()
 }).required(), 'Parameters')
 .summary('Move data records and raw data to a new owner/allocation')
