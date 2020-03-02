@@ -2534,12 +2534,14 @@ DatabaseAPI::taskLoadReady( libjson::Value & a_result )
 
 
 void
-DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step )
+DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step, std::string * a_err_msg )
 {
     vector<pair<string,string>> params;
     params.push_back({"task_id",a_task_id});
     if ( a_step )
         params.push_back({ "step", to_string( *a_step )});
+    if ( a_err_msg )
+        params.push_back({ "err_msg", *a_err_msg });
 
     dbGet( "task/run", params, a_task_reply );
 }

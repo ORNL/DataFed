@@ -30,11 +30,12 @@ void
 TaskWorker::workerThread()
 {
     bool                        retry = false;
-    string                      msg;
+    string                      err_msg;
     libjson::Value              task_cmd;
     libjson::Value::ObjectIter  iter;
     uint32_t                    cmd;
     int                         step;
+    bool                        first;
 
     DL_DEBUG( "Task worker " << id() << " started." )
 
@@ -44,13 +45,23 @@ TaskWorker::workerThread()
 
         DL_DEBUG("Task worker " << id() << " handling new task " << m_task->task_id );
 
-        try
-        {
-            DL_DEBUG( "Calling task run (first)" );
-            m_db.taskRun( m_task->task_id, task_cmd, 0 );
+        err_msg.clear();
+        first = true;
 
-            while ( true )
+        while ( true )
+        {
+            try
             {
+                if ( first ){
+                    DL_DEBUG( "Calling task run (first)" );
+                    m_db.taskRun( m_task->task_id, task_cmd, 0 );
+                    first = false;
+                }
+                else
+                {
+                    DL_DEBUG( "Calling task run, step: " << step );
+                    m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
+                }
 
                 DL_DEBUG( "task reply: " << task_cmd.toString() );
 
@@ -105,33 +116,33 @@ TaskWorker::workerThread()
                 //DL_DEBUG("sleep");
                 //sleep(10);
 
-                if ( cmd == TC_STOP || retry )
+                if ( cmd == TC_STOP )
                     break;
 
-                DL_DEBUG( "Calling task run, step: " << step );
-                m_db.taskRun( m_task->task_id, task_cmd, &step );
-            }
-
-            if ( retry )
-            {
-                if ( m_mgr.retryTask( m_task ))
+                if ( retry )
                 {
-                    DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
-                    abortTask( "Maximum task retry period exceeded." );
+                    if ( m_mgr.retryTask( m_task ))
+                    {
+                        DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
+                        //abortTask( "Maximum task retry period exceeded." );
+                        err_msg = "Maximum task retry period exceeded.";
+                    }
+
+                    break;
                 }
             }
-        }
-        catch( TraceException & e )
-        {
-            msg = e.toString();
-            DL_ERROR( "Task worker " << id() << " exception: " << msg );
-            abortTask( msg );
-        }
-        catch( exception & e )
-        {
-            msg = e.what();
-            DL_ERROR( "Task worker " << id() << " exception: " << msg );
-            abortTask( msg );
+            catch( TraceException & e )
+            {
+                err_msg = e.toString();
+                DL_ERROR( "Task worker " << id() << " exception: " << err_msg );
+                //abortTask( msg );
+            }
+            catch( exception & e )
+            {
+                err_msg = e.what();
+                DL_ERROR( "Task worker " << id() << " exception: " << err_msg );
+                //abortTask( msg );
+            }
         }
     }
 }
@@ -214,6 +225,8 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
         m_db.setClient( uid );
         m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
     }
+
+    EXCEPT(1,"TEST ONLY EXCEPTION");
 
     if ( type == TT_DATA_GET || type == TT_DATA_PUT )
     {
