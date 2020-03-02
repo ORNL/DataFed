@@ -226,7 +226,7 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
         m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
     }
 
-    EXCEPT(1,"TEST ONLY EXCEPTION");
+    //EXCEPT(1,"TEST ONLY EXCEPTION");
 
     if ( type == TT_DATA_GET || type == TT_DATA_PUT )
     {

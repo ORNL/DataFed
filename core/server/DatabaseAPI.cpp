@@ -2723,8 +2723,8 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
     body += "],\"coll_id\":\"" + a_request.coll_id() + "\"";
     if ( a_request.has_repo_id() )
         body += ",\"repo_id\":\"" + a_request.repo_id() + "\"";
-    if ( a_request.has_proj_id() )
-        body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
+    //if ( a_request.has_proj_id() )
+    //    body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
     if ( a_request.has_check() )
         body += string(",\"check\":\"") + (a_request.check()?"true":"false") + "\"";
     body += "}";
