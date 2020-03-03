@@ -285,7 +285,7 @@ TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
     MsgBuf::Message *               reply;
     //time_t                          mod_time;
     const string &                  repo_id = a_task_params["repo_id"].asString();
-    const string &                  path = a_task_params["path"].asString();
+    const string &                  path = a_task_params["repo_path"].asString();
     libjson::Value::Array &         ids = a_task_params["ids"].getArray();
     libjson::Value::ArrayIter       id;
 
