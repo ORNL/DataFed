@@ -787,6 +787,65 @@ var tasks_func = function() {
         return reply;
     };
 
+    obj.taskInitRecCollDelete = function( a_client, a_ids ){
+        var result = g_proc.preprocessItems( a_client, null, a_ids, g_lib.TT_REC_DEL );
+        var i,rec_ids = [];
+
+        for ( i in result.http_data )
+            rec_ids.push( result.http_data[i].id );
+        for ( i in result.glob_data )
+            rec_ids.push( result.glob_data[i].id );
+
+        obj._ensureExclusiveAccess( rec_ids );
+
+        for ( i in result.coll ){
+            // TODO Adjust for collection limit on allocation
+            obj._deleteCollection( result.coll[i] );
+        }
+
+        // Delete records with no data
+        for ( i in result.http_data ){
+            obj._deleteDataRecord( result.http_data[i].id );
+        }
+
+        // Mark and schedule records for delete
+        if ( result.glob_data.length ){
+            var state = { del: obj._buildDeleteDoc( result.glob_data )};
+
+            result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del.length + 1, state );
+
+            // Records with managed data must be marked as deleted, but not actually deleted
+            for ( i in result.glob_data ){
+                obj._deleteDataRecord( result.glob_data[i].id );
+            }
+        }
+
+        return result;
+    };
+
+    obj.taskRunRecCollDelete = function( a_task ){
+        console.log("taskRunRecCollDelete");
+
+        var reply, state = a_task.state;
+
+        // No rollback functionality
+        if ( a_task.step < 0 )
+            return;
+
+        if ( a_task.step < a_task.steps - 1 ){
+            console.log("taskRunRecCollDelete - del", a_task.step );
+            reply = { cmd: g_lib.TC_RAW_DATA_DELETE, params: state.del[ a_task.step ], step: a_task.step };
+        }else{
+            console.log("taskRunRecCollDelete - complete task");
+            obj._transact( function(){
+                // Last step - complete task
+                reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
+            }, [], ["task"],["lock","block"] );
+        }
+
+        return reply;
+    };
+
     // ----------------------- External Support Functions ---------------------
 
     obj.taskGetRunFunc = function( a_task ){
@@ -796,7 +855,7 @@ var tasks_func = function() {
             case g_lib.TT_DATA_DEL:      return obj.taskRunDataDelete;
             case g_lib.TT_REC_ALLOC_CHG: return obj.taskRunRecAllocChg;
             case g_lib.TT_REC_OWNER_CHG: return obj.taskRunRecOwnerChg;
-            case g_lib.TT_REC_DEL:       return obj.taskRunRecDelete;
+            case g_lib.TT_REC_DEL:       return obj.taskRunRecCollDelete;
             case g_lib.TT_ALLOC_CREATE:  return obj.taskRunAllocCreate;
             case g_lib.TT_ALLOC_DEL:     return obj.taskRunAllocDelete;
             case g_lib.TT_USER_DEL:      return obj.taskRunUserDelete;
@@ -942,8 +1001,6 @@ var tasks_func = function() {
             rem_path = repo.path + (a_dst_owner.charAt(0)=="u"?"user/":"project/") + a_dst_owner.substr(2) + "/";
         }
 
-
-        // TODO More efficient to omit data results and assume same order as data array?
         locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, r_id: v._id, r_ep: v.endpoint, r_path: v.path, uid: e.uid }", { data: a_data });
 
         console.log("locs hasNext",locs.hasNext());
@@ -988,7 +1045,6 @@ var tasks_func = function() {
 
         if ( a_mode == g_lib.TT_REC_ALLOC_CHG || a_mode == g_lib.TT_REC_OWNER_CHG ){
             var j, k, chunks, chunk_sz, files, sz;
-
 
             for ( i in repo_map ){
                 rm = repo_map[i];
@@ -1085,6 +1141,82 @@ var tasks_func = function() {
 
         return xfr_docs;
     };
+
+
+    obj._buildDeleteDoc = function( a_data ){
+        var loc, locs, doc = [], repo_map = {};
+
+        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
+
+        console.log("locs hasNext",locs.hasNext());
+
+        while ( locs.hasNext() ){
+            loc = locs.next();
+
+            if ( loc.r_id in repo_map ){
+                repo_map[loc.r_id].ids.push(loc.d_id);
+            }else{
+                repo_map[loc.r_id] = {
+                    repo_id: loc.r_id,
+                    repo_path: loc.r_path + (loc.uid.charAt(0)=="u"?"user/":"project/") + loc.uid.substr(2) + "/",
+                    ids:[loc.d_id]
+                };
+            }
+        }
+
+        for ( var i in repo_map ){
+            doc.push(repo_map[i]);
+        }
+
+        return doc;
+    };
+
+    /** @brief Deletes a collection record
+     *
+     * NOTE: DO NOT CALL THIS DIRECTLY - USED ONLY BY TASK/PROCESS CODE
+     *
+     * Does not recursively delete contained items.
+     */
+    obj._deleteCollection = function( a_id ){
+        var tmp = g_db.alias.firstExample({ _from: a_id });
+        if ( tmp ){
+            g_graph.a.remove( tmp._to );
+        }
+
+        tmp = g_db.top.firstExample({ _from: a_id });
+        if ( tmp )
+            g_lib.topicUnlink( a_id );
+
+        g_graph.c.remove( a_id );
+    };
+
+
+    /** @brief Deletes data records
+     *
+     * Deletes record and associated graph objects. Does not delete raw data
+     * but does adjust allocation.
+     */
+    obj._deleteDataRecord = function( a_id ){
+        console.log( "delete rec", a_id );
+        var doc = g_db.d.document( a_id );
+
+        var alias = g_db.alias.firstExample({ _from: a_id });
+        if ( alias ){
+            g_graph.a.remove( alias._to );
+        }
+
+        var loc = g_db.loc.firstExample({ _from: a_id });
+        var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
+
+        //console.log( "alloc", alloc );
+        //console.log( "data size", doc.size );
+        //console.log( "upd:", { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+        g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+
+        g_graph.d.remove( a_id );
+    };
+
+
 
     /*
     if ( a_new_coll_id ){
@@ -1198,6 +1330,18 @@ var tasks_func = function() {
             new_loc = { _from: loc._from, _to: loc.new_repo, uid: loc.new_owner?loc.new_owner:loc.uid };
             g_db.loc.save( new_loc );
             g_db.loc.remove( loc );
+        }
+    };
+
+
+    obj._ensureExclusiveAccess = function( a_ids ){
+        var i, id, lock;
+        for ( i in a_ids ){
+            id = a_ids[i];
+
+            lock = g_db.lock.firstExample({ _to: id });
+            if ( lock )
+                throw [ g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use." ];
         }
     };
 

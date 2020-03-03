@@ -1339,15 +1339,14 @@ router.post('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var i, id, res_ids = [];
+                var i, id, ids = [];
 
                 for ( i in req.body.ids ){
                     id = g_lib.resolveDataCollID( req.body.ids[i], client );
-                    res_ids.push( id );
+                    ids.push( id );
                 }
 
-                // Deletes records w/ no raw data, returns those with for delete task
-                var result = g_proc.dataCollDelete( client, res_ids );
+                var result = g_tasks.taskInitRecCollDelete( client, ids );
 
                 res.send(result);
             }

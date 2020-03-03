@@ -1073,51 +1073,6 @@ module.exports = ( function() {
     };
 
 
-    /** @brief Deletes a collection record
-     *
-     * NOTE: DO NOT CALL THIS DIRECTLY - USED ONLY BY TASK/PROCESS CODE
-     *
-     * Does not recursively delete contained items.
-     */
-    obj._deleteCollection = function( a_id ){
-        var tmp = g_db.alias.firstExample({ _from: a_id });
-        if ( tmp ){
-            g_graph.a.remove( tmp._to );
-        }
-
-        tmp = g_db.top.firstExample({ _from: a_id });
-        if ( tmp )
-            g_lib.topicUnlink( a_id );
-
-        g_graph.c.remove( a_id );
-    };
-
-
-    /** @brief Deletes data records
-     *
-     * Deletes record and associated graph objects. Does not delete raw data
-     * but does adjust allocation.
-     */
-    obj._deleteDataRecord = function( a_id ){
-        console.log( "delete rec", a_id );
-        var doc = g_db.d.document( a_id );
-
-        var alias = g_db.alias.firstExample({ _from: a_id });
-        if ( alias ){
-            g_graph.a.remove( alias._to );
-        }
-
-        var loc = g_db.loc.firstExample({ _from: a_id });
-        var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
-
-        console.log( "alloc", alloc );
-        console.log( "data size", doc.size );
-        console.log( "upd:", { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
-        g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
-
-        g_graph.d.remove( a_id );
-    };
-
 
 
 
