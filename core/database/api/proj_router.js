@@ -14,7 +14,7 @@ const   joi = require('joi');
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
-const   g_proc = require('./process');
+const   g_tasks = require('./tasks');
 
 module.exports = router;
 
@@ -422,7 +422,7 @@ router.post('/delete', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                var result = g_proc.projectDelete( client, req.body.ids );
+                var result = g_tasks.taskInitProjDelete( client, req.body.ids );
 
                 res.send(result);
             }

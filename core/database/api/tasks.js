@@ -848,6 +848,79 @@ var tasks_func = function() {
 
     // ----------------------- External Support Functions ---------------------
 
+
+    /** @brief Delete projects and associated data
+     *
+     * Delete one or more projects. If a project has no allocations,
+     * it can be deleted immediately. If a project has allocations and
+     * raw data, the project can be deleted, but a task must be initialized
+     * to delete the allocations. Deletion is an exclusive operation - if
+     * any other tasks are using the project or associated data, the delete
+     * operation will be denied.
+     */
+    obj.taskInitProjDelete = function( a_client, a_proj_ids ){
+        var i,proj_id,proj;
+
+        // Verify existence and check permission
+        for ( i in a_proj_ids ){
+            proj_id = a_proj_ids[i];
+            if ( !g_db.p.exists( proj_id ))
+                throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'" ];
+
+            g_lib.ensureAdminPermProj( a_client, proj_id );
+        }
+
+        obj._ensureExclusiveAccess( a_proj_ids );
+
+        var allocs, alloc;
+        var task_allocs = [];
+
+        // For each project, determine allocation/raw data status and take appropriate actions
+        for ( i in a_proj_ids ){
+            proj_id = a_proj_ids[i];
+
+            allocs = g_db.alloc.byExample({ _from: proj_id });
+            while ( allocs.hasNext() ){
+                alloc = allocs.next();
+                task_allocs.push({ repo: alloc._to, path: alloc.path });
+            }
+
+            obj._projectDelete( proj_id );
+        }
+
+        var result = {};
+
+        if ( task_allocs.length ){
+            result.task = obj._createTask( a_client._id, g_lib.TT_PROJ_DEL, task_allocs.length + 1, { allocs: task_allocs });
+        }
+
+        return result;
+    };
+
+    obj.taskRunProjDelete = function( a_task ){
+        console.log("taskRunProjDelete");
+
+        var reply, state = a_task.state;
+
+        // No rollback functionality
+        if ( a_task.step < 0 )
+            return;
+
+        if ( a_task.step < a_task.steps - 1 ){
+            // Request repo path delete
+            reply = { cmd: g_lib.TC_ALLOC_DELETE, params: state.allocs[ a_task.step ], step: a_task.step };
+        }else{
+            // Complete task
+            obj._transact( function(){
+                reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
+            }, [], ["task"], ["lock","block"] );
+        }
+
+        return reply;
+    };
+
+    // ----------------------- External Support Functions ---------------------
+
     obj.taskGetRunFunc = function( a_task ){
         switch ( a_task.type ){
             case g_lib.TT_DATA_GET:      return obj.taskRunDataGet;
@@ -1216,6 +1289,30 @@ var tasks_func = function() {
         g_graph.d.remove( a_id );
     };
 
+
+    /** @brief Deletes project immediately
+     *
+     * Deletes projects and associated graph objects.
+     *
+     * DO NOT USE ON PROJECTS WITH RAW DATA!!!!
+     */
+    obj._projectDelete = function( a_proj_id ){
+        // Delete allocations
+        g_db.alloc.removeByExample({ _from: a_proj_id });
+
+        // Delete all owned records (data, collections, groups, aliases
+        var id, rec_ids = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: a_proj_id });
+
+        while ( rec_ids.hasNext() ) {
+            id = rec_ids.next();
+            if ( id.charAt(0) == "c" ){
+                g_lib.topicUnlink( id );
+            }
+            g_graph[id.charAt(0)].remove( id );
+        }
+
+        g_graph.d.remove( a_proj_id );
+    };
 
 
     /*
