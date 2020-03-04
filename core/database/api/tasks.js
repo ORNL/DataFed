@@ -35,7 +35,7 @@ var tasks_func = function() {
 
         var repo = g_db.repo.document( a_repo_id );
         var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
-        var state = { repo: a_repo_id, subject: a_subject_id, data_limit: a_data_limit, rec_limit: a_rec_limit, path: path };
+        var state = { repo_id: a_repo_id, subject: a_subject_id, data_limit: a_data_limit, rec_limit: a_rec_limit, repo_path: path };
         var task = obj._createTask( a_client._id, g_lib.TT_ALLOC_CREATE, 2, state );
 
         if ( g_proc._lockDepsGeneral( task._id, [{id:a_repo_id,lev:1,ctx:a_subject_id},{id:a_subject_id,lev:0}] )){
@@ -55,12 +55,14 @@ var tasks_func = function() {
             return;
 
         if ( a_task.step == 0 ){
-            reply = { cmd: g_lib.TC_ALLOC_CREATE, params: { repo: state.repo, path: state.path }, step: a_task.step };
+            reply = { cmd: g_lib.TC_ALLOC_CREATE, params: { repo_id: state.repo_id, repo_path: state.repo_path }, step: a_task.step };
         }else{
              // Create allocation edge and finish
 
             obj._transact( function(){
-                g_db.alloc.save({ _from: state.subject, _to: state.repo, data_limit: state.data_limit, rec_limit: state.rec_limit, rec_count: 0, data_size: 0, path: state.path });
+                console.log("saving alloc:", state.subject, state.repo_id, state.data_limit, state.rec_limit,  0, 0, state.repo_path );
+
+                g_db.alloc.save({ _from: state.subject, _to: state.repo_id, data_limit: state.data_limit, rec_limit: state.rec_limit, rec_count: 0, data_size: 0, path: state.repo_path });
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
             }, [], ["task","alloc"], ["lock","block"] );
         }
@@ -93,7 +95,7 @@ var tasks_func = function() {
             throw [g_lib.ERR_IN_USE,"Cannot delete allocation - records present"];
 
         var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
-        var state = { repo: a_repo_id, subject: a_subject_id, path: path };
+        var state = { repo_id: a_repo_id, subject: a_subject_id, repo_path: path };
         var task = obj._createTask( a_client._id, g_lib.TT_ALLOC_DEL, 2, state );
 
         if ( g_proc._lockDepsGeneral( task._id, [{id:a_repo_id,lev:1,ctx:a_subject_id},{id:a_subject_id,lev:0}] )){
@@ -115,8 +117,8 @@ var tasks_func = function() {
         if ( a_task.step == 0 ){
             // Delete alloc edge, request repo path delete
             obj._transact( function(){
-                g_db.alloc.removeByExample({ _from: state.subject, _to: state.repo });
-                reply = { cmd: g_lib.TC_ALLOC_DELETE, params: { repo: state.repo, path: state.path }, step: a_task.step };
+                g_db.alloc.removeByExample({ _from: state.subject, _to: state.repo_id });
+                reply = { cmd: g_lib.TC_ALLOC_DELETE, params: { repo_id: state.repo_id, repo_path: state.repo_path }, step: a_task.step };
             }, [], ["alloc"] );
         }else{
             // Complete task
@@ -278,7 +280,7 @@ var tasks_func = function() {
             xfr = state.xfr[a_task.step-2];
             params = {
                 repo_id: xfr.dst_repo_id,
-                path: xfr.dst_repo_path,
+                repo_path: xfr.dst_repo_path,
                 ids: [xfr.files[0].id]
             };
             reply = { cmd: g_lib.TC_RAW_DATA_UPDATE_SIZE, params: params, step: a_task.step };
@@ -498,7 +500,7 @@ var tasks_func = function() {
                     // Request data size update
                     params = {
                         repo_id: xfr.src_repo_id,
-                        path: xfr.src_repo_path,
+                        repo_path: xfr.src_repo_path,
                     };
                     params.ids = [];
                     for ( var i in xfr.files ){
@@ -766,7 +768,7 @@ var tasks_func = function() {
                     // Request data size update
                     params = {
                         repo_id: xfr.src_repo_id,
-                        path: xfr.src_repo_path,
+                        repo_path: xfr.src_repo_path,
                     };
                     params.ids = [];
                     for ( var i in xfr.files ){
@@ -882,7 +884,7 @@ var tasks_func = function() {
             allocs = g_db.alloc.byExample({ _from: proj_id });
             while ( allocs.hasNext() ){
                 alloc = allocs.next();
-                task_allocs.push({ repo: alloc._to, path: alloc.path });
+                task_allocs.push({ repo_id: alloc._to, repo_path: alloc.path });
             }
 
             obj._projectDelete( proj_id );
