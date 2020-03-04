@@ -322,7 +322,7 @@ TaskWorker::cmdRawDataUpdateSize( libjson::Value & a_task_params )
     DL_DEBUG( "params: " << a_task_params.toString() );
 
     const string &                  repo_id = a_task_params["repo_id"].asString();
-    const string &                  path = a_task_params["path"].asString();
+    const string &                  path = a_task_params["repo_path"].asString();
     libjson::Value::Array &         ids = a_task_params["ids"].getArray();
     Auth::RepoDataGetSizeRequest    sz_req;
     Auth::RepoDataSizeReply *       sz_rep;
@@ -364,8 +364,8 @@ TaskWorker::cmdAllocCreate( libjson::Value & a_task_params )
     DL_INFO( "Task " << m_task->task_id << " cmdAllocCreate" );
     DL_DEBUG( "params: " << a_task_params.toString() );
 
-    string & repo_id = a_task_params["repo"].asString();
-    string & path = a_task_params["path"].asString();
+    string & repo_id = a_task_params["repo_id"].asString();
+    string & path = a_task_params["repo_path"].asString();
 
     Auth::RepoPathCreateRequest     req;
     MsgBuf::Message *               reply;
@@ -387,8 +387,8 @@ TaskWorker::cmdAllocDelete( libjson::Value & a_task_params )
     DL_INFO( "Task " << m_task->task_id << " cmdAllocDelete" );
     DL_DEBUG( "params: " << a_task_params.toString() );
 
-    string & repo_id = a_task_params["repo"].asString();
-    string & path = a_task_params["path"].asString();
+    string & repo_id = a_task_params["repo_id"].asString();
+    string & path = a_task_params["repo_path"].asString();
 
     Auth::RepoPathDeleteRequest         req;
     MsgBuf::Message *                   reply;
