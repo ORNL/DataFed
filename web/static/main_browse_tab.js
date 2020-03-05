@@ -613,7 +613,7 @@ function makeBrowserTab(){
         var parent = "root";
         var node = inst.data_tree.activeNode;
         if ( node ){
-            if ( node.key.startsWith("d/")) {
+            if ( node.key.startsWith("d/") || node.key == "empty" ) {
                 parent = node.parent.key;
             }else if (node.key.startsWith("c/")){
                 parent = node.key;
@@ -673,7 +673,7 @@ function makeBrowserTab(){
         var node = inst.data_tree.activeNode;
         var parent = "root";
         if ( node ){
-            if ( node.key.startsWith("d/")) {
+            if ( node.key.startsWith("d/") || node.key == "empty" ) {
                 parent = node.parent.key;
             }else if (node.key.startsWith("c/")){
                 parent = node.key;
@@ -1154,7 +1154,12 @@ function makeBrowserTab(){
                         bits |= 5;
                     break;
                 case "q": bits = 0x3FA; break;
-                default:  bits = 0x3FF;  break;
+                default:
+                    if ( node.key == "empty" && node.parent.key.startsWith("c/"))
+                        bits = 0x2FF;
+                    else
+                        bits = 0x3FF;
+                    break;
             }
             //console.log("single",bits);
         }else{
@@ -3246,14 +3251,14 @@ function makeBrowserTab(){
 
                 inst. addTreePagingNode( data );
 
-                if (( !items || !items.length ) && ( data.node.parent.key.startsWith("c/") || data.node.parent.key.startsWith("repo/"))){
+                //if (( !items || !items.length ) && ( data.node.parent.key.startsWith("c/") || data.node.parent.key.startsWith("repo/"))){
                     //data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
-                }
+                //}
             }
 
             if ( data.result && data.result.length == 0 ){
                 if ( scope )
-                    data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
+                    data.result.push({title:"(empty)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
                 else
                     data.result.push({title:"(empty)",icon:false,checkbox:false,nodrag:true,notarg:true,key:"empty"});
             }
