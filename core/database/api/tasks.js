@@ -150,7 +150,7 @@ var tasks_func = function() {
                 dep_ids.push( result.glob_data[i]._id );
 
             if ( g_proc._processTaskDeps( task._id, dep_ids, 0, 0 )){
-                task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+                task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true }).new;
             }
 
             result.task = task;
@@ -229,7 +229,7 @@ var tasks_func = function() {
                 dep_ids.push( result.glob_data[i].id );
 
             if ( g_proc._processTaskDeps( task._id, dep_ids, 1, 0 )){
-                task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true });
+                task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true }).new;
             }
 
             result.task = task;
@@ -369,7 +369,7 @@ var tasks_func = function() {
         var task = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, 3, state );
 
         if ( g_proc._processTaskDeps( task._id, rec_ids, 1, 0 )){
-            task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true });
+            task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true }).new;
         }
 
         result.task = task;
@@ -637,7 +637,7 @@ var tasks_func = function() {
         var state = { encrypt: 1, http_data: result.http_data, glob_data: result.glob_data, dst_coll_id: a_dst_coll_id, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
         var task = obj._createTask( a_client._id, g_lib.TT_REC_OWNER_CHG, 3, state );
         if ( g_proc._lockDepsGeneral( task._id, deps )){
-            task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true });
+            task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true }).new;
         }
 
         result.task = task;

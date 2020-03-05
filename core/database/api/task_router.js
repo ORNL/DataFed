@@ -37,8 +37,6 @@ router.get('/view', function (req, res) {
             task.blocking.push( blocks.next()._from );
         }
 
-        task.id = task._id;
-        delete task._id;
         delete task._rev;
         delete task._key;
 
