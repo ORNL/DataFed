@@ -1463,7 +1463,7 @@ function makeBrowserTab(){
             key = node.key;
 
         if ( key == "mydata" ) {
-            fields.id = "All non-prject related data owned by you.";
+            fields.id = "All non-project data owned by you.";
             fields.descr = "Location for creating and organizing personal data and collections.";
 
             userView( inst.uid, true, function( ok, user ){
@@ -1488,7 +1488,7 @@ function makeBrowserTab(){
                 inst.updateSelectionField( fields );
             });
         }else if ( key == "proj_own" ) {
-            fields.id = "My Projects";
+            fields.id = "Owned Projects";
             fields.descr = "All projects owned by you.";
             inst.updateSelectionField( fields );
         }else if ( key == "proj_adm" ) {
@@ -1679,8 +1679,8 @@ function makeBrowserTab(){
             fields.descr = "Lists allocations and associated data records.";
             inst.updateSelectionField( fields );
         } else if ( key.startsWith("published")) {
-            fields.id = "Published Collections";
-            fields.descr = "Lists collections published to DataFed catalogs.";
+            fields.id = "Public Collections";
+            fields.descr = "Lists collections made public and available in DataFed catalogs.";
             inst.updateSelectionField( fields );
         } else if ( key.startsWith( "repo/" )) {
             allocView( node.data.repo, node.data.scope, function( ok, data ){
@@ -2893,8 +2893,8 @@ function makeBrowserTab(){
 
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-        {title:"My Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:false,lazy:true},
-        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
+        {title:"Owned Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-box",folder:true,expanded:false,lazy:true},
+        {title:"Owned Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
@@ -3075,7 +3075,7 @@ function makeBrowserTab(){
             if ( data.node.key == "mydata" ){
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:inst.my_root_key,offset:0,user:g_user.uid,scope:inst.uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:inst.uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Public Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+g_user.uid,offset:0,scope:inst.uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:inst.uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -3097,7 +3097,7 @@ function makeBrowserTab(){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Public Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
