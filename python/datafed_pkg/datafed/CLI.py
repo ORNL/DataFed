@@ -744,14 +744,11 @@ def _dataGet( df_id, path, wait, encrypt, context ):
 
     reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), wait = wait, progress_bar = bar, context = context )
 
-    if _output_mode_sticky == _OM_RETN:
-        global _return_val
-        _return_val = reply
-        return
-    elif _output_mode == _OM_JSON:
-        click.echo( "{{\"msg_type\":\"{}\",\"message\":{}}}".format(reply[1],MessageToJson( reply[0], preserving_proto_field_name=True )))
-    elif reply[1] == "TaskDataReply":
-        click.echo( "Task ID: {}".format( reply[0].task[0].id ))
+    if reply[1] == "DataGetPutReply":
+        _generic_reply_handler( reply, _print_task )
+    else:
+        _generic_reply_handler( reply, _print_task_array )
+
 
 @_data.command(name='put')
 @click.argument("data_id", metavar="ID", required=True, nargs=1)
@@ -771,7 +768,11 @@ def _dataPut( data_id, path, wait, extension, encrypt, context ):
     '''
 
     reply = _capi.dataPut( _resolve_id( data_id ), path, encrypt = int(encrypt), wait = wait, extension = extension, context = context )
-    _generic_reply_handler( reply, _print_task )
+
+    if reply[1] == "DataGetPutReply":
+        _generic_reply_handler( reply, _print_task )
+    else:
+        _generic_reply_handler( reply, _print_task_array )
 
 
 # =============================================================================
@@ -1280,7 +1281,7 @@ def _taskView( task_id ):
     else:
         _id = task_id
     reply = _capi.taskView( _id )
-    _generic_reply_handler( reply, _print_task )
+    _generic_reply_handler( reply, _print_task_array )
 
 
 # =============================================================================
@@ -1668,6 +1669,9 @@ def _print_endpoints( message ):
         p = i.find("/")
         if p > 0:
             path = i[0:p]
+        else:
+            path = i
+
         try:
             _list_items.index(path)
         except:
@@ -1786,9 +1790,27 @@ def _print_task_listing( message ):
         click.echo("{:2}. {:14}  {:13}  {:9}  {}  {}".format(df_idx, t.id, task_type, task_status, _capi.timestampToStr(t.ct), _capi.timestampToStr(t.ut) ))
         df_idx += 1
 
-
 def _print_task( message ):
+    if message.HasField( "task" ):
+        task_type = _task_types.get(message.task.type, "None")
+        task_status = _task_statuses.get(message.task.status, "None")
+
+        click.echo( "{:<20} {:<50}".format('Task ID: ', message.task.id) + '\n' +
+                    "{:<20} {:<50}".format('Type: ', task_type) + '\n' +
+                    "{:<20} {:<50}".format('Status: ', task_status))
+
+        if message.task.status == 4:
+            click.echo("{:<20} {:<50}".format('Message: ', message.task.msg))
+
+        click.echo( "{:<20} {:<50}".format('Started: ', _capi.timestampToStr(message.task.ct)) + '\n' +
+                    "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(message.task.ut)))
+
+def _print_task_array( message ):
+    print("_print_task_array")
+
     for t in message.task:
+        print(t)
+
         task_type = _task_types.get(t.type, "None")
         task_status = _task_statuses.get(t.status, "None")
         #xfr_encrypt = _xfr_encrypt_modes.get(xfr.encrypt, "None")
@@ -1797,30 +1819,14 @@ def _print_task( message ):
                     "{:<20} {:<50}".format('Type: ', task_type) + '\n' +
                     "{:<20} {:<50}".format('Status: ', task_status))
 
-        #if xfr.status == 4:
-        #    click.echo("{:<20} {:<50}".format('Error: ', xfr.err_msg))
+        if t.status == 4:
+            click.echo("{:<20} {:<50}".format('Message: ', t.msg))
 
         #click.echo( "{:<20} {:<50}".format('Endpoint:', xfr.rem_ep) + '\n' +
         #            "{:<20} {:<50}".format('Path: ', xfr.rem_path) + '\n' +
         #            "{:<20} {} ({})".format('Encrypted:', xfr.encrypted, xfr_encrypt) + '\n' +
         click.echo( "{:<20} {:<50}".format('Started: ', _capi.timestampToStr(t.ct)) + '\n' +
                     "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(t.ut)))
-
-        '''
-        if _verbosity == 2:
-            n = len( xfr.repo.file )
-        else:
-            n = min( 5, len( xfr.repo.file ))
-
-        df_ids = ""
-        n = min( 5, len( xfr.repo.file ))
-        for f in range(n):
-            if f > 0:
-                df_ids += ", "
-            df_ids += xfr.repo.file[f].id
-
-        click.echo("{:<20} {:<50}".format('Data Record(s): ', df_ids ))
-        '''
 
 def _print_user( message ):
     for usr in message.user:

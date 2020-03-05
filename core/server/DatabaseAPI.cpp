@@ -1564,52 +1564,59 @@ DatabaseAPI::setListingDataReply( ListingReply & a_reply, libjson::Value & a_res
 void
 DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
 {
-    a_item->set_id( a_obj.at( "id" ).asString( ));
-    a_item->set_title( a_obj.at( "title" ).asString( ));
-
-    Value::ObjectIter   j;
-
-    if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
-        a_item->set_alias( j->second.asString( ));
-
-    if (( j = a_obj.find( "owner" )) != a_obj.end( ) && !j->second.isNull( ))
-        a_item->set_owner( j->second.asString( ));
-
-    if (( j = a_obj.find( "creator" )) != a_obj.end( ) && !j->second.isNull( ))
-        a_item->set_creator( j->second.asString( ));
-
-    if (( j = a_obj.find( "doi" )) != a_obj.end( ) && !j->second.isNull( ))
-        a_item->set_doi( j->second.asString( ));
-
-    if (( j = a_obj.find( "url" )) != a_obj.end( ) && !j->second.isNull( ))
-        a_item->set_url( j->second.asString( ));
-
-    if (( j = a_obj.find( "size" )) != a_obj.end( ))
-        a_item->set_size( j->second.asNumber( ));
-
-    if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
-        a_item->set_locked( j->second.asBool( ));
-
-    if (( j = a_obj.find( "gen" )) != a_obj.end( ))
-        a_item->set_gen( j->second.asNumber( ));
-
-    if (( j = a_obj.find( "deps" )) != a_obj.end( ))
+    try
     {
-        Value::ObjectIter   m;
-        DependencyData *    dep;
-        Value::Array &      arr2 = j->second.getArray();
+        a_item->set_id( a_obj.at( "id" ).asString( ));
+        a_item->set_title( a_obj.at( "title" ).asString( ));
 
-        for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+        Value::ObjectIter   j;
+
+        if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_alias( j->second.asString( ));
+
+        if (( j = a_obj.find( "owner" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_owner( j->second.asString( ));
+
+        if (( j = a_obj.find( "creator" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_creator( j->second.asString( ));
+
+        if (( j = a_obj.find( "doi" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_doi( j->second.asString( ));
+
+        if (( j = a_obj.find( "url" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_url( j->second.asString( ));
+
+        if (( j = a_obj.find( "size" )) != a_obj.end( ))
+            a_item->set_size( j->second.asNumber( ));
+
+        if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_locked( j->second.asBool( ));
+
+        if (( j = a_obj.find( "gen" )) != a_obj.end( ))
+            a_item->set_gen( j->second.asNumber( ));
+
+        if (( j = a_obj.find( "deps" )) != a_obj.end( ))
         {
-            Value::Object & obj2 = k->getObject();
+            Value::ObjectIter   m;
+            DependencyData *    dep;
+            Value::Array &      arr2 = j->second.getArray();
 
-            dep = a_item->add_dep();
-            dep->set_id( obj2.at( "id" ).asString());
-            dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
-            dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
-            if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
-                dep->set_alias( m->second.asString() );
+            for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+            {
+                Value::Object & obj2 = k->getObject();
+
+                dep = a_item->add_dep();
+                dep->set_id( obj2.at( "id" ).asString());
+                dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
+                dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+                if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
+                    dep->set_alias( m->second.asString() );
+            }
         }
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( 1, "setListingData - " << e.what() );
     }
 }
 

@@ -373,7 +373,8 @@ class API:
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
-        msg = auth.DataGetPreprocRequest()
+        msg = auth.DataGetRequest()
+        msg.check = True
         for ids in item_id:
             msg.id.append( self._resolve_id( ids, context ))
 
@@ -433,9 +434,9 @@ class API:
 
             reply = self._mapi.sendRecv( msg )
 
-            if len(reply[0].task) > 0 and wait:
+            if reply[0].task and wait:
                 msg2 = auth.TaskViewRequest()
-                msg2.task_id = reply[0].task[0].id
+                msg2.task_id = reply[0].task.id
                 elapsed = 0
 
                 while True:
@@ -448,13 +449,13 @@ class API:
                     if reply2[1] == "NackReply":
                         break
 
-                    reply = reply2
-
-                    if reply[0].task[0].status > 2:
+                    if reply2[0].task[0].status > 2:
                         break
 
                     if timeout_sec and elapsed > timeout_sec:
                         break
+
+                reply = reply2
 
             return reply
         else:
@@ -490,9 +491,9 @@ class API:
 
         reply = self._mapi.sendRecv( msg )
 
-        if len(reply[0].task) > 0 and wait:
+        if ( reply[0].HasField( "task" ) == True ) and wait:
             msg2 = auth.TaskViewRequest()
-            msg2.task_id = reply[0].task[0].id
+            msg2.task_id = reply[0].task.id
             elapsed = 0
 
             while True:
@@ -505,13 +506,15 @@ class API:
                 if reply2[1] == "NackReply":
                     break
 
-                reply = reply2
+                #reply = reply2
 
-                if reply[0].task[0].status > 2:
+                if reply2[0].task[0].status > 2:
                     break
 
                 if timeout_sec and elapsed > timeout_sec:
                     break
+
+            reply = reply2
 
         return reply
 
