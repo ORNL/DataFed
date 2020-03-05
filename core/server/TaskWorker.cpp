@@ -247,28 +247,34 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
 
     vector<pair<string,string>> files_v;
     for ( libjson::Value::ArrayIter f = files.begin(); f != files.end(); f++ )
-        files_v.push_back(make_pair( src_path + (*f)["from"].asString(), dst_path + (*f)["to"].asString() ));
-
-    string glob_task_id = m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
-
-    // Monitor Globus transfer
-
-    GlobusAPI::XfrStatus    xfr_status;
-    string                  err_msg;
-
-    do
     {
-        sleep( 5 );
+        if ((*f)["size"].asNumber() > 0 )
+            files_v.push_back(make_pair( src_path + (*f)["from"].asString(), dst_path + (*f)["to"].asString() ));
+    }
 
-        if ( m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
+    if ( files_v.size() )
+    {
+        string glob_task_id = m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
+
+        // Monitor Globus transfer
+
+        GlobusAPI::XfrStatus    xfr_status;
+        string                  err_msg;
+
+        do
         {
-            // Transfer task needs to be cancelled
-            m_glob.cancelTask( glob_task_id, acc_tok );
-        }
-    } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
+            sleep( 5 );
 
-    if ( xfr_status == GlobusAPI::XS_FAILED )
-        EXCEPT( 1, err_msg );
+            if ( m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
+            {
+                // Transfer task needs to be cancelled
+                m_glob.cancelTask( glob_task_id, acc_tok );
+            }
+        } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
+
+        if ( xfr_status == GlobusAPI::XS_FAILED )
+            EXCEPT( 1, err_msg );
+    }
 
     return false;
 }

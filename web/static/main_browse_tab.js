@@ -3255,7 +3255,7 @@ function makeBrowserTab(){
                 if ( scope )
                     data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
                 else
-                    data.result.push({title:"(empty2)",icon:false,checkbox:false,nodrag:true,notarg:true,key:"empty"});
+                    data.result.push({title:"(empty)",icon:false,checkbox:false,nodrag:true,notarg:true,key:"empty"});
             }
         },
         renderNode: function(ev,data){
