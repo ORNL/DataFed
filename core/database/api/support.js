@@ -34,7 +34,7 @@ module.exports = ( function() {
 
     obj.PERM_NONE           = 0x0000;
     obj.PERM_ALL            = 0x7FFF;
-    obj.PERM_MEMBER         = 0x0007; // Project record perms
+    obj.PERM_MEMBER         = 0x0047; // Project record perms
     obj.PERM_MANAGER        = 0x0407; // Project record perms
     obj.PERM_PUBLIC         = 0x0047;
 
