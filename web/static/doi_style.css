@@ -1,0 +1,25 @@
+.content
+{
+    font-size: 120%;
+}
+
+.doi-grid
+{
+    display:grid;
+    grid-template-columns:max-content auto;
+    grid-column-gap:1em;
+    grid-row-gap:.25em;
+    overflow-y:hidden;
+    width:100%;
+}
+
+.doi-grid>div
+{
+    box-sizing: border-box;
+    padding: 0.2em;
+}
+
+span.fancytree-title
+{
+    font-size: 1.2rem;
+}

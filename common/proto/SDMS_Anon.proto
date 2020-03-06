@@ -78,3 +78,8 @@ message AuthenticateByTokenRequest
     required string             token       = 1;    // Access token
 }
 
+message DOIViewRequest
+{
+    required string             doi         = 1;
+    optional bool               details     = 2;
+}

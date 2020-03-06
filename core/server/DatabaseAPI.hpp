@@ -74,6 +74,8 @@ public:
     void recordUpdateDataMoveRevert( const libjson::Value & a_rec_ids );
     void recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids );
 
+    void doiView( const Anon::DOIViewRequest & a_request, Auth::RecordDataReply & a_reply );
+
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
 
     void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );

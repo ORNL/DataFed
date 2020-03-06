@@ -890,6 +890,7 @@ DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request
     setListingDataReply( a_reply, result );
 }
 
+
 void
 DatabaseAPI::recordView( const RecordViewRequest & a_request, RecordDataReply & a_reply )
 {
@@ -1139,6 +1140,17 @@ DatabaseAPI::recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids )
 
     dbPost( "dat/update/move_fini", {}, &body, result );
 }
+
+void
+DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Auth::RecordDataReply & a_reply )
+{
+    Value result;
+
+    dbGet( "dat/view/doi", {{"doi",a_request.doi()}}, result );
+
+    setRecordData( a_reply, result );
+}
+
 
 void
 DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )

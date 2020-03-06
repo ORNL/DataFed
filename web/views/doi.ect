@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <% include 'head.ect' %>
+        <script type="text/javascript" charset="utf-8" src="/main.js"></script>
+        <link href="/doi_style.css" rel="stylesheet">
+        <link href="/fancytree/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
+        <script src="/fancytree/jquery.fancytree-all.min.js"></script>
+        <title>DataFed DOI <%- @doi %></title>
+    </head>
+    <body>
+        <div class="col-flex ui-widget-content" style="height:100%;border:none">
+            <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:0 .5em">
+                <div style="flex:none;font-size:2em;">
+                    <span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span>&nbsp
+                </div>
+                <div style="flex:none;font-size:2em;">
+                    <div>
+                        DataFed
+                    </div>
+                    <div style="font-size:40%;margin:-.3em 0 .15em .1em">
+                        Ver <%- @version %> <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp<b>TEST</b>&nbsp</span>
+                    </div>
+                </div>
+                <div style="flex:1 1 100%;font-size:2em;">
+                    <center>DOI <%- @doi %></center>
+                </div>
+                <div style="flex:none">
+                    <button class="btn" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'>Help</button>&nbsp
+                    <button class="btn" onclick="location.href='/ui/login'">Log In / Register</button>
+                </div>
+            </div>
+            <div class='content' style="flex:auto;overflow:auto">
+                <div id='content' style="padding:3rem 8rem 0"></div>
+                <!-- div style="padding:3rem 8rem 0;font-size:120%;">
+                    <div id="data_md_tree" class="no-border" style="display:inline-block"></div>
+                </div -->
+            </div>
+        </div>
+    </body>
+    <script>
+        window.name = 'datafed_doi_target';
+        $(".btn").button();
+
+        var g_doi = "<%- @doi %>";
+
+        var g_test_mode = "<%- @test_mode %>";
+        if ( g_test_mode ){
+            console.log("test mode:",g_test_mode);
+            $("#mode_label").show();
+        }
+
+        _asyncGet( "/api/doi/view?doi=" + encodeURIComponent(g_doi), null, function( ok, data ){
+            console.log("view",g_doi,ok,data);
+
+            if ( ok ){
+                var item = data.data[0], html = "";
+                var date = new Date();
+
+                html += "<div class='doi-grid'>";
+                html += "<div>DOI No.:</div><div class='ui-widget-content'>" + item.doi + "</div>";
+                html += "<div>DataFed ID:</div><div class='ui-widget-content'>" + item.id + "</div>";
+                html += "<div>Title:</div><div class='ui-widget-content'>" + item.title + "</div>";
+
+                if ( item.desc )
+                    html += "<div>Description:</div><div class='ui-widget-content' style='white-space:pre-wrap'>" + item.desc + "</div>";
+
+                html += "<div>Keywords:</div><div class='ui-widget-content'>" + (item.keyw?item.keyw:"N/A") + "</div>";
+                html += "<div>Data Size:</div><div class='ui-widget-content'>" + sizeToString( item.size ) + "</div>";
+                html += "<div>Owner:</div><div class='ui-widget-content'>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</div>";
+
+                if ( item.creator )
+                    html += "<div>Creator:</div><div class='ui-widget-content'>" + item.creator.substr(2) + "</div>";
+
+                html += "<div>Provenance:</div><div class='ui-widget-content'>";
+
+                if ( item.deps && item.deps.length ){
+                    var dep,id;
+
+                    for ( i in item.deps ){
+                        dep = item.deps[i];
+                        id = dep.id + (dep.alias?" ("+dep.alias+")":"");
+
+                        if ( dep.dir == "DEP_OUT" ){
+                            switch(dep.type){
+                                case "DEP_IS_DERIVED_FROM":
+                                    html += "Derived from " + id + "<br>";
+                                    break;
+                                case "DEP_IS_COMPONENT_OF":
+                                    html += "Component of " + id + "<br>";
+                                    break;
+                                case "DEP_IS_NEW_VERSION_OF":
+                                    html += "New version of " + id + "<br>";
+                                    break;
+                            }
+                        }else{
+                            switch(dep.type){
+                                case "DEP_IS_DERIVED_FROM":
+                                    html += "Precursor of " + id + "<br>";
+                                    break;
+                                case "DEP_IS_COMPONENT_OF":
+                                    html += "Container of " + id + "<br>";
+                                    break;
+                                case "DEP_IS_NEW_VERSION_OF":
+                                    html += "Old version of " + id + "<br>";
+                                    break;
+                            }
+                        }
+
+                        //html += dep.id + " " + dep.type + " " + dep.dir + "<BR>";
+                    }
+                }else{
+                    html += "No relationships.";
+                }
+
+                html += "</div>";
+                if ( item.ct ){
+                    date.setTime(item.ct*1000);
+                    html += "<div>Created:</div><div class='ui-widget-content'>" + date.toLocaleDateString("en-US", g_date_opts) + "</div>";
+                }
+                if ( item.ut ){
+                    date.setTime(item.ut*1000);
+                    html += "<div>Updated:</div><div class='ui-widget-content'>" + date.toLocaleDateString("en-US", g_date_opts) + "</div>";
+                }
+                if ( item.dt ){
+                    date.setTime(item.dt*1000);
+                    html += "<div>Uploaded:</div><div class='ui-widget-content'>" + date.toLocaleDateString("en-US", g_date_opts)+ "</div>";
+                }
+
+                html += "<div>Metadata:</div><div id='md_div' class='ui-widget-content'></div>";
+                html += "</div>";
+                $('#content').html( html );
+
+                if ( item.metadata ){
+                    html = "<div id='data_md_tree' class='no-border' style='display:inline-block'></div>";
+                    $('#md_div').html( html );
+
+                    var md = JSON.parse( item.metadata );
+
+                    //var src = [{title:"Metadata",folder:true,expanded:true,children: buildObjSrcTree(md)}];
+                    var src = buildObjSrcTree(md,"md");
+
+                    $("#data_md_tree").fancytree({
+                        extensions: ["themeroller"],
+                        themeroller: {
+                            activeClass: "",
+                            addClass: "",
+                            focusClass: "",
+                            hoverClass: "fancytree-hover",
+                            selectedClass: ""
+                        },
+                        source: src,
+                        selectMode: 1,
+                        clickFolderMode: 2,
+                    });
+
+                }else{
+                    $('#md_div').text( "N/A" );
+                }
+            }else{
+                html = "Error Loading DOI Information<br>" + data;
+                $('#content').html( html );
+            }
+
+        });
+
+    </script>
+</html>

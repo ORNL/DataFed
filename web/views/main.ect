@@ -96,6 +96,12 @@
             $("#mode_label").show();
         }
 
+        var dlgGroups = new makeDlgGroups();
+        var dlgGroupEdit = new makeDlgGroupEdit();
+        var dlgAllocNewEdit = new makeDlAllocNewEdit();
+
+        epRecentLoad();
+
         userView( g_user.uid, true, function( ok, user ){
             if ( ok && user ){
                 g_user.isAdmin = user.isAdmin;

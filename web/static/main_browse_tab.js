@@ -1709,6 +1709,7 @@ function makeBrowserTab(){
         }
     }
 
+    /*
     this.buildObjSrcTree = function( obj, base ){
         //console.log("build tree", obj, base);
 
@@ -1741,6 +1742,7 @@ function makeBrowserTab(){
 
         return src;
     }
+    */
 
     this.showSelectedMetadata = function( md_str )
     {
@@ -1755,10 +1757,11 @@ function makeBrowserTab(){
             //console.log( "exp st", inst.data_md_exp );
             // TODO Use data_md_tree.isExapnded() to do lazy loading in case user's don't want to see metadata
             var md = JSON.parse( md_str );
-            if ( inst.data_md_exp["Metadata"] )
-                inst.data_md_exp["Metadata"] = 10;
+            //if ( inst.data_md_exp["Metadata"] )
+            //    inst.data_md_exp["Metadata"] = 10;
 
-            var src = [{title:"Metadata",folder:true,expanded:inst.data_md_exp["Metadata"]?true:false,children:inst.buildObjSrcTree(md,"Metadata")}];
+            //var src = [{title:"Metadata",folder:true,expanded:inst.data_md_exp["Metadata"]?true:false,children:buildObjSrcTree(md,"Metadata",inst)}];
+            var src = buildObjSrcTree(md,"md",inst);
 
             inst.data_md_tree.reload( src );
             inst.data_md_empty = false;
@@ -3424,6 +3427,7 @@ function makeBrowserTab(){
         },
         source: inst.data_md_empty_src,
         selectMode: 1,
+        clickFolderMode: 2,
         beforeExpand: function(event,data){
             var path = data.node.title;
             var par = data.node.parent;
@@ -3442,11 +3446,6 @@ function makeBrowserTab(){
                 inst.data_md_exp[path] = 10;
             }
             //console.log( "exp st", inst.data_md_exp );
-        },
-        click: function( ev, data ){
-            if ( data.targetType == "icon" && data.node.isFolder() ){
-                data.node.toggleExpanded();
-            }
         }
     });
 

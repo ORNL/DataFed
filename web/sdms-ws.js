@@ -130,6 +130,16 @@ app.get('/', (request, response) => {
         response.redirect('/ui');
 });
 
+
+app.get('/ui/doi/:doiNum*', (request, response) => {
+    console.log("get /doi");
+
+    var theme = request.cookies['sdms-theme']|| "light";
+    var doi = (request.params.doiNum + request.params[0]).toLowerCase();
+    response.render('doi',{doi: doi,theme:theme,version:g_version,test_mode:g_test});
+});
+
+
 app.get('/ui', (request, response) => {
     console.log("get /ui");
     //console.log( "sdms cookie:", request.cookies['sdms'] );
@@ -787,6 +797,13 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/doi/view', ( a_req, a_resp ) => {
+    console.log("DOI:",a_req.query.doi);
+    sendMessage( "DOIViewRequest", { doi: a_req.query.doi }, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    }, true );
+});
+
 app.get('/api/perms/check', ( a_req, a_resp ) => {
     var params = { id: a_req.query.id };
     if ( a_req.query.perms != undefined )
@@ -1195,8 +1212,8 @@ function allocRequestContext( a_response, a_callback ) {
 }
 
 
-function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb ) {
-    var client = a_req.cookies[ 'sdms' ];
+function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
+    var client = a_anon?"anon_":a_req.cookies[ 'sdms' ];
 
     a_resp.setHeader('Content-Type', 'application/json');
 

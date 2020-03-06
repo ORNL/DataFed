@@ -76,6 +76,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
+        SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
 
         proto_id = REG_PROTO( SDMS::Auth );
 

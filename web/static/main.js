@@ -151,7 +151,6 @@ function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
         a_new_obj[a_field] = tmp;
 };
 
-
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
@@ -1026,6 +1025,37 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
             .attr('d', 'M 2,0 L 6,2 L 2,4 M 4,2 L 0,4 L 0,0')
 }
 
+
+function buildObjSrcTree( obj, base, inst ){
+    //console.log("build tree", obj, base);
+
+    var src = [], k2;
+    Object.keys(obj).forEach(function(k) {
+        k2 = escapeHTML(k);
+
+        if ( obj[k] === null ){
+            src.push({title:k2 + " : null", icon: false })
+        }else if ( typeof obj[k] === 'object' ){
+            var fkey=base+"."+k2;
+
+            if ( inst ){
+                if ( inst.data_md_exp[fkey] )
+                    inst.data_md_exp[fkey] = 10;
+
+                src.push({title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)})
+            }else{
+                src.push({title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)})
+            }
+        }else if ( typeof obj[k] === 'string' ){
+            src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
+        }else{
+            src.push({title:k2 + " : " + obj[k], icon: false })
+        }
+    });
+
+    return src;
+}
+
 var status_timer;
 var status_int;
 
@@ -1107,12 +1137,14 @@ DepTypeFromString = {
     "DEP_IS_NEW_VERSION_OF":DEP_IS_NEW_VERSION_OF
 }
 
-var dlgGroups = new makeDlgGroups();
-var dlgGroupEdit = new makeDlgGroupEdit();
-var dlgAllocNewEdit = new makeDlAllocNewEdit();
 var g_ep_recent = [];
 var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
 
+/*var dlgGroups = new makeDlgGroups();
+var dlgGroupEdit = new makeDlgGroupEdit();
+var dlgAllocNewEdit = new makeDlAllocNewEdit();
+
 epRecentLoad();
+*/
 
 console.log( "main.js loaded");
