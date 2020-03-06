@@ -596,7 +596,18 @@ module.exports = ( function() {
     };
 
     obj.resolveDataID = function( a_id, a_client ) {
-        var id,i=a_id.indexOf('/');
+        var alias, id;
+
+        if ( a_id.startsWith( 'doi:' )){
+            id = "a/" + (a_id.substr(4).split("/").join("_"));
+            alias = obj.db.alias.firstExample({ _to: id });
+            if ( !alias )
+                throw [obj.ERR_NOT_FOUND,"DOI '" + a_id + "' does not exist " + id];
+
+            return alias._from;
+        }
+
+        var i=a_id.indexOf('/');
 
         if ( i != -1 ) {
             if ( !a_id.startsWith('d/'))
@@ -609,7 +620,7 @@ module.exports = ( function() {
             else
                 alias_id += a_id;
 
-            var alias = obj.db.alias.firstExample({ _to: alias_id });
+            alias = obj.db.alias.firstExample({ _to: alias_id });
             if ( !alias )
                 throw [obj.ERR_NOT_FOUND,"Alias '" + a_id + "' does not exist"];
 

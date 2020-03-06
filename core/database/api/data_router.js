@@ -867,6 +867,42 @@ router.get('/view', function (req, res) {
 .summary('Get data by ID or alias')
 .description('Get data by ID or alias');
 
+
+router.get('/view/doi', function (req, res) {
+    try {
+        var data_id = g_lib.resolveDataID( "doi:" + req.queryParams.doi );
+        var data = g_db.d.document( data_id );
+
+        var i,dep,rem_md = false;
+
+        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
+        for ( i in data.deps ){
+            dep = data.deps[i];
+            if ( dep.alias )
+                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
+        }
+
+        if ( rem_md && data.md )
+            delete data.md;
+
+        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
+
+        delete data._rev;
+        delete data._key;
+        data.id = data._id;
+        delete data._id;
+
+        res.send( [data] );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('doi', joi.string().required(), "DOI number (without doi: prefix)")
+.summary('Get data by DOI')
+.description('Get data by DOI');
+
+
 router.get('/dep/get', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
     var data_id = g_lib.resolveDataID( req.queryParams.id, client );
