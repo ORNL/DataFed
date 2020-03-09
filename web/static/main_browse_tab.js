@@ -1339,105 +1339,44 @@ function makeBrowserTab(){
         }
     }
 
+    this.showSelectedHTML = function( html ){
+        $("#sel_info_form").hide();
+        $("#sel_info_div").html(html).show();
+        //inst.sel_md_div.hide();
+    }
+
     this.showSelectedDataInfo = function( key ){
         viewData( key, function( item ){
-            fields = {};
-
-            if ( item ){
-                var date = new Date();
-
-                fields.id = "<div class='form-grid'><div>ID:</div><div>" + key + "</div>";
-                if ( item.alias )
-                    fields.id += "<div>Alias:</div><div>" + item.alias + "</div>";
-                if ( item.doi )
-                    fields.id += "<div>DOI:</div><div>" + item.doi + "</div>";
-                fields.id += "</div>";
-
-                fields.title = "\"" + item.title + "\"";
-
-                if ( item.desc )
-                    fields.descr = item.desc;
-
-                var html = "<div class='form-grid'>";
-                html += "<div>Keywords:</div><div>" + (item.keyw?item.keyw:"N/A") + "</div>";
-                html += "<div>Locked:</div><div>" + (item.locked?"Yes":"No") + "</div>";
-                if ( item.dataUrl ){
-                    html += "<div>Data URL:</div><div style='word-break:break-all'><a href='" + item.dataUrl + "' target='_blank'>"+item.dataUrl+"</a></div>";
-                }else{
-                    html += "<div>Data Repo:</div><div>" + item.repoId.substr(5) + "</div>";
-                    html += "<div>Data Size:</div><div>" + sizeToString( item.size ) + "</div>";
-                    if ( item.source )
-                        html += "<div>Source:</div><div>" + item.source + "</div>";
-                    if ( item.ext )
-                        html += "<div>Extension:</div><div>" + item.ext + "</div>";
-                    html += "<div>Auto Ext.:</div><div>" + (item.extAuto?"Yes":"No") + "</div>";
-                }
-                if ( item.ct ){
-                    date.setTime(item.ct*1000);
-                    html += "<div>Created:</div><div>" + date.toLocaleDateString("en-US", g_date_opts) + "</div>";
-                }
-                if ( item.ut ){
-                    date.setTime(item.ut*1000);
-                    html += "<div>Updated:</div><div>" + date.toLocaleDateString("en-US", g_date_opts) + "</div>";
-                }
-                if ( item.dt ){
-                    date.setTime(item.dt*1000);
-                    html += "<div>Uploaded:</div><div>" + date.toLocaleDateString("en-US", g_date_opts)+ "</div>";
-                }
-                html += "<div>Owner:</div><div>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</div>";
-                if ( item.creator ){
-                    html += "<div>Creator:</div><div>" + item.creator.substr(2) + "</div>";
-                }
-                html += "</div>";
-
-                fields.details = html;
-
-                if ( item.deps && item.deps.length ){
-                    var dep,id;
-                    html = "";
-                    for ( i in item.deps ){
-                        dep = item.deps[i];
-                        id = dep.id + (dep.alias?" ("+dep.alias+")":"");
-
-                        if ( dep.dir == "DEP_OUT" ){
-                            switch(dep.type){
-                                case "DEP_IS_DERIVED_FROM":
-                                    html += "Derived from " + id + "<br>";
-                                    break;
-                                case "DEP_IS_COMPONENT_OF":
-                                    html += "Component of " + id + "<br>";
-                                    break;
-                                case "DEP_IS_NEW_VERSION_OF":
-                                    html += "New version of " + id + "<br>";
-                                    break;
-                            }
-                        }else{
-                            switch(dep.type){
-                                case "DEP_IS_DERIVED_FROM":
-                                    html += "Precursor of " + id + "<br>";
-                                    break;
-                                case "DEP_IS_COMPONENT_OF":
-                                    html += "Container of " + id + "<br>";
-                                    break;
-                                case "DEP_IS_NEW_VERSION_OF":
-                                    html += "Old version of " + id + "<br>";
-                                    break;
-                            }
-                        }
-
-                        //html += dep.id + " " + dep.type + " " + dep.dir + "<BR>";
-                    }
-
-                    fields.links = html;
-                }else{
-                    fields.links = "No relationships.";
-                }
-
-                fields.md = item.metadata;
+            showSelectedItemInfo( item );
+            if ( item.metadata ){
+                inst.showSelectedMetadata( item.metadata );
             }else{
-                fields.id = "Insufficient permissions to view data record.";
+                inst.showSelectedMetadata();
             }
-            inst.updateSelectionField( fields );
+        }); 
+    }
+
+    this.showSelectedCollInfo = function( key ){
+        viewColl( key, function( item ){
+            if ( item ){
+                showSelectedItemInfo( item );
+                inst.showSelectedMetadata();
+            }else{
+                inst.showSelectedMetadata();
+                inst.showSelectedHTML( "Insufficient permissions to view collection." );
+            }
+        }); 
+    }
+
+    this.showSelectedProjInfo = function( key ){
+        viewProj( key, function( item ){
+            if ( item ){
+                showSelectedItemInfo( item );
+                inst.showSelectedMetadata();
+            }else{
+                inst.showSelectedMetadata();
+                inst.showSelectedHTML( "Insufficient permissions to view project." );
+            }
         }); 
     }
 
@@ -1462,147 +1401,28 @@ function makeBrowserTab(){
         }else
             key = node.key;
 
-        if ( key == "mydata" ) {
-            fields.id = "All non-project data owned by you.";
-            fields.descr = "Location for creating and organizing personal data and collections.";
-
-            userView( inst.uid, true, function( ok, user ){
-                if ( ok && user ){
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    html += "<tr><td>Allocation(s):</td><td>";
-
-                    if ( user.alloc && user.alloc.length ){
-                        var alloc,free;
-                        for ( i in user.alloc ){
-                            alloc = user.alloc[i]
-                            free = Math.max( Math.floor(10000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
-                            html += alloc.repo + ": " + sizeToString( alloc.dataLimit ) + " total, " + sizeToString( alloc.dataSize ) + " used (" + free + " % free)<br>";
-                        }
-                    }else{
-                        html += "(n/a)";
-                    }
-                    html += "</table>";
-                    fields.details = html;
-                }
-
-                inst.updateSelectionField( fields );
-            });
-        }else if ( key == "proj_own" ) {
-            fields.id = "Owned Projects";
-            fields.descr = "All projects owned by you.";
-            inst.updateSelectionField( fields );
-        }else if ( key == "proj_adm" ) {
-            fields.id = "Managed Projects";
-            fields.descr = "Projects owned by other users that are managed by you.";
-            inst.updateSelectionField( fields );
-        }else if ( key == "proj_mem" ) {
-            fields.id = "Member Projects";
-            fields.descr = "Projects owned by other users where you are a member.";
-            inst.updateSelectionField( fields );
-        }else if ( key == "shared_all" ) {
-            fields.id = "Shared Data";
-            fields.descr = "Data shared with you by other users and projects.";
-            inst.updateSelectionField( fields );
-        }else if ( key == "shared_user" ) {
-            fields.id = "Shared Data by User";
-            fields.descr = "Data shared with you by other users.";
-            inst.updateSelectionField( fields );
-        }else if ( key == "shared_proj" ) {
-            fields.id = "Shared Data by Project";
-            fields.descr = "Data shared with you by other projects.";
-            inst.updateSelectionField( fields );
-        }else if ( key == "queries" ) {
-            fields.id = "Saved Queries";
-            fields.descr = "All saved queries created by you.";
-            inst.updateSelectionField( fields );
-        }else if ( key[0] == "c" ) {
-            viewColl( key, function( item ){
-                if ( item ){
-                    fields.id = "<div class='form-grid'><div>ID:</div><div>" + key + "</div>";
-                    if ( item.alias )
-                        fields.id += "<div>Alias:</div><div>" + item.alias + "</div>";
-                    fields.id += "</div>";
-
-                    fields.title = "\"" + item.title + "\"";
-
-                    if ( item.desc )
-                        fields.descr = item.desc;
-
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    if ( item.ispublic && item.topic )
-                        html += "<tr><td>Topic:</td><td>" + (item.topic?item.topic:"N/A") + "</td></tr>";
-                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + (item.owner[0]=="p"?" (project)":"") + "</td></tr>";
-                    if ( item.ct ){
-                        date.setTime(item.ct*1000);
-                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    if ( item.ut ){
-                        date.setTime(item.ut*1000);
-                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    html += "</table>";
-
-                    fields.details = html;
-                }else{
-                    fields.id = "Insufficient permissions to view collection.";
-                }
-                inst.updateSelectionField( fields );
-            }); 
-        } else if ( key[0] == "d" ) {
+        if ( key[0] == "c" ) {
+            inst.showSelectedCollInfo( key );
+        }else if ( key[0] == "d" ) {
             inst.showSelectedDataInfo( key );
+        }else if ( key == "mydata" ) {
+            inst.showSelectedHTML( "Owned Data<br><br>All data owned by you." );
+        }else if ( key == "proj_own" ) {
+            inst.showSelectedHTML( "Owned Projects<br><br>All projects owned by you." );
+        }else if ( key == "proj_adm" ) {
+            inst.showSelectedHTML( "Managed Projects<br><br>Projects owned by other users that are managed by you." );
+        }else if ( key == "proj_mem" ) {
+            inst.showSelectedHTML( "Member Projects<br><br>Projects owned by other users where you are a member." );
+        }else if ( key == "shared_all" ) {
+            inst.showSelectedHTML( "Shared Data<br><br>Data shared with you by other users and projects." );
+        }else if ( key == "shared_user" ) {
+            inst.showSelectedHTML( "Shared Data by User<br><br>Data shared with you by other users." );
+        }else if ( key == "shared_proj" ) {
+            inst.showSelectedHTML( "Shared Data by Project<br><br>Data shared with you by other projects." );
+        }else if ( key == "queries" ) {
+            inst.showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
         } else if ( key.startsWith("p/")) {
-            viewProj( key, function( item ){
-                if ( item ){
-                    fields.id = "ID: " + key;
-                    fields.title = "\"" + item.title + "\"";
-
-                    if ( item.desc )
-                        fields.descr = item.desc;
-
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                    if ( item.ct ){
-                        date.setTime(item.ct*1000);
-                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    if ( item.ut ){
-                        date.setTime(item.ut*1000);
-                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    html += "<tr><td>Admins:</td><td>";
-                    if ( item.admin && item.admin.length ){
-                        for ( i in item.admin )
-                        html += item.admin[i].substr(2) + " ";
-                    }else{
-                        html += "(n/a)";
-                    }
-                    html += "</td></tr>";
-                    html += "<tr><td>Members:</td><td>";
-                    if ( item.member && item.member.length ){
-                        for ( i in item.member )
-                            html += item.member[i].substr(2) + " ";
-                    }else{
-                        html += "(n/a)";
-                    }
-                    html += "<tr><td>Allocation(s):</td><td>";
-                    if ( item.alloc && item.alloc.length ){
-                        var alloc,free;
-                        for ( i in item.alloc ){
-                            alloc = item.alloc[i]
-                            free = Math.max( Math.floor(10000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
-                            html += alloc.repo + ": " + sizeToString( alloc.dataLimit ) + " total, " + sizeToString( alloc.dataSize ) + " used (" + free + " % free)<br>";
-                        }
-                    }else{
-                        html += "(n/a)";
-                    }
-
-                    html += "</td></tr></table>";
-                    fields.details = html;
-                }else{
-                    fields.id = "Insufficient permissions to view project.";
-                }
-                inst.updateSelectionField( fields );
-            }); 
+            inst.showSelectedProjInfo( key );
         } else if ( key.startsWith("q/")) {
             sendQueryView( key, function( ok, item ){
                 if ( ok && item ){
@@ -1642,46 +1462,11 @@ function makeBrowserTab(){
                 inst.updateSelectionField( fields );
             });
         } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
-            viewProj( node.data.scope, function( item ){
-                if ( item ){
-                    fields.id = "ID: " + key;
-                    fields.title = "\"" + item.title + "\"";
-
-                    if ( item.desc )
-                        fields.descr = item.desc;
-
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                    if ( item.ct ){
-                        date.setTime(item.ct*1000);
-                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    if ( item.ut ){
-                        date.setTime(item.ut*1000);
-                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    html += "<tr><td>Admins:</td><td>";
-                    if ( item.admin && item.admin.length ){
-                        for ( i in item.admin )
-                        html += item.admin[i].substr(2) + " ";
-                    }else{
-                        html += "(n/a)";
-                    }
-                    html += "</td></tr></table>";
-                    fields.details = html;
-                }else{
-                    fields.id = "Insufficient permissions to view project.";
-                }
-                inst.updateSelectionField( fields );
-            });
+            inst.showSelectedProjInfo( node.data.scope );
         } else if ( key == "allocs" ) {
-            fields.id = "My Allocations";
-            fields.descr = "Lists allocations and associated data records.";
-            inst.updateSelectionField( fields );
+            inst.showSelectedHTML( "Data Allocations<br><br>Lists allocations and associated data records." );
         } else if ( key.startsWith("published")) {
-            fields.id = "Public Collections";
-            fields.descr = "Lists collections made public and available in DataFed catalogs.";
-            inst.updateSelectionField( fields );
+            inst.showSelectedHTML( "Public Collections<br><br>Lists collections made public and available in DataFed catalogs." );
         } else if ( key.startsWith( "repo/" )) {
             allocView( node.data.repo, node.data.scope, function( ok, data ){
                 if ( ok ){

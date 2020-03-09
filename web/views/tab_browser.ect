@@ -1,6 +1,7 @@
 <div class="col-flex" style="padding:0;height:100%;">
     <div style="min-height:0;display:flex;flex:1">
-        <div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:.15em .15em 0 .15em;min-width:0;min-height:0;width:55%">
+        <!-- div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:.15em .15em 0 .15em;min-width:0;min-height:0;width:55%" -->
+        <div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:0;min-width:0;min-height:0;width:55%">
             <div id="data-tabs" style="border:none;padding:0;height:100%;min-height:0">
                 <ul>
                     <li><a href="#tab-data-tree">My Data</a></li>
@@ -62,47 +63,42 @@
                 </div>
             </div>
         </div>
-        <div id="info-tabs-parent" style="flex:1 1 60%;padding:.15em .15em 0 0;height:100%;min-width:0;min-height:0">
+        <!--  div id="info-tabs-parent" style="flex:1 1 60%;padding:.15em .15em 0 0;height:100%;min-width:0;min-height:0" -->
+        <div id="info-tabs-parent" style="flex:1 1 60%;padding: 0;height:100%;min-width:0;min-height:0">
             <div id="info-tabs" style="border:none;padding:0;height:100%;min-height:0">
                 <ul>
                     <li><a href="#tab-sel-info">General</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
                 </ul>
                 <div id="tab-sel-info" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
-                    <div class="ui-widget-content" style="height:100%;overflow:auto;padding:.25em">
-                        <div id="sel_title_div">
-                            <div id="sel_title"></div>
-                            <br>
-                        </div>
-                        <div id="sel_id"></div>
-                        <div id="sel_alias"></div>
-                        <div id="sel_descr_div">
-                            <br>
-                            <div id="sel_descr_hdr" style="" class="sub-header">Description</div>
-                            <div style="padding:0;overflow-wrap:break-word" class="ui-widget-content" >
-                                    <div id="sel_descr" style="padding:.25em;white-space:pre-wrap"></div>
-                            </div>
-                        </div>
-                        <div id="sel_links_div">
-                            <br>
-                            <div id="sel_links_hdr" class="sub-header">Provenance</div>
-                            <div class="ui-widget-content" >
-                                <div id="sel_links" style="padding:.25em"></div>
-                            </div>
-                        </div>
-                        <div id="sel_details_div">
-                            <br>
-                            <div id="sel_details_hdr" class="sub-header">Details</div>
-                            <div class="ui-widget-content" style="">
-                                <div id="sel_details" style="padding:.25em;overflow-wrap:break-word"></div>
-                            </div>
-                        </div>
+                    <div id="sel_info_div" class="content" style="height:100%;overflow:auto;padding:.5em .5em;display:none"></div>
+                    <div id="sel_info_form" class="content" style="height:100%;overflow:auto;padding:.25em;display:none">
+                        <table class="sel-info-table">
+                            <tr><td>Type:</td><td id='sel_info_type'></td></tr>
+                            <tr><td>ID:</td><td id='sel_info_id'></td></tr>
+                            <tr class="sid sic"><td>Alias:</td><td id='sel_info_alias'></td></tr>
+                            <tr class="sidp"><td>DOI No.:</td><td id='sel_info_doi'></td></tr>
+                            <tr><td>Title:</td><td id='sel_info_title'></td></tr>
+                            <tr class="sid sidp sic sip"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr>
+                            <tr class="sid sidp"><td>Keywords:</td><td id='sel_info_keyw'></td></tr>
+                            <tr class="sidp"><td>Data URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
+                            <tr class="sid"><td>Data Repo:</td><td id='sel_info_repo'></td></tr>
+                            <tr class="sid"><td>Data Size:</td><td id='sel_info_size'></td></tr>
+                            <tr class="sid"><td>Data Source:</td><td id='sel_info_src'></td></tr>
+                            <tr class="sid"><td>Data Ext:</td><td id='sel_info_ext'></td></tr>
+                            <tr class="sid sidp"><td>Provenance:</td><td id='sel_info_prov'></td></tr>
+                            <tr class="sid sidp sic sip siq"><td>Owner:</td><td id='sel_info_owner'></td></tr>
+                            <tr class="sid sidp"><td>Creator:</td><td id='sel_info_creator'></td></tr>
+                            <tr class="sid sidp sic"><td>Created:</td><td id='sel_info_ct'></td></tr>
+                            <tr class="sid sidp sic"><td>Updated:</td><td id='sel_info_ut'></td></tr>
+                            <tr class="sid sidp"><td>Uploaded:</td><td id='sel_info_dt'></td></tr>
+                        </table>
                     </div>
                 </div>
                 <div id="tab-sel-md" class="ui-widget-content" style="padding:0;height:100%;min-height:0;overflow:auto">
-                    <div class="ui-widget-content" style="height:100%;overflow:auto;padding:.25em">
+                    <div class="content" style="height:100%;overflow:auto;padding:.25em">
                         <div id="sel_md" style="padding:.25em">
-                            <div id="data_md_tree" class="no-border" style="display:inline-block"></div>
+                            <div id="data_md_tree" class="content no-border" style="display:inline-block"></div>
                         </div>
                     </div>
                 </div>

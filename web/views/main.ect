@@ -39,6 +39,7 @@
         <script type="text/javascript" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main.js"></script>
         <script type="text/javascript" charset="utf-8" src="/catalog_subtab.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/item_info_form.js"></script>
         <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
         <script type="text/javascript">
             loadUser();
@@ -49,12 +50,23 @@
     </head>
     <body>
     <div class="col-flex" style="height:100%;width:100%">
-        <!-- div class="ui-widget-header row-flex" style="flex:none;background-image:url('/banner.jpg');background-repeat:no-repeat;background-position:right center;align-items:center;padding:.25em .5em" -->
-        <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
-            <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span> DataFed <span style="font-size:40%">V-<%- @version %></span> <span id='mode_label' class='ui-state-error' style='display:none'><b>TEST MODE</b></span></div>
+        <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:0 .5em">
+            <div style="flex:none;font-size:2em;">
+                <span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span>&nbsp
+            </div>
+            <div style="flex:none;font-size:2em;">
+                <div>
+                    DataFed
+                </div>
+                <div style="font-size:40%;margin:-.3em 0 .15em .1em">
+                    Ver <%- @version %> <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp<b>TEST</b>&nbsp</span>
+                </div>
+            </div>
+            <div style="flex:1 1 100%;font-size:2em;">
+                <center>Data Portal</center>
+            </div>
             <div style="flex:none">
                 <button class="btn" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'>Help</button>&nbsp
-                <!-- button class="btn" onclick="window.open('/ui/docs/cli','sdms-docs-cli')" title='DataFed Command-Line-Interface help &amp installation.' >CLI</button -->
                 <button class="btn" onclick="logout()">Log Out</button>
             </div>
         </div>

@@ -279,6 +279,24 @@ svg text
     width: 10em;
 }
 
+.sel-info-table
+{
+    width:100%;
+}
+
+.sel-info-table tr
+{
+    vertical-align:top;
+}
+
+.sel-info-table td{
+    padding: 0.2em .5em;
+}
+
+.sel-info-table td:nth-child(2){
+    width:100%;
+}
+
 .form-table
 {
     width:100%;
@@ -440,6 +458,7 @@ td
     display:grid;
     grid-template-columns:max-content auto;
     column-gap:1em;
+    row-gap:.25em;
     overflow-y:hidden;
     width:100%;
 }
