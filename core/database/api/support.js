@@ -371,13 +371,16 @@ module.exports = ( function() {
         if ( obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client_id }))
             return obj.PROJ_MANAGER;
 
-        var res = obj.db._query( "for v,e,p in 3..3 inbound @user member, acl, outbound owner filter p.vertices[1].gid == 'members' and v._id == @proj return { id: v._id }", { user: a_client_id, proj: a_proj_id }).toArray();
+        var grp = obj.db.g.firstExample({ uid: a_proj_id, gid: "members" });
+        if ( !grp )
+            return obj.PROJ_NO_ROLE;
 
-        if ( res.length == 1 )
+        if ( obj.db.member.firstExample({ _from: grp._id, _to: a_client_id }))
             return obj.PROJ_MEMBER;
         else
             return obj.PROJ_NO_ROLE;
     };
+
 
     obj.assignRepo = function( a_user_id ){
         // TODO use default if specified

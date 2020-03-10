@@ -476,31 +476,29 @@ router.get('/view', function (req, res) {
             det_ok = true;
         }
 
-        if ( det_ok ){
-            var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
-            if ( repos.length )
-                user.is_repo_admin = true;
+        var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
+        if ( repos.length )
+            user.is_repo_admin = true;
 
-            if ( req.queryParams.details ) {
-                var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
-                if ( idents.length ) {
-                    user.idents = idents;
-                }
+        user.allocs = g_db.alloc.byExample({_from:user._id}).toArray();
+        if ( user.allocs.length ) {
+            var alloc;
 
-                user.allocs = g_db.alloc.byExample({_from:user._id}).toArray();
-                if ( user.allocs.length ) {
-                    var alloc;
+            for ( var i in user.allocs ){
+                alloc = user.allocs[i];
+                delete alloc._from;
+                alloc.repo = alloc._to.substr(5);
+                delete alloc._to;
+                delete alloc._key;
+                delete alloc._id;
+                delete alloc._rev;
+            }
+        }
 
-                    for ( var i in user.allocs ){
-                        alloc = user.allocs[i];
-                        delete alloc._from;
-                        alloc.repo = alloc._to.substr(5);
-                        delete alloc._to;
-                        delete alloc._key;
-                        delete alloc._id;
-                        delete alloc._rev;
-                    }
-                }
+        if ( req.queryParams.details && det_ok ){
+            var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
+            if ( idents.length ) {
+                user.idents = idents;
             }
         }else{
             delete user.options;
