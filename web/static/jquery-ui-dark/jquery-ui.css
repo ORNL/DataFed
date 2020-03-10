@@ -272,6 +272,36 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
     color:#E07010;
 }
 
+mark
+{
+	background:#ffc73d;
+	color:#111111;
+}
+
+.fancytree-ext-filter-dimm span.fancytree-node span.fancytree-title {
+	color: #aaa!important;
+	font-weight: lighter!important;
+}
+
+.fancytree-ext-filter-dimm tr.fancytree-submatch span.fancytree-title,
+.fancytree-ext-filter-dimm span.fancytree-node.fancytree-submatch span.fancytree-title {
+	color: #fff!important;
+	font-weight: bold!important;
+}
+
+.fancytree-ext-filter-dimm tr.fancytree-match span.fancytree-title,
+.fancytree-ext-filter-dimm span.fancytree-node.fancytree-match span.fancytree-title {
+	color: #fff!important;
+	font-weight: bold!important;
+}
+
+.shadowed
+{
+	position:relative;
+	z-index:10;
+	box-shadow: .2em .4em 5px #222;
+}
+
 ::-webkit-scrollbar-track
 {
     background: #222

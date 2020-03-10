@@ -4,26 +4,12 @@ function makeBrowserTab(){
     var inst = this;
 
     inst.frame = $("#content");
-    //inst.frame = $("#tab-browse");
-    //inst.data_ident = $("#data_ident",inst.frame);
-    inst.sel_id = $("#sel_id",inst.frame);
-    inst.sel_alias = $("#sel_alias",inst.frame);
-    inst.sel_title_div = $("#sel_title_div",inst.frame);
-    inst.sel_title = $("#sel_title",inst.frame);
-    inst.sel_details_div = $("#sel_details_div",inst.frame);
-    inst.sel_details = $("#sel_details",inst.frame);
-    inst.sel_descr_div = $("#sel_descr_div",inst.frame);
-    inst.sel_descr = $("#sel_descr",inst.frame);
-    inst.sel_links_div = $("#sel_links_div",inst.frame);
-    inst.sel_links = $("#sel_links",inst.frame);
-    inst.sel_md_div = $("#sel_md_div",inst.frame);
     this.task_hist = $("#task_hist",inst.frame);
     this.alloc_stat = $("#alloc_stat",inst.frame);
     this.data_tree = null;
     this.data_md_tree = null;
     this.data_md_empty = true;
     this.data_md_empty_src = [{title:"(n/a)", icon:false}];
-    //this.data_md_cur = {};
     this.data_md_exp = {};
     this.taskHist = [];
     this.pollSince = g_opts.task_hist * 3600;
@@ -3075,13 +3061,17 @@ function makeBrowserTab(){
     tooltipTheme( inst.data_tree_div );
 
     $("#data_md_tree").fancytree({
-        extensions: ["themeroller"],
+        extensions: ["themeroller","filter"],
         themeroller: {
             activeClass: "",
             addClass: "",
             focusClass: "",
             hoverClass: "fancytree-hover",
             selectedClass: ""
+        },
+        filter:{
+            autoExpand: true,
+            mode: "dimm"
         },
         source: inst.data_md_empty_src,
         selectMode: 1,
@@ -3206,6 +3196,22 @@ function makeBrowserTab(){
     $("#btn_srch_refresh").on("click", function(){
         if ( inst.cur_query )
             inst.execQuery( inst.cur_query );
+    });
+
+    $("#md_filter_text").on('keypress', function (e) {
+        if (e.keyCode == 13){
+            var text = $("#md_filter_text").val();
+            inst.data_md_tree.filterNodes( text );
+        }
+    });
+
+    $("#md_filter_apply").on('click', function (e) {
+        var text = $("#md_filter_text").val();
+        inst.data_md_tree.filterNodes( text );
+    });
+
+    $("#md_filter_reset").on('click', function (e) {
+        inst.data_md_tree.clearFilter();
     });
 
     if ( g_user.isRepoAdmin ){
@@ -3458,19 +3464,6 @@ function makeBrowserTab(){
             }
         }
     }).css({'overflow': 'auto'});
-
-    $("#sel_descr_hdr").button().click( function(){
-        $("#sel_descr").slideToggle();
-    });
-    $("#sel_links_hdr").button().click( function(){
-        $("#sel_links").slideToggle();
-    });
-    $("#sel_details_hdr").button().click( function(){
-        $("#sel_details").slideToggle();
-    });
-    $("#sel_md_hdr").button().click( function(){
-        $("#sel_md").slideToggle();
-    });
 
     $(".scope",inst.frame).checkboxradio();
     $(".scope2",inst.frame).checkboxradio();
