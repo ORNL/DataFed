@@ -67,7 +67,7 @@
         <div id="info-tabs-parent" style="flex:1 1 60%;padding: 0;height:100%;min-width:0;min-height:0">
             <div id="info-tabs" style="border:none;padding:0;height:100%;min-height:0">
                 <ul>
-                    <li><a href="#tab-sel-info">General</a></li>
+                    <li><a href="#tab-sel-info">Details</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
                 </ul>
                 <div id="tab-sel-info" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
@@ -77,16 +77,28 @@
                             <tr><td>Type:</td><td id='sel_info_type'></td></tr>
                             <tr><td>ID:</td><td id='sel_info_id'></td></tr>
                             <tr class="sid sic"><td>Alias:</td><td id='sel_info_alias'></td></tr>
-                            <tr class="sidp"><td>DOI No.:</td><td id='sel_info_doi'></td></tr>
-                            <tr><td>Title:</td><td id='sel_info_title'></td></tr>
-                            <tr class="sid sidp sic sip"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr>
+                            <tr class="sidp"><td>DOI&nbspNo.:</td><td id='sel_info_doi'></td></tr>
+                            <tr class="sid sidp sic sip sia siq"><td>Title:</td><td id='sel_info_title'></td></tr>
+                            <tr class="siu"><td>Name:</td><td id='sel_info_name'></td></tr>
+                            <tr class="sid sidp sic sip sia"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr>
                             <tr class="sid sidp"><td>Keywords:</td><td id='sel_info_keyw'></td></tr>
-                            <tr class="sidp"><td>Data URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
-                            <tr class="sid"><td>Data Repo:</td><td id='sel_info_repo'></td></tr>
-                            <tr class="sid"><td>Data Size:</td><td id='sel_info_size'></td></tr>
-                            <tr class="sid"><td>Data Source:</td><td id='sel_info_src'></td></tr>
-                            <tr class="sid"><td>Data Ext:</td><td id='sel_info_ext'></td></tr>
+                            <tr class="sidp"><td>Data&nbspURL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
+                            <tr class="sid"><td>Data&nbspRepo:</td><td id='sel_info_repo'></td></tr>
+                            <tr class="sid"><td>Data&nbspSize:</td><td id='sel_info_size'></td></tr>
+                            <tr class="sid"><td>Data&nbspSource:</td><td id='sel_info_src'></td></tr>
+                            <tr class="sid"><td>Data&nbspExt:</td><td id='sel_info_ext'></td></tr>
                             <tr class="sid sidp"><td>Provenance:</td><td id='sel_info_prov'></td></tr>
+                            <tr class="siu"><td>E&#8209;Mail:</td><td id='sel_info_email'></td></tr>
+                            <tr class="sia"><td>Data&nbspLimit:</td><td id='sel_info_data_lim'></td></tr>
+                            <tr class="sia"><td>Data&nbspUsage:</td><td id='sel_info_data_sz'></td></tr>
+                            <tr class="sia"><td>Record&nbspLimit:</td><td id='sel_info_rec_lim'></td></tr>
+                            <tr class="sia"><td>Record&nbspCount:</td><td id='sel_info_rec_cnt'></td></tr>
+                            <tr class="sip"><td>Admins:</td><td id='sel_info_admins'></td></tr>
+                            <tr class="sip"><td>Members:</td><td id='sel_info_members'></td></tr>
+                            <tr class="sip siu"><td>Allocations:</td><td id='sel_info_allocs'></td></tr>
+                            <tr class="siq"><td>ID/Alias:</td><td id='sel_info_qry_id'></td></tr>
+                            <tr class="siq"><td>Text:</td><td id='sel_info_qry_text'></td></tr>
+                            <tr class="siq"><td>Metadata:</td><td id='sel_info_qry_meta'></td></tr>
                             <tr class="sid sidp sic sip siq"><td>Owner:</td><td id='sel_info_owner'></td></tr>
                             <tr class="sid sidp"><td>Creator:</td><td id='sel_info_creator'></td></tr>
                             <tr class="sid sidp sic"><td>Created:</td><td id='sel_info_ct'></td></tr>
@@ -121,7 +133,6 @@
         <button class="btn" id="btn_unlock" title='Unlock selected item' disabled>Unlock</button>
         <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Get</button>
         <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Put</button>
-        <button class="btn" id="btn_move" title='Move raw data to a different repo/allocation' disabled>Relocate</button>
     </div>
     <div id="footer" style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0">

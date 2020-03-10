@@ -154,7 +154,7 @@ function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            console.log("viewData ok, data:", data );
+            //console.log("viewData ok, data:", data );
             a_cb( data );
         }
         else {
@@ -239,7 +239,7 @@ function dataLock( a_id, a_lock, a_cb ){
 function dataGet( a_ids, a_cb ){
     dataGetCheck( a_ids, function( ok, data ){
         if ( ok ){
-            console.log("data get check:",data);
+            //console.log("data get check:",data);
             var internal = false, external = false;
 
             if ( !data.item || !data.item.length ){
@@ -269,7 +269,7 @@ function dataGet( a_ids, a_cb ){
                 dlgStartTransfer( TT_DATA_GET, data.item, a_cb );
             }else{
                 for ( var i in data.item ){
-                    console.log("download ", data.item[i].url )
+                    //console.log("download ", data.item[i].url )
                     var link = document.createElement("a");
                     var idx = data.item[i].url.lastIndexOf("/");
                     link.download = data.item[i].url.substr(idx);
@@ -287,7 +287,7 @@ function dataGet( a_ids, a_cb ){
 function dataPut( a_id, a_cb ){
     dataPutCheck( a_id, function( ok, data ){
         if ( ok ){
-            console.log("data put check:",data);
+            //console.log("data put check:",data);
 
             if ( !data.item || !data.item.length ){
                 dlgAlert("Data Put Error","Selection contains no record.");
@@ -307,7 +307,7 @@ function dataPut( a_id, a_cb ){
 
 
 function dataAllocChange( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
-    console.log("change alloc, items", a_ids );
+    //console.log("change alloc, items", a_ids );
     var url = "/api/dat/alloc_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&repo_id="+encodeURIComponent(a_repo_id);
     if (a_proj_id )
         url += "&proj_id="+encodeURIComponent(a_proj_id);
@@ -319,7 +319,7 @@ function dataAllocChange( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
 
 
 function dataOwnerChange( a_ids, a_coll_id, a_repo_id, a_proj_id, a_check, a_cb ){
-    console.log("change owner, items", a_ids );
+    //console.log("change owner, items", a_ids );
     var url = "/api/dat/owner_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&coll_id="+encodeURIComponent(a_coll_id);
     if (a_repo_id )
         url += "&repo_id="+encodeURIComponent(a_repo_id);
@@ -361,7 +361,7 @@ function dataGetDepGraph( a_id, a_cb ) {
 }
 
 function dataCreateBatch( a_records, a_cb ){
-    console.log("dataCreateBatch");
+    //console.log("dataCreateBatch");
     _asyncPostText( "/api/dat/create/batch", a_records, function( ok, data ){
         if ( a_cb )
             a_cb( ok, data );
@@ -369,7 +369,7 @@ function dataCreateBatch( a_records, a_cb ){
 }
 
 function dataUpdateBatch( a_records, a_cb ){
-    console.log("dataUpdateBatch");
+    //console.log("dataUpdateBatch");
     _asyncPostText( "/api/dat/update/batch", a_records, function( ok, data ){
         if ( a_cb )
             a_cb( ok, data );
@@ -445,24 +445,24 @@ function unlinkItem( a_item, a_coll, a_cb ) {
 }*/
 
 function unlinkItems( a_items, a_coll, a_cb ) {
-    console.log("unlinkItems()",a_items);
+    //console.log("unlinkItems()",a_items);
     _asyncGet( "/api/col/unlink?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
 function colMoveItems( a_items, a_src_id, a_dst_id, a_cb ) {
-    console.log("colMoveItems", a_items, a_src_id, a_dst_id );
+    //console.log("colMoveItems", a_items, a_src_id, a_dst_id );
     _asyncGet( "/api/col/move?items="+encodeURIComponent(JSON.stringify(a_items))+"&src_id="+encodeURIComponent(a_src_id)+"&dst_id="+encodeURIComponent(a_dst_id), null, a_cb );
 }
 
 function getParents( a_id, a_cb ) {
-    console.log("getParents",a_id);
+    //console.log("getParents",a_id);
     _asyncGet( "/api/col/get_parents?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
 function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
-    console.log("getCollOffset",coll_id,item_id,page_sz,idx);
+    //console.log("getCollOffset",coll_id,item_id,page_sz,idx);
     _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"&page_sz="+page_sz, null, function(ok,data){
-        console.log("getCollOffset - cb",coll_id,item_id,page_sz,idx);
+        //console.log("getCollOffset - cb",coll_id,item_id,page_sz,idx);
         cb( ok, data, idx )
     });
 }
@@ -493,7 +493,7 @@ function aclByProjectList( a_proj_id, a_cb ) {
 
 function checkPerms( a_id, a_perms, a_cb ){
     _asyncGet( "/api/perms/check?id="+encodeURIComponent(a_id)+(a_perms?("&perms="+a_perms):""), null, function(ok,data){
-        console.log("checkPerm",a_id,a_perms,ok,data);
+        //console.log("checkPerm",a_id,a_perms,ok,data);
         if ( ok )
             a_cb( data.granted );
         else
@@ -517,7 +517,7 @@ function alertPermDenied(){
 
 
 function userView( a_id, a_details, a_cb ) {
-    console.log("userView ",a_id);
+    //console.log("userView ",a_id);
     _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
 }
 
@@ -569,7 +569,7 @@ function repoDelete( a_repo_id, a_cb ){
 }*/
 
 function repoCalcSize( a_items, a_recursive, a_cb ){
-    console.log("calcSize, rec:",a_recursive,"items",a_items);
+    //console.log("calcSize, rec:",a_recursive,"items",a_items);
     _asyncGet( "/api/repo/calc_size?recurse=" + a_recursive + "&items="+ encodeURIComponent(JSON.stringify(a_items)), null, function( ok, data ){
         a_cb( ok, data );
     });
@@ -694,7 +694,7 @@ function sendQueryDelete( a_ids, a_cb ){
 }
 
 function sendQueryView( a_id, a_callback ){
-    console.log("sendQueryView,",a_id);
+    //console.log("sendQueryView,",a_id);
     _asyncGet("/api/query/view?id="+encodeURIComponent(a_id),null,a_callback);
 }
 
@@ -713,7 +713,7 @@ function epAutocomplete( a_term, a_cb ){
 }
 
 function epRecentLoad( a_cb ){
-    console.log("epRecentLoad");
+    //console.log("epRecentLoad");
     _asyncGet( "/ui/ep/recent/load", null, function( ok, data ){
         //console.log("epRecentLoad",ok,data);
         
@@ -737,13 +737,13 @@ function epRecentSave( a_cb ){
 */
 
 function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
-    console.log("epDirList",a_ep,a_path);
+    //console.log("epDirList",a_ep,a_path);
     _asyncGet( "/ui/ep/dir/list?ep=" + encodeURIComponent(a_ep) + "&path=" + encodeURIComponent(a_path) + "&hidden=" + (a_show_hidden?"true":"false"), null, function( ok, data ){
         if ( a_cb ){
             if ( ok )
                 a_cb( data );
             else{
-                console.log("dir list failed",data);
+                //console.log("dir list failed",data);
                 a_cb();
             }
         }
@@ -865,14 +865,12 @@ function sizeToString( a_bytes ){
 function parseSize( a_size_str ){
     var result = null, val;
     var tokens = a_size_str.toUpperCase().trim().split(" ");
-    console.log( "tokens:", tokens );
+
     for ( var i in tokens ){
         if ( tokens[i].length == 0 ){
-            console.log( "splice at", i );
             tokens.splice(i,1);
         }
     }
-    console.log( "tokens:", tokens );
 
     if ( tokens.length == 2 ){
         val = parseFloat(tokens[0]);
@@ -1036,7 +1034,7 @@ function buildObjSrcTree( obj, base, inst ){
         if ( obj[k] === null ){
             src.push({title:k2 + " : null", icon: false })
         }else if ( typeof obj[k] === 'object' ){
-            var fkey=base+"."+k2;
+            var fkey=(base?base+".":"")+k2;
 
             if ( inst ){
                 if ( inst.data_md_exp[fkey] )

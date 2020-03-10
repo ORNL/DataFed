@@ -1079,18 +1079,6 @@ function makeBrowserTab(){
         }
     }
 
-    this.actionDataMove = function() {
-        var ids = inst.getSelectedIDs();
-        if ( ids.length != 1 )
-            return;
-
-        var id = ids[0];
-
-        if ( id.charAt(0) == "d" ) {
-            dataMove( id );
-        }
-    }
-
     this.actionReloadSelected = function(){
         var node;
 
@@ -1200,7 +1188,6 @@ function makeBrowserTab(){
         $("#btn_share",inst.frame).button("option","disabled",(bits & 8) != 0 );
         $("#btn_upload",inst.frame).button("option","disabled",(bits & 0x10) != 0 );
         $("#btn_download",inst.frame).button("option","disabled",(bits & 0x20) != 0);
-        $("#btn_move",inst.frame).button("option","disabled",(bits & 0x20) != 0);
         $("#btn_lock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_unlock",inst.frame).button("option","disabled",(bits & 0x40) != 0);
         $("#btn_new_data",inst.frame).button("option","disabled",(bits & 0x100) != 0 );
@@ -1280,69 +1267,10 @@ function makeBrowserTab(){
     }
 
 
-    /*
-    inst.getRefreshNode = function(a_node){
-        //console.log("getRefreshNode",a_node);
-        var node = a_node.parent,prev = a_node;
-        while(node){
-            if ( !node.key.startsWith("c/")){
-                return node;
-            }
-            prev = node;
-            node = node.parent;
-        }
-    }*/
-
-    this.updateSelectionField = function( fields ){
-        if ( fields.title ){
-            inst.sel_title.text( fields.title );
-            inst.sel_title_div.show();
-        }else
-            inst.sel_title_div.hide();
-
-        if ( fields.id )
-            inst.sel_id.html( fields.id );
-        else
-            inst.sel_id.text("(no information)");
-
-        if ( fields.descr ){
-            inst.sel_descr.text(fields.descr);
-            inst.sel_descr_div.show();
-        }else if ( fields.descr_html ){
-            inst.sel_descr.html(fields.descr_html);
-            inst.sel_descr_div.show();
-        }else{
-            inst.sel_descr_div.hide();
-        }
-
-
-        if ( fields.details ){
-            inst.sel_details.html(fields.details);
-            inst.sel_details_div.show();
-        }else{
-            inst.sel_details_div.hide();
-        }
-
-        if ( fields.links ){
-            inst.sel_links.html(fields.links);
-            inst.sel_links_div.show();
-        }else{
-            inst.sel_links_div.hide();
-        }
-
-        if ( fields.md ){
-            inst.showSelectedMetadata( fields.md );
-            inst.sel_md_div.show();
-        }else{
-            inst.showSelectedMetadata();
-            inst.sel_md_div.hide();
-        }
-    }
-
     this.showSelectedHTML = function( html ){
         $("#sel_info_form").hide();
         $("#sel_info_div").html(html).show();
-        //inst.sel_md_div.hide();
+        inst.showSelectedMetadata();
     }
 
     this.showSelectedDataInfo = function( key ){
@@ -1368,6 +1296,19 @@ function makeBrowserTab(){
         }); 
     }
 
+    this.showSelectedUserInfo = function( key ){
+        userView( key, true, function( ok, item ){
+            if ( ok, item ){
+                item.id = item.uid;
+                showSelectedItemInfo( item );
+                inst.showSelectedMetadata();
+            }else{
+                inst.showSelectedMetadata();
+                inst.showSelectedHTML( "Insufficient permissions to view user." );
+            }
+        }); 
+    }
+
     this.showSelectedProjInfo = function( key ){
         viewProj( key, function( item ){
             if ( item ){
@@ -1380,17 +1321,62 @@ function makeBrowserTab(){
         }); 
     }
 
-    this.showSelectedInfo = function( node ){
-        var fields = {};
+    this.showSelectedAllocInfo = function( repo, user ){
+        allocView( repo, user, function( ok, data ){
+            if ( ok ){
+                var item = data.alloc[0];
+                item.user = item.id;
+                item.id = item.repo;
+                showSelectedItemInfo( item );
+                inst.showSelectedMetadata();
+            }else{
+                inst.showSelectedMetadata();
+                inst.showSelectedHTML( "Insufficient permissions to view allocation." );
+            }
+        });
+    }
 
+    this.showSelectedQueryInfo = function( key ){
+        sendQueryView( key, function( ok, item ){
+            if ( item ){
+                showSelectedItemInfo( item );
+                inst.showSelectedMetadata();
+            }else{
+                inst.showSelectedMetadata();
+                inst.showSelectedHTML( "Insufficient permissions to view query." );
+            }
+        }); 
+    }
+
+    this.showSelectedMetadata = function( md_str )
+    {
+        if ( md_str ){
+            for ( var i in inst.data_md_exp ){
+                if ( inst.data_md_exp[i] == 1 )
+                    delete inst.data_md_exp[i];
+                else
+                    inst.data_md_exp[i]--;
+            }
+
+            var md = JSON.parse( md_str );
+            var src = buildObjSrcTree(md,"",inst);
+            inst.data_md_tree.reload( src );
+            inst.data_md_empty = false;
+        } else if ( !inst.data_md_empty ) {
+            inst.data_md_tree.reload(inst.data_md_empty_src);
+            inst.data_md_empty = true;
+        }
+    }
+
+    this.showSelectedInfo = function( node ){
         if ( !node ){
-            inst.updateSelectionField(fields);
+            inst.showSelectedMetadata();
+            inst.showSelectedHTML( "" );
             return;
         }
 
-        console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
-        var key,i,html;
-        var date = new Date();
+        //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+        var key;
 
         if ( typeof node == 'string' )
             key = node;
@@ -1421,140 +1407,27 @@ function makeBrowserTab(){
             inst.showSelectedHTML( "Shared Data by Project<br><br>Data shared with you by other projects." );
         }else if ( key == "queries" ) {
             inst.showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
-        } else if ( key.startsWith("p/")) {
+        }else if ( key.startsWith("p/")){
             inst.showSelectedProjInfo( key );
-        } else if ( key.startsWith("q/")) {
-            sendQueryView( key, function( ok, item ){
-                if ( ok && item ){
-                    fields.id = "ID: " + item.id;
-                    fields.title = item.title;
-
-                    var qry = JSON.parse( item.query );
-                    fields.descr_html = "<table class='info_table'><col width='20%'><col width='80%'><tr><td><u>Query Field</u></td><td><u>Value</u></td></tr><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"---")+"</td></tr><tr><td>Text:</td><td>"+(qry.text?qry.text:"---")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"---")+"</td></tr></table>";
-
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
-                    if ( item.ct ){
-                        date.setTime(item.ct*1000);
-                        html += "<tr><td>Created:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    if ( item.ut ){
-                        date.setTime(item.ut*1000);
-                        html += "<tr><td>Updated:</td><td>" + date.toLocaleDateString("en-US", g_date_opts) + "</td></tr>";
-                    }
-                    html += "</table>";
-                    fields.details = html;
-                }
-
-                inst.updateSelectionField( fields );
-            });
-        } else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ) {
-            userView( node.data.scope, false, function( ok, item ){
-                if ( ok && item ){
-                    fields.id = "ID: " + item.uid;
-                    fields.title = item.name;
-
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    html += "<tr><td>E-mail:</td><td>" + item.email + "</td></tr></table>";
-                    fields.details = html;
-                }
-
-                inst.updateSelectionField( fields );
-            });
-        } else if ( key.startsWith( "shared_proj_" ) && node.data.scope ) {
+        }else if ( key.startsWith("q/")){
+            inst.showSelectedQueryInfo( key );
+        }else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ){
+            inst.showSelectedUserInfo( node.data.scope );
+        }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
             inst.showSelectedProjInfo( node.data.scope );
-        } else if ( key == "allocs" ) {
+        }else if ( key == "allocs" ) {
             inst.showSelectedHTML( "Data Allocations<br><br>Lists allocations and associated data records." );
-        } else if ( key.startsWith("published")) {
+        }else if ( key.startsWith("published")) {
             inst.showSelectedHTML( "Public Collections<br><br>Lists collections made public and available in DataFed catalogs." );
-        } else if ( key.startsWith( "repo/" )) {
-            allocView( node.data.repo, node.data.scope, function( ok, data ){
-                if ( ok ){
-                    var alloc = data.alloc[0];
-                    var is_user = node.data.scope.startsWith("u/");
-                    fields.id = (node.data.sub_alloc?"Sub-a":"A") + "llocation on " + node.data.repo + (is_user?", user: ":", project: ") + node.data.scope;
-                    fields.descr = "Browse data records by allocation.";
-
-                    html = "<table class='info_table'><col width='20%'><col width='80%'>";
-                    html += "<tr><td>Repo ID:</td><td>" + node.data.repo + "</td></tr>";
-                    html += "<tr><td>Data Limit:</td><td>" + sizeToString( alloc.dataLimit ) + "</td></tr>";
-                    html += "<tr><td>Data Usage:";
-                    var used = Math.max( Math.floor(10000*alloc.dataSize/alloc.dataLimit)/100, 0 );
-                    html += "</td><td>" + sizeToString( alloc.dataSize ) + " (" + used + " %)</td></tr>";
-                    html += "<tr><td>Record Limit:</td><td>" + alloc.recLimit + "</td></tr>";
-                    html += "<tr><td>Record Count:</td><td>" + alloc.recCount + "</td></tr></table>";
-                    fields.details = html;
-                }else{
-                    setStatusText( "Allocation View Error: " + data );
-                }
-                inst.updateSelectionField( fields );
-            });
-        } else {
-            inst.updateSelectionField( fields );
+        }else if ( key.startsWith( "repo/" )) {
+            inst.showSelectedAllocInfo( node.data.repo, node.data.scope );
+        }else{
+            inst.showSelectedMetadata();
+            inst.showSelectedHTML( "" );
         }
     }
 
-    /*
-    this.buildObjSrcTree = function( obj, base ){
-        //console.log("build tree", obj, base);
 
-        var src = [], k2;
-        Object.keys(obj).forEach(function(k) {
-            //console.log( "key:",k, "type:", typeof obj[k] );
-            k2 = escapeHTML(k);
-
-            //console.log(key,typeof md[key]);
-            if ( obj[k] === null ){
-                //console.log( "is NULL" );
-                src.push({title:k2 + " : null", icon: false })
-            }else if ( typeof obj[k] === 'object' ){
-                //console.log( "is an object" );
-
-                var fkey=base+"."+k2;
-                //console.log( fkey, "=", data_md_exp[fkey] );
-                if ( inst.data_md_exp[fkey] ){
-                    inst.data_md_exp[fkey] = 10;
-                }
-                src.push({title:k2, icon: true, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: inst.buildObjSrcTree(obj[k],fkey)})
-            }else if ( typeof obj[k] === 'string' ){
-                //console.log( "is a string" );
-                src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
-            }else{
-                //console.log( "is an something else" );
-                src.push({title:k2 + " : " + obj[k], icon: false })
-            }
-        });
-
-        return src;
-    }
-    */
-
-    this.showSelectedMetadata = function( md_str )
-    {
-        if ( md_str ){
-            for ( var i in inst.data_md_exp ){
-                if ( inst.data_md_exp[i] == 1 )
-                    delete inst.data_md_exp[i];
-                else
-                    inst.data_md_exp[i]--;
-            }
-
-            //console.log( "exp st", inst.data_md_exp );
-            // TODO Use data_md_tree.isExapnded() to do lazy loading in case user's don't want to see metadata
-            var md = JSON.parse( md_str );
-            //if ( inst.data_md_exp["Metadata"] )
-            //    inst.data_md_exp["Metadata"] = 10;
-
-            //var src = [{title:"Metadata",folder:true,expanded:inst.data_md_exp["Metadata"]?true:false,children:buildObjSrcTree(md,"Metadata",inst)}];
-            var src = buildObjSrcTree(md,"md",inst);
-
-            inst.data_md_tree.reload( src );
-            inst.data_md_empty = false;
-        } else if ( !inst.data_md_empty ) {
-            inst.data_md_tree.reload(inst.data_md_empty_src);
-            inst.data_md_empty = true;
-        }
-    }
 
     this.execQuery = function( query ){
         setStatusText("Executing search query...");
@@ -1756,7 +1629,7 @@ function makeBrowserTab(){
         }else{
             if ( item.owner && item.creator ){
                 if ( item.owner != inst.uid && item.creator != inst.uid )
-                    title += "&nbsp<span class='data-tree-owner'(>" + item.owner.substr(2) + ")</span>";
+                    title += "&nbsp<span class='data-tree-owner'>(" + item.owner.substr(2) + ")</span>";
                 else if ( item.creator != inst.uid )
                     title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
             }else if ( item.owner ){
@@ -3296,7 +3169,6 @@ function makeBrowserTab(){
     $("#btn_unlock",inst.frame).on('click', inst.actionUnlockSelected );
     $("#btn_upload",inst.frame).on('click', inst.actionDataPut );
     $("#btn_download",inst.frame).on('click', inst.actionDataGet );
-    $("#btn_move",inst.frame).on('click', inst.actionDataMove );
     $("#btn_dep_graph",inst.frame).on('click', inst.actionDepGraph );
     $("#btn_prev_coll",inst.frame).on('click', inst.actionPrevParent );
     $("#btn_next_coll",inst.frame).on('click', inst.actionNextParent );
@@ -3481,7 +3353,6 @@ function makeBrowserTab(){
                 {title: "Unlock", action: inst.actionUnlockSelected, cmd: "unlock" },
                 {title: "Get", action: inst.actionDataGet, cmd: "get" },
                 {title: "Put", action: inst.actionDataPut, cmd: "put" },
-                {title: "Move", action: inst.actionDataMove, cmd: "move" },
                 {title: "Graph", action: inst.actionDepGraph, cmd: "graph" }
                 ]},
             {title: "New", cmd:"new",children: [
@@ -3571,6 +3442,7 @@ function makeBrowserTab(){
     $("#footer-tabs").tabs({
         heightStyle: "auto",
         collapsible: true,
+        active: false,
         activate: function(ev,ui){
             if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
                 inst.updateSearchSelectState( true );
