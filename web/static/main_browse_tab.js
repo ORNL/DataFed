@@ -3071,7 +3071,7 @@ function makeBrowserTab(){
         },
         filter:{
             autoExpand: true,
-            mode: "dimm"
+            mode: "hide"
         },
         source: inst.data_md_empty_src,
         selectMode: 1,

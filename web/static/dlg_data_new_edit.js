@@ -415,8 +415,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#desc",frame).val(a_data.desc);
                 $("#keyw",frame).val(a_data.keyw);
 
-                if ( a_data.metadata )
-                    jsoned.setValue( a_data.metadata, -1 );
+                if ( a_data.metadata ){
+
+                    var md = JSON.parse( a_data.metadata ); //, null, "\t" );
+                    var txt = JSON.stringify( md, null, 4 );
+                    //console.log(txt);
+                    jsoned.setValue( txt, -1);
+                }
 
                 if ( a_data.deps && a_data.deps.length ){
                     var i,dep;
