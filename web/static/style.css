@@ -642,3 +642,10 @@ textarea
     text-decoration: none;
     font-size: 85%;
 }
+
+::-webkit-scrollbar
+{
+    width: 0.5em;
+    height: 0.5em;
+}
+

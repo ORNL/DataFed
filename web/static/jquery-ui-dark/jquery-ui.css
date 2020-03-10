@@ -272,6 +272,33 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
     color:#E07010;
 }
 
+::-webkit-scrollbar-track
+{
+    background: #222
+}
+
+::-webkit-scrollbar-corner
+{
+    background: #222
+}
+
+::-webkit-scrollbar-thumb
+{
+	background: #444;
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover
+{
+    background: #074700;
+}
+
+.scroller
+{
+    scrollbar-color: #444 #222; /* thumb and track color */
+    scrollbar-width: thin;
+}
+
 /* Layout helpers
 ----------------------------------*/
 .ui-helper-hidden {

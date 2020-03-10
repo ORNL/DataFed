@@ -21,7 +21,7 @@
 
 .content
 {
-    background: #F0F0F0!important;
+    background: #f0f0f0!important;
 }
 
 input.ui-state-disabled
@@ -222,6 +222,34 @@ textarea.ui-state-disabled
 .ui-icon-linkext
 {
     color: #ff8000
+}
+
+
+::-webkit-scrollbar-track
+{
+    background: #f8f8f8;
+}
+
+::-webkit-scrollbar-corner
+{
+    background: #f8f8f8;
+}
+
+::-webkit-scrollbar-thumb
+{
+	background: #d8d8d8;
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover
+{
+    background: #a0e1cb;
+}
+
+.scroller
+{
+    scrollbar-color: #d8d8d8 #f8f8f8; /* thumb and track color */
+    scrollbar-width: thin;
 }
 
 span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
