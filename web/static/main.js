@@ -1027,13 +1027,57 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
 function buildObjSrcTree( obj, base, inst ){
     //console.log("build tree", obj, base);
 
-    var src = [], k2;
+    var src = [], k2, o, i, v, pod, val, len, vs;
+
     Object.keys(obj).forEach(function(k) {
         k2 = escapeHTML(k);
 
-        if ( obj[k] === null ){
-            src.push({title:k2 + " : null", icon: false })
-        }else if ( typeof obj[k] === 'object' ){
+
+        if ( Array.isArray( obj[k] )){
+            // Test for POD arrays (no objects) - If POD, put all values in title of this node; otherwise, add as children
+            o = obj[k];
+            pod = true;
+
+            for ( i in o ){
+                if ( typeof o[i] === 'object' || typeof o[i] === 'string' ){
+                    pod = false;
+                    break;
+                }
+            }
+
+            if ( pod ){
+                val = null;
+                len = 0;
+
+                for ( i in o ){
+                    v = o[i];
+
+                    if ( val ){
+                        val += ",";
+                    }else{
+                        val = "[";
+                    }
+
+                    if ( typeof v === 'string' ){
+                        vs = "\"" + escapeHTML( v ) + "\"";
+                    }else{
+                        vs = String(v);
+                    }
+                    len += vs.length;
+                    if ( len > 100 ){
+                        val += "<br>";
+                        len = 0;
+                    }
+                    val += vs;
+                }
+
+                val += "]";
+                src.push({title:k2 + " : " + val, icon: false })
+                return;
+            }
+        }
+        
+        if ( typeof obj[k] === 'object' ){
             var fkey=(base?base+".":"")+k2;
 
             if ( inst ){
@@ -1046,8 +1090,10 @@ function buildObjSrcTree( obj, base, inst ){
             }
         }else if ( typeof obj[k] === 'string' ){
             src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
+        }else if ( obj[k] === null ){
+            src.push({title:k2 + " : null", icon: false });
         }else{
-            src.push({title:k2 + " : " + obj[k], icon: false })
+            src.push({title:k2 + " : " + String(obj[k]), icon: false })
         }
     });
 

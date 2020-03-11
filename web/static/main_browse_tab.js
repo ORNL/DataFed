@@ -2711,7 +2711,6 @@ function makeBrowserTab(){
         selectMode: 2,
         collapse: function( event, data ) {
             if ( data.node.isLazy() ){
-                console.log("collapse");
                 data.node.resetLazy();
             }
         },
@@ -3063,10 +3062,10 @@ function makeBrowserTab(){
     $("#data_md_tree").fancytree({
         extensions: ["themeroller","filter"],
         themeroller: {
-            activeClass: "",
+            activeClass: "my-fancytree-active",
             addClass: "",
             focusClass: "",
-            hoverClass: "fancytree-hover",
+            hoverClass: "my-fancytree-hover",
             selectedClass: ""
         },
         filter:{
@@ -3075,7 +3074,12 @@ function makeBrowserTab(){
         },
         source: inst.data_md_empty_src,
         selectMode: 1,
-        clickFolderMode: 2,
+        //clickFolderMode: 2,
+        /*click: function(event, data) {
+            if ( data.targetType == "icon" && data.node.isFolder() ){
+                data.node.toggleExpanded();
+            }
+        },*/
         beforeExpand: function(event,data){
             var path = data.node.title;
             var par = data.node.parent;
@@ -3211,7 +3215,12 @@ function makeBrowserTab(){
     });
 
     $("#md_filter_reset").on('click', function (e) {
+        $("#md_filter_text").val("");
         inst.data_md_tree.clearFilter();
+        var node = inst.data_md_tree.getActiveNode();
+        if ( node ){
+            node.li.scrollIntoView();
+        }
     });
 
     if ( g_user.isRepoAdmin ){
