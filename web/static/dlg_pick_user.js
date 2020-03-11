@@ -1,10 +1,12 @@
+/*jshint multistr: true */
+
 function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
     var content =
         "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
             <div id='dlg_user_tree' class='no-border'></div>\
         </div>";
 
-    var sel_users = []
+    var sel_users = [];
 
     this.userPageLoad = function( key, offset ){
         var node = tree.getNodeByKey( key );
@@ -14,7 +16,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 node.load(true);
             },0);
         }
-    }
+    };
 
     var frame = $(document.createElement('div'));
     frame.html( content );
@@ -62,7 +64,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         source: src,
         selectMode: a_single_sel?1:2,
         select: function( ev, data ){
-            var idx = sel_users.indexOf( data.node.key )
+            var idx = sel_users.indexOf( data.node.key );
             if ( data.node.isSelected()){
                 if ( idx == -1 ){
                     sel_users.push( data.node.key );
@@ -85,7 +87,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 $("#ok_btn").button("enable");
             }else{
                 $("#ok_btn").button("disable");
-            };
+            }
         },
         checkbox: true,
         lazyLoad: function( ev, data ) {
@@ -112,11 +114,13 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             }
         },
         postProcess: function( ev, data ) {
+            var i;
+
             if ( data.node.key == "collab" || data.node.key == "all" ){
                 console.log( "user list:",data.response);
                 data.result = [];
                 var user;
-                for ( var i in data.response.user ) {
+                for ( i in data.response.user ) {
                     user = data.response.user[i];
                     data.result.push({ title: user.name + " ("+user.uid.substr(2) +")",icon:"ui-icon ui-icon-person",key: user.uid,unselectable:(a_excl.indexOf( user.uid ) != -1), selected: sel_users.indexOf( user.uid ) != -1 });
                 }
@@ -128,7 +132,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             } else if ( data.node.key == "groups" ){
                 data.result = [];
                 var group;
-                for ( var i in data.response ) {
+                for ( i in data.response ) {
                     group = data.response[i];
                     if ( a_excl.indexOf( "g/"+group.gid ) == -1 )
                         data.result.push({ title: group.title + " ("+group.gid +")",icon:"ui-icon ui-icon-persons",checkbox:false,folder:true,lazy:true,key:"g/"+group.gid });
@@ -136,7 +140,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
             } else if ( data.node.key.startsWith("g/")){
                 data.result = [];
                 var mem;
-                for ( var i in data.response.member ) {
+                for ( i in data.response.member ) {
                     mem = data.response.member[i];
                     if ( a_excl.indexOf( mem ) == -1 )
                         data.result.push({ title: mem.substr(2),icon:"ui-icon ui-icon-person",key:mem});

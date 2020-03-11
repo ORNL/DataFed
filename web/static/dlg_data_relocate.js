@@ -1,8 +1,11 @@
+/*jshint multistr: true */
 
 // TODO - Need to handle changing account (verify, refresh allocs, reset collection to root)
 // TODO - Need to handle changing collection (verify, check permissions)
 // TODO - Add account picker dialog
 // TODO - Add dest collection picker dialog
+
+// NOTE - NOT CURRENTLY USED - MAY NEED IN FUTURE
 
 function dlgDataRelocate( a_src_items, a_dest, a_owner, a_cb) {
     console.log("dlgDataRelocate", a_src_items, a_dest, a_owner );

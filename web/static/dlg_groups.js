@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function makeDlgGroups(){
     console.log("making dialog groups");
 
@@ -118,12 +120,12 @@ function makeDlgGroups(){
 
         inst.frame.dialog( options );
         $(".btn",inst.frame).button();
-    }
+    };
 
     this.selectNone = function(){
         $("#dlg_edit_grp",inst.frame).prop("disabled", true );
         $("#dlg_rem_grp",inst.frame).prop("disabled", true );
-    }
+    };
 
     this.addGroup = function( ){
         console.log("Add group");
@@ -135,7 +137,7 @@ function makeDlgGroups(){
                     node.setSelected();
             }
         });
-    }
+    };
 
     this.remGroup = function(){
         console.log("Remove group");
@@ -152,7 +154,7 @@ function makeDlgGroups(){
                 }
             });
         }
-    }
+    };
 
     this.editGroup = function(){
         console.log("Edit group");
@@ -171,5 +173,5 @@ function makeDlgGroups(){
                 }
             });
         }
-    }
+    };
 }

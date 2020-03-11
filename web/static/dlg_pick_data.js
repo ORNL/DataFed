@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgPickData( a_cb ){
     var frame = $(document.createElement('div'));
     var html = "<div class='ui-widget-content' style='height:98%;min-height:0;overflow:auto'>\

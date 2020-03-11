@@ -1,10 +1,10 @@
+/*jshint multistr: true */
+
 var DLG_DATA_NEW = 0;
 var DLG_DATA_EDIT = 1;
 var DLG_DATA_DUP = 2;
 var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
 var DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
-
-//<tr><td title='Metadata JSON document (optional)'>Metadata:</td><td colspan='2'><textarea id='md' rows=7 style='width:100%'></textarea></td></tr>
 
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var frame = $(document.createElement('div'));

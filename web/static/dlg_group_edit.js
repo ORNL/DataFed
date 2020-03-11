@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function makeDlgGroupEdit(){
     var inst = this;
 
@@ -156,7 +158,7 @@ function makeDlgGroupEdit(){
         $("#btn_add",inst.frame).click( function(){ inst.addUsers(); });
 
         inst.frame.dialog( options );
-    }
+    };
 
     this.removeUser = function(){
         var tree = $("#member_list",inst.frame).fancytree("getTree");
@@ -171,7 +173,7 @@ function makeDlgGroupEdit(){
             if ( inst.group.member.length == 0 )
                 $("#btn_clear",inst.frame).button("enable" );
         }
-    }
+    };
 
     this.addUsers = function(){
         dlgPickUser( inst.uid, inst.excl, false, function( uids ){
@@ -189,7 +191,7 @@ function makeDlgGroupEdit(){
                     $("#btn_clear",inst.frame).button("enable" );
             }
         });
-    }
+    };
 
     this.clearUsers = function(){
         inst.group.member = [];
@@ -197,10 +199,10 @@ function makeDlgGroupEdit(){
         tree.clear();
         $("#btn_clear",inst.frame).button("disable");
         $("#btn_remove",inst.frame).button("disable");
-    }
+    };
 
     this.userSelected = function(){
         var b = $("#btn_remove",inst.frame);
         $("#btn_remove",inst.frame).button("enable");
-    }
+    };
 }

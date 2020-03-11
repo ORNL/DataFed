@@ -2,17 +2,7 @@ function makeDlAllocNewEdit(){
     var inst = this;
 
     this.content =
-        "<table width='100%'>\
-        <tr><td style='vertical-align:middle' id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%'></input></td></tr>\
-        <tr id='subj_btn_row' style='display:none'><td style='vertical-align:middle'></td><td style='text-align:right'>\
-                <button class='btn small' id='set_user'>Users</button>\
-                <button class='btn small' id='set_proj'>Projects</button>\
-            </td></tr>\
-        <tr><td style='vertical-align:middle'>Max. Data Size:</td><td><input type='text' id='data_limit' style='width:100%'></input></td></tr>\
-        <tr><td style='vertical-align:middle'>Total Data size:</td><td><input type='text' id='data_size' style='width:100%' readonly></input></td></tr>\
-        <tr><td style='vertical-align:middle'>Max. Rec. Count:</td><td><input type='text' id='rec_limit' style='width:100%'></input></td></tr>\
-        </table>\
-        ";
+        "<table width='100%'><tr><td style='vertical-align:middle' id='subj_label'>Subject&nbspID:</td><td><input type='text' id='subject' style='width:100%'></input></td></tr><tr id='subj_btn_row' style='display:none'><td style='vertical-align:middle'></td><td style='text-align:right'><button class='btn small' id='set_user'>Users</button><button class='btn small' id='set_proj'>Projects</button></td></tr><tr><td style='vertical-align:middle'>Max. Data Size:</td><td><input type='text' id='data_limit' style='width:100%'></input></td></tr><tr><td style='vertical-align:middle'>Total Data size:</td><td><input type='text' id='data_size' style='width:100%' readonly></input></td></tr><tr><td style='vertical-align:middle'>Max. Rec. Count:</td><td><input type='text' id='rec_limit' style='width:100%'></input></td></tr></table>";
 
     this.show = function( a_repo, a_alloc, a_excl, a_cb ){
         inst.frame = $(document.createElement('div'));
@@ -138,5 +128,5 @@ function makeDlAllocNewEdit(){
         };
 
         inst.frame.dialog( options );
-    }
+    };
 }

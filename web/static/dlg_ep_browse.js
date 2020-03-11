@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
     var frame = $(document.createElement('div'));
     
@@ -162,4 +164,4 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
     };
 
     frame.dialog( options );
-};
+}

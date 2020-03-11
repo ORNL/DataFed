@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgPickTopic( a_cb ){
     var frame = $(document.createElement('div'));
     var html = "<div class='ui-widget-content' style='height:98%;min-height:0;overflow:auto'>\
@@ -16,7 +18,7 @@ function dlgPickTopic( a_cb ){
             //console.log("new offset:",node.data.offset);
             node.load(true);
         }
-    }
+    };
 
     topicList( null, 0, g_opts.page_size, false, function( ok, a_data ){
         if ( ok ){

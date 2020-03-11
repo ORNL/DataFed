@@ -37,8 +37,8 @@ function dlgAllocations(){
             var alloc;
             for ( var i in data ){
                 alloc = data[i];
-                html += "<tr><td>"+alloc.repo+"</td><td>"+sizeToString(alloc.maxSize)+"</td><td>"+sizeToString(alloc.totSize)+"</td><td>"+alloc.maxCount+"</td><td>"
-                    + alloc.stats.records + "</td><td>" + alloc.stats.files + "</td><td>" + (alloc.stats.files?sizeToString( alloc.stats.totalSz/alloc.stats.files ):"n/a") + "</td></tr>";
+                html += "<tr><td>"+alloc.repo+"</td><td>"+sizeToString(alloc.maxSize)+"</td><td>"+sizeToString(alloc.totSize)+"</td><td>"+alloc.maxCount+"</td><td>"+
+                    alloc.stats.records + "</td><td>" + alloc.stats.files + "</td><td>" + (alloc.stats.files?sizeToString( alloc.stats.totalSz/alloc.stats.files ):"n/a") + "</td></tr>";
             }
             html += "</table>";
         }else{

@@ -54,27 +54,27 @@ function makeBrowserTab(){
         hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
         tabs.outerHeight(h);
         $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
-    }
+    };
 
     this.getSelectedIDs = function(){
-        var ids = [];
+        var ids = [], sel, i;
         //console.log("getSelectedIDs, mode:",inst.select_source);
         switch( inst.select_source ){
             case SS_TREE:
-                var sel = inst.data_tree.getSelectedNodes();
-                for ( var i in sel ){
+                sel = inst.data_tree.getSelectedNodes();
+                for ( i in sel ){
                     ids.push( sel[i].key );
                 }
                 break;
             case SS_SEARCH:
-                var sel = inst.results_tree.getSelectedNodes();
-                for ( var i in sel ){
+                sel = inst.results_tree.getSelectedNodes();
+                for ( i in sel ){
                     ids.push( sel[i].key );
                 }
                 break;
             case SS_CAT:
-                var sel = inst.cat_tree.getSelectedNodes();
-                for ( var i in sel ){
+                sel = inst.cat_tree.getSelectedNodes();
+                for ( i in sel ){
                     ids.push( sel[i].key );
                 }
                 break;
@@ -86,7 +86,7 @@ function makeBrowserTab(){
         }
 
         return ids;
-    }
+    };
 
     this.refreshUI = function( a_ids, a_data, a_reload ){
         //console.log("refreshUI",a_ids,a_data);
@@ -133,8 +133,7 @@ function makeBrowserTab(){
 
         switch( inst.select_source ){
             case SS_TREE:
-                var node = inst.data_tree.activeNode;
-                inst.showSelectedInfo( node );
+                inst.showSelectedInfo( inst.data_tree.activeNode );
                 break;
             case SS_CAT:
                 inst.showSelectedInfo();
@@ -143,11 +142,10 @@ function makeBrowserTab(){
                 inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
                 break;
             case SS_SEARCH:
-                var node = inst.results_tree.activeNode;
-                inst.showSelectedInfo( node );
+                inst.showSelectedInfo( inst.results_tree.activeNode );
                 break;
         }
-    }
+    };
 
 
     this.displayPath = function( path, item ){
@@ -246,7 +244,7 @@ function makeBrowserTab(){
                                 asyncEnd();
                             }
                         });
-                        return
+                        return;
                     }
                     //console.log("path:",path);
                     reloadPathNode( path.length - 1 );
@@ -304,8 +302,9 @@ function makeBrowserTab(){
         }else{
             reloadPathNode( path.length - 1 );
         }
-    }
+    };
 
+    // TODO - This is broken
     this.showParent = function( which ){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 ){
@@ -342,9 +341,9 @@ function makeBrowserTab(){
                                 return p.id == node.parent.key;
                             }) != -1 ){
                                 if ( which == 1 )
-                                    i>0?i--:i=data.path.length-1;
+                                    if ( i > 0 ) i--; else i=data.path.length-1;
                                 else
-                                    i<data.path.length-1?i++:i=0;
+                                    if ( i < data.path.length-1) i++; else i=0;
                                 path = data.path[i].item;
                                 break;
                             }
@@ -378,9 +377,7 @@ function makeBrowserTab(){
                 setStatusText("Get Collections Error: " + data, 1 );
             }
         });
-    }
-
-
+    };
 
     this.setLockSelected = function( a_lock ){
         var ids = inst.getSelectedIDs();
@@ -394,7 +391,7 @@ function makeBrowserTab(){
                 setStatusText("Lock Update Failed: " + data, 1 );
             }
         });
-    }
+    };
 
     this.refreshCollectionNodes = function( node_keys, scope ){
         // Refresh any collection nodes in data tree and catalog tree
@@ -461,7 +458,7 @@ function makeBrowserTab(){
 
         for ( i in refresh )
             inst.reloadNode(refresh[i]);
-    }
+    };
 
     this.copyItems = function( items, dest_node, cb ){
         var item_keys = [];
@@ -479,8 +476,7 @@ function makeBrowserTab(){
             if ( cb )
                 cb();
         });
-    }
-
+    };
 
     this.moveItems = function( items, dest_node, cb ){
         //console.log("moveItems",items,dest_node,inst.pasteSourceParent);
@@ -500,7 +496,7 @@ function makeBrowserTab(){
                 cb();
 
         });
-    }
+    };
 
     //-------------------------------------------------------------------------
     // ACTION FUNCTIONS (UI event handlers)
@@ -536,15 +532,11 @@ function makeBrowserTab(){
                 if ( coll.length )
                     done++;
 
-                function refreshAfterDel(){
-                    refreshUI();
-                }
-
                 if ( data.length ){
                     sendDataDelete( data, function( ok, data ){
                         if ( ok ){
                             if ( --done == 0 )
-                                refreshAfterDel();
+                                refreshUI();
                         }else
                             setStatusText( "Data Delete Error: " + data, 1 );
                     });
@@ -553,7 +545,7 @@ function makeBrowserTab(){
                     collDelete( coll, function( ok, data ){
                         if ( ok ){
                             if ( --done == 0 )
-                                refreshAfterDel();
+                                refreshUI();
                         }else
                             setStatusText("Collection Delete Error: " + data, 1 );
                     });
@@ -578,7 +570,7 @@ function makeBrowserTab(){
                 }
             }
         });
-    }
+    };
 
     this.fileMenu = function(){
         $("#filemenu").toggle().position({
@@ -586,14 +578,14 @@ function makeBrowserTab(){
             at: "left bottom",
             of: this
         }); //"fade"); //.focus(); //slideToggle({direction: "up"});
-    }
+    };
 
     this.actionNewProj = function() {
         dlgProjNewEdit(null,0,function( data ){
             setStatusText("Project "+data.id+" created");
             inst.reloadNode( inst.data_tree.getNodeByKey( "proj_own" ));
         });
-    }
+    };
 
     this.actionNewData = function() {
         var parent = "root";
@@ -623,7 +615,7 @@ function makeBrowserTab(){
                     inst.graphLoad( inst.focus_node_id, inst.sel_node.id );
             });
         });
-    }
+    };
 
     this.actionDupData = function(){
         var parent = "root";
@@ -653,7 +645,7 @@ function makeBrowserTab(){
                 }
             });
         });
-    }
+    };
 
     this.actionNewColl = function(){
         var node = inst.data_tree.activeNode;
@@ -680,7 +672,7 @@ function makeBrowserTab(){
                     inst.reloadNode( node );
             });
         });
-    }
+    };
 
     this.actionImportData = asyncFunc( function( files ){
         var coll_id;
@@ -737,11 +729,11 @@ function makeBrowserTab(){
         reader.onload = function( e ){
             //console.log("files onload");
             try{
-                var obj = JSON.parse( e.target.result )
+                var obj = JSON.parse( e.target.result );
                 var rec_count = 0;
 
                 if ( obj instanceof Array ){
-                    for ( i in obj ){
+                    for ( var i in obj ){
                         if ( !inst.update_files && !inst.import_direct )
                             obj[i].parent = coll_id;
                         payload.push( obj[i] );
@@ -792,15 +784,15 @@ function makeBrowserTab(){
                 dlgAlert("Import Error","Invalid JSON in file " + files[count].name );
                 return;
             }
-        }
+        };
 
         reader.onerror = function( e ){
-            dlgAlert("Import Error", "Error reading file: " + files[count].name )
-        }
+            dlgAlert("Import Error", "Error reading file: " + files[count].name );
+        };
 
         reader.onabort = function( e ){
-            dlgAlert("Import Error", "Import aborted" )
-        }
+            dlgAlert("Import Error", "Import aborted" );
+        };
 
         reader.readAsText(files[count],'UTF-8');
     });
@@ -819,11 +811,11 @@ function makeBrowserTab(){
 
     this.actionLockSelected = function(){
         inst.setLockSelected( true );
-    }
+    };
 
     this.actionUnlockSelected = function(){
         inst.setLockSelected( false );
-    }
+    };
 
     this.actionCutSelected = function(){
         inst.pasteItems = inst.data_tree.getSelectedNodes();
@@ -835,7 +827,7 @@ function makeBrowserTab(){
                 inst.pasteCollections.push( inst.pasteItems[i] );
         }
         //console.log("cutSelected",inst.pasteItems,inst.pasteSourceParent);
-    }
+    };
 
     this.actionCopySelected = function(){
         console.log("Copy");
@@ -853,16 +845,17 @@ function makeBrowserTab(){
             if ( inst.pasteItems[i].key.startsWith("c/") )
                 inst.pasteCollections.push( inst.pasteItems[i] );
         }
-    }
+    };
 
     this.actionPasteSelected = function(){
+        function pasteDone(){
+            inst.pasteItems = [];
+            inst.pasteSourceParent = null;
+            inst.pasteCollections = null;
+        }
+
         var node = inst.data_tree.activeNode;
         if ( node && inst.pasteItems.length ){
-            function pasteDone(){
-                inst.pasteItems = [];
-                inst.pasteSourceParent = null;
-                inst.pasteCollections = null;
-            }
 
             if ( node.key == "empty" || node.key.startsWith( "d/" ))
                 node = node.parent;
@@ -871,7 +864,7 @@ function makeBrowserTab(){
             else
                 inst.copyItems( inst.pasteItems, node, pasteDone );
         }
-    }
+    };
 
     this.actionUnlinkSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
@@ -897,7 +890,7 @@ function makeBrowserTab(){
                 }
             });
         }
-    }
+    };
 
     this.permGateAny = function( item_id, req_perms, cb ){
         getPerms( item_id, req_perms, function( perms ){
@@ -908,7 +901,7 @@ function makeBrowserTab(){
                 cb( perms );
             }
         });
-    }
+    };
 
     this.actionEditSelected = function() {
         if ( async_guard )
@@ -969,38 +962,7 @@ function makeBrowserTab(){
             default:
                 return;
         }
-    }
-
-    /*
-    this.dupSelected = function(){
-        var node = inst.data_tree.activeNode;
-        if ( node && node.key[0] == "d" ) {
-            //console.log( "edit sel", node, node.data.isproj );
-            checkPerms( node.key, PERM_READONLY, function( granted ){
-                if ( !granted ){
-                    alertPermDenied();
-                    return;
-                }
-
-                viewData( node.key, function( data ){
-                    if ( data ){
-                        console.log( "data", data );
-                        dlgDataNewEdit(DLG_DATA_DUP,data,null,0,function(data2){
-                            inst.addNode( data2 );
-                            if ( data.dataSize && parseInt(data.dataSize) > 0 ){
-                                copyData( node.key, data2.id, function( ok, data ){
-                                    if ( ok )
-                                        dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
-                                    else
-                                        dlgAlert( "Transfer Error", data );
-                                });
-                            }
-                        });
-                    }
-                }); 
-            });
-        }
-    }*/
+    };
 
     this.actionShareSelected = function() {
         var ids = inst.getSelectedIDs();
@@ -1028,7 +990,7 @@ function makeBrowserTab(){
                 });
             }
         });
-    }
+    };
 
     this.actionDepGraph = function(){
         var ids = inst.getSelectedIDs();
@@ -1042,14 +1004,14 @@ function makeBrowserTab(){
             $('[href="#tab-prov-graph"]').closest('li').show();
             $( "#data-tabs" ).tabs({ active: 2 });
         }
-    }
+    };
 
     this.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
         dataGet( ids, function(){
             inst.resetTaskPoll();
         });
-    }
+    };
 
     this.actionDataPut = function() {
         var ids = inst.getSelectedIDs();
@@ -1063,7 +1025,7 @@ function makeBrowserTab(){
                 inst.resetTaskPoll();
             });
         }
-    }
+    };
 
     this.actionReloadSelected = function(){
         var node;
@@ -1079,7 +1041,6 @@ function makeBrowserTab(){
                 inst.reloadNode( node, inst.cat_tree );
             }
         }
-
     };
 
     this.calcActionState = function( sel ){
@@ -1141,7 +1102,7 @@ function makeBrowserTab(){
         }
 
         return bits;
-    }
+    };
 
     this.updateBtnState = function(){
         //console.log("updateBtnState");
@@ -1204,21 +1165,21 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "newd", (bits & 0x100) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "newc", (bits & 0x100) == 0 );
         inst.data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
-    }
+    };
 
     this.saveExpandedPaths = function( node, paths ){
         var subp = {};
         if ( node.children ){
             var child;
             for ( var i in node.children ){
-                child = node.children[i]
+                child = node.children[i];
                 if ( child.isExpanded() ){
                     inst.saveExpandedPaths( child, subp );
                 }
             }
         }
         paths[node.key] = subp;
-    }
+    };
 
     this.restoreExpandedPaths = function( node, paths ){
         node.setExpanded(true).always(function(){
@@ -1232,7 +1193,7 @@ function makeBrowserTab(){
                 }
             }
         });
-    }
+    };
 
     this.reloadNode = function( node, tree ){
         if ( !node || node.isLazy() && !node.isLoaded() )
@@ -1250,14 +1211,13 @@ function makeBrowserTab(){
                 inst.restoreExpandedPaths( node, paths[node.key] );
             }
         });
-    }
-
+    };
 
     this.showSelectedHTML = function( html ){
         $("#sel_info_form").hide();
         $("#sel_info_div").html(html).show();
         inst.showSelectedMetadata();
-    }
+    };
 
     this.showSelectedDataInfo = function( key ){
         viewData( key, function( item ){
@@ -1268,7 +1228,7 @@ function makeBrowserTab(){
                 inst.showSelectedMetadata();
             }
         }); 
-    }
+    };
 
     this.showSelectedCollInfo = function( key ){
         viewColl( key, function( item ){
@@ -1280,7 +1240,7 @@ function makeBrowserTab(){
                 inst.showSelectedHTML( "Insufficient permissions to view collection." );
             }
         }); 
-    }
+    };
 
     this.showSelectedUserInfo = function( key ){
         userView( key, true, function( ok, item ){
@@ -1293,7 +1253,7 @@ function makeBrowserTab(){
                 inst.showSelectedHTML( "Insufficient permissions to view user." );
             }
         }); 
-    }
+    };
 
     this.showSelectedProjInfo = function( key ){
         viewProj( key, function( item ){
@@ -1305,7 +1265,7 @@ function makeBrowserTab(){
                 inst.showSelectedHTML( "Insufficient permissions to view project." );
             }
         }); 
-    }
+    };
 
     this.showSelectedAllocInfo = function( repo, user ){
         allocView( repo, user, function( ok, data ){
@@ -1320,7 +1280,7 @@ function makeBrowserTab(){
                 inst.showSelectedHTML( "Insufficient permissions to view allocation." );
             }
         });
-    }
+    };
 
     this.showSelectedQueryInfo = function( key ){
         sendQueryView( key, function( ok, item ){
@@ -1332,7 +1292,7 @@ function makeBrowserTab(){
                 inst.showSelectedHTML( "Insufficient permissions to view query." );
             }
         }); 
-    }
+    };
 
     this.showSelectedMetadata = function( md_str )
     {
@@ -1352,7 +1312,7 @@ function makeBrowserTab(){
             inst.data_md_tree.reload(inst.data_md_empty_src);
             inst.data_md_empty = true;
         }
-    }
+    };
 
     this.showSelectedInfo = function( node ){
         if ( !node ){
@@ -1411,9 +1371,7 @@ function makeBrowserTab(){
             inst.showSelectedMetadata();
             inst.showSelectedHTML( "" );
         }
-    }
-
-
+    };
 
     this.execQuery = function( query ){
         setStatusText("Executing search query...");
@@ -1436,7 +1394,7 @@ function makeBrowserTab(){
                     setStatusText("No results found");
                     results.push({title:"(no results)",icon:false,checkbox:false,nodrag:true,notarg:true});
                 }
-                $()
+
                 //srch_node.removeChildren();
                 //srch_node.addChildren( results );
                 //srch_node.setExpanded( true );
@@ -1450,7 +1408,7 @@ function makeBrowserTab(){
                 dlgAlert("Query Error",items);
             }
         });
-    }
+    };
 
     this.parseQuickSearch = function(){
         //console.log("parse query");
@@ -1530,16 +1488,16 @@ function makeBrowserTab(){
 
         // TODO make sure at least one scope set and on term
         return query;
-    }
+    };
 
     this.searchDirect = function(){
-        $("#run_qry_btn").removeClass("ui-state-error")
+        $("#run_qry_btn").removeClass("ui-state-error");
 
         var query = parseQuickSearch();
 
         //if ( query.scopes.length && ( query.text || query.meta || query.id ))
         inst.execQuery( query );
-    }
+    };
 
     this.querySave = function(){
         dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
@@ -1553,7 +1511,7 @@ function makeBrowserTab(){
                 });
             }
         });
-    }
+    };
 
     this.searchWizard = function(){
         dlgSearchWizard( function( query ){
@@ -1576,7 +1534,7 @@ function makeBrowserTab(){
             inst.execQuery( query, scope );
             */
         });
-    }
+    };
 
     this.updateSearchSelectState = function( enabled ){
         if( enabled && $("#scope_selected",inst.frame).prop("checked")){
@@ -1592,12 +1550,12 @@ function makeBrowserTab(){
         }
         inst.data_tree.selectAll(false);
         inst.cat_tree.selectAll(false);
-    }
+    };
 
     this.searchClearSelection = function(){
         inst.data_tree.selectAll(false);
         inst.cat_tree.selectAll(false);
-    }
+    };
 
     this.generateTitle = function( item, refresh ) {
         var title = "";
@@ -1630,7 +1588,7 @@ function makeBrowserTab(){
         title += "</span>";
 
         return title;
-    }
+    };
 
     this.updateIcon = function( node, data ) {
         if ( data.id.startsWith( "d/" )){
@@ -1639,7 +1597,7 @@ function makeBrowserTab(){
             else
                 node.icon = "ui-icon ui-icon-file";
         }
-    }
+    };
 
     this.taskUpdateHistory = function( task_list ){
         var len = task_list.length;
@@ -1704,7 +1662,7 @@ function makeBrowserTab(){
             html += "</table>";
         }
         this.task_hist.html( html );
-    }
+    };
 
     this.taskHistoryPoll = function(){
         //console.log("taskHistoryPoll",inst.pollSince);
@@ -1746,14 +1704,14 @@ function makeBrowserTab(){
 
             inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000*(inst.pollSince));
         });
-    }
+    };
 
     this.resetTaskPoll = function(){
         console.log("reset task poll");
         inst.pollSince = 0;
         clearTimeout(inst.taskTimer);
         inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
-    }
+    };
 
     this.setupRepoTab = function(){
         //_asyncGet( "/api/repo/list?details=true", null, function(ok,data){
@@ -1784,7 +1742,7 @@ function makeBrowserTab(){
                 });
             }
         });
-    }
+    };
 
     this.graphLoad = function( a_id, a_sel_node_id ){
         inst.focus_node_id = a_id;
@@ -1815,7 +1773,7 @@ function makeBrowserTab(){
             for ( i in a_data.item ){
                 item = a_data.item[i];
                 //console.log("node:",item);
-                node = {id:item.id,locked:item.locked,links:[]}
+                node = {id:item.id,locked:item.locked,links:[]};
                 if ( item.alias ){
                     node.label = item.alias;
                 }else
@@ -1885,7 +1843,7 @@ function makeBrowserTab(){
             //console.log("graph nodes:",inst.graph_nodes);
             //console.log("graph edges:",inst.graph_edges);
         });
-    }
+    };
 
     this.graphUpdate = function( a_ids, a_data ){
         // Only updates locked and alias of impacted nodes
@@ -1910,7 +1868,7 @@ function makeBrowserTab(){
 
         if ( render )
             inst.renderDepGraph();
-    }
+    };
 
     this.renderDepGraph = function(){
         var g;
@@ -2094,7 +2052,7 @@ function makeBrowserTab(){
                 else
                     return r;
             })
-            .attr('y', -r)
+            .attr('y', -r);
 
         g.append("text")
             .attr("class","locked")
@@ -2105,7 +2063,7 @@ function makeBrowserTab(){
                     return "";
             })
             .attr('x', r-3)
-            .attr('y', -r+1)
+            .attr('y', -r+1);
 
         inst.nodes.exit()
             .remove();
@@ -2123,12 +2081,12 @@ function makeBrowserTab(){
             var linkForce = d3.forceLink(inst.link_data)
                 .strength(function(d){
                     switch(d.ty){
-                        case 0: return .1;
-                        case 1: return .1;
-                        case 2: return .1;
+                        case 0: return 0.1;
+                        case 1: return 0.1;
+                        case 2: return 0.1;
                     }
                 })
-                .id( function(d) { return d.id; })
+                .id( function(d) { return d.id; });
 
             inst.simulation = d3.forceSimulation()
                 .nodes(inst.node_data)
@@ -2136,14 +2094,14 @@ function makeBrowserTab(){
                 .force('charge', d3.forceManyBody()
                     .strength(-300))
                 .force('row', d3.forceY( function(d,i){ return d.row != undefined ?(75 + d.row*75):0; })
-                    .strength( function(d){ return d.row != undefined ?.05:0; }))
+                    .strength( function(d){ return d.row != undefined ?0.05:0; }))
                 .force('col', d3.forceX(function(d,i){ return d.col != undefined?inst.graph_center_x:0; })
-                    .strength( function(d){ return d.col != undefined ?.05:0; }))
+                    .strength( function(d){ return d.col != undefined ?0.05:0; }))
                 .force("link", linkForce )
                 .on('tick', inst.simTick);
 
         }
-    }
+    };
 
     this.dragStarted = function(d) {
         //console.log("drag start",d.id);
@@ -2151,7 +2109,7 @@ function makeBrowserTab(){
         d.fx = d3.event.x;
         d.fy = d3.event.y;
         d3.event.sourceEvent.stopPropagation();
-    }
+    };
 
     this.dragged = function(d) {
         //console.log("drag",d3.event.x,d3.event.y);
@@ -2159,7 +2117,7 @@ function makeBrowserTab(){
         d.fy = d3.event.y;
         inst.simTick(); 
         d3.event.sourceEvent.stopPropagation();
-    }
+    };
 
     this.dragEnded = function(d){
         //console.log("drag end",d.id);
@@ -2170,21 +2128,21 @@ function makeBrowserTab(){
         delete d.fy;
         //console.log("at:",d);
         d3.event.sourceEvent.stopPropagation();
-    }
+    };
 
     this.graphNodeFind = function( a_id ){
         for ( var i in inst.node_data ){
             if ( inst.node_data[i].id == a_id )
                 return inst.node_data[i];
         }
-    }
+    };
 
     this.graphLinkFind = function( a_id ){
         for ( var i in inst.link_data ){
             if ( inst.link_data[i].id == a_id )
                 return inst.link_data[i];
         }
-    }
+    };
 
     this.actionGraphNodeExpand = function(){
         console.log("expand node");
@@ -2245,7 +2203,7 @@ function makeBrowserTab(){
                 }
             });
         }
-    }
+    };
 
     this.actionGraphNodeCollapse = function(){
         //console.log("collapse node");
@@ -2292,7 +2250,7 @@ function makeBrowserTab(){
 
             inst.renderDepGraph();
         }
-    }
+    };
 
     this.actionGraphNodeHide = function(){
         if ( inst.sel_node && inst.sel_node.id != inst.focus_node_id && inst.node_data.length > 1 ){
@@ -2300,7 +2258,7 @@ function makeBrowserTab(){
             // Check for disconnection of the graph
             var start = inst.sel_node.links[0].source == inst.sel_node?inst.sel_node.links[0].target:inst.sel_node.links[0].source;
             if ( inst.graphCountConnected( start, [] ) == inst.node_data.length - 1 ){
-                for ( i in inst.sel_node.links ){
+                for ( var i in inst.sel_node.links ){
                     inst.sel_node.links[i].prune = true;
                 }
                 inst.graphPrune();
@@ -2313,7 +2271,7 @@ function makeBrowserTab(){
                 setStatusText("Node cannot be hidden");
             }
         }
-    }
+    };
 
     this.graphCountConnected = function(a_node,a_visited,a_from){
         var count = 0;
@@ -2332,7 +2290,7 @@ function makeBrowserTab(){
         }
 
         return count;
-    }
+    };
 
     this.graphPrune = function(){
         var i,j,item;
@@ -2359,7 +2317,7 @@ function makeBrowserTab(){
                         console.log("BAD INDEX IN TARGET LINKS!");
                     }
                 }
-                inst.link_data.splice(i,1)
+                inst.link_data.splice(i,1);
             }
         }
 
@@ -2367,10 +2325,10 @@ function makeBrowserTab(){
             item = inst.node_data[i];
             if ( item.prune ){
                 //console.log("pruning node:",item);
-                inst.node_data.splice(i,1)
+                inst.node_data.splice(i,1);
             }
         }
-    }
+    };
 
     this.graphPruneReset = function(){
         var i;
@@ -2380,7 +2338,7 @@ function makeBrowserTab(){
         for ( i in inst.link_data ){
             inst.link_data[i].prune = false;
         }
-    }
+    };
 
     // Depth-first-search to required nodes, mark for pruning
     this.graphPruneCalc = function( a_node, a_visited, a_source ){
@@ -2420,7 +2378,7 @@ function makeBrowserTab(){
 
 
         return a_node.prune;
-    }
+    };
 
     this.simTick = function() {
         //console.log("tick");
@@ -2433,7 +2391,7 @@ function makeBrowserTab(){
             .attr("y1", function(d) { return d.source.y; })
             .attr("x2", function(d) { return d.target.x; })
             .attr("y2", function(d) { return d.target.y; });
-    }
+    };
 
     this.treeSelectNode = function( a_node, a_toggle ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
@@ -2450,7 +2408,7 @@ function makeBrowserTab(){
         }else{
             a_node.setSelected( true );
         }
-    }
+    };
 
     this.treeSelectRange = function( a_tree, a_node ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
@@ -2463,7 +2421,7 @@ function makeBrowserTab(){
             var parent = act_node.parent;
             if ( parent == a_node.parent ){
                 var n,sel = false;
-                for ( i in parent.children ){
+                for ( var i in parent.children ){
                     n = parent.children[i];
                     if ( sel ){
                         n.setSelected( true );
@@ -2480,7 +2438,7 @@ function makeBrowserTab(){
                 setStatusText("Range select only supported within a single collection.",1);
             }
         }
-    }
+    };
 
     /** @brief Check if past is allowed to specified node
      *  @param dest_node - Candidate paste destination node
@@ -2524,7 +2482,7 @@ function makeBrowserTab(){
             return "over";
         }else
             return false;
-    }
+    };
 
     this.pageLoad = function( key, offset ){
         //console.log("pageLoad",key, offset);
@@ -2535,7 +2493,7 @@ function makeBrowserTab(){
                 node.load(true);
             },0);
         }
-    }
+    };
 
 
     var tree_source = [
@@ -2550,8 +2508,6 @@ function makeBrowserTab(){
         ]},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
     ];
-
-    
 
     $("#data_tree").fancytree({
         extensions: ["dnd","themeroller"],
@@ -2933,7 +2889,7 @@ function makeBrowserTab(){
                     node.setSelected( false );
                 });
                 var parents = data.node.getParentList();
-                for ( i in parents ){
+                for ( var i in parents ){
                     parents[i].setSelected( false );
                 }
             }
@@ -2991,7 +2947,7 @@ function makeBrowserTab(){
                     var coll_sel = false;
 
                     // If any collections are selected, copy is not available
-                    for ( i in sel ){
+                    for ( var i in sel ){
                         if ( sel[i].key.startsWith("c/")){
                             coll_sel = true;
                             break;
@@ -3052,7 +3008,7 @@ function makeBrowserTab(){
             var pages = Math.ceil(a_data.response.total/g_opts.page_sz), page = 1+a_data.response.offset/g_opts.page_sz;
             a_data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
         }
-    }
+    };
 
     inst.data_tree_div = $('#data_tree');
     inst.data_tree = inst.data_tree_div.fancytree('getTree');
@@ -3074,13 +3030,8 @@ function makeBrowserTab(){
         },
         source: inst.data_md_empty_src,
         selectMode: 1,
-        //clickFolderMode: 2,
-        /*click: function(event, data) {
-            if ( data.targetType == "icon" && data.node.isFolder() ){
-                data.node.toggleExpanded();
-            }
-        },*/
         beforeExpand: function(event,data){
+            // Handle auto-expansion
             var path = data.node.title;
             var par = data.node.parent;
             while ( par ){
@@ -3091,13 +3042,10 @@ function makeBrowserTab(){
             }
 
             if ( data.node.isExpanded() ){
-                //console.log("collapsed", data.node, path );
                 delete inst.data_md_exp[path];
             }else{
-                //console.log("expanded", data.node, path );
                 inst.data_md_exp[path] = 10;
             }
-            //console.log( "exp st", inst.data_md_exp );
         }
     });
 
@@ -3125,7 +3073,7 @@ function makeBrowserTab(){
     });
     $("#btn_update_data",inst.frame).on('click', function(){
         $("#filemenu").hide();
-        inst.update_files = true
+        inst.update_files = true;
         $('#input_files',inst.frame).val("");
         $('#input_files',inst.frame).trigger('click');
     });
@@ -3142,7 +3090,7 @@ function makeBrowserTab(){
             }else{
                 console.log(">>> asyncBegin blocked");
             }
-        }
+        };
     }
 
     function asyncEnd(){
@@ -3173,7 +3121,7 @@ function makeBrowserTab(){
     $("#btn_col_node",inst.frame).on('click', inst.actionGraphNodeCollapse );
     $("#btn_hide_node",inst.frame).on('click', inst.actionGraphNodeHide );
 
-    $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations() });
+    $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations(); });
     $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){
         if(reload){
             inst.refreshUI();
@@ -3183,7 +3131,7 @@ function makeBrowserTab(){
         inst.taskHist = [];
         inst.pollSince = g_opts.task_hist * 3600;
         inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
-    })});
+    });});
 
     $(document.body).on('click', '.browse-reload' , inst.actionReloadSelected );
 
@@ -3194,7 +3142,7 @@ function makeBrowserTab(){
     });
 
     $("#id_query,#text_query,#meta_query").on( "input", function(e) {
-        $("#run_qry_btn").addClass("ui-state-error")
+        $("#run_qry_btn").addClass("ui-state-error");
     });
 
     $("#btn_srch_refresh").on("click", function(){
@@ -3401,31 +3349,27 @@ function makeBrowserTab(){
         heightStyle:"fill",
         active: 0,
         activate: function(ev,ui){
-            console.log("tabs activate");
+            var node;
+
             if ( ui.newPanel.length ){
                 switch ( ui.newPanel[0].id ){
                     case "tab-data-tree":
-                        console.log("tree tab");
                         inst.select_source = SS_TREE;
-                        var node = inst.data_tree.activeNode;
+                        node = inst.data_tree.activeNode;
                         inst.showSelectedInfo( node );
                         break;
                     case "tab-catalogs":
                         inst.select_source = SS_CAT;
-                        // TODO update sel info
                         inst.showSelectedInfo();
-                        console.log("cat tab");
                         break;
                     case "tab-prov-graph":
                         inst.select_source = SS_PROV;
                         inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
-                        console.log("prov tab");
                         break;
                     case "tab-search-results":
                         inst.select_source = SS_SEARCH;
-                        var node = inst.results_tree.activeNode;
+                        node = inst.results_tree.activeNode;
                         inst.showSelectedInfo( node );
-                        console.log("results tab");
                         break;
                 }
             }
@@ -3518,9 +3462,9 @@ function makeBrowserTab(){
 
     inst.svg = d3.select("svg")
     .call(zoom.on("zoom", function () {
-        svg.attr("transform", d3.event.transform)
+        svg.attr("transform", d3.event.transform);
     }))
-    .append("g")
+    .append("g");
 
     defineArrowMarkerDeriv(inst.svg);
     defineArrowMarkerComp(inst.svg);

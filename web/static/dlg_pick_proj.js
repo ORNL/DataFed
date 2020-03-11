@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgPickProject( a_excl, a_single_sel, cb ){
     var content =
         "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
@@ -12,7 +14,7 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
                 node.load(true);
             },0);
         }
-    }
+    };
 
     var frame = $(document.createElement('div'));
     frame.html( content );
@@ -56,8 +58,6 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
         {title:"All By Title",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,checkbox:false,key:"all-title",offset:0}
     ];
 
-    //src.push({title:"By Projects",icon:false,folder:true,lazy:true,checkbox:false,key:"projects"});
-
     $("#dlg_proj_tree",frame).fancytree({
         extensions: ["themeroller"],
         themeroller: {
@@ -74,7 +74,7 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
                 $("#ok_btn").button("enable");
             }else{
                 $("#ok_btn").button("disable");
-            };
+            }
         },
         checkbox: true,
         lazyLoad: function( event, data ) {
@@ -94,14 +94,14 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
             if ( data.node.lazy ){
                 console.log("post proc",data.response);
                 data.result = [];
-                var proj;
+                var proj, i;
                 if ( data.node.key == "all-title" ){
-                    for ( var i in data.response.item ) {
+                    for ( i in data.response.item ) {
                         proj = data.response.item[i];
                         data.result.push({ title: "\"" + proj.title + "\"  ("+proj.id +")",icon:"ui-icon ui-icon-box",key: proj.id, unselectable: (a_excl.indexOf( proj.id ) != -1) });
                     }
                 } else {
-                    for ( var i in data.response.item ) {
+                    for ( i in data.response.item ) {
                         proj = data.response.item[i];
                         data.result.push({ title: proj.id + "  (\"" + proj.title + ")\"",icon:"ui-icon ui-icon-box",key: proj.id, unselectable: (a_excl.indexOf( proj.id ) != -1) });
                     }
