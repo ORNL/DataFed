@@ -749,8 +749,28 @@ module.exports = ( function() {
     };
 
     obj.getParents = function( item_id ){
-        var i, parents,results=[];
+        var p, idx = 0, parents,results=[];
 
+        parents = obj.db.item.byExample({_to: item_id });
+        if ( !parents.hasNext() )
+            return [[]];
+
+        while ( parents.hasNext() ){
+            p = parents.next();
+            p = obj.db.c.document(p._from);
+
+            results.push([{id:p._id,title:p.title,alias:p.alias}]);
+
+            p = obj.db.item.firstExample({_to: p._id });
+            while ( p ){
+                p = obj.db.c.document(p._from);
+                results[idx].push({id:p._id,title:p.title,alias:p.alias});
+                p = obj.db.item.firstExample({_to: p._id });
+            }
+            idx ++;
+        }
+
+        /*
         parents = obj.db._query( "for v in 1..1 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : item_id }).toArray();
         if ( !parents.length )
             return [[]];
@@ -763,7 +783,7 @@ module.exports = ( function() {
             var res = obj.db._query( "for v in 1..50 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : results[i][0].id }).toArray();
             //console.log("par:",res);
             results[i] = results[i].concat( res );
-        }
+        }*/
 
         return results;
     };
