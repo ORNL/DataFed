@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgSettings( a_cb ){
     var content = "\
         User Interface<hr>\

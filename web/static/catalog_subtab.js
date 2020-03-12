@@ -13,7 +13,7 @@ function CatalogSubTab( browser, frame ){
                 node.load(true);
             },0);
         }
-    }
+    };
 
     $("#catalog_tree", frame ).fancytree({
         toggleEffect: false,

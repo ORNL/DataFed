@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgQueryNewEdit(a_data,a_cb) {
     var frame = $(document.createElement('div'));
     frame.html(
@@ -90,7 +92,7 @@ function dlgQueryNewEdit(a_data,a_cb) {
                     if ( ok ){
                         var html;
                         if ( items.length > 0 ){
-                            var html = "<table style='width:100%;text-align:left;'><tr><th>ID/alias</th><th>Title</th></tr>";
+                            html = "<table style='width:100%;text-align:left;'><tr><th>ID/alias</th><th>Title</th></tr>";
                             for ( var i in items ){
                                 var item = items[i];
                                 html += "<tr><td style='vertical-align:top'>";

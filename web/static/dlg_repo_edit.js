@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgRepoEdit( a_repo_id, a_cb ){
     var content =
         "<div class='row-flex' style='height:100%'>\
@@ -129,8 +131,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         });
 
         dlgPickUser( "u/"+g_user.uid, excl, false, function( uids ){
-            console.log("sel:",uids);
-            for ( i in uids ){
+            for ( var i in uids ){
                 uid = uids[i];
                 admin_tree.rootNode.addNode({title: uid.substr(2),icon:"ui-icon ui-icon-person",key: uid });
             }
@@ -302,8 +303,9 @@ function dlgRepoEdit( a_repo_id, a_cb ){
             id: 'apply_btn',
             text: a_repo_id?"Apply Changes":"Save",
             click: function() {
+                var obj, cap;
                 if ( a_repo_id ){
-                    var obj = {id:repo.id};
+                    obj = {id:repo.id};
                     getUpdatedValue( $("#title",frame).val(), repo, obj, "title" );
                     getUpdatedValue( $("#desc",frame).val(), repo, obj, "desc" );
                     getUpdatedValue( $("#addr",frame).val(), repo, obj, "address" );
@@ -313,7 +315,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     getUpdatedValue( $("#domain",frame).val(), repo, obj, "domain" );
                     getUpdatedValue( $("#exp_path",frame).val(), repo, obj, "expPath" );
 
-                    var cap = parseSize( $("#capacity",frame).val() );
+                    cap = parseSize( $("#capacity",frame).val() );
                     if ( cap == null ){
                         dlgAlert("Data Entry Error","Invalid repo capacity value." );
                         return;
@@ -353,7 +355,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                         }
                     });
                 }else{
-                    var obj = {
+                    obj = {
                         id: $("#id",frame).val(),
                         title: $("#title",frame).val(),
                         address: $("#addr",frame).val(),
@@ -372,7 +374,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     if ( tmp )
                         obj.exp_path = tmp;
 
-                    var cap = parseSize( $("#capacity",frame).val() );
+                    cap = parseSize( $("#capacity",frame).val() );
                     if ( cap == null ){
                         dlgAlert("Data Entry Error","Invalid repo capacity value." );
                         return;

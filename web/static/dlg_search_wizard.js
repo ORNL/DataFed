@@ -1,3 +1,7 @@
+/*jshint multistr: true */
+
+// TODO - This is not currently used - placeholder only
+
 function dlgSearchWizard( a_cb ) {
     if ( !a_cb ){
         console.log("search wiz invalid cb");
@@ -234,7 +238,7 @@ function dlgSearchWizard( a_cb ) {
                                 if ( qry1 ) qry1 += " && ";
                                 qry1 += p;
                             }
-                        };
+                        }
                     }
 
                     if ( terms2.length ){
@@ -244,7 +248,7 @@ function dlgSearchWizard( a_cb ) {
                                 if ( qry2 ) qry2 += " || ";
                                 qry2 += p;
                             }
-                        };
+                        }
                     }
 
                     if ( qry1 && qry2 )

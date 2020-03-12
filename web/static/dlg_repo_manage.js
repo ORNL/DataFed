@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgRepoManage(){
     var content =
         "<div class='col-flex' style='height:100%'>\

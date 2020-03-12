@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgSetACLs( item ){
     var content =
         "<div class='col-flex' style='height:100%;width:100%;min-height:0;overflow:none'>\
@@ -324,7 +326,7 @@ function dlgSetACLs( item ){
 
     function addUser(){
         var new_excl = excl.slice();
-        for ( i in new_rules ){
+        for ( var i in new_rules ){
             rule = new_rules[i];
             if ( rule.id.startsWith( "u/" ))
                 new_excl.push( rule.id );
@@ -368,7 +370,7 @@ function dlgSetACLs( item ){
 
                         if ( rule.id.startsWith( "g/" )){
                             gid = rule.id.substr(2);
-                            group = groups.find( function(elem){ return elem.gid == gid } );
+                            group = groups.find( function(elem){ return elem.gid == gid; } );
                             if ( group ){
                                 node.resetLazy();
                                 node.setTitle( group.title + " (" + gid + ")");
@@ -390,7 +392,7 @@ function dlgSetACLs( item ){
                             new_rules.push( rule );
                             if ( ok ){
                                 gid = gid.substr(2);
-                                group = groups.find( function(elem){ return elem.gid == gid } );
+                                group = groups.find( function(elem){ return elem.gid == gid; } );
                                 tree.rootNode.children[1].addNode({title:group.title + " (" + gid + ")",icon:false,key:"g/"+gid,rule:rule,folder:true,lazy:true });
                             }else
                                 tree.rootNode.children[1].addNode({title:gid.substr(2),icon:false,key:gid,rule:rule,folder:true,lazy:true });

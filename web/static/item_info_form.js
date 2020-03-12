@@ -155,7 +155,7 @@ function showSelectedItemInfo( item ){
         var alloc,free;
         text = "";
         for ( i in item.alloc ){
-            alloc = item.alloc[i]
+            alloc = item.alloc[i];
             free = Math.max( Math.floor(10000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
             text += alloc.repo + ": " + sizeToString( alloc.dataLimit ) + " total, " + sizeToString( alloc.dataSize ) + " used (" + free + " % free)<br>";
         }

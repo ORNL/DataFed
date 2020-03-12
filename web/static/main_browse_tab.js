@@ -1513,29 +1513,6 @@ function makeBrowserTab(){
         });
     };
 
-    this.searchWizard = function(){
-        dlgSearchWizard( function( query ){
-            /*
-            $("#query_input").val( query );
-            var scope = 0;
-
-            if( $("#scope_mydat",inst.frame).prop("checked"))
-                scope |= SS_MY_DATA;
-            if( $("#scope_myproj",inst.frame).prop("checked"))
-                scope |= SS_MY_PROJ;
-            if( $("#scope_teamproj",inst.frame).prop("checked"))
-                scope |= SS_TEAM_PROJ;
-            if( $("#scope_usershare",inst.frame).prop("checked"))
-                scope |= SS_USER_SHARE;
-            if( $("#scope_projshare",inst.frame).prop("checked"))
-                scope |= SS_PROJ_SHARE;
-            if( $("#scope_public",inst.frame).prop("checked"))
-                scope |= SS_PUBLIC;
-            inst.execQuery( query, scope );
-            */
-        });
-    };
-
     this.updateSearchSelectState = function( enabled ){
         if( enabled && $("#scope_selected",inst.frame).prop("checked")){
             $(inst.data_tree_div).fancytree("option","checkbox",true);
@@ -2564,13 +2541,16 @@ function makeBrowserTab(){
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,inst.pasteItems);
 
+                var i, proj_id, ids = [];
+
                 if ( inst.pasteSourceParent.data.scope != dest_node.data.scope ){
                     console.log("Change owner");
                     var coll_id = dest_node.key.startsWith( "d/" )?dest_node.parent.key:dest_node.key;
-                    var proj_id = inst.pasteSourceParent.data.scope.charAt(0) == 'p'?inst.pasteSourceParent.data.scope:null;
-                    var ids = [];
-                    for( var i in inst.pasteItems )
-                    ids.push( inst.pasteItems[i].key );
+                    proj_id = inst.pasteSourceParent.data.scope.charAt(0) == 'p'?inst.pasteSourceParent.data.scope:null;
+
+                    for( i in inst.pasteItems ){
+                        ids.push( inst.pasteItems[i].key );
+                    }
 
                     dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
                         console.log("chg owner reply:",ok,reply);
@@ -2597,10 +2577,11 @@ function makeBrowserTab(){
                     var key = dest_node.key.startsWith( "repo/" )? dest_node.key:dest_node.parent.key;
                     var idx = key.indexOf("/",5);
                     var repo_id = key.substr(0,idx);
-                    var proj_id = inst.pasteSourceParent.data.scope.charAt(0) == 'p'?inst.pasteSourceParent.data.scope:null;
-                    var ids = [];
-                    for( var i in inst.pasteItems )
-                    ids.push( inst.pasteItems[i].key );
+                    proj_id = inst.pasteSourceParent.data.scope.charAt(0) == 'p'?inst.pasteSourceParent.data.scope:null;
+
+                    for( i in inst.pasteItems ){
+                        ids.push( inst.pasteItems[i].key );
+                    }
 
                     dataAllocChange( ids, repo_id, proj_id, true, function( ok, reply ){
                         if ( ok ){
@@ -2777,7 +2758,7 @@ function makeBrowserTab(){
             }
         },
         postProcess: function( event, data ) {
-            var scope = null;
+            var item, i, scope = null;
 
             //console.log( "pos proc:", data );
             if ( data.node.key == "mydata" || data.node.key.startsWith("p/")){
@@ -2786,11 +2767,10 @@ function makeBrowserTab(){
                     data.result = [];
                 if ( data.response.item && data.response.item.length ){
                     console.log( "pos proc project:", data.response );
-                    var item;
                     var admin = (data.node.key=="proj_own"?true:false);
                     var mgr = (data.node.key=="proj_adm"?true:false);
 
-                    for ( var i in data.response.item ) {
+                    for ( i in data.response.item ) {
                         item = data.response.item[i];
                         data.result.push({ title: inst.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true,admin:admin,mgr:mgr,nodrag:true,lazy:true});
                     }
@@ -2800,8 +2780,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
                 data.result = [];
                 if ( data.response.length ){
-                    var item;
-                    for ( var i in data.response ) {
+                    for ( i in data.response ) {
                         item = data.response[i];
                         data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user_"+item.uid,scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
@@ -2809,8 +2788,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
                 data.result = [];
                 if ( data.response.length ){
-                    var item;
-                    for ( var i in data.response ) {
+                    for ( i in data.response ) {
                         item = data.response[i];
                         data.result.push({ title: inst.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
@@ -2819,7 +2797,7 @@ function makeBrowserTab(){
                 data.result = [];
                 if ( data.response.length ){
                     var qry;
-                    for ( var i in data.response ) {
+                    for ( i in data.response ) {
                         qry = data.response[i];
                         data.result.push({ title: qry.title+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-zoom",folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
                     }
@@ -2828,7 +2806,7 @@ function makeBrowserTab(){
                 data.result = [];
                 if ( data.response.length ){
                     var alloc;
-                    for ( var i in data.response ) {
+                    for ( i in data.response ) {
                         alloc = data.response[i];
                         data.result.push({ title: alloc.repo.substr(5),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
@@ -2837,10 +2815,10 @@ function makeBrowserTab(){
                 // General data/collection listing for all nodes
                 //console.log("pos proc default",data.node.key,data.response);
                 data.result = [];
-                var item,entry;
+                var entry;
                 scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
-                for ( var i in items ) {
+                for ( i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
                         entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope,key:item.id, offset: 0 };

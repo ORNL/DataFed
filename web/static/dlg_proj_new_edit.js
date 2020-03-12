@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     var frame = $(document.createElement('div'));
     var html = "<div class='col-flex' style='height:100%'>\
@@ -59,7 +61,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj = {};
+                var obj,i = {};
 
                 var subRepo = $("#suballoc",frame).val();
                 var subAlloc = $("#suballoc_size",frame).val();
@@ -92,7 +94,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                             return;
                         }
 
-                        for ( var i in alloc_list ){
+                        for ( i in alloc_list ){
                             if ( alloc_list[i].repo == subRepo ){
                                 if ( alloc_sz > alloc_list[i].maxSize ){
                                     dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
@@ -124,7 +126,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 });
 
                 if ( a_data ){
-                    var i,diff;
+                    var diff;
                     console.log("ex admins:",a_data.admin,",new:",admins);
                     if ( a_data.admin && a_data.admin.length ){
                         diff = true;
@@ -197,7 +199,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         open: function(event,ui){
             if ( a_data && a_data.alloc ){
                 $("#suballoc",frame).html("<option value='ignore'>Allocation(s) in use</option>").selectmenu({width:"auto",disabled:true});
-                inputDisable($("#suballoc_size",frame))
+                inputDisable($("#suballoc_size",frame));
             }else{
                 allocListBySubject( undefined, false, function( ok, data ){
                     console.log( ok, data );
@@ -216,16 +218,16 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                                 found = true;
                             }
                             console.log( "alloc", alloc );
-                            alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>"
+                            alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
                         }
 
                         if ( found ){
                             if (( a_upd_perms & PERM_WR_REC ) != 0 ){
-                                inputEnable($("#suballoc_size",frame))
+                                inputEnable($("#suballoc_size",frame));
                             }
                         }else{
                             // Unlikely
-                            inputDisable($("#suballoc_size",frame))
+                            inputDisable($("#suballoc_size",frame));
                         }
                     }
 

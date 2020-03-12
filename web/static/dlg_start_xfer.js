@@ -1,3 +1,5 @@
+/*jshint multistr: true */
+
 function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     var frame = $(document.createElement('div'));
     var ep_lab = a_mode == TT_DATA_GET?"Destination":"Source";
@@ -26,14 +28,8 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         "</div></div></div>");
 
     var dlg_title = (a_mode == TT_DATA_GET?"Get Data":"Put Data");
-    var selection_ok = true;
-    var endpoint_ok = false;
-    var matches = $("#matches",frame);
-    var path_in = $("#path",frame);
-    var ep_list = null;
-    var cur_ep = null;
-
-    //console.log("records:",a_ids);
+    var selection_ok = true, endpoint_ok = false, matches = $("#matches",frame);
+    var path_in = $("#path",frame), ep_list = null, cur_ep = null, item;
 
     function updateGoBtn(){
         if ( selection_ok && endpoint_ok )
@@ -45,15 +41,15 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     if ( !a_ids ){
         $("#title",frame).html( "(new record)" );
     }else if ( a_ids.length > 1 ){
-        var item, skip = 0, tot_sz = 0;
-        var info, sel, src = [];
+        var skip = 0, tot_sz = 0, info, sel, src = [];
+
         for ( var i in a_ids ){
             item = a_ids[i];
             if ( item.size == 0 ){
                 info = "(empty)";
                 sel = false;
             }else if ( item.locked ){
-                info == "(locked)"
+                info = "(locked)";
                 sel = false;
             }else{
                 tot_sz += parseInt( item.size );

@@ -126,7 +126,7 @@ function _asyncPostText( a_url, a_text_data, a_callback ) {
     });
 }
 
-const escapeMap = {
+var escapeMap = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
@@ -149,7 +149,7 @@ function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
     var tmp = a_new_val.trim(), old = a_old_obj[a_field];
     if (( old === undefined && tmp.length ) || ( old !== undefined && tmp != old ))
         a_new_obj[a_field] = tmp;
-};
+}
 
 function viewData( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
@@ -240,14 +240,14 @@ function dataGet( a_ids, a_cb ){
     dataGetCheck( a_ids, function( ok, data ){
         if ( ok ){
             //console.log("data get check:",data);
-            var internal = false, external = false;
+            var i, internal = false, external = false;
 
             if ( !data.item || !data.item.length ){
                 dlgAlert("Data Get Error","Selection contains no raw data.");
                 return;
             }
 
-            for ( var i in data.item ){
+            for ( i in data.item ){
                 if ( data.item[i].locked ){
                     dlgAlert("Data Get Error","One or more data records are currently locked.");
                     return;
@@ -268,7 +268,7 @@ function dataGet( a_ids, a_cb ){
             } else if ( internal ){
                 dlgStartTransfer( TT_DATA_GET, data.item, a_cb );
             }else{
-                for ( var i in data.item ){
+                for ( i in data.item ){
                     //console.log("download ", data.item[i].url )
                     var link = document.createElement("a");
                     var idx = data.item[i].url.lastIndexOf("/");
@@ -463,7 +463,7 @@ function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
     //console.log("getCollOffset",coll_id,item_id,page_sz,idx);
     _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"&page_sz="+page_sz, null, function(ok,data){
         //console.log("getCollOffset - cb",coll_id,item_id,page_sz,idx);
-        cb( ok, data, idx )
+        cb( ok, data, idx );
     });
 }
 
@@ -787,6 +787,7 @@ function dlgConfirmChoice( title, msg, btns, cb ) {
     };
 
     for ( var i in btns ){
+        // JSHINT WARNS BUT THIS IS CORRECT (can't use ECS6)
         ( function( idx ) {
             options.buttons.push({
                 text: btns[idx],
@@ -814,6 +815,7 @@ function dlgSingleEntry( title, label, btns, cb ) {
     };
 
     for ( var i in btns ){
+        // JSHINT WARNS BUT THIS IS CORRECT (can't use ECS6)
         ( function( idx ) {
             options.buttons.push({
                 text: btns[idx],
@@ -877,10 +879,15 @@ function parseSize( a_size_str ){
         if ( !isNaN(val) ){
             switch(tokens[1]){
                 case "PB": val *= 1024;
+                /* falls through */
                 case "TB": val *= 1024;
+                /* falls through */
                 case "GB": val *= 1024;
+                /* falls through */
                 case "MB": val *= 1024;
+                /* falls through */
                 case "KB": val *= 1024;
+                /* falls through */
                 case "B":
                     result = val;
                     break;
@@ -899,9 +906,13 @@ function parseSize( a_size_str ){
                 if ( !isNaN(val) ){
                     switch(tokens[0][len-2]){
                         case "P": val *= 1024;
+                        /* falls through */
                         case "T": val *= 1024;
+                        /* falls through */
                         case "G": val *= 1024;
+                        /* falls through */
                         case "M": val *= 1024;
+                        /* falls through */
                         case "K": val *= 1024;
                             result = val;
                             break;
@@ -994,7 +1005,7 @@ function defineArrowMarkerDeriv( a_svg ){
         .attr('markerHeight',4)
         .append('svg:path')
             .attr('class','arrow-path derivation')
-            .attr('d', 'M 5,0 L 0,2 L 5,4')
+            .attr('d', 'M 5,0 L 0,2 L 5,4');
 }
 
 function defineArrowMarkerComp( a_svg ){
@@ -1007,7 +1018,7 @@ function defineArrowMarkerComp( a_svg ){
         .attr('markerHeight',4)
         .append('svg:path')
             .attr('class','arrow-path component')
-            .attr('d', 'M 4,0 L 0,2 L 4,4 L 8,2')
+            .attr('d', 'M 4,0 L 0,2 L 4,4 L 8,2');
 }
 
 function defineArrowMarkerNewVer( a_svg, a_name ){
@@ -1020,7 +1031,7 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
         .attr('markerHeight',4)
         .append('svg:path')
             .attr('class','arrow-path new-version')
-            .attr('d', 'M 2,0 L 6,2 L 2,4 M 4,2 L 0,4 L 0,0')
+            .attr('d', 'M 2,0 L 6,2 L 2,4 M 4,2 L 0,4 L 0,0');
 }
 
 
@@ -1072,7 +1083,7 @@ function buildObjSrcTree( obj, base, inst ){
                 }
 
                 val += "]";
-                src.push({title:k2 + " : " + val, icon: false })
+                src.push({title:k2 + " : " + val, icon: false });
                 return;
             }
         }
@@ -1084,16 +1095,16 @@ function buildObjSrcTree( obj, base, inst ){
                 if ( inst.data_md_exp[fkey] )
                     inst.data_md_exp[fkey] = 10;
 
-                src.push({title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)})
+                src.push({title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)});
             }else{
-                src.push({title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)})
+                src.push({title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
             }
         }else if ( typeof obj[k] === 'string' ){
-            src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false })
+            src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false });
         }else if ( obj[k] === null ){
             src.push({title:k2 + " : null", icon: false });
         }else{
-            src.push({title:k2 + " : " + String(obj[k]), icon: false })
+            src.push({title:k2 + " : " + String(obj[k]), icon: false });
         }
     });
 
@@ -1173,22 +1184,15 @@ var DEP_IS_NEW_VERSION_OF  = 2;
 DepDirFromString = {
     "DEP_IN":DEP_IN,
     "DEP_OUT":DEP_OUT
-}
+};
 
 DepTypeFromString = {
     "DEP_IS_DERIVED_FROM":DEP_IS_DERIVED_FROM,
     "DEP_IS_COMPONENT_OF":DEP_IS_COMPONENT_OF,
     "DEP_IS_NEW_VERSION_OF":DEP_IS_NEW_VERSION_OF
-}
+};
 
 var g_ep_recent = [];
 var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
-
-/*var dlgGroups = new makeDlgGroups();
-var dlgGroupEdit = new makeDlgGroupEdit();
-var dlgAllocNewEdit = new makeDlAllocNewEdit();
-
-epRecentLoad();
-*/
 
 console.log( "main.js loaded");
