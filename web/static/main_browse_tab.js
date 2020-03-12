@@ -3100,7 +3100,7 @@ function makeBrowserTab(){
     $("#btn_hide_node",inst.frame).on('click', inst.actionGraphNodeHide );
 
     $("#btn_alloc",inst.frame).on('click', function(){ dlgAllocations(); });
-    $("#btn_settings",inst.frame).on('click', function(){ dlgSettings(function(reload){
+    $("#btn_settings").on('click', function(){ dlgSettings(function(reload){
         if(reload){
             inst.refreshUI();
         }

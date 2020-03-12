@@ -48,21 +48,17 @@
     <body>
     <div class="col-flex" style="height:100%;width:100%">
         <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:0 .5em">
-            <div style="flex:none;font-size:2em;">
-                <span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span>&nbsp
+            <div style="flex:none;font-size:1.8em;">
+                <span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span>
             </div>
             <div style="flex:none;font-size:2em;">
-                <div>
-                    DataFed
-                </div>
-                <div style="font-size:40%;margin:-.3em 0 .15em .1em">
-                    Ver <%- @version %> <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp<b>TEST</b>&nbsp</span>
-                </div>
+                &nbspDataFed Portal
             </div>
-            <div style="flex:1 1 100%;font-size:2em;">
-                <center>Data Portal</center>
+            <div style="flex:auto;font-size:1.6em;font-weight:normal;padding:0 1em">
+                <span id='uname'></span>
             </div>
             <div style="flex:none">
+                <button id='btn_settings' class='btn' title='Update application and account settings'>Settings</button>&nbsp
                 <button class="btn" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'>Help</button>&nbsp
                 <button class="btn" onclick="logout()">Log Out</button>
             </div>
@@ -71,10 +67,7 @@
             <% include 'tab_browser.ect' %>
         </div>
         <div class="ui-widget-header" style="flex:none;padding:.25em">
-            <div class="row-flex">
-                <div style="flex:none;padding:.2em 0 0 0" >User: <span id="uname"></span>&nbsp&nbsp<span id='is_admin' class='ui-state-error' style='display:none'>ADMIN</span>&nbsp&nbsp</div>
-                <div id="status_text" style="height:1.65em;padding:.3em 0 0 0;flex:1 1 100%;text-align:center;font-size:.9em;font-style:normal;background:black;color:white"></div>
-            </div>
+            <div id="status_text" style="height:1.65em;width:100%;padding:.3em 0 0 0;text-align:center;font-size:.9em;font-style:normal;background:black;color:white"></div>
         </div>
     </div>
     </body>

@@ -519,6 +519,11 @@ td
     /*vertical-align:bottom!important;*/
 }
 
+.ui-tabs .ui-tabs-nav .ui-tabs-anchor
+{
+	padding: .1em .25em!important;
+}
+
 .search-wiz-select-button
 {
     padding: 1px .5em!important;
