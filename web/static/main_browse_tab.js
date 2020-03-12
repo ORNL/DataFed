@@ -322,7 +322,6 @@ function makeBrowserTab(){
             }
         }
 
-        //console.log("----- showParent -----",item_id);
         getParents( item_id, function( ok, data ){
             if ( ok ){
                 if ( data.path.length ){
@@ -334,21 +333,25 @@ function makeBrowserTab(){
                     else{
                         // Figure out which parent path matches current location
 
+
                         for ( i in data.path ){
                             path = data.path[i].item;
                             //console.log("path:",path);
-                            if ( path.findIndex(function(p){
-                                return p.id == node.parent.key;
-                            }) != -1 ){
-                                if ( which == 1 )
-                                    if ( i > 0 ) i--; else i=data.path.length-1;
-                                else
-                                    if ( i < data.path.length-1) i++; else i=0;
-                                path = data.path[i].item;
-                                break;
-                            }
+
+                            if ( path[0].id != node.parent.key )
+                                continue;
+
+                            if ( which == 1 )
+                                if ( i > 0 ) i--; else i=data.path.length-1;
+                            else
+                                if ( i < data.path.length-1) i++; else i=0;
+                            path = data.path[i].item;
+                            break;
                         }
                     }
+
+                    if ( !path ) // Might happen if displayed tree is stale
+                        return;
 
                     for ( i = 0; i < path.length; i++ ){
                         path[i] = {id:path[i].id,off:null};
