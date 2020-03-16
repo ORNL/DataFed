@@ -2506,7 +2506,7 @@ function makeBrowserTab(){
                     helper = $("<div class='fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>")
                     .append( nodeTag.find("span.fancytree-title").clone());
 
-                    helper.data("ftSourceNode", sourceNode);
+                    helper.data( "ftSourceNode", node );
 
                     return helper;
                 }
