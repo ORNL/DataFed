@@ -1111,6 +1111,43 @@ function buildObjSrcTree( obj, base, inst ){
     return src;
 }
 
+function setPickTarget( a_input, a_prefixes = [] ){
+    if ( g_pick_target && a_input.get(0) === g_pick_target.get(0) ){
+        g_pick_target.removeClass("pick-hl");
+        g_pick_target = null;
+    }else{
+        if ( g_pick_target )
+            g_pick_target.removeClass("pick-hl");
+
+        g_pick_target = a_input;
+        g_pick_target.addClass("pick-hl");
+        a_pick_prefixes = a_prefixes;
+    }
+}
+
+function setPickTargetVal( a_text ){
+    if ( g_pick_target ){
+        if ( a_pick_prefixes.length ){
+            var found = false;
+            for ( var i in a_pick_prefixes ){
+                if ( a_text.startsWith( a_pick_prefixes[i] )){
+                    found = true;
+                    break;
+                }
+            }
+            if ( !found )
+                return false;
+        }
+
+        g_pick_target.val( a_text );
+        g_pick_target.removeClass("pick-hl");
+        g_pick_target = null;
+        return true;
+    }
+
+    return false;
+}
+
 var status_timer;
 var status_int;
 
@@ -1194,5 +1231,7 @@ DepTypeFromString = {
 
 var g_ep_recent = [];
 var g_date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
+var g_pick_target = null;
+
 
 console.log( "main.js loaded");

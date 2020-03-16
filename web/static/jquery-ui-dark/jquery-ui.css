@@ -272,6 +272,12 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
     color:#E07010;
 }
 
+.pick-hl
+{
+	background:#ffc73d!important;
+	color:#111111!important;
+}
+
 mark
 {
 	background:#ffc73d;

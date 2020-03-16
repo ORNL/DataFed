@@ -574,8 +574,15 @@ td
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    z-index:1000 !important;
+    /*z-index:600 !important;*/
 }
+
+/*
+.ui-dialog
+{
+    z-index:500!important;
+}
+*/
 
 textarea
 {

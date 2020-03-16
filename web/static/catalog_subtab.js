@@ -51,6 +51,10 @@ function CatalogSubTab( browser, frame ){
                 data.node.resetLazy();
             }
         },
+        dblclick: function(event, data) {
+            if ( setPickTargetVal( data.node.key ))
+                return false;
+        },
         click: function(event, data) {
             if ( event.which == null ){
                 // RIGHT-CLICK CONTEXT MENU

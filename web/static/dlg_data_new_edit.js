@@ -8,6 +8,7 @@ var DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
 
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var frame = $(document.createElement('div'));
+
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
             <ul>\
@@ -121,6 +122,19 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         $("select",row).selectmenu({width:200});
         $(".btn",row).button();
         inputTheme( $('input:text',row ));
+
+        $('input:text',row).droppable({
+            accept: function( item ){
+                console.log("ref accept!");
+                return true;
+            },
+            drop: function(ev,ui){
+                console.log("ref drop!");
+                var sourceNode = $(ui.helper).data("ftSourceNode");
+                console.log("drop:",sourceNode);
+            }
+        });
+
         $(".rem-ref",row).on("click",function(ev){
             remRef(ev);
         });
@@ -143,10 +157,9 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     }
 
     function findRef(ev){
-        dlgPickData( function( data_id ){
-            var tr = ev.currentTarget.closest("tr");
-            $("input",tr).val(data_id);
-        });
+        // Set global target to the associated ID input field
+        var tr = ev.currentTarget.closest("tr");
+        setPickTarget($("input",tr),["d/"]);
     }
 
     function updateAllocSelect(){
@@ -205,7 +218,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     var options = {
         title: dlg_title,
-        modal: true,
+        modal: false,
         width: 500,
         height: 530,
         resizable: true,
@@ -395,12 +408,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             $("select",frame).selectmenu({width:200});
 
-            jsoned = ace.edit("md", {
+            jsoned = ace.edit( $("#md",frame).get(0), {
                 theme:(g_theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
                 fontSize:16,
-                autoScrollEditorIntoView:true
-                //wrap:true
+                autoScrollEditorIntoView:true,
+                wrap:true
             });
 
             var parent;
@@ -543,6 +556,20 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             }
 
             jsoned.resize();
+
+            $('input',frame).droppable({
+                accept: function( item ){
+                    console.log("any accept!");
+                    return true;
+                },
+                drop: function(ev,ui){
+                    console.log("any drop!");
+                    var sourceNode = $(ui.helper).data("ftSourceNode");
+                    console.log("drop:",sourceNode);
+                    $(this).val(sourceNode.key);
+                }
+            });
+    
         }
     };
 

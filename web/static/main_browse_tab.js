@@ -1988,15 +1988,10 @@ function makeBrowserTab(){
                     .attr('r',r);
             })
             .on("dblclick", function(d,i){
-                //console.log("dbl click");
-                if ( d.comp )
-                    inst.actionGraphNodeCollapse();
-                else
-                    inst.actionGraphNodeExpand();
-                d3.event.stopPropagation();
+                if ( setPickTargetVal( d.id ))
+                    d3.event.stopPropagation();
             })
             .on("click", function(d,i){
-                //console.log("click");
                 if ( inst.sel_node != d ){
                     d3.select(".highlight")
                         .attr("class","select hidden");
@@ -2006,6 +2001,14 @@ function makeBrowserTab(){
                     inst.sel_node_id = d.id;
                     inst.showSelectedInfo( d.id );
                 }
+
+                if ( d3.event.ctrlKey ){
+                    if ( d.comp )
+                        inst.actionGraphNodeCollapse();
+                    else
+                        inst.actionGraphNodeExpand();
+                }
+
                 d3.event.stopPropagation();
             });
 
@@ -2125,11 +2128,9 @@ function makeBrowserTab(){
     };
 
     this.actionGraphNodeExpand = function(){
-        console.log("expand node");
-        //inst.sel_node_id = "d/51724878";
-
         if ( inst.sel_node && !inst.sel_node.comp ){
             //var exp_node = graphNodeFind( inst.sel_node )
+            //inst.sel_node_id
             dataGetDeps( inst.sel_node_id, function( data ){
                 //console.log("expand node data:",data);
                 if ( data && data.item ){
@@ -2138,7 +2139,7 @@ function makeBrowserTab(){
 
                     inst.sel_node.comp = true;
 
-                    var dep,node,link,i,id;
+                    var dep,new_node,link,i,id;
 
                     //node = inst.graphNodeFind(inst.sel_node_id);
                     //node.comp = true;
@@ -2166,12 +2167,12 @@ function makeBrowserTab(){
 
                         inst.sel_node.links.push(link);
 
-                        node = inst.graphNodeFind(dep.id);
-                        if ( !node ){
+                        new_node = inst.graphNodeFind(dep.id);
+                        if ( !new_node ){
                             //console.log("adding node");
                             inst.node_data.push({id:dep.id,label:dep.alias?dep.alias:dep.id,links:[link]});
                         }else{
-                            node.links.push(link);
+                            new_node.links.push(link);
                         }
 
                         //console.log("adding link");
@@ -2495,12 +2496,9 @@ function makeBrowserTab(){
         dnd:{
             autoExpandMS: 400,
             draggable:{
-                zIndex: 1000,
-                scroll: true,
-                //containment: "parent",
-                //revert: false,
-                scrollSpeed: 10,
-                scrollSensitivity: 30
+                zIndex: 2000,
+                scroll: false,
+                appendTo: "body"
             },
             dragStart: function(node, data) {
                 console.log( "drag start" );
@@ -2654,9 +2652,6 @@ function makeBrowserTab(){
                 data.node.resetLazy();
             }
         },
-        //tooltip: function( ev, data ){
-        //    return "tooltip";
-        //},
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = [
@@ -2896,6 +2891,10 @@ function makeBrowserTab(){
                 inst.keyNav = true;
             }
         },
+        dblclick: function(event, data) {
+            if ( setPickTargetVal( data.node.key ))
+                return false;
+        },
         click: function(event, data) {
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
@@ -3122,6 +3121,17 @@ function makeBrowserTab(){
         }
     });
 
+    $('#text_query').droppable({
+        accept: function( item ){
+            console.log("qry txt accept");
+            return true;
+        },
+        drop: function(ev,ui){
+            var sourceNode = $(ui.helper).data("ftSourceNode");
+            console.log("qry txt drop:",sourceNode);
+        }
+    });
+
     $("#id_query,#text_query,#meta_query").on( "input", function(e) {
         $("#run_qry_btn").addClass("ui-state-error");
     });
@@ -3218,6 +3228,10 @@ function makeBrowserTab(){
             }else if( ev.keyCode == 38 || ev.keyCode == 40 ){
                 inst.keyNav = true;
             }
+        },
+        dblclick: function(event, data) {
+            if ( setPickTargetVal( data.node.key ))
+                return false;
         },
         click: function(event, data) {
             if ( event.which == null ){
