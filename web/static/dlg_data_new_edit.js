@@ -567,7 +567,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     var sourceNode = $(ui.helper).data("ftSourceNode");
                     console.log("drop:",sourceNode);
                     $(this).val(sourceNode.key);
-                }
+                },
+                hoverClass: "ui-state-error"
             });
     
         }
