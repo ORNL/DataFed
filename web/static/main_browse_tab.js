@@ -2497,8 +2497,19 @@ function makeBrowserTab(){
             autoExpandMS: 400,
             draggable:{
                 zIndex: 2000,
+                revert: "invalid",
                 scroll: false,
-                appendTo: "body"
+                appendTo: "body",
+                helper: function(ev){
+                    var helper, node = $.ui.fancytree.getNode(ev.target), nodeTag = $(node.span);
+
+                    helper = $("<div class='fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>")
+                    .append( nodeTag.find("span.fancytree-title").clone());
+
+                    helper.data("ftSourceNode", sourceNode);
+
+                    return helper;
+                }
             },
             dragStart: function(node, data) {
                 console.log( "drag start" );
