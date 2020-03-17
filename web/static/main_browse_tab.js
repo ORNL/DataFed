@@ -2504,17 +2504,16 @@ function makeBrowserTab(){
                 scroll: false,
                 appendTo: "body",
                 helper: function(ev){
+                    console.log( "dnd helper" );
+
                     var node = $.ui.fancytree.getNode(ev.target);
                     inst.helper = $("<div class='ui-widget-container fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>");
                     inst.helper.data( "ftSourceNode", node );
                     return inst.helper;
-                },
-                cursorAt:{
-                    left: 5
                 }
             },
             dragStart: function(node, data) {
-                console.log( "drag start" );
+                console.log( "dnd start" );
                 //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
                 if ( !inst.drag_enabled || node.data.nodrag ){
                     console.log("abort drag start");
