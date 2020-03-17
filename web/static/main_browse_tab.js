@@ -2901,18 +2901,22 @@ function makeBrowserTab(){
             }
         },
         click: function(event, data) {
+            console.log("click",data.node.key);
+
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
             }
 
             if ( inst.dragging ){ // Suppress click processing on aborted drag
+                console.log("aborted drag");
+
                 inst.dragging = false;
             }else if ( !inst.searchSelect ){ // Selection "rules" differ for search-select mode
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
 
                     if ( !data.node.isSelected() ){
-                        //console.log("not selected");
+                        console.log("not selected - select");
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
                         inst.treeSelectNode(data.node);
