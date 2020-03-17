@@ -2490,14 +2490,14 @@ function makeBrowserTab(){
         extensions: ["dnd5","themeroller"],
         toggleEffect: false,
         dnd5:{
-            autoExpandMS: 400,
+            /*autoExpandMS: 400,
             preventRecursion: true,
             preventVoidMoves: true,
             preventLazyParents: false,
             preventSameParent: false,
             preventNonNodes: false,
             dropMarkerOffsetX: 0,
-            multiSource: false,
+            multiSource: false,*/
             dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
