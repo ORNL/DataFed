@@ -2637,6 +2637,7 @@ function makeBrowserTab(){
                 inst.drag_enabled = true;
             },
             dragEnter: function(node, data) {
+                return true;
                 console.log("dragEnter",node.key);
                 if ( inst.dragging ){
                     console.log("allowed:",inst.pasteAllowed( node, data.otherNode ));
