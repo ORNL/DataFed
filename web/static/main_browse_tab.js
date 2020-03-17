@@ -2503,14 +2503,14 @@ function makeBrowserTab(){
                 revert: "invalid",
                 scroll: false,
                 appendTo: "body",
-                helper: function(ev){
+                /*helper: function(ev){
                     console.log( "dnd helper" );
 
                     var node = $.ui.fancytree.getNode(ev.target);
                     inst.helper = $("<div class='ui-widget-container fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>");
                     inst.helper.data( "ftSourceNode", node );
                     return inst.helper;
-                }
+                }*/
             },
             dragStart: function(node, data) {
                 console.log( "dnd start" );
@@ -2531,13 +2531,14 @@ function makeBrowserTab(){
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
                 //console.log( "drag start", inst.pasteItems );
 
-
+                /*
                 if ( inst.pasteItems.length > 1 )
                     inst.helper.append( "<i class='ui-icon ui-icon-files'> (multiple)");
                 else if ( node.key.startsWith( "d/" ))
                     inst.helper.append( "<i class='ui-icon ui-icon-file'></i> " + node.key  );
                 else
                     inst.helper.append( "<i class='ui-icon ui-icon-folder'></i> " + node.key );
+                */
 
                 inst.pasteSourceParent = inst.pasteItems[0].parent;
                 console.log("pasteSourceParent",inst.pasteSourceParent);
