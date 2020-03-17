@@ -1038,11 +1038,16 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
 function buildObjSrcTree( obj, base, inst ){
     //console.log("build tree", obj, base);
 
-    var src = [], k2, o, i, v, pod, val, len, vs;
+    var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
+    
+    if (is_arr)
+        kbase = base?base:"" + "[";
+    else
+        kbase = base?base+".":"";
 
     Object.keys(obj).forEach(function(k) {
         k2 = escapeHTML(k);
-        var fkey=(base?base+".":"")+k;
+        fkey=kbase + k + is_arr?"]":"";
 
         if ( Array.isArray( obj[k] )){
             // Test for POD arrays (no objects) - If POD, put all values in title of this node; otherwise, add as children
@@ -1057,6 +1062,7 @@ function buildObjSrcTree( obj, base, inst ){
             }
 
             if ( pod ){
+                // Array of POD types - jam all on one line
                 val = null;
                 len = 0;
 
@@ -1083,7 +1089,7 @@ function buildObjSrcTree( obj, base, inst ){
                 }
 
                 val += "]";
-                src.push({key:fkey+"["+i+"]",title:k2 + " : " + val, icon: false });
+                src.push({key:fkey,title:k2 + " : " + val, icon: false });
                 return;
             }
         }
