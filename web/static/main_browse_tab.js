@@ -2504,6 +2504,7 @@ function makeBrowserTab(){
                 revert: "invalid",
                 scroll: false,
                 appendTo: "body",
+                multiSource: true
                 /*helper: function(ev){
                     console.log( "dnd helper" );
 
@@ -2515,11 +2516,11 @@ function makeBrowserTab(){
             },
             dragStart: function(node, data) {
                 console.log( "dnd start" );
-                //if ( !drag_enabled || node.key == "loose" || node.key == root_key )
+
                 if ( !inst.drag_enabled || node.data.nodrag ){
-                    console.log("abort drag start");
                     return false;
                 }
+
                 clearTimeout( inst.hoverTimer );
                 node.setActive(true);
                 if ( !node.isSelected() ){
@@ -2552,7 +2553,7 @@ function makeBrowserTab(){
 
                 if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey || !node.parent.key.startsWith("c/") ) {
                     inst.drag_mode = 0;
-                    data.effectAllowed = "link";
+                    data.effectAllowed = "copy";
                 } else {
                     inst.drag_mode = 1;
                     data.effectAllowed = "move";
