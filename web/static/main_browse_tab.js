@@ -2498,9 +2498,6 @@ function makeBrowserTab(){
             preventNonNodes: false,
             dropMarkerOffsetX: 0,
             multiSource: false,*/
-            preventSameParent: false,
-            preventVoidMoves: true,
-            dropEffectDefault: "move",
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
@@ -2539,10 +2536,10 @@ function makeBrowserTab(){
                 }
                 return true;
             },
-            dragExpand: function(node, data){
+            /*dragExpand: function(node, data){
                 console.log("dragExp",node.key);
                 return true;
-            },
+            },*/
             dragDrop: function(dest_node, data) {
                 inst.dragging = false;
                 inst.drag_enabled = false;
@@ -2638,15 +2635,19 @@ function makeBrowserTab(){
                 }
                 inst.drag_enabled = true;
             },
+            dragOver: function(node, data) {
+                data.dropEffect = data.dropEffectSuggested;
+            },
             dragEnter: function(node, data) {
-                console.log("dragEnter",node.key);
+                return true;
+                /*console.log("dragEnter",node.key);
                 if ( inst.dragging ){
                     console.log("allowed:",inst.pasteAllowed( node, data.otherNode ));
                     return inst.pasteAllowed( node, data.otherNode );
                 }else{
                     console.log("not dragging");
                     return false;
-                }
+                }*/
             },
             dragEnd: function(node, data) {
                 inst.dragging = false;
