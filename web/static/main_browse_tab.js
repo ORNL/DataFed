@@ -2491,10 +2491,13 @@ function makeBrowserTab(){
     ];
 
     $("#data_tree").fancytree({
-        extensions: ["dnd","themeroller"],
+        extensions: ["dnd5","themeroller"],
         toggleEffect: false,
         dnd:{
             autoExpandMS: 400,
+            preventLazyParents: false,
+            preventSameParent: true,
+            dropMarkerOffsetX: 0,
             draggable:{
                 zIndex: 1000, // Needed to work on pop-up dialogs
                 revert: "invalid",
