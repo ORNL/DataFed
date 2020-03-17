@@ -2498,7 +2498,9 @@ function makeBrowserTab(){
             preventNonNodes: false,
             dropMarkerOffsetX: 0,
             multiSource: false,*/
-            dropEffectDefault: "link",
+            preventSameParent: false,
+            preventVoidMoves: true,
+            dropEffectDefault: "move",
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
@@ -2640,8 +2642,7 @@ function makeBrowserTab(){
                 console.log("dragEnter",node.key);
                 if ( inst.dragging ){
                     console.log("allowed:",inst.pasteAllowed( node, data.otherNode ));
-                    if ( inst.pasteAllowed( node, data.otherNode ))
-                        return true;
+                    return inst.pasteAllowed( node, data.otherNode );
                 }else{
                     console.log("not dragging");
                     return false;
