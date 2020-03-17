@@ -2492,7 +2492,7 @@ function makeBrowserTab(){
         dnd5:{
             autoExpandMS: 400,
             preventLazyParents: false,
-            preventSameParent: true,
+            preventSameParent: false,
             preventNonNodes: true,
             dropMarkerOffsetX: 0,
             multiSource: false,
