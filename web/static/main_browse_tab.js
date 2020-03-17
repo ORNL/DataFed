@@ -2490,7 +2490,7 @@ function makeBrowserTab(){
         extensions: ["dnd5","themeroller"],
         toggleEffect: false,
         dnd5:{
-            /*autoExpandMS: 400,
+            /*
             preventRecursion: true,
             preventVoidMoves: true,
             preventLazyParents: false,
@@ -2498,6 +2498,8 @@ function makeBrowserTab(){
             preventNonNodes: false,
             dropMarkerOffsetX: 0,
             multiSource: false,*/
+            autoExpandMS: 400,
+            preventNonNodes: true,
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
