@@ -2639,8 +2639,11 @@ function makeBrowserTab(){
                 data.dropEffect = data.dropEffectSuggested;
             },
             dragEnter: function(node, data) {
-                return true;
-                /*console.log("dragEnter",node.key);
+                var allowed = inst.pasteAllowed( node, data.otherNode );
+
+                console.log("dragEnter",node.key, allowed );
+                return allowed;
+                /*
                 if ( inst.dragging ){
                     console.log("allowed:",inst.pasteAllowed( node, data.otherNode ));
                     return inst.pasteAllowed( node, data.otherNode );
