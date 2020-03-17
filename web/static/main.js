@@ -1047,7 +1047,7 @@ function buildObjSrcTree( obj, base, inst ){
 
     Object.keys(obj).forEach(function(k) {
         k2 = escapeHTML(k);
-        fkey=kbase + k + is_arr?"]":"";
+        fkey=kbase + k + (is_arr?"]":"");
 
         if ( Array.isArray( obj[k] )){
             // Test for POD arrays (no objects) - If POD, put all values in title of this node; otherwise, add as children
