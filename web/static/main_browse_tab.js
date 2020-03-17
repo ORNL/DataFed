@@ -2519,7 +2519,7 @@ function makeBrowserTab(){
 
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
 
-                data.dataTransfer.setData("text/plain",node.key);
+                //data.dataTransfer.setData("text/plain",node.key);
 
                 inst.pasteSourceParent = inst.pasteItems[0].parent;
                 console.log("pasteSourceParent",inst.pasteSourceParent);
