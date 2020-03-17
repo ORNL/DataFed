@@ -1083,7 +1083,7 @@ function buildObjSrcTree( obj, base, inst ){
                 }
 
                 val += "]";
-                src.push({key:fkey,title:k2 + " : " + val, icon: false });
+                src.push({key:fkey+"["+i+"]",title:k2 + " : " + val, icon: false });
                 return;
             }
         }
