@@ -1331,8 +1331,8 @@ function makeBrowserTab(){
             key = node;
         else if ( node.key == "shared_proj" && node.data.scope )
             key = node.data.scope;
-        else if ( node.key.startsWith( "t/" ) && node.data.scope ){
-            key = node.data.scope;
+        //else if ( node.key.startsWith( "t/" ) && node.data.scope ){
+        //    key = node.data.scope;
         }else
             key = node.key;
 
@@ -1360,7 +1360,9 @@ function makeBrowserTab(){
             inst.showSelectedProjInfo( key );
         }else if ( key.startsWith("q/")){
             inst.showSelectedQueryInfo( key );
-        }else if (( key.startsWith("u/") || key.startsWith( "shared_user_" )) && node.data.scope ){
+        }else if ( key.startsWith("u/")){
+            inst.showSelectedUserInfo( node.key );
+        }else if ( key.startsWith( "shared_user_" ) && node.data.scope ){
             inst.showSelectedUserInfo( node.data.scope );
         }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
             inst.showSelectedProjInfo( node.data.scope );
