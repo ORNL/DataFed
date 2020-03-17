@@ -2491,9 +2491,11 @@ function makeBrowserTab(){
         toggleEffect: false,
         dnd5:{
             autoExpandMS: 400,
+            preventRecursion: true,
+            preventVoidMoves: true,
             preventLazyParents: false,
             preventSameParent: false,
-            preventNonNodes: true,
+            preventNonNodes: false,
             dropMarkerOffsetX: 0,
             multiSource: false,
             dropEffectDefault: "copy",
@@ -2502,6 +2504,7 @@ function makeBrowserTab(){
                 console.log( "dnd start" );
 
                 if ( !inst.drag_enabled || node.data.nodrag ){
+                    console.log( "NOT ALLOWED" );
                     return false;
                 }
 
@@ -2517,17 +2520,6 @@ function makeBrowserTab(){
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
 
                 data.dataTransfer.setData("text/plain",node.key);
-
-                //console.log( "drag start", inst.pasteItems );
-
-                /*
-                if ( inst.pasteItems.length > 1 )
-                    inst.helper.append( "<i class='ui-icon ui-icon-files'> (multiple)");
-                else if ( node.key.startsWith( "d/" ))
-                    inst.helper.append( "<i class='ui-icon ui-icon-file'></i> " + node.key  );
-                else
-                    inst.helper.append( "<i class='ui-icon ui-icon-folder'></i> " + node.key );
-                */
 
                 inst.pasteSourceParent = inst.pasteItems[0].parent;
                 console.log("pasteSourceParent",inst.pasteSourceParent);
@@ -2645,11 +2637,12 @@ function makeBrowserTab(){
                 inst.drag_enabled = true;
             },
             dragEnter: function(node, data) {
-                console.log("dragEnter");
+                console.log("dragEnter",node.key);
                 if ( inst.dragging ){
-                    console.log("dragEnter, allowed:",inst.pasteAllowed( node, data.otherNode ));
+                    console.log("allowed:",inst.pasteAllowed( node, data.otherNode ));
                     return inst.pasteAllowed( node, data.otherNode );
                 }else{
+                    console.log("not dragging");
                     return false;
                 }
             }
