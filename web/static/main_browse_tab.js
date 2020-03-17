@@ -2513,9 +2513,9 @@ function makeBrowserTab(){
                     return helper;*/
 
                     console.log( "create helper" );
-                    var node = $.ui.fancytree.getNode(ev.target);
+                    //var node = $.ui.fancytree.getNode(ev.target);
                     inst.helper = $("<div class='fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>");
-                    helper.data( "ftSourceNode", node );
+                    //helper.data( "ftSourceNode", {} );
                     return inst.helper;
                 }
             },
