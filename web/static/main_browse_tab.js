@@ -3001,7 +3001,7 @@ function makeBrowserTab(){
     tooltipTheme( inst.data_tree_div );
 
     $("#data_md_tree").fancytree({
-        extensions: ["themeroller","filter","dnd5"],
+        extensions: ["themeroller","filter"/*,"dnd5"*/],
         themeroller: {
             activeClass: "my-fancytree-active",
             addClass: "",
@@ -3009,7 +3009,7 @@ function makeBrowserTab(){
             hoverClass: "my-fancytree-hover",
             selectedClass: ""
         },
-        dnd5:{
+        /*dnd5:{
             preventSameParent: true,
             preventNonNodes: true,
             dropMarkerOffsetX: 0,
@@ -3020,7 +3020,7 @@ function makeBrowserTab(){
                 console.log( "dnd start" );
                 data.dataTransfer.setData("text/plain",node.key);
             }
-        },
+        },*/
         filter:{
             autoExpand: true,
             mode: "hide"
