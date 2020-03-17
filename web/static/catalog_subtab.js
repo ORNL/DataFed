@@ -17,13 +17,25 @@ function CatalogSubTab( browser, frame ){
 
     $("#catalog_tree", frame ).fancytree({
         toggleEffect: false,
-        extensions: ["themeroller"],
+        extensions: ["themeroller","dnd5"],
         themeroller: {
             activeClass: "my-fancytree-active",
             addClass: "",
             focusClass: "",
             hoverClass: "my-fancytree-hover",
             selectedClass: ""
+        },
+        dnd5:{
+            dropMarkerOffsetX: 0,
+            multiSource: false,
+            dropEffectDefault: "copy",
+            scroll: false,
+            preventForeignNodes: true,
+            dragStart: function(node, data) {
+                console.log( "dnd start" );
+                data.dataTransfer.setData("text/plain",node.key);
+                return true;
+            }
         },
         source:[
             {title:"By Topic <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
