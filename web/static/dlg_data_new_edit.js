@@ -557,7 +557,18 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             jsoned.resize();
 
-            $('input',frame).droppable({
+            $('input',frame).on("ondragover",function(e){
+                console.log("drag over:",sourceNode);
+                e.preventDefault();
+            });
+            $('input',frame).on("drop",function(e){
+                e.preventDefault();
+                var sourceNode =$.ui.fancytree.getDragNode();
+                console.log("drop:",sourceNode);
+                $(this).val(sourceNode.key);
+            });
+
+            /*$('input',frame).droppable({
                 accept: function( item ){
                     console.log("any accept!");
                     return true;
@@ -570,7 +581,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     $(this).val(sourceNode.key);
                 },
                 hoverClass: "ui-state-error"
-            });
+            });*/
     
         }
     };
