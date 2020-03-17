@@ -1042,7 +1042,7 @@ function buildObjSrcTree( obj, base, inst ){
 
     Object.keys(obj).forEach(function(k) {
         k2 = escapeHTML(k);
-
+        var fkey=(base?base+".":"")+k;
 
         if ( Array.isArray( obj[k] )){
             // Test for POD arrays (no objects) - If POD, put all values in title of this node; otherwise, add as children
@@ -1083,28 +1083,27 @@ function buildObjSrcTree( obj, base, inst ){
                 }
 
                 val += "]";
-                src.push({title:k2 + " : " + val, icon: false });
+                src.push({key:fkey,title:k2 + " : " + val, icon: false });
                 return;
             }
         }
         
         if ( typeof obj[k] === 'object' ){
-            var fkey=(base?base+".":"")+k2;
 
             if ( inst ){
                 if ( inst.data_md_exp[fkey] )
                     inst.data_md_exp[fkey] = 10;
 
-                src.push({title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)});
+                src.push({key:fkey,title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)});
             }else{
-                src.push({title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
+                src.push({key:fkey,title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
             }
         }else if ( typeof obj[k] === 'string' ){
-            src.push({title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false });
+            src.push({key:fkey,title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false });
         }else if ( obj[k] === null ){
-            src.push({title:k2 + " : null", icon: false });
+            src.push({key:fkey,title:k2 + " : null", icon: false });
         }else{
-            src.push({title:k2 + " : " + String(obj[k]), icon: false });
+            src.push({key:fkey,title:k2 + " : " + String(obj[k]), icon: false });
         }
     });
 
