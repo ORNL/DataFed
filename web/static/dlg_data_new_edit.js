@@ -123,7 +123,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         $(".btn",row).button();
         inputTheme( $('input:text',row ));
 
-        $('input:text',row).droppable({
+        /*$('input:text',row).droppable({
             accept: function( item ){
                 console.log("ref accept!");
                 return true;
@@ -133,7 +133,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 var sourceNode = $(ui.helper).data("ftSourceNode");
                 console.log("drop:",sourceNode);
             }
-        });
+        });*/
 
         $(".rem-ref",row).on("click",function(ev){
             remRef(ev);
@@ -557,7 +557,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             jsoned.resize();
 
-            $('input:text',frame).on("ondragover",function(e){
+            /*$('input:text',frame).on("ondragover",function(e){
                 console.log("drag over:",sourceNode);
                 e.preventDefault();
             });
@@ -566,23 +566,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 var sourceNode =$.ui.fancytree.getDragNode();
                 console.log("drop:",sourceNode);
                 $(this).val(sourceNode.key);
-            });
-
-            /*$('input',frame).droppable({
-                accept: function( item ){
-                    console.log("any accept!");
-                    return true;
-                },
-                drop: function(ev,ui){
-                    console.log("any drop!");
-                    //var sourceNode = $(ui.helper).data("ftSourceNode");
-                    var sourceNode =$.ui.fancytree.getDragNode();
-                    console.log("drop:",sourceNode);
-                    $(this).val(sourceNode.key);
-                },
-                hoverClass: "ui-state-error"
             });*/
-    
         }
     };
 

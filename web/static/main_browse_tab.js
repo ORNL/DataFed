@@ -2500,22 +2500,8 @@ function makeBrowserTab(){
             preventNonNodes: true,
             dropMarkerOffsetX: 0,
             multiSource: false,
-            draggable:{
-                zIndex: 1000, // Needed to work on pop-up dialogs
-                revert: "invalid",
-                scroll: false,
-                appendTo: "body",
-                multiSource: false,
-                dropEffectDefault: "copy"
-                /*helper: function(ev){
-                    console.log( "dnd helper" );
-
-                    var node = $.ui.fancytree.getNode(ev.target);
-                    inst.helper = $("<div class='ui-widget-container fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>");
-                    inst.helper.data( "ftSourceNode", node );
-                    return inst.helper;
-                }*/
-            },
+            dropEffectDefault: "copy",
+            scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
 
@@ -3028,13 +3014,25 @@ function makeBrowserTab(){
     tooltipTheme( inst.data_tree_div );
 
     $("#data_md_tree").fancytree({
-        extensions: ["themeroller","filter"],
+        extensions: ["themeroller","filter","dnd5"],
         themeroller: {
             activeClass: "my-fancytree-active",
             addClass: "",
             focusClass: "",
             hoverClass: "my-fancytree-hover",
             selectedClass: ""
+        },
+        dnd5:{
+            preventSameParent: true,
+            preventNonNodes: true,
+            dropMarkerOffsetX: 0,
+            multiSource: false,
+            dropEffectDefault: "copy",
+            scroll: false,
+            dragStart: function(node, data) {
+                console.log( "dnd start" );
+                data.dataTransfer.setData("text/plain",node.key);
+            }
         },
         filter:{
             autoExpand: true,
