@@ -1304,7 +1304,7 @@ ClientWorker::parseSearchMetadata( const string & a_query )
                 }
                 else
                 {
-                    if ( tmp.compare( 0, 3, "md." ) == 0 || tmp.compare( 0, 3, "md[" ) == 0 )
+                    if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
                         result.append( "i." );
                     else
                         result.append( "i.md." );
