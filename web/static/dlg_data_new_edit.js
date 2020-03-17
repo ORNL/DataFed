@@ -30,7 +30,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:1 1 auto;overflow:auto'>\
                         <table id='ref-table'>\
-                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
+                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
                         </table>\
                     </div>\
                     <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
@@ -106,17 +106,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         remRef(ev);
     });
 
-    $(".find-ref",frame).on("click",function(ev){
-        findRef(ev);
-    });
-
     var jsoned;
     var ref_rows = 1;
     var orig_deps = [];
     var encrypt_mode = 1;
 
     function addRef(){
-        var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Find data record' class='btn find-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-zoom' style='font-size:.9em'></span></button></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
+        var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
 
         row.insertAfter("#ref-table tr:last",frame);
         $("select",row).selectmenu({width:200});
@@ -138,9 +134,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         $(".rem-ref",row).on("click",function(ev){
             remRef(ev);
         });
-        $(".find-ref",row).on("click",function(ev){
-            findRef(ev);
-        });
         ref_rows++;
     }
 
@@ -154,12 +147,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         }else{
             $("input",tr).val("");
         }
-    }
-
-    function findRef(ev){
-        // Set global target to the associated ID input field
-        var tr = ev.currentTarget.closest("tr");
-        setPickTarget($("input",tr),["d/"]);
     }
 
     function updateAllocSelect(){
@@ -463,7 +450,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
                     if (( a_upd_perms & PERM_WR_REC ) == 0 ){
                         inputDisable( $("#title,#desc,#alias,#keyw", frame ));
-                        inputDisable( $(".add-ref,.rem-ref,.find-ref,.ref-row input", frame ));
+                        inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
                     }
 

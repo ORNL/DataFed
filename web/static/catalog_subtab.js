@@ -33,6 +33,9 @@ function CatalogSubTab( browser, frame ){
             preventForeignNodes: true,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
+                if ( node.key.startsWith( "t/" ))
+                    return false;
+
                 data.dataTransfer.setData("text/plain",node.key);
                 return true;
             }
@@ -62,10 +65,6 @@ function CatalogSubTab( browser, frame ){
             if ( data.node.isLazy() ){
                 data.node.resetLazy();
             }
-        },
-        dblclick: function(event, data) {
-            if ( setPickTargetVal( data.node.key ))
-                return false;
         },
         click: function(event, data) {
             if ( event.which == null ){

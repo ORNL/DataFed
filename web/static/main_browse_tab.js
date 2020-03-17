@@ -1987,10 +1987,6 @@ function makeBrowserTab(){
                     .duration(500)
                     .attr('r',r);
             })
-            .on("dblclick", function(d,i){
-                if ( setPickTargetVal( d.id ))
-                    d3.event.stopPropagation();
-            })
             .on("click", function(d,i){
                 if ( inst.sel_node != d ){
                     d3.select(".highlight")
@@ -2909,10 +2905,6 @@ function makeBrowserTab(){
                 inst.keyNav = true;
             }
         },
-        dblclick: function(event, data) {
-            if ( setPickTargetVal( data.node.key ))
-                return false;
-        },
         click: function(event, data) {
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
@@ -3271,10 +3263,6 @@ function makeBrowserTab(){
                 inst.keyNav = true;
             }
         },
-        dblclick: function(event, data) {
-            if ( setPickTargetVal( data.node.key ))
-                return false;
-        },
         click: function(event, data) {
             if ( event.which == null ){
                 // RIGHT-CLICK CONTEXT MENU
@@ -3386,18 +3374,15 @@ function makeBrowserTab(){
         heightStyle:"fill",
         active: 0,
         activate: function(ev,ui){
-            var node;
-
             if ( ui.newPanel.length ){
                 switch ( ui.newPanel[0].id ){
                     case "tab-data-tree":
                         inst.select_source = SS_TREE;
-                        node = inst.data_tree.activeNode;
-                        inst.showSelectedInfo( node );
+                        inst.showSelectedInfo( inst.data_tree.activeNode );
                         break;
                     case "tab-catalogs":
                         inst.select_source = SS_CAT;
-                        inst.showSelectedInfo();
+                        inst.showSelectedInfo( inst.cat_tree.activeNode );
                         break;
                     case "tab-prov-graph":
                         inst.select_source = SS_PROV;
@@ -3405,8 +3390,7 @@ function makeBrowserTab(){
                         break;
                     case "tab-search-results":
                         inst.select_source = SS_SEARCH;
-                        node = inst.results_tree.activeNode;
-                        inst.showSelectedInfo( node );
+                        inst.showSelectedInfo( inst.results_tree.activeNode );
                         break;
                 }
             }
