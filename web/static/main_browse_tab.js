@@ -1308,7 +1308,7 @@ function makeBrowserTab(){
             }
 
             var md = JSON.parse( md_str );
-            var src = buildObjSrcTree(md,"",inst);
+            var src = buildObjSrcTree(md,"md",inst);
             inst.data_md_tree.reload( src );
             inst.data_md_empty = false;
         } else if ( !inst.data_md_empty ) {
