@@ -2534,7 +2534,7 @@ function makeBrowserTab(){
 
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
 
-                data.dataTransfer.setData(node.key);
+                data.dataTransfer.setData("text/plain",node.key);
 
                 //console.log( "drag start", inst.pasteItems );
 
