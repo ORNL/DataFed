@@ -910,7 +910,7 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-
+    console.log("Coll Read",a_req.query.id);
     sendMessage( "CollReadRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });

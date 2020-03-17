@@ -2559,6 +2559,10 @@ function makeBrowserTab(){
                 }
                 return true;
             },
+            dragExpand: function(node, data){
+                console.log("dragExp",node.key);
+                return true;
+            },
             dragDrop: function(dest_node, data) {
                 inst.dragging = false;
                 inst.drag_enabled = false;

@@ -564,7 +564,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 },
                 drop: function(ev,ui){
                     console.log("any drop!");
-                    var sourceNode = $(ui.helper).data("ftSourceNode");
+                    //var sourceNode = $(ui.helper).data("ftSourceNode");
+                    var sourceNode =$.ui.fancytree.getDragNode();
                     console.log("drop:",sourceNode);
                     $(this).val(sourceNode.key);
                 },
