@@ -1333,7 +1333,7 @@ function makeBrowserTab(){
             key = node.data.scope;
         //else if ( node.key.startsWith( "t/" ) && node.data.scope ){
         //    key = node.data.scope;
-        }else
+        else
             key = node.key;
 
         if ( key[0] == "c" ) {
