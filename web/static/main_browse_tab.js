@@ -2504,7 +2504,8 @@ function makeBrowserTab(){
                 revert: "invalid",
                 scroll: false,
                 appendTo: "body",
-                multiSource: true
+                multiSource: false,
+                dropEffectDefault: "copy"
                 /*helper: function(ev){
                     console.log( "dnd helper" );
 
@@ -2553,10 +2554,8 @@ function makeBrowserTab(){
 
                 if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey || !node.parent.key.startsWith("c/") ) {
                     inst.drag_mode = 0;
-                    data.effectAllowed = "copy";
                 } else {
                     inst.drag_mode = 1;
-                    data.effectAllowed = "move";
                 }
                 return true;
             },
