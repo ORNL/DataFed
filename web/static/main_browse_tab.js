@@ -2497,6 +2497,7 @@ function makeBrowserTab(){
             autoExpandMS: 400,
             preventLazyParents: false,
             preventSameParent: true,
+            preventNonNodes: true,
             dropMarkerOffsetX: 0,
             multiSource: false,
             draggable:{
@@ -2532,6 +2533,9 @@ function makeBrowserTab(){
                 }
 
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
+
+                data.dataTransfer.setData(node.key);
+
                 //console.log( "drag start", inst.pasteItems );
 
                 /*

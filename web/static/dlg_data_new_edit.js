@@ -557,11 +557,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             jsoned.resize();
 
-            $('input',frame).on("ondragover",function(e){
+            $('input:text',frame).on("ondragover",function(e){
                 console.log("drag over:",sourceNode);
                 e.preventDefault();
             });
-            $('input',frame).on("drop",function(e){
+            $('input:text',frame).on("drop",function(e){
                 e.preventDefault();
                 var sourceNode =$.ui.fancytree.getDragNode();
                 console.log("drop:",sourceNode);
