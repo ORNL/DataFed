@@ -2645,6 +2645,9 @@ function makeBrowserTab(){
                     console.log("not dragging");
                     return false;
                 }
+            },
+            dragEnd: function(node, data) {
+                inst.dragging = false;
             }
         },
         themeroller: {
