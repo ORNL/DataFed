@@ -1041,7 +1041,7 @@ function buildObjSrcTree( obj, base, inst ){
     var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     
     if (is_arr)
-        kbase = base?base:"" + "[";
+        kbase = (base?base:"") + "[";
     else
         kbase = base?base+".":"";
 
