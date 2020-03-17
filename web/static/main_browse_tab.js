@@ -2490,14 +2490,6 @@ function makeBrowserTab(){
         extensions: ["dnd5","themeroller"],
         toggleEffect: false,
         dnd5:{
-            /*
-            preventRecursion: true,
-            preventVoidMoves: true,
-            preventLazyParents: false,
-            preventSameParent: false,
-            preventNonNodes: false,
-            dropMarkerOffsetX: 0,
-            multiSource: false,*/
             autoExpandMS: 400,
             preventNonNodes: true,
             scroll: false,
@@ -2538,10 +2530,6 @@ function makeBrowserTab(){
                 }
                 return true;
             },
-            /*dragExpand: function(node, data){
-                console.log("dragExp",node.key);
-                return true;
-            },*/
             dragDrop: function(dest_node, data) {
                 inst.dragging = false;
                 inst.drag_enabled = false;
@@ -3016,7 +3004,7 @@ function makeBrowserTab(){
     tooltipTheme( inst.data_tree_div );
 
     $("#data_md_tree").fancytree({
-        extensions: ["themeroller","filter"/*,"dnd5"*/],
+        extensions: ["themeroller","filter","dnd5"],
         themeroller: {
             activeClass: "my-fancytree-active",
             addClass: "",
@@ -3024,18 +3012,15 @@ function makeBrowserTab(){
             hoverClass: "my-fancytree-hover",
             selectedClass: ""
         },
-        /*dnd5:{
-            preventSameParent: true,
+        dnd5:{
             preventNonNodes: true,
-            dropMarkerOffsetX: 0,
-            multiSource: false,
-            dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
                 data.dataTransfer.setData("text/plain",node.key);
+                return true;
             }
-        },*/
+        },
         filter:{
             autoExpand: true,
             mode: "hide"
@@ -3228,11 +3213,8 @@ function makeBrowserTab(){
             selectedClass: ""
         },
         dnd5:{
-            dropMarkerOffsetX: 0,
-            multiSource: false,
-            dropEffectDefault: "copy",
-            scroll: false,
             preventForeignNodes: true,
+            scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
                 data.dataTransfer.setData("text/plain",node.key);
