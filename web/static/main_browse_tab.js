@@ -2493,7 +2493,7 @@ function makeBrowserTab(){
     $("#data_tree").fancytree({
         extensions: ["dnd5","themeroller"],
         toggleEffect: false,
-        dnd:{
+        dnd5:{
             autoExpandMS: 400,
             preventLazyParents: false,
             preventSameParent: true,
