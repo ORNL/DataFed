@@ -2503,6 +2503,7 @@ function makeBrowserTab(){
                 helper: function(ev){
                     var helper, node = $.ui.fancytree.getNode(ev.target), nodeTag = $(node.span);
 
+                    console.log( "helper, items", inst.pasteItems );
                     helper = $("<div class='fancytree-drag-helper'><span class='fancytree-drag-helper-img' />" + node.key + "</div>");
 
                     //.append( nodeTag.find("span.fancytree-title").clone());
