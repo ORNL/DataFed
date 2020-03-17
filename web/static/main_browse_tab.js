@@ -2502,9 +2502,12 @@ function makeBrowserTab(){
                 appendTo: "body",
                 helper: function(ev){
                     var node = $.ui.fancytree.getNode(ev.target);
-                    inst.helper = $("<div class='ui-widget fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>");
+                    inst.helper = $("<div class='ui-widget-container fancytree-drag-helper'><span class='fancytree-drag-helper-img' /></div>");
                     inst.helper.data( "ftSourceNode", node );
                     return inst.helper;
+                },
+                cursorAt:{
+                    left: 5
                 }
             },
             dragStart: function(node, data) {
