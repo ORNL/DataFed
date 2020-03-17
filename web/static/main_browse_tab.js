@@ -2492,6 +2492,7 @@ function makeBrowserTab(){
         dnd5:{
             autoExpandMS: 400,
             preventNonNodes: true,
+            dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
@@ -3014,6 +3015,7 @@ function makeBrowserTab(){
         },
         dnd5:{
             preventNonNodes: true,
+            dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );
@@ -3214,6 +3216,7 @@ function makeBrowserTab(){
         },
         dnd5:{
             preventForeignNodes: true,
+            dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
                 console.log( "dnd start" );

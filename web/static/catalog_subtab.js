@@ -28,6 +28,7 @@ function CatalogSubTab( browser, frame ){
         dnd5:{
             scroll: false,
             preventForeignNodes: true,
+            dropEffectDefault: "copy",
             dragStart: function(node, data) {
                 console.log( "dnd start" );
                 if ( node.key.startsWith( "t/" ))
