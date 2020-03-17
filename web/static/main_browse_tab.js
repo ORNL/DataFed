@@ -2498,7 +2498,7 @@ function makeBrowserTab(){
             preventLazyParents: false,
             preventSameParent: true,
             dropMarkerOffsetX: 0,
-            multiSource: true,
+            multiSource: false,
             draggable:{
                 zIndex: 1000, // Needed to work on pop-up dialogs
                 revert: "invalid",
