@@ -2498,6 +2498,7 @@ function makeBrowserTab(){
             preventLazyParents: false,
             preventSameParent: true,
             dropMarkerOffsetX: 0,
+            multiSource: true,
             draggable:{
                 zIndex: 1000, // Needed to work on pop-up dialogs
                 revert: "invalid",
@@ -2551,8 +2552,10 @@ function makeBrowserTab(){
 
                 if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey || !node.parent.key.startsWith("c/") ) {
                     inst.drag_mode = 0;
+                    data.effectAllowed = "link";
                 } else {
                     inst.drag_mode = 1;
+                    data.effectAllowed = "move";
                 }
                 return true;
             },
