@@ -34,7 +34,7 @@ function CatalogSubTab( browser, frame ){
                 if ( node.data.nodrag )
                     return false;
 
-                data.dataTransfer.setData("text/plain",node.key);
+                data.dataTransfer.setData("text/plain",node.key.startsWith("t/")?node.title:node.key);
                 return true;
             }
         },
@@ -113,9 +113,9 @@ function CatalogSubTab( browser, frame ){
                     item = items[i];
                     if ( item.id[0]=="t" ){
                         if ( item.title.startsWith("u/") ){
-                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.title,icon:"ui-icon ui-icon-person",offset:0};
+                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-person",offset:0};
                         }else if ( item.title.startsWith("p/") ){
-                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.title,icon:"ui-icon ui-icon-box",offset:0 };
+                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-box",offset:0 };
                         }else{
                             entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
                         }

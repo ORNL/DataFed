@@ -1331,8 +1331,8 @@ function makeBrowserTab(){
             key = node;
         else if ( node.key == "shared_proj" && node.data.scope )
             key = node.data.scope;
-        //else if ( node.key.startsWith( "t/" ) && node.data.scope ){
-        //    key = node.data.scope;
+        else if ( node.key.startsWith( "t/" ) && node.data.scope )
+            key = node.data.scope;
         else
             key = node.key;
 
