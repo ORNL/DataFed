@@ -1324,7 +1324,7 @@ function makeBrowserTab(){
             return;
         }
 
-        //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+        console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
         var key;
 
         if ( typeof node == 'string' )

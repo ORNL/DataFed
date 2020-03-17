@@ -31,7 +31,7 @@ function CatalogSubTab( browser, frame ){
             dropEffectDefault: "copy",
             dragStart: function(node, data) {
                 console.log( "dnd start" );
-                if ( node.key.startsWith( "t/" ))
+                if ( node.data.nodrag )
                     return false;
 
                 data.dataTransfer.setData("text/plain",node.key);
@@ -47,16 +47,6 @@ function CatalogSubTab( browser, frame ){
             browser.showSelectedInfo( data.node );
         },
         select: function( event, data ) {
-            /*if ( data.node.isSelected() ){
-                data.node.visit( function( node ){
-                    node.setSelected( false );
-                });
-                var parents = data.node.getParentList();
-                for ( i in parents ){
-                    parents[i].setSelected( false );
-                }
-            }*/
-
             browser.updateBtnState();
         },
         collapse: function( event, data ) {
@@ -123,9 +113,9 @@ function CatalogSubTab( browser, frame ){
                     item = items[i];
                     if ( item.id[0]=="t" ){
                         if ( item.title.startsWith("u/") ){
-                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-person",nodrag:true,offset:0};
+                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-person",offset:0};
                         }else if ( item.title.startsWith("p/") ){
-                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-box",nodrag:true,offset:0 };
+                            entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-box",offset:0 };
                         }else{
                             entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
                         }
