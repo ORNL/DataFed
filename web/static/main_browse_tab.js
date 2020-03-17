@@ -2496,11 +2496,11 @@ function makeBrowserTab(){
         dnd:{
             autoExpandMS: 400,
             draggable:{
-                zIndex: 2000,
+                zIndex: 1000, // Needed to work on pop-up dialogs
                 revert: "invalid",
                 scroll: false,
                 appendTo: "body",
-                helper: function(ev){
+                /*helper: function(ev){
                     var helper, node = $.ui.fancytree.getNode(ev.target), nodeTag = $(node.span);
 
                     console.log( "helper, items", inst.pasteItems );
@@ -2511,7 +2511,7 @@ function makeBrowserTab(){
                     helper.data( "ftSourceNode", node );
 
                     return helper;
-                }
+                }*/
             },
             dragStart: function(node, data) {
                 console.log( "drag start" );
@@ -2531,6 +2531,8 @@ function makeBrowserTab(){
 
                 inst.pasteItems = inst.data_tree.getSelectedNodes();
                 console.log( "drag start", inst.pasteItems );
+
+                $( "#data_tree" ).draggable( "option", "helper", "<div>Hello!</div>" );
 
                 inst.pasteSourceParent = inst.pasteItems[0].parent;
                 console.log("pasteSourceParent",inst.pasteSourceParent);
