@@ -172,6 +172,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         url += "&admins=" + JSON.stringify( admins );
                 }
 
+                console.log("URL", url );
+
                 if ( url ){
                     if ( a_data )
                         url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
