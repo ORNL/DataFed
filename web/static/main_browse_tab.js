@@ -2746,6 +2746,7 @@ function makeBrowserTab(){
                     cache: false
                 };
             } else {
+                console.log("Lazy load coll",data.node.key);
                 data.result = {
                     url: "/api/col/read?offset="+data.node.data.offset+"&count="+g_opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
                     cache: false
@@ -2819,7 +2820,7 @@ function makeBrowserTab(){
                 }
             } else if ( data.node.parent || data.node.key.startsWith("published")) {
                 // General data/collection listing for all nodes
-                //console.log("pos proc default",data.node.key,data.response);
+                console.log("pos proc default",data.node.key);
                 data.result = [];
                 var entry;
                 scope = data.node.data.scope;
