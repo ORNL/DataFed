@@ -126,6 +126,16 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     }
 
                 }else{
+                    if ( !obj.id ){
+                        setStatusText( "ID field is required.", true );
+                        return;
+                    }
+
+                    if ( !obj.title ){
+                        setStatusText( "Title field is required.", true );
+                        return;
+                    }
+
                     if ( members.length )
                         url += "&members=" + JSON.stringify( members );
 
@@ -133,30 +143,24 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         url += "&admins=" + JSON.stringify( admins );
                 }
 
-                console.log("URL", url );
+                if ( a_data )
+                    url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
+                else
+                    url = "/api/prj/create?id=" + encodeURIComponent( $("#id",frame).val().trim() ) + url;
 
-                if ( url ){
-                    if ( a_data )
-                        url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
-                    else
-                        url = "/api/prj/create?id=" + encodeURIComponent( $("#id",frame).val().trim() ) + url;
+                console.log( "URL", url );
 
-                    console.log( "URL", url );
-
-                    var inst = $(this);
-                    _asyncGet( url, null, function( ok, data ){
-                        if ( ok ) {
-                            inst.dialog('destroy').remove();
-                            //console.log( "data:",data);
-                            if ( a_cb )
-                                a_cb(data[0]);
-                        } else {
-                            setStatusText( data, true );
-                        }
-                    });
-                }else{
-                    setStatusText( "Required project data missing.", true );
-                }
+                var inst = $(this);
+                _asyncGet( url, null, function( ok, data ){
+                    if ( ok ) {
+                        inst.dialog('destroy').remove();
+                        //console.log( "data:",data);
+                        if ( a_cb )
+                            a_cb(data[0]);
+                    } else {
+                        setStatusText( data, true );
+                    }
+                });
             }
         }],
         open: function(event,ui){
