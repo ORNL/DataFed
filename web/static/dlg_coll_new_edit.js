@@ -80,10 +80,11 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
             console.log("dlg widget",widget);
             //<span class='note'>*&nbsp Required fields</span></td></tr><tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span>
             //padding:1em;line-height:200%
-            $(".ui-dialog-buttonpane",widget).append("<div><span class='note' style='font-size:85%'>&nbsp* Required fields<br>** Enables anonymous read</span><div>");
-            widget.addClass("coll-ed-"+a_data?a_data.id.substr(2):"new");
+            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em'>*</span> Required fields<br><span style='width:2em'>**</span> Enables anonymous read<div>");
 
             if ( a_data ){
+                widget.addClass("coll-ed-"+a_data.id.substr(2));
+
                 console.log("coll data:",a_data);
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){
@@ -104,6 +105,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
             } else {
+                widget.addClass("coll-ed-new");
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
