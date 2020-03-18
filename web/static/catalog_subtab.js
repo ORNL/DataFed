@@ -38,11 +38,15 @@ function CatalogSubTab( browser, frame ){
 
                 var key = node.key;
 
-                if ( node.key.startsWith("t/") && !node.data.scope ){
-                    key = node.title.toLowerCase();
-                    while ( node.parent && !node.parent.data.nodrag ){
-                        node = node.parent;
-                        key = node.title.toLowerCase() + "." + key;
+                if ( node.key.startsWith("t/")){
+                    if ( node.data.scope ){
+                        key = node.data.scope;
+                    }else{
+                        key = node.title.toLowerCase();
+                        while ( node.parent && !node.parent.data.nodrag ){
+                            node = node.parent;
+                            key = node.title.toLowerCase() + "." + key;
+                        }
                     }
                 }
                 
