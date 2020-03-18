@@ -3047,7 +3047,7 @@ function makeBrowserTab(){
         }
     });
 
-    this.data_md_tree = $.ui.fancytree.getTree("#data_md_tree");]
+    this.data_md_tree = $.ui.fancytree.getTree("#data_md_tree");
 
     // Connect event/click handlers
     $("#btn_file_menu",inst.frame).on('click', inst.fileMenu );
