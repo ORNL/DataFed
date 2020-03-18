@@ -147,11 +147,11 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     _asyncGet( url, null, function( ok, data ){
                         if ( ok ) {
                             inst.dialog('destroy').remove();
-                            console.log( "data:",data);
+                            //console.log( "data:",data);
                             if ( a_cb )
                                 a_cb(data[0]);
                         } else {
-                            dlgAlert( "Project " + (a_data?"Update":"Create") + " Error", data );
+                            setStatusText( data, true );
                         }
                     });
                 }else{
