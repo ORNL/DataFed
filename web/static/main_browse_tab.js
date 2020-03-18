@@ -1331,10 +1331,9 @@ function makeBrowserTab(){
             key = node;
         else if ( node.key == "shared_proj" && node.data.scope )
             key = node.data.scope;
-        else if ( node.key.startsWith( "t/" ) && node.data.scope ){
+        else if ( node.key.startsWith( "t/" ) && node.data.scope )
             key = node.data.scope;
-            console.log("wtf",node,key);
-        }else
+        else
             key = node.key;
 
         if ( key[0] == "c" ) {
@@ -1362,7 +1361,7 @@ function makeBrowserTab(){
         }else if ( key.startsWith("q/")){
             inst.showSelectedQueryInfo( key );
         }else if ( key.startsWith("u/")){
-            inst.showSelectedUserInfo( node.key );
+            inst.showSelectedUserInfo( key );
         }else if ( key.startsWith( "shared_user_" ) && node.data.scope ){
             inst.showSelectedUserInfo( node.data.scope );
         }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
@@ -1404,7 +1403,8 @@ function makeBrowserTab(){
                 //srch_node.removeChildren();
                 //srch_node.addChildren( results );
                 //srch_node.setExpanded( true );
-                $("#search_results_tree").fancytree("getTree").reload(results);
+                $.ui.fancytree.getTree("#search_results_tree").reload(results);
+                //$("#search_results_tree").fancytree("getTree").reload(results);
                 $('[href="#tab-search-results"]').closest('li').show();
                 $( "#data-tabs" ).tabs({ active: 3 });
 
@@ -3003,7 +3003,7 @@ function makeBrowserTab(){
     };
 
     inst.data_tree_div = $('#data_tree');
-    inst.data_tree = inst.data_tree_div.fancytree('getTree');
+    inst.data_tree = $.ui.fancytree.getTree("#data_tree"); //inst.data_tree_div.fancytree('getTree');
 
     tooltipTheme( inst.data_tree_div );
 
@@ -3051,7 +3051,7 @@ function makeBrowserTab(){
         }
     });
 
-    this.data_md_tree = $("#data_md_tree").fancytree("getTree");
+    this.data_md_tree = $.ui.fancytree.getTree("#data_md_tree"); //$("#data_md_tree").fancytree("getTree");
 
     // Connect event/click handlers
     $("#btn_file_menu",inst.frame).on('click', inst.fileMenu );
@@ -3203,7 +3203,7 @@ function makeBrowserTab(){
 
     var cat_subtab = new CatalogSubTab( inst, $("#tab-catalogs"));
     inst.cat_tree_div = $('#catalog_tree',$("#tab-catalogs"));
-    inst.cat_tree = inst.cat_tree_div.fancytree('getTree');
+    inst.cat_tree = $.ui.fancytree.getTree("#catalog_tree"); //inst.cat_tree_div.fancytree('getTree');
 
     //inst.cat_tree_div = $('#catalog_tree');
     //inst.cat_tree = inst.cat_tree_div.fancytree('getTree');
@@ -3321,7 +3321,7 @@ function makeBrowserTab(){
     });
 
     inst.results_tree_div = $('#search_results_tree');
-    inst.results_tree = inst.results_tree_div.fancytree('getTree');
+    inst.results_tree = $.ui.fancytree.getTree("#search_results_tree"); //inst.results_tree_div.fancytree('getTree');
 
     tooltipTheme( inst.results_tree_div );
 
@@ -3412,7 +3412,8 @@ function makeBrowserTab(){
 
     $(".search-results-close").click( function(){
         inst.cur_query = null;
-        $("#search_results_tree").fancytree("getTree").clear();
+        $.ui.fancytree.getTree("#search_results_tree").clear();
+        //$("#search_results_tree").fancytree("getTree").clear();
         $('[href="#tab-search-results"]').closest('li').hide();
         $( "#data-tabs" ).tabs({ active: 0 });
     });
