@@ -141,7 +141,7 @@ function CatalogSubTab( browser, frame ){
     });
 
     this.cat_tree_div = $('#catalog_tree',frame);
-    this.cat_tree = this.cat_tree_div.fancytree('getTree');
+    this.cat_tree = $.ui.fancytree.getTree("#catalog_tree");
 
     return this;
 }

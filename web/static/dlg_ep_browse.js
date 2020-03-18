@@ -66,7 +66,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
 
     function reloadTree( a_new_path ){
         loading = true;
-        $("#file_tree").fancytree( "getTree").reload( [] );
+        $.ui.fancytree.getTree("#file_tree").reload( [] );
         epDirList( a_ep.id, a_new_path, false, function(data){
             if( data ){
                 console.log("got result:",data);
@@ -87,7 +87,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                         }
                     }
                 }
-                $("#file_tree").fancytree( "getTree").reload( tree_source );
+                $.ui.fancytree.getTree("#file_tree").reload( tree_source );
                 $("#sel_btn").button("disable");
                 loading = false;
             }else{
@@ -110,7 +110,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
             click: function() {
                 clearTimeout( path_in_timer );
                 if ( a_cb ){
-                    var node = $("#file_tree").fancytree( "getTree").activeNode;
+                    var node = $.ui.fancytree.getTree("#file_tree").activeNode;
                     if ( node ){
                         a_cb( path + (path.charAt(path.length-1) == "/"?"":"/") + (node.key=="."?"":node.key) );
                         $(this).dialog('destroy').remove();
