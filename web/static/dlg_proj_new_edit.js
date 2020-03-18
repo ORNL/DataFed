@@ -125,8 +125,11 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         url += "&members=" + JSON.stringify( members );
                     }
 
+                    url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
                 }else{
-                    if ( !obj.id ){
+                    var id = $("#id",frame).val().trim();
+
+                    if ( !id ){
                         setStatusText( "ID field is required.", true );
                         return;
                     }
@@ -141,12 +144,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
                     if ( admins.length )
                         url += "&admins=" + JSON.stringify( admins );
-                }
 
-                if ( a_data )
-                    url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
-                else
-                    url = "/api/prj/create?id=" + encodeURIComponent( $("#id",frame).val().trim() ) + url;
+                    url = "/api/prj/create?id=" + encodeURIComponent( id ) + url;
+                }
 
                 console.log( "URL", url );
 
