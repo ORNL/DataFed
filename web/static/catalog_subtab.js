@@ -54,6 +54,11 @@ function CatalogSubTab( browser, frame ){
                 data.node.resetLazy();
             }
         },
+        renderNode: function(ev,data){
+            if ( data.node.data.hasBtn ){
+                $(".btn",data.node.li).button();
+            }
+        },
         click: function(event, data) {
             if ( event.which == null ){
                 // RIGHT-CLICK CONTEXT MENU
