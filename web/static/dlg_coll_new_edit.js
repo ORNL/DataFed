@@ -1,6 +1,7 @@
 function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
     var frame = $(document.createElement('div'));
-    frame.html( "<table class='form-table'><tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr><tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr><tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr><tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr><tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'><button title='Browse topics' id='pick_topic' class='btn btn-icon'><span class='ui-icon ui-icon-structure'></span></button></td></tr><tr><td>&nbsp</td></tr><tr><td colspan='3'><span class='note'>*&nbsp Required fields</span></td></tr><tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span></td></tr></table>" );
+    //frame.html( "<table class='form-table'><tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr><tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr><tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr><tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr><tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr><tr><td>&nbsp</td></tr><tr><td colspan='3'><span class='note'>*&nbsp Required fields</span></td></tr><tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span></td></tr></table>" );
+    frame.html( "<table class='form-table'><tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr><tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr><tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr><tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr><tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr></table>" );
 
     var dlg_title;
     if ( a_data ) {
@@ -12,12 +13,6 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
     inputTheme($('input',frame));
     inputTheme($('textarea',frame));
     $(".btn",frame).button();
-
-    $("#pick_topic",frame).on("click",function(){
-        dlgPickTopic( function( topic ){
-            $("#topic",frame).val( topic );
-        });
-    });
 
     var options = {
         title: dlg_title,
@@ -81,6 +76,12 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
             }
         }],
         open: function(){
+            var widget = frame.dialog( "widget" );
+            console.log("dlg widget",widget);
+            //<span class='note'>*&nbsp Required fields</span></td></tr><tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span>
+            //padding:1em;line-height:200%
+            $(".ui-dialog-buttonpane",widget).append("<div><span class='note' style=''>* Required fields<br>** Enables anonymous read</span><div>");
+
             if ( a_data ){
                 console.log("coll data:",a_data);
                 $("#title",frame).val(a_data.title);
@@ -98,7 +99,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
                 if (( a_upd_perms & PERM_SHARE ) == 0 ){
-                    inputDisable( $("#topic,#pick_topic", frame ));
+                    inputDisable( $("#topic", frame ));
                 }
 
             } else {

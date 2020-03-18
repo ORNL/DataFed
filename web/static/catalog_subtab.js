@@ -4,18 +4,6 @@ function CatalogSubTab( browser, frame ){
     this.browser = browser;
     this.frame = frame;
 
-    /*
-    function catTreePageLoad( key, offset ){
-        //console.log("pageLoad",key, offset);
-        var node = inst.cat_tree.getNodeByKey( key );
-        if ( node ){
-            node.data.offset = offset;
-            setTimeout(function(){
-                node.load(true);
-            },0);
-        }
-    };*/
-
     $("#catalog_tree", frame ).fancytree({
         toggleEffect: false,
         extensions: ["themeroller","dnd5"],
