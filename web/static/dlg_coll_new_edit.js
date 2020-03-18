@@ -21,7 +21,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
 
     var options = {
         title: dlg_title,
-        modal: true,
+        modal: false,
         width: 500,
         height: 'auto',
         resizable: true,
@@ -72,7 +72,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                         if ( a_cb )
                             a_cb(data.coll[0]);
                     } else {
-                        dlgAlert( "Collection " + (a_data?"Update":"Create") + " Error", data );
+                        setStatusText( data, true );
                     }
                 });
             }

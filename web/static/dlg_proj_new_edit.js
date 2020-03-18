@@ -44,7 +44,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
     var options = {
         title: a_data?"Edit Project " + a_data.id:"New Project",
-        modal: true,
+        modal: false,
         width: 500,
         height: 550,
         resizable: true,
