@@ -2471,6 +2471,16 @@ function makeBrowserTab(){
         }
     };
 
+    this.pageLoadCat = function( key, offset ){
+        //console.log("pageLoad",key, offset);
+        var node = inst.cat_tree.getNodeByKey( key );
+        if ( node ){
+            node.data.offset = offset;
+            setTimeout(function(){
+                node.load(true);
+            },0);
+        }
+    };
 
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
