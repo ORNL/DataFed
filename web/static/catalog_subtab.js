@@ -38,7 +38,7 @@ function CatalogSubTab( browser, frame ){
 
                 var key = node.key;
 
-                if ( node.key.startsWith("t/")){
+                if ( node.key.startsWith("t/") && !node.data.scope ){
                     key = node.title.toLowerCase();
                     while ( node.parent && !node.parent.data.nodrag ){
                         node = node.parent;
