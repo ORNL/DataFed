@@ -4,7 +4,7 @@ function CatalogSubTab( browser, frame ){
     this.browser = browser;
     this.frame = frame;
 
-    this.catTreePageLoad = function( key, offset ){
+    function catTreePageLoad( key, offset ){
         //console.log("pageLoad",key, offset);
         var node = inst.cat_tree.getNodeByKey( key );
         if ( node ){
