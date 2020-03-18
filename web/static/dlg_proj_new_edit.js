@@ -38,8 +38,6 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     else
         proj = { owner: "u/"+g_user.uid };
 
-    var alloc_list = [];
-
     inputTheme($('input',frame));
     inputTheme($('textarea',frame));
     inputDisable($('#owner_id',frame));
@@ -59,12 +57,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj ={}, i;
-
-                var subRepo = $("#suballoc",frame).val();
-                var subAlloc = $("#suballoc_size",frame).val();
-
-                var url = "";
+                var obj ={}, i, url = "";
 
                 if ( a_data ){
                     getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
@@ -79,36 +72,6 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
                 if ( obj.desc )
                     url += "&desc="+ encodeURIComponent(obj.desc);
-
-                if ( subRepo != "ignore" && (( !a_data && subRepo != "none" ) || (a_data && (subRepo != a_data.subRepo || subAlloc != a_data.subAlloc )))){
-                    //console.log("repo:",subRepo );
-                    if ( subRepo == "none" ){
-                        url += "&sub_repo=none";
-                    }else{
-                        var alloc_sz = parseSize( subAlloc );
-                        //console.log( "alloc_sz", alloc_sz );
-                        if ( alloc_sz == null || alloc_sz < 0 ){
-                            dlgAlert("Input Error","Invalid sub-allocation size.");
-                            return;
-                        }
-
-                        for ( i in alloc_list ){
-                            if ( alloc_list[i].repo == subRepo ){
-                                if ( alloc_sz > alloc_list[i].maxSize ){
-                                    dlgAlert("Input Error","Sub-allocation size exceeds selected allocation capacity.");
-                                    return;
-                                }
-
-                                break;
-                            }
-                        }
-
-                        if ( a_data && (subRepo == a_data.subRepo))
-                            url += "&sub_alloc=" + alloc_sz;
-                        else
-                            url += "&sub_repo=" + subRepo + "&sub_alloc=" + alloc_sz;
-                    }
-                }
 
                 var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
                 var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
@@ -125,7 +88,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
                 if ( a_data ){
                     var diff;
-                    console.log("ex admins:",a_data.admin,",new:",admins);
+
                     if ( a_data.admin && a_data.admin.length ){
                         diff = true;
                         if ( a_data.admin.length == admins.length ){
@@ -200,51 +163,6 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             var widget = frame.dialog( "widget" );
             $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
 
-            if ( a_data && a_data.alloc ){
-                $("#suballoc",frame).html("<option value='ignore'>Allocation(s) in use</option>").selectmenu({width:"auto",disabled:true});
-                inputDisable($("#suballoc_size",frame));
-            }else{
-                allocListBySubject( undefined, false, function( ok, data ){
-                    console.log( ok, data );
-                    var alloc_opt = "<option value='none'>None</option>";
-
-                    if ( ok ){
-                        alloc_list = data;
-                        var alloc;
-                        var found = false;
-                        for ( var i in data ){
-                            alloc = data[i];
-
-                            alloc_opt += "<option value='"+alloc.repo+"'";
-                            if ( a_data && a_data.subRepo == alloc.repo ){
-                                alloc_opt += " selected";
-                                found = true;
-                            }
-                            console.log( "alloc", alloc );
-                            alloc_opt += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
-                        }
-
-                        if ( found ){
-                            if (( a_upd_perms & PERM_WR_REC ) != 0 ){
-                                inputEnable($("#suballoc_size",frame));
-                            }
-                        }else{
-                            // Unlikely
-                            inputDisable($("#suballoc_size",frame));
-                        }
-                    }
-
-                    $("#suballoc",frame).html(alloc_opt).selectmenu({width:"auto",disabled:a_data?!(a_upd_perms&PERM_WR_REC):false}).on('selectmenuchange', function( ev, ui ) {
-                        console.log("alloc changed",ui.item.value,$("#suballoc",frame).val());
-
-                        if ( ui.item.value == "none" ){
-                            inputDisable($("#suballoc_size",frame)).val("");
-                        }else{
-                            inputEnable($("#suballoc_size",frame));
-                        }
-                    });
-                });
-            }
             var mem_src = [];
             var adm_src = [];
 
@@ -253,12 +171,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
                 $("#owner_id",frame).val(a_data.owner);
-                if ( a_data.subRepo )
-                    $("#suballoc_size",frame).val(a_data.subAlloc);
 
-                if (( a_upd_perms & PERM_WR_REC ) == 0 ){
-                    inputDisable($("#title,#desc,#suballoc_size,#add_adm_btn,#rem_adm_btn",frame));
-                }
+                if (( a_upd_perms & PERM_WR_REC ) == 0 )
+                    inputDisable($("#title,#desc,#add_adm_btn,#rem_adm_btn",frame));
 
                 for ( var i in a_data.member )
                     mem_src.push({title: a_data.member[i].substr(2),icon:false,key: a_data.member[i] });
