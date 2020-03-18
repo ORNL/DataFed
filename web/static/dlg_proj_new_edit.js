@@ -5,12 +5,10 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\
             <table class='form-table'>\
-                <tr><td>ID:</td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
-                <tr><td>Title:</td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
+                <tr><td>ID: <span class='note'>*</span></td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
+                <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
-                <tr><td>Sub&#8209;allocation:</td><td><select id='suballoc'><option value='1'>None</option></select></td></tr>\
-                <tr><td>Alloc.&nbspSize:</td><td><input type='text' id='suballoc_size' style='width:100%'></input></td></tr>\
             </table>\
         </div>\
         <div style='flex:none'>&nbsp</div>\
@@ -199,6 +197,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             }
         }],
         open: function(event,ui){
+            var widget = frame.dialog( "widget" );
+            $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
+
             if ( a_data && a_data.alloc ){
                 $("#suballoc",frame).html("<option value='ignore'>Allocation(s) in use</option>").selectmenu({width:"auto",disabled:true});
                 inputDisable($("#suballoc_size",frame));
