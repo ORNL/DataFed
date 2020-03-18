@@ -159,7 +159,7 @@ function viewData( a_id, a_cb ) {
         }
         else {
             //console.log("viewData failed:", data );
-            setStatusText("View Data Error: " + data, 1 );
+            setStatusText( "View Data Error: " + data, true );
             a_cb();
         }
     });
@@ -340,7 +340,7 @@ function dataGetDeps( a_id, a_cb ) {
         }
         else {
             //console.log("viewData failed:", data );
-            setStatusText("Get Dependencies Error: " + data);
+            setStatusText( "Get Dependencies Error: " + data, true );
             a_cb();
         }
     });
@@ -404,7 +404,7 @@ function viewColl( a_id, a_cb ) {
                 a_cb();
         }
         else {
-            setStatusText("View Collection Error: " + data);
+            setStatusText( "View Collection Error: " + data, true );
             a_cb();
         }
     });
@@ -425,7 +425,7 @@ function viewProj( a_id, a_cb ){
         }
         else {
             //console.log("viewProj failed:", data );
-            setStatusText("View Project Error: "+data);
+            setStatusText( "View Project Error: "+data, true );
             a_cb();
         }
     });

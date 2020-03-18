@@ -194,7 +194,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         }
                     });
                 }else{
-                    $(this).dialog('destroy').remove();
+                    setStatusText( "Required project data missing.", true );
                 }
             }
         }],
