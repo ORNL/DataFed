@@ -26,6 +26,9 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
         height: 'auto',
         resizable: true,
         closeOnEscape: false,
+        position:{
+            my: "right", at: "right", of: "body"
+        },
         buttons: [{
             text: "Cancel",
             click: function() {
