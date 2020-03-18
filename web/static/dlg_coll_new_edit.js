@@ -80,7 +80,8 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
             console.log("dlg widget",widget);
             //<span class='note'>*&nbsp Required fields</span></td></tr><tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span>
             //padding:1em;line-height:200%
-            $(".ui-dialog-buttonpane",widget).append("<div><span class='note' style=''>* Required fields<br>** Enables anonymous read</span><div>");
+            $(".ui-dialog-buttonpane",widget).append("<div><span class='note' style='font-size:85%'>&nbsp* Required fields<br>** Enables anonymous read</span><div>");
+            widget.addClass("coll-ed-"+a_data?a_data.id.substr(2):"new");
 
             if ( a_data ){
                 console.log("coll data:",a_data);
