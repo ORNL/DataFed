@@ -4,6 +4,7 @@ function CatalogSubTab( browser, frame ){
     this.browser = browser;
     this.frame = frame;
 
+    /*
     function catTreePageLoad( key, offset ){
         //console.log("pageLoad",key, offset);
         var node = inst.cat_tree.getNodeByKey( key );
@@ -13,7 +14,7 @@ function CatalogSubTab( browser, frame ){
                 node.load(true);
             },0);
         }
-    };
+    };*/
 
     $("#catalog_tree", frame ).fancytree({
         toggleEffect: false,
@@ -135,7 +136,7 @@ function CatalogSubTab( browser, frame ){
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
                     var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='catTreePageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
             }
 
