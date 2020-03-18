@@ -32,10 +32,23 @@ function CatalogSubTab( browser, frame ){
             dropEffectDefault: "copy",
             dragStart: function(node, data) {
                 console.log( "dnd start" );
+
                 if ( node.data.nodrag )
                     return false;
 
-                data.dataTransfer.setData("text/plain",node.key.startsWith("t/")?node.title:node.key);
+                var key = node.key;
+
+                if ( node.key.startsWith("t/")){
+                    key = node.title.toLower();
+                    while ( node.parent && !node.parent.data.nodrag ){
+                        node = node.parent;
+                        key = node.title.toLower() + "." + key;
+                    }
+                }
+                
+
+                data.dataTransfer.setData("text/plain",key);
+
                 return true;
             }
         },
@@ -123,7 +136,7 @@ function CatalogSubTab( browser, frame ){
                         }else if ( item.title.startsWith("p/") ){
                             entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-box",offset:0 };
                         }else{
-                            entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",nodrag:true,offset:0 };
+                            entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",offset:0 };
                         }
                     }else if ( item.id[0]=="c" ){
                         entry = { title: browser.generateTitle(item),folder:true,lazy:true,key:item.id,offset:0,scope:item.owner?item.owner:scope };
