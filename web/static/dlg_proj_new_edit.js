@@ -61,7 +61,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj,i = {};
+                var obj ={}, i;
 
                 var subRepo = $("#suballoc",frame).val();
                 var subAlloc = $("#suballoc_size",frame).val();
