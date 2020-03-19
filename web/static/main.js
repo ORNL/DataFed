@@ -849,6 +849,17 @@ function dlgAlert( title, msg, cb ) {
     div.dialog( options );
 }
 
+function checkDlgOpen( a_id ){
+    var dlg = $( "#" + a_id );
+    if ( dlg ){
+        dlg.moveToTop();
+        return true;
+    }
+
+    return false;
+}
+
+
 function sizeToString( a_bytes ){
     if ( a_bytes == 0 )
         return "0";

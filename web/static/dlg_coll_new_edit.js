@@ -77,13 +77,11 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
         }],
         open: function(){
             var widget = frame.dialog( "widget" );
-            console.log("dlg widget",widget);
-            //<span class='note'>*&nbsp Required fields</span></td></tr><tr><td colspan='3'><span class='note'>** Enables anonymous read for all contained items</span>
-            //padding:1em;line-height:200%
-            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<br><span style='width:2em;display:inline-block'>**</span> Enables anonymous read<div>");
+
+            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<br><span style='width:2em;display:inline-block;text-align:right'>**</span> Enables anonymous read<div>");
 
             if ( a_data ){
-                widget.addClass("coll-ed-"+a_data.id.substr(2));
+                widget.prop("id",a_data.id+"/edit");
 
                 console.log("coll data:",a_data);
                 $("#title",frame).val(a_data.title);
@@ -105,7 +103,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
             } else {
-                widget.addClass("coll-ed-new");
+                widget.prop("id","c/new/edit");
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");

@@ -584,6 +584,9 @@ function makeBrowserTab(){
     };
 
     this.actionNewProj = function() {
+        if ( checkDlgOpen( "p/new/edit" ))
+            return;
+
         dlgProjNewEdit(null,0,function( data ){
             setStatusText("Project "+data.id+" created");
             inst.reloadNode( inst.data_tree.getNodeByKey( "proj_own" ));
@@ -591,6 +594,9 @@ function makeBrowserTab(){
     };
 
     this.actionNewData = function() {
+        if ( checkDlgOpen( "d/new/edit" ))
+            return;
+
         var parent = "root";
         var node = inst.data_tree.activeNode;
         if ( node ){
@@ -651,6 +657,9 @@ function makeBrowserTab(){
     };
 
     this.actionNewColl = function(){
+        if ( checkDlgOpen( "c/new/edit" ))
+            return;
+
         var node = inst.data_tree.activeNode;
         var parent = "root";
         if ( node ){
@@ -916,6 +925,9 @@ function makeBrowserTab(){
             return;
 
         var id = ids[0];
+
+        if ( checkDlgOpen( id + "/edit" ))
+            return;
 
         switch( id.charAt(0) ){
             case "p":

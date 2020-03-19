@@ -405,6 +405,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             var parent;
             if ( a_data ){
+                widget.prop("id",a_data.id+"/edit");
+
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){
                     var idx =  a_data.alias.lastIndexOf(":");
@@ -486,6 +488,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         parent = "root";
                 }
             } else {
+                widget.prop("id","d/new/edit");
+
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
