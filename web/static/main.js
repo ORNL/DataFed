@@ -850,7 +850,7 @@ function dlgAlert( title, msg, cb ) {
 }
 
 function checkDlgOpen( a_id ){
-    var dlg = $( "#" + a_id );
+    var dlg = $( "#" + a_id.replace("/","_"));
     if ( dlg ){
         dlg.moveToTop();
         return true;

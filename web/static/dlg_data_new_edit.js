@@ -405,7 +405,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             var parent;
             if ( a_data ){
-                console.log(a_data.id,"->",a_data.id.replace("/","_")+"_edit");
                 widget.prop("id",a_data.id.replace("/","_")+"_edit");
 
                 $("#title",frame).val(a_data.title);
