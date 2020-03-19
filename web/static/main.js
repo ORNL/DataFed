@@ -852,7 +852,7 @@ function dlgAlert( title, msg, cb ) {
 function checkDlgOpen( a_id ){
     var dlg = $( "#" + a_id.replace("/","_"));
     if ( dlg.length ){
-        dlg.get(0).moveToTop();
+        dlg.dialog( "moveToTop" );
         return true;
     }
 
