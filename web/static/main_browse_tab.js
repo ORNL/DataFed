@@ -2877,9 +2877,12 @@ function makeBrowserTab(){
                 $(".btn",data.node.li).button();
             }
         },
-        activate: function( event, data ) {
+        beforeActivate: function( event, data ) {
             if ( data.node.data.paging )
                 return false;
+            return true;
+        },
+        activate: function( event, data ) {
 
             if ( inst.keyNav && !inst.keyNavMS ){
                 inst.data_tree.selectAll(false);
