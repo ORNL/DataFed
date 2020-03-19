@@ -2936,6 +2936,9 @@ function makeBrowserTab(){
         click: function(event, data) {
             console.log("click",data.node.key);
 
+            if ( data.node.data.paging )
+                return;
+
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
             }
