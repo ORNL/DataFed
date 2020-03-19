@@ -8,7 +8,7 @@ var DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
 
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
     var ele = document.createElement('div');
-    ele.id = (a_data?a_data.id.replace("/","_"):"d_new")+"_edit")
+    ele.id = (a_data?a_data.id.replace("/","_"):"d_new")+"_edit";
     var frame = $(ele);
 
     frame.html(
