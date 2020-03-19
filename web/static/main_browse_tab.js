@@ -584,7 +584,7 @@ function makeBrowserTab(){
     };
 
     this.actionNewProj = function() {
-        if ( checkDlgOpen( "p/new/edit" ))
+        if ( checkDlgOpen( "p_new_edit" ))
             return;
 
         dlgProjNewEdit(null,0,function( data ){
@@ -594,7 +594,7 @@ function makeBrowserTab(){
     };
 
     this.actionNewData = function() {
-        if ( checkDlgOpen( "d/new/edit" ))
+        if ( checkDlgOpen( "d_new_edit" ))
             return;
 
         var parent = "root";
@@ -657,7 +657,7 @@ function makeBrowserTab(){
     };
 
     this.actionNewColl = function(){
-        if ( checkDlgOpen( "c/new/edit" ))
+        if ( checkDlgOpen( "c_new_edit" ))
             return;
 
         var node = inst.data_tree.activeNode;
@@ -926,7 +926,7 @@ function makeBrowserTab(){
 
         var id = ids[0];
 
-        if ( checkDlgOpen( id + "/edit" ))
+        if ( checkDlgOpen( id + "_edit" ))
             return;
 
         switch( id.charAt(0) ){

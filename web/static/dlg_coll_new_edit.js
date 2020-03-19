@@ -81,7 +81,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
             $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<br><span style='width:2em;display:inline-block;text-align:right'>**</span> Enables anonymous read<div>");
 
             if ( a_data ){
-                widget.prop("id",a_data.id+"/edit");
+                widget.prop("id",a_data.id.replace("/","_")+"_edit");
 
                 console.log("coll data:",a_data);
                 $("#title",frame).val(a_data.title);
@@ -103,7 +103,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
             } else {
-                widget.prop("id","c/new/edit");
+                widget.prop("id","c_new_edit");
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");

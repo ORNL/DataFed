@@ -171,7 +171,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             var adm_src = [];
 
             if ( a_data ){
-                widget.prop("id",a_data.id+"/edit");
+                widget.prop("id",a_data.id.replace("/","_")+"_edit");
 
                 inputDisable($("#id",frame)).val(a_data.id);
                 $("#title",frame).val(a_data.title);
@@ -188,7 +188,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     adm_src.push({title: a_data.admin[i].substr(2),icon:false,key: a_data.admin[i] });
 
             }else{
-                widget.prop("id","p/new/edit");
+                widget.prop("id","p_new_edit");
 
                 $("#owner_id",frame).val(g_user.uid);
             }
