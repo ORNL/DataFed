@@ -284,7 +284,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         closeOnEscape: false,
         buttons: [{
             id: "go_btn",
-            text: (a_mode?"Start":"Select"),
+            text: (a_mode != null?"Start":"Select"),
             click: function() {
                 var raw_path = $("#path",frame).val().trim();
                 if ( !raw_path ) {

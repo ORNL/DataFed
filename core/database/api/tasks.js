@@ -1049,7 +1049,7 @@ var tasks_func = function() {
             xfr_docs - chunked per source repo and max data transfer size
         */
 
-        console.log("_buildTransferDoc");
+        console.log("_buildTransferDoc",a_mode,a_data, a_remote);
 
         var idx, locs, loc, file, rem_ep, rem_fname, rem_path, xfr, repo_map = {};
 
@@ -1058,19 +1058,29 @@ var tasks_func = function() {
             if ( idx < 1 )
                 throw [g_lib.ERR_INVALID_PARAM,"Invalid remote path (must include endpoint)"];
 
+            console.log("rem idx:",idx);
+
             rem_ep = a_remote.substr(0,idx);
             rem_path = a_remote.substr(idx);
+
+            console.log("rem ep:",rem_ep);
+            console.log("rem path:",rem_path);
 
             if ( a_mode == g_lib.TT_DATA_GET ){
                 if ( rem_path.charAt( rem_path.length - 1 ) != "/" )
                     rem_path += "/";
             } else if ( a_mode == g_lib.TT_DATA_PUT ){
-                idx = a_remote.lastIndexOf("/",a_remote.length-1);
+                idx = rem_path.lastIndexOf("/",rem_path.length-1);
+                console.log("new idx:",idx);
+
                 rem_fname = rem_path.substr( idx + 1 );
                 rem_path = rem_path.substr( 0, idx + 1 );
+                console.log("rem_fname",rem_fname);
+                console.log("rem_path",rem_path);
             } 
         }else{
-            console.log("BTD - 1");
+            console.log("should not be here!",a_mode, g_lib.TT_DATA_GET, g_lib.TT_DATA_PUT);
+
             var repo = g_db.repo.document( a_remote );
             rem_ep = repo.endpoint;
             rem_path = repo.path + (a_dst_owner.charAt(0)=="u"?"user/":"project/") + a_dst_owner.substr(2) + "/";
@@ -1092,6 +1102,7 @@ var tasks_func = function() {
                     file.to = file.from + (loc.d_ext?loc.d_ext:"");
                     break;
                 case g_lib.TT_DATA_PUT:
+                    console.log("set from:",rem_fname);
                     file.from = rem_fname;
                     file.to = loc.d_id.substr( 2 );
                     break;
@@ -1101,6 +1112,8 @@ var tasks_func = function() {
                     file.to = file.from;
                     break;
             }
+
+            console.log("file:",file);
 
             if ( loc.r_id in repo_map ){
                 repo_map[loc.r_id].files.push(file);
@@ -1114,7 +1127,7 @@ var tasks_func = function() {
             }
         }
 
-        console.log("repo map len",repo_map.length);
+        console.log("repo map len",Object.keys(repo_map).length);
 
         var i, rm, xfr_docs = [];
 

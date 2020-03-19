@@ -244,16 +244,19 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
     }
 
     // Init Globus transfer
+    DL_DEBUG( "Init globus transfer" );
 
     vector<pair<string,string>> files_v;
     for ( libjson::Value::ArrayIter f = files.begin(); f != files.end(); f++ )
     {
-        if ((*f)["size"].asNumber() > 0 )
+        if ( type == TT_DATA_PUT || (*f)["size"].asNumber() > 0 )
             files_v.push_back(make_pair( src_path + (*f)["from"].asString(), dst_path + (*f)["to"].asString() ));
     }
 
     if ( files_v.size() )
     {
+        DL_DEBUG( "Begin transfer of " << files_v.size() << " files" );
+
         string glob_task_id = m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
 
         // Monitor Globus transfer
@@ -274,6 +277,9 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
 
         if ( xfr_status == GlobusAPI::XS_FAILED )
             EXCEPT( 1, err_msg );
+    }else
+    {
+        DL_DEBUG( "No files to transfer" );
     }
 
     return false;
