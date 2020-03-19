@@ -1058,28 +1058,28 @@ var tasks_func = function() {
             if ( idx < 1 )
                 throw [g_lib.ERR_INVALID_PARAM,"Invalid remote path (must include endpoint)"];
 
-            console.log("rem idx:",idx);
+            //console.log("rem idx:",idx);
 
             rem_ep = a_remote.substr(0,idx);
             rem_path = a_remote.substr(idx);
 
-            console.log("rem ep:",rem_ep);
-            console.log("rem path:",rem_path);
+            //console.log("rem ep:",rem_ep);
+            //console.log("rem path:",rem_path);
 
             if ( a_mode == g_lib.TT_DATA_GET ){
                 if ( rem_path.charAt( rem_path.length - 1 ) != "/" )
                     rem_path += "/";
             } else if ( a_mode == g_lib.TT_DATA_PUT ){
                 idx = rem_path.lastIndexOf("/",rem_path.length-1);
-                console.log("new idx:",idx);
+                //console.log("new idx:",idx);
 
                 rem_fname = rem_path.substr( idx + 1 );
                 rem_path = rem_path.substr( 0, idx + 1 );
-                console.log("rem_fname",rem_fname);
-                console.log("rem_path",rem_path);
+                //console.log("rem_fname",rem_fname);
+                //console.log("rem_path",rem_path);
             } 
         }else{
-            console.log("should not be here!",a_mode, g_lib.TT_DATA_GET, g_lib.TT_DATA_PUT);
+            //console.log("should not be here!",a_mode, g_lib.TT_DATA_GET, g_lib.TT_DATA_PUT);
 
             var repo = g_db.repo.document( a_remote );
             rem_ep = repo.endpoint;
@@ -1088,11 +1088,11 @@ var tasks_func = function() {
 
         locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, r_id: v._id, r_ep: v.endpoint, r_path: v.path, uid: e.uid }", { data: a_data });
 
-        console.log("locs hasNext",locs.hasNext());
+        //console.log("locs hasNext",locs.hasNext());
 
         while ( locs.hasNext() ){
             loc = locs.next();
-            console.log("loc",loc);
+            //console.log("loc",loc);
 
             file = { id: loc.d_id, size: loc.d_sz };
 
@@ -1102,7 +1102,6 @@ var tasks_func = function() {
                     file.to = file.from + (loc.d_ext?loc.d_ext:"");
                     break;
                 case g_lib.TT_DATA_PUT:
-                    console.log("set from:",rem_fname);
                     file.from = rem_fname;
                     file.to = loc.d_id.substr( 2 );
                     break;
@@ -1113,7 +1112,7 @@ var tasks_func = function() {
                     break;
             }
 
-            console.log("file:",file);
+            //console.log("file:",file);
 
             if ( loc.r_id in repo_map ){
                 repo_map[loc.r_id].files.push(file);
@@ -1127,7 +1126,7 @@ var tasks_func = function() {
             }
         }
 
-        console.log("repo map len",Object.keys(repo_map).length);
+        //console.log("repo map len",Object.keys(repo_map).length);
 
         var i, rm, xfr_docs = [];
 
@@ -1151,7 +1150,7 @@ var tasks_func = function() {
                 for ( j = 0; j < rm.files.length; j++ ){
                     file = rm.files[j];
                     if ( file.size >= g_lib.GLOB_MAX_XFR_SIZE ){
-                        console.log("rec",file.id,"alone in xfr, sz:",file.size);
+                        //console.log("rec",file.id,"alone in xfr, sz:",file.size);
                         chunks.push( [file] );
                         chunk_sz.push( file.size );
                     }else{
@@ -1165,17 +1164,17 @@ var tasks_func = function() {
                     file = rm.files[j];
                     sz = file.size;
                     files = [file];
-                    console.log("rec",file.id,"first in xfr, sz:",file.size);
+                    //console.log("rec",file.id,"first in xfr, sz:",file.size);
 
                     for ( k = j + 1; k < rm.files.length; ){
                         file = rm.files[k];
                         if ( sz + file.size <= g_lib.GLOB_MAX_XFR_SIZE ){
-                            console.log("rec",file.id,"added to xfr, sz:",file.size);
+                            //console.log("rec",file.id,"added to xfr, sz:",file.size);
                             files.push( file );
                             sz += file.size;
                             rm.files.splice(k,1);
                         }else{
-                            console.log("rec",file.id,"too big for xfr, sz:",file.size,"sum",sz + file.size,"max",g_lib.GLOB_MAX_XFR_SIZE);
+                            //console.log("rec",file.id,"too big for xfr, sz:",file.size,"sum",sz + file.size,"max",g_lib.GLOB_MAX_XFR_SIZE);
                             k++;
                         }
                     }

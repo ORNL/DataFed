@@ -2878,6 +2878,9 @@ function makeBrowserTab(){
             }
         },
         activate: function( event, data ) {
+            if ( data.node.data.paging )
+                return false;
+
             if ( inst.keyNav && !inst.keyNavMS ){
                 inst.data_tree.selectAll(false);
                 inst.selectScope = data.node;
@@ -3017,7 +3020,13 @@ function makeBrowserTab(){
     inst.addTreePagingNode = function( a_data ){
         if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
             var pages = Math.ceil(a_data.response.total/g_opts.page_sz), page = 1+a_data.response.offset/g_opts.page_sz;
-            a_data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+            a_data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\"" +
+                a_data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"") +
+                " onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " +
+                page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\"" +
+                a_data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'" + 
+                (page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*g_opts.page_sz +
+                ")'>Last</button>", folder:false, icon:false, checkbox:false, hasBtn:true, paging: true });
         }
     };
 
