@@ -2926,9 +2926,6 @@ function makeBrowserTab(){
         click: function(event, data) {
             console.log("click",data.node.key);
 
-            if ( data.node.data.paging )
-                return;
-
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
             }
@@ -3027,7 +3024,7 @@ function makeBrowserTab(){
                 page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\"" +
                 a_data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'" + 
                 (page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*g_opts.page_sz +
-                ")'>Last</button>", folder:false, icon:false, checkbox:false, hasBtn:true, paging: true });
+                ")'>Last</button>", folder:false, icon:false, checkbox:false, hasBtn:true });
         }
     };
 
