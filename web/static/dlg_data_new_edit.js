@@ -7,7 +7,9 @@ var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
 var DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
 
 function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
-    var frame = $(document.createElement('div'));
+    var ele = document.createElement('div');
+    ele.id = (a_data?a_data.id.replace("/","_"):"d_new")+"_edit")
+    var frame = $(ele);
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -118,18 +120,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         $("select",row).selectmenu({width:200});
         $(".btn",row).button();
         inputTheme( $('input:text',row ));
-
-        /*$('input:text',row).droppable({
-            accept: function( item ){
-                console.log("ref accept!");
-                return true;
-            },
-            drop: function(ev,ui){
-                console.log("ref drop!");
-                var sourceNode = $(ui.helper).data("ftSourceNode");
-                console.log("drop:",sourceNode);
-            }
-        });*/
 
         $(".rem-ref",row).on("click",function(ev){
             remRef(ev);
@@ -405,9 +395,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
             var parent;
             if ( a_data ){
-                //widget.prop("id",a_data.id.replace("/","_")+"_edit");
-                frame.prop("id",a_data.id.replace("/","_")+"_edit");
-
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){
                     var idx =  a_data.alias.lastIndexOf(":");
@@ -419,10 +406,8 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 $("#keyw",frame).val(a_data.keyw);
 
                 if ( a_data.metadata ){
-
-                    var md = JSON.parse( a_data.metadata ); //, null, "\t" );
+                    var md = JSON.parse( a_data.metadata );
                     var txt = JSON.stringify( md, null, 4 );
-                    //console.log(txt);
                     jsoned.setValue( txt, -1);
                 }
 
@@ -489,9 +474,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         parent = "root";
                 }
             } else {
-                //widget.prop("id","d_new_edit");
-                frame.prop("id","d_new_edit");
-
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
@@ -549,17 +531,6 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             }
 
             jsoned.resize();
-
-            /*$('input:text',frame).on("ondragover",function(e){
-                console.log("drag over:",sourceNode);
-                e.preventDefault();
-            });
-            $('input:text',frame).on("drop",function(e){
-                e.preventDefault();
-                var sourceNode =$.ui.fancytree.getDragNode();
-                console.log("drop:",sourceNode);
-                $(this).val(sourceNode.key);
-            });*/
         }
     };
 
