@@ -198,6 +198,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         modal: false,
         width: 500,
         height: 530,
+        position:{ my: "left", at: "center+10", of: "body" },
         resizable: true,
         resizeStop: function(ev,ui){
             $("#dlg-tabs",frame).tabs("refresh");

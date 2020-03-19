@@ -1,7 +1,10 @@
 /*jshint multistr: true */
 
 function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
-    var frame = $(document.createElement('div'));
+    var ele = document.createElement('div');
+    ele.id = (a_data?a_data.id.replace("/","_"):"p_new")+"_edit";
+    var frame = $(ele);
+
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\
             <table class='form-table'>\
@@ -47,6 +50,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         modal: false,
         width: 500,
         height: 550,
+        position:{ my: "left", at: "center+10", of: "body" },
         resizable: true,
         closeOnEscape: false,
         buttons: [{
@@ -171,8 +175,6 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             var adm_src = [];
 
             if ( a_data ){
-                widget.prop("id",a_data.id.replace("/","_")+"_edit");
-
                 inputDisable($("#id",frame)).val(a_data.id);
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
@@ -188,8 +190,6 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     adm_src.push({title: a_data.admin[i].substr(2),icon:false,key: a_data.admin[i] });
 
             }else{
-                widget.prop("id","p_new_edit");
-
                 $("#owner_id",frame).val(g_user.uid);
             }
 
