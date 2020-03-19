@@ -2877,16 +2877,6 @@ function makeBrowserTab(){
                 $(".btn",data.node.li).button();
             }
         },
-        beforeActivate: function( event, data ) {
-            if ( data.node.data.paging )
-                return false;
-            return true;
-        },
-        beforeSelect: function( event, data ) {
-            if ( data.node.data.paging )
-                return false;
-            return true;
-        },
         activate: function( event, data ) {
 
             if ( inst.keyNav && !inst.keyNavMS ){
