@@ -2768,9 +2768,14 @@ function makeBrowserTab(){
                     cache: false
                 };
             } else {
-                console.log("Lazy load coll",data.node.key);
+                var key = data.node.key;
+                if ( data.node.data.key_pfx )
+                    key = data.node.key.substr( data.node.data.key_pfx.length );
+
+                console.log("Lazy load coll",key);
+
                 data.result = {
-                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+g_opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
+                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+g_opts.page_sz+"&id=" + encodeURIComponent( key ),
                     cache: false
                 };
             }
@@ -2842,7 +2847,12 @@ function makeBrowserTab(){
                 }
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
-                var is_pub = data.node.key.startsWith("published");
+                // Define key prefixes for collections in special tree locations
+
+                var key_pfx = "";
+                if ( data.node.key.startsWith("published"))
+                    key_pfx = "pub_";
+
                 console.log("pos proc default",data.node.key);
                 data.result = [];
                 var entry;
@@ -2851,7 +2861,7 @@ function makeBrowserTab(){
                 for ( i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
-                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope,key:(is_pub?"pub_":"")+item.id, offset: 0, nodrag: is_pub };
+                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false };
                     }else{
                         entry = { title: inst.generateTitle(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
                     }
