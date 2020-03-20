@@ -2840,8 +2840,9 @@ function makeBrowserTab(){
                         data.result.push({ title: alloc.repo.substr(5),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
                 }
-            } else if ( data.node.parent || data.node.key.startsWith("published")) {
+            } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
+                var is_pub = data.node.key.startsWith("published");
                 console.log("pos proc default",data.node.key);
                 data.result = [];
                 var entry;
@@ -2850,7 +2851,7 @@ function makeBrowserTab(){
                 for ( i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
-                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope,key:item.id, offset: 0 };
+                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope,key:item.id, offset: 0, nodrag: is_pub };
                     }else{
                         entry = { title: inst.generateTitle(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
                     }
