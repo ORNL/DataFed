@@ -2858,6 +2858,9 @@ function makeBrowserTab(){
                 var entry;
                 scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
+
+                inst.addTreePagingNode( data );
+
                 for ( i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
@@ -2868,8 +2871,6 @@ function makeBrowserTab(){
 
                     data.result.push( entry );
                 }
-
-                inst.addTreePagingNode( data );
 
                 //if (( !items || !items.length ) && ( data.node.parent.key.startsWith("c/") || data.node.parent.key.startsWith("repo/"))){
                     //data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
