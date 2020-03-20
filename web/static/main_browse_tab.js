@@ -2861,7 +2861,7 @@ function makeBrowserTab(){
                 for ( i in items ) {
                     item = items[i];
                     if ( item.id[0]=="c" ){
-                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false };
+                        entry = { title: inst.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false, key_pfx: key_pfx };
                     }else{
                         entry = { title: inst.generateTitle(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
                     }
