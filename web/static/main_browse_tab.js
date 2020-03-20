@@ -2858,7 +2858,7 @@ function makeBrowserTab(){
                     data.result.push( entry );
                 }
 
-                inst. addTreePagingNode( data );
+                inst.addTreePagingNode( data );
 
                 //if (( !items || !items.length ) && ( data.node.parent.key.startsWith("c/") || data.node.parent.key.startsWith("repo/"))){
                     //data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});

@@ -1282,11 +1282,16 @@ void
 DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
+    vector<pair<string,string>> params;
 
     if ( a_request.has_subject() )
-        dbGet( "col/published/list", {{"subject",a_request.subject()}}, result );
-    else
-        dbGet( "col/published/list", {}, result );
+        params.push_back({"subject",a_request.subject()});
+    if ( a_request.has_offset() )
+        params.push_back({"offset",to_string(a_request.offset())});
+    if ( a_request.has_count() )
+        params.push_back({"count",to_string(a_request.count())});
+
+    dbGet( "col/published/list", params, result );
 
     setListingDataReply( a_reply, result );
 }
