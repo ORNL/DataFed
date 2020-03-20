@@ -3031,12 +3031,12 @@ function makeBrowserTab(){
         if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
             var pages = Math.ceil(a_data.response.total/g_opts.page_sz), page = 1+a_data.response.offset/g_opts.page_sz;
             a_data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoad(\"" +
-                a_data.node.key+"\",0)'><span class='ui-icon ui-icon-arrowstop-1-w'></span></button> <button class='btn small'"+(page==1?" disabled":"") +
-                " onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " +
+                a_data.node.key+"\",0)'><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> <button class='btn small'"+(page==1?" disabled":"") +
+                " onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*g_opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-w'></span></button> Page " +
                 page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoad(\"" +
-                a_data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'" + 
+                a_data.node.key+"\","+page*g_opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-e'></span></button> <button class='btn small'" + 
                 (page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*g_opts.page_sz +
-                ")'>Last</button>", folder:false, icon:false, checkbox:false, hasBtn:true });
+                ")'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>", folder:false, icon:false, checkbox:false, hasBtn:true });
         }
     };
 
