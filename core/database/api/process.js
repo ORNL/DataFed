@@ -127,9 +127,9 @@ module.exports = ( function() {
             if ( !g_db._exists( id ))
                 throw [ g_lib.ERR_INVALID_PARAM, (is_coll?"Collection '":"Data record '") + id + "' does not exist." ];
 
-            console.log("load",id);
+            console.log("preproc load",id);
             doc = g_db._document( id );
-            console.log("loaded");
+            console.log("preproc loaded");
 
             if ( doc.deleted )
                 throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
@@ -215,6 +215,7 @@ module.exports = ( function() {
             }
 
             // Permission OK, process item
+            console.log("preproc perm ok");
 
             if ( is_coll ){
                 a_ctxt.coll.push( id );

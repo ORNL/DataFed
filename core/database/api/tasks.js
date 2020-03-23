@@ -790,6 +790,8 @@ var tasks_func = function() {
     };
 
     obj.taskInitRecCollDelete = function( a_client, a_ids ){
+        console.log("taskInitRecCollDelete");
+
         var result = g_proc.preprocessItems( a_client, null, a_ids, g_lib.TT_REC_DEL );
         var i,rec_ids = [];
 
@@ -798,12 +800,18 @@ var tasks_func = function() {
         for ( i in result.glob_data )
             rec_ids.push( result.glob_data[i].id );
 
+        console.log("get exl acc");
+
         obj._ensureExclusiveAccess( rec_ids );
+
+        console.log("del collections");
 
         for ( i in result.coll ){
             // TODO Adjust for collection limit on allocation
             obj._deleteCollection( result.coll[i] );
         }
+
+        console.log("del empty data");
 
         // Delete records with no data
         for ( i in result.http_data ){
@@ -812,6 +820,8 @@ var tasks_func = function() {
 
         // Mark and schedule records for delete
         if ( result.glob_data.length ){
+            console.log("sched data del task");
+
             var state = { del: obj._buildDeleteDoc( result.glob_data )};
 
             result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del.length + 1, state );
