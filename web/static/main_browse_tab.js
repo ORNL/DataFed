@@ -136,7 +136,7 @@ function makeBrowserTab(){
                 inst.showSelectedInfo( inst.data_tree.activeNode );
                 break;
             case SS_CAT:
-                inst.showSelectedInfo();
+                inst.showSelectedInfo( inst.cat_tree.activeNode );
                 break;
             case SS_PROV:
                 inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
@@ -958,6 +958,7 @@ function makeBrowserTab(){
                         if ( data ){
                             dlgDataNewEdit( DLG_DATA_EDIT, data, null, perms, function( data ){
                                 refreshUI( id, data );
+                                // TODO - Only do this if raw data source is changed
                                 inst.resetTaskPoll();
                             });
                         }
