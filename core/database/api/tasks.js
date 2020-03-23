@@ -795,12 +795,18 @@ var tasks_func = function() {
         var result = g_proc.preprocessItems( a_client, null, a_ids, g_lib.TT_REC_DEL );
         var i,rec_ids = [];
 
-        for ( i in result.http_data )
+        console.log("taskInitRecCollDelete - 1",rec_ids, result.http_data );
+
+        for ( i in result.http_data ){
+            console.log("taskInitRecCollDelete - 1.5", result.http_data[i].id );
             rec_ids.push( result.http_data[i].id );
+        }
+        console.log("taskInitRecCollDelete - 2",rec_ids);
+
         for ( i in result.glob_data )
             rec_ids.push( result.glob_data[i].id );
 
-        console.log("get exl acc");
+        console.log("get exl acc",rec_ids);
 
         obj._ensureExclusiveAccess( rec_ids );
 
@@ -1459,11 +1465,12 @@ var tasks_func = function() {
         var i, id, lock;
         for ( i in a_ids ){
             id = a_ids[i];
-
+            console.log("_ensureExclusiveAccess",id);
             lock = g_db.lock.firstExample({ _to: id });
             if ( lock )
                 throw [ g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use." ];
         }
+        console.log("_ensureExclusiveAccess done");
     };
 
     return obj;

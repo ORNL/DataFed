@@ -88,7 +88,8 @@ message AllocData
     required uint32             rec_count   = 5;
     required string             path        = 6;
     optional string             id          = 7;
-    optional AllocStatsData     stats       = 8;
+    optional bool               is_def      = 8;
+    optional AllocStatsData     stats       = 9;
 }
 
 // For viewing dependencies

@@ -372,9 +372,7 @@ router.get('/alloc/list/by_repo', function (req, res) {
 router.get('/alloc/list/by_owner', function (req, res) {
     var obj, result = g_db.alloc.byExample({_from: req.queryParams.owner}).toArray();
 
-    result.sort(function(a,b){
-        return a._to < b._to?-1:1;
-    });
+    g_lib.sortAllocations( result );
 
     for ( var i in result ){
         obj = result[i];
@@ -406,9 +404,7 @@ router.get('/alloc/list/by_object', function (req, res) {
     var owner_id = g_db.owner.firstExample({ _from: obj_id })._to;
     var obj, result = g_db.alloc.byExample({ _from: owner_id }).toArray();
 
-    result.sort(function(a,b){
-        return a._to < b._to?-1:1;
-    });
+    g_lib.sortAllocations( result );
 
     for ( var i in result ){
         obj = result[i];
@@ -633,3 +629,51 @@ router.get('/alloc/set', function (req, res) {
 .queryParam('rec_limit', joi.number().integer().min(1).required(), "Max number of records (files)")
 .summary('Set user/project repo allocation')
 .description('Set user repo/project allocation. Only repo admin can set allocations.');
+
+
+router.get('/alloc/set/default', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","repo","admin"],
+                write: ["alloc"]
+            },
+            action: function() {
+                var client = g_lib.getUserFromClientID( req.queryParams.client );
+                var subject_id;
+                if ( req.queryParams.subject.startsWith("p/"))
+                    subject_id = req.queryParams.subject;
+                else
+                    subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+
+                if ( !g_db._exists( req.queryParams.repo ))
+                    throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
+
+                if ( !g_db._exists( subject_id ))
+                    throw [g_lib.ERR_NOT_FOUND,"Subject, "+subject_id+", not found"];
+
+                // TODO Make sure client has permission to set default for subject
+
+                var alloc, allocs = g_db.alloc.byExample({ _from: subject_id });
+                while ( allocs.hasNext() ){
+                    alloc = allocs.next();
+                    if ( alloc._to == req.queryParams.repo )
+                        g_db.alloc.update( alloc._id, { is_def: true });
+                    else if ( alloc.is_def )
+                        g_db.alloc.update( alloc._id, { is_def: false });
+                }
+
+                //if ( !alloc )
+                //    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', has no allocation on " + repo._id ];
+
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
+.queryParam('repo', joi.string().required(), "Repo ID")
+.summary('Set user/project repo allocation as default')
+.description('Set user repo/project allocation as default.');

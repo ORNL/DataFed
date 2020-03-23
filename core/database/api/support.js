@@ -381,14 +381,24 @@ module.exports = ( function() {
             return obj.PROJ_NO_ROLE;
     };
 
+    obj.sortAllocations( allocs ){
+        allocs.sort(function(a,b){
+            if ( a.is_def )
+                return -1;
+            else if ( b.is_def )
+                return 1;
+            else
+                return a._to < b._to?-1:1;
+        });
+    }
 
     obj.assignRepo = function( a_user_id ){
-        // TODO use default if specified
+        var alloc, allocs = obj.db.alloc.byExample({ _from: a_user_id }).toArray();
 
-        var alloc, allocs = obj.db.alloc.byExample({ _from: a_user_id });
+        obj.sortAllocations( allocs );
 
-        while ( allocs.hasNext() ){
-            alloc = allocs.next();
+        for ( var i in allocs ){
+            alloc = allocs[i];
 
             if ( alloc.data_size < alloc.data_limit && alloc.rec_count < alloc.rec_limit ){
                 return alloc;

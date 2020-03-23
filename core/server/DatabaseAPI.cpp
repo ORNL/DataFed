@@ -2343,7 +2343,9 @@ DatabaseAPI::setAllocData( AllocData * a_alloc, libjson::Value::Object & a_obj )
     a_alloc->set_rec_count( a_obj.at( "rec_count" ).asNumber( ));
     a_alloc->set_path( a_obj.at( "path" ).asString( ));
 
-    Value::ObjectIter j;
+    Value::ObjectIter j = a_obj.find( "is_def" );
+    if ( j != a_obj.end( ))
+        a_alloc->set_is_def( j->second.asBool( ));
 
     if (( j = a_obj.find( "id" )) != a_obj.end( ))
         a_alloc->set_id( j->second.asString( ));
