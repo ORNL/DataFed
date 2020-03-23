@@ -88,6 +88,22 @@ function makeBrowserTab(){
         return ids;
     };
 
+    this.refreshNodeTitle = function( a_node, a_data, a_reload ){
+        a_node.title = inst.generateTitle( a_data );
+
+        if ( a_data.id.startsWith( "d/" )){
+            if ( a_data.doi )
+                a_node.icon = "ui-icon ui-icon-linkext";
+            else
+                a_node.icon = "ui-icon ui-icon-file";
+        }
+
+        a_node.renderTitle();
+
+        if ( a_reload )
+            inst.reloadNode( a_node );
+    }
+
     this.refreshUI = function( a_ids, a_data, a_reload ){
         //console.log("refreshUI",a_ids,a_data);
 
@@ -110,12 +126,14 @@ function makeBrowserTab(){
             inst.data_tree.visit( function(node){
                 idx = ids.indexOf( node.key );
                 if ( idx != -1 ){
-                    //node.setTitle( inst.generateTitle( data[idx] ));
-                    node.title = inst.generateTitle( data[idx] );
-                    inst.updateIcon( node, data[idx] );
-                    node.renderTitle();
-                    if ( a_reload )
-                        inst.reloadNode( node );
+                    inst.refreshNodeTitle( node, data[idx], a_reload );
+                }
+            });
+
+            inst.cat_tree.visit( function(node){
+                idx = ids.indexOf( node.key );
+                if ( idx != -1 ){
+                    inst.refreshNodeTitle( node, data[idx], a_reload );
                 }
             });
         }
@@ -1582,15 +1600,6 @@ function makeBrowserTab(){
         title += "</span>";
 
         return title;
-    };
-
-    this.updateIcon = function( node, data ) {
-        if ( data.id.startsWith( "d/" )){
-            if ( data.doi )
-                node.icon = "ui-icon ui-icon-linkext";
-            else
-                node.icon = "ui-icon ui-icon-file";
-        }
     };
 
     this.taskUpdateHistory = function( task_list ){
