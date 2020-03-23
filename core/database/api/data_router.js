@@ -324,7 +324,7 @@ function recordUpdate( client, record, results ){
     data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true });
     data = data.new;
 
-    if ( obj.alias != undefined ) {
+    if ( obj.alias !== undefined ) {
         var old_alias = g_db.alias.firstExample({ _from: data_id });
         if ( old_alias ) {
             const graph = require('@arangodb/general-graph')._graph('sdmsg');
