@@ -122,12 +122,12 @@ public:
     void repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply );
     void repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply );
     void repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply );
+    void repoAllocationSet( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply );
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
     void topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply );
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
-
 
     void taskLoadReady( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );

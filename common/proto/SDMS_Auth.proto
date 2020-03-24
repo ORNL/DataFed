@@ -723,6 +723,13 @@ message RepoAllocationSetRequest
 }
 
 // Reply is ACK/NACK
+message RepoAllocationSetDefaultRequest
+{
+    required string             repo        = 1;
+    optional string             subject     = 2;
+}
+
+// Reply is ACK/NACK
 message RepoAllocationDeleteRequest
 {
     required string             repo        = 1;

@@ -163,6 +163,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoListObjectAllocationsRequest, RepoAllocationsReply, repoListObjectAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoViewAllocationRequest, RepoAllocationsReply, repoViewAllocation );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
+        SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
         SET_MSG_HANDLER_DB( proto_id, TopicListRequest, ListingReply, topicList );
         SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );

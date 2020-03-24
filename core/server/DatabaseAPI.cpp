@@ -2423,6 +2423,21 @@ DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request
 }
 
 void
+DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply )
+{
+    (void)a_reply;
+
+    Value result;
+    vector<pair<string,string>> params;
+
+    params.push_back({"repo",a_request.repo()});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+
+    dbGet( "repo/alloc/set/default", params, result );
+}
+
+void
 DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
     Value result;

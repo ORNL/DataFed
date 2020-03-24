@@ -381,7 +381,7 @@ module.exports = ( function() {
             return obj.PROJ_NO_ROLE;
     };
 
-    obj.sortAllocations( allocs ){
+    obj.sortAllocations = function( allocs ){
         allocs.sort(function(a,b){
             if ( a.is_def )
                 return -1;
@@ -390,7 +390,7 @@ module.exports = ( function() {
             else
                 return a._to < b._to?-1:1;
         });
-    }
+    };
 
     obj.assignRepo = function( a_user_id ){
         var alloc, allocs = obj.db.alloc.byExample({ _from: a_user_id }).toArray();
