@@ -640,19 +640,28 @@ router.get('/alloc/set/default', function (req, res) {
             },
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
-                var subject_id;
-                if ( req.queryParams.subject.startsWith("p/"))
-                    subject_id = req.queryParams.subject;
-                else
-                    subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+                var subject_id = client._id;
+
+                if ( req.queryParams.subject ){
+                    if ( req.queryParams.subject.startsWith("p/")){
+                        if ( !g_db._exists( subject_id ))
+                            throw [g_lib.ERR_NOT_FOUND,"Project, " + req.queryParams.subject + ", not found"];
+
+                        var role = g_lib.getProjectRole( client._id, req.queryParams.subject );
+                        if ( role != g_lib.PROJ_MANAGER || role != g_lib.PROJ_ADMIN )
+                            throw [g_lib.ERR_PERM_DENIED, "Setting default allocation on project requires admin/manager rights."];
+
+                        subject_id = req.queryParams.subject;
+                    }else{
+                        subject_id = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+
+                        if ( subject_id != client._id && !client.is_admin )
+                            throw [g_lib.ERR_PERM_DENIED, "Setting default allocation on user requires admin rights."];
+                    }
+                }
 
                 if ( !g_db._exists( req.queryParams.repo ))
                     throw [g_lib.ERR_NOT_FOUND,"Repo, '" + req.queryParams.repo + "', does not exist"];
-
-                if ( !g_db._exists( subject_id ))
-                    throw [g_lib.ERR_NOT_FOUND,"Subject, "+subject_id+", not found"];
-
-                // TODO Make sure client has permission to set default for subject
 
                 var alloc, allocs = g_db.alloc.byExample({ _from: subject_id });
                 while ( allocs.hasNext() ){
@@ -662,10 +671,6 @@ router.get('/alloc/set/default', function (req, res) {
                     else if ( alloc.is_def )
                         g_db.alloc.update( alloc._id, { is_def: false });
                 }
-
-                //if ( !alloc )
-                //    throw [g_lib.ERR_NOT_FOUND, "Subject, '" + subject_id + "', has no allocation on " + repo._id ];
-
             }
         });
     } catch( e ) {
@@ -673,7 +678,7 @@ router.get('/alloc/set/default', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().required(), "User/project ID to receive allocation")
+.queryParam('subject', joi.string().optional(), "User/project ID to receive allocation")
 .queryParam('repo', joi.string().required(), "Repo ID")
 .summary('Set user/project repo allocation as default')
 .description('Set user repo/project allocation as default.');

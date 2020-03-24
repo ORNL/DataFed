@@ -2852,9 +2852,9 @@ function makeBrowserTab(){
                 data.result = [];
                 if ( data.response.length ){
                     var alloc;
-                    for ( i in data.response ) {
+                    for ( i = 0; i < data.response.length; i++ ) {
                         alloc = data.response[i];
-                        data.result.push({ title: alloc.repo.substr(5),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
+                        data.result.push({ title: alloc.repo.substr(5) + (i==0?" (default)":""),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
                 }
             } else if ( data.node.parent ) {
