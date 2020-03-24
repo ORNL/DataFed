@@ -152,13 +152,13 @@ function dlgSettings( a_cb ){
 
     allocListBySubject(null,null, function( ok, data ){
         //console.log( "updateAllocSelect", ok, data );
-        var html = "<option value='none'>None</option>";
+        var html = "";
         if ( ok && data.length ){
             var alloc;
             for ( var i in data ){
                 alloc = data[i];
                 html += "<option value='"+alloc.repo + "'";
-                html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.totSize) + " / " + sizeToString(alloc.maxSize) +")</option>";
+                html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
             }
         }
 
