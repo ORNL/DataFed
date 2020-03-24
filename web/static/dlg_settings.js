@@ -167,5 +167,4 @@ function dlgSettings( a_cb ){
 
         frame.dialog( options );
     });
-
 }

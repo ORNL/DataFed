@@ -11,6 +11,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 <tr><td>ID: <span class='note'>*</span></td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
+                <tr id='def_alloc_row' style='display:hidden'><td>Default Alloc.:</td><td><select id='def_alloc'><option value='none'>None</option></select></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
             </table>\
         </div>\
@@ -178,6 +179,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 inputDisable($("#id",frame)).val(a_data.id);
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
+                $("#def_alloc",frame).selectmenu({width:225});
+                $("#def_alloc_row",frame).show();
                 $("#owner_id",frame).val(a_data.owner);
 
                 if (( a_upd_perms & PERM_WR_REC ) == 0 )
@@ -291,6 +294,28 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         }
     };
 
+    if ( a_data ){
+        allocListBySubject( a_data.id, null, function( ok, data ){
+            var html = "";
+            if ( ok && data.length ){
+                var alloc;
+                for ( var i = 0; i < data.length; i++ ){
+                    alloc = data[i];
+                    html += "<option value='" + alloc.repo + "'";
+                    if ( i == 0 ){
+                        html += " selected";
+                        def_alloc = alloc.repo;
+                    }
+                    html += ">" + alloc.repo.substr(5) + " ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
+                }
+            }
 
-    frame.dialog( options );
+            $("#def_alloc",frame).html(html);
+
+            frame.dialog( options );
+        });
+    }else{}
+        frame.dialog( options );
+    }
+
 }
