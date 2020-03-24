@@ -122,7 +122,7 @@ function dlgSettings( a_cb ){
                 }
 
                 function do_close(){
-                    if ( --do_close <= 0 ){
+                    if ( --close_cnt <= 0 ){
                         setStatusText("Settings saved.");
 
                         if ( a_cb )

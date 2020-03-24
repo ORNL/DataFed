@@ -169,7 +169,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 var result;
 
                 function do_close(){
-                    if ( --do_close <= 0 ){
+                    console.log( "do_close", do_close );
+                    if ( --close_cnt <= 0 ){
                         setStatusText("Settings saved.");
 
                         if ( a_cb )
@@ -184,7 +185,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
                 //var inst = $(this);
                 if ( url ){
-                    //console.log( "URL", url );
+                    console.log( "URL", url );
                     _asyncGet( url, null, function( ok, data ){
                         if ( !ok ) {
                             dlgAlert( "Project " + (a_data?"Update":"Create") +" Error", data );
@@ -196,6 +197,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 }
 
                 if ( new_def_alloc ){
+                    console.log( "Set def alloc", new_def_alloc );
                     setDefaultAlloc( new_def_alloc, a_data.id, function( ok, data ){
                         if ( !ok ){
                             dlgAlert("Error Setting Default Allocation", data );
