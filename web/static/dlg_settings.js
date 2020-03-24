@@ -68,7 +68,7 @@ function dlgSettings( a_cb ){
             text: "Save",
             click: function(){
                 var reload = false, save = false, upd_email, upd_pass;
-                var url = "";
+                var url = "", inst = $(this);
 
                 var tmp = $("#new_email",frame).val();
                 if ( tmp != g_user.email ){
@@ -128,7 +128,7 @@ function dlgSettings( a_cb ){
                         if ( a_cb )
                             a_cb( reload );
 
-                        $(this).dialog('destroy').remove();
+                        inst.dialog('destroy').remove();
                     }
                 }
 

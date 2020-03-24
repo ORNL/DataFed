@@ -63,7 +63,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj ={}, i, url = "";
+                var obj ={}, i, url = "", inst = $(this);
 
                 if ( a_data ){
                     getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
@@ -176,14 +176,13 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         if ( a_cb )
                             a_cb(result);
 
-                        $(this).dialog('destroy').remove();
+                        inst.dialog('destroy').remove();
                     }
                 }
 
                 if ( close_cnt == 0 )
                     do_close();
 
-                //var inst = $(this);
                 if ( url ){
                     console.log( "URL", url );
                     _asyncGet( url, null, function( ok, data ){
