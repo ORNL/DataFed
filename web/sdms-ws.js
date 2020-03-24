@@ -1058,6 +1058,18 @@ app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/repo/alloc/set/default', ( a_req, a_resp ) => {
+    var par = {repo:a_req.query.repo};
+    if ( a_req.query.subject )
+        par.subject = a_req.query.subject;
+
+    console.log("alloc set def:",par);
+
+    sendMessage( "RepoAllocationSetDefaultRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/top/list', ( a_req, a_resp ) => {
     var par = {topicId:a_req.query.id?a_req.query.id:"t/root"};
     if ( a_req.query.data == "false" )

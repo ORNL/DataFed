@@ -39,6 +39,7 @@ function dlgSettings( a_cb ){
     inputTheme( $('input:text,input:password',frame ));
     $(".btn",frame).button();
     var emailFilter = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    var def_alloc;
 
     $("#btn_revoke_cred",frame).click( function(){
         dlgConfirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Cancel","Revoke"], function(choice){
@@ -57,11 +58,12 @@ function dlgSettings( a_cb ){
         width: 450,
         height: 500,
         resizable: true,
-        closeOnEscape: false,
+        closeOnEscape: true,
         buttons: [{
             text: "Save",
             click: function(){
                 var reload = false, save = false, upd_email, upd_pass;
+                var url = "";
 
                 var tmp = $("#new_email",frame).val();
                 if ( tmp != g_user.email ){
@@ -69,7 +71,7 @@ function dlgSettings( a_cb ){
                         dlgAlert( "Data Entry Error", "Invalid e-mail" );
                         return;
                     }else{
-                        upd_email = tmp;
+                        url += "&email=" + encodeURIComponent(tmp);
                         g_user.email = tmp;
                     }
                 }
@@ -81,36 +83,30 @@ function dlgSettings( a_cb ){
                         dlgAlert( "Update CLI Password", "Passwords do not match" );
                         return;
                     }else{
-                        upd_pass = tmp;
+                        url += "&pw=" + encodeURIComponent(tmp);
                     }
                 }
+
+                var save_opts = false;
 
                 tmp = $("#page-size",frame).val();
                 if ( tmp != g_opts.page_sz ){
                     g_opts.page_sz = parseInt(tmp);
-                    save = true;
+                    save_opts = true;
                     reload = true;
                 }
 
                 tmp = $("#task-poll-hours",frame).val();
                 if ( tmp != g_opts.task_hist ){
                     g_opts.task_hist = parseInt(tmp);
-                    save = true;
+                    save_opts = true;
                 }
 
-                tmp = $("#def-alloc",frame).val();
-                if ( tmp != g_opts.def_alloc ){
-                    g_opts.def_alloc = tmp;
-                    save = true;
-                }
+                if ( save_opts )
+                    url += "&opts="+encodeURIComponent(JSON.stringify(g_opts));
 
-                tmp = $("#theme-sel",frame).val();
-                if ( tmp != g_theme ){
-                    themeSet( tmp );
-                }
-
-                if ( save ){
-                    _asyncGet( "/api/usr/update?uid=u/"+g_user.uid+"&opts="+encodeURIComponent(JSON.stringify(g_opts)), null, function( ok, data ){
+                if ( url ){
+                    _asyncGet( "/api/usr/update?uid=u/"+g_user.uid + url, null, function( ok, data ){
                         if ( !ok )
                             dlgAlert( "Update Options Error", data );
                         else
@@ -118,15 +114,17 @@ function dlgSettings( a_cb ){
                     });
                 }
 
-                if ( upd_pass || upd_email ){
-                    var url = "/api/usr/update?uid=u/"+g_user.uid;
-                    if ( upd_pass )
-                        url += "&pw=" + encodeURIComponent(upd_pass);
-                    if ( upd_email )
-                        url += "&email=" + encodeURIComponent(upd_email);
-                    _asyncGet(url, null, function( ok, data ){
-                        if ( !ok )
-                            dlgAlert( "Update Error", data );
+                tmp = $("#theme-sel",frame).val();
+                if ( tmp != g_theme ){
+                    themeSet( tmp );
+                }
+
+                tmp = $("#def-alloc",frame).val();
+                if ( tmp != def_alloc ){
+                    setDefaultAlloc( tmp, function( ok, data ){
+                        if ( !ok ){
+                            dlgAlert("Error Setting Default Allocation", data );
+                        }
                     });
                 }
 
@@ -156,10 +154,12 @@ function dlgSettings( a_cb ){
             var alloc;
             for ( var i = 0; i < data.length; i++ ){
                 alloc = data[i];
-                html += "<option value='"+alloc.repo + "'";
-                if ( i == 0 )
+                html += "<option value='" + alloc.repo + "'";
+                if ( i == 0 ){
                     html += " selected";
-                html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
+                    def_alloc = alloc.repo;
+                }
+                html += ">" + alloc.repo.substr(5) + " ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
             }
         }
 

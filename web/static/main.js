@@ -948,6 +948,10 @@ function themeSet( theme ){
     _asyncGet( "/ui/theme/save?theme="+theme, null, null );
 }
 
+function setDefaultAlloc( a_repo, a_subject, a_cb ){
+    _asyncGet( "/api/repo/alloc/set/default?repo=" + a_repo + (a_subject?"&subject="+a_subject:""), null, a_cb );
+}
+
 function tooltipTheme( a_objs ){
     a_objs.tooltip({
         show: { effect: "fade", delay: 1000 },
