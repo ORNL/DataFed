@@ -154,10 +154,10 @@ function showSelectedItemInfo( item ){
     if ( item.alloc && item.alloc.length ){
         var alloc,free;
         text = "";
-        for ( i in item.alloc ){
+        for ( i = 0; i < item.alloc.length; i++ ){
             alloc = item.alloc[i];
-            free = Math.max( Math.floor(10000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
-            text += alloc.repo + ": " + sizeToString( alloc.dataLimit ) + " total, " + sizeToString( alloc.dataSize ) + " used (" + free + " % free)<br>";
+            free = Math.max( Math.floor(1000*(alloc.dataLimit - alloc.dataSize)/alloc.dataLimit)/100, 0 );
+            text += alloc.repo + ": " + sizeToString( alloc.dataSize ) + " of " + sizeToString( alloc.dataLimit ) + " used (" + free + "% free)" + (i==0?" (default)":"") + "<br>";
         }
         $("#sel_info_allocs",form).html( text );
     }
