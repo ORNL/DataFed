@@ -314,7 +314,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
             frame.dialog( options );
         });
-    }else{}
+    }else{
         frame.dialog( options );
     }
 
