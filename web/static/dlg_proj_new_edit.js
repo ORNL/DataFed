@@ -200,8 +200,11 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     setDefaultAlloc( new_def_alloc, a_data.id, function( ok, data ){
                         if ( !ok ){
                             dlgAlert("Error Setting Default Allocation", data );
-                        }else
+                        }else{
+                            if ( !result )
+                                result = a_data;
                             do_close();
+                        }
                     });
                 }
             }
