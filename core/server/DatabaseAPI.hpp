@@ -122,7 +122,7 @@ public:
     void repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply );
     void repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply );
     void repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply );
-    void repoAllocationSet( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply );
+    void repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply );
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
     void topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply );

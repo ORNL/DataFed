@@ -2423,7 +2423,7 @@ DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request
 }
 
 void
-DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply )
 {
     (void)a_reply;
 
