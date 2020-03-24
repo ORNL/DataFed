@@ -60,6 +60,11 @@ function dlgSettings( a_cb ){
         resizable: true,
         closeOnEscape: true,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('destroy').remove();
+            }
+        },{
             text: "Save",
             click: function(){
                 var reload = false, save = false, upd_email, upd_pass;
@@ -121,7 +126,7 @@ function dlgSettings( a_cb ){
 
                 tmp = $("#def-alloc",frame).val();
                 if ( tmp != def_alloc ){
-                    setDefaultAlloc( tmp, function( ok, data ){
+                    setDefaultAlloc( tmp, null, function( ok, data ){
                         if ( !ok ){
                             dlgAlert("Error Setting Default Allocation", data );
                         }
@@ -131,11 +136,6 @@ function dlgSettings( a_cb ){
                 if ( a_cb )
                     a_cb( reload );
 
-                $(this).dialog('destroy').remove();
-            }
-        },{
-            text: "Cancel",
-            click: function() {
                 $(this).dialog('destroy').remove();
             }
         }],
