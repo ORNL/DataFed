@@ -151,19 +151,20 @@ function dlgSettings( a_cb ){
     };
 
     allocListBySubject(null,null, function( ok, data ){
-        //console.log( "updateAllocSelect", ok, data );
         var html = "";
         if ( ok && data.length ){
             var alloc;
-            for ( var i in data ){
+            for ( var i = 0; i < data.length; i++ ){
                 alloc = data[i];
                 html += "<option value='"+alloc.repo + "'";
+                if ( i == 0 )
+                    html += " selected";
                 html += ">"+alloc.repo.substr(5)+" ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
             }
         }
 
         $("#def-alloc",frame).html(html);
-        //$("#def-alloc",frame).selectmenu("refresh");
+
         frame.dialog( options );
     });
 
