@@ -4,6 +4,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     var ele = document.createElement('div');
     ele.id = (a_data?a_data.id.replace("/","_"):"p_new")+"_edit";
     var frame = $(ele);
+    var def_alloc;
 
     var html = "<div class='col-flex' style='height:100%'>\
         <div style='flex:none'>\
@@ -11,7 +12,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 <tr><td>ID: <span class='note'>*</span></td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
-                <tr id='def_alloc_row' style='display:hidden'><td>Default Alloc.:</td><td><select id='def_alloc'><option value='none'>None</option></select></td></tr>\
+                <tr id='def_alloc_row' style='display:hidden'><td>Default&nbspAlloc:</td><td><select id='def_alloc'><option value='none'>None</option></select></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
             </table>\
         </div>\
@@ -91,6 +92,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     members.push( node.key );
                 });
 
+                var new_def_alloc, close_cnt = 0;
+
                 if ( a_data ){
                     var diff;
 
@@ -130,7 +133,16 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         url += "&members=" + JSON.stringify( members );
                     }
 
-                    url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
+                    if ( url ){
+                        close_cnt++;
+                        url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
+                    }
+
+                    var tmp = $("#def_alloc",frame).val();
+                    if ( tmp != def_alloc ){
+                        new_def_alloc = tmp;
+                        close_cnt++;
+                    }
                 }else{
                     var id = $("#id",frame).val().trim();
 
@@ -151,21 +163,46 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         url += "&admins=" + JSON.stringify( admins );
 
                     url = "/api/prj/create?id=" + encodeURIComponent( id ) + url;
+                    close_cnt = 1;
                 }
 
-                console.log( "URL", url );
+                var result;
 
-                var inst = $(this);
-                _asyncGet( url, null, function( ok, data ){
-                    if ( ok ) {
-                        inst.dialog('destroy').remove();
-                        //console.log( "data:",data);
+                function do_close(){
+                    if ( --do_close <= 0 ){
+                        setStatusText("Settings saved.");
+
                         if ( a_cb )
-                            a_cb(data[0]);
-                    } else {
-                        setStatusText( data, true );
+                            a_cb(result);
+
+                        $(this).dialog('destroy').remove();
                     }
-                });
+                }
+
+                if ( close_cnt == 0 )
+                    do_close();
+
+                //var inst = $(this);
+                if ( url ){
+                    //console.log( "URL", url );
+                    _asyncGet( url, null, function( ok, data ){
+                        if ( !ok ) {
+                            dlgAlert( "Project " + (a_data?"Update":"Create") +" Error", data );
+                        }else{
+                            result = data[0];
+                            do_close();
+                        }
+                    });
+                }
+
+                if ( new_def_alloc ){
+                    setDefaultAlloc( new_def_alloc, a_data.id, function( ok, data ){
+                        if ( !ok ){
+                            dlgAlert("Error Setting Default Allocation", data );
+                        }else
+                            do_close();
+                    });
+                }
             }
         }],
         open: function(event,ui){

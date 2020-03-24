@@ -110,13 +110,26 @@ function dlgSettings( a_cb ){
                 if ( save_opts )
                     url += "&opts="+encodeURIComponent(JSON.stringify(g_opts));
 
-                if ( url ){
-                    _asyncGet( "/api/usr/update?uid=u/"+g_user.uid + url, null, function( ok, data ){
-                        if ( !ok )
-                            dlgAlert( "Update Options Error", data );
-                        else
-                            setStatusText("Options saved.");
-                    });
+                var new_def_alloc, close_cnt = 0;
+
+                if ( url )
+                    close_cnt++;
+
+                tmp = $("#def-alloc",frame).val();
+                if ( tmp != def_alloc ){
+                    new_def_alloc = tmp;
+                    close_cnt++;
+                }
+
+                function do_close(){
+                    if ( --do_close <= 0 ){
+                        setStatusText("Settings saved.");
+
+                        if ( a_cb )
+                            a_cb( reload );
+
+                        $(this).dialog('destroy').remove();
+                    }
                 }
 
                 tmp = $("#theme-sel",frame).val();
@@ -124,19 +137,28 @@ function dlgSettings( a_cb ){
                     themeSet( tmp );
                 }
 
-                tmp = $("#def-alloc",frame).val();
-                if ( tmp != def_alloc ){
-                    setDefaultAlloc( tmp, null, function( ok, data ){
+                if ( close_cnt == 0 )
+                    do_close();
+
+                if ( url ){
+                    _asyncGet( "/api/usr/update?uid=u/"+g_user.uid + url, null, function( ok, data ){
                         if ( !ok ){
-                            dlgAlert("Error Setting Default Allocation", data );
+                            dlgAlert( "Save Settings Error", data );
+                        }else{
+                            do_close();
                         }
                     });
                 }
 
-                if ( a_cb )
-                    a_cb( reload );
-
-                $(this).dialog('destroy').remove();
+                if ( new_def_alloc ){
+                    setDefaultAlloc( new_def_alloc, null, function( ok, data ){
+                        if ( !ok ){
+                            dlgAlert("Set Default Allocation Error", data );
+                        }else{
+                            do_close();
+                        }
+                    });
+                }
             }
         }],
         open: function(event,ui){
