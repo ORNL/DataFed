@@ -145,7 +145,7 @@ function dlgSettings( a_cb ){
             $("#page-size",frame).val(g_opts.page_sz).selectmenu({width:150});
             $("#theme-sel",frame).val(g_theme).selectmenu({width:150});
             $("#task-poll-hours",frame).val(g_opts.task_hist).selectmenu({width:150});
-            $("#def-alloc",frame).val(g_opts.def_alloc).selectmenu({width:225});
+            $("#def-alloc",frame).selectmenu({width:225});
             $("#new_email",frame).val( g_user.email );
         }
     };
