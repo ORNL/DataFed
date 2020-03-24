@@ -648,7 +648,7 @@ router.get('/alloc/set/default', function (req, res) {
                             throw [g_lib.ERR_NOT_FOUND,"Project, " + req.queryParams.subject + ", not found"];
 
                         var role = g_lib.getProjectRole( client._id, req.queryParams.subject );
-                        if ( role != g_lib.PROJ_MANAGER || role != g_lib.PROJ_ADMIN )
+                        if ( role != g_lib.PROJ_MANAGER && role != g_lib.PROJ_ADMIN )
                             throw [g_lib.ERR_PERM_DENIED, "Setting default allocation on project requires admin/manager rights."];
 
                         subject_id = req.queryParams.subject;

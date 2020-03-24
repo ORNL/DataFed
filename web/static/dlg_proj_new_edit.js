@@ -79,8 +79,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 if ( obj.desc )
                     url += "&desc="+ encodeURIComponent(obj.desc);
 
-                var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
-                var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
+                var mem_tree = $.ui.fancytree.getTree("#proj_mem_tree");
+                var adm_tree = $.ui.fancytree.getTree("#proj_adm_tree");
 
                 var admins = [];
                 adm_tree.visit( function(node){
@@ -169,9 +169,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 var result;
 
                 function do_close(){
-                    console.log( "do_close", do_close );
+                    console.log( "do_close", close_cnt );
                     if ( --close_cnt <= 0 ){
-                        setStatusText("Settings saved.");
+                        setStatusText("Project saved.");
 
                         if ( a_cb )
                             a_cb(result);
@@ -270,8 +270,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 }
             });
 
-            var mem_tree =  $("#proj_mem_tree",frame).fancytree("getTree");
-            var adm_tree =  $("#proj_adm_tree",frame).fancytree("getTree");
+            var mem_tree = $.ui.fancytree.getTree("#proj_mem_tree");
+            var adm_tree = $.ui.fancytree.getTree("#proj_adm_tree");
             var uid;
 
             $("#add_mem_btn",frame).click( function(){
