@@ -2694,6 +2694,14 @@ function makeBrowserTab(){
                 data.node.resetLazy();
             }
         },
+        icon: function( ev, data ) {
+            if ( data.node.isFolder() && data.node.key.startsWith( "c/" )) {
+                if ( data.node.isExpanded())
+                    return "ui-icon ui-icon-folder-open";
+                else
+                    return "ui-icon ui-icon-folder";
+            }
+        },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = [
