@@ -510,7 +510,7 @@ router.post('/update/batch', function (req, res) {
 .summary('Update a batch of existing data record')
 .description('Update a batch of existing data record from JSON body');
 
-
+/*
 router.post('/update/post_put', function (req, res) {
     try {
         var result = [];
@@ -582,7 +582,7 @@ router.post('/update/post_put', function (req, res) {
 }).required(), 'Record fields')
 .summary('Update an existing data record after data put')
 .description('Update an existing data record from JSON body');
-
+*/
 
 router.post('/update/size', function (req, res) {
     try {

@@ -1028,6 +1028,7 @@ DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request
     setRecordData( a_reply, result["data"] );
 }
 
+/*
 void
 DatabaseAPI::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext )
 {
@@ -1040,6 +1041,7 @@ DatabaseAPI::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_s
 
     dbPost( "dat/update/post_put", {}, &body, result );
 }
+*/
 
 void
 DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )

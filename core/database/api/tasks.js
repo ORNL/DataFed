@@ -276,6 +276,30 @@ var tasks_func = function() {
             params = Object.assign( params, state.xfr[a_task.step-1] );
             reply = { cmd: g_lib.TC_RAW_DATA_TRANSFER, params: params, step: a_task.step };
         } else if ( a_task.step < a_task.steps - 1 ){
+            // Update extention, manual/auto
+            var rec = g_db.d.document( xfr.files[0].id ), upd_rec = {};
+
+            if ( state.ext ){
+                upd_rec.ext = state.ext;
+                upd_rec.ext_auto = false;
+
+                if ( upd_rec.ext.charAt(0) != "." )
+                    upd_rec.ext = "." + upd_rec.ext;
+
+            }else if ( rec.ext_auto ){
+                var src = xfr.files[0].from;
+
+                // Extention starts at LAST "." filename
+                var pos = src.lastIndexOf(".");
+                if ( pos != -1 ){
+                    upd_rec.ext = src.substr( pos );
+                }else{
+                    upd_rec.ext = null;
+                }
+            }
+
+            g_db._update( xfr.files[0].id, upd_rec, { keepNull: false });
+
             // Request data size update
             xfr = state.xfr[a_task.step-2];
             params = {
