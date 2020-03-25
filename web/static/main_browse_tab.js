@@ -2513,8 +2513,8 @@ function makeBrowserTab(){
         {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
         {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
-            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_user"},
-            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
+            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
         ]},
         {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
     ];
