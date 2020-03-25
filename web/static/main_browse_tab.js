@@ -2695,6 +2695,7 @@ function makeBrowserTab(){
             }
         },
         icon: function( ev, data ) {
+            console.log("ft icon cb");
             if ( data.node.isFolder() && data.node.key.startsWith( "c/" )) {
                 if ( data.node.isExpanded())
                     return "ui-icon ui-icon-folder-open";
