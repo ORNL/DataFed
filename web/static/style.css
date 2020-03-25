@@ -31,14 +31,14 @@ span.fancytree-custom-icon {
 }
 
 span.fancytree-node.fancytree-folder > span.fancytree-icon {
-    margin-left:0!important;
+    /*margin-left:0!important;*/
     /*background-image:none;*/
     /*background-image: url("customFolder.gif");*/
 
 }
 
 span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon {
-    margin-left:0!important;
+    /*margin-left:0!important;*/
     /*background-image:none;*/
 }
 
