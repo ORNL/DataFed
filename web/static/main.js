@@ -549,25 +549,6 @@ function repoDelete( a_repo_id, a_cb ){
     _asyncGet("/api/repo/delete?id="+a_repo_id,null,a_cb);
 }
 
-/*function repoUpdate( a_repo, a_title, a_desc, a_domain, a_exp_path, a_capacity, a_admins, a_cb ){
-    console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
-    var url = "/api/repo/update?id="+a_repo;
-    if ( a_title )
-        url += "&title="+encodeURIComponent(a_title);
-    if ( a_desc )
-        url += "&desc="+encodeURIComponent(a_desc);
-    if ( a_domain )
-        url += "&domain="+encodeURIComponent(a_domain);
-    if ( a_exp_path )
-        url += "&exp_path="+encodeURIComponent(a_exp_path);
-    if ( a_capacity != null )
-        url += "&capacity="+a_capacity;
-    if ( a_admins )
-        url += "&admins=" + JSON.stringify( a_admins );
-    console.log( url );
-    _asyncGet( url, null, a_cb );
-}*/
-
 function repoCalcSize( a_items, a_recursive, a_cb ){
     //console.log("calcSize, rec:",a_recursive,"items",a_items);
     _asyncGet( "/api/repo/calc_size?recurse=" + a_recursive + "&items="+ encodeURIComponent(JSON.stringify(a_items)), null, function( ok, data ){
@@ -578,6 +559,7 @@ function repoCalcSize( a_items, a_recursive, a_cb ){
 function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
 }
+
 function allocListBySubject( a_subject, a_inc_stats, a_cb ){
     var url = "/api/repo/alloc/list/by_subject?";
     if ( a_subject )

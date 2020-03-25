@@ -2640,6 +2640,9 @@ DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::Data
     if ( a_request.has_encrypt() )
         body += ",\"encrypt\":" + to_string( a_request.encrypt() );
 
+    if ( a_request.has_ext() )
+        body += ",\"enxt\":\"" + a_request.ext() + "\"";
+
     if ( a_request.has_check() && a_request.check() )
         body += ",\"check\":true";
 
