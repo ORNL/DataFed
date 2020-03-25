@@ -474,6 +474,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
     }
 }
 
+/*
 bool
 TaskWorker::refreshDataSize( const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext )
 {
@@ -519,6 +520,6 @@ TaskWorker::refreshDataSize( const std::string & a_repo_id, const std::string & 
 
     return false;
 }
-
+*/
 
 }}
