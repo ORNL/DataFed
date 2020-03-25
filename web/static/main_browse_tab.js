@@ -2837,7 +2837,7 @@ function makeBrowserTab(){
                 if ( data.response.length ){
                     for ( i in data.response ) {
                         item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-box",folder:true,key:"shared_user_"+item.uid,scope:"u/"+item.uid,lazy:true,nodrag:true});
+                        data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-person",folder:true,key:"shared_user_"+item.uid,scope:"u/"+item.uid,lazy:true,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
