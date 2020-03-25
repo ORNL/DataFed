@@ -119,7 +119,7 @@ router.get('/run', function (req, res) {
                     console.log("First exception" );
                     // Exception on processing, start roll-back
                     task.step = -task.step;
-                    task.error = err;
+                    task.error = String(err);
                     g_db.task.update( task._id, { step: task.step, error: task.error, ut: Math.floor( Date.now()/1000 ) }, { waitForSync: true });
                 }else{
                     console.log("Exception in rollback" );

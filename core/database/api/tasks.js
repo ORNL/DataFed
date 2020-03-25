@@ -276,6 +276,8 @@ var tasks_func = function() {
             params = Object.assign( params, state.xfr[a_task.step-1] );
             reply = { cmd: g_lib.TC_RAW_DATA_TRANSFER, params: params, step: a_task.step };
         } else if ( a_task.step < a_task.steps - 1 ){
+            xfr = state.xfr[a_task.step-2];
+
             // Update extention, manual/auto
             var rec = g_db.d.document( xfr.files[0].id ), upd_rec = {};
 
@@ -301,7 +303,6 @@ var tasks_func = function() {
             g_db._update( xfr.files[0].id, upd_rec, { keepNull: false });
 
             // Request data size update
-            xfr = state.xfr[a_task.step-2];
             params = {
                 repo_id: xfr.dst_repo_id,
                 repo_path: xfr.dst_repo_path,
