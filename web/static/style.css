@@ -21,12 +21,6 @@ div
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
-/*
-span.fancytree-title
-{
-    font-size: 1rem;
-}*/
-
 .ui-icon
 {
     /*margin:0!important;*/
@@ -90,41 +84,17 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     content: "\e64a";
 }
 
-/*.text
-{
-    background-image:none!important;
-    background: #FFFFFF!important;
-    color: #000000!important;
-    font-size: 1rem!important;
-    font-style: normal!important;
-}*/
-
 .col-flex
 {
     display:flex;
     flex-direction:column;
-    /*height: 100%;*/
-    /*justify-content:center;
-    align-items:stretch;
-    align-content:flex-start;*/
 }
 
 .row-flex
 {
     display:flex;
     flex-direction:row;
-    /*width: 100%;*/
-    /*justify-content:flex-start;
-    align-items:stretch;
-    align-content:flex-start;*/
 }
-
-/*
-.content
-{
-    background: #404040!important;
-}
-*/
 
 .sub-header
 {
@@ -140,7 +110,6 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 .ui-checkboxradio-label
 {
-    /*padding:.15em!important;*/
     padding:0 2px!important;
     margin:0!important;
     border-radius:0!important;
@@ -163,37 +132,7 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 svg text
 {
     font-family: jquery-ui;
- }
-
-/*
-.header
-{
-    background: #004000;
-    color: #ffffff;
 }
-
-.footer
-{
-    background: #004000;
-    color: #ffffff;
-    padding: .5em;
-}
-
-.status-bar
-{
-    color:#00FF00;
-    background:#202020;
-}
-
-.text
-{
-    background-image:none!important;
-    background: #FFFFFF!important;
-    color: #000000!important;
-    font-size: 1rem!important;
-    font-style: normal!important;
-}
-*/
 
 .small {
     margin: 0!important;
@@ -207,12 +146,6 @@ svg text
 
 .data-tree-title
 {
-    /*display:inline-block;
-    min-width:13em;
-    max-width:13em;
-    overflow:hidden;
-    background:#008000;
-    text-overflow: ellipsis;*/
     margin:0!important;
     padding:0!important;
 }
@@ -223,28 +156,18 @@ svg text
     line-height: .85em;
     font-size: .85em;
     margin:-.2em 0 0 0!important;
-    /*
-    background:#800000;
-    padding:0!important;
-    */
 }
 
 .data-tree-id
 {
     display:inline-block;
     min-width:7em;
-    /*margin:0!important;
-    padding:0!important;
-    font-size: .85rem*/;
 }
 
 .data-tree-alias
 {
     display:inline-block;
     min-width:15em;
-    /*margin:0!important;
-    padding:0!important;
-    font-size: .85rem;*/
 }
 
 .panel-sunk
@@ -252,7 +175,6 @@ svg text
     display:inline-block;
     box-shadow: 2px 2px 5px black inset;
     padding:2px;
-    /*background-color:#444;*/
     border-radius:6px;
     color: #aaa;
     vertical-align:middle!important;
@@ -456,37 +378,6 @@ svg text
     margin:0 1em 0 0;
 }
 
-/*
-.perm_table td:last-child{
-    width:50%;
-}
-*/
-
-/*
-.perm_table tr:nth-child(even)
-{
-    background-color: #eee;
-}
-
-.perm_table tr:nth-child(odd)
-{
-    background-color: #fff;
-}*/
-
-/*
-.perm_table td:nth-child(2)
-{
-    text-align:right;
-}
-*/
-
-/*
-td
-{
-    vertical-align:top;
-}
-*/
-
 .no-border
 {
     border:none!important;
@@ -502,32 +393,9 @@ td
     width:100%;
 }
 
-/*
-.ui-selectablexx
-{
-    background-color: #808080;
-}
-
-.ui-selectedxx
-{
-    background-color: #80FF80;
-}
-*/
-
-/*ul.ui-effects-placeholder { width:10px !important; }*/
-
-/*
-.ui-fancytree.fancytree-container { 
-    height: 100%;
-    border: none;
-    font-size: 1rem;
-}
-*/
 .dlg-no-title .ui-dialog-titlebar
 {
     display:none;
-    /*border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;*/
 }
 
 .dlg-no-title .ui-dialog-content
@@ -545,17 +413,9 @@ td
     padding:0.1em 0 0 0!important;
 }
 
-/*
-.dlg-no-title .ui-tabs-nav
-{
-    border-top-right-radius: 0;
-    border-top-left-radius: 0;
-}*/
-
 .ui-selectmenu-button.ui-button
 {
     padding: 1px .5em!important;
-    /*vertical-align:bottom!important;*/
 }
 
 .ui-tabs .ui-tabs-nav .ui-tabs-anchor
@@ -571,9 +431,9 @@ td
 }
 
 /* Hide all jQ dialog close buttons */
-.ui-dialog-titlebar-close {
+/*.ui-dialog-titlebar-close {
     visibility: hidden;
-}
+}*/
 
 .ui-tabs-nav{
     border-top-left-radius: 0!important;
@@ -613,15 +473,7 @@ td
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    /*z-index:600 !important;*/
 }
-
-/*
-.ui-dialog
-{
-    z-index:500!important;
-}
-*/
 
 textarea
 {
