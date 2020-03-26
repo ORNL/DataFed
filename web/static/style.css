@@ -21,12 +21,13 @@ div
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
+/*
 .ui-icon
 {
-    /*margin:0!important;*/
     font-size:1rem!important;
     width:1em;
 }
+*/
 
 span.fancytree-icon {
     margin:0 0 0 .35rem!important;

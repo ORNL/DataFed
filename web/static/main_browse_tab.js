@@ -2899,7 +2899,6 @@ function makeBrowserTab(){
         renderNode: function(ev,data){
             if ( data.node.data.hasBtn ){
                 $(".btn",data.node.li).button();
-                $(".btn-ico",data.node.li).button({showLabel:false});
             }
         },
         activate: function( event, data ) {
