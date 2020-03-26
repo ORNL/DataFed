@@ -30,6 +30,10 @@ span.fancytree-custom-icon {
     margin-left:0!important;
 }
 
+span.fancytree-node > span.fancytree-custom-icon {
+    font-size:1rem!important;
+}
+
 /* Override Fancytree folder icons */
 span.fancytree-node.fancytree-folder > span.fancytree-icon {
     background-image:none;
