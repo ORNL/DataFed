@@ -61,12 +61,12 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
     font-family:"jquery-ui";
-    content: "\e69a";
+    content: "\e684";
 }
 
 span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
     font-family:"jquery-ui";
-    content: "\e69b";
+    content: "\e67e";
 }
 
 /*.text
