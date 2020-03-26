@@ -205,21 +205,15 @@ svg text
     border-radius:4px!important;
 }
 
-/*.btn-icon
+/*
+.btn-icon
 {
     padding: 0px 0px 0px 0px!important;
 }*/
 
-.btn.btn-icon-tiny
+.btn.btn-icon
 {
-    /*height:1.35em;*/
-    padding:.2em 0.1em!important;
-}
-
-
-.btn.btn-icon-tiny span
-{
-    font-size:1em;
+    padding:0.1em 0.1em!important;
 }
 
 .btn.btn-icon-tiny
