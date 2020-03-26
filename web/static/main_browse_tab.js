@@ -2508,15 +2508,15 @@ function makeBrowserTab(){
 
     var tree_source = [
         //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-        {title:"My Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon-person",folder:true,expanded:false,lazy:true},
-        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
-        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
-        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
+        {title:"My Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,expanded:false,lazy:true},
+        {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
+        {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
+        {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
-            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
-            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
+            {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
         ]},
-        {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
+        {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
     ];
 
     $("#data_tree").fancytree({

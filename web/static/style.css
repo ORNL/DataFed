@@ -27,6 +27,10 @@ span.fancytree-title
     font-size: 1rem;
 }*/
 
+.ui-icon
+{
+    margin:0!important;
+}
 
 span.fancytree-custom-icon {
     margin:0!important;
