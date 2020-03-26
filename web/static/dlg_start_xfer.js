@@ -281,8 +281,13 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         width: '600',
         height: 'auto',
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                clearTimeout( in_timer );
+                $(this).dialog('close');
+            }
+        },{
             id: "go_btn",
             text: (a_mode != null?"Start":"Select"),
             click: function() {
@@ -313,7 +318,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                     xfrStart( ids, a_mode, raw_path, ext, encrypt, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
-                            inst.dialog('destroy').remove();
+                            inst.dialog('close');
                             setStatusText( "Task '" + data.task.id + "' created for data transfer." );
                             if ( a_cb ){
                                 a_cb();
@@ -325,14 +330,8 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                 }else{
                     a_cb( raw_path, encrypt );
                     clearTimeout( in_timer );
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                clearTimeout( in_timer );
-                $(this).dialog('destroy').remove();
             }
         }],
         open: function(){
@@ -368,6 +367,9 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                 clearTimeout( in_timer );
                 in_timer = setTimeout( inTimerExpired, 750 );
             });
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

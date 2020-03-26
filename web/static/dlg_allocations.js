@@ -59,7 +59,6 @@ function dlgAllocations(){
             width: 600,
             height: 300,
             resizable: true,
-            closeOnEscape: false,
             buttons: [{
                 text: "Refresh",
                 click: function() {
@@ -71,11 +70,13 @@ function dlgAllocations(){
             },{
                 text: "Close",
                 click: function() {
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }
             }],
             open: function(event,ui){
-
+            },
+            close: function( ev, ui ) {
+                $(this).dialog("destroy").remove();
             }
         };
 

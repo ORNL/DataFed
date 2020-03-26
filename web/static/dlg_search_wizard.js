@@ -220,9 +220,13 @@ function dlgSearchWizard( a_cb ) {
         width: "auto",
         height: 550,
         resizable: false,
-        closeOnEscape: true,
         draggable: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('close');
+            }
+        },{
             text: "Search",
             click: function() {
                 //var scope = SS_MY_DATA | SS_MY_PROJ;
@@ -259,15 +263,10 @@ function dlgSearchWizard( a_cb ) {
                     //console.log( "query:", qry );
 
                     a_cb( qry );
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }catch(e){
                     dlgAlert("Input Error", e );
                 }
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
             }
         }],
         open: function(ev,ui){
@@ -361,6 +360,9 @@ function dlgSearchWizard( a_cb ) {
             $("#set_ctime",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("ct"); });
             $("#set_utime",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("ut"); });
             $("#set_md",dlg_frame).on('click', function(){ $("#termmenu").hide(); setTerm("md.",true); });
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

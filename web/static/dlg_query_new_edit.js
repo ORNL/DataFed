@@ -81,8 +81,12 @@ function dlgQueryNewEdit(a_data,a_cb) {
         width: 500,
         height: 500,
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('close');
+            }
+        },{
             text: "Test",
             click: function() {
                 var qry = parseSearchDialog();
@@ -125,7 +129,7 @@ function dlgQueryNewEdit(a_data,a_cb) {
                     sendQueryUpdate( a_data.id, obj.title, qry, function(ok,data){
                         if ( ok ){
                             a_cb( data.query[0] );
-                            inst.dialog('destroy').remove();
+                            inst.dialog('close');
                         }else{
                             dlgAlert("Query Save Error",data);
                         }
@@ -133,11 +137,6 @@ function dlgQueryNewEdit(a_data,a_cb) {
                 }else{
                     // TODO Add create functionality
                 }
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
             }
         }],
         resize: function(){
@@ -182,6 +181,9 @@ function dlgQueryNewEdit(a_data,a_cb) {
                     }
                 }
             }
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

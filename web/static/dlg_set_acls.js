@@ -465,7 +465,7 @@ function dlgSetACLs( item ){
         viewProj( uid, function(proj){
             if (!proj){
                 dlgAlert("Access Error","Unable to read project data");
-                frame.dialog('destroy').remove();
+                frame.dialog('close');
                 return;
             }
             excl = [proj.owner]; //[proj.owner,"g/members"];
@@ -540,11 +540,10 @@ function dlgSetACLs( item ){
             width: is_coll?600:500,
             height: 450,
             resizable: true,
-            closeOnEscape: false,
             buttons: [{
                 text: "Cancel",
                 click: function() {
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }
             },{
                 text: "Ok",
@@ -558,7 +557,7 @@ function dlgSetACLs( item ){
                         if ( !ok )
                             dlgAlert( "Sharing Update Failed", data );
                         else
-                            x.dialog('destroy').remove();
+                            x.dialog('close');
                     });
                 }
             }],
@@ -606,6 +605,9 @@ function dlgSetACLs( item ){
                         updateSelection( data.node.key, data.node.data.rule );
                     },
                 });
+            },
+            close: function( ev, ui ) {
+                $(this).dialog("destroy").remove();
             }
         };
 

@@ -193,8 +193,12 @@ function dlgDataRelocate( a_src_items, a_dest, a_owner, a_cb) {
             width: 400,
             height: 450,
             resizable: true,
-            closeOnEscape: false,
             buttons: [{
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog('close');
+                }
+            },{
                 id: "go_btn",
                 text: "Relocate",
                 click: function() {
@@ -202,15 +206,10 @@ function dlgDataRelocate( a_src_items, a_dest, a_owner, a_cb) {
                         if ( !ok ){
                             dlgAlert("Data Relocate Error",data);
                         }else{
-                            $(this).dialog('destroy').remove();
+                            $(this).dialog('close');
                             dlgAlert("Data Relocate","Relocation process initiated.");
                         }
                     });
-                }
-            },{
-                text: "Cancel",
-                click: function() {
-                    $(this).dialog('destroy').remove();
                 }
             }],
             open: function(ev,ui){
@@ -220,6 +219,9 @@ function dlgDataRelocate( a_src_items, a_dest, a_owner, a_cb) {
                     refresh(false);
                 });
                 $("#go_btn").button("disable");
+            },
+            close: function( ev, ui ) {
+                $(this).dialog("destroy").remove();
             }
         };
     

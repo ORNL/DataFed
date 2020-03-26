@@ -25,21 +25,23 @@ function dlgOwnerChangeConfirm( a_cur_owner, a_new_owner, a_reply, cb ){
         width: '32em',
         height: 'auto',
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
             text: "Cancel",
             click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         },{
             text: "Ok",
             click: function(){
                 cb( $("select",frame).val() );
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         }],
         open: function(event,ui){
             $("select",frame).selectmenu({width: 'auto' });
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

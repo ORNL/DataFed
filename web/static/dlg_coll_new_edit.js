@@ -22,12 +22,11 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
         width: 500,
         height: 'auto',
         resizable: true,
-        closeOnEscape: false,
         position:{ my: "left", at: "center+10", of: "body" },
         buttons: [{
             text: "Cancel",
             click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         },{
             text: a_data?"Update":"Create",
@@ -44,7 +43,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                     getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
 
                     if ( Object.keys(obj).length === 0 ){
-                        $(this).dialog('destroy').remove();
+                        $(this).dialog('close');
                         return;
                     }
 
@@ -66,7 +65,7 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
 
                 _asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
-                        inst.dialog('destroy').remove();
+                        inst.dialog('close');
                         if ( a_cb )
                             a_cb(data.coll[0]);
                     } else {
@@ -107,6 +106,9 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 $("#coll",frame).val(a_parent?a_parent:"");
                 $("#topic",frame).val("");
             }
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

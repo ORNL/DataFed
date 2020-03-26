@@ -58,11 +58,10 @@ function dlgSettings( a_cb ){
         width: 450,
         height: 500,
         resizable: true,
-        closeOnEscape: true,
         buttons: [{
             text: "Cancel",
             click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         },{
             text: "Save",
@@ -128,7 +127,7 @@ function dlgSettings( a_cb ){
                         if ( a_cb )
                             a_cb( reload );
 
-                        inst.dialog('destroy').remove();
+                        inst.dialog('close');
                     }
                 }
 
@@ -167,6 +166,9 @@ function dlgSettings( a_cb ){
             $("#task-poll-hours",frame).val(g_opts.task_hist).selectmenu({width:150});
             $("#def-alloc",frame).selectmenu({width:225});
             $("#new_email",frame).val( g_user.email );
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

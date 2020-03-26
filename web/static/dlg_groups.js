@@ -35,7 +35,6 @@ function makeDlgGroups(){
             width: 500,
             height: 400,
             resizable: true,
-            closeOnEscape: false,
             buttons: [{
                 text: select?"Ok":"Close",
                 click: function() {
@@ -50,7 +49,7 @@ function makeDlgGroups(){
                     } else if ( cb )
                         cb();
 
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }
             }],
             open: function(event,ui){
@@ -106,6 +105,9 @@ function makeDlgGroups(){
                     }
                     });
                 });
+            },
+            close: function( ev, ui ) {
+                $(this).dialog("destroy").remove();
             }
         };
         if ( select ){

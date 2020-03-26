@@ -27,22 +27,24 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         width: 400,
         height: 500,
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('close');
+            }
+        },{
             id:"ok_btn",
             text: "Ok",
             click: function() {
                 cb( sel_users );
-                $(this).dialog('destroy').remove();
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         }],
         open: function(event,ui){
             $("#ok_btn").button("disable");
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

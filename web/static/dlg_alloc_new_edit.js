@@ -52,8 +52,12 @@ function makeDlAllocNewEdit(){
             width: 400,
             height: 'auto',
             resizable: true,
-            closeOnEscape: false,
             buttons: [{
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog('close');
+                }
+            },{
                 text: (a_alloc?"Update":"Add"),
                 click: function() {
                     if ( !a_alloc ){
@@ -100,7 +104,7 @@ function makeDlAllocNewEdit(){
                         allocSet( a_repo, inst.alloc.id, data_limit, rec_limit, function( ok, data ){
                             if ( ok ){
                                 a_cb( inst.alloc );
-                                dlg_inst.dialog('destroy').remove();
+                                dlg_inst.dialog('close');
                             }else{
                                 dlgAlert("Allocation Error","Allocation update failed ("+data+").");
                             }
@@ -109,7 +113,7 @@ function makeDlAllocNewEdit(){
                         allocCreate( a_repo, inst.alloc.id, data_limit, rec_limit, function( ok, data ){
                             if ( ok ){
                                 a_cb( inst.alloc );
-                                dlg_inst.dialog('destroy').remove();
+                                dlg_inst.dialog('close');
                             }else{
                                 dlgAlert("Allocation Error","Allocation creation failed ("+data+").");
                             }
@@ -117,13 +121,11 @@ function makeDlAllocNewEdit(){
                     }
 
                 }
-            },{
-                text: "Cancel",
-                click: function() {
-                    $(this).dialog('destroy').remove();
-                }
             }],
             open: function(event,ui){
+            },
+            close: function( ev, ui ) {
+                $(this).dialog("destroy").remove();
             }
         };
 

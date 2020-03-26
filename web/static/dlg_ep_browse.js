@@ -103,8 +103,13 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
         width: '500',
         height: '400',
         resizable: true,
-        closeOnEscape: true,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                clearTimeout( path_in_timer );
+                $(this).dialog('close');
+            }
+        },{
             id: "sel_btn",
             text: "Select",
             click: function() {
@@ -113,15 +118,9 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                     var node = $.ui.fancytree.getTree("#file_tree").activeNode;
                     if ( node ){
                         a_cb( path + (path.charAt(path.length-1) == "/"?"":"/") + (node.key=="."?"":node.key) );
-                        $(this).dialog('destroy').remove();
+                        $(this).dialog('close');
                     }
                 }
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                clearTimeout( path_in_timer );
-                $(this).dialog('destroy').remove();
             }
         }],
         open: function(){
@@ -159,7 +158,9 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                     reloadTree( path );
                 }, 1000 );
             });
-
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

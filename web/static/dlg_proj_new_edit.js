@@ -54,11 +54,10 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
         height: 550,
         position:{ my: "left", at: "center+10", of: "body" },
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
             text: "Cancel",
             click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         },{
             text: a_data?"Update":"Create",
@@ -176,7 +175,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         if ( a_cb )
                             a_cb(result);
 
-                        inst.dialog('destroy').remove();
+                        inst.dialog('close');
                     }
                 }
 
@@ -332,6 +331,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             });
 
             $(".btn",frame).button();
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

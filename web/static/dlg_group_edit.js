@@ -86,8 +86,13 @@ function makeDlgGroupEdit(){
             width: 600,
             height: 450,
             resizable: true,
-            closeOnEscape: false,
             buttons: [{
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog('close');
+                    cb();
+                }
+            },{
                 text: "Ok",
                 click: function() {
                     inst.group.gid = $("#gid",inst.frame).val();
@@ -125,7 +130,7 @@ function makeDlgGroupEdit(){
                                 dlgAlert( "Server Error", data );
                             } else {
                                 //console.log( "data:", data );
-                                dlg_inst.dialog('destroy').remove();
+                                dlg_inst.dialog('close');
                                 cb( data );
                             }
                         });
@@ -135,21 +140,17 @@ function makeDlgGroupEdit(){
                                 dlgAlert( "Server Error", data );
                             } else {
                                 //console.log( "data:", data );
-                                dlg_inst.dialog('destroy').remove();
+                                dlg_inst.dialog('close');
                                 cb( data );
                             }
                         });
                     }
                 }
-            },{
-                text: "Cancel",
-                click: function() {
-                    $(this).dialog('destroy').remove();
-                    cb();
-                }
             }],
             open: function(event,ui){
-                
+            },
+            close: function( ev, ui ) {
+                $(this).dialog("destroy").remove();
             }
         };
 

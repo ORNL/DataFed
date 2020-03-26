@@ -92,8 +92,12 @@ function dlgPickTopic( a_cb ){
         width: 400,
         height: 500,
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('close');
+            }
+        },{
             id: "sel_btn",
             text: "Select",
             click: function() {
@@ -112,16 +116,14 @@ function dlgPickTopic( a_cb ){
 
                     a_cb( topic.toLowerCase() );
                 }
-                $(this).dialog('destroy').remove();
-            }
-        },{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         }],
         open: function(event,ui){
             $("#sel_btn").button("disable");
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

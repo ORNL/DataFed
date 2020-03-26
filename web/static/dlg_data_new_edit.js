@@ -203,12 +203,10 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         resizeStop: function(ev,ui){
             $("#dlg-tabs",frame).tabs("refresh");
         },
-        closeOnEscape: false,
         buttons: [{
             text: "Cancel",
             click: function() {
-                jsoned.destroy();
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         },{
             id: "do_it",
@@ -294,8 +292,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     }
 
                     if ( Object.keys(obj).length === 0 ){
-                        jsoned.destroy();
-                        $(this).dialog('destroy').remove();
+                        $(this).dialog('close');
                         return;
                     }
 
@@ -352,8 +349,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                                 if ( ok2 ){
                                     setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
                                     //dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
-                                    jsoned.destroy();
-                                    inst.dialog('destroy').remove();
+                                    inst.dialog('close');
                                     if ( a_cb )
                                         a_cb(data.data[0],obj.parentId);
                                 }else{
@@ -361,8 +357,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                                 }
                             });
                         }else{
-                            jsoned.destroy();
-                            inst.dialog('destroy').remove();
+                            inst.dialog('close');
                             if ( a_cb )
                                 a_cb(data.data[0],obj.parentId);
                         }
@@ -532,6 +527,10 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             }
 
             jsoned.resize();
+        },
+        close: function( ev, ui ) {
+            jsoned.destroy();
+            $(this).dialog("destroy").remove();
         }
     };
 

@@ -85,12 +85,11 @@ function dlgRepoManage(){
         width: 500,
         height: 400,
         resizable: true,
-        closeOnEscape: false,
         buttons: [{
             text: "Close",
             click: function() {
 
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         }],
         open: function(event,ui){
@@ -155,6 +154,9 @@ function dlgRepoManage(){
                     }
                 });
             });
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

@@ -291,13 +291,12 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         width: 750,
         height: 'auto',
         resizable: true,
-        closeOnEscape: true,
         buttons: [{
             text: a_repo_id?"Close":"Cancel",
             click: function() {
                 if ( a_repo_id && a_cb )
                     a_cb();
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
             }
         },{
             id: 'apply_btn',
@@ -396,7 +395,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     repoCreate( obj, function( ok, data ){
                         if ( ok ){
                             if (a_cb) a_cb();
-                            inst.dialog('destroy').remove();
+                            inst.dialog('close');
                         }else{
                             dlgAlert( "Repo Create Failed", data );
                         }
@@ -410,6 +409,9 @@ function dlgRepoEdit( a_repo_id, a_cb ){
             }
             var widget = frame.dialog( "widget" );
             $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 

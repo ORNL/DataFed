@@ -757,14 +757,17 @@ function setStatusText( text, err ){
 
 function dlgConfirmChoice( title, msg, btns, cb ) {
     var div = $(document.createElement('div'));
-    div.addClass("fubar");
     div.html( msg );
+
     var options = {
         title: title,
         modal: true,
         buttons: [],
         open: function(ev,ui){
             $(':button',div.parent()).blur();
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
         }
     };
 
@@ -775,7 +778,7 @@ function dlgConfirmChoice( title, msg, btns, cb ) {
                 text: btns[idx],
                 click: function() {
                     cb( idx );
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }
             });
         })(i);
@@ -793,7 +796,10 @@ function dlgSingleEntry( title, label, btns, cb ) {
         title: title,
         width: 'auto',
         modal: true,
-        buttons: []
+        buttons: [],
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
+        }
     };
 
     for ( var i in btns ){
@@ -803,7 +809,7 @@ function dlgSingleEntry( title, label, btns, cb ) {
                 text: btns[idx],
                 click: function() {
                     cb( idx, $("#dlg_se_input",div).val() );
-                    $(this).dialog('destroy').remove();
+                    $(this).dialog('close');
                 }
             });
         })(i);
@@ -821,11 +827,14 @@ function dlgAlert( title, msg, cb ) {
         buttons: [{
             text: "Ok",
             click: function() {
-                $(this).dialog('destroy').remove();
+                $(this).dialog('close');
                 if ( cb )
                     cb();
             }
-        }]
+        }],
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
+        }
     };
 
     div.dialog( options );
