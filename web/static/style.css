@@ -21,16 +21,19 @@ div
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
+/*
 span.fancytree-title
 {
     font-size: 1rem;
-}
+}*/
 
+/*
 span.fancytree-custom-icon {
     margin-left:0!important;
-}
+}*/
 
-span.fancytree-node > span.fancytree-custom-icon {
+.ui.fancytree-container
+{
     font-size:1rem!important;
 }
 
