@@ -212,8 +212,8 @@ svg text
 
 .btn.btn-icon-tiny
 {
-    height:1.35em;
-    padding:0 0.1em!important;
+    /*height:1.35em;*/
+    padding:0 0.2em 0.15em 0.15em!important;
 }
 
 .btn.btn-icon-tiny span
