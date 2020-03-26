@@ -30,7 +30,7 @@ span.fancytree-custom-icon {
     margin-left:0!important;
 }
 
-/*
+/* Override Fancytree folder icons */
 span.fancytree-node.fancytree-folder > span.fancytree-icon {
     background-image:none;
 }
@@ -47,7 +47,7 @@ span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
 span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
     font-family:"jquery-ui";
     content: "\e69b";
-}*/
+}
 
 
 /*.text
