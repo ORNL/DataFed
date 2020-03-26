@@ -2694,7 +2694,7 @@ function makeBrowserTab(){
                 data.node.resetLazy();
             }
         },
-        icon: function( ev, data ) {
+        /*icon: function( ev, data ) {
             if ( data.node.isFolder() && data.node.key.startsWith( "c/" )) {
                 console.log("ft icon cb");
                 if ( data.node.isExpanded())
@@ -2702,7 +2702,7 @@ function makeBrowserTab(){
                 else
                     return "ui-icon ui-icon-folder";
             }
-        },
+        },*/
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = [
