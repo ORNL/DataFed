@@ -31,6 +31,7 @@ span.fancytree-title
 {
     /*margin:0!important;*/
     font-size:1rem!important;
+    width:1em;
 }
 
 span.fancytree-icon {
