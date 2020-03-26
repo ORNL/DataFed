@@ -2696,11 +2696,13 @@ function makeBrowserTab(){
         },
         icon: function( ev, data ) {
             if ( data.node.isFolder() && data.node.key.startsWith( "c/" )) {
-                console.log("ft icon cb");
-                if ( data.node.isExpanded())
+                if ( data.node.isExpanded()){
+                    console.log("ft icon - expanded");
                     return "ui-icon ui-icon-folder-open";
-                else
+                }else{
+                    console.log("ft icon - closed");
                     return "ui-icon ui-icon-folder";
+                }
             }
         },
         lazyLoad: function( event, data ) {
