@@ -30,6 +30,14 @@
     background: #104010!important;
 }
 
+span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
+    color: #808080;
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
+    color: #808080;
+}
+
 .content
 {
     background: #404040!important;

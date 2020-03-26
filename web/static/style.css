@@ -79,14 +79,14 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
     font-family:"jquery-ui";
+    font-size:.9rem!important;
     content: "\e647";
-    color: #808080;
 }
 
 span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
     font-family:"jquery-ui";
+    font-size:.9rem!important;
     content: "\e64a";
-    color: #808080;
 }
 
 /*.text

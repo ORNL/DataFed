@@ -30,6 +30,14 @@
 	background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
 }
 
+span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
+    color: #a0a0a0;
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
+    color: #a0a0a0;
+}
+
 .content
 {
     background: #f0f0f0!important;
