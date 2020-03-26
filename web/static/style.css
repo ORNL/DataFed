@@ -50,6 +50,25 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 }
 
 
+/* Override Fancytree expander icons */
+span.fancytree-node.fancytree-folder > span.fancytree-expander {
+    background-image:none;
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander {
+    background-image:none;
+}
+
+span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
+    font-family:"jquery-ui";
+    content: "\e69a";
+}
+
+span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
+    font-family:"jquery-ui";
+    content: "\e69b";
+}
+
 /*.text
 {
     background-image:none!important;
