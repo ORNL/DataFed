@@ -43,7 +43,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 <div id='working_data'>\
                     <table class='form-table'>\
                         <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon'><span class='ui-icon ui-icon-file'></span></button></tr>\
+                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
                         <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                     </table>\
                 </div>\
