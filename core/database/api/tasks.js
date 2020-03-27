@@ -464,7 +464,7 @@ var tasks_func = function() {
                 a_task.step = 2;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
                 // Fall-through to next step
-            }, ["loc"], ["task"] );
+            }, [], ["loc","task"] );
         }
 
         if ( a_task.step > 1 && a_task.step < a_task.steps - 1 ){
