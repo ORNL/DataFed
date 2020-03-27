@@ -2950,9 +2950,6 @@ function makeBrowserTab(){
         click: function(event, data) {
             console.log("click",data.node.key);
 
-            if ( data.targetType == "icon" && data.node.isFolder() ){
-                data.node.toggleExpanded();
-            }
 
             if ( inst.dragging ){ // Suppress click processing on aborted drag
                 console.log("aborted drag");
@@ -3012,6 +3009,10 @@ function makeBrowserTab(){
                         inst.selectScope = data.node;
                         inst.treeSelectRange(inst.data_tree,data.node);
                     }else{
+                        if ( data.targetType == "icon" && data.node.isFolder() ){
+                            data.node.toggleExpanded();
+                        }
+
                         inst.data_tree.selectAll(false);
                         inst.selectScope = data.node;
                         inst.treeSelectNode(data.node);
@@ -3380,13 +3381,14 @@ function makeBrowserTab(){
             {title: "Actions", cmd: "actions", children: [
                 {title: "Edit", action: inst.actionEditSelected, cmd: "edit" },
                 //{title: "Duplicate", cmd: "dup" },
-                {title: "Delete", action: inst.actionDeleteSelected, cmd: "del" },
                 {title: "Sharing", action: inst.actionShareSelected, cmd: "share" },
-                {title: "Lock", action: inst.actionLockSelected, cmd: "lock" },
-                {title: "Unlock", action: inst.actionUnlockSelected, cmd: "unlock" },
-                {title: "Get", action: inst.actionDataGet, cmd: "get" },
-                {title: "Put", action: inst.actionDataPut, cmd: "put" },
-                {title: "Graph", action: inst.actionDepGraph, cmd: "graph" }
+                //{title: "Lock", action: inst.actionLockSelected, cmd: "lock" },
+                //{title: "Unlock", action: inst.actionUnlockSelected, cmd: "unlock" },
+                {title: "Download", action: inst.actionDataGet, cmd: "get" },
+                {title: "Upload", action: inst.actionDataPut, cmd: "put" },
+                {title: "Provenance", action: inst.actionDepGraph, cmd: "graph" },
+                {title: "----"},
+                {title: "Delete", action: inst.actionDeleteSelected, cmd: "del" }
                 ]},
             {title: "New", cmd:"new",children: [
                 {title: "Data", action: inst.actionNewData, cmd: "newd" },
@@ -3401,12 +3403,18 @@ function makeBrowserTab(){
             ],
         beforeOpen: function( ev, ui ){
             ev.stopPropagation();
+
+            // Ignore context menu over paging nodes
+            var node = $.ui.fancytree.getNode( ev.originalEvent );
+            if ( node && node.data.hasBtn )
+                return false;
+
             // Select the target before menu is shown
             if ( inst.hoverTimer ){
                 clearTimeout(inst.hoverTimer);
                 inst.hoverTimer = null;
             }
-            //inst.hoverNav = true;
+
             ui.target.click();
         }
     };
