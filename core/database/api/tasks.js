@@ -487,6 +487,9 @@ var tasks_func = function() {
                         // Init record move
                         obj.recMoveInit( xfr.files, state.dst_repo_id );
 
+                        // TEST ONLY
+                        //throw [g_lib.ERR_INTERNAL_FAULT,"TEST ONLY ERROR"];
+
                         // Update task step
                         a_task.step += 1;
                         g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
@@ -849,7 +852,6 @@ var tasks_func = function() {
             obj._deleteDataRecord( result.http_data[i].id );
         }
 
-        // Mark and schedule records for delete
         if ( result.glob_data.length ){
             console.log("sched data del task");
 
@@ -857,7 +859,6 @@ var tasks_func = function() {
 
             result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del.length + 1, state );
 
-            // Records with managed data must be marked as deleted, but not actually deleted
             for ( i in result.glob_data ){
                 obj._deleteDataRecord( result.glob_data[i].id );
             }
@@ -1427,8 +1428,12 @@ var tasks_func = function() {
     obj.recMoveFini = function( a_data ) {
         var data, loc, new_loc, alloc, rec, coll;
 
+        console.log("recMoveFini" );
+
         for ( var i in a_data ){
             data = a_data[i];
+
+            console.log("recMoveFini, id:", data.id );
 
             loc = g_db.loc.firstExample({ _from: data.id });
 
@@ -1469,12 +1474,16 @@ var tasks_func = function() {
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (cur)!" ];
 
+            console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
+
             g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - data.size });
 
             // Update new allocation stats
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (new)!" ];
+
+            console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count + 1, data_size: alloc.data_size + data.size });
 
