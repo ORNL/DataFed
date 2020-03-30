@@ -882,7 +882,7 @@ def _collUpdate( coll_id, title, alias, description, topic, context):
     optional.
     '''
 
-    reply = _capi.collectionUpdate( _resolve_coll_id( coll_id, context = context ), alias = alias, description = description, topic = topic, context = context )
+    reply = _capi.collectionUpdate( _resolve_coll_id( coll_id, context = context ), title = title, alias = alias, description = description, topic = topic, context = context )
     _generic_reply_handler( reply, _print_coll )
 
 
