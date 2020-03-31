@@ -1411,7 +1411,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
 
     if (( i = obj.find( "meta" )) != obj.end( ))
     {
-        id = parseSearchMetadata( i->second.asString() );
+        meta = parseSearchMetadata( i->second.asString() );
     }
 
     if ( meta.size() && id.size() )

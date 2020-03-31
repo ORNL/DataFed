@@ -333,6 +333,8 @@ class _AliasedGroupRoot( _AliasedGroup ):
             return _collItemsList
         elif cmd_name == "cd":
             return _wc
+        elif cmd_name == "?":
+            return _help_cli
 
         return super().get_command( ctx, cmd_name )
 
@@ -831,6 +833,7 @@ def _coll():
 @_coll.command(name='view')
 @click.argument("coll_id", metavar="ID")
 @_global_context_options
+@_global_output_options
 def _collView( coll_id, context ):
     '''
     View collection information. Displays collection title, description, and
@@ -850,6 +853,7 @@ def _collView( coll_id, context ):
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("--topic", type=str, required=False, help="Publish the collection to the provided topic.")
 @_global_context_options
+@_global_output_options
 def _collCreate( title, alias, description, topic, parent, context ):
     '''
     Create a new collection. The collection 'title' is required, but all
@@ -875,6 +879,7 @@ def _collCreate( title, alias, description, topic, parent, context ):
 @click.option("-d","--description",type=str,required=False,help="Description text")
 @click.option("--topic", type=str, required=False, help="Publish the collection under the provided topic.")
 @_global_context_options
+@_global_output_options
 def _collUpdate( coll_id, title, alias, description, topic, context):
     '''
     Update an existing collection. The collection ID is required and can be
@@ -1186,6 +1191,7 @@ def _projectList( owned, admin, member, offset, count ):
 
 @_project.command(name='view')
 @click.argument("proj_id", metavar="ID")
+@_global_output_options
 def _projectView( proj_id ):
     '''
     View project information. Current user must have a role (owner, manager, or
@@ -1682,38 +1688,32 @@ def _print_endpoints( message ):
 
 def _print_data( message ):
     for dr in message.data:
-        click.echo( "{:<20} {:<50}".format('ID: ', dr.id) + '\n' +
-                    "{:<20} {:<50}".format('Title: ', dr.title) + '\n' +
-                    "{:<20} {:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ) + '\n' +
-                    "{:<20} {:<50}".format('Keywords: ', dr.keyw if dr.keyw else "(none)" ) + '\n' +
-                    "{:<20} {:<50}".format('Locked: ', str(dr.locked)))
+        click.echo( "{:<15}{:<50}".format('ID: ', dr.id))
+        click.echo( "{:<15}{:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ))
+        _wrap_text( dr.title, "Title:", 15 )
+        _wrap_text( dr.keyw, "Keywords:", 15 )
 
         if dr.data_url:
-            click.echo("{:<20} {:<50}".format('DOI No.: ', dr.doi))
-            click.echo("{:<20} {:<50}".format('Data URL: ', dr.data_url))
+            click.echo("{:<15}{:<50}".format('DOI No.: ', dr.doi))
+            click.echo("{:<15}{:<50}".format('Data URL: ', dr.data_url))
         else:
-            click.echo("{:<20} {:<50}".format('Data Size: ', _capi.sizeToStr(dr.size)) + '\n' +
-                    "{:<20} {:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
-                    "{:<20} {:<50}".format('Source: ', dr.source if dr.source else '(none)' ))
+            click.echo("{:<15}{:<50}".format('Data Size: ', _capi.sizeToStr(dr.size)) + '\n' +
+                    "{:<15}{:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
+                    "{:<15}{:<50}".format('Source: ', dr.source if dr.source else '(none)' ))
             if dr.ext_auto:
-                click.echo( "{:<20} {:<50}".format('Extension: ', '(auto)'))
+                click.echo( "{:<15}{:<50}".format('Extension: ', '(auto)'))
             else:
-                click.echo( "{:<20} {:<50}".format('Extension: ', dr.ext if dr.ext else '(not set)' ))
+                click.echo( "{:<15}{:<50}".format('Extension: ', dr.ext if dr.ext else '(not set)' ))
 
-        click.echo( "{:<20} {:<50}".format('Owner: ', dr.owner[2:]) + '\n' +
-                    "{:<20} {:<50}".format('Creator: ', dr.creator[2:]) + '\n' +
-                    "{:<20} {:<50}".format('Created: ', _capi.timestampToStr(dr.ct)) + '\n' +
-                    "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(dr.ut)))
+        click.echo( "{:<15}{:<50}".format('Owner: ', dr.owner[2:]) + '\n' +
+                    "{:<15}{:<50}".format('Creator: ', dr.creator[2:]) + '\n' +
+                    "{:<15}{:<50}".format('Created: ', _capi.timestampToStr(dr.ct)) + '\n' +
+                    "{:<15}{:<50}".format('Updated: ', _capi.timestampToStr(dr.ut)))
 
-        w,h = shutil.get_terminal_size((80, 20))
-
-        wrapper = textwrap.TextWrapper(initial_indent='  ',subsequent_indent='  ',width=w)
         if len(dr.desc) > 200 and _verbosity < 2:
-            click.echo( "Description:\n\n" + wrapper.fill( dr.desc[:200] + '... (more)' ) + '\n' )
-        elif len(dr.desc) > 0:
-            click.echo( "Description:\n\n" + wrapper.fill( dr.desc ) + '\n')
+            _wrap_text( dr.desc[:200] + '... [more]', "Description:", 15, True )
         else:
-            click.echo( "{:<20} {:<50}".format('Description: ', '(none)'))
+            _wrap_text( dr.desc, "Description:", 15 )
 
         if _verbosity == 2:
             if dr.metadata:
@@ -1723,11 +1723,11 @@ def _print_data( message ):
                 click.echo( "\n" )
                 # TODO: Paging function?
             elif not dr.metadata:
-                click.echo("{:<20} {:<50}".format('Metadata: ', "(none)"))
+                click.echo("{:<15}{:<50}".format('Metadata: ', "(none)"))
             if not dr.deps:
-                click.echo("{:<20} {:<50}".format('Dependencies: ', '(none)'))
+                click.echo("{:<15}{:<50}".format('Dependencies: ', '(none)'))
             elif dr.deps:
-                click.echo("{:<20}".format('Dependencies:\n'))
+                click.echo("{:<15}".format('Dependencies:\n'))
                 _print_deps(dr)
 
 
@@ -1745,23 +1745,19 @@ def _print_batch( message ):
 
 def _print_coll( message ):
     for coll in message.coll:
-        click.echo( "{:<20} {:<50}".format('ID: ', coll.id) + '\n' +
-                    "{:<20} {:<50}".format('Title: ', coll.title) + '\n' +
-                    "{:<20} {:<50}".format('Alias: ', coll.alias if coll.alias else "(none)") + '\n' +
-                    "{:<20} {:<50}".format('Topic: ', coll.topic if coll.topic else '(not published)') + '\n' +
-                    "{:<20} {:<50}".format('Owner: ', coll.owner[2:]) + '\n' +
-                    "{:<20} {:<50}".format('Created: ', _capi.timestampToStr(coll.ct)) + '\n' +
-                    "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(coll.ut)))
+        click.echo( "{:<15}{:<50}".format('ID: ', coll.id))
+        click.echo( "{:<15}{:<50}".format('Alias: ', coll.alias if coll.alias else "(none)" ))
+        _wrap_text( coll.title, "Title:", 15 )
 
-        w,h = shutil.get_terminal_size((80, 20))
+        click.echo( "{:<15}{:<50}".format('Topic: ', coll.topic if coll.topic else '(not published)') + '\n' +
+                    "{:<15}{:<50}".format('Owner: ', coll.owner[2:]) + '\n' +
+                    "{:<15}{:<50}".format('Created: ', _capi.timestampToStr(coll.ct)) + '\n' +
+                    "{:<15}{:<50}".format('Updated: ', _capi.timestampToStr(coll.ut)))
 
-        wrapper = textwrap.TextWrapper(initial_indent='  ',subsequent_indent='  ',width=w)
         if len(coll.desc) > 200 and _verbosity < 2:
-            click.echo( "Description:\n\n" + wrapper.fill( coll.desc[:200] + '... (more)' ) + '\n')
-        elif len(coll.desc) > 0:
-            click.echo( "Description:\n\n" + wrapper.fill( coll.desc ) + '\n')
+            _wrap_text( coll.desc[:200] + '... [more]', "Description:", 15, True )
         else:
-            click.echo( "{:<20} {:<50}".format('Description: ', '(none)'))
+            _wrap_text( coll.desc, "Description:", 15 )
 
 def _print_deps( dr ):
     types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
@@ -1831,54 +1827,50 @@ def _print_task_array( message ):
 def _print_user( message ):
     for usr in message.user:
         if _verbosity >= 0:
-            click.echo("{:<20} {:<50}".format('User ID: ', usr.uid) + '\n' +
-                       "{:<20} {:<50}".format('Name: ', usr.name) + '\n' +
-                       "{:<20} {:<50}".format('Email: ', usr.email))
-
+            click.echo("{:<10} {:<50}".format('User ID: ', usr.uid) + '\n' +
+                       "{:<10} {:<50}".format('Name: ', usr.name) + '\n' +
+                       "{:<10} {:<50}".format('Email: ', usr.email))
 
 def _print_proj( message ):
     for proj in message.proj:
         #for i in proj.member: members.append(i)
 
-        w,h = shutil.get_terminal_size((80, 20))
+        #w,h = shutil.get_terminal_size((80, 20))
 
-        click.echo( "{:<20} {:<50}".format('ID: ', proj.id) + '\n' +
-                    "{:<20} {:<50}".format('Title: ', proj.title) + '\n' +
-                    "{:<20} {:<50}".format('Owner: ', proj.owner[2:]) + '\n' +
-                    "{:<20} {:<50}".format('Created: ', _capi.timestampToStr(proj.ct)) + '\n' +
-                    "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(proj.ut)))
+        click.echo( "{:<14} {:<50}".format('ID: ', proj.id) + '\n' +
+                    "{:<14} {:<50}".format('Title: ', proj.title) + '\n' +
+                    "{:<14} {:<50}".format('Owner: ', proj.owner[2:]) + '\n' +
+                    "{:<14} {:<50}".format('Created: ', _capi.timestampToStr(proj.ct)) + '\n' +
+                    "{:<14} {:<50}".format('Updated: ', _capi.timestampToStr(proj.ut)))
 
         if _verbosity == 2:
             if len(proj.admin):
                 text = _arrayToCSV(proj.admin,2)
-                wrapper = textwrap.TextWrapper(subsequent_indent=' '*21,width=w-21)
-                click.echo( "Admins:              " + wrapper.fill( text ))
+                _wrap_text( text, "Admins:", 15 )
             else:
-                click.echo("{:<20} (none)".format('Admin(s): '))
+                click.echo("{:<14} (none)".format('Admin(s): '))
 
             if len(proj.member):
                 text = _arrayToCSV(proj.member,2)
-                wrapper = textwrap.TextWrapper(subsequent_indent=' '*21,width=w-21)
-                click.echo( "Members:             " + wrapper.fill( text ))
+                _wrap_text( text, "Members:", 15 )
             else:
-                click.echo("{:<20} (none)".format('Admin(s): '))
+                click.echo("{:<14} (none)".format('Admin(s): '))
 
-            if proj.sub_repo:
-                click.echo("{:<20} {} (sub-alloc), {} total, {} used".format("Allocation:",proj.sub_repo, _capi.sizeToStr(proj.sub_alloc),_capi.sizeToStr(proj.sub_usage)))
-            elif len(proj.alloc) > 0:
+            if len(proj.alloc) > 0:
+                first = True
                 for alloc in proj.alloc:
-                    click.echo("{:<20} {}, {} total, {} used".format("Allocation:",alloc.repo, _capi.sizeToStr(alloc.max_size),_capi.sizeToStr(alloc.tot_size)))
+                    if first == True:
+                        first = False
+                        click.echo("{:<14} {}, {} total, {} used".format("Allocations:",alloc.repo, _capi.sizeToStr(alloc.data_limit),_capi.sizeToStr(alloc.data_size)))
+                    else:
+                        click.echo("{:<14} {}, {} total, {} used".format("",alloc.repo, _capi.sizeToStr(alloc.data_limit),_capi.sizeToStr(alloc.data_size)))
             else:
-                click.echo("{:<20} (none)".format("Allocation:"))
-
-        wrapper = textwrap.TextWrapper(initial_indent='  ',subsequent_indent='  ',width=w)
+                click.echo("{:<14} (none)".format("Allocations:"))
 
         if len(proj.desc) > 200 and _verbosity < 2:
-            click.echo( "Description:\n\n" + wrapper.fill( proj.desc[:200] + '... (more)' ) + '\n' )
-        elif len(proj.desc) > 0:
-            click.echo( "Description:\n\n" + wrapper.fill( proj.desc ) + '\n')
+            _wrap_text( proj.desc[:200] + '... [more]', "Description:", 15, True )
         else:
-            click.echo( "{:<20} {:<50}".format('Description: ', '(none)'))
+            _wrap_text( proj.desc, "Description:", 15 )
 
 def _print_path( message ):
     ind = 0
@@ -1915,6 +1907,28 @@ def _print_query( message ):
         click.echo( "{:<20} {:<50}\n".format('Owner: ', q.owner[2:]) +
                     "{:<20} {:<50}\n".format('Created: ', _capi.timestampToStr(q.ct)) +
                     "{:<20} {:<50}\n".format('Updated: ', _capi.timestampToStr(q.ut)))
+
+def _wrap_text( text, prefix, indent, compact = False ):
+    if len(text) == 0:
+        click.echo( "{0:<{1}}{2:<50}".format(prefix, indent, "(none)" ))
+
+    w,h = shutil.get_terminal_size((80, 20))
+    if len(prefix) < indent:
+        prefix = prefix + ' '*(indent-len(prefix))
+
+    wrapper = textwrap.TextWrapper(initial_indent=prefix,subsequent_indent=' '*indent,width=w)
+
+    if compact:
+        click.echo( wrapper.fill( text ))
+    else:
+        para = text.splitlines()
+        first = True
+
+        for p in para:
+            click.echo( wrapper.fill( p ))
+            if first == True:
+                wrapper.initial_indent = ' '*indent
+                first = False
 
 def _scopeToStr( scope ):
     s = scope["scope"]
