@@ -133,6 +133,7 @@ function recordCreate( client, record, results ){
 
     data.new.id = data.new._id;
     data.new.parent_id = parent_id;
+    data.new.repo_id = repo_alloc._to;
 
     delete data.new._id;
     delete data.new._key;
@@ -300,14 +301,13 @@ function recordUpdate( client, record, results ){
             obj.ext = "." + obj.ext;
     }
 
-    if ( record.size !== undefined ) {
-        var loc, alloc;
+    var loc = g_db.loc.firstExample({ _from: data_id });
+    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
 
+    if ( record.size !== undefined ) {
         obj.size = record.size;
 
         if ( obj.size != data.size ){
-            loc = g_db.loc.firstExample({ _from: data_id });
-            alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
             g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
         }
     }
@@ -393,9 +393,11 @@ function recordUpdate( client, record, results ){
         delete dep.from;
     }
 
+    data.id = data._id;
+    data.repo_id = alloc._to;
+
     delete data._rev;
     delete data._key;
-    data.id = data._id;
     delete data._id;
 
     results.push( data );
