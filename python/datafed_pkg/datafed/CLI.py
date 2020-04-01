@@ -512,6 +512,9 @@ def _wc( coll_id ):
         if coll.owner != _cur_ctx:
             _cur_ctx = coll.owner
             _capi.setContext( _cur_ctx )
+            if _output_mode == _OM_TEXT and _cur_ctx != _uid:
+                click.echo("CLI now tracking as {}. Use 'cd //' to return to {}.".format( _cur_ctx, _uid ))
+
 
 @_cli.command(name='wp')
 def _wp():
@@ -1176,7 +1179,7 @@ def _project():
 @click.option("-C","--count",default=20,help="Limit list to count results")
 def _projectList( owned, admin, member, offset, count ):
     '''
-    List associated projects. List projects that are owned or managed by the
+    List projects associated with current user. List projects that are owned or managed by the
     current user, as well as projects were the current user is a member.
     '''
 
@@ -1973,7 +1976,7 @@ def _resolve_id( df_id ):
 def _resolve_coll_id( coll_id, context = None ):
     if coll_id == ".":
         return _cur_coll
-    elif coll_id == "~":
+    elif coll_id == "~" or coll_id == "~/" or coll_id == "//":
         return "c/u_" + _uid[2:] + "_root"
     elif coll_id == "-":
         return _prev_coll
