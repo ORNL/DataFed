@@ -491,10 +491,13 @@ def _wc( coll_id ):
     else:
         _id = _resolve_coll_id( coll_id )
 
-        if len(_id) > 2 and _id[:2] == "p/":
-            reply = _capi.collectionView( "c/p_" + _id[2:] + "_root" )
-        else:
-            reply = _capi.collectionView( _id )
+        if len(_id) > 2:
+            if _id[:2] == "p/":
+                _id = "c/p_" + _id[2:] + "_root"
+            elif _id[:2] == "u/":
+                _id = "c/u_" + _id[2:] + "_root"
+
+        reply = _capi.collectionView( _id )
 
         coll = reply[0].coll[0]
 
@@ -944,8 +947,14 @@ def _collItemsList( ctx, coll_id, offset, count, context ):
         cid = _cur_coll
     else:
         cid = _resolve_coll_id( coll_id )
+        if len(cid) > 2:
+            if cid[:2] == "p/":
+                cid = "c/p_" + cid[2:] + "_root"
+            elif cid[:2] == "u/":
+                cid = "c/u_" + cid[2:] + "_root"
 
     reply = _capi.collectionItemsList( cid, offset = offset, count = count, context = context )
+
     _generic_reply_handler( reply, _print_listing )
 
 
