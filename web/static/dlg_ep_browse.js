@@ -13,10 +13,12 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                     </div>\
                     <div style='flex:none;padding:.25em'></div>\
                     <div class='ui-widget-content' style='flex:1 1 100%;min-height:0;overflow:auto'>\
-                        <div id='file_tree' class='no-border' style='min-height:0;overflow:none'></div>\
+                        <table id='file_tree'>\
+                            <colgroup><col width='*'></col><col></col><col></col></colgroup>\
+                            <tbody><tr><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap'></td></tr></tbody>\
+                        </table>\
                     </div>\
                 </div>");
-
 
     var path = a_path;
     var path_in_timer;
@@ -66,14 +68,16 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
 
     function reloadTree( a_new_path ){
         loading = true;
-        $.ui.fancytree.getTree("#file_tree").reload( [] );
+        $("#sel_btn").button("disable");
+        $("#file_tree").fancytree("disable");
+
         epDirList( a_ep.id, a_new_path, false, function(data){
             if( data ){
                 console.log("got result:",data);
 
                 var tree_source = [];
                 if ( data.code ){
-                    tree_source.push({ title: "<span class='ui-state-error'>Error: " + data.message + "</span>", icon: false });
+                    tree_source.push({ title: "<span class='ui-state-error'>Error: " + data.message + "</span>", icon: false, is_dir: true });
                 }else{
                     tree_source.push({ title: ".", icon: "ui-icon ui-icon-folder", key: ".", is_dir: true });
                     tree_source.push({ title: "..", icon: "ui-icon ui-icon-folder", key: "..", is_dir: true });
@@ -83,18 +87,17 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                         if ( entry.type == "dir" ){
                             tree_source.push({ title: entry.name, icon: "ui-icon ui-icon-folder", key: entry.name, is_dir: true });
                         } else if ( entry.type == "file" ){
-                            tree_source.push({ title: "<span style='float:left;width:5em'>" + sizeToString( entry.size ) + "</span> " + entry.last_modified.substr( 0, entry.last_modified.indexOf("+")) + "&nbsp&nbsp&nbsp" + entry.name, icon: "ui-icon ui-icon-file", key: entry.name });
+                            dt = (new Date(entry.last_modified)).toLocaleString();
+                            tree_source.push({ title: entry.name, size: sizeToString( entry.size ), date: dt, icon: "ui-icon ui-icon-file", key: entry.name });
                         }
                     }
                 }
                 $.ui.fancytree.getTree("#file_tree").reload( tree_source );
-                $("#sel_btn").button("disable");
-                loading = false;
-            }else{
-                loading = false;
             }
-        });
 
+            loading = false;
+            $("#file_tree").fancytree("enable");
+        });
     }
 
     var options = {
@@ -125,7 +128,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
         }],
         open: function(){
             $("#file_tree").fancytree({
-                extensions: ["themeroller"],
+                extensions: ["themeroller","table"],
                 themeroller: {
                     activeClass: "ui-state-hover",
                     addClass: "",
@@ -133,7 +136,29 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                     hoverClass: "ui-state-active",
                     selectedClass: ""
                 },
-                source: [{title: "loading...",icon:false}],
+                table: {
+                    //indentation: 20,
+                    nodeColumnIdx: 0,
+                    //checkboxColumnIdx: 0  // render the checkboxes into the 1st column
+                },
+                renderColumns: function( ev, data ) {
+                    var node = data.node, $tdList = $(node.tr).find(">td");
+
+                    // Make the title cell span the remaining columns if it's a folder:
+                    if( node.data.is_dir ) {
+                        $tdList.eq(0)
+                            .prop("colspan", 3)
+                            .nextAll().remove();
+                        return;
+                    }
+
+                    // ...otherwise render remaining columns
+
+                    $tdList.eq(1).text(node.data.size);
+                    $tdList.eq(2).text(node.data.date);
+                },
+                checkbox: false,
+                source: [{title: "loading...",icon:false,is_dir:true}],
                 selectMode: 1,
                 activate: function( ev, data ){
                     console.log("activate");
@@ -149,7 +174,9 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                     }
                 }
             });
+
             reloadTree( a_path );
+
             $("#path",frame).on('input', function(){
                 console.log("path manually changed");
                 clearTimeout( path_in_timer );
