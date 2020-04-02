@@ -1087,7 +1087,29 @@ class API:
     # ----------------------------------------------------- Shared Data Methods
     # =========================================================================
 
+    ##
+    # @brief List users/projects with shared data
+    #
+    # List users and/or that have shared data with client/subject.
+    #
+    # @return A ListingReply Google protobuf message object
+    # @exception Exception: On invalid options or communication/server error
+    #
+    def sharesListOwners( self, inc_users = None, inc_projects = None, subject = None ):
+        msg = auth.ACLBySubjectRequest()
 
+        if inc_users != None:
+            msg.inc_users = inc_users
+
+        if inc_projects != None:
+            msg.inc_projects = inc_projects
+
+        if subject != None:
+            msg.subject = subject.lower()
+
+        return self._mapi.sendRecv( msg )
+
+    '''
     ##
     # @brief List users with shared data
     #
@@ -1116,7 +1138,7 @@ class API:
         msg = auth.ACLByProjRequest()
 
         return self._mapi.sendRecv( msg )
-
+    '''
 
     ##
     # @brief List shared data records and collections
@@ -1127,17 +1149,13 @@ class API:
     # @return A ListingReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def sharedDataList( self, owner_id ):
-        oid = owner_id.lower()
+    def sharesListItems( self, owner_id, context = None, offset = None, count = None ):
+        # TODO add support for offset & count
 
-        if oid.startswith("p/"):
-            msg = auth.ACLByProjListRequest()
-        else:
-            msg = auth.ACLByUserListRequest()
-            if not oid.startswith("u/"):
-                oid = "u/" + oid
-
-        msg.owner = oid
+        msg = auth.ACLListItemsBySubjectRequest()
+        msg.owner = owner_id.lower()
+        if context != None:
+            msg.subject = context.lower()
 
         return self._mapi.sendRecv( msg )
 

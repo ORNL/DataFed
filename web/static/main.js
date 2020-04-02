@@ -476,19 +476,19 @@ function aclUpdate( a_id, a_rules, a_public, a_cb ) {
 }
 
 function aclByUser( a_cb ) {
-    _asyncGet( "/api/acl/by_user", null, a_cb );
+    _asyncGet( "/api/acl/by_subject?inc_users=true", null, a_cb );
 }
 
 function aclByUserList( a_user_id, a_cb ) {
-    _asyncGet( "/api/acl/by_user/list?owner="+encodeURIComponent(a_user_id), null, a_cb );
+    _asyncGet( "/api/acl/by_subject/list?owner="+encodeURIComponent(a_user_id), null, a_cb );
 }
 
 function aclByProject( a_cb ) {
-    _asyncGet( "/api/acl/by_proj", null, a_cb );
+    _asyncGet( "/api/acl/by_subject?inc_projects=true", null, a_cb );
 }
 
 function aclByProjectList( a_proj_id, a_cb ) {
-    _asyncGet( "/api/acl/by_proj/list?owner="+encodeURIComponent(a_proj_id), null, a_cb );
+    _asyncGet( "/api/acl/by_subject/list?owner="+encodeURIComponent(a_proj_id), null, a_cb );
 }
 
 function checkPerms( a_id, a_perms, a_cb ){

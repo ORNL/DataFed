@@ -499,6 +499,24 @@ message ACLUpdateRequest
     optional bool               ispublic    = 3;
 }
 
+// List users/projects owning any ACLs set for client or subject (user or project)
+// Returns ListingReply
+message ACLBySubjectRequest
+{
+    optional string             subject         = 1;
+    optional bool               inc_users       = 2;
+    optional bool               inc_projects    = 3;
+}
+
+// List top-level ACLs set by owner for client or subject (user or project)
+// Returns ListingReply
+message ACLListItemsBySubjectRequest
+{
+    optional string             subject     = 1;
+    required string             owner       = 2;
+}
+
+/*
 message ACLByUserRequest
 {
 }
@@ -516,6 +534,7 @@ message ACLByProjListRequest
 {
     required string             owner       = 1;
 }
+*/
 
 message ACLDataReply
 {

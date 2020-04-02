@@ -836,6 +836,19 @@ app.get('/api/acl/update', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/acl/by_subject', ( a_req, a_resp ) => {
+    sendMessage( "ACLBySubjectRequest", {incUsers:a_req.query.inc_users?true:false,incProjects:a_req.query.inc_projects?true:false}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/acl/by_subject/list', ( a_req, a_resp ) => {
+    sendMessage( "ACLListItemsBySubjectRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+/*
 app.get('/api/acl/by_user', ( a_req, a_resp ) => {
     sendMessage( "ACLByUserRequest", {}, a_req, a_resp, function( reply ) {
         if ( reply.user )
@@ -865,6 +878,7 @@ app.get('/api/acl/by_proj/list', ( a_req, a_resp ) => {
         a_resp.send(reply);
     });
 });
+*/
 
 app.get('/api/task/list', ( a_req, a_resp ) => {
     var params = {};

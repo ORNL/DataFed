@@ -81,7 +81,7 @@ function makeDlgGroupEdit(){
         });
 
         var options = {
-            title: group?"Edit Group "+group.gid:"New Group",
+            title: group?"Edit Group '"+group.gid+"'":"New Group",
             modal: true,
             width: 600,
             height: 450,

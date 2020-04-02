@@ -98,10 +98,14 @@ public:
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );
-    void aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply );
-    void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply );
-    void aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply );
-    void aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply );
+
+    void aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply );
+    void aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply );
+
+    //void aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply );
+    //void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply );
+    //void aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply );
+    //void aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply );
 
     void groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply );

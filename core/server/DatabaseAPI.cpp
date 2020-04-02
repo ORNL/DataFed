@@ -1808,6 +1808,39 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
 }
 
 void
+DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+    if ( a_request.has_inc_users() )
+        params.push_back({"inc_users",a_request.inc_users()?"true":"false"});
+    if ( a_request.has_inc_projects() )
+        params.push_back({"inc_projects",a_request.inc_projects()?"true":"false"});
+
+    dbGet( "acl/by_subject", params, result );
+
+    setListingDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+
+    params.push_back({"owner",a_request.owner()});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+
+    dbGet( "acl/by_subject/list", params, result );
+
+    setListingDataReply( a_reply, result );
+}
+
+/*void
 DatabaseAPI::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply )
 {
     (void)a_request;
@@ -1847,7 +1880,7 @@ DatabaseAPI::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth:
     dbGet( "acl/by_proj/list", {{"owner",a_request.owner()}}, result );
 
     setListingDataReply( a_reply, result );
-}
+}*/
 
 void
 DatabaseAPI::setACLData( ACLDataReply & a_reply, libjson::Value & a_result )

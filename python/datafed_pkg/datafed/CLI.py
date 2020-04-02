@@ -329,8 +329,8 @@ class _AliasedGroup(click.Group):
 # Same as AliasGroup but checks for global aliases
 class _AliasedGroupRoot( _AliasedGroup ):
     def get_command(self, ctx, cmd_name):
-        if cmd_name == "ls" or cmd_name == "dir":
-            return _collItemsList
+        if cmd_name == "dir":
+            return _list
         elif cmd_name == "cd":
             return _wc
         elif cmd_name == "?":
@@ -827,6 +827,37 @@ def _data_batch_update( file ):
 
 
 # =============================================================================
+# --------------------------------------------------------------- List Function
+# =============================================================================
+
+@_cli.command(name='ls')
+@click.option("-O","--offset",default=0,help="Start list at offset")
+@click.option("-C","--count",default=20,help="Limit list to count results")
+@click.argument("item_id", required=False, metavar="ID")
+@_global_context_options
+@click.pass_context
+def _list( ctx, item_id, offset, count, context ):
+    '''
+    List contents of a collection, or shared items of a user or project.
+    ID may be a collection ID or alias, a user or project ID, an index
+    value from a listing, or omitted for the current working collection.
+    '''
+
+    global _cur_coll
+
+    if item_id == None:
+        _id = _cur_coll
+    else:
+        _id = _resolve_coll_id( item_id )
+
+    if len(_id) > 2 and ( _id[:2] == "p/" or _id[:2] == "u/" ):
+        reply = _capi.sharesListItems( _id, offset = offset, count = count, context = context )
+    else:
+        reply = _capi.collectionItemsList( _id, offset = offset, count = count, context = context )
+
+    _generic_reply_handler( reply, _print_listing )
+
+# =============================================================================
 # -------------------------------------------------------- Collection Functions
 # =============================================================================
 
@@ -927,35 +958,6 @@ def _collDelete( coll_id, force, context ):
 
     reply = _capi.collectionDelete( resolved_ids, context )
     _generic_reply_handler( reply, _print_ack_reply )
-
-
-@_coll.command(name='list')
-@click.option("-O","--offset",default=0,help="Start list at offset")
-@click.option("-C","--count",default=20,help="Limit list to count results")
-@click.argument("coll_id", required=False, metavar="ID")
-@_global_context_options
-@click.pass_context
-def _collItemsList( ctx, coll_id, offset, count, context ):
-    '''
-    List items in collection. ID may be a collection ID or alias, an index
-    value from a listing, or omitted for the current working collection.
-    '''
-
-    global _cur_coll
-
-    if coll_id == None:
-        cid = _cur_coll
-    else:
-        cid = _resolve_coll_id( coll_id )
-        if len(cid) > 2:
-            if cid[:2] == "p/":
-                cid = "c/p_" + cid[2:] + "_root"
-            elif cid[:2] == "u/":
-                cid = "c/u_" + cid[2:] + "_root"
-
-    reply = _capi.collectionItemsList( cid, offset = offset, count = count, context = context )
-
-    _generic_reply_handler( reply, _print_listing )
 
 
 @_coll.command(name='add')
@@ -1218,44 +1220,20 @@ def _projectView( proj_id ):
 # ------------------------------------------------------- Shared Data Functions
 # =============================================================================
 
-@_cli.command(name='shared',cls=_AliasedGroup,help="Shared data subcommands.")
-def _shared():
-    pass
-
-
-@_shared.command(name="users")
-def _sharedUsers():
+@_cli.command(name="shares")
+@click.option("-u","--users",is_flag=True,help="Show users only")
+@click.option("-p","--projects",is_flag=True,help="Show projects only")
+def _shares( users, projects ):
     '''
-    List users that have shared data. Only users that have shared data with the
-    current user are listed, not users that the current user has shared data
-    with.
+    List users and/or projects sharing data with current user.
     '''
 
-    reply = _capi.sharedUsersList()
-    _generic_reply_handler( reply, _print_user_listing )
-
-
-@_shared.command(name="projects",help="List projects with shared data")
-def _sharedProjects():
-    '''
-    List projects that have shared data.
-    '''
-
-    reply = _capi.sharedProjectsList()
-    _generic_reply_handler( reply, _print_proj_listing )
-
-
-@_shared.command( name = "list" )
-@click.argument( "df_id", metavar = "ID" )
-def _sharedList( df_id ):
-    '''
-    List shared data records and collections by user/project ID. ID may be a
-    user or project ID, or an index value from a listing.
-    '''
-
-    reply = _capi.sharedDataList( _resolve_id( df_id ))
+    # TODO - add project subject when projects shares are added
+    if not users and not projects:
+        reply = _capi.sharesListOwners( True, True )
+    else:
+        reply = _capi.sharesListOwners( users, projects )
     _generic_reply_handler( reply, _print_listing )
-
 
 # =============================================================================
 # ---------------------------------------------------------- Transfer Functions

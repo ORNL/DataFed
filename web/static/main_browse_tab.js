@@ -219,6 +219,8 @@ function makeBrowserTab(){
                         path.push({id:"proj_mem",off:0});
                     else{
                         console.log("NOT FOUND - shared project folder?" );
+                        // TODO BROKEN CODE
+                        /*
                         aclByProject( function( ok, projs ){
                             if ( ok ){
                                 //console.log("projs:",projs);
@@ -262,6 +264,7 @@ function makeBrowserTab(){
                                 asyncEnd();
                             }
                         });
+                        */
                         return;
                     }
                     //console.log("path:",path);
@@ -273,10 +276,12 @@ function makeBrowserTab(){
             if ( uid == g_user.uid ){
                 reloadPathNode( path.length - 1 );
             }else{
-                aclByUser( function( ok, users ){
+                // TODO BROKEN CODE
+                /*
+                aclByUser( function( ok, data ){
                     if ( ok ){
-                        //console.log("users:",users);
-                        var idx = users.findIndex(function(user){
+                        console.log("data:",data);
+                        var idx = data.items.findIndex(function(user){
                             return user.uid == uid;
                         });
                         if ( idx != -1 ){
@@ -316,6 +321,7 @@ function makeBrowserTab(){
                         asyncEnd();
                     }
                 });
+                */
             }
         }else{
             reloadPathNode( path.length - 1 );
@@ -1255,11 +1261,16 @@ function makeBrowserTab(){
 
     this.showSelectedDataInfo = function( key ){
         viewData( key, function( item ){
-            showSelectedItemInfo( item );
-            if ( item.metadata ){
-                inst.showSelectedMetadata( item.metadata );
+            if ( item ){
+                showSelectedItemInfo( item );
+                if ( item.metadata ){
+                    inst.showSelectedMetadata( item.metadata );
+                }else{
+                    inst.showSelectedMetadata();
+                }
             }else{
                 inst.showSelectedMetadata();
+                inst.showSelectedHTML( "Insufficient permissions to view data record." );
             }
         }); 
     };
@@ -2726,12 +2737,12 @@ function makeBrowserTab(){
             } else if ( data.node.key.startsWith( "shared_user" )) {
                 if ( data.node.data.scope ){
                     data.result = {
-                        url: "/api/acl/by_user/list?owner=" + encodeURIComponent(data.node.data.scope),
+                        url: "/api/acl/by_subject/list?owner=" + encodeURIComponent(data.node.data.scope),
                         cache: false
                     };
                 }else{
                     data.result = {
-                        url: "/api/acl/by_user",
+                        url: "/api/acl/by_subject?inc_users=true",
                         cache: false
                     };
                 }
@@ -2748,12 +2759,12 @@ function makeBrowserTab(){
             } else if ( data.node.key.startsWith( "shared_proj" )) {
                 if ( data.node.data.scope ){
                     data.result = {
-                        url: "/api/acl/by_proj/list?owner=" + encodeURIComponent(data.node.data.scope),
+                        url: "/api/acl/by_subject/list?owner=" + encodeURIComponent(data.node.data.scope),
                         cache: false
                     };
                 }else{
                     data.result = {
-                        url: "/api/acl/by_proj",
+                        url: "/api/acl/by_subject?inc_projects=true",
                         cache: false
                     };
                 }
@@ -2824,18 +2835,19 @@ function makeBrowserTab(){
 
                 inst.addTreePagingNode( data );
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
+                console.log("pos proc:", data.response );
                 data.result = [];
-                if ( data.response.length ){
-                    for ( i in data.response ) {
-                        item = data.response[i];
-                        data.result.push({ title: item.name + " (" + item.uid + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-person",folder:true,key:"shared_user_"+item.uid,scope:"u/"+item.uid,lazy:true,nodrag:true});
+                if ( data.response.item.length ){
+                    for ( i in data.response.item ) {
+                        item = data.response.item[i];
+                        data.result.push({ title: item.title + " (" + item.id.substr(2) + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-person",folder:true, key:"shared_user_"+item.id, scope: item.id, lazy:true,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
                 data.result = [];
-                if ( data.response.length ){
-                    for ( i in data.response ) {
-                        item = data.response[i];
+                if ( data.response.item.length ){
+                    for ( i in data.response.item ) {
+                        item = data.response.item[i];
                         data.result.push({ title: inst.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }
