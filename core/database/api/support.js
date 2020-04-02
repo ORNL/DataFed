@@ -1256,12 +1256,76 @@ module.exports = ( function() {
         return perm;
     };
 
+    obj.getACLOwnersBySubject = function( subject, inc_users, inc_projects ){
+        var results = [];
+
+        if ( inc_users || inc_projects ){
+            var ids = new Set(), owner_id, acl, acls = obj.db.acl.byExample({ _to: subject });
+
+            // Find direct ACLs (not through a group)
+            while( acls.hasNext() ){
+                acl = acls.next();
+                owner_id = obj.db.owner.firstExample({_from: acl._from })._to;
+
+                if ( owner_id.charAt(0) == 'p' ){
+                    if ( inc_projects ){
+                        ids.add( owner_id );
+                    }
+                }else if ( inc_users ){
+                    ids.add( owner_id );
+                }
+            }
+
+            // Find indirect ACLs (through a group)
+            var group, mem, members = obj.db.member.byExample({ _to: subject });
+            while ( members.hasNext() ){
+                mem = members.next();
+                // Group must have at least one ACL set; otherwise ignore it
+                if ( obj.db.acl.firstExample({ _to: mem._from })){
+                    owner_id = obj.db.owner.firstExample({ _from: mem._from })._to;
+
+                    if ( owner_id.charAt(0) == 'p' ){
+                        if ( inc_projects ){
+                            if ( ids.has( owner_id ))
+                                continue;
+
+                            // Filter-out project 'members' groups
+                            group = obj.db.g.document( mem._from );
+                            if ( group.gid != "members" )
+                                ids.add( owner_id );
+                        }
+                    }else if ( inc_users ){
+                        ids.add( owner_id );
+                    }
+                }
+            }
+
+            var doc;
+
+            ids.forEach( function( id ){
+                doc = obj.db._document( id );
+                results.push({ id:doc._id, title: doc.name?doc.name:doc.title, owner: doc.owner });
+            });
+
+            results.sort( function( a, b ){
+                if ( a.id < b.id )
+                    return -1;
+                else if ( a.id > b.id )
+                    return 1;
+                else
+                    return 0;
+            });
+        }
+
+        return results;
+    };
+
     obj.usersWithClientACLs = function( client_id, id_only ){
         var result;
         if ( id_only ){
             result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return v._id),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return v._id)) return x", { user: client_id }).toArray();
         }else{
-            result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._key,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._key,name:v.name})) sort x.name return x", { user: client_id }).toArray();
+            result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._id,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._id,name:v.name})) sort x.name return x", { user: client_id }).toArray();
         }
         //console.log("usersWithACLs:",result);
         return result;

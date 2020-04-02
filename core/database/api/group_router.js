@@ -121,8 +121,8 @@ router.get('/update', function (req, res) {
 
                 if ( group.gid != "members" ) {
                     //g_lib.procInputParam( req.queryParams, "gid", false, obj );
-                    g_lib.procInputParam( req.queryParams, "title", false, obj );
-                    g_lib.procInputParam( req.queryParams, "desc", false, obj );
+                    g_lib.procInputParam( req.queryParams, "title", true, obj );
+                    g_lib.procInputParam( req.queryParams, "desc", true, obj );
 
                     group = g_db._update( group._id, obj, { keepNull:false, returnNew: true });
                     group = group.new;
