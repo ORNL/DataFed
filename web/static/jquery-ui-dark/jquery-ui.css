@@ -280,14 +280,19 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
     color:#40A040;
 }
 
-.data-tree-owner
+.data-tree-owner-other
 {
     color:#F03030;
 }
 
-.data-tree-creator
+.data-tree-creator-other
 {
     color:#E07010;
+}
+
+.data-tree-creator-self
+{
+    color:#0080FF;
 }
 
 .pick-hl

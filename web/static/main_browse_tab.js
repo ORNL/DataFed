@@ -1590,21 +1590,29 @@ function makeBrowserTab(){
         title += "<span class='data-tree-id'>" + item.id + "</span>";
         title += "<span class='data-tree-alias'>" + (item.alias?item.alias.substr(item.alias.lastIndexOf(":") + 1):"") + "</span>";
 
-        if ( item.owner && item.owner.startsWith( "p/" )){
-            if ( item.creator && item.creator != inst.uid )
-                title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
-        }else{
-            if ( item.owner && item.creator ){
-                if ( item.owner != inst.uid && item.creator != inst.uid )
-                    title += "&nbsp<span class='data-tree-owner'>(" + item.owner.substr(2) + ")</span>";
-                else if ( item.creator != inst.uid )
-                    title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
-            }else if ( item.owner ){
-                if ( item.owner != inst.uid )
-                    title += "&nbsp<span class='data-tree-owner'>(" + item.owner.substr(2) + ")</span>";
-            }else if ( item.creator ){
+        // Only apply owner/creator labels to data records
+        if ( item.id.startsWith( "d/" )){
+            console.log("item",item);
+
+            if ( item.owner.startsWith( "p/" )){
                 if ( item.creator != inst.uid )
                     title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
+            }else{
+                //if ( item.owner && item.creator ){
+                if ( item.owner != inst.uid && item.creator == inst.uid )
+                    title += "&nbsp<span class='data-tree-creator-self'>(" + item.creator.substr(2) + ")</span>";
+                else if ( item.owner == inst.uid && item.creator != inst.uid )
+                    title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
+                else if ( item.owner != inst.uid && item.creator != inst.uid )
+                    title += "&nbsp<span class='data-tree-owner-other'>[" + item.owner.substr(2) + "]</span>";
+
+                /*}else if ( item.owner ){
+                    if ( item.owner != inst.uid )
+                        title += "&nbsp<span class='data-tree-owner'>(" + item.owner.substr(2) + ")</span>";
+                }else if ( item.creator ){
+                    if ( item.creator != inst.uid )
+                        title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
+                }*/
             }
         }
 
