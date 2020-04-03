@@ -250,7 +250,7 @@ router.get('/by_subject/list', function (req, res) {
 
         // TODO This does not work if the subject is a project member
 
-        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: subj, owner: owner_id }).toArray();
+        var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,doi:v.doi,locked:v.locked}", { client: subj, owner: owner_id }).toArray();
 
         if ( shares.length < 2 ){
             res.send(shares);
