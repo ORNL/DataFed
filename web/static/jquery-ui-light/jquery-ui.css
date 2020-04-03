@@ -330,15 +330,22 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 	color:#309030;
 }
 
-.data-tree-owner
+.data-tree-owner-other
 {
     color:#B03020;
 }
 
-.data-tree-creator
+.data-tree-creator-other
 {
     color:#EF7000;
 }
+
+.data-tree-creator-self
+{
+    color:#0040FF;
+}
+
+
 
 .ui-draggable-handle {
 	-ms-touch-action: none;
