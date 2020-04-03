@@ -591,6 +591,17 @@ message ProjectViewRequest
     required string             id          = 1;
 }
 
+message ProjectGetRoleRequest
+{
+    required string             id          = 1;
+    optional string             subject     = 2;
+}
+
+message ProjectGetRoleReply
+{
+    required ProjectRole        role        = 1;
+}
+
 message ProjectDataReply
 {
     repeated ProjectData        proj        = 1;

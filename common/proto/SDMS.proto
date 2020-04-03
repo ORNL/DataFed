@@ -67,6 +67,14 @@ enum SortOption
     SORT_TIME_UPDATE            = 3;
 }
 
+enum ProjectRole
+{
+    PROJ_NO_ROLE    = 0;
+    PROJ_MEMBER     = 1;
+    PROJ_MANAGER    = 2;
+    PROJ_ADMIN      = 3;
+}
+
 
 // ============================ Data Structures
 

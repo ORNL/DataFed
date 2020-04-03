@@ -1082,6 +1082,13 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def projectGetRole( self, project_id ):
+        msg = auth.ProjectGetRoleRequest()
+        msg.id = project_id
+
+        reply = self._mapi.sendRecv( msg )
+
+        return reply[0].role
 
     # =========================================================================
     # ----------------------------------------------------- Shared Data Methods

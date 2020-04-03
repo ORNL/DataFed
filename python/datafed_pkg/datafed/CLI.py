@@ -850,8 +850,19 @@ def _list( ctx, item_id, offset, count, context ):
     else:
         _id = _resolve_coll_id( item_id )
 
-    if len(_id) > 2 and ( _id[:2] == "p/" or _id[:2] == "u/" ):
+    if  _id[:2] == "p/":
+        if _capi.projectGetRole( _id ) == 0:
+            reply = _capi.sharesListItems( _id, offset = offset, count = count, context = context )
+            if _output_mode == _OM_TEXT:
+                click.echo("Listing project shares:")
+        else:
+            reply = _capi.collectionItemsList( "c/p_"+_id[2:]+"_root", offset = offset, count = count, context = context )
+            if _output_mode == _OM_TEXT:
+                click.echo("Listing project root:")
+    elif  _id[:2] == "u/":
         reply = _capi.sharesListItems( _id, offset = offset, count = count, context = context )
+        if _output_mode == _OM_TEXT:
+                click.echo("Listing user shares:")
     else:
         reply = _capi.collectionItemsList( _id, offset = offset, count = count, context = context )
 

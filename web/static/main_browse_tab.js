@@ -2837,7 +2837,7 @@ function makeBrowserTab(){
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
                 console.log("pos proc:", data.response );
                 data.result = [];
-                if ( data.response.item.length ){
+                if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
                         data.result.push({ title: item.title + " (" + item.id.substr(2) + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-person",folder:true, key:"shared_user_"+item.id, scope: item.id, lazy:true,nodrag:true});
@@ -2845,7 +2845,7 @@ function makeBrowserTab(){
                 }
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
                 data.result = [];
-                if ( data.response.item.length ){
+                if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
                         data.result.push({ title: inst.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});

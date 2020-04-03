@@ -776,6 +776,21 @@ DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::Listing
 }
 
 void
+DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::ProjectGetRoleReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+    params.push_back({"id",a_request.id()});
+    if ( a_request.has_subject() )
+        params.push_back({"subject",a_request.subject()});
+
+    dbGet( "prj/get_role", params, result );
+
+    Value::Object & obj = result.getObject();
+    a_reply.set_role((ProjectRole)(unsigned short) obj.at( "role" ).asNumber( ));
+}
+
+void
 DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
 {
     Value result;
