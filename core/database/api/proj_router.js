@@ -440,5 +440,33 @@ router.post('/delete', function (req, res) {
 .description('Delete project(s) and all associated data records and raw data.');
 
 
+router.get('/get_role', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var subj;
+
+        if ( req.queryParams.subject )
+            subj = g_lib.getUserFromClientID( req.queryParams.subject )._id;
+        else
+            subj = client._id;
+
+        if ( !req.queryParams.id.startsWith("p/"))
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid project ID: "+req.queryParams.id];
+
+        if ( !g_db._exists( req.queryParams.id ))
+            throw [g_lib.ERR_NOT_FOUND,"Project, "+req.queryParams.id+", not found"];
+
+        var role = g_lib.getProjectRole( subj, req.queryParams.id );
+
+        res.send({ role: role });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('subject', joi.string().optional(), "Optional subject (user) ID")
+.queryParam('id', joi.string().required(), "Project ID")
+.summary('Get client/subject project role')
+.description('Get client/subject project role');
 
 

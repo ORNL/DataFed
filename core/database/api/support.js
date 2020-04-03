@@ -1259,8 +1259,14 @@ module.exports = ( function() {
     obj.getACLOwnersBySubject = function( subject, inc_users, inc_projects ){
         var results = [];
 
+        /* Get users and projects that have shared data or collections with subject:
+        - Any user that shares a record or collection directly with the subject, or with a group that the subject is a member 
+        - Any non-associated project that shares a record or collection directly with the subject, or with a group that the subject is a member
+        - Non-associated projects are prejects where the subject is not the owner, an admin, or a member
+        */
+
         if ( inc_users || inc_projects ){
-            var ids = new Set(), owner_id, acl, acls = obj.db.acl.byExample({ _to: subject });
+            var ids = new Set(), ignore = new Set(), owner_id, acl, acls = obj.db.acl.byExample({ _to: subject });
 
             // Find direct ACLs (not through a group)
             while( acls.hasNext() ){
@@ -1269,7 +1275,14 @@ module.exports = ( function() {
 
                 if ( owner_id.charAt(0) == 'p' ){
                     if ( inc_projects ){
-                        ids.add( owner_id );
+                        if ( ids.has( owner_id ) || ignore.has( owner_id ))
+                            continue;
+
+                        if ( obj.getProjectRole( subject, owner_id ) == obj.PROJ_NO_ROLE ){
+                            ids.add( owner_id );
+                        }else{
+                            ignore.add( owner_id );
+                        }
                     }
                 }else if ( inc_users ){
                     ids.add( owner_id );
@@ -1277,7 +1290,7 @@ module.exports = ( function() {
             }
 
             // Find indirect ACLs (through a group)
-            var group, mem, members = obj.db.member.byExample({ _to: subject });
+            var mem, members = obj.db.member.byExample({ _to: subject });
             while ( members.hasNext() ){
                 mem = members.next();
                 // Group must have at least one ACL set; otherwise ignore it
@@ -1286,13 +1299,14 @@ module.exports = ( function() {
 
                     if ( owner_id.charAt(0) == 'p' ){
                         if ( inc_projects ){
-                            if ( ids.has( owner_id ))
+                            if ( ids.has( owner_id ) || ignore.has( owner_id ))
                                 continue;
 
-                            // Filter-out project 'members' groups
-                            group = obj.db.g.document( mem._from );
-                            if ( group.gid != "members" )
+                            if ( obj.getProjectRole( subject, owner_id ) == obj.PROJ_NO_ROLE ){
                                 ids.add( owner_id );
+                            }else{
+                                ignore.add( owner_id );
+                            }
                         }
                     }else if ( inc_users ){
                         ids.add( owner_id );
