@@ -57,7 +57,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     ** Setting record to published will delete associated DataFed-managed raw data.\
                 </div>\
                 <div id='pub_upd_warn' style='display:none' class='note'>\
-                    Note: Editing data source information of published records is not recommended due to potential impact on data subscribers. If exiting data is being deprecated, consider creating a new data record with a deprecation dependency on this record.\
+                    Note: Editing data source information of published records is not recommended due to potential impact on data subscribers.\
                 </div>\
             </div>\
             <div id='tab-dlg-meta' style='padding:1em'>\
@@ -459,6 +459,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         $("#working_data",frame).hide();
                         $("#published_data",frame).show();
                         $("#pub_upd_warn",frame).show();
+                        inputDisable( $("#alias", frame ));
                     }else if ( a_data.size > 0 ){
                         $("#pub_del_warn,#pub_del_warn_ast",frame).show();
                     }
@@ -487,9 +488,12 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 if ( pub ){
                     $("#working_data",frame).hide();
                     $("#published_data",frame).show();
+                    $("#alias", frame ).val("");
+                    inputDisable( $("#alias", frame ));
                 }else{
                     $("#working_data",frame).show();
                     $("#published_data",frame).hide();
+                    inputEnable( $("#alias", frame ));
                 }
             });
 
