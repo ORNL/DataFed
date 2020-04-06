@@ -1591,7 +1591,7 @@ function makeBrowserTab(){
         title += "<span class='data-tree-alias'>" + (item.alias?item.alias.substr(item.alias.lastIndexOf(":") + 1):"") + "</span>";
 
         // Only apply owner/creator labels to data records
-        if ( item.id.startsWith( "d/" )){
+        if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){
             console.log("item",item);
 
             if ( item.owner.startsWith( "p/" )){
