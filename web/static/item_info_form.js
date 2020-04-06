@@ -36,6 +36,9 @@ function showSelectedItemInfo( item ){
     if ( item.doi )
         $("#sel_info_doi",form).text( item.doi );
 
+    if ( item.dataUrl )
+        $("#sel_info_url",form).text( item.dataUrl );
+
     if ( item.desc )
         $("#sel_info_desc",form).text( item.desc );
 
