@@ -22,9 +22,7 @@ module.exports = router;
 //==================== DATA API FUNCTIONS
 
 function recordCreate( client, record, results ){
-    var owner_id;
-    var parent_id;
-    var repo_alloc;
+    var owner_id, parent_id, repo_alloc, alias_key;
 
     //console.log("Create new data");
 
@@ -79,6 +77,9 @@ function recordCreate( client, record, results ){
     if ( obj.doi || obj.data_url ){
         if ( !obj.doi || !obj.data_url )
             throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
+
+        alias_key = (obj.doi.split("/").join("_"));
+        console.log("alias:",alias_key);
     }else{
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
@@ -89,6 +90,10 @@ function recordCreate( client, record, results ){
             obj.ext = record.ext;
             if ( obj.ext.length && obj.ext.charAt(0) != "." )
                 obj.ext = "." + obj.ext;
+        }
+
+        if ( obj.alias ) {
+            alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
         }
     }
 
@@ -102,11 +107,9 @@ function recordCreate( client, record, results ){
     g_db.loc.save( loc );
     g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
 
-    if ( obj.alias ) {
-        var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
-
+    if ( alias_key ) {
         if ( g_db.a.exists({ _key: alias_key }))
-            throw [g_lib.ERR_INVALID_PARAM,"Alias, "+obj.alias+", already in use"];
+            throw [g_lib.ERR_INVALID_PARAM,"Alias, "+alias_key+", already in use"];
 
         g_db.a.save({ _key: alias_key });
         g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });

@@ -278,8 +278,10 @@ var tasks_func = function() {
         } else if ( a_task.step < a_task.steps - 1 ){
             xfr = state.xfr[a_task.step-2];
 
-            // Update extention, manual/auto
+            // Update source, extention, manual/auto
             var rec = g_db.d.document( xfr.files[0].id ), upd_rec = {};
+
+            upd_rec.source = state.path;
 
             if ( state.ext ){
                 upd_rec.ext = state.ext;

@@ -130,8 +130,9 @@ module.exports = ( function() {
     obj.CHARSET_ALIAS   = 1;
     obj.CHARSET_TOPIC   = 2;
     obj.CHARSET_URL     = 3;
+    obj.CHARSET_DOI     = 4;
 
-    obj.extra_chars = ["_-.","_-.","_-.","-._~:/?#[]@!$&'()*+,;="];
+    obj.extra_chars = ["_-.","_-.","_-.","-._~:/?#[]@!$&'()*+,;=","/_-:.@()+,=;$!*'%"];
 
     obj.field_reqs = {
         title: { required: true, update: true, max_len: 80, label: 'title' },
@@ -145,7 +146,7 @@ module.exports = ( function() {
         ext: { required: false, update: true, max_len: 40, lower: false, label: 'extension' },
         gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
         id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' },
-        doi: { required: false, update: true, max_len: 40, lower: true, label: 'doi' },
+        doi: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_DOI, label: 'doi' },
         data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' },
     };
 
