@@ -754,8 +754,6 @@ def _dataGet( df_id, path, wait, encrypt, context ):
 
     if reply[1] == "DataGetPutReply":
         _generic_reply_handler( reply, _print_task )
-    else:
-        _generic_reply_handler( reply, _print_task_array )
 
 
 @_data.command(name='put')
