@@ -145,9 +145,9 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
                     <table style='width:100%'>
-                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button id="run_qry_btn" class="btn small" onclick="searchDirect()" style='width:12ch'>Run Query</button></td></tr>
+                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button id="run_qry_btn" class="btn small" style='width:12ch'>Run Query</button></td></tr>
 
-                        <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button class='btn small' onclick='querySave()' style='width:12ch' >Save Query</button></td></tr>
+                        <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button id="save_qry_btn" class='btn small' style='width:12ch' >Save Query</button></td></tr>
                         <tr><td>Scope:</td><td colspan="3">
                             <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbspMy Data</span>
                             <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbspMy Projects</span>
@@ -155,7 +155,7 @@
                             <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbspShared</span>
                             <!-- span class='my-check'><label for='scope_public'></label><input class='scope' type='checkbox' name='scope_public' id='scope_public'>&nbspPublic</span -->
                             <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbspSelected</span>
-                        </td><td><button id='btn_srch_clear_select' class='btn small' onclick='searchClearSelection()' style='width:12ch' disabled>Clear Sel.</button></td></tr>
+                        </td><td><button id='btn_srch_clear_select' class='btn small' style='width:12ch' disabled>Clear Sel.</button></td></tr>
                     </table>
                     <div style='padding:.5em 0 0 0'><span class='note'>* Note: metadata text comparisons are case sensitive.</span></div>
                 </div>

@@ -126,6 +126,31 @@ function _asyncPostText( a_url, a_text_data, a_callback ) {
     });
 }
 
+var async_guard = false;
+
+function asyncFunc( fn ){
+    return function(){
+        if ( !async_guard ){
+            console.log(">>> asyncBegin");
+            async_guard = true;
+            //$("body").css("cursor", "progress");
+            return fn.apply(this,arguments);
+        }else{
+            console.log(">>> asyncBegin blocked");
+        }
+    };
+}
+
+function asyncEnd(){
+    if ( async_guard ){
+        console.log("<<< asyncEnd");
+        //$("body").css("cursor", "default");
+        async_guard = false;
+    }else{
+        console.log("<<< asyncEnd INVALID!!!!");
+    }
+}
+
 var escapeMap = {
     '&': '&amp;',
     '<': '&lt;',
@@ -1042,7 +1067,7 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
 
 
 function buildObjSrcTree( obj, base, inst ){
-    //console.log("build tree", obj, base);
+    //console.log("build tree", base, inst);
 
     var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     
@@ -1103,8 +1128,10 @@ function buildObjSrcTree( obj, base, inst ){
         if ( typeof obj[k] === 'object' ){
 
             if ( inst ){
-                if ( inst.data_md_exp[fkey] )
+                if ( inst.data_md_exp[fkey] ){
+                    //console.log("expanded:",fkey);
                     inst.data_md_exp[fkey] = 10;
+                }
 
                 src.push({key:fkey,title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)});
             }else{

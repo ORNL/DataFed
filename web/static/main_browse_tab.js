@@ -1,47 +1,63 @@
+/*jshint strict: global */
+/*jshint esversion: 5 */
+/*jshint multistr: true */
+/* globals console, document, FileReader, CatalogSubTab */
+/* globals $, d3, g_opts, g_user, g_date_opts, dlgAlert, collDelete, projDelete, dlgConfirmChoice, checkDlgOpen */
+/* globals viewData, dataEdit, dataShare, dataDelete, dataGet, dataPut, setStatusText, sizeToString */
+/* globals userView, viewProj, viewColl, getParents, getCollOffset, checkPerms, dlgDataNewEdit, dlgProjNewEdit */
+/* globals PERM_RD_REC, PERM_RD_META, PERM_RD_DATA, PERM_WR_REC, PERM_WR_META, PERM_WR_DATA */
+/* globals PERM_LIST, PERM_LINK, PERM_CREATE, PERM_DELETE, PERM_SHARE, PERM_LOCK, PERM_MAX, PERM_BAS_READ */
+/* globals PERM_BAS_WRITE, PERM_BAS_ADMIN, PERM_ALL, MD_MAX_SIZE, PAYLOAD_MAX_SIZE */
+/* globals SS_USER, SS_PROJECT, SS_OWNED_PROJECTS, SS_MANAGED_PROJECTS, SS_MEMBER_PROJECTS, SS_COLLECTION */
+/* globals SS_TOPIC, SS_SHARED_BY_USER, SS_SHARED_BY_ANY_USER, SS_SHARED_BY_PROJECT, SS_SHARED_BY_ANY_PROJECT */
+/* globals SS_PUBLIC, SS_VIEW, DLG_DATA_EDIT, DLG_DATA_NEW, DLG_DATA_DUP, escapeHTML */
+/* globals showSelectedItemInfo, setTimeout, clearTimeout, _asyncGet, buildObjSrcTree, allocView */
+/* globals dlgSingleEntry, dlgSetACLs, dlgRepoEdit, permGetAny, alertPermDenied, dlgQueryNewEdit, asyncEnd, asyncFunc */
+'use strict';
+
+
 function makeBrowserTab(){
     console.log("making browser tab");
 
-    var inst = this;
+    var inst = {}; //this;
 
     inst.frame = $("#content");
-    this.task_hist = $("#task_hist",inst.frame);
-    this.alloc_stat = $("#alloc_stat",inst.frame);
-    this.data_tree = null;
-    this.data_md_tree = null;
-    this.data_md_empty = true;
-    this.data_md_empty_src = [{title:"(n/a)", icon:false}];
-    this.data_md_exp = {};
-    this.taskHist = [];
-    this.pollSince = g_opts.task_hist * 3600;
-    this.pollMax = 120;
-    this.pollMin = 4;
-    this.my_root_key = "c/u_" + g_user.uid + "_root";
-    this.uid = "u/" + g_user.uid;
-    this.drag_mode = 0;
-    this.drag_enabled = true;
-    this.searchSelect = false;
-    this.selectScope = null;
-    this.dragging = false;
-    this.pasteItems = [];
-    this.node_data = [];
-    this.link_data = [];
-    this.r = 10;
-    this.graph_center_x = 200;
-    this.nodes_grp = null;
-    this.nodes = null;
-    this.links_grp = null;
-    this.links = null;
-    this.svg = null;
-    this.simulation = null;
-    this.sel_node = null;
+    inst.task_hist = $("#task_hist",inst.frame);
+    inst.data_tree = null;
+    inst.data_md_tree = null;
+    inst.data_md_empty = true;
+    inst.data_md_empty_src = [{title:"(n/a)", icon:false}];
+    inst.data_md_exp = {};
+    inst.taskHist = [];
+    inst.pollSince = g_opts.task_hist * 3600;
+    inst.pollMax = 120;
+    inst.pollMin = 4;
+    inst.my_root_key = "c/u_" + g_user.uid + "_root";
+    inst.uid = "u/" + g_user.uid;
+    inst.drag_mode = 0;
+    inst.drag_enabled = true;
+    inst.searchSelect = false;
+    inst.selectScope = null;
+    inst.dragging = false;
+    inst.pasteItems = [];
+    inst.node_data = [];
+    inst.link_data = [];
+    inst.r = 10;
+    inst.graph_center_x = 200;
+    inst.nodes_grp = null;
+    inst.nodes = null;
+    inst.links_grp = null;
+    inst.links = null;
+    inst.svg = null;
+    inst.simulation = null;
+    inst.sel_node = null;
+    inst.SS_TREE = 0;
+    inst.SS_CAT = 1;
+    inst.SS_PROV = 2;
+    inst.SS_SEARCH = 3;
+    inst.select_source = inst.SS_TREE;
 
-    var SS_TREE = 0;
-    var SS_CAT = 1;
-    var SS_PROV = 2;
-    var SS_SEARCH = 3;
-    this.select_source = SS_TREE;
-
-    this.windowResized = function(){
+    inst.windowResized = function(){
         var h = $("#data-tabs-parent").height();
         inst.graph_center_x = $("#data-tabs-parent").width()/2;
         var tabs = $("#data-tabs");
@@ -56,29 +72,29 @@ function makeBrowserTab(){
         $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
     };
 
-    this.getSelectedIDs = function(){
+    inst.getSelectedIDs = function(){
         var ids = [], sel, i;
         //console.log("getSelectedIDs, mode:",inst.select_source);
         switch( inst.select_source ){
-            case SS_TREE:
+            case inst.SS_TREE:
                 sel = inst.data_tree.getSelectedNodes();
                 for ( i in sel ){
                     ids.push( sel[i].key );
                 }
                 break;
-            case SS_SEARCH:
+            case inst.SS_SEARCH:
                 sel = inst.results_tree.getSelectedNodes();
                 for ( i in sel ){
                     ids.push( sel[i].key );
                 }
                 break;
-            case SS_CAT:
+            case inst.SS_CAT:
                 sel = inst.cat_tree.getSelectedNodes();
                 for ( i in sel ){
                     ids.push( sel[i].key );
                 }
                 break;
-            case SS_PROV:
+            case inst.SS_PROV:
                 if ( inst.sel_node ){
                     ids.push( inst.sel_node.id );
                 }
@@ -88,7 +104,7 @@ function makeBrowserTab(){
         return ids;
     };
 
-    this.refreshNodeTitle = function( a_node, a_data, a_reload ){
+    inst.refreshNodeTitle = function( a_node, a_data, a_reload ){
         a_node.title = inst.generateTitle( a_data );
 
         if ( a_data.id.startsWith( "d/" )){
@@ -102,9 +118,9 @@ function makeBrowserTab(){
 
         if ( a_reload )
             inst.reloadNode( a_node );
-    }
+    };
 
-    this.refreshUI = function( a_ids, a_data, a_reload ){
+    inst.refreshUI = function( a_ids, a_data, a_reload ){
         //console.log("refreshUI",a_ids,a_data);
 
         if ( !a_ids || !a_data ){
@@ -150,23 +166,23 @@ function makeBrowserTab(){
         }
 
         switch( inst.select_source ){
-            case SS_TREE:
+            case inst.SS_TREE:
                 inst.showSelectedInfo( inst.data_tree.activeNode );
                 break;
-            case SS_CAT:
+            case inst.SS_CAT:
                 inst.showSelectedInfo( inst.cat_tree.activeNode );
                 break;
-            case SS_PROV:
+            case inst.SS_PROV:
                 inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
                 break;
-            case SS_SEARCH:
+            case inst.SS_SEARCH:
                 inst.showSelectedInfo( inst.results_tree.activeNode );
                 break;
         }
     };
 
 
-    this.displayPath = function( path, item ){
+    inst.displayPath = function( path, item ){
         //console.log("displayPath");
 
         var node;
@@ -328,8 +344,8 @@ function makeBrowserTab(){
         }
     };
 
-    // TODO - This is broken
-    this.showParent = function( which ){
+    // TODO -  broken code
+    inst.showParent = function( which ){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 ){
             asyncEnd();
@@ -406,21 +422,21 @@ function makeBrowserTab(){
         });
     };
 
-    this.setLockSelected = function( a_lock ){
+    inst.setLockSelected = function( a_lock ){
         var ids = inst.getSelectedIDs();
         if ( ids.length == 0 )
             return;
 
         sendDataLock( ids, a_lock, function( ok, data ){
             if ( ok ){
-                refreshUI( ids, data.item );
+                inst.refreshUI( ids, data.item );
             }else{
                 setStatusText("Lock Update Failed: " + data, 1 );
             }
         });
     };
 
-    this.refreshCollectionNodes = function( node_keys, scope ){
+    inst.refreshCollectionNodes = function( node_keys, scope ){
         // Refresh any collection nodes in data tree and catalog tree
         // Scope is used to narrow search in trees
 
@@ -487,7 +503,7 @@ function makeBrowserTab(){
             inst.reloadNode(refresh[i]);
     };
 
-    this.copyItems = function( items, dest_node, cb ){
+    inst.copyItems = function( items, dest_node, cb ){
         var item_keys = [];
         for( var i in items )
             item_keys.push( items[i].key );
@@ -505,7 +521,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.moveItems = function( items, dest_node, cb ){
+    inst.moveItems = function( items, dest_node, cb ){
         //console.log("moveItems",items,dest_node,inst.pasteSourceParent);
         var item_keys = [];
         for( var i in items )
@@ -528,7 +544,7 @@ function makeBrowserTab(){
     //-------------------------------------------------------------------------
     // ACTION FUNCTIONS (UI event handlers)
 
-    this.actionDeleteSelected = function(){
+    inst.actionDeleteSelected = function(){
         var ids = inst.getSelectedIDs();
         if ( ids.length == 0 )
             return;
@@ -563,7 +579,7 @@ function makeBrowserTab(){
                     sendDataDelete( data, function( ok, data ){
                         if ( ok ){
                             if ( --done == 0 )
-                                refreshUI();
+                                inst.refreshUI();
                         }else
                             setStatusText( "Data Delete Error: " + data, 1 );
                     });
@@ -572,7 +588,7 @@ function makeBrowserTab(){
                     collDelete( coll, function( ok, data ){
                         if ( ok ){
                             if ( --done == 0 )
-                                refreshUI();
+                                inst.refreshUI();
                         }else
                             setStatusText("Collection Delete Error: " + data, 1 );
                     });
@@ -599,7 +615,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.fileMenu = function(){
+    inst.fileMenu = function(){
         $("#filemenu").toggle().position({
             my: "left bottom",
             at: "left bottom",
@@ -607,7 +623,7 @@ function makeBrowserTab(){
         }); //"fade"); //.focus(); //slideToggle({direction: "up"});
     };
 
-    this.actionNewProj = function() {
+    inst.actionNewProj = function() {
         if ( checkDlgOpen( "p_new_edit" ))
             return;
 
@@ -617,7 +633,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.actionNewData = function() {
+    inst.actionNewData = function() {
         if ( checkDlgOpen( "d_new_edit" ))
             return;
 
@@ -650,7 +666,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.actionDupData = function(){
+    inst.actionDupData = function(){
         var parent = "root";
         var node = inst.data_tree.activeNode;
         if ( node ){
@@ -680,7 +696,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.actionNewColl = function(){
+    inst.actionNewColl = function(){
         if ( checkDlgOpen( "c_new_edit" ))
             return;
 
@@ -710,7 +726,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.actionImportData = asyncFunc( function( files ){
+    inst.actionImportData = asyncFunc( function( files ){
         var coll_id;
 
         if ( !inst.update_files && !inst.import_direct ){
@@ -736,7 +752,7 @@ function makeBrowserTab(){
         // Read file contents into a single payload for atomic validation and processing
         var file, tot_size = 0;
 
-        for ( i = 0; i < files.length; i++ ){
+        for ( var i = 0; i < files.length; i++ ){
             file = files[i];
             console.log("size:",file.size,typeof file.size);
             if ( file.size == 0 ){
@@ -833,29 +849,29 @@ function makeBrowserTab(){
         reader.readAsText(files[count],'UTF-8');
     });
 
-    this.actionFirstParent = asyncFunc( function(){
+    inst.actionFirstParent = asyncFunc( function(){
         inst.showParent(0);
     });
 
-    this.actionPrevParent = asyncFunc( function(){
+    inst.actionPrevParent = asyncFunc( function(){
         inst.showParent(1);
     });
 
-    this.actionNextParent = asyncFunc( function(){
+    inst.actionNextParent = asyncFunc( function(){
         inst.showParent(2);
     });
 
-    this.actionLockSelected = function(){
+    inst.actionLockSelected = function(){
         inst.setLockSelected( true );
     };
 
-    this.actionUnlockSelected = function(){
+    inst.actionUnlockSelected = function(){
         inst.setLockSelected( false );
     };
 
-    this.actionCutSelected = function(){
+    inst.actionCutSelected = function(){
         inst.pasteItems = inst.data_tree.getSelectedNodes();
-        inst.pasteSourceParent = pasteItems[0].parent;
+        inst.pasteSourceParent = inst.pasteItems[0].parent;
         inst.pasteMode = "cut";
         inst.pasteCollections = [];
         for ( var i in inst.pasteItems ){
@@ -865,16 +881,16 @@ function makeBrowserTab(){
         //console.log("cutSelected",inst.pasteItems,inst.pasteSourceParent);
     };
 
-    this.actionCopySelected = function(){
+    inst.actionCopySelected = function(){
         console.log("Copy");
-        if ( inst.select_source == SS_TREE )
+        if ( inst.select_source == inst.SS_TREE )
             inst.pasteItems = inst.data_tree.getSelectedNodes();
-        else if ( inst.select_source == SS_SEARCH )
+        else if ( inst.select_source == inst.SS_SEARCH )
             inst.pasteItems = inst.results_tree.getSelectedNodes();
         else
             return;
 
-        inst.pasteSourceParent = pasteItems[0].parent;
+        inst.pasteSourceParent = inst.pasteItems[0].parent;
         inst.pasteMode = "copy";
         inst.pasteCollections = [];
         for ( var i in inst.pasteItems ){
@@ -883,7 +899,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionPasteSelected = function(){
+    inst.actionPasteSelected = function(){
         function pasteDone(){
             inst.pasteItems = [];
             inst.pasteSourceParent = null;
@@ -902,7 +918,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionUnlinkSelected = function(){
+    inst.actionUnlinkSelected = function(){
         var sel = inst.data_tree.getSelectedNodes();
         if ( sel.length ){
             var scope = sel[0].data.scope;
@@ -928,7 +944,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.permGateAny = function( item_id, req_perms, cb ){
+    inst.permGateAny = function( item_id, req_perms, cb ){
         getPerms( item_id, req_perms, function( perms ){
             if (( perms & req_perms ) == 0 ){
                 setStatusText( "Permission Denied.", 1 );
@@ -939,7 +955,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.actionEditSelected = function() {
+    inst.actionEditSelected = function() {
         if ( async_guard )
             return;
 
@@ -955,33 +971,33 @@ function makeBrowserTab(){
 
         switch( id.charAt(0) ){
             case "p":
-                permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
+                inst.permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
                     viewProj( id, function( data ){
                         if ( data ){
                             dlgProjNewEdit( data, perms, function( data ){
-                                refreshUI( id, data );
+                                inst.refreshUI( id, data );
                             });
                         }
                     });
                 });
                 break;
             case "c":
-                permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
+                inst.permGateAny( id, PERM_WR_REC | PERM_SHARE, function( perms ){
                     viewColl( id, function( data ){
                         if ( data ){
                             dlgCollNewEdit( data, null, perms, function( data ){
-                                refreshUI( id, data );
+                                inst.refreshUI( id, data );
                             });
                         }
                     });
                 });
                 break;
             case "d":
-                permGateAny( id, PERM_WR_REC | PERM_WR_META | PERM_WR_DATA, function( perms ){
+                inst.permGateAny( id, PERM_WR_REC | PERM_WR_META | PERM_WR_DATA, function( perms ){
                     viewData( id, function( data ){
                         if ( data ){
                             dlgDataNewEdit( DLG_DATA_EDIT, data, null, perms, function( data ){
-                                refreshUI( id, data );
+                                inst.refreshUI( id, data );
                                 // TODO - Only do this if raw data source is changed
                                 inst.resetTaskPoll();
                             });
@@ -993,7 +1009,7 @@ function makeBrowserTab(){
                 sendQueryView( id, function( ok, old_qry ){
                     if ( ok ){
                         dlgQueryNewEdit( old_qry, function( data ){
-                            refreshUI( id, data, true );
+                            inst.refreshUI( id, data, true );
                         });
                     }else
                         setStatusText("Query Edit Error: " + old_qry, 1);
@@ -1004,7 +1020,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionShareSelected = function() {
+    inst.actionShareSelected = function() {
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
@@ -1032,7 +1048,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.actionDepGraph = function(){
+    inst.actionDepGraph = function(){
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
@@ -1046,14 +1062,14 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionDataGet = function() {
+    inst.actionDataGet = function() {
         var ids = inst.getSelectedIDs();
         dataGet( ids, function(){
             inst.resetTaskPoll();
         });
     };
 
-    this.actionDataPut = function() {
+    inst.actionDataPut = function() {
         var ids = inst.getSelectedIDs();
         if ( ids.length != 1 )
             return;
@@ -1067,15 +1083,15 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionReloadSelected = function(){
+    inst.actionReloadSelected = function(){
         var node;
 
-        if ( inst.select_source == SS_TREE ){
+        if ( inst.select_source == inst.SS_TREE ){
             node = inst.data_tree.activeNode;
             if ( node ){
                 inst.reloadNode( node );
             }
-        } else if ( inst.select_source == SS_CAT ){
+        } else if ( inst.select_source == inst.SS_CAT ){
             node = inst.cat_tree.activeNode;
             if ( node ){
                 inst.reloadNode( node, inst.cat_tree );
@@ -1083,7 +1099,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.calcActionState = function( sel ){
+    inst.calcActionState = function( sel ){
         var bits,node;
 
         if ( sel.length > 1 ){
@@ -1144,28 +1160,28 @@ function makeBrowserTab(){
         return bits;
     };
 
-    this.updateBtnState = function(){
+    inst.updateBtnState = function(){
         //console.log("updateBtnState");
         var bits,sel;
         switch( inst.select_source ){
-            case SS_TREE:
+            case inst.SS_TREE:
                 sel = inst.data_tree.getSelectedNodes();
-                bits = calcActionState( sel );
+                bits = inst.calcActionState( sel );
                 break;
-            case SS_CAT:
+            case inst.SS_CAT:
                 //bits = 0xFF;
                 sel = inst.cat_tree.getSelectedNodes();
-                bits = calcActionState( sel );
+                bits = inst.calcActionState( sel );
                 break;
-            case SS_PROV:
+            case inst.SS_PROV:
                 if ( inst.focus_node_id )
                     bits = 0;
                 else
                     bits = 0xFF;
                 break;
-            case SS_SEARCH:
+            case inst.SS_SEARCH:
                 sel = inst.results_tree.getSelectedNodes();
-                bits = calcActionState( sel );
+                bits = inst.calcActionState( sel );
                 break;
         }
 
@@ -1207,7 +1223,7 @@ function makeBrowserTab(){
         inst.data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
     };
 
-    this.saveExpandedPaths = function( node, paths ){
+    inst.saveExpandedPaths = function( node, paths ){
         var subp = {};
         if ( node.children ){
             var child;
@@ -1221,7 +1237,7 @@ function makeBrowserTab(){
         paths[node.key] = subp;
     };
 
-    this.restoreExpandedPaths = function( node, paths ){
+    inst.restoreExpandedPaths = function( node, paths ){
         node.setExpanded(true).always(function(){
             if ( node.children ){
                 var child;
@@ -1235,7 +1251,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.reloadNode = function( node, tree ){
+    inst.reloadNode = function( node, tree ){
         if ( !node || node.isLazy() && !node.isLoaded() )
             return;
 
@@ -1253,13 +1269,13 @@ function makeBrowserTab(){
         });
     };
 
-    this.showSelectedHTML = function( html ){
+    inst.showSelectedHTML = function( html ){
         $("#sel_info_form").hide();
         $("#sel_info_div").html(html).show();
         inst.showSelectedMetadata();
     };
 
-    this.showSelectedDataInfo = function( key ){
+    inst.showSelectedDataInfo = function( key ){
         viewData( key, function( item ){
             if ( item ){
                 showSelectedItemInfo( item );
@@ -1275,7 +1291,7 @@ function makeBrowserTab(){
         }); 
     };
 
-    this.showSelectedCollInfo = function( key ){
+    inst.showSelectedCollInfo = function( key ){
         viewColl( key, function( item ){
             if ( item ){
                 showSelectedItemInfo( item );
@@ -1287,7 +1303,7 @@ function makeBrowserTab(){
         }); 
     };
 
-    this.showSelectedUserInfo = function( key ){
+    inst.showSelectedUserInfo = function( key ){
         userView( key, true, function( ok, item ){
             if ( ok, item ){
                 item.id = item.uid;
@@ -1300,7 +1316,7 @@ function makeBrowserTab(){
         }); 
     };
 
-    this.showSelectedProjInfo = function( key ){
+    inst.showSelectedProjInfo = function( key ){
         viewProj( key, function( item ){
             if ( item ){
                 showSelectedItemInfo( item );
@@ -1312,7 +1328,7 @@ function makeBrowserTab(){
         }); 
     };
 
-    this.showSelectedAllocInfo = function( repo, user ){
+    inst.showSelectedAllocInfo = function( repo, user ){
         allocView( repo, user, function( ok, data ){
             if ( ok ){
                 var item = data.alloc[0];
@@ -1327,7 +1343,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.showSelectedQueryInfo = function( key ){
+    inst.showSelectedQueryInfo = function( key ){
         sendQueryView( key, function( ok, item ){
             if ( item ){
                 showSelectedItemInfo( item );
@@ -1339,8 +1355,9 @@ function makeBrowserTab(){
         }); 
     };
 
-    this.showSelectedMetadata = function( md_str )
+    inst.showSelectedMetadata = function( md_str )
     {
+        //console.log("showSelectedMetadata, inst:",inst);
         if ( md_str ){
             for ( var i in inst.data_md_exp ){
                 if ( inst.data_md_exp[i] == 1 )
@@ -1359,7 +1376,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.showSelectedInfo = function( node ){
+    inst.showSelectedInfo = function( node ){
         if ( !node ){
             inst.showSelectedMetadata();
             inst.showSelectedHTML( "" );
@@ -1422,7 +1439,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.execQuery = function( query ){
+    inst.execQuery = function( query ){
         setStatusText("Executing search query...");
         dataFind( query, function( ok, items ){
             console.log( "qry res:", ok, items );
@@ -1456,7 +1473,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.parseQuickSearch = function(){
+    inst.parseQuickSearch = function(){
         //console.log("parse query");
         var query = {};
         var tmp = $("#text_query").val();
@@ -1536,19 +1553,19 @@ function makeBrowserTab(){
         return query;
     };
 
-    this.searchDirect = function(){
+    inst.searchDirect = function(){
         $("#run_qry_btn").removeClass("ui-state-error");
 
-        var query = parseQuickSearch();
+        var query = inst.parseQuickSearch();
 
         //if ( query.scopes.length && ( query.text || query.meta || query.id ))
         inst.execQuery( query );
     };
 
-    this.querySave = function(){
+    inst.querySave = function(){
         dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
             if ( btn == 0 ){
-                var query = parseQuickSearch();
+                var query = inst.parseQuickSearch();
                 sendQueryCreate( val, query, function( ok, data ){
                     if ( ok )
                         inst.reloadNode(inst.data_tree.getNodeByKey("queries"));
@@ -1559,7 +1576,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.updateSearchSelectState = function( enabled ){
+    inst.updateSearchSelectState = function( enabled ){
         if( enabled && $("#scope_selected",inst.frame).prop("checked")){
             $(inst.data_tree_div).fancytree("option","checkbox",true);
             $(inst.cat_tree_div).fancytree("option","checkbox",true);
@@ -1575,12 +1592,12 @@ function makeBrowserTab(){
         inst.cat_tree.selectAll(false);
     };
 
-    this.searchClearSelection = function(){
+    inst.searchClearSelection = function(){
         inst.data_tree.selectAll(false);
         inst.cat_tree.selectAll(false);
     };
 
-    this.generateTitle = function( item, refresh ) {
+    inst.generateTitle = function( item, refresh ) {
         var title = "";
 
         if ( item.locked )
@@ -1592,7 +1609,7 @@ function makeBrowserTab(){
 
         // Only apply owner/creator labels to data records
         if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){
-            console.log("item",item);
+            //console.log("item",item);
 
             if ( item.owner.startsWith( "p/" )){
                 if ( item.creator != inst.uid )
@@ -1621,7 +1638,7 @@ function makeBrowserTab(){
         return title;
     };
 
-    this.taskUpdateHistory = function( task_list ){
+    inst.taskUpdateHistory = function( task_list ){
         var len = task_list.length;
         var html;
         if ( len == 0 ){
@@ -1683,10 +1700,10 @@ function makeBrowserTab(){
             }
             html += "</table>";
         }
-        this.task_hist.html( html );
+        inst.task_hist.html( html );
     };
 
-    this.taskHistoryPoll = function(){
+    inst.taskHistoryPoll = function(){
         //console.log("taskHistoryPoll",inst.pollSince);
 
         if ( !g_user )
@@ -1728,14 +1745,14 @@ function makeBrowserTab(){
         });
     };
 
-    this.resetTaskPoll = function(){
+    inst.resetTaskPoll = function(){
         console.log("reset task poll");
         inst.pollSince = 0;
         clearTimeout(inst.taskTimer);
         inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
     };
 
-    this.setupRepoTab = function(){
+    inst.setupRepoTab = function(){
         //_asyncGet( "/api/repo/list?details=true", null, function(ok,data){
         repoList( true, false, function(ok,data){
             console.log("repo list:",ok,data);
@@ -1749,7 +1766,6 @@ function makeBrowserTab(){
                         repo = data[i];
                         html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+"</td><td>"+sizeToString( repo.capacity )+"</td><td>"+repo.path+"</td><td><button class='btn small repo_adm' repo='"+repo.id+"'>Admin</button></td></tr>";
                     }
-                    //onclick='dlgRepoAdmin.show(\""+repo.id+"\")'
                     html += "</table>";
                 }else{
                     html = "No administered repositories";
@@ -1766,7 +1782,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.graphLoad = function( a_id, a_sel_node_id ){
+    inst.graphLoad = function( a_id, a_sel_node_id ){
         inst.focus_node_id = a_id;
         inst.sel_node_id = a_sel_node_id?a_sel_node_id:a_id;
         inst.sel_node = null;
@@ -1867,7 +1883,7 @@ function makeBrowserTab(){
         });
     };
 
-    this.graphUpdate = function( a_ids, a_data ){
+    inst.graphUpdate = function( a_ids, a_data ){
         // Only updates locked and alias of impacted nodes
 
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];
@@ -1892,7 +1908,7 @@ function makeBrowserTab(){
             inst.renderDepGraph();
     };
 
-    this.renderDepGraph = function(){
+    inst.renderDepGraph = function(){
         var g;
 
         inst.links = inst.links_grp.selectAll('line')
@@ -1962,9 +1978,9 @@ function makeBrowserTab(){
             })
             .attr('x', function(d){
                 if ( d.locked )
-                    return r + 12;
+                    return inst.r + 12;
                 else
-                    return r;
+                    return inst.r;
             });
 
         inst.nodes.select("text.locked")
@@ -1995,7 +2011,7 @@ function makeBrowserTab(){
                     .on("end", inst.dragEnded));
 
         g.append("circle")
-            .attr("r", r)
+            .attr("r", inst.r)
             .attr('class',function(d){
                 var res = 'obj ';
                 //console.log("node enter 1");
@@ -2021,13 +2037,13 @@ function makeBrowserTab(){
                 d3.select(this)
                     .transition()
                     .duration(150)
-                    .attr('r',r*1.5);
+                    .attr('r',inst.r*1.5);
             })
             .on("mouseout",function(d){
                 d3.select(this)
                     .transition()
                     .duration(500)
-                    .attr('r',r);
+                    .attr('r',inst.r);
             })
             .on("click", function(d,i){
                 if ( inst.sel_node != d ){
@@ -2051,7 +2067,7 @@ function makeBrowserTab(){
             });
 
         g.append("circle")
-            .attr("r", r *1.5)
+            .attr("r", inst.r *1.5)
             .attr("class", function(d){
                 //console.log("node enter 3");
 
@@ -2069,11 +2085,11 @@ function makeBrowserTab(){
             })
             .attr('x', function(d){
                 if ( d.locked )
-                    return r + 12;
+                    return inst.r + 12;
                 else
-                    return r;
+                    return inst.r;
             })
-            .attr('y', -r);
+            .attr('y', -inst.r);
 
         g.append("text")
             .attr("class","locked")
@@ -2083,8 +2099,8 @@ function makeBrowserTab(){
                 else
                     return "";
             })
-            .attr('x', r-3)
-            .attr('y', -r+1);
+            .attr('x', inst.r-3)
+            .attr('y', -inst.r+1);
 
         inst.nodes.exit()
             .remove();
@@ -2124,7 +2140,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.dragStarted = function(d) {
+    inst.dragStarted = function(d) {
         //console.log("drag start",d.id);
         if (!d3.event.active) inst.simulation.alphaTarget(0.3).restart();
         d.fx = d3.event.x;
@@ -2132,7 +2148,7 @@ function makeBrowserTab(){
         d3.event.sourceEvent.stopPropagation();
     };
 
-    this.dragged = function(d) {
+    inst.dragged = function(d) {
         //console.log("drag",d3.event.x,d3.event.y);
         d.fx = d3.event.x;
         d.fy = d3.event.y;
@@ -2140,7 +2156,7 @@ function makeBrowserTab(){
         d3.event.sourceEvent.stopPropagation();
     };
 
-    this.dragEnded = function(d){
+    inst.dragEnded = function(d){
         //console.log("drag end",d.id);
         if (!d3.event.active) inst.simulation.alphaTarget(0);
         d.x = d.fx;
@@ -2151,21 +2167,21 @@ function makeBrowserTab(){
         d3.event.sourceEvent.stopPropagation();
     };
 
-    this.graphNodeFind = function( a_id ){
+    inst.graphNodeFind = function( a_id ){
         for ( var i in inst.node_data ){
             if ( inst.node_data[i].id == a_id )
                 return inst.node_data[i];
         }
     };
 
-    this.graphLinkFind = function( a_id ){
+    inst.graphLinkFind = function( a_id ){
         for ( var i in inst.link_data ){
             if ( inst.link_data[i].id == a_id )
                 return inst.link_data[i];
         }
     };
 
-    this.actionGraphNodeExpand = function(){
+    inst.actionGraphNodeExpand = function(){
         if ( inst.sel_node && !inst.sel_node.comp ){
             //var exp_node = graphNodeFind( inst.sel_node )
             //inst.sel_node_id
@@ -2224,7 +2240,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionGraphNodeCollapse = function(){
+    inst.actionGraphNodeCollapse = function(){
         //console.log("collapse node");
         if ( inst.sel_node ){
             var i, link, dest, loc_trim=[];
@@ -2271,7 +2287,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.actionGraphNodeHide = function(){
+    inst.actionGraphNodeHide = function(){
         if ( inst.sel_node && inst.sel_node.id != inst.focus_node_id && inst.node_data.length > 1 ){
             inst.sel_node.prune = true;
             // Check for disconnection of the graph
@@ -2292,7 +2308,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.graphCountConnected = function(a_node,a_visited,a_from){
+    inst.graphCountConnected = function(a_node,a_visited,a_from){
         var count = 0;
 
         if ( a_visited.indexOf( a_node.id ) < 0 && !a_node.prune ){
@@ -2303,7 +2319,7 @@ function makeBrowserTab(){
                 link = a_node.links[i];
                 if ( link != a_from ){
                     dest = (link.source == a_node?link.target:link.source);
-                    count += graphCountConnected(dest,a_visited,link);
+                    count += inst.graphCountConnected(dest,a_visited,link);
                 }
             }
         }
@@ -2311,7 +2327,7 @@ function makeBrowserTab(){
         return count;
     };
 
-    this.graphPrune = function(){
+    inst.graphPrune = function(){
         var i,j,item;
 
         for ( i = inst.link_data.length - 1; i >= 0; i-- ){
@@ -2349,7 +2365,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.graphPruneReset = function(){
+    inst.graphPruneReset = function(){
         var i;
         for ( i in inst.node_data ){
             inst.node_data[i].prune = false;
@@ -2360,7 +2376,7 @@ function makeBrowserTab(){
     };
 
     // Depth-first-search to required nodes, mark for pruning
-    this.graphPruneCalc = function( a_node, a_visited, a_source ){
+    inst.graphPruneCalc = function( a_node, a_visited, a_source ){
         //console.log("graphPrune",a_node.label);
         if ( a_visited.indexOf(a_node.id) < 0 ){
             a_visited.push(a_node.id);
@@ -2370,7 +2386,7 @@ function makeBrowserTab(){
                 return false;
             }
 
-            var i, prune, dest, keep = false;
+            var i, prune, dest, link, keep = false;
 
             for ( i in a_node.links ){
                 link = a_node.links[i];
@@ -2399,7 +2415,7 @@ function makeBrowserTab(){
         return a_node.prune;
     };
 
-    this.simTick = function() {
+    inst.simTick = function() {
         //console.log("tick");
         inst.nodes
             .attr("transform", function(d) {
@@ -2412,7 +2428,7 @@ function makeBrowserTab(){
             .attr("y2", function(d) { return d.target.y; });
     };
 
-    this.treeSelectNode = function( a_node, a_toggle ){
+    inst.treeSelectNode = function( a_node, a_toggle ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
             setStatusText("Cannot select across collections or categories",1);
             return;
@@ -2429,7 +2445,7 @@ function makeBrowserTab(){
         }
     };
 
-    this.treeSelectRange = function( a_tree, a_node ){
+    inst.treeSelectRange = function( a_tree, a_node ){
         if ( a_node.parent != inst.selectScope.parent || a_node.data.scope != inst.selectScope.data.scope ){
             setStatusText("Cannot select across collections or categories",1);
             return;
@@ -2465,12 +2481,12 @@ function makeBrowserTab(){
      *
      * There is additional source information in inst.pasteXXX
      */
-    this.pasteAllowed = function( dest_node, src_node ){
+    inst.pasteAllowed = function( dest_node, src_node ){
         //console.log("pasteAllowed:",dest_node, src_node);
 
         if ( !dest_node.data.notarg && dest_node.data.scope ){
-            // Prevent pasting to self or across scopes
-            if ( inst.pasteSourceParent.key == dest_node.key )
+            // Prevent pasting to self or across scopes or from other trees
+            if ( !inst.pasteSourceParent || inst.pasteSourceParent.key == dest_node.key )
                 return false;
 
             // Different scopes requires destination or destination parent to be a collection
@@ -2501,28 +2517,6 @@ function makeBrowserTab(){
             return "over";
         }else
             return false;
-    };
-
-    this.pageLoad = function( key, offset ){
-        //console.log("pageLoad",key, offset);
-        var node = inst.data_tree.getNodeByKey( key );
-        if ( node ){
-            node.data.offset = offset;
-            setTimeout(function(){
-                node.load(true);
-            },0);
-        }
-    };
-
-    this.pageLoadCat = function( key, offset ){
-        //console.log("pageLoad",key, offset);
-        var node = inst.cat_tree.getNodeByKey( key );
-        if ( node ){
-            node.data.offset = offset;
-            setTimeout(function(){
-                node.load(true);
-            },0);
-        }
     };
 
     var tree_source = [
@@ -2930,7 +2924,7 @@ function makeBrowserTab(){
             }
             inst.keyNav = false;
 
-            showSelectedInfo( data.node );
+            inst.showSelectedInfo( data.node );
         },
         select: function( event, data ) {
             //if ( inst.searchSelect && data.node.isSelected() ){
@@ -2968,8 +2962,7 @@ function makeBrowserTab(){
             }
         },
         click: function(event, data) {
-            console.log("click",data.node.key);
-
+            //console.log("click",data.node.key);
 
             if ( inst.dragging ){ // Suppress click processing on aborted drag
                 console.log("aborted drag");
@@ -3073,6 +3066,28 @@ function makeBrowserTab(){
         }
     };
 
+    inst.pageLoad = function( key, offset ){
+        //console.log("pageLoad",key, offset);
+        var node = inst.data_tree.getNodeByKey( key );
+        if ( node ){
+            node.data.offset = offset;
+            setTimeout(function(){
+                node.load(true);
+            },0);
+        }
+    };
+
+    inst.pageLoadCat = function( key, offset ){
+        //console.log("pageLoad",key, offset);
+        var node = inst.cat_tree.getNodeByKey( key );
+        if ( node ){
+            node.data.offset = offset;
+            setTimeout(function(){
+                node.load(true);
+            },0);
+        }
+    };
+
     inst.data_tree_div = $('#data_tree');
     inst.data_tree = $.ui.fancytree.getTree("#data_tree");
 
@@ -3114,6 +3129,8 @@ function makeBrowserTab(){
                 par = par.parent;
             }
 
+            path = "md." + path;
+
             if ( data.node.isExpanded() ){
                 delete inst.data_md_exp[path];
             }else{
@@ -3122,7 +3139,7 @@ function makeBrowserTab(){
         }
     });
 
-    this.data_md_tree = $.ui.fancytree.getTree("#data_md_tree");
+    inst.data_md_tree = $.ui.fancytree.getTree("#data_md_tree");
 
     // Connect event/click handlers
     $("#btn_file_menu",inst.frame).on('click', inst.fileMenu );
@@ -3151,30 +3168,6 @@ function makeBrowserTab(){
         $('#input_files',inst.frame).trigger('click');
     });
 
-    var async_guard = false;
-
-    function asyncFunc( fn ){
-        return function(){
-            if ( !async_guard ){
-                console.log(">>> asyncBegin");
-                async_guard = true;
-                //$("body").css("cursor", "progress");
-                return fn.apply(this,arguments);
-            }else{
-                console.log(">>> asyncBegin blocked");
-            }
-        };
-    }
-
-    function asyncEnd(){
-        if ( async_guard ){
-            console.log("<<< asyncEnd");
-            //$("body").css("cursor", "default");
-            async_guard = false;
-        }else{
-            console.log("<<< asyncEnd INVALID!!!!");
-        }
-    }
 
     $("#btn_edit",inst.frame).on('click', inst.actionEditSelected );
     //$("#btn_dup",inst.frame).on('click', inst.dupSelected );
@@ -3200,7 +3193,7 @@ function makeBrowserTab(){
             inst.refreshUI();
         }
         clearTimeout(inst.taskTimer);
-        this.task_hist.html( "(no recent transfers)" );
+        inst.task_hist.html( "(no recent transfers)" );
         inst.taskHist = [];
         inst.pollSince = g_opts.task_hist * 3600;
         inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
@@ -3256,12 +3249,11 @@ function makeBrowserTab(){
     });
 
     if ( g_user.isRepoAdmin ){
-        setupRepoTab();
+        inst.setupRepoTab();
         $('[href="#tab-repo"]').closest('li').show();
     }
 
     if ( g_user.isAdmin ){
-        //setupRepoTab();
         $('[href="#tab-admin"]').closest('li').show();
         $("#btn_manage_repos",inst.frame).on('click', dlgRepoManage );
     }
@@ -3450,19 +3442,19 @@ function makeBrowserTab(){
             if ( ui.newPanel.length ){
                 switch ( ui.newPanel[0].id ){
                     case "tab-data-tree":
-                        inst.select_source = SS_TREE;
+                        inst.select_source = inst.SS_TREE;
                         inst.showSelectedInfo( inst.data_tree.activeNode );
                         break;
                     case "tab-catalogs":
-                        inst.select_source = SS_CAT;
+                        inst.select_source = inst.SS_CAT;
                         inst.showSelectedInfo( inst.cat_tree.activeNode );
                         break;
                     case "tab-prov-graph":
-                        inst.select_source = SS_PROV;
+                        inst.select_source = inst.SS_PROV;
                         inst.showSelectedInfo( inst.sel_node?inst.sel_node.id:null );
                         break;
                     case "tab-search-results":
-                        inst.select_source = SS_SEARCH;
+                        inst.select_source = inst.SS_SEARCH;
                         inst.showSelectedInfo( inst.results_tree.activeNode );
                         break;
                 }
@@ -3533,30 +3525,34 @@ function makeBrowserTab(){
 
     $("#filemenu").menu().removeClass("ui-widget-content").addClass("ui-corner-all");
 
-    this.filemenutimer = null;
+    inst.filemenutimer = null;
     $("#filemenu").mouseout(function(){
-        if ( !this.filemenutimer ){
-            this.filemenutimer = setTimeout( function(){
+        if ( !inst.filemenutimer ){
+            inst.filemenutimer = setTimeout( function(){
                 $("#filemenu").hide();
-                this.filemenutimer = null;
+                inst.filemenutimer = null;
             }, 1000 );
         }
     });
 
     $("#filemenu").mouseover(function(){
-        if ( this.filemenutimer ){
-            clearTimeout(this.filemenutimer);
-            this.filemenutimer = null;
+        if ( inst.filemenutimer ){
+            clearTimeout(inst.filemenutimer);
+            inst.filemenutimer = null;
         }
     });
 
-
+    // Wire-up callbacks in static browser template
+    $("#run_qry_btn",inst.frame).on("click", function(){ inst.searchDirect(); });
+    $("#save_qry_btn",inst.frame).on("click", function(){ inst.querySave(); });
+    $("#btn_srch_clear_select",inst.frame).on("click", function(){ inst.searchClearSelection(); });
+ 
     // Graph Init
     var zoom = d3.zoom();
 
     inst.svg = d3.select("svg")
     .call(zoom.on("zoom", function () {
-        svg.attr("transform", d3.event.transform);
+        inst.svg.attr("transform", d3.event.transform);
     }))
     .append("g");
 
@@ -3574,14 +3570,17 @@ function makeBrowserTab(){
     //$("#sel_details").slideToggle();
 
     var node = inst.data_tree.getNodeByKey( "mydata" );
+    console.log("mydata node:",node);
     node.setExpanded().done(function(){
-        node = inst.data_tree.getNodeByKey( inst.my_root_key );
-        node.setExpanded();
+        console.log("my root key:",inst,inst.my_root_key);
+        var node2 = inst.data_tree.getNodeByKey( inst.my_root_key );
+        console.log("my root node:",node2);
+        node2.setExpanded();
     });
 
     inst.showSelectedInfo();
-    this.task_hist.html( "(no recent transfers)" );
-    this.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
+    inst.task_hist.html( "(no recent transfers)" );
+    inst.taskTimer = setTimeout( inst.taskHistoryPoll, 1000 );
 
     return inst;
 }

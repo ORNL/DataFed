@@ -83,12 +83,12 @@
         var g_theme = "<%- @theme %>";
         var g_test_mode = ("<%- @test_mode %>" == "true");
         var g_opts = { page_sz: 20, task_hist: 24, def_alloc: 'none' };
-        var tab_browser;
+        var g_tab_browser;
         var resizeTimer = null;
 
         function resizeUI(){
             //console.log("resizeUI")
-            tab_browser.windowResized();
+            g_tab_browser.windowResized();
         }
 
         $(window).bind('resize', function() {
@@ -119,7 +119,7 @@
                     $("#is_admin").show();
                 }
 
-                tab_browser = makeBrowserTab();
+                g_tab_browser = makeBrowserTab();
 
                 resizeUI();
 
@@ -128,6 +128,16 @@
                 dlgAlert("System Error","Unable to access user record");
             }
         });
+
+        // Global onclick callback for browser data tree
+        function pageLoad( key, offset ){
+            g_tab_browser.pageLoad( key, offset );
+        };
+
+        // Global onclick callback for browser catalog tree
+        function pageLoadCat( key, offset ){
+            g_tab_browser.pageLoadCat( key, offset );
+        };
 
     </script>
 </html>
