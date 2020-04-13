@@ -1,10 +1,13 @@
-function CatalogSubTab( browser, frame ){
+import * as util from "./util.js";
+import * as settings from "./settings.js";
+import * as panel_info from "./panel_item_info.js";
+
+export function makeCatalogPanel( a_id, a_frame, a_parent ){
     var inst = this;
 
-    this.browser = browser;
-    this.frame = frame;
+    this.tree_div = $(a_id,a_frame);
 
-    $("#catalog_tree", frame ).fancytree({
+    $("#catalog_tree", a_frame ).fancytree({
         toggleEffect: false,
         extensions: ["themeroller","dnd5"],
         themeroller: {
@@ -50,10 +53,10 @@ function CatalogSubTab( browser, frame ){
         selectMode: 1,
         activate: function( event, data ) {
             data.node.setSelected( true );
-            browser.showSelectedInfo( data.node );
+            panel_info.showSelectedInfo( data.node );
         },
         select: function( event, data ) {
-            browser.updateBtnState();
+            a_parent.updateBtnState();
         },
         collapse: function( event, data ) {
             if ( data.node.isLazy() ){
@@ -70,23 +73,23 @@ function CatalogSubTab( browser, frame ){
                 // RIGHT-CLICK CONTEXT MENU
 
                 // Enable/disable actions
-                inst.cat_tree_div.contextmenu("enableEntry", "unlink", false );
-                inst.cat_tree_div.contextmenu("enableEntry", "cut", false );
-                inst.cat_tree_div.contextmenu("enableEntry", "paste", false );
-                inst.cat_tree_div.contextmenu("enableEntry", "new", false );
+                inst.tree_div.contextmenu("enableEntry", "unlink", false );
+                inst.tree_div.contextmenu("enableEntry", "cut", false );
+                inst.tree_div.contextmenu("enableEntry", "paste", false );
+                inst.tree_div.contextmenu("enableEntry", "new", false );
 
                 if ( data.node.key.charAt(0) == 'd' ){
-                    inst.cat_tree_div.contextmenu("enableEntry", "actions", true );
-                    inst.cat_tree_div.contextmenu("enableEntry", "copy", true );
+                    inst.tree_div.contextmenu("enableEntry", "actions", true );
+                    inst.tree_div.contextmenu("enableEntry", "copy", true );
                 }else if ( data.node.key.charAt(0) == 'c' ){
-                    inst.cat_tree_div.contextmenu("enableEntry", "actions", true );
-                    inst.cat_tree_div.contextmenu("enableEntry", "graph", false );
-                    inst.cat_tree_div.contextmenu("enableEntry", "put", false );
-                    inst.cat_tree_div.contextmenu("enableEntry", "copy", false );
-                    inst.cat_tree_div.contextmenu("enableEntry", "move", false );
+                    inst.tree_div.contextmenu("enableEntry", "actions", true );
+                    inst.tree_div.contextmenu("enableEntry", "graph", false );
+                    inst.tree_div.contextmenu("enableEntry", "put", false );
+                    inst.tree_div.contextmenu("enableEntry", "copy", false );
+                    inst.tree_div.contextmenu("enableEntry", "move", false );
                 }else{
-                    inst.cat_tree_div.contextmenu("enableEntry", "actions", false );
-                    inst.cat_tree_div.contextmenu("enableEntry", "copy", false );
+                    inst.tree_div.contextmenu("enableEntry", "actions", false );
+                    inst.tree_div.contextmenu("enableEntry", "copy", false );
                 }
             }else if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
@@ -96,17 +99,17 @@ function CatalogSubTab( browser, frame ){
         lazyLoad: function( event, data ) {
             if ( data.node.key == "topics" ) {
                 data.result = {
-                    url: "/api/top/list?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/top/list?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key.startsWith( "t/" )){
                 data.result = {
-                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key.startsWith( "c/" )){
                 data.result = {
-                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+g_opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
+                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+settings.opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
                     cache: false
                 };
             }
@@ -121,13 +124,13 @@ function CatalogSubTab( browser, frame ){
                 //console.log("topic resp:",data.response);
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
+                    var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
                     data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+
                         "\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+
-                        "\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+
-                        (page==pages?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+"\","+page*g_opts.page_sz+
+                        "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+
+                        (page==pages?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+"\","+page*settings.opts.page_sz+
                         ")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoadCat(\""+
-                        data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+                        data.node.key+"\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
 
                 for ( var i in items ) {
@@ -141,9 +144,9 @@ function CatalogSubTab( browser, frame ){
                             entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",offset:0 };
                         }
                     }else if ( item.id[0]=="c" ){
-                        entry = { title: browser.generateTitle(item),folder:true,lazy:true,key:item.id,offset:0,scope:item.owner?item.owner:scope };
+                        entry = { title: util.generateTitle(item),folder:true,lazy:true,key:item.id,offset:0,scope:item.owner?item.owner:scope };
                     }else{ // data records
-                        entry = { title:browser.generateTitle(item),key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi,scope:item.owner?item.owner:scope };
+                        entry = { title: util.generateTitle(item),key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,doi:item.doi,scope:item.owner?item.owner:scope };
                     }
 
                     data.result.push( entry );
@@ -156,8 +159,7 @@ function CatalogSubTab( browser, frame ){
         },
     });
 
-    this.cat_tree_div = $('#catalog_tree',frame);
-    this.cat_tree = $.ui.fancytree.getTree("#catalog_tree");
+    this.tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
 
     return this;
 }

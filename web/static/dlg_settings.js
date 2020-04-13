@@ -1,6 +1,9 @@
-/*jshint multistr: true */
+import * as settings from "./settings.js";
+import * as util from "./util.js";
+import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
 
-function dlgSettings( a_cb ){
+export function dlgSettings( a_cb ){
     var content = "\
         User Interface<hr>\
         <table class='setting-table'>\
@@ -36,17 +39,17 @@ function dlgSettings( a_cb ){
 
     var frame = $(document.createElement('div'));
     frame.html( content );
-    inputTheme( $('input:text,input:password',frame ));
+    util.inputTheme( $('input:text,input:password',frame ));
     $(".btn",frame).button();
     var emailFilter = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     var def_alloc;
 
     $("#btn_revoke_cred",frame).click( function(){
-        dlgConfirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Cancel","Revoke"], function(choice){
+        dialogs.dlgConfirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Cancel","Revoke"], function(choice){
             if ( choice == 1 ){
-                _asyncGet( "/api/usr/revoke_cred", null, function( ok, data ){
+                api._asyncGet( "/api/usr/revoke_cred", null, function( ok, data ){
                     if ( !ok )
-                        dlgAlert( "Revoke Credentials Error", data );
+                        dialogs.dlgAlert( "Revoke Credentials Error", data );
                 });
             }
         });
@@ -66,17 +69,17 @@ function dlgSettings( a_cb ){
         },{
             text: "Save",
             click: function(){
-                var reload = false, save = false, upd_email, upd_pass;
+                var reload = false;
                 var url = "", inst = $(this);
 
                 var tmp = $("#new_email",frame).val();
-                if ( tmp != g_user.email ){
+                if ( tmp != settings.user.email ){
                     if (!emailFilter.test(String(tmp).toLowerCase())) {
-                        dlgAlert( "Data Entry Error", "Invalid e-mail" );
+                        dialogs.dlgAlert( "Data Entry Error", "Invalid e-mail" );
                         return;
                     }else{
                         url += "&email=" + encodeURIComponent(tmp);
-                        g_user.email = tmp;
+                        settings.setUserEmail( tmp );
                     }
                 }
 
@@ -84,30 +87,32 @@ function dlgSettings( a_cb ){
                 if ( tmp ){
                     var pw2 = $('#cli_confirm_pw',frame).val();
                     if ( tmp != pw2 ){
-                        dlgAlert( "Update CLI Password", "Passwords do not match" );
+                        dialogs.dlgAlert( "Update CLI Password", "Passwords do not match" );
                         return;
                     }else{
                         url += "&pw=" + encodeURIComponent(tmp);
                     }
                 }
 
-                var save_opts = false;
+                var save_opts = false, opts = settings.opts;
 
                 tmp = $("#page-size",frame).val();
-                if ( tmp != g_opts.page_sz ){
-                    g_opts.page_sz = parseInt(tmp);
+                if ( tmp != opts.page_sz ){
+                    opts.page_sz = parseInt(tmp);
                     save_opts = true;
                     reload = true;
                 }
 
                 tmp = $("#task-poll-hours",frame).val();
-                if ( tmp != g_opts.task_hist ){
-                    g_opts.task_hist = parseInt(tmp);
+                if ( tmp != opts.task_hist ){
+                    opts.task_hist = parseInt(tmp);
                     save_opts = true;
                 }
 
-                if ( save_opts )
-                    url += "&opts="+encodeURIComponent(JSON.stringify(g_opts));
+                if ( save_opts ){
+                    settings.setOptionsObj( opts );
+                    url += "&opts="+encodeURIComponent(JSON.stringify(opts));
+                }
 
                 var new_def_alloc, close_cnt = 0;
 
@@ -122,7 +127,7 @@ function dlgSettings( a_cb ){
 
                 function do_close(){
                     if ( --close_cnt <= 0 ){
-                        setStatusText("Settings saved.");
+                        util.setStatusText("Settings saved.");
 
                         if ( a_cb )
                             a_cb( reload );
@@ -132,17 +137,19 @@ function dlgSettings( a_cb ){
                 }
 
                 tmp = $("#theme-sel",frame).val();
-                if ( tmp != g_theme ){
-                    themeSet( tmp );
+                if ( tmp != settings.theme ){
+                    settings.setTheme( tmp );
+                    $("#jq-theme-css").attr({href : "/jquery-ui-"+tmp+"/jquery-ui.css" });
+                    api._asyncGet( "/ui/theme/save?theme="+tmp, null, null );
                 }
 
                 if ( close_cnt == 0 )
                     do_close();
 
                 if ( url ){
-                    _asyncGet( "/api/usr/update?uid=u/"+g_user.uid + url, null, function( ok, data ){
+                    api._asyncGet( "/api/usr/update?uid=u/"+settings.user.uid + url, null, function( ok, data ){
                         if ( !ok ){
-                            dlgAlert( "Save Settings Error", data );
+                            dialogs.dlgAlert( "Save Settings Error", data );
                         }else{
                             do_close();
                         }
@@ -150,9 +157,9 @@ function dlgSettings( a_cb ){
                 }
 
                 if ( new_def_alloc ){
-                    setDefaultAlloc( new_def_alloc, null, function( ok, data ){
+                    api.setDefaultAlloc( new_def_alloc, null, function( ok, data ){
                         if ( !ok ){
-                            dlgAlert("Set Default Allocation Error", data );
+                            dialogs.dlgAlert("Set Default Allocation Error", data );
                         }else{
                             do_close();
                         }
@@ -161,18 +168,18 @@ function dlgSettings( a_cb ){
             }
         }],
         open: function(event,ui){
-            $("#page-size",frame).val(g_opts.page_sz).selectmenu({width:150});
-            $("#theme-sel",frame).val(g_theme).selectmenu({width:150});
-            $("#task-poll-hours",frame).val(g_opts.task_hist).selectmenu({width:150});
+            $("#page-size",frame).val(settings.opts.page_sz).selectmenu({width:150});
+            $("#theme-sel",frame).val(settings.theme).selectmenu({width:150});
+            $("#task-poll-hours",frame).val(settings.opts.task_hist).selectmenu({width:150});
             $("#def-alloc",frame).selectmenu({width:225});
-            $("#new_email",frame).val( g_user.email );
+            $("#new_email",frame).val(settings.user.email );
         },
         close: function( ev, ui ) {
             $(this).dialog("destroy").remove();
         }
     };
 
-    allocListBySubject(null,null, function( ok, data ){
+    api.allocListBySubject(null,null, function( ok, data ){
         var html = "";
         if ( ok && data.length ){
             var alloc;
@@ -183,7 +190,7 @@ function dlgSettings( a_cb ){
                     html += " selected";
                     def_alloc = alloc.repo;
                 }
-                html += ">" + alloc.repo.substr(5) + " ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
+                html += ">" + alloc.repo.substr(5) + " ("+ util.sizeToString(alloc.dataSize) + " / " + util.sizeToString(alloc.dataLimit) +")</option>";
             }
         }
 

@@ -111,6 +111,8 @@ function startServer(){
     });
 }
 
+express.static.mime.define({'application/javascript': ['js']});
+
 app.use( express.static( __dirname + '/static' ));
 // body size limit = 100*max metadata size, which is 100 Kb
 app.use( bodyParser.json({ type: 'application/json', limit: '1048576'}));

@@ -1,12 +1,19 @@
-/*jshint multistr: true */
+import * as api from "./api.js";
+import * as model from "./model.js";
+import * as util from "./util.js";
+import * as settings from "./settings.js";
+import * as dialogs from "./dialogs.js";
+import {dlgStartTransfer} from "./dlg_start_xfer.js";
 
-var DLG_DATA_NEW = 0;
-var DLG_DATA_EDIT = 1;
-var DLG_DATA_DUP = 2;
-var DLG_DATA_LABEL = ["New", "Edit", "Copy"];
-var DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
+export var DLG_DATA_MODE_NEW = 0;
+export var DLG_DATA_MODE_EDIT = 1;
+export var DLG_DATA_MODE_DUP = 2;
 
-function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
+const DLG_DATA_LABEL = ["New", "Edit", "Copy"];
+const DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
+
+
+export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     var ele = document.createElement('div');
     ele.id = (a_data?a_data.id.replace("/","_"):"d_new")+"_edit";
     var frame = $(ele);
@@ -79,15 +86,15 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         </div>" );
 
     var dlg_title;
-    if ( a_data && ( a_mode == DLG_DATA_EDIT || a_mode == DLG_DATA_DUP ))
+    if ( a_data && ( a_mode == DLG_DATA_MODE_EDIT || a_mode == DLG_DATA_MODE_DUP ))
         dlg_title = DLG_DATA_LABEL[a_mode] + " Data Record " + a_data.id;
-    else if ( a_mode == DLG_DATA_NEW )
+    else if ( a_mode == DLG_DATA_MODE_NEW )
         dlg_title = "New Data Record";
     else
         return;
 
-    inputTheme( $('input:text',frame ));
-    inputTheme( $('textarea',frame ));
+    util.inputTheme( $('input:text',frame ));
+    util.inputTheme( $('textarea',frame ));
 
     $(".btn",frame).button();
 
@@ -119,7 +126,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
         row.insertAfter("#ref-table tr:last",frame);
         $("select",row).selectmenu({width:200});
         $(".btn",row).button();
-        inputTheme( $('input:text',row ));
+        util.inputTheme( $('input:text',row ));
 
         $(".rem-ref",row).on("click",function(ev){
             remRef(ev);
@@ -141,13 +148,13 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
     function updateAllocSelect(){
         var coll_id = $("#coll",frame).val();
-        allocListByObject( coll_id, function( ok, data ){
+        api.allocListByObject( coll_id, function( ok, data ){
             var html;
             var have_cap = false;
             if ( ok ){
                 if ( data.length == 0 ){
                     html="<option value='bad'>(no allocations)</option>";
-                    dlgAlert("Allocation Error", "Cannot create new data record for this user/project. No available storage allocations.");
+                    dialogs.dlgAlert("Allocation Error", "Cannot create new data record for this user/project. No available storage allocations.");
                     return;
                 }else{
                     var alloc;
@@ -161,11 +168,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         else
                             html += " disabled";
 
-                        html += ">"+ alloc.repo.substr(5) + " ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
+                        html += ">"+ alloc.repo.substr(5) + " ("+ util.sizeToString(alloc.dataSize) + " / " + util.sizeToString(alloc.dataLimit) +")</option>";
                     }
 
                     if ( !have_cap ){
-                        dlgAlert("Data Allocation Error","Cannot create new data record for this user/project. All available storage allocations are full. ");
+                        dialogs.dlgAlert("Data Allocation Error","Cannot create new data record for this user/project. All available storage allocations are full. ");
                         return;
                     }else{
                         $("#do_it").button("enable");
@@ -217,7 +224,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 var anno = jsoned.getSession().getAnnotations();
                 if ( anno && anno.length ){
-                    dlgAlert( "Data Entry Error", "Metadata field has unresolved errors.");
+                    dialogs.dlgAlert( "Data Entry Error", "Metadata field has unresolved errors.");
                     return;
                 }
 
@@ -226,7 +233,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     id = $("input",ele).val();
                     if ( id ){
                         type = parseInt($("select",ele).val());
-                        deps.push({id:id,type:type,dir:DEP_OUT});
+                        deps.push({id:id,type:type,dir:model.DEP_OUT});
                     }
                 });
 
@@ -235,24 +242,24 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 if ( $("#published",frame).prop("checked") )
                     is_published = true;
 
-                if ( a_data && a_mode == DLG_DATA_EDIT ){
+                if ( a_data && a_mode == DLG_DATA_MODE_EDIT ){
                     url += "update";
 
-                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
-                    getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
-                    getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                    getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
-                    getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+                    util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
+                    util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
+                    util.getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
+                    util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
 
                     if ( is_published ){
                         var doi = $("#doi",frame).val();
                         var data_url = $("#data_url",frame).val();
                         if ( !doi || !data_url ){
-                            dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
+                            dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
                             return;
                         }
-                        getUpdatedValue( doi, a_data, obj, "doi" );
-                        getUpdatedValue( data_url, a_data, obj, "dataUrl" );
+                        util.getUpdatedValue( doi, a_data, obj, "doi" );
+                        util.getUpdatedValue( data_url, a_data, obj, "dataUrl" );
                     }else{
                         if ( a_data.doi ){
                             obj.doi="";
@@ -266,7 +273,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                             if ( a_data.extAuto )
                                 obj.extAuto = false;
 
-                            getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
+                            util.getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
                         }
                     }
 
@@ -300,23 +307,23 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }else{
                     url += "create";
 
-                    getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
-                    getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
-                    getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
+                    util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
+                    util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
+                    util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
+                    util.getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
 
                     if ( is_published ){
-                        getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
-                        getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
+                        util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
+                        util.getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
                         if ( !obj.doi || !obj.dataUrl ){
-                            dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
+                            dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
                             return;
                         }
                     }else{
                         if ( $("#ext_auto",frame).prop("checked") ){
                             obj.extAuto = true;
                         }else{
-                            getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
+                            util.getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
                         }
                     }
 
@@ -328,10 +335,10 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         obj.deps = deps;
                 }
 
-                if ( a_mode != DLG_DATA_EDIT ){
+                if ( a_mode != DLG_DATA_MODE_EDIT ){
                     var repo_id = $("#alloc").val();
                     if ( repo_id == "bad" ){
-                        dlgAlert( "Data Entry Error", "Parent collection is invalid");
+                        dialogs.dlgAlert( "Data Entry Error", "Parent collection is invalid");
                         return;
                     }else if (repo_id != 'default' )
                         obj.repoId = repo_id;
@@ -341,19 +348,18 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
 
                 var inst = $(this);
 
-                _asyncPost( url, obj, function( ok, data ){
+                api._asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         tmp = $("#source_file").val().trim();
-                        if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_DUP )){
-                            xfrStart( [data.data[0].id], TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
+                        if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+                            api.xfrStart( [data.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
                                 if ( ok2 ){
-                                    setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
-                                    //dlgAlert( "Transfer Initiated", "Data transfer ID and progress will be shown under the 'Transfers' tab on the main window." );
+                                    util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
                                     inst.dialog('close');
                                     if ( a_cb )
                                         a_cb(data.data[0],obj.parentId);
                                 }else{
-                                    dlgAlert( "Transfer Error", data2 );
+                                    dialogs.dlgAlert( "Transfer Error", data2 );
                                 }
                             });
                         }else{
@@ -363,7 +369,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         }
 
                     } else {
-                        dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );
+                        dialogs.dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );
                     }
                 });
             }
@@ -382,7 +388,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             $("select",frame).selectmenu({width:200});
 
             jsoned = ace.edit( $("#md",frame).get(0), {
-                theme:(g_theme=="light"?"ace/theme/light":"ace/theme/dark"),
+                theme:(settings.theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
                 fontSize:16,
                 autoScrollEditorIntoView:true,
@@ -408,23 +414,23 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                 }
 
                 if ( a_data.deps && a_data.deps.length ){
-                    var i,dep;
+                    var i, dep, row;
                     for ( i in a_data.deps ){
                         dep = a_data.deps[i];
                         if ( dep.dir == "DEP_OUT" ){
-                            orig_deps.push({id:dep.alias?dep.alias:dep.id,type:DepTypeFromString[dep.type],dir:DEP_OUT});
+                            orig_deps.push({id:dep.alias?dep.alias:dep.id,type:model.DepTypeFromString[dep.type],dir:model.DEP_OUT});
                             row = $("#ref-table tr:last",frame);
                             $("input",row).val(dep.alias?dep.alias:dep.id);
-                            $("select",row).val(DepTypeFromString[dep.type]).selectmenu("refresh");
+                            $("select",row).val(model.DepTypeFromString[dep.type]).selectmenu("refresh");
                             addRef();
                         }
                     }
                 }
 
-                if ( a_mode == DLG_DATA_EDIT ){
+                if ( a_mode == DLG_DATA_MODE_EDIT ){
                     $("#published",frame).prop("disabled",true);
 
-                    if (( a_upd_perms & PERM_WR_META ) == 0 ){
+                    if (( a_upd_perms & model.PERM_WR_META ) == 0 ){
                         jsoned.setReadOnly(true);
                         jsoned.container.style.opacity=0.45;
                         $("#md_status").text("(read only)");
@@ -432,14 +438,14 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         $("#md_merge",frame).attr('disabled',true);
                         $("#md_set",frame).attr('disabled',true);
                     }
-                    if (( a_upd_perms & PERM_WR_REC ) == 0 ){
-                        inputDisable( $("#title,#desc,#alias,#keyw", frame ));
-                        inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
+                    if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
+                        util.inputDisable( $("#title,#desc,#alias,#keyw", frame ));
+                        util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
                     }
 
-                    if (( a_upd_perms & PERM_WR_DATA ) == 0 ){
-                        inputDisable( $("#extension,#doi,data_url,#pick_source", frame ));
+                    if (( a_upd_perms & model.PERM_WR_DATA ) == 0 ){
+                        util.inputDisable( $("#extension,#doi,data_url,#pick_source", frame ));
                         $("#ext_auto",frame).prop("disabled",true);
                     }
 
@@ -459,7 +465,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                         $("#working_data",frame).hide();
                         $("#published_data",frame).show();
                         $("#pub_upd_warn",frame).show();
-                        inputDisable( $("#alias", frame ));
+                        util.inputDisable( $("#alias", frame ));
                     }else if ( a_data.size > 0 ){
                         $("#pub_del_warn,#pub_del_warn_ast",frame).show();
                     }
@@ -489,11 +495,11 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
                     $("#working_data",frame).hide();
                     $("#published_data",frame).show();
                     $("#alias", frame ).val("");
-                    inputDisable( $("#alias", frame ));
+                    util.inputDisable( $("#alias", frame ));
                 }else{
                     $("#working_data",frame).show();
                     $("#published_data",frame).hide();
-                    inputEnable( $("#alias", frame ));
+                    util.inputEnable( $("#alias", frame ));
                 }
             });
 
@@ -508,7 +514,7 @@ function dlgDataNewEdit(a_mode,a_data,a_parent,a_upd_perms,a_cb) {
             });
 
             var changetimer;
-            if ( a_mode == DLG_DATA_NEW )
+            if ( a_mode == DLG_DATA_MODE_NEW )
                 $("#do_it").button("disable");
 
             $("#coll",frame).val( parent ).on( "input", function(){

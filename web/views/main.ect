@@ -17,33 +17,37 @@
         <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script -->
         <script src="https://d3js.org/d3.v5.min.js"></script>
 
-        <script type="text/javascript" charset="utf-8" src="/dlg_pick_user.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_pick_proj.js"></script>
+        <script type="module" charset="utf-8" src="/model.js"></script>
+        <script type="module" charset="utf-8" src="/util.js"></script>
+        <script type="module" charset="utf-8" src="/settings.js"></script>
+        <script type="module" charset="utf-8" src="/api.js"></script>
+        <script type="module" charset="utf-8" src="/dialogs.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_pick_user.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_pick_proj.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_pick_topic.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_set_acls.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_data_new_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_data_new_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_query_new_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_group_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_allocations.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_start_xfer.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_start_xfer.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_ep_browse.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_settings.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_repo_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_settings.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_repo_edit.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_repo_manage.js"></script>
         <script type="text/javascript" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/main.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/catalog_subtab.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/item_info_form.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/main_browse_tab.js"></script>
-        <script type="text/javascript">
-            loadUser();
-            if ( !g_user || !g_user.active )
+        <!-- script type="text/javascript" charset="utf-8" src="/main.js"></script -->
+        <script type="module" charset="utf-8" src="/panel_catalog.js"></script>
+        <script type="module" charset="utf-8" src="/panel_item_info.js"></script>
+        <script type="module" charset="utf-8" src="/main_browse_tab.js"></script>
+        <!-- script type="text/javascript">
+            settings.loadUser();
+            if ( !settings.user || !settings.user.active )
                 window.location.replace("/ui");
-        </script>
+        </script -->
         <title>DataFed Main</title>
     </head>
     <body>
@@ -72,23 +76,35 @@
         </div>
     </div>
     </body>
-    <script>
+    <script async type='module'>
+        import * as browser_tab from "/main_browse_tab.js";
+        import * as util from "/util.js";
+        import * as api from "/api.js";
+        import * as settings from "/settings.js";
+        import * as dialogs from "/dialogs.js";
+
+        settings.loadUser();
+        if ( !settings.user || !settings.user.active )
+            window.location.replace("/ui");
+
         window.name = 'sdms_target';
-        document.getElementById("uname").innerHTML = g_user.name;
+        document.getElementById("uname").innerHTML = settings.user.name;
 
         $(".btn").button();
 
-        tooltipTheme( $("button,input") ); //.tooltip({ show: { effect: "slideDown", delay: 500 }});
+        util.tooltipTheme( $("button,input") ); //.tooltip({ show: { effect: "slideDown", delay: 500 }});
 
         var g_theme = "<%- @theme %>";
         var g_test_mode = ("<%- @test_mode %>" == "true");
         var g_opts = { page_sz: 20, task_hist: 24, def_alloc: 'none' };
-        var g_tab_browser;
+        //var g_tab_browser;
         var resizeTimer = null;
 
+
+        // Global resize handler
         function resizeUI(){
             //console.log("resizeUI")
-            g_tab_browser.windowResized();
+            browser_tab.windowResized();
         }
 
         $(window).bind('resize', function() {
@@ -102,42 +118,34 @@
 
         var dlgGroups = new makeDlgGroups();
         var dlgGroupEdit = new makeDlgGroupEdit();
-        var dlgAllocNewEdit = new makeDlAllocNewEdit();
 
-        epRecentLoad();
+        api.epRecentLoad();
 
-        userView( g_user.uid, true, function( ok, user ){
+        api.userView( settings.user.uid, true, function( ok, user ){
             if ( ok && user ){
-                g_user.isAdmin = user.isAdmin;
-                g_user.isRepoAdmin = user.isRepoAdmin;
+                console.log("user from settings:",settings.user);
+
+                settings.setUserAdmin( user.isAdmin );
+                settings.setUserRepoAdmin( user.isRepoAdmin );
 
                 if ( user.options ){
-                    g_opts = JSON.parse( user.options );
+                    settings.setOptions( user.options );
                 }
 
-                if ( g_user.isAdmin ){
+                if ( settings.user.isAdmin ){
                     $("#is_admin").show();
                 }
 
-                g_tab_browser = makeBrowserTab();
+                browser_tab.init();
 
                 resizeUI();
 
-                setStatusText("DataFed Ready");
+                util.setStatusText("DataFed Ready");
             }else{
-                dlgAlert("System Error","Unable to access user record");
+                dialogs.dlgAlert("System Error","Unable to access user record");
             }
         });
 
-        // Global onclick callback for browser data tree
-        function pageLoad( key, offset ){
-            g_tab_browser.pageLoad( key, offset );
-        };
-
-        // Global onclick callback for browser catalog tree
-        function pageLoadCat( key, offset ){
-            g_tab_browser.pageLoadCat( key, offset );
-        };
 
     </script>
 </html>

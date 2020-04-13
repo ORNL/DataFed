@@ -1,25 +1,26 @@
-/*jshint multistr: true */
+import * as settings from "./settings.js";
 
-function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
-    var content =
+var tree;
+
+window.userPageLoad = function( key, offset ){
+    var node = tree.getNodeByKey( key );
+    if ( node ){
+        node.data.offset = offset;
+        setTimeout(function(){
+            node.load(true);
+        },0);
+    }
+};
+
+
+export function show(  a_uid, a_excl, a_single_sel, cb ){
+    var frame = $(document.createElement('div'));
+    frame.html(
         "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
             <div id='dlg_user_tree' class='no-border'></div>\
-        </div>";
+        </div>" );
 
     var sel_users = [];
-
-    this.userPageLoad = function( key, offset ){
-        var node = tree.getNodeByKey( key );
-        if ( node ){
-            node.data.offset = offset;
-            setTimeout(function(){
-                node.load(true);
-            },0);
-        }
-    };
-
-    var frame = $(document.createElement('div'));
-    frame.html( content );
 
     var options = {
         title: "Select User(s)",
@@ -95,7 +96,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         lazyLoad: function( ev, data ) {
             if ( data.node.key == "collab" ) {
                 data.result = {
-                    url: "/api/usr/list/collab?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/usr/list/collab?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key == "groups" ) {
@@ -105,7 +106,7 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 };
             } else if ( data.node.key == "all" ) {
                 data.result = {
-                    url: "/api/usr/list/all?offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/usr/list/all?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key.startsWith("g/")){
@@ -128,8 +129,13 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
                 }
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+                    var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+
+                        "\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+
+                        "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+
+                        (page==pages?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+"\","+page*settings.opts.page_sz+
+                        ")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='userPageLoad(\""+data.node.key+
+                        "\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
             } else if ( data.node.key == "groups" ){
                 data.result = [];
@@ -156,7 +162,8 @@ function dlgPickUser(  a_uid, a_excl, a_single_sel, cb ){
         },
     });
 
-    var tree = $("#dlg_user_tree",frame).fancytree("getTree");
+    tree = $("#dlg_user_tree",frame).fancytree("getTree");
 
     frame.dialog( options );
 }
+

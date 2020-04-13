@@ -1,9 +1,13 @@
-/*jshint multistr: true */
+import * as model from "./model.js";
+import * as util from "./util.js";
+import * as settings from "./settings.js";
+import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
 
-function dlgStartTransfer( a_mode, a_ids, a_cb ) {
+export function dlgStartTransfer( a_mode, a_ids, a_cb ) {
     var frame = $(document.createElement('div'));
-    var ep_lab = a_mode == TT_DATA_GET?"Destination":"Source";
-    var rec_lab = a_mode == TT_DATA_GET?"Source":"Destination";
+    var ep_lab = a_mode == model.TT_DATA_GET?"Destination":"Source";
+    var rec_lab = a_mode == model.TT_DATA_GET?"Source":"Destination";
     var rec_tree;
 
     frame.html( "<div class='ui-widget' style='height:95%'>" +
@@ -24,10 +28,10 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         <input type='radio' id='encrypt_req' name='encrypt_mode' value='2'/>\
         <label for='encrypt_req'>Required</label>\
         <br>" +
-        (a_mode == TT_DATA_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
+        (a_mode == model.TT_DATA_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
         "</div></div></div>");
 
-    var dlg_title = (a_mode == TT_DATA_GET?"Download Raw Data":"Upload Raw Data");
+    var dlg_title = (a_mode == model.TT_DATA_GET?"Download Raw Data":"Upload Raw Data");
     var selection_ok = true, endpoint_ok = false, matches = $("#matches",frame);
     var path_in = $("#path",frame), ep_list = null, cur_ep = null, item;
 
@@ -53,7 +57,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                 sel = false;
             }else{
                 tot_sz += parseInt( item.size );
-                info = sizeToString( item.size );
+                info = util.sizeToString( item.size );
                 sel = true;
             }
 
@@ -64,7 +68,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                 src.push({ title: "<span style='color:#808080'>" + item.id + "&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>" + info + "</span>&nbsp" + item.title + "</span>", unselectable: true, key: item.id });
             }
         }
-        $("#title",frame).text( "" + a_ids.length + " records, " + skip + " skipped, total size: " + sizeToString( tot_sz ));
+        $("#title",frame).text( "" + a_ids.length + " records, " + skip + " skipped, total size: " + util.sizeToString( tot_sz ));
 
         $($("#records",frame),frame).fancytree({
             extensions: ["themeroller"],
@@ -99,20 +103,20 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         rec_tree = $("#records",frame).fancytree("getTree");
     }else{
         item = a_ids[0];
-        html = item.id + "&nbsp&nbsp" + sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
+        var html = item.id + "&nbsp&nbsp" + util.sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
         $("#title",frame).html( html );
-        if ( a_mode == TT_DATA_PUT && item.source ){
+        if ( a_mode == model.TT_DATA_PUT && item.source ){
             path_in.val( item.source );
         }
     }
 
-    inputTheme(path_in);
-    inputTheme($("#ext",frame));
+    util.inputTheme(path_in);
+    util.inputTheme($("#ext",frame));
 
     matches.on('selectmenuchange', function( ev, ui ) {
         if ( ep_list && ui.item ){
             var ep = ep_list[ui.item.index-1].id;
-            epView( ep, function( ok, data ){
+            api.epView( ep, function( ok, data ){
                 if ( ok && !data.code ){
                     cur_ep = data;
                     cur_ep.name = cur_ep.canonical_name || cur_ep.id;
@@ -149,7 +153,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         }else
             path = cur_ep.default_directory?cur_ep.default_directory:"/";
         //console.log("path:",path);
-        dlgEpBrowse( cur_ep, path, (a_mode == TT_DATA_GET)?"dir":"file", function( sel ){
+        dlgEpBrowse( cur_ep, path, (a_mode == model.TT_DATA_GET)?"dir":"file", function( sel ){
             path_in.val( cur_ep.name + sel );
         });
     });
@@ -215,7 +219,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
             $("#browse",frame).button("disable");
             $("#activate",frame).button("disable");
 
-            epView( ep, function( ok, data ){
+            api.epView( ep, function( ok, data ){
                 if ( ok && !data.code ){
                     //console.log( "endpoint:", data );
                     cur_ep = data;
@@ -239,7 +243,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                     matches.selectmenu("enable");
                 }else{
                     cur_ep = null;
-                    epAutocomplete( ep, function( ok, data ){
+                    api.epAutocomplete( ep, function( ok, data ){
                         //console.log("ep matches:", ok, data );
                         if ( ok ){
                             if ( data.DATA && data.DATA.length ){
@@ -265,7 +269,7 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                                 matches.selectmenu("disable");
 
                                 if ( data.code ){
-                                    dlgAlert( "Globus Error", data.code );
+                                    dialogs.dlgAlert( "Globus Error", data.code );
                                 }
                             }
                         }
@@ -293,14 +297,14 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
             click: function() {
                 var raw_path = $("#path",frame).val().trim();
                 if ( !raw_path ) {
-                    dlgAlert("Input Error","Path cannot be empty.");
+                    dialogs.dlgAlert("Input Error","Path cannot be empty.");
                     return;
                 }
 
                 var encrypt = $("input[name='encrypt_mode']:checked").val();
 
                 var inst = $(this);
-                if ( a_mode == TT_DATA_GET || a_mode == TT_DATA_PUT ){
+                if ( a_mode == model.TT_DATA_GET || a_mode == model.TT_DATA_PUT ){
                     var ext = $("#ext",frame).val();
                     if ( ext )
                         ext.trim();
@@ -315,16 +319,16 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
                         }
                     }
 
-                    xfrStart( ids, a_mode, raw_path, ext, encrypt, function( ok, data ){
+                    api.xfrStart( ids, a_mode, raw_path, ext, encrypt, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('close');
-                            setStatusText( "Task '" + data.task.id + "' created for data transfer." );
+                            util.setStatusText( "Task '" + data.task.id + "' created for data transfer." );
                             if ( a_cb ){
                                 a_cb();
                             }
                         }else{
-                            dlgAlert( "Transfer Error", data );
+                            dialogs.dlgAlert( "Transfer Error", data );
                         }
                     });
                 }else{
@@ -340,11 +344,11 @@ function dlgStartTransfer( a_mode, a_ids, a_cb ) {
             $( ":radio" ).checkboxradio();
 
             if ( path_in.val().length == 0 ){
-                if ( g_ep_recent.length ){
-                    path_in.val( g_ep_recent[0] );
+                if ( settings.ep_recent.length ){
+                    path_in.val( settings.ep_recent[0] );
                     path_in.select();
                     path_in.autocomplete({
-                        source: g_ep_recent,
+                        source: settings.ep_recent,
                         select: function(){
                             clearTimeout( in_timer );
                             in_timer = setTimeout( inTimerExpired, 250 );

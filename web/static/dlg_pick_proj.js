@@ -1,23 +1,25 @@
-/*jshint multistr: true */
+import * as settings from "./settings.js";
 
-function dlgPickProject( a_excl, a_single_sel, cb ){
-    var content =
+var tree;
+
+window.projPageLoad = function( key, offset ){
+    var node = tree.getNodeByKey( key );
+    if ( node ){
+        node.data.offset = offset;
+        setTimeout(function(){
+            node.load(true);
+        },0);
+    }
+};
+
+
+export function show( a_excl, a_single_sel, cb ){
+    var frame = $(document.createElement('div'));
+    frame.html(
         "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
             <div id='dlg_proj_tree' class='no-border'></div>\
-        </div>";
+        </div>" );
 
-    this.projPageLoad = function( key, offset ){
-        var node = tree.getNodeByKey( key );
-        if ( node ){
-            node.data.offset = offset;
-            setTimeout(function(){
-                node.load(true);
-            },0);
-        }
-    };
-
-    var frame = $(document.createElement('div'));
-    frame.html( content );
 
     var options = {
         title: "Select Project(s)",
@@ -34,10 +36,8 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
             id: "ok_btn",
             text: "Ok",
             click: function() {
-                users = [];
-                //var tree = $("#dlg_proj_tree",frame).fancytree("getTree");
-                var sel = tree.getSelectedNodes();
-                var key;
+                var key, users = [], sel = tree.getSelectedNodes();
+
                 for ( var i in sel ){
                     key = sel[i].key;
                     if ( users.indexOf( key ) == -1 )
@@ -82,12 +82,12 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
         lazyLoad: function( event, data ) {
             if ( data.node.key == "all-id" ) {
                 data.result = {
-                    url: "/api/prj/list?sort=0&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/prj/list?sort=0&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
             } else if ( data.node.key == "all-title" ) {
                 data.result = {
-                    url: "/api/prj/list?sort=1&offset="+data.node.data.offset+"&count="+g_opts.page_sz,
+                    url: "/api/prj/list?sort=1&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
             }
@@ -110,8 +110,13 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
                 }
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/g_opts.page_sz), page = 1+data.response.offset/g_opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+(page-2)*g_opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+(page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+page*g_opts.page_sz+")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+(pages-1)*g_opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+                    var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
+                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+
+                    "\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+
+                    "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+
+                    (page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+page*settings.opts.page_sz+
+                    ")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+
+                    "\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
                 }
             }
         },
@@ -122,7 +127,7 @@ function dlgPickProject( a_excl, a_single_sel, cb ){
         },
     });
 
-    var tree = $("#dlg_proj_tree",frame).fancytree("getTree");
+    tree = $("#dlg_proj_tree",frame).fancytree("getTree");
 
     frame.dialog( options );
 }

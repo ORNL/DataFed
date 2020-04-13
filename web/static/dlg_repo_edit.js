@@ -1,6 +1,12 @@
-/*jshint multistr: true */
+import * as api from "./api.js";
+import * as util from "./util.js";
+import * as settings from "./settings.js";
+import * as dialogs from "./dialogs.js";
+import * as dlgAllocNewEdit from "./dlg_alloc_new_edit.js";
+import * as dlgPickUser from "./dlg_pick_user.js";
 
-function dlgRepoEdit( a_repo_id, a_cb ){
+
+export function show( a_repo_id, a_cb ){
     var content =
         "<div class='row-flex' style='height:100%'>\
             <div class='col-flex' style='flex:1 1 70%;height:100%'>\
@@ -57,11 +63,11 @@ function dlgRepoEdit( a_repo_id, a_cb ){
 
     frame.html( content );
 
-    inputTheme($('input',frame));
-    inputTheme($('textarea',frame));
+    util.inputTheme($('input',frame));
+    util.inputTheme($('textarea',frame));
 
     function repoInputChanged( a_bit ){
-        this.changed |= a_bit;
+        changed |= a_bit;
         $("#apply_btn").button("option","disabled",false);
     }
 
@@ -87,7 +93,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
 
     function initStats( stats ){
         if ( stats ){
-            $("#used",frame).val(sizeToString( stats.dataSize ));
+            $("#used",frame).val(util.sizeToString( stats.dataSize ));
             $("#no_records",frame).val( stats.recCount );
             $("#no_files",frame).val( stats.fileCount );
         }
@@ -102,11 +108,11 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     }
 
     function addAllocNode( alloc ){
-        alloc_tree.rootNode.addNode({title:alloc.id.substr(2) + "  (" +sizeToString(alloc.dataSize) +"/"+sizeToString( alloc.dataLimit )+")",icon:alloc.id.startsWith("u/")?"ui-icon ui-icon-person":"ui-icon ui-icon-box",key:alloc.id,alloc:alloc});
+        alloc_tree.rootNode.addNode({title:alloc.id.substr(2) + "  (" +util.sizeToString(alloc.dataSize) +"/"+util.sizeToString( alloc.dataLimit )+")",icon:alloc.id.startsWith("u/")?"ui-icon ui-icon-person":"ui-icon ui-icon-box",key:alloc.id,alloc:alloc});
     }
 
     function updateAllocTitle( node ){
-        node.setTitle( node.key.substr(2) + "  (" +sizeToString(node.data.alloc.dataSize) +"/"+sizeToString( node.data.alloc.dataLimit )+")");
+        node.setTitle( node.key.substr(2) + "  (" +util.sizeToString(node.data.alloc.dataSize) +"/"+util.sizeToString( node.data.alloc.dataLimit )+")");
     }
 
     $(".btn",frame).button();
@@ -130,7 +136,8 @@ function dlgRepoEdit( a_repo_id, a_cb ){
             excl.push(node.key);
         });
 
-        dlgPickUser( "u/"+g_user.uid, excl, false, function( uids ){
+        dlgPickUser.show( "u/"+settings.user.uid, excl, false, function( uids ){
+            var uid;
             for ( var i in uids ){
                 uid = uids[i];
                 admin_tree.rootNode.addNode({title: uid.substr(2),icon:"ui-icon ui-icon-person",key: uid });
@@ -174,20 +181,19 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     $("#stat_alloc_btn",frame).click( function(){
         var node = alloc_tree.getActiveNode();
         if ( node ){
-            allocStats( a_repo_id, node.key, function( ok, data ){
+            api.allocStats( a_repo_id, node.key, function( ok, data ){
                 if ( ok ){
                     //console.log("stats:",data);
                     // Update alloc tree with latest total_sz
                     node.data.alloc.totalSz = data.totalSz;
-                    //node.setTitle( node.key.substr(2) + "  (" +sizeToString(data.totalSz) +"/"+sizeToString( node.data.alloc.alloc )+")");
                     updateAllocTitle( node );
 
                     var msg =
                     "<table class='info_table'>\
                     <tr><td>No. of Records:</td><td>" + data.recCount + "</td></tr>\
                     <tr><td>No. of Files:</td><td>" + data.fileCount + "</td></tr>\
-                    <tr><td>Total size:</td><td>" + data.dataSize + "<br>(" + sizeToString( data.dataSize ) + ")</td></tr>\
-                    <tr><td>Average size:</td><td>" + sizeToString( data.fileCount>0?data.dataSize/data.fileCount:0 ) + "</td></tr>\
+                    <tr><td>Total size:</td><td>" + data.dataSize + "<br>(" + util.sizeToString( data.dataSize ) + ")</td></tr>\
+                    <tr><td>Average size:</td><td>" + util.sizeToString( data.fileCount>0?data.dataSize/data.fileCount:0 ) + "</td></tr>\
                     </table><br>Histogram:<br><br><table class='info_table'>\
                     <tr><th></th><th>1's</th><th>10's</th><th>100's</th></tr>\
                     <tr><td>B:</td><td>" + data.histogram[0] + "</td><td>"+ data.histogram[1] + "</td><td>"+ data.histogram[2] + "</td></tr>\
@@ -197,7 +203,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     <tr><td>TB:</td><td>" + data.histogram[12] + "</td></tr>\
                     </table>";
 
-                    dlgAlert( "Allocation Statistics", msg );
+                    dialogs.dlgAlert( "Allocation Statistics", msg );
                 }
             });
         }
@@ -206,13 +212,13 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     $("#del_alloc_btn",frame).click( function(){
         var node = alloc_tree.getActiveNode();
         if ( node ){
-            dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Cancel","Delete"], function( choice ){
+            dialogs.dlgConfirmChoice("Confirm Delete", "Delete allocation for " + (node.key.startsWith("u/")?"user ":"project ") + node.key.substr(2) + "?", ["Cancel","Delete"], function( choice ){
                 if ( choice == 1 ){
-                    allocDelete( a_repo_id, node.key, function( ok, data ){
+                    api.allocDelete( a_repo_id, node.key, function( ok, data ){
                         if ( ok )
                             node.remove();
                         else
-                            dlgAlert( "Allocation Delete Error", data );
+                            dialogs.dlgAlert( "Allocation Delete Error", data );
                     });
                 }
             });
@@ -235,7 +241,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         }
     });
 
-    admin_tree = $("#admin_tree",frame).fancytree("getTree");
+    var admin_tree = $("#admin_tree",frame).fancytree("getTree");
 
     $("#alloc_tree",frame).fancytree({
         extensions: ["themeroller"],
@@ -255,23 +261,23 @@ function dlgRepoEdit( a_repo_id, a_cb ){
         }
     });
 
-    alloc_tree = $("#alloc_tree",frame).fancytree("getTree");
+    var alloc_tree = $("#alloc_tree",frame).fancytree("getTree");
 
     if ( a_repo_id != null ){
-        repoView( a_repo_id, function( ok, a_repo ){
+        api.repoView( a_repo_id, function( ok, a_repo ){
             if ( ok && a_repo.length ){
                 repo = a_repo[0];
                 initForm();
             }
         });
 
-        allocStats( a_repo_id, null, function( ok, stats ){
+        api.allocStats( a_repo_id, null, function( ok, stats ){
             if ( ok ){
                 initStats( stats );
             }
         });
 
-        allocList( a_repo_id, function( ok, alloc ){
+        api.allocList( a_repo_id, function( ok, alloc ){
             if ( ok ){
                 initAlloc( alloc );
             }
@@ -305,18 +311,18 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                 var obj, cap;
                 if ( a_repo_id ){
                     obj = {id:repo.id};
-                    getUpdatedValue( $("#title",frame).val(), repo, obj, "title" );
-                    getUpdatedValue( $("#desc",frame).val(), repo, obj, "desc" );
-                    getUpdatedValue( $("#addr",frame).val(), repo, obj, "address" );
-                    getUpdatedValue( $("#pub_key",frame).val(), repo, obj, "pubKey" );
-                    getUpdatedValue( $("#ep_id",frame).val(), repo, obj, "endpoint" );
-                    getUpdatedValue( $("#path",frame).val(), repo, obj, "path" );
-                    getUpdatedValue( $("#domain",frame).val(), repo, obj, "domain" );
-                    getUpdatedValue( $("#exp_path",frame).val(), repo, obj, "expPath" );
+                    util.getUpdatedValue( $("#title",frame).val(), repo, obj, "title" );
+                    util.getUpdatedValue( $("#desc",frame).val(), repo, obj, "desc" );
+                    util.getUpdatedValue( $("#addr",frame).val(), repo, obj, "address" );
+                    util.getUpdatedValue( $("#pub_key",frame).val(), repo, obj, "pubKey" );
+                    util.getUpdatedValue( $("#ep_id",frame).val(), repo, obj, "endpoint" );
+                    util.getUpdatedValue( $("#path",frame).val(), repo, obj, "path" );
+                    util.getUpdatedValue( $("#domain",frame).val(), repo, obj, "domain" );
+                    util.getUpdatedValue( $("#exp_path",frame).val(), repo, obj, "expPath" );
 
-                    cap = parseSize( $("#capacity",frame).val() );
+                    cap = util.parseSize( $("#capacity",frame).val() );
                     if ( cap == null ){
-                        dlgAlert("Data Entry Error","Invalid repo capacity value." );
+                        dialogs.dlgAlert("Data Entry Error","Invalid repo capacity value." );
                         return;
                     }
                     if ( cap != repo.capacity )
@@ -328,7 +334,7 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     });
 
                     if ( admins.length == 0 ){
-                        dlgAlert("Data Entry Error","Must specify at least one repo admin." );
+                        dialogs.dlgAlert("Data Entry Error","Must specify at least one repo admin." );
                         return;
                     }
 
@@ -345,14 +351,16 @@ function dlgRepoEdit( a_repo_id, a_cb ){
 
                     console.log("repo update:",obj);
 
-                    repoUpdate( obj, function( ok, data ){
-                        if ( ok ){
-                            changed = 0;
-                            $("#apply_btn").button("option", "disabled", true);
-                        }else{
-                            dlgAlert( "Repo Update Failed", data );
-                        }
-                    });
+                    if ( changed ){
+                        api.repoUpdate( obj, function( ok, data ){
+                            if ( ok ){
+                                changed = 0;
+                                $("#apply_btn").button("option", "disabled", true);
+                            }else{
+                                dialogs.dlgAlert( "Repo Update Failed", data );
+                            }
+                        });
+                    }
                 }else{
                     obj = {
                         id: $("#id",frame).val(),
@@ -373,9 +381,9 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     if ( tmp )
                         obj.exp_path = tmp;
 
-                    cap = parseSize( $("#capacity",frame).val() );
+                    cap = util.parseSize( $("#capacity",frame).val() );
                     if ( cap == null ){
-                        dlgAlert("Data Entry Error","Invalid repo capacity value." );
+                        dialogs.dlgAlert("Data Entry Error","Invalid repo capacity value." );
                         return;
                     }
                     obj.capacity = cap;
@@ -386,18 +394,18 @@ function dlgRepoEdit( a_repo_id, a_cb ){
                     });
 
                     if ( obj.admin.length == 0 ){
-                        dlgAlert("Data Entry Error","Must specify at least one repo admin." );
+                        dialogs.dlgAlert("Data Entry Error","Must specify at least one repo admin." );
                         return;
                     }
 
                     var inst = $(this);
 
-                    repoCreate( obj, function( ok, data ){
+                    api.repoCreate( obj, function( ok, data ){
                         if ( ok ){
                             if (a_cb) a_cb();
                             inst.dialog('close');
                         }else{
-                            dlgAlert( "Repo Create Failed", data );
+                            dialogs.dlgAlert( "Repo Create Failed", data );
                         }
                     });
                 }
@@ -416,5 +424,4 @@ function dlgRepoEdit( a_repo_id, a_cb ){
     };
 
     frame.dialog( options );
-
 }

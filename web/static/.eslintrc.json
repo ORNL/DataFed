@@ -1,0 +1,24 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true,
+        "jquery": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "module"
+    },
+    "settings":{
+    },
+    "extends": ["eslint:recommended","plugin:import/errors","plugin:import/warnings"],
+    "globals": {
+        "ace":true,
+        "d3":true,
+        "Cookies":true
+    },
+    "rules": {
+        "semi": "error",
+	"no-unused-vars": ["error", { "args": "none" }],
+        "import/no-unresolved": [2, {"caseSensitive": true}]
+    }
+}
