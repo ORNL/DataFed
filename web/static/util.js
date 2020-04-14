@@ -154,7 +154,7 @@ export function generateTitle( item, refresh ) {
     // Only apply owner/creator labels to data records
     if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){
         //console.log("item",item);
-        var uid = settings.user.uid;
+        var uid = "u/" + settings.user.uid;
 
         if ( item.owner.startsWith( "p/" )){
             if ( item.creator != uid )

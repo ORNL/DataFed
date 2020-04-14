@@ -88,7 +88,12 @@
 
         var g_test_mode = ("<%- @test_mode %>" == "true");
 
-        // Global resize handler
+
+        window.logout = function() {
+            settings.clearUser();
+            window.location = "/ui/logout";
+        }
+
         function resizeUI(){
             browser_tab.windowResized();
         }
@@ -99,6 +104,8 @@
             if (resizeTimer) clearTimeout(resizeTimer);
             resizeTimer = setTimeout(resizeUI, 100);
         });
+
+        resizeUI();
 
         if ( g_test_mode ){
             $("#mode_label").show();
@@ -122,8 +129,6 @@
                 }
 
                 browser_tab.init();
-
-                resizeUI();
 
                 util.setStatusText("DataFed Ready");
             }else{

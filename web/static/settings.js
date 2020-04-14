@@ -1,5 +1,5 @@
 export var theme = "light";
-export var user = {};
+export var user = null;
 export var ep_recent = [];
 export var opts = {
     page_sz: 20,
@@ -21,6 +21,10 @@ export function loadUser() {
     }
 
     //console.log( "user: ", g_user );
+}
+
+export function clearUser(){
+    user = null;
 }
 
 export function setTheme( a_theme ){
