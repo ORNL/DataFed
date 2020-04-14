@@ -236,6 +236,7 @@ export function show( a_repo_id, a_cb ){
         },
         source: [],
         selectMode: 1,
+        nodata:false,
         activate: function( event, data ) {
             $("#rem_adm_btn",frame).button("option", "disabled", false);
         }
@@ -254,6 +255,7 @@ export function show( a_repo_id, a_cb ){
         },
         source: [],
         selectMode: 1,
+        nodata:false,
         activate: function( event, data ) {
             $("#stat_alloc_btn",frame).button("option", "disabled", false);
             $("#edit_alloc_btn",frame).button("option", "disabled", false);

@@ -1,6 +1,9 @@
-/*jshint multistr: true */
+import * as api from "./api.js";
+import * as model from "./model.js";
+import * as util from "./util.js";
+import * as dialogs from "./dialogs.js";
 
-function dlgQueryNewEdit(a_data,a_cb) {
+export function show( a_data, a_cb ) {
     var frame = $(document.createElement('div'));
     frame.html(
         "<div class='col-flex' style='height:100%'>\
@@ -22,15 +25,16 @@ function dlgQueryNewEdit(a_data,a_cb) {
             <div id='results' class='ui-widget-content' style='flex:1 1 50%;overflow:auto;padding:.5em'></div>\
         </div>" );
 
-    var old_qry;
+    var old_qry, dlg_title;
+
     if ( a_data ){
         dlg_title = "Edit Query " + a_data.id;
         old_qry = JSON.parse(a_data.query);
     }else
         dlg_title = "New Query";
 
-    inputTheme( $('input:text',frame ));
-    inputTheme( $('textarea',frame ));
+    util.inputTheme( $('input:text',frame ));
+    util.inputTheme( $('textarea',frame ));
     $(".scope-dlg",frame).checkboxradio();
 
     function parseSearchDialog(){
@@ -59,16 +63,16 @@ function dlgQueryNewEdit(a_data,a_cb) {
             query.scopes = [];
 
             if ( $("#scope_mydat-dlg",frame).prop("checked"))
-                query.scopes.push({scope:SS_USER});
+                query.scopes.push({scope:model.SS_USER});
             if ( $("#scope_myproj-dlg",frame).prop("checked"))
-                query.scopes.push({scope:SS_OWNED_PROJECTS});
+                query.scopes.push({scope:model.SS_OWNED_PROJECTS});
             if ( $("#scope_otherproj-dlg",frame).prop("checked")){
-                query.scopes.push({scope:SS_MANAGED_PROJECTS});
-                query.scopes.push({scope:SS_MEMBER_PROJECTS});
+                query.scopes.push({scope:model.SS_MANAGED_PROJECTS});
+                query.scopes.push({scope:model.SS_MEMBER_PROJECTS});
             }
             if ( $("#scope_shared-dlg",frame).prop("checked")){
-                query.scopes.push({scope:SS_SHARED_BY_ANY_USER});
-                query.scopes.push({scope:SS_SHARED_BY_ANY_PROJECT});
+                query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
+                query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
             }
         }
 
@@ -91,8 +95,7 @@ function dlgQueryNewEdit(a_data,a_cb) {
             click: function() {
                 var qry = parseSearchDialog();
                 console.log("qry:",qry);
-                dataFind( qry, function( ok, items ){
-                    console.log( "qry res:", ok, items );
+                api.dataFind( qry, function( ok, items ){
                     if ( ok ){
                         var html;
                         if ( items.length > 0 ){
@@ -105,7 +108,7 @@ function dlgQueryNewEdit(a_data,a_cb) {
                                 else
                                     html += "[" + item.id.substr(2) + "]&nbsp";
 
-                                html += "</td><td style='width:100%'>\"" + escapeHTML( item.title ) + "\"</td></tr>";
+                                html += "</td><td style='width:100%'>\"" + util.escapeHTML( item.title ) + "\"</td></tr>";
                             }
                             html += "</table>";
                         } else {
@@ -113,7 +116,7 @@ function dlgQueryNewEdit(a_data,a_cb) {
                         }
                         $("#results",frame).html(html);
                     }else{
-                        dlgAlert("Query Error",items);
+                        dialogs.dlgAlert("Query Error",items);
                     }
                 });
         
@@ -123,15 +126,15 @@ function dlgQueryNewEdit(a_data,a_cb) {
             click: function() {
                 if ( a_data ){
                     var obj = {};
-                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     var qry = parseSearchDialog();
                     var inst = $(this);
-                    sendQueryUpdate( a_data.id, obj.title, qry, function(ok,data){
+                    api.sendQueryUpdate( a_data.id, obj.title, qry, function(ok,data){
                         if ( ok ){
                             a_cb( data.query[0] );
                             inst.dialog('close');
                         }else{
-                            dlgAlert("Query Save Error",data);
+                            dialogs.dlgAlert("Query Save Error",data);
                         }
                     });
                 }else{
@@ -150,11 +153,11 @@ function dlgQueryNewEdit(a_data,a_cb) {
 
                 for ( var i in old_qry.scopes ){
                     switch( old_qry.scopes[i].scope ){
-                        case SS_PROJECT:
-                        case SS_COLLECTION:
-                        case SS_TOPIC:
-                        case SS_SHARED_BY_USER:
-                        case SS_SHARED_BY_PROJECT:
+                        case model.SS_PROJECT:
+                        case model.SS_COLLECTION:
+                        case model.SS_TOPIC:
+                        case model.SS_SHARED_BY_USER:
+                        case model.SS_SHARED_BY_PROJECT:
                             $("#scope_cell",frame).html("(manual scope selection - cannot be edited)");
                             old_qry.scope_manual = true;
                             return;
@@ -164,18 +167,18 @@ function dlgQueryNewEdit(a_data,a_cb) {
                 for ( i in old_qry.scopes ){
                     //console.log(old_qry.scopes[i]);
                     switch( old_qry.scopes[i].scope ){
-                        case SS_USER:
+                        case model.SS_USER:
                             $("#scope_mydat-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
-                        case SS_OWNED_PROJECTS:
+                        case model.SS_OWNED_PROJECTS:
                             $("#scope_myproj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
-                        case SS_MANAGED_PROJECTS:
-                        case SS_MEMBER_PROJECTS:
+                        case model.SS_MANAGED_PROJECTS:
+                        case model.SS_MEMBER_PROJECTS:
                             $("#scope_otherproj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
-                        case SS_SHARED_BY_ANY_USER:
-                        case SS_SHARED_BY_ANY_PROJECT:
+                        case model.SS_SHARED_BY_ANY_USER:
+                        case model.SS_SHARED_BY_ANY_PROJECT:
                             $("#scope_shared-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
                     }

@@ -146,7 +146,7 @@ export function dataView( a_id, a_cb ) {
         }
         else {
             //console.log("viewData failed:", data );
-            setStatusText( "View Data Error: " + data, true );
+            util.setStatusText( "View Data Error: " + data, true );
             a_cb();
         }
     });

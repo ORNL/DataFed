@@ -3,7 +3,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
-import {dlgStartTransfer} from "./dlg_start_xfer.js";
+import * as dlgStartXfer from "./dlg_start_xfer.js";
 
 export var DLG_DATA_MODE_NEW = 0;
 export var DLG_DATA_MODE_EDIT = 1;
@@ -99,7 +99,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     $(".btn",frame).button();
 
     $("#pick_source",frame).on("click",function(){
-        dlgStartTransfer( null, null, function( a_path, a_encrypt_mode ){
+        dlgStartXfer.show( null, null, function( a_path, a_encrypt_mode ){
             $("#source_file",frame).val( a_path );
             encrypt_mode = a_encrypt_mode;
             if ( $("#ext_auto",frame).prop("checked") )

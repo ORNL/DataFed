@@ -1,6 +1,12 @@
-/*jshint multistr: true */
+import * as model from "./model.js";
+import * as util from "./util.js";
+import * as settings from "./settings.js";
+import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
+import * as dlgPickUser from "./dlg_pick_user.js";
 
-function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
+
+export function show( a_data, a_upd_perms, a_cb ) {
     var ele = document.createElement('div');
     ele.id = (a_data?a_data.id.replace("/","_"):"p_new")+"_edit";
     var frame = $(ele);
@@ -41,11 +47,11 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     if ( a_data )
         proj = Object.assign({}, a_data);
     else
-        proj = { owner: "u/"+g_user.uid };
+        proj = { owner: "u/"+settings.user.uid };
 
-    inputTheme($('input',frame));
-    inputTheme($('textarea',frame));
-    inputDisable($('#owner_id',frame));
+    util.inputTheme($('input',frame));
+    util.inputTheme($('textarea',frame));
+    util.inputDisable($('#owner_id',frame));
 
     var options = {
         title: a_data?"Edit Project " + a_data.id:"New Project",
@@ -65,8 +71,8 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 var obj ={}, i, url = "", inst = $(this);
 
                 if ( a_data ){
-                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
-                    getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
+                    util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                 }else{
                     obj.title = $("#title",frame).val().trim();
                     obj.desc = $("#desc",frame).val().trim();
@@ -146,12 +152,12 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     var id = $("#id",frame).val().trim();
 
                     if ( !id ){
-                        setStatusText( "ID field is required.", true );
+                        util.setStatusText( "ID field is required.", true );
                         return;
                     }
 
                     if ( !obj.title ){
-                        setStatusText( "Title field is required.", true );
+                        util.setStatusText( "Title field is required.", true );
                         return;
                     }
 
@@ -170,7 +176,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 function do_close(){
                     console.log( "do_close", close_cnt );
                     if ( --close_cnt <= 0 ){
-                        setStatusText("Project saved.");
+                        util.setStatusText("Project saved.");
 
                         if ( a_cb )
                             a_cb(result);
@@ -184,9 +190,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
                 if ( url ){
                     console.log( "URL", url );
-                    _asyncGet( url, null, function( ok, data ){
+                    api._asyncGet( url, null, function( ok, data ){
                         if ( !ok ) {
-                            dlgAlert( "Project " + (a_data?"Update":"Create") +" Error", data );
+                            dialogs.dlgAlert( "Project " + (a_data?"Update":"Create") +" Error", data );
                         }else{
                             result = data[0];
                             do_close();
@@ -196,9 +202,9 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
 
                 if ( new_def_alloc ){
                     console.log( "Set def alloc", new_def_alloc );
-                    setDefaultAlloc( new_def_alloc, a_data.id, function( ok, data ){
+                    api.setDefaultAlloc( new_def_alloc, a_data.id, function( ok, data ){
                         if ( !ok ){
-                            dlgAlert("Error Setting Default Allocation", data );
+                            dialogs.dlgAlert("Error Setting Default Allocation", data );
                         }else{
                             if ( !result )
                                 result = a_data;
@@ -216,15 +222,15 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
             var adm_src = [];
 
             if ( a_data ){
-                inputDisable($("#id",frame)).val(a_data.id);
+                util.inputDisable($("#id",frame)).val(a_data.id);
                 $("#title",frame).val(a_data.title);
                 $("#desc",frame).val(a_data.desc);
                 $("#def_alloc",frame).selectmenu({width:225});
                 $("#def_alloc_row",frame).show();
                 $("#owner_id",frame).val(a_data.owner);
 
-                if (( a_upd_perms & PERM_WR_REC ) == 0 )
-                    inputDisable($("#title,#desc,#add_adm_btn,#rem_adm_btn",frame));
+                if (( a_upd_perms & model.PERM_WR_REC ) == 0 )
+                    util.inputDisable($("#title,#desc,#add_adm_btn,#rem_adm_btn",frame));
 
                 for ( var i in a_data.member )
                     mem_src.push({title: a_data.member[i].substr(2),icon:false,key: a_data.member[i] });
@@ -233,7 +239,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     adm_src.push({title: a_data.admin[i].substr(2),icon:false,key: a_data.admin[i] });
 
             }else{
-                $("#owner_id",frame).val(g_user.uid);
+                $("#owner_id",frame).val(settings.user.uid);
             }
 
             $("#proj_mem_tree",frame).fancytree({
@@ -266,7 +272,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                 selectMode: 1,
                 checkbox: false,
                 activate: function( event, data ) {
-                    if (( a_upd_perms & PERM_WR_REC ) != 0 ){
+                    if (( a_upd_perms & model.PERM_WR_REC ) != 0 ){
                         $("#rem_adm_btn",frame).button("option", "disabled", false);
                     }
                 }
@@ -285,7 +291,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     excl.push(node.key);
                 });
 
-                dlgPickUser( "u/"+g_user.uid, excl, false, function( uids ){
+                dlgPickUser.show( "u/"+settings.user.uid, excl, false, function( uids ){
                     for ( i in uids ){
                         uid = uids[i];
                         mem_tree.rootNode.addNode({title: uid.substr(2),icon:false,key: uid });
@@ -312,7 +318,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                     excl.push(node.key);
                 });
                 console.log("excl:",excl);
-                dlgPickUser( "u/"+g_user.uid, excl, false, function( uids ){
+                dlgPickUser.show( "u/"+settings.user.uid, excl, false, function( uids ){
                     console.log("sel:",uids);
                     for ( i in uids ){
                         uid = uids[i];
@@ -338,7 +344,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
     };
 
     if ( a_data ){
-        allocListBySubject( a_data.id, null, function( ok, data ){
+        api.allocListBySubject( a_data.id, null, function( ok, data ){
             var html = "";
             if ( ok && data.length ){
                 var alloc;
@@ -349,7 +355,7 @@ function dlgProjNewEdit( a_data, a_upd_perms, a_cb ) {
                         html += " selected";
                         def_alloc = alloc.repo;
                     }
-                    html += ">" + alloc.repo.substr(5) + " ("+ sizeToString(alloc.dataSize) + " / " + sizeToString(alloc.dataLimit) +")</option>";
+                    html += ">" + alloc.repo.substr(5) + " ("+ util.sizeToString(alloc.dataSize) + " / " + util.sizeToString(alloc.dataLimit) +")</option>";
                 }
             }
 

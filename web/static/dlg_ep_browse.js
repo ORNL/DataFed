@@ -1,6 +1,7 @@
-/*jshint multistr: true */
+import * as util from "./util.js";
+import * as api from "./api.js";
 
-function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
+export function show( a_ep, a_path, a_mode, a_cb ) {
     var frame = $(document.createElement('div'));
     
     frame.html( "<div class='col-flex' style='height:100%'>\
@@ -25,7 +26,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
     var loading = false;
 
     $(".btn",frame).button();
-    inputTheme( $('input:text',frame ));
+    util.inputTheme( $('input:text',frame ));
     $("#path",frame).val(a_path);
     $(".btn",frame).button();
 
@@ -71,7 +72,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
         $("#sel_btn").button("disable");
         $("#file_tree").fancytree("disable");
 
-        epDirList( a_ep.id, a_new_path, false, function(data){
+        api.epDirList( a_ep.id, a_new_path, false, function(data){
             if( data ){
                 console.log("got result:",data);
 
@@ -81,6 +82,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                 }else{
                     tree_source.push({ title: ".", icon: "ui-icon ui-icon-folder", key: ".", is_dir: true });
                     tree_source.push({ title: "..", icon: "ui-icon ui-icon-folder", key: "..", is_dir: true });
+                    var entry, dt;
                     for ( var i in data.DATA ){
                         entry = data.DATA[i];
 
@@ -88,7 +90,7 @@ function dlgEpBrowse( a_ep, a_path, a_mode, a_cb ) {
                             tree_source.push({ title: entry.name, icon: "ui-icon ui-icon-folder", key: entry.name, is_dir: true });
                         } else if ( entry.type == "file" ){
                             dt = (new Date(entry.last_modified)).toLocaleString();
-                            tree_source.push({ title: entry.name, size: sizeToString( entry.size ), date: dt, icon: "ui-icon ui-icon-file", key: entry.name });
+                            tree_source.push({ title: entry.name, size: util.sizeToString( entry.size ), date: dt, icon: "ui-icon ui-icon-file", key: entry.name });
                         }
                     }
                 }

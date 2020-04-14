@@ -183,9 +183,7 @@ export function generateTitle( item, refresh ) {
     return title;
 }
 
-export function buildObjSrcTree( obj, base, inst ){
-    //console.log("build tree", base, inst);
-
+export function buildObjSrcTree( obj, base, md_exp ){
     var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     
     if (is_arr)
@@ -244,13 +242,12 @@ export function buildObjSrcTree( obj, base, inst ){
         
         if ( typeof obj[k] === 'object' ){
 
-            if ( inst ){
-                if ( inst.data_md_exp[fkey] ){
-                    //console.log("expanded:",fkey);
-                    inst.data_md_exp[fkey] = 10;
+            if ( md_exp ){
+                if ( md_exp[fkey] ){
+                    md_exp[fkey] = 10;
                 }
 
-                src.push({key:fkey,title:k2, icon: false, folder: true, expanded: inst.data_md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,inst)});
+                src.push({key:fkey,title:k2, icon: false, folder: true, expanded: md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,md_exp)});
             }else{
                 src.push({key:fkey,title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
             }

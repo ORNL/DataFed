@@ -3,7 +3,7 @@ import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 
-export function dlgSettings( a_cb ){
+export function show( a_cb ){
     var content = "\
         User Interface<hr>\
         <table class='setting-table'>\

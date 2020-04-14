@@ -119,6 +119,10 @@ app.use( bodyParser.json({ type: 'application/json', limit: '1048576'}));
 app.use( bodyParser.text({ type: 'text/plain', limit: '1048576'}));
 app.use( cookieParser() );
 app.use( helmet({hsts:{maxAge:31536000}}) );
+app.use(function(req, res, next) {
+    res.setHeader('Content-Language','en-US');
+    next();
+});
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 

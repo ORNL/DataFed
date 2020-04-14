@@ -3,12 +3,9 @@
     <head>
         <% include 'head.ect' %>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-        <!-- link href="/fancytree/skin-themeroller/ui.fancytree.min.css" rel="stylesheet" -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.34.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.34.0/jquery.fancytree-all.min.js"></script>
-        <!-- script src="/fancytree/jquery.fancytree-all.min.js"></script -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/jquery.fancytree-all.min.js"></script>
         <script src="/jquery/jquery-ui-contextmenu.min.js"></script>
-
         <script src="/ace/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/theme-light.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/theme-dark.js" type="text/javascript" charset="utf-8"></script>
@@ -24,30 +21,23 @@
         <script type="module" charset="utf-8" src="/dialogs.js"></script>
         <script type="module" charset="utf-8" src="/dlg_pick_user.js"></script>
         <script type="module" charset="utf-8" src="/dlg_pick_proj.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_pick_topic.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_set_acls.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_set_acls.js"></script>
         <script type="module" charset="utf-8" src="/dlg_data_new_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_query_new_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_groups.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_group_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_query_new_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_groups.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_group_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
         <script type="module" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
         <script type="module" charset="utf-8" src="/dlg_start_xfer.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_ep_browse.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_ep_browse.js"></script>
         <script type="module" charset="utf-8" src="/dlg_settings.js"></script>
         <script type="module" charset="utf-8" src="/dlg_repo_edit.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_repo_manage.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
-        <!-- script type="text/javascript" charset="utf-8" src="/main.js"></script -->
+        <script type="module" charset="utf-8" src="/dlg_repo_manage.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
         <script type="module" charset="utf-8" src="/panel_catalog.js"></script>
         <script type="module" charset="utf-8" src="/panel_item_info.js"></script>
         <script type="module" charset="utf-8" src="/main_browse_tab.js"></script>
-        <!-- script type="text/javascript">
-            settings.loadUser();
-            if ( !settings.user || !settings.user.active )
-                window.location.replace("/ui");
-        </script -->
         <title>DataFed Main</title>
     </head>
     <body>
@@ -94,19 +84,17 @@
 
         util.tooltipTheme( $("button,input") ); //.tooltip({ show: { effect: "slideDown", delay: 500 }});
 
-        var g_theme = "<%- @theme %>";
-        var g_test_mode = ("<%- @test_mode %>" == "true");
-        var g_opts = { page_sz: 20, task_hist: 24, def_alloc: 'none' };
-        //var g_tab_browser;
-        var resizeTimer = null;
+        settings.setTheme( "<%- @theme %>" );
 
+        var g_test_mode = ("<%- @test_mode %>" == "true");
 
         // Global resize handler
         function resizeUI(){
-            //console.log("resizeUI")
             browser_tab.windowResized();
         }
 
+        // Suppress extraneous resize events while drag-resizing
+        var resizeTimer = null;
         $(window).bind('resize', function() {
             if (resizeTimer) clearTimeout(resizeTimer);
             resizeTimer = setTimeout(resizeUI, 100);
@@ -115,9 +103,6 @@
         if ( g_test_mode ){
             $("#mode_label").show();
         }
-
-        var dlgGroups = new makeDlgGroups();
-        var dlgGroupEdit = new makeDlgGroupEdit();
 
         api.epRecentLoad();
 

@@ -1,9 +1,11 @@
-/*jshint multistr: true */
+import * as settings from "./settings.js";
+import * as util from "./util.js";
+import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
+import * as dlgPickUser from "./dlg_pick_user.js";
 
-function makeDlgGroupEdit(){
-    var inst = this;
-
-    this.content =
+export function show( a_uid, a_excl, a_group, cb ){
+    const content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none'>\
                 <table style='width:100%'>\
@@ -20,190 +22,176 @@ function makeDlgGroupEdit(){
             </div>\
         </div>";
 
-    this.show = function( a_uid, a_excl, group, cb ){
+    var frame = $(document.createElement('div'));
+    frame.html( content );
 
-        inst.frame = $(document.createElement('div'));
-        inst.frame.html( inst.content );
-        inst.uid = a_uid;
-        inst.excl = a_excl;
-
-        console.log("Exclude:", inst.excl );
-
-        $(".btn",inst.frame).button();
-        inputTheme($('input',inst.frame));
-        inputTheme($('textarea',inst.frame));
-
-        var src = [];
-
-        if ( group ){
-            inputDisable($("#gid",inst.frame)).val( group.gid );
-            $("#title",inst.frame).val( group.title );
-            $("#desc",inst.frame).val( group.desc );
-
-            if ( group.member && group.member.length ){
-                $("#btn_clear",inst.frame).button("enable" );
-
-                for ( var i in group.member ){
-                    src.push({ title: group.member[i].substr(2), icon: false, key: group.member[i]});
-                }
-            }else{
-                group.member = [];
-                $("#btn_clear",inst.frame).button("disable" );
-            }
-
-            inst.group = jQuery.extend(true, {}, group );
-        } else {
-            inst.group = { member: [] };
-            $("#btn_clear",inst.frame).button("disable");
-        }
-
-        /*if ( !src.length )
-            src.push({title: "(empty)", icon: false, key: null });*/
-
-
-        $("#btn_remove",inst.frame).button("disable" );
-
-        $("#member_list",inst.frame).fancytree({
-            extensions: ["themeroller"],
-            themeroller: {
-                activeClass: "ui-state-hover",
-                addClass: "",
-                focusClass: "",
-                hoverClass: "ui-state-active",
-                selectedClass: ""
-            },
-            source: src,
-            selectMode: 1,
-            activate: function( event, data ) {
-                console.log( "activated" );
-                inst.userSelected();
-            },
-        });
-
-        var options = {
-            title: group?"Edit Group '"+group.gid+"'":"New Group",
-            modal: true,
-            width: 600,
-            height: 450,
-            resizable: true,
-            buttons: [{
-                text: "Cancel",
-                click: function() {
-                    $(this).dialog('close');
-                    cb();
-                }
-            },{
-                text: "Ok",
-                click: function() {
-                    inst.group.gid = $("#gid",inst.frame).val();
-                    inst.group.title = $("#title",inst.frame).val();
-                    inst.group.desc = $("#desc",inst.frame).val();
-
-                    var dlg_inst = $(this);
-                    var uid;
-                    var i;
-                    if ( group ){
-                        if ( inst.group.title == group.title )
-                            delete inst.group.title;
-                        if ( inst.group.desc == group.desc )
-                            delete inst.group.desc;
-
-                        inst.group.add = [];
-                        inst.group.rem = [];
-
-                        for ( i in inst.group.member ){
-                            uid = inst.group.member[i];
-                            if ( group.member.indexOf( uid ) == -1 ){
-                                inst.group.add.push( uid );
-                            }
-                        }
-
-                        for ( i in group.member ){
-                            uid = group.member[i];
-                            if ( inst.group.member.indexOf( uid ) == -1 ){
-                                inst.group.rem.push( uid );
-                            }
-                        }
-
-                        groupUpdate( inst.group, function( ok, data ){
-                            if ( !ok ){
-                                dlgAlert( "Server Error", data );
-                            } else {
-                                //console.log( "data:", data );
-                                dlg_inst.dialog('close');
-                                cb( data );
-                            }
-                        });
-                    } else {
-                        groupCreate( inst.uid, inst.group, function( ok, data ){
-                            if ( !ok ){
-                                dlgAlert( "Server Error", data );
-                            } else {
-                                //console.log( "data:", data );
-                                dlg_inst.dialog('close');
-                                cb( data );
-                            }
-                        });
-                    }
-                }
-            }],
-            open: function(event,ui){
-            },
-            close: function( ev, ui ) {
-                $(this).dialog("destroy").remove();
-            }
-        };
-
-        $("#btn_remove",inst.frame).click( function(){ inst.removeUser(); });
-        $("#btn_clear",inst.frame).click( function(){ inst.clearUsers(); });
-        $("#btn_add",inst.frame).click( function(){ inst.addUsers(); });
-
-        inst.frame.dialog( options );
-    };
-
-    this.removeUser = function(){
-        var tree = $("#member_list",inst.frame).fancytree("getTree");
-        var node = tree.getActiveNode();
+    function removeUser(){
+        var node = mem_tree.getActiveNode();
         if ( node ){
-            var i = inst.group.member.indexOf( node.key );
+            var i = group.member.indexOf( node.key );
             if ( i > -1 ) {
-                inst.group.member.splice( i, 1 );
+                group.member.splice( i, 1 );
                 node.remove();
             }
-            $("#btn_remove",inst.frame).button("disable");
-            if ( inst.group.member.length == 0 )
-                $("#btn_clear",inst.frame).button("enable" );
+            $("#btn_remove",frame).button("disable");
+            if ( group.member.length == 0 )
+                $("#btn_clear",frame).button("enable" );
         }
-    };
+    }
 
-    this.addUsers = function(){
-        dlgPickUser( inst.uid, inst.excl, false, function( uids ){
+    function addUsers(){
+        var excl = [...a_excl, ...group.member];
+        dlgPickUser.show( a_uid, excl, false, function( uids ){
             if ( uids.length > 0 ){
-                var tree = $("#member_list",inst.frame).fancytree("getTree");
                 var i,id;
                 for ( i in uids ){
                     id = uids[i];
-                    if ( inst.excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
-                        tree.rootNode.addNode({title: id.substr(2),icon:false,key:id });
-                        inst.group.member.push(id);
+                    if ( a_excl.indexOf( id ) == -1 && !mem_tree.getNodeByKey( id )){
+                        mem_tree.rootNode.addNode({title: id.substr(2),icon:false,key:id });
+                        group.member.push(id);
                     }
                 }
-                if ( inst.group.member.length )
-                    $("#btn_clear",inst.frame).button("enable" );
+                if ( group.member.length )
+                    $("#btn_clear",frame).button("enable" );
             }
         });
+    }
+
+    function clearUsers(){
+        group.member = [];
+        mem_tree.clear();
+        $("#btn_clear",frame).button("disable");
+        $("#btn_remove",frame).button("disable");
+    }
+
+    function userSelected(){
+        $("#btn_remove",frame).button("enable");
+    }
+
+    $(".btn",frame).button();
+    util.inputTheme($('input',frame));
+    util.inputTheme($('textarea',frame));
+
+    var group, src = [];
+
+    if ( a_group ){
+        group = jQuery.extend(true, {}, a_group );
+
+        util.inputDisable($("#gid",frame)).val( group.gid );
+        $("#title",frame).val( group.title );
+        $("#desc",frame).val( group.desc );
+
+        if ( group.member && group.member.length ){
+            $("#btn_clear",frame).button("enable" );
+
+            for ( var i in group.member ){
+                src.push({ title: group.member[i].substr(2), icon: false, key: group.member[i]});
+            }
+        }else{
+            group.member = [];
+            $("#btn_clear",frame).button("disable" );
+        }
+
+    } else {
+        group = { member: [] };
+        $("#btn_clear",frame).button("disable");
+    }
+
+    $("#btn_remove",frame).button("disable" );
+
+    $("#member_list",frame).fancytree({
+        extensions: ["themeroller"],
+        themeroller: {
+            activeClass: "ui-state-hover",
+            addClass: "",
+            focusClass: "",
+            hoverClass: "ui-state-active",
+            selectedClass: ""
+        },
+        source: src,
+        selectMode: 1,
+        activate: function( event, data ) {
+            console.log( "activated" );
+            userSelected();
+        },
+    });
+
+    var mem_tree = $("#member_list",frame).fancytree("getTree");
+
+    var options = {
+        title: a_group?"Edit Group '"+a_group.gid+"'":"New Group",
+        modal: true,
+        width: 600,
+        height: 450,
+        resizable: true,
+        buttons: [{
+            text: "Cancel",
+            click: function() {
+                $(this).dialog('close');
+                cb();
+            }
+        },{
+            text: "Ok",
+            click: function() {
+                group.gid = $("#gid",frame).val();
+                group.title = $("#title",frame).val();
+                group.desc = $("#desc",frame).val();
+
+                var i, uid, dlg_inst = $(this);
+
+                if ( a_group ){
+                    if ( a_group.title == group.title )
+                        delete group.title;
+                    if ( a_group.desc == group.desc )
+                        delete group.desc;
+
+                    group.add = [];
+                    group.rem = [];
+
+                    for ( i in group.member ){
+                        uid = group.member[i];
+                        if ( a_group.member.indexOf( uid ) == -1 ){
+                            group.add.push( uid );
+                        }
+                    }
+
+                    for ( i in a_group.member ){
+                        uid = group.member[i];
+                        if ( group.member.indexOf( uid ) == -1 ){
+                            group.rem.push( uid );
+                        }
+                    }
+
+                    api.groupUpdate( group, function( ok, data ){
+                        if ( !ok ){
+                            dialogs.dlgAlert( "Server Error", data );
+                        } else {
+                            dlg_inst.dialog('close');
+                            cb( data );
+                        }
+                    });
+                } else {
+                    api.groupCreate( "u/" + settings.user.uid, group, function( ok, data ){
+                        if ( !ok ){
+                            dialogs.dlgAlert( "Server Error", data );
+                        } else {
+                            dlg_inst.dialog('close');
+                            cb( data );
+                        }
+                    });
+                }
+            }
+        }],
+        open: function(event,ui){
+        },
+        close: function( ev, ui ) {
+            $(this).dialog("destroy").remove();
+        }
     };
 
-    this.clearUsers = function(){
-        inst.group.member = [];
-        var tree = $("#member_list",inst.frame).fancytree("getTree");
-        tree.clear();
-        $("#btn_clear",inst.frame).button("disable");
-        $("#btn_remove",inst.frame).button("disable");
-    };
+    $("#btn_remove",frame).click( function(){ removeUser(); });
+    $("#btn_clear",frame).click( function(){ clearUsers(); });
+    $("#btn_add",frame).click( function(){ addUsers(); });
 
-    this.userSelected = function(){
-        var b = $("#btn_remove",inst.frame);
-        $("#btn_remove",inst.frame).button("enable");
-    };
+    frame.dialog( options );
 }

@@ -3,8 +3,9 @@ import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
+import * as dlgEpBrowse from "./dlg_ep_browse.js";
 
-export function dlgStartTransfer( a_mode, a_ids, a_cb ) {
+export function show( a_mode, a_ids, a_cb ) {
     var frame = $(document.createElement('div'));
     var ep_lab = a_mode == model.TT_DATA_GET?"Destination":"Source";
     var rec_lab = a_mode == model.TT_DATA_GET?"Source":"Destination";
@@ -153,7 +154,7 @@ export function dlgStartTransfer( a_mode, a_ids, a_cb ) {
         }else
             path = cur_ep.default_directory?cur_ep.default_directory:"/";
         //console.log("path:",path);
-        dlgEpBrowse( cur_ep, path, (a_mode == model.TT_DATA_GET)?"dir":"file", function( sel ){
+        dlgEpBrowse.show( cur_ep, path, (a_mode == model.TT_DATA_GET)?"dir":"file", function( sel ){
             path_in.val( cur_ep.name + sel );
         });
     });

@@ -1,6 +1,9 @@
-/*jshint multistr: true */
+import * as api from "./api.js";
+import * as util from "./util.js";
+import * as dialogs from "./dialogs.js";
+import * as dlgRepoEdit from "./dlg_repo_edit.js";
 
-function dlgRepoManage(){
+export function show(){
     var content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:.5rem 0 0 0'>Repositories:</div>\
@@ -17,15 +20,10 @@ function dlgRepoManage(){
     var frame = $(document.createElement('div'));
     frame.html( content );
 
-    function selectNone(){
-        $("#dlg_edit_repo",frame).prop("disabled", true );
-        $("#dlg_rem_repo",frame).prop("disabled", true );
-    }
-
     function addRepo(){
         console.log("Add repo");
-        dlgRepoEdit( null, function(){
-            setStatusText("Repo created");
+        dlgRepoEdit.show( null, function(){
+            util.setStatusText("Repo created");
             refreshRepoList();
         });
     }
@@ -35,10 +33,10 @@ function dlgRepoManage(){
         var tree = $("#dlg_repo_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Cancel","Delete"],function(choice){
+            dialogs.dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Cancel","Delete"],function(choice){
                 if ( choice == 1 ){
-                    repoDelete( node.key );
-                    setStatusText("Repo deleted");
+                    api.repoDelete( node.key );
+                    util.setStatusText("Repo deleted");
                     refreshRepoList();
                 }
             });
@@ -50,17 +48,17 @@ function dlgRepoManage(){
         var tree = $("#dlg_repo_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
-            dlgRepoEdit( node.key, function(){
-                setStatusText("Repo updated");
+            dlgRepoEdit.show( node.key, function(){
+                util.setStatusText("Repo updated");
                 refreshRepoList();
             });
         }
     }
 
     function refreshRepoList(){
-        repoList(false,true,function( ok, data){
+        api.repoList(false,true,function( ok, data){
             if ( !ok ){
-                dlgAlert("Repo List Error",data);
+                dialogs.dlgAlert("Repo List Error",data);
                 return;
             }
 
@@ -93,9 +91,9 @@ function dlgRepoManage(){
             }
         }],
         open: function(event,ui){
-            repoList(false,true,function( ok, data){
+            api.repoList(false,true,function( ok, data){
                 if ( !ok ){
-                    dlgAlert("Repo List Error",data);
+                    dialogs.dlgAlert("Repo List Error",data);
                     return;
                 }
 
@@ -134,7 +132,7 @@ function dlgRepoManage(){
                             if ( repo.desc )
                                 data.result.push( { title:"desc: "+repo.desc,icon:false } );
                             if ( repo.capacity )
-                                data.result.push( { title:"capacity: "+sizeToString(repo.capacity),icon:false } );
+                                data.result.push( { title:"capacity: "+util.sizeToString(repo.capacity),icon:false } );
                             //var adm;
                             //for ( var i in data.response.admin ) {
                             //    adm = data.response.admin[i];
@@ -142,8 +140,7 @@ function dlgRepoManage(){
                             // }
                         }
                     },
-                    activate: function( event, data ) {
-                        console.log( data.node.key );
+                    activate: function( ev, data ) {
                         if ( data.node.key.startsWith("repo/")){
                             $("#dlg_edit_repo",frame).button("enable" );
                             $("#dlg_rem_repo",frame).button("enable" );

@@ -6,10 +6,11 @@ var form = $("#sel_info_form");
 var div = $("#sel_info_div");
 var data_md_tree = null;
 var data_md_empty = true;
-var data_md_empty_src = [{title:"(n/a)", icon:false}];
+var data_md_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}];
 var data_md_exp = {};
 
 export function showSelectedInfo( node ){
+
     if ( !node ){
         showSelectedItemInfo();
         return;
@@ -143,7 +144,7 @@ function showSelectedItemForm( item ){
 
     div.hide();
 
-    $(".sel-info-table td:nth-child(2)",form).html("<span style='color:#808080'>(none)</span>");
+    $(".sel-info-table td:nth-child(2)",form).not(".ignore").html("<span style='color:#808080'>(none)</span>");
 
     $("#sel_info_type",form).text( text );
     $("#sel_info_id",form).text( item.id );
@@ -307,7 +308,7 @@ function showSelectedMetadata( md_str )
         }
 
         var md = JSON.parse( md_str );
-        var src = util.buildObjSrcTree(md,"md",this);
+        var src = util.buildObjSrcTree( md, "md", data_md_exp );
         data_md_tree.reload( src );
         data_md_empty = false;
     } else if ( !data_md_empty ) {

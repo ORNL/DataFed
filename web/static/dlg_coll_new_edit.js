@@ -1,4 +1,8 @@
-function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
+import * as model from "./model.js";
+import * as util from "./util.js";
+import * as api from "./api.js";
+
+export function show( a_data, a_parent, a_upd_perms, a_cb ){
     var ele = document.createElement('div');
     ele.id = (a_data?a_data.id.replace("/","_"):"c_new")+"_edit";
     var frame = $(ele);
@@ -12,8 +16,8 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
         dlg_title = "New Collection";
     }
 
-    inputTheme($('input',frame));
-    inputTheme($('textarea',frame));
+    util.inputTheme($('input',frame));
+    util.inputTheme($('textarea',frame));
     $(".btn",frame).button();
 
     var options = {
@@ -37,10 +41,10 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 if ( a_data ){
                     url += "update";
 
-                    getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
-                    getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
-                    getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                    getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
+                    util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
+                    util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
+                    util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
+                    util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -51,10 +55,10 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 }else{
                     obj.parentId = $("#coll",frame).val().trim();
 
-                    getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
-                    getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
-                    getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
+                    util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
+                    util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
+                    util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
+                    util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
 
                     url += "create";
                 }
@@ -63,13 +67,13 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
 
                 //console.log( "create coll", obj );
 
-                _asyncPost( url, obj, function( ok, data ){
+                api._asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('close');
                         if ( a_cb )
                             a_cb(data.coll[0]);
                     } else {
-                        setStatusText( data, true );
+                        util.setStatusText( data, true );
                     }
                 });
             }
@@ -91,12 +95,12 @@ function dlgCollNewEdit( a_data, a_parent, a_upd_perms, a_cb ){
                 $("#parent_row",frame).css("display","none");
                 $("#topic",frame).val(a_data.topic);
 
-                if (( a_upd_perms & PERM_WR_REC ) == 0 ){
-                    inputDisable( $("#title,#desc,#alias", frame ));
+                if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
+                    util.inputDisable( $("#title,#desc,#alias", frame ));
                 }
 
-                if (( a_upd_perms & PERM_SHARE ) == 0 ){
-                    inputDisable( $("#topic", frame ));
+                if (( a_upd_perms & model.PERM_SHARE ) == 0 ){
+                    util.inputDisable( $("#topic", frame ));
                 }
 
             } else {

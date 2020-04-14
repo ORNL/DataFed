@@ -7,6 +7,15 @@ import * as panel_info from "./panel_item_info.js";
 import * as panel_cat from "./panel_catalog.js";
 import * as dlgDataNewEdit from "./dlg_data_new_edit.js";
 import * as dlgRepoEdit from "./dlg_repo_edit.js";
+import * as dlgSetACLs from "./dlg_set_acls.js";
+import * as dlgRepoManage from "./dlg_repo_manage.js";
+import * as dlgOwnerChangeConfirm from "./dlg_owner_chg_confirm.js";
+import * as dlgStartXfer from "./dlg_start_xfer.js";
+import * as dlgQueryNewEdit from "./dlg_query_new_edit.js";
+import * as dlgSettings from "./dlg_settings.js";
+import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
+import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
+
 
 var frame = $("#content");
 var task_hist = $("#task_hist",frame);
@@ -76,7 +85,7 @@ window.pageLoad = function( key, offset ){
             node.load(true);
         },0);
     }
-}
+};
 
 window.pageLoadCat = function( key, offset ){
     //console.log("pageLoad",key, offset);
@@ -87,7 +96,7 @@ window.pageLoadCat = function( key, offset ){
             node.load(true);
         },0);
     }
-}
+};
 
 function getSelectedIDs(){
     var ids = [], sel, i;
@@ -593,7 +602,7 @@ function dataGet( a_ids, a_cb ){
                 dialogs.dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
                 return;
             } else if ( internal ){
-                dlgStartTransfer( model.TT_DATA_GET, data.item, a_cb );
+                dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
             }else{
                 for ( i in data.item ){
                     //console.log("download ", data.item[i].url )
@@ -624,7 +633,7 @@ function dataPut( a_id, a_cb ){
             if ( data.item[0].doi ){
                 dialogs.dlgAlert("Data Put Error","Record has read-only, externally managed data.");
             }else{
-                dlgStartTransfer( model.TT_DATA_PUT, data.item, a_cb );
+                dlgStartXfer.show( model.TT_DATA_PUT, data.item, a_cb );
             }
         }else{
             dialogs.dlgAlert("Data Put Error",data);
@@ -718,7 +727,7 @@ function actionNewProj() {
     if ( util.checkDlgOpen( "p_new_edit" ))
         return;
 
-    dlgProjNewEdit(null,0,function( data ){
+    dlgProjNewEdit.show(null,0,function( data ){
         util.setStatusText("Project "+data.id+" created");
         reloadNode( data_tree.getNodeByKey( "proj_own" ));
     });
@@ -809,7 +818,7 @@ function actionNewColl(){
             return;
         }
 
-        dlgCollNewEdit(null,parent,0,function(data){
+        dlgCollNewEdit.show(null,parent,0,function(data){
             var node = data_tree.getNodeByKey( data.parentId );
             if ( node )
                 reloadNode( node );
@@ -1065,7 +1074,7 @@ function actionEditSelected() {
             permGateAny( id, model.PERM_WR_REC | model.PERM_SHARE, function( perms ){
                 api.viewProj( id, function( data ){
                     if ( data ){
-                        dlgProjNewEdit( data, perms, function( data ){
+                        dlgProjNewEdit.show( data, perms, function( data ){
                             refreshUI( id, data );
                         });
                     }
@@ -1076,7 +1085,7 @@ function actionEditSelected() {
             permGateAny( id, model.PERM_WR_REC | model.PERM_SHARE, function( perms ){
                 api.viewColl( id, function( data ){
                     if ( data ){
-                        dlgCollNewEdit( data, null, perms, function( data ){
+                        dlgCollNewEdit.show( data, null, perms, function( data ){
                             refreshUI( id, data );
                         });
                     }
@@ -1099,7 +1108,7 @@ function actionEditSelected() {
         case 'q':
             api.sendQueryView( id, function( ok, old_qry ){
                 if ( ok ){
-                    dlgQueryNewEdit( old_qry, function( data ){
+                    dlgQueryNewEdit.show( old_qry, function( data ){
                         refreshUI( id, data, true );
                     });
                 }else
@@ -1128,12 +1137,12 @@ function actionShareSelected() {
         if ( id.charAt(0) == "c" ){
             api.viewColl( id, function( coll ){
                 if ( coll )
-                    dlgSetACLs( coll );
+                    dlgSetACLs.show( coll );
             });
         } else {
             api.dataView( id, function( data ){
                 if ( data )
-                    dlgSetACLs( data );
+                    dlgSetACLs.show( data );
             });
         }
     });
@@ -2676,7 +2685,7 @@ $("#btn_exp_node",frame).on('click', actionGraphNodeExpand );
 $("#btn_col_node",frame).on('click', actionGraphNodeCollapse );
 $("#btn_hide_node",frame).on('click', actionGraphNodeHide );
 
-$("#btn_settings").on('click', function(){ dlgSettings(function(reload){
+$("#btn_settings").on('click', function(){ dlgSettings.show( function(reload){
     if(reload){
         refreshUI();
     }
@@ -2805,7 +2814,7 @@ export function init(){
                     api.dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
                         console.log("chg owner reply:",ok,reply);
                         if ( ok ){
-                            dlgOwnerChangeConfirm( pasteSourceParent.data.scope, dest_node.data.scope, reply, function( repo ){
+                            dlgOwnerChangeConfirm.show( pasteSourceParent.data.scope, dest_node.data.scope, reply, function( repo ){
                                 console.log("chg owner conf:", repo );
                                 api.dataOwnerChange( ids, coll_id, repo, proj_id, false, function( ok, reply ){
                                     if ( ok ){
@@ -3277,7 +3286,7 @@ export function init(){
 
     if ( settings.user.isAdmin ){
         $('[href="#tab-admin"]').closest('li').show();
-        $("#btn_manage_repos",frame).on('click', dlgRepoManage );
+        $("#btn_manage_repos",frame).on('click', dlgRepoManage.show );
     }
 
     $(".btn-refresh").button({icon:"ui-icon-refresh",showLabel:false});
