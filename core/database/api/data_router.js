@@ -1228,7 +1228,7 @@ router.post('/get', function (req, res) {
                 var result = g_tasks.taskInitDataGet( client, req.body.path, req.body.encrypt, res_ids, req.body.check );
 
                 if ( !req.body.check )
-                    g_lib.saveRecentGlobusPath( client, req.body.path );
+                    g_lib.saveRecentGlobusPath( client, req.body.path, g_lib.TT_DATA_GET );
 
                 res.send(result);
             }
@@ -1274,7 +1274,7 @@ router.post('/put', function (req, res) {
                 var result = g_tasks.taskInitDataPut( client, req.body.path, req.body.encrypt, req.body.ext, res_ids, req.body.check );
 
                 if ( !req.body.check )
-                    g_lib.saveRecentGlobusPath( client, req.body.path );
+                    g_lib.saveRecentGlobusPath( client, req.body.path, g_lib.TT_DATA_PUT );
 
                 res.send(result);
             }

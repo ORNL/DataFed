@@ -1374,12 +1374,18 @@ module.exports = ( function() {
         }
     };
 
-    obj.saveRecentGlobusPath = function( a_client, a_path ){
-        var path, idx = a_path.lastIndexOf("/");
-        if ( idx > 0 )
-            path = a_path.substr(0,idx);
-        else
-            path = a_path;
+    obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
+        var path = a_path, idx = a_path.lastIndexOf("/");
+
+        if ( a_mode == obj.TT_DATA_PUT ){
+            // For PUT, strip off filename but keep last slash
+            if ( idx > 0 )
+                path = a_path.substr(0,idx+1);
+        }else{
+            // For GET, make sure path ends in a slash
+            if ( idx != a_path.length - 1 )
+                path += "/";
+        }
 
         if ( a_client.eps && a_client.eps.length ){
             idx = a_client.eps.indexOf( path );
