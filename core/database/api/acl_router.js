@@ -160,13 +160,6 @@ router.get('/update', function (req, res) {
 
                 new_obj.acls = acl_mode;
 
-                if ( req.queryParams.public != undefined ){
-                    if ( req.queryParams.public )
-                        new_obj.public = true;
-                    else
-                        new_obj.public = null;
-                }
-
                 g_db._update( object._id, new_obj, { keepNull: false } );
 
                 result = g_db._query( "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", { object: object._id }).toArray();
@@ -182,9 +175,8 @@ router.get('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('rules', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
-.queryParam('public', joi.boolean().optional(), "Enable public access")
-.summary('Update ACL(s) and/or public access on a data record or collection')
-.description('Update access control list(s) (ACLs) and/or public access on a data record or collection. Default access permissions are set using ACLs with id of "default". Inherited permissions can only be set on collections.');
+.summary('Update ACL(s) on a data record or collection')
+.description('Update access control list(s) (ACLs) on a data record or collection. Default access permissions are set using ACLs with id of "default". Inherited permissions can only be set on collections.');
 
 router.get('/view', function (req, res) {
     try {
