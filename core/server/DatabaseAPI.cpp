@@ -1620,7 +1620,7 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
         if (( j = a_obj.find( "url" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_url( j->second.asString( ));
 
-        if (( j = a_obj.find( "size" )) != a_obj.end( ))
+        if (( j = a_obj.find( "size" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_size( j->second.asNumber( ));
 
         if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))

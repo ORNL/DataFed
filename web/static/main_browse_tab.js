@@ -1225,6 +1225,7 @@ function calcActionState( sel ){
         //console.log("multi",bits);
     }else if ( sel.length ){
         node = sel[0];
+        console.log("btns, nde:",node.data);
 
         switch ( node.key[0] ){
             //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
@@ -1236,6 +1237,8 @@ function calcActionState( sel ){
                     bits = 0x102;
                 if ( node.data.doi )
                     bits |= 0x10;
+                if ( !node.data.size )
+                    bits |= 0x20;
                 break;
             case "p":
                 bits = 0x3Fa;
@@ -1386,7 +1389,8 @@ function execQuery( query ){
                 util.setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                 for ( var i in items ){
                     var item = items[i];
-                    results.push({title:util.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi});
+                    results.push({title:util.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
+                        checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,size:item.size});
                 }
             } else {
                 util.setStatusText("No results found");
@@ -3113,7 +3117,8 @@ export function init(){
                     if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false, key_pfx: key_pfx };
                     }else{
-                        entry = { title: util.generateTitle(item),checkbox:false,folder:false,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",scope:item.owner?item.owner:scope,key:item.id,doi:item.doi };
+                        entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
+                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
                     }
 
                     data.result.push( entry );
