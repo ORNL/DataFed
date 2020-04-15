@@ -1814,8 +1814,6 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
     params.push_back({"id",a_request.id()});
     if ( a_request.has_rules() )
         params.push_back({"rules",a_request.rules()});
-    if ( a_request.has_ispublic() )
-        params.push_back({"public",a_request.ispublic()?"true":"false"});
 
     dbGet( "acl/update", params, result );
 

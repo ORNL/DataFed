@@ -86,6 +86,7 @@ export function showSelectedItemInfo( item ){
             showSelectedMetadata();
         }
     }else{
+        form.hide();
         showSelectedMetadata();
         //showSelectedHTML( "Insufficient permissions to view data record." );
     }

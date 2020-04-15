@@ -325,8 +325,8 @@ export function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
-export function aclUpdate( a_id, a_rules, a_public, a_cb ) {
-    _asyncGet( "/api/acl/update?id="+encodeURIComponent(a_id)+"&rules="+encodeURIComponent(JSON.stringify(a_rules))+"&pub="+a_public, null, a_cb );
+export function aclUpdate( a_id, a_rules, a_cb ) {
+    _asyncGet( "/api/acl/update?id="+encodeURIComponent(a_id)+"&rules="+encodeURIComponent(JSON.stringify(a_rules)), null, a_cb );
 }
 
 export function aclByUser( a_cb ) {

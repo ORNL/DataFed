@@ -183,6 +183,36 @@ export function generateTitle( item, refresh ) {
     return title;
 }
 
+export function treeSelectRange( a_tree, a_node ){
+    /*if ( a_node.parent != selectScope.parent || a_node.data.scope != selectScope.data.scope ){
+        util.setStatusText("Cannot select across collections or categories",1);
+        return;
+    }*/
+
+    var act_node = a_tree.activeNode;
+    if ( act_node ){
+        var parent = act_node.parent;
+        if ( parent == a_node.parent ){
+            var n,sel = false;
+            for ( var i in parent.children ){
+                n = parent.children[i];
+                if ( sel ){
+                    n.setSelected( true );
+                    if ( n.key == act_node.key || n.key == a_node.key )
+                        break;
+                }else{
+                    if ( n.key == act_node.key || n.key == a_node.key ){
+                        n.setSelected( true );
+                        sel = true;
+                    }
+                }
+            }
+        }else{
+            setStatusText("Range select only supported within a single collection.",1);
+        }
+    }
+}
+
 export function buildObjSrcTree( obj, base, md_exp ){
     var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     

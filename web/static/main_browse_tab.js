@@ -1225,7 +1225,6 @@ function calcActionState( sel ){
         //console.log("multi",bits);
     }else if ( sel.length ){
         node = sel[0];
-        console.log("btns, nde:",node.data);
 
         switch ( node.key[0] ){
             //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
@@ -3005,13 +3004,8 @@ export function init(){
                     url: "/api/col/published/list?subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
                     cache: false
                 };
-            }else if ( data.node.key == "favorites" || data.node.key == "views" ) {
+            } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
                 data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
-            } else if ( data.node.key.startsWith("t/") ) {
-                data.result = {
-                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
             } else if ( data.node.key.startsWith("q/") ) {
                 data.result = {
                     url: "/api/query/exec?id=" + encodeURIComponent( data.node.key ),
@@ -3104,7 +3098,6 @@ export function init(){
                 if ( data.node.key.startsWith("published"))
                     key_pfx = "pub_";
 
-                console.log("pos proc default",data.node.key);
                 data.result = [];
                 var entry;
                 scope = data.node.data.scope;

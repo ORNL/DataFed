@@ -556,7 +556,7 @@ export function show( item ){
                     //var is_public = $("#public_check",frame).prop("checked");
                     //console.log( "SAVE ACLS:", is_public, new_rules );
 
-                    api.aclUpdate( item.id, new_rules, false, function( ok, data ){
+                    api.aclUpdate( item.id, new_rules, function( ok, data ){
                         if ( !ok )
                             dialogs.dlgAlert( "Sharing Update Failed", data );
                         else

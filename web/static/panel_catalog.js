@@ -22,8 +22,6 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
             preventForeignNodes: true,
             dropEffectDefault: "copy",
             dragStart: function(node, data) {
-                console.log( "dnd start" );
-
                 if ( node.data.nodrag )
                     return false;
 
@@ -50,12 +48,21 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
         source:[
             {title:"By Topic <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
         ],
-        selectMode: 1,
+        selectMode: 2,
         activate: function( event, data ) {
-            data.node.setSelected( true );
             panel_info.showSelectedInfo( data.node );
         },
         select: function( event, data ) {
+            if ( data.node.isSelected() ){
+                data.node.visit( function( node ){
+                    node.setSelected( false );
+                });
+                var parents = data.node.getParentList();
+                for ( var i in parents ){
+                    parents[i].setSelected( false );
+                }
+            }
+
             a_parent.updateBtnState();
         },
         collapse: function( event, data ) {
@@ -69,32 +76,32 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
             }
         },
         click: function(event, data) {
-            if ( event.which == null ){
-                // RIGHT-CLICK CONTEXT MENU
-
-                // Enable/disable actions
-                inst.tree_div.contextmenu("enableEntry", "unlink", false );
-                inst.tree_div.contextmenu("enableEntry", "cut", false );
-                inst.tree_div.contextmenu("enableEntry", "paste", false );
-                inst.tree_div.contextmenu("enableEntry", "new", false );
-
-                if ( data.node.key.charAt(0) == 'd' ){
-                    inst.tree_div.contextmenu("enableEntry", "actions", true );
-                    inst.tree_div.contextmenu("enableEntry", "copy", true );
-                }else if ( data.node.key.charAt(0) == 'c' ){
-                    inst.tree_div.contextmenu("enableEntry", "actions", true );
-                    inst.tree_div.contextmenu("enableEntry", "graph", false );
-                    inst.tree_div.contextmenu("enableEntry", "put", false );
-                    inst.tree_div.contextmenu("enableEntry", "copy", false );
-                    inst.tree_div.contextmenu("enableEntry", "move", false );
-                }else{
-                    inst.tree_div.contextmenu("enableEntry", "actions", false );
-                    inst.tree_div.contextmenu("enableEntry", "copy", false );
-                }
-            }else if ( data.targetType == "icon" && data.node.isFolder() ){
+            if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
-            }
+            } else {
+                //if ( inst.tree.getSelectedNodes().length == 0 )
+                //    selectScope = data.node;
 
+                if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
+                    //treeSelectRange(cat_tree,data.node);
+                    util.treeSelectRange( cat_tree, data.node );
+                }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
+                    if ( data.node.isSelected() ){
+                        data.node.setSelected( false );
+                    }else{
+                        data.node.setSelected( true );
+                    }
+                }else if ( data.originalEvent.shiftKey ) {
+                    cat_tree.selectAll(false);
+                    //selectScope = data.node;
+                    util.treeSelectRange( cat_tree, data.node );
+                }else{
+                    cat_tree.selectAll(false);
+                    //selectScope = data.node;
+                    //treeSelectNode(data.node);
+                    data.node.setSelected( true );
+                }
+            }
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "topics" ) {
@@ -120,8 +127,6 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
                 var item,entry;
                 var items = data.response.item;
                 var scope = data.node.data.scope;
-
-                //console.log("topic resp:",data.response);
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
                     var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
@@ -160,7 +165,9 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
         },
     });
 
-    this.tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
+    var cat_tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
+
+    inst.tree = cat_tree;
 
     return this;
 }
