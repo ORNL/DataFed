@@ -19,6 +19,7 @@ export function show(){
 
     var frame = $(document.createElement('div'));
     frame.html( content );
+    var tree;
 
     function addRepo(){
         console.log("Add repo");
@@ -30,7 +31,6 @@ export function show(){
 
     function remRepo(){
         console.log("Remove repo");
-        var tree = $("#dlg_repo_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
             dialogs.dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Cancel","Delete"],function(choice){
@@ -45,7 +45,6 @@ export function show(){
 
     function editRepo(){
         console.log("Edit repo");
-        var tree = $("#dlg_repo_tree",frame).fancytree("getTree");
         var node = tree.getActiveNode();
         if ( node ){
             dlgRepoEdit.show( node.key, function(){
@@ -69,7 +68,7 @@ export function show(){
                 repo = data[i];
                 src.push({title: repo.id + " (" + repo.domain + ")",folder:true,lazy:true,icon:false,key:repo.id });
             }
-            $("#dlg_repo_tree",frame).fancytree("getTree").reload(src);
+            tree.reload(src);
         });
     }
 
@@ -150,6 +149,8 @@ export function show(){
                         }
                     }
                 });
+
+                tree = $.ui.fancytree.getTree($("#dlg_repo_tree",frame));
             });
         },
         close: function( ev, ui ) {

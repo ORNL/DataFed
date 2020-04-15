@@ -127,7 +127,7 @@ export function show( a_excl, a_single_sel, cb ){
         },
     });
 
-    tree = $("#dlg_proj_tree",frame).fancytree("getTree");
+    tree = $.ui.fancytree.getTree($("#dlg_proj_tree",frame));
 
     frame.dialog( options );
 }

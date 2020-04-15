@@ -162,7 +162,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         },
     });
 
-    tree = $("#dlg_user_tree",frame).fancytree("getTree");
+    tree = $.ui.fancytree.getTree($("#dlg_user_tree",frame));
 
     frame.dialog( options );
 }

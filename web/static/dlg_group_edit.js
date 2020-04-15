@@ -75,6 +75,9 @@ export function show( a_uid, a_excl, a_group, cb ){
     var group, src = [];
 
     if ( a_group ){
+        if ( !a_group.member )
+            a_group.member = [];
+
         group = jQuery.extend(true, {}, a_group );
 
         util.inputDisable($("#gid",frame)).val( group.gid );
@@ -110,13 +113,13 @@ export function show( a_uid, a_excl, a_group, cb ){
         },
         source: src,
         selectMode: 1,
+        nodata: false,
         activate: function( event, data ) {
-            console.log( "activated" );
             userSelected();
         },
     });
 
-    var mem_tree = $("#member_list",frame).fancytree("getTree");
+    var mem_tree = $.ui.fancytree.getTree($("#member_list",frame));
 
     var options = {
         title: a_group?"Edit Group '"+a_group.gid+"'":"New Group",
@@ -156,7 +159,7 @@ export function show( a_uid, a_excl, a_group, cb ){
                     }
 
                     for ( i in a_group.member ){
-                        uid = group.member[i];
+                        uid = a_group.member[i];
                         if ( group.member.indexOf( uid ) == -1 ){
                             group.rem.push( uid );
                         }

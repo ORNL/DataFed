@@ -18,6 +18,7 @@ export function show( a_uid, a_excl, cb, select ){
 
     var frame = $(document.createElement('div'));
     frame.html( content );
+    var group_tree;
 
     $("#dlg_add_grp",frame).click( addGroup );
     $("#dlg_edit_grp",frame).click( editGroup );
@@ -31,8 +32,7 @@ export function show( a_uid, a_excl, cb, select ){
     function addGroup(){
         dlgGroupEdit.show( a_uid, a_excl, null, function( group ){
             if ( group ){
-                var tree = $("#dlg_group_tree",frame).fancytree("getTree");
-                var node = tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
+                var node = group_tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
                 if ( select )
                     node.setSelected();
             }
@@ -40,8 +40,7 @@ export function show( a_uid, a_excl, cb, select ){
     }
 
     function remGroup(){
-        var tree = $("#dlg_group_tree",frame).fancytree("getTree");
-        var node = tree.getActiveNode();
+        var node = group_tree.getActiveNode();
         if ( node ){
             dialogs.dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Cancel","Delete"], function( choice ) {
                 console.log( choice );
@@ -56,8 +55,7 @@ export function show( a_uid, a_excl, cb, select ){
     }
 
     function editGroup(){
-        var tree = $("#dlg_group_tree",frame).fancytree("getTree");
-        var node = tree.getActiveNode();
+        var node = group_tree.getActiveNode();
         if ( node ){
             api.groupView( a_uid, node.key.substr(2), function( ok, group ){
                 if ( ok ){
@@ -82,8 +80,8 @@ export function show( a_uid, a_excl, cb, select ){
             text: select?"Ok":"Close",
             click: function() {
                 if ( select && cb ){
-                    var groups = [], tree = $("#dlg_group_tree",frame).fancytree("getTree");
-                    var sel = tree.getSelectedNodes();
+                    var groups = [];
+                    var sel = group_tree.getSelectedNodes();
                     for ( var i in sel ){
                         groups.push( sel[i].key );
                     }
@@ -146,6 +144,8 @@ export function show( a_uid, a_excl, cb, select ){
                         }
                 }
                 });
+
+                group_tree = $.ui.fancytree.getTree($("#dlg_group_tree",frame));
             });
         },
         close: function( ev, ui ) {

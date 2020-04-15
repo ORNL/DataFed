@@ -242,7 +242,7 @@ export function show( a_repo_id, a_cb ){
         }
     });
 
-    var admin_tree = $("#admin_tree",frame).fancytree("getTree");
+    var admin_tree = $.ui.fancytree.getTree($("#admin_tree",frame));
 
     $("#alloc_tree",frame).fancytree({
         extensions: ["themeroller"],
@@ -263,7 +263,7 @@ export function show( a_repo_id, a_cb ){
         }
     });
 
-    var alloc_tree = $("#alloc_tree",frame).fancytree("getTree");
+    var alloc_tree = $.ui.fancytree.getTree($("#alloc_tree",frame));
 
     if ( a_repo_id != null ){
         api.repoView( a_repo_id, function( ok, a_repo ){

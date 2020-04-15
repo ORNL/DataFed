@@ -101,7 +101,7 @@ export function show( a_mode, a_ids, a_cb ) {
         });
 
         $("#records",frame).show();
-        rec_tree = $("#records",frame).fancytree("getTree");
+        rec_tree = $.ui.fancytree.getTree($("#records",frame));
     }else{
         item = a_ids[0];
         var html = item.id + "&nbsp&nbsp" + util.sizeToString( item.size ) + "&nbsp&nbsp" + item.title;

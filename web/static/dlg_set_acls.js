@@ -342,17 +342,16 @@ export function show( item ){
 
         dlgPickUser.show( uid, new_excl, false, function( uids ){
             if ( uids.length > 0 ){
-                var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
                 var i,id,rule;
                 for ( i in uids ){
                     id = uids[i];
-                    if ( new_excl.indexOf( id ) == -1 && !tree.getNodeByKey( id )){
+                    if ( new_excl.indexOf( id ) == -1 && !rule_tree.getNodeByKey( id )){
                         rule = {id: id, grant: model.PERM_BAS_READ, inhgrant:0 };
                         new_rules.push( rule );
-                        tree.rootNode.children[2].addNode({title: id.substr(2),icon:"ui-icon ui-icon-person",key:id,rule:rule });
+                        rule_tree.rootNode.children[2].addNode({title: id.substr(2),icon:"ui-icon ui-icon-person",key:id,rule:rule });
                     }
                 }
-                tree.activateKey( uids[0] );
+                rule_tree.activateKey( uids[0] );
             }
         });
     }
@@ -369,13 +368,11 @@ export function show( item ){
 
         dlgGroups.show( uid, new_excl, function( gids ){
             api.groupList( uid, function( ok, groups ){
-                var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
-
                 if ( ok ){
                     var group;
                     for ( i in new_rules ){
                         rule = new_rules[i];
-                        node = tree.getNodeByKey( rule.id );
+                        node = rule_tree.getNodeByKey( rule.id );
 
                         if ( rule.id.startsWith( "g/" )){
                             gid = rule.id.substr(2);
@@ -392,31 +389,30 @@ export function show( item ){
                 }
 
                 if ( gids && gids.length > 0 ){
-                    node = tree.getNodeByKey("groups");
+                    node = rule_tree.getNodeByKey("groups");
 
                     for ( i in gids ){
                         gid = gids[i];
-                        if ( !tree.getNodeByKey( gid )){
+                        if ( !rule_tree.getNodeByKey( gid )){
                             rule = {id: gid, grant: model.PERM_BAS_READ, inhgrant:0 };
                             new_rules.push( rule );
                             if ( ok ){
                                 gid = gid.substr(2);
                                 group = groups.find( function(elem){ return elem.gid == gid; } );
-                                tree.rootNode.children[1].addNode({title:group.title + " (" + gid + ")",icon:"ui-icon ui-icon-persons",key:"g/"+gid,rule:rule,folder:true,lazy:true });
+                                rule_tree.rootNode.children[1].addNode({title:group.title + " (" + gid + ")",icon:"ui-icon ui-icon-persons",key:"g/"+gid,rule:rule,folder:true,lazy:true });
                             }else
-                                tree.rootNode.children[1].addNode({title:gid.substr(2),icon:"ui-icon ui-icon-persons",key:gid,rule:rule,folder:true,lazy:true });
+                                rule_tree.rootNode.children[1].addNode({title:gid.substr(2),icon:"ui-icon ui-icon-persons",key:gid,rule:rule,folder:true,lazy:true });
                         }
                     }
 
-                    tree.activateKey( gids[0] );
+                    rule_tree.activateKey( gids[0] );
                 }
             });
         }, true );
     }
 
     function editGroup(){
-        var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
-        var node = tree.getActiveNode();
+        var node = rule_tree.getActiveNode();
         if ( node ){
             api.groupView( uid, node.key, function( ok, group ){
                 if ( ok ){
@@ -439,8 +435,7 @@ export function show( item ){
             if ( key == "g/members" )
                 return;
 
-            var tree = $("#dlg_rule_tree",frame).fancytree("getTree");
-            var node = tree.getActiveNode();
+            var node = rule_tree.getActiveNode();
             if ( node.key == key ){
                 for ( var i in new_rules ) {
                     if ( new_rules[i].id == key ){
@@ -466,7 +461,7 @@ export function show( item ){
     var new_rules = [];
     var cur_rule;
     var excl = [];
-    var perm_tree, inh_perm_tree;
+    var rule_tree, perm_tree, inh_perm_tree;
 
     if ( item.owner.startsWith("p/")){
         api.viewProj( uid, function(proj){
@@ -484,10 +479,11 @@ export function show( item ){
     }
 
     buildPermList( '#local_perm_div', false, is_coll?COLL_MODE:DATA_MODE );
-    perm_tree = $('#local_perm_div',frame).fancytree("getTree");
+    perm_tree = $.ui.fancytree.getTree($("#local_perm_div",frame));
+
     if ( is_coll ){
         buildPermList( '#inh_perm_div', true, COLL_MODE|DATA_MODE );
-        inh_perm_tree = $('#inh_perm_div',frame).fancytree("getTree");
+        inh_perm_tree = $.ui.fancytree.getTree($("#inh_perm_div",frame));
     }
 
 
@@ -613,6 +609,8 @@ export function show( item ){
                         updateSelection( data.node.key, data.node.data.rule );
                     },
                 });
+
+                rule_tree = $.ui.fancytree.getTree($("#dlg_rule_tree",frame));
             },
             close: function( ev, ui ) {
                 $(this).dialog("destroy").remove();
