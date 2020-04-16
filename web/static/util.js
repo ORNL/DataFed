@@ -141,7 +141,7 @@ export function checkDlgOpen( a_id ){
     return false;
 }
 
-export function generateTitle( item, refresh ) {
+export function generateTitle( item, refresh, unstruct = false ) {
     var title = "";
 
     if ( item.locked )
@@ -153,28 +153,29 @@ export function generateTitle( item, refresh ) {
 
     // Only apply owner/creator labels to data records
     if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){
-        //console.log("item",item);
         var uid = "u/" + settings.user.uid;
 
-        if ( item.owner.startsWith( "p/" )){
-            if ( item.creator != uid )
-                title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
-        }else{
-            //if ( item.owner && item.creator ){
-            if ( item.owner != uid && item.creator == uid )
-                title += "&nbsp<span class='data-tree-creator-self'>(" + item.creator.substr(2) + ")</span>";
-            else if ( item.owner == uid && item.creator != uid )
+        if ( unstruct ){
+            // No tree structure to convey owner of data, so show owner when user is not owner/creator
+            if ( item.owner != uid && item.creator != uid ){
+                title += "&nbsp<span class='data-tree-owner-other'>" + item.owner.substr(2) + "</span>";
+            } else if ( item.owner != uid && item.creator == uid ){
+                title += "&nbsp<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
+            } else if ( item.owner == uid && item.creator != uid ) {
                 title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
-            else if ( item.owner != uid && item.creator != uid )
-                title += "&nbsp<span class='data-tree-owner-other'>[" + item.owner.substr(2) + "]</span>";
-
-            /*}else if ( item.owner ){
-                if ( item.owner != uid )
-                    title += "&nbsp<span class='data-tree-owner'>(" + item.owner.substr(2) + ")</span>";
-            }else if ( item.creator ){
-                if ( item.creator != uid )
-                    title += "&nbsp<span class='data-tree-creator'>[" + item.creator.substr(2) + "]</span>";
-            }*/
+            }
+        }else{
+            if ( item.owner != uid ){
+                if ( item.creator == uid ){
+                    title += "&nbsp<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
+                } else if ( item.creator != item.owner ) {
+                    title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
+                }
+            } else {
+                if ( item.creator != uid ) {
+                    title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
+                }
+            }
         }
     }
 

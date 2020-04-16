@@ -78,7 +78,7 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
         click: function(event, data) {
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
-            } else {
+            } else if ( !search_sel_mode ) {
                 //if ( inst.tree.getSelectedNodes().length == 0 )
                 //    selectScope = data.node;
 
@@ -165,7 +165,13 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
         },
     });
 
+    inst.setSearchSelectMode = function( a_enabled ){
+        search_sel_mode = a_enabled;
+        cat_tree.setOption("checkbox",a_enabled);
+    }
+
     var cat_tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
+    var search_sel_mode = false;
 
     inst.tree = cat_tree;
 

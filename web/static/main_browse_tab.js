@@ -1203,7 +1203,7 @@ function calcActionState( sel ){
     var bits,node;
 
     if ( sel.length > 1 ){
-        bits = 0x31A; //0x319;
+        bits = 0x31B;
         for ( var i in sel ){
             node = sel[i];
             switch ( node.key[0] ){
@@ -1388,7 +1388,7 @@ function execQuery( query ){
                 util.setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                 for ( var i in items ){
                     var item = items[i];
-                    results.push({title:util.generateTitle( item ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
+                    results.push({title:util.generateTitle( item, false, true ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
                         checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,size:item.size});
                 }
             } else {
@@ -1514,12 +1514,15 @@ function querySave(){
 function updateSearchSelectState( enabled ){
     if( enabled && $("#scope_selected",frame).prop("checked")){
         $(data_tree_div).fancytree("option","checkbox",true);
-        $(cat_panel.tree_div).fancytree("option","checkbox",true);
+        cat_panel.setSearchSelectMode(true);
+
+        //cat_panel.tree.setOption("checkbox",true);
         $("#btn_srch_clear_select",frame).button("option","disabled",false);
         searchSelect = true;
     }else{
         $(data_tree_div).fancytree("option","checkbox",false);
-        $(cat_panel.tree_div).fancytree("option","checkbox",false);
+        cat_panel.setSearchSelectMode(false);
+        //cat_panel.tree.setOption("checkbox",false);
         $("#btn_srch_clear_select",frame).button("option","disabled",true);
         searchSelect = false;
     }
@@ -3116,10 +3119,6 @@ export function init(){
 
                     data.result.push( entry );
                 }
-
-                //if (( !items || !items.length ) && ( data.node.parent.key.startsWith("c/") || data.node.parent.key.startsWith("repo/"))){
-                    //data.result.push({title:"(empty1)",icon:false,checkbox:false,scope:scope,nodrag:true,key:"empty"});
-                //}
             }
 
             if ( data.result && data.result.length == 0 ){
@@ -3184,8 +3183,6 @@ export function init(){
             //console.log("click",data.node.key);
 
             if ( dragging ){ // Suppress click processing on aborted drag
-                console.log("aborted drag");
-
                 dragging = false;
             }else if ( !searchSelect ){ // Selection "rules" differ for search-select mode
                 if ( event.which == null ){
@@ -3316,8 +3313,7 @@ export function init(){
         activate: function( event, data ) {
             if ( keyNav && !keyNavMS ){
                 results_tree.selectAll(false);
-                selectScope = data.node;
-                treeSelectNode(data.node);
+                data.node.setSelected( true );
             }
             keyNav = false;
 
@@ -3329,10 +3325,11 @@ export function init(){
         keydown: function(ev, data) {
             //console.log("keydown",ev.keyCode);
             if ( ev.keyCode == 32 ){
-                if ( data_tree.getSelectedNodes().length == 0 ){
-                    selectScope = data.node;
+                if ( data.node.isSelected() ){
+                    data.node.setSelected( false );
+                }else{
+                    data.node.setSelected( true );
                 }
-                treeSelectNode(data.node,true);
             }else if( ev.keyCode == 13 ){
                 if ( keyNavMS ){
                     keyNavMS = false;
@@ -3351,10 +3348,8 @@ export function init(){
                 //console.log("click no which");
 
                 if ( !data.node.isSelected() ){
-                    //console.log("not selected");
                     results_tree.selectAll(false);
-                    selectScope = data.node;
-                    treeSelectNode(data.node);
+                    data.node.setSelected( true );
                 }
 
                 // Enable/disable actions
@@ -3365,22 +3360,22 @@ export function init(){
                 results_tree_div.contextmenu("enableEntry", "new", false );
 
             } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
-                //console.log("has scope");
-                if ( results_tree.getSelectedNodes().length == 0 )
-                    selectScope = data.node;
-
                 if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
-                    treeSelectRange(results_tree,data.node);
+                    util.treeSelectRange( results_tree, data.node );
                 }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
-                    treeSelectNode(data.node,true);
+                    if ( data.node.isSelected() ){
+                        data.node.setSelected( false );
+                    }else{
+                        data.node.setSelected( true );
+                    }
                 }else if ( data.originalEvent.shiftKey ) {
                     results_tree.selectAll(false);
-                    selectScope = data.node;
-                    treeSelectRange(results_tree,data.node);
+                    //selectScope = data.node;
+                    util.treeSelectRange( results_tree, data.node );
                 }else{
                     results_tree.selectAll(false);
-                    selectScope = data.node;
-                    treeSelectNode(data.node);
+                    //selectScope = data.node;
+                    data.node.setSelected( true );
                 }
             }
         }
