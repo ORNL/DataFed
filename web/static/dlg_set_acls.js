@@ -566,6 +566,12 @@ export function show( item ){
             }],
             open: function(event,ui){
                 $("#dlg_id",frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
+
+                if ( item.ispublic ){
+                    var widget = frame.dialog( "widget" );
+                    $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>Note: public read access active.</span>");
+                }
+
                 var src = buildTreeSource( orig_rules );
 
                 $("#dlg_rule_tree",frame).fancytree({
