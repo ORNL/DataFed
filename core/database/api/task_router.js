@@ -269,3 +269,25 @@ router.get('/reload', function (req, res) {
 })
 .summary('Reload ready/running task records')
 .description('Reload ready/running task records.');
+
+router.get('/purge', function (req, res) {
+    try{
+        g_db._executeTransaction({
+            collections: {
+                read: [],
+                exclusive: ["task","lock","block"]
+            },
+            action: function() {
+                var t = (Date.now()/1000) - req.queryParams.age_sec;
+                g_db._query( "for i in task filter i.status >= " + g_lib.TS_SUCCEEDED + " and i.ut < " + t + " remove i in task" );
+            }
+        });
+
+
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('age_sec', joi.number().integer().min(0).required(), "Purge age (seconds)")
+.summary('Purge completed task records')
+.description('Purge completed task records.');
