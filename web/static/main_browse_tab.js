@@ -2760,6 +2760,7 @@ export function init(){
         dnd5:{
             autoExpandMS: 400,
             preventNonNodes: true,
+            preventLazyParents: false,
             dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
