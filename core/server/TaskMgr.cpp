@@ -80,7 +80,8 @@ TaskMgr::maintenanceThread()
     multimap<timepoint_t,Task*>::iterator   t;
     unique_lock<mutex>                      sched_lock( m_worker_mutex, defer_lock );
     unique_lock<mutex>                      maint_lock( m_maint_mutex );
-    //TaskWorker *                            worker;
+
+    purgeTaskHistory();
 
     while( 1 )
     {
@@ -114,10 +115,7 @@ TaskMgr::maintenanceThread()
 
         if ( now >= purge_next )
         {
-            // TODO Do purge
-            DL_INFO( "MAINT: purging old task records." );
-
-            //db_client.purgeTransferRecords( m_config.task_purge_age );
+            purgeTaskHistory();
 
             now = chrono::system_clock::now();
             purge_next = now + purge_per;
@@ -150,6 +148,26 @@ TaskMgr::maintenanceThread()
     }
 }
 
+void
+TaskMgr::purgeTaskHistory() const
+{
+    DL_INFO( "TaskMgr: purging old task records." );
+
+    try
+    {
+        DatabaseAPI  db( m_config.db_url, m_config.db_user, m_config.db_pass );
+
+        db.taskPurge( m_config.task_purge_age );
+    }
+    catch ( TraceException & e )
+    {
+        DL_ERROR( "TaskMgr: purging failed - " << e.toString() );
+    }
+    catch (...)
+    {
+        DL_ERROR( "TaskMgr: purging failed - unknown exception." );
+    }
+}
 
 /**
  * @brief Public method to add a new task to the "ready" queue

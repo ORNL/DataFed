@@ -151,6 +151,7 @@ public:
     void taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result );
     void taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataReply & a_reply );
     void taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataReply & a_reply );
+    void taskPurge( uint32_t a_age_sec );
 
     // TODO Project Delete
 

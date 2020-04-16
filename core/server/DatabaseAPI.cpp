@@ -3088,5 +3088,12 @@ DatabaseAPI::taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataRe
     setTaskDataReplyArray( a_reply, result );
 }
 
+void
+DatabaseAPI::taskPurge( uint32_t a_age_sec )
+{
+    libjson::Value result;
+
+    dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
+}
 
 }}

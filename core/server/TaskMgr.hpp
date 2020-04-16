@@ -44,6 +44,7 @@ private:
     void        wakeNextWorker();
     Task *      getNextTask( ITaskWorker * a_worker );
     bool        retryTask( Task * a_task );
+    void        purgeTaskHistory() const;
 
 
     Config &                            m_config;
