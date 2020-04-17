@@ -1211,7 +1211,7 @@ function calcActionState( sel ){
         //console.log("multi",bits);
     }else if ( sel.length ){
         node = sel[0];
-
+        console.log("node:",node);
         switch ( node.key[0] ){
             //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
             case "c": bits = node.data.isroot?0x2D7:0x252;  break;
@@ -1263,10 +1263,7 @@ export function updateBtnState(){
             bits = calcActionState( sel );
             break;
         case SS_PROV:
-            if ( graph_panel.getSelectedID() )
-                bits = 0;
-            else
-                bits = 0xFF;
+            bits = calcActionState(graph_panel.getSelectedNodes());
             break;
         case SS_SEARCH:
             sel = results_tree.getSelectedNodes();

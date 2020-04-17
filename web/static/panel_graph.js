@@ -3,8 +3,8 @@ import * as model from "./model.js";
 import * as api from "./api.js";
 import * as panel_info from "./panel_item_info.js";
 
-export function newGraphPanel( a_frame, a_parent ){
-    return new GraphPanel( a_frame, a_parent );
+export function newGraphPanel( a_id, a_frame, a_parent ){
+    return new GraphPanel( a_id, a_frame, a_parent );
 }
 
 function GraphPanel( a_id, a_frame, a_parent ){
@@ -41,7 +41,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
             for ( i in a_data.item ){
                 item = a_data.item[i];
                 //console.log("node:",item);
-                node = {id:item.id,locked:item.locked,links:[]};
+                node = {id:item.id,doi:item.doi,size:item.size,locked:item.locked,links:[]};
                 if ( item.alias ){
                     node.label = item.alias;
                 }else
@@ -102,6 +102,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
             renderGraph();
             panel_info.showSelectedInfo( sel_node_id );
+            a_parent.updateBtnState();
         });
     };
 
@@ -146,6 +147,14 @@ function GraphPanel( a_id, a_frame, a_parent ){
     this.getSelectedID = function(){
         if ( sel_node )
             return sel_node.id;
+    };
+
+    this.getSelectedNodes = function(){
+        var sel = [];
+        if ( sel_node ){
+            sel.push({ key: sel_node.id, data: { doi: sel_node.doi, size: sel_node.size }, parent: { key: "" }});
+        }
+        return sel;
     };
 
     this.getSubjectID = function(){
@@ -290,6 +299,14 @@ function GraphPanel( a_id, a_frame, a_parent ){
                     .duration(500)
                     .attr('r',r);
             })
+            .on("dblclick", function(d,i){
+                //console.log("dbl click");
+                if ( d.comp )
+                    inst.collapseNode();
+                else
+                    inst.expandNode();
+                d3.event.stopPropagation();
+            })
             .on("click", function(d,i){
                 if ( sel_node != d ){
                     d3.select(".highlight")
@@ -299,6 +316,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
                     sel_node = d;
                     sel_node_id = d.id;
                     panel_info.showSelectedInfo( d.id );
+                    a_parent.updateBtnState();
                 }
 
                 if ( d3.event.ctrlKey ){
@@ -639,7 +657,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
     var zoom = d3.zoom();
 
     // TODO Select in our frame only
-    svg = d3.select("svg")
+    svg = d3.select(a_id)
     .call(zoom.on("zoom", function () {
         svg.attr("transform", d3.event.transform);
     }))
