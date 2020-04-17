@@ -50,6 +50,12 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
         ],
         selectMode: 2,
         activate: function( event, data ) {
+            if ( keyNav ){
+                cat_tree.selectAll(false);
+                data.node.setSelected(true);
+                keyNav = false;
+            }
+
             panel_info.showSelectedInfo( data.node );
         },
         select: function( event, data ) {
@@ -79,11 +85,7 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
             if ( data.targetType == "icon" && data.node.isFolder() ){
                 data.node.toggleExpanded();
             } else if ( !search_sel_mode ) {
-                //if ( inst.tree.getSelectedNodes().length == 0 )
-                //    selectScope = data.node;
-
                 if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
-                    //treeSelectRange(cat_tree,data.node);
                     util.treeSelectRange( cat_tree, data.node );
                 }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
                     if ( data.node.isSelected() ){
@@ -93,14 +95,16 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
                     }
                 }else if ( data.originalEvent.shiftKey ) {
                     cat_tree.selectAll(false);
-                    //selectScope = data.node;
                     util.treeSelectRange( cat_tree, data.node );
                 }else{
                     cat_tree.selectAll(false);
-                    //selectScope = data.node;
-                    //treeSelectNode(data.node);
                     data.node.setSelected( true );
                 }
+            }
+        },
+        keydown: function(ev, data) {
+            if( ev.keyCode == 38 || ev.keyCode == 40 ){
+                keyNav = true;
             }
         },
         lazyLoad: function( event, data ) {
@@ -171,7 +175,7 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
     }
 
     var cat_tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
-    var search_sel_mode = false;
+    var keyNav = false, search_sel_mode = false;
 
     inst.tree = cat_tree;
 

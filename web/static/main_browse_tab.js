@@ -2376,11 +2376,15 @@ function treeSelectNode( a_node, a_toggle ){
 
     if ( a_toggle ){
         if ( a_node.isSelected() ){
+            console.log("select false");
+
             a_node.setSelected( false );
         }else{
+            console.log("select true");
             a_node.setSelected( true );
         }
     }else{
+        console.log("select true");
         a_node.setSelected( true );
     }
 }
@@ -3164,10 +3168,14 @@ export function init(){
         keydown: function(ev, data) {
             //console.log("keydown",ev.keyCode);
             if ( ev.keyCode == 32 ){
-                if ( data_tree.getSelectedNodes().length == 0 ){
-                    selectScope = data.node;
+                // Manual search select uses different select rules
+                if ( !searchSelect ){
+                    if ( data_tree.getSelectedNodes().length == 0 ){
+                        selectScope = data.node;
+                    }
+
+                    treeSelectNode(data.node,true);
                 }
-                treeSelectNode(data.node,true);
             }else if( ev.keyCode == 13 ){
                 if ( keyNavMS ){
                     keyNavMS = false;
