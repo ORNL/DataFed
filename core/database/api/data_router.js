@@ -959,9 +959,9 @@ router.get('/dep/graph/get', function (req, res) {
                             next.push([dep.id,dep.type < 2]);
                         }
                     }
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,locked:rec.locked,gen:gen,deps:deps});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,locked:rec.locked,gen:gen,deps:deps});
                 }else{
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,locked:rec.locked});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,locked:rec.locked});
                 }
             }
 
@@ -987,7 +987,7 @@ router.get('/dep/graph/get', function (req, res) {
                 entry = cur[i];
 
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
                 if ( entry[1] ){
                     for ( j in deps ){
@@ -997,7 +997,7 @@ router.get('/dep/graph/get', function (req, res) {
 
                         if ( visited.indexOf(dep.id) < 0 ){
                             //console.log("follow");
-                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
+                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
                             if ( dep.type<2 )
