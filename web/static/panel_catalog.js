@@ -2,12 +2,12 @@ import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as panel_info from "./panel_item_info.js";
 
-export function makeCatalogPanel( a_id, a_frame, a_parent ){
-    var inst = this;
+export function newCatalogPanel( a_id, a_frame, a_parent ){
+    return new CatalogPanel( a_id, a_frame, a_parent );
+}
 
-    this.tree_div = $(a_id,a_frame);
-
-    $("#catalog_tree", a_frame ).fancytree({
+function CatalogPanel( a_id, a_frame, a_parent ){
+    $( a_id, a_frame ).fancytree({
         toggleEffect: false,
         extensions: ["themeroller","dnd5"],
         themeroller: {
@@ -169,15 +169,17 @@ export function makeCatalogPanel( a_id, a_frame, a_parent ){
         },
     });
 
-    inst.setSearchSelectMode = function( a_enabled ){
-        search_sel_mode = a_enabled;
-        cat_tree.setOption("checkbox",a_enabled);
-    }
 
     var cat_tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
     var keyNav = false, search_sel_mode = false;
 
-    inst.tree = cat_tree;
+    this.setSearchSelectMode = function( a_enabled ){
+        search_sel_mode = a_enabled;
+        cat_tree.setOption("checkbox",a_enabled);
+    }
+
+    this.tree_div = $(a_id,a_frame);
+    this.tree = cat_tree;
 
     return this;
 }
