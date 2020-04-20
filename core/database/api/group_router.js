@@ -40,6 +40,9 @@ router.get('/create', function (req, res) {
                     uid = client._id;
                 }
 
+                if ( req.queryParams.gid == "members" )
+                    throw [g_lib.ERR_PERM_DENIED,"Group ID 'members' is reserved"];
+
                 var obj = { uid: uid };
 
                 g_lib.procInputParam( req.queryParams, "gid", false, obj );
@@ -47,7 +50,7 @@ router.get('/create', function (req, res) {
                 g_lib.procInputParam( req.queryParams, "summary", false, obj );
 
                 if ( g_db.g.firstExample({ uid: uid, gid: obj.gid }))
-                    throw [g_lib.ERR_IN_USE,"Group, "+obj.gid+", in use"];
+                    throw [g_lib.ERR_IN_USE,"Group ID '"+obj.gid+"' already exists."];
 
                 var group = g_db.g.save( obj, { returnNew: true });
 
@@ -107,14 +110,14 @@ router.get('/update', function (req, res) {
                     var uid = req.queryParams.proj;
                     group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
-                        throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.gid+", not found"];
+                        throw [g_lib.ERR_NOT_FOUND,"Group ID '"+req.queryParams.gid+"' not found"];
 
                     //g_lib.ensureAdminPermObject( client, group._id );
                     g_lib.ensureManagerPermProj( client, uid );
                 } else {
                     group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
                     if ( !group )
-                        throw [g_lib.ERR_NOT_FOUND,"Group, "+req.queryParams.gid+", not found"];
+                        throw [g_lib.ERR_NOT_FOUND,"Group ID '"+req.queryParams.gid+"' not found"];
                 }
 
                 var obj = {};
@@ -195,7 +198,7 @@ router.get('/delete', function (req, res) {
                     var uid = req.queryParams.proj;
                     group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
                     if ( !group )
-                        throw [g_lib.ERR_NOT_FOUND,"Group, "+req.queryParams.gid+", not found"];
+                        throw [g_lib.ERR_NOT_FOUND,"Group ID '"+req.queryParams.gid+"' not found"];
 
                     //g_lib.ensureAdminPermObject( client, group._id );
                     g_lib.ensureManagerPermProj( client, uid );
@@ -258,14 +261,14 @@ router.get('/view', function (req, res) {
             var uid = req.queryParams.proj;
             group = g_db.g.firstExample({ uid: uid, gid: req.queryParams.gid });
             if ( !group )
-                throw [g_lib.ERR_NOT_FOUND,"Group, "+req.queryParams.gid+", not found"];
+                throw [g_lib.ERR_NOT_FOUND,"Group ID '"+req.queryParams.gid+"' not found"];
 
             if ( g_lib.getProjectRole( client._id, uid ) == g_lib.PROJ_NO_ROLE )
                 throw g_lib.ERR_PERM_DENIED;
         } else {
             group = g_db.g.firstExample({ uid: client._id, gid: req.queryParams.gid });
             if ( !group )
-                throw [g_lib.ERR_NOT_FOUND,"User, "+req.queryParams.gid+", not found"];
+                throw [g_lib.ERR_NOT_FOUND,"Group ID '"+req.queryParams.gid+"' not found"];
         }
 
         var result = { uid: group.uid, gid: group.gid, title: group.title, desc: group.desc };
