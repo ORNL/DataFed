@@ -567,7 +567,7 @@ export function show( item ){
                     },
                     source: src,
                     selectMode: 1,
-                    nodata:"(empty)",
+                    nodata: false,
                     lazyLoad: function( event, data ) {
                         if ( data.node.key.startsWith("g/")){
                             data.result = {
