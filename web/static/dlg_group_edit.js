@@ -174,7 +174,7 @@ export function show( a_uid, a_excl, a_group, cb ){
                         }
                     });
                 } else {
-                    api.groupCreate( "u/" + settings.user.uid, group, function( ok, data ){
+                    api.groupCreate( a_uid, group, function( ok, data ){
                         if ( !ok ){
                             dialogs.dlgAlert( "Server Error", data );
                         } else {

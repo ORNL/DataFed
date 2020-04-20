@@ -57,6 +57,8 @@ export function show( item ){
     var frame = $(document.createElement('div'));
     frame.html( content );
 
+    var is_root = item.id == "c/" + item.owner.charAt(0) + "_" + item.owner.substr(2) + "_root";
+
     function buildPermList( a_div_id, a_inh, a_mode ){
         var src = [], children;
 
@@ -109,7 +111,7 @@ export function show( item ){
                 }
             },
             beforeSelect: function( event, data ) {
-                if ( cur_rule && cur_rule.id != "default" ){
+                if ( cur_rule ){
                     if ( !data.node.data.inh ){
                         if ( is_coll ){
                             if (( parseInt( data.node.key ) & (model.PERM_RD_REC|model.PERM_LIST) ) && data.node.isSelected() )
@@ -192,9 +194,8 @@ export function show( item ){
         }
 
         var src = [
-            {title:"Default",icon:"ui-icon ui-icon-settings",folder:false,key:"default",rule:def_rule },
-            {title:"Groups",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:group_rules,key:"groups"},
-            {title:"Users",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:user_rules,key:"users"}
+            {title:"Users",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:user_rules,key:"users"},
+            {title:"Groups",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:group_rules,key:"groups"}
         ];
 
         return src;
@@ -208,9 +209,7 @@ export function show( item ){
             value &= ~(model.PERM_CREATE|model.PERM_LINK|model.PERM_LIST);
 
         if ( cur_rule ){
-            if ( cur_rule.id != "default" ){
-                value |= model.PERM_RD_REC|(is_coll?model.PERM_LIST:0);
-            }
+            value |= model.PERM_RD_REC|(is_coll?model.PERM_LIST:0);
             cur_rule.grant = value;
             setPermsFromRule( cur_rule );
         }
@@ -320,11 +319,6 @@ export function show( item ){
             setPermsFromRule(rule);
             $("#dlg_edit",frame).button("enable");
             $("#dlg_rem",frame).button("enable" );
-        } else if ( key == "default" ) {
-            //disablePermControls( false );
-            setPermsFromRule( rule );
-            $("#dlg_edit",frame).button("disable");
-            $("#dlg_rem",frame).button("disable");
         } else {
             disablePermControls();
             $("#dlg_edit",frame).button("disable");
@@ -348,7 +342,7 @@ export function show( item ){
                     if ( new_excl.indexOf( id ) == -1 && !rule_tree.getNodeByKey( id )){
                         rule = {id: id, grant: model.PERM_BAS_READ, inhgrant:0 };
                         new_rules.push( rule );
-                        rule_tree.rootNode.children[2].addNode({title: id.substr(2),icon:"ui-icon ui-icon-person",key:id,rule:rule });
+                        rule_tree.rootNode.children[0].addNode({title: id.substr(2),icon:"ui-icon ui-icon-person",key:id,rule:rule });
                     }
                 }
                 rule_tree.activateKey( uids[0] );
@@ -430,10 +424,11 @@ export function show( item ){
     function remUserGroup(){
         if ( cur_rule ){
             var key = cur_rule.id;
-            if ( key == "default" )
+
+            if ( key == "g/members" && is_root ){
+                dialogs.dlgAlert("Sharing Error", "'members' group cannot be removed from project root collection.");
                 return;
-            if ( key == "g/members" )
-                return;
+            }
 
             var node = rule_tree.getActiveNode();
             if ( node.key == key ){
@@ -470,7 +465,7 @@ export function show( item ){
                 frame.dialog('close');
                 return;
             }
-            excl = [proj.owner]; //[proj.owner,"g/members"];
+            excl = [proj.owner];
             if ( proj.admin )
                 excl = excl.concat( proj.admin );
         });
@@ -515,19 +510,6 @@ export function show( item ){
 
         if ( !data.rule )
             data.rule = [];
-
-        // Insert a default rule if not present (for UI needs)
-        var ins_def = true;
-        for ( var i in data.rule ){
-            if ( data.rule[i].id == "default" ) {
-                ins_def = false;
-                break;
-            }
-        }
-
-        if ( ins_def ){
-            data.rule.push({id:"default",grant:0,inhgrant:0});
-        }
 
         if ( data.rule ) {
             orig_rules = data.rule.slice();

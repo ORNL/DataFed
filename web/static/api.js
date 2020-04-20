@@ -487,10 +487,7 @@ export function groupUpdate( a_group, a_cb ) {
 }
 
 export function groupDelete( a_uid, a_gid, a_cb ) {
-    _asyncGet( "/api/grp/delete?uid="+a_uid+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, function( ok, data ){
-        if ( ok && a_cb )
-            a_cb();
-    });
+    _asyncGet( "/api/grp/delete?uid="+a_uid+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, a_cb );
 }
 
 export function topicList( a_parent, a_offset, a_count, a_inc_data, a_cb ){

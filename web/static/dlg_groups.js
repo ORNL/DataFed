@@ -3,6 +3,7 @@ import * as dialogs from "./dialogs.js";
 import * as dlgGroupEdit from "./dlg_group_edit.js";
 
 export function show( a_uid, a_excl, cb, select ){
+    console.log("groups UID:", a_uid );
     const content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:.5rem 0 0 0'>Groups:</div>\
@@ -45,9 +46,13 @@ export function show( a_uid, a_excl, cb, select ){
             dialogs.dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Cancel","Delete"], function( choice ) {
                 console.log( choice );
                 if ( choice == 1 ) {
-                    api.groupDelete( a_uid, node.key.substr(2), function() {
-                        node.remove();
-                        selectNone();
+                    api.groupDelete( a_uid, node.key.substr(2), function( ok, data ) {
+                        if ( ok ){
+                            node.remove();
+                            selectNone();
+                        }else{
+                            dialogs.dlgAlert( "Group Delete Error", data );
+                        }
                     });
                 }
             });
@@ -115,6 +120,7 @@ export function show( a_uid, a_excl, cb, select ){
                     source: src,
                     selectMode: select?2:1,
                     checkbox: select,
+                    nodata: false,
                     lazyLoad: function( event, data ) {
                         data.result = {
                             url: "/api/grp/view?uid="+encodeURIComponent( a_uid )+"&gid="+encodeURIComponent(data.node.key.substr(2)),
