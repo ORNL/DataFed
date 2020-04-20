@@ -809,14 +809,6 @@ module.exports = ( function() {
     };
 
 
-    obj.getCollDefaultACL = function( coll_id ){
-        var res = obj.db._query("for i in c filter i._id == @id return {grant:i.grant,inhgrant:i.inhgrant}",{id:coll_id});
-        if ( !res.hasNext() ){
-            throw [obj.ERR_NOT_FOUND,"Collection " + coll_id + " not found."];
-        }
-        return res.next();
-    };
-
     obj.hasAnyCommonAccessScope = function( src_item_id, dst_coll_id ){
         console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
 
@@ -881,18 +873,12 @@ module.exports = ( function() {
             if ( obj.db.acl.firstExample({ _from: p1[j] })){
                 return false;
             }
-            def = obj.getCollDefaultACL( p1[j] );
-            if ( def.grant !== null || def.inhgrant !== null )
-                return false;
         }
 
         for ( j = i; j < p2.length; j++ ){
             if ( obj.db.acl.firstExample({ _from: p2[j] })){
                 return false;
             }
-            def = obj.getCollDefaultACL( p2[j] );
-            if ( def.grant !== null || def.inhgrant !== null )
-                return false;
         }
 
         return true;
@@ -913,18 +899,13 @@ module.exports = ( function() {
         // If object is marked "public", everyone is granted VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
 
-        if ( a_object.public )
+        if ( a_object.public ){
             perm_found = obj.PERM_PUBLIC;
 
-        if ( a_object.grant )
-            perm_found |= a_object.grant;
-
-        if ( a_inherited && a_object.inhgrant )
-            perm_found |= a_object.inhgrant;
-
-        result = obj.evalPermissions( a_req_perm, perm_found, any );
-        if ( result != null )
-            return result;
+            result = obj.evalPermissions( a_req_perm, perm_found, any );
+            if ( result != null )
+                return result;
+        }
 
         // Evaluate user permissions set directly on object
         if ( a_object.acls & 1 ){
@@ -973,7 +954,7 @@ module.exports = ( function() {
         while ( 1 ) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.public,acls:v.acls}", { children : children }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
 
             if ( parents.length == 0 )
                 break;
@@ -981,15 +962,13 @@ module.exports = ( function() {
             for ( i in parents ) {
                 parent = parents[i];
 
-                if ( parent.public )
+                if ( parent.public ){
                     perm_found |= obj.PERM_PUBLIC;
 
-                if ( parent.inhgrant )
-                    perm_found |= parent.inhgrant;
-
-                result = obj.evalPermissions( a_req_perm, perm_found, any );
-                if ( result != null )
-                    return result;
+                    result = obj.evalPermissions( a_req_perm, perm_found, any );
+                    if ( result != null )
+                        return result;
+                }
 
                 // User ACL first
                 if ( parent.acls && (( parent.acls & 1 ) != 0 )){
@@ -1056,17 +1035,12 @@ module.exports = ( function() {
         // If object is marked "public", everyone is granted VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
 
-        if ( a_object.public )
+        if ( a_object.public ){
             perm_found = obj.PERM_PUBLIC;
 
-        if ( a_object.grant )
-            perm_found |= a_object.grant;
-
-        if ( a_inherited && a_object.inhgrant )
-            perm_found |= a_object.inhgrant;
-
-        if (( a_req_perm & perm_found ) == a_req_perm )
-            return a_req_perm;
+            if (( a_req_perm & perm_found ) == a_req_perm )
+                return a_req_perm;
+        }
 
         // Evaluate permissions set directly on object
 
@@ -1115,7 +1089,7 @@ module.exports = ( function() {
         while ( 1 ) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.public,acls:v.acls}", { children : children }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
 
             if ( parents.length == 0 )
                 break;
@@ -1123,14 +1097,12 @@ module.exports = ( function() {
             for ( i in parents ) {
                 parent = parents[i];
 
-                if ( parent.public )
+                if ( parent.public ){
                     perm_found |= obj.PERM_PUBLIC;
 
-                if ( parent.inhgrant )
-                    perm_found |= parent.inhgrant;
-
-                if (( a_req_perm & perm_found ) == a_req_perm )
-                    return a_req_perm;
+                    if (( a_req_perm & perm_found ) == a_req_perm )
+                        return a_req_perm;
+                }
 
                 // User ACL
                 if ( parent.acls && (( parent.acls & 1 ) != 0 )){
@@ -1172,12 +1144,6 @@ module.exports = ( function() {
     obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
         var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
-        if ( a_object.grant )
-            perm.grant |= a_object.grant;
-
-        if ( a_object.inhgrant )
-            perm.inhgrant |= a_object.inhgrant;
-
         if ( a_object.acls & 1 ){
             acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client_id } ).toArray();
 
@@ -1205,19 +1171,13 @@ module.exports = ( function() {
             while ( 1 ) {
                 // Find all parent collections owned by object owner
 
-                parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,inhgrant:v.inhgrant,public:v.public,acls:v.acls}", { children : children }).toArray();
+                parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
 
                 if ( parents.length == 0 )
                     break;
 
                 for ( i in parents ) {
                     parent = parents[i];
-
-                    if ( parent.inhgrant )
-                        perm.inherited |= parent.inhgrant;
-
-                    if (( a_req_perm & perm.inherited ) == a_req_perm )
-                        break;
 
                     // User ACL
                     if ( parent.acls && (( parent.acls & 1 ) != 0 )){

@@ -78,83 +78,50 @@ router.get('/update', function (req, res) {
                         if ( !is_coll && rule.inhgrant )
                             throw [g_lib.ERR_INVALID_PARAM,"Inherited permissions cannot be applied to data records"];
 
-                        if ( rule.id == "default" || rule.id == "def" ) {
-                            // Make sure authority is not exceeded
-                            if ( !is_admin ){
-                                old_rule = cur_rules.findIndex( function( r ){
-                                    return r.id == "default";
-                                });
-                                if ( old_rule >= 0 ){
-                                    if ( old_rule.grant != rule.grant ){
-                                        chg = old_rule.grant ^ rule.grant;
-                                        if (( chg & client_perm ) != ( chg & ~g_lib.PERM_SHARE )){
-                                            console.log("bad alter", rule.id, old_rule, rule, client_perm );
-                                            throw [g_lib.ERR_PERM_DENIED,"Attempt to alter protected permissions on " + rule.id + " ACL."];
-                                        }
-                                    }
-                                }else{
-                                    if (( rule.grant & g_lib.PERM_SHARE ) || ( rule.grant & client_perm ) != rule.grant ){
-                                        console.log("exceeding", rule.id, old_rule.grant, rule.grant, client_perm );
-                                        throw [g_lib.ERR_PERM_DENIED,"Attempt to exceed controlled permissions on " + rule.id + " ACL."];
-                                    }
-                                }
-                            }
+                        if ( rule.id.startsWith("g/")){
+                            acl_mode |= 2;
+                            var group = g_db.g.firstExample({ uid: owner_id, gid: rule.id.substr(2) });
 
-                            new_obj.grant = rule.grant;
+                            if ( !group )
+                                throw [g_lib.ERR_NOT_FOUND,"Group "+rule.id+" not found"];
 
-                            if ( new_obj.grant == 0 )
-                                new_obj.grant = null;
-
-                            new_obj.inhgrant = rule.inhgrant;
-
-                            if ( new_obj.inhgrant == 0 )
-                                new_obj.inhgrant = null;
-
+                            rule.id = group._id;
                         } else {
-                            if ( rule.id.startsWith("g/")){
-                                acl_mode |= 2;
-                                var group = g_db.g.firstExample({ uid: owner_id, gid: rule.id.substr(2) });
+                            acl_mode |= 1;
+                            if ( !g_db._exists( rule.id ))
+                                throw [g_lib.ERR_NOT_FOUND,"User "+rule.id+" not found"];
+                        }
 
-                                if ( !group )
-                                    throw [g_lib.ERR_NOT_FOUND,"Group "+rule.id+" not found"];
+                        if ( !is_admin ){
+                            // TODO I believe the code below is obsolete - granting sharing permission is (should be) unrestricted now
+                            old_rule = cur_rules.findIndex( function( r ){
+                                return r.id == rule.id;
+                            });
 
-                                rule.id = group._id;
-                            } else {
-                                acl_mode |= 1;
-                                if ( !g_db._exists( rule.id ))
-                                    throw [g_lib.ERR_NOT_FOUND,"User "+rule.id+" not found"];
-                            }
-
-                            if ( !is_admin ){
-                                old_rule = cur_rules.findIndex( function( r ){
-                                    return r.id == rule.id;
-                                });
-
-                                if ( old_rule >= 0 ){
-                                    old_rule = cur_rules[old_rule];
-                                    if ( old_rule.grant != rule.grant ){
-                                        chg = old_rule.grant ^ rule.grant;
-                                        if (( chg & client_perm ) != ( chg & ~g_lib.PERM_SHARE )){
-                                            console.log("bad alter", rule.id, old_rule, rule, client_perm );
-                                            throw [g_lib.ERR_PERM_DENIED,"Attempt to alter protected permissions on " + rule.id + " ACL."];
-                                        }
-                                    }
-                                }else{
-                                    if (( rule.grant & g_lib.PERM_SHARE ) || ( rule.grant & client_perm ) != rule.grant ){
-                                        console.log("exceeding", rule.id, old_rule.grant, rule.grant, client_perm );
-                                        throw [g_lib.ERR_PERM_DENIED,"Attempt to exceed controlled permissions on " + rule.id + " ACL."];
+                            if ( old_rule >= 0 ){
+                                old_rule = cur_rules[old_rule];
+                                if ( old_rule.grant != rule.grant ){
+                                    chg = old_rule.grant ^ rule.grant;
+                                    if (( chg & client_perm ) != ( chg & ~g_lib.PERM_SHARE )){
+                                        console.log("bad alter", rule.id, old_rule, rule, client_perm );
+                                        throw [g_lib.ERR_PERM_DENIED,"Attempt to alter protected permissions on " + rule.id + " ACL."];
                                     }
                                 }
+                            }else{
+                                if (( rule.grant & g_lib.PERM_SHARE ) || ( rule.grant & client_perm ) != rule.grant ){
+                                    console.log("exceeding", rule.id, old_rule.grant, rule.grant, client_perm );
+                                    throw [g_lib.ERR_PERM_DENIED,"Attempt to exceed controlled permissions on " + rule.id + " ACL."];
+                                }
                             }
-
-                            obj = { _from : object._id, _to:rule.id };
-                            if ( rule.grant )
-                                obj.grant = rule.grant;
-                            if ( rule.inhgrant )
-                                obj.inhgrant = rule.inhgrant;
-
-                            g_db.acl.save( obj );
                         }
+
+                        obj = { _from : object._id, _to:rule.id };
+                        if ( rule.grant )
+                            obj.grant = rule.grant;
+                        if ( rule.inhgrant )
+                            obj.inhgrant = rule.inhgrant;
+
+                        g_db.acl.save( obj );
                     }
                 }
 
@@ -176,7 +143,7 @@ router.get('/update', function (req, res) {
 .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('rules', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
 .summary('Update ACL(s) on a data record or collection')
-.description('Update access control list(s) (ACLs) on a data record or collection. Default access permissions are set using ACLs with id of "default". Inherited permissions can only be set on collections.');
+.description('Update access control list(s) (ACLs) on a data record or collection. Inherited permissions can only be set on collections.');
 
 router.get('/view', function (req, res) {
     try {
@@ -479,15 +446,5 @@ function postProcACLRules( rules, object ) {
 
         if ( rule.inhgrant == null )
             delete rule.inhgrant;
-    }
-
-    if ( object.grant || object.inhgrant ) {
-        rule = { id: 'default' };
-        if ( object.grant != null )
-            rule.grant = object.grant;
-        if ( object.inhgrant != null )
-            rule.inhgrant = object.inhgrant;
-        
-        rules.push( rule );
     }
 }
