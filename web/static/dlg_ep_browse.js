@@ -162,6 +162,7 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
                 checkbox: false,
                 source: [{title: "loading...",icon:false,is_dir:true}],
                 selectMode: 1,
+                nodata: false,
                 activate: function( ev, data ){
                     console.log("activate");
                     if (( data.node.data.is_dir && a_mode == "dir" && data.node.key != ".." ) || ( !data.node.data.is_dir && a_mode == "file" ))

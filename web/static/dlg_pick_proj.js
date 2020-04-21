@@ -70,6 +70,7 @@ export function show( a_excl, a_single_sel, cb ){
             selectedClass: ""
         },
         source: src,
+        nodata: false,
         selectMode: a_single_sel?1:2,
         select: function(){
             if ( tree.getSelectedNodes().length ){

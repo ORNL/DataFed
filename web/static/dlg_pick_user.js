@@ -65,6 +65,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
             selectedClass: ""
         },
         source: src,
+        nodata: false,
         selectMode: a_single_sel?1:2,
         select: function( ev, data ){
             var idx = sel_users.indexOf( data.node.key );

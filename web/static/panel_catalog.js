@@ -48,6 +48,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         source:[
             {title:"By Topic <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
         ],
+        nodata: false,
         selectMode: 2,
         activate: function( event, data ) {
             if ( keyNav ){
@@ -176,7 +177,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     this.setSearchSelectMode = function( a_enabled ){
         search_sel_mode = a_enabled;
         cat_tree.setOption("checkbox",a_enabled);
-    }
+    };
 
     this.tree_div = $(a_id,a_frame);
     this.tree = cat_tree;

@@ -18,7 +18,7 @@ export function show( a_data, a_upd_perms, a_cb ) {
                 <tr><td>ID: <span class='note'>*</span></td><td><input type='text' id='id' style='width:100%'></input></td></tr>\
                 <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                 <tr><td style='vertical-align:top'>Description:</td><td><textarea id='desc' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
-                <tr id='def_alloc_row' style='display:hidden'><td>Default&nbspAlloc:</td><td><select id='def_alloc'><option value='none'>None</option></select></td></tr>\
+                <tr id='def_alloc_row' style='display:none'><td>Default&nbspAlloc:</td><td><select id='def_alloc'><option value='none'>None</option></select></td></tr>\
                 <tr><td>Owner:</td><td><input type='text' id='owner_id' style='width:100%'></input></td></tr>\
             </table>\
         </div>\
@@ -252,6 +252,7 @@ export function show( a_data, a_upd_perms, a_cb ) {
                     selectedClass: ""
                 },
                 source: mem_src,
+                nodata: false,
                 selectMode: 1,
                 checkbox: false,
                 activate: function( event, data ) {
@@ -269,6 +270,7 @@ export function show( a_data, a_upd_perms, a_cb ) {
                     selectedClass: ""
                 },
                 source: adm_src,
+                nodata: false,
                 selectMode: 1,
                 checkbox: false,
                 activate: function( event, data ) {

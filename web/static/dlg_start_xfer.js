@@ -81,6 +81,7 @@ export function show( a_mode, a_ids, a_cb ) {
                 selectedClass: ""
             },
             source: src,
+            nodata: false,
             checkbox: true,
             selectMode: 3,
             icon:false,

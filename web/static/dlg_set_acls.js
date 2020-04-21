@@ -179,7 +179,6 @@ export function show( item ){
     function buildTreeSource( rules ){
         var user_rules = [];
         var group_rules = [];
-        var def_rule = null;
         var sub;
 
         for ( var i in rules ){
@@ -189,8 +188,20 @@ export function show( item ){
                 user_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-person",key:sub.id,rule:sub });
             else if ( sub.id.startsWith( "g/" ))
                 group_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-persons",key:sub.id,rule:sub,folder:true,lazy:true });
-            else
-                def_rule = sub;
+        }
+
+        if ( user_rules.length == 0 ){
+            user_rules.push({title:"(none)", icon:false });
+            user_none = true;
+        }else{
+            user_none = false;
+        }
+
+        if ( group_rules.length == 0 ){
+            group_rules.push({title:"(none)", icon:false });
+            group_none = true;
+        }else{
+            group_none = false;
         }
 
         var src = [
@@ -342,6 +353,10 @@ export function show( item ){
                     if ( new_excl.indexOf( id ) == -1 && !rule_tree.getNodeByKey( id )){
                         rule = {id: id, grant: model.PERM_BAS_READ, inhgrant:0 };
                         new_rules.push( rule );
+                        if ( user_none ){
+                            rule_tree.rootNode.children[0].removeChildren();
+                            user_none = false;
+                        }
                         rule_tree.rootNode.children[0].addNode({title: id.substr(2),icon:"ui-icon ui-icon-person",key:id,rule:rule });
                     }
                 }
@@ -384,6 +399,11 @@ export function show( item ){
 
                 if ( gids && gids.length > 0 ){
                     node = rule_tree.getNodeByKey("groups");
+
+                    if ( group_none ){
+                        rule_tree.rootNode.children[1].removeChildren();
+                        group_none = false;
+                    }
 
                     for ( i in gids ){
                         gid = gids[i];
@@ -438,6 +458,17 @@ export function show( item ){
                         break;
                     }
                 }
+
+                if ( node.getNextSibling() == null && node.getPrevSibling() == null ){
+                    if ( key.charAt(0) == 'u' ){
+                        rule_tree.rootNode.children[0].addNode({title:"(none)", icon:false });
+                        user_none = true;
+                    }else{
+                        rule_tree.rootNode.children[1].addNode({title:"(none)", icon:false });
+                        group_none = true;
+                    }
+                }
+
                 cur_rule = null;
                 disablePermControls( true );
                 node.remove();
@@ -457,6 +488,7 @@ export function show( item ){
     var cur_rule;
     var excl = [];
     var rule_tree, perm_tree, inh_perm_tree;
+    var user_none, group_none;
 
     if ( item.owner.startsWith("p/")){
         api.viewProj( uid, function(proj){

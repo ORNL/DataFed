@@ -1,4 +1,3 @@
-import * as settings from "./settings.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";

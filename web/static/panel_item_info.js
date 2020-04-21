@@ -343,6 +343,7 @@ $("#data_md_tree").fancytree({
         mode: "hide"
     },
     source: data_md_empty_src,
+    nodata: false,
     selectMode: 1,
     beforeExpand: function(event,data){
         // Handle auto-expansion
