@@ -4,6 +4,12 @@
 * To view and modify this theme, visit http://jqueryui.com/themeroller/?scope=&folderName=custom-theme&bgImgOpacityError=40&bgImgOpacityHighlight=60&bgImgOpacityActive=20&bgImgOpacityHover=33&bgImgOpacityDefault=35&bgImgOpacityContent=0&bgImgOpacityHeader=44&cornerRadiusShadow=8px&offsetLeftShadow=8px&offsetTopShadow=8px&thicknessShadow=12px&opacityShadow=50&bgImgOpacityShadow=30&bgTextureShadow=flat&bgColorShadow=%23000&opacityOverlay=80&bgImgOpacityOverlay=50&bgTextureOverlay=flat&bgColorOverlay=%235c5c5c&iconColorError=%23a83300&fcError=%23111111&borderColorError=%23ffb73d&bgTextureError=glass&bgColorError=%23ffc73d&iconColorHighlight=%2312f50a&fcHighlight=%2312f50a&borderColorHighlight=%23cccccc&bgTextureHighlight=flat&bgColorHighlight=%23121312&iconColorActive=%23222222&fcActive=%23ffffff&borderColorActive=%2326f748&bgTextureActive=highlight_hard&bgColorActive=%230e7e0c&iconColorHover=%23ffffff&fcHover=%23ffffff&borderColorHover=%2316d50b&bgTextureHover=highlight_soft&bgColorHover=%23074700&iconColorDefault=%23cccccc&fcDefault=%23eeeeee&borderColorDefault=%23444444&bgTextureDefault=highlight_soft&bgColorDefault=%23222222&iconColorContent=%23cccccc&fcContent=%23ffffff&borderColorContent=%23555555&bgTextureContent=flat&bgColorContent=%23000000&iconColorHeader=%23ffffff&fcHeader=%23ffffff&borderColorHeader=%23333333&bgTextureHeader=highlight_soft&bgColorHeader=%23444444&cornerRadius=6px&fwDefault=normal&fsDefault=1em&ffDefault=Verdana%2CArial%2Csans-serif
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
 
+.main-header
+{
+	background: #606060;
+	color: #ffffff;
+}
+
 .fancytree-container
 {
 	background:transparent!important;
