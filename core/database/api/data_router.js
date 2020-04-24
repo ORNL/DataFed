@@ -176,7 +176,7 @@ router.post('/create', function (req, res) {
     ext_auto: joi.boolean().optional(),
     deps: joi.array().items(joi.object({
         id: joi.string().required(),
-        type: joi.number().integer().required()})).optional()
+        type: joi.number().integer().required()})).optional(),
 }).required(), 'Record fields')
 .summary('Create a new data record')
 .description('Create a new data record from JSON body');
@@ -224,10 +224,14 @@ router.post('/create/batch', function (req, res) {
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
         id: joi.string().allow('').optional(), // Ignored
+        locked: joi.boolean().optional(), // Ignore
+        size: joi.number().optional(), // Ignored
+        source: joi.string().allow('').optional(), // Ignored
         owner: joi.string().allow('').optional(), // Ignored
         creator: joi.string().allow('').optional(), // Ignored
+        dt: joi.number().optional(), // Ignored
         ut: joi.number().optional(), // Ignored
-        ct: joi.number().optional(), // Ignored
+        ct: joi.number().optional() // Ignored
     })
 ).required(), 'Array of record with attributes')
 .summary('Create a batch of new data records')
@@ -468,11 +472,7 @@ router.post('/update', function (req, res) {
         type: joi.number().integer().required()})).optional(),
     deps_rem: joi.array().items(joi.object({
         id: joi.string().required(),
-        type: joi.number().integer().required()})).optional(),
-    owner: joi.string().allow('').optional(), // Ignored
-    creator: joi.string().allow('').optional(), // Ignored
-    ut: joi.number().optional(), // Ignored
-    ct: joi.number().optional(), // Ignored
+        type: joi.number().integer().required()})).optional()
 }).required(), 'Record fields')
 .summary('Update an existing data record')
 .description('Update an existing data record from JSON body');
@@ -490,9 +490,17 @@ router.post('/update/batch', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var rec;
 
                 for ( var i in req.body ){
-                    recordUpdate( client, req.body[i], result.data );
+                    rec = req.body[i];
+
+                    // Strip-out 'active' fields that should be ignored
+                    delete rec.source;
+                    delete rec.size;
+                    delete rec.dt;
+
+                    recordUpdate( client, rec, result.data );
                 }
 
                 //result.task = g_proc.taskInitDeleteRawData( client, del_map );
@@ -512,23 +520,30 @@ router.post('/update/batch', function (req, res) {
         desc: joi.string().allow('').optional(),
         keyw: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
-        public: joi.boolean().optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
-        size: joi.number().optional(),
-        source: joi.string().allow('').optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
-        dt: joi.number().optional(),
-        deps_clear: joi.boolean().optional(),
+        deps: joi.array().items(joi.object({
+            id: joi.string().required(),
+            type: joi.number().integer().required()})).optional(),
         deps_add: joi.array().items(joi.object({
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
         deps_rem: joi.array().items(joi.object({
             id: joi.string().required(),
-            type: joi.number().integer().required()})).optional()
+            type: joi.number().integer().required()})).optional(),
+        dt: joi.number().optional(), // Ignore
+        public: joi.boolean().optional(), // Ignore
+        locked: joi.boolean().optional(), // Ignore
+        size: joi.number().optional(), // Ignore
+        source: joi.string().allow('').optional(), // Ignore
+        owner: joi.string().allow('').optional(), // Ignored
+        creator: joi.string().allow('').optional(), // Ignored
+        ut: joi.number().optional(), // Ignored
+        ct: joi.number().optional() // Ignored
     })
 ).required(), 'Array of records and field updates')
 .summary('Update a batch of existing data record')
