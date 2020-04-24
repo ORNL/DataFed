@@ -49,6 +49,10 @@ module.exports = ( function() {
                 ctxt.data_perm = g_lib.PERM_DELETE;
                 ctxt.coll_perm = g_lib.PERM_DELETE;
                 break;
+            case g_lib.TT_DATA_EXPORT:
+                ctxt.data_perm = g_lib.PERM_RD_REC | g_lib.PERM_RD_META;
+                ctxt.coll_perm = g_lib.PERM_LIST;
+                break;
         }
 
         ctxt.comb_perm = ctxt.data_perm | ctxt.coll_perm;
@@ -157,7 +161,7 @@ module.exports = ( function() {
                         coll_perm = perm.grant | perm.inherited;
 
                         if (( coll_perm & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
-                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
 
                     }else{
                         data_perm = a_ctxt.data_perm;

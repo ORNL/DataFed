@@ -907,6 +907,57 @@ router.get('/view/doi', function (req, res) {
 .summary('Get data by DOI')
 .description('Get data by DOI');
 
+router.post('/export', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["uuid","accn","d","c","item"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var id, res_ids = [];
+
+                for ( var i in req.body.id ){
+                    id = g_lib.resolveDataCollID( req.body.id[i], client );
+                    res_ids.push( id );
+                }
+
+                var ctxt = g_proc.preprocessItems( client, null, res_ids, g_lib.TT_DATA_EXPORT );
+                var i, data, ids = [], results = [];
+
+                for ( i in ctxt.glob_data )
+                    ids.push( ctxt.glob_data[i].id );
+                for ( i in ctxt.http_data )
+                    ids.push( ctxt.http_data[i].id );
+
+                for ( i in ids ){
+                    data = g_db.d.document( ids[i] );
+
+                    data.deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type}",{data:data._id}).toArray();
+           
+                    delete data._rev;
+                    delete data._key;
+                    data.id = data._id;
+                    delete data._id;
+            
+                    result.push( JSON.stringify( data ));
+                }
+
+                res.send(result);
+            }
+        });
+
+    } catch( e ){
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    id: joi.array().items(joi.string()).required()
+}).required(), 'Parameters')
+.summary('Export record metadata')
+.description('Export record metadata');
+
 
 router.get('/dep/get', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );

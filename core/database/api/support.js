@@ -51,6 +51,7 @@ module.exports = ( function() {
     obj.TT_ALLOC_DEL        = 7;
     obj.TT_USER_DEL         = 8;
     obj.TT_PROJ_DEL         = 9;
+    obj.TT_DATA_EXPORT      = 10;
 
     obj.TS_BLOCKED          = 0;
     obj.TS_READY            = 1;
