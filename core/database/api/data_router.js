@@ -222,7 +222,12 @@ router.post('/create/batch', function (req, res) {
         ext_auto: joi.boolean().optional(),
         deps: joi.array().items(joi.object({
             id: joi.string().required(),
-            type: joi.number().integer().required()})).optional()
+            type: joi.number().integer().required()})).optional(),
+        id: joi.string().allow('').optional(), // Ignored
+        owner: joi.string().allow('').optional(), // Ignored
+        creator: joi.string().allow('').optional(), // Ignored
+        ut: joi.number().optional(), // Ignored
+        ct: joi.number().optional(), // Ignored
     })
 ).required(), 'Array of record with attributes')
 .summary('Create a batch of new data records')
@@ -345,33 +350,15 @@ function recordUpdate( client, record, results ){
 
     var i,dep,id; //dep_data;
 
-    if ( record.deps_clear ){
+    if ( record.deps ){
         g_db.dep.removeByExample({_from:data_id});
-        data.deps = [];
-    }
+        for ( i in record.deps ) {
+            dep = record.deps[i];
 
-    if ( record.deps_rem != undefined ){
-        //console.log("rem deps from ",data._id);
-        for ( i in record.deps_rem ) {
-            dep = record.deps_rem[i];
-            id = g_lib.resolveDataID( dep.id, client );
-            //console.log("rem id:",id);
-            if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
-                throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
-            //console.log("done rem");
-            g_db.dep.removeByExample({_from:data._id,_to:id});
-        }
-    }
-
-    if ( record.deps_add != undefined ){
-        //console.log("add deps");
-        for ( i in record.deps_add ) {
-            dep = record.deps_add[i];
-            //console.log("dep id:",dep.id);
             id = g_lib.resolveDataID( dep.id, client );
             if ( !id.startsWith("d/"))
                 throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-            //dep_data = g_db.d.document( id );
+
             if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
 
@@ -379,6 +366,37 @@ function recordUpdate( client, record, results ){
         }
 
         g_lib.checkDependencies(data_id);
+    }else{
+        if ( record.deps_rem != undefined ){
+            //console.log("rem deps from ",data._id);
+            for ( i in record.deps_rem ) {
+                dep = record.deps_rem[i];
+                id = g_lib.resolveDataID( dep.id, client );
+                //console.log("rem id:",id);
+                if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
+                    throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
+                //console.log("done rem");
+                g_db.dep.removeByExample({_from:data._id,_to:id});
+            }
+        }
+
+        if ( record.deps_add != undefined ){
+            //console.log("add deps");
+            for ( i in record.deps_add ) {
+                dep = record.deps_add[i];
+                //console.log("dep id:",dep.id);
+                id = g_lib.resolveDataID( dep.id, client );
+                if ( !id.startsWith("d/"))
+                    throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+                //dep_data = g_db.d.document( id );
+                if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
+                    throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
+
+                g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
+            }
+
+            g_lib.checkDependencies(data_id);
+        }
     }
 
     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
@@ -442,13 +460,19 @@ router.post('/update', function (req, res) {
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
     dt: joi.number().optional(),
-    deps_clear: joi.boolean().optional(),
+    deps: joi.array().items(joi.object({
+        id: joi.string().required(),
+        type: joi.number().integer().required()})).optional(),
     deps_add: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional(),
     deps_rem: joi.array().items(joi.object({
         id: joi.string().required(),
-        type: joi.number().integer().required()})).optional()
+        type: joi.number().integer().required()})).optional(),
+    owner: joi.string().allow('').optional(), // Ignored
+    creator: joi.string().allow('').optional(), // Ignored
+    ut: joi.number().optional(), // Ignored
+    ct: joi.number().optional(), // Ignored
 }).required(), 'Record fields')
 .summary('Update an existing data record')
 .description('Update an existing data record from JSON body');
