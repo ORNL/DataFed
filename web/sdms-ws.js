@@ -706,6 +706,12 @@ app.get('/api/dat/view', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/dat/export', ( a_req, a_resp ) => {
+    sendMessage( "RecordExportRequest", { id: JSON.parse( a_req.query.ids )}, a_req, a_resp, function( reply ) {
+        a_resp.send( reply );
+    });
+});
+
 app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
     var par  = {
         repo: a_req.query.repo,

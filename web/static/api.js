@@ -152,6 +152,12 @@ export function dataView( a_id, a_cb ) {
     });
 }
 
+
+export function dataExport( a_ids, a_cb ) {
+    _asyncGet( "/api/dat/export?ids=" + encodeURIComponent(JSON.stringify( a_ids )), null, a_cb );
+}
+
+
 export function dataAllocChange( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
     //console.log("change alloc, items", a_ids );
     var url = "/api/dat/alloc_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&repo_id="+encodeURIComponent(a_repo_id);

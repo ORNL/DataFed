@@ -222,6 +222,16 @@ message RecordUpdateBatchRequest
     required string             records     = 1; // JSON array containing records following DB record update schema
 }
 
+message RecordExportRequest
+{
+    repeated string             id          = 1;
+}
+
+message RecordExportReply
+{
+    repeated string             record      = 1;
+}
+
 message RecordLockRequest
 {
     repeated string             id          = 1;

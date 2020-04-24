@@ -1078,6 +1078,39 @@ DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
 }
 
 void
+DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply )
+{
+    Value result;
+
+    string body = "{\"id\":[";
+
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i > 0 )
+            body += ",";
+        body += "\"" + a_request.id(i) + "\"";
+    }
+
+    body += "]}";
+
+    dbPost( "dat/export", {}, &body, result );
+
+    try
+    {
+        Value::Array & arr = result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            a_reply.add_record( i->asString() );
+        }
+    }
+    catch(...)
+    {
+        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+    }
+}
+
+void
 DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;

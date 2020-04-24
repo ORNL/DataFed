@@ -1195,16 +1195,16 @@ function calcActionState( sel ){
             switch ( node.key[0] ){
                 case "c": bits |= node.data.isroot?0xD7:0x52;  break;
                 case "d": bits |= 0x00;  break;
-                case "r": bits |= 0x1F7;  break;
+                case "r": bits |= 0x5F7;  break;
                 case "p":
-                    bits |= 0x1Fa;
+                    bits |= 0x5Fa;
                     if ( node.data.mgr )
                         bits |= 4;
                     else if ( !node.data.admin )
                         bits |= 5;
                     break;
-                case "q": bits |= 0x1F9; break;
-                default:  bits |= 0x1FF;  break;
+                case "q": bits |= 0x5F9; break;
+                default:  bits |= 0x5FF;  break;
             }
         }
 
@@ -1226,23 +1226,23 @@ function calcActionState( sel ){
                     bits |= 0x20;
                 break;
             case "p":
-                bits = 0x3Fa;
+                bits = 0x7Fa;
                 if ( node.data.mgr )
                     bits |= 4;
                 else if ( !node.data.admin )
                     bits |= 5;
                 break;
-            case "q": bits = 0x3FA; break;
+            case "q": bits = 0x7FA; break;
             default:
                 if ( node.key == "empty" && node.parent.key.startsWith("c/"))
-                    bits = 0x2FF;
+                    bits = 0x6FF;
                 else
-                    bits = 0x3FF;
+                    bits = 0x7FF;
                 break;
         }
         //console.log("single",bits);
     }else{
-        bits = 0x2FF;
+        bits = 0x6FF;
     }
 
     return bits;
@@ -1289,6 +1289,15 @@ export function updateBtnState(){
     $("#btn_srch_first_par_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
     $("#btn_cat_first_par_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
 
+    // Enable/disable file import/export menu items (by position, not name)
+
+    // Export selected (only collections or records selected)
+    if ( bits & 0x400 )
+        $("#filemenu li:nth-child(4)").addClass("ui-state-disabled");
+    else
+        $("#filemenu li:nth-child(4)").removeClass("ui-state-disabled");
+
+    // Import to collection
     if ( bits & 0x100 )
         $("#filemenu li:nth-child(1)").addClass("ui-state-disabled");
     else
@@ -2016,6 +2025,7 @@ $("#btn_new_proj",frame).on('click', actionNewProj );
 $("#btn_new_data",frame).on('click', actionNewData );
 $("#btn_dup_data",frame).on('click', actionDupData );
 $("#btn_new_coll",frame).on('click', actionNewColl );
+
 $("#btn_import_data",frame).on('click', function(){
     $("#filemenu").hide();
     update_files = false;
@@ -2023,6 +2033,7 @@ $("#btn_import_data",frame).on('click', function(){
     $('#input_files',frame).val("");
     $('#input_files',frame).trigger('click');
 });
+
 $("#btn_import_direct_data",frame).on('click', function(){
     $("#filemenu").hide();
     update_files = false;
@@ -2030,11 +2041,30 @@ $("#btn_import_direct_data",frame).on('click', function(){
     $('#input_files',frame).val("");
     $('#input_files',frame).trigger('click');
 });
+
 $("#btn_update_data",frame).on('click', function(){
     $("#filemenu").hide();
     update_files = true;
     $('#input_files',frame).val("");
     $('#input_files',frame).trigger('click');
+});
+
+$("#btn_export_data",frame).on('click', function(){
+    $("#filemenu").hide();
+    dialogs.dlgConfirmChoice( "Confirm Export", "Export selected record metadata to browser download directory?", ["Cancel","Export"], function( choice ){
+        if ( choice == 1 ){
+            var ids = getSelectedIDs();
+
+            api.dataExport( ids, function( ok, data ){
+                console.log("reply:", data );
+                var rec;
+                for ( var i in data.record ){
+                    rec = JSON.parse( data.record[i] );
+                    util.saveFile( rec.id.substr(2) + ".json", data.record[i] );
+                }
+            });
+        }
+    });
 });
 
 export function init(){
