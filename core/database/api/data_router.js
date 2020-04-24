@@ -1,9 +1,5 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
 /* globals require */
 /* globals module */
-/* globals console */
 
 'use strict';
 
@@ -12,7 +8,6 @@ const   router = createRouter();
 const   joi = require('joi');
 
 const   g_db = require('@arangodb').db;
-const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
 const   g_proc = require('./process');
 const   g_tasks = require('./tasks');
@@ -915,15 +910,15 @@ router.post('/export', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id, res_ids = [];
+                var i, id, res_ids = [];
 
-                for ( var i in req.body.id ){
+                for ( i in req.body.id ){
                     id = g_lib.resolveDataCollID( req.body.id[i], client );
                     res_ids.push( id );
                 }
 
                 var ctxt = g_proc.preprocessItems( client, null, res_ids, g_lib.TT_DATA_EXPORT );
-                var i, data, ids = [], results = [];
+                var data, ids = [], results = [];
 
                 for ( i in ctxt.glob_data )
                     ids.push( ctxt.glob_data[i].id );
@@ -940,10 +935,10 @@ router.post('/export', function (req, res) {
                     data.id = data._id;
                     delete data._id;
             
-                    result.push( JSON.stringify( data ));
+                    results.push( JSON.stringify( data ));
                 }
 
-                res.send(result);
+                res.send(results);
             }
         });
 
