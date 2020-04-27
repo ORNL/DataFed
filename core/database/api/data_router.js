@@ -59,10 +59,6 @@ function recordCreate( client, record, results ){
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
 
-    if ( record.public ){
-        obj.public = record.public;
-    }
-
     if ( record.md ){
         obj.md = record.md;
         if ( Array.isArray( obj.md ))
@@ -166,7 +162,6 @@ router.post('/create', function (req, res) {
     desc: joi.string().allow('').optional(),
     keyw: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    public: joi.boolean().optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
     parent: joi.string().allow('').optional(),
@@ -212,7 +207,6 @@ router.post('/create/batch', function (req, res) {
         desc: joi.string().allow('').optional(),
         keyw: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
-        public: joi.boolean().optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),
         parent: joi.string().allow('').optional(),
@@ -255,9 +249,6 @@ function recordUpdate( client, record, results ){
         if ( obj.size !== undefined || obj.dt !== undefined || obj.data_url !== undefined || obj.doi !== undefined || obj.source !== undefined )
             perms |= g_lib.PERM_WR_DATA;
 
-        if ( obj.public !== undefined )
-            perms |= g_lib.PERM_SHARE;
-
         if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
             throw g_lib.ERR_PERM_DENIED;
     }
@@ -281,9 +272,6 @@ function recordUpdate( client, record, results ){
         if ( Array.isArray( obj.md ))
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
     }
-
-    if ( record.public !== undefined )
-        obj.public = record.public;
 
     if ( record.ext_auto !== undefined )
         obj.ext_auto = record.ext_auto;
@@ -454,7 +442,6 @@ router.post('/update', function (req, res) {
     desc: joi.string().allow('').optional(),
     keyw: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    public: joi.boolean().optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
     md: joi.any().optional(),
@@ -536,7 +523,6 @@ router.post('/update/batch', function (req, res) {
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
         dt: joi.number().optional(), // Ignore
-        public: joi.boolean().optional(), // Ignore
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignore
         source: joi.string().allow('').optional(), // Ignore
@@ -549,79 +535,6 @@ router.post('/update/batch', function (req, res) {
 .summary('Update a batch of existing data record')
 .description('Update a batch of existing data record from JSON body');
 
-/*
-router.post('/update/post_put', function (req, res) {
-    try {
-        var result = [];
-
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alloc"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var data_id = g_lib.resolveDataID( req.body.id, client );
-                var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-                var data = g_db.d.document( data_id );
-
-                var obj = { ut: Math.floor( Date.now()/1000 ), size: req.body.size, dt: req.body.dt };
-
-                g_lib.procInputParam( req.body, "source", true, obj );
-
-                if ( req.body.ext_auto !== undefined ){
-                    obj.ext_auto = req.body.ext_auto;
-                }
-
-                if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-                    if ( obj.source !== undefined || data.source !== undefined ){
-                        // Changed - update auto extension
-                        var src = obj.source || data.source;
-                        if ( src ){
-                            // Skip possible "." in end-point name
-                            var pos = src.lastIndexOf("/");
-                            pos = src.indexOf(".",pos>0?pos:0);
-                            if ( pos != -1 ){
-                                obj.ext = src.substr( pos );
-                            }else{
-                                obj.ext = null;
-                            }
-                        }
-                    }
-                }else{
-                    g_lib.procInputParam( req.body, "ext", true, obj );
-                    if ( obj.ext && obj.ext.charAt(0) != "." )
-                        obj.ext = "." + obj.ext;
-                }
-
-                if ( obj.size != data.size ){
-                    var loc = g_db.loc.firstExample({ _from: data_id });
-                    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
-
-                    g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
-                }
-
-                g_db._update( data_id, obj, { keepNull: false });
-            }
-        });
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.body(joi.object({
-    id: joi.string().required(),
-    size: joi.number().required(),
-    source: joi.string().allow('').required(),
-    ext: joi.string().allow('').optional(),
-    ext_auto: joi.boolean().optional(),
-    dt: joi.number().required()
-}).required(), 'Record fields')
-.summary('Update an existing data record after data put')
-.description('Update an existing data record from JSON body');
-*/
 
 router.post('/update/size', function (req, res) {
     try {
@@ -669,7 +582,7 @@ router.post('/update/size', function (req, res) {
 .summary('Update existing data record size')
 .description('Update existing data record raw data size');
 
-
+/*
 router.post('/update/move_init', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -861,7 +774,7 @@ router.post('/update/move_fini', function (req, res) {
 }).required(), 'Parameters')
 .summary('Finalize record after raw data move to new allocation')
 .description('Finalize record after raw data move data to a new allocation.');
-
+*/
 
 router.get('/view', function (req, res) {
     try {
