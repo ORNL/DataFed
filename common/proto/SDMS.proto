@@ -41,8 +41,7 @@ enum SearchScope
     SS_SHARED_BY_ANY_USER       = 9;
     SS_SHARED_BY_PROJECT        = 10;
     SS_SHARED_BY_ANY_PROJECT    = 11;
-    SS_PUBLIC                   = 12;
-    SS_VIEW                     = 13;
+    SS_VIEW                     = 12;
 }
 
 enum DependencyType
@@ -168,24 +167,22 @@ message RecordData
     optional string             alias       = 3;
     optional string             desc        = 4;
     optional string             keyw        = 5;
-    //optional string             topic       = 6;
-    optional bool               ispublic    = 6;
-    optional string             doi         = 7;
-    optional string             data_url    = 8;
-    optional string             metadata    = 9;
-    optional string             repo_id     = 10;
-    optional double             size        = 11;
-    optional string             source      = 12;
-    optional string             ext         = 13;
-    optional bool               ext_auto    = 14;
-    optional uint32             ct          = 15;
-    optional uint32             ut          = 16;
-    optional uint32             dt          = 17;
-    optional string             owner       = 18;
-    optional string             creator     = 19;
-    optional bool               locked      = 20;
-    optional string             parent_id   = 21;
-    repeated DependencyData     deps        = 22;
+    optional string             doi         = 6;
+    optional string             data_url    = 7;
+    optional string             metadata    = 8;
+    optional string             repo_id     = 9;
+    optional double             size        = 10;
+    optional string             source      = 11;
+    optional string             ext         = 12;
+    optional bool               ext_auto    = 13;
+    optional uint32             ct          = 14;
+    optional uint32             ut          = 15;
+    optional uint32             dt          = 16;
+    optional string             owner       = 17;
+    optional string             creator     = 18;
+    optional bool               locked      = 19;
+    optional string             parent_id   = 20;
+    repeated DependencyData     deps        = 21;
 }
 
 // Fields required for a data repo to locate raw data
@@ -215,12 +212,11 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional bool               ispublic    = 5;
-    optional string             topic       = 6;
-    optional string             owner       = 7;
-    optional uint32             ct          = 8;
-    optional uint32             ut          = 9;
-    optional string             parent_id   = 10;
+    optional string             topic       = 5;
+    optional string             owner       = 6;
+    optional uint32             ct          = 7;
+    optional uint32             ut          = 8;
+    optional string             parent_id   = 9;
 }
 
 message GroupData

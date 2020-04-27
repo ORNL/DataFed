@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');
@@ -12,7 +5,6 @@ const   router = createRouter();
 const   joi = require('joi');
 
 const   g_db = require('@arangodb').db;
-const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
 const   g_tasks = require('./tasks');
 
@@ -253,7 +245,7 @@ router.get('/view', function (req, res) {
     try {
         // TODO Enforce view permission
 
-        var client = g_lib.getUserFromClientID( req.queryParams.client );
+        g_lib.getUserFromClientID( req.queryParams.client );
 
         if ( !g_db.p.exists( req.queryParams.id ))
             throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'" ];
@@ -398,7 +390,7 @@ router.get('/list', function (req, res) {
 
 router.get('/search', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        g_lib.getUserFromClientID( req.queryParams.client );
         
         res.send( g_db._query( req.queryParams.query, {} ));
     } catch( e ) {

@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');
@@ -12,7 +5,6 @@ const   router = createRouter();
 const   joi = require('joi');
 
 const   g_db = require('@arangodb').db;
-const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
 const   g_tasks = require('./tasks');
 
@@ -298,7 +290,7 @@ router.get('/delete', function (req, res) {
  * data move operations (change alloc or owner).
  */
 router.get('/calc_size', function (req, res) {
-    var client = g_lib.getUserFromClientID( req.queryParams.client );
+    g_lib.getUserFromClientID( req.queryParams.client );
 
     // TODO Check permissions
     var i, repo_map = {};

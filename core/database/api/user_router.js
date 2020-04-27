@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');

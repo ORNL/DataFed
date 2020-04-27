@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');
@@ -12,7 +5,6 @@ const   router = createRouter();
 const   joi = require('joi');
 
 const   g_db = require('@arangodb').db;
-const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
 
 module.exports = router;
@@ -266,7 +258,8 @@ function dedupShares( client, shares ){
     while( work ){
         work = false;
         for( i in items ){
-            if (items.hasOwnProperty(i)) {
+            // TODO - Why is hasOwnProperty being used here?
+            if ( Object.prototype.hasOwnProperty.call( items, i )) {
                 item = items[i];
                 for ( j in item.paths ){
                     path = item.paths[j];
@@ -303,7 +296,7 @@ function dedupShares( client, shares ){
     // Remove any independent shares (no ancestor/descendant)
     shares=[];
     for( i in items ){
-        if (items.hasOwnProperty(i)) {
+        if ( Object.prototype.hasOwnProperty.call( items, i )) {
             item = items[i];
             parent = false;
             for ( j in item.paths ){
@@ -322,7 +315,7 @@ function dedupShares( client, shares ){
     // Determine if descendants are navigable from ancestors
     var perm,coll;
     for( i in items ){
-        if (items.hasOwnProperty(i)) {
+        if ( Object.prototype.hasOwnProperty.call( items, i )) {
             item = items[i];
             work = false;
 

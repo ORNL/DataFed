@@ -1,17 +1,5 @@
 #!/usr/bin/env node
 
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-/* globals process */
-/* globals Buffer */
-/* globals __dirname */
-
-/*import { isContext } from 'vm';*/
-
 'use strict';
 
 const express = require('express'); // For REST api
@@ -382,7 +370,8 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
         id: a_req.query.id,
         title: a_req.query.title,
         domain: a_req.query.domain
-    }
+    };
+
     if ( a_req.query.repo != undefined )
         params.repo = a_req.query.repo;
     if ( a_req.query.desc != undefined )
@@ -407,7 +396,8 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
 app.get('/api/prj/update', ( a_req, a_resp ) => {
     var params  = {
         id: a_req.query.id,
-    }
+    };
+
     if ( a_req.query.domain != undefined )
         params.domain = a_req.query.domain;
     if ( a_req.query.title != undefined )
@@ -843,7 +833,7 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/acl/update', ( a_req, a_resp ) => {
-    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules, ispublic: (a_req.query.pub=="true"?true:false)}, a_req, a_resp, function( reply ) {
+    sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -1041,7 +1031,7 @@ app.get('/api/repo/alloc/list/by_subject', ( a_req, a_resp ) => {
         par.subject = a_req.query.subject;
     if ( a_req.query.stats == "true" )
         par.stats = true;
-    console.log("RepoListSubjectAllocationsRequest",par)
+
     sendMessage( "RepoListSubjectAllocationsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply.alloc?reply.alloc:[]);
     });
@@ -1430,7 +1420,7 @@ process.on('unhandledRejection', (reason, p) => {
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
-    var mlen = frame.readUInt32BE( 0 );
+    /*var mlen =*/ frame.readUInt32BE( 0 );
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
     var ctx = frame.readUInt16BE( 6 );
 

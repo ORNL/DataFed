@@ -1,6 +1,3 @@
-/* globals require */
-/* globals module */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');

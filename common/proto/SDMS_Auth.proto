@@ -175,18 +175,16 @@ message RecordCreateRequest
 {
     optional string             title       = 1;
     optional string             desc        = 2;
-    //optional string             topic       = 3;
     optional string             keyw        = 3;
     optional string             alias       = 4;
-    optional bool               ispublic    = 5;
-    optional string             doi         = 6;
-    optional string             data_url    = 7;
-    optional string             metadata    = 8;
-    optional string             parent_id   = 9;
-    optional string             repo_id     = 10;
-    optional string             ext         = 11;
-    optional bool               ext_auto    = 12;
-    repeated DependencySpecData deps        = 13;
+    optional string             doi         = 5;
+    optional string             data_url    = 6;
+    optional string             metadata    = 7;
+    optional string             parent_id   = 8;
+    optional string             repo_id     = 9;
+    optional string             ext         = 10;
+    optional bool               ext_auto    = 11;
+    repeated DependencySpecData deps        = 12;
 }
 
 message RecordCreateBatchRequest
@@ -200,21 +198,19 @@ message RecordUpdateRequest
     optional string             title       = 2;
     optional string             desc        = 3;
     optional string             keyw        = 4;
-    //optional string             topic       = 5;
     optional string             alias       = 5;
-    optional bool               ispublic    = 6;
-    optional string             doi         = 7;
-    optional string             data_url    = 8;
-    optional string             metadata    = 9;
-    optional bool               mdset       = 10;
-    optional string             source      = 11;
-    optional string             ext         = 12;
-    optional bool               ext_auto    = 13;
-    optional uint64             size        = 14;
-    optional uint32             dt          = 15;
-    optional bool               deps_clear  = 16;
-    repeated DependencySpecData deps_add    = 17;
-    repeated DependencySpecData deps_rem    = 18;
+    optional string             doi         = 6;
+    optional string             data_url    = 7;
+    optional string             metadata    = 8;
+    optional bool               mdset       = 9;
+    optional string             source      = 10;
+    optional string             ext         = 11;
+    optional bool               ext_auto    = 12;
+    optional uint64             size        = 13;
+    optional uint32             dt          = 14;
+    optional bool               deps_clear  = 15;
+    repeated DependencySpecData deps_add    = 16;
+    repeated DependencySpecData deps_rem    = 17;
 }
 
 message RecordUpdateBatchRequest
@@ -506,7 +502,6 @@ message ACLUpdateRequest
 {
     required string             id          = 1;
     optional string             rules       = 2;
-    optional bool               ispublic    = 3;
 }
 
 // List users/projects owning any ACLs set for client or subject (user or project)

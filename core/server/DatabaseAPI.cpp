@@ -986,8 +986,6 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
             body += (a_request.mdset()?"true":"false");
         }
     }
-    if ( a_request.has_ispublic() )
-        body += string(",\"public\":") + (a_request.ispublic()?"true":"false");
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1157,6 +1155,7 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
     setListingDataReply( a_reply, result );
 }
 
+/*
 void
 DatabaseAPI::recordUpdateDataMoveInit( const libjson::Value & a_rec_ids, const std::string & a_new_repo_id, const std::string & a_new_owner_id, const std::string & a_new_coll_id )
 {
@@ -1190,6 +1189,7 @@ DatabaseAPI::recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids )
 
     dbPost( "dat/update/move_fini", {}, &body, result );
 }
+*/
 
 void
 DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Auth::RecordDataReply & a_reply )
@@ -1236,9 +1236,6 @@ DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
 
             if (( j = obj.find( "keyw" )) != obj.end( ))
                 rec->set_keyw( j->second.asString( ));
-
-            if (( j = obj.find( "public" )) != obj.end( ))
-                rec->set_ispublic( j->second.asBool( ));
 
             if (( j = obj.find( "doi" )) != obj.end( ))
                 rec->set_doi( j->second.asString( ));
@@ -1526,9 +1523,6 @@ DatabaseAPI::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
 
             if (( j = obj.find( "desc" )) != obj.end( ))
                 coll->set_desc( j->second.asString( ));
-
-            if (( j = obj.find( "public" )) != obj.end( ))
-                coll->set_ispublic( j->second.asBool( ));
 
             if (( j = obj.find( "topic" )) != obj.end( ))
                 coll->set_topic( j->second.asString( ));

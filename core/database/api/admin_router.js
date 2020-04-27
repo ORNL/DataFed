@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');
@@ -12,15 +5,14 @@ const   router = createRouter();
 const   joi = require('joi');
 
 const   g_db = require('@arangodb').db;
-const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
-const   perf = require('@arangodb/foxx');
+//const   perf = require('@arangodb/foxx');
 
 module.exports = router;
 router.get('/test', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
+        //var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
         var result = true;
         var item = g_lib.resolveID( req.queryParams.item, client );
         var obj = g_db[item[0]].document( item );

@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   joi = require('joi');
@@ -254,7 +247,8 @@ module.exports = ( function() {
             res.throw( obj.ERR_INFO[e][0], obj.ERR_INFO[e][1] );
         } else if ( Array.isArray( e )) {
             res.throw( obj.ERR_INFO[e[0]][0], e[1] );
-        } else if ( e.hasOwnProperty( "errorNum" )) {
+        //} else if ( e.hasOwnProperty( "errorNum" )) {
+        } else if ( Object.prototype.hasOwnProperty.call( e, "errorNum" )){
             switch ( e.errorNum ) {
                 case 1202:
                     res.throw( 404, "Record does not exist" );
@@ -570,7 +564,7 @@ module.exports = ( function() {
     obj.isSrcParentOfDest = function( a_src_id, a_dest_id ){
         var parent;
         var child_id = a_dest_id;
-        while ( 1 ){
+        for(;;){
             parent = obj.db.item.firstExample({_to: child_id});
             if ( !parent )
                 return false;
@@ -837,7 +831,7 @@ module.exports = ( function() {
         var p1 = [src_coll_id], p2 = [dst_coll_id];
         var parent, child = src_coll_id;
 
-        while ( 1 ){
+        for(;;){
             parent = obj.db.item.firstExample({_to: child});
             if ( !parent )
                 break;
@@ -847,7 +841,7 @@ module.exports = ( function() {
 
         child = dst_coll_id;
 
-        while ( 1 ){
+        for(;;){
             parent = obj.db.item.firstExample({_to: child});
             if ( !parent )
                 break;
@@ -868,7 +862,7 @@ module.exports = ( function() {
         }
 
         // If ANY ACLs or default permissions are set from here down, they differ in scope
-        var j, def;
+        var j;
 
         for ( j = i; j < p1.length; j++ ){
             if ( obj.db.acl.firstExample({ _from: p1[j] })){
@@ -952,7 +946,7 @@ module.exports = ( function() {
         var children = [a_object];
         var parents,parent;
 
-        while ( 1 ) {
+        for(;;){
             // Find all parent collections owned by object owner
 
             parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
@@ -1087,7 +1081,7 @@ module.exports = ( function() {
         var children = [a_object];
         var parents,parent;
 
-        while ( 1 ) {
+        for(;;){
             // Find all parent collections owned by object owner
 
             parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
@@ -1169,7 +1163,7 @@ module.exports = ( function() {
             var children = [a_object];
             var parents,parent;
 
-            while ( 1 ) {
+            for(;;){
                 // Find all parent collections owned by object owner
 
                 parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();

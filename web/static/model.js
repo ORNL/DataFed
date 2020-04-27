@@ -31,8 +31,7 @@ export const SS_SHARED_BY_USER           = 8;
 export const SS_SHARED_BY_ANY_USER       = 9;
 export const SS_SHARED_BY_PROJECT        = 10;
 export const SS_SHARED_BY_ANY_PROJECT    = 11;
-export const SS_PUBLIC                   = 12;
-export const SS_VIEW                     = 13;
+export const SS_VIEW                     = 12;
 
 export const TT_DATA_GET         = 0;
 export const TT_DATA_PUT         = 1;

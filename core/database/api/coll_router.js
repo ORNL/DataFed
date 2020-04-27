@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');
@@ -476,17 +469,15 @@ router.get('/move', function (req, res) {
                     throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
 
                 var chk_perm = false;
-                var src_perms = 0, dst_perms = 0, has_share = false;
+                var src_perms = 0, dst_perms = 0;
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
-                    src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/, true );
+                    src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK, true );
                     if (( src_perms & g_lib.PERM_LINK ) == 0 )
                         throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK on source collection."];
 
                     chk_perm = true;
-                }/*else{
-                    src_perms = g_lib.PERM_ALL;
-                }*/
+                }
 
                 if ( !g_lib.hasAdminPermObject( client, dst_id )) {
                     dst_perms = g_lib.getPermissions( client, dst, g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/, true );
@@ -494,12 +485,7 @@ router.get('/move', function (req, res) {
                         throw [g_lib.ERR_PERM_DENIED,"Permission denied - requires LINK on destination collection."];
 
                     chk_perm = true;
-                }/*else{
-                    dst_perms = g_lib.PERM_ALL;
-                }*/
-
-                //if (( src_perms & g_lib.PERM_SHARE ) && ( dst_perms & g_lib.PERM_SHARE ))
-                //    has_share = true;
+                }
 
                 var i,item;
 
@@ -513,9 +499,7 @@ router.get('/move', function (req, res) {
                     if ( chk_perm && item.creator != client._id /*&& !has_share*/ ){
                         if ( !g_lib.hasCommonAccessScope( src_id, dst_id )){
                             throw [g_lib.ERR_PERM_DENIED,"Cannot move items across access-control scopes."];
-                        } /*else{
-                            has_share = true;
-                        }*/
+                        }
                     }
 
                     if ( !g_db.item.firstExample({ _from: src_id, _to: item._id }))
@@ -535,7 +519,7 @@ router.get('/move', function (req, res) {
                 }
 
                 var cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:dst_id});
-                console.log("coll item count:",cres.count());
+
                 if ( cres.count() > g_lib.MAX_COLL_ITEMS )
                     throw [g_lib.ERR_INPUT_TOO_LONG,"Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 

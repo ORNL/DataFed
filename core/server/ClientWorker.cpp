@@ -1534,10 +1534,6 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
                 "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @projs return v)"
                 ")";
             break;
-        case SDMS::SS_PUBLIC:
-            result += "for i in d filter i.public == true and i.owner != @client";
-            use_client = true;
-            break;
         case SDMS::SS_VIEW:
             break;
         }

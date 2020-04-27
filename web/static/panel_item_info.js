@@ -171,8 +171,12 @@ function showSelectedItemForm( item ){
     if ( item.keyw )
         $("#sel_info_keyw",form).text( item.keyw );
 
+    if ( item.topic )
+        $("#sel_info_topic",form).text( item.topic );
+
     if ( item.owner )
         $("#sel_info_owner",form).text( item.owner );
+
 
     if ( item.creator )
         $("#sel_info_creator",form).text( item.creator );

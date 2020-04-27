@@ -1,12 +1,7 @@
 {
     "env": {
-        "browser": true,
-        "es6": true,
-        "jquery": true
-    },
-    "parserOptions": {
-        "ecmaVersion": 6,
-        "sourceType": "module"
+        "node": true,
+        "es6":true
     },
     "settings":{
     },

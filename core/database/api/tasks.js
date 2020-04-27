@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   g_db = require('@arangodb').db;
@@ -905,7 +898,7 @@ var tasks_func = function() {
      * operation will be denied.
      */
     obj.taskInitProjDelete = function( a_client, a_proj_ids ){
-        var i,proj_id,proj;
+        var i,proj_id;
 
         // Verify existence and check permission
         for ( i in a_proj_ids ){
@@ -1023,7 +1016,7 @@ var tasks_func = function() {
         g_db.lock.removeByExample({ _from: a_task_id });
         //console.log("taskComplete 5");
         var delay = 1;
-        while( true ){
+        for(;;){
             try{
                 g_db.task.update( a_task_id, doc );
                 break;
@@ -1428,7 +1421,7 @@ var tasks_func = function() {
 
 
     obj.recMoveFini = function( a_data ) {
-        var data, loc, new_loc, alloc, rec, coll;
+        var data, loc, new_loc, alloc, coll;
 
         console.log("recMoveFini" );
 

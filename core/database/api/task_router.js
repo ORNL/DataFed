@@ -1,10 +1,3 @@
-/*jshint strict: global */
-/*jshint esversion: 6 */
-/*jshint multistr: true */
-/* globals require */
-/* globals module */
-/* globals console */
-
 'use strict';
 
 const   createRouter = require('@arangodb/foxx/router');
@@ -93,7 +86,7 @@ router.get('/run', function (req, res) {
 
         var result;
 
-        while ( true ){
+        for(;;){
             try{
                 if ( req.queryParams.err_msg ){
                     throw [0,req.queryParams.err_msg];

@@ -1470,8 +1470,6 @@ function parseQuickSearch(){
             query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
             query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
         }
-        if ( $("#scope_public",frame).prop("checked"))
-            query.scopes.push({scope:model.SS_PUBLIC});
     }
 
     //console.log("query:", query);

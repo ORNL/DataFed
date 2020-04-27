@@ -51,7 +51,6 @@ export function show( item ){
                     </div>\
                 </div>\
             </div>\
-            <!-- div style='flex:none;padding-top:.5em'><label for='public_check'></label><input type='checkbox' name='public_check' id='public_check'>&nbsp Enable public access</div -->\
         </div>";
 
     var frame = $(document.createElement('div'));
@@ -292,7 +291,6 @@ export function show( item ){
             inh_perm_tree.selectAll(false);
         }
 
-        //$(":checkbox:not(#public_check)",frame).prop("checked",false).checkboxradio("refresh").checkboxradio("disable");
         $("#dlg_read_only",frame).button("disable");
         $("#dlg_read_write",frame).button("disable");
         $("#dlg_grant_all",frame).button("disable");
@@ -567,9 +565,6 @@ export function show( item ){
                 click: function() {
                     var x = $(this);
 
-                    //var is_public = $("#public_check",frame).prop("checked");
-                    //console.log( "SAVE ACLS:", is_public, new_rules );
-
                     api.aclUpdate( item.id, new_rules, function( ok, data ){
                         if ( !ok )
                             dialogs.dlgAlert( "Sharing Update Failed", data );
@@ -581,7 +576,7 @@ export function show( item ){
             open: function(event,ui){
                 $("#dlg_id",frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
 
-                if ( item.ispublic ){
+                if ( is_coll && item.topic ){
                     var widget = frame.dialog( "widget" );
                     $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>Note: public read access active.</span>");
                 }
@@ -640,9 +635,6 @@ export function show( item ){
         frame.dialog( options );
         $(".btn",frame).button();
         $(":checkbox",frame).checkboxradio();
-        //$("#public_check",frame).checkboxradio();
-        //$("#public_check",frame).prop("checked",item.ispublic);
-        //$("#public_check",frame).checkboxradio("refresh");
 
         disablePermControls( true );
         $("#dlg_edit",frame).button("disable");
