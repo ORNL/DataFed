@@ -894,7 +894,7 @@ module.exports = ( function() {
         // If object is marked "public", everyone is granted VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
 
-        if ( a_object.public ){
+        if ( a_object.topic ){
             perm_found = obj.PERM_PUBLIC;
 
             result = obj.evalPermissions( a_req_perm, perm_found, any );
@@ -949,7 +949,7 @@ module.exports = ( function() {
         for(;;){
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
             if ( parents.length == 0 )
                 break;
@@ -957,7 +957,7 @@ module.exports = ( function() {
             for ( i in parents ) {
                 parent = parents[i];
 
-                if ( parent.public ){
+                if ( parent.topic ){
                     perm_found |= obj.PERM_PUBLIC;
 
                     result = obj.evalPermissions( a_req_perm, perm_found, any );
@@ -1027,10 +1027,10 @@ module.exports = ( function() {
 
         var perm_found=0,acl,acls,i;
 
-        // If object is marked "public", everyone is granted VIEW, and READ permissions
+        // If object has a topic (collections only), everyone is granted VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
 
-        if ( a_object.public ){
+        if ( a_object.topic ){
             perm_found = obj.PERM_PUBLIC;
 
             if (( a_req_perm & perm_found ) == a_req_perm )
@@ -1084,7 +1084,7 @@ module.exports = ( function() {
         for(;;){
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
             if ( parents.length == 0 )
                 break;
@@ -1092,7 +1092,7 @@ module.exports = ( function() {
             for ( i in parents ) {
                 parent = parents[i];
 
-                if ( parent.public ){
+                if ( parent.topic ){
                     perm_found |= obj.PERM_PUBLIC;
 
                     if (( a_req_perm & perm_found ) == a_req_perm )
@@ -1166,7 +1166,7 @@ module.exports = ( function() {
             for(;;){
                 // Find all parent collections owned by object owner
 
-                parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,public:v.public,acls:v.acls}", { children : children }).toArray();
+                parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
                 if ( parents.length == 0 )
                     break;

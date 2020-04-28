@@ -58,10 +58,7 @@ router.post('/create', function (req, res) {
                 g_lib.procInputParam( req.body, "alias", false, obj );
 
                 if ( req.body.topic ){
-                    obj.public = true;
                     g_lib.procInputParam( req.body, "topic", false, obj );
-                }else{
-                    obj.public = false;
                 }
 
                 var coll = g_db.c.save( obj, { returnNew: true });
@@ -132,12 +129,6 @@ router.post('/update', function (req, res) {
                 g_lib.procInputParam( req.body, "alias", true, obj );
                 g_lib.procInputParam( req.body, "topic", true, obj );
 
-                if ( obj.topic ){
-                    obj.public = true;
-                }else if ( obj.topic === null && coll.topic ) {
-                    obj.public = false;
-                }
-
                 //console.log("coll obj:",obj);
 
                 if ( !g_lib.hasAdminPermObject( client, coll_id )) {
@@ -186,8 +177,6 @@ router.post('/update', function (req, res) {
                         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
                     }
                 }
-
-                // TODO Need to recursively process public flag if changed?
 
                 delete coll._rev;
                 delete coll._key;
@@ -624,7 +613,7 @@ router.get('/published/list', function (req, res) {
             owner_id = client._id;
         }
 
-        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
+        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.topic != null sort v.title";
         var result;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
