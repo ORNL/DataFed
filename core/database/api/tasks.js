@@ -547,36 +547,22 @@ var tasks_func = function() {
     // ----------------------- OWNER CHANGE ----------------------------
 
     obj.taskInitRecOwnerChg = function( a_client, a_res_ids, a_dst_coll_id, a_dst_repo_id, a_check ){
-        console.log("taskInitRecOwnerChg");
-
-
-        console.log("taskInitRecOwnerChg 2");
-
         // Verify destination collection
 
         if ( !g_db.c.exists( a_dst_coll_id ))
             throw [ g_lib.ERR_INVALID_PARAM, "No such collection '" + a_dst_coll_id + "'" ];
 
-        console.log("taskInitRecOwnerChg 2.1");
-
         var owner_id = g_db.owner.firstExample({_from: a_dst_coll_id })._to;
-
-        console.log("taskInitRecOwnerChg 2.2" );
 
         if ( owner_id != a_client._id ){
 
             if (( owner_id.charAt(0) != 'p' ) || !g_lib.hasManagerPermProj( a_client, owner_id )){
-                console.log("taskInitRecOwnerChg 2.3");
-
                 var coll = g_db.c.document( a_dst_coll_id );
-                console.log("taskInitRecOwnerChg 2.4");
 
                 if ( g_lib.hasPermissions( a_client, coll, g_lib.PERM_CREATE ) != true )
                     throw [ g_lib.ERR_PERM_DENIED, "Operation requires CREATE permission on destination collection '" + a_dst_coll_id + "'" ];
             }
         }
-
-        console.log("taskInitRecOwnerChg 3");
 
         var allocs;
 
@@ -595,13 +581,9 @@ var tasks_func = function() {
                 throw [ g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'" ];
         }
 
-        console.log("taskInitRecOwnerChg 3.1");
-
         var result = g_proc.preprocessItems( a_client, owner_id, a_res_ids, g_lib.TT_REC_OWNER_CHG );
 
         var i,loc,rec,deps = [];
-
-        console.log("taskInitRecOwnerChg 4");
 
         result.tot_cnt = result.http_data.length + result.glob_data.length;
         result.act_size = 0;
@@ -629,8 +611,6 @@ var tasks_func = function() {
                 }
             }
         }
-
-        console.log("taskInitRecOwnerChg 5");
 
         result.act_cnt = deps.length;
         //result.data_limit = alloc.data_limit;
@@ -1424,7 +1404,7 @@ var tasks_func = function() {
 
 
     obj.recMoveFini = function( a_data ) {
-        var data, loc, new_loc, alloc, coll;
+        var data, loc, new_loc, alloc, coll, alias;
 
         console.log("recMoveFini" );
 
@@ -1463,6 +1443,13 @@ var tasks_func = function() {
                 // Move to new collection
                 g_db.item.removeByExample({ _to: data.id });
                 g_db.item.save({ _from: loc.new_coll, _to: data.id });
+
+                // Move owner edge of alias if alias present
+                alias = g_db.alias.firstExmaple({ _from: data.id });
+                if ( alias ){
+                    g_db.owner.removeByExample({ _from: alias._to });
+                    g_db.owner.save({ _from: alias._to, _to: loc.new_owner });
+                }
             }
 
             //rec = g_db.d.document( id );
