@@ -55,10 +55,19 @@ router.get('/create', function (req, res) {
             },
             action: function() {
                 var time = Math.floor( Date.now()/1000 );
+                var fname,lname,idx = req.queryParams.name.lastIndexOf(" ");
+                if ( idx ){
+                    lname = req.queryParams.name.substr( idx + 1 );
+                    fname = req.queryParams.name.substr( 0, idx ).trim();
+                }else{
+                    throw [g_lib.ERR_INVALID_PARAM, "Invalid user name (no first/last name) " + req.queryParams.name];
+                }
 
                 var user_data = {
                     _key: req.queryParams.uid,
                     name: req.queryParams.name,
+                    name_first: fname,
+                    name_last: lname,
                     is_admin: req.queryParams.is_admin,
                     max_coll: g_lib.DEF_MAX_COLL,
                     max_proj: g_lib.DEF_MAX_PROJ,

@@ -1359,10 +1359,13 @@ var tasks_func = function() {
             if ( id.charAt(0) == "c" ){
                 g_lib.topicUnlink( id );
             }
-            g_graph[id.charAt(0)].remove( id );
+            if ( id.startsWith( 'task' ))
+                g_graph.task.remove( id );
+            else
+                g_graph[id.charAt(0)].remove( id );
         }
 
-        g_graph.d.remove( a_proj_id );
+        g_graph.p.remove( a_proj_id );
     };
 
 

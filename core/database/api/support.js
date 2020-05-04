@@ -273,9 +273,11 @@ module.exports = ( function() {
     };
 
     obj.isDomainAccount = function( a_client_id ) {
-        if ( a_client_id.indexOf( "." ) != -1 )
+        // TODO This needs to have a test that doesn't conflict with email-style uids
+
+        /*if ( a_client_id.indexOf( "." ) != -1 )
             return true;
-        else
+        else*/
             return false;
     };
 
