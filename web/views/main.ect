@@ -112,11 +112,11 @@
             $("#mode_label").show();
         }
 
-        api.epRecentLoad();
-
         api.userView( settings.user.uid, true, function( ok, user ){
             if ( ok && user ){
                 console.log("user from settings:",settings.user);
+
+                api.epRecentLoad();
 
                 settings.setUserAdmin( user.isAdmin );
                 settings.setUserRepoAdmin( user.isRepoAdmin );

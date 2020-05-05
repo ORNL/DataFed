@@ -239,7 +239,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                 console.log( 'user', userinfo.uid, 'authenticated, verifying SDMS account' );
 
                 sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
-                    //console.log( "UserFindByUUIDsRequest reply:", reply );
+                    console.log( "UserFindByUUIDsRequest reply:", reply );
 
                     if ( !reply  ) {
                         console.log("User find error. Reply:", reply );

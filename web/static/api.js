@@ -373,7 +373,7 @@ export function getPerms( a_id, a_perms, a_cb ){
 
 export function userView( a_id, a_details, a_cb ) {
     //console.log("userView ",a_id);
-    _asyncGet( "/api/usr/view?id="+a_id+(a_details?"&details=true":""), null, a_cb );
+    _asyncGet( "/api/usr/view?id="+encodeURIComponent(a_id)+(a_details?"&details=true":""), null, a_cb );
 }
 
 export function repoList( a_details, a_list_all, a_cb ){
@@ -493,7 +493,7 @@ export function groupUpdate( a_group, a_cb ) {
 }
 
 export function groupDelete( a_uid, a_gid, a_cb ) {
-    _asyncGet( "/api/grp/delete?uid="+a_uid+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, a_cb );
+    _asyncGet( "/api/grp/delete?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, a_cb );
 }
 
 export function topicList( a_parent, a_offset, a_count, a_inc_data, a_cb ){
