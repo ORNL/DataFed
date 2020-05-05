@@ -425,7 +425,7 @@ router.get('/alloc/view', function (req, res) {
         if ( req.queryParams.subject ){
             owner_id = req.queryParams.subject;
             // Check permissions
-            if (( owner_id != client._id ) && !g_lib.hasAdminPermProj( client, owner_id ) ){
+            if (( owner_id != client._id ) && g_lib.getProjectRole( client._id, owner_id ) == g_lib.PROJ_NO_ROLE ){
                 throw g_lib.ERR_PERM_DENIED;
             }
         }else{
