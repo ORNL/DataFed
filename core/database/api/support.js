@@ -26,6 +26,8 @@ module.exports = ( function() {
     obj.PERM_ANNOTATE       = 0x4000; // Annotate record
 
     obj.PERM_NONE           = 0x0000;
+    obj.PERM_RD_ALL         = 0x0007; // Read all
+    obj.PERM_WR_ALL         = 0x0038; // Write all
     obj.PERM_ALL            = 0x7FFF;
     obj.PERM_MEMBER         = 0x0047; // Project record perms
     obj.PERM_MANAGER        = 0x0407; // Project record perms

@@ -34,8 +34,9 @@ module.exports = ( function() {
                 ctxt.coll_perm = g_lib.PERM_LIST;
                 break;
             case g_lib.TT_REC_OWNER_CHG:
-                // Must be data owner or creator OR if owned by a project, the project or
+                // Must have all read+delete, or be owner or creator OR, if owned by a project, the project or
                 // an admin.
+                ctxt.data_perm = g_lib.PERM_RD_ALL | g_lib.PERM_DELETE;
                 ctxt.coll_perm = g_lib.PERM_LIST;
                 break;
             case g_lib.TT_REC_DEL:
@@ -94,7 +95,7 @@ module.exports = ( function() {
      */
     obj._preprocessItemsRecursive = function( a_ctxt, a_ids, a_data_perm, a_coll_perm ){
         var i, id, ids, is_coll, doc;
-        var perm, data_perm = a_data_perm, coll_perm = a_coll_perm;
+        var perm, data_perm = a_data_perm, coll_perm = a_coll_perm, ok;
 
         for ( i in a_ids ){
             id = a_ids[i];
@@ -181,19 +182,29 @@ module.exports = ( function() {
                 }else if ( a_ctxt.mode == g_lib.TT_REC_OWNER_CHG ){
                     // Must be data owner or creator OR if owned by a project, the project or
                     // an admin.
+                    if ( doc.owner != a_ctxt.client._id && doc.creator != a_ctxt.client._id && !a_ctxt.client.is_admin ){
+                        ok = false;
 
-                    if ( doc.owner != a_ctxt.client._id && doc.creator != a_ctxt.client._id ){
                         if ( doc.owner.startsWith( "p/" )){
                             if (!( doc.owner in a_ctxt.visited )){
                                 if ( g_lib.hasManagerPermProj( a_ctxt.client._id, doc.owner )){
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
-                                }else{
-                                    throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                                    ok = true;
                                 }
+                            }else{
+                                ok = true;
                             }
-                        }else{
-                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                        }
+
+                        if ( !ok && ( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
+                            if ( a_data_perm != null ) // Already have inherited permission, don't ask again
+                                perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
+                            else
+                                perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
+
+                            if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
+                                throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
                         }
                     }
                 }else{

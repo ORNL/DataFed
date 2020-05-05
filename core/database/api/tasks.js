@@ -555,7 +555,6 @@ var tasks_func = function() {
         var owner_id = g_db.owner.firstExample({_from: a_dst_coll_id })._to;
 
         if ( owner_id != a_client._id ){
-
             if (( owner_id.charAt(0) != 'p' ) || !g_lib.hasManagerPermProj( a_client, owner_id )){
                 var coll = g_db.c.document( a_dst_coll_id );
 
@@ -571,6 +570,7 @@ var tasks_func = function() {
             allocs = g_db.alloc.byExample({ _from: owner_id });
             if ( !allocs.hasNext() )
                 throw [ g_lib.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'" ];
+
         }else{
             // Verify destination repo
             if ( !g_db.repo.exists( a_dst_repo_id ))
@@ -613,10 +613,6 @@ var tasks_func = function() {
         }
 
         result.act_cnt = deps.length;
-        //result.data_limit = alloc.data_limit;
-        //result.data_size = alloc.data_size;
-        //result.rec_limit = alloc.rec_limit;
-        //result.rec_count = alloc.rec_count;
 
         if ( a_check ){
             result.allocs = [];
@@ -1445,7 +1441,7 @@ var tasks_func = function() {
                 g_db.item.save({ _from: loc.new_coll, _to: data.id });
 
                 // Move owner edge of alias if alias present
-                alias = g_db.alias.firstExmaple({ _from: data.id });
+                alias = g_db.alias.firstExample({ _from: data.id });
                 if ( alias ){
                     g_db.owner.removeByExample({ _from: alias._to });
                     g_db.owner.save({ _from: alias._to, _to: loc.new_owner });
