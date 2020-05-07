@@ -54,18 +54,19 @@ router.get('/create', function (req, res) {
                 write: ["u","c","a","g","acl","owner","ident","uuid","alias","admin"]
             },
             action: function() {
-                var time = Math.floor( Date.now()/1000 );
-                var fname,lname,idx = req.queryParams.name.lastIndexOf(" ");
-                if ( idx ){
-                    lname = req.queryParams.name.substr( idx + 1 );
-                    fname = req.queryParams.name.substr( 0, idx ).trim();
-                }else{
-                    throw [g_lib.ERR_INVALID_PARAM, "Invalid user name (no first/last name) " + req.queryParams.name];
-                }
+                var time = Math.floor( Date.now()/1000 ),
+                    name = req.queryParams.name.trim(),
+                    idx = name.lastIndexOf(" ");
+
+                if ( idx < 1 )
+                    throw [g_lib.ERR_INVALID_PARAM, "Invalid user name (no first/last name) " + name];
+
+                var lname = name.substr( idx + 1 ),
+                    fname = name.substr( 0, idx ).trim();
 
                 var user_data = {
                     _key: req.queryParams.uid,
-                    name: req.queryParams.name,
+                    name: name.toLowerCase() + " " + req.queryParams.uid,
                     name_first: fname,
                     name_last: lname,
                     is_admin: req.queryParams.is_admin,
@@ -113,6 +114,7 @@ router.get('/create', function (req, res) {
                 delete user.new._id;
                 delete user.new._key;
                 delete user.new._rev;
+                delete user.new.name;
 
                 result = [user.new];
             }
@@ -162,8 +164,18 @@ router.get('/update', function (req, res) {
                 if ( req.queryParams.password )
                     obj.password = req.queryParams.password;
 
-                if ( req.queryParams.name )
-                    obj.name = req.queryParams.name;
+                if ( req.queryParams.name ){
+                    var name = req.queryParams.name.trim();
+                    var idx = name.lastIndexOf(" ");
+
+                    if ( idx < 1 ){
+                        throw [g_lib.ERR_INVALID_PARAM, "Invalid user name (no first/last name) " + req.queryParams.name];
+                    }
+
+                    obj.name_first = name.substr( 0, idx ).trim(),
+                    obj.name_last = name.substr( idx + 1 );
+                    obj.name = name.toLowerCase() + " " + user_id.substr(2);
+                }
 
                 if ( req.queryParams.email )
                     obj.email = req.queryParams.email;
@@ -183,6 +195,7 @@ router.get('/update', function (req, res) {
                 delete user.new._id;
                 delete user.new._key;
                 delete user.new._rev;
+                delete user.new.name;
                 delete user.new.pub_key;
                 delete user.new.priv_key;
                 delete user.new.access;
@@ -228,6 +241,7 @@ router.get('/find/by_uuids', function (req, res) {
         delete user._id;
         delete user._key;
         delete user._rev;
+        delete user.name;
 
         res.send([user]);
     } catch( e ) {
@@ -237,6 +251,37 @@ router.get('/find/by_uuids', function (req, res) {
 .queryParam('uuids', joi.array().items(joi.string()).required(), "User UUID List")
 .summary('Find a user from list of UUIDs')
 .description('Find a user from list of UUIDs');
+
+
+router.get('/find/by_name_uid', function (req, res) {
+    try {
+        var name = req.queryParams.name_uid.trim();
+        if ( name.length < 2 )
+            throw [ g_lib.ERR_INVALID_PARAM, "Input is too short for name/uid search." ];
+        else if ( name.length < 3 )
+            name = " " + name + " "; // Pad to allow matches for very short first/last names (i.e. Bo, Li, Xi)
+
+        var off = req.queryParams.offset?req.queryParams.offset:0,
+            cnt = req.queryParams.count?req.queryParams.count:20;
+
+        var result = g_db._query( "for u in userview search analyzer(u.name in tokens(@name,'user_name'), 'user_name')" +
+            " let s = BM25(u) filter s > 2 sort s desc limit @off,@cnt return {uid:u._id,name_last:u.name_last,name_first:u.name_first}",
+            { name: name, off: off, cnt: cnt },{fullCount:true});
+
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+        result.push({paging:{off:off,cnt:cnt,tot:tot}});
+
+        res.send(result);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('name_uid', joi.string().required(), "User name and/or uid (partial)")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
+.summary('Find users matching partial name and/or uid')
+.description('Find users matching partial name and/or uid');
 
 
 router.get('/keys/set', function (req, res) {
@@ -511,6 +556,7 @@ router.get('/view', function (req, res) {
         delete user._id;
         delete user._key;
         delete user._rev;
+        delete user.name;
         delete user.password;
         delete user.max_coll;
         delete user.max_proj;
@@ -534,18 +580,18 @@ router.get('/view', function (req, res) {
 
 
 router.get('/list/all', function (req, res) {
-    var qry = "for i in u sort i.name";
+    var qry = "for i in u sort i.name_last, i.name_first";
     var result;
 
     if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
-        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return { uid: i._id, name: i.name }";
+        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return { uid: i._id, name_last: i.name_last, name_first: i.name_first }";
         result = g_db._query( qry, {},{},{fullCount:true});
         var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
         result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
     }
     else{
-        qry += " return { uid: i._id, name: i.name }";
+        qry += " return { uid: i._id, name_last: i.name_last, name_first: i.name_first }";
         result = g_db._query( qry );
     }
 
@@ -557,9 +603,11 @@ router.get('/list/all', function (req, res) {
 .description('List all users');
 
 router.get('/list/collab', function (req, res) {
-    var client = g_lib.getUserFromClientID( req.queryParams.client );
-    var qry = "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 3..3 inbound @user member, outbound owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 2..2 inbound @user owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name })) sort x.name";
-    var result;
+    var result, client = g_lib.getUserFromClientID( req.queryParams.client );
+    var qry = "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return" +
+              " distinct { uid: v._id, name_last: v.name_last, name_first: v.name_first }),(for v in 3..3 inbound @user member, outbound owner, outbound admin" +
+              " filter is_same_collection('u',v) return distinct { uid: v._id, name_last: v.name_last, name_first: v.name_first }),(for v in 2..2 inbound @user" +
+              " owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name_last: v.name_last, name_first: v.name_first })) sort x.name_last, x.name_first";
 
     // Members of owned groups and owned user ACLS:
     // Members of groups client belongs to (not owned - projects and ACLs)

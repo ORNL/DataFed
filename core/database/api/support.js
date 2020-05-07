@@ -1274,11 +1274,15 @@ module.exports = ( function() {
                 }
             }
 
-            var doc;
+            var doc,title;
 
             ids.forEach( function( id ){
                 doc = obj.db._document( id );
-                results.push({ id:doc._id, title: doc.name?doc.name:doc.title, owner: doc.owner });
+                if ( doc.title )
+                    title = doc.title;
+                else
+                    title = doc.name_last + ", " + doc.name_first;
+                results.push({ id:doc._id, title: title, owner: doc.owner });
             });
 
             results.sort( function( a, b ){

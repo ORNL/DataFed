@@ -351,7 +351,7 @@ router.get('/alloc/list/by_repo', function (req, res) {
 
     g_lib.ensureAdminPermRepo( client, repo._id );
 
-    var result = g_db._query("for v, e in 1..1 inbound @repo alloc sort v._id return {id:v._id,name:v.name?v.name:v.title,repo:@repo,data_limit:e.data_limit,data_size:e.data_size,rec_limit:e.rec_limit,rec_count:e.rec_count,path:e.path}", { repo: repo._id } ).toArray();
+    var result = g_db._query("for v, e in 1..1 inbound @repo alloc sort v._id return {id:v._id,repo:@repo,data_limit:e.data_limit,data_size:e.data_size,rec_limit:e.rec_limit,rec_count:e.rec_count,path:e.path}", { repo: repo._id } ).toArray();
 
     res.send( result );
 })
