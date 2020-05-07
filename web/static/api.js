@@ -376,6 +376,18 @@ export function userView( a_id, a_details, a_cb ) {
     _asyncGet( "/api/usr/view?id="+encodeURIComponent(a_id)+(a_details?"&details=true":""), null, a_cb );
 }
 
+export function userFindByNameUID( a_name_uid, a_offset, a_count, a_cb ) {
+    if ( !a_cb )
+        return;
+
+        var url = "/api/usr/find/by_name_uid?name_uid="+encodeURIComponent(a_name_uid);
+
+    if ( a_offset != undefined && a_count != undefined )
+        url += "&offset="+a_offset+"&count="+a_count;
+
+    _asyncGet( url, null, a_cb );
+}
+
 export function repoList( a_details, a_list_all, a_cb ){
     var url = "/api/repo/list";
     if ( a_details )
@@ -499,16 +511,16 @@ export function groupDelete( a_uid, a_gid, a_cb ) {
 export function topicList( a_parent, a_offset, a_count, a_inc_data, a_cb ){
     if ( !a_cb )
         return;
+
     var url = "/api/top/list?id="+encodeURIComponent(a_parent?a_parent:"t/root");
+
     if ( a_inc_data === false )
         url += "&data=false";
+
     if ( a_offset != undefined && a_count != undefined )
         url += "&offset="+a_offset+"&count="+a_count;
-    _asyncGet( url, null, function( ok, data ){
-        if ( a_cb ){
-            a_cb( ok, data );
-        }
-    });
+
+    _asyncGet( url, null, a_cb );
 }
 
 export function sendQueryCreate( a_title, a_query, a_callback ) {

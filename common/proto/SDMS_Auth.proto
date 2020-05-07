@@ -89,6 +89,13 @@ message UserFindByUUIDsRequest
     repeated string             uuid        = 1;
 }
 
+message UserFindByNameUIDRequest
+{
+    required string             name_uid    = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
 message UserUpdateRequest
 {
     required string             uid         = 1;

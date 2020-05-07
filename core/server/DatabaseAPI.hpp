@@ -49,6 +49,7 @@ public:
     void userListAll( const Auth::UserListAllRequest & a_request, Auth::UserDataReply & a_reply );
     void userListCollab( const Auth::UserListCollabRequest & a_request, Auth::UserDataReply & a_reply );
     void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
+    void userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply );
     void userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply );
     void userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply );
 

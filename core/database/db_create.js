@@ -59,6 +59,27 @@ graph._extendEdgeDefinitions(lock);
 var block = graph_module._relation("block", ["task"], ["task"]);
 graph._extendEdgeDefinitions(block);
 
+var userview = db._createView("userview","arangosearch",{});
+var analyzers = require("@arangodb/analyzers");
+var user_name = analyzers.save("user_name","ngram",{
+  "min": 3,
+  "max": 5,
+  "streamType":"utf8",
+  "preserveOriginal":true
+}, ["frequency","norm","position"]); 
+
+//db._query("for doc in userview2 search analyzer(doc.name in tokens('Joe Samson','na2'), 'na2') let s = BM25(doc) filter s > 2 sort s desc return {id: doc._id,name:doc.name,score:s}");
+//db._query("for doc in userview search analyzer(doc.name in tokens('x st','user_name'), 'user_name') let s = BM25(doc,1.2,.5) sort s desc return {id:doc._id,name:doc.name,score:s}");
+
+userview.properties({
+  links:{
+    "u":{
+      fields:{"name":{analyzers:["user_name"]}},
+      includeAllFields: false
+    }
+  }
+},true);
+
 var view = db._createView("textview","arangosearch",{});
 
 view.properties({

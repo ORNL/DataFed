@@ -541,6 +541,23 @@ DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Au
 }
 
 void
+DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+    params.push_back({"name_uid",a_request.name_uid()});
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({"offset",to_string(a_request.offset())});
+        params.push_back({"count",to_string(a_request.count())});
+    }
+
+    dbGet( "usr/find/by_name_uid", params, result );
+
+    setUserData( a_reply, result );
+}
+
+void
 DatabaseAPI::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply )
 {
     (void)a_request;
@@ -607,7 +624,8 @@ DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
             {
                 user = a_reply.add_user();
                 user->set_uid( obj.at( "uid" ).asString( ));
-                user->set_name( obj.at( "name" ).asString( ));
+                user->set_name_last( obj.at( "name_last" ).asString( ));
+                user->set_name_first( obj.at( "name_first" ).asString( ));
 
                 if (( j = obj.find( "email" )) != obj.end( ))
                     user->set_email( j->second.asString( ));

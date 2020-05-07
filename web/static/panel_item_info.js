@@ -101,6 +101,7 @@ function showSelectedHTML( html ){
 function showSelectedUserInfo( key ){
     api.userView( key, true, function( ok, item ){
         if ( ok, item ){
+            console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
         }else{
@@ -153,8 +154,8 @@ function showSelectedItemForm( item ){
     if ( item.title )
         $("#sel_info_title",form).text( item.title );
 
-    if ( item.name )
-        $("#sel_info_name",form).text( item.name );
+    if ( item.nameLast )
+        $("#sel_info_name",form).text( item.nameFirst + " " + item.nameLast );
 
     if ( item.alias && cls != ".sidp" )
         $("#sel_info_alias",form).text( item.alias );

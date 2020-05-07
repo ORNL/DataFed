@@ -306,9 +306,21 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/usr/find', ( a_req, a_resp ) => {
+app.get('/api/usr/find/by_uuids', ( a_req, a_resp ) => {
     sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
+    });
+});
+
+app.get('/api/usr/find/by_name_uid', ( a_req, a_resp ) => {
+    var par = {nameUid: a_req.query.name_uid};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "UserFindByNameUIDRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.send( reply );
     });
 });
 
