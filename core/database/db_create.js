@@ -15,6 +15,7 @@ graph._addVertexCollection("d");    // Data
 graph._addVertexCollection("c");    // Collection
 graph._addVertexCollection("t");    // Topic
 graph._addVertexCollection("a");    // Alias
+graph._addVertexCollection("n");    // Annotations (notes)
 graph._addVertexCollection("q");    // Saved queries
 graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
@@ -40,6 +41,9 @@ graph._extendEdgeDefinitions(ident);
 
 var adm = graph_module._relation("admin", ["p","repo"], ["u"]);
 graph._extendEdgeDefinitions(adm);
+
+var note = graph_module._relation("note", ["d","c"], ["n"]);
+graph._extendEdgeDefinitions(note);
 
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);
 graph._extendEdgeDefinitions(alias);

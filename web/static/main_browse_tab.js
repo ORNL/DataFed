@@ -38,6 +38,7 @@ var SS_TREE = 0;
 var SS_CAT = 1;
 var SS_PROV = 2;
 var SS_SEARCH = 3;
+var SS_NOTIFY = 4;
 var select_source = SS_TREE;
 var cur_query;
 var update_files, import_direct;
@@ -1144,7 +1145,7 @@ function actionDepGraph(){
     if ( id.charAt(0) == "d" ) {
         graph_panel.load( id );
         $('[href="#tab-prov-graph"]').closest('li').show();
-        $( "#data-tabs" ).tabs({ active: 2 });
+        $( "#data-tabs" ).tabs({ active: 3 });
     }
 }
 
@@ -1390,7 +1391,7 @@ function execQuery( query ){
 
             $.ui.fancytree.getTree("#search_results_tree").reload(results);
             $('[href="#tab-search-results"]').closest('li').show();
-            $( "#data-tabs" ).tabs({ active: 3 });
+            $( "#data-tabs" ).tabs({ active: 4 });
 
             if ( !data_tree.activeNode )
                 panel_info.showSelectedInfo();
@@ -1791,6 +1792,7 @@ var tree_source = [
         {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
         {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
     ]},
+    {title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},
     {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
 ];
 
@@ -1936,6 +1938,10 @@ $("#data-tabs").tabs({
                 case "tab-catalogs":
                     select_source = SS_CAT;
                     panel_info.showSelectedInfo( cat_panel.tree.activeNode );
+                    break;
+                case "tab-notifications":
+                    //select_source = SS_CAT;
+                    //panel_info.showSelectedInfo( cat_panel.tree.activeNode );
                     break;
                 case "tab-prov-graph":
                     select_source = SS_PROV;
@@ -2246,7 +2252,7 @@ export function init(){
                 var uid = "u/" + settings.user.uid;
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Public Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
                     {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key == "proj_own" ){
@@ -2268,7 +2274,7 @@ export function init(){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
-                    {title:"Public Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-structure"},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             } else if ( data.node.key.startsWith( "shared_user" )) {
@@ -2327,7 +2333,7 @@ export function init(){
                 if ( data.node.data.key_pfx )
                     key = data.node.key.substr( data.node.data.key_pfx.length );
 
-                console.log("Lazy load coll",key);
+                //console.log("Lazy load coll",key);
 
                 data.result = {
                     url: "/api/col/read?offset="+data.node.data.offset+"&count="+settings.opts.page_sz+"&id=" + encodeURIComponent( key ),
@@ -2413,6 +2419,11 @@ export function init(){
                 var entry;
                 scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
+
+                // Annotation entry for parent collection
+                if ( data.node.key.startsWith( "c/" )){
+                    data.result.push({title:"Annotations",folder:true,lazy:true,icon:"ui-icon ui-icon-news",checkbox:false,scope:scope,nodrag:true,key:"note_"+data.node.key.substr(2)});
+                }
 
                 addTreePagingNode( data );
 

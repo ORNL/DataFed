@@ -14,7 +14,7 @@ router.use( "/acl", require('./acl_router') );
 router.use( "/qry", require('./query_router') );
 router.use( "/topic", require('./topic_router') );
 //router.use( "/tag", require('./tag_router') );
-//router.use( "/not", require('./note_router') );
+router.use( "/note", require('./note_router') );
 router.use( "/authz", require('./authz_router') );
 router.use( "/repo", require('./repo_router') );
 router.use( "/task", require('./task_router') );

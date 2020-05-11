@@ -160,7 +160,7 @@ textarea.ui-state-disabled
 
 .ui-icon-persons
 {
-    color: #8040FF
+    color: #4070FF
 }
 
 .fancytree-node .ui-icon-folder
@@ -175,7 +175,7 @@ textarea.ui-state-disabled
 
 .fancytree-node .ui-icon-box
 {
-    color: #4070FF
+    color: #8040FF
 }
 
 .ui-icon-view-icons
@@ -220,7 +220,7 @@ textarea.ui-state-disabled
 
 .ui-icon-view-list
 {
-    color: #808080
+    color: #DFFF20
 }
 
 .ui-icon-zoom
@@ -248,6 +248,26 @@ textarea.ui-state-disabled
 .ui-icon-structure
 {
     color: #ff8000
+}
+
+.ui-icon-sign-in
+{
+    color: #00af00
+}
+
+.ui-icon-sign-out
+{
+    color: #ff4040
+}
+
+.ui-icon-databases
+{
+    color: #a0a0a0
+}
+
+.ui-icon-database
+{
+    color: #a0a0a0
 }
 
 .ui-icon-locked

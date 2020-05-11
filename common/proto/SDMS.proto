@@ -74,6 +74,14 @@ enum ProjectRole
     PROJ_ADMIN      = 3;
 }
 
+enum NoteType
+{
+    NOTE_QUESTION   = 0;
+    NOTE_INFO       = 1;
+    NOTE_WARN       = 2;
+    NOTE_ERROR      = 3;
+}
+
 
 // ============================ Data Structures
 

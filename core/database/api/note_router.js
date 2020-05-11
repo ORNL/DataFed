@@ -16,10 +16,12 @@ router.post('/create', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","x"],
-                write: []
+                read: ["u","uuid","accn"],
+                write: ["n","note"]
             },
             action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+
             }
         });
     } catch( e ) {
@@ -28,6 +30,7 @@ router.post('/create', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('object', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('type', joi.number().min(0).max(4).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .summary('Create an annotation on an object')
 .description('Create an annotation on an object');
 
