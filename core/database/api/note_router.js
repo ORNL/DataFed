@@ -49,7 +49,7 @@ router.post('/create', function (req, res) {
                 delete note.new._key;
                 delete note.new._rev;
 
-                return [note.new];
+                res.send( [note.new] );
             }
         });
     } catch( e ) {
@@ -115,11 +115,11 @@ router.post('/update', function (req, res) {
                 var time = Math.floor( Date.now()/1000 );
                 var obj = { ut: time, comments: note.comments };
 
-                if ( req.queryParams.action )
+                if ( req.queryParams.action !== undefined )
                     obj.state = req.queryParams.action;
 
                 g_lib.procInputParam( req.queryParams, "desc", false, obj );
-                obj.comments.push({ user: client._id, action: req.queryParams.action?req.queryParams.action:null, time:time, comment: obj.desc });
+                obj.comments.push({ user: client._id, action: req.queryParams.action!==undefined?req.queryParams.action:null, time:time, comment: obj.desc });
                 delete obj.desc;
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
@@ -129,7 +129,7 @@ router.post('/update', function (req, res) {
                 delete note.new._key;
                 delete note.new._rev;
 
-                return [note.new];
+                res.send( [note.new] );
             }
         });
     } catch( e ) {
