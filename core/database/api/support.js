@@ -89,6 +89,15 @@ module.exports = ( function() {
     obj.PROJ_MANAGER        = 2;    // Adds permission to manage groups and grants ADMIN permission on all data/collections
     obj.PROJ_ADMIN          = 3;    // Grants all permissions (edit and delete project)
 
+    obj.NOTE_QUESTION       = 0;
+    obj.NOTE_INFO           = 1;
+    obj.NOTE_WARN           = 2;
+    obj.NOTE_ERROR          = 3;
+
+    obj.NOTE_CLOSED         = 0;
+    obj.NOTE_OPEN           = 1;
+    obj.NOTE_ACTIVE         = 2;
+
     obj.SS_MY_DATA          = 0x01;
     obj.SS_MY_PROJ          = 0x02;
     obj.SS_TEAM_PROJ        = 0x04;
@@ -600,9 +609,8 @@ module.exports = ( function() {
             id = alias._from;
         }
 
-        // This will only happen if graph integrity is lost
         if ( !obj.db._exists( id ) ){
-            throw [ obj.ERR_INVALID_PARAM, (id.charAt(0)=='d'?"Data record '":"Collection '") + id + "' does not exist." ];
+            throw [ obj.ERR_INVALID_PARAM, "Record '" + id + "' does not exist." ];
         }
 
         return id;
@@ -702,7 +710,6 @@ module.exports = ( function() {
             id = alias._from;
         }
 
-        // This will only happen if graph integrity is lost
         if ( !obj.db._exists( id ) ){
             throw [ obj.ERR_INVALID_PARAM, (id.charAt(0)=='d'?"Data record '":"Collection '") + id + "' does not exist." ];
         }

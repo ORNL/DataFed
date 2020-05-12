@@ -82,6 +82,12 @@ enum NoteType
     NOTE_ERROR      = 3;
 }
 
+enum NoteState
+{
+    NOTE_CLOSED     = 0;
+    NOTE_OPEN       = 1;
+    NOTE_ACTIVE     = 2;
+}
 
 // ============================ Data Structures
 
