@@ -74,21 +74,6 @@ enum ProjectRole
     PROJ_ADMIN      = 3;
 }
 
-enum NoteType
-{
-    NOTE_QUESTION   = 0;
-    NOTE_INFO       = 1;
-    NOTE_WARN       = 2;
-    NOTE_ERROR      = 3;
-}
-
-enum NoteState
-{
-    NOTE_CLOSED     = 0;
-    NOTE_OPEN       = 1;
-    NOTE_ACTIVE     = 2;
-}
-
 // ============================ Data Structures
 
 message AllocStatsData
@@ -276,6 +261,42 @@ message QueryData
     optional bool               use_sh_prj  = 7;
     optional uint32             ct          = 8;
     optional uint32             ut          = 9;
+}
+
+// -------------------------------------------- ANNOTATION DEFINES
+
+enum NoteType
+{
+    NOTE_QUESTION   = 0;
+    NOTE_INFO       = 1;
+    NOTE_WARN       = 2;
+    NOTE_ERROR      = 3;
+}
+
+enum NoteState
+{
+    NOTE_CLOSED     = 0;
+    NOTE_OPEN       = 1;
+    NOTE_ACTIVE     = 2;
+}
+
+message NoteComment
+{
+    required string             user    = 1;
+    required uint32             time    = 2;
+    required string             comment = 3;
+    optional NoteState          state   = 4;
+}
+
+message NoteData
+{
+    required string             id          = 1;
+    required NoteType           type        = 2;
+    required NoteState          state       = 3;
+    required string             title       = 4;
+    repeated NoteComment        comment     = 5;
+    required uint32             ct          = 6;
+    required uint32             ut          = 7;
 }
 
 // -------------------------------------------------- TASK DEFINES

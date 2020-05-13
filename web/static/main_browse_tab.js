@@ -49,6 +49,7 @@ var taskTimer, taskHist = [];
 var pollSince = settings.opts.task_hist * 3600;
 var pollMax = 120;
 var pollMin = 4;
+var note_icon = ["circle-help","comment","alert","flag"];
 
 export function windowResized(){
     var h = $("#data-tabs-parent").height();
@@ -2289,6 +2290,11 @@ export function init(){
                         cache: false
                     };
                 }
+            } else if ( data.node.key.startsWith("note_")) {
+                data.result = {
+                    url: "/api/note/list/by_subject?subject=" + encodeURIComponent(data.node.key.substr(5)),
+                    cache: false
+                };
             } else if ( data.node.key == "allocs" ) {
                 data.result = {
                     url: "/api/repo/alloc/list/by_subject?subject=" + encodeURIComponent(data.node.data.scope),
@@ -2407,6 +2413,32 @@ export function init(){
                         data.result.push({ title: alloc.repo.substr(5) + (i==0?" (default)":""),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
                 }
+            } else if ( data.node.key.startsWith("note_")) {
+                data.result = [];
+                if ( data.response.note && data.response.note.length ){
+                    var note,open=[],closed=[],entry,ns,nt;
+                    for ( i = 0; i < data.response.note.length; i++ ) {
+                        note = data.response.note[i];
+                        nt = model.NoteTypeFromString[note.type];
+                        ns = model.NoteStateFromString[note.state];
+                        console.log("note:",note);
+
+                        entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt],key:note.id,offset:0,nodrag:true,checkbox:false};
+                        if ( ns == model.NOTE_ACTIVE ){
+                            data.result.push(entry);
+                        }else if ( ns == model.NOTE_OPEN ){
+                            open.push(entry);
+                        }else{
+                            closed.push(entry);
+                        }
+                    }
+                    if ( open.length ){
+                        data.result.push({title:"Open",icon:"ui-icon ui-icon-news",folder:true,children:open,nodrag:true,checkbox:false});
+                    }
+                    if ( closed.length ){
+                        data.result.push({title:"Closed",icon:"ui-icon ui-icon-news",folder:true,children:closed,nodrag:true,checkbox:false});
+                    }
+                }
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
                 // Define key prefixes for collections in special tree locations
@@ -2422,7 +2454,7 @@ export function init(){
 
                 // Annotation entry for parent collection
                 if ( data.node.key.startsWith( "c/" )){
-                    data.result.push({title:"Annotations",folder:true,lazy:true,icon:"ui-icon ui-icon-news",checkbox:false,scope:scope,nodrag:true,key:"note_"+data.node.key.substr(2)});
+                    data.result.push({title:"Annotations",folder:true,lazy:true,icon:"ui-icon ui-icon-news",checkbox:false,scope:scope,nodrag:true,key:"note_"+data.node.key});
                 }
 
                 addTreePagingNode( data );

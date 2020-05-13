@@ -132,9 +132,13 @@ public:
     void repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply );
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
-    void topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply  & a_reply );
-    void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply );
-    void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply );
+    void topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply & a_reply );
+    void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
+    void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
+
+    void noteCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void noteUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void noteListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
 
     void taskLoadReady( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );
@@ -177,6 +181,8 @@ private:
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result );
     void setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result );
     void setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats );
+    void setNoteDataReply( Auth::AnnotationDataReply & a_reply, libjson::Value & a_result );
+    void setNoteData( NoteData * a_item, libjson::Value::Object & a_obj );
     void setTaskDataReply( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void setTaskDataReplyArray( Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void setTaskData( TaskData * a_task, libjson::Value & a_task_json );

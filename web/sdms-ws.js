@@ -894,6 +894,40 @@ app.get('/api/acl/by_proj/list', ( a_req, a_resp ) => {
 });
 */
 
+app.get('/api/note/create', ( a_req, a_resp ) => {
+    var params  = {
+        type: a_req.query.type,
+        subject: a_req.query.subject,
+        title: a_req.query.title,
+        comment: a_req.query.comment,
+        activate: a_req.query.activate
+    };
+
+    sendMessage( "AnnotationCreateRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/note/update', ( a_req, a_resp ) => {
+    var params  = {
+        id: a_req.query.id,
+        comment: a_req.query.comment,
+    };
+
+    if ( a_req.query.new_state )
+        params.newState = a_req.query.new_state;
+
+    sendMessage( "AnnotationUpdateRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.get('/api/note/list/by_subject', ( a_req, a_resp ) => {
+    sendMessage( "AnnotationListBySubjectRequest", { subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/task/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.since )

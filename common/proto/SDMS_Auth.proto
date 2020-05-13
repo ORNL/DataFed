@@ -860,6 +860,39 @@ message QueryDataReply
     repeated SDMS.QueryData     query       = 1;
 }
 
+// ============================ Annotation Messages
+
+message AnnotationCreateRequest
+{
+    required SDMS.NoteType      type        = 1;
+    required string             subject     = 2;
+    required string             title       = 3;
+    required string             comment     = 4;
+    required bool               activate    = 5;
+}
+
+message AnnotationUpdateRequest
+{
+    required string             id          = 1;
+    required string             comment     = 2;
+    optional SDMS.NoteState     new_state   = 3;
+}
+
+message AnnotationListBySubjectRequest
+{
+    required string             subject     = 1;
+}
+
+message AnnotationViewRequest
+{
+    required string             id          = 1;
+}
+
+message AnnotationDataReply
+{
+    repeated SDMS.NoteData      note    = 1;
+}
+
 // ============================ Task Messages
 
 message TaskViewRequest

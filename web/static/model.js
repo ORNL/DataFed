@@ -61,6 +61,28 @@ export const DEP_IS_DERIVED_FROM    = 0;
 export const DEP_IS_COMPONENT_OF    = 1;
 export const DEP_IS_NEW_VERSION_OF  = 2;
 
+export const NOTE_QUESTION   = 0;
+export const NOTE_INFO       = 1;
+export const NOTE_WARN       = 2;
+export const NOTE_ERROR      = 3;
+
+export const NOTE_CLOSED     = 0;
+export const NOTE_OPEN       = 1;
+export const NOTE_ACTIVE     = 2;
+
+export const NoteTypeFromString = {
+    "NOTE_QUESTION":NOTE_QUESTION,
+    "NOTE_INFO":NOTE_INFO,
+    "NOTE_WARN":NOTE_WARN,
+    "NOTE_ERROR":NOTE_ERROR
+};
+
+export const NoteStateFromString = {
+    "NOTE_CLOSED":NOTE_CLOSED,
+    "NOTE_OPEN":NOTE_OPEN,
+    "NOTE_ACTIVE":NOTE_ACTIVE
+};
+
 export const DepDirFromString = {
     "DEP_IN":DEP_IN,
     "DEP_OUT":DEP_OUT

@@ -2659,6 +2659,119 @@ DatabaseAPI::checkPerms( const string & a_id, uint16_t a_perms )
 }
 */
 
+void
+DatabaseAPI::noteCreate( const AnnotationCreateRequest & a_request, AnnotationDataReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+    params.push_back({ "type", to_string( a_request.type() )});
+    params.push_back({ "subject", a_request.subject() });
+    params.push_back({ "title", a_request.title() });
+    params.push_back({ "comment", a_request.comment() });
+    params.push_back({ "activate", a_request.activate()?"true":"false" });
+
+    dbGet( "note/create", params, result );
+
+    setNoteDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::noteUpdate( const AnnotationUpdateRequest & a_request, AnnotationDataReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+    params.push_back({ "id", a_request.id() });
+    params.push_back({ "comment", a_request.comment() });
+    if ( a_request.has_new_state() )
+        params.push_back({ "new_state", to_string( a_request.new_state() )});
+
+    dbGet( "note/update", params, result );
+
+    setNoteDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::noteListBySubject( const AnnotationListBySubjectRequest & a_request, AnnotationDataReply & a_reply )
+{
+    Value result;
+
+    dbGet( "note/list/by_subject", {{"subject",a_request.subject()}}, result );
+
+    setNoteDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, libjson::Value & a_result )
+{
+    Value::ObjectIter   j;
+
+    try
+    {
+        Value::Array & arr = a_result.getArray();
+
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        {
+            Value::Object & obj = i->getObject();
+
+            /*if (( j = obj.find( "paging" )) != obj.end( ))
+            {
+                Value::Object & obj2 = j->second.getObject();
+
+                a_reply.set_offset( obj2.at( "off" ).asNumber( ));
+                a_reply.set_count( obj2.at( "cnt" ).asNumber( ));
+                a_reply.set_total( obj2.at( "tot" ).asNumber( ));
+            }
+            else
+            {*/
+                setNoteData( a_reply.add_note(), obj );
+            //}
+        }
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service. " << e.what( ));
+    }
+}
+
+void
+DatabaseAPI::setNoteData( NoteData * a_note, libjson::Value::Object & a_obj )
+{
+    try
+    {
+        a_note->set_id( a_obj.at( "_id" ).asString( ));
+        a_note->set_type((NoteType) a_obj.at( "type" ).asNumber( ));
+        a_note->set_state((NoteState) a_obj.at( "state" ).asNumber( ));
+        a_note->set_title( a_obj.at( "title" ).asString( ));
+        a_note->set_ct( a_obj.at( "ct" ).asNumber( ));
+        a_note->set_ut( a_obj.at( "ut" ).asNumber( ));
+
+        Value::ObjectIter   j;
+
+        if (( j = a_obj.find( "comments" )) != a_obj.end( ))
+        {
+            Value::ObjectIter   m;
+            NoteComment *       comment;
+            Value::Array &      arr = j->second.getArray();
+
+            for ( Value::ArrayIter k = arr.begin(); k != arr.end(); k++ )
+            {
+                Value::Object & obj = k->getObject();
+
+                comment = a_note->add_comment();
+                comment->set_user( obj.at( "user" ).asString());
+                comment->set_time( obj.at( "time" ).asNumber());
+                comment->set_comment( obj.at( "comment" ).asString());
+
+                if (( m = obj.find( "action" )) != obj.end( ) && !m->second.isNull( ))
+                    comment->set_state((NoteState) m->second.asNumber() );
+            }
+        }
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( 1, "setNoteData - " << e.what() );
+    }
+}
 
 void
 DatabaseAPI::taskLoadReady( libjson::Value & a_result )
