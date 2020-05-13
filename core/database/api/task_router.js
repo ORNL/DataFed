@@ -272,6 +272,7 @@ router.get('/purge', function (req, res) {
             },
             action: function() {
                 var t = (Date.now()/1000) - req.queryParams.age_sec;
+                // TODO This does NOT remove edges!
                 g_db._query( "for i in task filter i.status >= " + g_lib.TS_SUCCEEDED + " and i.ut < " + t + " remove i in task" );
             }
         });

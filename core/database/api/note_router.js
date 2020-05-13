@@ -3,7 +3,6 @@
 const   createRouter = require('@arangodb/foxx/router');
 const   router = createRouter();
 const   joi = require('joi');
-
 const   g_db = require('@arangodb').db;
 const   g_lib = require('./support');
 
@@ -43,11 +42,6 @@ router.post('/create', function (req, res) {
             
                 var note = g_db.n.save( obj, { returnNew: true });
                 g_db.note.save({ _from: id, _to: note._id });
-
-                note.id = note.new._id;
-                delete note.new._id;
-                delete note.new._key;
-                delete note.new._rev;
 
                 res.send( [note.new] );
             }
@@ -124,11 +118,6 @@ router.post('/update', function (req, res) {
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
 
-                note.id = note.new._id;
-                delete note.new._id;
-                delete note.new._key;
-                delete note.new._rev;
-
                 res.send( [note.new] );
             }
         });
@@ -144,5 +133,87 @@ router.post('/update', function (req, res) {
 .description('Close an annotation');
 
 
+router.get('/list/view', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        if ( !req.queryParams.id.startsWith( "n/" ))
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid annotaion ID '" + req.queryParams.id + "'"];
+
+        if ( !g_db._exists( req.queryParams.id ))
+            throw [g_lib.ERR_INVALID_PARAM,"Annotaion ID '" + req.queryParams.id + "' does not exist."];
+
+        var note = g_db.n.document( req.queryParams.id );
+
+        if ( client._id != note.creator ){
+            var ne = g_db.note.firstExample({ _to: note._id });
+            if ( !g_lib.hasAdminPermObject( client, ne._from )) {
+                if ( note.state == g_lib.NOTE_ACTIVE ){
+                    // Anyone with read permission to subject doc can comment on active notes
+                    var doc = g_db._document( ne._from );
+                    if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
+                        throw g_lib.ERR_PERM_DENIED;
+                    }
+                }else{
+                    throw g_lib.ERR_PERM_DENIED;
+                }
+            }
+        }
+
+        res.send([ note ]);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('id', joi.string().required(), "ID of annotation")
+.summary('View annotation')
+.description('View annotation');
 
 
+router.get('/list/by_subject', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var results, qry, id = g_lib.resolveDataCollID( req.queryParams.id, client );
+
+        if ( g_lib.hasAdminPermObject( client, id )) {
+            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
+            results = g_db._query( qry, { subj: id });
+        }else{
+            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
+            results = g_db._query( qry, { subj: id, client: client._id });
+        }
+
+        res.send( results );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client UID")
+.queryParam('id', joi.string().required(), "ID/alias of subject")
+.summary('List annotations by subject')
+.description('List annotations attached to subject data record or colelction');
+
+
+router.post('/purge', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["n","note"]
+            },
+            action: function() {
+                var t = (Date.now()/1000) - req.queryParams.age_sec;
+                var notes = g_db._query( "for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " return i._id" );
+                while ( notes.hasNext() ){
+                    g_lib.graph.n.remove(notes.next());
+                }
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('age_sec', joi.number().integer().min(0).required(), "Purge age (seconds)")
+.summary('Purge old closed annotations')
+.description('Purge old closed annotations');
