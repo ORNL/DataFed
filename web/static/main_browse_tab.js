@@ -1150,6 +1150,36 @@ function actionDepGraph(){
     }
 }
 
+function actionSubscribe(){
+    var ids = getSelectedIDs();
+    if ( ids.length != 1 )
+        return;
+
+    var id = ids[0];
+
+    console.log("subscribe");
+    /*if ( id.charAt(0) == "d" ) {
+        graph_panel.load( id );
+        $('[href="#tab-prov-graph"]').closest('li').show();
+        $( "#data-tabs" ).tabs({ active: 3 });
+    }*/
+}
+
+function actionAnnotate(){
+    var ids = getSelectedIDs();
+    if ( ids.length != 1 )
+        return;
+
+    var id = ids[0];
+
+    console.log("annotate");
+    /*if ( id.charAt(0) == "d" ) {
+        graph_panel.load( id );
+        $('[href="#tab-prov-graph"]').closest('li').show();
+        $( "#data-tabs" ).tabs({ active: 3 });
+    }*/
+}
+
 function actionDataGet() {
     var ids = getSelectedIDs();
     dataGet( ids, function(){
@@ -1191,7 +1221,7 @@ function calcActionState( sel ){
     var bits,node;
 
     if ( sel.length > 1 ){
-        bits = 0x31B;
+        bits = 0x71B;
         for ( var i in sel ){
             node = sel[i];
             switch ( node.key[0] ){
@@ -1213,7 +1243,7 @@ function calcActionState( sel ){
         //console.log("multi",bits);
     }else if ( sel.length ){
         node = sel[0];
-        console.log("node:",node);
+
         switch ( node.key[0] ){
             //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
             case "c": bits = node.data.isroot?0x2D7:0x252;  break;
@@ -1290,6 +1320,8 @@ export function updateBtnState(){
     $("#btn_next_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
     $("#btn_srch_first_par_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
     $("#btn_cat_first_par_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
+    $("#btn_subscribe",frame).button("option","disabled",(bits & 0x400) != 0 );
+    $("#btn_annotate",frame).button("option","disabled",(bits & 0x400) != 0 );
 
     // Enable/disable file import/export menu items (by position, not name)
 
@@ -1318,6 +1350,8 @@ export function updateBtnState(){
     data_tree_div.contextmenu("enableEntry", "newd", (bits & 0x100) == 0 );
     data_tree_div.contextmenu("enableEntry", "newc", (bits & 0x100) == 0 );
     data_tree_div.contextmenu("enableEntry", "graph", (bits & 0x200) == 0 );
+    data_tree_div.contextmenu("enableEntry", "sub", (bits & 0x400) == 0 );
+    data_tree_div.contextmenu("enableEntry", "note", (bits & 0x400) == 0 );
 }
 
 function saveExpandedPaths( node, paths ){
@@ -1811,6 +1845,8 @@ var ctxt_menu_opts = {
             {title: "Download", action: actionDataGet, cmd: "get" },
             {title: "Upload", action: actionDataPut, cmd: "put" },
             {title: "Provenance", action: actionDepGraph, cmd: "graph" },
+            {title: "Subcribe", action: actionSubscribe, cmd: "sub" },
+            {title: "Annotate", action: actionAnnotate, cmd: "note" },
             {title: "----"},
             {title: "Delete", action: actionDeleteSelected, cmd: "del" }
             ]},
@@ -1976,6 +2012,8 @@ $("#btn_unlock",frame).on('click', actionUnlockSelected );
 $("#btn_upload",frame).on('click', actionDataPut );
 $("#btn_download",frame).on('click', actionDataGet );
 $("#btn_dep_graph",frame).on('click', actionDepGraph );
+$("#btn_subscribe",frame).on('click', actionSubscribe );
+$("#btn_annotate",frame).on('click', actionAnnotate );
 $("#btn_prev_coll",frame).on('click', actionPrevParent );
 $("#btn_next_coll",frame).on('click', actionNextParent );
 $("#btn_srch_first_par_coll",frame).on('click', actionFirstParent );

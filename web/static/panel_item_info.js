@@ -1,4 +1,5 @@
 import * as util from "./util.js";
+import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as api from "./api.js";
 
@@ -56,6 +57,8 @@ export function showSelectedInfo( node ){
         showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
     }else if ( key.startsWith("p/")){
         showSelectedProjInfo( key );
+    }else if ( key.startsWith("n/")){
+        showSelectedNoteInfo( key );
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
             showSelectedItemInfo( item );
@@ -114,6 +117,83 @@ function showSelectedProjInfo( key ){
     api.viewProj( key, function( item ){
         showSelectedItemInfo( item );
     }); 
+}
+
+function showSelectedNoteInfo( key ){
+    api.annotationView( key, function( ok, data ){
+        //console.log("note reply:",ok,data);
+        if ( ok && data.note ){
+            var note = data.note[0],
+                nt = model.NoteTypeFromString[note.type],
+                ns = model.NoteStateFromString[note.state],
+                html, comm, date_ct = new Date(), date_ut = new Date();
+
+            date_ct.setTime(note.ct*1000);
+            date_ut.setTime(note.ut*1000);
+    
+            html = "<table class='sel-info-table'>\
+                <tr><td>Type:</td><td>Annotation, "+model.NoteTypeLabel[nt]+"</td></tr>\
+                <tr><td>ID:</td><td>"+note.id+"</td></tr>\
+                <tr><td>Title:</td><td>"+util.escapeHTML(note.title)+"</td></tr>\
+                <tr><td>Status:</td><td>"+model.NoteStateLabel[ns]+"</td></tr>\
+                <tr><td>Creator:</td><td>"+note.comment[0].user.substr(2)+"</td></tr>\
+                <tr><td>Created:</td><td>"+date_ct.toLocaleDateString("en-US", settings.date_opts)+"</td></tr>\
+                <tr><td>Updated:</td><td>"+date_ut.toLocaleDateString("en-US", settings.date_opts)+"</td></tr>\
+                </table>";
+
+            var is_creator = ( note.comment[0].user == "u/"+settings.user.uid );
+
+            html += "<div style='padding:1.5em .6em 0 .6em'>";
+
+            if ( ns != model.NOTE_CLOSED ){
+                html += "<button class='btn btn-note-comment'>Reply</button>";
+            }
+
+            if ( ns == model.NOTE_CLOSED && is_creator ){
+                html += "<button class='btn btn-note-reopen'>Reopen</button>";
+            }
+
+            if (( ns == model.NOTE_OPEN || ns == model.NOTE_OPEN ) && is_creator ){
+                html += "<button class='btn btn-note-close'>Close</button>";
+            }
+
+            if ( ns == model.NOTE_OPEN && is_creator ){
+                html += "<button class='btn btn-note-activate'>Activate</button>";
+            }
+
+            if ( ns == model.NOTE_ACTIVE && is_creator ){
+                html += "<button class='btn btn-note-deactivate'>Deactivate</button>";
+            }
+
+            html += "</div>";
+
+            for ( var i in note.comment ){
+                comm = note.comment[i];
+
+                html += "<div style='padding:1.5em .6em 0 .6em'>User " + comm.user.substr(2) + " ";
+                switch ( comm.state ){
+                    case "NOTE_OPEN": html += "opened"; break;
+                    case "NOTE_CLOSED": html += "closed"; break;
+                    case "NOTE_ACTIVE": html += "activated"; break;
+                    default: html += "commented"; break;
+                }
+
+                date_ut.setTime(comm.time*1000);
+                html += " annotation on " + date_ut.toLocaleDateString("en-US", settings.date_opts);
+                html += "<br><div style='padding:1em 1em 0 1em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment);
+                if ( comm.user == "u/"+settings.user.uid ){
+                    html += "<div style='padding:.5em 0 0 0'><button class='btn btn-note-edit' id='btn_note_edit_"+i+"'>Edit Comment</button></div>";
+                }
+                html += "</div></div>";
+            }
+
+            showSelectedHTML( html );
+            $(".btn",div).button();
+            $(".btn-note-edit",div).on("click",function(){
+                console.log("click!",this.id);
+            });
+        }
+    });
 }
 
 function showSelectedAllocInfo( repo, user ){

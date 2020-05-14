@@ -922,6 +922,12 @@ app.get('/api/note/update', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/note/view', ( a_req, a_resp ) => {
+    sendMessage( "AnnotationViewRequest", { id:a_req.query.id}, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/note/list/by_subject', ( a_req, a_resp ) => {
     sendMessage( "AnnotationListBySubjectRequest", { subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);

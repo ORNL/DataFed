@@ -70,6 +70,19 @@ export const NOTE_CLOSED     = 0;
 export const NOTE_OPEN       = 1;
 export const NOTE_ACTIVE     = 2;
 
+export const NoteTypeLabel = [
+    "Question",
+    "Information",
+    "Warning",
+    "Error"
+];
+
+export const NoteStateLabel = [
+    "Closed",
+    "Open",
+    "Active"
+];
+
 export const NoteTypeFromString = {
     "NOTE_QUESTION":NOTE_QUESTION,
     "NOTE_INFO":NOTE_INFO,

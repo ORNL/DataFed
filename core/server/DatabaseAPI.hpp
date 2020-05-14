@@ -136,9 +136,10 @@ public:
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
 
-    void noteCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void noteUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void noteListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
 
     void taskLoadReady( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );

@@ -2660,7 +2660,7 @@ DatabaseAPI::checkPerms( const string & a_id, uint16_t a_perms )
 */
 
 void
-DatabaseAPI::noteCreate( const AnnotationCreateRequest & a_request, AnnotationDataReply & a_reply )
+DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, AnnotationDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2676,7 +2676,7 @@ DatabaseAPI::noteCreate( const AnnotationCreateRequest & a_request, AnnotationDa
 }
 
 void
-DatabaseAPI::noteUpdate( const AnnotationUpdateRequest & a_request, AnnotationDataReply & a_reply )
+DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, AnnotationDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2691,7 +2691,17 @@ DatabaseAPI::noteUpdate( const AnnotationUpdateRequest & a_request, AnnotationDa
 }
 
 void
-DatabaseAPI::noteListBySubject( const AnnotationListBySubjectRequest & a_request, AnnotationDataReply & a_reply )
+DatabaseAPI::annotationView( const AnnotationViewRequest & a_request, AnnotationDataReply & a_reply )
+{
+    Value result;
+
+    dbGet( "note/view", {{"id",a_request.id()}}, result );
+
+    setNoteDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::annotationListBySubject( const AnnotationListBySubjectRequest & a_request, AnnotationDataReply & a_reply )
 {
     Value result;
 

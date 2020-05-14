@@ -142,9 +142,10 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, noteCreate );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, noteUpdate );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, noteListBySubject );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );

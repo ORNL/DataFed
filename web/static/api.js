@@ -388,6 +388,10 @@ export function userFindByNameUID( a_name_uid, a_offset, a_count, a_cb ) {
     _asyncGet( url, null, a_cb );
 }
 
+export function annotationView( a_id, a_cb ){
+    _asyncGet( "/api/note/view?id="+encodeURIComponent(a_id), null, a_cb );
+}
+
 export function repoList( a_details, a_list_all, a_cb ){
     var url = "/api/repo/list";
     if ( a_details )
