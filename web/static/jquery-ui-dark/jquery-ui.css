@@ -193,9 +193,24 @@ textarea.ui-state-disabled
     color: #008F00
 }
 
+.ui-icon-flag
+{
+    color: #FF0000
+}
+
 .ui-icon-alert
 {
-    color: #FF5F00
+    color: #ef9f00
+}
+
+.ui-icon-comment
+{
+    color: #209f20
+}
+
+.ui-icon-circle-help
+{
+    color: #5050ff
 }
 
 .ui-icon-heart
