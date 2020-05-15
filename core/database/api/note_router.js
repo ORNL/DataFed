@@ -33,7 +33,8 @@ router.post('/create', function (req, res) {
                 }
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { state: req.queryParams.activate?g_lib.NOTE_ACTIVE:g_lib.NOTE_OPEN, type: req.queryParams.type, ct: time, ut: time, creator: client._id };
+                var obj = { state: req.queryParams.activate?g_lib.NOTE_ACTIVE:g_lib.NOTE_OPEN, type: req.queryParams.type,
+                    subject: id, ct: time, ut: time, creator: client._id };
             
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
                 obj.comments = [{ user: client._id, action: obj.state, time:time }];
@@ -252,10 +253,10 @@ router.get('/list/by_subject', function (req, res) {
         var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject, client );
 
         if ( g_lib.hasAdminPermObject( client, id )) {
-            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
+            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject:v.subject,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id });
         }else{
-            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
+            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject:v.subject,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id, client: client._id });
         }
 
