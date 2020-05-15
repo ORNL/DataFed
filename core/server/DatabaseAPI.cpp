@@ -2670,7 +2670,7 @@ DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Annota
     params.push_back({ "comment", a_request.comment() });
     params.push_back({ "activate", a_request.activate()?"true":"false" });
 
-    dbGet( "note/create", params, result );
+    dbPost( "note/create", params, 0, result );
 
     setNoteDataReply( a_reply, result );
 }
@@ -2685,7 +2685,7 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Annota
     if ( a_request.has_new_state() )
         params.push_back({ "new_state", to_string( a_request.new_state() )});
 
-    dbGet( "note/update", params, result );
+    dbPost( "note/update", params, 0, result );
 
     setNoteDataReply( a_reply, result );
 }

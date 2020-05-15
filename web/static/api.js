@@ -392,6 +392,12 @@ export function annotationView( a_id, a_cb ){
     _asyncGet( "/api/note/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
+export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activate, a_cb ){
+    _asyncGet( "/api/note/create?subject="+encodeURIComponent(a_subj_id) + "&type=" + a_type +
+        "&title=" +encodeURIComponent(a_title) + "&comment="+encodeURIComponent(a_comment)+(a_activate?"&activate=true":""),
+        null, a_cb );
+}
+
 export function repoList( a_details, a_list_all, a_cb ){
     var url = "/api/repo/list";
     if ( a_details )

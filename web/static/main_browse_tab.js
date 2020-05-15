@@ -16,7 +16,7 @@ import * as dlgQueryNewEdit from "./dlg_query_new_edit.js";
 import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
-
+import * as dlgAnnotation from "./dlg_annotation.js";
 
 var frame = $("#content");
 var task_hist = $("#task_hist",frame);
@@ -1173,6 +1173,13 @@ function actionAnnotate(){
     var id = ids[0];
 
     console.log("annotate");
+
+    permGateAny( id, model.PERM_RD_REC | model.PERM_RD_META | model.PERM_RD_DATA, function( perms ){
+        dlgAnnotation.show( id, null, null, function(){
+            refreshUI( id );
+        });
+    });
+
     /*if ( id.charAt(0) == "d" ) {
         graph_panel.load( id );
         $('[href="#tab-prov-graph"]').closest('li').show();

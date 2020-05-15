@@ -903,6 +903,7 @@ app.get('/api/note/create', ( a_req, a_resp ) => {
         activate: a_req.query.activate
     };
 
+    console.log("note create",params)
     sendMessage( "AnnotationCreateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
