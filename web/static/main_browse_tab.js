@@ -1175,7 +1175,7 @@ function actionAnnotate(){
     console.log("annotate");
 
     permGateAny( id, model.PERM_RD_REC | model.PERM_RD_META | model.PERM_RD_DATA, function( perms ){
-        dlgAnnotation.show( id, null, null, function(){
+        dlgAnnotation.show( id, null, null, null, function(){
             refreshUI( id );
         });
     });

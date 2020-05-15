@@ -293,10 +293,11 @@ message NoteData
     required string             id          = 1;
     required NoteType           type        = 2;
     required NoteState          state       = 3;
-    required string             title       = 4;
-    repeated NoteComment        comment     = 5;
-    required uint32             ct          = 6;
-    required uint32             ut          = 7;
+    required string             subject     = 4;
+    required string             title       = 5;
+    repeated NoteComment        comment     = 6;
+    required uint32             ct          = 7;
+    required uint32             ut          = 8;
 }
 
 // -------------------------------------------------- TASK DEFINES

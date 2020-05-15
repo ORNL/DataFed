@@ -2751,6 +2751,7 @@ DatabaseAPI::setNoteData( NoteData * a_note, libjson::Value::Object & a_obj )
         a_note->set_id( a_obj.at( "_id" ).asString( ));
         a_note->set_type((NoteType) a_obj.at( "type" ).asNumber( ));
         a_note->set_state((NoteState) a_obj.at( "state" ).asNumber( ));
+        a_note->set_subject( a_obj.at( "subject" ).asString( ));
         a_note->set_title( a_obj.at( "title" ).asString( ));
         a_note->set_ct( a_obj.at( "ct" ).asNumber( ));
         a_note->set_ut( a_obj.at( "ut" ).asNumber( ));

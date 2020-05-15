@@ -398,6 +398,11 @@ export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activ
         null, a_cb );
 }
 
+export function annotationUpdate( a_id, a_comment, a_new_state, a_cb ){
+    _asyncGet( "/api/note/update?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
+        (a_new_state!=null?"&new_state="+a_new_state:""),null, a_cb );
+}
+
 export function repoList( a_details, a_list_all, a_cb ){
     var url = "/api/repo/list";
     if ( a_details )

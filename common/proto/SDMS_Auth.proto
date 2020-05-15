@@ -878,6 +878,14 @@ message AnnotationUpdateRequest
     optional SDMS.NoteState     new_state   = 3;
 }
 
+message AnnotationEditCommentRequest
+{
+    required string             id          = 1;
+    required string             comment_idx = 2;
+    required string             comment     = 3;
+    optional string             title       = 4;
+}
+
 message AnnotationListBySubjectRequest
 {
     required string             subject     = 1;

@@ -2,6 +2,7 @@ import * as util from "./util.js";
 import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as api from "./api.js";
+import * as dlgAnnotation from "./dlg_annotation.js";
 
 var form = $("#sel_info_form");
 var div = $("#sel_info_div");
@@ -190,7 +191,41 @@ function showSelectedNoteInfo( key ){
             showSelectedHTML( html );
             $(".btn",div).button();
             $(".btn-note-edit",div).on("click",function(){
-                console.log("click!",this.id);
+                console.log("edit!",this.id);
+            });
+
+            $(".btn-note-comment",div).on("click",function(){
+                console.log("comment!");
+                dlgAnnotation.show( note.subject, note, null, null, function(){
+                    //refreshUI( id );
+                });
+            });
+
+            $(".btn-note-reopen",div).on("click",function(){
+                console.log("reopen!");
+                dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
+                    //refreshUI( id );
+                });
+            });
+
+            $(".btn-note-close",div).on("click",function(){
+                console.log("close!");
+                dlgAnnotation.show( note.subject, note, model.NOTE_CLOSED, null, function(){
+                    //refreshUI( id );
+                });
+            });
+
+            $(".btn-note-activate",div).on("click",function(){
+                console.log("activate!");
+                dlgAnnotation.show( note.subject, note, model.NOTE_ACTIVE, null, function(){
+                    //refreshUI( id );
+                });
+            });
+
+            $(".btn-note-deactivate",div).on("click",function(){
+                dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
+                    //refreshUI( id );
+                });
             });
         }
     });
