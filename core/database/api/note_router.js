@@ -20,7 +20,7 @@ router.post('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id = g_lib.resolveDataCollID( req.queryParams.id, client );
+                var id = g_lib.resolveDataCollID( req.queryParams.subject, client );
         
                 if ( !g_lib.hasAdminPermObject( client, id )) {
                     var doc = g_db._document( id );
@@ -36,9 +36,8 @@ router.post('/create', function (req, res) {
                 var obj = { state: req.queryParams.activate?g_lib.NOTE_ACTIVE:g_lib.NOTE_OPEN, type: req.queryParams.type, ct: time, ut: time, creator: client._id };
             
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
-                g_lib.procInputParam( req.queryParams, "desc", false, obj );
-                obj.comments = [{ user: client._id, action: obj.state, time:time, comment: obj.desc }];
-                delete obj.desc;
+                obj.comments = [{ user: client._id, action: obj.state, time:time }];
+                g_lib.procInputParam( req.queryParams, "comment", false, obj.comments[0] );
             
                 var note = g_db.n.save( obj, { returnNew: true });
                 g_db.note.save({ _from: id, _to: note._id });
@@ -51,10 +50,10 @@ router.post('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('id', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('subject', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('type', joi.number().min(0).max(3).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .queryParam('title', joi.string().required(), "Title of annotaion")
-.queryParam('desc', joi.string().required(), "Description / comments")
+.queryParam('comment', joi.string().required(), "Comments")
 .queryParam('activate', joi.boolean().optional(), "Make new annotation active on create")
 .summary('Create an annotation on an object')
 .description('Create an annotation on an object');
@@ -78,23 +77,23 @@ router.post('/update', function (req, res) {
 
                 var note = g_db.n.document( req.queryParams.id );
 
-                // Action requirements:
+                // new_state requirements:
                 // None (comment) - If open: only note creator or subject admin, if active: anyone with read access to subject
                 // Open (must not be open) - Must be note creator or subject admin
                 // Close (must not be closed) - Must be note creator or subject admin
                 // Activate (must not be active) - Must be subject admin
 
-                if ( req.queryParams.action === note.state ){
-                    throw [g_lib.ERR_INVALID_PARAM,"Invalid annotaion action."];
+                if ( req.queryParams.new_state === note.state ){
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid new state for annotaion."];
                 }
 
                 if ( client._id != note.creator ){
-                    if ( req.queryParams.action === g_lib.NOTE_ACTIVE )
+                    if ( req.queryParams.new_state === g_lib.NOTE_ACTIVE )
                         throw [g_lib.ERR_PERM_DENIED,"Insufficient permissions to activate annotaion."];
 
                     var ne = g_db.note.firstExample({ _to: note._id });
                     if ( !g_lib.hasAdminPermObject( client, ne._from )) {
-                        if ( req.queryParams.action === undefined && note.state == g_lib.NOTE_ACTIVE ){
+                        if ( req.queryParams.new_state === undefined && note.state == g_lib.NOTE_ACTIVE ){
                             // Anyone with read permission to subject doc can comment on active notes
                             var doc = g_db._document( ne._from );
                             if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
@@ -106,15 +105,18 @@ router.post('/update', function (req, res) {
                     }
                 }
 
-                var time = Math.floor( Date.now()/1000 );
-                var obj = { ut: time, comments: note.comments };
+                var time = Math.floor( Date.now()/1000 ),
+                    obj = { ut: time, comments: note.comments },
+                    comment = { user: client._id, time:time };
 
-                if ( req.queryParams.action !== undefined )
-                    obj.state = req.queryParams.action;
+                if ( req.queryParams.new_state !== undefined ){
+                    obj.state = req.queryParams.new_state;
+                    comment.action = req.queryParams.new_state;
+                }
 
-                g_lib.procInputParam( req.queryParams, "desc", false, obj );
-                obj.comments.push({ user: client._id, action: req.queryParams.action!==undefined?req.queryParams.action:null, time:time, comment: obj.desc });
-                delete obj.desc;
+                g_lib.procInputParam( req.queryParams, "comment", false, comment );
+
+                obj.comments.push(comment);
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
 
@@ -127,8 +129,8 @@ router.post('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "ID of annotation")
-.queryParam('desc', joi.string().required(), "Description / comments")
-.queryParam('action', joi.number().min(0).max(2).optional(), "Action (new state), omit for comment")
+.queryParam('comment', joi.string().required(), "Comments")
+.queryParam('new_state', joi.number().min(0).max(2).optional(), "New state (omit for comment)")
 .summary('Update an annotation')
 .description('Update an annotation with new comment and optional new state');
 

@@ -144,6 +144,7 @@ module.exports = ( function() {
         alias: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ALIAS, label: 'alias' },
         desc: { required: false, update: true, max_len: 2000, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
+        comment: { required: true, update: true, max_len: 2000, in_field: "comment", out_field: "comment", label: 'comment' },
         keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
         topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
         domain: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'domain' },
