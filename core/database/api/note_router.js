@@ -141,7 +141,7 @@ router.post('/comment/edit', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["n","note"]
+                write: ["n"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -171,7 +171,7 @@ router.post('/comment/edit', function (req, res) {
                     obj.comments = note.comments;
                 }
 
-                if ( req.queryParams.title != note.title ){
+                if ( req.queryParams.title && req.queryParams.title != note.title ){
                     g_lib.procInputParam( req.queryParams, "title", false, obj );
                 }
 
