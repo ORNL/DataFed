@@ -2691,6 +2691,22 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Annota
 }
 
 void
+DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+    params.push_back({ "id", a_request.id() });
+    params.push_back({ "comment", a_request.comment() });
+    params.push_back({ "comment_idx", to_string( a_request.comment_idx() )});
+    if ( a_request.has_title() )
+        params.push_back({ "title", a_request.title() });
+
+    dbPost( "note/comment/edit", params, 0, result );
+
+    setNoteDataReply( a_reply, result );
+}
+
+void
 DatabaseAPI::annotationView( const AnnotationViewRequest & a_request, AnnotationDataReply & a_reply )
 {
     Value result;

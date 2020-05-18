@@ -923,6 +923,21 @@ app.get('/api/note/update', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/note/comment/edit', ( a_req, a_resp ) => {
+    var params  = {
+        id: a_req.query.id,
+        comment: a_req.query.comment,
+        commentIdx: a_req.query.comment_idx
+    };
+
+    if ( a_req.query.title )
+        params.title = a_req.query.title;
+
+    sendMessage( "AnnotationCommentEditRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/note/view', ( a_req, a_resp ) => {
     sendMessage( "AnnotationViewRequest", { id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);

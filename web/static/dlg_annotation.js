@@ -29,8 +29,10 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
         if ( a_comment_idx != 0 ){
             $("#title",frame).prop('readonly', true);
         }
+
         if ( a_comment_idx != null ){
             title = "Edit Annotation Comments";
+            $("#comment",frame).val(a_annotation.comment[a_comment_idx].comment);
         }else{
             switch( a_new_state ){
                 case model.NOTE_OPEN: title = "Re-Open Annotation"; break;
@@ -67,16 +69,22 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
             text: "Ok",
             click: function() {
                 var type = parseInt($("#type",frame).val()),
-                    title = $("#title",frame).val(),
-                    comment = $("#comment",frame).val(),
+                    title = $("#title",frame).val().trim(),
+                    comment = $("#comment",frame).val().trim(),
                     activate = $("#activate",frame).prop("checked"),
                     dlg_inst = $(this);
 
                 if ( a_annotation ){
                     if ( a_comment_idx != null ){
-                        // TODO EDIT
+                        api.annotationCommentEdit( a_annotation.id, comment, a_comment_idx, title!=a_annotation.title?title:null, function( ok, data ){
+                            if ( !ok ){
+                                dialogs.dlgAlert( "Server Error", data );
+                            } else {
+                                dlg_inst.dialog('close');
+                                cb();
+                            }
+                        });
                     }else{
-                        console.log("new state",a_new_state);
                         api.annotationUpdate( a_annotation.id, comment, a_new_state, function( ok, data ){
                             if ( !ok ){
                                 dialogs.dlgAlert( "Server Error", data );
@@ -87,7 +95,6 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
                         });
                     }
                 }else{
-                    console.log("activate:",activate);
                     api.annotationCreate( a_subject, type, title, comment, activate, function( ok, data ){
                         if ( !ok ){
                             dialogs.dlgAlert( "Server Error", data );

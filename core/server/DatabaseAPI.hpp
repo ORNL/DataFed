@@ -138,6 +138,7 @@ public:
 
     void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
     void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply );
     void annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply );
     void annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
 

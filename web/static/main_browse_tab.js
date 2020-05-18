@@ -135,7 +135,7 @@ function refreshNodeTitle( a_node, a_data, a_reload ){
         reloadNode( a_node );
 }
 
-function refreshUI( a_ids, a_data, a_reload ){
+export function refreshUI( a_ids, a_data, a_reload ){
 
     if ( !a_ids || !a_data ){
         // If no IDs or unknown action, refresh everything
@@ -145,7 +145,7 @@ function refreshUI( a_ids, a_data, a_reload ){
         reloadNode(data_tree.getNodeByKey("proj_mem"));
         reloadNode(data_tree.getNodeByKey("shared_user"));
         reloadNode(data_tree.getNodeByKey("shared_proj"));
-        reloadNode(data_tree.getNodeByKey("topics"));
+        //reloadNode(data_tree.getNodeByKey("topics"));
         reloadNode(data_tree.getNodeByKey("queries"));
     }else{
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];

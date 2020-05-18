@@ -171,7 +171,7 @@ function showSelectedNoteInfo( key ){
             for ( var i in note.comment ){
                 comm = note.comment[i];
 
-                html += "<div style='padding:1.5em .6em 0 .6em'>User " + comm.user.substr(2) + " ";
+                html += "<div style='padding:1.5em 0 0 0'>User " + comm.user.substr(2) + " ";
                 switch ( comm.state ){
                     case "NOTE_OPEN": html += "opened"; break;
                     case "NOTE_CLOSED": html += "closed"; break;
@@ -180,51 +180,58 @@ function showSelectedNoteInfo( key ){
                 }
 
                 date_ut.setTime(comm.time*1000);
-                html += " annotation on " + date_ut.toLocaleDateString("en-US", settings.date_opts);
-                html += "<br><div style='padding:1em 1em 0 1em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment);
+                html += " annotation on " + date_ut.toLocaleDateString("en-US", settings.date_opts) + "<br>";
                 if ( comm.user == "u/"+settings.user.uid ){
-                    html += "<div style='padding:.5em 0 0 0'><button class='btn btn-note-edit' id='btn_note_edit_"+i+"'>Edit Comment</button></div>";
+                    html += "<div class='row-flex' style='padding:1em 0 0 1em;align-items:flex-end'><div style='flex:1 1 auto;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
+                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn small btn-note-edit' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
+                }else{
+                    html += "<div style='padding:1em 1em 0 1em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
                 }
-                html += "</div></div>";
+
+                html += "</div>";
             }
 
             showSelectedHTML( html );
             $(".btn",div).button();
             $(".btn-note-edit",div).on("click",function(){
                 console.log("edit!",this.id);
+                var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
+                dlgAnnotation.show( note.subject, note, null, idx, function(){
+                    window.refreshUI();
+                });
             });
 
             $(".btn-note-comment",div).on("click",function(){
                 console.log("comment!");
                 dlgAnnotation.show( note.subject, note, null, null, function(){
-                    //refreshUI( id );
+                    window.refreshUI();
                 });
             });
 
             $(".btn-note-reopen",div).on("click",function(){
                 console.log("reopen!");
                 dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
-                    //refreshUI( id );
+                    window.refreshUI();
                 });
             });
 
             $(".btn-note-close",div).on("click",function(){
                 console.log("close!");
                 dlgAnnotation.show( note.subject, note, model.NOTE_CLOSED, null, function(){
-                    //refreshUI( id );
+                    window.refreshUI();
                 });
             });
 
             $(".btn-note-activate",div).on("click",function(){
                 console.log("activate!");
                 dlgAnnotation.show( note.subject, note, model.NOTE_ACTIVE, null, function(){
-                    //refreshUI( id );
+                    window.refreshUI();
                 });
             });
 
             $(".btn-note-deactivate",div).on("click",function(){
                 dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
-                    //refreshUI( id );
+                    window.refreshUI();
                 });
             });
         }

@@ -403,6 +403,11 @@ export function annotationUpdate( a_id, a_comment, a_new_state, a_cb ){
         (a_new_state!=null?"&new_state="+a_new_state:""),null, a_cb );
 }
 
+export function annotationCommentEdit( a_id, a_comment, a_comment_idx, a_title, a_cb ){
+    _asyncGet( "/api/note/comment/edit?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
+        "&comment_idx=" + a_comment_idx + (a_title!=null?"&title="+a_title:""),null, a_cb );
+}
+
 export function repoList( a_details, a_list_all, a_cb ){
     var url = "/api/repo/list";
     if ( a_details )
