@@ -154,43 +154,26 @@ router.post('/comment/edit', function (req, res) {
 
                 var note = g_db.n.document( req.queryParams.id );
 
-                // Action requirements:
-                // None (comment) - If open: only note creator or subject admin, if active: anyone with read access to subject
-                // Open (must not be open) - Must be note creator or subject admin
-                // Close (must not be closed) - Must be note creator or subject admin
-                // Activate (must not be active) - Must be subject admin
+                if ( req.queryParams.comment_idx >= note.comments.length )
+                    throw [g_lib.ERR_INVALID_PARAM,"Comment index out of range."];
 
-                if ( req.queryParams.action === note.state ){
-                    throw [g_lib.ERR_INVALID_PARAM,"Invalid annotaion action."];
+                if ( req.queryParams.title && req.queryParams.comment_idx > 0 )
+                    throw [g_lib.ERR_INVALID_PARAM,"Title can only be changed with first comment."];
+
+                var obj = { ut: Math.floor( Date.now()/1000 ) }, comment = note.comments[req.queryParams.comment_idx];
+
+                if ( client._id != comment.user ){
+                    throw [g_lib.ERR_PERM_DENIED,"Only original commentor may edit comments."];
                 }
 
-                if ( client._id != note.creator ){
-                    if ( req.queryParams.action === g_lib.NOTE_ACTIVE )
-                        throw [g_lib.ERR_PERM_DENIED,"Insufficient permissions to activate annotaion."];
-
-                    var ne = g_db.note.firstExample({ _to: note._id });
-                    if ( !g_lib.hasAdminPermObject( client, ne._from )) {
-                        if ( req.queryParams.action === undefined && note.state == g_lib.NOTE_ACTIVE ){
-                            // Anyone with read permission to subject doc can comment on active notes
-                            var doc = g_db._document( ne._from );
-                            if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
-                                throw g_lib.ERR_PERM_DENIED;
-                            }
-                        }else{
-                            throw [g_lib.ERR_PERM_DENIED,"Insufficient permissions to update annotaion."];
-                        }
-                    }
+                if ( req.queryParams.comment != comment.comment ){
+                    g_lib.procInputParam( req.queryParams, "comment", false, comment );
+                    obj.comments = note.comments;
                 }
 
-                var time = Math.floor( Date.now()/1000 );
-                var obj = { ut: time, comments: note.comments };
-
-                if ( req.queryParams.action !== undefined )
-                    obj.state = req.queryParams.action;
-
-                g_lib.procInputParam( req.queryParams, "desc", false, obj );
-                obj.comments.push({ user: client._id, action: req.queryParams.action!==undefined?req.queryParams.action:null, time:time, comment: obj.desc });
-                delete obj.desc;
+                if ( req.queryParams.title != note.title ){
+                    g_lib.procInputParam( req.queryParams, "title", false, obj );
+                }
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
 
@@ -203,10 +186,11 @@ router.post('/comment/edit', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "ID of annotation")
-.queryParam('desc', joi.string().required(), "New description / comments")
-.queryParam('index', joi.number().min(0).required(), "Comment index number to edit")
+.queryParam('comment', joi.string().required(), "New description / comments")
+.queryParam('comment_idx', joi.number().min(0).required(), "Comment index number to edit")
+.queryParam('title', joi.string().optional(), "New title (only valid for comment idx 0)")
 .summary('Edit an annotation comment')
-.description('Edit a specific comment within an annotation (replaces existing comment with that provided).');
+.description('Edit a specific comment within an annotation and/or title (replaces existing comment with that provided).');
 
 
 router.get('/view', function (req, res) {
