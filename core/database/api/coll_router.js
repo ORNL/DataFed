@@ -271,19 +271,19 @@ router.get('/read', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title";
+        var qry = "for v in 1..1 outbound @coll item let ann = (for a in note filter a._from == v._id return 1) sort is_same_collection('c',v) DESC, v.title";
         var result;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, notes: length(ann), locked: v.locked }";
             result = g_db._query( qry, { coll: coll_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, notes: length(ann), locked: v.locked }";
             result = g_db._query( qry, { coll: coll_id });
         }
 
