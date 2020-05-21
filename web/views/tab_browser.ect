@@ -74,6 +74,7 @@
                 <ul>
                     <li><a href="#tab-sel-info">Information</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
+                    <li><a href="#tab-sel-notes">Annotations</a></li>
                 </ul>
                 <div id="tab-sel-info" class="ui-widget-content content" style="padding:0;height:100%;min-height:0">
                     <div id="sel_info_div" style="height:100%;overflow:auto;padding:.5em .5em;display:none"></div>
@@ -117,6 +118,31 @@
                     <div class="content col-flex" style="height:100%">
                         <div class='row-flex shadowed' style='flex:none;align-items:center;padding:.25em'>Filter:&nbsp<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp<button class='btn small' id='md_filter_reset'>Reset</button></div>
                         <div id="data_md_tree" class="no-border" style="flex:auto;padding:.5em 0 0 0;background:transparent;display:inline-block;overflow:auto"></div>
+                    </div>
+                </div>
+                <div id="tab-sel-notes" style="padding:0;height:100%;min-height:0;overflow:auto">
+                    <div class="col-flex" style="height:100%">
+                        <div class="ui-widget-content content" style='flex:1 1 30%;overflow:auto'>
+                            <div id="note-tabs" class='tabs-no-header ui-widget-content content' style="">
+                                <ul>
+                                    <li><a href="#tab-note-active">Active</a></li>
+                                    <li><a href="#tab-note-open">Open</a></li>
+                                    <li><a href="#tab-note-closed">Closed</a></li>
+                                </ul>
+                                <div id="tab-note-active" class="ui-widget-content" style="padding:0;overflow:auto;min-height:0;background:blue">
+                                Active!
+                                </div>
+                                <div id="tab-note-open" class="ui-widget-content" style="padding:0;overflow:auto;min-height:0">
+                                Open
+                                </div>
+                                <div id="tab-note-closed" class="" style="padding:0;overflow:auto;min-height:0">
+                                Closed
+                                </div>
+                            </div>
+                        </div>
+                        <div id='note-details' style='flex:1 1 70%;overflow:auto;background:green'>
+                        Note details
+                        </div>
                     </div>
                 </div>
             </div>

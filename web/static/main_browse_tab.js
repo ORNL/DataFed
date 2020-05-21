@@ -1936,6 +1936,15 @@ $("#info-tabs").tabs({
     active: 0,
 });
 
+$("#note-tabs").tabs({
+    heightStyle:"content",
+    active: 0,
+    activate: function( event, ui ) {
+        ui.newPanel.css("display","flex");
+    }
+});
+
+
 $(".prov-graph-close").click( function(){
     graph_panel.clear();
     $('[href="#tab-prov-graph"]').closest('li').hide();
