@@ -1178,15 +1178,9 @@ function actionAnnotate(){
 
     permGateAny( id, model.PERM_RD_REC | model.PERM_RD_META | model.PERM_RD_DATA, function( perms ){
         dlgAnnotation.show( id, null, null, null, function(){
-            refreshUI( id );
+            panel_info.showSelectedInfo( id );
         });
     });
-
-    /*if ( id.charAt(0) == "d" ) {
-        graph_panel.load( id );
-        $('[href="#tab-prov-graph"]').closest('li').show();
-        $( "#data-tabs" ).tabs({ active: 3 });
-    }*/
 }
 
 function actionDataGet() {
