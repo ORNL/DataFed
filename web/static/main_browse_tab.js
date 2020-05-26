@@ -49,7 +49,6 @@ var taskTimer, taskHist = [];
 var pollSince = settings.opts.task_hist * 3600;
 var pollMax = 120;
 var pollMin = 4;
-var note_icon = ["circle-help","comment","alert","flag"];
 
 export function windowResized(){
     var h = $("#data-tabs-parent").height();
@@ -59,10 +58,13 @@ export function windowResized(){
     $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
 
     h = $("#info-tabs-parent").height();
+    console.log("info-tabs-parent h:",h)
     tabs = $("#info-tabs");
-    hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
+    //hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
+    hdr_h = $("#info-tabs > .ui-tabs-nav").outerHeight();
+    console.log("info-tabs hdr h:",hdr_h)
     tabs.outerHeight(h);
-    $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
+    $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
     if ( graph_panel )
         graph_panel.resized( $("#data-tabs-parent").width(), h - hdr_h );
 }
@@ -1936,15 +1938,6 @@ $("#info-tabs").tabs({
     active: 0,
 });
 
-$("#note-tabs").tabs({
-    heightStyle:"content",
-    active: 0,
-    activate: function( event, ui ) {
-        ui.newPanel.css("display","flex");
-    }
-});
-
-
 $(".prov-graph-close").click( function(){
     graph_panel.clear();
     $('[href="#tab-prov-graph"]').closest('li').hide();
@@ -2344,11 +2337,11 @@ export function init(){
                         cache: false
                     };
                 }
-            } else if ( data.node.key.startsWith("note_")) {
+            /*} else if ( data.node.key.startsWith("note_")) {
                 data.result = {
                     url: "/api/note/list/by_subject?subject=" + encodeURIComponent(data.node.key.substr(5)),
                     cache: false
-                };
+                };*/
             } else if ( data.node.key == "allocs" ) {
                 data.result = {
                     url: "/api/repo/alloc/list/by_subject?subject=" + encodeURIComponent(data.node.data.scope),
@@ -2467,7 +2460,7 @@ export function init(){
                         data.result.push({ title: alloc.repo.substr(5) + (i==0?" (default)":""),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
                 }
-            } else if ( data.node.key.startsWith("note_")) {
+            /*} else if ( data.node.key.startsWith("note_")) {
                 data.result = [];
                 if ( data.response.note && data.response.note.length ){
                     var note,open=[],closed=[],entry,ns,nt;
@@ -2492,7 +2485,7 @@ export function init(){
                     if ( closed.length ){
                         data.result.push({title:"Closed",icon:"ui-icon ui-icon-news",folder:true,children:closed,nodrag:true,checkbox:false});
                     }
-                }
+                }*/
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
                 // Define key prefixes for collections in special tree locations
@@ -2507,9 +2500,9 @@ export function init(){
                 var items = data.response.data?data.response.data:data.response.item;
 
                 // Annotation entry for parent collection
-                if ( data.node.key.startsWith( "c/" )){
+                /*if ( data.node.key.startsWith( "c/" )){
                     data.result.push({title:"Annotations",folder:true,lazy:true,icon:"ui-icon ui-icon-news",checkbox:false,scope:scope,nodrag:true,key:"note_"+data.node.key});
-                }
+                }*/
 
                 addTreePagingNode( data );
 

@@ -6,10 +6,16 @@ import * as dlgAnnotation from "./dlg_annotation.js";
 
 var form = $("#sel_info_form");
 var div = $("#sel_info_div");
+var note_div = $("#note-div");
+var note_details = $("#note-details");
 var data_md_tree = null;
 var data_md_empty = true;
-var data_md_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}];
+var tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}];
 var data_md_exp = {};
+var note_active_tree = null;
+var note_open_tree = null;
+var note_closed_tree = null;
+var note_icon = ["circle-help","comment","alert","flag"];
 
 export function showSelectedInfo( node ){
 
@@ -58,8 +64,8 @@ export function showSelectedInfo( node ){
         showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
     }else if ( key.startsWith("p/")){
         showSelectedProjInfo( key );
-    }else if ( key.startsWith("n/")){
-        showSelectedNoteInfo( key );
+    //}else if ( key.startsWith("n/")){
+    //    showSelectedNoteInfo( key );
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
             showSelectedItemInfo( item );
@@ -84,6 +90,9 @@ export function showSelectedInfo( node ){
 export function showSelectedItemInfo( item ){
     if ( item && item.id ){
         showSelectedItemForm( item );
+        if ( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )){
+            setupAnnotationTab( item.id );
+        }
         if ( item.metadata ){
             showSelectedMetadata( item.metadata );
         }else{
@@ -91,6 +100,7 @@ export function showSelectedItemInfo( item ){
         }
     }else{
         form.hide();
+        note_div.hide();
         showSelectedMetadata();
         //showSelectedHTML( "Insufficient permissions to view data record." );
     }
@@ -98,6 +108,7 @@ export function showSelectedItemInfo( item ){
 
 function showSelectedHTML( html ){
     form.hide();
+    note_div.hide();
     div.html(html).show();
     showSelectedMetadata();
 }
@@ -120,6 +131,98 @@ function showSelectedProjInfo( key ){
     }); 
 }
 
+$("#note_active_tree").fancytree({
+    extensions: ["themeroller"],
+    themeroller: {
+        activeClass: "my-fancytree-active",
+        addClass: "",
+        focusClass: "",
+        hoverClass: "my-fancytree-hover",
+        selectedClass: ""
+    },
+    source: [],
+    nodata: false,
+    selectMode: 1,
+    activate: function( event, data ) {
+        showSelectedNoteInfo( data.node.key );
+    }
+});
+
+note_active_tree = $.ui.fancytree.getTree("#note_active_tree");
+
+$("#note_open_tree").fancytree({
+    extensions: ["themeroller"],
+    themeroller: {
+        activeClass: "my-fancytree-active",
+        addClass: "",
+        focusClass: "",
+        hoverClass: "my-fancytree-hover",
+        selectedClass: ""
+    },
+    source: [],
+    nodata: false,
+    selectMode: 1,
+    activate: function( event, data ) {
+        showSelectedNoteInfo( data.node.key );
+    }
+});
+
+note_open_tree = $.ui.fancytree.getTree("#note_open_tree");
+
+$("#note_closed_tree").fancytree({
+    extensions: ["themeroller"],
+    themeroller: {
+        activeClass: "my-fancytree-active",
+        addClass: "",
+        focusClass: "",
+        hoverClass: "my-fancytree-hover",
+        selectedClass: ""
+    },
+    source: [],
+    nodata: false,
+    selectMode: 1,
+    activate: function( event, data ) {
+        showSelectedNoteInfo( data.node.key );
+    }
+});
+
+note_closed_tree = $.ui.fancytree.getTree("#note_closed_tree");
+
+function setupAnnotationTab( a_id ){
+    api.annotationListBySubject( a_id, function( ok, data ){
+        if ( ok ){
+            console.log("data:",data);
+            var note_active = [],
+                note_open = [],
+                note_closed = [],
+                note, entry, ns, nt;
+
+            if ( data.note ){
+                for ( var i = 0; i < data.note.length; i++ ) {
+                    note = data.note[i];
+                    nt = model.NoteTypeFromString[note.type];
+                    ns = model.NoteStateFromString[note.state];
+                    console.log("note:",note);
+
+                    entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key:note.id};
+                    if ( ns == model.NOTE_ACTIVE ){
+                        note_active.push(entry);
+                    }else if ( ns == model.NOTE_OPEN ){
+                        note_open.push(entry);
+                    }else{
+                        note_closed.push(entry);
+                    }
+                }
+            }
+
+            note_active_tree.reload(note_active.length?note_active:tree_empty_src);
+            note_open_tree.reload(note_open.length?note_open:tree_empty_src);
+            note_closed_tree.reload(note_closed.length?note_closed:tree_empty_src);
+            note_div.show();
+        }
+    });
+}
+
 function showSelectedNoteInfo( key ){
     api.annotationView( key, function( ok, data ){
         //console.log("note reply:",ok,data);
@@ -133,7 +236,7 @@ function showSelectedNoteInfo( key ){
             date_ut.setTime(note.ut*1000);
     
             html = "<table class='sel-info-table'>\
-                <tr><td>Type:</td><td>Annotation, "+model.NoteTypeLabel[nt]+"</td></tr>\
+                <tr><td>Type:</td><td>"+model.NoteTypeLabel[nt]+"</td></tr>\
                 <tr><td>ID:</td><td>"+note.id+"</td></tr>\
                 <tr><td>Title:</td><td>"+util.escapeHTML(note.title)+"</td></tr>\
                 <tr><td>Status:</td><td>"+model.NoteStateLabel[ns]+"</td></tr>\
@@ -191,52 +294,76 @@ function showSelectedNoteInfo( key ){
                 html += "</div>";
             }
 
-            showSelectedHTML( html );
-            $(".btn",div).button();
-            $(".btn-note-edit",div).on("click",function(){
+            //showSelectedHTML( html );
+            note_details.html(html);
+
+            $(".btn",note_details).button();
+            $(".btn-note-edit",note_details).on("click",function(){
                 console.log("edit!",this.id);
                 var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
                 dlgAnnotation.show( note.subject, note, null, idx, function(){
-                    window.refreshUI();
+                    showSelectedNoteInfo( key );
                 });
             });
 
-            $(".btn-note-comment",div).on("click",function(){
+            $(".btn-note-comment",note_details).on("click",function(){
                 console.log("comment!");
                 dlgAnnotation.show( note.subject, note, null, null, function(){
-                    window.refreshUI();
+                    showSelectedNoteInfo( key );
                 });
             });
 
-            $(".btn-note-reopen",div).on("click",function(){
+            $(".btn-note-reopen",note_details).on("click",function(){
                 console.log("reopen!");
                 dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
-                    window.refreshUI();
+                    showSelectedNoteInfo( key );
                 });
             });
 
-            $(".btn-note-close",div).on("click",function(){
+            $(".btn-note-close",note_details).on("click",function(){
                 console.log("close!");
                 dlgAnnotation.show( note.subject, note, model.NOTE_CLOSED, null, function(){
-                    window.refreshUI();
+                    showSelectedNoteInfo( key );
                 });
             });
 
-            $(".btn-note-activate",div).on("click",function(){
+            $(".btn-note-activate",note_details).on("click",function(){
                 console.log("activate!");
                 dlgAnnotation.show( note.subject, note, model.NOTE_ACTIVE, null, function(){
-                    window.refreshUI();
+                    showSelectedNoteInfo( key );
                 });
             });
 
-            $(".btn-note-deactivate",div).on("click",function(){
+            $(".btn-note-deactivate",note_details).on("click",function(){
                 dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
-                    window.refreshUI();
+                    showSelectedNoteInfo( key );
                 });
             });
         }
     });
 }
+
+$("#note-tabs").tabs({
+    heightStyle:"content",
+    active: 0,
+    activate: function(ev,ui){
+        console.log("tab act:",ui);
+        var node;
+
+        if ( ui.newPanel[0].id == "tab-note-active" ){
+            node = note_active_tree.getActiveNode();
+        }else if ( ui.newPanel[0].id == "tab-note-open" ){
+            node = note_open_tree.getActiveNode();
+        }else{
+            node = note_closed_tree.getActiveNode();
+        }
+
+        if ( node )
+            showSelectedNoteInfo( node.key );
+        else
+            note_details.html("");
+    }
+});
 
 function showSelectedAllocInfo( repo, user ){
     api.allocView( repo, user, function( ok, data ){
@@ -440,7 +567,7 @@ function showSelectedMetadata( md_str )
         data_md_tree.reload( src );
         data_md_empty = false;
     } else if ( !data_md_empty ) {
-        data_md_tree.reload(data_md_empty_src);
+        data_md_tree.reload(tree_empty_src);
         data_md_empty = true;
     }
 }
@@ -469,7 +596,7 @@ $("#data_md_tree").fancytree({
         autoExpand: true,
         mode: "hide"
     },
-    source: data_md_empty_src,
+    source: tree_empty_src,
     nodata: false,
     selectMode: 1,
     beforeExpand: function(event,data){

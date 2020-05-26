@@ -388,6 +388,10 @@ export function userFindByNameUID( a_name_uid, a_offset, a_count, a_cb ) {
     _asyncGet( url, null, a_cb );
 }
 
+export function annotationListBySubject( a_id, a_cb ){
+    _asyncGet( "/api/note/list/by_subject?subject="+encodeURIComponent(a_id), null, a_cb );
+}
+
 export function annotationView( a_id, a_cb ){
     _asyncGet( "/api/note/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
