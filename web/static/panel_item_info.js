@@ -199,6 +199,8 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                 note_closed = [],
                 note, entry, ns, nt;
 
+            var act = $("#note-tabs").tabs('option', 'active');
+
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
@@ -208,10 +210,16 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
                     entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject: a_subject_id };
                     if ( ns == model.NOTE_ACTIVE ){
+                        if ( note_active.length == 0 && act != 0 )
+                            entry.active = true;
                         note_active.push(entry);
                     }else if ( ns == model.NOTE_OPEN ){
+                        if ( note_open.length == 0  && act != 1 )
+                            entry.active = true;
                         note_open.push(entry);
                     }else{
+                        if ( note_closed.length == 0  && act != 2 )
+                            entry.active = true;
                         note_closed.push(entry);
                     }
                 }
@@ -219,7 +227,8 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
             if ( note_active.length ){
                 note_active_tree.reload(note_active).done( function(){
-                    note_active_tree.activateKey( note_active[0].key );
+                    if ( act == 0 )
+                        note_active_tree.activateKey( note_active[0].key );
                 });
             }else{
                 note_active_tree.reload(tree_empty_src);
@@ -227,7 +236,8 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
             if ( note_open.length ){
                 note_open_tree.reload(note_open).done( function(){
-                    note_open_tree.activateKey( note_open[0].key );
+                    if ( act == 1 )
+                        note_open_tree.activateKey( note_open[0].key );
                 });
             }else{
                 note_open_tree.reload(tree_empty_src);
@@ -235,7 +245,8 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
             if ( note_closed.length ){
                 note_closed_tree.reload(note_closed).done( function(){
-                    note_closed_tree.activateKey( note_closed[0].key );
+                    if ( act == 2 )
+                        note_closed_tree.activateKey( note_closed[0].key );
                 });
             }else{
                 note_closed_tree.reload(tree_empty_src);
