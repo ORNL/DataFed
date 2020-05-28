@@ -259,6 +259,26 @@ svg text
     width:100%;
 }
 
+
+.sel-note-table
+{
+    width:100%;
+}
+
+.sel-note-table tr
+{
+    vertical-align:top;
+}
+
+.sel-note-table td{
+    padding: 0.2em .5em 0 0;
+}
+
+.sel-note-table td:nth-child(2){
+    width:100%;
+}
+
+
 .form-table
 {
     width:100%;

@@ -193,7 +193,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
     api.annotationListBySubject( a_subject_id, function( ok, data ){
         if ( ok ){
-            console.log("data:",data);
+            //console.log("data:",data);
             var note_active = [],
                 note_open = [],
                 note_closed = [],
@@ -204,7 +204,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                     note = data.note[i];
                     nt = model.NoteTypeFromString[note.type];
                     ns = model.NoteStateFromString[note.state];
-                    console.log("note:",note);
+                    //console.log("note:",note);
 
                     entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject: a_subject_id };
                     if ( ns == model.NOTE_ACTIVE ){
@@ -217,9 +217,40 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                 }
             }
 
-            note_active_tree.reload(note_active.length?note_active:tree_empty_src);
-            note_open_tree.reload(note_open.length?note_open:tree_empty_src);
-            note_closed_tree.reload(note_closed.length?note_closed:tree_empty_src);
+            if ( note_active.length ){
+                note_active_tree.reload(note_active).done( function(){
+                    note_active_tree.activateKey( note_active[0].key );
+                });
+            }else{
+                note_active_tree.reload(tree_empty_src);
+            }
+
+            if ( note_open.length ){
+                note_open_tree.reload(note_open).done( function(){
+                    note_open_tree.activateKey( note_open[0].key );
+                });
+            }else{
+                note_open_tree.reload(tree_empty_src);
+            }
+
+            if ( note_closed.length ){
+                note_closed_tree.reload(note_closed).done( function(){
+                    note_closed_tree.activateKey( note_closed[0].key );
+                });
+            }else{
+                note_closed_tree.reload(tree_empty_src);
+            }
+
+            var disabled = [];
+            if ( note_active.length == 0 )
+                disabled.push(0);
+            if ( note_open.length == 0 )
+                disabled.push(1);
+            if ( note_closed.length == 0 )
+                disabled.push(2);
+
+            $("#note-tabs").tabs("option","disabled",disabled);
+
             note_div.show();
 
             if ( a_cb )
@@ -229,6 +260,11 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 }
 
 function showSelectedNoteInfo( node ){
+    if ( !node.key.startsWith("n/")){
+        note_details.html("");
+        return;
+    }
+
     api.annotationView( node.key, function( ok, data ){
         //console.log("note reply:",ok,data);
         if ( ok && data.note ){
@@ -239,20 +275,47 @@ function showSelectedNoteInfo( node ){
 
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
-    
-            html = "<table class='sel-info-table'>\
-                <tr><td>Type:</td><td>"+model.NoteTypeLabel[nt]+"</td></tr>\
-                <tr><td>ID:</td><td>"+note.id+"</td></tr>\
+
+            //<tr><td>ID:</td><td>"+note.id+"</td></tr>\
+
+            html = "<div class='col-flex' style='height:100%'><div style='flex:1 1 auto;overflow:auto'>\
+                <div style='padding:0 0 .5em 0'>Annotation Information:</div>\
+                <table class='sel-note-table' style='padding:0 0 0 .5em'>\
                 <tr><td>Title:</td><td>"+util.escapeHTML(note.title)+"</td></tr>\
-                <tr><td>Status:</td><td>"+model.NoteStateLabel[ns]+"</td></tr>\
+                <tr><td>Type:</td><td>"+model.NoteTypeLabel[nt]+" ["+model.NoteStateLabel[ns] + "]</td></tr>\
                 <tr><td>Creator:</td><td>"+note.comment[0].user.substr(2)+"</td></tr>\
                 <tr><td>Created:</td><td>"+date_ct.toLocaleDateString("en-US", settings.date_opts)+"</td></tr>\
                 <tr><td>Updated:</td><td>"+date_ut.toLocaleDateString("en-US", settings.date_opts)+"</td></tr>\
                 </table>";
 
             var is_creator = ( note.comment[0].user == "u/"+settings.user.uid );
+            html += "<div style='padding:1em 0 0 0'>Annotation History:</div>";
 
-            html += "<div style='padding:1.5em .6em 0 .6em'>";
+            for ( var i in note.comment ){
+                comm = note.comment[i];
+                date_ut.setTime(comm.time*1000);
+                html += "<div style='padding:1em 0 0 0'>" + date_ut.toLocaleDateString("en-US", settings.date_opts) + ", <b>"+ comm.user.substr(2) + " ";
+
+                switch ( comm.state ){
+                    case "NOTE_OPEN": html += "opened"; break;
+                    case "NOTE_CLOSED": html += "closed"; break;
+                    case "NOTE_ACTIVE": html += "activated"; break;
+                    default: html += "replied to"; break;
+                }
+
+                html += "</b> annotation:<br>";
+
+                if ( comm.user == "u/"+settings.user.uid ){
+                    html += "<div class='row-flex' style='padding:.5em;align-items:flex-end'><div class='ui-widget-content' style='flex:1 1 auto;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
+                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn small btn-note-edit' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
+                }else{
+                    html += "<div class='ui-widget-content' style='margin:0.5em;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
+                }
+
+                html += "</div>";
+            }
+
+            html += "</div><div style='flex:none;padding:1em 0 0 0'>";
 
             if ( ns != model.NOTE_CLOSED ){
                 html += "<button class='btn btn-note-comment'>Reply</button>&nbsp";
@@ -274,30 +337,7 @@ function showSelectedNoteInfo( node ){
                 html += "<button class='btn btn-note-close'>Close</button>";
             }
 
-            html += "</div>";
-
-            for ( var i in note.comment ){
-                comm = note.comment[i];
-
-                html += "<div style='padding:1.5em 0 0 0'>User " + comm.user.substr(2) + " ";
-                switch ( comm.state ){
-                    case "NOTE_OPEN": html += "opened"; break;
-                    case "NOTE_CLOSED": html += "closed"; break;
-                    case "NOTE_ACTIVE": html += "activated"; break;
-                    default: html += "commented"; break;
-                }
-
-                date_ut.setTime(comm.time*1000);
-                html += " annotation on " + date_ut.toLocaleDateString("en-US", settings.date_opts) + "<br>";
-                if ( comm.user == "u/"+settings.user.uid ){
-                    html += "<div class='row-flex' style='padding:1em 0 0 1em;align-items:flex-end'><div style='flex:1 1 auto;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
-                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn small btn-note-edit' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
-                }else{
-                    html += "<div style='padding:1em 1em 0 1em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
-                }
-
-                html += "</div>";
-            }
+            html += "</div></div>";
 
             note_details.html(html);
 
@@ -364,7 +404,7 @@ $("#note-tabs").tabs({
     heightStyle:"content",
     active: 0,
     activate: function(ev,ui){
-        console.log("tab act:",ui);
+        //console.log("tab act:",ui);
         var node;
 
         if ( ui.newPanel[0].id == "tab-note-active" ){
