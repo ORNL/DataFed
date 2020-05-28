@@ -358,14 +358,6 @@ function showSelectedNoteInfo( node ){
                 var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
                 dlgAnnotation.show( note.subject, note, null, idx, function( data ){
                     showSelectedNoteInfo( node );
-                    // TODO If title updated, update listing
-                    console.log("data",data);
-                    nt = model.NoteTypeFromString[note.type];
-                    ns = model.NoteStateFromString[note.state];
-                    //console.log("note:",note);
-
-                    //entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject: a_subject_id };
-
                     node.setTitle( data.note[0].title );
                 });
             });
