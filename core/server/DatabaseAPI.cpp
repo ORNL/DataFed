@@ -2730,6 +2730,14 @@ DatabaseAPI::annotationListBySubject( const AnnotationListBySubjectRequest & a_r
 }
 
 void
+DatabaseAPI::annotationPurge( uint32_t a_age_sec )
+{
+    Value result;
+
+    dbGet( "note/purge", {{"age_sec",to_string( a_age_sec )}}, result );
+}
+
+void
 DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   j;

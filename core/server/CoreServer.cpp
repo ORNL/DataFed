@@ -1,4 +1,5 @@
 #include <fstream>
+#include <chrono>
 #include <time.h>
 #include <curl/curl.h>
 #include "DynaLog.hpp"
@@ -31,7 +32,8 @@ Server::Server() :
     m_io_insecure_thread(0),
     m_io_running(false),
     m_zap_thread(0),
-    m_msg_router_thread(0)
+    m_msg_router_thread(0),
+    m_db_maint_thread(0)
 {
     curl_global_init( CURL_GLOBAL_DEFAULT );
 
@@ -44,6 +46,7 @@ Server::Server() :
     loadRepositoryConfig();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
+    m_db_maint_thread = new thread( &Server::dbMaintenance, this );
 
     // Create task mgr
     TaskMgr::getInstance();
@@ -56,6 +59,9 @@ Server::~Server()
 
     m_zap_thread->join();
     delete m_zap_thread;
+
+    m_db_maint_thread->join();
+    delete m_db_maint_thread;
 }
 
 void
@@ -218,6 +224,36 @@ Server::ioInsecure()
     }
 }
 
+void
+Server::dbMaintenance()
+{
+    chrono::system_clock::duration  purge_per = chrono::seconds( m_config.note_purge_period );
+    DatabaseAPI                     db( m_config.db_url, m_config.db_user, m_config.db_pass );
+
+    while ( 1 )
+    {
+        try
+        {
+            DL_DEBUG( "DB Maint: Purging closed annotations" );
+            db.annotationPurge( m_config.note_purge_age );
+        }
+        catch( TraceException & e )
+        {
+            DL_ERROR( "DB Maint:" << e.toString() );
+        }
+        catch( exception & e )
+        {
+            DL_ERROR( "DB Maint:" << e.what() );
+        }
+        catch( ... )
+        {
+            DL_ERROR( "DB Maint: Unknown exception" );
+        }
+
+        this_thread::sleep_for( purge_per );
+    }
+    DL_ERROR( "DB maintenance thread exiting" );
+}
 
 
 void

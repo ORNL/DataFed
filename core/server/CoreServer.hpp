@@ -39,9 +39,8 @@ private:
     void msgRouter();
     void ioSecure();
     void ioInsecure();
-    void ioServices();
-    void ioClients();
     void zapHandler();
+    void dbMaintenance();
 
     Config &                        m_config;
     std::thread *                   m_io_secure_thread;
@@ -57,6 +56,7 @@ private:
     std::thread *                   m_msg_router_thread;
     std::vector<ClientWorker*>      m_workers;
     std::thread *                   m_io_local_thread;
+    std::thread *                   m_db_maint_thread;
 
     friend class Session;
 };

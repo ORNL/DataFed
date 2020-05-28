@@ -357,8 +357,10 @@ function showSelectedNoteInfo( node ){
                 console.log("edit!",this.id);
                 var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
                 dlgAnnotation.show( note.subject, note, null, idx, function( data ){
-                    showSelectedNoteInfo( node );
-                    node.setTitle( data.note[0].title );
+                    if ( data ){
+                        showSelectedNoteInfo( node );
+                        node.setTitle( data.note[0].title );
+                    }
                 });
             });
 

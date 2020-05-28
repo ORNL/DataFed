@@ -30,7 +30,9 @@ struct Config
         task_purge_period( 6*3600 ),
         task_retry_time_fail( 3600 ),
         task_retry_time_init( 20 ), // Doubles every retry until max
-        task_retry_backoff_max( 3 )
+        task_retry_backoff_max( 3 ),
+        note_purge_age( 7*24*3600 ),
+        note_purge_period( 6*3600 )
     {}
 
     std::string     cred_dir;
@@ -50,6 +52,8 @@ struct Config
     uint32_t        task_retry_time_fail;
     uint32_t        task_retry_time_init;
     uint32_t        task_retry_backoff_max;
+    uint32_t        note_purge_age;
+    uint32_t        note_purge_period;
 
     MsgComm::SecurityContext            sec_ctx;
     std::map<std::string,RepoData*>     repos;
