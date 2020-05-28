@@ -255,7 +255,7 @@ router.get('/list/by_subject', function (req, res) {
 .description('List annotations attached to subject data record or colelction');
 
 
-router.post('/purge', function (req, res) {
+router.get('/purge', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -263,10 +263,14 @@ router.post('/purge', function (req, res) {
                 write: ["n","note"]
             },
             action: function() {
+                console.log("note purge, age:", req.queryParams.age_sec );
+
                 var t = (Date.now()/1000) - req.queryParams.age_sec;
-                var notes = g_db._query( "for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " return i._id" );
+                var id, notes = g_db._query( "for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " return i._id" );
                 while ( notes.hasNext() ){
-                    g_lib.graph.n.remove(notes.next());
+                    id = notes.next();
+                    console.log("purging",id);
+                    g_lib.graph.n.remove(id);
                 }
             }
         });
