@@ -81,7 +81,7 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
                                 dialogs.dlgAlert( "Server Error", data );
                             } else {
                                 dlg_inst.dialog('close');
-                                cb();
+                                cb( data );
                             }
                         });
                     }else{

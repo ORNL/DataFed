@@ -148,6 +148,11 @@ textarea.ui-state-disabled
     color: #803636!important;
 }
 
+.ui-icon-note
+{
+    color: #0080FF
+}
+
 .ui-icon-person
 {
     color: #0000FF

@@ -147,6 +147,9 @@ export function generateTitle( item, refresh, unstruct = false ) {
     if ( item.locked )
         title += "<i class='ui-icon ui-icon-locked'></i> ";
 
+    if ( item.notes )
+        title += "<i class='ui-icon ui-icon-note'></i> ";
+
     title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>" + (refresh?"&nbsp<i class='browse-reload ui-icon ui-icon-reload'></i>":"") + "<span class='data-tree-subtitle'>";
     title += "<span class='data-tree-id'>" + item.id + "</span>";
     title += "<span class='data-tree-alias'>" + (item.alias?item.alias.substr(item.alias.lastIndexOf(":") + 1):"") + "</span>";
