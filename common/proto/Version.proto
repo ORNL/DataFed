@@ -5,7 +5,7 @@ enum VerMajor
 
 enum VerMinor
 {
-    VER_MINOR = 12;
+    VER_MINOR = 13;
 }
 
 enum VerBuild

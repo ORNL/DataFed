@@ -244,7 +244,7 @@ class API:
     # @param metadata - Domain-specific metadata (JSON object, optional)
     # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
     # @param metadata_set - Set (replace) existing metadata with provided (default is merge)
-    # @param dep_clear - Clear existing dependencies
+    # @param deps - Set all dependencies (array of tuples of relation type and record ID)
     # @param deps_add - Dependencies to add (array of tuples of relation type and record ID)
     # @param deps_rem - Dependencies to remove (array of tuples of relation type and record ID)
     # @param context - User or project ID to use for alias resolution (optional)
@@ -252,14 +252,14 @@ class API:
     # @exception Exception: On invalid options or communication/server error
     #
     def dataUpdate( self, data_id, title = None, alias = None, description = None, keywords = None,
-        extension = None, metadata = None, metadata_file = None, metadata_set = False, dep_clear = False, dep_add = None,
-        dep_rem = None, context = None ):
+        extension = None, metadata = None, metadata_file = None, metadata_set = False, deps = None, deps_add = None,
+        deps_rem = None, context = None ):
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options." )
 
-        if dep_clear and dep_rem:
-            raise Exception( "Cannot specify both dep-clear and dep-rem options." )
+        if deps and ( deps_add or deps_rem ):
+            raise Exception( "Cannot specify both deps and deps-add or deps-rem options." )
 
         msg = auth.RecordUpdateRequest()
         msg.id = self._resolve_id( data_id, context )
@@ -297,11 +297,20 @@ class API:
         if metadata_set:
             msg.mdset = True
 
-        if dep_clear:
-            msg.deps_clear = True
+        if deps:
+            for d in deps:
+                dep = msg.deps.add()
+                if d[0] == "der":
+                    dep.type = 0
+                elif d[0] == "comp":
+                    dep.type = 1
+                elif d[0] == "ver":
+                    dep.type = 2
+                dep.id = self._resolve_id( d[1], context )
 
-        if dep_add:
-            for d in dep_add:
+
+        if deps_add:
+            for d in deps_add:
                 dep = msg.deps_add.add()
                 if d[0] == "der":
                     dep.type = 0
@@ -311,8 +320,8 @@ class API:
                     dep.type = 2
                 dep.id = self._resolve_id( d[1], context )
 
-        if dep_rem:
-            for d in dep_rem:
+        if deps_rem:
+            for d in deps_rem:
                 dep = msg.deps_rem.add()
                 if d[0] == "der":
                     dep.type = 0

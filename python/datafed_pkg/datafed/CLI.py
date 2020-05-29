@@ -656,12 +656,12 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON.")
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
-@click.option("-C","--dep-clear",is_flag=True,help="Clear all dependencies on record. May be used in conjunction with --dep-add to replace existing dependencies.")
-@click.option("-A","--dep-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify new dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
-@click.option("-R","--dep-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-D","--deps",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify all dependencies by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-A","--deps-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-R","--deps-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
 @_global_context_options
 @_global_output_options
-def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, extension, metadata, metadata_file, metadata_set, dep_clear, dep_add, dep_rem, context ):
+def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, extension, metadata, metadata_file, metadata_set, deps, deps_add, deps_rem, context ):
     '''
     Update an existing data record. The data record ID is required and can be
     an ID, alias, or listing index; all other record attributes are optional.
@@ -679,7 +679,7 @@ def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, ex
         raise Exception( "Cannot specify both --dep-clear and --dep-rem options." )
 
     reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, keywords = keywords, extension = extension,
-        metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, dep_clear = dep_clear, dep_add = dep_add, dep_rem = dep_rem, context = context )
+        metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, deps = deps, deps_add = deps_add, deps_rem = deps_rem, context = context )
     _generic_reply_handler( reply, _print_data )
 
     if raw_data_file:

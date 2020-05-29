@@ -215,7 +215,7 @@ message RecordUpdateRequest
     optional bool               ext_auto    = 12;
     optional uint64             size        = 13;
     optional uint32             dt          = 14;
-    optional bool               deps_clear  = 15;
+    repeated DependencySpecData deps        = 15;
     repeated DependencySpecData deps_add    = 16;
     repeated DependencySpecData deps_rem    = 17;
 }

@@ -294,8 +294,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     if ( deps_diff ){
-                        obj.depsAdd = deps;
-                        obj.depsClear = true;
+                        obj.deps = deps;
                     }
 
                     if ( Object.keys(obj).length === 0 ){
