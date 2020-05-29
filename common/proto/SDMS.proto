@@ -150,7 +150,7 @@ message ListingData
     optional string             creator     = 6;
     optional int32              gen         = 7;
     optional double             size        = 8;
-    optional uint32             notes       = 9;
+    repeated uint32             notes       = 9;
     optional string             doi         = 10;
     optional string             url         = 11;
     repeated DependencyData     dep         = 12;
@@ -184,6 +184,7 @@ message RecordData
     optional bool               locked      = 19;
     optional string             parent_id   = 20;
     repeated DependencyData     deps        = 21;
+    repeated uint32             notes       = 22;
 }
 
 // Fields required for a data repo to locate raw data
@@ -218,6 +219,7 @@ message CollData
     optional uint32             ct          = 7;
     optional uint32             ut          = 8;
     optional string             parent_id   = 9;
+    repeated uint32             notes       = 10;
 }
 
 message GroupData

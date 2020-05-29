@@ -153,7 +153,7 @@ textarea.ui-state-disabled
 	color: #12f50a!important;
 }
 
-.ui-icon-note
+.ui-icon-notice
 {
     color: #0080FF
 }
@@ -195,7 +195,8 @@ textarea.ui-state-disabled
 
 .fancytree-node .ui-icon-file
 {
-    color: #008F00
+    /*color: #008F00*/
+    color: #909090
 }
 
 .ui-icon-flag
@@ -208,14 +209,14 @@ textarea.ui-state-disabled
     color: #ef9f00
 }
 
-.ui-icon-comment
+.ui-icon-circle-info
 {
-    color: #209f20
+    color: #0080FF
 }
 
 .ui-icon-circle-help
 {
-    color: #5050ff
+    color: #ef9f00
 }
 
 .ui-icon-heart

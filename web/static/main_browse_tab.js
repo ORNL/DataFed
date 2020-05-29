@@ -138,7 +138,7 @@ function refreshNodeTitle( a_node, a_data, a_reload ){
 }
 
 export function refreshUI( a_ids, a_data, a_reload ){
-
+    console.log("refresh",a_ids,a_data);
     if ( !a_ids || !a_data ){
         // If no IDs or unknown action, refresh everything
         reloadNode(data_tree.getNodeByKey("mydata"));
@@ -1174,11 +1174,12 @@ function actionAnnotate(){
 
     var id = ids[0];
 
-    console.log("annotate");
-
     permGateAny( id, model.PERM_RD_REC | model.PERM_RD_META | model.PERM_RD_DATA, function( perms ){
         dlgAnnotation.show( id, null, null, null, function(){
-            panel_info.showSelectedInfo( id );
+            panel_info.showSelectedInfo( id, function( data ){
+                console.log("ann data",data);
+                refreshUI( id, data );
+            });
         });
     });
 }
@@ -2454,32 +2455,6 @@ export function init(){
                         data.result.push({ title: alloc.repo.substr(5) + (i==0?" (default)":""),icon:"ui-icon ui-icon-database",folder:true,key:alloc.repo+"/"+alloc.id,scope:alloc.id,repo:alloc.repo,lazy:true,offset:0,nodrag:true,checkbox:false});
                     }
                 }
-            /*} else if ( data.node.key.startsWith("note_")) {
-                data.result = [];
-                if ( data.response.note && data.response.note.length ){
-                    var note,open=[],closed=[],entry,ns,nt;
-                    for ( i = 0; i < data.response.note.length; i++ ) {
-                        note = data.response.note[i];
-                        nt = model.NoteTypeFromString[note.type];
-                        ns = model.NoteStateFromString[note.state];
-                        console.log("note:",note);
-
-                        entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt],key:note.id,offset:0,nodrag:true,checkbox:false};
-                        if ( ns == model.NOTE_ACTIVE ){
-                            data.result.push(entry);
-                        }else if ( ns == model.NOTE_OPEN ){
-                            open.push(entry);
-                        }else{
-                            closed.push(entry);
-                        }
-                    }
-                    if ( open.length ){
-                        data.result.push({title:"Open",icon:"ui-icon ui-icon-news",folder:true,children:open,nodrag:true,checkbox:false});
-                    }
-                    if ( closed.length ){
-                        data.result.push({title:"Closed",icon:"ui-icon ui-icon-news",folder:true,children:closed,nodrag:true,checkbox:false});
-                    }
-                }*/
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
                 // Define key prefixes for collections in special tree locations
@@ -2492,11 +2467,6 @@ export function init(){
                 var entry;
                 scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
-
-                // Annotation entry for parent collection
-                /*if ( data.node.key.startsWith( "c/" )){
-                    data.result.push({title:"Annotations",folder:true,lazy:true,icon:"ui-icon ui-icon-news",checkbox:false,scope:scope,nodrag:true,key:"note_"+data.node.key});
-                }*/
 
                 addTreePagingNode( data );
 

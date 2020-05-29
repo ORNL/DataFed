@@ -96,8 +96,8 @@
             window.location = "/ui/logout";
         }
 
-        window.refreshUI = function(){
-            browser_tab.refreshUI();
+        window.refreshUI = function( a_ids, a_data, a_reload ){
+            browser_tab.refreshUI( a_ids, a_data, a_reload );
         }
 
         function resizeUI(){

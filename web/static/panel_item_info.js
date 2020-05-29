@@ -15,9 +15,12 @@ var data_md_exp = {};
 var note_active_tree = null;
 var note_open_tree = null;
 var note_closed_tree = null;
-var note_icon = ["circle-help","comment","alert","flag"];
+var note_icon = ["circle-help","circle-info","alert","flag"];
+var cur_item = null;
+var cur_notes;
 
-export function showSelectedInfo( node ){
+export function showSelectedInfo( node, cb ){
+    cur_item = null;
 
     if ( !node ){
         showSelectedItemInfo();
@@ -41,10 +44,14 @@ export function showSelectedInfo( node ){
     if ( key[0] == "c" ) {
         api.viewColl( key, function( item ){
             showSelectedItemInfo( item );
+            cur_item = item;
+            if ( cb ) cb( item );
         }); 
     }else if ( key[0] == "d" ) {
         api.dataView( key, function( item ){
             showSelectedItemInfo( item );
+            cur_item = item;
+            if ( cb ) cb( item );
         }); 
     }else if ( key == "mydata" ) {
         showSelectedHTML( "Owned Data<br><br>All data owned by you." );
@@ -63,25 +70,27 @@ export function showSelectedInfo( node ){
     }else if ( key == "queries" ) {
         showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
     }else if ( key.startsWith("p/")){
-        showSelectedProjInfo( key );
+        showSelectedProjInfo( key, cb );
     //}else if ( key.startsWith("n/")){
     //    showSelectedNoteInfo( key );
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
             showSelectedItemInfo( item );
+            cur_item = item;
+            if ( cb ) cb( item );
         }); 
     }else if ( key.startsWith("u/")){
-        showSelectedUserInfo( key );
+        showSelectedUserInfo( key, cb );
     }else if ( key.startsWith( "shared_user_" ) && node.data.scope ){
-        showSelectedUserInfo( node.data.scope );
+        showSelectedUserInfo( node.data.scope, cb );
     }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
-        showSelectedProjInfo( node.data.scope );
+        showSelectedProjInfo( node.data.scope, cb );
     }else if ( key == "allocs" ) {
         showSelectedHTML( "Data Allocations<br><br>Lists allocations and associated data records." );
     }else if ( key.startsWith("published")) {
         showSelectedHTML( "Public Collections<br><br>Lists collections made public and available in DataFed catalogs." );
     }else if ( key.startsWith( "repo/" )) {
-        showSelectedAllocInfo( node.data.repo, node.data.scope );
+        showSelectedAllocInfo( node.data.repo, node.data.scope, cb );
     }else{
         showSelectedItemInfo();
     }
@@ -113,21 +122,25 @@ function showSelectedHTML( html ){
     showSelectedMetadata();
 }
 
-function showSelectedUserInfo( key ){
+function showSelectedUserInfo( key, cb ){
     api.userView( key, true, function( ok, item ){
         if ( ok, item ){
             console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
+            cur_item = item;
+            if ( cb ) cb( item );
         }else{
             showSelectedItemInfo();
         }
     }); 
 }
 
-function showSelectedProjInfo( key ){
+function showSelectedProjInfo( key, cb ){
     api.viewProj( key, function( item ){
         showSelectedItemInfo( item );
+        cur_item = item;
+        if ( cb ) cb( item );
     }); 
 }
 
@@ -201,6 +214,8 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
             var act = $("#note-tabs").tabs('option', 'active');
 
+            cur_notes = new Set();
+
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
@@ -213,10 +228,12 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                         if ( note_active.length == 0 && act != 0 )
                             entry.active = true;
                         note_active.push(entry);
+                        cur_notes.add( nt );
                     }else if ( ns == model.NOTE_OPEN ){
                         if ( note_open.length == 0  && act != 1 )
                             entry.active = true;
                         note_open.push(entry);
+                        cur_notes.add( nt );
                     }else{
                         if ( note_closed.length == 0  && act != 2 )
                             entry.active = true;
@@ -264,8 +281,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
             note_div.show();
 
-            if ( a_cb )
-                a_cb();
+            if ( a_cb ) a_cb();
         }
     });
 }
@@ -318,7 +334,7 @@ function showSelectedNoteInfo( node ){
 
                 if ( comm.user == "u/"+settings.user.uid ){
                     html += "<div class='row-flex' style='padding:.5em;align-items:flex-end'><div class='ui-widget-content' style='flex:1 1 auto;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
-                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn small btn-note-edit' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
+                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn btn-note-edit' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
                 }else{
                     html += "<div class='ui-widget-content' style='margin:0.5em;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
                 }
@@ -401,6 +417,7 @@ function showSelectedNoteInfo( node ){
     });
 }
 
+
 function updateSelectedNote( a_note_id, a_subject_id ){
     setupAnnotationTab( a_subject_id, function(){
         if ( note_active_tree.activateKey( a_note_id )){
@@ -410,6 +427,14 @@ function updateSelectedNote( a_note_id, a_subject_id ){
         }else if( note_closed_tree.activateKey( a_note_id )){
             $("#note-tabs").tabs({active:2});
         }
+
+        cur_item.notes = [];
+
+        cur_notes.forEach( function( nt ){
+            cur_item.notes.push( nt );
+        });
+    
+        window.refreshUI( cur_item.id, cur_item );
     });
 }
 
@@ -435,13 +460,14 @@ $("#note-tabs").tabs({
     }
 });
 
-function showSelectedAllocInfo( repo, user ){
+function showSelectedAllocInfo( repo, user, cb ){
     api.allocView( repo, user, function( ok, data ){
         if ( ok ){
             var item = data.alloc[0];
             item.user = item.id;
             item.id = item.repo;
             showSelectedItemInfo( item );
+            if ( cb ) cb( item );
         }else{
             showSelectedItemInfo();
         }

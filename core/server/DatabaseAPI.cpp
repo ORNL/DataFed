@@ -1294,6 +1294,15 @@ DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
             if (( j = obj.find( "parent_id" )) != obj.end( ))
                 rec->set_parent_id( j->second.asString( ));
 
+            if (( j = obj.find( "notes" )) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    rec->add_notes( k->asNumber( ));
+                }
+            }
+
             if (( j = obj.find( "deps" )) != obj.end( ))
             {
                 Value::Array & arr2 = j->second.getArray();
@@ -1559,6 +1568,16 @@ DatabaseAPI::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
 
             if (( j = obj.find( "owner" )) != obj.end( ))
                 coll->set_owner( j->second.asString( ));
+
+            if (( j = obj.find( "notes" )) != obj.end( ))
+            {
+                Value::Array & arr2 = j->second.getArray();
+                for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    coll->add_notes( k->asNumber( ));
+                }
+            }
+
         }
     }
     catch(...)
@@ -1668,8 +1687,14 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
         if (( j = a_obj.find( "size" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_size( j->second.asNumber( ));
 
-        if (( j = a_obj.find( "notes" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_notes( j->second.asNumber( ));
+        if (( j = a_obj.find( "notes" )) != a_obj.end( ))
+        {
+            Value::Array & arr = j->second.getArray();
+            for ( Value::ArrayIter k = arr.begin(); k != arr.end(); k++ )
+            {
+                a_item->add_notes( k->asNumber( ));
+            }
+        }
 
         if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_locked( j->second.asBool( ));
