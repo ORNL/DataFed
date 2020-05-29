@@ -595,6 +595,8 @@ router.get('/view', function (req, res) {
                 rem_md = true;
         }
 
+        data.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client  && n.state > 0 ) return distinct n.type",{data:data_id,client:client._id}).toArray();
+
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
