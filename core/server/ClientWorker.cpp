@@ -1374,7 +1374,7 @@ ClientWorker::parseSearchMetadata( const string & a_query )
 string
 ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
 {
-    use_client = false;
+    use_client = true;
 
     libjson::Value query;
     query.fromString( a_query );
@@ -1468,7 +1468,6 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
         {
         case SDMS::SS_USER:
             result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
-            use_client = true;
             break;
         case SDMS::SS_PROJECT:
             if (( j = scope.find( "id" )) == scope.end() )
@@ -1478,15 +1477,12 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_OWNED_PROJECTS:
             result += "for i,e,p in 2..2 inbound @client owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
-            use_client = true;
             break;
         case SDMS::SS_MANAGED_PROJECTS:
             result += "for i,e,p in 2..2 inbound @client admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
-            use_client = true;
             break;
         case SDMS::SS_MEMBER_PROJECTS:
             result += "for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i)";
-            use_client = true;
             break;
         case SDMS::SS_COLLECTION:
             if (( j = scope.find( "id" )) == scope.end() )
@@ -1504,7 +1500,6 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for shared user");
 
-            use_client = true;
             result += string("for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + j->second.asString() + "' return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + j->second.asString() + "' return v),"
@@ -1513,7 +1508,6 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_ANY_USER:
             //result += "for u in @shared_users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) return i";
-            use_client = true;
             use_shared_users = true;
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @users return v),"
@@ -1525,7 +1519,6 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             if (( j = scope.find( "id" )) == scope.end() )
                 EXCEPT(1,"Missing scope 'id' for shared project");
 
-            use_client = true;
             result += string("for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + j->second.asString() + "' return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + j->second.asString() + "' return v),"
@@ -1561,7 +1554,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size}";
+    result += " let ann = (for n in 1..1 outbound i._id note filter n.state == 2 || ( n.state == 1 && ( @client == i.owner || @client == i.creator || @client == n.creator )) return distinct n.type)";
+
+    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size,notes:ann}";
 
 
     return result;

@@ -223,7 +223,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                     ns = model.NoteStateFromString[note.state];
                     //console.log("note:",note);
 
-                    entry = {title:note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject: a_subject_id };
+                    entry = {title: note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject: a_subject_id };
                     if ( ns == model.NOTE_ACTIVE ){
                         if ( note_active.length == 0 && act != 0 )
                             entry.active = true;
@@ -303,20 +303,8 @@ function showSelectedNoteInfo( node ){
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
 
-            //<tr><td>ID:</td><td>"+note.id+"</td></tr>\
-
-            html = "<div class='col-flex' style='height:100%'><div style='flex:1 1 auto;overflow:auto'>\
-                <div style='padding:0 0 .5em 0'>Annotation Information:</div>\
-                <table class='sel-note-table' style='padding:0 0 0 .5em'>\
-                <tr><td>Title:</td><td>"+util.escapeHTML(note.title)+"</td></tr>\
-                <tr><td>Type:</td><td>"+model.NoteTypeLabel[nt]+" ["+model.NoteStateLabel[ns] + "]</td></tr>\
-                <tr><td>Creator:</td><td>"+note.comment[0].user.substr(2)+"</td></tr>\
-                <tr><td>Created:</td><td>"+date_ct.toLocaleDateString("en-US", settings.date_opts)+"</td></tr>\
-                <tr><td>Updated:</td><td>"+date_ut.toLocaleDateString("en-US", settings.date_opts)+"</td></tr>\
-                </table>";
-
+            html = "<div class='col-flex' style='height:100%'><div style='flex:none;padding:0 0 .5em 0'>Annotation History:</div><div style='flex:1 1 auto;overflow:auto'>";
             var is_creator = ( note.comment[0].user == "u/"+settings.user.uid );
-            html += "<div style='padding:1em 0 0 0'>Annotation History:</div>";
 
             for ( var i in note.comment ){
                 comm = note.comment[i];
