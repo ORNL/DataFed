@@ -24,7 +24,7 @@ router.get('/list', function (req, res) {
             qry += " sort is_same_collection('t',v) DESC, v.title";
         }
 
-        qry += " let ann = (for n in 1..1 outbound v._id note filter n.state == 2 || ( n.creator == @client  && n.state > 0 ) return distinct n.type)";
+        qry += " let ann = (for n in 1..1 outbound v._id note filter n.state == 2 || ( n.state == 1 && ( @client == v.owner || @client == v.creator || @client == n.creator )) return distinct n.type)";
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,doi:v.doi,alias:v.alias,notes:ann}";

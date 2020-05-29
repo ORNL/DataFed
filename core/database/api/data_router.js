@@ -584,10 +584,9 @@ router.get('/view', function (req, res) {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveDataID( req.queryParams.id, client );
         var data = g_db.d.document( data_id );
+        var i,dep,rem_md = false, admin = g_lib.hasAdminPermObject( client, data_id );
 
-        var i,dep,rem_md = false;
-
-        if ( !g_lib.hasAdminPermObject( client, data_id )) {
+        if ( !admin) {
             var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
             if ( data.locked || ( perms & ( g_lib.PERM_RD_REC | g_lib.PERM_RD_META )) == 0 )
                 throw g_lib.ERR_PERM_DENIED;
@@ -595,7 +594,10 @@ router.get('/view', function (req, res) {
                 rem_md = true;
         }
 
-        data.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client  && n.state > 0 ) return distinct n.type",{data:data_id,client:client._id}).toArray();
+        if ( admin )
+            data.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:data_id}).toArray();
+        else
+            data.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:data_id,client:client._id}).toArray();
 
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
@@ -1178,7 +1180,7 @@ router.post('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"],
+                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep","n","note"],
                 exclusive: ["lock","task","block"],
             },
             action: function() {

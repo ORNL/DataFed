@@ -235,15 +235,19 @@ router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
-        var coll = g_db.c.document( coll_id );
+        var coll_id = g_lib.resolveCollID( req.queryParams.id, client ),
+            coll = g_db.c.document( coll_id ),
+            admin = g_lib.hasAdminPermObject( client, coll_id );
 
-        if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+        if ( !admin) {
             if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        coll.notes = g_db._query("for n in 1..1 outbound @coll note filter n.state == 2 || ( n.creator == @client && n.state > 0 ) return distinct n.type",{coll:coll_id,client:client._id}).toArray();
+        if ( admin )
+            coll.notes = g_db._query("for n in 1..1 outbound @coll note filter n.state > 0 return distinct n.type",{coll:coll_id}).toArray();
+        else
+            coll.notes = g_db._query("for n in 1..1 outbound @coll note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{coll:coll_id,client:client._id}).toArray();
 
         coll.id = coll._id;
 
@@ -265,28 +269,34 @@ router.get('/view', function (req, res) {
 router.get('/read', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
-        var coll = g_db.c.document( coll_id );
+        var coll_id = g_lib.resolveCollID( req.queryParams.id, client ),
+            coll = g_db.c.document( coll_id ),
+            admin = g_lib.hasAdminPermObject( client, coll_id );
 
-        if ( !g_lib.hasAdminPermObject( client, coll_id )) {
+        if ( !admin ) {
             if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
                 throw g_lib.ERR_PERM_DENIED;
         }
-        
-        var qry = "for v in 1..1 outbound @coll item let ann = (for n in 1..1 outbound v._id note filter n.state == 2 || ( n.creator == @client  && n.state > 0 ) return distinct n.type) sort is_same_collection('c',v) DESC, v.title";
-        var result;
+
+        var qry, result, params = { coll: coll_id };
+
+        if ( admin )
+            qry = "for v in 1..1 outbound @coll item let ann = (for n in 1..1 outbound v._id note filter n.state > 0 return distinct n.type) sort is_same_collection('c',v) DESC, v.title";
+        else{
+            qry = "for v in 1..1 outbound @coll item let ann = (for n in 1..1 outbound v._id note filter n.state == 2 || ( n.state == 1 && ( @client == v.owner || @client == v.creator || @client == n.creator )) return distinct n.type) sort is_same_collection('c',v) DESC, v.title";
+            params.client = client._id;
+        }
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
             qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, notes: ann, locked: v.locked }";
-            result = g_db._query( qry, { client: client._id, coll: coll_id },{},{fullCount:true});
+            result = g_db._query( qry, params,{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
-        }
-        else{
+        }else{
             qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, notes: ann, locked: v.locked }";
-            result = g_db._query( qry, { client: client._id, coll: coll_id });
+            result = g_db._query( qry, params );
         }
 
         res.send( result );

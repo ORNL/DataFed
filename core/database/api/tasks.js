@@ -1278,15 +1278,24 @@ var tasks_func = function() {
      * Does not recursively delete contained items.
      */
     obj._deleteCollection = function( a_id ){
+        // Delete alias
         var tmp = g_db.alias.firstExample({ _from: a_id });
         if ( tmp ){
             g_graph.a.remove( tmp._to );
         }
 
+        // Delete notes
+        tmp = g_db.note.byExample({ _from: a_id });
+        while( tmp.hasNext() ){
+            g_graph.n.remove( tmp.next()._to );
+        }
+
+        // Unlink/delete topic
         tmp = g_db.top.firstExample({ _from: a_id });
         if ( tmp )
             g_lib.topicUnlink( a_id );
 
+        // Delete collection
         g_graph.c.remove( a_id );
     };
 
@@ -1300,19 +1309,24 @@ var tasks_func = function() {
         console.log( "delete rec", a_id );
         var doc = g_db.d.document( a_id );
 
-        var alias = g_db.alias.firstExample({ _from: a_id });
-        if ( alias ){
-            g_graph.a.remove( alias._to );
+        // Delete alias
+        var tmp = g_db.alias.firstExample({ _from: a_id });
+        if ( tmp ){
+            g_graph.a.remove( tmp._to );
         }
 
+        // Delete notes
+        tmp = g_db.note.byExample({ _from: a_id });
+        while( tmp.hasNext() ){
+            g_graph.n.remove( tmp.next()._to );
+        }
+        
+        // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
         var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
-
-        //console.log( "alloc", alloc );
-        //console.log( "data size", doc.size );
-        //console.log( "upd:", { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
         g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
 
+        // Delete data record
         g_graph.d.remove( a_id );
     };
 
