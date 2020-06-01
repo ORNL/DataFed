@@ -171,8 +171,11 @@ export function generateTitle( item, refresh, unstruct = false ) {
     }
 
     title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>" + (refresh?"&nbsp<i class='browse-reload ui-icon ui-icon-reload'></i>":"") + "<span class='data-tree-subtitle'>";
-    title += "<span class='data-tree-id'>" + item.id + "</span>";
-    title += "<span class='data-tree-alias'>" + (item.alias?item.alias.substr(item.alias.lastIndexOf(":") + 1):"") + "</span>";
+    title += "<span class='data-tree-id'>" + item.id + "</span>&nbsp";
+    if ( item.alias )
+        title += "<span class='data-tree-alias'>[" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + "]</span>";
+    else
+        title += "<span class='data-tree-alias'></span>";
 
     // Only apply owner/creator labels to data records
     if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){

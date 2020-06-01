@@ -2291,13 +2291,18 @@ export function init(){
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
-                console.log("lazy load mydata, user:",settings.user);
+                data.result = {
+                    url: "/api/col/view?id="+my_root_key,
+                    cache: false
+                };
+
+                /*console.log("lazy load mydata, user:",settings.user);
                 var uid = "u/" + settings.user.uid;
                 data.result = [
                     {title:"Root Collection",folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
                     {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
-                ];
+                ];*/
             }else if ( data.node.key == "proj_own" ){
                     data.result = {
                     url: "/api/prj/list?owner=true&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
@@ -2314,12 +2319,17 @@ export function init(){
                     cache: false
                 };
             }else if ( data.node.key.startsWith("p/")){
-                var prj_id = data.node.key.substr(2);
+                data.result = {
+                    url: "/api/col/view?id=c/p_"+data.node.key.substr(2)+"_root",
+                    cache: false
+                };
+
+                /*var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
-                ];
+                ];*/
             } else if ( data.node.key.startsWith( "shared_user" )) {
                 if ( data.node.data.scope ){
                     data.result = {
@@ -2404,10 +2414,22 @@ export function init(){
             var item, i, scope = null;
 
             //console.log( "pos proc:", data );
-            if ( data.node.key == "mydata" || data.node.key.startsWith("p/")){
-                //console.log("post mydata",data.response);
+            if ( data.node.key == "mydata" ){
+                var uid = "u/" + settings.user.uid;
+                data.result = [
+                    {title:util.generateTitle(data.response),folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
+                    {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
+                ];
+            }else if ( data.node.key.startsWith("p/")){
+                var prj_id = data.node.key.substr(2);
+                data.result = [
+                    {title: util.generateTitle( data.response ),folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
+                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
+                ];
             }else if ( data.node.key == "proj_own" || data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
-                    data.result = [];
+                data.result = [];
                 if ( data.response.item && data.response.item.length ){
                     console.log( "pos proc project:", data.response );
                     var admin = (data.node.key=="proj_own"?true:false);
