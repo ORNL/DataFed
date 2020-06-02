@@ -1307,6 +1307,8 @@ export function updateBtnState(){
             break;
     }
 
+    console.log("updateBtnState, bits:", bits );
+
     $("#btn_edit",frame).button("option","disabled",(bits & 1) != 0 );
     $("#btn_dup_data",frame).button("option","disabled",(bits & 2) != 0 );
     $("#btn_del",frame).button("option","disabled",(bits & 4) != 0 );

@@ -8,7 +8,7 @@ var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
 const constants = require('crypto');
 const helmet = require('helmet');
-var request = require('request');
+//var request = require('request');
 const fs = require('fs');
 const ini = require('ini');
 var protobuf = require("protobufjs");
@@ -115,87 +115,89 @@ app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 
 
-app.get('/', (request, response) => {
-    console.log("Initial site access from ", request.connection.remoteAddress );
+app.get('/', (a_request, a_response) => {
+    console.log("Initial site access from ", a_request.connection.remoteAddress );
 
-    if ( request.cookies['sdms'] && request.cookies['sdms-user'])
-        response.redirect( '/ui/main' );
-    else
-        response.redirect('/ui');
+    if ( a_request.cookies['sdms'] && a_request.cookies['sdms-user'])
+    a_response.redirect( '/ui/main' );
+        else
+        a_response.redirect('/ui');
 });
 
 
-app.get('/ui/doi/:doiNum*', (request, response) => {
+app.get('/ui/doi/:doiNum*', (a_request, a_response) => {
     console.log("get /doi");
 
-    var theme = request.cookies['sdms-theme']|| "light";
-    var doi = (request.params.doiNum + request.params[0]).toLowerCase();
-    response.render('doi',{doi: doi,theme:theme,version:g_version,test_mode:g_test});
+    var theme = a_request.cookies['sdms-theme']|| "light";
+    var doi = (a_request.params.doiNum + a_request.params[0]).toLowerCase();
+    a_response.render('doi',{doi: doi,theme:theme,version:g_version,test_mode:g_test});
 });
 
 
-app.get('/ui', (request, response) => {
+app.get('/ui', (a_request, a_response) => {
     console.log("get /ui");
-    //console.log( "sdms cookie:", request.cookies['sdms'] );
+    //console.log( "sdms cookie:", a_request.cookies['sdms'] );
 
-    if ( request.cookies['sdms'] && request.cookies['sdms-user'] )
-        response.redirect( '/ui/main' );
+    if ( a_request.cookies['sdms'] && a_request.cookies['sdms-user'] )
+        a_response.redirect( '/ui/main' );
     else{
-        var theme = request.cookies['sdms-theme']|| "light";
-        response.render('index',{theme:theme,version:g_version,test_mode:g_test});
+        var theme = a_request.cookies['sdms-theme']|| "light";
+        a_response.render('index',{theme:theme,version:g_version,test_mode:g_test});
     }
 });
 
-app.get('/ui/main', (request, response) => {
+app.get('/ui/main', (a_request, a_response) => {
     console.log("get /ui/main");
-    //console.log( "sdms cookie:", request.cookies['sdms'] );
+    //console.log( "sdms cookie:", a_request.cookies['sdms'] );
 
-    if ( request.cookies['sdms'] ){
-        var theme = request.cookies['sdms-theme'] || "light";
-        response.render( 'main',{theme:theme,version:g_version,test_mode:g_test});
+    if ( a_request.cookies['sdms'] ){
+        var theme = a_request.cookies['sdms-theme'] || "light";
+        a_response.render( 'main',{theme:theme,version:g_version,test_mode:g_test});
     }else
-        response.redirect( '/ui' );
+        a_response.redirect( '/ui' );
 });
 
-app.get('/ui/docs', (request, response) => {
-    var theme = request.cookies['sdms-theme'] || "light";
-    response.render( 'docs',{theme:theme,version:g_version,test_mode:g_test});
+app.get('/ui/docs', (a_request, a_response) => {
+    var theme = a_request.cookies['sdms-theme'] || "light";
+    a_response.render( 'docs',{theme:theme,version:g_version,test_mode:g_test});
 });
 
-app.get('/ui/docs/api', (request, response) => {
-    var theme = request.cookies['sdms-theme'] || "light";
-    response.render( 'docs_api',{theme:theme,version:g_version,test_mode:g_test});
+app.get('/ui/docs/api', (a_request, a_response) => {
+    var theme = a_request.cookies['sdms-theme'] || "light";
+    a_response.render( 'docs_api',{theme:theme,version:g_version,test_mode:g_test});
 });
 
-app.get('/ui/register', (request, response) => {
-    //console.log("get /ui/register", request.query.acc_tok, request.query.ref_tok );
-    if ( !request.cookies['sdms-user'] )
-        response.redirect( '/' );
+app.get('/ui/register', (a_request, a_response) => {
+    //console.log("get /ui/register", a_request.query.acc_tok, a_request.query.ref_tok );
+    if ( !a_request.cookies['sdms-user'] )
+        a_response.redirect( '/' );
 
-    var theme = request.cookies['sdms-theme'] || "light";
+    var theme = a_request.cookies['sdms-theme'] || "light";
 
-    response.render('register', { acc_tok: request.query.acc_tok, ref_tok: request.query.ref_tok, acc_tok_ttl: request.query.acc_tok_ttl, uid: request.query.uid, uname: request.query.uname,theme:theme,version:g_version,test_mode:g_test });
+    a_response.render('register', { acc_tok: a_request.query.acc_tok, ref_tok: a_request.query.ref_tok,
+        acc_tok_ttl: a_request.query.acc_tok_ttl, uid: a_request.query.uid, uname: a_request.query.uname,
+        theme:theme,version:g_version,test_mode:g_test });
 });
 
-app.get('/ui/login', (request, response) => {
+app.get('/ui/login', (a_request, a_response) => {
     console.log("get /ui/login");
 
     var uri = globus_auth.code.getUri();
-    response.redirect(uri);
+    a_response.redirect(uri);
 });
 
-app.get('/ui/logout', (request, response) => {
+app.get('/ui/logout', (a_request, a_response) => {
     console.log("get /ui/logout");
 
-    response.clearCookie( 'sdms' );
-    response.clearCookie( 'sdms-user', { path: "/ui" } );
-    response.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://sdms.ornl.gov");
+    a_response.clearCookie( 'sdms' );
+    a_response.clearCookie( 'sdms-user', { path: "/ui" } );
+    a_response.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://sdms.ornl.gov");
 });
 
-app.get('/ui/error', (request, response) => {
+app.get('/ui/error', (a_request, a_response) => {
     //console.log("get /ui/error");
-    var theme = request.cookies['sdms-theme'] || "light";
-    response.render('error',{theme:theme,version:g_version,test_mode:g_test});
+    var theme = a_request.cookies['sdms-theme'] || "light";
+    a_response.render('error',{theme:theme,version:g_version,test_mode:g_test});
 });
 
 app.get('/ui/authn', ( a_request, a_response ) => {
@@ -204,73 +206,80 @@ app.get('/ui/authn', ( a_request, a_response ) => {
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
 
     globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
-        console.log( 'client token:', client_token );
+        //console.log( 'client token:', client_token );
+        console.log( 'got client token' );
+
         var xfr_token = client_token.data.other_tokens[0];
         //console.log( 'xfr token:', xfr_token );
 
-        // TODO - Refresh the current users access token?
-        /*
-        client_token.refresh().then( function( updatedUser ) {
-            // TODO What to do here???
-            console.log( updatedUser !== client_token ); //=> true
-            console.log( updatedUser.accessToken );
-        }, function( reason ) {
-            console.log( "refresh failed:", reason );
-        }); */
-
-        request.post({
-            uri: 'https://auth.globus.org/v2/oauth2/token/introspect',
-            headers: {
+        const opts = {
+            hostname: 'auth.globus.org',
+            method: 'POST',
+            path: '/v2/oauth2/token/introspect',
+            rejectUnauthorized: true,
+            auth: g_oauth_credentials.clientId + ":" + g_oauth_credentials.clientSecret,
+            headers:{
                 'Content-Type' : 'application/x-www-form-urlencoded',
                 'Accept' : 'application/json',
-            },
-            auth: {
-                user: g_oauth_credentials.clientId,
-                pass: g_oauth_credentials.clientSecret
-            },
-            body: 'token=' + client_token.accessToken + '&include=identities_set'
-        }, function( error, response, body ) {
-            var userinfo = null;
-
-            if ( response.statusCode >= 200 && response.statusCode < 300 ) {
-                userinfo = JSON.parse( body );
-                userinfo.uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
-
-                console.log( 'user', userinfo.uid, 'authenticated, verifying SDMS account' );
-
-                sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
-                    console.log( "UserFindByUUIDsRequest reply:", reply );
-
-                    if ( !reply  ) {
-                        console.log("User find error. Reply:", reply );
-                        a_response.redirect( "/ui/error" );
-                    } else if ( !reply.user || !reply.user.length ) {
-                        // Not registered
-                        console.log("User not registered", userinfo );
-                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                        //a_response.redirect( "/ui/register" );
-                        //console.log("uid", userinfo.uid, "uname", userinfo.name );
-
-                        a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&acc_tok_ttl=" + xfr_token.expires_in + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
-                    } else {
-                        console.log( 'user', userinfo.uid, 'verified' );
-                        // Registered, save access token
-                        userinfo.acc_tok = xfr_token.access_token;
-                        userinfo.ref_tok = xfr_token.refresh_token;
-                        setAccessToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
-
-                        // TODO Account may be disable from SDMS (active = false)
-                        a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
-                        a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                        a_response.redirect( "/ui/main" );
-                    }
-                });
-            } else {
-                a_response.clearCookie( 'sdms' );
-                a_response.clearCookie( 'sdms-user', { path: "/ui" } );
-                a_response.redirect( "/ui/error" );
             }
-        } );
+        };
+
+        const req = https.request( opts, (res) => {
+            var data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                console.log('tok introspect done');
+
+                if ( res.statusCode >= 200 && res.statusCode < 300 ){
+                    var userinfo = JSON.parse( data );
+                    userinfo.uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+
+                    console.log( 'user', userinfo.uid, 'authenticated, verifying SDMS account' );
+
+                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
+                        //console.log( "UserFindByUUIDsRequest reply:", reply );
+
+                        if ( !reply  ) {
+                            console.log("User find error." );
+                            a_response.redirect( "/ui/error" );
+                        } else if ( !reply.user || !reply.user.length ) {
+                            // Not registered
+                            console.log("User not registered", userinfo );
+                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
+                            a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&acc_tok_ttl=" + xfr_token.expires_in + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
+                        } else {
+                            console.log( 'user', userinfo.uid, 'verified' );
+                            // Registered, save access token
+                            userinfo.acc_tok = xfr_token.access_token;
+                            userinfo.ref_tok = xfr_token.refresh_token;
+                            setAccessToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
+
+                            // TODO Account may be disable from SDMS (active = false)
+                            a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
+                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
+                            a_response.redirect( "/ui/main" );
+                        }
+                    });
+                }else{
+                    a_response.clearCookie( 'sdms' );
+                    a_response.clearCookie( 'sdms-user', { path: "/ui" } );
+                    a_response.redirect( "/ui/error" );
+                }
+            });
+        });
+          
+        req.on('error', (e) => {
+            a_response.clearCookie( 'sdms' );
+            a_response.clearCookie( 'sdms-user', { path: "/ui" } );
+            a_response.redirect( "/ui/error" );
+        });
+
+        req.write( 'token=' + client_token.accessToken + '&include=identities_set' );
+        req.end();
     }, function( reason ){
         console.log( "getToken failed:", reason );
     });
@@ -1186,39 +1195,74 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
     //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        console.log("reply:", reply );
+        //console.log("token reply:", reply );
 
-        request.get({
-            uri: 'https://transfer.api.globusonline.org/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
-            auth: {
-                bearer: reply.access,
+        const opts = {
+            hostname: 'transfer.api.globusonline.org',
+            method: 'GET',
+            path: '/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
+            rejectUnauthorized: false,
+            headers:{
+                Authorization: ' Bearer ' + reply.access            
             }
-        }, function( error, response, body ) {
-            //console.log( body );
-            a_resp.json(JSON.parse(body));
+        };
+
+        const req = https.request( opts, (res) => {
+            var data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            res.on('end', () => {
+                console.log('done:',data);
+                a_resp.json(JSON.parse(data));
+            });
         });
+          
+        req.on('error', (e) => {
+            a_resp.status( 500 );
+            a_resp.send( "Globus endpoint view failed." );
+        });
+
+        req.end();
     });
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
     console.log("/ui/eo/autocomp", a_req.query.term);
 
-    //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
-    //console.log("userinfo", userinfo );
-
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        console.log("reply:", reply );
+        //console.log("token reply:", reply );
 
-        request.get({
-            uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
-            //uri: 'https://transfer.api.globusonline.org/v0.10/endpoint_search?filter_scope=all&filter_fulltext='+a_req.query.term,
-            auth: {
-                bearer: reply.access,
+        const opts = {
+            hostname: 'transfer.api.globusonline.org',
+            method: 'GET',
+            path: '/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
+            rejectUnauthorized: false,
+            headers:{
+                Authorization: ' Bearer ' + reply.access            
             }
-        }, function( error, response, body ) {
-            //console.log( body );
-            a_resp.json(JSON.parse(body));
+        };
+
+        const req = https.request( opts, (res) => {
+            var data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                console.log('done:',data);
+                a_resp.json(JSON.parse(data));
+            });
         });
+          
+        req.on('error', (e) => {
+            a_resp.status( 500 );
+            a_resp.send( "Globus endpoint search failed." );
+        });
+
+        req.end();
     });
 });
 
@@ -1226,29 +1270,49 @@ app.get('/ui/ep/recent/load', ( a_req, a_resp ) => {
     sendMessage( "UserGetRecentEPRequest", {}, a_req, a_resp, function( reply ) {
         a_resp.json(reply.ep?reply.ep:[]);
     });
-
-    //var recent = a_req.cookies['sdms-recent'];
-    //a_resp.json(recent?JSON.parse(recent):[]);
 });
 
 app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
     sendMessage( "UserSetRecentEPRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
-    //a_resp.cookie( 'sdms-recent', a_req.query.recent, { path: "/ui" });
-    //a_resp.json({});
 });
 
 app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
-    console.log("/ui/ep/dir/list", a_req.query.ep, a_req.query.path );
-
-    //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
-    //console.log("userinfo", userinfo );
-
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
         console.log("reply:", reply );
 
-        request.get({
+        const opts = {
+            hostname: 'transfer.api.globusonline.org',
+            method: 'GET',
+            path: '/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
+            rejectUnauthorized: false,
+            headers:{
+                Authorization: ' Bearer ' + reply.access            
+            }
+        };
+
+        const req = https.request( opts, (res) => {
+            var data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            res.on('end', () => {
+                console.log('done:',data);
+                a_resp.json(JSON.parse(data));
+            });
+        });
+          
+        req.on('error', (e) => {
+            a_resp.status( 500 );
+            a_resp.send( "Globus endpoint directoy listing failed." );
+        });
+
+        req.end();
+    });
+
+/*        request.get({
             uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
             auth: {
                 bearer: reply.access,
@@ -1259,6 +1323,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
             a_resp.json(JSON.parse(body));
         });
     });
+*/
 
 });
 
