@@ -1206,7 +1206,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
             path: '/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
-            rejectUnauthorized: false,
+            rejectUnauthorized: true,
             headers:{
                 Authorization: ' Bearer ' + reply.access            
             }
@@ -1243,7 +1243,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
             path: '/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
-            rejectUnauthorized: false,
+            rejectUnauthorized: true,
             headers:{
                 Authorization: ' Bearer ' + reply.access            
             }
@@ -1291,7 +1291,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
             path: '/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
-            rejectUnauthorized: false,
+            rejectUnauthorized: true,
             headers:{
                 Authorization: ' Bearer ' + reply.access            
             }
