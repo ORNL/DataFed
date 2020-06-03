@@ -30,6 +30,7 @@ export function show( a_mode, a_ids, a_cb ) {
         <label for='encrypt_req'>Required</label>\
         <br>" +
         (a_mode == model.TT_DATA_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
+        (a_mode == model.TT_DATA_GET?"<br><label for='orig_fname'>Download to original filename(s)</label><input id='orig_fname' type='checkbox'></input>":"") +
         "</div></div></div>");
 
     var dlg_title = (a_mode == model.TT_DATA_GET?"Download Raw Data":"Upload Raw Data");
@@ -169,6 +170,9 @@ export function show( a_mode, a_ids, a_cb ) {
         window.open('https://app.globus.org/file-manager?origin_id='+ encodeURIComponent(cur_ep.id),'');
     });
 
+    if ( a_mode == model.TT_DATA_GET )
+        $("#orig_fname",frame).checkboxradio();
+
     function updateEndpointOptions( cur_ep ){
         if ( cur_ep.activated || cur_ep.expires_in == -1 ){
             $("#browse",frame).button("enable");
@@ -307,9 +311,10 @@ export function show( a_mode, a_ids, a_cb ) {
                     return;
                 }
 
-                var encrypt = $("input[name='encrypt_mode']:checked").val();
+                var encrypt = $("input[name='encrypt_mode']:checked").val(),
+                    orig_fname = $("#orig_fname",frame).prop("checked"),
+                    inst = $(this);
 
-                var inst = $(this);
                 if ( a_mode == model.TT_DATA_GET || a_mode == model.TT_DATA_PUT ){
                     var ext = $("#ext",frame).val();
                     if ( ext )
@@ -325,7 +330,7 @@ export function show( a_mode, a_ids, a_cb ) {
                         }
                     }
 
-                    api.xfrStart( ids, a_mode, raw_path, ext, encrypt, function( ok, data ){
+                    api.xfrStart( ids, a_mode, raw_path, ext, encrypt, orig_fname, function( ok, data ){
                         if ( ok ){
                             clearTimeout( in_timer );
                             inst.dialog('close');

@@ -739,6 +739,8 @@ app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/get', ( a_req, a_resp ) => {
+    console.log("data get",a_req.query);
+
     var par = { id: JSON.parse( a_req.query.id )};
 
     if ( a_req.query.path )
@@ -746,6 +748,9 @@ app.get('/api/dat/get', ( a_req, a_resp ) => {
 
     if ( a_req.query.encrypt != undefined )
         par.encrypt = a_req.query.encrypt;
+
+    if ( a_req.query.orig_fname )
+        par.origFname = true;
 
     if ( a_req.query.check )
         par.check = a_req.query.check;
