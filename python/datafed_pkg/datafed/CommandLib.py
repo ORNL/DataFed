@@ -378,7 +378,7 @@ class API:
     # @exception Exception: If both Globus and HTTP transfers are required
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
+    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL, orig_fname = False, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
@@ -440,6 +440,7 @@ class API:
             msg.id.extend(glob_list)
             msg.path = self._resolvePathForGlobus( path, False )
             msg.encrypt = encrypt
+            msg.orig_fname = orig_fname
 
             reply = self._mapi.sendRecv( msg )
 

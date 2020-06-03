@@ -720,8 +720,9 @@ def _dataDelete( data_id, force, context ):
 @click.argument("path", required=True, metavar="PATH", nargs=1)
 @click.option("-w","--wait",is_flag=True,help="Block until Globus transfer is complete.")
 @click.option("-e","--encrypt",type=click.Choice(['0', '1', '2']),default='1',help="Encryption mode: 0 = none, 1 = if available (default), 2 = force.")
+@click.option("-o","--orig_fname",is_flag=True,help="Download to original filename(s).")
 @_global_context_options
-def _dataGet( df_id, path, wait, encrypt, context ):
+def _dataGet( df_id, path, wait, encrypt, orig_fname, context ):
     '''
     Get (download) raw data of data records and/or collections. Multiple ID
     arguments can be specified and may be data record and/or collection IDs,
@@ -750,7 +751,7 @@ def _dataGet( df_id, path, wait, encrypt, context ):
     else:
         bar = None
 
-    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), wait = wait, progress_bar = bar, context = context )
+    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), orig_fname = orig_fname, wait = wait, progress_bar = bar, context = context )
 
     if reply[1] == "DataGetPutReply":
         _generic_reply_handler( reply, _print_task )
