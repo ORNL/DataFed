@@ -82,14 +82,17 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
                 }else{
                     tree_source.push({ title: ".", icon: "ui-icon ui-icon-folder", key: ".", is_dir: true });
                     tree_source.push({ title: "..", icon: "ui-icon ui-icon-folder", key: "..", is_dir: true });
-                    var entry, dt;
+                    var entry, dt, tstr;
                     for ( var i in data.DATA ){
                         entry = data.DATA[i];
 
                         if ( entry.type == "dir" ){
                             tree_source.push({ title: entry.name, icon: "ui-icon ui-icon-folder", key: entry.name, is_dir: true });
                         } else if ( entry.type == "file" ){
-                            dt = (new Date(entry.last_modified)).toLocaleString();
+                            //vals = entry.last_modified.split(/[-: +]/);
+                            tstr = entry.last_modified.replace(" ", "T" );
+                            console.log("date:",tstr);
+                            dt = (new Date( tstr )).toLocaleString();
                             tree_source.push({ title: entry.name, size: util.sizeToString( entry.size ), date: dt, icon: "ui-icon ui-icon-file", key: entry.name });
                         }
                     }
