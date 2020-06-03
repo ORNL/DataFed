@@ -236,7 +236,7 @@ module.exports = ( function() {
 
                     a_ctxt.http_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: 0, url: doc.data_url, ext: doc.ext });
                 }else if ( a_ctxt.mode != g_lib.TT_DATA_GET || doc.size ){
-                    a_ctxt.glob_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: doc.size, ext: doc.ext });
+                    a_ctxt.glob_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: doc.size, source: doc.source, ext: doc.ext });
                 }
             }
         }

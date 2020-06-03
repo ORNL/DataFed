@@ -1030,7 +1030,7 @@ router.post('/get', function (req, res) {
                     res_ids.push( id );
                 }
 
-                var result = g_tasks.taskInitDataGet( client, req.body.path, req.body.encrypt, res_ids, req.body.check );
+                var result = g_tasks.taskInitDataGet( client, req.body.path, req.body.encrypt, res_ids, req.body.orig_fname, req.body.check );
 
                 if ( !req.body.check )
                     g_lib.saveRecentGlobusPath( client, req.body.path, g_lib.TT_DATA_GET );
@@ -1048,6 +1048,7 @@ router.post('/get', function (req, res) {
     id: joi.array().items(joi.string()).required(),
     path: joi.string().optional(),
     encrypt: joi.number().optional(),
+    orig_fname: joi.boolean().optional(),
     check: joi.boolean().optional()
 }).required(), 'Parameters')
 .summary('Get (download) data to Globus destination path')
