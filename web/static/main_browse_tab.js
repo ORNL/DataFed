@@ -89,6 +89,24 @@ window.pageLoadCat = function( key, offset ){
     }
 };
 
+function getSelectedNodes(){
+    var sel;
+
+    switch( select_source ){
+        case SS_TREE:
+            sel = data_tree.getSelectedNodes();
+            break;
+        case SS_SEARCH:
+            sel = results_tree.getSelectedNodes();
+            break;
+        case SS_CAT:
+            sel = cat_panel.tree.getSelectedNodes();
+            break;
+    }
+
+    return sel;
+}
+
 function getSelectedIDs(){
     var ids = [], sel, i;
 
@@ -1152,6 +1170,32 @@ function actionDepGraph(){
     }
 }
 
+function actionRefresh(){
+    var sel = getSelectedNodes();
+
+    if ( sel.length == 1 ){
+        var node = sel[0];
+        if ( node.isLazy() ){
+            reloadNode( node );
+        }else if ( node.parent.isLazy() ) {
+            var par = node.parent;
+            reloadNode( par, function(){
+                var new_node = par.findFirst( function( n ){
+                    if ( n.key == node.key )
+                        return true;
+                });
+                if ( new_node ){
+                    new_node.setActive();
+                    new_node.setSelected();
+                }else{
+                    par.setActive();
+                    par.setSelected();
+                }
+            });
+        }
+    }
+}
+
 function actionSubscribe(){
     var ids = getSelectedIDs();
     if ( ids.length != 1 )
@@ -1205,7 +1249,7 @@ function actionDataPut() {
     }
 }
 
-function actionReloadSelected(){
+/*function actionReloadSelected(){
     var node;
 
     if ( select_source == SS_TREE ){
@@ -1216,10 +1260,10 @@ function actionReloadSelected(){
     } else if ( select_source == SS_CAT ){
         node = cat_panel.tree.activeNode;
         if ( node ){
-            reloadNode( node, cat_panel.tree );
+            reloadNode( node );
         }
     }
-}
+}*/
 
 function calcActionState( sel ){
     var bits,node;
@@ -1278,7 +1322,7 @@ function calcActionState( sel ){
         }
         //console.log("single",bits);
     }else{
-        bits = 0x6FF;
+        bits = 0x7FF;
     }
 
     return bits;
@@ -1374,34 +1418,54 @@ function saveExpandedPaths( node, paths ){
     paths[node.key] = subp;
 }
 
-function restoreExpandedPaths( node, paths ){
-    node.setExpanded(true).always(function(){
-        if ( node.children ){
-            var child;
-            for ( var i in node.children ){
-                child = node.children[i];
-                if ( child.key in paths ){
-                    restoreExpandedPaths( child, paths[child.key] );
-                }
+
+function restoreExpandedPaths( a_node, a_paths, a_cb ){
+    var num_nodes = 0;
+
+    function done(){
+        if ( a_cb ){
+            if ( --num_nodes == 0 ){
+                a_cb();
             }
         }
-    });
+    }
+
+    function recurseExpPaths( node, paths ){
+        num_nodes += 1;
+
+        node.setExpanded( true ).always(function(){
+            if ( node.children ){
+                var child;
+                for ( var i in node.children ){
+                    child = node.children[i];
+                    if ( child.key in paths ){
+                        recurseExpPaths( child, paths[child.key] );
+                    }
+                }
+            }
+    
+            done();
+        });
+    }
+
+    recurseExpPaths( a_node, a_paths );
 }
 
-function reloadNode( node, tree ){
-    if ( !node || node.isLazy() && !node.isLoaded() )
+
+function reloadNode( a_node, a_cb ){
+    if ( !a_node || a_node.isLazy() && !a_node.isLoaded() )
         return;
 
-    var save_exp = node.isExpanded();
+    var save_exp = a_node.isExpanded();
     var paths = {};
 
     if ( save_exp ){
-        saveExpandedPaths( node, paths );
+        saveExpandedPaths( a_node, paths );
     }
 
-    node.load(true).always(function(){
+    a_node.load(true).always(function(){
         if ( save_exp ){
-            restoreExpandedPaths( node, paths[node.key] );
+            restoreExpandedPaths( a_node, paths[a_node.key], a_cb );
         }
     });
 }
@@ -1824,17 +1888,17 @@ function addTreePagingNode( a_data ){
 }
 
 var tree_source = [
-    //{title:"Favorites <i class='browse-reload ui-icon ui-icon-reload'",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-    {title:"My Data <i class='browse-reload ui-icon ui-icon-reload'></i>",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,expanded:false,lazy:true},
-    {title:"My Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
-    {title:"Managed Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
-    {title:"Member Projects <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
+    //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
+    {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,expanded:false,lazy:true},
+    {title:"My Projects</i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
+    {title:"Managed Projects</i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
+    {title:"Member Projects",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
     {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
-        {title:"By User <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
-        {title:"By Project <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
+        {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
+        {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
     ]},
     {title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},
-    {title:"Saved Queries <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
+    {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
 ];
 
 var ctxt_menu_opts = {
@@ -1865,7 +1929,8 @@ var ctxt_menu_opts = {
         {title: "Cut", action: actionCutSelected, cmd: "cut" },
         {title: "Copy", action: actionCopySelected, cmd: "copy" },
         {title: "Paste", action: actionPasteSelected, cmd: "paste" },
-        {title: "Unlink", action: actionUnlinkSelected, cmd: "unlink" }
+        {title: "Unlink", action: actionUnlinkSelected, cmd: "unlink" },
+        {title: "Refresh", action: actionRefresh, cmd: "refresh" }
         ],
     beforeOpen: function( ev, ui ){
         ev.stopPropagation();
@@ -2022,8 +2087,10 @@ $("#btn_subscribe",frame).on('click', actionSubscribe );
 $("#btn_annotate",frame).on('click', actionAnnotate );
 $("#btn_prev_coll",frame).on('click', actionPrevParent );
 $("#btn_next_coll",frame).on('click', actionNextParent );
+$("#btn_refresh",frame).on('click', actionRefresh );
 $("#btn_srch_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_first_par_coll",frame).on('click', actionFirstParent );
+$("#btn_cat_refresh",frame).on('click', actionRefresh );
 
 $("#btn_exp_node",frame).on('click', function(){
     graph_panel.expandNode();
@@ -2047,8 +2114,6 @@ $("#btn_settings").on('click', function(){ dlgSettings.show( function(reload){
     pollSince = settings.opts.task_hist * 3600;
     taskTimer = setTimeout( taskHistoryPoll, 1000 );
 });});
-
-$(document.body).on('click', '.browse-reload' , actionReloadSelected );
 
 $("#id_query,#text_query,#meta_query").on('keypress', function (e) {
     if (e.keyCode == 13){
@@ -2297,14 +2362,6 @@ export function init(){
                     url: "/api/col/view?id="+my_root_key,
                     cache: false
                 };
-
-                /*console.log("lazy load mydata, user:",settings.user);
-                var uid = "u/" + settings.user.uid;
-                data.result = [
-                    {title:"Root Collection",folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
-                    {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
-                ];*/
             }else if ( data.node.key == "proj_own" ){
                     data.result = {
                     url: "/api/prj/list?owner=true&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
@@ -2325,13 +2382,6 @@ export function init(){
                     url: "/api/col/view?id=c/p_"+data.node.key.substr(2)+"_root",
                     cache: false
                 };
-
-                /*var prj_id = data.node.key.substr(2);
-                data.result = [
-                    {title: "Root Collection",folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
-                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
-                ];*/
             } else if ( data.node.key.startsWith( "shared_user" )) {
                 if ( data.node.data.scope ){
                     data.result = {
@@ -2344,11 +2394,6 @@ export function init(){
                         cache: false
                     };
                 }
-            /*} else if ( data.node.key.startsWith("note_")) {
-                data.result = {
-                    url: "/api/note/list/by_subject?subject=" + encodeURIComponent(data.node.key.substr(5)),
-                    cache: false
-                };*/
             } else if ( data.node.key == "allocs" ) {
                 data.result = {
                     url: "/api/repo/alloc/list/by_subject?subject=" + encodeURIComponent(data.node.data.scope),
@@ -2421,7 +2466,7 @@ export function init(){
                 data.result = [
                     {title:util.generateTitle(data.response),folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
-                    {title:"Allocations <i class='browse-reload ui-icon ui-icon-reload'></i>",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
+                    {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
@@ -2450,7 +2495,7 @@ export function init(){
                 if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: item.title + " (" + item.id.substr(2) + ") <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-person",folder:true, key:"shared_user_"+item.id, scope: item.id, lazy:true,nodrag:true});
+                        data.result.push({ title: item.title + " (" + item.id.substr(2) + ")",icon:"ui-icon ui-icon-person",folder:true, key:"shared_user_"+item.id, scope: item.id, lazy:true,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "shared_proj" && !data.node.data.scope ){
@@ -2467,7 +2512,7 @@ export function init(){
                     var qry;
                     for ( i in data.response ) {
                         qry = data.response[i];
-                        data.result.push({ title: qry.title+" <i class='browse-reload ui-icon ui-icon-reload'></i>",icon:"ui-icon ui-icon-zoom",folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
+                        data.result.push({ title: qry.title+"",icon:"ui-icon ui-icon-zoom",folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "allocs" ) {

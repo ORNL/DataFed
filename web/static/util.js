@@ -170,8 +170,8 @@ export function generateTitle( item, refresh, unstruct = false ) {
         }
     }
 
-    title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span>" + (refresh?"&nbsp<i class='browse-reload ui-icon ui-icon-reload'></i>":"") + "<span class='data-tree-subtitle'>";
-    title += "<span class='data-tree-id'>" + item.id + "</span>&nbsp";
+    title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span><span class='data-tree-subtitle'>";
+    title += "<span class='data-tree-id'>" + item.id + "</span>&nbsp;";
     if ( item.alias )
         title += "<span class='data-tree-alias'>[" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + "]</span>";
     else
@@ -184,22 +184,22 @@ export function generateTitle( item, refresh, unstruct = false ) {
         if ( unstruct ){
             // No tree structure to convey owner of data, so show owner when user is not owner/creator
             if ( item.owner != uid && item.creator != uid ){
-                title += "&nbsp<span class='data-tree-owner-other'>" + item.owner.substr(2) + "</span>";
+                title += "&nbsp;<span class='data-tree-owner-other'>" + item.owner.substr(2) + "</span>";
             } else if ( item.owner != uid && item.creator == uid ){
-                title += "&nbsp<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
+                title += "&nbsp;<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
             } else if ( item.owner == uid && item.creator != uid ) {
-                title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
+                title += "&nbsp;<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
             }
         }else{
             if ( item.owner != uid ){
                 if ( item.creator == uid ){
-                    title += "&nbsp<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
+                    title += "&nbsp;<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
                 } else if ( item.creator != item.owner ) {
-                    title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
+                    title += "&nbsp;<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
                 }
             } else {
                 if ( item.creator != uid ) {
-                    title += "&nbsp<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
+                    title += "&nbsp;<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
                 }
             }
         }
@@ -328,7 +328,7 @@ export function setStatusText( text, err ){
 
     if ( err ){
         bar.addClass("blink-background");
-        bar.html( "<span class='ui-icon ui-icon-alert' style='color:yellow;font-size:115%'></span>&nbsp" + text );
+        bar.html( "<span class='ui-icon ui-icon-alert' style='color:yellow;font-size:115%'></span>&nbsp;" + text );
     }else{
         bar.removeClass("blink-background");
         bar.html( text);

@@ -23,6 +23,7 @@
                             <button class="btn btn-icon" id="btn_file_menu" title='Batch import/update menu'><span class="ui-icon ui-icon-disk"></span></button>
                             <button class="btn btn-icon" id="btn_prev_coll" title='Go to previous containing collection' disabled><span class="ui-icon ui-icon-arrowthick-1-w"></span></button>
                             <button class="btn btn-icon" id="btn_next_coll" title='Go to next containing collection' disabled><span class="ui-icon ui-icon-arrowthick-1-e"></span></button>
+                            <button class="btn btn-icon" id="btn_refresh" title='Refresh selected item'><span class="ui-icon ui-icon-reload"></span></button>
                             <input type="file" id="input_files" name="files[]" multiple style='display:none'/>
                             <output id="import_list"></output>
                         </div>
@@ -34,7 +35,8 @@
                             <div id="catalog_tree" class="no-border" style="display:inline-block"></div>
                         </div>
                         <div class='content' style="flex:none;padding:.25em 0 0 .25em">
-                            <button class="btn" id="btn_cat_first_par_coll" title="Go to the first containing collection of selected record in 'My Data'." disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
+                            <button class="btn btn-icon" id="btn_cat_first_par_coll" title="Go to the first containing collection of selected record in 'My Data'." disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
+                            <button class="btn btn-icon" id="btn_cat_refresh" title='Refresh selected item'><span class="ui-icon ui-icon-reload"></span></button>
                         </div>
                     </div>
                 </div>
@@ -82,22 +84,22 @@
                             <tr><td>Type:</td><td id='sel_info_type'></td></tr>
                             <tr><td>ID:</td><td id='sel_info_id'></td></tr>
                             <tr class="sid sic"><td>Alias:</td><td id='sel_info_alias'></td></tr>
-                            <tr class="sidp"><td>DOI&nbspNo.:</td><td id='sel_info_doi'></td></tr>
+                            <tr class="sidp"><td>DOI&nbsp;No.:</td><td id='sel_info_doi'></td></tr>
                             <tr class="sid sidp sic sip sia siq"><td>Title:</td><td id='sel_info_title'></td></tr>
                             <tr class="siu"><td>Name:</td><td id='sel_info_name'></td></tr>
                             <tr class="sid sidp sic sip sia"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr>
                             <tr class="sid sidp"><td>Keywords:</td><td id='sel_info_keyw'></td></tr>
-                            <tr class="sidp"><td>Data&nbspURL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
-                            <tr class="sid"><td>Data&nbspRepo:</td><td id='sel_info_repo'></td></tr>
-                            <tr class="sid"><td>Data&nbspSize:</td><td id='sel_info_size'></td></tr>
-                            <tr class="sid"><td>Data&nbspSource:</td><td id='sel_info_src'></td></tr>
-                            <tr class="sid"><td>Data&nbspExt:</td><td id='sel_info_ext'></td></tr>
+                            <tr class="sidp"><td>Data&nbsp;URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
+                            <tr class="sid"><td>Data&nbsp;Repo:</td><td id='sel_info_repo'></td></tr>
+                            <tr class="sid"><td>Data&nbsp;Size:</td><td id='sel_info_size'></td></tr>
+                            <tr class="sid"><td>Data&nbsp;Source:</td><td id='sel_info_src'></td></tr>
+                            <tr class="sid"><td>Data&nbsp;Ext:</td><td id='sel_info_ext'></td></tr>
                             <tr class="sid sidp"><td>Provenance:</td><td id='sel_info_prov'></td></tr>
                             <tr class="siu"><td>E&#8209;Mail:</td><td id='sel_info_email'></td></tr>
-                            <tr class="sia"><td>Data&nbspLimit:</td><td id='sel_info_data_lim'></td></tr>
-                            <tr class="sia"><td>Data&nbspUsage:</td><td id='sel_info_data_sz'></td></tr>
-                            <tr class="sia"><td>Record&nbspLimit:</td><td id='sel_info_rec_lim'></td></tr>
-                            <tr class="sia"><td>Record&nbspCount:</td><td id='sel_info_rec_cnt'></td></tr>
+                            <tr class="sia"><td>Data&nbsp;Limit:</td><td id='sel_info_data_lim'></td></tr>
+                            <tr class="sia"><td>Data&nbsp;Usage:</td><td id='sel_info_data_sz'></td></tr>
+                            <tr class="sia"><td>Record&nbsp;Limit:</td><td id='sel_info_rec_lim'></td></tr>
+                            <tr class="sia"><td>Record&nbsp;Count:</td><td id='sel_info_rec_cnt'></td></tr>
                             <tr class="sip"><td>Admins:</td><td id='sel_info_admins'></td></tr>
                             <tr class="sip"><td>Members:</td><td id='sel_info_members'></td></tr>
                             <tr class="sip siu"><td>Allocations:</td><td id='sel_info_allocs'></td></tr>
@@ -115,7 +117,7 @@
                 </div>
                 <div id="tab-sel-md" class="ui-widget-content" style="padding:0;height:100%;min-height:0;overflow:auto">
                     <div class="content col-flex" style="height:100%">
-                        <div class='row-flex shadowed' style='flex:none;align-items:center;padding:.25em'>Filter:&nbsp<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp<button class='btn small' id='md_filter_reset'>Reset</button></div>
+                        <div class='row-flex shadowed' style='flex:none;align-items:center;padding:.25em'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
                         <div id="data_md_tree" class="no-border" style="flex:auto;padding:.5em 0 0 0;background:transparent;display:inline-block;overflow:auto"></div>
                     </div>
                 </div>
@@ -159,13 +161,13 @@
         <button class="btn" id="btn_dep_graph" title='View dependency graph of selected data record' disabled>Provenance</button>
         <button class="btn" id="btn_subscribe" title='Manage subscription on selected data record or collection' disabled>Subscribe</button>
         <button class="btn" id="btn_annotate" title='Creaye new annotation on selected data record or collection' disabled>Annotate</button>
-        <span style='padding-left:1em'>&nbsp</span>
+        <span style='padding-left:1em'>&nbsp;</span>
         <button class="btn" id="btn_edit" title='Edit selected item' disabled>Edit</button>
         <!-- button class="btn" id="btn_dup" disabled>Duplicate</button -->
         <button class="btn" id="btn_share" title='Set sharing permissions on selected item' disabled>Share</button>
         <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Download</button>
         <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Upload</button>
-        <span style='padding-left:1em'>&nbsp</span>
+        <span style='padding-left:1em'>&nbsp;</span>
         <button class="btn" id="btn_del" title='Delete selected item' disabled>Delete</button>
         <!-- button class="btn" id="btn_lock" title='Lock selected item' disabled>Lock</button>
         <button class="btn" id="btn_unlock" title='Unlock selected item' disabled>Unlock</button -->
@@ -177,7 +179,7 @@
                 <li><a href="#tab-tasks">Server Tasks</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
-                <span style='float:right;padding:.1em 0 0 0'><span id='mode_label' class='ui-state-error' style='display:none'>&nbsp<b>TEST</b>&nbsp</span>&nbsp<span id='is_admin' class='ui-state-error' style='display:none'>&nbsp<b>ADMIN</b>&nbsp</span>&nbsp<span style='font-weight:normal'>V-<%- @version %></span></span>
+                <span style='float:right;padding:.1em 0 0 0'><span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>TEST</b>&nbsp;</span>&nbsp;<span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;<span style='font-weight:normal'>V-<%- @version %></span></span>
             </ul>
             <div id="tab-search" class="content" style="padding:0">
                 <div class='tab-inner-div'>
@@ -186,11 +188,11 @@
 
                         <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button id="save_qry_btn" class='btn small' style='width:12ch' >Save Query</button></td></tr>
                         <tr><td>Scope:</td><td colspan="3">
-                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbspMy Data</span>
-                            <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbspMy Projects</span>
-                            <span class='my-check'><label for='scope_otherproj'></label><input class='scope' type='checkbox' name='scope_otherproj' id='scope_otherproj'>&nbspOther Projects</span>
-                            <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbspShared</span>
-                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbspSelected</span>
+                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;My Data</span>
+                            <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbsp;My Projects</span>
+                            <span class='my-check'><label for='scope_otherproj'></label><input class='scope' type='checkbox' name='scope_otherproj' id='scope_otherproj'>&nbsp;Other Projects</span>
+                            <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
+                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Selected</span>
                         </td><td><button id='btn_srch_clear_select' class='btn small' style='width:12ch' disabled>Clear Sel.</button></td></tr>
                     </table>
                     <div style='padding:.5em 0 0 0'><span class='note'>* Note: metadata text comparisons are case sensitive.</span></div>

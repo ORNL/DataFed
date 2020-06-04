@@ -46,7 +46,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         },
         source:[
-            {title:"By Topic <i class='browse-reload ui-icon ui-icon-reload'></i>",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
+            {title:"By Topic",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
         ],
         nodata: false,
         selectMode: 2,
