@@ -740,7 +740,7 @@ router.get('/dep/graph/get', function (req, res) {
         var i, j, entry, rec, deps, dep, node, visited = [data_id], cur = [[data_id,true]], next = [], result = [];
 
         // Get Ancestors
-        var gen = 0;
+        var admin, gen = 0;
 
         //console.log("get ancestors");
 
@@ -749,8 +749,17 @@ router.get('/dep/graph/get', function (req, res) {
             for ( i in cur ) {
                 entry = cur[i];
                 rec = g_db.d.document( entry[0] );
-                if ( rec.alias && client._id != rec.owner )
+
+                if ( rec.alias && client._id != rec.owner ){
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
+                }
+                
+                admin = g_lib.hasAdminPermObject( client, rec._id );
+
+                if ( admin )
+                    rec.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:rec._id}).toArray();
+                else
+                    rec.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:rec._id,client:client._id}).toArray();
 
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
@@ -764,9 +773,9 @@ router.get('/dep/graph/get', function (req, res) {
                             next.push([dep.id,dep.type < 2]);
                         }
                     }
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,locked:rec.locked,gen:gen,deps:deps});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,locked:rec.locked,gen:gen,deps:deps});
                 }else{
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,locked:rec.locked});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,locked:rec.locked});
                 }
             }
 
