@@ -41,11 +41,16 @@ function GraphPanel( a_id, a_frame, a_parent ){
             for ( i in a_data.item ){
                 item = a_data.item[i];
                 //console.log("node:",item);
-                node = {id:item.id,doi:item.doi,size:item.size,locked:item.locked,links:[]};
+                node = {id:item.id,doi:item.doi,size:item.size,notes:item.notes,locked:item.locked,links:[]};
+
                 if ( item.alias ){
                     node.label = item.alias;
                 }else
                     node.label = item.id;
+
+                if ( node.notes ){
+                    node.label += util.generateNoteSpan( node, true );
+                }
 
                 if ( item.gen != undefined ){
                     node.row = item.gen;
@@ -122,10 +127,17 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 item = data[i];
 
                 node.locked = item.locked;
+                node.notes = item.notes;
+
                 if ( item.alias ){
                     node.label = item.alias;
                 }else
                     node.label = item.id;
+
+                if ( node.notes ){
+                    node.label += util.generateNoteSpan( node, true );
+                }
+    
             }
         }
 
@@ -227,7 +239,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
             });
 
         nodes.select("text.label")
-            .text(function(d) {
+            .html(function(d) {
                 return d.label;
             })
             .attr('x', function(d){
@@ -343,7 +355,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
         g.append("text")
             .attr("class","label")
-            .text(function(d) {
+            .html(function(d) {
                 return d.label;
             })
             .attr('x', function(d){

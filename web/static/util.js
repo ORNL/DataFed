@@ -151,13 +151,56 @@ export function getDataIcon( a_data ){
         return "ui-icon ui-icon-file";
 }
 
+export function generateNoteSpan( item, codes ){
+    var res = "";
+
+    if ( item.notes ){
+        var ques = false, max = -1;
+
+        for ( var i in item.notes ){
+            if ( item.notes[i] == model.NOTE_QUESTION )
+                ques = true;
+            else if ( item.notes[i] > max )
+                max = item.notes[i];
+        }
+
+        if ( max == model.NOTE_ERROR ){
+            if ( codes )
+                res += " &#xe6e9;";
+            else
+                res += "<i class='ui-icon ui-icon-flag' style='margin: 0 1px 1px -4px'></i>";
+        }else if ( max == model.NOTE_WARN ){
+            if ( codes )
+                res += " &#xe65f;";
+            else
+                res += "<i class='ui-icon ui-icon-alert' style='margin: 0 1px 1px -4px'></i>";
+        }else if ( max == model.NOTE_INFO ){
+            if ( codes )
+                res += " &#xe665;";
+            else
+                res += "<i class='ui-icon ui-icon-circle-info' style='margin: 0 1px 1px -4px'></i>";
+        }
+
+        if ( ques ){
+            if ( codes )
+                res += " &#xe662;";
+            else
+                res += "<i class='ui-icon ui-icon-circle-help' style='margin: 0 1px 1px "+(max>0?"0":"-4px")+"'></i>";
+        }
+    }
+
+    return res;
+}
+
 export function generateTitle( item, refresh, unstruct = false ) {
     var title = "";
 
     if ( item.locked )
         title += "<i class='ui-icon ui-icon-locked'></i> ";
 
-    if ( item.notes ){
+    title += generateNoteSpan( item );
+
+    /*if ( item.notes ){
         var ques = false, max = -1;
 
         for ( var i in item.notes ){
@@ -176,7 +219,7 @@ export function generateTitle( item, refresh, unstruct = false ) {
         if ( ques ){
             title += "<i class='ui-icon ui-icon-circle-help' style='margin: 0 1px 1px "+(max>0?"0":"-4px")+"'></i>";
         }
-    }
+    }*/
 
     title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span><span class='data-tree-subtitle'>";
     title += "<span class='data-tree-id'>" + item.id + "</span>&nbsp;";
