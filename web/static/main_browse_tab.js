@@ -51,25 +51,17 @@ var pollMax = 120;
 var pollMin = 4;
 
 
-//$("#data-tabs-parent").resizable({handles:{"e":$("#data-tabs-resize")}});
-var sibTotalWidth;
-var container = $("#yyyy");
+var resize_container = $("#resize_container");
 
 $("#data-tabs-parent").resizable({
     handles:"e",
-    /*start: function(event, ui){
-        sibTotalWidth = ui.originalSize.width + ui.originalElement.next().outerWidth();
-    },*/
     stop: function(event, ui){     
-        var cellPercentWidth=100 * ui.originalElement.outerWidth()/ container.innerWidth();
+        var cellPercentWidth=100 * ui.originalElement.outerWidth()/ resize_container.innerWidth();
         ui.originalElement.css('width', cellPercentWidth + '%');  
         var nextCell = ui.originalElement.next();
-        var nextPercentWidth=100 * nextCell.outerWidth()/container.innerWidth();
+        var nextPercentWidth=100 * nextCell.outerWidth()/resize_container.innerWidth();
         nextCell.css('width', nextPercentWidth + '%');
     },
-    /*resize: function(event, ui){ 
-        ui.originalElement.next().width(sibTotalWidth - ui.size.width); 
-    }*/
 });
 
 export function windowResized(){
