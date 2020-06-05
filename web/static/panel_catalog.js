@@ -156,7 +156,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                     }else if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,key:item.id,offset:0,scope:item.owner?item.owner:scope };
                     }else{ // data records
-                        entry = { title: util.generateTitle(item),key:item.id,icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
+                        entry = { title: util.generateTitle(item),key:item.id, icon: util.getDataIcon( item ),
                             checkbox:false, doi:item.doi, scope:item.owner?item.owner:scope, size:item.size };
                     }
 

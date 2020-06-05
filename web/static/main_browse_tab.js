@@ -157,10 +157,7 @@ function refreshNodeTitle( a_node, a_data, a_reload ){
     a_node.title = util.generateTitle( a_data );
 
     if ( a_data.id.startsWith( "d/" )){
-        if ( a_data.doi )
-            a_node.icon = "ui-icon ui-icon-linkext";
-        else
-            a_node.icon = "ui-icon ui-icon-file";
+        a_node.icon = util.getDataIcon( a_data );
     }
 
     a_node.renderTitle();
@@ -1500,7 +1497,7 @@ function execQuery( query ){
                 util.setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
                 for ( var i in items ){
                     var item = items[i];
-                    results.push({title:util.generateTitle( item, false, true ),icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
+                    results.push({title:util.generateTitle( item, false, true ),icon: util.getDataIcon( item ),
                         checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,size:item.size});
                 }
             } else {
@@ -2560,7 +2557,7 @@ export function init(){
                     if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false, key_pfx: key_pfx };
                     }else{
-                        entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon:item.doi?"ui-icon ui-icon-linkext":"ui-icon ui-icon-file",
+                        entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
                     }
 

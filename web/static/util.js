@@ -142,6 +142,14 @@ export function checkDlgOpen( a_id ){
 
     return false;
 }
+export function getDataIcon( a_data ){
+    if ( a_data.doi )
+        return "ui-icon ui-icon-linkext";
+    else if ( a_data.size )
+        return "ui-icon ui-icon-file-text";
+    else
+        return "ui-icon ui-icon-file";
+}
 
 export function generateTitle( item, refresh, unstruct = false ) {
     var title = "";
