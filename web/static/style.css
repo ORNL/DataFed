@@ -18,6 +18,23 @@ div
     box-sizing: border-box;
 }
 
+
+/*.ui-resizable-e {
+    right: 0!important;
+    width: 5px!important;
+    background:#888;
+}*/
+
+/*
+.custom-resizable-e {
+    cursor: e-resize;
+    width: 10px;
+    right: 0;
+    top: 0;
+    height: 100%;
+}
+*/
+
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
