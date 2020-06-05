@@ -145,10 +145,10 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     padding:.25em .5em 0 0;
 }
 
-.tab-inner-div
+.footer-tab-inner-div
 {
     padding:.5em .5em 0 .5em;
-    height:7.5em;
+    height:7.7em;
     overflow:auto;
 }
 

@@ -2045,7 +2045,7 @@ $("#footer-tabs").tabs({
             }, 1500 );*/
         }
     }
-}).css({'overflow': 'auto'});
+}); //.css({'overflow': 'auto'});
 
 $("#data-tabs").tabs({
     heightStyle:"fill",
