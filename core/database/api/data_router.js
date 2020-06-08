@@ -604,6 +604,11 @@ router.get('/view', function (req, res) {
             dep = data.deps[i];
             if ( dep.alias && client._id != dep.owner )
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
+
+            if ( g_lib.hasAdminPermObject( client, dep.id ) )
+                dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:dep.id}).toArray();
+             else
+                dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:dep.id,client:client._id}).toArray();
         }
 
         if ( rem_md && data.md )
@@ -724,6 +729,11 @@ router.get('/dep/get', function (req, res) {
         dep = result.deps[i];
         if ( dep.alias && client._id != dep.owner )
             dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
+
+        if ( g_lib.hasAdminPermObject( client, dep.id ) )
+            dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:dep.id}).toArray();
+        else
+            dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:dep.id,client:client._id}).toArray();
     }
 
     res.send( [result] );
@@ -740,7 +750,7 @@ router.get('/dep/graph/get', function (req, res) {
         var i, j, entry, rec, deps, dep, node, visited = [data_id], cur = [[data_id,true]], next = [], result = [];
 
         // Get Ancestors
-        var admin, gen = 0;
+        var gen = 0;
 
         //console.log("get ancestors");
 
@@ -754,9 +764,7 @@ router.get('/dep/graph/get', function (req, res) {
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
                 }
                 
-                admin = g_lib.hasAdminPermObject( client, rec._id );
-
-                if ( admin )
+                if ( g_lib.hasAdminPermObject( client, rec._id ))
                     rec.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:rec._id}).toArray();
                 else
                     rec.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:rec._id,client:client._id}).toArray();
@@ -814,6 +822,12 @@ router.get('/dep/graph/get', function (req, res) {
                             node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
+
+                            if ( g_lib.hasAdminPermObject( client, node.id ))
+                                node.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:node.id}).toArray();
+                            else
+                                node.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:node.id,client:client._id}).toArray();
+            
                             if ( dep.type<2 )
                                 node.gen = gen;
                             result.push(node);
