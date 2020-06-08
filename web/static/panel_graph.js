@@ -7,6 +7,17 @@ export function newGraphPanel( a_id, a_frame, a_parent ){
     return new GraphPanel( a_id, a_frame, a_parent );
 }
 
+function makeLabel( node, item ){
+    if ( item.alias ){
+        node.label = item.alias;
+    }else
+        node.label = item.id;
+
+    if ( node.notes ){
+        node.label += util.generateNoteSpan( node, true );
+    }
+}
+
 function GraphPanel( a_id, a_frame, a_parent ){
 
     //var graph_div = $(a_id,a_frame);
@@ -40,17 +51,10 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
             for ( i in a_data.item ){
                 item = a_data.item[i];
-                //console.log("node:",item);
+                console.log("node:",item);
                 node = {id:item.id,doi:item.doi,size:item.size,notes:item.notes,locked:item.locked,links:[]};
 
-                if ( item.alias ){
-                    node.label = item.alias;
-                }else
-                    node.label = item.id;
-
-                if ( node.notes ){
-                    node.label += util.generateNoteSpan( node, true );
-                }
+                makeLabel( node, item );
 
                 if ( item.gen != undefined ){
                     node.row = item.gen;
@@ -113,6 +117,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
     // TODO Why are IDs separate from data?
 
+
     this.update = function( a_ids, a_data ){
         // Only updates locked and alias of impacted nodes
 
@@ -128,16 +133,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
                 node.locked = item.locked;
                 node.notes = item.notes;
-
-                if ( item.alias ){
-                    node.label = item.alias;
-                }else
-                    node.label = item.id;
-
-                if ( node.notes ){
-                    node.label += util.generateNoteSpan( node, true );
-                }
-    
+                makeLabel( node, item );
             }
         }
 
@@ -475,6 +471,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
                     for ( i in rec.dep ){
                         dep = rec.dep[i];
+                        console.log("dep:",dep);
 
                         if ( dep.dir == "DEP_IN" )
                             id = dep.id+"-"+rec.id;
@@ -499,7 +496,10 @@ function GraphPanel( a_id, a_frame, a_parent ){
                         new_node = findNodes(dep.id);
                         if ( !new_node ){
                             //console.log("adding node");
-                            node_data.push({id:dep.id,label:dep.alias?dep.alias:dep.id,links:[link]});
+                            // TODO Make label consistent
+                            new_node = {id:dep.id,notes:dep.notes,links:[link]}
+                            makeLabel( new_node, dep );
+                            node_data.push( new_node );
                         }else{
                             new_node.links.push(link);
                         }

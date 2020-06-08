@@ -103,8 +103,9 @@ message DependencyData
 {
     required string             id          = 1;
     optional string             alias       = 2;
-    required DependencyType     type        = 3;
-    required DependencyDir      dir         = 4;
+    repeated uint32             notes       = 3;
+    required DependencyType     type        = 4;
+    required DependencyDir      dir         = 5;
 }
 
 // For specifying dependencies

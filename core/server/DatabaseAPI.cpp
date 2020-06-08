@@ -1677,6 +1677,7 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
         a_item->set_title( a_obj.at( "title" ).asString( ));
 
         Value::ObjectIter   j;
+        Value::ArrayIter    k,n;
 
         if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_alias( j->second.asString( ));
@@ -1699,7 +1700,7 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
         if (( j = a_obj.find( "notes" )) != a_obj.end( ))
         {
             Value::Array & arr = j->second.getArray();
-            for ( Value::ArrayIter k = arr.begin(); k != arr.end(); k++ )
+            for ( k = arr.begin(); k != arr.end(); k++ )
             {
                 a_item->add_notes( k->asNumber( ));
             }
@@ -1717,7 +1718,7 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
             DependencyData *    dep;
             Value::Array &      arr2 = j->second.getArray();
 
-            for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
+            for ( k = arr2.begin(); k != arr2.end(); k++ )
             {
                 Value::Object & obj2 = k->getObject();
 
@@ -1727,6 +1728,14 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
                 dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
                 if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
                     dep->set_alias( m->second.asString() );
+                if (( m = obj2.find( "notes" )) != obj2.end( ))
+                {
+                    Value::Array & arr3 = m->second.getArray();
+                    for ( n = arr3.begin(); n != arr3.end(); n++ )
+                    {
+                        dep->add_notes( n->asNumber( ));
+                    }
+                }
             }
         }
     }
