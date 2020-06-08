@@ -46,7 +46,7 @@ function recordCreate( client, record, results ){
         throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
 
     var time = Math.floor( Date.now()/1000 );
-    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id };
+    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id, loc_err: false, inh_err: false };
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
@@ -116,6 +116,12 @@ function recordCreate( client, record, results ){
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
             g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
             data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+        }
+
+        // Recalc inh_err and update
+        if ( g_lib.calcInhError( data.new._id )){
+            data.new.inh_err = true;
+            g_db.d.update( data.new._id, { inh_error: true });
         }
     }
 
@@ -336,9 +342,10 @@ function recordUpdate( client, record, results ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id; //dep_data;
+    var i,dep,id,chk_err=false; //dep_data;
 
     if ( record.deps ){
+        chk_err = true;
         g_db.dep.removeByExample({_from:data_id});
         for ( i in record.deps ) {
             dep = record.deps[i];
@@ -356,6 +363,8 @@ function recordUpdate( client, record, results ){
         g_lib.checkDependencies(data_id);
     }else{
         if ( record.deps_rem != undefined ){
+            chk_err = true;
+
             //console.log("rem deps from ",data._id);
             for ( i in record.deps_rem ) {
                 dep = record.deps_rem[i];
@@ -369,6 +378,8 @@ function recordUpdate( client, record, results ){
         }
 
         if ( record.deps_add != undefined ){
+            chk_err = true;
+
             //console.log("add deps");
             for ( i in record.deps_add ) {
                 dep = record.deps_add[i];
@@ -384,6 +395,22 @@ function recordUpdate( client, record, results ){
             }
 
             g_lib.checkDependencies(data_id);
+        }
+    }
+
+    if ( chk_err ){
+        // Recalc inh_err and update
+        chk_err = g_lib.calcInhError( data._id );
+        if ( chk_err != data.inh_err ){
+            // Inh err state has chnaged, update record
+            var has_err = data.inh_err || data.loc_err;
+            data.inh_err = chk_err;
+            g_db.d.update( data._id, { inh_error: data.inh_err });
+
+            // If combined inh & loc err state has changed, recalc inh_err for dependent records
+            if ( has_err != ( data.inh_err || data.loc_err )){
+                g_lib.recalcInhErrorDeps( data._id, !has_err );
+            }
         }
     }
 

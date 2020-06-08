@@ -1345,6 +1345,29 @@ module.exports = ( function() {
         }
     };
 
+    obj.calcInhError = function( id, depth ){
+        console.log("calcInhError ",id);
+
+        var dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 let err = (for n in 1..1 outbound v note filter n.state == 2 && n.type == 3 return distinct true) return {id:v._id,inh_err:v.inh_err,err:err}",{id:id});
+        if ( !depth || depth < 50 ){
+            while( deps.hasNext() ){
+                dep = deps.next();
+                if ( dep.inh_err || dep.err )
+                    return true;
+
+                obj.checkDependencies( dep.id, depth + 1 );
+            }
+        }
+
+        return false;
+    };
+
+    obj.recalcInhErrorDeps = function( id, has_err ){
+        // local or inherited error at source has changed, recalc & update dependents inh_err
+
+        // TODO - Must cache local errors as well as inherited - otherwise must recalc local from annotaions for all dependents
+    }
+
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");
 
