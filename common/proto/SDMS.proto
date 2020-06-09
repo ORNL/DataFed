@@ -155,6 +155,7 @@ message ListingData
     optional string             doi         = 10;
     optional string             url         = 11;
     repeated DependencyData     dep         = 12;
+    optional bool               inh_err     = 13;
 }
 
 message PathData
@@ -186,6 +187,7 @@ message RecordData
     optional string             parent_id   = 20;
     repeated DependencyData     deps        = 21;
     repeated uint32             notes       = 22;
+    optional bool               inh_err     = 23;
 }
 
 // Fields required for a data repo to locate raw data

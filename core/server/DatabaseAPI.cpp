@@ -1312,6 +1312,9 @@ DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
                 }
             }
 
+            if (( j = obj.find( "inh_err" )) != obj.end( ))
+                rec->set_inh_err( j->second.asBool( ));
+
             if (( j = obj.find( "deps" )) != obj.end( ))
             {
                 Value::Array & arr2 = j->second.getArray();
@@ -1705,6 +1708,9 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
                 a_item->add_notes( k->asNumber( ));
             }
         }
+
+        if (( j = a_obj.find( "inh_err" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_item->set_inh_err( j->second.asBool( ));
 
         if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_locked( j->second.asBool( ));
