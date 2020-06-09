@@ -1348,11 +1348,12 @@ module.exports = ( function() {
     obj.calcInhError = function( id, depth ){
         console.log("calcInhError ",id);
 
-        var dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 let err = (for n in 1..1 outbound v note filter n.state == 2 && n.type == 3 return distinct true) return {id:v._id,inh_err:v.inh_err,err:err}",{id:id});
+        //var dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 let err = (for n in 1..1 outbound v note filter n.state == 2 && n.type == 3 return distinct true) return {id:v._id,inh_err:v.inh_err,err:err}",{id:id});
+        var dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
         if ( !depth || depth < 50 ){
             while( deps.hasNext() ){
                 dep = deps.next();
-                if ( dep.inh_err || dep.err )
+                if ( dep.inh_err || dep.loc_err )
                     return true;
 
                 obj.checkDependencies( dep.id, depth + 1 );
@@ -1365,7 +1366,43 @@ module.exports = ( function() {
     obj.recalcInhErrorDeps = function( id, has_err ){
         // local or inherited error at source has changed, recalc & update dependents inh_err
 
-        // TODO - Must cache local errors as well as inherited - otherwise must recalc local from annotaions for all dependents
+        var update,dep,deps = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
+        while( deps.hasNext() ){
+            dep = deps.next();
+
+            if ( has_err ){
+                if ( !dep.inh_err ){
+                    update = true;
+                }else{
+                    update = false;
+                }
+            }else{
+                if ( dep.inh_err ){
+                    // Must determine if inherits error from any other sources
+                    var up_deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,err:v.loc_err||v.inh_err}",{id:dep.id,src:id});
+
+                    update = true;
+                    while( up_deps.hasNext() ){
+                        if ( up_deps.next().err ){
+                            update = false;
+                            break;
+                        }
+                    }
+                }else{
+                    update = false;
+                }
+            }
+
+            if ( update ){
+                // Update inh_err
+                obj.db.d.update( dep.id, { inh_err: dep.inh_err });
+
+                if ( !dep.loc_err ){
+                    // combined err state changed, must update dependents
+                    recalcInhErrorDeps( dep.id, has_err );
+                }
+            }
+        }
     }
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){

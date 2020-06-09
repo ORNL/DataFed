@@ -16,14 +16,14 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d","c"],
-                write: ["n","note"]
+                write: ["d","n","note"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id = g_lib.resolveDataCollID( req.queryParams.subject, client );
+                var id = g_lib.resolveDataCollID( req.queryParams.subject, client ),
+                    doc = g_db._document( id );
         
                 if ( !g_lib.hasAdminPermObject( client, id )) {
-                    var doc = g_db._document( id );
                     if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
                         throw g_lib.ERR_PERM_DENIED;
                     }
@@ -43,6 +43,19 @@ router.post('/create', function (req, res) {
                 var note = g_db.n.save( obj, { returnNew: true });
                 g_db.note.save({ _from: id, _to: note._id });
 
+                // Further process activated errors on data records (set loc_err, propagate downstream)
+                if ( req.queryParams.type == g_lib.NOTE_ERROR && req.queryParams.activate && doc._id.startsWith( "d/" )){
+                    if ( !doc.loc_err ){
+                        // local err state has chnaged, update record
+                        g_db.d.update( doc._id, { loc_err: true });
+                    }
+
+                    if ( !doc.inh_err && !doc.loc_err ){
+                        // Combined inh & loc err state has changed, recalc inh_err for dependent records
+                        g_lib.recalcInhErrorDeps( doc._id, true );
+                    }
+                }
+        
                 res.send( [note.new] );
             }
         });
@@ -76,7 +89,10 @@ router.post('/update', function (req, res) {
                 if ( !g_db._exists( req.queryParams.id ))
                     throw [g_lib.ERR_INVALID_PARAM,"Annotaion ID '" + req.queryParams.id + "' does not exist."];
 
-                var note = g_db.n.document( req.queryParams.id );
+                var note = g_db.n.document( req.queryParams.id ),
+                    ne = g_db.note.firstExample({ _to: note._id }),
+                    old_state = note.state;
+                    doc = g_db._document( ne._from );
 
                 // new_state requirements:
                 // None (comment) - If open: only note creator or subject admin, if active: anyone with read access to subject
@@ -92,11 +108,9 @@ router.post('/update', function (req, res) {
                     if ( req.queryParams.new_state === g_lib.NOTE_ACTIVE )
                         throw [g_lib.ERR_PERM_DENIED,"Insufficient permissions to activate annotaion."];
 
-                    var ne = g_db.note.firstExample({ _to: note._id });
                     if ( !g_lib.hasAdminPermObject( client, ne._from )) {
                         if ( req.queryParams.new_state === undefined && note.state == g_lib.NOTE_ACTIVE ){
                             // Anyone with read permission to subject doc can comment on active notes
-                            var doc = g_db._document( ne._from );
                             if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
                                 throw g_lib.ERR_PERM_DENIED;
                             }
@@ -121,6 +135,33 @@ router.post('/update', function (req, res) {
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
 
+                // Further process activated errors on data records (set loc_err, propagate downstream)
+                if ( note.type == g_lib.NOTE_ERROR && doc._id.startsWith( "d/" )){
+                    var loc_err;
+                    if ( old_state == g_lib.NOTE_ACTIVE && note.state != g_lib.NOTE_ACTIVE ){
+                        if ( doc.loc_err ){
+                            // Deactived an error, reclac & update loc_err
+                            // Any other active errors?
+                            var notes = g_db._query("for v in 1..1 outbound @id note filter v.state == 2 && v.type == 3 v._id != @nid return true",{id:doc._id,nid:note._id});
+                            if ( !notes.hasNext()){
+                                // Deactived only active error, update loc_err
+                                loc_err = false;
+                            }
+                        }
+                    }else if( old_state != g_lib.NOTE_ACTIVE && note.state == g_lib.NOTE_ACTIVE ){
+                        if ( !doc.loc_err ){
+                            // Actived an error, update loc_err
+                            loc_err = true;
+                        }
+                    }
+
+                    if ( !doc.inh_err && loc_err != undefined ){
+                        g_db.d.update( doc._id, { loc_err: loc_err });
+                        // Combined inh & loc err state has changed, recalc inh_err for dependent records
+                        g_lib.recalcInhErrorDeps( doc._id, loc_err );
+                    }
+                }
+                
                 res.send( [note.new] );
             }
         });
