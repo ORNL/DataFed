@@ -189,6 +189,13 @@ export function generateNoteSpan( item, codes ){
         }
     }
 
+    if ( item.inhErr ){
+        if ( codes )
+            res += " (&#xe6e9;)";
+        else
+            res += " <span class='inh-err-title'>(<i class='ui-icon ui-icon-flag inh-err-title' style='margin: 0 0 1px 0'>></i>)</span> ";
+    }
+
     return res;
 }
 

@@ -1732,8 +1732,13 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
                 dep->set_id( obj2.at( "id" ).asString());
                 dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
                 dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+
                 if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
                     dep->set_alias( m->second.asString() );
+
+                if (( m = obj2.find( "inh_err" )) != obj2.end( ) && !m->second.isNull( ))
+                    dep->set_inh_err( m->second.asBool() );
+
                 if (( m = obj2.find( "notes" )) != obj2.end( ))
                 {
                     Value::Array & arr3 = m->second.getArray();

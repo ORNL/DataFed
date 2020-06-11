@@ -8,14 +8,13 @@ export function newGraphPanel( a_id, a_frame, a_parent ){
 }
 
 function makeLabel( node, item ){
+    console.log("makeLabel",node,item);
     if ( item.alias ){
         node.label = item.alias;
     }else
         node.label = item.id;
 
-    if ( node.notes ){
-        node.label += util.generateNoteSpan( node, true );
-    }
+    node.label += util.generateNoteSpan( item, true );
 }
 
 function GraphPanel( a_id, a_frame, a_parent ){
@@ -41,7 +40,6 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
         //console.log("owner:",a_owner);
         api.dataGetDepGraph( a_id, function( a_data ){
-            console.log("dep data:",a_data);
             var item, i, j, dep, node;
 
             link_data = [];
@@ -52,7 +50,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
             for ( i in a_data.item ){
                 item = a_data.item[i];
                 console.log("node:",item);
-                node = {id:item.id,doi:item.doi,size:item.size,notes:item.notes,locked:item.locked,links:[]};
+                node = {id:item.id,doi:item.doi,size:item.size,notes:item.notes,inhErr:item.inhErr,locked:item.locked,links:[]};
 
                 makeLabel( node, item );
 
@@ -133,6 +131,8 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
                 node.locked = item.locked;
                 node.notes = item.notes;
+                console.log("updating:", node);
+
                 makeLabel( node, item );
             }
         }
@@ -495,9 +495,9 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
                         new_node = findNodes(dep.id);
                         if ( !new_node ){
-                            //console.log("adding node");
+                            console.log("adding node");
                             // TODO Make label consistent
-                            new_node = {id:dep.id,notes:dep.notes,links:[link]}
+                            new_node = {id:dep.id,notes:dep.notes,inhErr:dep.inhErr,links:[link]}
                             makeLabel( new_node, dep );
                             node_data.push( new_node );
                         }else{
