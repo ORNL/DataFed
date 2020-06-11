@@ -78,7 +78,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["n","note"]
+                write: ["d","n","note"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -133,16 +133,20 @@ router.post('/update', function (req, res) {
 
                 obj.comments.push(comment);
 
-                note = g_db.n.update( note._id, obj, { returnNew: true } );
+                note = g_db.n.update( note._id, obj, { returnNew: true } ).new;
 
                 // Further process activated errors on data records (set loc_err, propagate downstream)
-                if ( note.type == g_lib.NOTE_ERROR && doc._id.startsWith( "d/" )){
+                console.log("check for error upd/prop",note,doc._id.startsWith( "d/" ));
+                if (( note.type == g_lib.NOTE_ERROR ) && doc._id.startsWith( "d/" )){
+                    console.log("is an error on data",old_state,note.state,doc.loc_err,doc.inh_err);
                     var loc_err;
                     if ( old_state == g_lib.NOTE_ACTIVE && note.state != g_lib.NOTE_ACTIVE ){
+                        console.log("deactivate err");
                         if ( doc.loc_err ){
                             // Deactived an error, reclac & update loc_err
                             // Any other active errors?
-                            var notes = g_db._query("for v in 1..1 outbound @id note filter v.state == 2 && v.type == 3 v._id != @nid return true",{id:doc._id,nid:note._id});
+                            var notes = g_db._query("for v in 1..1 outbound @id note filter v.state == 2 && v.type == 3 && v._id != @nid return true",{id:doc._id,nid:note._id});
+                            console.log("no loc err, notes next:",notes.hasNext());
                             if ( !notes.hasNext()){
                                 // Deactived only active error, update loc_err
                                 loc_err = false;
@@ -155,14 +159,19 @@ router.post('/update', function (req, res) {
                         }
                     }
 
-                    if ( !doc.inh_err && loc_err != undefined ){
+                    if ( loc_err != undefined ){
+                        console.log("upd loc_err:",loc_err);
                         g_db.d.update( doc._id, { loc_err: loc_err });
-                        // Combined inh & loc err state has changed, recalc inh_err for dependent records
-                        g_lib.recalcInhErrorDeps( doc._id, loc_err );
+
+                        if ( !doc.inh_err ){
+                            console.log("recalc inh err");
+                            // Combined inh & loc err state has changed, recalc inh_err for dependent records
+                            g_lib.recalcInhErrorDeps( doc._id, loc_err );
+                        }
                     }
                 }
                 
-                res.send( [note.new] );
+                res.send( [note] );
             }
         });
     } catch( e ) {

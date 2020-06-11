@@ -1364,11 +1364,13 @@ module.exports = ( function() {
     };
 
     obj.recalcInhErrorDeps = function( id, has_err ){
+        console.log("recalcInhErrorDeps",id,has_err);
         // local or inherited error at source has changed, recalc & update dependents inh_err
 
-        var update,dep,deps = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
+        var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
         while( deps.hasNext() ){
             dep = deps.next();
+            console.log("- dep:",dep.id,dep.inh_err);
 
             if ( has_err ){
                 if ( !dep.inh_err ){
@@ -1379,11 +1381,13 @@ module.exports = ( function() {
             }else{
                 if ( dep.inh_err ){
                     // Must determine if inherits error from any other sources
-                    var up_deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,err:v.loc_err||v.inh_err}",{id:dep.id,src:id});
+                    var ud,up_deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,err:v.loc_err||v.inh_err}",{id:dep.id,src:id});
 
                     update = true;
                     while( up_deps.hasNext() ){
-                        if ( up_deps.next().err ){
+                        ud = up_deps.next();
+                        console.log("-- ud:",ud.id,ud.err);
+                        if ( ud.err ){
                             update = false;
                             break;
                         }
@@ -1394,8 +1398,9 @@ module.exports = ( function() {
             }
 
             if ( update ){
+                console.log("- do update");
                 // Update inh_err
-                obj.db.d.update( dep.id, { inh_err: dep.inh_err });
+                obj.db.d.update( dep.id, { inh_err: has_err });
 
                 if ( !dep.loc_err ){
                     // combined err state changed, must update dependents

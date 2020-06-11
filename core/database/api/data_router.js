@@ -750,7 +750,7 @@ router.get('/dep/get', function (req, res) {
     var data_id = g_lib.resolveDataID( req.queryParams.id, client );
     var dep,result = {id:data_id,title:""};
 
-    result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
+    result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,inh_err:v.inh_err,type:e.type,dir:dir}",{data:data_id}).toArray();
 
     for ( var i in result.deps ){
         dep = result.deps[i];
@@ -808,9 +808,9 @@ router.get('/dep/graph/get', function (req, res) {
                             next.push([dep.id,dep.type < 2]);
                         }
                     }
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,locked:rec.locked,gen:gen,deps:deps});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,inh_err:rec.inh_err,locked:rec.locked,gen:gen,deps:deps});
                 }else{
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,locked:rec.locked});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,inh_err:rec.inh_err,locked:rec.locked});
                 }
             }
 
@@ -836,7 +836,7 @@ router.get('/dep/graph/get', function (req, res) {
                 entry = cur[i];
 
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,inh_err:v.inh_err,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
                 if ( entry[1] ){
                     for ( j in deps ){
