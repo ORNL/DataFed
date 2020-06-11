@@ -91,7 +91,7 @@ router.post('/update', function (req, res) {
 
                 var note = g_db.n.document( req.queryParams.id ),
                     ne = g_db.note.firstExample({ _to: note._id }),
-                    old_state = note.state;
+                    old_state = note.state,
                     doc = g_db._document( ne._from );
 
                 // new_state requirements:

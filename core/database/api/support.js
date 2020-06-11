@@ -1399,11 +1399,11 @@ module.exports = ( function() {
 
                 if ( !dep.loc_err ){
                     // combined err state changed, must update dependents
-                    recalcInhErrorDeps( dep.id, has_err );
+                    obj.recalcInhErrorDeps( dep.id, has_err );
                 }
             }
         }
-    }
+    };
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");
