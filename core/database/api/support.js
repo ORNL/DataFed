@@ -1379,21 +1379,17 @@ module.exports = ( function() {
                     update = false;
                 }
             }else{
-                if ( dep.inh_err ){
-                    // Must determine if inherits error from any other sources
-                    var ud,up_deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,err:v.loc_err||v.inh_err}",{id:dep.id,src:id});
+                // Must determine if inherits error from any other sources
+                var ud,up_deps = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,err:v.loc_err||v.inh_err}",{id:dep.id,src:id});
 
-                    update = true;
-                    while( up_deps.hasNext() ){
-                        ud = up_deps.next();
-                        console.log("-- ud:",ud.id,ud.err);
-                        if ( ud.err ){
-                            update = false;
-                            break;
-                        }
+                update = true;
+                while( up_deps.hasNext() ){
+                    ud = up_deps.next();
+                    console.log("-- ud:",ud.id,ud.err);
+                    if ( ud.err ){
+                        update = false;
+                        break;
                     }
-                }else{
-                    update = false;
                 }
             }
 

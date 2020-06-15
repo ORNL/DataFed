@@ -142,15 +142,13 @@ router.post('/update', function (req, res) {
                     var loc_err;
                     if ( old_state == g_lib.NOTE_ACTIVE && note.state != g_lib.NOTE_ACTIVE ){
                         console.log("deactivate err");
-                        if ( doc.loc_err ){
-                            // Deactived an error, reclac & update loc_err
-                            // Any other active errors?
-                            var notes = g_db._query("for v in 1..1 outbound @id note filter v.state == 2 && v.type == 3 && v._id != @nid return true",{id:doc._id,nid:note._id});
-                            console.log("no loc err, notes next:",notes.hasNext());
-                            if ( !notes.hasNext()){
-                                // Deactived only active error, update loc_err
-                                loc_err = false;
-                            }
+                        // Deactived an error, reclac & update loc_err
+                        // Any other active errors?
+                        var notes = g_db._query("for v in 1..1 outbound @id note filter v.state == 2 && v.type == 3 && v._id != @nid return true",{id:doc._id,nid:note._id});
+                        console.log("no loc err, notes next:",notes.hasNext());
+                        if ( !notes.hasNext()){
+                            // Deactived only active error, update loc_err
+                            loc_err = false;
                         }
                     }else if( old_state != g_lib.NOTE_ACTIVE && note.state == g_lib.NOTE_ACTIVE ){
                         if ( !doc.loc_err ){
