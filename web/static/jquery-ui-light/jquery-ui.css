@@ -148,6 +148,10 @@ textarea.ui-state-disabled
     color: #803636!important;
 }
 
+.inh-err-title{
+	color: #fF7060!important;
+}
+
 .ui-icon-notice
 {
     color: #0080FF
