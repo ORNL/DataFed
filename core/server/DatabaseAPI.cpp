@@ -2795,27 +2795,31 @@ void
 DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, libjson::Value & a_result )
 {
     Value::ObjectIter   j;
+    Value::ArrayIter    i;
 
     try
     {
-        Value::Array & arr = a_result.getArray();
-
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        if (( j = a_result.find( "results" )) != a_result.end() )
         {
-            Value::Object & obj = i->getObject();
+            Value::Array & arr = j->second.getArray();
 
-            /*if (( j = obj.find( "paging" )) != obj.end( ))
+            for ( i = arr.begin(); i != arr.end(); i++ )
             {
-                Value::Object & obj2 = j->second.getObject();
+                Value::Object & obj = i->getObject();
 
-                a_reply.set_offset( obj2.at( "off" ).asNumber( ));
-                a_reply.set_count( obj2.at( "cnt" ).asNumber( ));
-                a_reply.set_total( obj2.at( "tot" ).asNumber( ));
-            }
-            else
-            {*/
                 setNoteData( a_reply.add_note(), obj );
-            //}
+            }
+        }
+
+        if (( j = a_result.find( "updates" )) != a_result.end() )
+        {
+            Value::Array & arr = j->second.getArray();
+
+            for ( i = arr.begin(); i != arr.end(); i++ )
+            {
+                Value::Object & obj = i->getObject();
+                setListingData( a_reply.add_update(), obj );
+            }
         }
     }
     catch( exception & e )

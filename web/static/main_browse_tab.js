@@ -2870,3 +2870,20 @@ export function init(){
 }
 
 task_hist.html( "(no recent transfers)" );
+
+model.registerUpdateListener( function( a_data ){
+    console.log("updating:",a_data);
+    // Find impacted nodes in data tree and update title
+    data_tree.visit( function(node){
+        if ( node.key in a_data ){
+            refreshNodeTitle( node, a_data[node.key] );
+        }
+    });
+
+    // Find impacted nodes in search results and update title
+    results_tree.visit( function(node){
+        if ( node.key in a_data ){
+            refreshNodeTitle( node, a_data[node.key] );
+        }
+    });
+});

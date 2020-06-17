@@ -106,3 +106,37 @@ export const DepTypeFromString = {
     "DEP_IS_COMPONENT_OF":DEP_IS_COMPONENT_OF,
     "DEP_IS_NEW_VERSION_OF":DEP_IS_NEW_VERSION_OF
 };
+
+var upd_cbs = [];
+var upd_timer;
+var upd_data = {};
+
+export function registerUpdateListener( a_cb ){
+    if ( upd_cbs.indexOf( a_cb ) < 0 )
+        upd_cbs.push( a_cb );
+}
+
+export function update( a_data ){
+    var d;
+    console.log("Update model called",a_data);
+
+    if ( upd_timer ){
+        clearTimeout( upd_timer );
+        upd_timer = null;
+    }
+
+    // Convert array to map
+    for ( var i in a_data ){
+        d = a_data[i];
+        upd_data[d.id] = d;
+    }
+
+    upd_timer = setTimeout(function(){
+        console.log("calling Update CBs");
+        for ( var i in upd_cbs ){
+            upd_cbs[i](upd_data);
+        }
+        upd_timer = null;
+        upd_data = {};
+    }, 500);
+}

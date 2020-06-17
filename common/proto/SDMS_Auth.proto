@@ -900,6 +900,7 @@ message AnnotationViewRequest
 message AnnotationDataReply
 {
     repeated SDMS.NoteData      note    = 1;
+    repeated SDMS.ListingData   update  = 2;
 }
 
 // ============================ Task Messages

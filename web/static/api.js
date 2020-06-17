@@ -397,15 +397,29 @@ export function annotationView( a_id, a_cb ){
     _asyncGet( "/api/note/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
+
 export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activate, a_cb ){
     _asyncGet( "/api/note/create?subject="+encodeURIComponent(a_subj_id) + "&type=" + a_type +
         "&title=" +encodeURIComponent(a_title) + "&comment="+encodeURIComponent(a_comment)+(a_activate?"&activate=true":""),
-        null, a_cb );
+        null, function( ok, reply ){
+            a_cb( ok, reply );
+
+            if ( ok && reply.updates )
+                model.update( reply.updates );
+        });
 }
 
 export function annotationUpdate( a_id, a_comment, a_new_state, a_cb ){
     _asyncGet( "/api/note/update?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
-        (a_new_state!=null?"&new_state="+a_new_state:""),null, a_cb );
+        (a_new_state!=null?"&new_state="+a_new_state:""),
+        null, function( ok, reply ){
+            a_cb( ok, reply );
+
+            console.log("chk for updates:",reply);
+
+            if ( ok && reply.update )
+                model.update( reply.update );
+        });
 }
 
 export function annotationCommentEdit( a_id, a_comment, a_comment_idx, a_title, a_cb ){
