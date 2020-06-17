@@ -1345,6 +1345,24 @@ module.exports = ( function() {
         }
     };
 
+    obj.updateAnnotationField = function( doc ){
+        var notes = g_db._query("for v in 1..1 outbound @id note filter v.state > 0 return v", { id: doc._id }),
+            note_mask = 0, m;
+
+        while ( notes.hasNext() ){
+            note = notes.next();
+            m = 1<<note.state;
+            if ( note.state == g_lib.NOTE_OPEN ){
+                m <<= 8;
+            }
+            note_mask |= m;
+        }
+
+        if ( notes_mask != doc.notes ){
+
+        }
+    };
+
     obj.calcInhError = function( id, depth ){
         console.log("calcInhError ",id);
 
@@ -1363,11 +1381,13 @@ module.exports = ( function() {
         return false;
     };
 
-    obj.recalcInhErrorDeps = function( id, has_err ){
+    obj.recalcInhErrorDeps = function( id, has_err, updates ){
         console.log("recalcInhErrorDeps",id,has_err);
         // local or inherited error at source has changed, recalc & update dependents inh_err
 
-        var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
+        //var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
+        // TODO add notes
+        var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, loc_err:v.loc_err, inh_err: v.inh_err, locked: v.locked }",{id:id});
         while( deps.hasNext() ){
             dep = deps.next();
             console.log("- dep:",dep.id,dep.inh_err);
@@ -1397,10 +1417,14 @@ module.exports = ( function() {
                 console.log("- do update");
                 // Update inh_err
                 obj.db.d.update( dep.id, { inh_err: has_err });
+                dep.inh_err = has_err;
+                if ( !( dep.id in updates )){
+                    updates[dep.id] = dep;
+                }
 
                 if ( !dep.loc_err ){
                     // combined err state changed, must update dependents
-                    obj.recalcInhErrorDeps( dep.id, has_err );
+                    obj.recalcInhErrorDeps( dep.id, has_err, updates );
                 }
             }
         }

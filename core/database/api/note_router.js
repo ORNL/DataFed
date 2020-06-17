@@ -34,7 +34,8 @@ router.post('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = { state: req.queryParams.activate?g_lib.NOTE_ACTIVE:g_lib.NOTE_OPEN, type: req.queryParams.type,
-                    subject: id, ct: time, ut: time, creator: client._id };
+                    subject: id, ct: time, ut: time, creator: client._id },
+                    updates = {};
             
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
                 obj.comments = [{ user: client._id, action: obj.state, time:time }];
@@ -42,6 +43,9 @@ router.post('/create', function (req, res) {
             
                 var note = g_db.n.save( obj, { returnNew: true });
                 g_db.note.save({ _from: id, _to: note._id });
+
+                // Update notes bits on associated doc
+                g_lib.updateAnnotationField( doc );
 
                 // Further process activated errors on data records (set loc_err, propagate downstream)
                 if ( req.queryParams.type == g_lib.NOTE_ERROR && req.queryParams.activate && doc._id.startsWith( "d/" )){
@@ -52,11 +56,11 @@ router.post('/create', function (req, res) {
 
                     if ( !doc.inh_err && !doc.loc_err ){
                         // Combined inh & loc err state has changed, recalc inh_err for dependent records
-                        g_lib.recalcInhErrorDeps( doc._id, true );
+                        g_lib.recalcInhErrorDeps( doc._id, true, updates );
                     }
                 }
         
-                res.send( [note.new] );
+                res.send({ results: [note.new], updates: Array.from( updates )});
             }
         });
     } catch( e ) {
@@ -92,7 +96,8 @@ router.post('/update', function (req, res) {
                 var note = g_db.n.document( req.queryParams.id ),
                     ne = g_db.note.firstExample({ _to: note._id }),
                     old_state = note.state,
-                    doc = g_db._document( ne._from );
+                    doc = g_db._document( ne._from ),
+                    updates = {};
 
                 // new_state requirements:
                 // None (comment) - If open: only note creator or subject admin, if active: anyone with read access to subject
@@ -164,12 +169,13 @@ router.post('/update', function (req, res) {
                         if ( !doc.inh_err ){
                             console.log("recalc inh err");
                             // Combined inh & loc err state has changed, recalc inh_err for dependent records
-                            g_lib.recalcInhErrorDeps( doc._id, loc_err );
+                            g_lib.recalcInhErrorDeps( doc._id, loc_err, updates );
                         }
                     }
                 }
-                
-                res.send( [note] );
+
+                console.log("updates:",Object.values(updates));
+                res.send({ results: [note], updates: Object.values(updates)});
             }
         });
     } catch( e ) {
@@ -225,7 +231,7 @@ router.post('/comment/edit', function (req, res) {
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
 
-                res.send( [note.new] );
+                res.send({ results: [note.new] });
             }
         });
     } catch( e ) {
@@ -268,7 +274,7 @@ router.get('/view', function (req, res) {
             }
         }
 
-        res.send([ note ]);
+        res.send({ results: [note] });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -292,7 +298,7 @@ router.get('/list/by_subject', function (req, res) {
             results = g_db._query( qry, { subj: id, client: client._id });
         }
 
-        res.send( results );
+        res.send({ results: results.toArray() });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
