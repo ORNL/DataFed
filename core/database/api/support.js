@@ -98,6 +98,19 @@ module.exports = ( function() {
     obj.NOTE_OPEN           = 1;
     obj.NOTE_ACTIVE         = 2;
 
+    obj.NOTE_MASK_ACT_QUES  = 0x01;
+    obj.NOTE_MASK_ACT_INFO  = 0x02;
+    obj.NOTE_MASK_ACT_WARN  = 0x04;
+    obj.NOTE_MASK_ACT_ERR   = 0x08;
+    obj.NOTE_MASK_OPN_QUES  = 0x10;
+    obj.NOTE_MASK_OPN_INFO  = 0x20;
+    obj.NOTE_MASK_OPN_WARN  = 0x40;
+    obj.NOTE_MASK_OPN_ERR   = 0x80;
+    obj.NOTE_MASK_INH_WARN  = 0x400;
+    obj.NOTE_MASK_INH_ERR   = 0x800;
+    obj.NOTE_MASK_LOC_ALL   = 0xFF;
+    obj.NOTE_MASK_INH_ALL   = 0xC00;
+
     obj.SS_MY_DATA          = 0x01;
     obj.SS_MY_PROJ          = 0x02;
     obj.SS_TEAM_PROJ        = 0x04;
@@ -1345,48 +1358,68 @@ module.exports = ( function() {
         }
     };
 
-    obj.updateAnnotationField = function( doc ){
-        var notes = g_db._query("for v in 1..1 outbound @id note filter v.state > 0 return v", { id: doc._id }),
-            note_mask = 0, m;
+    obj.updateAnnotationState = function( doc, calc_inh, updates ){
+        var mask = 0;
+
+        if ( calc_inh ){
+            mask = obj.updateAnnotationStateUp( doc._id );
+        }else{
+            mask = ( doc.notes & g_lib.NOTE_MASK_INH_ALL );
+        }
+
+        var m, notes = g_db._query("for v in 1..1 outbound @id note filter v.state > 0 return v", { id: doc._id }),
 
         while ( notes.hasNext() ){
             note = notes.next();
-            m = 1<<note.state;
+            m = 1<<note.type;
             if ( note.state == g_lib.NOTE_OPEN ){
-                m <<= 8;
+                m <<= 4;
             }
-            note_mask |= m;
+            mask |= m;
         }
 
-        if ( notes_mask != doc.notes ){
+        // Update doc notes mask if changed
+        if ( mask != doc.notes ){
+            obj.db._update( doc._id, { notes: mask });
 
+            // For data records, if active error or warn bits have changed, or inh err bit has changed, need to recalc downstream
+            var app_err = ( mask & ( g_lib.NOTE_MASK_INH_ERR | g_lib.NOTE_MASK_ACT_ERR )) != 0,
+                app_warn = ( mask & g_lib.NOTE_MASK_ACT_WARN ) != 0,
+                recalc = ( app_err != (( doc.notes & ( g_lib.NOTE_MASK_INH_ERR | g_lib.NOTE_MASK_ACT_ERR ))!= 0 ))
+                    || ( app_warn != ( doc.notes & g_lib.NOTE_MASK_ACT_WARN ));
+
+            doc.notes = mask;
+
+            if ( recalc && doc._id.startsWith( "d/" )){
+                g_lib.updateAnnotationStateDown( doc._id, app_err, app_warn, updates );
+            }
         }
     };
 
-    obj.calcInhError = function( id, depth ){
-        console.log("calcInhError ",id);
+    obj.updateAnnotationStateUp = function( id ){
+        console.log("updateAnnotationStateUp ",id);
 
-        //var dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 let err = (for n in 1..1 outbound v note filter n.state == 2 && n.type == 3 return distinct true) return {id:v._id,inh_err:v.inh_err,err:err}",{id:id});
-        var dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
-        if ( !depth || depth < 50 ){
-            while( deps.hasNext() ){
-                dep = deps.next();
-                if ( dep.inh_err || dep.loc_err )
-                    return true;
+        var mask = 0, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { id: v._id, notes: v.notes }",{id:id});
 
-                obj.checkDependencies( dep.id, depth + 1 );
-            }
+        while( deps.hasNext() ){
+            dep = deps.next();
+            // Active errors are alway inherited, active warnings are only inherited from direct ancestor
+            if ( dep.notes & ( g_lib.NOTE_MASK_INH_ERR | g_lib.NOTE_MASK_ACT_ERR ))
+                mask |= g_lib.NOTE_MASK_INH_ERR;
+            if ( dep.notes & g_lib.NOTE_MASK_ACT_WARN )
+                mask |= g_lib.NOTE_MASK_INH_WARN;
         }
 
-        return false;
+        return mask;
     };
 
-    obj.recalcInhErrorDeps = function( id, has_err, updates ){
-        console.log("recalcInhErrorDeps",id,has_err);
+    obj.updateAnnotationStateDown = function( id, has_err, has_warn, updates ){
+        console.log("updateAnnotationStateDown",id,has_err,has_warn);
         // local or inherited error at source has changed, recalc & update dependents inh_err
 
         //var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
         // TODO add notes
+        /*
         var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, loc_err:v.loc_err, inh_err: v.inh_err, locked: v.locked }",{id:id});
         while( deps.hasNext() ){
             dep = deps.next();
@@ -1424,10 +1457,10 @@ module.exports = ( function() {
 
                 if ( !dep.loc_err ){
                     // combined err state changed, must update dependents
-                    obj.recalcInhErrorDeps( dep.id, has_err, updates );
+                    obj.updateAnnotationStateDown( dep.id, has_err, updates );
                 }
             }
-        }
+        }*/
     };
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){

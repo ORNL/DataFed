@@ -45,20 +45,8 @@ router.post('/create', function (req, res) {
                 g_db.note.save({ _from: id, _to: note._id });
 
                 // Update notes bits on associated doc
-                g_lib.updateAnnotationField( doc );
+                //g_lib.updateAnnotationState( doc, false, updates );
 
-                // Further process activated errors on data records (set loc_err, propagate downstream)
-                if ( req.queryParams.type == g_lib.NOTE_ERROR && req.queryParams.activate && doc._id.startsWith( "d/" )){
-                    if ( !doc.loc_err ){
-                        // local err state has chnaged, update record
-                        g_db.d.update( doc._id, { loc_err: true });
-                    }
-
-                    if ( !doc.inh_err && !doc.loc_err ){
-                        // Combined inh & loc err state has changed, recalc inh_err for dependent records
-                        g_lib.recalcInhErrorDeps( doc._id, true, updates );
-                    }
-                }
         
                 res.send({ results: [note.new], updates: Array.from( updates )});
             }
@@ -169,7 +157,7 @@ router.post('/update', function (req, res) {
                         if ( !doc.inh_err ){
                             console.log("recalc inh err");
                             // Combined inh & loc err state has changed, recalc inh_err for dependent records
-                            g_lib.recalcInhErrorDeps( doc._id, loc_err, updates );
+                            //g_lib.recalcInhErrorDeps( doc._id, loc_err, updates );
                         }
                     }
                 }
