@@ -1367,7 +1367,7 @@ module.exports = ( function() {
             mask = ( doc.notes & g_lib.NOTE_MASK_INH_ALL );
         }
 
-        var m, notes = g_db._query("for v in 1..1 outbound @id note filter v.state > 0 return v", { id: doc._id }),
+        var m, notes = g_db._query("for v in 1..1 outbound @id note filter v.state > 0 return v", { id: doc._id });
 
         while ( notes.hasNext() ){
             note = notes.next();

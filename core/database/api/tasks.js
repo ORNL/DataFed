@@ -233,7 +233,7 @@ var tasks_func = function() {
 
     obj.taskRunDataPut = function( a_task ){
         console.log("taskRunDataPut");
-        var reply, state = a_task.state, params, xfr;
+        var reply, state = a_task.state, params, xfr, retry;
 
         // No rollback functionality
         if ( a_task.step < 0 )
@@ -295,7 +295,21 @@ var tasks_func = function() {
                 }
             }
 
-            g_db._update( xfr.files[0].id, upd_rec, { keepNull: false });
+            // Must do this in a retry loop in case of concurrent (non-put) updates
+            retry = 10
+            while ( 1 ){
+                try{
+                    obj._transact( function(){
+                        g_db._update( xfr.files[0].id, upd_rec, { keepNull: false });
+                    }, [], ["d"],[] );
+                    break;
+                } catch( e ) {
+                    if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+                        throw e;
+                    }
+                }
+    
+            }
 
             // Request data size update
             params = {

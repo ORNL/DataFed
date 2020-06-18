@@ -15,7 +15,7 @@ module.exports = router;
 function recordCreate( client, record, results ){
     var owner_id, parent_id, repo_alloc, alias_key;
 
-    //console.log("Create new data");
+    console.log("Create new data:",record.title);
 
     if ( record.parent ) {
         parent_id = g_lib.resolveCollID( record.parent, client );
@@ -66,7 +66,7 @@ function recordCreate( client, record, results ){
             throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
 
         alias_key = (obj.doi.split("/").join("_"));
-        console.log("alias:",alias_key);
+        //console.log("alias:",alias_key);
     }else{
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
@@ -79,28 +79,50 @@ function recordCreate( client, record, results ){
                 obj.ext = "." + obj.ext;
         }
 
-        if ( obj.alias ) {
+        if ( obj.alias ){
             alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
         }
     }
 
-    var data = g_db.d.save( obj, { returnNew: true });
-    g_db.owner.save({ _from: data.new._id, _to: owner_id });
+    //try{
+        var data = g_db.d.save( obj, { returnNew: true });
+    //}catch( e ){
+    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'd': "+e.errorNum];
+    //}
+
+    //try{
+        g_db.owner.save({ _from: data.new._id, _to: owner_id });
+    //}catch( e ){
+    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'owner': "+e.errorNum];
+    //}
 
     g_lib.makeTitleUnique( parent_id, data.new );
 
     // Create data location edge and update allocation and stats
     var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
-    g_db.loc.save( loc );
-    g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+    //try{
+        g_db.loc.save( loc );
+    //}catch( e ){
+    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'loc': "+e.errorNum];
+    //}
+
+    //try{
+        g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+    //}catch( e ){
+    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception updating 'alloc': "+e.errorNum];
+    //}
 
     if ( alias_key ) {
         if ( g_db.a.exists({ _key: alias_key }))
             throw [g_lib.ERR_INVALID_PARAM,"Alias, "+alias_key+", already in use"];
 
-        g_db.a.save({ _key: alias_key });
-        g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
-        g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
+        //try{
+            g_db.a.save({ _key: alias_key });
+            g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
+            g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
+        //}catch( e ){
+        //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'a','alias',or 'owner': "+e.errorNum];
+        //}
     }
 
     // Handle specified dependencies
@@ -125,7 +147,11 @@ function recordCreate( client, record, results ){
         }
     }
 
-    g_db.item.save({ _from: parent_id, _to: data.new._id });
+    //try{
+        g_db.item.save({ _from: parent_id, _to: data.new._id });
+    //}catch( e ){
+    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception updating 'item': "+e.errorNum];
+    //}
 
     data.new.id = data.new._id;
     data.new.parent_id = parent_id;
@@ -139,23 +165,30 @@ function recordCreate( client, record, results ){
 }
 
 router.post('/create', function (req, res) {
-    try {
-        var result = [];
+    var retry = 10;
+    while ( true )
+    {
+        try {
+            var result = [];
 
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","repo"],
-                write: ["d","a","alloc","loc","owner","alias","item","dep"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                recordCreate( client, req.body, result );
+            g_db._executeTransaction({
+                collections: {
+                    read: ["u","uuid","accn","repo"],
+                    write: ["d","a","alloc","loc","owner","alias","item","dep"]
+                },
+                action: function() {
+                    const client = g_lib.getUserFromClientID( req.queryParams.client );
+                    recordCreate( client, req.body, result );
+                }
+            });
+
+            res.send( result );
+            break;
+        } catch( e ) {
+            if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+                g_lib.handleException( e, res );
             }
-        });
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
+        }
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
@@ -180,26 +213,33 @@ router.post('/create', function (req, res) {
 
 
 router.post('/create/batch', function (req, res) {
-    try {
-        var result = [];
-        console.log( "create data" );
+    var retry = 10;
+    while ( true )
+    {
+        try {
+            var result = [];
+            console.log( "create data" );
 
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","repo"],
-                write: ["d","a","alloc","loc","owner","alias","item","dep"]
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                for ( var i in req.body ){
-                    recordCreate( client, req.body[i], result );
+            g_db._executeTransaction({
+                collections: {
+                    read: ["u","uuid","accn","repo"],
+                    write: ["d","a","alloc","loc","owner","alias","item","dep"]
+                },
+                action: function() {
+                    const client = g_lib.getUserFromClientID( req.queryParams.client );
+                    for ( var i in req.body ){
+                        recordCreate( client, req.body[i], result );
+                    }
                 }
-            }
-        });
+            });
 
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
+            res.send( result );
+            break;
+        } catch( e ) {
+            if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+                g_lib.handleException( e, res );
+            }
+        }
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
