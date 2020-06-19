@@ -1391,6 +1391,7 @@ module.exports = ( function() {
             doc.notes = mask;
 
             if ( recalc && doc._id.startsWith( "d/" )){
+                //(app_err?g_lib.NOTE_MASK_INH_ERR:0)|(app_warn?g_lib.NOTE_MASK_INH_WARN:0)
                 g_lib.updateAnnotationStateDown( doc._id, app_err, app_warn, updates );
             }
         }
@@ -1413,55 +1414,207 @@ module.exports = ( function() {
         return mask;
     };
 
-    obj.updateAnnotationStateDown = function( id, has_err, has_warn, updates ){
+    obj.updateAnnotationStateDown = function( a_start_id, a_has_err, a_has_warn, a_updates ){
         console.log("updateAnnotationStateDown",id,has_err,has_warn);
-        // local or inherited error at source has changed, recalc & update dependents inh_err
 
-        //var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,loc_err:v.loc_err,inh_err:v.inh_err}",{id:id});
-        // TODO add notes
-        /*
-        var update,dep,deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, loc_err:v.loc_err, inh_err: v.inh_err, locked: v.locked }",{id:id});
-        while( deps.hasNext() ){
-            dep = deps.next();
-            console.log("- dep:",dep.id,dep.inh_err);
+        /* Different algorithms are needed for setting and clearing error state, and for warning state:
+            - Setting error bit is "simple" and only requires updating all dependents that do not have
+              the bit set already. Other ancestor state of any dependent is irrelevant.
+            - Clearing the error bit is "complex" and requires that all dependents are evaluated in
+              proper order. Other ancestor state must be evaluated, and some ancestors may be dependents
+              of other dependent nodes that have not yet been evaluated.
+            - Setting and clearing the warning bit is the same as the error bit except that only direct
+              dependents of the starting node need to be updated (warnings do not propagate more than 1
+              hop).
+            - Both a_has_err and a_has_warn are booleans, but may be undefined/null indicating that the
+              bit has not been changed.
+        */
 
-            if ( has_err ){
-                if ( !dep.inh_err ){
-                    update = true;
-                }else{
-                    update = false;
-                }
-            }else{
-                // Must determine if inherits error from any other sources
-                var ud,up_deps = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,err:v.loc_err||v.inh_err}",{id:dep.id,src:id});
+        var start_node = { id: a_start_id, notes: a_has_err?g_lib.NOTE_MASK_LOC_ERR:0 | a_has_warn?g_lib.NOTE_MASK_LOC_WARN:0, proc: false },
+            nodes = obj.loadAnnotationSubgraph( start_node );
 
-                update = true;
-                while( up_deps.hasNext() ){
-                    ud = up_deps.next();
-                    console.log("-- ud:",ud.id,ud.err);
-                    if ( ud.err ){
-                        update = false;
-                        break;
+        for ( n in nodes )
+            next.push( nodes[n].id );
+
+        if ( a_has_warn == true ){
+            obj.updateWarnStateDown( a_start_id, a_has_warn, next, nodes );
+        }
+
+        if ( a_has_err == true ){
+            obj.updateErrStateDownSet( a_start_id, nodes );
+        }else if ( a_has_err === false ){
+            obj.updateErrStateDownClear( a_start_id, next, nodes );
+        }
+
+
+        var upd_err, upd_warn, dep, deps, cur_ids, next_ids = [a_start_id], comp_ids = new Set(), nodes = {};
+
+        //deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,notes:v.notes,locked:v.locked}",{id:id});
+
+        while( next.length ){
+            cur_ids = next_ids;
+            next_ids = [];
+
+            for ( id in cur_ids ){
+                deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,notes:v.notes}",{id:id});
+
+                while( deps.hasNext() ){
+                    dep = deps.next();
+                    console.log("- dep:",dep.id,dep.notes);
+
+                    if (( !has_err && ( dep.notes & g_lib.NOTE_MASK_INH_ERR )) || (( has_warn === false ) && ( dep.notes & g_lib.NOTE_MASK_INH_WARN ))){
+                        // Must determine if inherits error from any other sources
+                        var ud,up_deps = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,notes:v.notes}",{id:dep.id,src:id});
+
+                        update = true;
+                        while( up_deps.hasNext() ){
+                            ud = up_deps.next();
+                            console.log("-- ud:",ud.id,ud.err);
+                            if ( ud.err ){
+                                update = false;
+                                break;
+                            }
+                        }
+                    }else{
+                        // If either err or warn bit has changes, need to update
+
+                        if ( has_err && !( dep.notes & g_lib.NOTE_MASK_INH_ERR )){
+                            upd_err = true;
+                        }else{
+                            upd_err = false;
+                        }
+
+                        if (( has_warn === true ) && !( dep.notes & g_lib.NOTE_MASK_INH_WARN )){
+                            upd_warn = true;
+                        }else{
+                            upd_warn = false;
+                        }
+                    }
+
+                    if ( upd_err || upd_warn ){
+                        console.log("- do update");
+
+                        // Update inherited err/warn bits
+                        dep.notes = (( dep.notes & g_lib.NOTE_MASK_LOC_ALL ) | (has_err?g_lib.NOTE_MASK_INH_ERR:0)|(has_warn?g_lib.NOTE_MASK_INH_WARN:0));
+                        obj.db.d.update( dep.id, { notes: dep.notes });
+
+                        if ( !( dep.id in updates )){
+                            updates[dep.id] = dep;
+                        }
+
+                        if ( upd_err ){
+                            // combined err state changed, must update dependents (warnings do not propagate)
+                            //obj.updateAnnotationStateDown( dep.id, has_err, null, updates );
+                            next_ids.push( dep.id );
+                        }
                     }
                 }
             }
+        }
+    };
 
-            if ( update ){
-                console.log("- do update");
-                // Update inh_err
-                obj.db.d.update( dep.id, { inh_err: has_err });
-                dep.inh_err = has_err;
-                if ( !( dep.id in updates )){
-                    updates[dep.id] = dep;
+    obj.loadAnnotationSubgraph = function( a_start_node ){
+        var n = 0, node, dep, nodes = {}, next = [a_start_node.id];
+
+        node[a_start_node.id] = a_start_node;
+
+        // First load ONLY dependents
+        while ( n < next.length ){
+            node = nodes[next[n]];
+            qry_res = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,notes:v.notes}",{id: node.id }).toArray();
+
+            while( qry_res.hasNext() ){
+                dep = qry_res.next();
+
+                if ( !( dep.id in nodes )){
+                    dep.proc = true;
+                    dep.dep = [];
+                    dep.anc = [node];
+                    nodes[dep.id] = dep;
+                    next.push(dep.id);
+                }else{
+                    dep = nodes[dep.id];
+                    dep.anc.push( node );
                 }
 
-                if ( !dep.loc_err ){
-                    // combined err state changed, must update dependents
-                    obj.updateAnnotationStateDown( dep.id, has_err, updates );
+                node.dep.push(dep);
+            }
+
+            n++;
+        }
+
+        // Next load ONLY ancestors and do NOT traverse these
+        // Start node is index 0 and is intentionally skipped
+        n = next.length - 1;
+        while ( n ){
+            node = nodes[next[n]];
+            qry_res = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 return {id:v._id,notes:v.notes}",{ id: node.id });
+
+            while( qry_res.hasNext() ){
+                dep = qry_res.next();
+
+                if ( !( dep.id in nodes )){
+                    dep.proc = false;
+                    nodes[dep.id] = dep;
+                    node.dep.push(dep);
                 }
             }
-        }*/
-    };
+
+            n--;
+        }
+
+        return nodes;
+    }
+
+    obj.updateWarnStateDown = function( a_start_id, a_has_warn, a_next, a_nodes ){
+        var n,node;
+
+        if ( a_has_warn ){
+            // Easy, just update nodes that don't have INH_WARN bit set
+            for ( n in a_next ){
+                node = a_nodes[a_next[n]];
+                if ( !( node.notes & g_lib.NOTE_MASK_INH_WARN )){
+                    node.notes |= g_lib.NOTE_MASK_INH_WARN;
+                    node.upd = true;
+                }
+            }
+        }else{
+            // Must check ancestor for INH_WARN bit to see if clearing bit is needed
+            // IGNORE START NODE!
+            var upd, anc, anc_node;
+
+            for ( n in a_next ){
+                node = a_nodes[a_next[n]];
+                upd = true;
+                anc = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,notes:v.notes}",{ id: node.id, src: a_start_id });
+
+                while ( anc.hasNext() ){
+                    anc_node = anc.next();
+
+                    if ( anc_node.id in a_nodes ){
+                        if ( !anc_node.comp ){
+
+                        }
+                        anc_node.dep.push( node.id );
+                    }else{
+                        anc_node.comp = true;
+                        anc_node.dep = [node];
+                        a_nodes[anc_node.id] = anc_node;
+                    }
+
+                }
+
+                if ( anc_node.notes & g_lib.NOTE_MASK_ACT_WARN ){
+                    upd = false;
+                }
+
+                if ( upd ){
+                    node.notes &= ~g_lib.NOTE_MASK_INH_WARN;
+                    node.upd = true;
+                }
+            }
+        }
+    }
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");
