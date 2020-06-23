@@ -42,7 +42,7 @@ graph._extendEdgeDefinitions(ident);
 var adm = graph_module._relation("admin", ["p","repo"], ["u"]);
 graph._extendEdgeDefinitions(adm);
 
-var note = graph_module._relation("note", ["d","c"], ["n"]);
+var note = graph_module._relation("note", ["d","c","n"], ["n"]);
 graph._extendEdgeDefinitions(note);
 
 var alias = graph_module._relation("alias", ["d","c"], ["a"]);

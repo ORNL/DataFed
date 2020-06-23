@@ -292,7 +292,8 @@ message NoteComment
     required string             user    = 1;
     required uint32             time    = 2;
     required string             comment = 3;
-    optional NoteState          state   = 4;
+    optional NoteState          type    = 4;
+    optional NoteState          state   = 5;
 }
 
 message NoteData
@@ -300,11 +301,13 @@ message NoteData
     required string             id          = 1;
     required NoteType           type        = 2;
     required NoteState          state       = 3;
-    required string             subject     = 4;
+    required string             subject_id  = 4;
     required string             title       = 5;
     repeated NoteComment        comment     = 6;
     required uint32             ct          = 7;
     required uint32             ut          = 8;
+    optional bool               has_parent  = 9;
+    optional bool               has_child   = 10;
 }
 
 // -------------------------------------------------- TASK DEFINES

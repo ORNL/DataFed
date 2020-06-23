@@ -2858,7 +2858,9 @@ DatabaseAPI::setNoteData( NoteData * a_note, libjson::Value::Object & a_obj )
                 comment->set_time( obj.at( "time" ).asNumber());
                 comment->set_comment( obj.at( "comment" ).asString());
 
-                if (( m = obj.find( "action" )) != obj.end( ) && !m->second.isNull( ))
+                if (( m = obj.find( "new_type" )) != obj.end( ) && !m->second.isNull( ))
+                    comment->set_type((NoteType) m->second.asNumber() );
+                if (( m = obj.find( "new_state" )) != obj.end( ) && !m->second.isNull( ))
                     comment->set_state((NoteState) m->second.asNumber() );
             }
         }

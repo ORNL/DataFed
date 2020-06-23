@@ -309,16 +309,48 @@ function showSelectedNoteInfo( node ){
             for ( var i in note.comment ){
                 comm = note.comment[i];
                 date_ut.setTime(comm.time*1000);
-                html += "<div style='padding:1em 0 0 0'>" + date_ut.toLocaleDateString("en-US", settings.date_opts) + ", <b>"+ comm.user.substr(2) + " ";
+                html += "<div style='padding:1em 0 0 0'>" + date_ut.toLocaleDateString("en-US", settings.date_opts) + ", user <b>"+ comm.user.substr(2) + "</b>";
 
-                switch ( comm.state ){
-                    case "NOTE_OPEN": html += "opened"; break;
-                    case "NOTE_CLOSED": html += "closed"; break;
-                    case "NOTE_ACTIVE": html += "activated"; break;
-                    default: html += "replied to"; break;
+                if ( comm.new_type ){
+                    if ( i == 0 ){
+                        html += "created annotation as <b>";
+                    }else{
+                        html += "changed annotation to <b>";
+                    }
+
+                    switch ( comm.new_type ){
+                        case "NOTE_QUESTION": html += "QUESTION"; break;
+                        case "NOTE_INFO": html += "INFORMATION"; break;
+                        case "NOTE_WARN": html += "WARNING"; break;
+                        case "NOTE_ERROR": html += "ERROR"; break;
+                    }
+
+                    html += "</b>";
                 }
 
-                html += "</b> annotation:<br>";
+                if ( comm.new_state ){
+                    if ( i == 0 ){
+                        html += " in state <b>";
+                    }else if ( comm.new_state ) {
+                        html += " and set state to <b>";
+                    }else{
+                        html += " set state to <b>";
+                    }
+
+                    switch ( comm.new_state ){
+                        case "NOTE_OPEN": html += "OPEN"; break;
+                        case "NOTE_CLOSED": html += "CLOSED"; break;
+                        case "NOTE_ACTIVE": html += "ACTIVE"; break;
+                    }
+
+                    html += "</b>";
+                }
+
+                if ( comm.new_type === undefined && comm.new_state === undefined ){
+                    html += " commented on annotation";
+                }
+
+                html += ".<br>";
 
                 if ( comm.user == "u/"+settings.user.uid ){
                     html += "<div class='row-flex' style='padding:.5em;align-items:flex-end'><div class='ui-widget-content' style='flex:1 1 auto;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
