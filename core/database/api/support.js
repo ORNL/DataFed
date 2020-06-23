@@ -1358,6 +1358,62 @@ module.exports = ( function() {
         }
     };
 
+    obj.annotationInitDependents = function( a_parent_note ){
+        var subj = obj.db._document( a_parent_note.subject_id );
+            note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { _id: v._id, notes: v.notes }",{id:subj._id}),
+            time = Math.floor( Date.now()/1000 ),
+            obj = {
+                state: g_lib.NOTE_OPEN, type: a_parent_note.type, has_parent: true, creator: a_parent_note.creator,
+                ct: time, ut: time, title: a_parent_note.title, comments: [{
+                    user: a_parent_note.creator, new_type: a_parent_note.type, new_state: g_lib.NOTE_OPEN, time: time,
+                    comment: "Impact assessment needed due to issue on direct ancestor '" + a_parent_note.subject_id +
+                    "'. Original issue description: \"" + a_parent_note.comments[0].comment + "\""
+                }]
+            };
+
+        // Create new linked annotation for each dependent
+        while( deps.hasNext() ){
+            dep = deps.next();
+            obj.subject_id = dep._id;
+            note = obj.db.n.save( obj, { returnNew: true });
+            obj.db.note.save({ _from: dep._id, _to: note.new._id });
+            obj.db.note.save({ _from: note.new._id, _to: a_parent_note._id });
+        }
+    }
+
+    /* Called when a parent annotation state or type is changed. If type is changed to error or warning, change all
+    children to match. For other types, close all children. For errors and warnings, if state is changed to active,
+    reopen any closed children; otherwise, if open or closed, close all children. For child notes that have already
+    been activated, must recurse to all children as needed. */
+    obj.annotationUpdateDependents = function( a_parent_note, a_prev_type, a_prev_state ){
+        if ( a_parent_note.type == a_prev_type && a_parent_note.state == a_prev_state )
+            return;
+
+        var note, time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time }, cur, next = [];
+            deps = obj.db._query("for v in 1..1 inbound @id note filter is_same_collection('n',v) return v",{id:a_parent_note._id});
+
+            if ( a_parent_note.type >= g_lib.NOTE_WARN && a_parent_note.state == g_lib.NOTE_ACTIVE )
+                obj.state = g_lib.NOTE_OPEN;
+            else
+                obj.state = g_lib.NOTE_CLOSED;
+
+        while ( deps.hasNext() ){
+            note = deps.next();
+            upd.comments = note.comments;
+            // TODO Add comment 
+            if ( note.state == g_lib.NOTE_ACTIVE )
+                next.push( note._id );
+            upd.db._update( note._id, upd );
+        }
+
+        while( next.length ){
+            cur = next;
+            next = [];
+
+            // TODO recurse
+        }
+    }
+
     obj.updateAnnotationState = function( doc, calc_inh, updates ){
         var mask = 0;
 

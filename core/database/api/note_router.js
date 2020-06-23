@@ -20,7 +20,7 @@ router.post('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id = g_lib.resolveDataCollID( req.queryParams.subject, client ),
+                var id = g_lib.resolveDataCollID( req.queryParams.subject_id, client ),
                     doc = g_db._document( id );
         
                 if ( !g_lib.hasAdminPermObject( client, id )) {
@@ -34,11 +34,11 @@ router.post('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
                 var obj = { state: req.queryParams.activate?g_lib.NOTE_ACTIVE:g_lib.NOTE_OPEN, type: req.queryParams.type,
-                    subject: id, ct: time, ut: time, creator: client._id },
+                    subject_id: id, ct: time, ut: time, creator: client._id },
                     updates = {};
             
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
-                obj.comments = [{ user: client._id, action: obj.state, time:time }];
+                obj.comments = [{ user: client._id, new_type: obj.type, new_state: obj.state, time:time }];
                 g_lib.procInputParam( req.queryParams, "comment", false, obj.comments[0] );
             
                 var note = g_db.n.save( obj, { returnNew: true });
@@ -47,6 +47,10 @@ router.post('/create', function (req, res) {
                 // Update notes bits on associated doc
                 //g_lib.updateAnnotationState( doc, false, updates );
 
+                // For ACTIVE errors and warnings, propagate to direct children
+                if ( obj.state == g_lib.NOTE_ACTIVE && obj.type >= g_lib.NOTE_WARN ){
+                    g_lib.annotationInitDependents( note.new );
+                }
         
                 res.send({ results: [note.new], updates: Array.from( updates )});
             }
@@ -56,7 +60,7 @@ router.post('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('subject', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('subject_id', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('type', joi.number().min(0).max(3).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .queryParam('title', joi.string().required(), "Title of annotaion")
 .queryParam('comment', joi.string().required(), "Comments")
@@ -118,10 +122,15 @@ router.post('/update', function (req, res) {
                     comment = { user: client._id, time:time };
 
                 if ( req.queryParams.new_state !== undefined ){
-                    obj.state = req.queryParams.new_state;
-                    comment.action = req.queryParams.new_state;
+                    obj.type = req.queryParams.new_state;
+                    comment.new_type = obj.type;
                 }
 
+                if ( req.queryParams.new_state !== undefined ){
+                    obj.state = req.queryParams.new_state;
+                    comment.new_state = req.queryParams.new_state;
+                }
+        
                 g_lib.procInputParam( req.queryParams, "comment", false, comment );
 
                 obj.comments.push(comment);
@@ -172,8 +181,9 @@ router.post('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "ID of annotation")
-.queryParam('comment', joi.string().required(), "Comments")
+.queryParam('new_type', joi.number().min(0).max(3).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .queryParam('new_state', joi.number().min(0).max(2).optional(), "New state (omit for comment)")
+.queryParam('comment', joi.string().required(), "Comments")
 .summary('Update an annotation')
 .description('Update an annotation with new comment and optional new state');
 
@@ -262,6 +272,9 @@ router.get('/view', function (req, res) {
             }
         }
 
+        if ( g_db.n.byExample({ _to: note._id }).count() > 1 )
+            note.has_child = true;
+
         res.send({ results: [note] });
     } catch( e ) {
         g_lib.handleException( e, res );
@@ -276,13 +289,13 @@ router.get('/view', function (req, res) {
 router.get('/list/by_subject', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject, client );
+        var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject_i, client );
 
         if ( g_lib.hasAdminPermObject( client, id )) {
-            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject:v.subject,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
+            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,has_parent:v.has_parent,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id });
         }else{
-            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject:v.subject,title:v.title,creator:v.creator,ct:v.ct,ut:v.ut}";
+            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,has_parent:v.has_parent,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id, client: client._id });
         }
 
@@ -292,7 +305,7 @@ router.get('/list/by_subject', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('subject', joi.string().required(), "ID/alias of subject")
+.queryParam('subject_id', joi.string().required(), "ID/alias of subject")
 .summary('List annotations by subject')
 .description('List annotations attached to subject data record or colelction');
 
