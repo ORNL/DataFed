@@ -135,7 +135,8 @@ function recordCreate( client, record, results ){
 
 router.post('/create', function (req, res) {
     var retry = 10;
-    while ( true )
+
+    for (;;)
     {
         try {
             var result = [];
@@ -183,7 +184,8 @@ router.post('/create', function (req, res) {
 
 router.post('/create/batch', function (req, res) {
     var retry = 10;
-    while ( true )
+
+    for (;;)
     {
         try {
             var result = [];

@@ -1381,10 +1381,10 @@ module.exports = ( function() {
         }
 
         return mask;
-    }
+    };
 
     obj.annotationInitDependents = function( a_parent_note ){
-        var subj = obj.db._document( a_parent_note.subject_id );
+        var subj = obj.db._document( a_parent_note.subject_id ),
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { _id: v._id, notes: v.notes }",{id:subj._id}),
             time = Math.floor( Date.now()/1000 ),
             obj = {
@@ -1404,7 +1404,7 @@ module.exports = ( function() {
             obj.db.note.save({ _from: dep._id, _to: note.new._id });
             obj.db.note.save({ _from: note.new._id, _to: a_parent_note._id });
         }
-    }
+    };
 
     /* Called when a parent annotation state or type is changed. If type is changed to error or warning, change all
     children to match. For other types, close all children. For errors and warnings, if state is changed to active,
@@ -1437,7 +1437,7 @@ module.exports = ( function() {
 
 
         obj.annotationUpdateDependents_Recurse( a_parent_note._id, upd, comment );
-    }
+    };
 
     obj.annotationUpdateDependents_Recurse = function( a_note_id, a_note_upd, a_comment ){
         var note, recurse, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
@@ -1459,7 +1459,7 @@ module.exports = ( function() {
                 obj.annotationUpdateDependents_Recurse( note._id, a_note_upd, a_comment );
             }
         }
-    }
+    };
 
     /*
     obj.updateAnnotationState = function( doc, calc_inh, updates ){
