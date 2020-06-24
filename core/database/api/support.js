@@ -1453,7 +1453,7 @@ module.exports = ( function() {
 
             a_note_upd.comments = note.comments;
             a_note_upd.comments.push( a_comment ); 
-            upd.db._update( note._id, a_note_upd );
+            obj.db._update( note._id, a_note_upd );
 
             if ( recurse ){
                 obj.annotationUpdateDependents_Recurse( note._id, a_note_upd, a_comment );
