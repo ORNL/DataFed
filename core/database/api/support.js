@@ -1388,9 +1388,9 @@ module.exports = ( function() {
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { _id: v._id, notes: v.notes }",{id:subj._id}),
             time = Math.floor( Date.now()/1000 ),
             obj = {
-                state: g_lib.NOTE_OPEN, type: a_parent_note.type, has_parent: true, creator: a_parent_note.creator,
+                state: obj.NOTE_OPEN, type: a_parent_note.type, has_parent: true, creator: a_parent_note.creator,
                 ct: time, ut: time, title: a_parent_note.title, comments: [{
-                    user: a_parent_note.creator, new_type: a_parent_note.type, new_state: g_lib.NOTE_OPEN, time: time,
+                    user: a_parent_note.creator, new_type: a_parent_note.type, new_state: obj.NOTE_OPEN, time: time,
                     comment: "Impact assessment needed due to issue on direct ancestor '" + a_parent_note.subject_id +
                     "'. Original issue description: \"" + a_parent_note.comments[0].comment + "\""
                 }]
@@ -1417,8 +1417,8 @@ module.exports = ( function() {
         var comment, time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time };
             //deps = obj.db._query("for v in 1..1 inbound @id note filter is_same_collection('n',v) return v",{id:a_parent_note._id});
 
-        if ( a_parent_note.type >= g_lib.NOTE_WARN && a_parent_note.state == g_lib.NOTE_ACTIVE ){
-            upd.state = g_lib.NOTE_OPEN;
+        if ( a_parent_note.type >= obj.NOTE_WARN && a_parent_note.state == obj.NOTE_ACTIVE ){
+            upd.state = obj.NOTE_OPEN;
             comment = "Imapct reassessment needed due to change of ";
 
             if ( a_parent_note.type != a_prev_type && a_parent_note.state != a_prev_state )
@@ -1429,8 +1429,8 @@ module.exports = ( function() {
                 comment += "state";
     
         }else{
-            upd.state = g_lib.NOTE_CLOSED;
-            comment = "Impact assessment invalidated due to change of state"
+            upd.state = obj.NOTE_CLOSED;
+            comment = "Impact assessment invalidated due to change of state";
         }
 
         comment += " of annotaion on ancestor '" + a_parent_note.subject_id + "'.";
@@ -1446,7 +1446,7 @@ module.exports = ( function() {
             note = deps.next();
 
             // Update may change note state, so check now
-            if ( note.state == g_lib.NOTE_ACTIVE )
+            if ( note.state == obj.NOTE_ACTIVE )
                 recurse = true;
             else
                 recurse = false;
