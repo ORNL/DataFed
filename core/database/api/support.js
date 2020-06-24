@@ -1358,6 +1358,31 @@ module.exports = ( function() {
         }
     };
 
+    obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
+        var mask = 0, res, n, b;
+
+        if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
+            res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,has_parent:n.has_parent}",
+                { id: a_subj_id });
+        }else{
+            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,has_parent:n.has_parent}",
+                { id: a_subj_id, client: a_client._id });
+        }
+
+        while ( res.hasNext() ){
+            n = res.next();
+
+            b = 1<<n.type;
+            if ( n.has_parent )
+                b <<= 8;
+            else if ( n.state == obj.NOTE_OPEN )
+                b <<= 4;
+            mask |= b;
+        }
+
+        return mask;
+    }
+
     obj.annotationInitDependents = function( a_parent_note ){
         var subj = obj.db._document( a_parent_note.subject_id );
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { _id: v._id, notes: v.notes }",{id:subj._id}),
@@ -1389,31 +1414,54 @@ module.exports = ( function() {
         if ( a_parent_note.type == a_prev_type && a_parent_note.state == a_prev_state )
             return;
 
-        var note, time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time }, cur, next = [];
-            deps = obj.db._query("for v in 1..1 inbound @id note filter is_same_collection('n',v) return v",{id:a_parent_note._id});
+        var comment, time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time };
+            //deps = obj.db._query("for v in 1..1 inbound @id note filter is_same_collection('n',v) return v",{id:a_parent_note._id});
 
-            if ( a_parent_note.type >= g_lib.NOTE_WARN && a_parent_note.state == g_lib.NOTE_ACTIVE )
-                obj.state = g_lib.NOTE_OPEN;
+        if ( a_parent_note.type >= g_lib.NOTE_WARN && a_parent_note.state == g_lib.NOTE_ACTIVE ){
+            upd.state = g_lib.NOTE_OPEN;
+            comment = "Imapct reassessment needed due to change of ";
+
+            if ( a_parent_note.type != a_prev_type && a_parent_note.state != a_prev_state )
+                comment += "type and state";
+            else if ( a_parent_note.state != a_prev_state )
+                comment += "type";
             else
-                obj.state = g_lib.NOTE_CLOSED;
+                comment += "state";
+    
+        }else{
+            upd.state = g_lib.NOTE_CLOSED;
+            comment = "Impact assessment invalidated due to change of state"
+        }
+
+        comment += " of annotaion on ancestor '" + a_parent_note.subject_id + "'.";
+
+
+        obj.annotationUpdateDependents_Recurse( a_parent_note._id, upd, comment );
+    }
+
+    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_note_upd, a_comment ){
+        var note, recurse, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
 
         while ( deps.hasNext() ){
             note = deps.next();
-            upd.comments = note.comments;
-            // TODO Add comment 
+
+            // Update may change note state, so check now
             if ( note.state == g_lib.NOTE_ACTIVE )
-                next.push( note._id );
-            upd.db._update( note._id, upd );
-        }
+                recurse = true;
+            else
+                recurse = false;
 
-        while( next.length ){
-            cur = next;
-            next = [];
+            a_note_upd.comments = note.comments;
+            a_note_upd.comments.push( a_comment ); 
+            upd.db._update( note._id, a_note_upd );
 
-            // TODO recurse
+            if ( recurse ){
+                obj.annotationUpdateDependents_Recurse( note._id, a_note_upd, a_comment );
+            }
         }
     }
 
+    /*
     obj.updateAnnotationState = function( doc, calc_inh, updates ){
         var mask = 0;
 
@@ -1469,10 +1517,12 @@ module.exports = ( function() {
 
         return mask;
     };
+    */
 
+    /*
     obj.updateAnnotationStateDown = function( a_start_id, a_has_err, a_has_warn, a_updates ){
         console.log("updateAnnotationStateDown",id,has_err,has_warn);
-
+    */
         /* Different algorithms are needed for setting and clearing error state, and for warning state:
             - Setting error bit is "simple" and only requires updating all dependents that do not have
               the bit set already. Other ancestor state of any dependent is irrelevant.
@@ -1485,7 +1535,7 @@ module.exports = ( function() {
             - Both a_has_err and a_has_warn are booleans, but may be undefined/null indicating that the
               bit has not been changed.
         */
-
+/*
         var start_node = { id: a_start_id, notes: a_has_err?g_lib.NOTE_MASK_LOC_ERR:0 | a_has_warn?g_lib.NOTE_MASK_LOC_WARN:0, proc: false },
             nodes = obj.loadAnnotationSubgraph( start_node );
 
@@ -1567,8 +1617,9 @@ module.exports = ( function() {
                 }
             }
         }
-    };
+    };*/
 
+    /*
     obj.loadAnnotationSubgraph = function( a_start_node ){
         var n = 0, node, dep, nodes = {}, next = [a_start_node.id];
 
@@ -1671,6 +1722,7 @@ module.exports = ( function() {
             }
         }
     }
+    */
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");

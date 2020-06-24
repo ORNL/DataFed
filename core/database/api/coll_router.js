@@ -244,11 +244,7 @@ router.get('/view', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        if ( admin )
-            coll.notes = g_db._query("for n in 1..1 outbound @coll note filter n.state > 0 return distinct n.type",{coll:coll_id}).toArray();
-        else
-            coll.notes = g_db._query("for n in 1..1 outbound @coll note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{coll:coll_id,client:client._id}).toArray();
-
+        coll.notes = g_lib.annotationGetMask( client, coll_id, admin );
         coll.id = coll._id;
 
         delete coll._id;
@@ -278,25 +274,25 @@ router.get('/read', function (req, res) {
                 throw g_lib.ERR_PERM_DENIED;
         }
 
-        var qry, result, params = { coll: coll_id };
-
-        if ( admin )
-            qry = "for v in 1..1 outbound @coll item let ann = (for n in 1..1 outbound v._id note filter n.state > 0 return distinct n.type) sort is_same_collection('c',v) DESC, v.title";
-        else{
-            qry = "for v in 1..1 outbound @coll item let ann = (for n in 1..1 outbound v._id note filter n.state == 2 || ( n.state == 1 && ( @client == v.owner || @client == v.creator || @client == n.creator )) return distinct n.type) sort is_same_collection('c',v) DESC, v.title";
-            params.client = client._id;
-        }
+        var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",
+            result, params = { coll: coll_id }, item;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, inh_err: v.inh_err, notes: ann, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, locked: v.locked }";
             result = g_db._query( qry, params,{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, inh_err: v.inh_err, notes: ann, locked: v.locked }";
-            result = g_db._query( qry, params );
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, locked: v.locked }";
+            result = g_db._query( qry, params ).toArray();
+        }
+
+        while ( result.hasNext() ){
+            item = result.next();
+            if ( item.id )
+                item.notes = g_lib.annotationGetMask( client, item.id, admin );
         }
 
         res.send( result );

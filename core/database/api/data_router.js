@@ -46,7 +46,7 @@ function recordCreate( client, record, results ){
         throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
 
     var time = Math.floor( Date.now()/1000 );
-    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id, loc_err: false, inh_err: false };
+    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id };
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
@@ -84,45 +84,24 @@ function recordCreate( client, record, results ){
         }
     }
 
-    //try{
-        var data = g_db.d.save( obj, { returnNew: true });
-    //}catch( e ){
-    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'd': "+e.errorNum];
-    //}
+    var data = g_db.d.save( obj, { returnNew: true });
 
-    //try{
-        g_db.owner.save({ _from: data.new._id, _to: owner_id });
-    //}catch( e ){
-    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'owner': "+e.errorNum];
-    //}
+    g_db.owner.save({ _from: data.new._id, _to: owner_id });
 
     g_lib.makeTitleUnique( parent_id, data.new );
 
     // Create data location edge and update allocation and stats
     var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
-    //try{
-        g_db.loc.save( loc );
-    //}catch( e ){
-    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'loc': "+e.errorNum];
-    //}
-
-    //try{
-        g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
-    //}catch( e ){
-    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception updating 'alloc': "+e.errorNum];
-    //}
+    g_db.loc.save( loc );
+    g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
 
     if ( alias_key ) {
         if ( g_db.a.exists({ _key: alias_key }))
             throw [g_lib.ERR_INVALID_PARAM,"Alias, "+alias_key+", already in use"];
 
-        //try{
-            g_db.a.save({ _key: alias_key });
-            g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
-            g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
-        //}catch( e ){
-        //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception saving to 'a','alias',or 'owner': "+e.errorNum];
-        //}
+        g_db.a.save({ _key: alias_key });
+        g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
+        g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
 
     // Handle specified dependencies
@@ -139,19 +118,9 @@ function recordCreate( client, record, results ){
             g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
             data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
         }
-
-        // Recalc inh_err and update
-        if ( g_lib.calcInhError( data.new._id )){
-            data.new.inh_err = true;
-            g_db.d.update( data.new._id, { inh_error: true });
-        }
     }
 
-    //try{
-        g_db.item.save({ _from: parent_id, _to: data.new._id });
-    //}catch( e ){
-    //    throw [g_lib.ERR_INTERNAL_FAULT,"Exception updating 'item': "+e.errorNum];
-    //}
+    g_db.item.save({ _from: parent_id, _to: data.new._id });
 
     data.new.id = data.new._id;
     data.new.parent_id = parent_id;
@@ -382,10 +351,9 @@ function recordUpdate( client, record, results ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id,chk_err=false; //dep_data;
+    var i,dep,id; //dep_data;
 
     if ( record.deps ){
-        chk_err = true;
         g_db.dep.removeByExample({_from:data_id});
         for ( i in record.deps ) {
             dep = record.deps[i];
@@ -403,8 +371,6 @@ function recordUpdate( client, record, results ){
         g_lib.checkDependencies(data_id);
     }else{
         if ( record.deps_rem != undefined ){
-            chk_err = true;
-
             //console.log("rem deps from ",data._id);
             for ( i in record.deps_rem ) {
                 dep = record.deps_rem[i];
@@ -418,8 +384,6 @@ function recordUpdate( client, record, results ){
         }
 
         if ( record.deps_add != undefined ){
-            chk_err = true;
-
             //console.log("add deps");
             for ( i in record.deps_add ) {
                 dep = record.deps_add[i];
@@ -435,22 +399,6 @@ function recordUpdate( client, record, results ){
             }
 
             g_lib.checkDependencies(data_id);
-        }
-    }
-
-    if ( chk_err ){
-        // Recalc inh_err and update
-        chk_err = g_lib.calcInhError( data._id );
-        if ( chk_err != data.inh_err ){
-            // Inh err state has chnaged, update record
-            var has_err = data.inh_err || data.loc_err;
-            data.inh_err = chk_err;
-            g_db.d.update( data._id, { inh_error: data.inh_err });
-
-            // If combined inh & loc err state has changed, recalc inh_err for dependent records
-            if ( has_err != ( data.inh_err || data.loc_err )){
-                g_lib.recalcInhErrorDeps( data._id, !has_err );
-            }
         }
     }
 
@@ -661,10 +609,7 @@ router.get('/view', function (req, res) {
                 rem_md = true;
         }
 
-        if ( admin )
-            data.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:data_id}).toArray();
-        else
-            data.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:data_id,client:client._id}).toArray();
+        data.notes = g_db.annotationGetMask( client, data_id, admin );
 
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
@@ -672,10 +617,7 @@ router.get('/view', function (req, res) {
             if ( dep.alias && client._id != dep.owner )
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
-            if ( g_lib.hasAdminPermObject( client, dep.id ) )
-                dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:dep.id}).toArray();
-             else
-                dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:dep.id,client:client._id}).toArray();
+            dep.notes = g_db.annotationGetMask( client, dep.id );
         }
 
         if ( rem_md && data.md )
@@ -790,17 +732,14 @@ router.get('/dep/get', function (req, res) {
     var data_id = g_lib.resolveDataID( req.queryParams.id, client );
     var dep,result = {id:data_id,title:""};
 
-    result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,inh_err:v.inh_err,type:e.type,dir:dir}",{data:data_id}).toArray();
+    result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
 
     for ( var i in result.deps ){
         dep = result.deps[i];
         if ( dep.alias && client._id != dep.owner )
             dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
-        if ( g_lib.hasAdminPermObject( client, dep.id ) )
-            dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:dep.id}).toArray();
-        else
-            dep.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:dep.id,client:client._id}).toArray();
+        dep.notes = g_lib.annotationGetMask( client, dep.id );
     }
 
     res.send( [result] );
@@ -814,12 +753,10 @@ router.get('/dep/graph/get', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
         var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-        var i, j, entry, rec, deps, dep, node, visited = [data_id], cur = [[data_id,true]], next = [], result = [];
+        var i, j, entry, rec, deps, dep, node, visited = [data_id], cur = [[data_id,true]], next = [], result = [],
+            notes, gen = 0;
 
         // Get Ancestors
-        var gen = 0;
-
-        //console.log("get ancestors");
 
         while ( cur.length ){
             //console.log("gen",gen);
@@ -830,11 +767,8 @@ router.get('/dep/graph/get', function (req, res) {
                 if ( rec.alias && client._id != rec.owner ){
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
                 }
-                
-                if ( g_lib.hasAdminPermObject( client, rec._id ))
-                    rec.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:rec._id}).toArray();
-                else
-                    rec.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:rec._id,client:client._id}).toArray();
+                    
+                notes = g_db.annotationGetMask( client, rec._id );
 
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
@@ -848,9 +782,9 @@ router.get('/dep/graph/get', function (req, res) {
                             next.push([dep.id,dep.type < 2]);
                         }
                     }
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,inh_err:rec.inh_err,locked:rec.locked,gen:gen,deps:deps});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:notes,locked:rec.locked,gen:gen,deps:deps});
                 }else{
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:rec.notes,inh_err:rec.inh_err,locked:rec.locked});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:notes,locked:rec.locked});
                 }
             }
 
@@ -876,7 +810,7 @@ router.get('/dep/graph/get', function (req, res) {
                 entry = cur[i];
 
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,inh_err:v.inh_err,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
                 if ( entry[1] ){
                     for ( j in deps ){
@@ -886,15 +820,12 @@ router.get('/dep/graph/get', function (req, res) {
 
                         if ( visited.indexOf(dep.id) < 0 ){
                             //console.log("follow");
-                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,inh_err:dep.inh_err,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
+                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
-                            if ( g_lib.hasAdminPermObject( client, node.id ))
-                                node.notes = g_db._query("for n in 1..1 outbound @data note filter n.state > 0 return distinct n.type",{data:node.id}).toArray();
-                            else
-                                node.notes = g_db._query("for n in 1..1 outbound @data note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return distinct n.type",{data:node.id,client:client._id}).toArray();
-            
+                            node.notes = g_db.annotationGetMask( client, node._id );
+
                             if ( dep.type<2 )
                                 node.gen = gen;
                             result.push(node);
@@ -1024,16 +955,19 @@ router.get('/list/by_alloc', function (req, res) {
         var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title";
         var result;
 
+        // TODO Add notes to results?
+        //node.notes = g_db.annotationGetMask( client, node._id );
+
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, inh_err: v.inh_err, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, inh_err: v.inh_err, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id });
         }
 
