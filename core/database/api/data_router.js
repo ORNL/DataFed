@@ -760,8 +760,10 @@ router.get('/dep/graph/get', function (req, res) {
 
         // Get Ancestors
 
+        console.log("get ancestors");
+
         while ( cur.length ){
-            //console.log("gen",gen);
+            console.log("gen",gen);
             for ( i in cur ) {
                 entry = cur[i];
                 rec = g_db.d.document( entry[0] );
@@ -770,6 +772,7 @@ router.get('/dep/graph/get', function (req, res) {
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
                 }
                     
+                console.log("calc notes for", rec._id );
                 notes = g_lib.annotationGetMask( client, rec._id );
 
                 if ( entry[1] ){
@@ -799,14 +802,14 @@ router.get('/dep/graph/get', function (req, res) {
 
         // Get Descendants
 
-        //console.log("get descendants");
+        console.log("get descendants");
 
         cur = [[data_id,true]];
         next = [];
         gen = 1;
 
         while ( cur.length ){
-            //console.log("gen",gen);
+            console.log("gen",gen);
 
             for ( i in cur ) {
                 entry = cur[i];
@@ -818,15 +821,16 @@ router.get('/dep/graph/get', function (req, res) {
                     for ( j in deps ){
                         dep = deps[j]; 
 
-                        //console.log("dep:",dep.id,"ty:",dep.type);
+                        console.log("dep:",dep.id,"ty:",dep.type);
 
                         if ( visited.indexOf(dep.id) < 0 ){
-                            //console.log("follow");
+                            console.log("follow");
+
                             node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
-                            node.notes = g_lib.annotationGetMask( client, node._id );
+                            node.notes = g_lib.annotationGetMask( client, node.id );
 
                             if ( dep.type<2 )
                                 node.gen = gen;

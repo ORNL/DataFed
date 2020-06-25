@@ -1383,9 +1383,9 @@ module.exports = ( function() {
         return mask;
     };
 
-    obj.annotationInitDependents = function( a_parent_note ){
+    obj.annotationInitDependents = function( a_parent_note, a_updates ){
         var subj = obj.db._document( a_parent_note.subject_id ),
-            note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { _id: v._id, notes: v.notes }",{id:subj._id}),
+            note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v",{id:subj._id}),
             time = Math.floor( Date.now()/1000 ),
             obj = {
                 state: obj.NOTE_OPEN, type: a_parent_note.type, has_parent: true, creator: a_parent_note.creator,
@@ -1403,6 +1403,15 @@ module.exports = ( function() {
             note = obj.db.n.save( obj, { returnNew: true });
             obj.db.note.save({ _from: dep._id, _to: note.new._id });
             obj.db.note.save({ _from: note.new._id, _to: a_parent_note._id });
+
+            // Add update listing data if not present
+            if ( !( dep._id in a_updates )){
+                dep.notes = obj.annotationGetMask( dep._id );
+                // remove larger unnecessary fields
+                delete dep.desc;
+                delete dep.md;
+                a_updates[dep._id] = dep;
+            }
         }
     };
 
@@ -1410,8 +1419,8 @@ module.exports = ( function() {
     children to match. For other types, close all children. For errors and warnings, if state is changed to active,
     reopen any closed children; otherwise, if open or closed, close all children. For child notes that have already
     been activated, must recurse to all children as needed. */
-    obj.annotationUpdateDependents = function( a_parent_note, a_prev_type, a_prev_state ){
-        if ( a_parent_note.type == a_prev_type && a_parent_note.state == a_prev_state )
+    obj.annotationUpdateDependents = function( a_parent_note, a_prev_type, a_prev_state, a_updates ){
+        if ( a_parent_note.type == a_prev_type && ( a_parent_note.state == a_prev_state || ( a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state != obj.NOTE_ACTIVE )))
             return;
 
         var comment, time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time };
@@ -1435,29 +1444,32 @@ module.exports = ( function() {
 
         comment += " of annotaion on ancestor '" + a_parent_note.subject_id + "'.";
 
-
-        obj.annotationUpdateDependents_Recurse( a_parent_note._id, upd, comment );
+        obj.annotationUpdateDependents_Recurse( a_parent_note._id, upd, comment, a_updates );
     };
 
-    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_note_upd, a_comment ){
-        var note, recurse, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
+    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_note_upd, a_comment, a_updates ){
+        var note, subj, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
 
         while ( deps.hasNext() ){
             note = deps.next();
-
-            // Update may change note state, so check now
-            if ( note.state == obj.NOTE_ACTIVE )
-                recurse = true;
-            else
-                recurse = false;
 
             a_note_upd.comments = note.comments;
             a_note_upd.comments.push( a_comment ); 
             obj.db._update( note._id, a_note_upd );
 
-            if ( recurse ){
-                obj.annotationUpdateDependents_Recurse( note._id, a_note_upd, a_comment );
+            // Add/refresh update listing data
+            if ( note.subject_id in a_updates ){
+                a_updates[note.subject_id].notes = obj.annotationGetMask( note.subject_id );
+            }else{
+                subj = obj.db._document( note.subject_id )
+                subj.notes = obj.annotationGetMask( note.subject_id );
+                // remove larger unnecessary fields
+                delete subj.desc;
+                delete subj.md;
+                a_updates[note.subject_id] = subj;
             }
+            
+            obj.annotationUpdateDependents_Recurse( note._id, a_note_upd, a_comment );
         }
     };
 

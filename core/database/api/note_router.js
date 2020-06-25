@@ -49,7 +49,7 @@ router.post('/create', function (req, res) {
 
                 // For ACTIVE errors and warnings, propagate to direct children
                 if ( obj.state == g_lib.NOTE_ACTIVE && obj.type >= g_lib.NOTE_WARN ){
-                    g_lib.annotationInitDependents( note.new );
+                    g_lib.annotationInitDependents( note.new, updates );
                 }
         
                 res.send({ results: [note.new], updates: Array.from( updates )});
@@ -88,6 +88,7 @@ router.post('/update', function (req, res) {
                 var note = g_db.n.document( req.queryParams.id ),
                     ne = g_db.note.firstExample({ _to: note._id }),
                     old_state = note.state,
+                    old_type = note.type,
                     doc = g_db._document( ne._from ),
                     updates = {};
 
@@ -137,38 +138,11 @@ router.post('/update', function (req, res) {
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } ).new;
 
-                // Further process activated errors on data records (set loc_err, propagate downstream)
-                console.log("check for error upd/prop",note,doc._id.startsWith( "d/" ));
-                if (( note.type == g_lib.NOTE_ERROR ) && doc._id.startsWith( "d/" )){
-                    console.log("is an error on data",old_state,note.state,doc.loc_err,doc.inh_err);
-                    var loc_err;
-                    if ( old_state == g_lib.NOTE_ACTIVE && note.state != g_lib.NOTE_ACTIVE ){
-                        console.log("deactivate err");
-                        // Deactived an error, reclac & update loc_err
-                        // Any other active errors?
-                        var notes = g_db._query("for v in 1..1 outbound @id note filter v.state == 2 && v.type == 3 && v._id != @nid return true",{id:doc._id,nid:note._id});
-                        console.log("no loc err, notes next:",notes.hasNext());
-                        if ( !notes.hasNext()){
-                            // Deactived only active error, update loc_err
-                            loc_err = false;
-                        }
-                    }else if( old_state != g_lib.NOTE_ACTIVE && note.state == g_lib.NOTE_ACTIVE ){
-                        if ( !doc.loc_err ){
-                            // Actived an error, update loc_err
-                            loc_err = true;
-                        }
-                    }
-
-                    if ( loc_err != undefined ){
-                        console.log("upd loc_err:",loc_err);
-                        g_db.d.update( doc._id, { loc_err: loc_err });
-
-                        if ( !doc.inh_err ){
-                            console.log("recalc inh err");
-                            // Combined inh & loc err state has changed, recalc inh_err for dependent records
-                            //g_lib.recalcInhErrorDeps( doc._id, loc_err, updates );
-                        }
-                    }
+                // If this is an error or warning, must assess impact to dependent records (derived/component only)
+                if ( g_db.n.byExample({ _to: note._id }).count() > 1 ){
+                    g_lib.annotationUpdateDependents( note, old_type, old_state, updates );
+                }else if ( obj.state == g_lib.NOTE_ACTIVE && obj.type >= g_lib.NOTE_WARN ){
+                    g_lib.annotationInitDependents( note, updates );
                 }
 
                 console.log("updates:",Object.values(updates));
