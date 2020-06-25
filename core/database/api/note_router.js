@@ -140,9 +140,13 @@ router.post('/update', function (req, res) {
 
                 // If this is an error or warning, must assess impact to dependent records (derived/component only)
                 if ( g_db.n.byExample({ _to: note._id }).count() > 1 ){
-                    g_lib.annotationUpdateDependents( note, old_type, old_state, updates );
-                }else if ( obj.state == g_lib.NOTE_ACTIVE && obj.type >= g_lib.NOTE_WARN ){
-                    g_lib.annotationInitDependents( note, updates );
+                    console.log("update existing dependent notes");
+                    g_lib.annotationUpdateDependents( client, note, old_type, old_state, updates );
+                }else if ( note.state == g_lib.NOTE_ACTIVE && note.type >= g_lib.NOTE_WARN ){
+                    console.log("init new dependent notes");
+                    g_lib.annotationInitDependents( client, note, updates );
+                }else{
+                    console.log("no dependent action:",note.state,note.type);
                 }
 
                 console.log("updates:",Object.values(updates));

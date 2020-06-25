@@ -1383,11 +1383,13 @@ module.exports = ( function() {
         return mask;
     };
 
-    obj.annotationInitDependents = function( a_parent_note, a_updates ){
+    obj.annotationInitDependents = function( a_client, a_parent_note, a_updates ){
+        console.log("annotationInitDependents",a_parent_note._id);
+
         var subj = obj.db._document( a_parent_note.subject_id ),
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v",{id:subj._id}),
             time = Math.floor( Date.now()/1000 ),
-            obj = {
+            new_note = {
                 state: obj.NOTE_OPEN, type: a_parent_note.type, has_parent: true, creator: a_parent_note.creator,
                 ct: time, ut: time, title: a_parent_note.title, comments: [{
                     user: a_parent_note.creator, new_type: a_parent_note.type, new_state: obj.NOTE_OPEN, time: time,
@@ -1399,14 +1401,15 @@ module.exports = ( function() {
         // Create new linked annotation for each dependent
         while( deps.hasNext() ){
             dep = deps.next();
-            obj.subject_id = dep._id;
-            note = obj.db.n.save( obj, { returnNew: true });
+            console.log("dep:",dep._id);
+            new_note.subject_id = dep._id;
+            note = obj.db.n.save( new_note, { returnNew: true });
             obj.db.note.save({ _from: dep._id, _to: note.new._id });
             obj.db.note.save({ _from: note.new._id, _to: a_parent_note._id });
 
             // Add update listing data if not present
             if ( !( dep._id in a_updates )){
-                dep.notes = obj.annotationGetMask( dep._id );
+                dep.notes = obj.annotationGetMask( a_client, dep._id );
                 // remove larger unnecessary fields
                 delete dep.desc;
                 delete dep.md;
@@ -1419,7 +1422,7 @@ module.exports = ( function() {
     children to match. For other types, close all children. For errors and warnings, if state is changed to active,
     reopen any closed children; otherwise, if open or closed, close all children. For child notes that have already
     been activated, must recurse to all children as needed. */
-    obj.annotationUpdateDependents = function( a_parent_note, a_prev_type, a_prev_state, a_updates ){
+    obj.annotationUpdateDependents = function( a_client, a_parent_note, a_prev_type, a_prev_state, a_updates ){
         if ( a_parent_note.type == a_prev_type && ( a_parent_note.state == a_prev_state || ( a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state != obj.NOTE_ACTIVE )))
             return;
 
@@ -1444,10 +1447,10 @@ module.exports = ( function() {
 
         comment += " of annotaion on ancestor '" + a_parent_note.subject_id + "'.";
 
-        obj.annotationUpdateDependents_Recurse( a_parent_note._id, upd, comment, a_updates );
+        obj.annotationUpdateDependents_Recurse( a_client, a_parent_note._id, upd, comment, a_updates );
     };
 
-    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_note_upd, a_comment, a_updates ){
+    obj.annotationUpdateDependents_Recurse = function( a_client, a_note_id, a_note_upd, a_comment, a_updates ){
         var note, subj, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
 
         while ( deps.hasNext() ){
@@ -1459,17 +1462,17 @@ module.exports = ( function() {
 
             // Add/refresh update listing data
             if ( note.subject_id in a_updates ){
-                a_updates[note.subject_id].notes = obj.annotationGetMask( note.subject_id );
+                a_updates[note.subject_id].notes = obj.annotationGetMask( a_client, note.subject_id );
             }else{
-                subj = obj.db._document( note.subject_id )
-                subj.notes = obj.annotationGetMask( note.subject_id );
+                subj = obj.db._document( note.subject_id );
+                subj.notes = obj.annotationGetMask( a_client, note.subject_id );
                 // remove larger unnecessary fields
                 delete subj.desc;
                 delete subj.md;
                 a_updates[note.subject_id] = subj;
             }
             
-            obj.annotationUpdateDependents_Recurse( note._id, a_note_upd, a_comment );
+            obj.annotationUpdateDependents_Recurse( a_client, note._id, a_note_upd, a_comment );
         }
     };
 
