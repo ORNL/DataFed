@@ -155,45 +155,44 @@ export function generateNoteSpan( item, codes ){
     var res = "";
 
     if ( item.notes ){
-        var ques = false, max = -1;
-
-        for ( var i in item.notes ){
-            if ( item.notes[i] == model.NOTE_QUESTION )
-                ques = true;
-            else if ( item.notes[i] > max )
-                max = item.notes[i];
-        }
-
-        if ( max == model.NOTE_ERROR ){
+        // Show icon for most critical note only - err > warn > info
+        if ( item.notes & model.NOTE_MASK_LOC_ERR ){
             if ( codes )
                 res += " &#xe6e9;";
             else
                 res += "<i class='ui-icon ui-icon-flag' style='margin: 0 1px 1px -4px'></i>";
-        }else if ( max == model.NOTE_WARN ){
+        }else if ( item.notes & model.NOTE_MASK_LOC_WARN ){
             if ( codes )
                 res += " &#xe65f;";
             else
                 res += "<i class='ui-icon ui-icon-alert' style='margin: 0 1px 1px -4px'></i>";
-        }else if ( max == model.NOTE_INFO ){
+        }else if ( item.notes & model.NOTE_MASK_LOC_INFO ){
             if ( codes )
                 res += " &#xe665;";
             else
                 res += "<i class='ui-icon ui-icon-circle-info' style='margin: 0 1px 1px -4px'></i>";
         }
 
-        if ( ques ){
+        // Show separate question icon
+        if ( item.notes & model.NOTE_MASK_LOC_QUES ){
             if ( codes )
                 res += " &#xe662;";
             else
-                res += "<i class='ui-icon ui-icon-circle-help' style='margin: 0 1px 1px "+(max>0?"0":"-4px")+"'></i>";
+                res += "<i class='ui-icon ui-icon-circle-help' style='margin: 0 1px 1px "+(res.length>0?"0":"-4px")+"'></i>";
         }
-    }
 
-    if ( item.inhErr ){
-        if ( codes )
-            res += " (&#xe6e9;)";
-        else
-            res += " <span class='inh-err-title'>(<i class='ui-icon ui-icon-flag inh-err-title' style='margin: 0 0 1px 0'>></i>)</span> ";
+        // Show separate icon for most critical nhererited note - err > warn
+        if ( item.notes & model.NOTE_MASK_INH_ERR ){
+            if ( codes )
+                res += " (&#xe6e9;)";
+            else
+                res += " <span class='inh-err-title'>(<i class='ui-icon ui-icon-flag inh-err-title' style='margin: 0 0 1px 0'>></i>)</span> ";
+        }else if ( item.notes & model.NOTE_MASK_INH_WARN ){
+            if ( codes )
+                res += " (&#xe65f;)";
+            else
+                res += " <span class='inh-warn-title'>(<i class='ui-icon ui-icon-alert inh-warn-title' style='margin: 0 0 1px 0'>></i>)</span> ";
+        }
     }
 
     return res;
@@ -206,27 +205,6 @@ export function generateTitle( item, refresh, unstruct = false ) {
         title += "<i class='ui-icon ui-icon-locked'></i> ";
 
     title += generateNoteSpan( item );
-
-    /*if ( item.notes ){
-        var ques = false, max = -1;
-
-        for ( var i in item.notes ){
-            if ( item.notes[i] == model.NOTE_QUESTION )
-                ques = true;
-            else if ( item.notes[i] > max )
-                max = item.notes[i];
-        }
-        if ( max == model.NOTE_ERROR )
-            title += "<i class='ui-icon ui-icon-flag' style='margin: 0 1px 1px -4px'></i>";
-        else if ( max == model.NOTE_WARN )
-            title += "<i class='ui-icon ui-icon-alert' style='margin: 0 1px 1px -4px'></i>";
-        else if ( max == model.NOTE_INFO )
-            title += "<i class='ui-icon ui-icon-circle-info' style='margin: 0 1px 1px -4px'></i>";
-
-        if ( ques ){
-            title += "<i class='ui-icon ui-icon-circle-help' style='margin: 0 1px 1px "+(max>0?"0":"-4px")+"'></i>";
-        }
-    }*/
 
     title += "<span class='fancytree-title data-tree-title'>" + escapeHTML(item.title) + "</span><span class='data-tree-subtitle'>";
     title += "<span class='data-tree-id'>" + item.id + "</span>&nbsp;";

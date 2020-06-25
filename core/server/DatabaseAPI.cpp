@@ -1304,16 +1304,7 @@ DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
                 rec->set_parent_id( j->second.asString( ));
 
             if (( j = obj.find( "notes" )) != obj.end( ))
-            {
-                Value::Array & arr2 = j->second.getArray();
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    rec->add_notes( k->asNumber( ));
-                }
-            }
-
-            if (( j = obj.find( "inh_err" )) != obj.end( ))
-                rec->set_inh_err( j->second.asBool( ));
+                rec->set_notes( j->second.asNumber( ));
 
             if (( j = obj.find( "deps" )) != obj.end( ))
             {
@@ -1582,14 +1573,7 @@ DatabaseAPI::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
                 coll->set_owner( j->second.asString( ));
 
             if (( j = obj.find( "notes" )) != obj.end( ))
-            {
-                Value::Array & arr2 = j->second.getArray();
-                for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    coll->add_notes( k->asNumber( ));
-                }
-            }
-
+                coll->set_notes( j->second.asNumber( ));
         }
     }
     catch(...)
@@ -1680,7 +1664,7 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
         a_item->set_title( a_obj.at( "title" ).asString( ));
 
         Value::ObjectIter   j;
-        Value::ArrayIter    k,n;
+        Value::ArrayIter    k;
 
         if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_alias( j->second.asString( ));
@@ -1701,16 +1685,7 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
             a_item->set_size( j->second.asNumber( ));
 
         if (( j = a_obj.find( "notes" )) != a_obj.end( ))
-        {
-            Value::Array & arr = j->second.getArray();
-            for ( k = arr.begin(); k != arr.end(); k++ )
-            {
-                a_item->add_notes( k->asNumber( ));
-            }
-        }
-
-        if (( j = a_obj.find( "inh_err" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_inh_err( j->second.asBool( ));
+            a_item->set_notes( j->second.asNumber( ));
 
         if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_locked( j->second.asBool( ));
@@ -1736,17 +1711,8 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
                 if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
                     dep->set_alias( m->second.asString() );
 
-                if (( m = obj2.find( "inh_err" )) != obj2.end( ) && !m->second.isNull( ))
-                    dep->set_inh_err( m->second.asBool() );
-
                 if (( m = obj2.find( "notes" )) != obj2.end( ))
-                {
-                    Value::Array & arr3 = m->second.getArray();
-                    for ( n = arr3.begin(); n != arr3.end(); n++ )
-                    {
-                        dep->add_notes( n->asNumber( ));
-                    }
-                }
+                    dep->set_notes( m->second.asNumber( ));
             }
         }
     }
@@ -2836,12 +2802,18 @@ DatabaseAPI::setNoteData( NoteData * a_note, libjson::Value::Object & a_obj )
         a_note->set_id( a_obj.at( "_id" ).asString( ));
         a_note->set_type((NoteType) a_obj.at( "type" ).asNumber( ));
         a_note->set_state((NoteState) a_obj.at( "state" ).asNumber( ));
-        a_note->set_subject( a_obj.at( "subject" ).asString( ));
+        a_note->set_subject_id( a_obj.at( "subject_id" ).asString( ));
         a_note->set_title( a_obj.at( "title" ).asString( ));
         a_note->set_ct( a_obj.at( "ct" ).asNumber( ));
         a_note->set_ut( a_obj.at( "ut" ).asNumber( ));
 
         Value::ObjectIter   j;
+
+        if (( j = a_obj.find( "has_parent" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_note->set_has_parent( j->second.asBool( ));
+
+        if (( j = a_obj.find( "has_child" )) != a_obj.end( ))
+            a_note->set_has_child( j->second.asBool( ));
 
         if (( j = a_obj.find( "comments" )) != a_obj.end( ))
         {

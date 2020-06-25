@@ -70,6 +70,23 @@ export const NOTE_CLOSED     = 0;
 export const NOTE_OPEN       = 1;
 export const NOTE_ACTIVE     = 2;
 
+export const NOTE_MASK_ACT_QUES  = 0x01;
+export const NOTE_MASK_ACT_INFO  = 0x02;
+export const NOTE_MASK_ACT_WARN  = 0x04;
+export const NOTE_MASK_ACT_ERR   = 0x08;
+export const NOTE_MASK_OPN_QUES  = 0x10;
+export const NOTE_MASK_OPN_INFO  = 0x20;
+export const NOTE_MASK_OPN_WARN  = 0x40;
+export const NOTE_MASK_OPN_ERR   = 0x80;
+export const NOTE_MASK_INH_WARN  = 0x400;
+export const NOTE_MASK_INH_ERR   = 0x800;
+export const NOTE_MASK_LOC_QUES  = 0x11;
+export const NOTE_MASK_LOC_INFO  = 0x22;
+export const NOTE_MASK_LOC_WARN  = 0x44;
+export const NOTE_MASK_LOC_ERR   = 0x88;
+export const NOTE_MASK_LOC_ALL   = 0xFF;
+export const NOTE_MASK_INH_ALL   = 0xC00;
+
 export const NoteTypeLabel = [
     "Question",
     "Information",

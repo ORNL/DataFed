@@ -214,7 +214,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
             var act = $("#note-tabs").tabs('option', 'active');
 
-            cur_notes = new Set();
+            cur_notes = 0;
 
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
@@ -223,17 +223,17 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                     ns = model.NoteStateFromString[note.state];
                     //console.log("note:",note);
 
-                    entry = {title: note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject: a_subject_id };
+                    entry = {title: note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject_id: a_subject_id };
                     if ( ns == model.NOTE_ACTIVE ){
                         if ( note_active.length == 0 && act != 0 )
                             entry.active = true;
                         note_active.push(entry);
-                        cur_notes.add( nt );
+                        cur_notes |= (1<<nt);
                     }else if ( ns == model.NOTE_OPEN ){
                         if ( note_open.length == 0  && act != 1 )
                             entry.active = true;
                         note_open.push(entry);
-                        cur_notes.add( nt );
+                        cur_notes |= (1<<(nt+4));
                     }else{
                         if ( note_closed.length == 0  && act != 2 )
                             entry.active = true;
@@ -300,6 +300,8 @@ function showSelectedNoteInfo( node ){
                 ns = model.NoteStateFromString[note.state],
                 html, comm, date_ct = new Date(), date_ut = new Date();
 
+            console.log("note:",note);
+
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
 
@@ -311,14 +313,14 @@ function showSelectedNoteInfo( node ){
                 date_ut.setTime(comm.time*1000);
                 html += "<div style='padding:1em 0 0 0'>" + date_ut.toLocaleDateString("en-US", settings.date_opts) + ", user <b>"+ comm.user.substr(2) + "</b>";
 
-                if ( comm.new_type ){
+                if ( comm.type ){
                     if ( i == 0 ){
-                        html += "created annotation as <b>";
+                        html += " created annotation as <b>";
                     }else{
-                        html += "changed annotation to <b>";
+                        html += " changed annotation to <b>";
                     }
 
-                    switch ( comm.new_type ){
+                    switch ( comm.type ){
                         case "NOTE_QUESTION": html += "QUESTION"; break;
                         case "NOTE_INFO": html += "INFORMATION"; break;
                         case "NOTE_WARN": html += "WARNING"; break;
@@ -328,16 +330,16 @@ function showSelectedNoteInfo( node ){
                     html += "</b>";
                 }
 
-                if ( comm.new_state ){
+                if ( comm.state ){
                     if ( i == 0 ){
                         html += " in state <b>";
-                    }else if ( comm.new_state ) {
+                    }else if ( comm.state ) {
                         html += " and set state to <b>";
                     }else{
                         html += " set state to <b>";
                     }
 
-                    switch ( comm.new_state ){
+                    switch ( comm.state ){
                         case "NOTE_OPEN": html += "OPEN"; break;
                         case "NOTE_CLOSED": html += "CLOSED"; break;
                         case "NOTE_ACTIVE": html += "ACTIVE"; break;
@@ -346,7 +348,7 @@ function showSelectedNoteInfo( node ){
                     html += "</b>";
                 }
 
-                if ( comm.new_type === undefined && comm.new_state === undefined ){
+                if ( comm.type === undefined && comm.state === undefined ){
                     html += " commented on annotation";
                 }
 
@@ -392,7 +394,7 @@ function showSelectedNoteInfo( node ){
             $(".btn-note-edit",note_details).on("click",function(){
                 console.log("edit!",this.id);
                 var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
-                dlgAnnotation.show( note.subject, note, null, idx, function( data ){
+                dlgAnnotation.show( note.subjectId, note, null, idx, function( data ){
                     if ( data ){
                         showSelectedNoteInfo( node );
                         node.setTitle( data.note[0].title );
@@ -402,35 +404,35 @@ function showSelectedNoteInfo( node ){
 
             $(".btn-note-comment",note_details).on("click",function(){
                 console.log("comment!");
-                dlgAnnotation.show( note.subject, note, null, null, function(){
+                dlgAnnotation.show( note.subjectId, note, null, null, function(){
                     showSelectedNoteInfo( node );
                 });
             });
 
             $(".btn-note-reopen",note_details).on("click",function(){
                 console.log("reopen!");
-                dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
-                    updateSelectedNote( node.key, node.data.subject );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function(){
+                    updateSelectedNote( node.key, note.subjectId );
                 });
             });
 
             $(".btn-note-close",note_details).on("click",function(){
                 console.log("close!");
-                dlgAnnotation.show( note.subject, note, model.NOTE_CLOSED, null, function(){
-                    updateSelectedNote( node.key, node.data.subject );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_CLOSED, null, function(){
+                    updateSelectedNote( node.key, note.subjectId );
                 });
             });
 
             $(".btn-note-activate",note_details).on("click",function(){
                 console.log("activate!");
-                dlgAnnotation.show( note.subject, note, model.NOTE_ACTIVE, null, function(){
-                    updateSelectedNote( node.key, node.data.subject );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_ACTIVE, null, function(){
+                    updateSelectedNote( node.key, note.subjectId );
                 });
             });
 
             $(".btn-note-deactivate",note_details).on("click",function(){
-                dlgAnnotation.show( note.subject, note, model.NOTE_OPEN, null, function(){
-                    updateSelectedNote( node.key, node.data.subject );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function(){
+                    updateSelectedNote( node.key, note.subjectId );
                 });
             });
         }
@@ -448,11 +450,9 @@ function updateSelectedNote( a_note_id, a_subject_id ){
             $("#note-tabs").tabs({active:2});
         }
 
-        cur_item.notes = [];
+        // TODO Revisit. This is a clunky way to update the UI
 
-        cur_notes.forEach( function( nt ){
-            cur_item.notes.push( nt );
-        });
+        cur_item.notes = cur_notes;
     
         window.refreshUI( cur_item.id, cur_item );
     });

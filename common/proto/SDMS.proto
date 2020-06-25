@@ -103,10 +103,9 @@ message DependencyData
 {
     required string             id          = 1;
     optional string             alias       = 2;
-    repeated uint32             notes       = 3;
-    optional bool               inh_err     = 4;
-    required DependencyType     type        = 5;
-    required DependencyDir      dir         = 6;
+    optional uint32             notes       = 3;
+    required DependencyType     type        = 4;
+    required DependencyDir      dir         = 5;
 }
 
 // For specifying dependencies
@@ -152,11 +151,10 @@ message ListingData
     optional string             creator     = 6;
     optional int32              gen         = 7;
     optional double             size        = 8;
-    repeated uint32             notes       = 9;
+    optional uint32             notes       = 9;
     optional string             doi         = 10;
     optional string             url         = 11;
     repeated DependencyData     dep         = 12;
-    optional bool               inh_err     = 13;
 }
 
 message PathData
@@ -187,8 +185,7 @@ message RecordData
     optional bool               locked      = 19;
     optional string             parent_id   = 20;
     repeated DependencyData     deps        = 21;
-    repeated uint32             notes       = 22;
-    optional bool               inh_err     = 23;
+    optional uint32             notes       = 22;
 }
 
 // Fields required for a data repo to locate raw data
@@ -223,7 +220,7 @@ message CollData
     optional uint32             ct          = 7;
     optional uint32             ut          = 8;
     optional string             parent_id   = 9;
-    repeated uint32             notes       = 10;
+    optional uint32             notes       = 10;
 }
 
 message GroupData
@@ -292,7 +289,7 @@ message NoteComment
     required string             user    = 1;
     required uint32             time    = 2;
     required string             comment = 3;
-    optional NoteState          type    = 4;
+    optional NoteType           type    = 4;
     optional NoteState          state   = 5;
 }
 
