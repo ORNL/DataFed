@@ -1660,11 +1660,15 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
 {
     try
     {
-        a_item->set_id( a_obj.at( "id" ).asString( ));
-        a_item->set_title( a_obj.at( "title" ).asString( ));
-
         Value::ObjectIter   j;
         Value::ArrayIter    k;
+
+        if (( j = a_obj.find( "id" )) != a_obj.end( ))
+            a_item->set_id( j->second.asString( ));
+        else if (( j = a_obj.find( "_id" )) != a_obj.end( ))
+            a_item->set_id( j->second.asString( ));
+
+        a_item->set_title( a_obj.at( "title" ).asString( ));
 
         if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_alias( j->second.asString( ));
