@@ -611,7 +611,7 @@ router.get('/view', function (req, res) {
                 rem_md = true;
         }
 
-        data.notes = g_db.annotationGetMask( client, data_id, admin );
+        data.notes = g_lib.annotationGetMask( client, data_id, admin );
 
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
@@ -619,7 +619,7 @@ router.get('/view', function (req, res) {
             if ( dep.alias && client._id != dep.owner )
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
-            dep.notes = g_db.annotationGetMask( client, dep.id );
+            dep.notes = g_lib.annotationGetMask( client, dep.id );
         }
 
         if ( rem_md && data.md )
@@ -770,7 +770,7 @@ router.get('/dep/graph/get', function (req, res) {
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
                 }
                     
-                notes = g_db.annotationGetMask( client, rec._id );
+                notes = g_lib.annotationGetMask( client, rec._id );
 
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
@@ -826,7 +826,7 @@ router.get('/dep/graph/get', function (req, res) {
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
-                            node.notes = g_db.annotationGetMask( client, node._id );
+                            node.notes = g_lib.annotationGetMask( client, node._id );
 
                             if ( dep.type<2 )
                                 node.gen = gen;
@@ -958,7 +958,7 @@ router.get('/list/by_alloc', function (req, res) {
         var result;
 
         // TODO Add notes to results?
-        //node.notes = g_db.annotationGetMask( client, node._id );
+        //node.notes = g_lib.annotationGetMask( client, node._id );
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;

@@ -289,8 +289,8 @@ router.get('/read', function (req, res) {
             result = g_db._query( qry, params ).toArray();
         }
 
-        while ( result.hasNext() ){
-            item = result.next();
+        for ( var i in result ){
+            item = result[i];
             if ( item.id )
                 item.notes = g_lib.annotationGetMask( client, item.id, admin );
         }

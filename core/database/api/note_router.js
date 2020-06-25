@@ -20,7 +20,7 @@ router.post('/create', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id = g_lib.resolveDataCollID( req.queryParams.subject_id, client ),
+                var id = g_lib.resolveDataCollID( req.queryParams.subject, client ),
                     doc = g_db._document( id );
         
                 if ( !g_lib.hasAdminPermObject( client, id )) {
@@ -60,7 +60,7 @@ router.post('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('subject_id', joi.string().required(), "ID or alias of data record or collection")
+.queryParam('subject', joi.string().required(), "ID or alias of data record or collection")
 .queryParam('type', joi.number().min(0).max(3).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .queryParam('title', joi.string().required(), "Title of annotaion")
 .queryParam('comment', joi.string().required(), "Comments")
@@ -121,7 +121,7 @@ router.post('/update', function (req, res) {
                     obj = { ut: time, comments: note.comments },
                     comment = { user: client._id, time:time };
 
-                if ( req.queryParams.new_state !== undefined ){
+                if ( req.queryParams.new_type !== undefined ){
                     obj.type = req.queryParams.new_state;
                     comment.new_type = obj.type;
                 }
@@ -181,7 +181,7 @@ router.post('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client UID")
 .queryParam('id', joi.string().required(), "ID of annotation")
-.queryParam('new_type', joi.number().min(0).max(3).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
+.queryParam('new_type', joi.number().min(0).max(3).optional(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .queryParam('new_state', joi.number().min(0).max(2).optional(), "New state (omit for comment)")
 .queryParam('comment', joi.string().required(), "Comments")
 .summary('Update an annotation')
@@ -289,7 +289,7 @@ router.get('/view', function (req, res) {
 router.get('/list/by_subject', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject_i, client );
+        var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject, client );
 
         if ( g_lib.hasAdminPermObject( client, id )) {
             qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,has_parent:v.has_parent,ct:v.ct,ut:v.ut}";
@@ -305,7 +305,7 @@ router.get('/list/by_subject', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client UID")
-.queryParam('subject_id', joi.string().required(), "ID/alias of subject")
+.queryParam('subject', joi.string().required(), "ID/alias of subject")
 .summary('List annotations by subject')
 .description('List annotations attached to subject data record or colelction');
 
