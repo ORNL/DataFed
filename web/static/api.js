@@ -404,8 +404,8 @@ export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activ
         null, function( ok, reply ){
             a_cb( ok, reply );
 
-            if ( ok && reply.updates )
-                model.update( reply.updates );
+            if ( ok && reply.update )
+                model.update( reply.update );
         });
 }
 

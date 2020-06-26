@@ -157,6 +157,10 @@ textarea.ui-state-disabled
 	color: #AF0000!important;
 }
 
+.inh-warn-title{
+	color: #cf7f00!important;
+}
+
 .ui-icon-notice
 {
     color: #0080FF
@@ -215,12 +219,12 @@ textarea.ui-state-disabled
 
 .ui-icon-circle-info
 {
-    color: #0080FF
+    color: #40df40
 }
 
 .ui-icon-circle-help
 {
-    color: #ef9f00
+    color: #40b0FF
 }
 
 .ui-icon-heart

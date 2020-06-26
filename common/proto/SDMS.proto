@@ -303,7 +303,7 @@ message NoteData
     repeated NoteComment        comment     = 6;
     required uint32             ct          = 7;
     required uint32             ut          = 8;
-    optional bool               has_parent  = 9;
+    optional string             parent_id   = 9;
     optional bool               has_child   = 10;
 }
 

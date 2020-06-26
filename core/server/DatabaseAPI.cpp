@@ -2783,12 +2783,17 @@ DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, libjson::Val
 
         if (( j = a_result.find( "updates" )) != a_result.end() )
         {
+            DL_DEBUG("Have updates");
+
             Value::Array & arr = j->second.getArray();
 
             for ( i = arr.begin(); i != arr.end(); i++ )
             {
                 Value::Object & obj = i->getObject();
+
                 setListingData( a_reply.add_update(), obj );
+
+                DL_DEBUG("Updated record: " << obj["title"].asString() );
             }
         }
     }
@@ -2813,8 +2818,8 @@ DatabaseAPI::setNoteData( NoteData * a_note, libjson::Value::Object & a_obj )
 
         Value::ObjectIter   j;
 
-        if (( j = a_obj.find( "has_parent" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_note->set_has_parent( j->second.asBool( ));
+        if (( j = a_obj.find( "parent_id" )) != a_obj.end( ) && !j->second.isNull( ))
+            a_note->set_parent_id( j->second.asString( ));
 
         if (( j = a_obj.find( "has_child" )) != a_obj.end( ))
             a_note->set_has_child( j->second.asBool( ));

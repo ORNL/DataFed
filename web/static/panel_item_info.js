@@ -144,7 +144,7 @@ function showSelectedProjInfo( key, cb ){
     }); 
 }
 
-$("#note_active_tree").fancytree({
+var tree_opts1 = {
     extensions: ["themeroller"],
     themeroller: {
         activeClass: "my-fancytree-active",
@@ -158,47 +158,56 @@ $("#note_active_tree").fancytree({
     selectMode: 1,
     activate: function( event, data ) {
         showSelectedNoteInfo( data.node );
-    }
-});
+    },
+    lazyLoad: function( event, data ) {
+        data.result = {
+            url: "/api/note/view?id="+encodeURIComponent( data.node.data.parentId ),
+            cache: false
+        };
+    },
+    postProcess: function( event, data ) {
+        console.log("postproc:",data);
 
+        data.result = [];
+        var note, nt, entry, resp;
+
+        if ( Array.isArray( data.response ))
+            resp = data.response;
+        else
+            resp = data.response.note;
+
+        for ( var i in resp ){
+            note = resp[i];
+            nt = model.NoteTypeFromString[note.type],
+            entry = { icon: false, key: note.id, subject_id: note.subject_id };
+
+            if ( note.parentId ){
+                entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
+                entry.parentId = note.parentId;
+                entry.folder = true;
+                entry.lazy = true;
+            }else{
+                entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> ";
+            }
+
+            entry.title += note.title;
+
+            data.result.push( entry );
+        }
+    }
+}; //, tree_opts2 = {}, tree_opts3 = {};
+
+//Object.assign( tree_opts2, tree_opts1 );
+//Object.assign( tree_opts3, tree_opts1 );
+
+$("#note_active_tree").fancytree( tree_opts1 );
 note_active_tree = $.ui.fancytree.getTree("#note_active_tree");
 
-$("#note_open_tree").fancytree({
-    extensions: ["themeroller"],
-    themeroller: {
-        activeClass: "my-fancytree-active",
-        addClass: "",
-        focusClass: "",
-        hoverClass: "my-fancytree-hover",
-        selectedClass: ""
-    },
-    source: [],
-    nodata: false,
-    selectMode: 1,
-    activate: function( event, data ) {
-        showSelectedNoteInfo( data.node );
-    }
-});
 
+$("#note_open_tree").fancytree( tree_opts1 );
 note_open_tree = $.ui.fancytree.getTree("#note_open_tree");
 
-$("#note_closed_tree").fancytree({
-    extensions: ["themeroller"],
-    themeroller: {
-        activeClass: "my-fancytree-active",
-        addClass: "",
-        focusClass: "",
-        hoverClass: "my-fancytree-hover",
-        selectedClass: ""
-    },
-    source: [],
-    nodata: false,
-    selectMode: 1,
-    activate: function( event, data ) {
-        showSelectedNoteInfo( data.node );
-    }
-});
-
+$("#note_closed_tree").fancytree( tree_opts1 );
 note_closed_tree = $.ui.fancytree.getTree("#note_closed_tree");
 
 function setupAnnotationTab( a_subject_id, a_cb ){
@@ -219,25 +228,41 @@ function setupAnnotationTab( a_subject_id, a_cb ){
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
-                    nt = model.NoteTypeFromString[note.type];
                     ns = model.NoteStateFromString[note.state];
+                    /*
+                    nt = model.NoteTypeFromString[note.type];
                     //console.log("note:",note);
 
-                    entry = {title: note.title,icon:"ui-icon ui-icon-" + note_icon[nt], key: note.id, subject_id: a_subject_id };
+                    entry = { icon: false, key: note.id, subject_id: a_subject_id };
+
+                    if ( note.hasParent ){
+                        entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
+                        entry.folder = true;
+                        entry.lazy = true;
+                    }else{
+                        entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> ";
+                    }
+
+                    entry.title += note.title;
+                    */
+
                     if ( ns == model.NOTE_ACTIVE ){
-                        if ( note_active.length == 0 && act != 0 )
-                            entry.active = true;
-                        note_active.push(entry);
+                        //if ( note_active.length == 0 && act != 0 )
+                        //    entry.active = true;
+                        //note_active.push(entry);
+                        note_active.push( note );
                         cur_notes |= (1<<nt);
                     }else if ( ns == model.NOTE_OPEN ){
-                        if ( note_open.length == 0  && act != 1 )
-                            entry.active = true;
-                        note_open.push(entry);
+                        //if ( note_open.length == 0  && act != 1 )
+                        //    entry.active = true;
+                        //note_open.push(entry);
+                        note_open.push( note );
                         cur_notes |= (1<<(nt+4));
                     }else{
-                        if ( note_closed.length == 0  && act != 2 )
-                            entry.active = true;
-                        note_closed.push(entry);
+                        //if ( note_closed.length == 0  && act != 2 )
+                        //    entry.active = true;
+                        //note_closed.push(entry);
+                        note_closed.push( note );
                     }
                 }
             }
@@ -300,18 +325,27 @@ function showSelectedNoteInfo( node ){
                 ns = model.NoteStateFromString[note.state],
                 html, comm, date_ct = new Date(), date_ut = new Date();
 
-            console.log("note:",note);
+            //console.log("note:",note);
 
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
 
-            html = "<div class='col-flex' style='height:100%'><div style='flex:none;padding:0 0 .5em 0'>Annotation History:</div><div style='flex:1 1 auto;overflow:auto'>";
+            html = "<div class='col-flex' style='height:100%'>\
+                    <div style='flex:none;padding:0 0 .5em 0'>\
+                        <table>\
+                            <tr><td>Annotation ID:</td><td>" + note.id + "</td></tr>\
+                            <tr><td>Subject ID:</td><td>" + note.subjectId + "</td></tr>\
+                            <tr><td>State:</td><td>" + model.NoteStateLabel[ns] + "</td></tr>\
+                        </table>\
+                    </div>\
+                    <div style='flex:1 1 auto;overflow:auto'>";
+
             var is_creator = ( note.comment[0].user == "u/"+settings.user.uid );
 
             for ( var i in note.comment ){
                 comm = note.comment[i];
                 date_ut.setTime(comm.time*1000);
-                html += "<div style='padding:1em 0 0 0'>" + date_ut.toLocaleDateString("en-US", settings.date_opts) + ", user <b>"+ comm.user.substr(2) + "</b>";
+                html += "<div style='padding:1em 0 0 .2em'>" + date_ut.toLocaleDateString("en-US", settings.date_opts) + ", user <b>"+ comm.user.substr(2) + "</b>";
 
                 if ( comm.type ){
                     if ( i == 0 ){
