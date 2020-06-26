@@ -1362,10 +1362,10 @@ module.exports = ( function() {
         var mask = 0, res, n, b;
 
         if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,has_parent:n.has_parent}",
+            res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,parent_id:n.parent_id}",
                 { id: a_subj_id });
         }else{
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,has_parent:n.has_parent}",
+            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,parent_id:n.parent_id}",
                 { id: a_subj_id, client: a_client._id });
         }
 
@@ -1373,7 +1373,7 @@ module.exports = ( function() {
             n = res.next();
 
             b = 1<<n.type;
-            if ( n.has_parent )
+            if ( n.parent_id )
                 b <<= 8;
             else if ( n.state == obj.NOTE_OPEN )
                 b <<= 4;
@@ -1390,7 +1390,7 @@ module.exports = ( function() {
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v",{id:subj._id}),
             time = Math.floor( Date.now()/1000 ),
             new_note = {
-                state: obj.NOTE_OPEN, type: a_parent_note.type, has_parent: true, creator: a_parent_note.creator,
+                state: obj.NOTE_OPEN, type: a_parent_note.type, parent_id: a_parent_note._id, creator: a_parent_note.creator,
                 ct: time, ut: time, title: a_parent_note.title, comments: [{
                     user: a_parent_note.creator, new_type: a_parent_note.type, new_state: obj.NOTE_OPEN, time: time,
                     comment: "Impact assessment needed due to issue on direct ancestor '" + a_parent_note.subject_id +
@@ -1426,53 +1426,66 @@ module.exports = ( function() {
         if ( a_parent_note.type == a_prev_type && ( a_parent_note.state == a_prev_state || ( a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state != obj.NOTE_ACTIVE )))
             return;
 
-        var comment, time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time };
-            //deps = obj.db._query("for v in 1..1 inbound @id note filter is_same_collection('n',v) return v",{id:a_parent_note._id});
+        var time = Math.floor( Date.now()/1000 ), upd = { type: a_parent_note.type, ut: time },
+            comment = { user: a_client._id, time: time };
+
+        if ( a_parent_note.type != a_prev_type )
+            comment.new_type = a_parent_note.type;
+
+        if ( a_parent_note.state != a_prev_state )
+            comment.new_state = a_parent_note.state;
 
         if ( a_parent_note.type >= obj.NOTE_WARN && a_parent_note.state == obj.NOTE_ACTIVE ){
             upd.state = obj.NOTE_OPEN;
-            comment = "Imapct reassessment needed due to change of ";
+            comment.comment = "Impact reassessment needed due to change of ";
 
             if ( a_parent_note.type != a_prev_type && a_parent_note.state != a_prev_state )
-                comment += "type and state";
+                comment.comment += "type and state";
             else if ( a_parent_note.state != a_prev_state )
-                comment += "type";
+                comment.comment += "type";
             else
-                comment += "state";
+                comment.comment += "state";
     
         }else{
             upd.state = obj.NOTE_CLOSED;
-            comment = "Impact assessment invalidated due to change of state";
+            comment.comment = "Impact assessment invalidated due to change of state";
         }
 
-        comment += " of annotaion on ancestor '" + a_parent_note.subject_id + "'.";
+        comment.comment += " of annotaion on ancestor '" + a_parent_note.subject_id + "'.";
 
-        obj.annotationUpdateDependents_Recurse( a_client, a_parent_note._id, upd, comment, a_updates );
+        var context = { client: a_client, note_upd: upd, comment: comment, updates: a_updates };
+
+        // Recurse full tree only if type is changing or state is changed from active to open or closed
+        if ( comment.new_type != undefined || ( a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state == obj.NOTE_ACTIVE ))
+            context.recurse = true;
+
+        obj.annotationUpdateDependents_Recurse( a_parent_note._id, context );
     };
 
-    obj.annotationUpdateDependents_Recurse = function( a_client, a_note_id, a_note_upd, a_comment, a_updates ){
+    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_context ){
         var note, subj, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
 
         while ( deps.hasNext() ){
             note = deps.next();
 
-            a_note_upd.comments = note.comments;
-            a_note_upd.comments.push( a_comment ); 
-            obj.db._update( note._id, a_note_upd );
+            a_context.note_upd.comments = note.comments;
+            a_context.note_upd.comments.push( a_context.comment ); 
+            obj.db._update( note._id, a_context.note_upd );
 
             // Add/refresh update listing data
-            if ( note.subject_id in a_updates ){
-                a_updates[note.subject_id].notes = obj.annotationGetMask( a_client, note.subject_id );
+            if ( note.subject_id in a_context.updates ){
+                a_context.updates[note.subject_id].notes = obj.annotationGetMask( a_context.client, note.subject_id );
             }else{
                 subj = obj.db._document( note.subject_id );
-                subj.notes = obj.annotationGetMask( a_client, note.subject_id );
+                subj.notes = obj.annotationGetMask( a_context.client, note.subject_id );
                 // remove larger unnecessary fields
                 delete subj.desc;
                 delete subj.md;
-                a_updates[note.subject_id] = subj;
+                a_context.updates[note.subject_id] = subj;
             }
-            
-            obj.annotationUpdateDependents_Recurse( a_client, note._id, a_note_upd, a_comment );
+
+            if ( a_context.recurse )
+                obj.annotationUpdateDependents_Recurse( note._id, a_context );
         }
     };
 

@@ -49,10 +49,10 @@ router.post('/create', function (req, res) {
 
                 // For ACTIVE errors and warnings, propagate to direct children
                 if ( obj.state == g_lib.NOTE_ACTIVE && obj.type >= g_lib.NOTE_WARN ){
-                    g_lib.annotationInitDependents( note.new, updates );
+                    g_lib.annotationInitDependents( client, note.new, updates );
                 }
-        
-                res.send({ results: [note.new], updates: Array.from( updates )});
+
+                res.send({ results: [note.new], updates: Object.values( updates )});
             }
         });
     } catch( e ) {
@@ -139,17 +139,16 @@ router.post('/update', function (req, res) {
                 note = g_db.n.update( note._id, obj, { returnNew: true } ).new;
 
                 // If this is an error or warning, must assess impact to dependent records (derived/component only)
-                if ( g_db.n.byExample({ _to: note._id }).count() > 1 ){
-                    console.log("update existing dependent notes");
+                if ( g_db.note.byExample({ _to: note._id }).count() > 1 ){
+                    //console.log("update existing dependent notes");
                     g_lib.annotationUpdateDependents( client, note, old_type, old_state, updates );
                 }else if ( note.state == g_lib.NOTE_ACTIVE && note.type >= g_lib.NOTE_WARN ){
-                    console.log("init new dependent notes");
+                    //console.log("init new dependent notes");
                     g_lib.annotationInitDependents( client, note, updates );
                 }else{
-                    console.log("no dependent action:",note.state,note.type);
+                    //console.log("no dependent action:",note.state,note.type);
                 }
 
-                console.log("updates:",Object.values(updates));
                 res.send({ results: [note], updates: Object.values(updates)});
             }
         });
@@ -250,7 +249,7 @@ router.get('/view', function (req, res) {
             }
         }
 
-        if ( g_db.n.byExample({ _to: note._id }).count() > 1 )
+        if ( g_db.note.byExample({ _to: note._id }).count() > 1 )
             note.has_child = true;
 
         res.send({ results: [note] });
@@ -270,10 +269,10 @@ router.get('/list/by_subject', function (req, res) {
         var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject, client );
 
         if ( g_lib.hasAdminPermObject( client, id )) {
-            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,has_parent:v.has_parent,ct:v.ct,ut:v.ut}";
+            qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id });
         }else{
-            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,has_parent:v.has_parent,ct:v.ct,ut:v.ut}";
+            qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id, client: client._id });
         }
 
@@ -296,7 +295,7 @@ router.get('/purge', function (req, res) {
                 write: ["n","note"]
             },
             action: function() {
-                console.log("note purge, age:", req.queryParams.age_sec );
+                //console.log("note purge, age:", req.queryParams.age_sec );
 
                 var t = (Date.now()/1000) - req.queryParams.age_sec;
                 var id, notes = g_db._query( "for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " return i._id" );
