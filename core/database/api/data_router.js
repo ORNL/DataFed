@@ -104,7 +104,7 @@ function recordCreate( client, record, results ){
         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
 
-    var updates = {};
+    var updates = new Set();
 
     // Handle specified dependencies
     if ( record.deps != undefined ){
@@ -121,11 +121,11 @@ function recordCreate( client, record, results ){
             data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
 
             if ( dep.type < g_lib.DEP_IS_NEW_VERSION_OF )
-                dep_ids.add( dep.id );
+                dep_ids.add( id );
         }
 
-        if ( dep_ids.size() )
-            data.new.notes = g_lib.annotationDependenciesUpdated( record, dep_ids, null, updates );
+        if ( dep_ids.size )
+            g_lib.annotationDependenciesUpdated( data.new, dep_ids, null, updates );
     }
 
     g_db.item.save({ _from: parent_id, _to: data.new._id });
@@ -152,7 +152,7 @@ router.post('/create', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -202,7 +202,7 @@ router.post('/create/batch', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -361,26 +361,68 @@ function recordUpdate( client, record, results ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id,deps_add=new Set(),deps_rem=new Set(),updates={};
+    var i,dep,id,deps_add=new Set(),deps_rem=new Set(),updates=new Set();
 
     if ( record.deps ){
-        var deps = g_db.dep.byExample({_from:data_id});
+        record.deps_rem = [];
+        record.deps_add = [];
+
+        var cur_deps = {}, deps = g_db.dep.byExample({_from:data_id});
 
         while ( deps.hasNext() ) {
             dep = deps.next();
-            if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
-                deps_rem.push( dep._to );
-
-            g_db.dep.remove( dep._id );
+            cur_deps[dep._to].add( dep.type );
         }
 
         for ( i in record.deps ) {
             dep = record.deps[i];
 
             id = g_lib.resolveDataID( dep.id, client );
-            if ( !id.startsWith("d/"))
+            if ( !id.startsWith( "d/" ))
                 throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
 
+            if ( id in cur_deps ){
+                if ( cur_deps[id] != dep.type ){
+                    record.deps_rem.push({ id: id, type: cur_deps[id] });
+                    record.deps_add.push( dep );
+                }
+
+                delete cur_deps[id];
+            }else{
+                record.deps_add.push( dep );
+            }
+        }
+
+        for ( id in cur_deps ) {
+            record.deps_rem.push({ id: id, type: cur_deps[id] });
+        }
+    }
+
+    if ( record.deps_rem != undefined && record.deps_rem.length ){
+        //console.log("rem deps from ",data._id);
+        for ( i in record.deps_rem ) {
+            dep = record.deps_rem[i];
+            id = g_lib.resolveDataID( dep.id, client );
+            dep = g_db.dep.firstExample({_from:data._id,_to:id});
+            if ( !dep )
+                throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
+
+            if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
+                deps_rem.add( id );
+
+            g_db.dep.removeByExample({_from:data._id,_to:id});
+        }
+    }
+
+    if ( record.deps_add != undefined && record.deps_add.length ){
+        //console.log("add deps");
+        for ( i in record.deps_add ) {
+            dep = record.deps_add[i];
+            //console.log("dep id:",dep.id);
+            id = g_lib.resolveDataID( dep.id, client );
+            if ( !id.startsWith("d/"))
+                throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
+            //dep_data = g_db.d.document( id );
             if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
 
@@ -391,47 +433,10 @@ function recordUpdate( client, record, results ){
         }
 
         g_lib.checkDependencies(data_id);
-    }else{
-        if ( record.deps_rem != undefined ){
-            //console.log("rem deps from ",data._id);
-            for ( i in record.deps_rem ) {
-                dep = record.deps_rem[i];
-                id = g_lib.resolveDataID( dep.id, client );
-                dep = g_db.dep.firstExample({_from:data._id,_to:id})
-                if ( !dep )
-                    throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
-
-                if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
-                    deps_rem.add( id );
-
-                g_db.dep.removeByExample({_from:data._id,_to:id});
-            }
-        }
-
-        if ( record.deps_add != undefined ){
-            //console.log("add deps");
-            for ( i in record.deps_add ) {
-                dep = record.deps_add[i];
-                //console.log("dep id:",dep.id);
-                id = g_lib.resolveDataID( dep.id, client );
-                if ( !id.startsWith("d/"))
-                    throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-                //dep_data = g_db.d.document( id );
-                if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
-                    throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
-
-                g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
-
-                if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
-                    deps_add.add( id );
-            }
-
-            g_lib.checkDependencies(data_id);
-        }
     }
 
-    if ( deps_add.size() || deps_rem.size() ){
-        data.notes = g_lib.annotationDependenciesUpdated( record, deps_add.size()?deps_add:null, deps_rem.size()?deps_rem:null, updates );
+    if ( deps_add.size || deps_rem.size ){
+        data.notes = g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, updates );
     }else{
         data.notes = g_lib.annotationGetMask( client, data._id );
     }
@@ -463,7 +468,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -517,7 +522,7 @@ router.post('/update/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {

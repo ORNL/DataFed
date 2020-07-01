@@ -1509,7 +1509,7 @@ module.exports = ( function() {
         var n = obj.db.n.document( a_id );
         a_update_ids.add( n.subject_id );
         obj.graph.n.remove( a_id );
-    }
+    };
 
     obj.annotationDependenciesUpdated = function( a_data, a_dep_ids_added, a_dep_ids_removed, a_update_ids ){
         // Called when dependencies are added/removed to/from existing/new data record
@@ -1531,20 +1531,23 @@ module.exports = ( function() {
         }
 
         if ( a_dep_ids_added ){
+            console.log("deps added:",Array.from( a_dep_ids_added ));
             // Get all annotations from new dependencies that may need to be propagated
-            qry_res = obj.db._query( "for v,e in 1..1 outbound @src note filter e.type < 2 return v", { src: Array.from( a_dep_ids_added )});
+            qry_res = obj.db._query( "for i in @src for v in 1..1 outbound i note filter v.type > 1 return v", { src: Array.from( a_dep_ids_added )});
 
             if ( qry_res.hasNext() ){
                 var time = Math.floor( Date.now()/1000 ), new_note;
     
                 while ( qry_res.hasNext() ){
                     res = qry_res.next();
+                    console.log("dep:",res);
 
                     // Only need to propagate if dependents are already present or state is active
                     if ( res.state == obj.NOTE_ACTIVE || obj.db.note.byExample({ _to: res._id }).count() > 1 ){
+                        console.log("propagate");
                         new_note = {
                             state: obj.NOTE_OPEN, type: res.type, parent_id: res._id, creator: res.creator,
-                            ct: time, ut: time, title: res.title, comments: [{
+                            subject_id: a_data._id, ct: time, ut: time, title: res.title, comments: [{
                                 user: res.creator, new_type: res.type, new_state: obj.NOTE_OPEN, time: time,
                                 comment: "Impact assessment needed due to issue on direct ancestor '" + res.subject_id +
                                 "'. Original issue description: \"" + res.comments[0].comment + "\""
