@@ -185,7 +185,9 @@ module.exports = ( function() {
             throw [obj.ERR_INTERNAL_FAULT,"Input specification for '" + a_field + "' not found. Please contact system administrator."];
         }
 
-        if ( spec.in_field )
+        if ( typeof a_in == "string" )
+            val = a_in;
+        else if ( spec.in_field )
             val = a_in[spec.in_field];
         else
             val = a_in[a_field];
@@ -1462,14 +1464,20 @@ module.exports = ( function() {
         obj.annotationUpdateDependents_Recurse( a_parent_note._id, context );
     };
 
-    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_context ){
-        var note, subj, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
+    obj.annotationUpdateDependents_Recurse = function( a_note_id, a_context, a_close ){
+        var old_state, note, subj, deps = obj.db._query( "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", { id: a_note_id });
+
+        if ( a_close ){
+            old_state = a_context.note_upd.state;
+            a_context.note_upd.state = obj.NOTE_CLOSED;
+        }
 
         while ( deps.hasNext() ){
             note = deps.next();
 
             a_context.note_upd.comments = note.comments;
-            a_context.note_upd.comments.push( a_context.comment ); 
+            a_context.note_upd.comments.push( a_context.comment );
+
             obj.db._update( note._id, a_context.note_upd );
 
             // Add/refresh update listing data
@@ -1485,272 +1493,72 @@ module.exports = ( function() {
             }
 
             if ( a_context.recurse )
-                obj.annotationUpdateDependents_Recurse( note._id, a_context );
+                obj.annotationUpdateDependents_Recurse( note._id, a_context, true );
+        }
+
+        if ( a_close ){
+            a_context.note_upd.state = old_state;
         }
     };
 
-    /*
-    obj.updateAnnotationState = function( doc, calc_inh, updates ){
-        var mask = 0;
-
-        if ( calc_inh ){
-            mask = obj.updateAnnotationStateUp( doc._id );
-        }else{
-            mask = ( doc.notes & g_lib.NOTE_MASK_INH_ALL );
-        }
-
-        var m, notes = g_db._query("for v in 1..1 outbound @id note filter v.state > 0 return v", { id: doc._id });
-
+    obj.annotationDelete = function( a_id, a_update_ids ){
+        var notes = obj.db.note.byExample({ _to: a_id });
         while ( notes.hasNext() ){
-            note = notes.next();
-            m = 1<<note.type;
-            if ( note.state == g_lib.NOTE_OPEN ){
-                m <<= 4;
+            obj.annotationDelete( notes.next()._from, a_update_ids );
+        }
+        var n = obj.db.n.document( a_id );
+        a_update_ids.add( n.subject_id );
+        obj.graph.n.remove( a_id );
+    }
+
+    obj.annotationDependenciesUpdated = function( a_data, a_dep_ids_added, a_dep_ids_removed, a_update_ids ){
+        // Called when dependencies are added/removed to/from existing/new data record
+        var res, qry_res;
+
+        a_update_ids.add( a_data._id );
+
+        if ( a_dep_ids_removed ){
+            // Find local annotations linked to upstream dependencies
+            qry_res = obj.db._query( "for v,e,p in 3..3 any @src note filter is_same_collection('d',v) && p.edges[1]._from == p.vertices[1]._id return {src: p.vertices[1], dst: p.vertices[3]}", { src: a_data._id });
+
+            while ( qry_res.hasNext() ){
+                res = qry_res.next();
+                if ( res.dst._id in a_dep_ids_removed ){
+                    // Delete local and downstream annotations
+                    obj.annotaionDelete( res.src._id, a_update_ids );
+                }
             }
-            mask |= m;
         }
 
-        // Update doc notes mask if changed
-        if ( mask != doc.notes ){
-            obj.db._update( doc._id, { notes: mask });
+        if ( a_dep_ids_added ){
+            // Get all annotations from new dependencies that may need to be propagated
+            qry_res = obj.db._query( "for v,e in 1..1 outbound @src note filter e.type < 2 return v", { src: Array.from( a_dep_ids_added )});
 
-            // For data records, if active error or warn bits have changed, or inh err bit has changed, need to recalc downstream
-            var app_err = ( mask & ( g_lib.NOTE_MASK_INH_ERR | g_lib.NOTE_MASK_ACT_ERR )) != 0,
-                app_warn = ( mask & g_lib.NOTE_MASK_ACT_WARN ) != 0,
-                recalc = ( app_err != (( doc.notes & ( g_lib.NOTE_MASK_INH_ERR | g_lib.NOTE_MASK_ACT_ERR ))!= 0 ))
-                    || ( app_warn != ( doc.notes & g_lib.NOTE_MASK_ACT_WARN ));
+            if ( qry_res.hasNext() ){
+                var time = Math.floor( Date.now()/1000 ), new_note;
+    
+                while ( qry_res.hasNext() ){
+                    res = qry_res.next();
 
-            doc.notes = mask;
+                    // Only need to propagate if dependents are already present or state is active
+                    if ( res.state == obj.NOTE_ACTIVE || obj.db.note.byExample({ _to: res._id }).count() > 1 ){
+                        new_note = {
+                            state: obj.NOTE_OPEN, type: res.type, parent_id: res._id, creator: res.creator,
+                            ct: time, ut: time, title: res.title, comments: [{
+                                user: res.creator, new_type: res.type, new_state: obj.NOTE_OPEN, time: time,
+                                comment: "Impact assessment needed due to issue on direct ancestor '" + res.subject_id +
+                                "'. Original issue description: \"" + res.comments[0].comment + "\""
+                            }]
+                        };
 
-            if ( recalc && doc._id.startsWith( "d/" )){
-                //(app_err?g_lib.NOTE_MASK_INH_ERR:0)|(app_warn?g_lib.NOTE_MASK_INH_WARN:0)
-                g_lib.updateAnnotationStateDown( doc._id, app_err, app_warn, updates );
+                        new_note = obj.db.n.save( new_note, { returnNew: true }).new;
+                        obj.db.note.save({ _from: a_data._id, _to: new_note._id });
+                        obj.db.note.save({ _from: new_note._id, _to: res._id });
+                    }
+                }
             }
         }
     };
-
-    obj.updateAnnotationStateUp = function( id ){
-        console.log("updateAnnotationStateUp ",id);
-
-        var mask = 0, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return { id: v._id, notes: v.notes }",{id:id});
-
-        while( deps.hasNext() ){
-            dep = deps.next();
-            // Active errors are alway inherited, active warnings are only inherited from direct ancestor
-            if ( dep.notes & ( g_lib.NOTE_MASK_INH_ERR | g_lib.NOTE_MASK_ACT_ERR ))
-                mask |= g_lib.NOTE_MASK_INH_ERR;
-            if ( dep.notes & g_lib.NOTE_MASK_ACT_WARN )
-                mask |= g_lib.NOTE_MASK_INH_WARN;
-        }
-
-        return mask;
-    };
-    */
-
-    /*
-    obj.updateAnnotationStateDown = function( a_start_id, a_has_err, a_has_warn, a_updates ){
-        console.log("updateAnnotationStateDown",id,has_err,has_warn);
-    */
-        /* Different algorithms are needed for setting and clearing error state, and for warning state:
-            - Setting error bit is "simple" and only requires updating all dependents that do not have
-              the bit set already. Other ancestor state of any dependent is irrelevant.
-            - Clearing the error bit is "complex" and requires that all dependents are evaluated in
-              proper order. Other ancestor state must be evaluated, and some ancestors may be dependents
-              of other dependent nodes that have not yet been evaluated.
-            - Setting and clearing the warning bit is the same as the error bit except that only direct
-              dependents of the starting node need to be updated (warnings do not propagate more than 1
-              hop).
-            - Both a_has_err and a_has_warn are booleans, but may be undefined/null indicating that the
-              bit has not been changed.
-        */
-/*
-        var start_node = { id: a_start_id, notes: a_has_err?g_lib.NOTE_MASK_LOC_ERR:0 | a_has_warn?g_lib.NOTE_MASK_LOC_WARN:0, proc: false },
-            nodes = obj.loadAnnotationSubgraph( start_node );
-
-        for ( n in nodes )
-            next.push( nodes[n].id );
-
-        if ( a_has_warn == true ){
-            obj.updateWarnStateDown( a_start_id, a_has_warn, next, nodes );
-        }
-
-        if ( a_has_err == true ){
-            obj.updateErrStateDownSet( a_start_id, nodes );
-        }else if ( a_has_err === false ){
-            obj.updateErrStateDownClear( a_start_id, next, nodes );
-        }
-
-
-        var upd_err, upd_warn, dep, deps, cur_ids, next_ids = [a_start_id], comp_ids = new Set(), nodes = {};
-
-        //deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,notes:v.notes,locked:v.locked}",{id:id});
-
-        while( next.length ){
-            cur_ids = next_ids;
-            next_ids = [];
-
-            for ( id in cur_ids ){
-                deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,notes:v.notes}",{id:id});
-
-                while( deps.hasNext() ){
-                    dep = deps.next();
-                    console.log("- dep:",dep.id,dep.notes);
-
-                    if (( !has_err && ( dep.notes & g_lib.NOTE_MASK_INH_ERR )) || (( has_warn === false ) && ( dep.notes & g_lib.NOTE_MASK_INH_WARN ))){
-                        // Must determine if inherits error from any other sources
-                        var ud,up_deps = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,notes:v.notes}",{id:dep.id,src:id});
-
-                        update = true;
-                        while( up_deps.hasNext() ){
-                            ud = up_deps.next();
-                            console.log("-- ud:",ud.id,ud.err);
-                            if ( ud.err ){
-                                update = false;
-                                break;
-                            }
-                        }
-                    }else{
-                        // If either err or warn bit has changes, need to update
-
-                        if ( has_err && !( dep.notes & g_lib.NOTE_MASK_INH_ERR )){
-                            upd_err = true;
-                        }else{
-                            upd_err = false;
-                        }
-
-                        if (( has_warn === true ) && !( dep.notes & g_lib.NOTE_MASK_INH_WARN )){
-                            upd_warn = true;
-                        }else{
-                            upd_warn = false;
-                        }
-                    }
-
-                    if ( upd_err || upd_warn ){
-                        console.log("- do update");
-
-                        // Update inherited err/warn bits
-                        dep.notes = (( dep.notes & g_lib.NOTE_MASK_LOC_ALL ) | (has_err?g_lib.NOTE_MASK_INH_ERR:0)|(has_warn?g_lib.NOTE_MASK_INH_WARN:0));
-                        obj.db.d.update( dep.id, { notes: dep.notes });
-
-                        if ( !( dep.id in updates )){
-                            updates[dep.id] = dep;
-                        }
-
-                        if ( upd_err ){
-                            // combined err state changed, must update dependents (warnings do not propagate)
-                            //obj.updateAnnotationStateDown( dep.id, has_err, null, updates );
-                            next_ids.push( dep.id );
-                        }
-                    }
-                }
-            }
-        }
-    };*/
-
-    /*
-    obj.loadAnnotationSubgraph = function( a_start_node ){
-        var n = 0, node, dep, nodes = {}, next = [a_start_node.id];
-
-        node[a_start_node.id] = a_start_node;
-
-        // First load ONLY dependents
-        while ( n < next.length ){
-            node = nodes[next[n]];
-            qry_res = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return {id:v._id,notes:v.notes}",{id: node.id }).toArray();
-
-            while( qry_res.hasNext() ){
-                dep = qry_res.next();
-
-                if ( !( dep.id in nodes )){
-                    dep.proc = true;
-                    dep.dep = [];
-                    dep.anc = [node];
-                    nodes[dep.id] = dep;
-                    next.push(dep.id);
-                }else{
-                    dep = nodes[dep.id];
-                    dep.anc.push( node );
-                }
-
-                node.dep.push(dep);
-            }
-
-            n++;
-        }
-
-        // Next load ONLY ancestors and do NOT traverse these
-        // Start node is index 0 and is intentionally skipped
-        n = next.length - 1;
-        while ( n ){
-            node = nodes[next[n]];
-            qry_res = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 return {id:v._id,notes:v.notes}",{ id: node.id });
-
-            while( qry_res.hasNext() ){
-                dep = qry_res.next();
-
-                if ( !( dep.id in nodes )){
-                    dep.proc = false;
-                    nodes[dep.id] = dep;
-                    node.dep.push(dep);
-                }
-            }
-
-            n--;
-        }
-
-        return nodes;
-    }
-
-    obj.updateWarnStateDown = function( a_start_id, a_has_warn, a_next, a_nodes ){
-        var n,node;
-
-        if ( a_has_warn ){
-            // Easy, just update nodes that don't have INH_WARN bit set
-            for ( n in a_next ){
-                node = a_nodes[a_next[n]];
-                if ( !( node.notes & g_lib.NOTE_MASK_INH_WARN )){
-                    node.notes |= g_lib.NOTE_MASK_INH_WARN;
-                    node.upd = true;
-                }
-            }
-        }else{
-            // Must check ancestor for INH_WARN bit to see if clearing bit is needed
-            // IGNORE START NODE!
-            var upd, anc, anc_node;
-
-            for ( n in a_next ){
-                node = a_nodes[a_next[n]];
-                upd = true;
-                anc = obj.db._query("for v,e in 1..1 outbound @id dep filter e.type < 2 && v._id != @src return {id:v._id,notes:v.notes}",{ id: node.id, src: a_start_id });
-
-                while ( anc.hasNext() ){
-                    anc_node = anc.next();
-
-                    if ( anc_node.id in a_nodes ){
-                        if ( !anc_node.comp ){
-
-                        }
-                        anc_node.dep.push( node.id );
-                    }else{
-                        anc_node.comp = true;
-                        anc_node.dep = [node];
-                        a_nodes[anc_node.id] = anc_node;
-                    }
-
-                }
-
-                if ( anc_node.notes & g_lib.NOTE_MASK_ACT_WARN ){
-                    upd = false;
-                }
-
-                if ( upd ){
-                    node.notes &= ~g_lib.NOTE_MASK_INH_WARN;
-                    node.upd = true;
-                }
-            }
-        }
-    }
-    */
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");

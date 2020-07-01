@@ -104,9 +104,11 @@ function recordCreate( client, record, results ){
         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
 
+    var updates = {};
+
     // Handle specified dependencies
     if ( record.deps != undefined ){
-        var dep,id,dep_data;
+        var dep,id,dep_data,dep_ids=new Set();
         data.new.deps = [];
 
         for ( var i in record.deps ) {
@@ -117,7 +119,13 @@ function recordCreate( client, record, results ){
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
             g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
             data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+
+            if ( dep.type < g_lib.DEP_IS_NEW_VERSION_OF )
+                dep_ids.add( dep.id );
         }
+
+        if ( dep_ids.size() )
+            data.new.notes = g_lib.annotationDependenciesUpdated( record, dep_ids, null, updates );
     }
 
     g_db.item.save({ _from: parent_id, _to: data.new._id });
@@ -353,10 +361,19 @@ function recordUpdate( client, record, results ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id; //dep_data;
+    var i,dep,id,deps_add=new Set(),deps_rem=new Set(),updates={};
 
     if ( record.deps ){
-        g_db.dep.removeByExample({_from:data_id});
+        var deps = g_db.dep.byExample({_from:data_id});
+
+        while ( deps.hasNext() ) {
+            dep = deps.next();
+            if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
+                deps_rem.push( dep._to );
+
+            g_db.dep.remove( dep._id );
+        }
+
         for ( i in record.deps ) {
             dep = record.deps[i];
 
@@ -368,6 +385,9 @@ function recordUpdate( client, record, results ){
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
 
             g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
+
+            if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
+                deps_add.add( id );
         }
 
         g_lib.checkDependencies(data_id);
@@ -377,10 +397,13 @@ function recordUpdate( client, record, results ){
             for ( i in record.deps_rem ) {
                 dep = record.deps_rem[i];
                 id = g_lib.resolveDataID( dep.id, client );
-                //console.log("rem id:",id);
-                if ( !g_db.dep.firstExample({_from:data._id,_to:id}) )
+                dep = g_db.dep.firstExample({_from:data._id,_to:id})
+                if ( !dep )
                     throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
-                //console.log("done rem");
+
+                if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
+                    deps_rem.add( id );
+
                 g_db.dep.removeByExample({_from:data._id,_to:id});
             }
         }
@@ -398,10 +421,19 @@ function recordUpdate( client, record, results ){
                     throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
 
                 g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
+
+                if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
+                    deps_add.add( id );
             }
 
             g_lib.checkDependencies(data_id);
         }
+    }
+
+    if ( deps_add.size() || deps_rem.size() ){
+        data.notes = g_lib.annotationDependenciesUpdated( record, deps_add.size()?deps_add:null, deps_rem.size()?deps_rem:null, updates );
+    }else{
+        data.notes = g_lib.annotationGetMask( client, data._id );
     }
 
     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();

@@ -36,7 +36,7 @@ router.post('/create', function (req, res) {
                 var obj = { state: req.queryParams.activate?g_lib.NOTE_ACTIVE:g_lib.NOTE_OPEN, type: req.queryParams.type,
                     subject_id: id, ct: time, ut: time, creator: client._id },
                     updates = {};
-            
+
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
                 obj.comments = [{ user: client._id, new_type: obj.type, new_state: obj.state, time:time }];
                 g_lib.procInputParam( req.queryParams, "comment", false, obj.comments[0] );
@@ -44,13 +44,15 @@ router.post('/create', function (req, res) {
                 var note = g_db.n.save( obj, { returnNew: true });
                 g_db.note.save({ _from: id, _to: note._id });
 
-                // Update notes bits on associated doc
-                //g_lib.updateAnnotationState( doc, false, updates );
-
                 // For ACTIVE errors and warnings, propagate to direct children
                 if ( obj.state == g_lib.NOTE_ACTIVE && obj.type >= g_lib.NOTE_WARN ){
                     g_lib.annotationInitDependents( client, note.new, updates );
                 }
+
+                delete doc.desc;
+                delete doc.md;
+                doc.notes = g_lib.annotationGetMask( client, doc._id );
+                updates[doc._id] = doc;
 
                 res.send({ results: [note.new], updates: Object.values( updates )});
             }
@@ -92,29 +94,25 @@ router.post('/update', function (req, res) {
                     doc = g_db._document( ne._from ),
                     updates = {};
 
-                // new_state requirements:
-                // None (comment) - If open: only note creator or subject admin, if active: anyone with read access to subject
-                // Open (must not be open) - Must be note creator or subject admin
-                // Close (must not be closed) - Must be note creator or subject admin
-                // Activate (must not be active) - Must be subject admin
+                /* Permissions to update: Currently any admin of the subject and the creator of the annotation may
+                make edits to the annotation. This approach is optimistic in assuming that conflicts will not arise
+                and all parties are ethical. Eventually a mechanism will be put in place to deal with conflicts and
+                potential ethics issues.
+                */
 
                 if ( req.queryParams.new_state === note.state ){
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid new state for annotaion."];
                 }
 
-                if ( client._id != note.creator ){
-                    if ( req.queryParams.new_state === g_lib.NOTE_ACTIVE )
-                        throw [g_lib.ERR_PERM_DENIED,"Insufficient permissions to activate annotaion."];
+                var can_edit = ( client._id == note.creator ) || g_lib.hasAdminPermObject( client, ne._from );
 
-                    if ( !g_lib.hasAdminPermObject( client, ne._from )) {
-                        if ( req.queryParams.new_state === undefined && note.state == g_lib.NOTE_ACTIVE ){
-                            // Anyone with read permission to subject doc can comment on active notes
-                            if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
-                                throw g_lib.ERR_PERM_DENIED;
-                            }
-                        }else{
-                            throw [g_lib.ERR_PERM_DENIED,"Insufficient permissions to update annotaion."];
-                        }
+                if ( !can_edit ){
+                    if ( req.queryParams.new_state != undefined || req.queryParams.new_type != undefined || req.queryParams.title != undefined )
+                        throw g_lib.ERR_PERM_DENIED;
+
+                    // Must have all read permissions on subject to comment on annotation
+                    if ( g_lib.getPermissions( client, doc, g_lib.PERM_RD_ALL ) != g_lib.PERM_RD_ALL ){
+                        throw g_lib.ERR_PERM_DENIED;
                     }
                 }
 
@@ -123,7 +121,7 @@ router.post('/update', function (req, res) {
                     comment = { user: client._id, time:time };
 
                 if ( req.queryParams.new_type !== undefined ){
-                    obj.type = req.queryParams.new_state;
+                    obj.type = req.queryParams.new_type;
                     comment.new_type = obj.type;
                 }
 
@@ -131,7 +129,11 @@ router.post('/update', function (req, res) {
                     obj.state = req.queryParams.new_state;
                     comment.new_state = req.queryParams.new_state;
                 }
-        
+
+                if ( req.queryParams.new_title && req.queryParams.new_title != note.title ){
+                    g_lib.procInputParam( req.queryParams.new_title, "title", false, obj );
+                }
+
                 g_lib.procInputParam( req.queryParams, "comment", false, comment );
 
                 obj.comments.push(comment);
@@ -145,9 +147,12 @@ router.post('/update', function (req, res) {
                 }else if ( note.state == g_lib.NOTE_ACTIVE && note.type >= g_lib.NOTE_WARN ){
                     //console.log("init new dependent notes");
                     g_lib.annotationInitDependents( client, note, updates );
-                }else{
-                    //console.log("no dependent action:",note.state,note.type);
                 }
+
+                delete doc.desc;
+                delete doc.md;
+                doc.notes = g_lib.annotationGetMask( client, doc._id );
+                updates[doc._id] = doc;
 
                 res.send({ results: [note], updates: Object.values(updates)});
             }
@@ -160,6 +165,7 @@ router.post('/update', function (req, res) {
 .queryParam('id', joi.string().required(), "ID of annotation")
 .queryParam('new_type', joi.number().min(0).max(3).optional(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
 .queryParam('new_state', joi.number().min(0).max(2).optional(), "New state (omit for comment)")
+.queryParam('new_title', joi.string().optional(), "New title")
 .queryParam('comment', joi.string().required(), "Comments")
 .summary('Update an annotation')
 .description('Update an annotation with new comment and optional new state');
@@ -186,9 +192,6 @@ router.post('/comment/edit', function (req, res) {
                 if ( req.queryParams.comment_idx >= note.comments.length )
                     throw [g_lib.ERR_INVALID_PARAM,"Comment index out of range."];
 
-                if ( req.queryParams.title && req.queryParams.comment_idx > 0 )
-                    throw [g_lib.ERR_INVALID_PARAM,"Title can only be changed with first comment."];
-
                 var obj = { ut: Math.floor( Date.now()/1000 ) }, comment = note.comments[req.queryParams.comment_idx];
 
                 if ( client._id != comment.user ){
@@ -198,10 +201,6 @@ router.post('/comment/edit', function (req, res) {
                 if ( req.queryParams.comment != comment.comment ){
                     g_lib.procInputParam( req.queryParams, "comment", false, comment );
                     obj.comments = note.comments;
-                }
-
-                if ( req.queryParams.title && req.queryParams.title != note.title ){
-                    g_lib.procInputParam( req.queryParams, "title", false, obj );
                 }
 
                 note = g_db.n.update( note._id, obj, { returnNew: true } );
@@ -217,9 +216,8 @@ router.post('/comment/edit', function (req, res) {
 .queryParam('id', joi.string().required(), "ID of annotation")
 .queryParam('comment', joi.string().required(), "New description / comments")
 .queryParam('comment_idx', joi.number().min(0).required(), "Comment index number to edit")
-.queryParam('title', joi.string().optional(), "New title (only valid for comment idx 0)")
 .summary('Edit an annotation comment')
-.description('Edit a specific comment within an annotation and/or title (replaces existing comment with that provided).');
+.description('Edit a specific comment within an annotation.');
 
 
 router.get('/view', function (req, res) {
