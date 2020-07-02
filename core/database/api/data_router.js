@@ -12,7 +12,7 @@ module.exports = router;
 
 //==================== DATA API FUNCTIONS
 
-function recordCreate( client, record, results ){
+function recordCreate( client, record, result ){
     var owner_id, parent_id, repo_alloc, alias_key;
 
     console.log("Create new data:",record.title);
@@ -138,7 +138,7 @@ function recordCreate( client, record, results ){
     delete data.new._key;
     delete data.new._rev;
 
-    results.push( data.new );
+    result.results.push( data.new );
 }
 
 router.post('/create', function (req, res) {
@@ -147,7 +147,7 @@ router.post('/create', function (req, res) {
     for (;;)
     {
         try {
-            var result = [];
+            var result = { results: [] };
 
             g_db._executeTransaction({
                 collections: {
@@ -196,7 +196,8 @@ router.post('/create/batch', function (req, res) {
     for (;;)
     {
         try {
-            var result = [];
+            var result = { results: [] };
+
             console.log( "create data" );
 
             g_db._executeTransaction({
@@ -253,7 +254,9 @@ router.post('/create/batch', function (req, res) {
 .description('Create a batch of new data records from JSON body');
 
 
-function recordUpdate( client, record, results ){
+function recordUpdate( client, record, result ){
+    console.log("recordUpdate:",record);
+
     var data_id = g_lib.resolveDataID( record.id, client );
     var data = g_db.d.document( data_id );
 
@@ -361,70 +364,37 @@ function recordUpdate( client, record, results ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id,deps_add=new Set(),deps_rem=new Set(),updates=new Set();
+    var i,dep,id,deps_add=new Set(),deps_rem=new Set();
 
-    if ( record.deps ){
-        record.deps_rem = [];
-        record.deps_add = [];
-
-        var cur_deps = {}, deps = g_db.dep.byExample({_from:data_id});
-
-        while ( deps.hasNext() ) {
-            dep = deps.next();
-            cur_deps[dep._to].add( dep.type );
-        }
-
-        for ( i in record.deps ) {
-            dep = record.deps[i];
+    if ( record.dep_rem != undefined ){
+        console.log("dep_rem set");
+        for ( i in record.dep_rem ) {
+            dep = record.dep_rem[i];
+            console.log("dep_rem: ", dep.id, dep.type );
 
             id = g_lib.resolveDataID( dep.id, client );
-            if ( !id.startsWith( "d/" ))
-                throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-
-            if ( id in cur_deps ){
-                if ( cur_deps[id] != dep.type ){
-                    record.deps_rem.push({ id: id, type: cur_deps[id] });
-                    record.deps_add.push( dep );
-                }
-
-                delete cur_deps[id];
-            }else{
-                record.deps_add.push( dep );
-            }
-        }
-
-        for ( id in cur_deps ) {
-            record.deps_rem.push({ id: id, type: cur_deps[id] });
-        }
-    }
-
-    if ( record.deps_rem != undefined && record.deps_rem.length ){
-        //console.log("rem deps from ",data._id);
-        for ( i in record.deps_rem ) {
-            dep = record.deps_rem[i];
-            id = g_lib.resolveDataID( dep.id, client );
-            dep = g_db.dep.firstExample({_from:data._id,_to:id});
+            dep = g_db.dep.firstExample({ _from: data._id, _to: id, type: dep.type });
             if ( !dep )
                 throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
 
-            if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF )
+            if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF ){
+                console.log("will remove:", id );
                 deps_rem.add( id );
+            }
 
-            g_db.dep.removeByExample({_from:data._id,_to:id});
+            g_db.dep.removeByExample({ _from: data._id, _to: id, type: dep.type });
         }
     }
 
-    if ( record.deps_add != undefined && record.deps_add.length ){
-        //console.log("add deps");
-        for ( i in record.deps_add ) {
-            dep = record.deps_add[i];
-            //console.log("dep id:",dep.id);
+    if ( record.dep_add != undefined ){
+        for ( i in record.dep_add ) {
+            dep = record.dep_add[i];
             id = g_lib.resolveDataID( dep.id, client );
             if ( !id.startsWith("d/"))
                 throw [g_lib.ERR_INVALID_PARAM,"Dependencies can only be set on data records."];
-            //dep_data = g_db.d.document( id );
-            if ( g_db.dep.firstExample({_from:data._id,_to:id}) )
-                throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
+
+            if ( g_db.dep.firstExample({ _from: data._id, _to: id, type: dep.type }))
+                throw [g_lib.ERR_INVALID_PARAM,"Only one dependency of each type may be defined between any two data records."];
 
             g_db.dep.save({ _from: data_id, _to: id, type: dep.type });
 
@@ -436,7 +406,7 @@ function recordUpdate( client, record, results ){
     }
 
     if ( deps_add.size || deps_rem.size ){
-        data.notes = g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, updates );
+        data.notes = g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
     }else{
         data.notes = g_lib.annotationGetMask( client, data._id );
     }
@@ -451,6 +421,8 @@ function recordUpdate( client, record, results ){
         delete dep.from;
     }
 
+    result.updates.add( data._id );
+
     data.id = data._id;
     data.repo_id = alloc._to;
 
@@ -458,12 +430,12 @@ function recordUpdate( client, record, results ){
     delete data._key;
     delete data._id;
 
-    results.push( data );
+    result.results.push( data );
 }
 
 router.post('/update', function (req, res) {
     try {
-        var result = { data: [] };
+        var result = { results: [], updates: new Set() };
 
         g_db._executeTransaction({
             collections: {
@@ -474,11 +446,18 @@ router.post('/update', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                recordUpdate( client, req.body, result.data );
-
-                //result.task = g_proc.taskInitDeleteRawData( client, del_map );
+                recordUpdate( client, req.body, result );
             }
         });
+
+        var doc, updates = [];
+        for ( i in result.update_ids ){
+            doc = g_db._document( i );
+            delete doc.desc;
+            delete doc.md;
+            updates.push( doc );
+        }
+        result.updates = updates;
 
         res.send( result );
     } catch( e ) {
@@ -501,13 +480,10 @@ router.post('/update', function (req, res) {
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
     dt: joi.number().optional(),
-    deps: joi.array().items(joi.object({
+    dep_add: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional(),
-    deps_add: joi.array().items(joi.object({
-        id: joi.string().required(),
-        type: joi.number().integer().required()})).optional(),
-    deps_rem: joi.array().items(joi.object({
+    dep_rem: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional()
 }).required(), 'Record fields')
@@ -517,7 +493,7 @@ router.post('/update', function (req, res) {
 
 router.post('/update/batch', function (req, res) {
     try {
-        var result = { data: [] };
+        var result = { results: [], updates: new Set() };
 
         g_db._executeTransaction({
             collections: {
@@ -537,12 +513,19 @@ router.post('/update/batch', function (req, res) {
                     delete rec.size;
                     delete rec.dt;
 
-                    recordUpdate( client, rec, result.data );
+                    recordUpdate( client, rec, result );
                 }
-
-                //result.task = g_proc.taskInitDeleteRawData( client, del_map );
             }
         });
+
+        var doc, updates = [];
+        for ( i in result.update_ids ){
+            doc = g_db._document( i );
+            delete doc.desc;
+            delete doc.md;
+            updates.push( doc );
+        }
+        result.updates = updates;
 
         res.send( result );
     } catch( e ) {
@@ -563,13 +546,10 @@ router.post('/update/batch', function (req, res) {
         mdset: joi.boolean().optional().default(false),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
-        deps: joi.array().items(joi.object({
+        dep_add: joi.array().items(joi.object({
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
-        deps_add: joi.array().items(joi.object({
-            id: joi.string().required(),
-            type: joi.number().integer().required()})).optional(),
-        deps_rem: joi.array().items(joi.object({
+        dep_rem: joi.array().items(joi.object({
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
         dt: joi.number().optional(), // Ignore
@@ -669,7 +649,7 @@ router.get('/view', function (req, res) {
         data.id = data._id;
         delete data._id;
 
-        res.send( [data] );
+        res.send({ results: [data] });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -704,7 +684,7 @@ router.get('/view/doi', function (req, res) {
         data.id = data._id;
         delete data._id;
 
-        res.send( [data] );
+        res.send({ results: [data] });
     } catch( e ) {
         g_lib.handleException( e, res );
     }

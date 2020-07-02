@@ -1342,10 +1342,10 @@ var tasks_func = function() {
             g_graph.a.remove( tmp._to );
         }
 
-        // Delete notes
+        // Delete notes and all inherted notes
         tmp = g_db.note.byExample({ _from: a_id });
         while( tmp.hasNext() ){
-            g_graph.n.remove( tmp.next()._to );
+            g_lib.annotationDelete( tmp.next()._to );
         }
         
         // Update allocation

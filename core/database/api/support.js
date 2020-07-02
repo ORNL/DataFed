@@ -1375,7 +1375,7 @@ module.exports = ( function() {
             n = res.next();
 
             b = 1<<n.type;
-            if ( n.parent_id )
+            if ( n.parent_id && n.state == obj.NOTE_OPEN )
                 b <<= 8;
             else if ( n.state == obj.NOTE_OPEN )
                 b <<= 4;
@@ -1502,30 +1502,42 @@ module.exports = ( function() {
     };
 
     obj.annotationDelete = function( a_id, a_update_ids ){
-        var notes = obj.db.note.byExample({ _to: a_id });
+        console.log("delete note:",a_id);
+        var n, notes = obj.db.note.byExample({ _to: a_id });
         while ( notes.hasNext() ){
-            obj.annotationDelete( notes.next()._from, a_update_ids );
+            n = notes.next();
+            if ( n._from.startsWith("n/")){
+                obj.annotationDelete( n._from, a_update_ids );
+            }
         }
         var n = obj.db.n.document( a_id );
-        a_update_ids.add( n.subject_id );
+        if ( a_update_ids )
+            a_update_ids.add( n.subject_id );
         obj.graph.n.remove( a_id );
     };
 
     obj.annotationDependenciesUpdated = function( a_data, a_dep_ids_added, a_dep_ids_removed, a_update_ids ){
+        console.log("annotationDependenciesUpdated",a_data._id);
         // Called when dependencies are added/removed to/from existing/new data record
         var res, qry_res;
 
         a_update_ids.add( a_data._id );
 
         if ( a_dep_ids_removed ){
+            console.log("deletings notes from:",a_data._id);
+
             // Find local annotations linked to upstream dependencies
             qry_res = obj.db._query( "for v,e,p in 3..3 any @src note filter is_same_collection('d',v) && p.edges[1]._from == p.vertices[1]._id return {src: p.vertices[1], dst: p.vertices[3]}", { src: a_data._id });
 
             while ( qry_res.hasNext() ){
                 res = qry_res.next();
-                if ( res.dst._id in a_dep_ids_removed ){
+                console.log("examine:",res.dst._id);
+
+                if ( a_dep_ids_removed.has( res.dst._id )){
                     // Delete local and downstream annotations
-                    obj.annotaionDelete( res.src._id, a_update_ids );
+                    obj.annotationDelete( res.src._id, a_update_ids );
+                }else{
+                    console.log("not removed:",res.dst._id);
                 }
             }
         }
