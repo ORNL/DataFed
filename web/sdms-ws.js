@@ -657,7 +657,7 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/update', ( a_req, a_resp ) => {
-    //console.log( "dat update", a_req.body );
+    console.log( "dat update", a_req.body );
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -711,7 +711,7 @@ app.get('/api/dat/delete', ( a_req, a_resp ) => {
 app.get('/api/dat/view', ( a_req, a_resp ) => {
     sendMessage( "RecordViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         if ( reply.data && reply.data.length )
-            a_resp.send(reply.data[0]);
+            a_resp.send( reply );
         else
             a_resp.send();
     });
@@ -929,8 +929,14 @@ app.get('/api/note/update', ( a_req, a_resp ) => {
         comment: a_req.query.comment,
     };
 
+    if ( a_req.query.new_type )
+        params.newType = a_req.query.new_type;
+
     if ( a_req.query.new_state )
         params.newState = a_req.query.new_state;
+
+    if ( a_req.query.new_title )
+        params.newTitle = a_req.query.new_title;
 
     sendMessage( "AnnotationUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -943,9 +949,6 @@ app.get('/api/note/comment/edit', ( a_req, a_resp ) => {
         comment: a_req.query.comment,
         commentIdx: a_req.query.comment_idx
     };
-
-    if ( a_req.query.title )
-        params.title = a_req.query.title;
 
     sendMessage( "AnnotationCommentEditRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);

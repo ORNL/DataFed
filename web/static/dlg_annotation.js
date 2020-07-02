@@ -4,7 +4,7 @@ import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 
 
-export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
+export function show( a_subject, a_annotation, a_new_state, a_comment_idx, a_cb ){
     const content =
         "<table class='form-table'>\
         <tr><td>Subject:</td><td id='td_subject'></td></tr>\
@@ -26,19 +26,21 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
     var title;
 
     if ( a_annotation ){ // Edit annotation
-        if ( a_comment_idx != 0 ){
+        if ( a_comment_idx != -1 ){
             $("#title",frame).prop('readonly', true);
         }
 
-        if ( a_comment_idx != null ){
-            title = "Edit Annotation Comments";
+        if ( a_comment_idx == -1 ){
+            title = "Edit Annotation";
+        }else if ( a_comment_idx != null ){
+            title = "Edit Annotation Comment";
             $("#comment",frame).val(a_annotation.comment[a_comment_idx].comment);
         }else{
             switch( a_new_state ){
-                case model.NOTE_OPEN: title = "Re-Open Annotation"; break;
+                case model.NOTE_OPEN: title = "Reopen Annotation"; break;
                 case model.NOTE_CLOSED: title = "Close Annotation"; break;
                 case model.NOTE_ACTIVE: title = "Activate Annotation"; break;
-                default: title = "Reply to Annotation"; break;
+                default: title = "Comment on Annotation"; break;
             }
         }
         
@@ -63,7 +65,7 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
             text: "Cancel",
             click: function() {
                 $(this).dialog('close');
-                cb();
+                a_cb();
             }
         },{
             text: "Ok",
@@ -75,22 +77,31 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
                     dlg_inst = $(this);
 
                 if ( a_annotation ){
-                    if ( a_comment_idx != null ){
-                        api.annotationCommentEdit( a_annotation.id, comment, a_comment_idx, title!=a_annotation.title?title:null, function( ok, data ){
+                    if ( a_comment_idx == -1 || a_comment_idx == null ){
+                        var new_state = null, new_type = null, new_title = null;
+
+                        if ( a_comment_idx == null ){
+                            new_state = a_new_state;
+                        }else{
+                            new_type = (type!=a_annotation.type?type:null);
+                            new_title = (title!=a_annotation.title?title:null);
+                        }
+
+                        api.annotationUpdate( a_annotation.id, comment, new_type, new_state, new_title, function( ok, data ){
                             if ( !ok ){
                                 dialogs.dlgAlert( "Server Error", data );
                             } else {
                                 dlg_inst.dialog('close');
-                                cb( data );
+                                a_cb( data );
                             }
                         });
-                    }else{
-                        api.annotationUpdate( a_annotation.id, comment, a_new_state, function( ok, data ){
+                    }else{ // a_comment_idx >= 0 (comment edit)
+                        api.annotationCommentEdit( a_annotation.id, comment, a_comment_idx, function( ok, data ){
                             if ( !ok ){
                                 dialogs.dlgAlert( "Server Error", data );
                             } else {
                                 dlg_inst.dialog('close');
-                                cb( data );
+                                a_cb( data );
                             }
                         });
                     }
@@ -100,7 +111,7 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
                             dialogs.dlgAlert( "Server Error", data );
                         } else {
                             dlg_inst.dialog('close');
-                            cb( data );
+                            a_cb( data );
                         }
                     });
                 }
@@ -112,10 +123,13 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, cb ){
 
             $("select",frame).selectmenu({width:200});
             if ( a_annotation ){
-                console.log("note type",a_annotation.type);
+                //console.log("note type",a_annotation.type);
                 $("#type",frame).val(model.NoteTypeFromString[a_annotation.type]);
-                //$("#type",frame ).selectmenu("disable");
-                $('option:not(:selected)',frame).prop('disabled', true);
+                // Disable type change if closed or not editing
+                if ( a_new_state == model.NOTE_CLOSED || a_comment_idx != -1 ){
+                    $("#type",frame ).selectmenu("disable");
+                    $('option:not(:selected)',frame).prop('disabled', true);
+                }
                 $("#type",frame).selectmenu("refresh");
             }
         },

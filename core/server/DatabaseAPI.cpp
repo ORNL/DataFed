@@ -236,6 +236,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             try
             {
+                DL_DEBUG( "PARSE [" << res_json << "]" );
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -1019,43 +1020,31 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
     if ( a_request.has_dt() )
         body += ",\"dt\":" + to_string(a_request.dt());
 
-    if ( a_request.deps_size() )
+    if ( a_request.dep_add_size() )
     {
-        body += ",\"deps\":[";
-        for ( int i = 0; i < a_request.deps_size(); i++ )
+        body += ",\"dep_add\":[";
+        for ( int i = 0; i < a_request.dep_add_size(); i++ )
         {
-            body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps(i).id() + "\",\"type\":" + to_string(a_request.deps(i).type()) + "}";
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.dep_add(i).id() + "\",\"type\":" + to_string(a_request.dep_add(i).type()) + "}";
         }
         body += "]";
     }
-    else
-    {
-        if ( a_request.deps_add_size() )
-        {
-            body += ",\"deps_add\":[";
-            for ( int i = 0; i < a_request.deps_add_size(); i++ )
-            {
-                body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps_add(i).id() + "\",\"type\":" + to_string(a_request.deps_add(i).type()) + "}";
-            }
-            body += "]";
-        }
 
-        if ( a_request.deps_rem_size() )
+    if ( a_request.dep_rem_size() )
+    {
+        body += ",\"dep_rem\":[";
+        for ( int i = 0; i < a_request.dep_rem_size(); i++ )
         {
-            body += ",\"deps_rem\":[";
-            for ( int i = 0; i < a_request.deps_rem_size(); i++ )
-            {
-                body += string(i>0?",":"")+"{\"id\":\"" + a_request.deps_rem(i).id() + "\",\"type\":" + to_string(a_request.deps_rem(i).type()) + "}";
-            }
-            body += "]";
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.dep_rem(i).id() + "\",\"type\":" + to_string(a_request.dep_rem(i).type()) + "}";
         }
+        body += "]";
     }
 
     body += "}";
 
     dbPost( "dat/update", {}, &body, result );
 
-    setRecordData( a_reply, result["data"] );
+    setRecordData( a_reply, result );
 }
 
 
@@ -1065,7 +1054,7 @@ DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request
     // "records" field is a JSON document - send directly to DB
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
 
-    setRecordData( a_reply, result["data"] );
+    setRecordData( a_reply, result );
 }
 
 /*
@@ -1234,93 +1223,130 @@ DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
 {
     RecordData *        rec;
     DependencyData *    deps;
-    Value::ObjectIter   j,m;
-    Value::ArrayIter    k;
+    Value::ObjectIter   j, m;
+    Value::ArrayIter    i, k;
 
     try
     {
-        Value::Array & arr = a_result.getArray();
-
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        if (( j = a_result.find( "results" )) != a_result.end() )
         {
-            Value::Object & obj = i->getObject();
+            DL_DEBUG("Have results");
 
-            rec = a_reply.add_data();
-            rec->set_id( obj.at( "id" ).asString( ));
-            rec->set_title( obj.at( "title" ).asString( ));
+            Value::Array & arr = j->second.getArray();
 
-            if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
-                rec->set_alias( j->second.asString( ));
-
-            if (( j = obj.find( "owner" )) != obj.end( ))
-                rec->set_owner( j->second.asString( ));
-
-            if (( j = obj.find( "creator" )) != obj.end( ))
-                rec->set_creator( j->second.asString( ));
-
-            if (( j = obj.find( "desc" )) != obj.end( ))
-                rec->set_desc( j->second.asString( ));
-
-            if (( j = obj.find( "keyw" )) != obj.end( ))
-                rec->set_keyw( j->second.asString( ));
-
-            if (( j = obj.find( "doi" )) != obj.end( ))
-                rec->set_doi( j->second.asString( ));
-
-            if (( j = obj.find( "data_url" )) != obj.end( ))
-                rec->set_data_url( j->second.asString( ));
-
-            if (( j = obj.find( "md" )) != obj.end( ))
-                rec->set_metadata( j->second.toString( ));
-
-            if (( j = obj.find( "repo_id" )) != obj.end( ))
-                rec->set_repo_id( j->second.asString( ));
-
-            if (( j = obj.find( "size" )) != obj.end( ))
-                rec->set_size( j->second.asNumber( ));
-
-            if (( j = obj.find( "source" )) != obj.end( ))
-                rec->set_source( j->second.asString( ));
-
-            if (( j = obj.find( "ext" )) != obj.end( ))
-                rec->set_ext( j->second.asString( ));
-
-            if (( j = obj.find( "ext_auto" )) != obj.end( ))
-                rec->set_ext_auto( j->second.asBool( ));
-
-            if (( j = obj.find( "ct" )) != obj.end( ))
-                rec->set_ct( j->second.asNumber( ));
-
-            if (( j = obj.find( "ut" )) != obj.end( ))
-                rec->set_ut( j->second.asNumber( ));
-
-            if (( j = obj.find( "dt" )) != obj.end( ))
-                rec->set_dt( j->second.asNumber( ));
-
-            if (( j = obj.find( "locked" )) != obj.end( ))
-                rec->set_locked( j->second.asBool( ));
-
-            if (( j = obj.find( "parent_id" )) != obj.end( ))
-                rec->set_parent_id( j->second.asString( ));
-
-            if (( j = obj.find( "notes" )) != obj.end( ))
-                rec->set_notes( j->second.asNumber( ));
-
-            if (( j = obj.find( "deps" )) != obj.end( ))
+            for ( i = arr.begin(); i != arr.end(); i++ )
             {
-                Value::Array & arr2 = j->second.getArray();
+                Value::Object & obj = i->getObject();
 
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                DL_DEBUG("res 1");
+
+                rec = a_reply.add_data();
+                rec->set_id( obj.at( "id" ).asString( ));
+                rec->set_title( obj.at( "title" ).asString( ));
+
+                DL_DEBUG("res 2");
+
+                if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
+                    rec->set_alias( j->second.asString( ));
+
+                if (( j = obj.find( "owner" )) != obj.end( ))
+                    rec->set_owner( j->second.asString( ));
+
+                if (( j = obj.find( "creator" )) != obj.end( ))
+                    rec->set_creator( j->second.asString( ));
+
+                if (( j = obj.find( "desc" )) != obj.end( ))
+                    rec->set_desc( j->second.asString( ));
+
+                DL_DEBUG("res 3");
+
+                if (( j = obj.find( "keyw" )) != obj.end( ))
+                    rec->set_keyw( j->second.asString( ));
+
+                if (( j = obj.find( "doi" )) != obj.end( ))
+                    rec->set_doi( j->second.asString( ));
+
+                if (( j = obj.find( "data_url" )) != obj.end( ))
+                    rec->set_data_url( j->second.asString( ));
+
+                if (( j = obj.find( "md" )) != obj.end( ))
+                    rec->set_metadata( j->second.toString( ));
+
+                if (( j = obj.find( "repo_id" )) != obj.end( ))
+                    rec->set_repo_id( j->second.asString( ));
+
+                DL_DEBUG("res 4");
+
+                if (( j = obj.find( "size" )) != obj.end( ))
+                    rec->set_size( j->second.asNumber( ));
+
+                if (( j = obj.find( "source" )) != obj.end( ))
+                    rec->set_source( j->second.asString( ));
+
+                if (( j = obj.find( "ext" )) != obj.end( ))
+                    rec->set_ext( j->second.asString( ));
+
+                if (( j = obj.find( "ext_auto" )) != obj.end( ))
+                    rec->set_ext_auto( j->second.asBool( ));
+
+                if (( j = obj.find( "ct" )) != obj.end( ))
+                    rec->set_ct( j->second.asNumber( ));
+
+                if (( j = obj.find( "ut" )) != obj.end( ))
+                    rec->set_ut( j->second.asNumber( ));
+
+                DL_DEBUG("res 5");
+
+                if (( j = obj.find( "dt" )) != obj.end( ))
+                    rec->set_dt( j->second.asNumber( ));
+
+                if (( j = obj.find( "locked" )) != obj.end( ))
+                    rec->set_locked( j->second.asBool( ));
+
+                if (( j = obj.find( "parent_id" )) != obj.end( ))
+                    rec->set_parent_id( j->second.asString( ));
+
+                if (( j = obj.find( "notes" )) != obj.end( ))
+                    rec->set_notes( j->second.asNumber( ));
+
+                DL_DEBUG("res 6");
+
+                if (( j = obj.find( "deps" )) != obj.end( ))
                 {
-                    Value::Object & obj2 = k->getObject();
+                    DL_DEBUG("have deps");
 
-                    deps = rec->add_deps();
-                    deps->set_id( obj2.at( "id" ).asString());
-                    deps->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
-                    deps->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
-                    if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
-                        deps->set_alias( m->second.asString() );
+                    Value::Array & arr2 = j->second.getArray();
+
+                    for ( k = arr2.begin(); k != arr2.end(); k++ )
+                    {
+                        Value::Object & obj2 = k->getObject();
+
+                        deps = rec->add_deps();
+                DL_DEBUG("res dep 1");
+                        deps->set_id( obj2.at( "id" ).asString());
+                        deps->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
+                        deps->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+                DL_DEBUG("res dep 2");
+                        if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
+                            deps->set_alias( m->second.asString() );
+                    }
                 }
+            }
+        }
+
+        if (( j = a_result.find( "updates" )) != a_result.end() )
+        {
+            DL_DEBUG("Have updates");
+
+            Value::Array & arr = j->second.getArray();
+
+            for ( i = arr.begin(); i != arr.end(); i++ )
+            {
+                Value::Object & obj = i->getObject();
+
+                setListingData( a_reply.add_update(), obj );
+
+                DL_DEBUG("Updated record: " << obj["title"].asString() );
             }
         }
     }
@@ -2709,8 +2735,12 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Annota
     vector<pair<string,string>> params;
     params.push_back({ "id", a_request.id() });
     params.push_back({ "comment", a_request.comment() });
+    if ( a_request.has_new_type() )
+        params.push_back({ "new_type", to_string( a_request.new_type() )});
     if ( a_request.has_new_state() )
         params.push_back({ "new_state", to_string( a_request.new_state() )});
+    if ( a_request.has_new_title() )
+        params.push_back({ "new_title", a_request.new_title() });
 
     dbPost( "note/update", params, 0, result );
 
@@ -2725,8 +2755,6 @@ DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a
     params.push_back({ "id", a_request.id() });
     params.push_back({ "comment", a_request.comment() });
     params.push_back({ "comment_idx", to_string( a_request.comment_idx() )});
-    if ( a_request.has_title() )
-        params.push_back({ "title", a_request.title() });
 
     dbPost( "note/comment/edit", params, 0, result );
 

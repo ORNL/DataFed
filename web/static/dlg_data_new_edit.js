@@ -219,25 +219,27 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             id: "do_it",
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
-                var obj = {};
-                var url = "/api/dat/";
-
                 var anno = jsoned.getSession().getAnnotations();
+
                 if ( anno && anno.length ){
                     dialogs.dlgAlert( "Data Entry Error", "Metadata field has unresolved errors.");
                     return;
                 }
 
-                var id,type,deps = [];
+                var obj = {},
+                    url = "/api/dat/",
+                    id,
+                    type,
+                    deps = [],
+                    is_published = false;
+
                 $(".ref-row",frame).each(function(idx,ele){
                     id = $("input",ele).val();
                     if ( id ){
                         type = parseInt($("select",ele).val());
-                        deps.push({id:id,type:type,dir:model.DEP_OUT});
+                        deps.push({ id: id, type: type });
                     }
                 });
-
-                var is_published = false;
 
                 if ( $("#published",frame).prop("checked") )
                     is_published = true;
@@ -252,8 +254,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
 
                     if ( is_published ){
-                        var doi = $("#doi",frame).val();
-                        var data_url = $("#data_url",frame).val();
+                        var doi = $("#doi",frame).val(),
+                            data_url = $("#data_url",frame).val();
+
                         if ( !doi || !data_url ){
                             dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
                             return;
@@ -280,22 +283,52 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
                         obj.mdset = true;
 
-                    var deps_diff = false;
+                    // Analyze changes to dependencies to generate add/rem lists
 
-                    if (  orig_deps.length != deps.length ){
-                        deps_diff = true;
-                    }else if ( deps.length ){
-                        for ( var i in orig_deps ){
-                            if ( orig_deps[i].id != deps[i].id || orig_deps[i].type != deps[i].type ){
-                                deps_diff = true;
-                                break;
-                            }
+                    var i, dep;
+
+                    obj.depAdd = [];
+                    obj.depRem = [];
+
+                    for ( i in orig_deps ){
+                        dep = orig_deps[i];
+
+                        if ( deps.findIndex( function( el ){
+                            if ( dep.id != el.id || dep.type != el.type )
+                                return false;
+                            else
+                                return true;
+                        }) == -1 ){
+                            obj.depRem.push( dep );
                         }
                     }
 
-                    if ( deps_diff ){
-                        obj.deps = deps;
+                    for ( i in deps ){
+                        dep = deps[i];
+
+                        if ( orig_deps.findIndex( function( el ){
+                            if ( dep.id != el.id || dep.type != el.type )
+                                return false;
+                            else
+                                return true;
+                        }) == -1 ){
+                            obj.depAdd.push( dep );
+                        }
+
+                        // Check for duplicate dependencies
+                        if ( deps.findIndex( function( el, idx ){
+                            if ( idx == i || dep.id != el.id || dep.type != el.type )
+                                return false;
+                            else
+                                return true;
+                        }) != -1 ){
+                            dialogs.dlgAlert( "Data Entry Error", "Duplicate references entered.");
+                            return;
+                        }
                     }
+
+                    console.log("dep add:",obj.depAdd);
+                    console.log("dep rem:",obj.depRem);
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -347,16 +380,16 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                 var inst = $(this);
 
-                api._asyncPost( url, obj, function( ok, data ){
+                api._asyncPost( url, obj, function( ok, reply ){
                     if ( ok ) {
                         tmp = $("#source_file").val().trim();
                         if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
-                            api.xfrStart( [data.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
+                            api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
                                 if ( ok2 ){
                                     util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
                                     inst.dialog('close');
                                     if ( a_cb )
-                                        a_cb(data.data[0],obj.parentId);
+                                        a_cb(reply.data[0],obj.parentId);
                                 }else{
                                     dialogs.dlgAlert( "Transfer Error", data2 );
                                 }
@@ -364,11 +397,13 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }else{
                             inst.dialog('close');
                             if ( a_cb )
-                                a_cb(data.data[0],obj.parentId);
+                                a_cb(reply.data[0],obj.parentId);
                         }
 
+                        if ( reply.update )
+                            model.update( reply.update );
                     } else {
-                        dialogs.dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", data );
+                        dialogs.dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", reply );
                     }
                 });
             }
@@ -417,9 +452,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     for ( i in a_data.deps ){
                         dep = a_data.deps[i];
                         if ( dep.dir == "DEP_OUT" ){
-                            orig_deps.push({id:dep.alias?dep.alias:dep.id,type:model.DepTypeFromString[dep.type],dir:model.DEP_OUT});
+                            orig_deps.push({ id: dep.alias?dep.alias: dep.id, type: model.DepTypeFromString[dep.type] });
                             row = $("#ref-table tr:last",frame);
-                            $("input",row).val(dep.alias?dep.alias:dep.id);
+                            $("input",row).val( dep.alias?dep.alias: dep.id );
                             $("select",row).val(model.DepTypeFromString[dep.type]).selectmenu("refresh");
                             addRef();
                         }

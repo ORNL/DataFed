@@ -140,14 +140,13 @@ export function xfrStart( a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_f
 }
 
 export function dataView( a_id, a_cb ) {
-    _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+    _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, reply ){
         if ( ok ) {
-            //console.log("viewData ok, data:", data );
-            a_cb( data );
+            console.log("dataView reply:",reply);
+            a_cb( reply.data );
         }
         else {
-            //console.log("viewData failed:", data );
-            util.setStatusText( "View Data Error: " + data, true );
+            util.setStatusText( "View Data Error: " + reply, true );
             a_cb();
         }
     });
@@ -223,17 +222,20 @@ export function dataGetDepGraph( a_id, a_cb ) {
 
 export function dataCreateBatch( a_records, a_cb ){
     //console.log("dataCreateBatch");
-    _asyncPostText( "/api/dat/create/batch", a_records, function( ok, data ){
+    _asyncPostText( "/api/dat/create/batch", a_records, function( ok, reply ){
         if ( a_cb )
-            a_cb( ok, data );
+            a_cb( ok, reply );
     });
 }
 
 export function dataUpdateBatch( a_records, a_cb ){
     //console.log("dataUpdateBatch");
-    _asyncPostText( "/api/dat/update/batch", a_records, function( ok, data ){
+    _asyncPostText( "/api/dat/update/batch", a_records, function( ok, reply ){
         if ( a_cb )
-            a_cb( ok, data );
+            a_cb( ok, reply );
+
+        if ( ok && reply.update )
+            model.update( reply.update );
     });
 }
 
@@ -409,22 +411,22 @@ export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activ
         });
 }
 
-export function annotationUpdate( a_id, a_comment, a_new_state, a_cb ){
+export function annotationUpdate( a_id, a_comment, a_new_type, a_new_state, a_new_title, a_cb ){
     _asyncGet( "/api/note/update?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
-        (a_new_state!=null?"&new_state="+a_new_state:""),
-        null, function( ok, reply ){
+        (a_new_type!=null?"&new_type="+a_new_type:"") + (a_new_state!=null?"&new_state="+a_new_state:"") +
+        (a_new_title!=null?"&new_title="+a_new_title:""), null, function( ok, reply ){
             a_cb( ok, reply );
 
-            console.log("chk for updates:",reply);
+            //console.log("chk for updates:",reply);
 
             if ( ok && reply.update )
                 model.update( reply.update );
         });
 }
 
-export function annotationCommentEdit( a_id, a_comment, a_comment_idx, a_title, a_cb ){
+export function annotationCommentEdit( a_id, a_comment, a_comment_idx, a_cb ){
     _asyncGet( "/api/note/comment/edit?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
-        "&comment_idx=" + a_comment_idx + (a_title!=null?"&title="+a_title:""),null, a_cb );
+        "&comment_idx=" + a_comment_idx, null, a_cb );
 }
 
 export function repoList( a_details, a_list_all, a_cb ){

@@ -1114,8 +1114,8 @@ function actionEditSelected() {
         case "d":
             permGateAny( id, model.PERM_WR_REC | model.PERM_WR_META | model.PERM_WR_DATA, function( perms ){
                 api.dataView( id, function( data ){
-                    if ( data ){
-                        dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_EDIT, data, null, perms, function( data ){
+                    if ( data && data.length ){
+                        dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_EDIT, data[0], null, perms, function( data ){
                             refreshUI( id, data );
                             // TODO - Only do this if raw data source is changed
                             resetTaskPoll();
@@ -2872,7 +2872,7 @@ export function init(){
 task_hist.html( "(no recent transfers)" );
 
 model.registerUpdateListener( function( a_data ){
-    console.log("updating:",a_data);
+    console.log("main tab updating:",a_data);
     // Find impacted nodes in data tree and update title
     data_tree.visit( function(node){
         if ( node.key in a_data ){

@@ -112,7 +112,7 @@ message DependencyData
 message DependencySpecData
 {
     required string             id          = 1;
-    required DependencyType     type        = 3;
+    required DependencyType     type        = 2;
 }
 
 message UserData

@@ -48,10 +48,11 @@ export function showSelectedInfo( node, cb ){
             if ( cb ) cb( item );
         }); 
     }else if ( key[0] == "d" ) {
-        api.dataView( key, function( item ){
-            showSelectedItemInfo( item );
-            cur_item = item;
-            if ( cb ) cb( item );
+        api.dataView( key, function( data ){
+            console.log("data view:",data[0]);
+            showSelectedItemInfo( data[0] );
+            cur_item = data[0];
+            if ( cb ) cb( data[0] );
         }); 
     }else if ( key == "mydata" ) {
         showSelectedHTML( "Owned Data<br><br>All data owned by you." );
@@ -166,7 +167,7 @@ var tree_opts1 = {
         };
     },
     postProcess: function( event, data ) {
-        console.log("postproc:",data);
+        //console.log("postproc:",data);
 
         data.result = [];
         var note, nt, entry, resp;
@@ -182,7 +183,8 @@ var tree_opts1 = {
             entry = { icon: false, key: note.id, subject_id: note.subject_id };
 
             if ( note.parentId ){
-                entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
+                //entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
+                entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> [inherited] ";
                 entry.parentId = note.parentId;
                 entry.folder = true;
                 entry.lazy = true;
@@ -195,14 +197,10 @@ var tree_opts1 = {
             data.result.push( entry );
         }
     }
-}; //, tree_opts2 = {}, tree_opts3 = {};
-
-//Object.assign( tree_opts2, tree_opts1 );
-//Object.assign( tree_opts3, tree_opts1 );
+};
 
 $("#note_active_tree").fancytree( tree_opts1 );
 note_active_tree = $.ui.fancytree.getTree("#note_active_tree");
-
 
 $("#note_open_tree").fancytree( tree_opts1 );
 note_open_tree = $.ui.fancytree.getTree("#note_open_tree");
@@ -219,9 +217,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
             var note_active = [],
                 note_open = [],
                 note_closed = [],
-                note, entry, ns, nt;
-
-            var act = $("#note-tabs").tabs('option', 'active');
+                note, ns, nt;
 
             cur_notes = 0;
 
@@ -229,67 +225,34 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
                     ns = model.NoteStateFromString[note.state];
-                    /*
                     nt = model.NoteTypeFromString[note.type];
-                    //console.log("note:",note);
-
-                    entry = { icon: false, key: note.id, subject_id: a_subject_id };
-
-                    if ( note.hasParent ){
-                        entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
-                        entry.folder = true;
-                        entry.lazy = true;
-                    }else{
-                        entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> ";
-                    }
-
-                    entry.title += note.title;
-                    */
 
                     if ( ns == model.NOTE_ACTIVE ){
-                        //if ( note_active.length == 0 && act != 0 )
-                        //    entry.active = true;
-                        //note_active.push(entry);
                         note_active.push( note );
                         cur_notes |= (1<<nt);
                     }else if ( ns == model.NOTE_OPEN ){
-                        //if ( note_open.length == 0  && act != 1 )
-                        //    entry.active = true;
-                        //note_open.push(entry);
                         note_open.push( note );
                         cur_notes |= (1<<(nt+4));
                     }else{
-                        //if ( note_closed.length == 0  && act != 2 )
-                        //    entry.active = true;
-                        //note_closed.push(entry);
                         note_closed.push( note );
                     }
                 }
             }
 
             if ( note_active.length ){
-                note_active_tree.reload(note_active).done( function(){
-                    if ( act == 0 )
-                        note_active_tree.activateKey( note_active[0].key );
-                });
+                note_active_tree.reload(note_active);
             }else{
                 note_active_tree.reload(tree_empty_src);
             }
 
             if ( note_open.length ){
-                note_open_tree.reload(note_open).done( function(){
-                    if ( act == 1 )
-                        note_open_tree.activateKey( note_open[0].key );
-                });
+                note_open_tree.reload(note_open);
             }else{
                 note_open_tree.reload(tree_empty_src);
             }
 
             if ( note_closed.length ){
-                note_closed_tree.reload(note_closed).done( function(){
-                    if ( act == 2 )
-                        note_closed_tree.activateKey( note_closed[0].key );
-                });
+                note_closed_tree.reload(note_closed);
             }else{
                 note_closed_tree.reload(tree_empty_src);
             }
@@ -318,7 +281,6 @@ function showSelectedNoteInfo( node ){
     }
 
     api.annotationView( node.key, function( ok, data ){
-        //console.log("note reply:",ok,data);
         if ( ok && data.note ){
             var note = data.note[0],
                 nt = model.NoteTypeFromString[note.type],
@@ -340,7 +302,7 @@ function showSelectedNoteInfo( node ){
                     </div>\
                     <div style='flex:1 1 auto;overflow:auto'>";
 
-            var is_creator = ( note.comment[0].user == "u/"+settings.user.uid );
+            //var has_admin = ( note.comment[0].user == "u/"+settings.user.uid );
 
             for ( var i in note.comment ){
                 comm = note.comment[i];
@@ -390,7 +352,7 @@ function showSelectedNoteInfo( node ){
 
                 if ( comm.user == "u/"+settings.user.uid ){
                     html += "<div class='row-flex' style='padding:.5em;align-items:flex-end'><div class='ui-widget-content' style='flex:1 1 auto;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
-                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn btn-note-edit' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
+                    html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn btn-note-edit-comment' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
                 }else{
                     html += "<div class='ui-widget-content' style='margin:0.5em;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
                 }
@@ -401,22 +363,22 @@ function showSelectedNoteInfo( node ){
             html += "</div><div style='flex:none;padding:1em 0 0 0'>";
 
             if ( ns != model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-comment'>Reply</button>&nbsp";
+                html += "<button class='btn btn-note-comment'>Comment</button>&nbsp";
             }
 
-            if ( ns == model.NOTE_CLOSED && is_creator ){
+            if ( ns == model.NOTE_CLOSED ){
                 html += "<button class='btn btn-note-reopen'>Reopen</button>&nbsp";
+            }else{
+                html += "<button class='btn btn-note-edit'>Edit</button>&nbsp";
             }
 
-            if ( ns == model.NOTE_OPEN && is_creator ){
+            if ( ns == model.NOTE_OPEN ){
                 html += "<button class='btn btn-note-activate'>Activate</button>&nbsp";
-            }
-
-            if ( ns == model.NOTE_ACTIVE && is_creator ){
+            }else if ( ns == model.NOTE_ACTIVE ){
                 html += "<button class='btn btn-note-deactivate'>Deactivate</button>&nbsp";
             }
 
-            if (( ns == model.NOTE_ACTIVE || ns == model.NOTE_OPEN ) && is_creator ){
+            if ( ns != model.NOTE_CLOSED ){
                 html += "<button class='btn btn-note-close'>Close</button>";
             }
 
@@ -425,72 +387,66 @@ function showSelectedNoteInfo( node ){
             note_details.html(html);
 
             $(".btn",note_details).button();
-            $(".btn-note-edit",note_details).on("click",function(){
-                console.log("edit!",this.id);
+            $(".btn-note-edit-comment",note_details).on("click",function(){
                 var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
-                dlgAnnotation.show( note.subjectId, note, null, idx, function( data ){
-                    if ( data ){
+                dlgAnnotation.show( note.subjectId, note, null, idx, function( new_note ){
+                    if ( new_note ){
                         showSelectedNoteInfo( node );
-                        node.setTitle( data.note[0].title );
                     }
                 });
             });
 
             $(".btn-note-comment",note_details).on("click",function(){
-                console.log("comment!");
-                dlgAnnotation.show( note.subjectId, note, null, null, function(){
-                    showSelectedNoteInfo( node );
+                dlgAnnotation.show( note.subjectId, note, null, null, function( new_note ){
+                    if ( new_note ){
+                        showSelectedNoteInfo( node );
+                    }
+                });
+            });
+
+            $(".btn-note-edit",note_details).on("click",function(){
+                dlgAnnotation.show( note.subjectId, note, null, -1, function( new_note ){
+                    if ( new_note ){
+                        setupAnnotationTab( note.subjectId );
+                    }
                 });
             });
 
             $(".btn-note-reopen",note_details).on("click",function(){
-                console.log("reopen!");
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function(){
-                    updateSelectedNote( node.key, note.subjectId );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function( new_note ){
+                    if ( new_note ){
+                        setupAnnotationTab( note.subjectId );
+                    }
                 });
             });
 
             $(".btn-note-close",note_details).on("click",function(){
-                console.log("close!");
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_CLOSED, null, function(){
-                    updateSelectedNote( node.key, note.subjectId );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_CLOSED, null, function( new_note ){
+                    if ( new_note ){
+                        setupAnnotationTab( note.subjectId );
+                    }
                 });
             });
 
             $(".btn-note-activate",note_details).on("click",function(){
-                console.log("activate!");
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_ACTIVE, null, function(){
-                    updateSelectedNote( node.key, note.subjectId );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_ACTIVE, null, function( new_note ){
+                    if ( new_note ){
+                        setupAnnotationTab( note.subjectId );
+                    }
                 });
             });
 
             $(".btn-note-deactivate",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function(){
-                    updateSelectedNote( node.key, note.subjectId );
+                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function( new_note ){
+                    if ( new_note ){
+                        setupAnnotationTab( note.subjectId );
+                    }
                 });
             });
         }
     });
 }
 
-
-function updateSelectedNote( a_note_id, a_subject_id ){
-    setupAnnotationTab( a_subject_id, function(){
-        if ( note_active_tree.activateKey( a_note_id )){
-            $("#note-tabs").tabs({active:0});
-        }else if ( note_open_tree.activateKey( a_note_id )){
-            $("#note-tabs").tabs({active:1});
-        }else if( note_closed_tree.activateKey( a_note_id )){
-            $("#note-tabs").tabs({active:2});
-        }
-
-        // TODO Revisit. This is a clunky way to update the UI
-
-        cur_item.notes = cur_notes;
-    
-        window.refreshUI( cur_item.id, cur_item );
-    });
-}
 
 $("#note-tabs").tabs({
     heightStyle:"content",

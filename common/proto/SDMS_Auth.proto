@@ -176,6 +176,7 @@ message RecordViewRequest
 message RecordDataReply
 {
     repeated SDMS.RecordData    data        = 1;
+    repeated SDMS.ListingData   update      = 2;
 }
 
 message RecordCreateRequest
@@ -215,9 +216,8 @@ message RecordUpdateRequest
     optional bool               ext_auto    = 12;
     optional uint64             size        = 13;
     optional uint32             dt          = 14;
-    repeated DependencySpecData deps        = 15;
-    repeated DependencySpecData deps_add    = 16;
-    repeated DependencySpecData deps_rem    = 17;
+    repeated DependencySpecData dep_add     = 15;
+    repeated DependencySpecData dep_rem     = 16;
 }
 
 message RecordUpdateBatchRequest
@@ -876,7 +876,9 @@ message AnnotationUpdateRequest
 {
     required string             id          = 1;
     required string             comment     = 2;
-    optional SDMS.NoteState     new_state   = 3;
+    optional SDMS.NoteType      new_type    = 3;
+    optional SDMS.NoteState     new_state   = 4;
+    optional string             new_title   = 5;
 }
 
 message AnnotationCommentEditRequest
@@ -884,7 +886,6 @@ message AnnotationCommentEditRequest
     required string             id          = 1;
     required uint32             comment_idx = 2;
     required string             comment     = 3;
-    optional string             title       = 4;
 }
 
 message AnnotationListBySubjectRequest

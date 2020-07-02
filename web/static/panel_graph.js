@@ -115,7 +115,6 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
     // TODO Why are IDs separate from data?
 
-
     this.update = function( a_ids, a_data ){
         // Only updates locked and alias of impacted nodes
 
@@ -583,6 +582,28 @@ function GraphPanel( a_id, a_frame, a_parent ){
         }
     };
 
+    this.updateData = function( a_data ){
+        console.log( "graph updating:", a_data );
+    
+        var i, node, item, render = false;
+
+        for ( i in a_data ){
+            item = a_data[i];
+            node = findNodes( i );
+            if ( node ){
+                render = true;
+
+                node.locked = item.locked;
+                node.notes = item.notes;
+                console.log("updating:", node);
+                makeLabel( node, item );
+            }
+        }
+
+        if ( render )
+            renderGraph();
+    }
+
     function graphCountConnected(a_node,a_visited,a_from){
         var count = 0;
 
@@ -684,6 +705,8 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
     nodes_grp = svg.append("g")
         .attr("class", "nodes");
+
+    model.registerUpdateListener( this.updateData );
 
     return this;
 }
