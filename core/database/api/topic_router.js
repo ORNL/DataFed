@@ -15,8 +15,9 @@ module.exports = router;
 router.get('/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var qry = "for v in 1..1 inbound @par top";
-        var result;
+        var qry = "for v in 1..1 inbound @par top",
+            result,
+            item;
 
         if ( !req.queryParams.data ){
             qry += " filter is_same_collection('t',v) sort v.title";
@@ -24,18 +25,22 @@ router.get('/list', function (req, res) {
             qry += " sort is_same_collection('t',v) DESC, v.title";
         }
 
-        qry += " let ann = (for n in 1..1 outbound v._id note filter n.state == 2 || ( n.state == 1 && ( @client == v.owner || @client == v.creator || @client == n.creator )) return distinct n.type)";
-
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
-            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,doi:v.doi,alias:v.alias,notes:ann}";
-            result = g_db._query( qry, { client: client._id, par: req.queryParams.id?req.queryParams.id:"t/root" },{},{fullCount:true});
+            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,doi:v.doi,alias:v.alias}";
+            result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias,doi:v.doi,notes:ann}";
-            result = g_db._query( qry, { client: client._id, par: req.queryParams.id?req.queryParams.id:"t/root" });
+            qry += " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias,doi:v.doi}";
+            result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" }).toArray();
+        }
+
+        for ( var i in result ){
+            item = result[i];
+            if ( item.id && ( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )))
+                item.notes = g_lib.annotationGetMask( client, item.id );
         }
 
         res.send( result );

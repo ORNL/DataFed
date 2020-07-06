@@ -247,7 +247,14 @@ router.get('/exec', function (req, res) {
             params.count = Math.min(50,1000-params.offset);
         }
 
-        res.send( g_db._query( qry.query_comp, params ));
+        var doc, results = g_db._query( qry.query_comp, params ).toArray();
+
+        for ( var i in results ){
+            doc = results[i];
+            doc.notes = g_lib.annotationGetMask( client, doc.id );
+        }
+
+        res.send( results );
     } catch( e ) {
         g_lib.handleException( e, res );
     }

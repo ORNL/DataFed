@@ -407,9 +407,9 @@ function recordUpdate( client, record, result ){
 
     if ( deps_add.size || deps_rem.size ){
         data.notes = g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
-    }else{
-        data.notes = g_lib.annotationGetMask( client, data._id );
     }
+
+    data.notes = g_lib.annotationGetMask( client, data._id );
 
     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
     for ( i in data.deps ){
@@ -436,6 +436,7 @@ function recordUpdate( client, record, result ){
 router.post('/update', function (req, res) {
     try {
         var result = { results: [], updates: new Set() };
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         g_db._executeTransaction({
             collections: {
@@ -444,19 +445,18 @@ router.post('/update', function (req, res) {
                 exclusive: ["task","lock","block"]
             },
             action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-
                 recordUpdate( client, req.body, result );
             }
         });
 
         var doc, updates = [];
-        for ( i in result.update_ids ){
-            doc = g_db._document( i );
+        result.updates.forEach( function( id ){
+            doc = g_db._document( id );
+            doc.notes = g_lib.annotationGetMask( client, doc._id );
             delete doc.desc;
             delete doc.md;
             updates.push( doc );
-        }
+        });
         result.updates = updates;
 
         res.send( result );
@@ -494,6 +494,7 @@ router.post('/update', function (req, res) {
 router.post('/update/batch', function (req, res) {
     try {
         var result = { results: [], updates: new Set() };
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
 
         g_db._executeTransaction({
             collections: {
@@ -502,7 +503,6 @@ router.post('/update/batch', function (req, res) {
                 exclusive: ["task","lock","block"]
             },
             action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var rec;
 
                 for ( var i in req.body ){
@@ -519,12 +519,13 @@ router.post('/update/batch', function (req, res) {
         });
 
         var doc, updates = [];
-        for ( i in result.update_ids ){
-            doc = g_db._document( i );
+        result.updates.forEach( function( id ){
+            doc = g_db._document( id );
+            doc.notes = g_lib.annotationGetMask( client, doc._id );
             delete doc.desc;
             delete doc.md;
             updates.push( doc );
-        }
+        });
         result.updates = updates;
 
         res.send( result );
@@ -1037,9 +1038,12 @@ router.get('/search', function (req, res) {
 
         //console.log("params:",params);
 
-        var results = g_db._query( req.queryParams.query, params ).toArray();
+        var doc, results = g_db._query( req.queryParams.query, params ).toArray();
 
-        //console.log("results:",results.length);
+        for ( var i in results ){
+            doc = results[i];
+            doc.notes = g_lib.annotationGetMask( client, doc.id );
+        }
 
         res.send( results );
     } catch( e ) {
