@@ -656,16 +656,17 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
     });
 });
 
-app.post('/api/dat/update', ( a_req, a_resp ) => {
-    console.log( "dat update", a_req.body );
-    sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
+app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
+    console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
+    sendMessage( "RecordCreateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
-app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
-    console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
-    sendMessage( "RecordCreateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
+app.post('/api/dat/update', ( a_req, a_resp ) => {
+    console.log( "dat update", a_req.body );
+    sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        console.log("rec update:",reply);
         a_resp.send(reply);
     });
 });

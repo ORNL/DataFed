@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include "fpconv.h"
+#include "TraceException.hpp"
 
 namespace libjson{
 
@@ -296,6 +297,20 @@ public:
         return m_type;
     }
 
+    const char * getTypeString() const
+    {
+        switch( m_type )
+        {
+            case VT_NULL: return "NULL";
+            case VT_OBJECT: return "OBJECT";
+            case VT_ARRAY: return "ARRAY";
+            case VT_STRING: return "STRING";
+            case VT_NUMBER: return "NUMBER";
+            case VT_BOOL: return "BOOL";
+            default: return "INVALID";
+        }
+    }
+
     inline bool
     isNull() const
     {
@@ -333,25 +348,44 @@ public:
     }
 
     bool
-    asBool()
+    asBool() const
     {
         if ( m_type == VT_BOOL )
             return m_value.b;
         else if ( m_type == VT_NUMBER )
             return (bool)m_value.n;
         else
-            throw std::logic_error("Invalid conversion of Value to bool");
+        {
+            EXCEPT_PARAM(1,"Invalid conversion of " << getTypeString() << " value to boolean");
+        }
     }
 
     double
-    asNumber()
+    asNumber() const
     {
         if ( m_type == VT_NUMBER )
             return m_value.n;
         else if ( m_type == VT_BOOL )
             return m_value.b?1:0;
         else
-            throw std::logic_error("Invalid conversion of Value to number");
+        {
+            EXCEPT_PARAM(1,"Invalid conversion of " << getTypeString() << " value to number");
+            //throw std::logic_error("Invalid conversion of Value to number");
+        }
+    }
+
+    static double
+    asNumber( const std::map<std::string,Value>::const_iterator & iter )
+    {
+        try
+        {
+            return iter->second.asNumber();
+        }
+        catch( TraceException & e )
+        {
+            EXCEPT_CONTEXT( e, "Error accessing key: " << iter->first );
+            throw;
+        }
     }
 
     std::string &
@@ -360,7 +394,9 @@ public:
         if ( m_type == VT_STRING )
             return *m_value.s;
         else
-            throw std::logic_error("Invalid conversion of Value to string");
+        {
+            EXCEPT_PARAM(1,"Invalid conversion of " << getTypeString() << " value to string");
+        }
     }
 
     const std::string &
@@ -369,7 +405,9 @@ public:
         if ( m_type == VT_STRING )
             return *m_value.s;
         else
-            throw std::logic_error("Invalid conversion of Value to string");
+        {
+            EXCEPT_PARAM(1,"Invalid conversion of " << getTypeString() << " value to string");
+        }
     }
 
     // ----- Object & Array Methods -----
@@ -1130,6 +1168,7 @@ private:
     }
 
 };
+
 
 }
 

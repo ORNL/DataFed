@@ -27,7 +27,7 @@ export function showSelectedInfo( node, cb ){
         return;
     }
 
-    console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+    //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
     var key;
 
     if ( typeof node == 'string' )
@@ -49,10 +49,10 @@ export function showSelectedInfo( node, cb ){
         }); 
     }else if ( key[0] == "d" ) {
         api.dataView( key, function( data ){
-            console.log("data view:",data[0]);
-            showSelectedItemInfo( data[0] );
-            cur_item = data[0];
-            if ( cb ) cb( data[0] );
+            //console.log("data view:",data[0]);
+            showSelectedItemInfo( data );
+            cur_item = data;
+            if ( cb ) cb( data );
         }); 
     }else if ( key == "mydata" ) {
         showSelectedHTML( "Owned Data<br><br>All data owned by you." );

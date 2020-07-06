@@ -16,7 +16,15 @@ const DLG_DATA_BTN_LABEL = ["Create", "Update", "Create"];
 export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     var ele = document.createElement('div');
     ele.id = (a_data?a_data.id.replace("/","_"):"d_new")+"_edit";
-    var frame = $(ele);
+    var frame = $(ele),
+        dlg_inst,
+        jsoned,
+        ref_rows = 1,
+        orig_deps = [],
+        encrypt_mode = 1,
+        is_published,
+        parent_coll;
+    
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -115,10 +123,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         remRef(ev);
     });
 
-    var jsoned;
-    var ref_rows = 1;
-    var orig_deps = [];
-    var encrypt_mode = 1;
 
     function addRef(){
         var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
@@ -200,6 +204,29 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         $("#extension",frame).val( ext + '(auto)');
     }
 
+    function callback( ok, reply ){
+        if ( ok ) {
+            // Start transfer if source changed
+            var tmp = $("#source_file").val().trim();
+            if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+                api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
+                    if ( ok2 ){
+                        util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
+                    }else{
+                        dialogs.dlgAlert( "Transfer Error", reply2 );
+                    }
+                });
+            }
+            
+            dlg_inst.dialog('close');
+
+            if ( a_cb )
+                a_cb( reply.data[0], parent_coll );
+        } else {
+            dialogs.dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", reply );
+        }
+    }
+
     var options = {
         title: dlg_title,
         modal: false,
@@ -219,6 +246,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             id: "do_it",
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
+                dlg_inst = $(this);
+
                 var anno = jsoned.getSession().getAnnotations();
 
                 if ( anno && anno.length ){
@@ -227,11 +256,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
                 var obj = {},
-                    url = "/api/dat/",
                     id,
                     type,
-                    deps = [],
-                    is_published = false;
+                    deps = [];
 
                 $(".ref-row",frame).each(function(idx,ele){
                     id = $("input",ele).val();
@@ -243,10 +270,11 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                 if ( $("#published",frame).prop("checked") )
                     is_published = true;
+                else
+                    is_published = false;
+
 
                 if ( a_data && a_mode == DLG_DATA_MODE_EDIT ){
-                    url += "update";
-
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
@@ -336,8 +364,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     obj.id = a_data.id;
+                    api.dataUpdate( obj, callback );
                 }else{
-                    url += "create";
+                    // Create new record
 
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
@@ -365,9 +394,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     if ( deps.length )
                         obj.deps = deps;
-                }
 
-                if ( a_mode != DLG_DATA_MODE_EDIT ){
                     var repo_id = $("#alloc").val();
                     if ( repo_id == "bad" ){
                         dialogs.dlgAlert( "Data Entry Error", "Parent collection is invalid");
@@ -376,36 +403,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         obj.repoId = repo_id;
 
                     obj.parentId = $("#coll",frame).val().trim();
+                    parent_coll = obj.parentId;
+                    api.dataCreate( obj, callback );
                 }
-
-                var inst = $(this);
-
-                api._asyncPost( url, obj, function( ok, reply ){
-                    if ( ok ) {
-                        tmp = $("#source_file").val().trim();
-                        if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
-                            api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, data2 ){
-                                if ( ok2 ){
-                                    util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
-                                    inst.dialog('close');
-                                    if ( a_cb )
-                                        a_cb(reply.data[0],obj.parentId);
-                                }else{
-                                    dialogs.dlgAlert( "Transfer Error", data2 );
-                                }
-                            });
-                        }else{
-                            inst.dialog('close');
-                            if ( a_cb )
-                                a_cb(reply.data[0],obj.parentId);
-                        }
-
-                        if ( reply.update )
-                            model.update( reply.update );
-                    } else {
-                        dialogs.dlgAlert( "Data "+DLG_DATA_BTN_LABEL[a_mode]+" Error", reply );
-                    }
-                });
             }
         }],
         resize: function(){

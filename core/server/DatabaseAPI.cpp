@@ -1712,16 +1712,18 @@ DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
             a_item->set_url( j->second.asString( ));
 
         if (( j = a_obj.find( "size" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_size( j->second.asNumber( ));
+            a_item->set_size( Value::asNumber( j ));
+
+            //a_item->set_size( j->second.asNumber( ));
 
         if (( j = a_obj.find( "notes" )) != a_obj.end( ))
-            a_item->set_notes( j->second.asNumber( ));
+            a_item->set_notes( Value::asNumber( j ));
 
         if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
             a_item->set_locked( j->second.asBool( ));
 
         if (( j = a_obj.find( "gen" )) != a_obj.end( ))
-            a_item->set_gen( j->second.asNumber( ));
+            a_item->set_gen( Value::asNumber( j ));
 
         if (( j = a_obj.find( "deps" )) != a_obj.end( ))
         {

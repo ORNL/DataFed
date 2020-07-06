@@ -246,6 +246,84 @@ export function generateTitle( item, refresh, unstruct = false ) {
     return title;
 }
 
+export function refreshNodeTitle( a_node, a_data, a_reload ){
+    a_node.title = generateTitle( a_data );
+
+    if ( a_data.id.startsWith( "d/" )){
+        a_node.icon = getDataIcon( a_data );
+    }
+
+    a_node.renderTitle();
+
+    if ( a_reload )
+        reloadNode( a_node );
+}
+
+export function reloadNode( a_node, a_cb ){
+    if ( !a_node || a_node.isLazy() && !a_node.isLoaded() )
+        return;
+
+    var save_exp = a_node.isExpanded();
+    var paths = {};
+
+    if ( save_exp ){
+        saveExpandedPaths( a_node, paths );
+    }
+
+    a_node.load(true).always(function(){
+        if ( save_exp ){
+            restoreExpandedPaths( a_node, paths[a_node.key], a_cb );
+        }
+    });
+}
+
+function saveExpandedPaths( node, paths ){
+    var subp = {};
+    if ( node.children ){
+        var child;
+        for ( var i in node.children ){
+            child = node.children[i];
+            if ( child.isExpanded() ){
+                saveExpandedPaths( child, subp );
+            }
+        }
+    }
+    paths[node.key] = subp;
+}
+
+
+function restoreExpandedPaths( a_node, a_paths, a_cb ){
+    var num_nodes = 0;
+
+    function done(){
+        if ( a_cb ){
+            if ( --num_nodes == 0 ){
+                a_cb();
+            }
+        }
+    }
+
+    function recurseExpPaths( node, paths ){
+        num_nodes += 1;
+
+        node.setExpanded( true ).always(function(){
+            if ( node.children ){
+                var child;
+                for ( var i in node.children ){
+                    child = node.children[i];
+                    if ( child.key in paths ){
+                        recurseExpPaths( child, paths[child.key] );
+                    }
+                }
+            }
+    
+            done();
+        });
+    }
+
+    recurseExpPaths( a_node, a_paths );
+}
+
 export function treeSelectRange( a_tree, a_node ){
     /*if ( a_node.parent != selectScope.parent || a_node.data.scope != selectScope.data.scope ){
         util.setStatusText("Cannot select across collections or categories",1);

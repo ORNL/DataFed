@@ -1,4 +1,5 @@
 import * as util from "./util.js";
+import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as panel_info from "./panel_item_info.js";
 
@@ -182,5 +183,15 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     this.tree_div = $(a_id,a_frame);
     this.tree = cat_tree;
 
+    model.registerUpdateListener( function( a_data ){
+        console.log("cat panel updating:",a_data);
+        // Find impacted nodes in catalog tree and update title
+        cat_tree.visit( function(node){
+            if ( node.key in a_data ){
+                util.refreshNodeTitle( node, a_data[node.key] );
+            }
+        });
+    });
+    
     return this;
 }

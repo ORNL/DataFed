@@ -153,7 +153,7 @@ function getSelectedIDs(){
     return ids;
 }
 
-function refreshNodeTitle( a_node, a_data, a_reload ){
+/*function refreshNodeTitle( a_node, a_data, a_reload ){
     a_node.title = util.generateTitle( a_data );
 
     if ( a_data.id.startsWith( "d/" )){
@@ -164,20 +164,21 @@ function refreshNodeTitle( a_node, a_data, a_reload ){
 
     if ( a_reload )
         reloadNode( a_node );
-}
+}*/
+
 
 export function refreshUI( a_ids, a_data, a_reload ){
     console.log("refresh",a_ids,a_data);
     if ( !a_ids || !a_data ){
         // If no IDs or unknown action, refresh everything
-        reloadNode(data_tree.getNodeByKey("mydata"));
-        reloadNode(data_tree.getNodeByKey("proj_own"));
-        reloadNode(data_tree.getNodeByKey("proj_adm"));
-        reloadNode(data_tree.getNodeByKey("proj_mem"));
-        reloadNode(data_tree.getNodeByKey("shared_user"));
-        reloadNode(data_tree.getNodeByKey("shared_proj"));
-        //reloadNode(data_tree.getNodeByKey("topics"));
-        reloadNode(data_tree.getNodeByKey("queries"));
+        util.reloadNode(data_tree.getNodeByKey("mydata"));
+        util.reloadNode(data_tree.getNodeByKey("proj_own"));
+        util.reloadNode(data_tree.getNodeByKey("proj_adm"));
+        util.reloadNode(data_tree.getNodeByKey("proj_mem"));
+        util.reloadNode(data_tree.getNodeByKey("shared_user"));
+        util.reloadNode(data_tree.getNodeByKey("shared_proj"));
+        //util.reloadNode(data_tree.getNodeByKey("topics"));
+        util.reloadNode(data_tree.getNodeByKey("queries"));
     }else{
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];
         var data = Array.isArray(a_data)?a_data:[a_data];
@@ -187,14 +188,14 @@ export function refreshUI( a_ids, a_data, a_reload ){
         data_tree.visit( function(node){
             idx = ids.indexOf( node.key );
             if ( idx != -1 ){
-                refreshNodeTitle( node, data[idx], a_reload );
+                util.refreshNodeTitle( node, data[idx], a_reload );
             }
         });
 
         cat_panel.tree.visit( function(node){
             idx = ids.indexOf( node.key );
             if ( idx != -1 ){
-                refreshNodeTitle( node, data[idx], a_reload );
+                util.refreshNodeTitle( node, data[idx], a_reload );
             }
         });
     }
@@ -523,7 +524,7 @@ function refreshCollectionNodes( node_keys, scope ){
     //console.log("REF: refresh results:",refresh);
 
     for ( i in refresh )
-        reloadNode(refresh[i]);
+        util.reloadNode(refresh[i]);
 
     refresh= [];
     //console.log("REF: search catalog tree");
@@ -550,7 +551,7 @@ function refreshCollectionNodes( node_keys, scope ){
     //console.log("REF: refresh results:",refresh);
 
     for ( i in refresh )
-        reloadNode(refresh[i]);
+        util.reloadNode(refresh[i]);
 }
 
 function copyItems( items, dest_node, cb ){
@@ -715,7 +716,7 @@ function actionDeleteSelected(){
             if ( proj.length ){
                 api.projDelete( proj, function( ok, data ){
                     if ( ok ){
-                        reloadNode(data_tree.getNodeByKey("proj_own"));
+                        util.reloadNode(data_tree.getNodeByKey("proj_own"));
                         panel_info.showSelectedInfo();
                     }else
                         util.setStatusText("Project Delete Error: " + data, 1 );
@@ -724,7 +725,7 @@ function actionDeleteSelected(){
             if ( qry.length ){
                 api.sendQueryDelete( qry, function( ok, data ){
                     if ( ok ){
-                        reloadNode(data_tree.getNodeByKey("queries"));
+                        util.reloadNode(data_tree.getNodeByKey("queries"));
                         panel_info.showSelectedInfo();
                     }else
                         util.setStatusText("Query Delete Error: " + data, 1 );
@@ -748,7 +749,7 @@ function actionNewProj() {
 
     dlgProjNewEdit.show(null,0,function( data ){
         util.setStatusText("Project "+data.id+" created");
-        reloadNode( data_tree.getNodeByKey( "proj_own" ));
+        util.reloadNode( data_tree.getNodeByKey( "proj_own" ));
     });
 }
 
@@ -778,9 +779,9 @@ function actionNewData() {
             resetTaskPoll();
             var node = data_tree.getNodeByKey( parent_id );
             if ( node )
-                reloadNode( node );
-            if ( graph_panel.getSubjectID() )
-                graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
+                util.reloadNode( node );
+            //if ( graph_panel.getSubjectID() )
+            //    graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
         });
     });
 }
@@ -801,16 +802,14 @@ function actionDupData(){
             return;
         }
         api.dataView( node.key, function( data ){
-            if ( data ){
-                dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_DUP,data,parent,0,function(data2,parent_id){
-                    console.log("back from dup",parent_id);
-                    var node = data_tree.getNodeByKey( parent_id );
-                    if ( node )
-                        reloadNode( node );
-                    if ( graph_panel.getSubjectID() )
-                        graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
-                });
-            }
+            dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_DUP, data, parent, 0, function(data2,parent_id){
+                console.log("back from dup",parent_id);
+                var node = data_tree.getNodeByKey( parent_id );
+                if ( node )
+                    util.reloadNode( node );
+                //if ( graph_panel.getSubjectID() )
+                //    graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
+            });
         });
     });
 }
@@ -840,7 +839,7 @@ function actionNewColl(){
         dlgCollNewEdit.show(null,parent,0,function(data){
             var node = data_tree.getNodeByKey( data.parentId );
             if ( node )
-                reloadNode( node );
+                util.reloadNode( node );
         });
     });
 }
@@ -939,7 +938,7 @@ function actionImportData( files ){
                             }else{
                                 var node = data_tree.getNodeByKey( coll_id );
                                 if ( node )
-                                    reloadNode( node );
+                                    util.reloadNode( node );
                             }
                         }else{
                             dialogs.dlgAlert( "Import Error", data );
@@ -1050,10 +1049,8 @@ function actionUnlinkSelected(){
             if ( ok ){
                 if ( data.item && data.item.length ){
                     var loc_root = "c/" + scope.charAt(0) + "_" + scope.substr(2) + "_root";
-                    //reloadNode( data_tree.getNodeByKey( loc_root ));
                     refreshCollectionNodes([loc_root,sel[0].parent.key],sel[0].parent.data.scope);
                 }else{
-                    //reloadNode( sel[0].parent );
                     refreshCollectionNodes([sel[0].parent.key],sel[0].parent.data.scope);
                 }
             }else{
@@ -1114,13 +1111,11 @@ function actionEditSelected() {
         case "d":
             permGateAny( id, model.PERM_WR_REC | model.PERM_WR_META | model.PERM_WR_DATA, function( perms ){
                 api.dataView( id, function( data ){
-                    if ( data && data.length ){
-                        dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_EDIT, data[0], null, perms, function( data ){
-                            refreshUI( id, data );
-                            // TODO - Only do this if raw data source is changed
-                            resetTaskPoll();
-                        });
-                    }
+                    dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_EDIT, data, null, perms, function( data ){
+                        //refreshUI( id, data );
+                        // TODO - Only do this if raw data source is changed
+                        resetTaskPoll();
+                    });
                 }); 
             }); 
             break;
@@ -1160,8 +1155,7 @@ function actionShareSelected() {
             });
         } else {
             api.dataView( id, function( data ){
-                if ( data )
-                    dlgSetACLs.show( data );
+                dlgSetACLs.show( data );
             });
         }
     });
@@ -1187,10 +1181,10 @@ function actionRefresh(){
     if ( sel.length == 1 ){
         var node = sel[0];
         if ( node.isLazy() ){
-            reloadNode( node );
+            util.reloadNode( node );
         }else if ( node.parent.isLazy() ) {
             var par = node.parent;
-            reloadNode( par, function(){
+            util.reloadNode( par, function(){
                 var new_node = par.findFirst( function( n ){
                     if ( n.key == node.key )
                         return true;
@@ -1362,7 +1356,7 @@ export function updateBtnState(){
             break;
     }
 
-    console.log("updateBtnState, bits:", bits );
+    //console.log("updateBtnState, bits:", bits );
 
     $("#btn_edit",frame).button("option","disabled",(bits & 1) != 0 );
     $("#btn_dup_data",frame).button("option","disabled",(bits & 2) != 0 );
@@ -1415,6 +1409,7 @@ export function updateBtnState(){
     data_tree_div.contextmenu("enableEntry", "note", (bits & 0x400) == 0 );
 }
 
+/*
 function saveExpandedPaths( node, paths ){
     var subp = {};
     if ( node.children ){
@@ -1461,8 +1456,9 @@ function restoreExpandedPaths( a_node, a_paths, a_cb ){
 
     recurseExpPaths( a_node, a_paths );
 }
+*/
 
-
+/*
 function reloadNode( a_node, a_cb ){
     if ( !a_node || a_node.isLazy() && !a_node.isLoaded() )
         return;
@@ -1480,7 +1476,7 @@ function reloadNode( a_node, a_cb ){
         }
     });
 }
-
+*/
 
 function execQuery( query ){
     util.setStatusText("Executing search query...");
@@ -1610,7 +1606,7 @@ function querySave(){
             var query = parseQuickSearch();
             api.sendQueryCreate( val, query, function( ok, data ){
                 if ( ok )
-                    reloadNode(data_tree.getNodeByKey("queries"));
+                    util.reloadNode(data_tree.getNodeByKey("queries"));
                 else
                     util.setStatusText( "Query Save Error: " + data, 1 );
             });
@@ -1743,7 +1739,7 @@ function taskHistoryPoll(){
         else
             pollSince = pollMax;
 
-            console.log( "poll per:",pollSince);
+        //console.log( "poll per:",pollSince);
 
         taskTimer = setTimeout( taskHistoryPoll, 1000*(pollSince));
     });
@@ -1759,7 +1755,7 @@ function resetTaskPoll(){
 function setupRepoTab(){
     //_asyncGet( "/api/repo/list?details=true", null, function(ok,data){
     api.repoList( true, false, function(ok,data){
-        console.log("repo list:",ok,data);
+        //console.log("repo list:",ok,data);
         if ( ok ){
             var html;
 
@@ -1797,15 +1793,11 @@ function treeSelectNode( a_node, a_toggle ){
 
     if ( a_toggle ){
         if ( a_node.isSelected() ){
-            console.log("select false");
-
             a_node.setSelected( false );
         }else{
-            console.log("select true");
             a_node.setSelected( true );
         }
     }else{
-        console.log("select true");
         a_node.setSelected( true );
     }
 }
@@ -2553,7 +2545,7 @@ export function init(){
 
                 for ( i in items ) {
                     item = items[i];
-                    console.log("item:",item);
+                    //console.log("item:",item);
                     if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false, key_pfx: key_pfx };
                     }else{
@@ -2876,14 +2868,14 @@ model.registerUpdateListener( function( a_data ){
     // Find impacted nodes in data tree and update title
     data_tree.visit( function(node){
         if ( node.key in a_data ){
-            refreshNodeTitle( node, a_data[node.key] );
+            util.refreshNodeTitle( node, a_data[node.key] );
         }
     });
 
     // Find impacted nodes in search results and update title
     results_tree.visit( function(node){
         if ( node.key in a_data ){
-            refreshNodeTitle( node, a_data[node.key] );
+            util.refreshNodeTitle( node, a_data[node.key] );
         }
     });
 });

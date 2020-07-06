@@ -142,12 +142,10 @@ export function xfrStart( a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_f
 export function dataView( a_id, a_cb ) {
     _asyncGet( "/api/dat/view?id=" + encodeURIComponent(a_id), null, function( ok, reply ){
         if ( ok ) {
-            console.log("dataView reply:",reply);
-            a_cb( reply.data );
+            a_cb( reply.data[0] );
         }
         else {
             util.setStatusText( "View Data Error: " + reply, true );
-            a_cb();
         }
     });
 }
@@ -220,6 +218,18 @@ export function dataGetDepGraph( a_id, a_cb ) {
     });
 }
 
+export function dataCreate( a_record, a_cb ){
+    //console.log("dataCreate");
+    _asyncPost( "/api/dat/create", a_record, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+
+        if ( ok && reply.update )
+            model.update( reply.update );
+    });
+}
+
+
 export function dataCreateBatch( a_records, a_cb ){
     //console.log("dataCreateBatch");
     _asyncPostText( "/api/dat/create/batch", a_records, function( ok, reply ){
@@ -227,6 +237,19 @@ export function dataCreateBatch( a_records, a_cb ){
             a_cb( ok, reply );
     });
 }
+
+
+export function dataUpdate( a_record, a_cb ){
+    console.log("dataUpdate", a_record );
+    _asyncPost( "/api/dat/update", a_record, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+
+        if ( ok && reply.update )
+            model.update( reply.update );
+    });
+}
+
 
 export function dataUpdateBatch( a_records, a_cb ){
     //console.log("dataUpdateBatch");

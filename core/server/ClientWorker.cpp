@@ -1554,9 +1554,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     if ( meta.size() )
         result += " filter " + meta;
 
-    result += " let ann = (for n in 1..1 outbound i._id note filter n.state == 2 || ( n.state == 1 && ( @client == i.owner || @client == i.creator || @client == n.creator )) return distinct n.type)";
-
-    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size,notes:ann}";
+    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size}";
 
 
     return result;
