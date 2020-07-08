@@ -357,14 +357,24 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
     try
     {
         Value::Object & obj = result.getObject();
+        Value::ObjectIter i;
+        
+        a_acc_tok = asString( obj, "access" );
+
+        if (( i = obj.find("access")) == obj.end())
 
         a_acc_tok = obj.at("access").asString();
         a_ref_tok = obj.at("refresh").asString();
         a_expires_in = (uint32_t)obj.at("expires_in").asNumber();
     }
-    catch(...)
+    catch( TraceException & e )
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        EXCEPT_CONTEXT( e, "Invalid response from DB method usr/token/get" );
+        throw;
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( e, "Invalid response from DB method usr/token/get: " << e.what() );
     }
 }
 
