@@ -833,12 +833,14 @@ ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid )
 void
 ClientWorker::handleTaskResponse( libjson::Value & a_result )
 {
-    libjson::Value::Object & obj = a_result.getObject();
-    libjson::Value::ObjectIter t = obj.find( "task" );
+    libjson::Value::Object & obj = a_result.asObject();
 
-    if ( t != obj.end( ) && t->second["status"].asNumber() != TS_BLOCKED )
+    if ( obj.has( "task" ))
     {
-        TaskMgr::getInstance().newTask( t->second["_id"].asString() );
+        libjson::Value::Object & task_obj = obj.asObject();
+
+        if ( task_obj.getNumber( "status" ) != TS_BLOCKED )
+            TaskMgr::getInstance().newTask( task_obj.getString( "_id" ));
     }
 }
 
@@ -1379,49 +1381,49 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     libjson::Value query;
     query.fromString( a_query );
 
-    if ( !query.has( "id" ) && !query.has( "text" ) && !query.has( "meta" ))
-        EXCEPT( 1, "Query contains no search terms." );
-
     string phrase;
-    libjson::Value::Object &    obj = query.getObject();
+    libjson::Value::Object &    obj = query.asObject();
     libjson::Value::ObjectIter  j, i = obj.find( "text" );
+
+    if ( !obj.has( "id" ) && !obj.has( "text" ) && !obj.has( "meta" ))
+        EXCEPT( 1, "Query contains no search terms." );
 
     if ( i != obj.end( ))
     {
-        phrase = parseSearchTextPhrase( i->second.asString( ));
+        phrase = parseSearchTextPhrase( i->second.asString() );
     }
     else
     {
-        if (( i = obj.find( "title" )) != obj.end( ))
-            phrase = parseSearchPhrase( "title", i->second.asString( ));
+        if ( obj.has( "title" ))
+            phrase = parseSearchPhrase( "title", obj.asString() );
 
-        if (( i = obj.find( "desc" )) != obj.end( ))
+        if ( obj.has( "desc" ))
         {
             if ( phrase.size( ))
                 phrase += " or ";
-            phrase += parseSearchPhrase( "desc", i->second.asString( ));
+            phrase += parseSearchPhrase( "desc", obj.asString() );
         }
 
-        if (( i = obj.find( "keyw" )) != obj.end( ))
+        if ( obj.has( "keyw" ))
         {
             if ( phrase.size( ))
                 phrase += " or ";
-            phrase += parseSearchPhrase( "keyw", i->second.asString( ));
+            phrase += parseSearchPhrase( "keyw", obj.asString() );
         }
     }
 
     string id;
 
-    if (( i = obj.find( "id" )) != obj.end( ))
+    if ( obj.has( "id" ))
     {
-        id = parseSearchIdAlias( i->second.asString() );
+        id = parseSearchIdAlias( obj.asString() );
     }
 
     string meta;
 
-    if (( i = obj.find( "meta" )) != obj.end( ))
+    if ( obj.has( "meta" ))
     {
-        meta = parseSearchMetadata( i->second.asString() );
+        meta = parseSearchMetadata( obj.asString() );
     }
 
     if ( meta.size() && id.size() )
@@ -1438,10 +1440,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     if ( phrase.size() )
         result += string("for i in intersection((for i in textview search analyzer(") + phrase + ",'text_en') return i),(";
 
-    if (( i = obj.find( "scopes" )) == obj.end( ))
-        EXCEPT(1,"No query scopes provided");
-
-    libjson::Value::Array & scopes = i->second.getArray();
+    libjson::Value::Array & scopes = obj.getArray( "scopes" );
 
     if ( scopes.size() == 0 )
         EXCEPT(1,"No query scopes provided");
@@ -1455,25 +1454,18 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
 
     for ( libjson::Value::ArrayIter s = scopes.begin(); s != scopes.end(); s++ )
     {
-        libjson::Value::Object & scope = s->getObject();
+        libjson::Value::Object & scope = s->asObject();
 
         if ( s != scopes.begin( ))
             result += "),(";
 
-        i = scope.find( "scope" );
-        if ( i == scope.end( ))
-            EXCEPT(1,"Missing scope value");
-
-        switch( (int)i->second.asNumber( ))
+        switch( (int)scope.getNumber( "scope" ))
         {
         case SDMS::SS_USER:
             result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
             break;
         case SDMS::SS_PROJECT:
-            if (( j = scope.find( "id" )) == scope.end() )
-                EXCEPT(1,"Missing scope 'id' for project");
-
-            result += string("for i in 1..1 inbound '") + j->second.asString() + "' owner filter is_same_collection('d',i)";
+            result += string("for i in 1..1 inbound '") + scope.getString( "id" ) + "' owner filter is_same_collection('d',i)";
             break;
         case SDMS::SS_OWNED_PROJECTS:
             result += "for i,e,p in 2..2 inbound @client owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
@@ -1485,26 +1477,20 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             result += "for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i)";
             break;
         case SDMS::SS_COLLECTION:
-            if (( j = scope.find( "id" )) == scope.end() )
-                EXCEPT(1,"Missing scope 'id' for collection");
-
-            result += string("for i in 1..10 outbound '") + j->second.asString() + "' item filter is_same_collection('d',i)";
+            result += string("for i in 1..10 outbound '") + scope.getString( "id" ) + "' item filter is_same_collection('d',i)";
             break;
         case SDMS::SS_TOPIC:
-            if (( j = scope.find( "id" )) == scope.end() )
-                EXCEPT(1,"Missing scope 'id' for topic");
-
-            result += string("for i in 1..10 inbound '") + j->second.asString() + "' top, outbound item filter is_same_collection('d',i)";
+            result += string("for i in 1..10 inbound '") + scope.getString( "id" ) + "' top, outbound item filter is_same_collection('d',i)";
             break;
         case SDMS::SS_SHARED_BY_USER:
-            if (( j = scope.find( "id" )) == scope.end() )
-                EXCEPT(1,"Missing scope 'id' for shared user");
-
+            {
+            string & id = scope.getString( "id" );
             result += string("for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + j->second.asString() + "' return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + j->second.asString() + "' return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + j->second.asString() + "' return v)"
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + id + "' return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + id + "' return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + id + "' return v)"
                 ")";
+            }
             break;
         case SDMS::SS_SHARED_BY_ANY_USER:
             //result += "for u in @shared_users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) return i";
@@ -1516,15 +1502,16 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
                 ")";
             break;
         case SDMS::SS_SHARED_BY_PROJECT:
-            if (( j = scope.find( "id" )) == scope.end() )
-                EXCEPT(1,"Missing scope 'id' for shared project");
+            {
+            string & id = scope.getString( "id" );
 
             result += string("for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + j->second.asString() + "' return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + j->second.asString() + "' return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + j->second.asString() + "' return v)"
+                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + id + "' return v),"
+                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + id + "' return v),"
+                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + id + "' return v)"
                 ")";
             break;
+            }
         case SDMS::SS_SHARED_BY_ANY_PROJECT:
             use_shared_projects = true;
             result += "for i in union_distinct("

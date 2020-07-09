@@ -6,6 +6,7 @@
 #include "DynaLog.hpp"
 
 using namespace std;
+using namespace libjson;
 
 namespace SDMS {
 namespace Core {
@@ -193,20 +194,15 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
-        libjson::Value result;
+        Value result;
 
         result.fromString( raw_result );
 
-        libjson::Value::Object & resp_obj = result.getObject();
+        Value::Object & resp_obj = result.asObject();
 
         checkResponsCode( code, resp_obj );
 
-        libjson::Value::ObjectIter i = result.find( "value" );
-        
-        if ( i == result.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'value' field from response." );
-
-        return i->second.asString();
+        return resp_obj.getString( "value" );
     }
     catch( libjson::ParseError & e )
     {
@@ -216,6 +212,7 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
     }
     catch( TraceException & e )
     {
+        DL_DEBUG( raw_result );
         e.addContext( "Globus submission API call failed." );
         throw;
     }
@@ -238,30 +235,31 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     DL_DEBUG( "Access Token: " << a_acc_token );
     DL_DEBUG( "Submission ID: " << sub_id );
 
-    libjson::Value body;
+    Value body;
 
-    body.initObject();
-    body["DATA_TYPE"] = "transfer";
-    body["submission_id"] = sub_id;
-    body["source_endpoint"] = a_src_ep;
-    body["destination_endpoint"] = a_dst_ep;
-    body["verify_checksum"] = true;
-    body["notify_on_succeeded"] = false;
-    body["encrypt_data"] = a_encrypt;
+    Value::Object & obj = body.initObject();
 
-    libjson::Value::Array & xfr_list = body["DATA"].initArray();
+    obj["DATA_TYPE"] = "transfer";
+    obj["submission_id"] = sub_id;
+    obj["source_endpoint"] = a_src_ep;
+    obj["destination_endpoint"] = a_dst_ep;
+    obj["verify_checksum"] = true;
+    obj["notify_on_succeeded"] = false;
+    obj["encrypt_data"] = a_encrypt;
+
+    Value::Array & xfr_list = obj["DATA"].initArray();
     xfr_list.reserve( a_files.size() );
 
     for ( vector<pair<string,string>>::const_iterator f = a_files.begin(); f != a_files.end(); f++ )
     {
         DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
 
-        libjson::Value xfr_item;
-        xfr_item.initObject();
-        xfr_item["DATA_TYPE"] = "transfer_item";
-        xfr_item["source_path"] = f->first;
-        xfr_item["destination_path"] = f->second;
-        xfr_item["recursive"] = false;
+        Value xfr_item;
+        Value::Object & xobj = xfr_item.initObject();
+        xobj["DATA_TYPE"] = "transfer_item";
+        xobj["source_path"] = f->first;
+        xobj["destination_path"] = f->second;
+        xobj["recursive"] = false;
         xfr_list.push_back( move( xfr_item ));
     }
 
@@ -273,28 +271,24 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
-        libjson::Value result;
+        Value result;
 
         result.fromString( raw_result );
 
-        libjson::Value::Object & resp_obj = result.getObject();
+        Value::Object & resp_obj = result.asObject();
 
         checkResponsCode( code, resp_obj );
 
-        libjson::Value::ObjectIter i;
+        Value::ObjectIter i;
 
-        i = resp_obj.find("code");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'code' field" );
+        string & code = resp_obj.getString( "code" );
 
-        if ( i->second.asString().compare( "Accepted" ) != 0 )
-            EXCEPT_PARAM( ID_SERVICE_ERROR, "Request not accepted (" << i->second.asString() << ")" );
+        if ( code.compare( "Accepted" ) != 0 )
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Request not accepted (" << code << ")" );
 
-        i = resp_obj.find("task_id");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'task_id' field" );
+        string & task_id = resp_obj.getString( "task_id" );
 
-        return i->second.asString();
+        return task_id;
     }
     catch( libjson::ParseError & e )
     {
@@ -304,12 +298,13 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     }
     catch( TraceException & e )
     {
+        DL_DEBUG( raw_result );
         e.addContext( "Globus transfer API call failed." );
         throw;
     }
     catch( ... )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
+        DL_DEBUG("UNEXPECTED EXCEPTION");
         DL_DEBUG( raw_result );
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus transfer API call returned unexpected content" );
     }
@@ -332,32 +327,35 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
-        libjson::Value result;
+        Value result;
 
         result.fromString( raw_result );
 
-        libjson::Value::Object & resp_obj = result.getObject();
+        Value::Object & resp_obj = result.asObject();
 
         checkResponsCode( code, resp_obj );
 
-        libjson::Value::ObjectIter i = resp_obj.find("DATA_TYPE");
-        if ( i == resp_obj.end() || i->second.asString().compare( "event_list" ) != 0 )
-            EXCEPT( ID_SERVICE_ERROR, "Missing or invalid DATA_TYPE field." );
+        string & data_type = resp_obj.getString( "DATA_TYPE" );
+
+        if ( data_type.compare( "event_list" ) != 0 )
+            EXCEPT( ID_SERVICE_ERROR, "Invalid DATA_TYPE field." );
 
         vector<string> events;
 
-        libjson::Value::Array & arr = resp_obj["DATA"].getArray();
+        Value::Array & arr = resp_obj.getArray( "DATA" );
 
-        for ( libjson::Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
         {
-            if ( (*i)["is_error"].asBool() )
+            Value::Object & dobj = i->asObject();
+
+            if ( dobj.getBool( "is_error" ))
             {
                 a_status = XS_FAILED;
-                a_err_msg = (*i)["description"].asString();
+                a_err_msg = dobj.getString( "description" );
                 return true;
             }
 
-            events.push_back( (*i)["code"].asString());
+            events.push_back( dobj.getString( "code" ));
         }
 
         // Look for certain transient error events that should be treated as permanent errors
@@ -371,6 +369,7 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
     }
     catch( TraceException & e )
     {
+        DL_DEBUG( raw_result );
         e.addContext( "Globus task event list API call failed." );
         throw;
     }
@@ -396,20 +395,18 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
-        libjson::Value result;
+        Value result;
 
         result.fromString( raw_result );
 
-        libjson::Value::Object & resp_obj = result.getObject();
+        Value::Object & resp_obj = result.asObject();
 
         checkResponsCode( code, resp_obj );
 
-        libjson::Value::ObjectIter i = resp_obj.find("code");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'code' field" );
+        string & resp_code = resp_obj.getString( "code" );
 
-        if ( i->second.asString() != "Canceled" )
-            EXCEPT_PARAM( ID_SERVICE_ERROR, "Unexpected 'code' value returned: " << i->second.asString() );
+        if ( resp_code != "Canceled" )
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Unexpected 'code' value returned: " << resp_code );
     }
     catch( libjson::ParseError & e )
     {
@@ -419,6 +416,7 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
     }
     catch( TraceException & e )
     {
+        DL_DEBUG( raw_result );
         e.addContext( "Globus cancel task API call failed." );
         throw;
     }
@@ -490,25 +488,17 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
-        libjson::Value result;
+        Value result;
 
         result.fromString( raw_result );
 
-        libjson::Value::Object & resp_obj = result.getObject();
+        Value::Object & resp_obj = result.asObject();
 
         checkResponsCode( code,resp_obj );
 
-        libjson::Value::ObjectIter i = resp_obj.find("activated");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'activated' field" );
+        a_ep_info.activated = resp_obj.getBool( "activated" );
 
-        a_ep_info.activated = i->second.asBool();
-
-        i = resp_obj.find("expires_in");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'expires_in' field" );
-
-        int64_t exp = i->second.asNumber();
+        int64_t exp = resp_obj.getNumber( "expires_in" );
         if ( exp < 0 )
         {
             a_ep_info.activated = true;
@@ -521,32 +511,23 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
             a_ep_info.expiration = time(0) + exp;
         }
 
-        i = resp_obj.find("force_encryption");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'force_encryption' field" );
-
-
-        a_ep_info.supports_encryption = false;
-
-        a_ep_info.force_encryption = i->second.asBool();
+        a_ep_info.force_encryption = resp_obj.getBool( "force_encryption" );
         if ( a_ep_info.force_encryption )
             a_ep_info.supports_encryption = true;
         else
         {
+            a_ep_info.supports_encryption = false;
+
             // Look at DATA[0].scheme to see if it's gsiftp
-            if (( i = resp_obj.find("DATA")) == resp_obj.end() )
-                EXCEPT( ID_SERVICE_ERROR, "Missing 'DATA' field" );
+            Value::Array & data = resp_obj.getArray( "DATA" );
+            Value::Object & server_obj = data[0].asObject();
 
-            libjson::Value::Object & server_obj = i->second[0].getObject();
+            Value & scheme = server_obj.getValue( "scheme" );
 
-            i = server_obj.find("scheme");
-            if ( i == resp_obj.end() )
-                EXCEPT( ID_SERVICE_ERROR, "Missing 'scheme' field" );
-
-            if ( i->second.isNull() )
+            if ( scheme.isNull() )
                 a_ep_info.supports_encryption = true;
-            else if ( i->second.isString() )
-                a_ep_info.supports_encryption = ( i->second.asString().compare( "gsiftp" ) == 0 );
+            else if ( scheme.isString() )
+                a_ep_info.supports_encryption = ( scheme.asString().compare( "gsiftp" ) == 0 );
         }
     }
     catch( libjson::ParseError & e )
@@ -557,6 +538,7 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
     }
     catch( TraceException & e )
     {
+        DL_DEBUG( raw_result );
         e.addContext( "Globus endpoint API call failed." );
         throw;
     }
@@ -582,25 +564,16 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
 
     try
     {
-        libjson::Value result;
+        Value result;
 
         result.fromString( raw_result );
 
-        libjson::Value::Object & resp_obj = result.getObject();
+        Value::Object & resp_obj = result.asObject();
 
         checkResponsCode( code, resp_obj );
 
-        libjson::Value::ObjectIter i = resp_obj.find("access_token");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'access_token' field" );
-
-        a_new_acc_tok = i->second.asString();
-
-        i = resp_obj.find("expires_in");
-        if ( i == resp_obj.end() )
-            EXCEPT( ID_SERVICE_ERROR, "Missing 'expires_in' field" );
-
-        a_expires_in = (uint32_t)i->second.asNumber();
+        a_new_acc_tok = resp_obj.getString( "access_token" );
+        a_expires_in = (uint32_t)resp_obj.getNumber( "expires_in" );
     }
     catch( libjson::ParseError & e )
     {
@@ -610,6 +583,7 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
     }
     catch( TraceException & e )
     {
+        DL_DEBUG( raw_result );
         e.addContext( "Globus token API call failed." );
         throw;
     }

@@ -24,15 +24,14 @@ public:
 
     struct Task
     {
-        Task( const std::string & a_id /*, libjson::Value & a_data*/ ) :
-            task_id( a_id ), /*data( std::move( a_data )),*/ cancel(false), retry_count(0)
+        Task( const std::string & a_id ) :
+            task_id( a_id ), cancel(false), retry_count(0)
         {}
 
         ~Task()
         {}
 
         std::string         task_id;
-        //libjson::Value      data;
         bool                cancel;
         uint32_t            retry_count;
         timepoint_t         retry_time;
@@ -41,7 +40,7 @@ public:
 
     virtual Task *      getNextTask( ITaskWorker * a_worker ) = 0;
     virtual bool        retryTask( Task * a_task ) = 0;
-    virtual void        newTasks( libjson::Value & a_tasks ) = 0;
+    virtual void        newTasks( const libjson::Value & a_tasks ) = 0;
 };
 
 }}

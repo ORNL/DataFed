@@ -15,6 +15,9 @@ namespace Core {
 using namespace SDMS::Auth;
 using namespace libjson;
 
+#define TRANSLATE_BEGIN() try{
+#define TRANSLATE_END( json ) }catch( TraceException &e ){ DL_ERROR( "INVALID JSON FROM DB: " << json.toString() ); EXCEPT_CONTEXT( e, "Invalid response from DB" ); throw; }
+
 DatabaseAPI::DatabaseAPI( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_client(0), m_db_url(a_db_url)
 {
@@ -107,7 +110,7 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
             catch( libjson::ParseError & e )
             {
                 DL_DEBUG( "PARSE [" << res_json << "]" );
-                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString( ));
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString() );
             }
         }
 
@@ -117,9 +120,9 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         }
         else
         {
-            if ( res_json.size() && a_result.has( "errorMessage" ))
+            if ( res_json.size() && a_result.asObject().has( "errorMessage" ))
             {
-                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].asString() );
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result.asObject().asString());
             }
             else
             {
@@ -242,7 +245,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
             catch( libjson::ParseError & e )
             {
                 DL_DEBUG( "PARSE [" << res_json << "]" );
-                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString( ));
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString() );
             }
         }
 
@@ -252,9 +255,9 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         }
         else
         {
-            if ( res_json.size() && a_result.has( "errorMessage" ))
+            if ( res_json.size() && a_result.asObject().has( "errorMessage" ))
             {
-                EXCEPT_PARAM( ID_BAD_REQUEST, a_result["errorMessage"].asString() );
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result.asObject().asString());
             }
             else
             {
@@ -287,10 +290,11 @@ DatabaseAPI::clientAuthenticateByToken( const std::string & a_token, Anon::AuthS
 }
 
 void
-DatabaseAPI::setAuthStatus( Anon::AuthStatusReply & a_reply, Value & a_result )
+DatabaseAPI::setAuthStatus( Anon::AuthStatusReply & a_reply, const Value & a_result )
 {
-    a_reply.set_uid( a_result["uid"].asString() );
-    a_reply.set_auth( a_result["authorized"].asBool());
+    const Value::Object & obj = a_result.asObject();
+    a_reply.set_uid( obj.getString( "uid" ));
+    a_reply.set_auth( obj.getBool( "authorized" ));
 }
 
 void
@@ -314,19 +318,17 @@ DatabaseAPI::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 
     dbGet( "usr/keys/get", {}, result );
 
-    Value::Object & obj = result[0].getObject();
+    const Value::Object & obj = result.asArray()[0].asObject();
 
-    Value::ObjectIter i = obj.find("pub_key");
-    if ( i == obj.end() )
+    if ( !obj.has( "pub_key" ))
         return false;
 
-    a_pub_key = i->second.asString();
+    a_pub_key = obj.asString();
 
-    i = obj.find("priv_key");
-    if ( i == obj.end() )
+    if ( !obj.has( "priv_key" ))
         return false;
 
-    a_priv_key = i->second.asString();
+    a_priv_key = obj.asString();
 
     return true;
 }
@@ -354,37 +356,17 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
     Value result;
     dbGet( "usr/token/get", {}, result );
 
-    try
-    {
-        Value::Object & obj = result.getObject();
-        Value::ObjectIter i;
-        
-        a_acc_tok = asString( obj, "access" );
+    TRANSLATE_BEGIN()
 
-        if (( i = obj.find("access")) == obj.end())
+    const Value::Object & obj = result.asObject();
+    
+    a_acc_tok = obj.getString( "access" );
+    a_ref_tok = obj.getString( "refresh" );
+    a_expires_in = (uint32_t) obj.getNumber( "expires_in" );
 
-        a_acc_tok = obj.at("access").asString();
-        a_ref_tok = obj.at("refresh").asString();
-        a_expires_in = (uint32_t)obj.at("expires_in").asNumber();
-    }
-    catch( TraceException & e )
-    {
-        EXCEPT_CONTEXT( e, "Invalid response from DB method usr/token/get" );
-        throw;
-    }
-    catch( exception & e )
-    {
-        EXCEPT_PARAM( e, "Invalid response from DB method usr/token/get: " << e.what() );
-    }
+    TRANSLATE_END( result )
 }
 
-/*
-bool
-DatabaseAPI::userGetAccessToken( std::string & a_acc_tok )
-{
-    return dbGetRaw( "usr/token/get/access", {}, a_acc_tok );
-}
-*/
 
 void
 DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
@@ -409,26 +391,25 @@ DatabaseAPI::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInf
     UserTokenInfo info;
     a_expiring_tokens.clear();
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = result.asArray();
+
+    a_expiring_tokens.reserve( arr.size() );
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            Value::Object & obj = i->getObject();
+        info.uid = obj.getString( "id" );
+        info.access_token = obj.getString( "access" );
+        info.refresh_token = obj.getString( "refresh" );
+        info.expiration = (uint32_t) obj.getNumber( "expiration" );
 
-            info.uid = obj.at("id").asString();
-            info.access_token = obj.at("access").asString();
-            info.refresh_token = obj.at("refresh").asString();
-            info.expiration = (uint32_t)obj.at("expiration").asNumber();
-
-            a_expiring_tokens.push_back( info );
-        }
+        a_expiring_tokens.push_back( info );
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( result )
 }
 
 void
@@ -576,19 +557,16 @@ DatabaseAPI::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Au
 
     dbGet( "usr/ep/get", {}, result );
 
-    try
-    {
-        Value::Array & arr = result.getArray();
+    TRANSLATE_BEGIN()
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            a_reply.add_ep( i->asString() );
-        }
-    }
-    catch(...)
+    const Value::Array & arr = result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        a_reply.add_ep( i->asString() );
     }
+
+    TRANSLATE_END( result )
 }
 
 void
@@ -610,74 +588,65 @@ DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, An
 }
 
 void
-DatabaseAPI::setUserData( UserDataReply & a_reply, Value & a_result )
+DatabaseAPI::setUserData( UserDataReply & a_reply, const Value & a_result )
 {
-    UserData*           user;
-    Value::ObjectIter   j;
+    UserData*               user;
+    Value::ArrayConstIter   k;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        if ( obj.has( "paging" ))
         {
-            Value::Object & obj = i->getObject();
+            const Value::Object & obj2 = obj.asObject();
 
-            if (( j = obj.find( "paging" )) != obj.end( ))
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            user = a_reply.add_user();
+            user->set_uid( obj.getString( "uid" ));
+            user->set_name_last( obj.getString( "name_last" ));
+            user->set_name_first( obj.getString( "name_first" ));
+
+            if ( obj.has( "email" ))
+                user->set_email( obj.asString() );
+
+            if ( obj.has( "options" ))
+                user->set_options( obj.asString() );
+
+            if ( obj.has( "is_admin" ))
+                user->set_is_admin( obj.asBool() );
+
+            if ( obj.has( "is_repo_admin" ))
+                user->set_is_repo_admin( obj.asBool() );
+
+            if ( obj.has( "idents" ))
             {
-                Value::Object & obj2 = j->second.getObject();
+                const Value::Array & arr2 = obj.asArray();
 
-                a_reply.set_offset( obj2.at( "off" ).asNumber( ));
-                a_reply.set_count( obj2.at( "cnt" ).asNumber( ));
-                a_reply.set_total( obj2.at( "tot" ).asNumber( ));
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                    user->add_ident( k->asString() );
             }
-            else
+
+            if ( obj.has( "allocs" ))
             {
-                user = a_reply.add_user();
-                user->set_uid( obj.at( "uid" ).asString( ));
-                user->set_name_last( obj.at( "name_last" ).asString( ));
-                user->set_name_first( obj.at( "name_first" ).asString( ));
+                const Value::Array & arr2 = obj.asArray();
 
-                if (( j = obj.find( "email" )) != obj.end( ))
-                    user->set_email( j->second.asString( ));
-
-                if (( j = obj.find( "options" )) != obj.end( ))
-                {
-                    user->set_options( j->second.asString( ));
-                }
-
-                if (( j = obj.find( "is_admin" )) != obj.end( ))
-                    user->set_is_admin( j->second.asBool( ));
-
-                if (( j = obj.find( "is_repo_admin" )) != obj.end( ))
-                    user->set_is_repo_admin( j->second.asBool( ));
-
-                if (( j = obj.find( "idents" )) != obj.end( ))
-                {
-                    Value::Array & arr2 = j->second.getArray();
-
-                    for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
-                    {
-                        user->add_ident( k->asString( ));
-                    }
-                }
-
-                if (( j = obj.find( "allocs" )) != obj.end( ))
-                {
-                    Value::Array & arr2 = j->second.getArray();
-
-                    for ( Value::ArrayIter k = arr2.begin(); k != arr2.end(); k++ )
-                    {
-                        setAllocData( user->add_alloc(), k->getObject() );
-                    }
-                }
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                    setAllocData( user->add_alloc(), k->asObject() );
             }
         }
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
@@ -815,8 +784,8 @@ DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::P
 
     dbGet( "prj/get_role", params, result );
 
-    Value::Object & obj = result.getObject();
-    a_reply.set_role((ProjectRole)(unsigned short) obj.at( "role" ).asNumber( ));
+    const Value::Object & obj = result.asObject();
+    a_reply.set_role((ProjectRole)(unsigned short) obj.getNumber( "role" ));
 }
 
 void
@@ -831,71 +800,61 @@ DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a
 
 
 void
-DatabaseAPI::setProjectData( ProjectDataReply & a_reply, Value & a_result )
+DatabaseAPI::setProjectData( ProjectDataReply & a_reply, const Value & a_result )
 {
-    ProjectData*        proj;
-    Value::ObjectIter   j;
-    Value::ArrayIter    k;
+    ProjectData*            proj;
+    Value::ArrayConstIter   k;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        proj = a_reply.add_proj();
+        proj->set_id( obj.getString( "id" ));
+        proj->set_title( obj.getString( "title" ));
+
+        if ( obj.has( "desc" ))
+            proj->set_desc( obj.asString() );
+
+        if ( obj.has( "owner" ))
+            proj->set_owner( obj.asString() );
+
+        if ( obj.has( "ct" ))
+            proj->set_ct( obj.asNumber() );
+
+        if ( obj.has( "ut" ))
+            proj->set_ut( obj.asNumber() );
+
+        if ( obj.has( "admins" ))
         {
-            Value::Object & obj = i->getObject();
+            const Value::Array & arr2 = obj.asArray();
 
-            proj = a_reply.add_proj();
-            proj->set_id( obj.at( "id" ).asString( ));
-            proj->set_title( obj.at( "title").asString() );
+            for ( k = arr2.begin(); k != arr2.end(); k++ )
+                proj->add_admin( k->asString() );
+        }
 
-            if (( j = obj.find("desc")) != obj.end( ))
-                proj->set_desc( j->second.asString( ));
+        if ( obj.has( "members" ))
+        {
+            const Value::Array & arr2 = obj.asArray();
 
-            if (( j = obj.find("owner")) != obj.end( ))
-                proj->set_owner( j->second.asString( ));
+            for ( k = arr2.begin(); k != arr2.end(); k++ )
+                proj->add_member( k->asString() );
+        }
 
-            if (( j = obj.find("ct")) != obj.end( ))
-                proj->set_ct( j->second.asNumber( ));
+        if ( obj.has( "allocs" ))
+        {
+            const Value::Array & arr2 = obj.asArray();
 
-            if (( j = obj.find("ut")) != obj.end( ))
-                proj->set_ut( j->second.asNumber( ));
-
-            if (( j = obj.find("admins")) != obj.end( ))
-            {
-                Value::Array & arr2 = j->second.getArray();
-
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    proj->add_admin( k->asString( ));
-                }
-            }
-
-            if (( j = obj.find("members")) != obj.end( ))
-            {
-                Value::Array & arr2 = j->second.getArray();
-
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    proj->add_member( k->asString( ));
-                }
-            }
-
-            if (( j = obj.find("allocs")) != obj.end( ))
-            {
-                Value::Array & arr2 = j->second.getArray();
-
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    setAllocData( proj->add_alloc(), k->getObject() );
-                }
-            }
+            for ( k = arr2.begin(); k != arr2.end(); k++ )
+                setAllocData( proj->add_alloc(), k->asObject() );
         }
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
@@ -1067,20 +1026,6 @@ DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request
     setRecordData( a_reply, result );
 }
 
-/*
-void
-DatabaseAPI::recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext )
-{
-    libjson::Value result;
-
-    string body = "{\"id\":\"" + a_data_id + "\",\"size\":" + to_string(a_file_size) + ",\"source\":\"" + a_src_path + "\",\"dt\":" + to_string(a_mod_time);
-    if ( a_ext )
-        body += ",\"ext\":\"" + *a_ext + "\",\"ext_auto\":false";
-    body += "}";
-
-    dbPost( "dat/update/post_put", {}, &body, result );
-}
-*/
 
 void
 DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
@@ -1119,19 +1064,14 @@ DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::Re
 
     dbPost( "dat/export", {}, &body, result );
 
-    try
-    {
-        Value::Array & arr = result.getArray();
+    TRANSLATE_BEGIN()
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            a_reply.add_record( i->asString() );
-        }
-    }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+    const Value::Array & arr = result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+        a_reply.add_record( i->asString() );
+
+    TRANSLATE_END( result )
 }
 
 void
@@ -1181,41 +1121,6 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
     setListingDataReply( a_reply, result );
 }
 
-/*
-void
-DatabaseAPI::recordUpdateDataMoveInit( const libjson::Value & a_rec_ids, const std::string & a_new_repo_id, const std::string & a_new_owner_id, const std::string & a_new_coll_id )
-{
-    string body = "{\"ids\":" + a_rec_ids.toString() + ",\"new_repo_id\":\"" + a_new_repo_id + "\",\"new_owner_id\":\"" + a_new_owner_id + "\",\"new_coll_id\":\"" + a_new_coll_id + "\"}";
-
-    DL_DEBUG("recordUpdateDataMoveInit" << body);
-
-    Value result;
-
-    dbPost( "dat/update/move_init", {}, &body, result );
-}
-
-void
-DatabaseAPI::recordUpdateDataMoveRevert( const libjson::Value & a_rec_ids )
-{
-    string body = "{\"ids\":" + a_rec_ids.toString() + "}";
-
-    Value result;
-
-    dbPost( "dat/update/move_revert", {}, &body, result );
-}
-
-void
-DatabaseAPI::recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids )
-{
-    string body = "{\"ids\":" + a_rec_ids.toString() + "}";
-
-    DL_DEBUG("recordUpdateDataMoveFinalize" << body);
-
-    Value result;
-
-    dbPost( "dat/update/move_fini", {}, &body, result );
-}
-*/
 
 void
 DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Auth::RecordDataReply & a_reply )
@@ -1229,141 +1134,116 @@ DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Auth::RecordDataRe
 
 
 void
-DatabaseAPI::setRecordData( RecordDataReply & a_reply, Value & a_result )
+DatabaseAPI::setRecordData( RecordDataReply & a_reply, const Value & a_result )
 {
     RecordData *        rec;
     DependencyData *    deps;
-    Value::ObjectIter   j, m;
-    Value::ArrayIter    i, k;
+    Value::ObjectConstIter   j, m;
+    Value::ArrayConstIter    i, k;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Object & res_obj = a_result.asObject();
+
+    if ( res_obj.has( "results" ))
     {
-        if (( j = a_result.find( "results" )) != a_result.end() )
+        const Value::Array & arr = res_obj.asArray();
+
+        for ( i = arr.begin(); i != arr.end(); i++ )
         {
-            DL_DEBUG("Have results");
+            const Value::Object & obj = i->asObject();
 
-            Value::Array & arr = j->second.getArray();
+            rec = a_reply.add_data();
+            rec->set_id( obj.getString( "id" ));
+            rec->set_title( obj.getString( "title" ));
 
-            for ( i = arr.begin(); i != arr.end(); i++ )
+            if ( obj.has( "alias" ) && !obj.value().isNull() )
+                rec->set_alias( obj.asString() );
+
+            if ( obj.has( "owner" ))
+                rec->set_owner( obj.asString() );
+
+            if ( obj.has( "creator" ))
+                rec->set_creator( obj.asString() );
+
+            if ( obj.has( "desc" ))
+                rec->set_desc( obj.asString() );
+
+            if ( obj.has( "keyw" ))
+                rec->set_keyw( obj.asString() );
+
+            if ( obj.has( "doi" ))
+                rec->set_doi( obj.asString() );
+
+            if ( obj.has( "data_url" ))
+                rec->set_data_url( obj.asString() );
+
+            if ( obj.has( "md" ))
+                rec->set_metadata( obj.value().toString() );
+
+            if ( obj.has( "repo_id" ))
+                rec->set_repo_id( obj.asString() );
+
+            if ( obj.has( "size" ))
+                rec->set_size( obj.asNumber() );
+
+            if ( obj.has( "source" ))
+                rec->set_source( obj.asString() );
+
+            if ( obj.has( "ext" ))
+                rec->set_ext( obj.asString() );
+
+            if ( obj.has( "ext_auto" ))
+                rec->set_ext_auto( obj.asBool() );
+
+            if ( obj.has( "ct" ))
+                rec->set_ct( obj.asNumber() );
+
+            if ( obj.has( "ut" ))
+                rec->set_ut( obj.asNumber() );
+
+            if ( obj.has( "dt" ))
+                rec->set_dt( obj.asNumber() );
+
+            if ( obj.has( "locked" ))
+                rec->set_locked( obj.asBool() );
+
+            if ( obj.has( "parent_id" ))
+                rec->set_parent_id( obj.asString() );
+
+            if ( obj.has( "notes" ))
+                rec->set_notes( obj.asNumber() );
+
+            if ( obj.has( "deps" ))
             {
-                Value::Object & obj = i->getObject();
+                const Value::Array & arr2 = obj.asArray();
 
-                DL_DEBUG("res 1");
-
-                rec = a_reply.add_data();
-                rec->set_id( obj.at( "id" ).asString( ));
-                rec->set_title( obj.at( "title" ).asString( ));
-
-                DL_DEBUG("res 2");
-
-                if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
-                    rec->set_alias( j->second.asString( ));
-
-                if (( j = obj.find( "owner" )) != obj.end( ))
-                    rec->set_owner( j->second.asString( ));
-
-                if (( j = obj.find( "creator" )) != obj.end( ))
-                    rec->set_creator( j->second.asString( ));
-
-                if (( j = obj.find( "desc" )) != obj.end( ))
-                    rec->set_desc( j->second.asString( ));
-
-                DL_DEBUG("res 3");
-
-                if (( j = obj.find( "keyw" )) != obj.end( ))
-                    rec->set_keyw( j->second.asString( ));
-
-                if (( j = obj.find( "doi" )) != obj.end( ))
-                    rec->set_doi( j->second.asString( ));
-
-                if (( j = obj.find( "data_url" )) != obj.end( ))
-                    rec->set_data_url( j->second.asString( ));
-
-                if (( j = obj.find( "md" )) != obj.end( ))
-                    rec->set_metadata( j->second.toString( ));
-
-                if (( j = obj.find( "repo_id" )) != obj.end( ))
-                    rec->set_repo_id( j->second.asString( ));
-
-                DL_DEBUG("res 4");
-
-                if (( j = obj.find( "size" )) != obj.end( ))
-                    rec->set_size( j->second.asNumber( ));
-
-                if (( j = obj.find( "source" )) != obj.end( ))
-                    rec->set_source( j->second.asString( ));
-
-                if (( j = obj.find( "ext" )) != obj.end( ))
-                    rec->set_ext( j->second.asString( ));
-
-                if (( j = obj.find( "ext_auto" )) != obj.end( ))
-                    rec->set_ext_auto( j->second.asBool( ));
-
-                if (( j = obj.find( "ct" )) != obj.end( ))
-                    rec->set_ct( j->second.asNumber( ));
-
-                if (( j = obj.find( "ut" )) != obj.end( ))
-                    rec->set_ut( j->second.asNumber( ));
-
-                DL_DEBUG("res 5");
-
-                if (( j = obj.find( "dt" )) != obj.end( ))
-                    rec->set_dt( j->second.asNumber( ));
-
-                if (( j = obj.find( "locked" )) != obj.end( ))
-                    rec->set_locked( j->second.asBool( ));
-
-                if (( j = obj.find( "parent_id" )) != obj.end( ))
-                    rec->set_parent_id( j->second.asString( ));
-
-                if (( j = obj.find( "notes" )) != obj.end( ))
-                    rec->set_notes( j->second.asNumber( ));
-
-                DL_DEBUG("res 6");
-
-                if (( j = obj.find( "deps" )) != obj.end( ))
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
                 {
-                    DL_DEBUG("have deps");
+                    const Value::Object & obj2 = k->asObject();
 
-                    Value::Array & arr2 = j->second.getArray();
+                    deps = rec->add_deps();
 
-                    for ( k = arr2.begin(); k != arr2.end(); k++ )
-                    {
-                        Value::Object & obj2 = k->getObject();
+                    deps->set_id( obj2.getString( "id" ));
+                    deps->set_type((DependencyType)(unsigned short) obj2.getNumber( "type" ));
+                    deps->set_dir((DependencyDir)(unsigned short) obj2.getNumber( "dir" ));
 
-                        deps = rec->add_deps();
-                DL_DEBUG("res dep 1");
-                        deps->set_id( obj2.at( "id" ).asString());
-                        deps->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
-                        deps->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
-                DL_DEBUG("res dep 2");
-                        if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
-                            deps->set_alias( m->second.asString() );
-                    }
+                    if ( obj2.has( "alias" ) && !obj2.value().isNull( ))
+                        deps->set_alias( obj2.asString() );
                 }
             }
         }
-
-        if (( j = a_result.find( "updates" )) != a_result.end() )
-        {
-            DL_DEBUG("Have updates");
-
-            Value::Array & arr = j->second.getArray();
-
-            for ( i = arr.begin(); i != arr.end(); i++ )
-            {
-                Value::Object & obj = i->getObject();
-
-                setListingData( a_reply.add_update(), obj );
-
-                DL_DEBUG("Updated record: " << obj["title"].asString() );
-            }
-        }
     }
-    catch(...)
+
+    if ( res_obj.has( "updates" ))
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        const Value::Array & arr = res_obj.asArray();
+
+        for ( i = arr.begin(); i != arr.end(); i++ )
+            setListingData( a_reply.add_update(), i->asObject() );
     }
+
+    TRANSLATE_END( a_result )
 }
 
 
@@ -1374,7 +1254,9 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
 
     dbGet( "dat/path", {{"id",a_request.id()},{"domain",a_request.domain()}}, result );
 
-    a_reply.set_path( result["path"].asString() );
+    const Value::Object & obj = result.asObject();
+
+    a_reply.set_path( obj.getString( "path" ));
 }
 
 
@@ -1566,201 +1448,179 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
 
     a_reply.set_id( a_request.id() );
     a_reply.set_item( a_request.item() );
-    a_reply.set_offset( result["offset"].asNumber() );
+    a_reply.set_offset( result.asObject().getNumber( "offset" ));
 }
 
 void
-DatabaseAPI::setCollData( CollDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setCollData( CollDataReply & a_reply, const libjson::Value & a_result )
 {
     CollData* coll;
-    Value::ObjectIter j;
+    Value::ObjectConstIter j;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const  Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            Value::Object & obj = i->getObject();
+        coll = a_reply.add_coll();
+        coll->set_id( obj.getString( "id" ));
+        coll->set_title( obj.getString( "title" ));
 
-            coll = a_reply.add_coll();
-            coll->set_id( obj.at( "id" ).asString( ));
-            coll->set_title( obj.at( "title" ).asString( ));
+        if ( obj.has( "desc" ))
+            coll->set_desc( obj.asString() );
 
-            if (( j = obj.find( "desc" )) != obj.end( ))
-                coll->set_desc( j->second.asString( ));
+        if ( obj.has( "topic" ))
+            coll->set_topic( obj.asString() );
 
-            if (( j = obj.find( "topic" )) != obj.end( ))
-                coll->set_topic( j->second.asString( ));
+        if ( obj.has( "alias" ) && !obj.value().isNull() )
+            coll->set_alias( obj.asString() );
 
-            if (( j = obj.find( "alias" )) != obj.end( ) && !j->second.isNull( ))
-                coll->set_alias( j->second.asString( ));
+        if ( obj.has( "ct" ))
+            coll->set_ct( obj.asNumber() );
 
-            if (( j = obj.find( "ct" )) != obj.end( ))
-                coll->set_ct( j->second.asNumber( ));
+        if ( obj.has( "ut" ))
+            coll->set_ut( obj.asNumber() );
 
-            if (( j = obj.find( "ut" )) != obj.end( ))
-                coll->set_ut( j->second.asNumber( ));
+        if ( obj.has( "parent_id" ))
+            coll->set_parent_id( obj.asString() );
 
-            if (( j = obj.find( "parent_id" )) != obj.end( ))
-                coll->set_parent_id( j->second.asString( ));
+        if ( obj.has( "owner" ))
+            coll->set_owner( obj.asString() );
 
-            if (( j = obj.find( "owner" )) != obj.end( ))
-                coll->set_owner( j->second.asString( ));
-
-            if (( j = obj.find( "notes" )) != obj.end( ))
-                coll->set_notes( j->second.asNumber( ));
-        }
+        if ( obj.has( "notes" ))
+            coll->set_notes( obj.asNumber() );
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
-DatabaseAPI::setCollPathData( CollPathReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setCollPathData( CollPathReply & a_reply, const libjson::Value & a_result )
 {
     PathData *          path;
     ListingData *       item;
-    Value::ArrayIter    j;
-    Value::ObjectIter   k;
+    Value::ArrayConstIter    j;
+    Value::ObjectConstIter   k;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Array & arr2 = i->asArray();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        path = a_reply.add_path();
+
+        for ( j = arr2.begin(); j != arr2.end(); j++ )
         {
-            Value::Array & arr2 = i->getArray();
+            const Value::Object & obj = j->asObject();
 
-            path = a_reply.add_path();
+            item = path->add_item();
+            item->set_id( obj.getString( "id" ));
+            item->set_title( obj.getString( "title" ));
 
-            for ( j = arr2.begin(); j != arr2.end(); j++ )
-            {
-                Value::Object & obj = j->getObject();
+            if ( obj.has( "alias" ) && !obj.value().isNull( ))
+                item->set_alias( obj.asString() );
 
-                item = path->add_item();
-                item->set_id( obj.at( "id" ).asString( ));
-                item->set_title( obj.at( "title" ).asString( ));
-
-                if (( k = obj.find( "alias" )) != obj.end() && !k->second.isNull( ))
-                    item->set_alias( k->second.asString() );
-
-                if (( k = obj.find( "owner" )) != obj.end( ))
-                    item->set_owner( k->second.asString() );
-            }
+            if ( obj.has( "owner" ))
+                item->set_owner( obj.asString() );
         }
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
-DatabaseAPI::setListingDataReply( ListingReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setListingDataReply( ListingReply & a_reply, const libjson::Value & a_result )
 {
-    Value::ObjectIter   j;
+    Value::ObjectConstIter   j;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        if ( obj.has( "paging" ))
         {
-            Value::Object & obj = i->getObject();
+            const Value::Object & obj2 = obj.asObject();
 
-            if (( j = obj.find( "paging" )) != obj.end( ))
-            {
-                Value::Object & obj2 = j->second.getObject();
-
-                a_reply.set_offset( obj2.at( "off" ).asNumber( ));
-                a_reply.set_count( obj2.at( "cnt" ).asNumber( ));
-                a_reply.set_total( obj2.at( "tot" ).asNumber( ));
-            }
-            else
-            {
-                setListingData( a_reply.add_item(), obj );
-            }
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            setListingData( a_reply.add_item(), obj );
         }
     }
-    catch( exception & e )
-    {
-        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service. " << e.what( ));
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
-DatabaseAPI::setListingData( ListingData * a_item, Value::Object & a_obj )
+DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
 {
-    try
+    if ( a_obj.has( "id" ))
+        a_item->set_id( a_obj.asString() );
+    else if ( a_obj.has( "_id" ))
+        a_item->set_id( a_obj.asString() );
+
+    a_item->set_title( a_obj.getString( "title" ));
+
+    if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
+        a_item->set_alias( a_obj.asString() );
+
+    if ( a_obj.has( "owner" ) && !a_obj.value().isNull( ))
+        a_item->set_owner( a_obj.asString() );
+
+    if ( a_obj.has( "creator" ) && !a_obj.value().isNull( ))
+        a_item->set_creator( a_obj.asString() );
+
+    if ( a_obj.has( "doi" ) && !a_obj.value().isNull( ))
+        a_item->set_doi( a_obj.asString() );
+
+    if ( a_obj.has( "url" ) && !a_obj.value().isNull( ))
+        a_item->set_url( a_obj.asString() );
+
+    if ( a_obj.has( "size" ) && !a_obj.value().isNull( ))
+        a_item->set_size( a_obj.asNumber() );
+
+    if ( a_obj.has( "notes" ))
+        a_item->set_notes( a_obj.asNumber() );
+
+    if ( a_obj.has( "locked" ) && !a_obj.value().isNull( ))
+        a_item->set_locked( a_obj.asBool() );
+
+    if ( a_obj.has( "gen" ))
+        a_item->set_gen( a_obj.asNumber() );
+
+    if ( a_obj.has( "deps" ))
     {
-        Value::ObjectIter   j;
-        Value::ArrayIter    k;
+        const Value::Array &    arr2 = a_obj.asArray();
+        DependencyData *        dep;
 
-        if (( j = a_obj.find( "id" )) != a_obj.end( ))
-            a_item->set_id( j->second.asString( ));
-        else if (( j = a_obj.find( "_id" )) != a_obj.end( ))
-            a_item->set_id( j->second.asString( ));
-
-        a_item->set_title( a_obj.at( "title" ).asString( ));
-
-        if (( j = a_obj.find( "alias" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_alias( j->second.asString( ));
-
-        if (( j = a_obj.find( "owner" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_owner( j->second.asString( ));
-
-        if (( j = a_obj.find( "creator" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_creator( j->second.asString( ));
-
-        if (( j = a_obj.find( "doi" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_doi( j->second.asString( ));
-
-        if (( j = a_obj.find( "url" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_url( j->second.asString( ));
-
-        if (( j = a_obj.find( "size" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_size( Value::asNumber( j ));
-
-            //a_item->set_size( j->second.asNumber( ));
-
-        if (( j = a_obj.find( "notes" )) != a_obj.end( ))
-            a_item->set_notes( Value::asNumber( j ));
-
-        if (( j = a_obj.find( "locked" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_item->set_locked( j->second.asBool( ));
-
-        if (( j = a_obj.find( "gen" )) != a_obj.end( ))
-            a_item->set_gen( Value::asNumber( j ));
-
-        if (( j = a_obj.find( "deps" )) != a_obj.end( ))
+        for ( Value::ArrayConstIter i = arr2.begin(); i != arr2.end(); i++ )
         {
-            Value::ObjectIter   m;
-            DependencyData *    dep;
-            Value::Array &      arr2 = j->second.getArray();
+            const Value::Object & obj2 = i->asObject();
 
-            for ( k = arr2.begin(); k != arr2.end(); k++ )
-            {
-                Value::Object & obj2 = k->getObject();
+            dep = a_item->add_dep();
+            dep->set_id( obj2.getString( "id" ));
+            dep->set_type((DependencyType)(unsigned short) obj2.getNumber( "type" ));
+            dep->set_dir((DependencyDir)(unsigned short) obj2.getNumber( "dir" ));
 
-                dep = a_item->add_dep();
-                dep->set_id( obj2.at( "id" ).asString());
-                dep->set_type((DependencyType)(unsigned short) obj2.at( "type" ).asNumber());
-                dep->set_dir((DependencyDir)(unsigned short) obj2.at( "dir" ).asNumber());
+            if ( obj2.has( "alias" ) && !obj2.value().isNull() )
+                dep->set_alias( obj2.asString() );
 
-                if (( m = obj2.find( "alias" )) != obj2.end( ) && !m->second.isNull( ))
-                    dep->set_alias( m->second.asString() );
-
-                if (( m = obj2.find( "notes" )) != obj2.end( ))
-                    dep->set_notes( m->second.asNumber( ));
-            }
+            if ( obj2.has( "notes" ))
+                dep->set_notes( obj2.asNumber() );
         }
-    }
-    catch( exception & e )
-    {
-        EXCEPT_PARAM( 1, "setListingData - " << e.what() );
     }
 }
 
@@ -1861,47 +1721,43 @@ DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingR
 }
 
 void
-DatabaseAPI::setQueryData( QueryDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_result )
 {
     QueryData *         qry;
-    Value::ObjectIter   j;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            Value::Object & obj = i->getObject();
+        qry = a_reply.add_query();
+        qry->set_id( obj.getString( "id" ));
+        qry->set_title( obj.getString( "title" ));
+        qry->set_query( obj.getString( "query" ));
 
-            qry = a_reply.add_query();
-            qry->set_id( obj.at( "id" ).asString() );
-            qry->set_title( obj.at( "title" ).asString() );
-            qry->set_query( obj.at( "query" ).asString() );
+        if ( obj.has( "owner" ))
+            qry->set_owner( obj.asString() );
 
-            if (( j = obj.find( "owner" )) != obj.end( ))
-                qry->set_owner( j->second.asString( ));
+        if ( obj.has( "ct" ))
+            qry->set_ct( obj.asNumber() );
 
-            if (( j = obj.find( "ct" )) != obj.end( ))
-                qry->set_ct( j->second.asNumber( ));
+        if ( obj.has( "ut" ))
+            qry->set_ut( obj.asNumber() );
 
-            if (( j = obj.find( "ut" )) != obj.end( ))
-                qry->set_ut( j->second.asNumber( ));
+        if ( obj.has( "use_owner" ) && !obj.value().isNull() )
+            qry->set_use_owner( obj.asBool() );
 
-            if (( j = obj.find( "use_owner" )) != obj.end( ) && !j->second.isNull( ))
-                qry->set_use_owner( j->second.asBool( ));
+        if ( obj.has( "use_sh_usr" ) && !obj.value().isNull() )
+            qry->set_use_sh_usr( obj.asBool() );
 
-            if (( j = obj.find( "use_sh_usr" )) != obj.end( ) && !j->second.isNull( ))
-                qry->set_use_sh_usr( j->second.asBool( ));
-
-            if (( j = obj.find( "use_sh_prj" )) != obj.end( ) && !j->second.isNull( ))
-                qry->set_use_sh_prj( j->second.asBool( ));
-        }
+        if ( obj.has( "use_sh_prj" ) && !obj.value().isNull() )
+            qry->set_use_sh_prj( obj.asBool() );
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 
@@ -1963,76 +1819,30 @@ DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a
     setListingDataReply( a_reply, result );
 }
 
-/*void
-DatabaseAPI::aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply )
-{
-    (void)a_request;
-    Value result;
-
-    dbGet( "acl/by_user", {}, result );
-
-    setUserData( a_reply, result );
-}
-
 void
-DatabaseAPI::aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply )
-{
-    Value result;
-
-    dbGet( "acl/by_user/list", {{"owner",a_request.owner()}}, result );
-
-    setListingDataReply( a_reply, result );
-}
-
-void
-DatabaseAPI::aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply )
-{
-    (void)a_request;
-    Value result;
-
-    dbGet( "acl/by_proj", {}, result );
-
-    setProjectData( a_reply, result );
-}
-
-void
-DatabaseAPI::aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply )
-{
-    Value result;
-
-    dbGet( "acl/by_proj/list", {{"owner",a_request.owner()}}, result );
-
-    setListingDataReply( a_reply, result );
-}*/
-
-void
-DatabaseAPI::setACLData( ACLDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setACLData( ACLDataReply & a_reply, const libjson::Value & a_result )
 {
     ACLRule *           rule;
-    Value::ObjectIter   j;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            Value::Object & obj = i->getObject();
+        rule = a_reply.add_rule();
+        rule->set_id( obj.getString( "id" ));
 
-            rule = a_reply.add_rule();
-            rule->set_id( obj.at( "id" ).asString( ));
+        if ( obj.has( "grant" ))
+            rule->set_grant( obj.asNumber() );
 
-            if (( j = obj.find( "grant" )) != obj.end( ))
-                rule->set_grant( j->second.asNumber( ));
-
-            if (( j = obj.find( "inhgrant" )) != obj.end( ))
-                rule->set_inhgrant( j->second.asNumber( ));
-        }
+        if ( obj.has( "inhgrant" ))
+            rule->set_inhgrant( obj.asNumber() );
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 
@@ -2154,47 +1964,41 @@ DatabaseAPI::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDat
 }
 
 void
-DatabaseAPI::setGroupData( GroupDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setGroupData( GroupDataReply & a_reply, const libjson::Value & a_result )
 {
-    GroupData *         group;
-    Value::ObjectIter   j;
-    Value::ArrayIter    k;
+    GroupData *             group;
+    Value::ArrayConstIter   j;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        group = a_reply.add_group();
+        group->set_gid( obj.getString( "gid" ));
+
+        if ( obj.has( "uid" ) && !obj.value().isNull() )
+            group->set_uid( obj.asString() );
+
+        if ( obj.has( "title" ) && !obj.value().isNull() )
+            group->set_title( obj.asString() );
+
+        if ( obj.has( "desc" ) && !obj.value().isNull() )
+            group->set_desc( obj.asString() );
+
+        if ( obj.has( "members" ))
         {
-            Value::Object & obj = i->getObject();
+            const Value::Array & arr2 = obj.asArray();
 
-            group = a_reply.add_group();
-            group->set_gid( obj.at( "gid" ).asString( ));
-
-            if (( j = obj.find( "uid" )) != obj.end() && !j->second.isNull( ))
-                group->set_uid( j->second.asString( ));
-
-            if (( j = obj.find( "title" )) != obj.end() && !j->second.isNull( ))
-                group->set_title( j->second.asString( ));
-
-            if (( j = obj.find( "desc" )) != obj.end() && !j->second.isNull( ))
-                group->set_desc( j->second.asString( ));
-
-            if (( j = obj.find( "members" )) != obj.end( ))
-            {
-                Value::Array & arr2 = j->second.getArray();
-
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    group->add_member( k->asString( ));
-                }
-            }
+            for ( j = arr2.begin(); j != arr2.end(); j++ )
+                group->add_member( j->asString() );
         }
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
@@ -2341,95 +2145,85 @@ DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::Re
 
     dbGet( "repo/calc_size", {{"recurse",a_request.recurse()?"true":"false"},{"items",items}}, result );
 
-    AllocStatsData * stats;
+    TRANSLATE_BEGIN()
 
-    try
-    {
-        Value::Array & arr = result.getArray();
+    const Value::Array & arr = result.asArray();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            stats = a_reply.add_stats();
-            setAllocStatsData( *i, *stats );
-        }
-    }
-    catch(...)
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        setAllocStatsData( *a_reply.add_stats(), i->asObject() );
     }
+
+    TRANSLATE_END( result )
 }
 
 
 void
-DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, libjson::Value & a_result )
+DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, const libjson::Value & a_result )
 {
     if ( !a_reply && !a_repos )
         EXCEPT( ID_INTERNAL_ERROR, "Missing parameters" );
 
     RepoData *          repo;
-    Value::ObjectIter   j;
-    Value::ArrayIter    k;
+    Value::ArrayConstIter    k;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        Value::Array & arr = a_result.getArray();
+        const Value::Object & obj = i->asObject();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
+        if ( a_reply )
+            repo = a_reply->add_repo();
+        else
+            repo = new RepoData();
+
+        repo->set_id( obj.getString( "id" ));
+
+        if ( obj.has( "title" ))
+            repo->set_title( obj.asString() );
+
+        if ( obj.has( "desc" ))
+            repo->set_desc( obj.asString() );
+
+        if ( obj.has( "capacity" ))
+            repo->set_capacity( obj.asNumber() ); // TODO Needs to be 64 bit integer (string in JSON)
+
+        if ( obj.has( "address" ))
+            repo->set_address( obj.asString() );
+
+        if ( obj.has( "endpoint" ))
+            repo->set_endpoint( obj.asString() );
+
+        if ( obj.has( "pub_key" ))
+            repo->set_pub_key( obj.asString() );
+
+        if ( obj.has( "path" ))
+            repo->set_path( obj.asString() );
+
+        if ( obj.has( "exp_path" ))
+            repo->set_exp_path( obj.asString() );
+
+        if ( obj.has( "domain" ) && !obj.value().isNull( ))
+            repo->set_domain( obj.asString() );
+
+        if ( obj.has( "admins" ))
         {
-            Value::Object & obj = i->getObject();
+            const Value::Array & arr2 = obj.asArray();
 
-            if ( a_reply )
-                repo = a_reply->add_repo();
-            else
-                repo = new RepoData();
-
-            repo->set_id( obj.at( "id" ).asString( ));
-
-            if (( j = obj.find( "title" )) != obj.end( ))
-                repo->set_title( j->second.asString( ));
-
-            if (( j = obj.find( "desc" )) != obj.end( ))
-                repo->set_desc( j->second.asString( ));
-
-            if (( j = obj.find( "capacity" )) != obj.end( ))
-                repo->set_capacity( j->second.asNumber( )); // TODO Needs to be 64 bit integer (string in JSON)
-
-            if (( j = obj.find( "address" )) != obj.end( ))
-                repo->set_address( j->second.asString( ));
-
-            if (( j = obj.find( "endpoint" )) != obj.end( ))
-                repo->set_endpoint( j->second.asString( ));
-
-            if (( j = obj.find( "pub_key" )) != obj.end( ))
-                repo->set_pub_key( j->second.asString( ));
-
-            if (( j = obj.find( "path" )) != obj.end( ))
-                repo->set_path( j->second.asString( ));
-
-            if (( j = obj.find( "exp_path" )) != obj.end( ))
-                repo->set_exp_path( j->second.asString( ));
-
-            if (( j = obj.find( "domain" )) != obj.end() && !j->second.isNull( ))
-                repo->set_domain( j->second.asString( ));
-
-            if (( j = obj.find( "admins" )) != obj.end( ))
+            for ( k = arr2.begin(); k != arr2.end(); k++ )
             {
-                Value::Array & arr2 = j->second.getArray();
-
-                for ( k = arr2.begin(); k != arr2.end(); k++ )
-                {
-                    repo->add_admin( k->asString( ));
-                }
+                repo->add_admin( k->asString() );
             }
-
-            if ( a_repos )
-                a_repos->push_back( repo );
         }
+
+        if ( a_repos )
+            a_repos->push_back( repo );
     }
-    catch(...)
-    {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
-    }
+
+    TRANSLATE_END( a_result )
 }
 
 void
@@ -2471,47 +2265,39 @@ DatabaseAPI::repoListObjectAllocations( const Auth::RepoListObjectAllocationsReq
 
 
 void
-DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, const libjson::Value & a_result )
 {
-    //Value::ArrayIter    k;
+    TRANSLATE_BEGIN()
 
-    try
-    {
-        Value::Array & arr = a_result.getArray();
+    const Value::Array & arr = a_result.asArray();
 
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            setAllocData( a_reply.add_alloc(), i->getObject() );
-        }
-    }
-    catch(...)
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        EXCEPT( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service" );
+        setAllocData( a_reply.add_alloc(), i->asObject() );
     }
+
+    TRANSLATE_END( a_result )
 }
 
 
 void
-DatabaseAPI::setAllocData( AllocData * a_alloc, libjson::Value::Object & a_obj )
+DatabaseAPI::setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj )
 {
-    a_alloc->set_repo( a_obj.at( "repo" ).asString( ));
-    a_alloc->set_data_limit( a_obj.at( "data_limit" ).asNumber( ));
-    a_alloc->set_data_size( a_obj.at( "data_size" ).asNumber( ));
-    a_alloc->set_rec_limit( a_obj.at( "rec_limit" ).asNumber( ));
-    a_alloc->set_rec_count( a_obj.at( "rec_count" ).asNumber( ));
-    a_alloc->set_path( a_obj.at( "path" ).asString( ));
+    a_alloc->set_repo( a_obj.getString( "repo" ));
+    a_alloc->set_data_limit( a_obj.getNumber( "data_limit" ));
+    a_alloc->set_data_size( a_obj.getNumber( "data_size" ));
+    a_alloc->set_rec_limit( a_obj.getNumber( "rec_limit" ));
+    a_alloc->set_rec_count( a_obj.getNumber( "rec_count" ));
+    a_alloc->set_path( a_obj.getString( "path" ));
 
-    Value::ObjectIter j = a_obj.find( "is_def" );
-    if ( j != a_obj.end( ))
-        a_alloc->set_is_def( j->second.asBool( ));
+    if ( a_obj.has( "is_def" ))
+        a_alloc->set_is_def( a_obj.asBool() );
 
-    if (( j = a_obj.find( "id" )) != a_obj.end( ))
-        a_alloc->set_id( j->second.asString( ));
+    if ( a_obj.has( "id" ))
+        a_alloc->set_id( a_obj.asString() );
 
-    if (( j = a_obj.find( "stats" )) != a_obj.end( ))
-    {
-        setAllocStatsData( j->second, *a_alloc->mutable_stats( ));
-    }
+    if ( a_obj.has( "stats" ))
+        setAllocStatsData( *a_alloc->mutable_stats( ), a_obj );
 }
 
 void
@@ -2539,35 +2325,28 @@ DatabaseAPI::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_req
 
     dbGet( "repo/alloc/stats", params, result );
 
-    setAllocStatsData( a_reply, result );
+    TRANSLATE_BEGIN()
+
+    setAllocStatsData( *a_reply.mutable_alloc(), result.asObject() );
+
+    TRANSLATE_END( result )
 }
 
-void
-DatabaseAPI::setAllocStatsData( Auth::RepoAllocationStatsReply & a_reply, libjson::Value & a_result )
-{
-    AllocStatsData * stats = a_reply.mutable_alloc();
-    setAllocStatsData( a_result, *stats );
-}
 
 void
-DatabaseAPI::setAllocStatsData( libjson::Value & a_value, AllocStatsData & a_stats )
+DatabaseAPI::setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_obj )
 {
-    Value::Object & obj = a_value.getObject();
+    a_stats.set_repo( a_obj.getString( "repo" ));
+    a_stats.set_rec_count( a_obj.getNumber( "rec_count" ));
+    a_stats.set_file_count( a_obj.getNumber( "file_count" ));
+    a_stats.set_data_size( a_obj.getNumber( "data_size" ));
 
-    a_stats.set_repo( obj.at( "repo" ).asString( ));
-    a_stats.set_rec_count( obj.at( "rec_count" ).asNumber( ));
-    a_stats.set_file_count( obj.at( "file_count" ).asNumber( ));
-    a_stats.set_data_size( obj.at( "data_size" ).asNumber( ));
-
-    Value::ObjectIter i = obj.find( "histogram" );
-    if ( i != obj.end( ))
+    if ( a_obj.has( "histogram" ))
     {
-        Value::Array & arr = i->second.getArray();
+        const Value::Array & arr = a_obj.asArray();
 
-        for ( Value::ArrayIter j = arr.begin(); j != arr.end(); j++ )
-        {
-            a_stats.add_histogram( j->asNumber( ));
-        }
+        for ( Value::ArrayConstIter j = arr.begin(); j != arr.end(); j++ )
+            a_stats.add_histogram( j->asNumber() );
     }
 }
 
@@ -2606,7 +2385,11 @@ DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & 
 
     dbGet( "authz/perm/check", params, result );
 
-    a_reply.set_granted( result["granted"].asBool( ));
+    TRANSLATE_BEGIN()
+
+    a_reply.set_granted( result.asObject().getBool( "granted" ));
+
+    TRANSLATE_END( result )
 }
 
 void
@@ -2620,7 +2403,11 @@ DatabaseAPI::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_repl
 
     dbGet( "authz/perm/get", params, result );
 
-    a_reply.set_granted( result["granted"].asNumber( ));
+    TRANSLATE_BEGIN()
+
+    a_reply.set_granted( result.asObject().getNumber( "granted" ));
+
+    TRANSLATE_END( result )
 }
 
 void
@@ -2652,47 +2439,6 @@ DatabaseAPI::topicList( const Auth::TopicListRequest & a_request, Auth::ListingR
     setListingDataReply( a_reply, result );
 }
 
-/*
-string parseTopic( const string & a_topic )
-{
-    string res = "[";
-    string::const_iterator c = a_topic.begin(), p = c;
-
-    for ( ; c != a_topic.end(); ++c )
-    {
-        // Check for valid chars
-        if ( *c == '.' )
-        {
-            if ( c == p )
-                EXCEPT( 1, "Invalid topic" );
-            if ( p != a_topic.begin() )
-                res.append(",\"");
-            else
-                res.append("\"");
-            res.append( p, c );
-            res.append("\"");
-            p = c;
-            p++;
-        }
-        else if ( !isalpha( *c ) && !isdigit( *c ) && *c != '-' )
-            EXCEPT( 1, "Invalid topic" );
-    }
-
-    if ( c == p )
-        EXCEPT( 1, "Invalid topic" );
-
-    if ( p != a_topic.begin() )
-        res.append(",\"");
-    else
-        res.append("\"");
-    res.append( p, c );
-    res.append("\"");
-
-    res.append( "]" );
-    std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-    DL_INFO("topic:" << res );
-    return res;
-}*/
 
 void
 DatabaseAPI::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
@@ -2703,6 +2449,7 @@ DatabaseAPI::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply
     dbGet( "topic/link", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
 }
 
+
 void
 DatabaseAPI::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply )
 {
@@ -2712,17 +2459,6 @@ DatabaseAPI::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckR
     dbGet( "topic/unlink", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
 }
 
-/*
-uint16_t
-DatabaseAPI::checkPerms( const string & a_id, uint16_t a_perms )
-{
-    libjson::Value result;
-
-    dbGet( "authz/check", {{"id",a_id},{"perms",to_string( a_perms )}}, result );
-
-    return result["granted"].GetInt();
-}
-*/
 
 void
 DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, AnnotationDataReply & a_reply )
@@ -2802,93 +2538,70 @@ DatabaseAPI::annotationPurge( uint32_t a_age_sec )
 }
 
 void
-DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result )
 {
-    Value::ObjectIter   j;
-    Value::ArrayIter    i;
+    Value::ArrayConstIter    i;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Object & res_obj = a_result.asObject();
+
+    if ( res_obj.has( "results" ))
     {
-        if (( j = a_result.find( "results" )) != a_result.end() )
-        {
-            Value::Array & arr = j->second.getArray();
+        const Value::Array & arr = res_obj.asArray();
 
-            for ( i = arr.begin(); i != arr.end(); i++ )
-            {
-                Value::Object & obj = i->getObject();
-
-                setNoteData( a_reply.add_note(), obj );
-            }
-        }
-
-        if (( j = a_result.find( "updates" )) != a_result.end() )
-        {
-            DL_DEBUG("Have updates");
-
-            Value::Array & arr = j->second.getArray();
-
-            for ( i = arr.begin(); i != arr.end(); i++ )
-            {
-                Value::Object & obj = i->getObject();
-
-                setListingData( a_reply.add_update(), obj );
-
-                DL_DEBUG("Updated record: " << obj["title"].asString() );
-            }
-        }
+        for ( i = arr.begin(); i != arr.end(); i++ )
+            setNoteData( a_reply.add_note(), i->asObject() );
     }
-    catch( exception & e )
+
+    if ( res_obj.has( "updates" ))
     {
-        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service. " << e.what( ));
+        const Value::Array & arr = res_obj.asArray();
+
+        for ( i = arr.begin(); i != arr.end(); i++ )
+            setListingData( a_reply.add_update(), i->asObject() );
     }
+
+    TRANSLATE_END( a_result )
 }
 
 void
-DatabaseAPI::setNoteData( NoteData * a_note, libjson::Value::Object & a_obj )
+DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_obj )
 {
-    try
+    a_note->set_id( a_obj.getString( "_id" ));
+    a_note->set_type((NoteType) a_obj.getNumber( "type" ));
+    a_note->set_state((NoteState) a_obj.getNumber( "state" ));
+    a_note->set_subject_id( a_obj.getString( "subject_id" ));
+    a_note->set_title( a_obj.getString( "title" ));
+    a_note->set_ct( a_obj.getNumber( "ct" ));
+    a_note->set_ut( a_obj.getNumber( "ut" ));
+
+    if ( a_obj.has( "parent_id" ) && !a_obj.value().isNull( ))
+        a_note->set_parent_id( a_obj.asString() );
+
+    if ( a_obj.has( "has_child" ))
+        a_note->set_has_child( a_obj.asBool() );
+
+    if ( a_obj.has( "comments" ))
     {
-        a_note->set_id( a_obj.at( "_id" ).asString( ));
-        a_note->set_type((NoteType) a_obj.at( "type" ).asNumber( ));
-        a_note->set_state((NoteState) a_obj.at( "state" ).asNumber( ));
-        a_note->set_subject_id( a_obj.at( "subject_id" ).asString( ));
-        a_note->set_title( a_obj.at( "title" ).asString( ));
-        a_note->set_ct( a_obj.at( "ct" ).asNumber( ));
-        a_note->set_ut( a_obj.at( "ut" ).asNumber( ));
+        const Value::Array &      arr = a_obj.asArray();
+        Value::ObjectIter   m;
+        NoteComment *       comment;
 
-        Value::ObjectIter   j;
-
-        if (( j = a_obj.find( "parent_id" )) != a_obj.end( ) && !j->second.isNull( ))
-            a_note->set_parent_id( j->second.asString( ));
-
-        if (( j = a_obj.find( "has_child" )) != a_obj.end( ))
-            a_note->set_has_child( j->second.asBool( ));
-
-        if (( j = a_obj.find( "comments" )) != a_obj.end( ))
+        for ( Value::ArrayConstIter k = arr.begin(); k != arr.end(); k++ )
         {
-            Value::ObjectIter   m;
-            NoteComment *       comment;
-            Value::Array &      arr = j->second.getArray();
+            const Value::Object & obj = k->asObject();
 
-            for ( Value::ArrayIter k = arr.begin(); k != arr.end(); k++ )
-            {
-                Value::Object & obj = k->getObject();
+            comment = a_note->add_comment();
+            comment->set_user( obj.getString( "user" ));
+            comment->set_time( obj.getNumber( "time" ));
+            comment->set_comment( obj.getString( "comment" ));
 
-                comment = a_note->add_comment();
-                comment->set_user( obj.at( "user" ).asString());
-                comment->set_time( obj.at( "time" ).asNumber());
-                comment->set_comment( obj.at( "comment" ).asString());
-
-                if (( m = obj.find( "new_type" )) != obj.end( ) && !m->second.isNull( ))
-                    comment->set_type((NoteType) m->second.asNumber() );
-                if (( m = obj.find( "new_state" )) != obj.end( ) && !m->second.isNull( ))
-                    comment->set_state((NoteState) m->second.asNumber() );
-            }
+            if ( obj.has( "new_type" ) && !obj.value().isNull( ))
+                comment->set_type((NoteType) obj.asNumber() );
+            if ( obj.has( "new_state" ) && !obj.value().isNull( ))
+                comment->set_state((NoteState) obj.asNumber() );
         }
-    }
-    catch( exception & e )
-    {
-        EXCEPT_PARAM( 1, "setNoteData - " << e.what() );
     }
 }
 
@@ -2982,42 +2695,36 @@ DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::Data
 }
 
 void
-DatabaseAPI::setDataGetSetReply( Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setDataGetSetReply( Auth::DataGetPutReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectIter   t;
 
-    try
+    TRANSLATE_BEGIN()
+
+    const Value::Object &   obj = a_result.asObject();
+    Value::ObjectIter   i;
+    Value::ArrayConstIter   j;
+
+    if ( obj.has( "glob_data" ) && obj.value().size() )
     {
-        Value::Object &     obj = a_result.getObject();
-        Value::ObjectIter   i;
-        Value::ArrayIter    j;
+        const Value::Array & arr = obj.asArray();
 
-        if (( i = obj.find("glob_data")) != obj.end() && i->second.size( ))
-        {
-            Value::Array & arr = i->second.getArray();
-
-            for ( j = arr.begin(); j != arr.end(); j++ )
-                setListingData( a_reply.add_item(), j->getObject() );
-        }
-
-        if (( i = obj.find("http_data")) != obj.end() && i->second.size( ))
-        {
-            Value::Array & arr = i->second.getArray();
-
-            for ( j = arr.begin(); j != arr.end(); j++ )
-                setListingData( a_reply.add_item(), j->getObject() );
-        }
-
-        if (( i = obj.find( "task" )) != obj.end( ))
-        {
-            setTaskData( a_reply.mutable_task(), i->second );
-        }
+        for ( j = arr.begin(); j != arr.end(); j++ )
+            setListingData( a_reply.add_item(), j->asObject() );
     }
-    catch ( exception & e )
+
+    if ( obj.has( "http_data" ) && obj.value().size() )
     {
-        DL_ERROR("JSON: " << a_result.toString());
-        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
+        const Value::Array & arr = obj.asArray();
+
+        for ( j = arr.begin(); j != arr.end(); j++ )
+            setListingData( a_reply.add_item(), j->asObject() );
     }
+
+    if ( obj.has( "task" ))
+        setTaskData( a_reply.mutable_task(), obj.value() );
+
+    TRANSLATE_END( a_result )
 }
 
 void
@@ -3061,22 +2768,22 @@ DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a
 
     dbPost( "dat/alloc_chg", {}, &body, a_result );
 
-    Value::Object & obj = a_result.getObject();
-    a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
-    a_reply.set_act_size( obj["act_size"].asNumber() );
-    a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
-    a_reply.set_data_limit( obj["data_limit"].asNumber() );
-    a_reply.set_data_size( obj["data_size"].asNumber() );
-    a_reply.set_rec_limit( obj["rec_limit"].asNumber() );
-    a_reply.set_rec_count( obj["rec_count"].asNumber() );
+    TRANSLATE_BEGIN()
 
-    Value::ObjectIter t = obj.find( "task" );
+    const Value::Object & obj = a_result.asObject();
 
-    if ( t != obj.end( ))
-    {
-        TaskData * task = a_reply.mutable_task();
-        setTaskData( task, t->second );
-    }
+    a_reply.set_act_cnt( obj.getNumber( "act_cnt" ));
+    a_reply.set_act_size( obj.getNumber( "act_size" ));
+    a_reply.set_tot_cnt( obj.getNumber( "tot_cnt" ));
+    a_reply.set_data_limit( obj.getNumber( "data_limit" ));
+    a_reply.set_data_size( obj.getNumber( "data_size" ));
+    a_reply.set_rec_limit( obj.getNumber( "rec_limit" ));
+    a_reply.set_rec_count( obj.getNumber( "rec_count" ));
+
+    if ( obj.has( "task" ))
+        setTaskData( a_reply.mutable_task(), obj.value() );
+
+    TRANSLATE_END( a_result )
 }
 
 
@@ -3103,30 +2810,26 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
 
     dbPost( "dat/owner_chg", {}, &body, a_result );
 
-    Value::Object & obj = a_result.getObject();
-    a_reply.set_act_cnt( obj["act_cnt"].asNumber() );
-    a_reply.set_act_size( obj["act_size"].asNumber() );
-    a_reply.set_tot_cnt( obj["tot_cnt"].asNumber() );
+    TRANSLATE_BEGIN()
 
-    Value::ObjectIter allocs = a_result.find("allocs");
-    if ( allocs != a_result.end() )
+    const Value::Object & obj = a_result.asObject();
+
+    a_reply.set_act_cnt( obj.getNumber( "act_cnt" ));
+    a_reply.set_act_size( obj.getNumber( "act_size" ));
+    a_reply.set_tot_cnt( obj.getNumber( "tot_cnt" ));
+
+    if ( obj.has( "allocs" ))
     {
-        Value::Array & alloc_arr = allocs->second.getArray();
-        for ( Value::ArrayIter a = alloc_arr.begin(); a != alloc_arr.end(); a++ )
-        {
-            setAllocData( a_reply.add_alloc(), a->getObject() );
-        }
+        const Value::Array & arr = obj.asArray();
+
+        for ( Value::ArrayConstIter a = arr.begin(); a != arr.end(); a++ )
+            setAllocData( a_reply.add_alloc(), a->asObject() );
     }
 
-    Value::ObjectIter t = obj.find( "task" );
+    if ( obj.has( "task" ))
+        setTaskData( a_reply.mutable_task(), obj.value() );
 
-    if ( t != obj.end( ))
-    {
-        //Value::Object & obj2 = t->second.getObject();
-
-        TaskData * task = a_reply.mutable_task();
-        setTaskData( task, t->second );
-    }
+    TRANSLATE_END( a_result )
 }
 
 
@@ -3170,28 +2873,20 @@ DatabaseAPI::taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteReque
 
 
 void
-DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
+DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json )
 {
-    try
-    {
-        Value::Object & obj = a_task_json.getObject();
+    const Value::Object & obj = a_task_json.asObject();
 
-        a_task->set_id( obj.at( "_id" ).asString( ));
-        a_task->set_type((TaskType)obj.at( "type" ).asNumber( ));
-        a_task->set_status((TaskStatus) obj.at( "status" ).asNumber() );
-        a_task->set_client( obj.at( "client" ).asString( ));
-        int step = obj.at( "step" ).asNumber( );
-        a_task->set_step( step < 0?-step:step);
-        a_task->set_steps( obj.at( "steps" ).asNumber( ));
-        a_task->set_msg( obj.at( "msg" ).asString( ));
-        a_task->set_ct( obj.at( "ct" ).asNumber( ));
-        a_task->set_ut( obj.at( "ut" ).asNumber( ));
-    }
-    catch( exception & e )
-    {
-        DL_DEBUG("taskData:" << a_task_json.toString());
-        EXCEPT_PARAM( 1, "setTaskData - " << e.what() );
-    }
+    a_task->set_id( obj.getString( "_id" ));
+    a_task->set_type((TaskType) obj.getNumber( "type" ));
+    a_task->set_status((TaskStatus) obj.getNumber( "status" ));
+    a_task->set_client( obj.getString( "client" ));
+    int step = obj.getNumber( "step" );
+    a_task->set_step( step < 0?-step:step);
+    a_task->set_steps( obj.getNumber( "steps" ));
+    a_task->set_msg( obj.getString( "msg" ));
+    a_task->set_ct( obj.getNumber( "ct" ));
+    a_task->set_ut( obj.getNumber( "ut" ));
 }
 
 
@@ -3205,26 +2900,16 @@ DatabaseAPI::setTaskData( TaskData * a_task, libjson::Value & a_task_json )
  * input - this is to.
  */
 void
-DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result )
 {
-    Value::ObjectIter   t;
+    TRANSLATE_BEGIN()
 
-    try
-    {
-        Value::Object & obj = a_result.getObject();
+    const Value::Object & obj = a_result.asObject();
 
-        t = obj.find( "task" );
-        if ( t != obj.end( ))
-        {
-            TaskData * task = a_reply.add_task();
-            setTaskData( task, t->second );
-        }
-    }
-    catch ( exception & e )
-    {
-        DL_ERROR("JSON: " << a_result.toString());
-        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
-    }
+    if ( obj.has( "task" ))
+        setTaskData( a_reply.add_task(), obj.value() );
+
+    TRANSLATE_END( a_result )
 }
 
 
@@ -3237,26 +2922,17 @@ DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, libjson::Value & a
  * JSON contains an array of task objects containing task fields.
  */
 void
-DatabaseAPI::setTaskDataReplyArray( Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result )
 {
-    Value::ObjectIter   t;
+    TRANSLATE_BEGIN()
 
-    //cerr << "TASK RES: " << a_result.toString() << endl;
+    const Value::Array & arr = a_result.asArray();
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    {
+        setTaskData( a_reply.add_task(), *i );
+    }
 
-    try
-    {
-        Value::Array & arr = a_result.getArray();
-        for ( Value::ArrayIter i = arr.begin(); i != arr.end(); i++ )
-        {
-            TaskData * task = a_reply.add_task();
-            setTaskData( task, *i );
-        }
-    }
-    catch ( exception & e )
-    {
-        DL_ERROR("JSON: " << a_result.toString());
-        EXCEPT_PARAM( ID_INTERNAL_ERROR, "Invalid JSON returned from DB service: " << e.what( ));
-    }
+    TRANSLATE_END( a_result )
 }
 
 

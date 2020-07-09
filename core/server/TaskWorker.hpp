@@ -21,11 +21,11 @@ public:
 private:
 
     void        workerThread();
-    bool        cmdRawDataTransfer( libjson::Value & a_task_params );
-    bool        cmdRawDataDelete( libjson::Value & a_task_params );
-    bool        cmdRawDataUpdateSize( libjson::Value & a_task_params );
-    bool        cmdAllocCreate( libjson::Value & a_task_params );
-    bool        cmdAllocDelete( libjson::Value & a_task_params );
+    bool        cmdRawDataTransfer( const libjson::Value & a_task_params );
+    bool        cmdRawDataDelete( const libjson::Value & a_task_params );
+    bool        cmdRawDataUpdateSize( const libjson::Value & a_task_params );
+    bool        cmdAllocCreate( const libjson::Value & a_task_params );
+    bool        cmdAllocDelete( const libjson::Value & a_task_params );
 
 
     void        abortTask( const std::string & a_msg );

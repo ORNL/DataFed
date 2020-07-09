@@ -73,13 +73,16 @@ namespace libjson {
             VT_BOOL
         };
 
+        /**
+        * @class Object
+        * @brief Provides a wrapper around underlying map to provide helper methods
+        */
         class Object
         {
         public:
             Object()
             {
                 m_iter = m_map.end();
-                //m_citer = m_map.end();
             }
 
             ~Object()
@@ -93,6 +96,29 @@ namespace libjson {
             inline void clear()
             {
                 m_map.clear();
+                m_iter = m_map.end();
+            }
+
+            // The following methods look-up a value from key and attempt to return a specific type
+
+            Value & getValue( const std::string& a_key )
+            {
+                ObjectIter iter = m_map.find( a_key );
+
+                if ( iter == m_map.end() )
+                    EXCEPT_PARAM( 1, "Key not found: " << a_key );
+
+                return (Value &) iter->second;
+            }
+
+            const Value & getValue( const std::string& a_key ) const
+            {
+                ObjectConstIter iter = m_map.find( a_key );
+
+                if ( iter == m_map.end() )
+                    EXCEPT_PARAM( 1, "Key not found: " << a_key );
+
+                return iter->second;
             }
 
             Object & getObject( const std::string& a_key )
@@ -121,27 +147,6 @@ namespace libjson {
                 EXCEPT_PARAM( 1, "Invalid conversion of " << iter->second.getTypeString() << " value to object for key " << a_key );
             }
 
-            Object& asObject()
-            {
-                if ( m_iter == m_map.end() )
-                    EXCEPT( 1, "Key not set" );
-
-                if ( m_iter->second.m_type == VT_OBJECT )
-                    return *m_iter->second.m_value.o;
-
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to object for key " << m_iter->first );
-            }
-
-            const Object& asObject() const
-            {
-                if ( m_iter == m_map.end() )
-                    EXCEPT( 1, "Key not set" );
-
-                if ( m_iter->second.m_type == VT_OBJECT )
-                    return *m_iter->second.m_value.o;
-
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to object for key " << m_iter->first );
-            }
 
             Array& getArray( const std::string& a_key )
             {
@@ -169,27 +174,6 @@ namespace libjson {
                 EXCEPT_PARAM( 1, "Invalid conversion of " << iter->second.getTypeString() << " value to array for key " << a_key );
             }
 
-            Array& asArray()
-            {
-                if ( m_iter == m_map.end() )
-                    EXCEPT( 1, "Key not set" );
-
-                if ( m_iter->second.m_type == VT_ARRAY )
-                    return *m_iter->second.m_value.a;
-
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to array for key " << m_iter->first );
-            }
-
-            const Array& asArray() const
-            {
-                if ( m_iter == m_map.end() )
-                    EXCEPT( 1, "Key not set" );
-
-                if ( m_iter->second.m_type == VT_ARRAY )
-                    return *m_iter->second.m_value.a;
-
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to array for key " << m_iter->first );
-            }
 
             bool getBool( const std::string& a_key ) const
             {
@@ -206,19 +190,6 @@ namespace libjson {
                 EXCEPT_PARAM( 1, "Invalid conversion of " << iter->second.getTypeString() << " value to boolean for key " << a_key );
             }
 
-            bool asBool() const
-            {
-                if ( m_iter == m_map.end() )
-                    EXCEPT( 1, "Key not set" );
-
-                if ( m_iter->second.m_type == VT_BOOL )
-                    return m_iter->second.m_value.b;
-                else if ( m_iter->second.m_type == VT_NUMBER )
-                    return (bool)m_iter->second.m_value.n;
-
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to boolean for key " << m_iter->first );
-            }
-
             double getNumber( const std::string& a_key ) const
             {
                 ObjectConstIter iter = m_map.find( a_key );
@@ -232,19 +203,6 @@ namespace libjson {
                     return iter->second.m_value.b ? 1 : 0;
 
                 EXCEPT_PARAM( 1, "Invalid conversion of " << iter->second.getTypeString() << " value to number for key " << a_key );
-            }
-
-            double asNumber() const
-            {
-                if ( m_iter == m_map.end() )
-                    EXCEPT( 1, "No key set" );
-
-                if ( m_iter->second.m_type == VT_NUMBER )
-                    return m_iter->second.m_value.n;
-                else if ( m_iter->second.m_type == VT_BOOL )
-                    return m_iter->second.m_value.b ? 1 : 0;
-
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to number for key " << m_iter->first );
             }
 
             const std::string& getString( const std::string& a_key ) const
@@ -273,15 +231,29 @@ namespace libjson {
                 EXCEPT_PARAM( 1, "Invalid conversion of " << iter->second.getTypeString() << " value to string for key " << a_key );
             }
 
-            const std::string& asString() const
+            // Checks if key is present, sets internal iterator to entry
+
+            inline bool has( const std::string& a_key ) const
+            {
+                return (m_iter = m_map.find( a_key )) != m_map.end();
+            }
+
+            // The following methods can be called after has() (sets internal iterator to entry)
+
+            Value & value()
             {
                 if ( m_iter == m_map.end() )
                     EXCEPT( 1, "Key not set" );
 
-                if ( m_iter->second.m_type == VT_STRING )
-                    return *m_iter->second.m_value.s;
+                return (Value &) m_iter->second;
+            }
 
-                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to string for key " << m_iter->first );
+            const Value & value() const
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                return m_iter->second;
             }
 
             std::string & asString()
@@ -295,10 +267,88 @@ namespace libjson {
                 EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to string for key " << m_iter->first);
             }
 
-            inline bool has( const std::string& a_key ) const
+            const std::string& asString() const
             {
-                return (m_iter = m_map.find( a_key )) != m_map.end();
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                if ( m_iter->second.m_type == VT_STRING )
+                    return *m_iter->second.m_value.s;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to string for key " << m_iter->first );
             }
+
+            double asNumber() const
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "No key set" );
+
+                if ( m_iter->second.m_type == VT_NUMBER )
+                    return m_iter->second.m_value.n;
+                else if ( m_iter->second.m_type == VT_BOOL )
+                    return m_iter->second.m_value.b ? 1 : 0;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to number for key " << m_iter->first );
+            }
+
+            bool asBool() const
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                if ( m_iter->second.m_type == VT_BOOL )
+                    return m_iter->second.m_value.b;
+                else if ( m_iter->second.m_type == VT_NUMBER )
+                    return (bool)m_iter->second.m_value.n;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to boolean for key " << m_iter->first );
+            }
+
+            Object& asObject()
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                if ( m_iter->second.m_type == VT_OBJECT )
+                    return *m_iter->second.m_value.o;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to object for key " << m_iter->first );
+            }
+
+            const Object& asObject() const
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                if ( m_iter->second.m_type == VT_OBJECT )
+                    return *m_iter->second.m_value.o;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to object for key " << m_iter->first );
+            }
+
+            Array& asArray()
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                if ( m_iter->second.m_type == VT_ARRAY )
+                    return *m_iter->second.m_value.a;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to array for key " << m_iter->first );
+            }
+
+            const Array& asArray() const
+            {
+                if ( m_iter == m_map.end() )
+                    EXCEPT( 1, "Key not set" );
+
+                if ( m_iter->second.m_type == VT_ARRAY )
+                    return *m_iter->second.m_value.a;
+
+                EXCEPT_PARAM( 1, "Invalid conversion of " << m_iter->second.getTypeString() << " value to array for key " << m_iter->first );
+            }
+
+            // The following methods provide a lower-level map-like interface
 
             inline ObjectIter find( const std::string& a_key )
             {
@@ -361,7 +411,6 @@ namespace libjson {
         private:
             std::map<std::string, Value>    m_map;
             mutable ObjectConstIter         m_iter;
-            //mutable ObjectConstIter         m_citer;
         };
 
 
@@ -776,6 +825,13 @@ namespace libjson {
 
         void fromString( const char* a_raw_json )
         {
+            if ( m_type != VT_NULL )
+            {
+                this->~Value();
+                m_type = VT_NULL;
+                m_value.o = 0;
+            }
+
             const char* c = a_raw_json;
             uint8_t         state = PS_SEEK_BEG;
 
@@ -974,32 +1030,25 @@ namespace libjson {
 
         inline void numToString( std::string& a_buffer, double a_value ) const
         {
-            //a_buffer.append( std::to_string( m_value.n ));
             size_t sz1 = a_buffer.size();
             a_buffer.resize( sz1 + 50 );
-            //int sz2 = sprintf( (char *)a_buffer.c_str() + sz1, "%g", m_value.n );
             int sz2 = fpconv_dtoa( a_value, (char*)a_buffer.c_str() + sz1 );
             a_buffer.resize( sz1 + sz2 );
         }
 
         const char* parseObject( Value& a_parent, const char* start )
         {
-            //std::cout << "parseObject(" << (size_t)start << ")\n";
-
             // On function entry, c is next char after '{'
 
             uint8_t         state = PS_SEEK_KEY;
             const char* c = start;
             std::string     key;
-            //Value           value;
 
             a_parent.m_type = VT_OBJECT;
             a_parent.m_value.o = new Object();
 
             while ( *c )
             {
-                //std::cout << "po s:" << (int)state << ", val: " << *c << "\n";
-
                 switch ( state )
                 {
                 case PS_SEEK_KEY:
@@ -1049,8 +1098,6 @@ namespace libjson {
 
         const char* parseArray( Value& a_parent, const char* start )
         {
-            //std::cout << "parseArray(" << (size_t)start << ")\n";
-
             // On function entry, c is next char after '['
             const char* c = start;
             uint8_t         state = PS_SEEK_VAL;
@@ -1062,8 +1109,6 @@ namespace libjson {
 
             while ( *c )
             {
-                //std::cout << "pa s:" << (int)state << ", val: " << *c << "\n";
-
                 switch ( state )
                 {
                 case PS_SEEK_VAL:
@@ -1094,15 +1139,10 @@ namespace libjson {
 
         inline const char* parseValue( Value& a_value, const char* start )
         {
-            //std::cout << "parseValue(" << (size_t)start << ")\n";
-
             const char* c = start;
-            //uint8_t         state = PS_SEEK_VAL;
 
             while ( *c )
             {
-                //std::cout << "pv val: " << *c << "\n";
-
                 switch ( *c )
                 {
                 case '{':
@@ -1168,8 +1208,6 @@ namespace libjson {
 
         inline const char* parseString( std::string& a_value, const char* start )
         {
-            //std::cout << "parseString(" << (size_t)start << ")\n";
-
             // On entry, c is next char after "
             const char* c = start;
             const char* a = start;
@@ -1179,8 +1217,6 @@ namespace libjson {
 
             while ( *c )
             {
-                //std::cout << "ps val: " << (int)(*c) << "\n";
-
                 if ( *c == '\\' )
                 {
                     if ( c != a )
@@ -1198,7 +1234,6 @@ namespace libjson {
                     case '\\':  a_value.append( "\\" ); break;
                     case 'u':
                         utf8 = ( uint32_t )((toHex( c + 2 ) << 12) | (toHex( c + 3 ) << 8) | (toHex( c + 4 ) << 4) | toHex( c + 5 ));
-                        //std::cout << "hex: " << std::hex << utf8 << std::dec << "\n";
 
                         if ( utf8 < 0x80 )
                             a_value.append( 1, (char)utf8 );

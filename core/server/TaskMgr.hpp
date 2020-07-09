@@ -37,7 +37,7 @@ private:
     ~TaskMgr();
 
     void        maintenanceThread();
-    void        newTasks( libjson::Value & a_tasks );
+    void        newTasks( const libjson::Value & a_tasks );
     void        addNewTaskAndScheduleWorker( const std::string & a_task_id );
     void        retryTaskAndScheduleWorker( Task * a_task );
 

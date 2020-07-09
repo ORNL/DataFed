@@ -199,12 +199,12 @@ TaskMgr::newTask( const std::string & a_task_id )
  * NOTE: Takes ownership of JSON values leaving NULL values in place.
  */
 void
-TaskMgr::newTasks( libjson::Value & a_tasks )
+TaskMgr::newTasks( const libjson::Value & a_tasks )
 {
     try
     {
-        libjson::Value::Array & arr = a_tasks.getArray();
-        libjson::Value::ArrayIter t = arr.begin();
+        const libjson::Value::Array & arr = a_tasks.asArray();
+        libjson::Value::ArrayConstIter t = arr.begin();
 
         DL_DEBUG("TaskMgr scheduling " << arr.size() << "new task(s)");
 

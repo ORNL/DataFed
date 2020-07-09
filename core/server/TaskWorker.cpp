@@ -5,6 +5,7 @@
 #include "TaskWorker.hpp"
 
 using namespace std;
+using namespace libjson;
 
 //#define TASK_DELAY sleep(60);
 #define TASK_DELAY
@@ -31,8 +32,8 @@ TaskWorker::workerThread()
 {
     bool                        retry = false;
     string                      err_msg;
-    libjson::Value              task_cmd;
-    libjson::Value::ObjectIter  iter;
+    Value              task_cmd;
+    Value::ObjectIter  iter;
     uint32_t                    cmd;
     int                         step;
     bool                        first;
@@ -63,25 +64,16 @@ TaskWorker::workerThread()
                     m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
                 }
 
-                DL_DEBUG( "task reply: " << task_cmd.toString() );
+                //DL_DEBUG( "task reply: " << task_cmd.toString() );
 
-                iter = task_cmd.find("cmd");
-                if ( iter == task_cmd.end() )
-                    EXCEPT(1,"Reply missing command value" );
+                const Value::Object & obj = task_cmd.asObject();
 
-                if ( !iter->second.isNumber() )
-                    EXCEPT(1,"Reply command value has invalid type" );
-                cmd = (uint32_t)iter->second.asNumber();
+                cmd = (uint32_t)obj.getNumber( "cmd" );
 
-                iter = task_cmd.find("params");
-                if ( iter == task_cmd.end() )
-                    EXCEPT(1,"Reply missing params value" );
+                const Value & params = obj.getValue( "params" );
 
-                libjson::Value & params = iter->second;
-
-                iter = task_cmd.find("step");
-                if ( iter != task_cmd.end() )
-                    step = iter->second.asNumber();
+                if ( obj.has( "step" ))
+                    step = obj.asNumber();
                 else if ( cmd != TC_STOP )
                     EXCEPT(1,"Reply missing step value" );
 
@@ -103,11 +95,10 @@ TaskWorker::workerThread()
                     retry = cmdAllocDelete( params );
                     break;
                 case TC_STOP:
-                    iter = task_cmd.find("new_tasks");
-                    if ( iter != task_cmd.end() )
+                    if ( obj.has( "new_tasks" ))
                     {
-                        DL_DEBUG("found " << iter->second.size() << " new ready tasks." );
-                        m_mgr.newTasks( iter->second );
+                        DL_DEBUG("found " << obj.value().size() << " new ready tasks." );
+                        m_mgr.newTasks( obj.value() );
                     }
                     break;
                 default:
@@ -135,14 +126,14 @@ TaskWorker::workerThread()
             {
                 err_msg = e.toString();
                 DL_ERROR( "Task worker " << id() << " exception: " << err_msg );
-                //abortTask( msg );
             }
             catch( exception & e )
             {
                 err_msg = e.what();
                 DL_ERROR( "Task worker " << id() << " exception: " << err_msg );
-                //abortTask( msg );
             }
+
+            task_cmd.clear();
         }
     }
 }
@@ -177,19 +168,21 @@ TaskWorker::abortTask( const std::string & a_msg )
 
 
 bool
-TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
+TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    //DL_DEBUG( "params: " << a_task_params.toString() );
 
-    string &                    uid = a_task_params["uid"].asString();
-    TaskType                    type = (TaskType)a_task_params["type"].asNumber();
-    Encryption                  encrypt = (Encryption)a_task_params["encrypt"].asNumber();
-    string &                    src_ep = a_task_params["src_repo_ep"].asString();
-    string &                    src_path = a_task_params["src_repo_path"].asString();
-    string &                    dst_ep = a_task_params["dst_repo_ep"].asString();
-    string &                    dst_path = a_task_params["dst_repo_path"].asString();
-    libjson::Value::Array &     files = a_task_params["files"].getArray();
+    const Value::Object & obj = a_task_params.asObject();
+
+    const string &              uid = obj.getString( "uid" );
+    TaskType                    type = (TaskType)obj.getNumber( "type" );
+    Encryption                  encrypt = (Encryption)obj.getNumber( "encrypt" );
+    const string &              src_ep = obj.getString( "src_repo_ep" );
+    const string &              src_path = obj.getString( "src_repo_path" );
+    const string &              dst_ep = obj.getString( "dst_repo_ep" );
+    const string &              dst_path = obj.getString( "dst_repo_path" );
+    const Value::Array &        files = obj.getArray( "files" );
     string                      src_repo_id;
     string                      dst_repo_id;
     bool                        encrypted = true;
@@ -198,24 +191,24 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
     switch ( type )
     {
     case TT_DATA_GET:
-        src_repo_id = a_task_params["src_repo_id"].asString();
+        src_repo_id = obj.getString( "src_repo_id" );
         break;
     case TT_DATA_PUT:
-        dst_repo_id = a_task_params["dst_repo_id"].asString();
+        dst_repo_id = obj.getString( "dst_repo_id" );
         break;
     case TT_REC_CHG_ALLOC:
     case TT_REC_CHG_OWNER:
-        src_repo_id = a_task_params["src_repo_id"].asString();
-        dst_repo_id = a_task_params["dst_repo_id"].asString();
+        src_repo_id = obj.getString( "src_repo_id" );
+        dst_repo_id = obj.getString( "dst_repo_id" );
         break;
     default:
         EXCEPT_PARAM( 1, "Invalid task type for raw data transfer command: " << type );
         break;
     }
 
-    string acc_tok = a_task_params["acc_tok"].asString();
-    string ref_tok = a_task_params["ref_tok"].asString();
-    uint32_t expires_in = a_task_params["acc_tok_exp_in"].asNumber();
+    string acc_tok = obj.getString( "acc_tok" );
+    string ref_tok = obj.getString( "ref_tok" );
+    uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
 
     if ( expires_in < 300 )
     {
@@ -230,7 +223,7 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
 
     if ( type == TT_DATA_GET || type == TT_DATA_PUT )
     {
-        string & ep = (type == TT_DATA_GET)?dst_ep:src_ep;
+        const string & ep = (type == TT_DATA_GET)?dst_ep:src_ep;
 
         // Check destination endpoint
         m_glob.getEndpointInfo( ep, acc_tok, ep_info );
@@ -247,10 +240,11 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
     DL_DEBUG( "Init globus transfer" );
 
     vector<pair<string,string>> files_v;
-    for ( libjson::Value::ArrayIter f = files.begin(); f != files.end(); f++ )
+    for ( Value::ArrayConstIter f = files.begin(); f != files.end(); f++ )
     {
-        if ( type == TT_DATA_PUT || (*f)["size"].asNumber() > 0 )
-            files_v.push_back(make_pair( src_path + (*f)["from"].asString(), dst_path + (*f)["to"].asString() ));
+        const Value::Object & fobj = f->asObject();
+        if ( type == TT_DATA_PUT || fobj.getNumber( "size" ) > 0 )
+            files_v.push_back(make_pair( src_path + fobj.getString( "from" ), dst_path + fobj.getString( "to" )));
     }
 
     if ( files_v.size() )
@@ -287,21 +281,21 @@ TaskWorker::cmdRawDataTransfer( libjson::Value & a_task_params )
 
 
 bool
-TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
+TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdRawDataDelete" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    //DL_DEBUG( "params: " << a_task_params.toString() );
+
+    const Value::Object & obj = a_task_params.asObject();
 
     Auth::RepoDataDeleteRequest     del_req;
     RecordDataLocation *            loc;
     MsgBuf::Message *               reply;
-    //time_t                          mod_time;
-    const string &                  repo_id = a_task_params["repo_id"].asString();
-    const string &                  path = a_task_params["repo_path"].asString();
-    libjson::Value::Array &         ids = a_task_params["ids"].getArray();
-    libjson::Value::ArrayIter       id;
+    const string &                  repo_id = obj.getString( "repo_id" );
+    const string &                  path = obj.getString( "repo_path" );
+    const Value::Array &            ids = obj.getArray( "ids" );
 
-    for ( id = ids.begin(); id != ids.end(); id++ )
+    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ )
     {
         loc = del_req.add_loc();
         loc->set_id( id->asString() );
@@ -318,20 +312,22 @@ TaskWorker::cmdRawDataDelete( libjson::Value & a_task_params )
 
 
 bool
-TaskWorker::cmdRawDataUpdateSize( libjson::Value & a_task_params )
+TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    //DL_DEBUG( "params: " << a_task_params.toString() );
 
-    const string &                  repo_id = a_task_params["repo_id"].asString();
-    const string &                  path = a_task_params["repo_path"].asString();
-    libjson::Value::Array &         ids = a_task_params["ids"].getArray();
+    const Value::Object & obj = a_task_params.asObject();
+
+    const string &                  repo_id = obj.getString( "repo_id" );
+    const string &                  path = obj.getString( "repo_path" );
+    const Value::Array &            ids = obj.getArray( "ids" );
     Auth::RepoDataGetSizeRequest    sz_req;
     Auth::RepoDataSizeReply *       sz_rep;
     RecordDataLocation *            loc;
     MsgBuf::Message *               reply;
 
-    for ( libjson::Value::ArrayIter id = ids.begin(); id != ids.end(); id++ )
+    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ )
     {
         loc = sz_req.add_loc();
         loc->set_id( id->asString() );
@@ -361,13 +357,15 @@ TaskWorker::cmdRawDataUpdateSize( libjson::Value & a_task_params )
 
 
 bool
-TaskWorker::cmdAllocCreate( libjson::Value & a_task_params )
+TaskWorker::cmdAllocCreate( const Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdAllocCreate" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    //DL_DEBUG( "params: " << a_task_params.toString() );
 
-    string & repo_id = a_task_params["repo_id"].asString();
-    string & path = a_task_params["repo_path"].asString();
+    const Value::Object & obj = a_task_params.asObject();
+
+    const string & repo_id = obj.getString( "repo_id" );
+    const string & path = obj.getString( "repo_path" );
 
     Auth::RepoPathCreateRequest     req;
     MsgBuf::Message *               reply;
@@ -384,13 +382,15 @@ TaskWorker::cmdAllocCreate( libjson::Value & a_task_params )
 
 
 bool
-TaskWorker::cmdAllocDelete( libjson::Value & a_task_params )
+TaskWorker::cmdAllocDelete( const Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdAllocDelete" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    //DL_DEBUG( "params: " << a_task_params.toString() );
 
-    string & repo_id = a_task_params["repo_id"].asString();
-    string & path = a_task_params["repo_path"].asString();
+    const Value::Object & obj = a_task_params.asObject();
+
+    const string & repo_id = obj.getString( "repo_id" );
+    const string & path = obj.getString( "repo_path" );
 
     Auth::RepoPathDeleteRequest         req;
     MsgBuf::Message *                   reply;
@@ -473,53 +473,5 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
         return false;
     }
 }
-
-/*
-bool
-TaskWorker::refreshDataSize( const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext )
-{
-    time_t mod_time = time(0);
-    size_t file_size = 1;
-
-    Auth::RepoDataGetSizeRequest    sz_req;
-    Auth::RepoDataSizeReply *       sz_rep;
-    RecordDataLocation *            loc;
-    MsgBuf::Message *               raw_msg;
-
-    loc = sz_req.add_loc();
-    loc->set_id( a_data_id );
-    loc->set_path( a_data_path );
-
-    DL_INFO( "SendRecv msg to " << a_repo_id );
-
-    if ( repoSendRecv( a_repo_id, sz_req, raw_msg ))
-    {
-        DL_INFO( "SendRecv failed, must retry" );
-
-        return true;
-    }
-
-    DL_INFO( "SendRecv OK" );
-
-    if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( raw_msg )) != 0 )
-    {
-        if ( sz_rep->size_size() == 1 )
-            file_size = sz_rep->size(0).size();
-
-        delete raw_msg;
-    }
-    else
-    {
-        delete raw_msg;
-        EXCEPT_PARAM( 1, "Unexpected reply type from repo service: " << a_repo_id );
-    }
-
-
-    // Update DB record with new file stats
-    m_db.recordUpdatePostPut( a_data_id, file_size, mod_time, a_src_path, a_ext.isString()?&a_ext.asString():0 );
-
-    return false;
-}
-*/
 
 }}
